@@ -9,7 +9,7 @@ class SgFunctionDeclaration;
 namespace AstUtilInterface{
 
    enum OperatorSideEffect {
-     Modify, Read, Call
+     Modify, Read, Kill, Call
    };
    //! Returns the collection of memory references modified, read, and invoked (as 
    //! function calls) as potential side effects of running the given ast, inside the

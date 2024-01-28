@@ -107,8 +107,10 @@ bool ProcessAstTree<AstNodePtr>:: ProcessIf( AstInterface &fa, const AstNodePtr&
      }
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>::
-ProcessFunctionDefinition( AstInterface &, const AstNodePtr&, const AstNodePtr&, AstInterface::TraversalVisitType) {
-    return true;
+ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s, AstInterface::AstList& params, AstInterface::AstList& outParams,
+                         const AstNodePtr& body, AstInterface::TraversalVisitType t)
+{ 
+   return true;
 }
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>::
@@ -132,9 +134,10 @@ bool ProcessAstTree<AstNodePtr>:: ProcessTree( AstInterface &_fa, const AstNodeP
    {
      AstInterface& fa = static_cast<AstInterface&>(_fa);
      AstNodePtr init, cond, incr, body;
+     AstInterface::AstList params, outParams;
      bool success = true;
-     if (fa.IsFunctionDefinition(s, 0, 0, 0, &body)) {
-        success = ProcessFunctionDefinition(fa, s, body, t);
+     if (fa.IsFunctionDefinition(s, 0, &params, &outParams, &body)) {
+        success = ProcessFunctionDefinition(fa, s, params, outParams, body, t);
      }
      if (fa.IsBlock(s)) {
         success = ProcessBlock( fa, s, t);

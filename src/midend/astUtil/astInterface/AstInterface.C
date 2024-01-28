@@ -1339,11 +1339,13 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
          return AstNodePtrImpl(isSgConstructorInitializer(s)->get_declaration());
     case V_SgDotExp:
          return GetFunctionDecl( AstNodePtrImpl(isSgDotExp(s)->get_rhs_operand()));
+    default: 
+        mlog[ERROR] << "Error: not recognizable function type : " << s->sage_class_name() << endl;
+        mlog[ERROR] << " at " << s->get_file_info()->get_filenameString() << ":" << s->get_file_info()->get_line() << std::endl;
+        mlog[ERROR] << s->unparseToString() << endl;
+        ROSE_ABORT();
     }
-    mlog[ERROR] << "Error: not recognizable function type : " << s->sage_class_name() << endl;
-    mlog[ERROR] << " at " << s->get_file_info()->get_filenameString() << ":" << s->get_file_info()->get_line() << std::endl;
-    mlog[ERROR] << s->unparseToString() << endl;
-    ROSE_ABORT();
+    return AST_NULL;
 }
 
 //! Returns whether t is a function type and if yes, returns its parameter
@@ -1374,12 +1376,14 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   SgFunctionParameterList *l = 0;
+  SgCtorInitializerList *ctor = 0;
   SgNode* d = s;
   SgFunctionDefinition *def =  0;
   if (s->variantT() ==  V_SgFunctionDefinition) 
     {
       def =  isSgFunctionDefinition(s);
       d = def->get_declaration();
+      ctor = def->get_CtorInitializerList();
   }
   
   switch (d->variantT()) {
@@ -1504,6 +1508,14 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   if (body != 0 && def != 0) {
      *body = AstNodePtrImpl(def->get_body());
   }
+  if (ctor != 0 && outpars != 0) {
+    SgInitializedNamePtrList& names = ctor->get_ctors();
+    for (SgInitializedNamePtrList::iterator p = names.begin(); 
+         p != names.end(); ++p) {
+      SgInitializedName* cur = *p;
+      outpars->push_back(cur);
+    }
+  }
   return true;
 }
 
@@ -1511,10 +1523,20 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 //! Use readlhs to tell whether the value of lhs is read before being modified 
 //! in the assignment (e.g., whether the assignment is +=, -= etc.)
 bool AstInterfaceImpl::
-IsAssignment( const SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs) 
+IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs) 
 { 
-  const SgExprStatement *n = isSgExprStatement(s);
-  const SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
+  if (s->variantT() == V_SgInitializedName) {
+        const SgNode* parent = s->get_parent();
+        if (parent != 0 && parent->variantT() == V_SgCtorInitializerList) {
+           // Treat constructor member variable initialization as assignment.
+          if (rhs != 0) *rhs = isSgInitializedName(s)->get_initializer(); 
+          if (lhs != 0) *lhs = s;
+          return true;
+        } 
+        return false;
+   } 
+  SgExprStatement *n = isSgExprStatement(s);
+  SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
   if (exp != 0) {
     switch (exp->variantT()) {
     case V_SgPlusAssignOp:
@@ -1548,7 +1570,7 @@ IsAssignment( const SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs)
 bool AstInterface::
 IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *readlhs) 
 { 
-  const SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
+  SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
   SgNode** _lhs = (lhs == 0)? ((SgNode**)0) : (SgNode**)&(lhs->get_ptr());
   SgNode** _rhs = (rhs == 0)? ((SgNode**)0) : (SgNode**)&(rhs->get_ptr());
   return AstInterfaceImpl::IsAssignment(s, _lhs, _rhs, readlhs);
@@ -2205,6 +2227,7 @@ IsMemoryAccess( const AstNodePtr& _s)
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
   switch (s->variantT()) {
+  case V_SgCastExp:
   case V_SgConstructorInitializer:
      return false;
   case V_SgPntrArrRefExp:
@@ -2527,6 +2550,7 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
   case V_SgVarRefExp:
   case V_SgEnumVal:
       break;
+  default: break;
   }
   if (AstToString(_first) != AstToString(_second)) {
     std::cerr << "AST different:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
@@ -2926,7 +2950,7 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
 bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** lb , SgNode** ub, SgNode** step, SgNode** body)
 { 
   switch (s->variantT()) {
-  case V_SgFortranDo:
+    case V_SgFortranDo:
     {
       const SgFortranDo *f = isSgFortranDo(s);
       SgExpression *init = f->get_initialization();

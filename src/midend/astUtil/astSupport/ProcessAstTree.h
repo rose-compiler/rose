@@ -40,9 +40,7 @@ class ProcessAstTreeBase : public ProcessAstNode<AstNodePtr>
   void SkipOnly( const AstNodePtr& s);
  public:
   bool operator()( AstInterface &fa, const AstNodePtr& s);
-
-// DQ (2/18/2008): Added to fix warning from GNU g++
-   virtual ~ProcessAstTreeBase() {}      
+  virtual ~ProcessAstTreeBase() {}      
 };
 
 template <class AstNodePtr>
@@ -60,6 +58,7 @@ class ProcessAstTree : public ProcessAstTreeBase<AstNodePtr>
                              const AstNodePtr& falsebody, 
                              AstInterface::TraversalVisitType t) ;
   virtual bool ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
+                                          AstInterface::AstList& params, AstInterface::AstList& outParams,
                                               const AstNodePtr& body,
                                              AstInterface::TraversalVisitType t) ;
   virtual bool ProcessBlock( AstInterface &fa, const AstNodePtr& s,
@@ -69,7 +68,7 @@ class ProcessAstTree : public ProcessAstTreeBase<AstNodePtr>
   virtual bool ProcessDecls(AstInterface &fa, const AstNodePtr& s);
   virtual bool ProcessStmt(AstInterface &fa, const AstNodePtr& s);
   bool ProcessTree( AstInterface &_fa, const AstNodePtr& s, 
-                       AstInterface::TraversalVisitType t);
+                       AstInterface::TraversalVisitType t) override;
  public:
   bool operator()( AstInterface &fa, const AstNodePtr& s);
 };

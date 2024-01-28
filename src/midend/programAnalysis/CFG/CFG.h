@@ -222,6 +222,7 @@ class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
                                 { return ProcessStmt(fa, s); }
 
   virtual bool ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
+                                     AstInterface::AstList& params, AstInterface::AstList& outParams,
                                            const AstNodePtr& body,
                                      AstInterface::TraversalVisitType t)
    {
@@ -242,7 +243,7 @@ class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
            if (lastNode != 0)
               AddBranch(lastNode, GetStmtNode(s, EXIT), CFGConfig::ALWAYS); 
      }
-     return  ProcessAstTree::ProcessFunctionDefinition(fa, s, body, t);
+     return  ProcessAstTree::ProcessFunctionDefinition(fa, s, params, outParams, body, t);
    }
 
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,

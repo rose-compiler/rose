@@ -20,11 +20,14 @@ bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
     std::function<bool(SgNode*, SgNode*)> save_read = [&collect] (SgNode* first, SgNode* second) {
       return collect(first, second, OperatorSideEffect::Read);
       };
+    std::function<bool(SgNode*, SgNode*)> save_kill = [&collect] (SgNode* first, SgNode* second) {
+      return collect(first, second, OperatorSideEffect::Kill);
+      };
     std::function<bool(SgNode*, SgNode*)> save_call = [&collect] (SgNode* first, SgNode* second) {
       return collect(first, second, OperatorSideEffect::Call);
       };
 
-    return collect_operator(ast, &save_mod, &save_read, 0, &save_call);
+    return collect_operator(ast, &save_mod, &save_read, &save_kill, &save_call);
 }
 
 void AstUtilInterface::ReadAnnotations(std::istream& input) {

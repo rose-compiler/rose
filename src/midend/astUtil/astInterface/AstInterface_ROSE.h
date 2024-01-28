@@ -97,7 +97,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
                        SgNode** step =0, SgNode** body=0);
 
   /*QY: if yes, set lhs, rhs and readlhs accordingly */
-  static bool IsAssignment( const SgNode* s, SgNode** lhs = 0, 
+  static bool IsAssignment( SgNode* s, SgNode** lhs = 0, 
                                SgNode** rhs = 0, bool* readlhs = 0); 
 
   /*QY: if yes, set vartype, varname,scope, and isglobal accordingly*/

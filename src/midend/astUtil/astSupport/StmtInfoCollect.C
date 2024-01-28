@@ -61,6 +61,9 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* cal
     if (DebugLocalInfoCollect()) {
       std::cerr << "Function Argument: " << AstInterface::AstToString(c) << "\n";
     }
+    if (fa.IsMemoryAccess(c)) {
+       AppendReadLoc( fa, c);
+    }
     operator()(fa, c);
   }
 }
@@ -77,11 +80,9 @@ AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
     AstNodePtr c = AstNodePtrImpl(*p2).get_ptr();
     if (c == AstNodePtr())
        continue;
-    if (fa.IsMemoryAccess(c))
-       if (DebugLocalInfoCollect()) {
-         std::cerr << "Function Argument modification: " << AstInterface::AstToString(c) << "\n";
-       }
+    if (fa.IsMemoryAccess(c)) {
        AppendModLoc( fa, c, AstNodePtr());
+    }
   }
 }
 
@@ -100,8 +101,25 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
                        AstInterface::TraversalVisitType t)
 {
  if (t == AstInterface::PreVisit) {
+   AstInterface::AstNodePtr lhs, rhs;
+   AstInterface::AstNodeList vars, args;
+   AstInterface::OperatorEnum opr;
+   bool readlhs = false;
 
-   if (fa.IsStatement(s)) {
+   AstNodePtr s_ptr = AstNodePtrImpl(s).get_ptr();
+   if (fa.IsFunctionDefinition(s, 0, &vars, &args)) {
+      curstmt = AstNodePtrImpl(s).get_ptr();
+      for (AstInterface::AstNodePtr param : vars) {
+         AppendReadLoc(fa, AstNodePtrImpl(param).get_ptr());
+      }
+      for (AstInterface::AstNodePtr param : args) {
+         if (fa.IsAssignment(param, &lhs, &rhs, &readlhs)) {
+            AppendModLoc(fa, AstNodePtrImpl(lhs).get_ptr(), AstNodePtrImpl(rhs).get_ptr());
+         } 
+      }
+      return true;
+   }
+   else if (fa.IsStatement(s)) {
       if (DebugLocalInfoCollect())
          std::cerr << "previsiting cur statement " << AstInterface::AstToString(s) << "\n";
       curstmt = AstNodePtrImpl(s).get_ptr();
@@ -119,30 +137,24 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       }
    }
 
-   AstInterface::AstNodePtr lhs, rhs;
-   AstInterface::AstNodeList vars, args;
-   AstInterface::OperatorEnum opr;
-   bool readlhs = false;
-
-   AstNodePtr s_ptr = AstNodePtrImpl(s).get_ptr();
    if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
-     if (DebugLocalInfoCollect())
-        std::cerr << "Is assignment.\n";
-     ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-     if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
-        modstack.push_back(s_ptr);
-        modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(rhs).get_ptr(),readlhs);
-     }
+       if (DebugLocalInfoCollect())
+          std::cerr << "Is assignment.\n";
+       ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+       if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
+         modstack.push_back(s_ptr);
+         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(rhs).get_ptr(),readlhs);
+       }
    }
    else if (fa.IsUnaryOp(s, &opr, &lhs) &&
            (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
-     if (DebugLocalInfoCollect())
+      if (DebugLocalInfoCollect())
         std::cerr << "Is unary operator.\n";
-     ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-     if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
-        modstack.push_back(s_ptr);
-        modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(lhs).get_ptr(),true);
-     }
+      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+      if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
+         modstack.push_back(s_ptr);
+         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(lhs).get_ptr(),true);
+      }
    }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
      if (DebugLocalInfoCollect())
@@ -173,7 +185,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
              std::cerr << " append function call " << AstInterface::AstToString(s) << std::endl;
          AppendFuncCall(fa, AstNodePtrImpl(s).get_ptr());
          Skip(s);
-     }
+     } 
      // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
      // to behave the same as a memory access, although it isn't one exactly
      else if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
