@@ -82,7 +82,7 @@ ThreadFlow::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     const bool emittedMessage = emitMessage(out, firstPrefix);
 
     if (!locations.empty()) {
-        const std::string p = emittedMessage ? firstPrefix : makeNextPrefix(firstPrefix);
+        const std::string p = emittedMessage ? makeNextPrefix(firstPrefix) : firstPrefix;
         out <<p <<"locations:\n";
         for (auto &threadFlowLocation: locations) {
             threadFlowLocation->emitYaml(out, makeListPrefix(p));

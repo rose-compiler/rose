@@ -28,6 +28,7 @@ run $(public_header) -o include/rose/Rose	\
     Location.h					\
     Progress.h					\
     RecursionCounter.h				\
+    Sarif.h					\
     SourceLocation.h				\
     StringUtility.h				\
     Traits.h					\

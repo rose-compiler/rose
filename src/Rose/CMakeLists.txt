@@ -48,6 +48,7 @@ install(FILES
   Location.h
   Progress.h
   RecursionCounter.h
+  Sarif.h
   SourceLocation.h
   StringUtility.h
   Yaml.h

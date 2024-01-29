@@ -79,9 +79,11 @@ ThreadFlowLocation::emitYaml(std::ostream &out, const std::string &firstPrefix) 
         throw Sarif::Exception("ThreadFlowLocation must have a message, a location, or both");
 
     const bool emittedMessage = emitMessage(out, firstPrefix);
+
     if (location) {
         const std::string p = emittedMessage ? makeNextPrefix(firstPrefix) : firstPrefix;
-        location->emitYaml(out, p);
+        out <<p <<"location:\n";
+        location->emitYaml(out, makeObjectPrefix(p));
     }
 }
 

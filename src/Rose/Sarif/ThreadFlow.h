@@ -38,7 +38,7 @@ public:
     /** Allocating constructor.
      *
      *  The message may be an empty string. */
-    static Ptr instance(const std::string &message);
+    static Ptr instance(const std::string &message = std::string());
 
     /** Property: Message string.
      *

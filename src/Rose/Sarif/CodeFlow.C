@@ -82,7 +82,7 @@ CodeFlow::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     const bool emittedMessage = emitMessage(out, firstPrefix);
 
     if (!threadFlows.empty()) {
-        const std::string p = emittedMessage ? firstPrefix : makeNextPrefix(firstPrefix);
+        const std::string p = emittedMessage ? makeNextPrefix(firstPrefix) : firstPrefix;
         out <<p <<"threadFlows:\n";
         for (auto &threadFlow: threadFlows) {
             threadFlow->emitYaml(out, makeListPrefix(p));
