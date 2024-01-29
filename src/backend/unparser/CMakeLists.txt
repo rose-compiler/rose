@@ -62,7 +62,16 @@ add_dependencies(unparser rosetta_generated)
 
 ########### install files ###############
 
-set(unparser_headers copy_unparser.h unparser.h unparse_sym.h
-  astUnparseAttribute.h IncludedFilesUnparser.h includeFileSupport.h nameQualificationSupport.h)
+set(unparser_headers
+
+  astUnparseAttribute.h
+  copy_unparser.h
+  IncludedFilesUnparser.h
+  includeFileSupport.h
+  nameQualificationSupport.h
+  UnparserDelegate.h
+  unparser.h
+  unparse_sym.h
+)
 
 install(FILES ${unparser_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
