@@ -4,6 +4,7 @@
 #include <Rose/Sarif/CodeFlow.h>
 
 #include <Rose/Sarif/ThreadFlow.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/bind/bind.hpp>
 
@@ -63,6 +64,7 @@ CodeFlow::checkThreadFlowsResize(int delta, const ThreadFlow::Ptr &threadFlow) {
 void
 CodeFlow::handleThreadFlowsResize(int delta, const ThreadFlow::Ptr &threadFlow) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(threadFlows.empty());
         lock(threadFlows.back(), "threadFlows");

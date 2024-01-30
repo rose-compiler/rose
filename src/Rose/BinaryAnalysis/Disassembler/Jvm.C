@@ -45,7 +45,7 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
     ROSE_ASSERT(false && "short read");
   }
 
-  T val = beToHost(*reinterpret_cast<T*>(buf));
+  T val = beToHost(*reinterpret_cast<T*>(buf));         // blame e380e4efa6
   operands->appendOperand(SageBuilderAsm::buildValue(val));
 
   // TODO: Perhaps there is a more efficient way to do this

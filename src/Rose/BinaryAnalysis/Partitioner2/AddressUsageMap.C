@@ -787,7 +787,7 @@ AddressUsageMap::overlapping(const AddressInterval &interval) const {
 }
 
 AddressUsers
-AddressUsageMap::containedIn(const AddressInterval &interval) const {
+AddressUsageMap::containedIn(const AddressInterval&) const {
     ASSERT_not_implemented("[Robb Matzke 2014-08-26]");
     //return containedIn(interval, AddressUsers::selectAllUsers);
 }

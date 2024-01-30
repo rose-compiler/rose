@@ -9,6 +9,7 @@
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Location.h>
 #include <Rose/Sarif/Rule.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/bind/bind.hpp>
 
@@ -192,6 +193,7 @@ Result::checkLocationsResize(int delta, const Location::Ptr &location) {
 void
 Result::handleLocationsResize(int delta, const Location::Ptr &location) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(locations.empty());
 
@@ -223,6 +225,7 @@ Result::checkCodeFlowsResize(int delta, const CodeFlow::Ptr &codeFlow) {
 void
 Result::handleCodeFlowsResize(int delta, const CodeFlow::Ptr &codeFlow) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(codeFlows.empty());
         lock(codeFlows.back(), "codeFlows");

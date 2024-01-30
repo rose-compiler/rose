@@ -11,6 +11,7 @@
 #include <EditDistance/LinearEditDistance.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <ROSE_UNUSED.h>
 
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
@@ -100,6 +101,7 @@ FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
         retval.push_back(d);
     return retval;
 #else
+    ROSE_UNUSED(matrix);
     throw FunctionSimilarity::Exception("dlib support is necessary for FunctionSimilarity analysis"
                                         "; see ROSE installation instructions");
 #endif

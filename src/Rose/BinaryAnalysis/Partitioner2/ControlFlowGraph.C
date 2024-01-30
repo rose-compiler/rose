@@ -278,7 +278,7 @@ findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
 }
 
 CfgConstEdgeSet
-findCallReturnEdges(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg) {
+findCallReturnEdges(const Partitioner::ConstPtr&, const ControlFlowGraph &cfg) {
     CfgConstEdgeSet retval;
     for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
         if (edge->value().type() == E_CALL_RETURN)

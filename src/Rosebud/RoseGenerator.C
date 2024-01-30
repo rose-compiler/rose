@@ -1,6 +1,7 @@
 #include <Rosebud/RoseGenerator.h>
 
 #include <Rosebud/Serializer.h>
+#include <ROSE_UNUSED.h>
 
 #include <Sawyer/GraphTraversal.h>
 
@@ -95,8 +96,7 @@ RoseGenerator::genImplOpen(std::ostream &impl, const Ast::Class::Ptr &c) {
 }
 
 void
-RoseGenerator::genImplClose(std::ostream &impl, const Ast::Class::Ptr &c) {
-    ASSERT_not_null(c);
+RoseGenerator::genImplClose(std::ostream &impl, const Ast::Class::Ptr&) {
     impl <<"\n"
          <<THIS_LOCATION <<machineGenerated();
 }
@@ -447,6 +447,7 @@ RoseGenerator::genBasicTypes(const Ast::Project::Ptr &project) {
 
 void
 RoseGenerator::adjustAst(const Classes &classes) {
+    ROSE_UNUSED(classes);
 #if 0 // [Robb Matzke 2023-04-05]
     ASSERT_not_null(project);
 

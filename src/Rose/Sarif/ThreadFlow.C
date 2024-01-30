@@ -4,6 +4,7 @@
 #include <Rose/Sarif/ThreadFlow.h>
 
 #include <Rose/Sarif/ThreadFlowLocation.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/bind/bind.hpp>
 
@@ -63,6 +64,7 @@ ThreadFlow::checkLocationsResize(int delta, const ThreadFlowLocation::Ptr &threa
 void
 ThreadFlow::handleLocationsResize(int delta, const ThreadFlowLocation::Ptr &threadFlowLocation) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(locations.empty());
         lock(locations.back(), "locations");

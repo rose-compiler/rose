@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/Dwarf.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
+#include <ROSE_UNUSED.h>
 
 #include <stringify.h>
 
@@ -160,6 +161,10 @@ SgAsmDwarfConstruct::createDwarfConstruct(int tag, int nesting_level, uint64_t o
         }
     }
 #else
+    ROSE_UNUSED(tag);
+    ROSE_UNUSED(nesting_level);
+    ROSE_UNUSED(offset);
+    ROSE_UNUSED(overall_offset);
     return nullptr;
 #endif
 }
@@ -299,7 +304,7 @@ SgAsmDwarfLineList::addressToSourceCode ( uint64_t address ) {
 
 
 void
-SgAsmDwarfLineList::display( const std::string & label ) {
+SgAsmDwarfLineList::display( const std::string & label ) { // blame 8e7b5bd1d0
     // Note that once the maps are setup NULL is an acceptable value (perhaps it should be the default parameter!)
     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
 

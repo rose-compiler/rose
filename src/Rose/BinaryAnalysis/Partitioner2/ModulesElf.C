@@ -8,6 +8,7 @@
 #include <rose_getline.h>
 #include <Sawyer/FileSystem.h>
 #include <x86InstructionProperties.h>
+#include <ROSE_UNUSED.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -179,6 +180,9 @@ PltEntryMatcher::matchAarch64Adrp(const Partitioner::ConstPtr &partitioner, rose
             return insn;
         }
     }
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
 #endif
     return NULL;
 }
@@ -217,6 +221,10 @@ PltEntryMatcher::matchAarch64Ldr(const Partitioner::ConstPtr &partitioner, rose_
         indirectNBytes = mre->get_type()->get_nBytes();
         return insn;
     }
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
+    ROSE_UNUSED(indirectVa);
 #endif
     return NULL;
 }
@@ -229,6 +237,9 @@ PltEntryMatcher::matchAarch64Add(const Partitioner::ConstPtr &partitioner, rose_
         if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_ADD)
             return insn;
     }
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
 #endif
     return NULL;
 }
@@ -241,6 +252,9 @@ PltEntryMatcher::matchAarch64Br(const Partitioner::ConstPtr &partitioner, rose_a
         if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_BR)
             return insn;
     }
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
 #endif
     return NULL;
 }
@@ -277,6 +291,10 @@ PltEntryMatcher::matchAarch32CopyPcToIp(const Partitioner::ConstPtr &partitioner
         result = va + ival->get_absoluteValue();
         return insn;
     }
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
+    ROSE_UNUSED(result);
 #endif
     return nullptr;
 }
@@ -304,6 +322,10 @@ PltEntryMatcher::matchAarch32AddConstToIp(const Partitioner::ConstPtr &partition
         return nullptr;
     addend = third->get_absoluteValue();
     return insn;
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
+    ROSE_UNUSED(addend);
 #endif
     return nullptr;
 }
@@ -338,6 +360,10 @@ PltEntryMatcher::matchAarch32IndirectBranch(const Partitioner::ConstPtr &partiti
         return nullptr;
     addend = addRhs->get_absoluteValue();
     return insn;
+#else
+    ROSE_UNUSED(partitioner);
+    ROSE_UNUSED(va);
+    ROSE_UNUSED(addend);
 #endif
     return nullptr;
 }

@@ -23,7 +23,7 @@ unparseAarch32Mnemonic(SgAsmAarch32Instruction *insn) {
 }
 
 std::string
-unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
+unparseAarch32Expression(SgAsmExpression *expr, const LabelMap*, RegisterDictionary::Ptr registers) {
     auto arch = Architecture::findByName("arm-a32").orThrow();
 
     if (!registers)

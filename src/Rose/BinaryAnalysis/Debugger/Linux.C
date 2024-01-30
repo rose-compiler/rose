@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/StringUtility/NumberToString.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/lexical_cast.hpp>
@@ -190,7 +191,7 @@ Linux::Specimen::randomizedAddresses(bool b) {
         persona_ |= ADDR_NO_RANDOMIZE;
     }
 #else
-    // void
+    ROSE_UNUSED(b);
 #endif
 }
 

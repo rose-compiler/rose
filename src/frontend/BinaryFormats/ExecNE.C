@@ -14,23 +14,23 @@
 using namespace Rose::Diagnostics;
 
 // Added to support RTI support in ROSE (not implemented)
-std::ostream & operator<< (std::ostream & os, const SgAsmNERelocEntry::iref_type & x)
+std::ostream & operator<<(std::ostream&, const SgAsmNERelocEntry::iref_type&)
    {
      printf("Error: operator<< not implemented! \n");
      ROSE_ABORT();
    }
    
-std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iord_type & x)
+std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iord_type&)
    {
      return os;
    }
 
-std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iname_type & x)
+std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iname_type&)
    {
      return os;
    }
 
-std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::osfixup_type & x)
+std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::osfixup_type&)
    {
      return os;
    }

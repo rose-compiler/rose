@@ -29,7 +29,7 @@ BoostSerializer::isSerializable(const Ast::Class::Ptr&) const {
 }
 
 void
-BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c,
+BoostSerializer::generate(std::ostream &header, std::ostream &/*impl*/, const Ast::Class::Ptr &c,
                           const Generator &generator) const {
     ASSERT_not_null(c);
 

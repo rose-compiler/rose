@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <ROSE_UNUSED.h>
 
 #include <SageBuilderAsm.h>
 
@@ -398,6 +399,7 @@ SgAsmExpression*
 Aarch64::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64_extender extender, SgAsmType *dstType,
                        arm64_shifter shifter, unsigned shiftAmount) const {
     using namespace ::Rose::BitOps;
+    ROSE_UNUSED(insn);
 
     ASSERT_not_null(expr);
     ASSERT_not_null(expr->get_type());

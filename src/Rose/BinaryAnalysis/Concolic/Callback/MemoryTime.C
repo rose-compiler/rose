@@ -34,7 +34,7 @@ MemoryTime::factory() {
 }
 
 SharedMemoryCallback::Ptr
-MemoryTime::instanceFromFactory(const AddressInterval &where, const Yaml::Node &config) const {
+MemoryTime::instanceFromFactory(const AddressInterval &where, const Yaml::Node &/*config*/) const {
     Ptr retval = instance(where);
     retval->name(name());
     return retval;

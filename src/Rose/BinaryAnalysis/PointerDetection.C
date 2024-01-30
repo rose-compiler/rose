@@ -16,6 +16,7 @@
 #include <Sawyer/ProgressBar.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <ROSE_UNUSED.h>
 
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
@@ -359,6 +360,8 @@ Analysis::conditionallySavePointer(const BaseSemantics::SValue::Ptr &ptrRValue_,
 #if 0 // [Robb Matzke 2022-09-23]
     if (!ptrRValuesSeen.insert(ptrRValue->hash()))
         return;
+#else
+    ROSE_UNUSED(ptrRValuesSeen);
 #endif
     SAWYER_MESG(debug) <<"    pointed-to address " <<*ptrRValue <<"\n";
     State::Ptr finalState = State::promote(finalState_);

@@ -1300,7 +1300,7 @@ public:
         : functionNameRe(re) {}
 
 public:
-    virtual bool operator()(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &edge, size_t depth) {
+    virtual bool operator()(const P2::ControlFlowGraph&, const P2::ControlFlowGraph::ConstEdgeIterator &edge, size_t /*depth*/) {
         const P2::FunctionSet &functions = edge->target()->value().owningFunctions();
         for (const P2::Function::Ptr &function: functions.values()) {
             const std::string name = function->name();

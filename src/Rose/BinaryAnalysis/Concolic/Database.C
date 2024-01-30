@@ -22,6 +22,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -628,6 +629,8 @@ Database::specimens() {
 std::vector<SpecimenId>
 Database::specimens(TestSuiteId testSuiteId) {
     ASSERT_require(testSuiteId);
+    ROSE_UNUSED(testSuiteId);
+
     Sawyer::Database::Statement stmt;
     stmt = connection_.stmt("select id from specimens where test_suite = ?tsid order by created_ts")
            .bind("tsid", *testSuiteId_);
@@ -711,6 +714,8 @@ std::vector<ExecutionEventId>
 Database::executionEventsSince(TestCaseId tcid, ExecutionEventId startingAtId) {
     ASSERT_require(tcid);
     ASSERT_require(startingAtId);
+    ROSE_UNUSED(tcid);
+
     ExecutionEvent::Ptr startingAt = object(startingAtId, Update::NO);
 
     int when = -1;

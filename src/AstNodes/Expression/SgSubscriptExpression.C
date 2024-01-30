@@ -11,7 +11,7 @@ SgSubscriptExpression::get_type() const
 
      bool isLowerBoundNullExpression = (isSgNullExpression(get_lowerBound()) != NULL);
      bool isUpperBoundNullExpression = (isSgNullExpression(get_upperBound()) != NULL);
-     bool isStrideNullExpression     = (isSgNullExpression(get_stride()) != NULL);
+     bool isStrideNullExpression     = (isSgNullExpression(get_stride()) != NULL); // blame initial commit
 
   // Even if the stride was not specified it should default to unit stride (value == 1).
      ROSE_ASSERT(isStrideNullExpression == false);

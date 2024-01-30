@@ -26,7 +26,7 @@ public:
     //
     // @param[in] partitioner Required to get the basic blocks of the function
     // @param[in] function Binary AST Function Node
-    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::PartitionerConstPtr& partitioner,
+    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::PartitionerConstPtr&,
                  Rose::BinaryAnalysis::Partitioner2::FunctionPtr function)
         : funcName(function->name()), binaryFunction(function) {}
 

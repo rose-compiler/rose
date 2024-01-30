@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
+#include <ROSE_UNUSED.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -81,7 +82,7 @@ static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16(); }
 Mips::Mips(const Architecture::Base::ConstPtr &arch)
     : Base(arch) {
     ASSERT_not_null(arch);
-    init(arch->byteOrder());
+    init();
 }
 
 Mips::Ptr
@@ -512,8 +513,10 @@ Mips::makeBranchTargetRelative(rose_addr_t insn_va, unsigned pc_offset, size_t b
 
 SgAsmIntegerValueExpression *
 Mips::makeBranchTargetAbsolute(rose_addr_t insn_va, unsigned insn_index, size_t bit_offset,
-                                           size_t nbits) const
+                               size_t nbits) const
 {
+    ROSE_UNUSED(bit_offset);
+
     ASSERT_require(nbits>0);
     ASSERT_require(bit_offset+nbits+2<=32);
     ASSERT_require(0==(insn_index & ~genMask<uint64_t>(nbits)));
@@ -1494,7 +1497,7 @@ static struct Mips32_ehb: Mips::Decoder {
     Mips32_ehb(): Mips::Decoder(Release2,
                          sOP(000)|sR0(000)|sR1(000)|sR2(000)|sR3(003)|sFN(000),
                          mOP()   |mR0()   |mR1()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_ehb, "ehb");
     }
 } mips32_ehb;
@@ -1516,7 +1519,7 @@ static struct Mips32_eret: Mips::Decoder {
     Mips32_eret(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(030),
                           mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_eret, "eret");
     }
 } mips32_eret;
@@ -2636,7 +2639,7 @@ static struct Mips32_pause: Mips::Decoder {
     Mips32_pause(): Mips::Decoder(Release2,
                            sOP(000)|sR0(000)|sR1(000)|sR2(000)|sR3(005)|sFN(000),
                            mOP()   |mR0()   |mR1()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_pause, "pause");
     }
 } mips32_pause;
@@ -3382,7 +3385,7 @@ static struct Mips32_tlbinv: Mips::Decoder {
     Mips32_tlbinv(): Mips::Decoder(Release1,
                             sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(003),
                             mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbinv, "tlbinv");
     }
 } mips32_tlbinv;
@@ -3392,7 +3395,7 @@ static struct Mips32_tlbinvf: Mips::Decoder {
     Mips32_tlbinvf(): Mips::Decoder(Release1,
                              sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(004),
                              mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbinvf, "tlbinvf");
     }
 } mips32_tlbinvf;
@@ -3402,7 +3405,7 @@ static struct Mips32_tlbp: Mips::Decoder {
     Mips32_tlbp(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(010),
                           mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbp, "tlbp");
     }
 } mips32_tlbp;
@@ -3412,7 +3415,7 @@ static struct Mips32_tlbr: Mips::Decoder {
     Mips32_tlbr(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(001),
                           mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbr, "tlbr");
     }
 } mips32_tlbr;
@@ -3422,7 +3425,7 @@ static struct Mips32_tlbwi: Mips::Decoder {
     Mips32_tlbwi(): Mips::Decoder(Release1,
                            sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(002),
                            mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbwi, "tlbwi");
     }
 } mips32_tlbwi;
@@ -3432,7 +3435,7 @@ static struct Mips32_tlbwr: Mips::Decoder {
     Mips32_tlbwr(): Mips::Decoder(Release1,
                            sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(006),
                            mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbwr, "tlbwr");
     }
 } mips32_tlbwr;
@@ -3607,7 +3610,7 @@ static struct Mips32_xori: Mips::Decoder {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-Mips::init(ByteOrder::Endianness sex)
+Mips::init()
 {
     REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
     REG_SP = architecture()->registerDictionary()->stackPointerRegister();

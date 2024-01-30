@@ -161,7 +161,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 protected:
-    void init(ByteOrder::Endianness);
+    void init();
 
 protected:
     /** Table of instruction-specific disassemblers.  This is the table of instruction-specific disassemblers consulted by

@@ -562,13 +562,13 @@ static AddressSet
 switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
     SgAsmIntegerValueExpression* ival{nullptr};
     AddressSet retval{};
-    uint32_t nTargets{0};
+    uint32_t nTargets{0};                               // blame a97ec5f7819
     rose_addr_t va{insn->get_address()};
     rose_addr_t fallThrough{va + insn->get_size()};
 
     complete = false;
 
-    CilInstructionKind kind{insn->get_kind()};
+    CilInstructionKind kind{insn->get_kind()};          // blame a97ec5f7819
     ASSERT_require(kind == Cil_switch);
 
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(0)))) {
@@ -578,7 +578,7 @@ switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
 
     retval.insert(fallThrough);
 
-    for (int n{1}; n < insn->nOperands(); n++) {
+    for (int n{1}; n < insn->nOperands(); n++) {        // blame a97ec5f7819
         if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
             retval.insert(fallThrough + ival->get_signedValue());
         }

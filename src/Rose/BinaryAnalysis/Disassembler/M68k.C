@@ -1256,7 +1256,7 @@ struct M68k_andi: M68k::Decoder {
 struct M68k_andi_to_ccr: M68k::Decoder {
     M68k_andi_to_ccr(): M68k::Decoder("andi_to_ccr", m68k_family,
                              OP(0) & BITS<0, 11>(0x23c) & INSN_WORD<1>(BITS<8, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = m68k_fmt_i8;
         SgAsmExpression *src = d->makeImmediateValue(state, fmt, extract<0, 7>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
@@ -1729,7 +1729,7 @@ struct M68k_cas2: M68k::Decoder {
                       OP(0) & BIT<11>(1) & BITS<0, 8>(0x0fc) &
                       INSN_WORD<1>(BITS<9, 11>(0) & BITS<3, 5>(0)) &
                       INSN_WORD<2>(BITS<9, 11>(0) & BITS<3, 5>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         unsigned w1 = d->instructionWord(state, 1);
         unsigned w2 = d->instructionWord(state, 2);
         SgAsmExpression *rx1 = d->makeDataAddressRegister(state, extract<12, 15>(w1), m68k_fmt_i32);
@@ -1863,7 +1863,7 @@ struct M68k_cmp2: M68k::Decoder {
 struct M68k_cpbcc: M68k::Decoder {
     M68k_cpbcc(): M68k::Decoder("cpbcc", m68k_68020|m68k_68030,
                        OP(15) & BITS<7, 8>(1)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D*, unsigned w0) {
         // Not implemented because we don't know what co-processors are present, and the co-processor determines the
         // size of this instruction. [Robb P. Matzke 2014-02-20]
         throw Exception("M68k CPBcc is not implemented: " + addrToString(w0, 16), state.insn_va);
@@ -1875,7 +1875,7 @@ struct M68k_cpdbcc: M68k::Decoder {
     M68k_cpdbcc(): M68k::Decoder("cpdbcc", m68k_68020|m68k_68030,
                         OP(15) & BITS<3, 8>(0x09) &
                         INSN_WORD<1>(BITS<6, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D*, unsigned) {
         // Not implemented because we don't know what co-processors are present, and the co-processor determines the
         // size of this instruction. [Robb P. Matzke 2014-02-20]
         throw Exception("M68k CPDBcc is not implemented", state.insn_va);
@@ -1886,7 +1886,7 @@ struct M68k_cpdbcc: M68k::Decoder {
 struct M68k_cpgen: M68k::Decoder {
     M68k_cpgen(): M68k::Decoder("cpgen", m68k_68020|m68k_68030,
                        OP(15) & BITS<6, 8>(0)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D*, unsigned) {
         // Not implemented because we don't know what co-processors are present, and the co-processor determines the
         // size of this instruction. [Robb P. Matzke 2014-02-20]
         throw Exception("M68k CPGEN is not implemented", state.insn_va);
@@ -1898,7 +1898,7 @@ struct M68k_cpscc: M68k::Decoder {
     M68k_cpscc(): M68k::Decoder("cpscc", m68k_68020|m68k_68030,
                        OP(15) & BITS<6, 8>(1) & EAM(m68k_eam_alter & ~m68k_eam_pcmi) &
                        INSN_WORD<1>(BITS<6, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D*, unsigned) {
         // Not implemented because we don't know what co-processors are present, and the co-processor determines the
         // size of this instruction. [Robb P. Matzke 2014-02-20]
         throw Exception("M68k CPScc is not implemented", state.insn_va);
@@ -1911,7 +1911,7 @@ struct M68k_cptrapcc: M68k::Decoder {
     M68k_cptrapcc(): M68k::Decoder("cptrapcc", m68k_68020|m68k_68030,
                           OP(15) & BITS<3, 8>(0x0f) & (BITS<0, 2>(2) | BITS<0, 2>(3) | BITS<0, 2>(4)) &
                           INSN_WORD<1>(BITS<6, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D*, unsigned) {
         // Not implemented because we don't know what co-processors are present, and the co-processor determines the
         // size of this instruction. [Robb P. Matzke 2014-02-20]
         throw Exception("M68k CPTRAPcc is not implemented", state.insn_va);
@@ -2094,7 +2094,7 @@ struct M68k_eori: M68k::Decoder {
 struct M68k_eori_to_ccr: M68k::Decoder {
     M68k_eori_to_ccr(): M68k::Decoder("eori_to_ccr", m68k_family,
                              OP(0) & BITS<0, 11>(0xa3c) & INSN_WORD<1>(BITS<8, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
         return d->makeInstruction(state, m68k_eori, "eori.b", src, dst);
@@ -2245,7 +2245,7 @@ struct M68k_fabs_rr: M68k::Decoder {
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) &
                                       (BITS<0, 6>(0x18) | BITS<0, 6>(0x58) | BITS<0, 6>(0x5c)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -2348,7 +2348,7 @@ struct M68k_fadd_rr: M68k::Decoder {
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) &
                                       (BITS<0, 6>(0x22) | BITS<0, 6>(0x62) | BITS<0, 6>(0x66)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -2539,7 +2539,7 @@ struct M68k_fcmp_rr: M68k::Decoder {
     M68k_fcmp_rr(): M68k::Decoder("fcmp_rr", m68k_generation_3|m68k_freescale_fpu,
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x38))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -2635,7 +2635,7 @@ struct M68k_fdiv_rr: M68k::Decoder {
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) &
                                       (BITS<0, 6>(0x20) | BITS<0, 6>(0x60) | BITS<0, 6>(0x64)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -2698,7 +2698,7 @@ struct M68k_fint_rr: M68k::Decoder {
     M68k_fint_rr(): M68k::Decoder("fint_rr", m68k_generation_3|m68k_freescale_fpu,
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x01))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -2754,7 +2754,7 @@ struct M68k_fintrz_rr: M68k::Decoder {
     M68k_fintrz_rr(): M68k::Decoder("fintrz_rr", m68k_generation_3|m68k_freescale_fpu,
                            OP(15) & BITS<0, 11>(0x200) &
                            INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x03))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -2869,7 +2869,7 @@ struct M68k_fmove_rr: M68k::Decoder {
                           OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & BITS<0, 5>(0) &
                           INSN_WORD<1>(BITS<13, 15>(0) &
                                        (BITS<0, 6>(0) | BITS<0, 6>(0x40) | BITS<0, 6>(0x44)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -3050,7 +3050,7 @@ struct M68k_fmul_rr: M68k::Decoder {
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) &
                                       (BITS<0, 6>(0x23) | BITS<0, 6>(0x63) | BITS<0, 6>(0x67)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -3153,7 +3153,7 @@ struct M68k_fneg_rr: M68k::Decoder {
                           OP(15) & BITS<0, 11>(0x200) &
                           INSN_WORD<1>(BITS<13, 15>(0) &
                                        (BITS<0, 6>(0x1a) | BITS<0, 6>(0x5a) | BITS<0, 6>(0x5e)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -3174,7 +3174,7 @@ struct M68k_fnop: M68k::Decoder {
     M68k_fnop(): M68k::Decoder("fnop", m68k_generation_3|m68k_freescale_fpu,
                       OP(15) & BITS<9, 11>(1) & BITS<0, 8>(0x080) &
                       INSN_WORD<1>(BITS<0, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         return d->makeInstruction(state, m68k_fnop, "fnop");
     }
 };
@@ -3267,7 +3267,7 @@ struct M68k_fsqrt_rr: M68k::Decoder {
                           OP(15) & BITS<0, 11>(0x200) &
                           INSN_WORD<1>(BITS<13, 15>(0) &
                                        (BITS<0, 6>(0x04) | BITS<0, 6>(0x41) | BITS<0, 6>(0x45)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -3370,7 +3370,7 @@ struct M68k_fsub_rr: M68k::Decoder {
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) &
                                       (BITS<0, 6>(0x28) | BITS<0, 6>(0x68) | BITS<0, 6>(0x6c)))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
@@ -3434,7 +3434,7 @@ struct M68k_ftst_rr: M68k::Decoder {
     M68k_ftst_rr(): M68k::Decoder("ftst_rr", m68k_generation_3|m68k_freescale_fpu,
                          OP(15) & BITS<0, 11>(0x200) &
                          INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x3a))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         return d->makeInstruction(state, m68k_ftst, "ftst."+formatLetter(fmt), src);
@@ -3445,7 +3445,7 @@ struct M68k_ftst_rr: M68k::Decoder {
 struct M68k_illegal: M68k::Decoder {
     M68k_illegal(): M68k::Decoder("illegal", m68k_family,
                          OP(4) & BITS<0, 11>(0xafc)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         return d->makeInstruction(state, m68k_illegal, "illegal");
     }
 };
@@ -3940,7 +3940,7 @@ struct M68k_movea: M68k::Decoder {
 struct M68k_move_to_cr: M68k::Decoder {
     M68k_move_to_cr(): M68k::Decoder("move_to_cr", m68k_family,
                             OP(4) & BITS<0, 11>(0xe7b)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *src = d->makeDataAddressRegister(state, extract<12, 15>(d->instructionWord(state, 1)), m68k_fmt_i32, 0);
         SgAsmExpression *dst = d->makeColdFireControlRegister(state, extract<0, 11>(d->instructionWord(state, 1)));
         return d->makeInstruction(state, m68k_movec, "movec.l", src, dst);
@@ -4163,7 +4163,7 @@ struct M68k_negx: M68k::Decoder {
 struct M68k_nop: M68k::Decoder {
     M68k_nop(): M68k::Decoder("nop", m68k_family,
                      OP(4) & BITS<0, 11>(0xe71)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         return d->makeInstruction(state, m68k_nop, "nop");
     }
 };
@@ -4231,7 +4231,7 @@ struct M68k_ori: M68k::Decoder {
 struct M68k_ori_to_ccr: M68k::Decoder {
     M68k_ori_to_ccr(): M68k::Decoder("ori_to_ccr", m68k_family,
                             OP(0) & BITS<0, 11>(0x03c) & INSN_WORD<1>(BITS<8, 15>(0))) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *src = d->makeImmediateValue(state, m68k_fmt_i8, extract<0, 7>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
         return d->makeInstruction(state, m68k_ori, "ori.b", src, dst);
@@ -4363,7 +4363,7 @@ struct M68k_rotate_extend_mem: M68k::Decoder {
 struct M68k_rtd: M68k::Decoder {
     M68k_rtd(): M68k::Decoder("rtd", m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                      OP(4) & BITS<0, 11>(0xe74)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *disp = d->makeImmediateExtension(state, m68k_fmt_i16, 0);
         return d->makeInstruction(state, m68k_rtd, "rtd", disp);
     }
@@ -4383,7 +4383,7 @@ struct M68k_rtm: M68k::Decoder {
 struct M68k_rtr: M68k::Decoder {
     M68k_rtr(): M68k::Decoder("rtr", m68k_family,
                      OP(4) & BITS<0, 11>(0xe77)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         return d->makeInstruction(state, m68k_rtr, "rtr");
     }
 };
@@ -4392,7 +4392,7 @@ struct M68k_rtr: M68k::Decoder {
 struct M68k_rts: M68k::Decoder {
     M68k_rts(): M68k::Decoder("rts", m68k_family,
                      OP(4) & BITS<0, 11>(0xe75)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         return d->makeInstruction(state, m68k_rts, "rts");
     }
 };
@@ -4672,7 +4672,7 @@ struct M68k_trapcc: M68k::Decoder {
 struct M68k_trapv: M68k::Decoder {
     M68k_trapv(): M68k::Decoder("trapv", m68k_family,
                        OP(4) & BITS<0, 11>(0xe76)) {}
-    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
+    SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         return d->makeInstruction(state, m68k_trapv, "trapv");
     }
 };

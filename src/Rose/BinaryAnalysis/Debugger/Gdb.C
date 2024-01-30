@@ -113,7 +113,7 @@ public:
                            boost::asio::streambuf &gdbOutputBuffer, Gdb::Fifo<std::string> &lines)
         : ios_(ios), gdbOutputPipe_(gdbOutputPipe), gdbOutputBuffer_(gdbOutputBuffer), lines_(lines) {}
 
-    void operator()(const boost::system::error_code &ec, size_t size) {
+    void operator()(const boost::system::error_code &ec, size_t /*size*/) {
         if (!ec) {
             std::istream in(&gdbOutputBuffer_);
             std::string line = boost::trim_copy(rose_getline(in));
@@ -565,7 +565,7 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
 }
 
 void
-Gdb::writeAllRegisters(ThreadId tid, const Sawyer::Container::BitVector &allValues) {
+Gdb::writeAllRegisters(ThreadId, const Sawyer::Container::BitVector &allValues) {
     // Calculate the starting bit offset for each register, and the total number of bits needed.
     // offsets[i] is the bit offset in retval for the start of register i
     std::vector<size_t> offsets;

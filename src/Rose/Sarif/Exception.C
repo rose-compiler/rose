@@ -13,7 +13,7 @@ IncrementalError::cannotChangeValue(const std::string &what) {
 
 IncrementalError
 IncrementalError::cannotSetAfter(const std::string &what, const std::string &after) {
-    return IncrementalError("cannot set " + what + " after emitting " + what);
+    return IncrementalError("cannot set " + what + " after emitting " + after);
 }
 
 IncrementalError

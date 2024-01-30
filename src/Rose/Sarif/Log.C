@@ -5,6 +5,7 @@
 
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Exception.h>
+#include <ROSE_UNUSED.h>
 
 #include <Sawyer/FileSystem.h>
 #include <boost/bind/bind.hpp>
@@ -67,6 +68,7 @@ Log::checkAnalysesResize(int delta, const Analysis::Ptr &analysis) {
 void
 Log::handleAnalysesResize(int delta, const Analysis::Ptr &analysis) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(analyses.empty());
 

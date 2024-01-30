@@ -61,7 +61,7 @@ SgDesignatedInitializer::replace_expression(SgExpression *o, SgExpression *n)
    }
 
 SgExpression*
-SgDesignatedInitializer::get_next(int& n) const
+SgDesignatedInitializer::get_next(int&) const
    {
   // DQ (7/21/2013): This function should not be called and should be removed at some point.
 

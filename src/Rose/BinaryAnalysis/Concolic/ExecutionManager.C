@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
 #include <Rose/StringUtility/StringToNumber.h>
+#include <ROSE_UNUSED.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -64,6 +65,9 @@ ExecutionManager::open(const std::string &databaseUrl) {
 ExecutionManager::Ptr
 ExecutionManager::create(const std::string &databaseUrl, const boost::filesystem::path &executableName,
                          const std::vector<std::string> &arguments, const std::string &testCaseName) {
+    ROSE_UNUSED(arguments);
+    ROSE_UNUSED(testCaseName);
+
     const std::string executableBaseName = executableName.filename().string();
     auto specimen = Specimen::instance(executableName);
 

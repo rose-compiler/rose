@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include "stringify.h"
+#include <ROSE_UNUSED.h>
 
 #include "rosePublicConfig.h"
 #ifdef ROSE_HAVE_LIBGCRYPT
@@ -210,6 +211,7 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
     t1.read(digest);
     return true;
 #else
+    ROSE_UNUSED(selector);
     memset(digest, 0, 20);
     return false;
 #endif

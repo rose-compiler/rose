@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <Rose/AST/Utils.h>
+#include <ROSE_UNUSED.h>
 
 #include <ostream>
 #include <string>
@@ -76,6 +77,7 @@ repairParentPointers(SgNode *root) {
         }
 
         void postOrderVisit(SgNode *node) override {
+            ROSE_UNUSED(node);
             ASSERT_forbid(stack.empty());
             ASSERT_require(stack.back() == node);
             stack.pop_back();

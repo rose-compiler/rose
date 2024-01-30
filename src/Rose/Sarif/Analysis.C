@@ -7,6 +7,7 @@
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Result.h>
 #include <Rose/Sarif/Rule.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/bind/bind.hpp>
 
@@ -129,6 +130,7 @@ Analysis::checkRulesResize(int delta, const Rule::Ptr &rule) {
 void
 Analysis::handleRulesResize(int delta, const Rule::Ptr &rule) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(rules.empty());
 
@@ -252,6 +254,7 @@ Analysis::checkArtifactsResize(int delta, const Artifact::Ptr &artifact) {
 void
 Analysis::handleArtifactsResize(int delta, const Artifact::Ptr &artifact) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(artifacts.empty());
 
@@ -287,6 +290,7 @@ Analysis::checkResultsResize(int delta, const Result::Ptr &result) {
 void
 Analysis::handleResultsResize(int delta, const Result::Ptr &result) {
     if (isIncremental()) {
+        ROSE_UNUSED(delta);
         ASSERT_require(1 == delta);
         ASSERT_forbid(results.empty());
 

@@ -4,6 +4,7 @@
 #include <Rose/BasicTypes.h>
 
 #include <Rose/Constants.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
@@ -359,6 +360,9 @@ public:
             boost::this_thread::sleep_for(interval);
         }
 #else
+        ROSE_UNUSED(interval);
+        ROSE_UNUSED(f);
+        ROSE_UNUSED(nameSeparator);
         return false;
 #endif
     }
@@ -405,6 +409,9 @@ public:
             boost::this_thread::sleep_for(limit);
         }
 #else
+        ROSE_UNUSED(limit);
+        ROSE_UNUSED(f);
+        ROSE_UNUSED(nameSeparator);
         return false;
 #endif
     }

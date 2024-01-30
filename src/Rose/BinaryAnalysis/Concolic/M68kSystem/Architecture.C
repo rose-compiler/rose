@@ -201,33 +201,31 @@ Architecture::createMemoryHashEvents() {
 }
 
 std::vector<ExecutionEvent::Ptr>
-Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &map, rose_addr_t insnVa) {
+Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t /*insnVa*/) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
-Architecture::mapMemory(const AddressInterval &where, unsigned permissions) {
+Architecture::mapMemory(const AddressInterval&, unsigned /*permissions*/) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
-Architecture::unmapMemory(const AddressInterval &where) {
+Architecture::unmapMemory(const AddressInterval&) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
-Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, const Emulation::RiscOperators::Ptr &ops,
-                               const SmtSolver::Ptr &solver) {
+Architecture::createInputVariables(const P2::PartitionerConstPtr&, const Emulation::RiscOperators::Ptr&, const SmtSolver::Ptr&) {
     ASSERT_forbid(isFactory());
     SAWYER_MESG(mlog[WARN]) <<"M68kSystem::Architecture::createInputVariables not implemented\n";
 }
 
 void
-Architecture::systemCall(const P2::PartitionerConstPtr &partitioner,
-                         const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+Architecture::systemCall(const P2::PartitionerConstPtr&, const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }

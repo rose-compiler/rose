@@ -2543,7 +2543,6 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
 
     // Build the data flow engine. We're using parts from a variety of locations.
     typedef DataFlow::DfCfg DfCfg;
-    typedef BaseSemantics::State::Ptr StatePtr;
     typedef DataFlow::TransferFunction TransferFunction;
     typedef BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
     typedef BinaryAnalysis::DataFlow::Engine<DfCfg, State::Ptr, TransferFunction, MergeFunction> Engine;

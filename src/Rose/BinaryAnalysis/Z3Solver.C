@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/lexical_cast.hpp>
 #include <rose_strtoull.h>
@@ -95,6 +96,8 @@ Z3Solver::timeout(boost::chrono::duration<double> seconds) {
         ASSERT_not_null(ctx_);
         setTimeout(ctx_, boost::chrono::duration<double>(seconds));
     }
+#else
+    ROSE_UNUSED(seconds);
 #endif
 }
 

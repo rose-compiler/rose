@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/Dwarf.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
+#include <ROSE_UNUSED.h>
 
 #include <stringify.h>
 
@@ -1476,6 +1477,7 @@ parse(SgAsmGenericFile *file) {
 #ifdef ROSE_HAVE_LIBDWARF
     return readDwarf(file);
 #else
+    ROSE_UNUSED(file);
     mlog[INFO] <<"DWARF parsing is not enabled in this ROSE configuration\n";
 #endif
 }

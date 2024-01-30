@@ -691,7 +691,7 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
 
 // Parse an optional property and return it if parsed and consumed from the input.
 static Ast::Property::Ptr
-parseOptionalProperty(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningCppStack) {
+parseOptionalProperty(const Ast::File::Ptr &file, Ast::CppStack::Stack&/*runningCppStack*/) {
     ASSERT_not_null(file);
     auto property = Ast::Property::instance();
     property->startToken = file->token();

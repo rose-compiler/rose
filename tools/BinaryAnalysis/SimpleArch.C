@@ -502,7 +502,7 @@ public:
 
     // Rb = Ia
     struct IP_load: P {
-        void p(D d, Ops ops, I insn, A args) {
+        void p(D d, Ops, I insn, A args) {
             assert_args(insn, args, 2);
             auto a = d->read(args[0], 16);
             d->write(args[1], a);
@@ -511,7 +511,7 @@ public:
 
     // Rb = Ra
     struct IP_mov: P {
-        void p(D d, Ops ops, I insn, A args) {
+        void p(D d, Ops, I insn, A args) {
             assert_args(insn, args, 2);
             auto a = d->read(args[0]);
             d->write(args[1], a);
@@ -897,7 +897,7 @@ public:
     }
 
     // Compiler-generated function prologue
-    std::vector<P2::FunctionPrologueMatcher::Ptr> functionPrologueMatchers(const P2::Engine::Ptr &engine) const override {
+    std::vector<P2::FunctionPrologueMatcher::Ptr> functionPrologueMatchers(const P2::Engine::Ptr&) const override {
 
         // Matches:
         //    PUSH FP           -- save the frame pointer

@@ -79,7 +79,7 @@ endif()
 
 ########### install files ###############
 install(FILES
-  setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h rose_paths.h
+  setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h ROSE_UNUSED.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h
   Map.h timing.h rose_getline.h rose_strtoull.h
   roseTraceLib.c ParallelSort.h rose_isnan.h rose_pragma_message.h

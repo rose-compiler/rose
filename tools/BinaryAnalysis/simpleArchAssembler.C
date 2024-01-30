@@ -3,7 +3,7 @@
 
 using namespace Rose::BinaryAnalysis;
 
-int main(int argc, char *argv[]) {
+int main() {
     ROSE_INITIALIZE;
     extern void assemble();
     assemble();

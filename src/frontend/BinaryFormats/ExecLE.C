@@ -830,7 +830,7 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness
     p_res1         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->res1);
 }
 
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, unsigned flags) {
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness, unsigned /*flags*/) {
     initializeProperties();
 }
 

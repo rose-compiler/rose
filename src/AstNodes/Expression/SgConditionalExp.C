@@ -30,10 +30,10 @@ SgConditionalExp::get_type() const
      SgType* trueType   = p_true_exp->get_type();
      ROSE_ASSERT(trueType != NULL);
 
+#if PRINT_DEVELOPER_WARNINGS
      SgType* falseType  = p_false_exp->get_type();
      ROSE_ASSERT(falseType != NULL);
 
-#if PRINT_DEVELOPER_WARNINGS
      string expression_type_name = "NULL";
      if (p_expression_type != NULL)
           expression_type_name = p_expression_type->class_name();

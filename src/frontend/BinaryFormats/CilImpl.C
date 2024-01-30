@@ -2150,10 +2150,10 @@ MethodHeader
 parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
 {
   std::uint8_t         buf[12];
-  const std::size_t    nread = fhdr->get_loaderMap()->readQuick(&buf, base_va + rva, sizeof(buf));
+  const std::size_t    nread = fhdr->get_loaderMap()->readQuick(&buf, base_va + rva, sizeof(buf)); // blame ae42dc1f
   ROSE_ASSERT(nread == 12);
 
-  const std::uint16_t  flags    = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
+  const std::uint16_t  flags    = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0)); // blame ae42dc1f
   const std::uint16_t  maxStack = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+2));
   const std::uint16_t  codeSize = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+4));
   const std::uint16_t  localIni = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+8));
@@ -2263,7 +2263,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       
     // parse header
     std::uint8_t   mh0;
-    std::size_t    nread = fhdr->get_loaderMap()->readQuick(&mh0, base_va + rva, 1);
+    std::size_t    nread = fhdr->get_loaderMap()->readQuick(&mh0, base_va + rva, 1); // blame ae42dc1f
     ROSE_ASSERT(nread == 1);
 
     const bool     isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
@@ -2279,7 +2279,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     std::uint32_t  codeLen = mh.codeSize();
 
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t nreadCode = fhdr->get_loaderMap()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    std::size_t nreadCode = fhdr->get_loaderMap()->readQuick(code.data(), base_va + codeRVA, codeLen); // blame ae42dc1f
     ROSE_ASSERT(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
@@ -2362,7 +2362,7 @@ void SgAsmCilMetadataRoot::parse()
   // Note: probably want to allocate a larger buffer
   std::vector<uint8_t> buf(size, 0);
 
-  size_t nread = fhdr->get_loaderMap()->readQuick(buf.data(), base_va + rva, size);
+  size_t nread = fhdr->get_loaderMap()->readQuick(buf.data(), base_va + rva, size); // blame ae42dc1f
   ASSERT_require(nread == size);
 
   this->parse(buf, 0);

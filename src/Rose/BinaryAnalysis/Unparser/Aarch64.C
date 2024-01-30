@@ -25,7 +25,7 @@ unparseAarch64Mnemonic(SgAsmAarch64Instruction *insn) {
 }
 
 std::string
-unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
+unparseAarch64Expression(SgAsmExpression *expr, const LabelMap*, RegisterDictionary::Ptr registers) {
     auto arch = Architecture::findByName("arm-a64").orThrow();
     if (!registers)
         registers = arch->registerDictionary();

@@ -155,7 +155,7 @@ Base::getSuccessors(SgAsmInstruction*, bool &complete) const {
 }
 
 AddressSet
-Base::getSuccessors(const std::vector<SgAsmInstruction*> &insns, bool &complete, const MemoryMapPtr &initial_memory) const {
+Base::getSuccessors(const std::vector<SgAsmInstruction*> &insns, bool &complete, const MemoryMapPtr&) const {
     if (insns.empty()) {
         complete = true;
         return AddressSet();

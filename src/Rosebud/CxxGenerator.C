@@ -170,8 +170,7 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
 
 // Initializer expression for property constructors
 std::string
-CxxGenerator::ctorInitializerExpression(const Ast::Property::Ptr &p, const std::string &expr) {
-    ASSERT_not_null(p);
+CxxGenerator::ctorInitializerExpression(const Ast::Property::Ptr&, const std::string &expr) {
     return expr;
 }
 

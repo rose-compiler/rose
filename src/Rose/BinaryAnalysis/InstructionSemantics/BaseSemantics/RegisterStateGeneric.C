@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
+#include <ROSE_UNUSED.h>
 
 #include <Sawyer/IntervalSet.h>
 
@@ -152,6 +153,9 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterD
             abort();
         }
     }
+#else
+    ROSE_UNUSED(when);
+    ROSE_UNUSED(reg);
 #endif
 }
 

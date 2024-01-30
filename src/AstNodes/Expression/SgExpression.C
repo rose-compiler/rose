@@ -141,7 +141,7 @@ SgExpression::get_name_qualification_length () const
    }
 
 void
-SgExpression::set_name_qualification_length ( int name_qualification_length )
+SgExpression::set_name_qualification_length ( int /*name_qualification_length*/ )
    {
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
@@ -163,7 +163,7 @@ SgExpression::get_type_elaboration_required () const
    }
 
 void
-SgExpression::set_type_elaboration_required ( bool type_elaboration_required )
+SgExpression::set_type_elaboration_required ( bool /*type_elaboration_required*/ )
    {
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
@@ -187,7 +187,7 @@ SgExpression::get_global_qualification_required () const
    }
 
 void
-SgExpression::set_global_qualification_required ( bool global_qualification_required )
+SgExpression::set_global_qualification_required ( bool /*global_qualification_required*/ )
    {
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
@@ -212,7 +212,7 @@ SgExpression::get_name_qualification_for_pointer_to_member_class_length () const
    }
 
 void
-SgExpression::set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length )
+SgExpression::set_name_qualification_for_pointer_to_member_class_length ( int /*name_qualification_length*/ )
    {
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
@@ -237,7 +237,7 @@ SgExpression::get_type_elaboration_for_pointer_to_member_class_required () const
    }
 
 void
-SgExpression::set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required )
+SgExpression::set_type_elaboration_for_pointer_to_member_class_required ( bool /*type_elaboration_required*/ )
    {
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
@@ -261,7 +261,7 @@ SgExpression::get_global_qualification_for_pointer_to_member_class_required () c
    }
 
 void
-SgExpression::set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required )
+SgExpression::set_global_qualification_for_pointer_to_member_class_required ( bool /*global_qualification_required*/ )
    {
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
@@ -286,7 +286,7 @@ SgExpression::get_originalExpressionTree() const
 
 // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
 void
-SgExpression::set_originalExpressionTree(SgExpression* X)
+SgExpression::set_originalExpressionTree(SgExpression*)
    {
      printf ("ERROR: base function SgExpression::set_originalExpressionTree() called for %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
