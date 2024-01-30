@@ -6257,10 +6257,10 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
        sage_tree_builder.Leave(funcCall);
        var = funcCall;
      }
-     else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol)) {
+     else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol) || isSgEnumSymbol(symbol)) {
        var = SageBuilder::buildTypeExpression(symbol->get_type());
      }
-     else if (isSgVariableSymbol(symbol) || isSgEnumSymbol(symbol) || symbol == nullptr) {
+     else if (isSgVariableSymbol(symbol) || symbol == nullptr) {
        var = sage_tree_builder.buildVarRefExp_nfi(std::string(name));
      }
      else {
