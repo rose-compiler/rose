@@ -37,6 +37,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "InnerClasses") { // 4.7.6
     return new SgAsmJvmInnerClasses(parent);
   }
+  else if (name == "EnclosingMethod") { // 4.7.7
+    return new SgAsmJvmEnclosingMethod(parent);
+  }
   else if (name == "Signature") { // 4.7.9
     return new SgAsmJvmSignature(parent);
   }
@@ -625,8 +628,35 @@ void SgAsmJvmInnerClassesEntry::dump(FILE* f, const char* prefix, ssize_t idx) c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.7 The EnclosingMethod Attribute. EnclosingMethod_attribute represented by the TODO.
+// 4.7.7 The EnclosingMethod Attribute. EnclosingMethod_attribute is represented by the SgAsmJvmEnclosingMethod class.
 //
+SgAsmJvmEnclosingMethod::SgAsmJvmEnclosingMethod(SgAsmJvmAttributeTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmEnclosingMethod* SgAsmJvmEnclosingMethod::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, p_class_index);
+  Jvm::read_value(pool, p_method_index);
+  return this;
+}
+
+void SgAsmJvmEnclosingMethod::unparse(std::ostream &os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+  Jvm::writeValue(os, p_class_index);
+  Jvm::writeValue(os, p_method_index);
+}
+
+void SgAsmJvmEnclosingMethod::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "%s    class_index:%d method_index:%d\n", prefix, p_class_index, p_method_index);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

@@ -101,21 +101,4 @@ void SgAsmJvmMethodTable::dump(FILE* f, const char *prefix, ssize_t idx) const
   }
 }
 
-SgAsmJvmAttribute* SgAsmJvmEnclosingMethod::parse(SgAsmJvmConstantPool* pool)
-{
-  mlog[FATAL] << "SgAsmJvmEnclosingMethod::parse() is not implemented yet\n";
-  ROSE_ABORT();
-  return nullptr;
-}
-
-void SgAsmJvmEnclosingMethod::unparse(std::ostream& os) const
-{
-  mlog[WARN] << "Unparsing of SgAsmJvmEnclosingMethod is not implemented yet\n";
-}
-
-void SgAsmJvmEnclosingMethod::dump(FILE* f, const char *prefix, ssize_t idx) const
-{
-  mlog[WARN] << "SgAsmJvmEnclosingMethod::dump() is not implemented yet\n";
-}
-
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
