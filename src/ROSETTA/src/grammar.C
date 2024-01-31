@@ -4355,12 +4355,12 @@ string Grammar::generateTraverseSuccessorNamesForLoopSource(string typeString,
      travSuccSource+="char buf[20];\n";
      if (typeString.find("PtrList") != string::npos || typeString.find("PtrVector") != string::npos)
         {
-          travSuccSource+="sprintf(buf,\"*[%d]\",i);\n"; // pointers are represented as '*'
+          travSuccSource+="snprintf(buf,sizeof(buf),\"*[%d]\",i);\n"; // pointers are represented as '*'
           travSuccSource += successorContainerName + ".push_back(buf);\n"; // It contains pointers to AST objects
         }
        else
         {
-          travSuccSource+="sprintf(buf,\"[%d]\",i);\n";
+          travSuccSource+="snprintf(buf,sizeof(buf),\"[%d]\",i);\n";
           travSuccSource += successorContainerName + ".push_back(buf);\n";  // It contains AST objects
         }
 
