@@ -35,12 +35,12 @@ namespace
   template <class SageNode>
   SgType* genericUnderType(SageNode* ty)
   {
-    ROSE_ASSERT(ty);
+    ASSERT_not_null(ty);
 
     return ty->get_base_type();
   }
 
-  SgType* getUnderType(SgType* ty)                { return NULL /* base case */; }
+  SgType* getUnderType(SgType*)                   { return nullptr /* base case */; }
   SgType* getUnderType(SgModifierType* ty)        { return genericUnderType(ty); }
   SgType* getUnderType(SgPointerType* ty)         { return genericUnderType(ty); }
   SgType* getUnderType(SgReferenceType* ty)       { return genericUnderType(ty); }
@@ -370,7 +370,7 @@ struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*>
     {}
 
     static
-    bool typeChk(SgType& derived, SgType& base)
+    bool typeChk(SgType&, SgType&)
     {
       return true;
     }
@@ -413,7 +413,7 @@ struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*>
 
     void handle(SgNode& derived)                  { SG_UNEXPECTED_NODE(derived); }
 
-    void handle(SgType& derived)                  {}
+    void handle(SgType&)                          {}
 
     // skip typedefs
     void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }

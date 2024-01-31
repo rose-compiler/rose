@@ -201,7 +201,7 @@ MatlabUnparserBottomUpTraversal::evaluateSynthesizedAttribute(SgNode *node, Synt
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleDoubleVal(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleDoubleVal(SgNode *node, SynthesizedAttributesList)
 {
   std::ostringstream ss;
 
@@ -212,7 +212,7 @@ MatlabUnparserBottomUpTraversal::handleDoubleVal(SgNode *node, SynthesizedAttrib
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleIntVal(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleIntVal(SgNode *node, SynthesizedAttributesList)
 {
   std::ostringstream ss;
 
@@ -223,7 +223,7 @@ MatlabUnparserBottomUpTraversal::handleIntVal(SgNode *node, SynthesizedAttribute
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleExprListExp(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleExprListExp(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string listString;
 
@@ -241,13 +241,13 @@ MatlabUnparserBottomUpTraversal::handleExprListExp(SgNode *node, SynthesizedAttr
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleMagicColonExp(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleMagicColonExp(SgNode*, SynthesizedAttributesList)
 {
   return ":";
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleMatrixExp(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleMatrixExp(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string matrixString = "[";
 
@@ -291,13 +291,13 @@ MatlabUnparserBottomUpTraversal::handleRangeExp(SgNode *node, SynthesizedAttribu
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleVarRefExp(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleVarRefExp(SgNode* node, SynthesizedAttributesList)
 {
   return isSgVarRefExp(node)->get_symbol()->get_name().getString();
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleFunctionCallExp(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleFunctionCallExp(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string functionName = childAttributes[SgFunctionCallExp_function];
   std::string args = childAttributes[SgFunctionCallExp_args];
@@ -306,19 +306,19 @@ MatlabUnparserBottomUpTraversal::handleFunctionCallExp(SgNode *node, Synthesized
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handlePrefixOp(SgNode *node, SynthesizedAttributesList childAttributes, std::string operatorString)
+MatlabUnparserBottomUpTraversal::handlePrefixOp(SgNode*, SynthesizedAttributesList childAttributes, std::string operatorString)
 {
   return operatorString + childAttributes[SgUnaryOp_operand_i];
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleInitializedName(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleInitializedName(SgNode *node, SynthesizedAttributesList)
 {
   return isSgInitializedName(node)->get_name().getString();
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleAssignOp(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleAssignOp(SgNode* node, SynthesizedAttributesList childAttributes)
 {
   std::string lhs = childAttributes[SgAssignOp_lhs_operand_i];
   std::string rhs = childAttributes[SgAssignOp_rhs_operand_i];
@@ -338,7 +338,7 @@ MatlabUnparserBottomUpTraversal::handleAssignOp(SgNode *node, SynthesizedAttribu
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleBinaryOp(SgNode *node, SynthesizedAttributesList childAttributes, std::string operatorString)
+MatlabUnparserBottomUpTraversal::handleBinaryOp(SgNode*, SynthesizedAttributesList childAttributes, std::string operatorString)
 {
   std::string lhs = childAttributes[SgBinaryOp_lhs_operand_i];
   std::string rhs = childAttributes[SgBinaryOp_rhs_operand_i];
@@ -366,7 +366,7 @@ MatlabUnparserBottomUpTraversal::handleMatrixTransposeOp(SgNode *node, Synthesiz
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleExprStatement(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleExprStatement(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string expressionString = childAttributes[SgExprStatement_expression];
 
@@ -389,11 +389,11 @@ MatlabUnparserBottomUpTraversal::handleReturnStmt(SgNode *node, SynthesizedAttri
 }
 
 std::string
-MatlabUnparserBottomUpTraversal:: handleBasicBlock(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal:: handleBasicBlock(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string blockString;
 
-  for(SynthesizedAttributesList::iterator i = childAttributes.begin(); i != childAttributes.end(); i++)
+  for(SynthesizedAttributesList::iterator i = childAttributes.begin(); i != childAttributes.end(); ++i)
   {
     blockString += *i;
   }
@@ -402,13 +402,13 @@ MatlabUnparserBottomUpTraversal:: handleBasicBlock(SgNode *node, SynthesizedAttr
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleFunctionDefinition(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleFunctionDefinition(SgNode*, SynthesizedAttributesList childAttributes)
 {
   return childAttributes[SgFunctionDefinition_body];
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleFunctionParameterList(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleFunctionParameterList(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string parameterListString;
 
@@ -452,7 +452,7 @@ MatlabUnparserBottomUpTraversal::handleFunctionDeclaration(SgNode *node, Synthes
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleMatlabForStatement(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleMatlabForStatement(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string index = childAttributes[SgMatlabForStatement_index];
   std::string range = childAttributes[SgMatlabForStatement_range];
@@ -495,7 +495,7 @@ MatlabUnparserBottomUpTraversal::handleIfStmt(SgNode *node, SynthesizedAttribute
 }
 
 std::string
-MatlabUnparserBottomUpTraversal::handleGlobal(SgNode *node, SynthesizedAttributesList childAttributes)
+MatlabUnparserBottomUpTraversal::handleGlobal(SgNode*, SynthesizedAttributesList childAttributes)
 {
   std::string scriptString;
 

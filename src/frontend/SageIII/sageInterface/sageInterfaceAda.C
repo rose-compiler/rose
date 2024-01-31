@@ -362,7 +362,7 @@ namespace
       descend(SgType* n);
 
       void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
-      void handle(const SgType& n) { /* not found */ }
+      void handle(const SgType&)   { /* not found */ }
 
       void handle(const SgNamedType& n)           { res = n.get_declaration(); }
 
@@ -1686,15 +1686,15 @@ namespace Ada
       //~ void handle(SgType& n) { res = &n; }
 
       // all root types (according to the three builder function in AdaMaker.C)
-      void handle(SgTypeLongLong& n)      { res = TypeDescription{integralType()}; }
-      void handle(SgTypeLongDouble& n)    { res = TypeDescription{realType()}; }
-      void handle(SgTypeFixed& n)         { res = TypeDescription{fixedType()}; }
+      void handle(SgTypeLongLong&)        { res = TypeDescription{integralType()}; }
+      void handle(SgTypeLongDouble&)      { res = TypeDescription{realType()}; }
+      void handle(SgTypeFixed&)           { res = TypeDescription{fixedType()}; }
 
       // plus discrete type indicator for Ada generics
       void handle(SgAdaDiscreteType& n)   { res = TypeDescription{n}; }
 
       // modular type: handle like int?
-      void handle(SgAdaModularType& n)    { res = TypeDescription{integralType()}; }
+      void handle(SgAdaModularType&)      { res = TypeDescription{integralType()}; }
 
       // are subroutines their own root type?
       void handle(SgAdaSubroutineType& n) { res = TypeDescription{n}; }
@@ -1747,7 +1747,7 @@ namespace Ada
         res = TypeDescription{arrayType(find(n.get_base_type()).typerep())};
       }
 
-      void handle(SgTypeString& n)
+      void handle(SgTypeString&)
       {
         // can be reached from any string literal, which stores the character type is attribute...
         // since we have no info about the character type, just return the standard string type
@@ -1755,9 +1755,9 @@ namespace Ada
       }
 
       // pointer types
-      void handle(SgTypeNullptr& n)       { res = TypeDescription{pointerType()}; } // \todo correct?
-      void handle(SgPointerType& n)       { res = TypeDescription{pointerType()}; } // \todo NO_POINTER_IN_ADA
-      void handle(SgAdaAccessType& n)     { res = TypeDescription{pointerType()}; }
+      void handle(SgTypeNullptr&)         { res = TypeDescription{pointerType()}; } // \todo correct?
+      void handle(SgPointerType&)         { res = TypeDescription{pointerType()}; } // \todo NO_POINTER_IN_ADA
+      void handle(SgAdaAccessType&)       { res = TypeDescription{pointerType()}; }
 
 
       // \todo add string types as introduced by initializeStandardPackage in AdaType.C
@@ -1840,30 +1840,30 @@ namespace Ada
         void handle(const SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
 
         // all root types (according to the three builder function in AdaMaker.C)
-        void handle(const SgTypeLongLong& n)      { res = pkgStandardScope(); }
-        void handle(const SgTypeLongDouble& n)    { res = pkgStandardScope(); }
-        void handle(const SgTypeFixed& n)         { res = pkgStandardScope(); }
+        void handle(const SgTypeLongLong&)        { res = pkgStandardScope(); }
+        void handle(const SgTypeLongDouble&)      { res = pkgStandardScope(); }
+        void handle(const SgTypeFixed&)           { res = pkgStandardScope(); }
 
         // modular type: handle like int?
-        void handle(const SgAdaModularType& n)    { res = pkgStandardScope(); }
+        void handle(const SgAdaModularType&)      { res = pkgStandardScope(); }
 
         // are subroutines their own root type?
-        void handle(const SgAdaSubroutineType& n) { res = pkgStandardScope(); }
+        void handle(const SgAdaSubroutineType&)   { res = pkgStandardScope(); }
 
         // plus types used by AdaMaker but that do not have a direct correspondence
         //   in the Ada Standard.
-        void handle(const SgTypeVoid& n)          { res = pkgStandardScope(); }
-        void handle(const SgTypeUnknown& n)       { res = pkgStandardScope(); }
-        void handle(const SgAutoType& n)          { res = pkgStandardScope(); }
-        void handle(const SgTypeDefault& n)       { res = pkgStandardScope(); }
+        void handle(const SgTypeVoid&)            { res = pkgStandardScope(); }
+        void handle(const SgTypeUnknown&)         { res = pkgStandardScope(); }
+        void handle(const SgAutoType&)            { res = pkgStandardScope(); }
+        void handle(const SgTypeDefault&)         { res = pkgStandardScope(); }
 
         // the package standard uses an enumeration to define boolean, so include the
         //   ROSE bool type also.
         // \todo remove BOOL_IS_ENUM_IN_ADA
-        void handle(const SgTypeBool& n)          { res = pkgStandardScope(); }
+        void handle(const SgTypeBool&)            { res = pkgStandardScope(); }
 
         // plus composite type of literals in the AST
-        void handle(const SgTypeString& n)        { res = pkgStandardScope(); }
+        void handle(const SgTypeString&)          { res = pkgStandardScope(); }
 
 
         // \todo implement generics based on test cases
@@ -1882,13 +1882,13 @@ namespace Ada
         void handle(const SgTypeDouble&)          { res = pkgStandardScope(); }
 
         void handle(const SgTypeChar& n)          { res = pkgStandardScope(); }
-        void handle(const SgTypeChar16& n)        { res = pkgStandardScope(); }
-        void handle(const SgTypeChar32& n)        { res = pkgStandardScope(); }
+        void handle(const SgTypeChar16&)          { res = pkgStandardScope(); }
+        void handle(const SgTypeChar32&)          { res = pkgStandardScope(); }
 
 
         // Ada kind of fundamental types
-        void handle(const SgArrayType& n)         { res = pkgStandardScope(); }
-        void handle(const SgTypeNullptr& n)       { res = pkgStandardScope(); }
+        void handle(const SgArrayType&)           { res = pkgStandardScope(); }
+        void handle(const SgTypeNullptr&)         { res = pkgStandardScope(); }
 
         void handle(const SgPointerType& n)       { res = find(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
         void handle(const SgAdaAccessType& n)     { res = find(n.get_base_type()); } // \todo or scope of underlying type?
@@ -1942,7 +1942,7 @@ namespace Ada
     {
       void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
-      void handle(SgType& n)              { /* \todo do nothing for now; should disappear and raise error */ }
+      void handle(SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
 
       // \todo may need to be reconsidered
       void handle(SgModifierType& n)      { res = associatedDeclaration(n.get_base_type()); }

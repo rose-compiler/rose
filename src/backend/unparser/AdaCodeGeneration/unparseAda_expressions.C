@@ -445,7 +445,7 @@ namespace
       //~ prn(")");
     }
 
-    void handle(SgNullExpression& n)
+    void handle(SgNullExpression&)
     {
       // should not be reached because all parents with legitimate null-expressions
       // such as "raise;" should unparse using expr_opt.
@@ -714,7 +714,7 @@ bool Unparse_Ada::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
 }
 
 
-void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
+void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info&)
 {
   ASSERT_not_null(expr);
 

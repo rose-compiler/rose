@@ -171,12 +171,12 @@ namespace
       type(n.get_base_type());
     }
 
-    void handle(const SgTypeDefault& n)
+    void handle(const SgTypeDefault&)
     {
       /* print nothing - used for forward declarations of unknown type */
     }
 
-    void handle(const SgAutoType& n)
+    void handle(const SgAutoType&)
     {
       /* print nothing - used for Integer and Real Number constants */
     }

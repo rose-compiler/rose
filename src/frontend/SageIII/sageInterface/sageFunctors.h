@@ -12,7 +12,8 @@
 #include "sageInterface.h"
 #include "sageBuilder.h"
 
-namespace sg
+// namespace sg  // no longer used -> move to legacy for removal
+namespace legacy
 {
   /// \brief   returns a deep copy of a sage node
   /// \details allows NULL input nodes (in contrast to SageInterface::deepCopy)
@@ -83,9 +84,9 @@ namespace sg
   /// \brief Functor copying an initialized name into a different scope
   struct InitNameCloner
   {
-      InitNameCloner(SgDeclarationStatement& declaration, SgScopeStatement* enclosing_scope = 0)
+      InitNameCloner(SgDeclarationStatement&, SgScopeStatement* enclosing_scope = 0)
    // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
-   // : decl(declaration), 
+   // : decl(declaration),
       : scope(enclosing_scope)
       {}
 

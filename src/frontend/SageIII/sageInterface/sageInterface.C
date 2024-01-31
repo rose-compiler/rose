@@ -32,7 +32,7 @@
 #include "sageGeneric.h"
 
 // PP 01/06/2012 : need convenience functors to interface STL
-#include "sageFunctors.h"
+// #include "sageFunctors.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 // For reusing some code from Qing's loop optimizer
@@ -27822,7 +27822,7 @@ namespace
   struct DeclaredType : sg::DispatchHandler<SgNamedType*>
   {
     void setResult(SgNamedType* ty) { res = ty; }
-    void setResult(SgType*      ty) { /* not a named type */ }
+    void setResult(SgType*)         { /* not a named type */ }
 
     void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
 

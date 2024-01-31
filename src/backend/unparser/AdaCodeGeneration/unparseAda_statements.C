@@ -247,7 +247,7 @@ namespace
     ReturnType stmtSyntax() const;
     ReturnType blockSyntax(const std::string& blklbl) const;
 
-    void handle(SgStatement& n)      { res = stmtSyntax(); }
+    void handle(SgStatement&)        { res = stmtSyntax(); }
     void handle(SgForStatement& n)   { res = blockSyntax(n.get_string_label());  }
     void handle(SgAdaLoopStmt& n)    { res = blockSyntax(n.get_string_label());  }
     void handle(SgWhileStmt& n)      { res = blockSyntax(n.get_string_label());  }
@@ -481,7 +481,7 @@ namespace
       list(pkgRange.first, pkgRange.second);
     }
 
-    void handle(SgNullStatement& n)
+    void handle(SgNullStatement&)
     {
       prn("null");
       prn(STMT_SEP);
@@ -1852,7 +1852,7 @@ namespace
     //   statement sequences in Ada, but are not true Ada scopes.
     struct AdaStmtSequence : sg::DispatchHandler<bool>
     {
-      void handle(SgNode& n)                        { /* default: false */ }
+      void handle(SgNode&)                          { /* default: false */ }
       void handle(SgTryStmt&)                       { res = true; }
       void handle(SgIfStmt&)                        { res = true; }
       void handle(SgWhileStmt&)                     { res = true; }
@@ -2370,7 +2370,7 @@ void Unparse_Ada::withNameQualificationMap(const NameQualMap& m)
 }
 
 void
-Unparse_Ada::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Ada::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info&)
 {
   ASSERT_not_null(stmt);
 

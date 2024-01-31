@@ -245,7 +245,7 @@ namespace
       /// constructor for primary traversal
       NameQualificationTraversalAda( std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
                                      std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
-                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
+                                     std::map<SgNode*,std::string> & /*input_qualifiedNameMapForTemplateHeaders*/,
                                      std::map<SgNode*,std::string> & input_typeNameMap,
                                      std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
                                      std::set<SgNode*> & input_referencedNameSet,
@@ -657,7 +657,7 @@ namespace
     void handle(const SgBasicBlock& n)             { res = &n; }
 
     // what to do with others?
-    void handle(const SgScopeStatement& n)         { /* res = nullptr; */ }
+    void handle(const SgScopeStatement&)           { /* res = nullptr; */ }
   };
 
   const SgNode*
@@ -726,7 +726,7 @@ namespace
 
   template <class ScopePathIterator>
   ScopePathIterator
-  shortenPathForUseDirectives( ScopePathIterator remBeg,
+  shortenPathForUseDirectives( ScopePathIterator /*remBeg*/,
                                ScopePathIterator remMin,
                                ScopePathIterator remLim,
                                const NameQualificationTraversalAda& /*trav*/
@@ -1676,7 +1676,7 @@ namespace
     traversal.closeScope();
   }
 
-  void AdaPostNameQualifier::resetNameQualificationContextIfGlobal(const SgDeclarationStatement& n)
+  void AdaPostNameQualifier::resetNameQualificationContextIfGlobal(const SgDeclarationStatement&)
   {
     // \note we may need to also check whether the next statement
     //       is in the same or a different file.
