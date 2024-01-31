@@ -55,6 +55,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
   }
+  else if (name == "MethodParameters") { // 4.7.24
+    return new SgAsmJvmMethodParameters(parent);
+  }
   else if (name == "NestHost") { // 4.7.28
     return new SgAsmJvmNestHost(parent);
   }
@@ -1035,8 +1038,74 @@ void SgAsmJvmBootstrapMethod::dump(FILE* f, const char* prefix, ssize_t idx) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.24 The MethodParameters Attribute. MethodParameters_attribute represented by the TODO class.
+// 4.7.24 The MethodParameters Attribute. MethodParameters_attribute is represented by the SgAsmJvmMethodParameters class.
 //
+SgAsmJvmMethodParameters::SgAsmJvmMethodParameters(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmMethodParameters* SgAsmJvmMethodParameters::parse(SgAsmJvmConstantPool* pool)
+{
+  uint8_t parametersCount;
+  ASSERT_not_null(get_parent());
+
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, parametersCount);
+
+  for (int ii = 0; ii < parametersCount; ii++) {
+    auto entry = new SgAsmJvmMethodParametersEntry(this);
+    entry->parse(pool);
+    get_parameters().push_back(entry);
+  }
+  return this;
+}
+
+void SgAsmJvmMethodParameters::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint8_t parametersCount = get_parameters().size();
+  Jvm::writeValue(os, parametersCount);
+
+  for (auto parameter : get_parameters()) {
+    parameter->unparse(os);
+  }
+}
+
+void SgAsmJvmMethodParameters::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmMethodParameters::dump()\n", prefix, idx);
+}
+
+SgAsmJvmMethodParametersEntry::SgAsmJvmMethodParametersEntry(SgAsmJvmMethodParameters* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmMethodParametersEntry* SgAsmJvmMethodParametersEntry::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_name_index);
+  Jvm::read_value(pool, p_access_flags);
+  return this;
+}
+
+void SgAsmJvmMethodParametersEntry::unparse(std::ostream& os) const
+{
+  Jvm::writeValue(os, p_name_index);
+  Jvm::writeValue(os, p_access_flags);
+}
+
+void SgAsmJvmMethodParametersEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: start_pc:%d line_number:%d\n", prefix, idx, p_name_index, p_access_flags);
+}
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

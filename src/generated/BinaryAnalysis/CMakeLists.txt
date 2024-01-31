@@ -290,6 +290,8 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmLocalVariableTypeEntry.C
   SgAsmJvmLocalVariableTypeTable.C
   SgAsmJvmMethod.C
+  SgAsmJvmMethodParameters.C
+  SgAsmJvmMethodParametersEntry.C
   SgAsmJvmMethodTable.C
   SgAsmJvmModuleMainClass.C
   SgAsmJvmNestHost.C
