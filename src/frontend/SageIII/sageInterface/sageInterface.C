@@ -10209,6 +10209,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
   // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
   // printf ("This is a valid surrounding statement = %s for insertBefore = %s \n",surroundingStatement->class_name().c_str(),insertBefore ? "true" : "false");
      vector<int>::const_iterator j = indexList.begin();
+     PreprocessingInfo* prevTargetAnchorComment = NULL;
      while (j != indexList.end())
         {
        // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
@@ -10237,8 +10238,12 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 
           if (surroundingStatementPreceedsTargetStatement == true)
              {
-               auto commentPosition = (*comments)[*j]->getRelativePosition();
-               if (commentPosition == PreprocessingInfo::before)
+                 // dest
+                 // src // comments to be moved up: all before positions become after position
+                 //     // then append to dest's commments
+                 //     adjust relative position one by one
+                 auto commentPosition = (*comments)[*j]->getRelativePosition();
+                 if (commentPosition == PreprocessingInfo::before)
                   {
                  // Mark comments that were before the preceeding statement to be after the preceeding statement
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::after);
@@ -10252,9 +10257,16 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   {
                     ROSE_ASSERT(false && "Comment relative position neither, before, after, nor end_of");
                   }
+
+                targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
+
              }
-            else
+            else // the target statement is after the source statment: we want to move comments from src to target
              {
+                    //  src : comments  : before or after (when moved to dest, it should become before)
+                    //                    all should be prepend to dest's first comment
+                    //  dest: comments
+               //     adjust relative position one by one
                if ((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before)
                   {
                     // Leave the comments marked as being before the removed statement
@@ -10270,50 +10282,49 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
                     ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before);
                   }
-
             // printf (" This case (surroundingStatementPreceedsTargetStatement == false) is not handled yet. \n");
             // ROSE_ASSERT(false);
+               AttachedPreprocessingInfoType* targetInfoList = targetStatement->getAttachedPreprocessingInfo();
+               // source stmt has a list of comments c1, c2, c3
+               // we want to keep their order and prepend to target stmt's existing comments
+               // The solution is to define an anchor comment in target stmt
+               //    first time anchor is NULL, we prepend c1 to before the target stmt's first comment
+               //    after that, we insert after the anchor comment (previous anchor)
+               //    all anchor comments must come from source statement
+               if (targetInfoList==NULL)
+               {
+                   // we can just use append to the end. the same effect.
+                   targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
+               }
+               else
+               {  
+                  // target stmt has comments
+                  // first time to grab thing
+                  if( prevTargetAnchorComment==NULL)
+                  {
+                     PreprocessingInfo * origFirstTargetComment  = *(targetInfoList->begin());
+                     // inssert before this original first one
+                     targetStatement->insertToAttachedPreprocessingInfo((*comments)[*j],origFirstTargetComment,false);
+                  }
+                  else
+                  {
+                   // now we have non null prev comment from target statement. insert after it!
+                   targetStatement->insertToAttachedPreprocessingInfo((*comments)[*j],prevTargetAnchorComment ,true);
+                  }
+               }
+
+               prevTargetAnchorComment = (*comments)[*j];
              }
 
-          targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
 
        // Remove them from the targetStmt. (set them to NULL and then remove them in a separate step).
 #if REMOVE_STATEMENT_DEBUG
           printf ("Marking entry from comments list as NULL on sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
 #endif
-          (*comments)[*j] = nullptr;
+         (*comments)[*j] = nullptr;// Why do we need to make it NULL??
 
           j++;
         }
-
-        if (pcounter<0)
-        {
-          cerr<<"Error: the count of #endif is larger than #if, #ifdef, and #ifnedf counts. This is unexpected. Relevant stmt is:"<<endl;
-          SageInterface::printAST(sourceStatement);
-          ROSE_ASSERT (pcounter>=0);
-        }
-
-        // We have encountered #if, #ifdef, and #ifnedf, but not enough #endif. We need to add extra #endif
-        while (pcounter>=1)
-        {
-           // adjust rpos based on surroundingStatementPreceedsTargetStatement
-           // if the new stmt is in front of the current stmt
-           // the current preprocessing info attached to the current stmt's before position will become the after position of the preceeding new stmt
-           if (surroundingStatementPreceedsTargetStatement == true)
-           {
-               if (rpos==PreprocessingInfo::before)
-                   rpos = PreprocessingInfo::after;
-           }
-           else
-           {   // reverse adjustment for the new stmt which is after the current stmt with the comments/cpp directives
-               if (rpos==PreprocessingInfo::after)
-                   rpos = PreprocessingInfo::before;
-           }
-
-           PreprocessingInfo* end_if  = new PreprocessingInfo (PreprocessingInfo::CpreprocessorEndifDeclaration, string("#endif"),  "Compiler-Generated", 0, 0, 0, rpos);
-           targetStatement->addToAttachedPreprocessingInfo (end_if);
-           pcounter--;
-        } // TODO: what to do with the original #endif somewhere later in the code? We may need to find and remove this. But hard to find the matching one!
 
   // Now remove each NULL entries in the comments vector.
   // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
@@ -16959,7 +16970,6 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
      counter = 0;
 #endif
 
-      // Similar revise like SageInterface::moveCommentsToNewStatement(), balancing #if .. #endif for some corner cases
      int pcounter =0;
      PreprocessingInfo* prevItem = NULL;
      PreprocessingInfo::RelativePositionType rpos;
@@ -17174,24 +17184,6 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
           printf ("   --- BOTTOM of loop: infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
 #endif
         } // end for
-
-       if (pcounter<0)
-       {
-         cerr<<"Error: the count of #endif is larger than #if, #ifdef, and #ifnedf counts. This is unexpected. Relevant stmt is:"<<endl;
-         SageInterface::printAST(stmt_src);
-         ROSE_ASSERT (pcounter>=0);
-       }
-
-       // We have encountered #if, #ifdef, and #ifnedf, but not enough #endif. We need to add extra #endif
-       while (pcounter>=1)
-       {
-          PreprocessingInfo* end_if  = new PreprocessingInfo (PreprocessingInfo::CpreprocessorEndifDeclaration, string("#endif"),  "Compiler-Generated", 0, 0, 0, rpos);
-          //stmt_dst->addToAttachedPreprocessingInfo(end_if,rpos);// TODO: rpos used here again??
-          stmt_dst->addToAttachedPreprocessingInfo(end_if);// 
-          pcounter--;
-       } // TODO: what to do with the original #endif somewhere later in the code? We may need to find and remove this. But hard to find the matching one!
-
-
 
 #if 0
      printf ("In SageInterface::movePreprocessingInfo(): Remove the element transfered to the new statement from the old statement list \n");
@@ -25620,16 +25612,20 @@ void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemaining, o
   //        printf("classification = %s:\n String format = %s\n",
   //              PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str (),
   //              (*i)->getString ().c_str ());
-        out<<" classification="<<PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str ();
-        out<<" string="<<(*i)->getString ().c_str ();
-        out<<" relative pos=";
-        if ((*i)->getRelativePosition () == PreprocessingInfo::inside)
-          out<<"inside";
-        else if ((*i)->getRelativePosition () == PreprocessingInfo::before)
-          out<<"inside";
+        if (*i==NULL)
+         out<<" NULL="; // The AST may be in the middle of transformation, with NULL comments attached.
         else
-          out<<"after";
-
+        {
+            out<<*i<<" classification="<<PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str ();
+            out<<" string="<<(*i)->getString ().c_str ();
+            out<<" relative pos=";
+            if ((*i)->getRelativePosition () == PreprocessingInfo::inside)
+                out<<"inside";
+            else if ((*i)->getRelativePosition () == PreprocessingInfo::before)
+                out<<"inside";
+            else
+                out<<"after";
+        }
         out<<">";
       }
       out <<"}";
@@ -25855,6 +25851,11 @@ void SageInterface::printAST(SgNode* node)
   string label="";
   serialize(node, prefix, false, oss, label);
   cout<<oss.str();
+}
+
+void SageInterface::printAST(SgNode* node, const char* filename)
+{
+  printAST2TextFile(node, filename, true);
 }
 
 void SageInterface::printAST2TextFile (SgNode* node, std::string filename, bool printType/*=true*/)

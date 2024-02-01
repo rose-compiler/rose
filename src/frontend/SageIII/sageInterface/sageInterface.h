@@ -423,6 +423,9 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    //! Pretty print AST horizontally, output to std output.
    void printAST (SgNode* node);
 
+   //! Pretty print AST horizontally, output to a specified file, a simpiler interface than printAST2TextFile()
+   void printAST (SgNode* node, const char* filename);
+
    //! Pretty print AST horizontally, output to a specified text file. If printType is set to false, don't print out type info.
    void printAST2TextFile (SgNode* node, const char* filename, bool printType=true);
 
