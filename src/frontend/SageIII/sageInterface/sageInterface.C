@@ -16994,18 +16994,18 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
           printf ("   --- TOP of loop: info->getTypeOfDirective()      = %s \n",PreprocessingInfo::directiveTypeName(info->getTypeOfDirective()).c_str());
           printf ("   --- TOP of loop: info->getRelativePosition()     = %s \n",PreprocessingInfo::relativePositionName(info->getRelativePosition()).c_str());
 #endif
-		  PreprocessingInfo::DirectiveType dtype= info->getTypeOfDirective();
-		  if (dtype == PreprocessingInfo::CpreprocessorIfdefDeclaration  ||
-				  dtype == PreprocessingInfo::CpreprocessorIfndefDeclaration ||
-				  dtype == PreprocessingInfo::CpreprocessorIfDeclaration )
-		  {
-			  pcounter++;
-			  rpos = info->getRelativePosition();
-		  }
-		  else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
-		  {
-			  pcounter--;
-		  }
+                  PreprocessingInfo::DirectiveType dtype= info->getTypeOfDirective();
+                  if (dtype == PreprocessingInfo::CpreprocessorIfdefDeclaration  ||
+                                  dtype == PreprocessingInfo::CpreprocessorIfndefDeclaration ||
+                                  dtype == PreprocessingInfo::CpreprocessorIfDeclaration )
+                  {
+                          pcounter++;
+                          rpos = info->getRelativePosition();
+                  }
+                  else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
+                  {
+                          pcounter--;
+                  }
 
           if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
                (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
