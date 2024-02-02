@@ -10008,16 +10008,19 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
         {
        // DQ (9/19/2010): Disable this new (not completely working feature) so that I can checkin the latest UPC/UPC++ work.
 #if 1
-       // DQ (9/16/2010): Added support to move comments and CPP directives marked to
-       // appear before the statment to be attached to the inserted statement (and marked
-       // to appear before that statement).
-          AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
-
        // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
        // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
        // Liao 10/28/2010. Sometimes we want remove the statement with all its preprocessing information
           if (autoRelocatePreprocessingInfo == true)
              {
+               // WE need to move up inner danglinge #endif or #if directives first. 
+               SageInterface::moveUpInnerDanglingIfEndifDirective(targetStmt);
+               // DQ (9/16/2010): Added support to move comments and CPP directives marked to
+               // appear before the statment to be attached to the inserted statement (and marked
+               // to appear before that statement).
+               AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
+
+
                if (comments != nullptr && isSgBasicBlock(targetStmt) == nullptr )
                   {
                     vector<int> captureList;
@@ -10576,6 +10579,8 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
   // Some translators have their own handling for this (e.g. the outliner)
      if (movePreprocessingInfoValue)
         {
+          // move inner dangling  #endif, #if  etc to newStmt's after position, otherwise they got lost
+          moveUpInnerDanglingIfEndifDirective(newStmt);
 #if 0
           printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() changed to movePreprocessingInfo() \n");
 #endif
@@ -27562,3 +27567,121 @@ SageInterface::findFirstSgCastExpMarkedAsTransformation(SgNode* n, const std::st
      return traversal.found;
 #endif
    }
+
+
+// A helper function to check begin (return 1) or end directive (return -1) or neither return 0;
+static int isBeginDirective (PreprocessingInfo* info)
+{
+   ROSE_ASSERT (info != NULL);
+    PreprocessingInfo::DirectiveType dtype= info->getTypeOfDirective();
+    if (dtype == PreprocessingInfo::CpreprocessorIfdefDeclaration  ||
+        dtype == PreprocessingInfo::CpreprocessorIfndefDeclaration ||
+        dtype == PreprocessingInfo::CpreprocessorIfDeclaration )
+    {
+        return 1;
+    }
+    else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
+    {
+       return -1;
+    }
+
+    return 0;
+}
+
+//!  Extract sequences like " #endif #endif ...  #if | #ifdef| #ifndef" buried inside subtree of lnode.
+//  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
+// This should be done before removing or replace the statement: lnode
+int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
+{
+    int retVal=0;
+    ROSE_ASSERT(lnode);
+    int pcounter =0; 
+
+// algorithm: using a queue (vector to simulate it)
+// queue <PreProcessingInfo* >  q; 
+//  start from 2nd node: ignore the first root node
+//  if  start preprocessing info: (if, ifndef, ifdef), push to the end of q 
+//  if  end of preprocessing info. (endif),  neturalize possible end p info at the end of q, otherwise push it to the end
+//
+//  the queue in the end may contain mixed  preprocessing info.   #endif #endif ... #if   #ifndef
+//  They cannot neutralize each other. 
+//  They should be attached to be after lnode !
+   RoseAst ast(lnode);
+   RoseAst::iterator ast_i=ast.begin(); 
+   ++ast_i; // skip the root node itself
+
+  // we store both the container and the element's index within the container. so later we can easily remove elements from containers
+   vector < pair< AttachedPreprocessingInfoType*, int> > keepers; // preprocessing info. to be kept
+   for(;ast_i!=ast.end();++ast_i) {
+       SgLocatedNode* current  = isSgLocatedNode(*ast_i);
+       if (current ==NULL ) // skip non located nodes
+         continue; 
+
+       AttachedPreprocessingInfoType* infoList = current->getAttachedPreprocessingInfo();
+       if (infoList == NULL) continue; 
+
+       int commentIndex=0;
+       for (Rose_STL_Container<PreprocessingInfo*>::iterator ci = (*infoList).begin(); ci != (*infoList).end(); ci++)
+       {
+           ROSE_ASSERT(*ci != NULL);
+           // fundamentally, we want to move individual PreprocessingInfo objects
+           // Or just duplicate them (easier)
+           PreprocessingInfo * info = *ci;
+
+           if ( isBeginDirective(info) == 1)
+           {
+               keepers.push_back(make_pair (infoList,commentIndex));
+           }
+           else if ( isBeginDirective(info) == -1)
+           {
+              bool neutralized = false;
+               // neutralize an internall matched pair, if any
+               if (keepers.size()>0)
+               { 
+                  AttachedPreprocessingInfoType* comments = keepers.back().first;
+                  int idx = keepers.back().second;
+                 
+                  if(isBeginDirective( (*comments)[idx] )==1)
+                  {
+                      keepers.pop_back();
+                      neutralized = true;
+                  }
+                }
+
+               if (!neutralized)
+                   keepers.push_back(make_pair (infoList,commentIndex));
+           }
+           commentIndex++;
+       }
+   }
+
+   set <AttachedPreprocessingInfoType*> relatedInfoList; // containers with comments to be moved
+   // now we go through the keepers
+   // move from old containers, and add into lnode's after position
+   for (auto ki = keepers.begin(); ki != keepers.end(); ki ++) 
+   {
+       AttachedPreprocessingInfoType* infoList =  (*ki).first;
+       relatedInfoList.insert (infoList);
+       int cidx=  (*ki).second;
+
+       PreprocessingInfo* info = (*infoList)[cidx];
+       // rewrite relative position
+       info->setRelativePosition(PreprocessingInfo::after);
+     
+     // insert after lnode
+                lnode->addToAttachedPreprocessingInfo (info);
+   
+      // zero out from original list
+      (*infoList)[cidx]= NULL; 
+      retVal++;
+   }
+   
+     // erase: based on null ptr now. we eventually will remove containers, no need to remove null comments now
+#if 0     // 
+        while (mcounter>=1)
+        {
+        } 
+#endif    
+    return retVal; 
+
+}
