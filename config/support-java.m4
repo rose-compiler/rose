@@ -194,7 +194,7 @@ if test "x$USE_JAVA" = x1; then
   fi
 
 # javah (JAVAH) has been removed from openjdk version 12.0.1 and replaced by an improved javac.
-# Thus JAVAH has been removed below, starting with the following line [CR 2019.04.30]
+# Thus JAVAH has been removed below, starting with the following line [Rasmussen 2019.04.30]
 #
 #  JAVAH="${JAVA_BIN}/javah"
 
@@ -219,8 +219,9 @@ if test "x$USE_JAVA" = x1; then
 # MAPLE_LIBS="-Wl,-rpath,/usr/lib -lmaplec $MAPLE_EXTRA_LIBS"
 # AM_COND_IF([OS_MACOSX],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"])
 
+# Rasmussen (02/01/2024): openjdk has different path to libjvm.dylib than original
 # DQ (12/6/2016): In MAC OSX set the LDFLAGS to include the rpath.
-AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"],[])
+AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/lib/server $LDFLAGS"],[])
 
 fi
 
