@@ -25,6 +25,7 @@
 
 // Fortran front end driver main program for ROSE scaffolding.
 
+#include "sage3basic.h"
 #include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
 
 #include "flang/Common/Fortran-features.h"
@@ -70,18 +71,16 @@ void CleanUpAtExit() {
   }
 }
 
+// Turn on CPU timing
 #if _POSIX_C_SOURCE >= 199309L && _POSIX_TIMERS > 0 && _POSIX_CPUTIME && \
     defined CLOCK_PROCESS_CPUTIME_ID
+#endif
 static constexpr bool canTime{true};
 double CPUseconds() {
   struct timespec tspec;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tspec);
-  return tspec.tv_nsec * 1.0e-9 + tspec.tv_sec;
+  return tspec.tv_nsec * 1.0e-6 + tspec.tv_sec;
 }
-#else
-static constexpr bool canTime{false};
-double CPUseconds() { return 0; }
-#endif
 
 struct DriverOptions {
   DriverOptions() {}
@@ -198,7 +197,7 @@ std::string CompileFortran(
   if (driver.timeParse) {
     if (canTime) {
       llvm::outs() << "parse time for " << path << ": " << (stop - start)
-                   << " CPU seconds\n";
+                   << " CPU milliseconds\n";
     } else {
       llvm::outs() << "no timing information due to lack of clock_gettime()\n";
     }
@@ -221,9 +220,26 @@ std::string CompileFortran(
   }
   auto &parseTree{*parsing.parseTree()};
 
+  // Test building from a move constructed copy of the parse tree
+  auto cstart {CPUseconds()};
+  Fortran::parser::Program parseTreeCopy{std::move(parseTree)};
+  auto cstop {CPUseconds()};
+  if (canTime) {
+    llvm::outs() << "parse-tree copy time: "  << (cstop - cstart) << " CPU milliseconds\n";
+  }
+
   // Transform the parse tree using Rose::builder
   if (driver.externalBuilder) {
-    Rose::builder::Build(parseTree, allCookedSources);
+    auto start{CPUseconds()};
+    Rose::builder::Build(parseTreeCopy, allCookedSources);
+    auto stop{CPUseconds()};
+    if (canTime) {
+      llvm::outs() << "Rose::Build time for " << path << ": " << (stop - start)
+                   << " CPU milliseconds\n";
+    }
+
+    // Always dump the parse tree for now
+    Fortran::parser::DumpTree(llvm::outs(), parseTreeCopy);
     return {};
   }
 

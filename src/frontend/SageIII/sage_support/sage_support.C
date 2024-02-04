@@ -777,29 +777,24 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                exit(0);
              }
 
-       // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
           if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
              {
-               SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+               SgSourceFile* sourceFile = new SgSourceFile(argv, project);
                file = sourceFile;
 
-            // DQ (12/23/2008): Moved initialization of source position (call to initializeSourcePosition())
-            // to earliest position in setup of SgFile.
+#ifdef ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+               file->set_experimental_flang_frontend(true);
+#endif
+
                file->set_sourceFileUsesFortranFileExtension(true);
-
-            // Use the filename suffix as a default means to set this value
                file->set_outputLanguage(SgFile::e_Fortran_language);
-
-            // DQ (29/8/2017): Set the input language as well.
                file->set_inputLanguage(SgFile::e_Fortran_language);
-               file->set_Fortran_only(true);
 
-            // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+               file->set_Fortran_only(true);
                Rose::is_Fortran_language = true;
 
-            // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
-            // interface to be built to use case insensitive symbol table handling.
                SageBuilder::symbol_table_case_insensitive_semantics = true;
+               sourceFile->initializeGlobalScope();
 
             // determine whether to run this file through the C preprocessor
                bool requires_C_preprocessor =
@@ -814,10 +809,15 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                           ! getProject()->get_macroSpecifierList().empty()
                       );
 
-#if 0
-               printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to %s (test 1) \n",requires_C_preprocessor ? "true" : "false");
-#endif
-               file->set_requires_C_preprocessor(requires_C_preprocessor);
+               if (file->get_experimental_flang_frontend() == true) {
+                 // Don't do C++ stuff for Flang frontend
+                 file->set_requires_C_preprocessor(false);
+                 file->set_disable_edg_backend(true);
+                 file->set_skip_commentsAndDirectives(true);
+               }
+               else {
+                 file->set_requires_C_preprocessor(requires_C_preprocessor);
+               }
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
             // If CPP processing is required then the global scope should have a source position using the intermediate
