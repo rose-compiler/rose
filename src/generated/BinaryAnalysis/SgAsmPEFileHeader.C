@@ -149,34 +149,34 @@ SgAsmPEFileHeader::set_e_bss_size(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEFileHeader::get_e_code_rva() const {
     return p_e_code_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEFileHeader::get_e_code_rva() {
     return p_e_code_rva;
 }
 
 void
-SgAsmPEFileHeader::set_e_code_rva(rose_rva_t const& x) {
+SgAsmPEFileHeader::set_e_code_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_e_code_rva = x;
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEFileHeader::get_e_data_rva() const {
     return p_e_data_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEFileHeader::get_e_data_rva() {
     return p_e_data_rva;
 }
 
 void
-SgAsmPEFileHeader::set_e_data_rva(rose_rva_t const& x) {
+SgAsmPEFileHeader::set_e_data_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_e_data_rva = x;
     set_isModified(true);
 }
@@ -452,8 +452,6 @@ SgAsmPEFileHeader::SgAsmPEFileHeader()
     , p_e_code_size(0)
     , p_e_data_size(0)
     , p_e_bss_size(0)
-    , p_e_code_rva(0)
-    , p_e_data_rva(0)
     , p_e_section_align(0)
     , p_e_file_align(0)
     , p_e_os_major(0)
@@ -493,8 +491,6 @@ SgAsmPEFileHeader::initializeProperties() {
     p_e_code_size = 0;
     p_e_data_size = 0;
     p_e_bss_size = 0;
-    p_e_code_rva = 0;
-    p_e_data_rva = 0;
     p_e_section_align = 0;
     p_e_file_align = 0;
     p_e_os_major = 0;

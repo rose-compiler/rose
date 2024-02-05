@@ -2358,6 +2358,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPERVASizePair);
 IS_SERIALIZABLE(AsmPERVASizePair);
 
+DECLARE_HEADERS(AsmPERVASizePair);
+#if defined(SgAsmPERVASizePair_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmPERVASizePair_HEADERS
+
 #ifdef DOCUMENTATION
 /** RVA/size pair. */
 class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
@@ -2365,7 +2370,7 @@ class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPERVASizePair.setDataPrototype(
-        "rose_rva_t", "e_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "e_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -2431,9 +2436,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_e_rva() const;
-    rose_rva_t& get_e_rva();
-    void set_e_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_e_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_e_rva();
+    void set_e_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -2500,6 +2505,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEImportSection);
 IS_SERIALIZABLE(AsmPEImportSection);
+
+DECLARE_HEADERS(AsmPEImportSection);
+#if defined(SgAsmPEImportSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmPEImportSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** Portable Executable Import Section.
@@ -2626,7 +2636,7 @@ IS_SERIALIZABLE(AsmPEImportSection);
  *      void visit(SgNode *node) {
  *          SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
  *          SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
- *          static const rose_rva_t nil(0);
+ *          static const Rose::BinaryAnalysis::RelativeVirtualAddress nil(0);
  *
  *          if (idir) {
  *              idir->set_dll_name_rva(nil);
@@ -2701,7 +2711,7 @@ public:
      *  needed to store the entire table.  Each subsequent IAT is given the next available address and it's size is also
      *  updated.  The result is that all the IATs under this Import Section are given addresses and sizes that make them
      *  contiguous in memory. This method returns the total number of bytes required for all the IATs. */
-    size_t reallocateIats(rose_rva_t start_at);
+    size_t reallocateIats(Rose::BinaryAnalysis::RelativeVirtualAddress start_at);
 
 private:
     static size_t mesg_nprinted; //counter for import_mesg()
@@ -2716,7 +2726,7 @@ public:
     void remove_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use removeImportDirectory");
     static bool show_import_mesg() ROSE_DEPRECATED("use showImportMessage");
     static void import_mesg_reset() ROSE_DEPRECATED("use importMessageReset");
-    size_t reallocate_iats(rose_rva_t) ROSE_DEPRECATED("use reallocateIats");
+    size_t reallocate_iats(Rose::BinaryAnalysis::RelativeVirtualAddress) ROSE_DEPRECATED("use reallocateIats");
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportSection();
@@ -2815,6 +2825,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEImportItem);
 IS_SERIALIZABLE(AsmPEImportItem);
 
+DECLARE_HEADERS(AsmPEImportItem);
+#if defined(SgAsmPEImportItem_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmPEImportItem_HEADERS
+
 #ifdef DOCUMENTATION
 /** A single imported object.
  *
@@ -2852,7 +2867,7 @@ class SgAsmPEImportItem: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEImportItem.setDataPrototype(
-        "rose_rva_t", "hintname_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "hintname_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -2864,7 +2879,7 @@ class SgAsmPEImportItem: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEImportItem.setDataPrototype(
-        "rose_rva_t", "bound_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "bound_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -2944,9 +2959,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_hintname_rva() const;
-    rose_rva_t& get_hintname_rva();
-    void set_hintname_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_hintname_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_hintname_rva();
+    void set_hintname_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -2965,9 +2980,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_bound_rva() const;
-    rose_rva_t& get_bound_rva();
-    void set_bound_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_bound_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_bound_rva();
+    void set_bound_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -3112,6 +3127,7 @@ IS_SERIALIZABLE(AsmPEImportDirectory);
 DECLARE_HEADERS(AsmPEImportDirectory);
 #if defined(SgAsmPEImportDirectory_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #endif // SgAsmPEImportDirectory_HEADERS
 
 #ifdef DOCUMENTATION
@@ -3130,7 +3146,7 @@ class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEImportDirectory.setDataPrototype(
-        "rose_rva_t", "dllNameRva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "dllNameRva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -3154,7 +3170,7 @@ class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEImportDirectory.setDataPrototype(
-        "rose_rva_t", "ilt_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "ilt_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -3166,7 +3182,7 @@ class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEImportDirectory.setDataPrototype(
-        "rose_rva_t", "iat_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "iat_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -3249,9 +3265,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_dllNameRva() const;
-    rose_rva_t& get_dllNameRva();
-    void set_dllNameRva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_dllNameRva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_dllNameRva();
+    void set_dllNameRva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -3290,9 +3306,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_ilt_rva() const;
-    rose_rva_t& get_ilt_rva();
-    void set_ilt_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_ilt_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_ilt_rva();
+    void set_ilt_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -3311,9 +3327,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_iat_rva() const;
-    rose_rva_t& get_iat_rva();
-    void set_iat_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_iat_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_iat_rva();
+    void set_iat_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -3355,7 +3371,7 @@ public:
      *  not reallocated if they already exist in some other section. The return value is the number of bytes allocated in
      *  the import section.  Upon return, this directory's address data members are initialized with possibly new
      *  values. */
-    size_t reallocate(rose_rva_t starting_rva);
+    size_t reallocate(Rose::BinaryAnalysis::RelativeVirtualAddress starting_rva);
 
     /** Encode an import directory entry back into disk format */
     void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
@@ -3389,8 +3405,9 @@ public:
     size_t hintNameTableExtent(Rose::BinaryAnalysis::AddressIntervalSet &extent/*in,out*/) const;
 
 private:
-    void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
-    void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
+    void parse_ilt_iat(const Rose::BinaryAnalysis::RelativeVirtualAddress &table_start, bool assume_bound);
+    void unparse_ilt_iat(std::ostream&,const Rose::BinaryAnalysis::RelativeVirtualAddress &table_start, bool assume_bound,
+                         size_t nalloc) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -3398,9 +3415,9 @@ private:
 public:
     SgAsmGenericString* get_dll_name() const ROSE_DEPRECATED("use get_dllName");
     void set_dll_name(SgAsmGenericString*) ROSE_DEPRECATED("use set_dllName");
-    const rose_rva_t& get_dll_name_rva() const ROSE_DEPRECATED("use get_dllNameRva");
-    rose_rva_t& get_dll_name_rva() ROSE_DEPRECATED("use get_dllNameRva");
-    void set_dll_name_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_dllNameRva");
+    const Rose::BinaryAnalysis::RelativeVirtualAddress& get_dll_name_rva() const ROSE_DEPRECATED("use get_dllNameRva");
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_dll_name_rva() ROSE_DEPRECATED("use get_dllNameRva");
+    void set_dll_name_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use set_dllNameRva");
     size_t iat_required_size() const ROSE_DEPRECATED("use iatRequiredSize");
     int find_import_item(const SgAsmPEImportItem*, int=0) const ROSE_DEPRECATED("use findImportItem");
     size_t hintname_table_extent(Rose::BinaryAnalysis::AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
@@ -3432,6 +3449,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEFileHeader);
 IS_SERIALIZABLE(AsmPEFileHeader);
+
+DECLARE_HEADERS(AsmPEFileHeader);
+#if defined(SgAsmPEFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmPEFileHeader_HEADERS
 
 #ifdef DOCUMENTATION
 /** Windows PE file header.
@@ -3520,13 +3542,13 @@ class SgAsmPEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "rose_rva_t", "e_code_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "e_code_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "rose_rva_t", "e_data_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "e_data_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4009,9 +4031,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_e_code_rva() const;
-    rose_rva_t& get_e_code_rva();
-    void set_e_code_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_e_code_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_e_code_rva();
+    void set_e_code_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -4020,9 +4042,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_e_data_rva() const;
-    rose_rva_t& get_e_data_rva();
-    void set_e_data_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_e_data_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_e_data_rva();
+    void set_e_data_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -4629,6 +4651,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEExportEntry);
 IS_SERIALIZABLE(AsmPEExportEntry);
 
+DECLARE_HEADERS(AsmPEExportEntry);
+#if defined(SgAsmPEExportEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmPEExportEntry_HEADERS
+
 #ifdef DOCUMENTATION
 /** Export entry. */
 class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
@@ -4648,7 +4675,7 @@ class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEExportEntry.setDataPrototype(
-        "rose_rva_t", "exportRva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "exportRva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4703,9 +4730,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_exportRva() const;
-    rose_rva_t& get_exportRva();
-    void set_exportRva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_exportRva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_exportRva();
+    void set_exportRva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -4719,7 +4746,8 @@ public:
     /** @} */
 
 public:
-    SgAsmPEExportEntry(SgAsmGenericString *name, unsigned ordinal, rose_rva_t export_rva, SgAsmGenericString *forwarder);
+    SgAsmPEExportEntry(SgAsmGenericString *name, unsigned ordinal, Rose::BinaryAnalysis::RelativeVirtualAddress export_rva,
+                       SgAsmGenericString *forwarder);
     void dump(FILE *f,const char *prefix,ssize_t idx) const;
     /* Accessors. Override ROSETTA because we adjust parents. */
 
@@ -4734,8 +4762,8 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    const rose_rva_t& get_export_rva() const ROSE_DEPRECATED("use get_exportRva");
-    void set_export_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_exportRva");
+    const Rose::BinaryAnalysis::RelativeVirtualAddress& get_export_rva() const ROSE_DEPRECATED("use get_exportRva");
+    void set_export_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use set_exportRva");
 public:
     /** Destructor. */
     virtual ~SgAsmPEExportEntry();
@@ -4764,6 +4792,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEExportDirectory);
 IS_SERIALIZABLE(AsmPEExportDirectory);
+
+DECLARE_HEADERS(AsmPEExportDirectory);
+#if defined(SgAsmPEExportDirectory_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmPEExportDirectory_HEADERS
 
 #ifdef DOCUMENTATION
 /** Export directory. */
@@ -4796,7 +4829,7 @@ class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEExportDirectory.setDataPrototype(
-        "rose_rva_t", "name_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "name_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4820,19 +4853,19 @@ class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEExportDirectory.setDataPrototype(
-        "rose_rva_t", "expaddr_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "expaddr_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEExportDirectory.setDataPrototype(
-        "rose_rva_t", "nameptr_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "nameptr_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEExportDirectory.setDataPrototype(
-        "rose_rva_t", "ordinals_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "ordinals_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4948,9 +4981,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_name_rva() const;
-    rose_rva_t& get_name_rva();
-    void set_name_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_name_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_name_rva();
+    void set_name_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -4989,9 +5022,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_expaddr_rva() const;
-    rose_rva_t& get_expaddr_rva();
-    void set_expaddr_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_expaddr_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_expaddr_rva();
+    void set_expaddr_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -5000,9 +5033,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_nameptr_rva() const;
-    rose_rva_t& get_nameptr_rva();
-    void set_nameptr_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_nameptr_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_nameptr_rva();
+    void set_nameptr_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -5011,9 +5044,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_ordinals_rva() const;
-    rose_rva_t& get_ordinals_rva();
-    void set_ordinals_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_ordinals_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_ordinals_rva();
+    void set_ordinals_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -20895,6 +20928,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFD);
 IS_SERIALIZABLE(AsmElfEHFrameEntryFD);
 
+DECLARE_HEADERS(AsmElfEHFrameEntryFD);
+#if defined(SgAsmElfEHFrameEntryFD_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#endif // SgAsmElfEHFrameEntryFD_HEADERS
+
 #ifdef DOCUMENTATION
 /** ELF error handling frame entry frame description entry. */
 class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
@@ -20902,7 +20940,7 @@ class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfEHFrameEntryFD.setDataPrototype(
-        "rose_rva_t", "begin_rva", "= 0",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "begin_rva", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -20950,9 +20988,9 @@ public:
      *  See official ELF specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_begin_rva() const;
-    rose_rva_t& get_begin_rva();
-    void set_begin_rva(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_begin_rva() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_begin_rva();
+    void set_begin_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -21778,6 +21816,7 @@ IS_SERIALIZABLE(AsmElfDynamicEntry);
 DECLARE_HEADERS(AsmElfDynamicEntry);
 #if defined(SgAsmElfDynamicEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #endif // SgAsmElfDynamicEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -21793,7 +21832,7 @@ class SgAsmElfDynamicEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfDynamicEntry.setDataPrototype(
-        "rose_rva_t", "d_val", "",
+        "Rose::BinaryAnalysis::RelativeVirtualAddress", "d_val", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -21952,9 +21991,9 @@ public:
      *  See ELF specification for details. 
      *  
      *  @{ */
-    rose_rva_t const& get_d_val() const;
-    rose_rva_t& get_d_val();
-    void set_d_val(rose_rva_t const&);
+    Rose::BinaryAnalysis::RelativeVirtualAddress const& get_d_val() const;
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_d_val();
+    void set_d_val(Rose::BinaryAnalysis::RelativeVirtualAddress const&);
     /** @} */
 
 public:
@@ -27079,6 +27118,7 @@ AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
 DECLARE_HEADERS(AsmGenericHeader);
 #if defined(SgAsmGenericHeader_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #endif // SgAsmGenericHeader_HEADERS
 
 #ifdef DOCUMENTATION
@@ -27245,7 +27285,7 @@ public:
     rose_addr_t get_entryRva() const;
 
     /** Append an RVA to the list of entry points. */
-    void addEntryRva(const rose_rva_t&);
+    void addEntryRva(const Rose::BinaryAnalysis::RelativeVirtualAddress&);
 
     /* Convenience functions */
     Rose::BinaryAnalysis::ByteOrder::Endianness get_sex() const;
@@ -27323,7 +27363,7 @@ public:
     virtual const char *format_name() const ROSE_DEPRECATED("use formatName");
     void add_dll(SgAsmGenericDLL*) ROSE_DEPRECATED("use addDll");
     rose_addr_t get_entry_rva() const ROSE_DEPRECATED("use get_entryRva");
-    void add_entry_rva(const rose_rva_t&) ROSE_DEPRECATED("use addEntryRva");
+    void add_entry_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use addEntryRva");
     size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
     void add_section(SgAsmGenericSection*) ROSE_DEPRECATED("use addSection");
     void remove_section(SgAsmGenericSection*) ROSE_DEPRECATED("use removeSection");
@@ -29167,6 +29207,7 @@ AsmGenericSection.setAutomaticGenerationOfDestructor(false);
 DECLARE_HEADERS(AsmGenericSection);
 #if defined(SgAsmGenericSection_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #endif // SgAsmGenericSection_HEADERS
 
 #ifdef DOCUMENTATION
@@ -29567,7 +29608,8 @@ public:
     SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*);
 
     /** Prints info about offsets into known sections. */
-    static void dumpContainingSections(FILE*, const std::string &prefix, rose_rva_t, const SgAsmGenericSectionPtrList&);
+    static void dumpContainingSections(FILE*, const std::string &prefix, Rose::BinaryAnalysis::RelativeVirtualAddress,
+                                       const SgAsmGenericSectionPtrList&);
 
     /** Saves a reference to the original file data for a section based on the section's current offset and size.
      *
@@ -29666,8 +29708,8 @@ public:
      * @{ */
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
                        rose_addr_t size, bool strict=true);
-    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
-                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress &start,
+                       void *dst_buf, rose_addr_t size, bool strict=true);
     /** @} */
 
     /** Reads data from a file.
@@ -29694,7 +29736,8 @@ public:
      *
      * @{ */
     std::string readContentString(rose_addr_t abs_offset, bool strict=true);
-    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, Rose::BinaryAnalysis::RelativeVirtualAddress rva,
+                                  bool strict=true);
     /** @} */
 
     /** Reads a string from the file.
@@ -29833,7 +29876,8 @@ public:
     void set_contains_code(bool) ROSE_DEPRECATED("use set_containsCode");
     rose_addr_t get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
     void set_mapped_actual_va(rose_addr_t) ROSE_DEPRECATED("use set_mappedActualVa");
-    static void dump_containing_sections(FILE*, const std::string&, rose_rva_t, const SgAsmGenericSectionPtrList&)
+    static void dump_containing_sections(FILE*, const std::string&, Rose::BinaryAnalysis::RelativeVirtualAddress,
+                                         const SgAsmGenericSectionPtrList&)
         ROSE_DEPRECATED("use dumpContainingSections");
     void grab_content() ROSE_DEPRECATED("use grabContent");
     void unparse_holes(std::ostream&) const ROSE_DEPRECATED("use unparseHoles");
@@ -29844,13 +29888,15 @@ public:
     size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
     size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t,  void*, rose_addr_t, bool=true)
         ROSE_DEPRECATED("use readContent");
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t&, void*, rose_addr_t, bool=true)
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress&, void*,
+                        rose_addr_t, bool=true)
         ROSE_DEPRECATED("use readContent");
     size_t read_content_local(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocal");
     std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
         ROSE_DEPRECATED("use readContentString");
     std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_rva_t, bool=true)
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::RelativeVirtualAddress,
+                                 bool=true)
         ROSE_DEPRECATED("use readContentString");
     std::string read_content_local_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocalString");
     SgUnsignedCharList read_content_local_ucl(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use readContentLocalUcl");

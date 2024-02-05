@@ -22,18 +22,18 @@ SgAsmPEExportEntry::set_ordinal(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEExportEntry::get_exportRva() const {
     return p_exportRva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEExportEntry::get_exportRva() {
     return p_exportRva;
 }
 
 void
-SgAsmPEExportEntry::set_exportRva(rose_rva_t const& x) {
+SgAsmPEExportEntry::set_exportRva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_exportRva = x;
     set_isModified(true);
 }
@@ -50,14 +50,12 @@ SgAsmPEExportEntry::~SgAsmPEExportEntry() {
 SgAsmPEExportEntry::SgAsmPEExportEntry()
     : p_name(nullptr)
     , p_ordinal(0)
-    , p_exportRva(0)
     , p_forwarder(nullptr) {}
 
 void
 SgAsmPEExportEntry::initializeProperties() {
     p_name = nullptr;
     p_ordinal = 0;
-    p_exportRva = 0;
     p_forwarder = nullptr;
 }
 

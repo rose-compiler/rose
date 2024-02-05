@@ -17,18 +17,18 @@ SgAsmElfDynamicEntry::set_d_tag(SgAsmElfDynamicEntry::EntryType const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmElfDynamicEntry::get_d_val() const {
     return p_d_val;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmElfDynamicEntry::get_d_val() {
     return p_d_val;
 }
 
 void
-SgAsmElfDynamicEntry::set_d_val(rose_rva_t const& x) {
+SgAsmElfDynamicEntry::set_d_val(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_d_val = x;
     set_isModified(true);
 }

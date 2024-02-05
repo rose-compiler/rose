@@ -6,18 +6,18 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #include <sage3basic.h>
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmElfEHFrameEntryFD::get_begin_rva() const {
     return p_begin_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmElfEHFrameEntryFD::get_begin_rva() {
     return p_begin_rva;
 }
 
 void
-SgAsmElfEHFrameEntryFD::set_begin_rva(rose_rva_t const& x) {
+SgAsmElfEHFrameEntryFD::set_begin_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_begin_rva = x;
     set_isModified(true);
 }
@@ -70,12 +70,10 @@ SgAsmElfEHFrameEntryFD::~SgAsmElfEHFrameEntryFD() {
 }
 
 SgAsmElfEHFrameEntryFD::SgAsmElfEHFrameEntryFD()
-    : p_begin_rva(0)
-    , p_size(0) {}
+    : p_size(0) {}
 
 void
 SgAsmElfEHFrameEntryFD::initializeProperties() {
-    p_begin_rva = 0;
     p_size = 0;
 }
 

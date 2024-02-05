@@ -17,18 +17,18 @@ SgAsmPEImportDirectory::set_dllName(SgAsmGenericString* const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEImportDirectory::get_dllNameRva() const {
     return p_dllNameRva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEImportDirectory::get_dllNameRva() {
     return p_dllNameRva;
 }
 
 void
-SgAsmPEImportDirectory::set_dllNameRva(rose_rva_t const& x) {
+SgAsmPEImportDirectory::set_dllNameRva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_dllNameRva = x;
     set_isModified(true);
 }
@@ -66,18 +66,18 @@ SgAsmPEImportDirectory::set_forwarder_chain(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEImportDirectory::get_ilt_rva() const {
     return p_ilt_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEImportDirectory::get_ilt_rva() {
     return p_ilt_rva;
 }
 
 void
-SgAsmPEImportDirectory::set_ilt_rva(rose_rva_t const& x) {
+SgAsmPEImportDirectory::set_ilt_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_ilt_rva = x;
     set_isModified(true);
 }
@@ -93,18 +93,18 @@ SgAsmPEImportDirectory::set_ilt_nalloc(size_t const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEImportDirectory::get_iat_rva() const {
     return p_iat_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEImportDirectory::get_iat_rva() {
     return p_iat_rva;
 }
 
 void
-SgAsmPEImportDirectory::set_iat_rva(rose_rva_t const& x) {
+SgAsmPEImportDirectory::set_iat_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_iat_rva = x;
     set_isModified(true);
 }
@@ -137,26 +137,20 @@ SgAsmPEImportDirectory::~SgAsmPEImportDirectory() {
 
 SgAsmPEImportDirectory::SgAsmPEImportDirectory()
     : p_dllName(nullptr)
-    , p_dllNameRva(0)
     , p_dll_name_nalloc(0)
     , p_time(0)
     , p_forwarder_chain(0)
-    , p_ilt_rva(0)
     , p_ilt_nalloc(0)
-    , p_iat_rva(0)
     , p_iat_nalloc(0)
     , p_imports(createAndParent<SgAsmPEImportItemList>(this)) {}
 
 void
 SgAsmPEImportDirectory::initializeProperties() {
     p_dllName = nullptr;
-    p_dllNameRva = 0;
     p_dll_name_nalloc = 0;
     p_time = 0;
     p_forwarder_chain = 0;
-    p_ilt_rva = 0;
     p_ilt_nalloc = 0;
-    p_iat_rva = 0;
     p_iat_nalloc = 0;
     p_imports = createAndParent<SgAsmPEImportItemList>(this);
 }

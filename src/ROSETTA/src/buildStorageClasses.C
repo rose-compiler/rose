@@ -959,6 +959,9 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "int64_t") ||
                  ( varTypeString == "rose_addr_t" ) ||
                  ( varTypeString == "rose_rva_t") ||
+                 varTypeString == "RelativeVirtualAddress" ||
+                 varTypeString == "BinaryAnalysis::RelativeVirtualAddress" ||
+                 varTypeString == "Rose::BinaryAnalysis::RelativeVirtualAddress" ||
                  ( varTypeString == "uint64_t" ) ||
                  ( varTypeString == "uint32_t" ) ||
                  ( varTypeString == "uint16_t" ) ||

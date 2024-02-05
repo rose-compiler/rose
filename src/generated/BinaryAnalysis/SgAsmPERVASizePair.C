@@ -6,18 +6,18 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #include <sage3basic.h>
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPERVASizePair::get_e_rva() const {
     return p_e_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPERVASizePair::get_e_rva() {
     return p_e_rva;
 }
 
 void
-SgAsmPERVASizePair::set_e_rva(rose_rva_t const& x) {
+SgAsmPERVASizePair::set_e_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_e_rva = x;
     set_isModified(true);
 }
@@ -38,13 +38,11 @@ SgAsmPERVASizePair::~SgAsmPERVASizePair() {
 }
 
 SgAsmPERVASizePair::SgAsmPERVASizePair()
-    : p_e_rva(0)
-    , p_e_size(0)
+    : p_e_size(0)
     , p_section(nullptr) {}
 
 void
 SgAsmPERVASizePair::initializeProperties() {
-    p_e_rva = 0;
     p_e_size = 0;
     p_section = nullptr;
 }

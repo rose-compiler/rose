@@ -50,18 +50,18 @@ SgAsmPEImportItem::set_name(SgAsmGenericString* const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEImportItem::get_hintname_rva() const {
     return p_hintname_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEImportItem::get_hintname_rva() {
     return p_hintname_rva;
 }
 
 void
-SgAsmPEImportItem::set_hintname_rva(rose_rva_t const& x) {
+SgAsmPEImportItem::set_hintname_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_hintname_rva = x;
     set_isModified(true);
 }
@@ -77,18 +77,18 @@ SgAsmPEImportItem::set_hintname_nalloc(size_t const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEImportItem::get_bound_rva() const {
     return p_bound_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEImportItem::get_bound_rva() {
     return p_bound_rva;
 }
 
 void
-SgAsmPEImportItem::set_bound_rva(rose_rva_t const& x) {
+SgAsmPEImportItem::set_bound_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_bound_rva = x;
     set_isModified(true);
 }
@@ -113,9 +113,7 @@ SgAsmPEImportItem::SgAsmPEImportItem()
     , p_ordinal(0)
     , p_hint(0)
     , p_name(createAndParent<SgAsmBasicString>(this))
-    , p_hintname_rva(0)
     , p_hintname_nalloc(0)
-    , p_bound_rva(0)
     , p_iat_written(false) {}
 
 void
@@ -124,9 +122,7 @@ SgAsmPEImportItem::initializeProperties() {
     p_ordinal = 0;
     p_hint = 0;
     p_name = createAndParent<SgAsmBasicString>(this);
-    p_hintname_rva = 0;
     p_hintname_nalloc = 0;
-    p_bound_rva = 0;
     p_iat_written = false;
 }
 

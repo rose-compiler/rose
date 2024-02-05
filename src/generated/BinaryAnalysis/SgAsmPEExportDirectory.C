@@ -50,18 +50,18 @@ SgAsmPEExportDirectory::set_vminor(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEExportDirectory::get_name_rva() const {
     return p_name_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEExportDirectory::get_name_rva() {
     return p_name_rva;
 }
 
 void
-SgAsmPEExportDirectory::set_name_rva(rose_rva_t const& x) {
+SgAsmPEExportDirectory::set_name_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_name_rva = x;
     set_isModified(true);
 }
@@ -99,50 +99,50 @@ SgAsmPEExportDirectory::set_nameptr_n(size_t const& x) {
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEExportDirectory::get_expaddr_rva() const {
     return p_expaddr_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEExportDirectory::get_expaddr_rva() {
     return p_expaddr_rva;
 }
 
 void
-SgAsmPEExportDirectory::set_expaddr_rva(rose_rva_t const& x) {
+SgAsmPEExportDirectory::set_expaddr_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_expaddr_rva = x;
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEExportDirectory::get_nameptr_rva() const {
     return p_nameptr_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEExportDirectory::get_nameptr_rva() {
     return p_nameptr_rva;
 }
 
 void
-SgAsmPEExportDirectory::set_nameptr_rva(rose_rva_t const& x) {
+SgAsmPEExportDirectory::set_nameptr_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_nameptr_rva = x;
     set_isModified(true);
 }
 
-rose_rva_t const&
+Rose::BinaryAnalysis::RelativeVirtualAddress const&
 SgAsmPEExportDirectory::get_ordinals_rva() const {
     return p_ordinals_rva;
 }
 
-rose_rva_t&
+Rose::BinaryAnalysis::RelativeVirtualAddress&
 SgAsmPEExportDirectory::get_ordinals_rva() {
     return p_ordinals_rva;
 }
 
 void
-SgAsmPEExportDirectory::set_ordinals_rva(rose_rva_t const& x) {
+SgAsmPEExportDirectory::set_ordinals_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const& x) {
     this->p_ordinals_rva = x;
     set_isModified(true);
 }
@@ -167,13 +167,9 @@ SgAsmPEExportDirectory::SgAsmPEExportDirectory()
     , p_timestamp(0)
     , p_vmajor(0)
     , p_vminor(0)
-    , p_name_rva(0)
     , p_ord_base(0)
     , p_expaddr_n(0)
     , p_nameptr_n(0)
-    , p_expaddr_rva(0)
-    , p_nameptr_rva(0)
-    , p_ordinals_rva(0)
     , p_name(NULL) {}
 
 void
@@ -182,13 +178,9 @@ SgAsmPEExportDirectory::initializeProperties() {
     p_timestamp = 0;
     p_vmajor = 0;
     p_vminor = 0;
-    p_name_rva = 0;
     p_ord_base = 0;
     p_expaddr_n = 0;
     p_nameptr_n = 0;
-    p_expaddr_rva = 0;
-    p_nameptr_rva = 0;
-    p_ordinals_rva = 0;
     p_name = NULL;
 }
 
