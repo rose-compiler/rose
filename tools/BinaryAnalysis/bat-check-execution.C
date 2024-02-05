@@ -17,6 +17,7 @@ static const char* description =
 
 #include <rose_getline.h>
 #include <rose_strtoull.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/CommandLine/Parser.h>

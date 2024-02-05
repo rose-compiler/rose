@@ -99,13 +99,13 @@ SgAsmGenericFile::set_trackingReferences(bool const& x) {
     set_isModified(true);
 }
 
-AddressIntervalSet const&
+Rose::BinaryAnalysis::AddressIntervalSet const&
 SgAsmGenericFile::get_referencedExtents() const {
     return p_referencedExtents;
 }
 
 void
-SgAsmGenericFile::set_referencedExtents(AddressIntervalSet const& x) {
+SgAsmGenericFile::set_referencedExtents(Rose::BinaryAnalysis::AddressIntervalSet const& x) {
     this->p_referencedExtents = x;
     set_isModified(true);
 }

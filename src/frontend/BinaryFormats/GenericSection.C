@@ -5,6 +5,8 @@
 #include "sage3basic.h"
 
 #include "stringify.h"
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/Diagnostics.h>
 

@@ -9,6 +9,8 @@
 #ifndef STORAGE_CLASS_MEMORY_MANAGEMENT_H
 #define STORAGE_CLASS_MEMORY_MANAGEMENT_H
 #include <rosePublicConfig.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Sawyer/BitVector.h>
 
 #define INITIAL_SIZE_OF_MEMORY_BLOCKS 10000
@@ -1212,12 +1214,12 @@ class EasyStorage<ExtentMap>: public StorageClassMemoryManagement<rose_addr_t> {
 
 /** Maps an AddressIntervalSet to/from file representation. */
 template<>
-class EasyStorage<AddressIntervalSet>: public StorageClassMemoryManagement<rose_addr_t> {
+class EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>: public StorageClassMemoryManagement<rose_addr_t> {
     typedef StorageClassMemoryManagement<rose_addr_t> Base;
   public:
     EasyStorage() {}
-    void storeDataInEasyStorageClass(const AddressIntervalSet&);
-    AddressIntervalSet rebuildDataStoredInEasyStorageClass() const;
+    void storeDataInEasyStorageClass(const Rose::BinaryAnalysis::AddressIntervalSet&);
+    Rose::BinaryAnalysis::AddressIntervalSet rebuildDataStoredInEasyStorageClass() const;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 /** Represents a synthesized function.
  *
  *  A function is a collection of blocks holding instructions (basic blocks) or static data.  Instructions might have
@@ -272,7 +274,7 @@ public:
      *      }
      *  } notPadding;
      *
-     *  AddressIntervalSet extents;
+     *  Rose::BinaryAnalysis::AddressIntervalSet extents;
      *  function->get_extent(&extents, NULL, NULL, &notPadding);
      *  @endcode
      *
@@ -287,10 +289,10 @@ public:
      *      }
      *  } onlyPadding;
      *
-     *  AddressIntervalSet extents;
+     *  Rose::BinaryAnalysis::AddressIntervalSet extents;
      *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
      *  @endcode */
-    size_t get_extent(AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+    size_t get_extent(Rose::BinaryAnalysis::AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
                       NodeSelector *selector=NULL);
 
     /** Computes the SHA1 message digest for the bytes of a function.

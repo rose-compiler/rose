@@ -106,22 +106,17 @@ bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
 #endif
 
-/** An interval of virtual addresses. */
-typedef Sawyer::Container::Interval<rose_addr_t> AddressInterval;
-std::ostream& operator<<(std::ostream&, const AddressInterval&);
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 
-/** A set of virtual addresses. This is optimized for cases when many addresses are contiguous. */
-typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
-std::ostream& operator<<(std::ostream&, const AddressIntervalSet&);
-
-// deprecated. Use AddressInterval instead for all new code.
+// deprecated. Use Rose::BinaryAnalysis::AddressInterval instead for all new code.
 typedef Range<rose_addr_t> Extent;
 
 /** Specialized printing for ROSE addresses. */
 template<>
 void Range<rose_addr_t>::print(std::ostream &o) const;
 
-// deprecated. Use AddressSet instead for all new code.
+// deprecated. Use Rose::BinaryAnalysis::AddressIntervalSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
 public:
         ExtentMap(): RangeMap<Extent>() {}
@@ -138,10 +133,10 @@ public:
 };
 
 // deprecated. Conversion functions, to be deleted when the old types are no longer needed.
-Extent toExtent(const AddressInterval&);
-AddressInterval toAddressInterval(const Extent&);
-ExtentMap toExtentMap(const AddressIntervalSet&);
-AddressIntervalSet toAddressIntervalSet(const ExtentMap&);
+Extent toExtent(const Rose::BinaryAnalysis::AddressInterval&);
+Rose::BinaryAnalysis::AddressInterval toAddressInterval(const Extent&);
+ExtentMap toExtentMap(const Rose::BinaryAnalysis::AddressIntervalSet&);
+Rose::BinaryAnalysis::AddressIntervalSet toAddressIntervalSet(const ExtentMap&);
 
 /** Settings that control how the lowest-level SgAsmExecutableFileFormat::hexdump function behaves. */
 struct HexdumpFormat {

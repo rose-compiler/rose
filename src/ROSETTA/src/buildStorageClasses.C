@@ -752,7 +752,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
         {
           returnType = STL_MAP;
         }
-     else if (varTypeString == "AddressIntervalSet")
+     else if (varTypeString == "AddressIntervalSet" || varTypeString == "Rose::BinaryAnalysis::AddressIntervalSet")
         {
           returnType = STL_SET;
         }

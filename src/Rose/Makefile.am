@@ -38,6 +38,8 @@ librose_partial_la_SOURCES =								\
 	AST/Utils.C									\
 	AST/utils/edge_ptr_repl.C							\
 	BinaryAnalysis/AbstractLocation.C						\
+	BinaryAnalysis/AddressInterval.C						\
+	BinaryAnalysis/AddressIntervalSet.C						\
 	BinaryAnalysis/Architecture/Amd64.C						\
 	BinaryAnalysis/Architecture/ArmAarch32.C					\
 	BinaryAnalysis/Architecture/ArmAarch64.C					\

@@ -8,6 +8,7 @@
 
 #include <unordered_map>
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
@@ -15,6 +16,7 @@
 
 namespace sb = Rose::SageBuilderAsm;
 using namespace Rose::Diagnostics; // mlog WARN, ...
+using namespace Rose::BinaryAnalysis;
 
 namespace // anonymous namespace for auxiliary functions
 {

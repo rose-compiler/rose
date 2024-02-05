@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 static const char *purpose = "experimental parallel disassembly";
 static const char *description =
@@ -8,6 +8,7 @@ static const char *description =
 // ROSE headers. Don't use <rose/...> because that's broken for programs distributed as part of ROSE.
 #include <rose.h>                                       // must be first ROSE header
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>

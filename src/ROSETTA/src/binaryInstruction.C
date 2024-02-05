@@ -3109,6 +3109,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEImportDirectory);
 IS_SERIALIZABLE(AsmPEImportDirectory);
 
+DECLARE_HEADERS(AsmPEImportDirectory);
+#if defined(SgAsmPEImportDirectory_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#endif // SgAsmPEImportDirectory_HEADERS
+
 #ifdef DOCUMENTATION
 /** One import directory per library.
  *
@@ -3381,7 +3386,7 @@ public:
      *  This function will scan this Import Directory's import items, observe which items make references to Hint/Name
      *  pairs that have known addresses, and add those areas of virtual memory to the specified extent map.  This function
      *  returns the number of ILT entries that reference a Hint/Name pair. */
-    size_t hintNameTableExtent(AddressIntervalSet &extent/*in,out*/) const;
+    size_t hintNameTableExtent(Rose::BinaryAnalysis::AddressIntervalSet &extent/*in,out*/) const;
 
 private:
     void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
@@ -3398,7 +3403,7 @@ public:
     void set_dll_name_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_dllNameRva");
     size_t iat_required_size() const ROSE_DEPRECATED("use iatRequiredSize");
     int find_import_item(const SgAsmPEImportItem*, int=0) const ROSE_DEPRECATED("use findImportItem");
-    size_t hintname_table_extent(AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
+    size_t hintname_table_extent(Rose::BinaryAnalysis::AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportDirectory();
@@ -14486,6 +14491,8 @@ IS_SERIALIZABLE(AsmGenericFile);
 DECLARE_HEADERS(AsmGenericFile);
 #if defined(SgAsmGenericFile_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 #include "DataConversion.h"
 #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
 #endif // SgAsmGenericFile_HEADERS
@@ -14551,7 +14558,7 @@ class SgAsmGenericFile: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericFile.setDataPrototype(
-        "AddressIntervalSet", "referencedExtents", "",
+        "Rose::BinaryAnalysis::AddressIntervalSet", "referencedExtents", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -14686,8 +14693,8 @@ public:
     /** Property: Addresses referenced during parsing. 
      * 
      * @{ */
-    AddressIntervalSet const& get_referencedExtents() const;
-    void set_referencedExtents(AddressIntervalSet const&);
+    Rose::BinaryAnalysis::AddressIntervalSet const& get_referencedExtents() const;
+    void set_referencedExtents(Rose::BinaryAnalysis::AddressIntervalSet const&);
     /** @} */
 
 public:
@@ -14701,7 +14708,7 @@ public:
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    mutable AddressIntervalSet *p_unreferenced_cache = nullptr;
+    mutable Rose::BinaryAnalysis::AddressIntervalSet *p_unreferenced_cache = nullptr;
     DataConverter *p_data_converter = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14739,7 +14746,7 @@ public:
     void dumpAll(const std::string& dumpname);
 
     /** Returns the parts of the file that have never been referenced. */
-    const AddressIntervalSet& get_unreferencedExtents() const;
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferencedExtents() const;
 
     /** Marks part of a file as having been referenced if tracking references. */
     void markReferencedExtent(rose_addr_t start_rva, rose_addr_t size);
@@ -14986,12 +14993,12 @@ public:
     void set_truncate_zeros(bool) ROSE_DEPRECATED("use set_truncateZeros");
     bool get_tracking_references() const ROSE_DEPRECATED("use get_trackingReferences");
     void set_tracking_references(bool) ROSE_DEPRECATED("use set_trackingReferences");
-    const AddressIntervalSet& get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
-    void set_referenced_extents(const AddressIntervalSet&) ROSE_DEPRECATED("use set_referencedExtents");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    void set_referenced_extents(const Rose::BinaryAnalysis::AddressIntervalSet&) ROSE_DEPRECATED("use set_referencedExtents");
     void extend_to_eof(std::ostream&) const ROSE_DEPRECATED("use extendToEof");
     void dump_all(bool in_cwd=true, const char *ext=NULL) ROSE_DEPRECATED("use dumpAll");
     void dump_all(const std::string& dumpname) ROSE_DEPRECATED("use dumpAll");
-    const AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
     void mark_referenced_extent(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use markReferencedExtent");
     DataConverter* get_data_converter() const ROSE_DEPRECATED("use get_dataConverter");
     void set_data_converter(DataConverter*) ROSE_DEPRECATED("use set_dataConverter");
@@ -15219,6 +15226,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmFunction);
 IS_SERIALIZABLE(AsmFunction);
+
+DECLARE_HEADERS(AsmFunction);
+#if defined(SgAsmFunction_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#endif // SgAsmFunction_HEADERS
 
 #ifdef DOCUMENTATION
 /** Represents a synthesized function.
@@ -15646,7 +15658,7 @@ public:
      *      }
      *  } notPadding;
      *
-     *  AddressIntervalSet extents;
+     *  Rose::BinaryAnalysis::AddressIntervalSet extents;
      *  function->get_extent(&extents, NULL, NULL, &notPadding);
      *  @endcode
      *
@@ -15661,10 +15673,10 @@ public:
      *      }
      *  } onlyPadding;
      *
-     *  AddressIntervalSet extents;
+     *  Rose::BinaryAnalysis::AddressIntervalSet extents;
      *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
      *  @endcode */
-    size_t get_extent(AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+    size_t get_extent(Rose::BinaryAnalysis::AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
                       NodeSelector *selector=NULL);
 
     /** Computes the SHA1 message digest for the bytes of a function.
@@ -28631,6 +28643,11 @@ AsmGenericStrtab.setAutomaticGenerationOfConstructor(false);
 AsmGenericStrtab.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmGenericStrtab);
+#if defined(SgAsmGenericStrtab_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#endif // SgAsmGenericStrtab_HEADERS
+
 #ifdef DOCUMENTATION
 /** Base class for string tables. */
 class SgAsmGenericStrtab: public SgAsmExecutableFileFormat {
@@ -28650,7 +28667,7 @@ class SgAsmGenericStrtab: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericStrtab.setDataPrototype(
-        "AddressIntervalSet", "freeList", "",
+        "Rose::BinaryAnalysis::AddressIntervalSet", "freeList", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -28718,8 +28735,8 @@ public:
      *  This list stores space which is available for new strings.
      *
      *  @{ */
-    AddressIntervalSet const& get_freeList() const;
-    AddressIntervalSet& get_freeList();
+    Rose::BinaryAnalysis::AddressIntervalSet const& get_freeList() const;
+    Rose::BinaryAnalysis::AddressIntervalSet& get_freeList();
     /** @} */
 public:
     /** Property: Space that should never be freed. 
@@ -28789,8 +28806,8 @@ public:
 public:
     const referenced_t& get_storage_list() const ROSE_DEPRECATED("use get_storageList");
     void set_storage_list(const referenced_t&) ROSE_DEPRECATED("use set_storageList");
-    const AddressIntervalSet& get_freelist() const ROSE_DEPRECATED("use get_freeList");
-    AddressIntervalSet& get_freelist() ROSE_DEPRECATED("use set_freeList");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_freelist() const ROSE_DEPRECATED("use get_freeList");
+    Rose::BinaryAnalysis::AddressIntervalSet& get_freelist() ROSE_DEPRECATED("use set_freeList");
     SgAsmStringStorage* get_dont_free() const ROSE_DEPRECATED("use get_dontFree");
     void set_dont_free(SgAsmStringStorage*) ROSE_DEPRECATED("use set_dontFree");
     size_t get_num_freed() const ROSE_DEPRECATED("use get_numberFreed");
@@ -29146,6 +29163,11 @@ AsmGenericSection.isBoostSerializable(true);
 AsmGenericSection.setAutomaticGenerationOfConstructor(false);
 AsmGenericSection.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmGenericSection);
+#if defined(SgAsmGenericSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#endif // SgAsmGenericSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** Contiguous region of a file.
@@ -29716,14 +29738,14 @@ public:
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see the @ref
      *  SgAsmGenericFile::referencedExtents property) and this function returns that same information but limits the results to this
      *  section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_referencedExtents() const;
+    Rose::BinaryAnalysis::AddressIntervalSet get_referencedExtents() const;
 
     /** Returns a list of parts of a single section that have not been referenced.
      *
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see @ref
      *  SgAsmGenericFile::get_unreferencedExtents) and this function returns that same information but limits the results to this
      *  section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_unreferencedExtents() const;
+    Rose::BinaryAnalysis::AddressIntervalSet get_unreferencedExtents() const;
 
     /** Whether section desires to be mapped to memory.
      *
@@ -29835,8 +29857,8 @@ public:
     int64_t read_content_local_sleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
     uint64_t read_content_local_uleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
     unsigned char *writable_content(size_t) ROSE_DEPRECATED("use writableContent");
-    AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
-    AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    Rose::BinaryAnalysis::AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    Rose::BinaryAnalysis::AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
     bool is_mapped() const ROSE_DEPRECATED("use isMapped");
     void clear_mapped() ROSE_DEPRECATED("use clearMapped");
     rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");

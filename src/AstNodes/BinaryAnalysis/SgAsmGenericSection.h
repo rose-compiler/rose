@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 /** Contiguous region of a file.
  *
  *  This class represents any contiguous region of a file that serves a particular purpose. Not only are ELF and PE Sections
@@ -373,14 +375,14 @@ public:
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see the @ref
      *  SgAsmGenericFile::referencedExtents property) and this function returns that same information but limits the results to this
      *  section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_referencedExtents() const;
+    Rose::BinaryAnalysis::AddressIntervalSet get_referencedExtents() const;
 
     /** Returns a list of parts of a single section that have not been referenced.
      *
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see @ref
      *  SgAsmGenericFile::get_unreferencedExtents) and this function returns that same information but limits the results to this
      *  section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_unreferencedExtents() const;
+    Rose::BinaryAnalysis::AddressIntervalSet get_unreferencedExtents() const;
 
     /** Whether section desires to be mapped to memory.
      *
@@ -492,8 +494,8 @@ public:
     int64_t read_content_local_sleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
     uint64_t read_content_local_uleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
     unsigned char *writable_content(size_t) ROSE_DEPRECATED("use writableContent");
-    AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
-    AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    Rose::BinaryAnalysis::AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    Rose::BinaryAnalysis::AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
     bool is_mapped() const ROSE_DEPRECATED("use isMapped");
     void clear_mapped() ROSE_DEPRECATED("use clearMapped");
     rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");

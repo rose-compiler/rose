@@ -1,4 +1,6 @@
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 #include "DataConversion.h"
 #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
 
@@ -70,7 +72,7 @@ public:
 
     /** Property: Addresses referenced during parsing. */
     [[using Rosebud: rosetta]]
-    AddressIntervalSet referencedExtents;
+    Rose::BinaryAnalysis::AddressIntervalSet referencedExtents;
 
     /** Property: If set, refuse to unparse file. */
     [[using Rosebud: rosetta]]
@@ -80,7 +82,7 @@ public:
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    mutable AddressIntervalSet *p_unreferenced_cache = nullptr;
+    mutable Rose::BinaryAnalysis::AddressIntervalSet *p_unreferenced_cache = nullptr;
     DataConverter *p_data_converter = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +120,7 @@ public:
     void dumpAll(const std::string& dumpname);
 
     /** Returns the parts of the file that have never been referenced. */
-    const AddressIntervalSet& get_unreferencedExtents() const;
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferencedExtents() const;
 
     /** Marks part of a file as having been referenced if tracking references. */
     void markReferencedExtent(rose_addr_t start_rva, rose_addr_t size);
@@ -365,12 +367,12 @@ public:
     void set_truncate_zeros(bool) ROSE_DEPRECATED("use set_truncateZeros");
     bool get_tracking_references() const ROSE_DEPRECATED("use get_trackingReferences");
     void set_tracking_references(bool) ROSE_DEPRECATED("use set_trackingReferences");
-    const AddressIntervalSet& get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
-    void set_referenced_extents(const AddressIntervalSet&) ROSE_DEPRECATED("use set_referencedExtents");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    void set_referenced_extents(const Rose::BinaryAnalysis::AddressIntervalSet&) ROSE_DEPRECATED("use set_referencedExtents");
     void extend_to_eof(std::ostream&) const ROSE_DEPRECATED("use extendToEof");
     void dump_all(bool in_cwd=true, const char *ext=NULL) ROSE_DEPRECATED("use dumpAll");
     void dump_all(const std::string& dumpname) ROSE_DEPRECATED("use dumpAll");
-    const AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
     void mark_referenced_extent(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use markReferencedExtent");
     DataConverter* get_data_converter() const ROSE_DEPRECATED("use get_dataConverter");
     void set_data_converter(DataConverter*) ROSE_DEPRECATED("use set_dataConverter");

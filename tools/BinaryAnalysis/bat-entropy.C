@@ -4,8 +4,10 @@ static const char *description =
     "the size of the window, the number of bytes per symbol, and the amount by which to shift the window at each step.";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
+
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
 
 #include <batSupport.h>
 #include <boost/format.hpp>

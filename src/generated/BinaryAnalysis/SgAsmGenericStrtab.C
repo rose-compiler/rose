@@ -28,12 +28,12 @@ SgAsmGenericStrtab::set_storageList(SgAsmGenericStrtab::referenced_t const& x) {
     set_isModified(true);
 }
 
-AddressIntervalSet const&
+Rose::BinaryAnalysis::AddressIntervalSet const&
 SgAsmGenericStrtab::get_freeList() const {
     return p_freeList;
 }
 
-AddressIntervalSet&
+Rose::BinaryAnalysis::AddressIntervalSet&
 SgAsmGenericStrtab::get_freeList() {
     return p_freeList;
 }

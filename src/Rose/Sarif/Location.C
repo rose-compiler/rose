@@ -25,7 +25,7 @@ Location::Location(const SourceLocation &begin, const SourceLocation &end, const
     }
 }
 
-Location::Location(const std::string &binaryArtifact, const AddressInterval &addrs, const std::string &mesg)
+Location::Location(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval &addrs, const std::string &mesg)
     : binaryArtifact_(binaryArtifact), binaryRegion_(addrs), message_(mesg) {
     if (addrs.isEmpty())
         throw Sarif::Exception("binary region cannot be empty");
@@ -48,7 +48,7 @@ Location::instance(const std::string &binaryArtifact, rose_addr_t addr, const st
 }
 
 Location::Ptr
-Location::instance(const std::string &binaryArtifact, const AddressInterval &addrs, const std::string &mesg) {
+Location::instance(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval &addrs, const std::string &mesg) {
     return Ptr(new Location(binaryArtifact, addrs, mesg));
 }
 
@@ -71,7 +71,7 @@ Location::binaryLocation() const {
     }
 }
 
-std::pair<std::string, AddressInterval>
+std::pair<std::string, BinaryAnalysis::AddressInterval>
 Location::binaryRegion() const {
     return std::make_pair(binaryArtifact_, binaryRegion_);
 }
@@ -126,7 +126,7 @@ Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
         out <<ppp <<"uri: " <<StringUtility::yamlEscape(binaryArtifact_) <<"\n";
         out <<pp <<"region:\n";
         out <<ppp <<"byteOffset: " <<StringUtility::addrToString(binaryRegion_.least()) <<"\n";
-        if (binaryRegion_ == AddressInterval::whole()) {
+        if (binaryRegion_ == BinaryAnalysis::AddressInterval::whole()) {
             out <<ppp <<"# WARNING: byteLength has been reduced by one to work around SARIF design flaw\n";
             out <<ppp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.greatest()) <<"\n";
         } else {

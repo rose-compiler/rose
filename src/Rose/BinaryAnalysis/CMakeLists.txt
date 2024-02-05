@@ -12,6 +12,8 @@ add_subdirectory(Unparser)
 
 add_library(roseBinaryAnalysis OBJECT
   AbstractLocation.C
+  AddressInterval.C
+  AddressIntervalSet.C
   AsmFunctionIndex.C
   AstHash.C
   BestMapAddress.C
@@ -63,6 +65,8 @@ add_dependencies(roseBinaryAnalysis rosetta_generated)
 
 install(FILES
   AbstractLocation.h
+  AddressInterval.h
+  AddressIntervalSet.h
   AsmFunctionIndex.h
   AstHash.h
   BasicTypes.h

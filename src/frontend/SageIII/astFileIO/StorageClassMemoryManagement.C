@@ -4513,12 +4513,12 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-EasyStorage<AddressIntervalSet>::storeDataInEasyStorageClass(const AddressIntervalSet &set)
+EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>::storeDataInEasyStorageClass(const Rose::BinaryAnalysis::AddressIntervalSet &set)
 {
     // Since the set's elements are of type Sawyer::Container::Interval<rose_addr_t> we can store the interval endpoints
     // in a single pool that is twice as large as the number of intervals in the set.
     std::vector<rose_addr_t> data_;
-    BOOST_FOREACH (const AddressInterval &interval, set.intervals()) {
+    BOOST_FOREACH (const Rose::BinaryAnalysis::AddressInterval &interval, set.intervals()) {
         assert(!interval.isEmpty());
         data_.push_back(interval.least());
         data_.push_back(interval.greatest());
@@ -4556,8 +4556,8 @@ EasyStorage<AddressIntervalSet>::storeDataInEasyStorageClass(const AddressInterv
         *Base::actual = *dat;
 }
 
-AddressIntervalSet
-EasyStorage<AddressIntervalSet>::rebuildDataStoredInEasyStorageClass() const
+Rose::BinaryAnalysis::AddressIntervalSet
+EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>::rebuildDataStoredInEasyStorageClass() const
 {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
     assert(Base::actualBlock <= 1);
@@ -4565,14 +4565,14 @@ EasyStorage<AddressIntervalSet>::rebuildDataStoredInEasyStorageClass() const
     assert(0 == Base::getSizeOfData() % 2);             // vector holds interval endpoints or
 #endif
 
-    AddressIntervalSet retval;
+    Rose::BinaryAnalysis::AddressIntervalSet retval;
     if (Base::actual!=NULL && Base::getSizeOfData()>0) {
         rose_addr_t *pointer = Base::getBeginningOfDataBlock();
         for (long i=0; i<Base::getSizeOfData(); i+=2) {
             rose_addr_t lo = pointer[i+0];
             rose_addr_t hi = pointer[i+1];
             assert(lo <= hi);
-            retval.insert(AddressInterval::hull(lo, hi));
+            retval.insert(Rose::BinaryAnalysis::AddressInterval::hull(lo, hi));
         }
     }
     return retval;

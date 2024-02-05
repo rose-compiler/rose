@@ -10,6 +10,8 @@ static const char *description =
 
 #include <rose.h>
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
@@ -25,6 +27,7 @@ static const char *description =
 #include <vector>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 

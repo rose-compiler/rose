@@ -8,9 +8,13 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 #include <boost/foreach.hpp>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 Extent toExtent(const AddressInterval &x) {
     return x.isEmpty() ? Extent() : Extent::inin(x.least(), x.greatest());

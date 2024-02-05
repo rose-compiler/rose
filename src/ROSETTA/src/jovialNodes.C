@@ -103,8 +103,8 @@ class SgJovialBitVal: public SgValueExp {
 #if defined(SgJovialBitVal_OTHERS) || defined(DOCUMENTATION)
 
 public:
-    /** Property: A copy (as coded) of the bit value string.
-     *
+    /** Property: A copy (as coded) of the bit value string. 
+     * 
      * @{ */
     std::string const& get_valueString() const;
     void set_valueString(std::string const&);

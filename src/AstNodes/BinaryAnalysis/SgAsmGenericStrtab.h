@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 /** Base class for string tables. */
 [[Rosebud::abstract]]
 class SgAsmGenericStrtab: public SgAsmExecutableFileFormat {
@@ -25,7 +27,7 @@ public:
      *
      *  @{ */
     [[using Rosebud: rosetta, large, mutators()]]
-    AddressIntervalSet freeList;
+    Rose::BinaryAnalysis::AddressIntervalSet freeList;
     /** @} */
 
     /** Property: Space that should never be freed. */
@@ -90,8 +92,8 @@ public:
 public:
     const referenced_t& get_storage_list() const ROSE_DEPRECATED("use get_storageList");
     void set_storage_list(const referenced_t&) ROSE_DEPRECATED("use set_storageList");
-    const AddressIntervalSet& get_freelist() const ROSE_DEPRECATED("use get_freeList");
-    AddressIntervalSet& get_freelist() ROSE_DEPRECATED("use set_freeList");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_freelist() const ROSE_DEPRECATED("use get_freeList");
+    Rose::BinaryAnalysis::AddressIntervalSet& get_freelist() ROSE_DEPRECATED("use set_freeList");
     SgAsmStringStorage* get_dont_free() const ROSE_DEPRECATED("use get_dontFree");
     void set_dont_free(SgAsmStringStorage*) ROSE_DEPRECATED("use set_dontFree");
     size_t get_num_freed() const ROSE_DEPRECATED("use get_numberFreed");

@@ -12,6 +12,7 @@
 #endif
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 std::string
 SgAsmFunction::reason_key(const std::string &prefix)

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 /** One import directory per library.
  *
  *  The import directory points to the Import Lookup Table and Import Address Table. ROSE no longer represents the ILT and IAT with
@@ -140,7 +142,7 @@ public:
      *  This function will scan this Import Directory's import items, observe which items make references to Hint/Name
      *  pairs that have known addresses, and add those areas of virtual memory to the specified extent map.  This function
      *  returns the number of ILT entries that reference a Hint/Name pair. */
-    size_t hintNameTableExtent(AddressIntervalSet &extent/*in,out*/) const;
+    size_t hintNameTableExtent(Rose::BinaryAnalysis::AddressIntervalSet &extent/*in,out*/) const;
 
 private:
     void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
@@ -157,5 +159,5 @@ public:
     void set_dll_name_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_dllNameRva");
     size_t iat_required_size() const ROSE_DEPRECATED("use iatRequiredSize");
     int find_import_item(const SgAsmPEImportItem*, int=0) const ROSE_DEPRECATED("use findImportItem");
-    size_t hintname_table_extent(AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
+    size_t hintname_table_extent(Rose::BinaryAnalysis::AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
 };

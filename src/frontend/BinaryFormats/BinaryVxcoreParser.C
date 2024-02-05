@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <BinaryVxcoreParser.h>
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>

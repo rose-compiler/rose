@@ -3,7 +3,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 const rose_addr_t
 SgAsmGenericString::unallocated = ~(rose_addr_t)0;

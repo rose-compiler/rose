@@ -4,6 +4,8 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <boost/version.hpp>

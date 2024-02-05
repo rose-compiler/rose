@@ -7,6 +7,7 @@ static const char *description =
     "whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/CommandLine.h>

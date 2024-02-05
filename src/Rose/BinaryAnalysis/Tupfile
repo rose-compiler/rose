@@ -2,6 +2,8 @@ include_rules
 
 run $(librose_compile)				\
     AbstractLocation.C				\
+    AddressInterval.C				\
+    AddressIntervalSet.C			\
     AsmFunctionIndex.C				\
     AstHash.C					\
     BestMapAddress.C				\
@@ -51,6 +53,8 @@ run $(librose_compile)				\
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AbstractLocation.h						\
+    AddressInterval.h						\
+    AddressIntervalSet.h					\
     AsmFunctionIndex.h						\
     AstHash.h							\
     BasicTypes.h						\

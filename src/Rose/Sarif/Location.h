@@ -4,6 +4,7 @@
 #define ROSE_Sarif_Location_H
 #include <Rose/Sarif/Node.h>
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/SourceLocation.h>
 
 namespace Rose {
@@ -44,7 +45,7 @@ private:
 
     // Info for a binary location or region. These are valid only if source is not valid.
     std::string binaryArtifact_;
-    AddressInterval binaryRegion_;
+    BinaryAnalysis::AddressInterval binaryRegion_;
 
     // Each location can have a message
     std::string message_;
@@ -53,7 +54,7 @@ public:
     ~Location();
 protected:
     explicit Location(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg);
-    Location(const std::string &binaryArtifact, const AddressInterval&, const std::string &mesg);
+    Location(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval&, const std::string &mesg);
 public:
     /** Allocating constructor for a source location. */
     static Ptr instance(const SourceLocation&, const std::string &mesg = "");
@@ -75,7 +76,7 @@ public:
      *  makes it impossible to represent such a region. Therefore, during output to the SARIF file, such a region will have its size
      *  decreased by one, thereby excluding the maximum address but resulting in a size that can be represented in the same number
      *  of bits as the address. */
-    static Ptr instance(const std::string &binaryArtifact, const AddressInterval&, const std::string &mesg = "");
+    static Ptr instance(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval&, const std::string &mesg = "");
 
     /** Source location.
      *
@@ -104,7 +105,7 @@ public:
      *  Returns the binary region as pair consisting of the binary artifact name, and the address interval. If this object stores
      *  only a binary location (not a region) then the address interval is a singleton. If this object stores a source location or
      *  region, then the return value is an empty string and an empty address interval. */
-    std::pair<std::string, AddressInterval> binaryRegion() const;
+    std::pair<std::string, BinaryAnalysis::AddressInterval> binaryRegion() const;
 
     /** Property: Text message.
      *

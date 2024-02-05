@@ -5,6 +5,7 @@ const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/MagicNumber.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>

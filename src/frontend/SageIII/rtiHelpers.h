@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
 #include <Sawyer/BitVector.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 
 // Helpful functions for Cxx_GrammarRTI.C
 // Probably should not be included anywhere else
