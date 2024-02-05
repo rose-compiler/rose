@@ -1200,7 +1200,6 @@ class EasyStorage<SgSharedVector<BASIC_TYPE> >: public StorageClassMemoryManagem
     void storeDataInEasyStorageClass(const SgSharedVector<BASIC_TYPE>& data_);
     SgSharedVector<BASIC_TYPE> rebuildDataStoredInEasyStorageClass() const;
 };
-#endif
 
 /** Maps an ExtentMap to/from file representation. */
 template<>
@@ -1221,6 +1220,8 @@ class EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>: public StorageClass
     void storeDataInEasyStorageClass(const Rose::BinaryAnalysis::AddressIntervalSet&);
     Rose::BinaryAnalysis::AddressIntervalSet rebuildDataStoredInEasyStorageClass() const;
 };
+#endif
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif  // STORAGE_CLASS_MEMORY_MANAGEMENT_H

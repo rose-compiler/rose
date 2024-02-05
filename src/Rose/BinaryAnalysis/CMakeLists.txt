@@ -44,6 +44,7 @@ add_library(roseBinaryAnalysis OBJECT
   RegisterParts.C
   RegisterDictionary.C
   RegisterNames.C
+  RelativeVirtualAddress.C
   ReturnValueUsed.C
   SerialIo.C
   SmtCommandLine.C
@@ -115,6 +116,7 @@ install(FILES
   RegisterDictionary.h
   RegisterNames.h
   RegisterParts.h
+  RelativeVirtualAddress.h
   ReturnValueUsed.h
   SerialIo.h
   SmtCommandLine.h

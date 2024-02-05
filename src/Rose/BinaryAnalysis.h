@@ -53,6 +53,7 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SmtCommandLine.h>

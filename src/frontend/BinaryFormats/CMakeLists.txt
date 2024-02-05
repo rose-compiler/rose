@@ -4,7 +4,6 @@ add_library(roseBinaryFormats OBJECT
   ExecGeneric.C
   ExtentMap.C
   Hexdump.C
-  Rva.C
   BinaryVxcoreParser.C
 
   ### BinaryComposite classes ###

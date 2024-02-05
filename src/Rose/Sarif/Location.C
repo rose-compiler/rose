@@ -25,11 +25,13 @@ Location::Location(const SourceLocation &begin, const SourceLocation &end, const
     }
 }
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 Location::Location(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval &addrs, const std::string &mesg)
     : binaryArtifact_(binaryArtifact), binaryRegion_(addrs), message_(mesg) {
     if (addrs.isEmpty())
         throw Sarif::Exception("binary region cannot be empty");
 }
+#endif
 
 Location::Ptr
 Location::instance(const SourceLocation &loc, const std::string &mesg) {
@@ -42,15 +44,19 @@ Location::instance(const SourceLocation &begin, const SourceLocation &end, const
     return Ptr(new Location(begin, end, mesg));
 }
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 Location::Ptr
 Location::instance(const std::string &binaryArtifact, rose_addr_t addr, const std::string &mesg) {
     return Ptr(new Location(binaryArtifact, addr, mesg));
 }
+#endif
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 Location::Ptr
 Location::instance(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval &addrs, const std::string &mesg) {
     return Ptr(new Location(binaryArtifact, addrs, mesg));
 }
+#endif
 
 const SourceLocation&
 Location::sourceLocation() const {
@@ -62,6 +68,7 @@ Location::sourceRegion() const {
     return std::make_pair(sourceBegin_, sourceEnd_);
 }
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 std::pair<std::string, rose_addr_t>
 Location::binaryLocation() const {
     if (binaryRegion_) {
@@ -70,11 +77,14 @@ Location::binaryLocation() const {
         return std::make_pair("", 0);
     }
 }
+#endif
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 std::pair<std::string, BinaryAnalysis::AddressInterval>
 Location::binaryRegion() const {
     return std::make_pair(binaryArtifact_, binaryRegion_);
 }
+#endif
 
 const std::string&
 Location::message() const {
@@ -120,6 +130,7 @@ Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
         }
 
     } else {
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
         ASSERT_forbid(binaryRegion_.isEmpty());
         out <<firstPrefix <<"physicalLocation:\n";
         out <<pp <<"artifactLocation:\n";
@@ -132,6 +143,9 @@ Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
         } else {
             out <<ppp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.size()) <<"\n";
         }
+#else
+        ASSERT_not_reachable("binary analysis is not supported");
+#endif
     }
 
     emitMessage(out, p);

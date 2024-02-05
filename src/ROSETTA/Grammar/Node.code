@@ -52,59 +52,8 @@ namespace Rose {
   }
 }
 
-// This is all documented in Rva.C since doxygen can't pick of documentation from this file.
-class ROSE_DLL_API rose_rva_t {
-        public:
-                rose_rva_t();
-                rose_rva_t(const rose_rva_t&);
-                rose_rva_t operator=(const rose_rva_t&);
-                rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=nullptr); //implicit
-                static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
-                bool is_bound() const;
-                rose_addr_t get_rva() const;
-                rose_rva_t& set_rva(rose_addr_t rva);
-                SgAsmGenericSection *get_section() const;
-                rose_rva_t& set_section(SgAsmGenericSection *section);
-                rose_rva_t& bind(SgAsmGenericHeader*);
-                rose_addr_t get_va() const;
-                rose_addr_t get_rel() const;
-                rose_addr_t get_rel(SgAsmGenericSection*);
-                void increment(rose_addr_t amount);
-                std::string to_string() const;
-        private:
-                rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
-                SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
-
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-        private:
-                friend class boost::serialization::access;
-
-                template<class S>
-                void serialize(S &s, const unsigned /*version*/) {
-                    s & BOOST_SERIALIZATION_NVP(addr);
-                    s & BOOST_SERIALIZATION_NVP(section);
-                }
-#endif
-};
-#endif
-
-#ifndef SWIG
-
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-std::ostream &operator<<(std::ostream&, const rose_rva_t&);
-
-rose_addr_t operator-(const rose_rva_t &a1, const rose_rva_t &a2);
-rose_addr_t operator+(const rose_rva_t &a1, const rose_rva_t &a2);
-
-bool operator< (const rose_rva_t &a1, const rose_rva_t &a2);
-bool operator<=(const rose_rva_t &a1, const rose_rva_t &a2);
-bool operator> (const rose_rva_t &a1, const rose_rva_t &a2);
-bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2);
-bool operator==(const rose_rva_t &a1, const rose_rva_t &a2);
-bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
-#endif
-
-#endif
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+using rose_rva_t = Rose::BinaryAnalysis::RelativeVirtualAddress;
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
@@ -165,7 +114,6 @@ struct HexdumpFormat {
 
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /** Mapping from instruction virtual address to instruction. */
 typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 #endif

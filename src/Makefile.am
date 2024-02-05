@@ -530,6 +530,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/RegisterDictionary.h					\
 	Rose/BinaryAnalysis/RegisterNames.h						\
 	Rose/BinaryAnalysis/RegisterParts.h						\
+	Rose/BinaryAnalysis/RelativeVirtualAddress.h					\
 	Rose/BinaryAnalysis/ReturnValueUsed.h						\
 	Rose/BinaryAnalysis/SerialIo.h							\
 	Rose/BinaryAnalysis/SmtCommandLine.h						\

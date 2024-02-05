@@ -4442,6 +4442,7 @@ SgSharedVector<TYPE> EasyStorage <SgSharedVector<TYPE> > :: rebuildDataStoredInE
    ****************************************************************************************
 */
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 void EasyStorage<ExtentMap>::storeDataInEasyStorageClass(const ExtentMap& emap)
 {
     /* Since first and second elements of the value_type pair are identical (both rose_addr_t), we store them in a single pool
@@ -4507,11 +4508,13 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 
      return emap;
    }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementations for AddressIntervalSet
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 void
 EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>::storeDataInEasyStorageClass(const Rose::BinaryAnalysis::AddressIntervalSet &set)
 {
@@ -4577,4 +4580,4 @@ EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>::rebuildDataStoredInEasySt
     }
     return retval;
 }
-
+#endif
