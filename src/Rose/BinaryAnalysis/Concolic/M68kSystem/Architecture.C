@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 // Temporary during testing
 #include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>
@@ -99,7 +100,7 @@ Architecture::entryAddress() {
     if (SgAsmInterpretation *interp = partitioner()->interpretation()) {
         for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
             ASSERT_not_null(header);
-            for (const rose_rva_t &rva: header->get_entryRvas())
+            for (const RelativeVirtualAddress &rva: header->get_entryRvas())
                 return header->get_baseVa() + rva.get_rva();
         }
     }

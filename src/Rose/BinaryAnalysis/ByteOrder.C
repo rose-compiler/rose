@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "ByteOrder.h"
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BitOps.h>
 
 namespace Rose {
@@ -279,25 +280,25 @@ host_to_be(int64_t h, int64_t *n) {
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_le(rose_rva_t h, uint32_t *n) {
+host_to_le(RelativeVirtualAddress h, uint32_t *n) {
     hostToLe(h, n);
 }
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_le(rose_rva_t h, uint64_t *n) {
+host_to_le(RelativeVirtualAddress h, uint64_t *n) {
     hostToLe(h, n);
 }
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_be(rose_rva_t h, uint32_t *n) {
+host_to_be(RelativeVirtualAddress h, uint32_t *n) {
     hostToBe(h, n);
 }
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_be(rose_rva_t h, uint64_t *n) {
+host_to_be(RelativeVirtualAddress h, uint64_t *n) {
     hostToBe(h, n);
 }
 
@@ -375,7 +376,7 @@ host_to_disk(Endianness sex, rose_addr_t h, uint64_t *np) {
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_disk(Endianness sex, rose_rva_t h, uint64_t *np) {
+host_to_disk(Endianness sex, RelativeVirtualAddress h, uint64_t *np) {
     hostToDisk(sex, h.get_rva(), np);
 }
 

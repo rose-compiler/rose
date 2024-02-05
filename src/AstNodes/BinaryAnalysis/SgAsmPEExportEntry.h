@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** Export entry. */
 class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
 public:
@@ -22,7 +24,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t exportRva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress exportRva;
 
     /** Property: Forwarder.
      *
@@ -36,7 +38,8 @@ public:
     /** @} */
 
 public:
-    SgAsmPEExportEntry(SgAsmGenericString *name, unsigned ordinal, rose_rva_t export_rva, SgAsmGenericString *forwarder);
+    SgAsmPEExportEntry(SgAsmGenericString *name, unsigned ordinal, Rose::BinaryAnalysis::RelativeVirtualAddress export_rva,
+                       SgAsmGenericString *forwarder);
     void dump(FILE *f,const char *prefix,ssize_t idx) const;
     /* Accessors. Override ROSETTA because we adjust parents. */
 
@@ -52,6 +55,6 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    const rose_rva_t& get_export_rva() const ROSE_DEPRECATED("use get_exportRva");
-    void set_export_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_exportRva");
+    const Rose::BinaryAnalysis::RelativeVirtualAddress& get_export_rva() const ROSE_DEPRECATED("use get_exportRva");
+    void set_export_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use set_exportRva");
 };

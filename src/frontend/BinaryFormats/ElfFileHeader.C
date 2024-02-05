@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
@@ -181,7 +182,7 @@ SgAsmElfFileHeader::parse()
     p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
-    rose_rva_t entry_rva, sectab_rva, segtab_rva;
+    Rose::BinaryAnalysis::RelativeVirtualAddress entry_rva, sectab_rva, segtab_rva;
     if (1 == disk32.e_ident_file_class) {
         get_executableFormat()->set_wordSize(4);
 

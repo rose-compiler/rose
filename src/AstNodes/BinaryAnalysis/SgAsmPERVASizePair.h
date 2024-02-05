@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** RVA/size pair. */
 class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,7 +32,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t e_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress e_rva;
 
     /** Property: Size.
      *

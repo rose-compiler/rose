@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 /** One entry from the dynamic linking table. */
 class SgAsmElfDynamicEntry: public SgAsmExecutableFileFormat {
@@ -120,7 +121,7 @@ public:
      *
      *  See ELF specification for details. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t d_val;
+    Rose::BinaryAnalysis::RelativeVirtualAddress d_val;
 
     /** Property: Name.
      *

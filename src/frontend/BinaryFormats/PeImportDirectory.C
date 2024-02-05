@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
@@ -172,7 +173,7 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
  * are different than the ILT even when @p assume_bound is false.  When this happens, we emit a warning message and treat the
  * conflicting IAT entry as a bound address. */
 void
-SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound)
+SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start, bool assume_bound)
 {
     SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
     assert(isec!=nullptr);
@@ -223,7 +224,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                 <<" continuing to read IAT entries.\n";
                 }
                 assert(idx<imports.size());
-                imports[idx]->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
+                imports[idx]->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
                 continue;
             } else {
                 break;
@@ -259,7 +260,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                <<import_item->get_bound_rva().get_rva() <<" (using new value)\n";
                 }
             }
-            import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
+            import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
         } else if (0!=(entry_word & by_ordinal_bit)) {
             /* The entry is an ordinal number. */
             if (entry_existed && import_item->get_ordinal()!=0 && import_item->get_ordinal()!=(entry_word & 0xffff)) {
@@ -270,7 +271,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                <<import_item->get_ordinal()
                                <<" (assuming this is a bound address)\n";
                 }
-                import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
+                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
             } else {
                 import_item->set_by_ordinal(true);
                 import_item->set_ordinal(entry_word & 0xffff);
@@ -293,7 +294,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                <<": entry type \"hint/name\" conflicts with entry type already discovered"
                                <<" \"ordinal\" (assuming this is a bound address)\n";
                 }
-                import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
+                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
             } else if (entry_existed && import_item->get_hintname_rva().get_rva()>0 &&
                        import_item->get_hintname_rva().get_rva()!=entry_word) {
                 if (SgAsmPEImportSection::showImportMessage()) {
@@ -304,10 +305,10 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                                <<import_item->get_hintname_rva().get_rva()
                                <<" (assuming this is a bound address)\n";
                 }
-                import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
+                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
             } else {
                 import_item->set_by_ordinal(false);
-                import_item->set_hintname_rva(rose_rva_t(entry_word).bind(fhdr));
+                import_item->set_hintname_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
                 import_item->set_hintname_nalloc(0); // for now, will adjust after we read it
                 rose_addr_t entry_word_va = entry_word + fhdr->get_baseVa();
                 uint16_t hint;
@@ -395,7 +396,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
  * section often references IAT entries via indirect jumps/calls and it is infeasible to move the IAT to a new location.  If
  * unparsing is unable to write all table entries due to the @p tablesize limit, an error message is printed. */
 void
-SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table_start, bool assume_bound,
+SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAddress &table_start, bool assume_bound,
                                         size_t tablesize) const
 {
     SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
@@ -428,7 +429,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
         }
     }
 
-    rose_rva_t entry_rva = table_start;
+    RelativeVirtualAddress entry_rva = table_start;
     for (size_t idx=0; idx<nelmts/*including zero terminator*/; ++idx, entry_rva.increment(entry_size)) {
         uint64_t entry_word = 0;
 
@@ -439,7 +440,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
             break;
         }
 
-        rose_rva_t hn_rva = imports[idx]->get_hintname_rva();
+        RelativeVirtualAddress hn_rva = imports[idx]->get_hintname_rva();
 
         /* Build the IAT/ILT entry */
         if (assume_bound) {
@@ -527,9 +528,9 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 }
 
 size_t
-SgAsmPEImportDirectory::reallocate(rose_rva_t start_rva)
+SgAsmPEImportDirectory::reallocate(RelativeVirtualAddress start_rva)
 {
-    rose_rva_t end_rva = start_rva;
+    RelativeVirtualAddress end_rva = start_rva;
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
 
     /* Allocate space for the name if it hasn't been allocated already; reallocate space if its allocated in the import
@@ -648,18 +649,18 @@ SgAsmPEImportDirectory::set_dll_name(SgAsmGenericString *x) {
     set_dllName(x);
 }
 
-const rose_rva_t&
+const RelativeVirtualAddress&
 SgAsmPEImportDirectory::get_dll_name_rva() const {
     return get_dllNameRva();
 }
 
-rose_rva_t&
+RelativeVirtualAddress&
 SgAsmPEImportDirectory::get_dll_name_rva() {
     return get_dllNameRva();
 }
 
 void
-SgAsmPEImportDirectory::set_dll_name_rva(const rose_rva_t &x) {
+SgAsmPEImportDirectory::set_dll_name_rva(const RelativeVirtualAddress &x) {
     set_dllNameRva(x);
 }
 

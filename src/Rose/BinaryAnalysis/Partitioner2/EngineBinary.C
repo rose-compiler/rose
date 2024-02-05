@@ -30,6 +30,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
@@ -1736,7 +1737,7 @@ EngineBinary::makeEntryFunctions(const Partitioner::Ptr &partitioner, SgAsmInter
     std::vector<Function::Ptr> retval;
     if (interp) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
-            for (const rose_rva_t &rva: fileHeader->get_entryRvas()) {
+            for (const RelativeVirtualAddress &rva: fileHeader->get_entryRvas()) {
                 rose_addr_t va = rva.get_rva() + fileHeader->get_baseVa();
                 Function::Ptr function = Function::instance(va, "_start", SgAsmFunction::FUNC_ENTRY_POINT);
                 insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);

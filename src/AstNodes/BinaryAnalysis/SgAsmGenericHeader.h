@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 /** Base class for container file headers. */
 class SgAsmGenericHeader: public SgAsmGenericSection {
@@ -68,7 +69,7 @@ public:
     rose_addr_t get_entryRva() const;
 
     /** Append an RVA to the list of entry points. */
-    void addEntryRva(const rose_rva_t&);
+    void addEntryRva(const Rose::BinaryAnalysis::RelativeVirtualAddress&);
 
     /* Convenience functions */
     Rose::BinaryAnalysis::ByteOrder::Endianness get_sex() const;
@@ -146,7 +147,7 @@ public:
     virtual const char *format_name() const ROSE_DEPRECATED("use formatName");
     void add_dll(SgAsmGenericDLL*) ROSE_DEPRECATED("use addDll");
     rose_addr_t get_entry_rva() const ROSE_DEPRECATED("use get_entryRva");
-    void add_entry_rva(const rose_rva_t&) ROSE_DEPRECATED("use addEntryRva");
+    void add_entry_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use addEntryRva");
     size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
     void add_section(SgAsmGenericSection*) ROSE_DEPRECATED("use addSection");
     void remove_section(SgAsmGenericSection*) ROSE_DEPRECATED("use removeSection");

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** ELF error handling frame entry frame description entry. */
 class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
 public:
@@ -5,7 +7,7 @@ public:
      *
      *  See official ELF specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t begin_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress begin_rva;
 
     /** Property: Size in bytes.
      *

@@ -1,6 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
@@ -44,7 +45,7 @@ SgAsmPERVASizePair::set_section(SgAsmGenericSection *section)
         set_isModified(true);
     p_section = section;
     if (section) {
-        set_e_rva(rose_rva_t(section->get_mappedPreferredRva(), section));
+        set_e_rva(Rose::BinaryAnalysis::RelativeVirtualAddress(section->get_mappedPreferredRva(), section));
         set_e_size(section->get_mappedSize());
     } else {
         set_e_rva(0);

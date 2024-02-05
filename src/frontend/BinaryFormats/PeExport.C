@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
 
 using namespace Rose;
@@ -95,7 +96,7 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-SgAsmPEExportEntry::SgAsmPEExportEntry(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr,
+SgAsmPEExportEntry::SgAsmPEExportEntry(SgAsmGenericString *fname, unsigned ordinal, RelativeVirtualAddress expaddr,
                                        SgAsmGenericString *forwarder) {
     initializeProperties();
 
@@ -253,7 +254,7 @@ SgAsmPEExportSection::parse()
         }
 
         // Read the address from the Export Address Table. This table is indexed by ordinal.
-        rose_rva_t expaddr = 0;                         // export address
+        RelativeVirtualAddress expaddr = 0;                         // export address
         const rose_addr_t expaddr_va = get_exportDirectory()->get_expaddr_rva().get_va() + ordinal * sizeof(ExportAddress_disk);
         try {
             ExportAddress_disk expaddr_disk;
@@ -339,13 +340,13 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
-const rose_rva_t&
+const RelativeVirtualAddress&
 SgAsmPEExportEntry::get_export_rva() const {
     return get_exportRva();
 }
 
 void
-SgAsmPEExportEntry::set_export_rva(const rose_rva_t &x) {
+SgAsmPEExportEntry::set_export_rva(const RelativeVirtualAddress &x) {
     set_exportRva(x);
 }
 

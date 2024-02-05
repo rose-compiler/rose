@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** A single imported object.
  *
  *  Each of these nodes is created from a combination of the PE Import Lookup Table and the PE Import Address Table, pointers to
@@ -35,7 +37,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t hintname_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress hintname_rva;
 
     /** Property: File bytes allocated for hint/name pair.
      *
@@ -47,7 +49,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t bound_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress bound_rva;
 
     /** Property: Whether the resolved address has been written to the memory map.
      *

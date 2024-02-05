@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
 
 using namespace Rose;
@@ -363,13 +364,13 @@ SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, rose_addr_t start_va
 }
 
 size_t
-SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, const rose_rva_t &start, void *dst_buf,
+SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf,
                                   rose_addr_t size, bool strict) {
     return readContent(map, start, dst_buf, size, strict);
 }
 
 size_t
-SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, const rose_rva_t &start, void *dst_buf,
+SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf,
                                  rose_addr_t size, bool strict) {
     return readContent(map, start.get_va(), dst_buf, size, strict);
 }
@@ -450,7 +451,7 @@ SgAsmGenericSection::readContentString(rose_addr_t abs_offset, bool strict)
 }
 
 std::string
-SgAsmGenericSection::readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict) {
+SgAsmGenericSection::readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, RelativeVirtualAddress rva, bool strict) {
     return readContentString(map, rva.get_va(), strict);
 }
 
@@ -811,13 +812,13 @@ SgAsmGenericSection::get_vaOffset(rose_addr_t va) const
 }
 
 void
-SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
+SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix, RelativeVirtualAddress rva,
                                               const SgAsmGenericSectionPtrList &slist) {
     return dumpContainingSections(f, prefix, rva, slist);
 }
 
 void
-SgAsmGenericSection::dumpContainingSections(FILE *f, const std::string &prefix, rose_rva_t rva,
+SgAsmGenericSection::dumpContainingSections(FILE *f, const std::string &prefix, RelativeVirtualAddress rva,
                                             const SgAsmGenericSectionPtrList &slist)
 {
     for (size_t i=0; i<slist.size(); i++) {

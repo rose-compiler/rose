@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
 #include <boost/format.hpp>
 
@@ -523,7 +524,7 @@ SgAsmPEFileHeader::set_rvaSizePair(PairPurpose idx, SgAsmPESection *section)
 
     SgAsmPERVASizePair *pair = get_rvaSizePairs()->get_pairs()[idx];
     ROSE_ASSERT(pair!=NULL);
-    pair->set_e_rva(rose_rva_t(section->get_mappedPreferredRva(), section));
+    pair->set_e_rva(RelativeVirtualAddress(section->get_mappedPreferredRva(), section));
     pair->set_e_size(section->get_mappedSize());
     pair->set_section(section);
 
@@ -549,7 +550,7 @@ SgAsmPEFileHeader::updateRvaSizePairs()
         SgAsmPERVASizePair *pair = get_rvaSizePairs()->get_pairs()[i];
         SgAsmGenericSection *section = pair->get_section();
         if (section) {
-            pair->set_e_rva(rose_rva_t(section->get_mappedPreferredRva(), section));
+            pair->set_e_rva(RelativeVirtualAddress(section->get_mappedPreferredRva(), section));
             pair->set_e_size(section->get_mappedSize());
         }
     }

@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
 
 using namespace Rose::Diagnostics;
@@ -138,7 +139,7 @@ SgAsmPEImportSection::reallocate()
 {
     importMessageReset();
     bool reallocated = SgAsmPESection::reallocate();
-    rose_rva_t end_rva(this->get_mappedPreferredRva(), this);
+    Rose::BinaryAnalysis::RelativeVirtualAddress end_rva(this->get_mappedPreferredRva(), this);
     SgAsmPEImportDirectoryPtrList &dirlist = get_importDirectories()->get_vector();
 
     /* Space needed for the list of import directory structs. The list is terminated with a zero entry. */
@@ -165,15 +166,15 @@ SgAsmPEImportSection::reallocate()
 }
 
 size_t
-SgAsmPEImportSection::reallocate_iats(rose_rva_t start_at)
+SgAsmPEImportSection::reallocate_iats(Rose::BinaryAnalysis::RelativeVirtualAddress start_at)
 {
     return reallocateIats(start_at);
 }
 
 size_t
-SgAsmPEImportSection::reallocateIats(rose_rva_t start_at)
+SgAsmPEImportSection::reallocateIats(Rose::BinaryAnalysis::RelativeVirtualAddress start_at)
 {
-    rose_rva_t rva = start_at;
+    Rose::BinaryAnalysis::RelativeVirtualAddress rva = start_at;
     const SgAsmPEImportDirectoryPtrList &dirs = get_importDirectories()->get_vector();
     for (SgAsmPEImportDirectoryPtrList::const_iterator di=dirs.begin(); di!=dirs.end(); ++di) {
         (*di)->set_iat_rva(rva);

@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 /** Contiguous region of a file.
  *
@@ -204,7 +205,8 @@ public:
     SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*);
 
     /** Prints info about offsets into known sections. */
-    static void dumpContainingSections(FILE*, const std::string &prefix, rose_rva_t, const SgAsmGenericSectionPtrList&);
+    static void dumpContainingSections(FILE*, const std::string &prefix, Rose::BinaryAnalysis::RelativeVirtualAddress,
+                                       const SgAsmGenericSectionPtrList&);
 
     /** Saves a reference to the original file data for a section based on the section's current offset and size.
      *
@@ -303,8 +305,8 @@ public:
      * @{ */
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
                        rose_addr_t size, bool strict=true);
-    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
-                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress &start,
+                       void *dst_buf, rose_addr_t size, bool strict=true);
     /** @} */
 
     /** Reads data from a file.
@@ -331,7 +333,8 @@ public:
      *
      * @{ */
     std::string readContentString(rose_addr_t abs_offset, bool strict=true);
-    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, Rose::BinaryAnalysis::RelativeVirtualAddress rva,
+                                  bool strict=true);
     /** @} */
 
     /** Reads a string from the file.
@@ -470,7 +473,8 @@ public:
     void set_contains_code(bool) ROSE_DEPRECATED("use set_containsCode");
     rose_addr_t get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
     void set_mapped_actual_va(rose_addr_t) ROSE_DEPRECATED("use set_mappedActualVa");
-    static void dump_containing_sections(FILE*, const std::string&, rose_rva_t, const SgAsmGenericSectionPtrList&)
+    static void dump_containing_sections(FILE*, const std::string&, Rose::BinaryAnalysis::RelativeVirtualAddress,
+                                         const SgAsmGenericSectionPtrList&)
         ROSE_DEPRECATED("use dumpContainingSections");
     void grab_content() ROSE_DEPRECATED("use grabContent");
     void unparse_holes(std::ostream&) const ROSE_DEPRECATED("use unparseHoles");
@@ -481,13 +485,15 @@ public:
     size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
     size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t,  void*, rose_addr_t, bool=true)
         ROSE_DEPRECATED("use readContent");
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t&, void*, rose_addr_t, bool=true)
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress&, void*,
+                        rose_addr_t, bool=true)
         ROSE_DEPRECATED("use readContent");
     size_t read_content_local(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocal");
     std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
         ROSE_DEPRECATED("use readContentString");
     std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_rva_t, bool=true)
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::RelativeVirtualAddress,
+                                 bool=true)
         ROSE_DEPRECATED("use readContentString");
     std::string read_content_local_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocalString");
     SgUnsignedCharList read_content_local_ucl(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use readContentLocalUcl");

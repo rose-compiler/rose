@@ -2,6 +2,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #include "stringify.h"
 
@@ -247,7 +248,7 @@ SgAsmElfDynamicSection::finishParsing()
                   }
               }
               if (best)
-                  entry->set_d_val(rose_rva_t(entry->get_d_val().get_rva(), best));
+                  entry->set_d_val(Rose::BinaryAnalysis::RelativeVirtualAddress(entry->get_d_val().get_rva(), best));
               break;
           }
           default:

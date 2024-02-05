@@ -6,6 +6,7 @@
 #include "sage3basic.h"
 
 #include "stringify.h"
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 using namespace Rose;
 
@@ -467,12 +468,12 @@ SgAsmGenericHeader::set_entry_rvas(const SgRVAList &x) {
 }
 
 void
-SgAsmGenericHeader::add_entry_rva(const rose_rva_t &rva) {
+SgAsmGenericHeader::add_entry_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress &rva) {
     addEntryRva(rva);
 }
 
 void
-SgAsmGenericHeader::addEntryRva(const rose_rva_t &rva) {
+SgAsmGenericHeader::addEntryRva(const Rose::BinaryAnalysis::RelativeVirtualAddress &rva) {
     p_entryRvas.push_back(rva);
 }
 

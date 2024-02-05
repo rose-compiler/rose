@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** Windows PE file header.
  *
  *  Most of the properties come directly from the PE specification and their documentation is not repeated here. */
@@ -236,13 +238,13 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t e_code_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress e_code_rva;
 
     /** Property: Data RVA.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t e_data_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress e_data_rva;
 
     /** Property: Section alignment.
      *

@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 /** One import directory per library.
  *
@@ -41,7 +42,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t dllNameRva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress dllNameRva;
 
     /** Property: Bytes allocated in the file for the name.
      *
@@ -65,7 +66,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t ilt_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress ilt_rva;
 
     /** Property: Bytes allocated in the file for the ILT.
      *
@@ -77,7 +78,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t iat_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress iat_rva;
 
     /** Property: Bytes allocated in the file for the IAT.
      *
@@ -111,7 +112,7 @@ public:
      *  not reallocated if they already exist in some other section. The return value is the number of bytes allocated in
      *  the import section.  Upon return, this directory's address data members are initialized with possibly new
      *  values. */
-    size_t reallocate(rose_rva_t starting_rva);
+    size_t reallocate(Rose::BinaryAnalysis::RelativeVirtualAddress starting_rva);
 
     /** Encode an import directory entry back into disk format */
     void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
@@ -145,8 +146,9 @@ public:
     size_t hintNameTableExtent(Rose::BinaryAnalysis::AddressIntervalSet &extent/*in,out*/) const;
 
 private:
-    void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
-    void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
+    void parse_ilt_iat(const Rose::BinaryAnalysis::RelativeVirtualAddress &table_start, bool assume_bound);
+    void unparse_ilt_iat(std::ostream&,const Rose::BinaryAnalysis::RelativeVirtualAddress &table_start, bool assume_bound,
+                         size_t nalloc) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -154,9 +156,9 @@ private:
 public:
     SgAsmGenericString* get_dll_name() const ROSE_DEPRECATED("use get_dllName");
     void set_dll_name(SgAsmGenericString*) ROSE_DEPRECATED("use set_dllName");
-    const rose_rva_t& get_dll_name_rva() const ROSE_DEPRECATED("use get_dllNameRva");
-    rose_rva_t& get_dll_name_rva() ROSE_DEPRECATED("use get_dllNameRva");
-    void set_dll_name_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_dllNameRva");
+    const Rose::BinaryAnalysis::RelativeVirtualAddress& get_dll_name_rva() const ROSE_DEPRECATED("use get_dllNameRva");
+    Rose::BinaryAnalysis::RelativeVirtualAddress& get_dll_name_rva() ROSE_DEPRECATED("use get_dllNameRva");
+    void set_dll_name_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use set_dllNameRva");
     size_t iat_required_size() const ROSE_DEPRECATED("use iatRequiredSize");
     int find_import_item(const SgAsmPEImportItem*, int=0) const ROSE_DEPRECATED("use findImportItem");
     size_t hintname_table_extent(Rose::BinaryAnalysis::AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");

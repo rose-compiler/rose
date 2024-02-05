@@ -22,6 +22,7 @@
 #include <Rose/RecursionCounter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -2818,7 +2819,7 @@ Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
         if (SgAsmElfDynamicEntryList *dentriesNode = dynamic->get_entries()) {
             for (SgAsmElfDynamicEntry *dentry: dentriesNode->get_entries()) {
                 if (dentry->get_d_tag() == SgAsmElfDynamicEntry::DT_PLTGOT) {
-                    rose_rva_t rva = dentry->get_d_val();
+                    RelativeVirtualAddress rva = dentry->get_d_val();
                     found = rva.get_section();
                     break;
                 }

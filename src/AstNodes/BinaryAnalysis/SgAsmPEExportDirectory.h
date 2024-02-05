@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** Export directory. */
 class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +63,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t name_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress name_rva;
 
     /** Property: Ordinal base.
      *
@@ -85,19 +87,19 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t expaddr_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress expaddr_rva;
 
     /** Property: Name pointer RVA.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t nameptr_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress nameptr_rva;
 
     /** Property: Ordinals RVA.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t ordinals_rva = 0;
+    Rose::BinaryAnalysis::RelativeVirtualAddress ordinals_rva;
 
     /** Property: Name.
      *

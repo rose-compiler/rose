@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
 /** Portable Executable Import Section.
  *
  *  Constructs an SgAsmPEImportSection that represents either a PE ".idata" section as defined by the PE Section Table, or
@@ -122,7 +124,7 @@
  *      void visit(SgNode *node) {
  *          SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
  *          SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
- *          static const rose_rva_t nil(0);
+ *          static const Rose::BinaryAnalysis::RelativeVirtualAddress nil(0);
  *
  *          if (idir) {
  *              idir->set_dll_name_rva(nil);
@@ -170,7 +172,7 @@ public:
      *  needed to store the entire table.  Each subsequent IAT is given the next available address and it's size is also
      *  updated.  The result is that all the IATs under this Import Section are given addresses and sizes that make them
      *  contiguous in memory. This method returns the total number of bytes required for all the IATs. */
-    size_t reallocateIats(rose_rva_t start_at);
+    size_t reallocateIats(Rose::BinaryAnalysis::RelativeVirtualAddress start_at);
 
 private:
     static size_t mesg_nprinted; //counter for import_mesg()
@@ -185,5 +187,5 @@ public:
     void remove_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use removeImportDirectory");
     static bool show_import_mesg() ROSE_DEPRECATED("use showImportMessage");
     static void import_mesg_reset() ROSE_DEPRECATED("use importMessageReset");
-    size_t reallocate_iats(rose_rva_t) ROSE_DEPRECATED("use reallocateIats");
+    size_t reallocate_iats(Rose::BinaryAnalysis::RelativeVirtualAddress) ROSE_DEPRECATED("use reallocateIats");
 };
