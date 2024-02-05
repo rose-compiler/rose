@@ -71,8 +71,8 @@ hostToLe(const Source &src, Destination *dst /*out*/,
 
 template<class T>
 void
-hostToLe(const rose_rva_t &in, T *out) {
-    hostToLe(in.get_rva(), out);
+hostToLe(const RelativeVirtualAddress &in, T *out) {
+    hostToLe(in.rva(), out);
 }
 /** @} */
 
@@ -93,8 +93,8 @@ hostToBe(const Source &src, Destination *dst,
 
 template<class T>
 void
-hostToBe(const rose_rva_t &in, T *out) {
-    hostToBe(in.get_rva(), out);
+hostToBe(const RelativeVirtualAddress &in, T *out) {
+    hostToBe(in.rva(), out);
 }
 /** @} */
 
@@ -139,8 +139,8 @@ void host_to_le(int h, int8_t *n) ROSE_DEPRECATED("use hostToLe");
 void host_to_le(int h, int16_t *n) ROSE_DEPRECATED("use hostToLe");
 void host_to_le(int h, int32_t *n) ROSE_DEPRECATED("use hostToLe");
 void host_to_le(int64_t h, int64_t *n) ROSE_DEPRECATED("use hostToLe");
-void host_to_le(rose_rva_t h, uint32_t *n) ROSE_DEPRECATED("use hostToLe");
-void host_to_le(rose_rva_t h, uint64_t *n) ROSE_DEPRECATED("use hostToLe");
+void host_to_le(RelativeVirtualAddress h, uint32_t *n) ROSE_DEPRECATED("use hostToLe");
+void host_to_le(RelativeVirtualAddress h, uint64_t *n) ROSE_DEPRECATED("use hostToLe");
 uint8_t be_to_host(uint8_t n) ROSE_DEPRECATED("use beToHost");
 uint16_t be_to_host(uint16_t n) ROSE_DEPRECATED("use beToHost");
 uint32_t be_to_host(uint32_t n) ROSE_DEPRECATED("use beToHost");
@@ -157,8 +157,8 @@ void host_to_be(int h, int8_t *n) ROSE_DEPRECATED("use hostToBe");
 void host_to_be(int h, int16_t *n) ROSE_DEPRECATED("use hostToBe");
 void host_to_be(int h, int32_t *n) ROSE_DEPRECATED("use hostToBe");
 void host_to_be(int64_t h, int64_t *n) ROSE_DEPRECATED("use hostToBe");
-void host_to_be(rose_rva_t h, uint32_t *n) ROSE_DEPRECATED("use hostToBe");
-void host_to_be(rose_rva_t h, uint64_t *n) ROSE_DEPRECATED("use hostToBe");
+void host_to_be(RelativeVirtualAddress h, uint32_t *n) ROSE_DEPRECATED("use hostToBe");
+void host_to_be(RelativeVirtualAddress h, uint64_t *n) ROSE_DEPRECATED("use hostToBe");
 uint8_t disk_to_host(Endianness sex, uint8_t n) ROSE_DEPRECATED("use diskToHost");
 uint16_t disk_to_host(Endianness sex, uint16_t n) ROSE_DEPRECATED("use diskToHost");
 uint32_t disk_to_host(Endianness sex, uint32_t n) ROSE_DEPRECATED("use diskToHost");
@@ -171,7 +171,7 @@ void host_to_disk(Endianness sex, unsigned h, uint8_t *np) ROSE_DEPRECATED("use 
 void host_to_disk(Endianness sex, unsigned h, uint16_t *np) ROSE_DEPRECATED("use hostToDisk");
 void host_to_disk(Endianness sex, unsigned h, uint32_t *np) ROSE_DEPRECATED("use hostToDisk");
 void host_to_disk(Endianness sex, rose_addr_t h, uint64_t *np) ROSE_DEPRECATED("use hostToDisk");
-void host_to_disk(Endianness sex, rose_rva_t h, uint64_t *np) ROSE_DEPRECATED("use hostToDisk");
+void host_to_disk(Endianness sex, RelativeVirtualAddress h, uint64_t *np) ROSE_DEPRECATED("use hostToDisk");
 void host_to_disk(Endianness sex, int h, int8_t *np) ROSE_DEPRECATED("use hostToDisk");
 void host_to_disk(Endianness sex, int h, int16_t *np) ROSE_DEPRECATED("use hostToDisk");
 void host_to_disk(Endianness sex, int h, int32_t *np) ROSE_DEPRECATED("use hostToDisk");

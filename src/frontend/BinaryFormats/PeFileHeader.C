@@ -378,9 +378,9 @@ SgAsmPEFileHeader::parse()
 
     /* Associate RVAs with particular sections so that if a section's mapping is changed the RVA gets adjusted automatically. */
     ROSE_ASSERT(get_entryRvas().size()==1);
-    get_entryRvas()[0].bind(this);
-    get_e_code_rva().bind(this);
-    get_e_data_rva().bind(this);
+    get_entryRvas()[0].bindBestSection(this);
+    get_e_code_rva().bindBestSection(this);
+    get_e_data_rva().bindBestSection(this);
 
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
     createTableSections();
@@ -617,7 +617,7 @@ SgAsmPEFileHeader::createTableSections()
         ROSE_ASSERT(map!=NULL);
         if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
             mlog[WARN] <<"SgAsmPEFileHeader::createTableSections: pair-" <<i
-                       <<", rva=" <<StringUtility::addrToString(pair->get_e_rva().get_rva())
+                       <<", rva=" <<StringUtility::addrToString(pair->get_e_rva().rva())
                        <<", size=" <<StringUtility::plural(pair->get_e_size(), "bytes")
                        <<" \"" <<StringUtility::cEscape(tabname) <<"\":"
                        <<" unable to find a mapping for the virtual address (skipping)\n";
@@ -684,14 +684,14 @@ SgAsmPEFileHeader::createTableSections()
         tabsec->set_fileAlignment(1);
 
         tabsec->set_mappedAlignment(1);
-        tabsec->set_mappedPreferredRva(pair->get_e_rva().get_rva());
-        tabsec->set_mappedActualVa(pair->get_e_rva().get_rva()+get_baseVa()); /*FIXME: not sure this is correct. [RPM 2009-09-11]*/
+        tabsec->set_mappedPreferredRva(pair->get_e_rva().rva());
+        tabsec->set_mappedActualVa(pair->get_e_rva().rva()+get_baseVa()); /*FIXME: not sure this is correct. [RPM 2009-09-11]*/
         tabsec->set_mappedSize(pair->get_e_size());
         tabsec->set_mappedReadPermission(true);
         tabsec->set_mappedWritePermission(false);
         tabsec->set_mappedExecutePermission(false);
         pair->set_section(tabsec);
-        pair->get_e_rva().set_section(tabsec);
+        pair->get_e_rva().bindSection(tabsec);
     }
 
     /* Now parse the sections */
@@ -952,8 +952,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_code_size",         p_e_code_size, p_e_code_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_data_size",         p_e_data_size, p_e_data_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_bss_size",          p_e_bss_size, p_e_bss_size);
-    fprintf(f, "%s%-*s = %s\n",                        p, w, "e_code_rva",          p_e_code_rva.to_string().c_str());
-    fprintf(f, "%s%-*s = %s\n",                        p, w, "e_data_rva",          p_e_data_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "e_code_rva",          p_e_code_rva.toString().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "e_data_rva",          p_e_data_rva.toString().c_str());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_section_align",     p_e_section_align, p_e_section_align);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_align",        p_e_file_align, p_e_file_align);
     fprintf(f, "%s%-*s = %u.%u\n",                     p, w, "os_vers",             p_e_os_major, p_e_os_minor);
@@ -976,7 +976,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         std::string p2 = (boost::format("%s.pair[%d].") %p %i).str();
         w = std::max(1, DUMP_FIELD_WIDTH-(int)p2.size());
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08" PRIx64 " (%" PRIu64 ")\n", p2.c_str(), w, "..",
-                get_rvaSizePairs()->get_pairs()[i]->get_e_rva().to_string().c_str(),
+                get_rvaSizePairs()->get_pairs()[i]->get_e_rva().toString().c_str(),
                 get_rvaSizePairs()->get_pairs()[i]->get_e_size(), get_rvaSizePairs()->get_pairs()[i]->get_e_size());
     }
     if (get_sectionTable()) {

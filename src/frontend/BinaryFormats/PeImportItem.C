@@ -84,7 +84,7 @@ SgAsmPEImportItem::get_iatEntryVa() const
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(idir);
     assert(fhdr!=NULL);
     rose_addr_t entry_size = fhdr->get_wordSize();
-    return idir->get_iat_rva().get_va() + idx * entry_size;
+    return *idir->get_iat_rva().va() + idx * entry_size;
 }
 
 void
@@ -101,21 +101,21 @@ SgAsmPEImportItem::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (p_by_ordinal) {
         fprintf(f, "%s%-*s = 0x%04x (%u)", p, w, "ordinal", p_ordinal, p_ordinal);
-        if (p_hintname_rva.get_rva()!=0 || p_hint!=0 || !p_name->get_string().empty())
+        if (p_hintname_rva.rva()!=0 || p_hint!=0 || !p_name->get_string().empty())
             fprintf(f, " (hint/name rva %s %" PRIuPTR " bytes, hint=0x%04x (%u), name=\"%s\")",
-                    p_hintname_rva.to_string().c_str(), p_hintname_nalloc, p_hint, p_hint, p_name->get_string(true).c_str());
+                    p_hintname_rva.toString().c_str(), p_hintname_nalloc, p_hint, p_hint, p_name->get_string(true).c_str());
         fprintf(f, "\n");
     } else {
         fprintf(f, "%s%-*s = rva %s %" PRIuPTR " bytes, hint=0x%04x (%u), name=\"%s\"",
-                p, w, "hint/name", p_hintname_rva.to_string().c_str(), p_hintname_nalloc,
+                p, w, "hint/name", p_hintname_rva.toString().c_str(), p_hintname_nalloc,
                 p_hint, p_hint, p_name->get_string(true).c_str());
         if (p_ordinal!=0)
             fprintf(f, " (ordinal=0x%02x (%u))", p_ordinal, p_ordinal);
         fprintf(f, "\n");
     }
 
-    if (p_bound_rva.get_rva()!=0)
-        fprintf(f, "%s%-*s = %s\n", p, w, "bound", p_bound_rva.to_string().c_str());
+    if (p_bound_rva.rva()!=0)
+        fprintf(f, "%s%-*s = %s\n", p, w, "bound", p_bound_rva.toString().c_str());
 }
 
 #endif

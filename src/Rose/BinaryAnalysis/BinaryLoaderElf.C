@@ -6,6 +6,7 @@
 #include <Rose/Diagnostics.h>
 #include "integerOps.h"                 /* needed for signExtend() */
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #include <fstream>
 #include <boost/regex.hpp>
@@ -192,9 +193,9 @@ BinaryLoaderElf::getDynamicVars(SgAsmGenericHeader *hdr, std::string &rpath/*out
         SgAsmElfDynamicEntryPtrList& entries = dynamic->get_entries()->get_entries();
         for (size_t i=0; i<entries.size(); ++i) {
             if (SgAsmElfDynamicEntry::DT_RPATH == entries[i]->get_d_tag()) {
-                rpath = entries[i]->get_d_val().to_string();
+                rpath = entries[i]->get_d_val().toString();
             } else if (SgAsmElfDynamicEntry::DT_RUNPATH == entries[i]->get_d_tag()) {
-                runpath = entries[i]->get_d_val().to_string();
+                runpath = entries[i]->get_d_val().toString();
             }
         }
     }

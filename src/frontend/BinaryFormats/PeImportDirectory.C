@@ -78,9 +78,9 @@ SgAsmPEImportDirectory::hintNameTableExtent(AddressIntervalSet &extent/*in,out*/
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     for (SgAsmPEImportItemPtrList::const_iterator ii=imports.begin(); ii!=imports.end(); ++ii) {
         SgAsmPEImportItem *import = *ii;
-        if (!import->get_by_ordinal() && import->get_hintname_rva().get_rva()!=0 && import->get_hintname_nalloc()>0) {
+        if (!import->get_by_ordinal() && import->get_hintname_rva().rva()!=0 && import->get_hintname_nalloc()>0) {
             size_t nbytes = std::min(import->get_hintname_nalloc(), import->hintNameRequiredSize());
-            extent.insert(AddressInterval::baseSize(import->get_hintname_rva().get_va(), nbytes));
+            extent.insert(AddressInterval::baseSize(*import->get_hintname_rva().va(), nbytes));
             ++retval;
         }
     }
@@ -124,22 +124,22 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
     p_iat_rva         = ByteOrder::leToHost(disk.iat_rva);
 
     /* Bind RVAs to best sections */
-    p_ilt_rva.bind(fhdr);
-    p_dllNameRva.bind(fhdr);
-    p_iat_rva.bind(fhdr);
+    p_ilt_rva.bindBestSection(fhdr);
+    p_dllNameRva.bindBestSection(fhdr);
+    p_iat_rva.bindBestSection(fhdr);
 
     /* Library name.  The PE format specification does not require the name to be contained in the import section, but we issue
      * a warning because ROSE may have problems allocating new space for the name if it's changed. */
     ROSE_ASSERT(get_dllName()!=nullptr);
     std::string dll_name;
-    if (0==get_dllNameRva().get_section()) {
+    if (0==get_dllNameRva().boundSection()) {
         if (SgAsmPEImportSection::showImportMessage()) {
             mlog[WARN] <<"SgAsmPEImportDirectory::parse: import directory at va " <<StringUtility::addrToString(idir_va)
                        <<" has bad DLL name rva " <<get_dllNameRva() <<"\n";
         }
     } else {
         try {
-            dll_name = get_dllNameRva().get_section()->readContentString(fhdr->get_loaderMap(), get_dllNameRva().get_va());
+            dll_name = get_dllNameRva().boundSection()->readContentString(fhdr->get_loaderMap(), *get_dllNameRva().va());
         } catch (const MemoryMap::NotMapped &e) {
             if (SgAsmPEImportSection::showImportMessage()) {
                 mlog[WARN] <<"SgAsmPEImportDirectory::parse: short read of dll name at rva "
@@ -155,10 +155,10 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
     p_dll_name_nalloc = dll_name.size() + 1;
 
     parse_ilt_iat(p_ilt_rva, false);
-    p_ilt_nalloc = 0==p_ilt_rva.get_rva() ? 0 : iatRequiredSize();
+    p_ilt_nalloc = 0==p_ilt_rva.rva() ? 0 : iatRequiredSize();
 
     parse_ilt_iat(p_iat_rva, false); // IAT initially is a copy of the ILT (i.e., objects are not bound to addresses yet)
-    p_iat_nalloc = 0==p_iat_rva.get_rva() ? 0 : iatRequiredSize();
+    p_iat_nalloc = 0==p_iat_rva.rva() ? 0 : iatRequiredSize();
 
     return this;
 }
@@ -184,11 +184,11 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
     SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     bool processing_iat = !imports.empty(); // we always process the ILT first (but it might be empty)
 
-    if (0==table_start.get_rva())
+    if (0==table_start.rva())
         return;                 // no ILT/IAT present
 
 
-    rose_addr_t entry_va=table_start.get_va(), entry_size=fhdr->get_wordSize();
+    rose_addr_t entry_va=*table_start.va(), entry_size=fhdr->get_wordSize();
     uint64_t by_ordinal_bit = 1ull << (8*entry_size-1);
 
     for (size_t idx=0; 1; ++idx, entry_va+=entry_size) {
@@ -224,7 +224,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
                                 <<" continuing to read IAT entries.\n";
                 }
                 assert(idx<imports.size());
-                imports[idx]->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
+                imports[idx]->set_bound_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
                 continue;
             } else {
                 break;
@@ -250,17 +250,17 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
 
         if (assume_bound) {
             /* The entry word is a virtual address. */
-            if (entry_existed && import_item->get_bound_rva().get_rva()>0 &&
-                import_item->get_bound_rva().get_rva()!=entry_word) {
+            if (entry_existed && import_item->get_bound_rva().rva()>0 &&
+                import_item->get_bound_rva().rva()!=entry_word) {
                 if (SgAsmPEImportSection::showImportMessage()) {
                     mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
                                <<" at va " <<StringUtility::addrToString(entry_va)
                                <<": bound address " <<StringUtility::addrToString(entry_word)
                                <<" conflicts with bound address already discovered "
-                               <<import_item->get_bound_rva().get_rva() <<" (using new value)\n";
+                               <<import_item->get_bound_rva().rva() <<" (using new value)\n";
                 }
             }
-            import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
+            import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
         } else if (0!=(entry_word & by_ordinal_bit)) {
             /* The entry is an ordinal number. */
             if (entry_existed && import_item->get_ordinal()!=0 && import_item->get_ordinal()!=(entry_word & 0xffff)) {
@@ -271,7 +271,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
                                <<import_item->get_ordinal()
                                <<" (assuming this is a bound address)\n";
                 }
-                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
+                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
             } else {
                 import_item->set_by_ordinal(true);
                 import_item->set_ordinal(entry_word & 0xffff);
@@ -294,21 +294,21 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
                                <<": entry type \"hint/name\" conflicts with entry type already discovered"
                                <<" \"ordinal\" (assuming this is a bound address)\n";
                 }
-                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
-            } else if (entry_existed && import_item->get_hintname_rva().get_rva()>0 &&
-                       import_item->get_hintname_rva().get_rva()!=entry_word) {
+                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
+            } else if (entry_existed && import_item->get_hintname_rva().rva()>0 &&
+                       import_item->get_hintname_rva().rva()!=entry_word) {
                 if (SgAsmPEImportSection::showImportMessage()) {
                     mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
                                <<" at va " <<StringUtility::addrToString(entry_va)
                                <<": hint/name rva " <<entry_word
                                <<" conflicts with hint/name rva already discovered "
-                               <<import_item->get_hintname_rva().get_rva()
+                               <<import_item->get_hintname_rva().rva()
                                <<" (assuming this is a bound address)\n";
                 }
-                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
+                import_item->set_bound_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
             } else {
                 import_item->set_by_ordinal(false);
-                import_item->set_hintname_rva(RelativeVirtualAddress(entry_word).bind(fhdr));
+                import_item->set_hintname_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
                 import_item->set_hintname_nalloc(0); // for now, will adjust after we read it
                 rose_addr_t entry_word_va = entry_word + fhdr->get_baseVa();
                 uint16_t hint;
@@ -408,12 +408,12 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAd
     size_t entry_size = fhdr->get_wordSize();
     uint64_t by_ordinal_bit = 1ull << (8*entry_size-1);
 
-    if (0==table_start.get_rva() || imports.empty())
+    if (0==table_start.rva() || imports.empty())
         return;
-    if (!table_start.get_section()) {
+    if (!table_start.boundSection()) {
         if (SgAsmPEImportSection::showImportMessage()) {
             mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT: table is not associated with a section: "
-                       <<table_start.to_string() <<"\n";
+                       <<table_start.toString() <<"\n";
         }
         return;
     }
@@ -422,7 +422,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAd
     size_t nelmts = std::min(tablesize/entry_size, imports.size()+1);
     if (nelmts<imports.size()+1) {
         if (SgAsmPEImportSection::showImportMessage()) {
-            mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT: table at " <<table_start.to_string()
+            mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT: table at " <<table_start.toString()
                        <<" is truncated from " <<StringUtility::plural(imports.size()+1, "entries", "entry")
                        <<" to " <<StringUtility::plural(nelmts, "entries", "entry")
                        <<" (inc. zero terminator) due to allocation constraints.\n";
@@ -436,7 +436,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAd
         /* Write the zero terminator? */
         if (idx+1==nelmts) {
             uint64_t zero = 0;
-            entry_rva.get_section()->write(f, entry_rva.get_rel(), entry_size, &zero);
+            entry_rva.boundSection()->write(f, *entry_rva.boundOffset(), entry_size, &zero);
             break;
         }
 
@@ -444,30 +444,30 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAd
 
         /* Build the IAT/ILT entry */
         if (assume_bound) {
-            entry_word = imports[idx]->get_bound_rva().get_rva();
+            entry_word = imports[idx]->get_bound_rva().rva();
         } else if (imports[idx]->get_by_ordinal()) {
             if (0!=(imports[idx]->get_ordinal() & ~0xffff)) {
                 if (SgAsmPEImportSection::showImportMessage()) {
                     mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
-                               <<" at rva " <<entry_rva.get_rva()
+                               <<" at rva " <<entry_rva.rva()
                                 <<": ordinal is out of bounds: " <<imports[idx]->get_ordinal() <<" (truncated to 16 bits)\n";
                 }
             }
             entry_word |= by_ordinal_bit | (imports[idx]->get_ordinal() & 0xffff);
-        } else if (0==hn_rva.get_rva() || nullptr==hn_rva.get_section()) {
+        } else if (0==hn_rva.rva() || nullptr==hn_rva.boundSection()) {
             if (SgAsmPEImportSection::showImportMessage()) {
                 mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
-                           <<" at rva " <<entry_rva.get_rva()
+                           <<" at rva " <<entry_rva.rva()
                            <<": non-ordinal entry has invalid hint/name pair address " <<hn_rva
                            <<" or is not associated with any section.\n";
             }
-            entry_word = hn_rva.get_rva(); // best we can do
+            entry_word = hn_rva.rva(); // best we can do
         } else {
             size_t bufsz = std::min(imports[idx]->get_hintname_nalloc(), imports[idx]->hintNameRequiredSize());
             if (bufsz < imports[idx]->hintNameRequiredSize()) {
                 if (SgAsmPEImportSection::showImportMessage()) {
                     mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
-                               <<" at rva " <<entry_rva.get_rva()
+                               <<" at rva " <<entry_rva.rva()
                                <<": insufficient space (" <<StringUtility::plural(bufsz, "bytes") <<")"
                                <<" allocated for hint/name pair at rva " <<hn_rva
                                <<" (need " <<StringUtility::plural(imports[idx]->hintNameRequiredSize(), "bytes") <<")\n";
@@ -480,7 +480,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAd
                 if (0!=(hint & ~0xffff)) {
                     if (SgAsmPEImportSection::showImportMessage()) {
                         mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
-                                   <<" at rva " <<entry_rva.get_rva()
+                                   <<" at rva " <<entry_rva.rva()
                                    <<": hint is out of bounds: " <<hint <<" (truncated to 16 bits)\n";
                     }
                 }
@@ -489,41 +489,41 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const RelativeVirtualAd
                 memcpy(&buf[2], name.c_str(), std::min(name.size()+1, bufsz-2));
                 if (bufsz>2)
                     buf[bufsz-1] = '\0';
-                hn_rva.get_section()->write(f, hn_rva.get_rel(), bufsz, &buf[0]);
-                if (0!=(hn_rva.get_rva() & by_ordinal_bit)) {
+                hn_rva.boundSection()->write(f, *hn_rva.boundOffset(), bufsz, &buf[0]);
+                if (0!=(hn_rva.rva() & by_ordinal_bit)) {
                     if (SgAsmPEImportSection::showImportMessage()) {
                         mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
-                                   <<" at rva " <<entry_rva.get_rva()
-                                   <<": hint/name pair rva " <<hn_rva.get_rva()
+                                   <<" at rva " <<entry_rva.rva()
+                                   <<": hint/name pair rva " <<hn_rva.rva()
                                    <<" has by_ordinal bit set\n";
                     }
                 }
             }
-            entry_word = hn_rva.get_rva() & ~by_ordinal_bit;
+            entry_word = hn_rva.rva() & ~by_ordinal_bit;
         }
 
         /* Write the IAT/ILT entry */
         if (0==entry_word) {
             if (SgAsmPEImportSection::showImportMessage()) {
                 mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
-                           <<" at rva " <<entry_rva.get_rva()
+                           <<" at rva " <<entry_rva.rva()
                            <<": zero table entry will cause table to be truncated when read\n";
             }
         }
         uint64_t disk = 0; // we might write only the first few bytes
         ByteOrder::hostToLe(entry_word, &disk);
-        entry_rva.get_section()->write(f, entry_rva.get_rel(), entry_size, &disk);
+        entry_rva.boundSection()->write(f, *entry_rva.boundOffset(), entry_size, &disk);
     }
 }
 
 void *
 SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 {
-    ByteOrder::hostToLe(p_ilt_rva.get_rva(),      &(disk->ilt_rva));
+    ByteOrder::hostToLe(p_ilt_rva.rva(),      &(disk->ilt_rva));
     ByteOrder::hostToLe(p_time,                   &(disk->time));
     ByteOrder::hostToLe(p_forwarder_chain,        &(disk->forwarder_chain));
-    ByteOrder::hostToLe(get_dllNameRva().get_rva(), &(disk->dll_name_rva));
-    ByteOrder::hostToLe(p_iat_rva.get_rva(),      &(disk->iat_rva));
+    ByteOrder::hostToLe(get_dllNameRva().rva(), &(disk->dll_name_rva));
+    ByteOrder::hostToLe(p_iat_rva.rva(),      &(disk->iat_rva));
     return disk;
 }
 
@@ -535,7 +535,7 @@ SgAsmPEImportDirectory::reallocate(RelativeVirtualAddress start_rva)
 
     /* Allocate space for the name if it hasn't been allocated already; reallocate space if its allocated in the import
      * section.  Allocate space even if the name is the empty string. */
-    if (0==get_dllNameRva().get_rva() || get_dllNameRva().get_section()==end_rva.get_section()) {
+    if (0==get_dllNameRva().rva() || get_dllNameRva().boundSection()==end_rva.boundSection()) {
         p_dll_name_nalloc = get_dllName()->get_string().size() + 1;
         p_dllNameRva = end_rva;
         end_rva.increment(p_dll_name_nalloc);
@@ -543,7 +543,7 @@ SgAsmPEImportDirectory::reallocate(RelativeVirtualAddress start_rva)
 
     /* Allocate space for the import lookup table if it hasn't been allocated yet. The table is terminated with a zero
      * entry (as is the IAT according to the spec even though the IAT size is implied by the ILT size). */
-    if (0==p_ilt_rva.get_rva() || p_ilt_rva.get_section()==end_rva.get_section()) {
+    if (0==p_ilt_rva.rva() || p_ilt_rva.boundSection()==end_rva.boundSection()) {
         p_ilt_nalloc = iatRequiredSize(); // ILT and IAT are always the same size
         p_ilt_rva = end_rva;
         end_rva.increment(p_ilt_nalloc);
@@ -551,7 +551,7 @@ SgAsmPEImportDirectory::reallocate(RelativeVirtualAddress start_rva)
 
     /* Allocate space for the import address table if it hasn't been allocated yet.   Note, the import address table should
      * usually be allocated explicitly because it is referenced by the program's instructions. */
-    if (0==p_iat_rva.get_rva() || p_iat_rva.get_section()==end_rva.get_section()) {
+    if (0==p_iat_rva.rva() || p_iat_rva.boundSection()==end_rva.boundSection()) {
         p_iat_nalloc = iatRequiredSize();
         p_iat_rva = end_rva;
         end_rva.increment(p_iat_nalloc);
@@ -564,7 +564,7 @@ SgAsmPEImportDirectory::reallocate(RelativeVirtualAddress start_rva)
      * careful that you don't increase the length of the name). */
     for (size_t i=0; i<imports.size(); ++i) {
         if (!imports[i]->get_by_ordinal() &&
-            (0==imports[i]->get_hintname_rva() || imports[i]->get_hintname_rva().get_section()==end_rva.get_section())) {
+            (0==imports[i]->get_hintname_rva() || imports[i]->get_hintname_rva().boundSection()==end_rva.boundSection())) {
             size_t sz = imports[i]->hintNameRequiredSize();
             imports[i]->set_hintname_nalloc(sz);
             imports[i]->set_hintname_rva(end_rva);
@@ -572,14 +572,14 @@ SgAsmPEImportDirectory::reallocate(RelativeVirtualAddress start_rva)
         }
     }
 
-    return end_rva.get_rva() - start_rva.get_rva();
+    return end_rva.rva() - start_rva.rva();
 }
 
 void
 SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section, size_t idx) const
 {
     /* The DLL name */
-    if (0==get_dllNameRva().get_rva() || nullptr==get_dllNameRva().get_section()) {
+    if (0==get_dllNameRva().rva() || nullptr==get_dllNameRva().boundSection()) {
         if (SgAsmPEImportSection::showImportMessage()) {
             mlog[WARN] <<"SgAsmPEImportDirectory: DLL name address " <<get_dllNameRva()
                        <<" is invalid or not bound to any file section\n";
@@ -593,7 +593,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
     } else if (p_dll_name_nalloc > 0) {
         std::vector<uint8_t> buf(p_dll_name_nalloc, 0);
         memcpy(&buf[0], get_dllName()->get_string().c_str(), get_dllName()->get_string().size());
-        get_dllNameRva().get_section()->write(f, get_dllNameRva().get_rel(), p_dll_name_nalloc, &buf[0]);
+        get_dllNameRva().boundSection()->write(f, *get_dllNameRva().boundOffset(), p_dll_name_nalloc, &buf[0]);
     }
 
     /* Import Lookup Table and Import Address Table (and indirectly, Hint/Name entries). According to the PE secification: "The
@@ -622,15 +622,15 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes", p, w, "dll_name_rva", get_dllNameRva().to_string().c_str(), p_dll_name_nalloc);
+    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes", p, w, "dll_name_rva", get_dllNameRva().toString().c_str(), p_dll_name_nalloc);
     if (get_dllName())
         fprintf(f, " \"%s\"", get_dllName()->get_string(true).c_str());
     fputc('\n', f);
 
     fprintf(f, "%s%-*s = %lu %s",        p, w, "time", (unsigned long)p_time, ctime(&p_time));
     fprintf(f, "%s%-*s = 0x%08x (%u)\n", p, w, "forwarder_chain", p_forwarder_chain, p_forwarder_chain);
-    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes\n", p, w, "ilt_rva", p_ilt_rva.to_string().c_str(), p_ilt_nalloc);
-    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes\n", p, w, "iat_rva", p_iat_rva.to_string().c_str(), p_iat_nalloc);
+    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes\n", p, w, "ilt_rva", p_ilt_rva.toString().c_str(), p_ilt_nalloc);
+    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes\n", p, w, "iat_rva", p_iat_rva.toString().c_str(), p_iat_nalloc);
     fprintf(f, "%s%-*s = %" PRIuPTR "\n",         p, w, "nentries", p_imports->get_vector().size());
 
     for (size_t i=0; i<p_imports->get_vector().size(); ++i) {

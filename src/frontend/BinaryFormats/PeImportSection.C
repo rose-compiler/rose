@@ -151,7 +151,7 @@ SgAsmPEImportSection::reallocate()
         end_rva.increment(dirlist[i]->reallocate(end_rva));
 
     /* Adjust the section size */
-    rose_addr_t need = end_rva.get_rel();
+    rose_addr_t need = end_rva.boundOffset().orElse(end_rva.rva());
     if (need < get_size()) {
         if (isMapped())
             set_mappedSize(need);
@@ -182,7 +182,7 @@ SgAsmPEImportSection::reallocateIats(Rose::BinaryAnalysis::RelativeVirtualAddres
         (*di)->set_iat_nalloc(need);
         rva.increment(need);
     }
-    return rva.get_rel() - start_at.get_rel();
+    return rva.boundOffset().orElse(rva.rva()) - start_at.boundOffset().orElse(start_at.rva());
 }
 
 

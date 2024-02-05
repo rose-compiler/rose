@@ -1738,7 +1738,7 @@ EngineBinary::makeEntryFunctions(const Partitioner::Ptr &partitioner, SgAsmInter
     if (interp) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
             for (const RelativeVirtualAddress &rva: fileHeader->get_entryRvas()) {
-                rose_addr_t va = rva.get_rva() + fileHeader->get_baseVa();
+                rose_addr_t va = rva.rva() + fileHeader->get_baseVa();
                 Function::Ptr function = Function::instance(va, "_start", SgAsmFunction::FUNC_ENTRY_POINT);
                 insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);
                 ASSERT_require2(function->address() == va, function->printableName());

@@ -43,9 +43,9 @@ SgAsmIntegerValueExpression::virtualAddress(SgNode *node)
     if (isSgAsmGenericSymbol(node))
         return isSgAsmGenericSymbol(node)->get_value();
     if (isSgAsmPEImportItem(node))
-        return isSgAsmPEImportItem(node)->get_bound_rva().get_va();
+        return *isSgAsmPEImportItem(node)->get_bound_rva().va();
     if (isSgAsmPERVASizePair(node))
-        return isSgAsmPERVASizePair(node)->get_e_rva().get_va();
+        return *isSgAsmPERVASizePair(node)->get_e_rva().va();
     if (isSgAsmGenericSection(node)) {
         SgAsmGenericSection *section = isSgAsmGenericSection(node);
         if (section->isMapped())

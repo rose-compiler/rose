@@ -27,8 +27,8 @@ RelativeVirtualAddress::operator=(const RelativeVirtualAddress &other) {
 
 RelativeVirtualAddress
 RelativeVirtualAddress::sectionRelative(SgAsmGenericSection *section, rose_addr_t offset) {
-    assert(section != nullptr);
-    assert(section->isMapped());
+    ASSERT_not_null(section);
+    ASSERT_require(section->isMapped());
     return RelativeVirtualAddress(section->get_mappedPreferredRva() + offset, section);
 }
 

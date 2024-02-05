@@ -101,7 +101,7 @@ Architecture::entryAddress() {
         for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
             ASSERT_not_null(header);
             for (const RelativeVirtualAddress &rva: header->get_entryRvas())
-                return header->get_baseVa() + rva.get_rva();
+                return header->get_baseVa() + rva.rva();
         }
     }
 

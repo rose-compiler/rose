@@ -41,22 +41,22 @@ SgAsmPEExportDirectory::SgAsmPEExportDirectory(SgAsmPEExportSection *section) {
     p_timestamp    = ByteOrder::leToHost(disk.timestamp);
     p_vmajor       = ByteOrder::leToHost(disk.vmajor);
     p_vminor       = ByteOrder::leToHost(disk.vminor);
-    p_name_rva     = ByteOrder::leToHost(disk.name_rva);       p_name_rva.set_section(section);
+    p_name_rva     = ByteOrder::leToHost(disk.name_rva);       p_name_rva.bindSection(section);
     p_ord_base     = ByteOrder::leToHost(disk.ord_base);
     p_expaddr_n    = ByteOrder::leToHost(disk.expaddr_n);
     p_nameptr_n    = ByteOrder::leToHost(disk.nameptr_n);
-    p_expaddr_rva  = ByteOrder::leToHost(disk.expaddr_rva);    p_expaddr_rva.set_section(section);
-    p_nameptr_rva  = ByteOrder::leToHost(disk.nameptr_rva);    p_nameptr_rva.set_section(section);
-    p_ordinals_rva = ByteOrder::leToHost(disk.ordinals_rva);   p_ordinals_rva.set_section(section);
+    p_expaddr_rva  = ByteOrder::leToHost(disk.expaddr_rva);    p_expaddr_rva.bindSection(section);
+    p_nameptr_rva  = ByteOrder::leToHost(disk.nameptr_rva);    p_nameptr_rva.bindSection(section);
+    p_ordinals_rva = ByteOrder::leToHost(disk.ordinals_rva);   p_ordinals_rva.bindSection(section);
 
     /* Read the name */
     std::string name;
     try {
-        name = section->readContentString(fhdr->get_loaderMap(), p_name_rva.get_va());
+        name = section->readContentString(fhdr->get_loaderMap(), *p_name_rva.va());
     } catch (const MemoryMap::NotMapped &e) {
         if (mlog[WARN]) {
             mlog[WARN] <<"SgAsmPEExportDirectory::ctor: directory name at rva "
-                       <<StringUtility::addrToString(p_name_rva.get_rva())
+                       <<StringUtility::addrToString(p_name_rva.rva())
                        <<" contains unmapped va " <<StringUtility::addrToString(e.va) <<"\n";
             if (e.map) {
                 mlog[WARN] <<"Memory map in effect at time of error:\n";
@@ -86,13 +86,13 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %lu %s",                      p, w, "timestamp", (unsigned long)p_timestamp, ctime(&p_timestamp));
     fprintf(f, "%s%-*s = %u\n",                        p, w, "vmajor", p_vmajor);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "vminor", p_vminor);
-    fprintf(f, "%s%-*s = %s\n",                        p, w, "name_rva", p_name_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "name_rva", p_name_rva.toString().c_str());
     fprintf(f, "%s%-*s = %u\n",                        p, w, "ord_base", p_ord_base);
     fprintf(f, "%s%-*s = %" PRIuPTR "\n",                       p, w, "expaddr_n", p_expaddr_n);
     fprintf(f, "%s%-*s = %" PRIuPTR "\n",                       p, w, "nameptr_n", p_nameptr_n);
-    fprintf(f, "%s%-*s = %s\n",                        p, w, "expaddr_rva", p_expaddr_rva.to_string().c_str());
-    fprintf(f, "%s%-*s = %s\n",                        p, w, "nameptr_rva", p_nameptr_rva.to_string().c_str());
-    fprintf(f, "%s%-*s = %s\n",                        p, w, "ordinals_rva", p_ordinals_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "expaddr_rva", p_expaddr_rva.toString().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "nameptr_rva", p_nameptr_rva.toString().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "ordinals_rva", p_ordinals_rva.toString().c_str());
 }
 
 /* Constructor */
@@ -127,7 +127,7 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         fprintf(f, ", biased=%s]", ordinal.unwrapError().c_str());
     }
-    fprintf(f, " rva=%s \"%s\"", p_exportRva.to_string().c_str(), p_name->get_string(true).c_str());
+    fprintf(f, " rva=%s \"%s\"", p_exportRva.toString().c_str(), p_name->get_string(true).c_str());
     if (p_forwarder)
         fprintf(f, " -> \"%s\"", p_forwarder->get_string(true).c_str());
     fputc('\n', f);
@@ -168,7 +168,7 @@ SgAsmPEExportSection::parse()
     p_exportDirectory = new SgAsmPEExportDirectory(this);
 
     // Check that the p_export_dir.p_nameptr_n is not out of range.
-    rose_addr_t availBytes = fhdr->get_loaderMap()->at(get_exportDirectory()->get_nameptr_rva().get_va()).available().size();
+    rose_addr_t availBytes = fhdr->get_loaderMap()->at(*get_exportDirectory()->get_nameptr_rva().va()).available().size();
     size_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
     if (get_exportDirectory()->get_nameptr_n() > availElmts) {
         mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<get_exportDirectory()->get_nameptr_n() <<")"
@@ -188,7 +188,7 @@ SgAsmPEExportSection::parse()
     for (size_t i=0; i<std::min(get_exportDirectory()->get_nameptr_n(), availElmts); i++) {
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
-        rose_addr_t nameptr_va = get_exportDirectory()->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
+        rose_addr_t nameptr_va = *get_exportDirectory()->get_nameptr_rva().va() + i*sizeof(nameptr_disk);
         bool badFunctionNameVa = false;
         try {
             readContent(fhdr->get_loaderMap(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
@@ -227,7 +227,7 @@ SgAsmPEExportSection::parse()
 
         /* Ordinal (an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
-        rose_addr_t ordinal_va = get_exportDirectory()->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
+        rose_addr_t ordinal_va = *get_exportDirectory()->get_ordinals_rva().va() + i*sizeof(ordinal_disk);
         bool badOrdinalVa = false;
         try {
             readContent(fhdr->get_loaderMap(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
@@ -255,12 +255,12 @@ SgAsmPEExportSection::parse()
 
         // Read the address from the Export Address Table. This table is indexed by ordinal.
         RelativeVirtualAddress expaddr = 0;                         // export address
-        const rose_addr_t expaddr_va = get_exportDirectory()->get_expaddr_rva().get_va() + ordinal * sizeof(ExportAddress_disk);
+        const rose_addr_t expaddr_va = *get_exportDirectory()->get_expaddr_rva().va() + ordinal * sizeof(ExportAddress_disk);
         try {
             ExportAddress_disk expaddr_disk;
             readContent(fhdr->get_loaderMap(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
             expaddr = ByteOrder::leToHost(expaddr_disk);
-            expaddr.bind(fhdr);
+            expaddr.bindBestSection(fhdr);
         } catch (const MemoryMap::NotMapped &e) {
             if (mlog[ERROR]) {
                 mlog[ERROR] <<"SgAsmPEExportSection::parse: export address #" <<i
@@ -277,14 +277,14 @@ SgAsmPEExportSection::parse()
         /* If export address is within this section then it points to a NUL-terminated forwarder name.
          * FIXME: Is this the proper precondition? [RPM 2009-08-20] */
         SgAsmGenericString *forwarder = NULL;
-        if (expaddr.get_va()>=get_mappedActualVa() && expaddr.get_va()<get_mappedActualVa()+get_mappedSize()) {
+        if (*expaddr.va()>=get_mappedActualVa() && *expaddr.va()<get_mappedActualVa()+get_mappedSize()) {
             std::string s;
             try {
-                s = readContentString(fhdr->get_loaderMap(), expaddr.get_va());
+                s = readContentString(fhdr->get_loaderMap(), *expaddr.va());
             } catch (const MemoryMap::NotMapped &e) {
                 if (mlog[ERROR]) {
                     mlog[ERROR] <<"SgAsmPEExportSection::parse: forwarder " <<i
-                                <<" at rva " <<StringUtility::addrToString(expaddr.get_rva())
+                                <<" at rva " <<StringUtility::addrToString(expaddr.rva())
                                 <<" contains unmapped va " <<StringUtility::addrToString(e.va) <<"\n";
                     if (e.map) {
                         mlog[ERROR] <<"Memory map in effect at time of error:\n";

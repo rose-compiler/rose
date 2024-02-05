@@ -307,17 +307,17 @@ SgAsmElfFileHeader::parse()
      * stores a zero in the e_shnum member and a completely invalid value in the e_shoff member. */
     if (sectab_rva>0 && get_e_shnum()>0) {
         SgAsmElfSectionTable *tab = new SgAsmElfSectionTable(this);
-        tab->set_offset(sectab_rva.get_rva());
+        tab->set_offset(sectab_rva.rva());
         tab->parse();
     }
     if (segtab_rva>0 && get_e_phnum()>0) {
         SgAsmElfSegmentTable *tab = new SgAsmElfSegmentTable(this);
-        tab->set_offset(segtab_rva.get_rva());
+        tab->set_offset(segtab_rva.rva());
         tab->parse();
     }
     
     /* Associate the entry point with a particular section. */
-    entry_rva.bind(this);
+    entry_rva.bindBestSection(this);
     addEntryRva(entry_rva);
     
     return this;

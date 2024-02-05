@@ -44,14 +44,14 @@ void *
 SgAsmElfDynamicEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32DynamicEntry_disk *disk) const
 {
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_d_tag, &(disk->d_tag));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_d_val.get_rva(), &(disk->d_val));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_d_val.rva(), &(disk->d_val));
     return disk;
 }
 void *
 SgAsmElfDynamicEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64DynamicEntry_disk *disk) const
 {
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_d_tag, &(disk->d_tag));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_d_val.get_rva(), &(disk->d_val));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_d_val.rva(), &(disk->d_val));
     return disk;
 }
 
@@ -100,7 +100,7 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     strcpy(label, toString(p_d_tag).c_str());
     for (char *s=label; *s; s++) *s = tolower(*s);
 
-    fprintf(f, "%s%-*s = %s", p, w, label, p_d_val.to_string().c_str());
+    fprintf(f, "%s%-*s = %s", p, w, label, p_d_val.toString().c_str());
     if (p_name)
         fprintf(f, " \"%s\"", p_name->get_string(true).c_str());
     fputc('\n', f);
@@ -156,11 +156,11 @@ SgAsmElfDynamicSection::parse()
         /* Set name */
         if (entry->get_d_tag()==SgAsmElfDynamicEntry::DT_NEEDED) {
             ROSE_ASSERT(entry->get_name()==NULL);
-            SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
+            SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().rva());
             entry->set_name(name);
             name->set_parent(entry);
 #if 1       /* FIXME: Do we really want this stuff duplicated in the AST? [RPM 2008-12-12] */
-            SgAsmStoredString *name2 = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
+            SgAsmStoredString *name2 = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().rva());
             fhdr->addDll(new SgAsmGenericDLL(name2));
 #endif
         }
@@ -232,12 +232,12 @@ SgAsmElfDynamicSection::finishParsing()
           case SgAsmElfDynamicEntry::DT_FILTER: {
               /* d_val is relative to a section. We know that all ELF Sections (but perhaps not the ELF Segments) have been
                * created by this time. */
-              ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
-              SgAsmGenericSectionPtrList containers = fhdr->get_sectionsByRva(entry->get_d_val().get_rva());
+              ROSE_ASSERT(entry->get_d_val().boundSection() == NULL);
+              SgAsmGenericSectionPtrList containers = fhdr->get_sectionsByRva(entry->get_d_val().rva());
               SgAsmGenericSection *best = NULL;
               for (SgAsmGenericSectionPtrList::iterator i=containers.begin(); i!=containers.end(); ++i) {
                   if ((*i)->isMapped()) {
-                      if ((*i)->get_mappedPreferredRva()==entry->get_d_val().get_rva()) {
+                      if ((*i)->get_mappedPreferredRva()==entry->get_d_val().rva()) {
                           best = *i;
                           break;
                       } else if (!best) {
@@ -248,7 +248,7 @@ SgAsmElfDynamicSection::finishParsing()
                   }
               }
               if (best)
-                  entry->set_d_val(Rose::BinaryAnalysis::RelativeVirtualAddress(entry->get_d_val().get_rva(), best));
+                  entry->set_d_val(Rose::BinaryAnalysis::RelativeVirtualAddress(entry->get_d_val().rva(), best));
               break;
           }
           default:

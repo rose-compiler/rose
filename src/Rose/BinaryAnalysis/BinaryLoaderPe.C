@@ -381,7 +381,7 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                         }
                         //Export entry found. Set address in the IAT
                         if(exportEntry != nullptr){
-                            rose_addr_t exportAddr   = exportEntry->get_exportRva().get_va();
+                            rose_addr_t exportAddr   = *exportEntry->get_exportRva().va();
                             rose_addr_t iatEntryAddr = importEntry->get_iatEntryVa();
                             size_t written = memoryMap->writeUnsigned(exportAddr,iatEntryAddr);
                             if(written > 0) importEntry->set_iat_written(true);

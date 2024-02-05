@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #include <Sawyer/StaticBuffer.h>
 
@@ -41,7 +42,7 @@ getImportIndex(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, Import
                     for (SgAsmPEImportItem *import: importDir->get_imports()->get_vector()) {
                         if (import->get_hintname_rva() != 0 || import->get_hint() != 0 ||
                             !import->get_name()->get_string().empty()) {
-                            rose_addr_t va = import->get_hintname_rva().get_va();
+                            rose_addr_t va = *import->get_hintname_rva().va();
                             if (index.insertMaybe(va, import))
                                 ++nInserted;
                         }
@@ -78,7 +79,7 @@ findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader 
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
                 for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
-                    rose_addr_t va = exportEntry->get_exportRva().get_va();
+                    rose_addr_t va = *exportEntry->get_exportRva().va();
                     if (partitioner->discoverInstruction(va)) {
                         Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
                                                                     SgAsmFunction::FUNC_EXPORT);

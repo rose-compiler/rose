@@ -183,7 +183,7 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
         case 0x01:
         case 0x03:
         case 0x1b: {
-            Rose::BinaryAnalysis::ByteOrder::hostToLe(get_begin_rva().get_rva(), &u32_disk);
+            Rose::BinaryAnalysis::ByteOrder::hostToLe(get_begin_rva().rva(), &u32_disk);
             memcpy(buf+at, &u32_disk, 4); at+=4;
             Rose::BinaryAnalysis::ByteOrder::hostToLe(get_size(), &u32_disk);
             memcpy(buf+at, &u32_disk, 4); at+=4;
@@ -234,7 +234,7 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().toString().c_str());
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n", p, w, "size", get_size(), get_size());
     fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "aug_data",
             get_augmentation_data().size(), get_augmentation_data().size());

@@ -2820,7 +2820,7 @@ Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
             for (SgAsmElfDynamicEntry *dentry: dentriesNode->get_entries()) {
                 if (dentry->get_d_tag() == SgAsmElfDynamicEntry::DT_PLTGOT) {
                     RelativeVirtualAddress rva = dentry->get_d_val();
-                    found = rva.get_section();
+                    found = rva.boundSection();
                     break;
                 }
             }

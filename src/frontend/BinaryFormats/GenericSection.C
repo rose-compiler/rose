@@ -372,7 +372,7 @@ SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, const RelativeVirtu
 size_t
 SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf,
                                  rose_addr_t size, bool strict) {
-    return readContent(map, start.get_va(), dst_buf, size, strict);
+    return readContent(map, *start.va(), dst_buf, size, strict);
 }
 
 size_t
@@ -452,7 +452,7 @@ SgAsmGenericSection::readContentString(rose_addr_t abs_offset, bool strict)
 
 std::string
 SgAsmGenericSection::readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, RelativeVirtualAddress rva, bool strict) {
-    return readContentString(map, rva.get_va(), strict);
+    return readContentString(map, *rva.va(), strict);
 }
 
 std::string

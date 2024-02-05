@@ -86,7 +86,7 @@ SgAsmGenericHeader::get_entryRva() const
 {
     if (get_entryRvas().size()==0)
         return rose_addr_t();
-    return get_entryRvas()[0].get_rva();
+    return get_entryRvas()[0].rva();
 }
 
 void
@@ -413,7 +413,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i = 0; i < get_entryRvas().size(); i++) {
         char label[64];
         snprintf(label, sizeof(label), "entry_rva[%" PRIuPTR "]", i);
-        rose_addr_t entry_rva = get_entryRvas()[i].get_rva();
+        rose_addr_t entry_rva = get_entryRvas()[i].rva();
         fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dumpContainingSections(f, std::string(p)+label, entry_rva, sections);

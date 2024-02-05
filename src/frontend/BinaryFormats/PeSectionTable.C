@@ -236,7 +236,7 @@ SgAsmPESectionTable::parse()
             // section. Sometimes the rva/size pair will point to a different region in memory than ".idata", in which case the
             // rva/size pair should be honored instead.
             SgAsmPERVASizePair *pair = fhdr->get_rvaSizePairs()->get_pairs()[SgAsmPEFileHeader::PAIR_IMPORTS];
-            if (pair->get_e_rva().get_va()==0) {
+            if (pair->get_e_rva().va().orElse(pair->get_e_rva().rva()) == 0) {
                 section = new SgAsmPEImportSection(fhdr); // treat .idata as an import table
             } else {
                 section = new SgAsmPESection(fhdr); // construct the import table from the rva/size pair instead

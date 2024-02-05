@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <rose_getline.h>
 #include <Sawyer/FileSystem.h>
 #include <x86InstructionProperties.h>
@@ -25,8 +26,8 @@ findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::
         T1(std::vector<Function::Ptr> &functions): nInserted(0), functions(functions) {}
         void visit(SgNode *node) {
             if (SgAsmElfEHFrameEntryFD *fde = isSgAsmElfEHFrameEntryFD(node)) {
-                Function::Ptr function = Function::instance(fde->get_begin_rva().get_rva(), SgAsmFunction::FUNC_EH_FRAME);
-                function->reasonComment("from EhFrameEntry " + fde->get_begin_rva().to_string());
+                Function::Ptr function = Function::instance(fde->get_begin_rva().rva(), SgAsmFunction::FUNC_EH_FRAME);
+                function->reasonComment("from EhFrameEntry " + fde->get_begin_rva().toString());
                 if (insertUnique(functions, function, sortFunctionsByAddress))
                     ++nInserted;
             }

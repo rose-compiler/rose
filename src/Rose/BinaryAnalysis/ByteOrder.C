@@ -377,7 +377,7 @@ host_to_disk(Endianness sex, rose_addr_t h, uint64_t *np) {
 // [Robb Matzke 2023-06-09]: deprecated
 void
 host_to_disk(Endianness sex, RelativeVirtualAddress h, uint64_t *np) {
-    hostToDisk(sex, h.get_rva(), np);
+    hostToDisk(sex, h.rva(), np);
 }
 
 // [Robb Matzke 2023-06-09]: deprecated
