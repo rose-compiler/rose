@@ -4,14 +4,22 @@
 namespace Rose {
 namespace AST {
 
-/**
- * \brief Mechanism to describe defect in the AST
+/** Describe defect in the AST
  *
  * How to record a defect:
+ *
+ * @code
  *    Defect::record<Defects::Kind::my_defect_kind>(my_descriptor_arguments);
+ * @endcode
+ *
  * Examples:
- *     Defect::record<Defects::Kind::integrity_edges>(source, target, label, traversed, container, expected, found, IntegrityEdgeDefect::Reason::incompatible);
- *     Defect::record<IntegrityEdgeDefect>(source, target, label, traversed, container, expected, found, IntegrityEdgeDefect::Reason::incompatible);
+ *
+ * @code
+ *     Defect::record<Defects::Kind::integrity_edges>(source, target, label, traversed, container, expected, found,
+ *                                                    IntegrityEdgeDefect::Reason::incompatible);
+ *     Defect::record<IntegrityEdgeDefect>(source, target, label, traversed, container, expected, found,
+ *                                         IntegrityEdgeDefect::Reason::incompatible);
+ * @endcode
  */
 namespace Defects {
 
@@ -24,11 +32,16 @@ namespace Defects {
     integrity_types,         //!< Types integrity:
   };
 
-  //! The generic defect descriptor
+  /** The generic defect descriptor.
+   *
+   *  @attention The name of this class violates the ROSE naming convention (not PascalCase). Users should not use this class until
+   *  this is fixed since the change will be API breaking. */
   template <Kind kind> struct defect_t;
 
-  /**
-   * \brief Defect descriptor specialization for the default kind "any".
+  /** Defect descriptor specialization for the default kind "any".
+   *
+   *  @attention The name of this class violates the ROSE naming convention (not PascalCase). Users should not use this class until
+   *  this is fixed since the change will be API breaking.
    *
    * All other defect descriptors must inherit from this descritor.
    * It provides a static method `record` which should always be used to create a defect descriptor.
@@ -72,14 +85,21 @@ namespace Defects {
  * \brief Main interface for Rose::AST::Defects.
  *
  * Use Defect::record<Kind>(args...) to record a defect.
+ *
  * Use Defect::display(std::ostream&) to display all defects.
- * Iterate over Defect::all. TODO const iterator and filter
+ *
+ * Iterate over Defect::all.
+ *
+ * TODO[Tristan]: const iterator and filter.
  */ 
 using Defect = Defects::defect_t<Defects::Kind::any>;
 
 namespace Defects {
 
-  //! Specialization of the defect_t template for the case of an edge integrity defect
+  /** Specialization of the defect_t template for the case of an edge integrity defect.
+   *
+   *  @attention The name of this class violates the ROSE naming convention (not PascalCase). Users should not use this class until
+   *  this is fixed since the change will be API breaking. */
   template <>
   struct defect_t<Kind::integrity_edges> : defect_t<Kind::any> {
     static constexpr Kind __kind = Kind::integrity_edges; //!< Needed to `create` defects from the typename instead of the kind.
