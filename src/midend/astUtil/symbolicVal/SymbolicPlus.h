@@ -15,8 +15,9 @@ class SymbolicPlus : public SymbolicExpr
 
   virtual SymOpType GetOpType() const { return SYMOP_PLUS; }
   virtual void ApplyOpd( const SymbolicVal & v) ;
-  SymbolicExpr* DistributeExpr(SymOpType t, const SymbolicVal& that) const
-          { return new SymbolicPlus(); }
+  SymbolicExpr* DistributeExpr(SymOpType, const SymbolicVal&) const {
+      return new SymbolicPlus();
+  }
 
   SymbolicExpr* CloneExpr() const { return new SymbolicPlus(*this);  }
   AstNodePtr CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const;

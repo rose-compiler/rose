@@ -15,8 +15,7 @@ class FunctionSideEffectInterface
   //! traverses a function call to collect data being read. Returns the callee if requested.
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0;
-  virtual bool get_call( AstInterface& fa, const AstNodePtr& fc, 
-                         CollectObject<AstNodePtr>* collect = 0)  {
+  virtual bool get_call( AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr)  {
      return false;
   }
   virtual ~FunctionSideEffectInterface() {}
@@ -25,16 +24,15 @@ class FunctionSideEffectInterface
 class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
 {
  public:
-  virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
-                               CollectObject<AstNodePtr>* collect = 0) 
-   { return false; }
-  virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
-                               CollectObject<AstNodePtr>* collect = 0,
-                               AstNodePtr* callee = 0) 
-   { return false; }
-  virtual bool get_call( AstInterface& fa, const AstNodePtr& fc, 
-                         CollectObject<AstNodePtr>* collect = 0) 
-   { return false; }
+  virtual bool get_modify(AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) {
+      return false;
+  }
+  virtual bool get_read(AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr, AstNodePtr* = nullptr) {
+      return false;
+  }
+  virtual bool get_call( AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) {
+      return false;
+  }
   virtual ~NoFunctionSideEffectAnalysis() {}
 };
 
@@ -71,9 +69,9 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
 {
  public:
   virtual bool
-    may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-              CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
-   { return false; }
+    may_alias(AstInterface&, const AstNodePtr&, const AstNodePtr&, CollectObject< std::pair<AstNodePtr, int>>&) {
+      return false;
+  }
   virtual ~NoFunctionAliasAnalysis() {}
 };
 

@@ -39,8 +39,12 @@ class GraphAccessTemplate : public GraphAccess
   GetEdgeEndPoint( const Edge* e, EdgeDirection dir) const = 0;
   virtual bool ContainNode(const Node* n) const = 0; // whether graph contains n
   virtual bool ContainEdge(const Edge* e) const = 0; // whether graph contains e
-  virtual std::string nodeToString(Node* n) const { return ""; }
-  virtual std::string edgeToString(Edge* n) const { return ""; }
+  virtual std::string nodeToString(Node*) const {
+      return "";
+  }
+  virtual std::string edgeToString(Edge*) const {
+      return "";
+  }
 };
 
 // this template class builds a bridge to GraphAccess interface 

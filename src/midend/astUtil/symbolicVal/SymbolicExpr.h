@@ -83,7 +83,7 @@ class SymbolicOperands
 class SymbolicExpr : public SymbolicValImpl, 
                      public CountRefHandle<SymbolicOperands>
 {
-  void operator = (const SymbolicExpr& that) {}
+  void operator=(const SymbolicExpr&) {}
 
  protected:
   SymbolicExpr() {}

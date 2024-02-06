@@ -7,13 +7,13 @@
 
 class UF_elem 
 {
-   void operator = (const UF_elem& that) {}
+   void operator=(const UF_elem&) {}
  protected:
    UF_elem *p_group;
    unsigned size;
  public:
    UF_elem () : p_group(this), size(1) {}
-   UF_elem (const UF_elem& that)  // no copying, can only modify using union_with 
+   UF_elem (const UF_elem&)  // no copying, can only modify using union_with
     : p_group(this), size(1) {}
    // compare root parents to check if they belong to the same set.  
    bool in_same_group(UF_elem *that) 

@@ -20,11 +20,11 @@ class SymbolicVisitor
  protected:
   virtual void Default() {}
  public:
-  virtual void VisitConst( const SymbolicConst &v) { Default(); }
-  virtual void VisitVar( const SymbolicVar &v) { Default(); }
-  virtual void VisitFunction( const SymbolicFunction &v) { Default(); }
-  virtual void VisitAstWrap( const SymbolicAstWrap& v) { Default(); }
-  virtual void VisitExpr( const SymbolicExpr& exp) { Default(); }
+  virtual void VisitConst(const SymbolicConst&) { Default(); }
+  virtual void VisitVar(const SymbolicVar&) { Default(); }
+  virtual void VisitFunction(const SymbolicFunction&) { Default(); }
+  virtual void VisitAstWrap(const SymbolicAstWrap&) { Default(); }
+  virtual void VisitExpr(const SymbolicExpr&) { Default(); }
   virtual ~SymbolicVisitor() {}
 };
 
@@ -249,7 +249,7 @@ class SymbolicFunction : public SymbolicValImpl
   unsigned NumOfArgs() const { return args.size(); }
   virtual SymbolicVal GetUnknownOpds() const 
       { return SymbolicVal(); }
-  virtual bool GetConstOpd(int &val1, int &val2) const { return false; }
+  virtual bool GetConstOpd(int&, int&) const { return false; }
   SymbolicValImpl* Clone() const { return new SymbolicFunction(*this); }
   virtual SymbolicFunction* cloneFunction(const Arguments& args) const
      { return  new SymbolicFunction(t, op,args); }

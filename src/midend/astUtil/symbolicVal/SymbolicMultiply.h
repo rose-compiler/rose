@@ -13,8 +13,9 @@ class SymbolicMultiply : public SymbolicExpr
      : SymbolicExpr(that) {}
 
   SymbolicExpr* CloneExpr() const { return new SymbolicMultiply(*this);  }
-  SymbolicExpr* DistributeExpr(SymOpType t, const SymbolicVal& that) const
-         { return (t < SYMOP_MULTIPLY)? new SymbolicMultiply() : 0; }
+  SymbolicExpr* DistributeExpr(SymOpType t, const SymbolicVal&) const {
+      return (t < SYMOP_MULTIPLY)? new SymbolicMultiply() : 0;
+  }
 
   virtual SymOpType GetOpType() const { return SYMOP_MULTIPLY; }
   virtual void ApplyOpd( const SymbolicVal &v);

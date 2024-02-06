@@ -202,8 +202,11 @@ class BoolDescriptor
   BoolDescriptor() : init(false) {}
   operator bool() const { return init; }
   void set() { init = true; }
-  bool read( std::istream& in) { init = true; return true;}
-  void write( std::ostream& out) const {}
+  bool read(std::istream&) {
+      init = true;
+      return true;
+  }
+  void write(std::ostream&) const {}
   void Dump() const { write(std::cerr); }
   std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };

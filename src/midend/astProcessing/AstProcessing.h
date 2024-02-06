@@ -512,7 +512,7 @@ DummyAttribute
 AstTopDownProcessing<InheritedAttributeType>::
 evaluateSynthesizedAttribute(SgNode* astNode,
         InheritedAttributeType inheritedValue,
-        typename AstTopDownProcessing<InheritedAttributeType>::SynthesizedAttributesList l)
+        typename AstTopDownProcessing<InheritedAttributeType>::SynthesizedAttributesList)
 {
     // call the cleanup function
     destroyInheritedValue(astNode, inheritedValue);
@@ -526,7 +526,7 @@ evaluateSynthesizedAttribute(SgNode* astNode,
 template <class InheritedAttributeType>
 DummyAttribute
 AstTopDownProcessing<InheritedAttributeType>::
-defaultSynthesizedAttribute(InheritedAttributeType inh)
+defaultSynthesizedAttribute(InheritedAttributeType)
 {
     // called but not used
     DummyAttribute a = defaultDummyAttribute;

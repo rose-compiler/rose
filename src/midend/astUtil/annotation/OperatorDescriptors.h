@@ -98,7 +98,7 @@ class OPDescriptorTemp : public BaseClass
  public:
   const ParameterDeclaration& get_param_decl() const { return decl; }
   void set_param_decl(const ParameterDeclaration& d) { decl = d; }
-  void replace_val( MapObject<SymbolicVal, SymbolicVal>& repl) {}
+  void replace_val(MapObject<SymbolicVal, SymbolicVal>&) {}
 
   bool read( std::istream& in, const OperatorDeclaration& op)
     {

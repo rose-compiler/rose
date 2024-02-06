@@ -608,10 +608,7 @@ class AttributeListMap {
        //
        ///////////////////////////////////////////////////////////////////////////
        template <typename ContainerT>
-               void expanded_macro(ContainerT const &result)
-               {
-
-               }
+       void expanded_macro(ContainerT const&/*result*/) {}
 
 
        ///////////////////////////////////////////////////////////////////////////
@@ -763,7 +760,7 @@ class AttributeListMap {
 
                 template <typename ContextT, typename TokenT>
             bool
-            may_skip_whitespace(ContextT const& ctx, TokenT& token, bool& skipped_newline)
+            may_skip_whitespace(ContextT const&, TokenT& token, bool&/*skipped_newline*/)
             {
                         using namespace boost::wave;
                         //After the last skipped token has been processed the first non-skipped

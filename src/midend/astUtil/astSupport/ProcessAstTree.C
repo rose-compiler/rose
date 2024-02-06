@@ -107,18 +107,19 @@ bool ProcessAstTree<AstNodePtr>:: ProcessIf( AstInterface &fa, const AstNodePtr&
      }
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>::
-ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
-                         const AstNodePtr& body, AstInterface::TraversalVisitType t)
-          { return true;}
+ProcessFunctionDefinition( AstInterface &, const AstNodePtr&, const AstNodePtr&, AstInterface::TraversalVisitType) {
+    return true;
+}
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>::
-ProcessBlock( AstInterface &fa, const AstNodePtr& s,
-                                  AstInterface::TraversalVisitType t)
-  { return true;}
+ProcessBlock( AstInterface &, const AstNodePtr&, AstInterface::TraversalVisitType) {
+    return true;
+}
 template <class AstNodePtr>
-bool ProcessAstTree<AstNodePtr>:: ProcessGoto( AstInterface &fa, const AstNodePtr& s,
-                               const AstNodePtr& dest)
-                                { Skip(s); return true; }
+bool ProcessAstTree<AstNodePtr>:: ProcessGoto(AstInterface&, const AstNodePtr& s, const AstNodePtr&) {
+    Skip(s);
+    return true;
+}
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>:: ProcessDecls(AstInterface &fa, const AstNodePtr& s)
                                 { Skip(s); return true; }

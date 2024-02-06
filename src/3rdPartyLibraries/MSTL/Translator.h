@@ -8,7 +8,7 @@ class Translator {
 
  public:
   virtual ~Translator() {};
-  virtual void setOptions(int argc,char** argv) {};
+  virtual void setOptions(int, char**) {};
   virtual void setOptions(const std::vector <std::string>& argvList) {};
   virtual void translate() { 
     frontend(); 

@@ -160,7 +160,7 @@ class StmtVarAliasCollect
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr());
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc);
-  virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) {}
+  virtual void AppendReadLoc(AstInterface&, const AstNodePtr&) {}
  public:
   StmtVarAliasCollect( FunctionAliasInterface* a = 0) 
     : funcanal(a), hasunknown(false), hasresult(false) {}

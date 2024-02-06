@@ -123,22 +123,14 @@ DOTGeneration<Node>::evaluateSynthesizedAttribute(Node node, DOTInheritedAttribu
 
 template<class Node>
 std::string
-DOTGeneration<Node>::additionalNodeInfo(Node node)
+DOTGeneration<Node>::additionalNodeInfo(Node)
    {
      return "";
    }
 
 template<class Node>
 std::string
-DOTGeneration<Node>::additionalNodeOptions(Node node)
-   {
-     return "";
-   }
-
-// DQ (3/5/2007): Added to support edge options (e.g. colors)
-template<class Node>
-std::string
-DOTGeneration<Node>::additionalEdgeInfo(Node from, Node to, std::string label)
+DOTGeneration<Node>::additionalNodeOptions(Node)
    {
      return "";
    }
@@ -146,7 +138,15 @@ DOTGeneration<Node>::additionalEdgeInfo(Node from, Node to, std::string label)
 // DQ (3/5/2007): Added to support edge options (e.g. colors)
 template<class Node>
 std::string
-DOTGeneration<Node>::additionalEdgeOptions(Node from, Node to, std::string label)
+DOTGeneration<Node>::additionalEdgeInfo(Node, Node, std::string)
+   {
+     return "";
+   }
+
+// DQ (3/5/2007): Added to support edge options (e.g. colors)
+template<class Node>
+std::string
+DOTGeneration<Node>::additionalEdgeOptions(Node, Node, std::string)
    {
      return "";
    }

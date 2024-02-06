@@ -33,8 +33,9 @@ class SymbolicSelect : public SymbolicExpr
    }
 
 
-   AstNodePtr CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
-   {  ROSE_ABORT();  }
+   AstNodePtr CodeGenOP(AstInterface&, const AstNodePtr&, const AstNodePtr&) const {
+       ROSE_ABORT();
+   }
    AstNodePtr CodeGen(  AstInterface &fa ) const;
 };
 

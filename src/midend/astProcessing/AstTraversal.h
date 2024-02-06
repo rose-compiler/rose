@@ -44,7 +44,7 @@ public:
   //! of the traversal.
   virtual void setChildrenContainer(SgNode* node, std::vector<SgNode*>& c);
   virtual void postOrderVisit(SgNode* node);
-  virtual void modifyChildrenContainer(SgNode* node, std::vector<SgNode*>& c) {}
+  virtual void modifyChildrenContainer(SgNode*, std::vector<SgNode*>&) {}
 };
 
 #endif

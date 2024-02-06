@@ -118,11 +118,11 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename ContextT, typename TokenT, typename ContainerT, typename IteratorT>
-    bool expanding_function_like_macro(ContextT const& ctx,
-        TokenT const& macrodef, std::vector<TokenT> const& formal_args, 
-        ContainerT const& definition,
-        TokenT const& macrocall, std::vector<ContainerT> const& arguments,
-        IteratorT const& seqstart, IteratorT const& seqend) 
+    bool expanding_function_like_macro(ContextT const&,
+                                       TokenT const& macrodef, std::vector<TokenT> const& formal_args,
+                                       ContainerT const& definition,
+                                       TokenT const& macrocall, std::vector<ContainerT> const& arguments,
+                                       IteratorT const&/*seqstart*/, IteratorT const&/*seqend*/)
     {
        ////////////////////////////////////////////////////////////////////
        //
@@ -170,7 +170,7 @@ public:
     //
     ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename ContainerT>
-    void expanded_macro(ContextT const& ctx, ContainerT const& result)
+    void expanded_macro(ContextT const&, ContainerT const& result)
     {
        attributeListMap->expanded_macro(result);
     }
@@ -185,7 +185,7 @@ public:
     //
     ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename ContainerT>
-    void rescanned_macro(ContextT const& ctx, ContainerT const& result)
+    void rescanned_macro(ContextT const&, ContainerT const& result)
     {
         attributeListMap->rescanned_macro(result);
     }
@@ -210,8 +210,7 @@ public:
 
     template <typename ContextT>
     bool
-    found_include_directive(ContextT const& ctx, std::string const& filename, 
-        bool include_next) 
+    found_include_directive(ContextT const&, std::string const& filename, bool /*include_next*/)
     {
        if(SgProject::get_verbose() >= 1)
            std::cout << "Found include directive: " << filename << std::endl;
@@ -239,7 +238,7 @@ public:
     template <typename ContextT>
     void 
     opened_include_file(ContextT const& ctx, std::string const& relname, 
-        std::string const& absname, bool is_system_include) 
+                        std::string const& absname, bool /*is_system_include*/)
     {
                                    
        if(SgProject::get_verbose() >= 1){
@@ -258,7 +257,7 @@ public:
     // new signature
     template <typename ContextT>
     void
-    returning_from_include_file(ContextT const& ctx) 
+    returning_from_include_file(ContextT const&)
     {}
 
     ///////////////////////////////////////////////////////////////////////////
@@ -289,9 +288,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename ContainerT>
     bool 
-    interpret_pragma(ContextT const &ctx, ContainerT &pending, 
-        typename ContextT::token_type const &option, ContainerT const &values, 
-        typename ContextT::token_type const &act_token)
+    interpret_pragma(ContextT const&, ContainerT &/*pending*/,
+                     typename ContextT::token_type const &/*option*/, ContainerT const &/*values*/,
+                     typename ContextT::token_type const &/*act_token*/)
     {
         return false;
     }
@@ -320,7 +319,7 @@ public:
     template <typename ContextT, typename TokenT, typename ParametersT, 
         typename DefinitionT>
     void
-    defined_macro(ContextT const& ctx, TokenT const& macro_name, 
+    defined_macro(ContextT const&, TokenT const& macro_name,
         bool is_functionlike, ParametersT const& parameters, 
         DefinitionT const& definition, bool is_predefined)
     {
@@ -406,7 +405,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
         template <typename ContextT, typename TokenT>
         bool 
-        found_directive(ContextT const& ctx, TokenT const& directive)
+        found_directive(ContextT const&, TokenT const& directive)
         {
                 if(SgProject::get_verbose() >= 1)
                         std::cout << "found_directive!" << std::endl;
@@ -608,7 +607,7 @@ public:
         ///////////////////////////////////////////////////////////////////////////
         template <typename ContextT, typename TokenT>
         void
-        skipped_token(ContextT const& ctx, TokenT const& token)
+        skipped_token(ContextT const&, TokenT const& token)
         {
                 using namespace boost::wave;
                 //Process all tokens to be skipped except the ones without a filename,
@@ -708,7 +707,7 @@ public:
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename TokenT>
             void
-            undefined_macro(ContextT const& ctx, TokenT const& macro_name)
+            undefined_macro(ContextT const&, TokenT const& macro_name)
                {
                  token_list_container tokListCont;
                  tokListCont.push_back(macro_name);
@@ -744,7 +743,7 @@ public:
  ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename ContainerT>
             bool
-            found_warning_directive(ContextT const& ctx, ContainerT const& message)
+            found_warning_directive(ContextT const&, ContainerT const& message)
                { 
                  attributeListMap->found_directive(lastPreprocDirective,message, false);
 

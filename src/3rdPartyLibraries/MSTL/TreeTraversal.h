@@ -16,8 +16,8 @@ class TreeTraversal {
   virtual void traverse(TreeNode node)=0;
   virtual bool isNullNode(TreeNode node) { return node==0; /* as default we assume the comparison with 0 to succeed on a null-node */ }
   virtual void nullNodeVisit() { }
-  virtual bool skipNode(TreeNode node) { return false; }
-  virtual bool skipSubTreeOfNode(TreeNode node) { return false; }
+  virtual bool skipNode(TreeNode) { return false; }
+  virtual bool skipSubTreeOfNode(TreeNode) { return false; }
  protected:
   typedef typename std::vector<TreeNode> ChildrenContainer; /* will be made a template parameter */
   virtual void setChildrenContainer(TreeNode node, ChildrenContainer& c)=0;

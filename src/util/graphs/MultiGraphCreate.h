@@ -41,8 +41,12 @@ class MultiGraphCreate
   virtual ~MultiGraphCreate() {}
   bool UnlinkElem( MultiGraphElem *n) { return n->UnlinkGraphCreate(this); }
   bool LinkElem( MultiGraphElem *n) { return n->LinkGraphCreate(this); }
-  bool UnlinkElem( void* n) {  return false; }
-  bool LinkElem(void* n) { return false; }
+  bool UnlinkElem(void*) {
+      return false;
+  }
+  bool LinkElem(void*) {
+      return false;
+  }
  public:
   bool ContainElem( const MultiGraphElem* e) const
           { return e->GetGraphCreate() == this; }
