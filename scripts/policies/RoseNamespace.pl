@@ -158,7 +158,7 @@ my @policies = (
         reason =>
         'Although not stated in any C or C++ language standard, many compilers
         treat the two forms of #include differently, such as adding an implicit
-        search path (e.g., "-I."). Not only would search paths be inconsisently
+        search path (e.g., "-I."). Not only would search paths be inconsistently
         applied for ROSE headers that are included by a combination of angle
         brackets and quotes, but the quotes may cause the compiler to look for
         ROSE header files from the user\'s current working directory (in
