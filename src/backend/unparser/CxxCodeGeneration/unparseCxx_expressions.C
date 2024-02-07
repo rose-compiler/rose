@@ -1658,7 +1658,7 @@ Unparse_ExprStmt::unparseAssnExpr(SgExpression*, SgUnparse_Info&) {}
 #define DEBUG__Unparse_ExprStmt__unparseVarRef 0
 
 void
-Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info&)
+Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    {
 #if DEBUG__Unparse_ExprStmt__unparseVarRef
      printf ("In Unparse_ExprStmt::unparseVarRef():\n");
