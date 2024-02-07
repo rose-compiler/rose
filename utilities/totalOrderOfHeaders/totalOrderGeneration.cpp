@@ -550,8 +550,8 @@ void show_help (const string& programName)
   std::cout << "  --abortOnCycle\t Disable cycle removal, abort and issue error messages when encountering first cyclic order in header files\n";
   std::cout << "  --verbose\tRun the program in a verbose mode\n";
   std::cout << "  --input=path\tSpecify the input path to search for input .json files recursively\n";
-  std::cout << "  --output=filename\tSpecify the output header file's name, default is total_header.hh if not specified";
-  std::cout << "  --include-vxworks-header\tIn the generated header file, prepend #include \"vxWorks.h\"";
+  std::cout << "  --output=filename\tSpecify the output header file's name, default is total_header.hh if not specified\n";
+  std::cout << "  --include-vxworks-header\tIn the generated header file, prepend #include \"vxWorks.h\"\n";
 }
 
 //--------------------------------------------------
