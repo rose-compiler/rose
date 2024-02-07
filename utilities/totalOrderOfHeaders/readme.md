@@ -35,6 +35,7 @@ Options:
   --verbose     Run the program in a verbose mode
   --input=path  Specify the input path to search for input .json files recursively
   --output=filename  Specify the output header file's name, default is total_header.hh
+  --include-vxworks-header In the generated header file, prepend #include "vxWorks.h"
 
 ```
 

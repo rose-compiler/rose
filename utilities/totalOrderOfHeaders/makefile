@@ -6,7 +6,7 @@ endif
 
 .PHONY: install check test	
 clean:
-	rm -rf *.o totalOrderGeneration total_header.hh log.txt myheader.h log2.txt
+	rm -rf *.o totalOrderGeneration total_header.hh log.txt myheader.h log2.txt myheader3.h log3.txt 
 
 install: totalOrderGeneration
 ifndef ROSE_HOME
@@ -29,3 +29,5 @@ check:totalOrderGeneration
 	diff total_header.hh reference/total_header.hh
 	./totalOrderGeneration --input=json/ --output=myheader.h&>log2.txt # run tests with .json input files
 	diff myheader.h reference/total_header.hh
+	./totalOrderGeneration --input=json/ --include-vxworks-header --output=myheader3.h&>log3.txt # run tests with .json input files
+	diff myheader3.h reference/total_header3.hh

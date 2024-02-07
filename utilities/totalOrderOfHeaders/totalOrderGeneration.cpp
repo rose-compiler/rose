@@ -39,6 +39,9 @@ string hfile_name="total_header.hh";
 // To facilitate debugging, users can disable the cycle removal step and the program will abort on the first cycle encountered.
 bool abortOnCycle= false; 
 
+// In the generated total header file, prepend #include "vxWorks.h"
+bool includeVxWorksHeader = false; 
+
 // prototypes of functions
 void removeCycles(std::unordered_map<std::string, std::unordered_set<std::string>>& graph) ;
 
@@ -435,7 +438,7 @@ int test()
   return 0;
 }
 
-// withe sorted total order of header full paths
+// withe the sorted total order of header full paths
 // write #include <headerName> or #include "headerName" based on its name and flag field stored in headerInfo
 //
 void writeHeaderfile(vector<string>& total_order, unordered_map<string, vector<string>>& headerInfo, string& filename)
@@ -448,6 +451,9 @@ void writeHeaderfile(vector<string>& total_order, unordered_map<string, vector<s
     std::cerr << "Failed to open file: " << filename << std::endl;
     assert(false);
   }
+
+  if (includeVxWorksHeader)
+    hfile<<"#include \"vxWorks.h\""<<endl;
 
   for (auto& header_path : total_order)
   {
@@ -545,6 +551,7 @@ void show_help (const string& programName)
   std::cout << "  --verbose\tRun the program in a verbose mode\n";
   std::cout << "  --input=path\tSpecify the input path to search for input .json files recursively\n";
   std::cout << "  --output=filename\tSpecify the output header file's name, default is total_header.hh if not specified";
+  std::cout << "  --include-vxworks-header\tIn the generated header file, prepend #include \"vxWorks.h\"";
 }
 
 //--------------------------------------------------
@@ -589,6 +596,10 @@ int main(int argc, char* argv[])
     if (arg== "--verbose")
     {
       verboseMode = true;
+    }
+    if (arg== "--include-vxworks-header")
+    {
+      includeVxWorksHeader = true;
     }
     // Check for --input option
     // note that .find() is used!
