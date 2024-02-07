@@ -31,9 +31,10 @@ Usage: totalOrderGeneration [options]
 Options:
   --help        Show this help message
   --test        Run the builtin test mode
-  --abortOnCycle         Disable cycle removal, abort and issue error messages when encountering first cyclic order in header files
+  --abortOnCycle  Disable cycle removal, abort and issue error messages when encountering first cyclic order in header files
   --verbose     Run the program in a verbose mode
   --input=path  Specify the input path to search for input .json files recursively
+  --output=filename  Specify the output header file's name, default is total_header.hh
 
 ```
 
@@ -42,8 +43,9 @@ Run the tool processing all .json files under a given path
 
 
  In the end, the headers will be written into a file named:
-    total_header.hh
+    total_header.hh (default name)
+    or specified file name using --output=???.hh
 
 
-insertHeader2AllCpp.sh 
+insertHeader2AllCpp.sh total_header.hpp
 * a script to prepend #include "total_header.hpp" to all .cpp files under the current path

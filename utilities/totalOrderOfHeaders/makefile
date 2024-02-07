@@ -6,7 +6,7 @@ endif
 
 .PHONY: install check test	
 clean:
-	rm -rf *.o totalOrderGeneration total_header.hh log.txt
+	rm -rf *.o totalOrderGeneration total_header.hh log.txt myheader.h log2.txt
 
 install: totalOrderGeneration
 ifndef ROSE_HOME
@@ -27,3 +27,5 @@ check:totalOrderGeneration
 	make test # run builtin tests
 	./totalOrderGeneration --input=json/ &>log.txt # run tests with .json input files
 	diff total_header.hh reference/total_header.hh
+	./totalOrderGeneration --input=json/ --output=myheader.h&>log2.txt # run tests with .json input files
+	diff myheader.h reference/total_header.hh

@@ -34,6 +34,7 @@ C. Liao, 12/27/2023
 
 using namespace std;
 
+string hfile_name="total_header.hh";
 // By default, this program will detect and remove cycles in the header dependency graph
 // To facilitate debugging, users can disable the cycle removal step and the program will abort on the first cycle encountered.
 bool abortOnCycle= false; 
@@ -543,7 +544,7 @@ void show_help (const string& programName)
   std::cout << "  --abortOnCycle\t Disable cycle removal, abort and issue error messages when encountering first cyclic order in header files\n";
   std::cout << "  --verbose\tRun the program in a verbose mode\n";
   std::cout << "  --input=path\tSpecify the input path to search for input .json files recursively\n";
-
+  std::cout << "  --output=filename\tSpecify the output header file's name, default is total_header.hh if not specified";
 }
 
 //--------------------------------------------------
@@ -598,6 +599,11 @@ int main(int argc, char* argv[])
 //      std::cout << "Input path set to: " << inputPath << std::endl;
       // Add functionality to handle the input path
       // ...
+    }
+    else if (arg.find("--output=") == 0) 
+    {
+      hfile_name= arg.substr(9); // Remove "--output=" from the argument
+//      std::cout << "output path set to: " << hfile_name<< std::endl;
     }
     else if (arg == "--abortOnCycle")
     {
@@ -662,7 +668,6 @@ int main(int argc, char* argv[])
     printTotalOrder(totalOrder);
   }
 
-   string hfile_name="total_header.hh";
    cout<<"Writing out the resulting total order headers of count "<< totalOrder.size() <<" into:"<< hfile_name<<endl;
    writeHeaderfile(totalOrder, headerInfo, hfile_name);
 
