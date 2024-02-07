@@ -124,7 +124,7 @@ class InterproceduralInfo
                 {
                         return exitNodes;
                 }
-                void addParameterToFunctionCall(SgNode * functionCall,SgExpression * param)
+                void addParameterToFunctionCall(SgNode*, SgExpression*)
                 {
                 }
 

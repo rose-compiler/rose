@@ -143,7 +143,7 @@ addNullValue(NodeType node, TraceType trace, std::string varname, std::string op
  
 template<class NodeType>
 void DOTRepresentation<NodeType>::
-addEmptyContainer(NodeType node, TraceType trace, std::string varname, std::string option) {
+addEmptyContainer(NodeType node, TraceType trace, std::string varname, std::string /*option*/) {
   (*dotout) << "n_" << node // node: holding null-reference to STL container, using [] to represent container-reference 
 	    << " -> "
 	    << "n_" << node << "__" << varname << "__null"

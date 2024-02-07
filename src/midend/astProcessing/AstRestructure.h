@@ -76,8 +76,8 @@ public:
 class AstRestructure 
    {
      public:
-          AstRestructure(SgProject* project) {}
-          AstRestructure(SgProject* project,std::string incheader) {}
+          AstRestructure(SgProject*) {}
+          AstRestructure(SgProject*, std::string /*incheader*/) {}
 
 
        // replaces the AST with astNode as root node with the AST representing string s

@@ -57,7 +57,7 @@ public:
 
   void addNullValue(NodeType node, TraceType trace, std::string varname, std::string option="");
   void addNullValue(NodeType node, std::string nodelabel, std::string edgelabel, std::string option="");
-  void addEmptyContainer(NodeType node, TraceType trace, std::string varname, std::string option="");
+  void addEmptyContainer(NodeType node, TraceType trace, std::string varname, std::string = "");
 
   std::string containerEdgeLabel(std::string containerVarName, ContainerIndexType count);
 

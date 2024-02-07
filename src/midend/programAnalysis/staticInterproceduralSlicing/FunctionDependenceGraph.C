@@ -5,7 +5,8 @@
 #include <map>
 using namespace std;
 
-FunctionDependenceGraph::FunctionDependenceGraph(ControlDependenceGraph * cdg, DataDependenceGraph * ddg, InterproceduralInfo * ii):
+FunctionDependenceGraph::FunctionDependenceGraph(ControlDependenceGraph * cdg, DataDependenceGraph * ddg,
+                                                 InterproceduralInfo */*ii*/):
 _cdg(cdg), _ddg(ddg)
 {
     //_interprocedural = ii;

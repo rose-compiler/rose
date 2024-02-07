@@ -128,9 +128,7 @@ bool TypeCollection<Descriptor>::
 
 template <class Descriptor>
 void TypeAnnotCollection<Descriptor>::
-read_descriptor( const TypeDescriptor& name, const string& annotName,
-                 istream& in)
-{
+read_descriptor(const TypeDescriptor& name, const string& /*annotName*/, istream& in) {
    Descriptor d;
    d.read(in);
    add_annot( name, d );

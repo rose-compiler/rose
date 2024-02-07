@@ -15,7 +15,7 @@
 using namespace DominatorTreesAndDominanceFrontiers;
 using namespace std;
 
-ControlDependenceGraph::ControlDependenceGraph(SgFunctionDefinition * functionStart, InterproceduralInfo * ii):
+ControlDependenceGraph::ControlDependenceGraph(SgFunctionDefinition * functionStart, InterproceduralInfo*):
   source(SliceCFGNode(functionStart->cfgForBeginning())),
   sink(SliceCFGNode(functionStart->cfgForEnd())),
   dominatorTree(functionStart,POST_DOMINATOR)   , /*
@@ -95,7 +95,7 @@ void ControlDependenceGraph::createSyntacticDependencies()
 
 }
 
-void ControlDependenceGraph::addDependence(int aID,int bID,EdgeType type)
+void ControlDependenceGraph::addDependence(int aID,int bID,EdgeType)
 {
   SgNode * a,*b;
   a=dominatorTree.getCFGNodeFromID(aID).getNode();
@@ -132,7 +132,7 @@ void ControlDependenceGraph::addDependence(int aID,int bID,EdgeType type)
 
 }
 
-void ControlDependenceGraph::processDependence(int aID,int bID)
+void ControlDependenceGraph::processDependence(int, int)
 {
 }
 
@@ -179,7 +179,7 @@ void dfsVisit(SliceCFGNode p)
     }   
 }
 
-void articualtionPoints(SliceCFGNode p)
+void articualtionPoints(SliceCFGNode)
 {
 }
 

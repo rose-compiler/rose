@@ -10,9 +10,8 @@
 template <class T>
 void 
 AbstractInterfaceNodeCollection<T>::
-addString ( SgNode* astNode, const TransformationStringType & transformation )
+addString(SgNode*, const TransformationStringType & transformation)
    {
-  // ROSE_ASSERT (transformation.associatedASTNode == NULL);
      ROSE_ASSERT (transformation.getRelativeScope()    != T::unknownScope);
      ROSE_ASSERT (transformation.getRelativePosition() != T::unknownPositionInScope);
 

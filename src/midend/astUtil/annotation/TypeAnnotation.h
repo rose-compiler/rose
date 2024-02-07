@@ -95,8 +95,7 @@ class TypeAnnotCollection
 : public AnnotCollectionBase<TypeDescriptor>, //== TypeCollectionBase
   public TypeCollection<Descriptor>
 {  // Derived from TypeCollectionBase
-  virtual void read_descriptor( const TypeDescriptor& targetname, 
-                                const std::string& annot, std::istream& in);
+  virtual void read_descriptor(const TypeDescriptor& targetname, const std::string& annot, std::istream& in);
  protected:
   using TypeCollection<Descriptor>::typemap;
  public:

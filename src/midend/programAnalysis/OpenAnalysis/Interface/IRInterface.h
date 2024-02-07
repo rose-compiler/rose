@@ -391,14 +391,18 @@ class IRInterface {
   // is a low-level/assembly-level language for a VLIW or superscalar
   // instruction set. The default implementation (which is appropriate
   // for most IR's) is to return false.
-  virtual bool ParallelWithSuccessor(StmtHandle h) { return false; }
+  virtual bool ParallelWithSuccessor(StmtHandle) {
+      return false;
+  }
 
   // Given an unstructured branch/jump statement, return the number
   // of delay slots. Again, this would be used when the underlying IR
   // is a low-level/assembly-level language for a VLIW or superscalar
   // instruction set. The default implementation (which is appropriate
   // for most IR's) is to return 0.
-  virtual int NumberOfDelaySlots(StmtHandle h) { return 0; }
+  virtual int NumberOfDelaySlots(StmtHandle) {
+      return 0;
+  }
 
   
   //--------------------------------------------------------
@@ -437,11 +441,11 @@ class IRInterface {
 
   // Given a LeafHandle, pretty-print it to the output stream os.
   // The default implementation does nothing.
-  virtual void PrintLeaf(LeafHandle vh, std::ostream & os) { }
+  virtual void PrintLeaf(LeafHandle, std::ostream&) {}
 
   // Given a statement, pretty-print it to the output stream os.
   // The default implementation does nothing.
-  virtual void Dump(StmtHandle stmt, std::ostream& os) { }
+  virtual void Dump(StmtHandle, std::ostream&) {}
   
   //--------------------------------------------------------
   // FIXME: the procedures below are of undetermined utility at the moment.

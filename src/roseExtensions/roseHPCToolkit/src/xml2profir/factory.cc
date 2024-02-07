@@ -138,8 +138,7 @@ ProfIRFactory::setElement (const XMLElem& e)
 }
 
 IRNode *
-ProfIRFactory::callCreate (const string& id, IRNodeCreator_t creator) const
-{
+ProfIRFactory::callCreate (const string&, IRNodeCreator_t creator) const {
   return (*creator) (element_);
 }
 

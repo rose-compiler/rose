@@ -260,7 +260,7 @@ public:
   public:
     enum dirType { Forward, Reverse }; 
     // Default to forward direction if client doesn't specify the direction.
-    BiDirNodesIterator (BaseGraph& g) { dir = Forward; iter = gr->node_set.begin(); } 
+    BiDirNodesIterator (BaseGraph&) { dir = Forward; iter = gr->node_set.begin(); }
     BiDirNodesIterator (BaseGraph& g, dirType d) {
       gr = &g; dir = d;
       if (dir == Forward)

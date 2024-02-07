@@ -237,7 +237,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT>
     void 
-    opened_include_file(ContextT const& ctx, std::string const& relname, 
+    opened_include_file(ContextT const&, std::string const& relname,
                         std::string const& absname, bool /*is_system_include*/)
     {
                                    

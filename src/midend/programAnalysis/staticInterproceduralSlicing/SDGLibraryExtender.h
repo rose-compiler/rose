@@ -6,9 +6,10 @@ class SystemDependenceGraph;
 class SDGLibraryExtender
 {
   public:
-  virtual bool isKnownLibraryFunction(SgFunctionDeclaration *fDec){return false;}
-  virtual void createConnectionsForLibaryFunction(SgFunctionDeclaration *fDec,
-SystemDependenceGraph * sdg){};
+  virtual bool isKnownLibraryFunction(SgFunctionDeclaration*) {
+      return false;
+  }
+  virtual void createConnectionsForLibaryFunction(SgFunctionDeclaration*, SystemDependenceGraph*) {}
   virtual ~SDGLibraryExtender() {}
 };
 #endif

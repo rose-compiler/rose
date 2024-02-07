@@ -165,7 +165,7 @@ public:
   IRUseDefIterator *GetUses (StmtHandle h);
   IRUseDefIterator *GetDefs (StmtHandle h);
 
-  SymHandle GetSymHandle (LeafHandle vh) {
+  SymHandle GetSymHandle (LeafHandle /*vh*/) {
    //WN *wn = (WN *) vh;
     //assert (OPERATOR_has_sym (WN_operator (wn)));
     //return (SymHandle) WN_st (wn); 
@@ -173,11 +173,13 @@ public:
   }
 
   //for now
-  SymHandle GetProcSymHandle(ProcHandle h) {return 0;};
+  SymHandle GetProcSymHandle(ProcHandle) {
+      return 0;
+  }
 
   // Given a SymHandle, return the textual name.
   // DQ (1/13/2006): Andreas has pointed out that the return type should be "const char*" instead of "char*"
-  const char *GetSymNameFromSymHandle (SymHandle sh) {
+  const char *GetSymNameFromSymHandle (SymHandle /*sh*/) {
     //ST *st = (ST *) sh;
     //return (char *) ST_name (st); 
     return 0; // MS: SymHandle is not a pointer, does not compile with 2.96;NULL;

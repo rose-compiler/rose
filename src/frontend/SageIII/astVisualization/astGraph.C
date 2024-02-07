@@ -35,8 +35,8 @@ AST_Graph::defaultFilterUnary::operator()(defaultFilterUnary::argument_type node
 };
 
 AST_Graph::defaultFilterBinary::result_type
-AST_Graph::defaultFilterBinary::operator()(defaultFilterBinary::first_argument_type nodeFilter,
-                                           defaultFilterBinary::second_argument_type edgeFilter){
+AST_Graph::defaultFilterBinary::operator()(defaultFilterBinary::first_argument_type /*nodeFilter*/,
+                                           defaultFilterBinary::second_argument_type /*edgeFilter*/){
    result_type defaultReturn;
    defaultReturn.addToGraph = true;
    defaultReturn.DOTOptions = "";

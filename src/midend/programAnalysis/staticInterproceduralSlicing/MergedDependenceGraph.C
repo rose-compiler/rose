@@ -5,7 +5,7 @@
 #include <set>
 using namespace std;
 
-DependenceNode *MergedDependenceGraph::_importNode(DependenceNode * node)
+DependenceNode *MergedDependenceGraph::_importNode(DependenceNode* /*node*/)
 {/*
     if (node->isInterproc())
     {
@@ -95,7 +95,7 @@ void MergedDependenceGraph::_mergeGraph(DependenceGraph * graph)
     }
 }
 
-set < SgNode * >MergedDependenceGraph::slice(SgNode * node)
+set < SgNode * >MergedDependenceGraph::slice(SgNode* /*node*/)
 {/*TODO
     set < DependenceNode * >reached = getSlice(getNode(node));
 

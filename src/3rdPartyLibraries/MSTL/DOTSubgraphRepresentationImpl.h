@@ -367,7 +367,7 @@ addNullValue(NodeType node, TraceType trace, string varname, string option) {
  
 template<class NodeType>
 void DOTSubgraphRepresentation<NodeType>::
-addEmptyContainer(NodeType node, TraceType trace, string varname, string option) {
+addEmptyContainer(NodeType node, TraceType trace, string varname, string /*option*/) {
 	NodeAdditionalStorage add;
 	add.node = node;
 	ostringstream strs;

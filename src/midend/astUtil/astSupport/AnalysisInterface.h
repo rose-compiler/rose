@@ -78,17 +78,17 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
 class AliasAnalysisInterface
 {
  public:
-  virtual void analyze(AstInterface& fa, const AstNodePtr& f) {}
-  virtual bool
-     may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) = 0;
+  virtual void analyze(AstInterface&, const AstNodePtr&) {}
+  virtual bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) = 0;
   virtual ~AliasAnalysisInterface() {}
 };
 
 class AssumeNoAlias : public AliasAnalysisInterface
 {
  public:
-  virtual bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
-   { return false; }
+  virtual bool may_alias(AstInterface&, const AstNodePtr&, const AstNodePtr&) {
+      return false;
+  }
 };
 
 // This is the interface to access loop structure stored in AST.
