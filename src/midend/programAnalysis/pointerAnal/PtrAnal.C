@@ -60,7 +60,7 @@ Local_GetVarName(AstInterface& fa, const AstNodePtr& scope, std::string name)
 }
 
 static std::string
-Local_GetConstName(AstInterface& fa, std::string val)
+Local_GetConstName(AstInterface&, std::string val)
 {
    return "c:"+val;
 }

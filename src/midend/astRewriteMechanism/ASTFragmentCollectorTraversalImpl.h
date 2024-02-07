@@ -370,7 +370,7 @@ isStartOrEndMarker( std::string markerString, int startOrEnd )
 template <class ASTNodeCollection>
 void
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::
-consistancyCheck( const std::string & s ) const
+consistancyCheck(const std::string&) const
    {
   // printf ("AST_FragmentIdentificationSynthesizedAttributeType::consistancyCheck(%s) \n",s.c_str());
 

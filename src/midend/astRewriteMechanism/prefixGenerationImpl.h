@@ -302,17 +302,10 @@ template <class ASTNodeCollection>
 typename MidLevelRewrite<ASTNodeCollection>::PrefixSynthesizedAttribute
 MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::
 evaluateSynthesizedAttribute (
-     SgNode* astNode,
-     typename MidLevelRewrite<ASTNodeCollection>::PrefixInheritedAttribute inputInheritedAttribute,
-     typename MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::SynthesizedAttributesList inputSynthesizedAttributeList )
+     SgNode*,
+     typename MidLevelRewrite<ASTNodeCollection>::PrefixInheritedAttribute,
+     typename MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::SynthesizedAttributesList)
    {
-#if 0
-     printf ("@@@ In evaluateSynthesizedAttribute: astNode = %p = %s \n",astNode,astNode->sage_class_name());
-#endif
-#if 0
-     printf ("     inputSynthesizedAttributeList.size() = %" PRIuPTR " \n",inputSynthesizedAttributeList.size());
-#endif
-
      return PrefixSynthesizedAttribute();
    }
 

@@ -46,7 +46,7 @@ class PtrAnal
                             const std::list<std::string>& result)=0; 
   virtual Stmt funcexit_x( const std::string& x) = 0;
 
-  virtual void contrl_flow(Stmt stmt1, Stmt stmt2, CFGConfig::EdgeType t) {}
+  virtual void contrl_flow(Stmt, Stmt, CFGConfig::EdgeType) {}
 
 private:
    class hash {

@@ -6,8 +6,8 @@
 class MultiGraphObserver
 {
  public:
-  virtual void UpdateDeleteNode( const MultiGraphElem *n) {}
-  virtual void UpdateDeleteEdge( const MultiGraphElem *e) {}
+  virtual void UpdateDeleteNode( const MultiGraphElem*) {}
+  virtual void UpdateDeleteEdge( const MultiGraphElem*) {}
   virtual ~MultiGraphObserver() {}
 };
 
