@@ -8,7 +8,7 @@
 
 // DQ (11/29/2004): initialize any uninitialized explicitly stored scope data.
 void
-initializeExplicitScopes ( SgNode *node)
+initializeExplicitScopes(SgNode */*node*/)
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance resetParentPointerTimer ("Initialize IR nodes containing explicit scope data member:");

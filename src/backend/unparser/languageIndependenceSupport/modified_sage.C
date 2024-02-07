@@ -59,7 +59,7 @@ int Unparse_MOD_SAGE::cur_get_linewrap () {
 }
 
 // DQ (8/13/2007): Added by Thomas to refactor unparser.
-void Unparse_MOD_SAGE::cur_set_linewrap (int nr) {
+void Unparse_MOD_SAGE::cur_set_linewrap(int) {
   unp->cur.set_linewrap(-1);
 }
 
@@ -912,7 +912,7 @@ GetPrecedence(int variant)
 //  Function that returns the associativity of the expression variants,
 //  -1: left associative; 1: right associative; 0 : not associative/unknown
 //-----------------------------------------------------------------------------------
-int GetAssociativity(int variant)
+int GetAssociativity(int)
    {
        ROSE_ASSERT(!"Deprecated. Use UnparseLanguageIndependentConstructs::getAssociativity instead");
        return 0;
@@ -927,7 +927,7 @@ int GetAssociativity(int variant)
 //  expression. This function is needed whenever the rhs of the binary expression
 //  is an operator= overloaded function.
 //-----------------------------------------------------------------------------------
-bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
+bool Unparse_MOD_SAGE::PrintStartParen(SgExpression*, SgUnparse_Info&)
    {
        ROSE_ASSERT(!"deprecated. use UnparseLanguageIndependentConstructs::requiresParentheses instead");
        return false;
@@ -1330,7 +1330,7 @@ void Unparse_MOD_SAGE::output(SgLocatedNode* node) {
 //  prints out pragmas
 //-----------------------------------------------------------------------------------
 void
-Unparse_MOD_SAGE::directives(SgLocatedNode* lnode)
+Unparse_MOD_SAGE::directives(SgLocatedNode* /*lnode*/)
    {
   // checks option status before printing line and file info
      if (unp->opt.get_linefile_opt())

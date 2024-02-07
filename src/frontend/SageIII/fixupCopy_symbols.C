@@ -8,7 +8,7 @@
 // 2) setup of symbol tables
 
 void
-SgInitializedName::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+SgInitializedName::fixupCopy_symbols(SgNode*, SgCopyHelp&) const
    {
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgInitializedName::fixupCopy_symbols() %p = %s \n",this,this->get_name().str());
@@ -57,7 +57,7 @@ SgExpression::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 
 
 void
-SgLocatedNode::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+SgLocatedNode::fixupCopy_symbols(SgNode*, SgCopyHelp&) const
    {
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgLocatedNode::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
@@ -1191,7 +1191,7 @@ SgDefaultOptionStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
-SgTemplateArgument::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+SgTemplateArgument::fixupCopy_symbols(SgNode* copy, SgCopyHelp&) const
    {
      SgTemplateArgument* templateArgument_copy = isSgTemplateArgument(copy);
      ROSE_ASSERT(templateArgument_copy != NULL);

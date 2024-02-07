@@ -46,7 +46,7 @@ queryFloatDoubleValExp (SgNode * astNode)
 #endif
 
 // DQ (4/13/2007): Moved from header file to source file.
-AttributeListMap::AttributeListMap(SgFile* sageFilePtr)
+AttributeListMap::AttributeListMap(SgFile* /*sageFilePtr*/)
    {
   // Set the block status to true as standard. This can be changed when a preprocessor conditional is evaluated as negative and later 
   // as positive.

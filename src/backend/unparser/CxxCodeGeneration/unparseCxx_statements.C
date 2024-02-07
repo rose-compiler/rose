@@ -3784,7 +3784,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
    }
 
 void
-Unparse_ExprStmt::unparsePragmaDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_ExprStmt::unparsePragmaDeclStmt (SgStatement* stmt, SgUnparse_Info&)
    {
      SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(stmt);
      ASSERT_not_null(pragmaDeclaration);
@@ -3821,7 +3821,7 @@ Unparse_ExprStmt::unparsePragmaDeclStmt (SgStatement* stmt, SgUnparse_Info& info
 
 
 void
-Unparse_ExprStmt::unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& /*info*/)
    {
      SgEmptyDeclaration* emptyDeclaration = isSgEmptyDeclaration(stmt);
      ASSERT_not_null(emptyDeclaration);
@@ -9362,7 +9362,7 @@ void
 Unparse_ExprStmt::initializeDeclarationsFromParent ( 
    SgDeclarationStatement* declarationStatement,
    SgClassDefinition* & cdefn,
-   SgNamespaceDefinitionStatement* & namespaceDefn, int debugSupport )
+   SgNamespaceDefinitionStatement* & namespaceDefn, int /*debugSupport*/ )
    {
   // DQ (11/18/2004): Now that we store the scope explicitly we don't have to interprete the parent pointer!
      ASSERT_not_null(declarationStatement);

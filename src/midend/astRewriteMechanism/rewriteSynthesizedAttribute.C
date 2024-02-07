@@ -42,7 +42,7 @@ SynthesizedAttribute ()
 #endif
 
 HighLevelRewrite::SynthesizedAttribute::
-SynthesizedAttribute ( SgNode* inputASTNode )
+SynthesizedAttribute ( SgNode* /*inputASTNode*/ )
    {
   // Initialize the single pointer in the class
   // astNode  = inputASTNode;

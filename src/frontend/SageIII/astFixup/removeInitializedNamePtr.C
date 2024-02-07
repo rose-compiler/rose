@@ -393,7 +393,7 @@ list<SgNode*> DeleteEmptyOperatorNodes::listOfTraversedTypes;
 
 void
 DeleteEmptyOperatorNodes::
-visitWithAstNodePointersList ( SgNode* node, AstNodePointersList l )
+visitWithAstNodePointersList(SgNode* /*node*/, AstNodePointersList l)
    {
      for (AstNodePointersList::iterator i=l.begin(); i!=l.end(); i++)
         {

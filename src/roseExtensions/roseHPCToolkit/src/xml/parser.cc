@@ -72,14 +72,14 @@ extern "C"
 //! SAX callback at start of document
 static
 void
-startDoc_ (void* user_data)
+startDoc_(void*_data)
 {
 }
 
 //! SAX callback at end of document
 static
 void
-endDoc_ (void* user_data)
+endDoc_(void*_data)
 {
 }
 

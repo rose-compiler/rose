@@ -37,7 +37,7 @@ void Unparse_Type::curprint (std::string str) {
 }
 
 bool
-Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info )
+Unparse_Type::generateElaboratedType(SgDeclarationStatement*, const SgUnparse_Info&)
    {
   // For now we just return true, later we will check the scopeStatement->get_type_elaboration_list();
      bool useElaboratedType = true;

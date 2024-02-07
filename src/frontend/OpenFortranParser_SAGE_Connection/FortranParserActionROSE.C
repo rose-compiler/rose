@@ -388,7 +388,7 @@ void c_action_name(Token_t *id)
  * 
  * @param id The identifier representing the named constant if present, otherwise is a literal-constant
  */
-void c_action_constant(Token_t * id)
+void c_action_constant(Token_t*)
 {
 }
 
@@ -427,7 +427,7 @@ void c_action_int_constant(Token_t * id)
  * 
  * @param id The identifier representing the named constant if present, otherwise is a literal-constant
  */
-void c_action_char_constant(Token_t * id)
+void c_action_char_constant(Token_t*)
 {
 }
 
@@ -1518,7 +1518,7 @@ void c_action_label(Token_t * lbl)
      * @param eos Token for T_EOS.
      * @param type typeParam if a typeParam. compDef if a compDef.
      */
-    void c_action_type_param_or_comp_def_stmt(Token_t * eos, int type)
+    void c_action_type_param_or_comp_def_stmt(Token_t * /*eos*/, int type)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_type_param_or_comp_def_stmt() type = %d \n", type);
@@ -1551,7 +1551,7 @@ void c_action_label(Token_t * lbl)
      * @param hasTypeAttrSpecList True if a type-attr-spec-list is present.
      * @param hasGenericNameList True if a generic-name-list is present.
      */
-    void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos,
+    void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * /*eos*/,
             ofp_bool hasTypeAttrSpecList, ofp_bool hasGenericNameList)
     {
         // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
@@ -1768,7 +1768,7 @@ void c_action_label(Token_t * lbl)
      * @param id Identifier equal to the parameter.
      * @param hasInit True if is initialized.
      */
-    void c_action_type_param_decl(Token_t * id, ofp_bool hasInit)
+    void c_action_type_param_decl(Token_t * /*id*/, ofp_bool /*hasInit*/)
     {
     }
 
@@ -1782,7 +1782,7 @@ void c_action_label(Token_t * lbl)
     void c_action_type_param_decl_list__begin()
     {
     }
-    void c_action_type_param_decl_list(int count)
+    void c_action_type_param_decl_list(int)
     {
     }
 
@@ -2234,7 +2234,7 @@ void c_action_label(Token_t * lbl)
     void c_action_proc_component_attr_spec_list__begin()
     {
     }
-    void c_action_proc_component_attr_spec_list(int count)
+    void c_action_proc_component_attr_spec_list(int)
     {
     }
 
@@ -2311,7 +2311,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      */
 // void c_action_proc_binding_stmt(Token_t * label, int type)
-    void c_action_proc_binding_stmt(Token_t *label, int type, Token_t *eos)
+    void c_action_proc_binding_stmt(Token_t */*label*/, int type, Token_t*)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("c_action_proc_binding_stmt(): type = %d \n", type);
@@ -2339,7 +2339,7 @@ void c_action_label(Token_t * lbl)
      * @param hasAccessSpec True if has public or private access spec.
      */
 // void c_action_generic_binding(ofp_bool hasAccessSpec)
-    void c_action_generic_binding(Token_t * genericKeyword, ofp_bool hasAccessSpec)
+    void c_action_generic_binding(Token_t*, ofp_bool /*hasAccessSpec*/)
     {
     }
 
@@ -2355,7 +2355,7 @@ void c_action_label(Token_t * lbl)
      * @param id Optional identifier in pass attribute.
      */
 // void c_action_binding_attr(int attr, Token_t * id)
-    void c_action_binding_attr(Token_t * bindingAttr, int attr, Token_t * id)
+    void c_action_binding_attr(Token_t*, int attr, Token_t * id)
     {
     }
 

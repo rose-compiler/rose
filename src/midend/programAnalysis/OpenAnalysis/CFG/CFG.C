@@ -753,7 +753,7 @@ CFG::build_CFG_unconditional_jump (CFG::Node* prev_node, StmtHandle stmt)
     labels and many indirect branches.
 */
 IRStmtType
-CFG::build_CFG_unconditional_jump_i (CFG::Node* prev_node, StmtHandle stmt)
+CFG::build_CFG_unconditional_jump_i(CFG::Node*, StmtHandle)
 {
   // Every label must be seen before all the edges can be added.
   // Just add this to the list of indirect jumps, which will have their

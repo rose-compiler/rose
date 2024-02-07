@@ -7,7 +7,7 @@ using namespace std;
 using namespace Rose;
 
 void
-markBackendSpecificFunctionsAsCompilerGenerated( SgNode* node )
+markBackendSpecificFunctionsAsCompilerGenerated(SgNode*)
    {
   // This simplifies how the traversal is called!
      MarkBackendSpecificFunctionsAsCompilerGenerated astFixupTraversal;

@@ -14,7 +14,7 @@ void
 TransformationStringTemplatedType<HighLevelCollectionTypedefs>::preconditions(
    ScopeIdentifierEnum   & relativeScope,
    PlacementPositionEnum & relativeLocation,
-   bool                  & inputBuildInNewScope )
+   bool                  & /*inputBuildInNewScope*/ )
    {
   // Note that we automatically change some of the input specifications to permit the 
   // simplified automatic testing of all the permutations associated with new strings 
@@ -94,7 +94,7 @@ void
 TransformationStringTemplatedType<MidLevelCollectionTypedefs>::preconditions(
    ScopeIdentifierEnum   & relativeScope,
    PlacementPositionEnum & relativeLocation,
-   bool                  & inputBuildInNewScope )
+   bool                  & /*inputBuildInNewScope*/ )
    {
   // Note that we automatically change some of the input specifications to permit the 
   // simplified automatic testing of all the permutations associated with new strings 
@@ -133,7 +133,7 @@ TransformationStringTemplatedType<MidLevelCollectionTypedefs>::preconditions(
 template<>
 TransformationStringTemplatedType<MidLevelCollectionTypedefs>::
 TransformationStringTemplatedType(
-   SgNode* astNode,
+   SgNode*,
    const string & X,
    ScopeIdentifierEnum inputRelativeScope,
    PlacementPositionEnum inputRelativeLocation,

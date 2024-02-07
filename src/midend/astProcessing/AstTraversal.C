@@ -12,7 +12,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
-void AstPreOrderTraversal::preOrderVisit(SgNode* node) {
+void AstPreOrderTraversal::preOrderVisit(SgNode* /*node*/) {
   //cout << "Visiting : " << node->sage_class_name() << endl;
 }
 
@@ -137,7 +137,7 @@ AstCycleTest::setChildrenContainer(SgNode* node, std::vector<SgNode*>& c)
         }
    }
 
-void AstCycleTest::postOrderVisit(SgNode* node) {
+void AstCycleTest::postOrderVisit(SgNode*) {
   activeNodes.pop_back();
 }
 

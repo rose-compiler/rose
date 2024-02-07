@@ -2437,7 +2437,7 @@ Unparse_ExprStmt::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) {}
 
 
 void
-Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info&)
    {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ASSERT_not_null(var_ref);
@@ -2608,7 +2608,7 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
 
 
 void
-Unparse_ExprStmt::unparseClassRef(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseClassRef(SgExpression* expr, SgUnparse_Info&)
    {
      SgClassNameRefExp* classname_ref = isSgClassNameRefExp(expr);
      ASSERT_not_null(classname_ref);
@@ -3966,7 +3966,7 @@ void remove_substrings(basic_string<T>& s, const basic_string<T>& p)
 
 
 void
-Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info&)
    {
      SgStringVal* str_val = isSgStringVal(expr);
      ASSERT_not_null(str_val);
@@ -4118,7 +4118,7 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 
 
 void
-Unparse_ExprStmt::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseUIntVal(SgExpression* expr, SgUnparse_Info&)
    {
      SgUnsignedIntVal* uint_val = isSgUnsignedIntVal(expr);
      ASSERT_not_null(uint_val);
@@ -4139,7 +4139,7 @@ Unparse_ExprStmt::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseLongIntVal(SgExpression* expr, SgUnparse_Info&)
    {
      SgLongIntVal* longint_val = isSgLongIntVal(expr);
      ASSERT_not_null(longint_val);
@@ -4160,7 +4160,7 @@ Unparse_ExprStmt::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info&)
    {
      SgLongLongIntVal* longlongint_val = isSgLongLongIntVal(expr);
      ASSERT_not_null(longlongint_val);
@@ -4181,7 +4181,7 @@ Unparse_ExprStmt::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info
    }
 
 void
-Unparse_ExprStmt::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info&)
    {
      SgUnsignedLongLongIntVal* ulonglongint_val = isSgUnsignedLongLongIntVal(expr);
      ASSERT_not_null(ulonglongint_val);
@@ -4202,7 +4202,7 @@ Unparse_ExprStmt::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& inf
    }
 
 void
-Unparse_ExprStmt::unparseULongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseULongIntVal(SgExpression* expr, SgUnparse_Info&)
    {
      SgUnsignedLongVal* ulongint_val = isSgUnsignedLongVal(expr);
      ASSERT_not_null(ulongint_val);
@@ -5923,7 +5923,7 @@ void Unparse_ExprStmt::unparseDerefOp(SgExpression* expr, SgUnparse_Info& info) 
 void Unparse_ExprStmt::unparseAddrOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "&", info); }
 void Unparse_ExprStmt::unparseMinusMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "--", info); }
 void Unparse_ExprStmt::unparsePlusPlusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "++", info); }
-void Unparse_ExprStmt::unparseAbstractOp(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_ExprStmt::unparseAbstractOp(SgExpression*, SgUnparse_Info&) {}
 void Unparse_ExprStmt::unparseBitCompOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
 void Unparse_ExprStmt::unparseRealPartOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "__real__ ", info); }
 void Unparse_ExprStmt::unparseImagPartOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "__imag__ ", info); }
@@ -5995,12 +5995,12 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseClassInitOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseClassInitOp(SgExpression*, SgUnparse_Info&)
    {
    }
 
 void
-Unparse_ExprStmt::unparseDyCastOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseDyCastOp(SgExpression*, SgUnparse_Info&)
    {
    }
 
@@ -6556,7 +6556,7 @@ Unparse_ExprStmt::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
 
 
 void
-Unparse_ExprStmt::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseThisNode(SgExpression* expr, SgUnparse_Info&)
    {
      SgThisExp* this_node = isSgThisExp(expr);
 
@@ -6601,7 +6601,7 @@ void Unparse_ExprStmt::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& i
      unparseBinaryOperator(expr, ">>=", info);
    }
 
-void Unparse_ExprStmt::unparseForDeclOp(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_ExprStmt::unparseForDeclOp(SgExpression*, SgUnparse_Info&) {}
 
 void
 Unparse_ExprStmt::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
@@ -6617,8 +6617,8 @@ Unparse_ExprStmt::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
      unp->u_type->unparseType(type_ref->get_type_name(), newinfo);
    }
 
-void Unparse_ExprStmt::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
-void Unparse_ExprStmt::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_ExprStmt::unparseVConst(SgExpression*, SgUnparse_Info&) {}
+void Unparse_ExprStmt::unparseExprInit(SgExpression*, SgUnparse_Info&) {}
 
 
 // Liao 11/3/2010

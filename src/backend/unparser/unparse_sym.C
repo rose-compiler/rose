@@ -43,17 +43,17 @@ Unparse_Sym::unparseSymbol(SgSymbol* sym, SgUnparse_Info& info)
         }
    }
 
-void Unparse_Sym::unparseVarSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseFunctionSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseFuncTypeSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseClassSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
+void Unparse_Sym::unparseVarSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseFunctionSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseFuncTypeSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseClassSymbol(SgSymbol*, SgUnparse_Info&) {}
 // void Unparse_Sym::unparseUnionSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
 // void Unparse_Sym::unparseStructSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseEnumSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseFieldSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseTypedefSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseMFunctionSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseLabelSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
+void Unparse_Sym::unparseEnumSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseFieldSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseTypedefSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseMFunctionSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseLabelSymbol(SgSymbol*, SgUnparse_Info&) {}
 // void Unparse_Sym::unparseConstructSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseTemplateSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
-void Unparse_Sym::unparseNamespaceSymbol(SgSymbol* sym, SgUnparse_Info& info) {}
+void Unparse_Sym::unparseTemplateSymbol(SgSymbol*, SgUnparse_Info&) {}
+void Unparse_Sym::unparseNamespaceSymbol(SgSymbol*, SgUnparse_Info&) {}

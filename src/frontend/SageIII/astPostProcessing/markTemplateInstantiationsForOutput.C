@@ -1291,7 +1291,7 @@ MarkTemplateInstantiationsForOutputSupportSynthesizedAttribute
 MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute ( 
    SgNode* node,
    MarkTemplateInstantiationsForOutputSupportInheritedAttribute   inheritedAttribute,
-   SubTreeSynthesizedAttributes synthesizedAttributeList )
+   SubTreeSynthesizedAttributes /*synthesizedAttributeList*/)
    {
      MarkTemplateInstantiationsForOutputSupportSynthesizedAttribute returnAttribute;
 

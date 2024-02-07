@@ -12,7 +12,7 @@ using namespace std;
 // using namespace PRE;
 
 
-bool isFunctionSideEffectFree(SgExpression* decl) {
+bool isFunctionSideEffectFree(SgExpression*) {
   return false; // FIXME
 }
 

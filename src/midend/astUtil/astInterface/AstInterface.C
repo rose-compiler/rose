@@ -1637,11 +1637,13 @@ CreateAssignment( const AstNodePtr& _lhs, const AstNodePtr& _rhs)
 }
 
 bool AstInterface::
-IsIOInputStmt( const AstNodePtr& s, AstNodeList* varlist) 
-{ return false; }
+IsIOInputStmt(const AstNodePtr&, AstNodeList*) {
+    return false;
+}
 bool AstInterface::
-IsIOOutputStmt( const AstNodePtr& s, AstNodeList* explist) 
-{ return false; }
+IsIOOutputStmt(const AstNodePtr&, AstNodeList*) {
+    return false;
+}
 
 //! Check if $_exp$ is a single integer constant; if yes, return the constant value in $val$.
 bool AstInterface::IsConstInt( const AstNodePtr& _exp, int *val) 
@@ -3912,7 +3914,7 @@ class PerformPreTransformationTraversal
     bool succ;
     Transform& op;
     AstInterface& fa;
-    _DummyAttribute evaluateInheritedAttribute(SgNode* astNode, _DummyAttribute a)
+    _DummyAttribute evaluateInheritedAttribute(SgNode* astNode, _DummyAttribute)
      {
         if (!succ) {
           //std::cerr << "pre operating on " << astNode << "::" << astNode->unparseToString() << "\n";
@@ -3924,8 +3926,7 @@ class PerformPreTransformationTraversal
         }
        return _DummyAttribute();
      }
-   AstNodePtrImpl evaluateSynthesizedAttribute(SgNode* astNode, _DummyAttribute a, 
-                                               SynthesizedAttributesList l)
+   AstNodePtrImpl evaluateSynthesizedAttribute(SgNode* astNode, _DummyAttribute, SynthesizedAttributesList)
       {
           //std::cerr << "post operating on " << astNode << "::" << astNode->unparseToString() << "\n";
           if (orig == astNode) {
@@ -3960,7 +3961,7 @@ class PerformPostTransformationTraversal : public AstBottomUpProcessing<AstNodeP
   SgNode *head;
     AstInterface& fa;
     Transform& op;
-  AstNodePtrImpl evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList l)
+  AstNodePtrImpl evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList)
       {
           AstNodePtrImpl r  = astNode;
           if (op(fa, AstNodePtrImpl(astNode), r) && r != astNode) {

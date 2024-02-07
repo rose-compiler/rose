@@ -318,7 +318,7 @@ class CollectModRefWrap : public CollectReadRefWrap<AstNodePtr>
 
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
-AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
+AppendModLoc(AstInterface&, const AstNodePtr& mod, const AstNodePtr& rhs)
     {
       if (DebugLocalInfoCollect()) {
           std::cerr << "appending modifying " << AstInterface::AstToString(mod) << " = " << AstInterface::AstToString(rhs) << std::endl;

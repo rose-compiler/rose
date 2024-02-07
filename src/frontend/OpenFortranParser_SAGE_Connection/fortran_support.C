@@ -3797,7 +3797,7 @@ LRSHFT
    }
 
 bool
-isIntrinsicFunctionReturningNonmatchingType( string s)
+isIntrinsicFunctionReturningNonmatchingType(string)
    {
   // Later we can figure out exactly which intrinsic function return type different from their
   // input types.  Examples include: sign, modulo (I think).

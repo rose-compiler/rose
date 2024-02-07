@@ -388,7 +388,7 @@ MidLevelInterfaceNodeCollection::map ( ScopeIdentifierEnum scope, PlacementPosit
    }
 
 void
-MidLevelInterfaceNodeCollection::sortInputStrings( SgNode* astNode )
+MidLevelInterfaceNodeCollection::sortInputStrings(SgNode*)
    {
   // This function bins the transformation strings by the output of the map 
   // function given the input of the scope and position in scope recoreded 

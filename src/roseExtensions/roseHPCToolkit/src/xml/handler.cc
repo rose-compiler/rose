@@ -48,7 +48,7 @@ XMLUtil::XMLHandler::startElement (const XMLCh* const name,
 }
 
 void
-XMLUtil::XMLHandler::endElement (const XMLCh* const name)
+XMLUtil::XMLHandler::endElement (const XMLCh* const)
 {
   level_--;
   elements_.pop ();

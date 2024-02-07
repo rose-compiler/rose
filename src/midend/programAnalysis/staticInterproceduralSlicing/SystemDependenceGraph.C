@@ -664,7 +664,7 @@ void SystemDependenceGraph::process()
   }
 }
 
-void SystemDependenceGraph::_processFunction(FunctionDependenceGraph * pdg)
+void SystemDependenceGraph::_processFunction(FunctionDependenceGraph * /*pdg*/)
 {
 #if 0
 //TODO

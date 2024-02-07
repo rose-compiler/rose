@@ -31,7 +31,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
 #ifdef NEWDU
                                          EDefUse * du,
 #endif
-                                         InterproceduralInfo * ii) // blame initial commit
+                                         InterproceduralInfo * /*ii*/)
       : _head(isSgFunctionDefinition(head))
 {
 #ifdef NEWDU
@@ -353,7 +353,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
         };
       }
       
-    void DataDependenceGraph::computeInterproceduralInformation(InterproceduralInfo * ii)
+    void DataDependenceGraph::computeInterproceduralInformation(InterproceduralInfo*)
     {
       // cout <<"since not all functionparameters may be requried for this function, but the stack has to be valid, force a data depenancy form the fucntion enrty to the formal in"<<endl;
     }

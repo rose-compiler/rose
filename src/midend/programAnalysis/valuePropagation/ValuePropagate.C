@@ -146,7 +146,7 @@ class CollectKnownValue
   CollectKnownValue(HasValueMap& m, HasValueCodeGen& cg, AppendValueNode& p) 
      : valmap(m), astcodegen(cg), append(p)  {}
   virtual bool Traverse( AstInterface &fa, const AstNodePtr& s,
-                               AstInterface::TraversalVisitType t)
+                               AstInterface::TraversalVisitType)
    {
        HasValueMapReplace valrepl( fa, valmap, false);
        if (ValueAnnotation::get_inst()->is_value_restrict_op( fa, s, &append, &valrepl, &astcodegen)) 
@@ -283,7 +283,7 @@ ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& 
 }
 
 void HasValueMap::
-copy_value( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy)
+copy_value(AstInterfaceImpl&, const AstNodePtr& orig, const AstNodePtr& copy)
 {
   HasValueDescriptor desc;
   if (has_value( orig, &desc)) {

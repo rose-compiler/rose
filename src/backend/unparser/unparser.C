@@ -165,7 +165,7 @@ Unparser::containsLanguageStatements ( char* fileName )
    }
 
 bool
-Unparser::includeFileIsSurroundedByExternCBraces ( char* tempFilename )
+Unparser::includeFileIsSurroundedByExternCBraces(char*)
    {
   // For the first attempt at writing this function we will check to see if all the
   // declarations in the target file have "C" linkage.  This is neccessary but not
@@ -203,7 +203,7 @@ int Unparser::line_count(char* directive) {
 
 
 bool
-Unparser::isASecondaryFile ( SgStatement* stmt )
+Unparser::isASecondaryFile(SgStatement*)
    {
   // for now just assume there are no secondary files
      return false;

@@ -119,7 +119,7 @@ IRStmtIterator * SageIRInterface::ProcBody(ProcHandle h)
 
 // Get IRCallsiteIterator* for a statement. The user must free the
 // iterator's memory via delete.
-IRCallsiteIterator * SageIRInterface::GetCallsites(StmtHandle h) 
+IRCallsiteIterator * SageIRInterface::GetCallsites(StmtHandle)
 {
   //for now
   return NULL;
@@ -127,13 +127,13 @@ IRCallsiteIterator * SageIRInterface::GetCallsites(StmtHandle h)
 
 // Get IRCallsiteIterator* for a statement. The user must free the
 // iterator's memory via delete.
-IRCallsiteParamIterator * SageIRInterface::GetCallsiteParams(ExprHandle h) 
+IRCallsiteParamIterator * SageIRInterface::GetCallsiteParams(ExprHandle)
 {
   //for now
   return NULL;
 }
 
-bool SageIRInterface::IsParamProcRef(ExprHandle h) 
+bool SageIRInterface::IsParamProcRef(ExprHandle)
 {
   //for now
   return false;
@@ -141,7 +141,7 @@ bool SageIRInterface::IsParamProcRef(ExprHandle h)
 
 // Given an expression representing a callsite, is this an
 // invocation through a procedure parameter.
-bool SageIRInterface::IsCallThruProcParam(ExprHandle h) {
+bool SageIRInterface::IsCallThruProcParam(ExprHandle) {
   //for now
   return false;
 }
@@ -197,7 +197,7 @@ IRStmtType SageIRInterface::GetStmtType(StmtHandle h)
 }
 
 // Given a statement, return the label associated with it (or NULL if none).
-StmtLabel SageIRInterface::GetLabel(StmtHandle h)
+StmtLabel SageIRInterface::GetLabel(StmtHandle)
 {
         //for now
         return 0;
@@ -289,13 +289,13 @@ StmtHandle SageIRInterface::GetLoopIncrement(StmtHandle h)
 //  return false;
 //}
 
-bool SageIRInterface::LoopIterationsDefinedAtEntry(StmtHandle h)
+bool SageIRInterface::LoopIterationsDefinedAtEntry(StmtHandle)
 {
         //this needs to be false for C (read comments in CFG.C)
         return false;
 }
 
-StmtLabel SageIRInterface::GetTargetLabel(StmtHandle h, int) 
+StmtLabel SageIRInterface::GetTargetLabel(StmtHandle, int)
 {
         //for now
         return 0;
@@ -307,7 +307,7 @@ StmtLabel SageIRInterface::GetTargetLabel(StmtHandle h, int)
 
 // Given an unstructured multi-way branch, return the number of targets.
 // The count does not include the optional default/catchall target.
-int SageIRInterface::NumUMultiTargets(StmtHandle h) 
+int SageIRInterface::NumUMultiTargets(StmtHandle)
 {
         //for now
         return 0;
@@ -315,7 +315,7 @@ int SageIRInterface::NumUMultiTargets(StmtHandle h)
 
 // Given an unstructured multi-way branch, return the label of the target
 // statement at 'targetIndex'. The n targets are indexed [0..n-1]. 
-StmtLabel SageIRInterface::GetUMultiTargetLabel(StmtHandle h, int)
+StmtLabel SageIRInterface::GetUMultiTargetLabel(StmtHandle, int)
 {
         //for now
         return 0;
@@ -323,7 +323,7 @@ StmtLabel SageIRInterface::GetUMultiTargetLabel(StmtHandle h, int)
 
 // Given an unstructured multi-way branch, return the label of the optional
 // default/catchall target. Return 0 if no default target.
-StmtLabel SageIRInterface::GetUMultiCatchallLabel(StmtHandle h)
+StmtLabel SageIRInterface::GetUMultiCatchallLabel(StmtHandle)
 {
         //for now
         return 0;
@@ -331,26 +331,26 @@ StmtLabel SageIRInterface::GetUMultiCatchallLabel(StmtHandle h)
 
 
 //for switch stmt?
-int SageIRInterface::NumMultiCases(StmtHandle h)
+int SageIRInterface::NumMultiCases(StmtHandle)
 {
         //for now
         return 0;
 }
 
 // I'm assuming bodyIndex is 0..n-1. 
-IRStmtIterator* SageIRInterface::MultiBody(StmtHandle h, int bodyIndex)
+IRStmtIterator* SageIRInterface::MultiBody(StmtHandle, int)
 {
         //for now
         return NULL;
 }
 
-bool SageIRInterface::IsBreakImplied(StmtHandle h)
+bool SageIRInterface::IsBreakImplied(StmtHandle)
 {
         return false; //break is never implied in C/C++ ?!?!
 }
 
 //default?
-IRStmtIterator* SageIRInterface::GetMultiCatchall(StmtHandle h)
+IRStmtIterator* SageIRInterface::GetMultiCatchall(StmtHandle)
 {
         return new SageIRStmtIterator();
 }
@@ -434,13 +434,13 @@ IRStmtIterator* SageIRInterface::ElseBody(StmtHandle h)
         }
    }
 
-IRUseDefIterator* SageIRInterface::GetUses(StmtHandle h)
+IRUseDefIterator* SageIRInterface::GetUses(StmtHandle)
 {
         //for now
         return NULL;
 }
 
-IRUseDefIterator* SageIRInterface::GetDefs(StmtHandle h)
+IRUseDefIterator* SageIRInterface::GetDefs(StmtHandle)
 {
         //for now
         return NULL;
@@ -553,21 +553,21 @@ ExprHandle SageIRInterface::GetCondition(StmtHandle h)
 
 // Given an unstructured multi-way branch, return the condition expression
 // corresponding to target 'targetIndex'. The n targets are indexed [0..n-1].
-ExprHandle SageIRInterface::GetUMultiCondition(StmtHandle h, int targetIndex)
+ExprHandle SageIRInterface::GetUMultiCondition(StmtHandle, int /*targetIndex*/)
 {
   // FIXME: It isn't yet decided whether or not this function is needed in
   // the IR interface.
   ROSE_ABORT ();
 }
 
-ExprHandle SageIRInterface::GetSMultiCondition(StmtHandle h, int bodyIndex)
+ExprHandle SageIRInterface::GetSMultiCondition(StmtHandle, int)
 {
         //for now
         return 0;
         //in whirl switch stmts are unstructured, and in sage???
 }
 
-ExprHandle SageIRInterface::GetMultiExpr(StmtHandle h)
+ExprHandle SageIRInterface::GetMultiExpr(StmtHandle)
 {
   // Whirl does not appear to have a structured switch statement. And what about Sage??
   ROSE_ABORT ();

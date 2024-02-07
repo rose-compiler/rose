@@ -1211,7 +1211,7 @@ NodeQuery::queryMemoryPool (SgNode* traversal, NodeQuery::roseFunctionPointerTwo
  * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
   NodeQuerySynthesizedAttributeType
-NodeQuery::queryMemoryPool (SgNode* traversal, NodeQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
+NodeQuery::queryMemoryPool (SgNode*, NodeQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
 {
   // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
   return AstQueryNamespace::queryMemoryPool(querySolverFunction, targetVariantVector);

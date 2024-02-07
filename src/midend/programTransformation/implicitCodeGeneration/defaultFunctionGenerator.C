@@ -1778,7 +1778,7 @@ getVarRefForFormal(SgFunctionDefinition *functionDefinition,
  */
 static void
 findClassesInvokedViaDestructors(SgNode *subtree,
-                                 SgThisExp *thisExp,
+                                 SgThisExp*,
                                  std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
 {
   // Find any function callsites within subtree.
@@ -1838,7 +1838,7 @@ findClassesInvokedViaDestructors(SgNode *subtree,
  */
 static void
 findClassesInvokedViaOperatorEquals(SgNode *subtree,
-                                    SgThisExp *thisExp,
+                                    SgThisExp*,
                                     std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
 {
   // Find any function callsites within subtree.

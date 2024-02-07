@@ -137,7 +137,7 @@ namespace AstQueryNamespace{
     mergeWith.insert(mergeWith.end(),mergeTo.begin(),mergeTo.end());
   }
 
-  void Merge(void* mergeWith, void* mergeTo ){}
+  void Merge(void*, void*) {}
 
 }
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -175,7 +175,7 @@ struct testFunctionals2: public std::binary_function<SgNode*,SgNode*, std::list<
   void setPred(int x){
     y=x;
   } 
-  std::list<SgNode*>  operator()(SgNode* node,SgNode* test) const{
+  std::list<SgNode*>  operator()(SgNode*, SgNode*) const{
       return std::list<SgNode*>();
   }
 };

@@ -162,7 +162,7 @@ CustomAstDOTGenerationData::additionalEdgeInfo(SgNode* from, SgNode* to, std::st
    }
 
 std::string
-CustomAstDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* to, std::string label)
+CustomAstDOTGenerationData::additionalEdgeOptions(SgNode*/*from*/, SgNode*/*to*/, std::string /*label*/)
    {
   // This virtual function adds options (after the node label) in the output DOT file
   // printf ("CustomAstDOTGenerationData::additionalEdgeOptions from = %p = %s -> label = %s -> to = %p = %s \n",

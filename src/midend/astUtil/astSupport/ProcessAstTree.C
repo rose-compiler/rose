@@ -96,8 +96,8 @@ bool ProcessAstTree<AstNodePtr>:: ProcessLoop(AstInterface &fa, const AstNodePtr
      }
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>:: ProcessIf( AstInterface &fa, const AstNodePtr& s,
-                             const AstNodePtr& cond, const AstNodePtr& truebody,
-                             const AstNodePtr& falsebody,
+                             const AstNodePtr& /*cond*/, const AstNodePtr& truebody,
+                             const AstNodePtr& /*falsebody*/,
                              AstInterface::TraversalVisitType t)
      {
         if (t == AstInterface::PreVisit) {

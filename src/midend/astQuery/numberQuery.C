@@ -432,7 +432,7 @@ NumberQuery::queryMemoryPool
 NumberQuerySynthesizedAttributeType
 NumberQuery::queryMemoryPool
 (
- std::string traversal,
+ std::string,
  NumberQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
 {
   // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]

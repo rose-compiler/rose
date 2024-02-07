@@ -171,11 +171,21 @@ class EQOperator : public SymbolicVisitor
 {
  protected:
   bool result;
-  virtual void VisitConst( const SymbolicConst &v) { result = false; }
-  virtual void VisitVar( const SymbolicVar &v) { result = false; }
-  virtual void VisitFunction( const SymbolicFunction &v) { result = false; }
-  virtual void VisitExpr( const  SymbolicExpr& v) { result = false; }
-  virtual void VisitAstWrap( const SymbolicAstWrap& v) { result = false; }
+  virtual void VisitConst(const SymbolicConst&) {
+      result = false;
+  }
+  virtual void VisitVar(const SymbolicVar&) {
+      result = false;
+  }
+  virtual void VisitFunction(const SymbolicFunction&) {
+      result = false;
+  }
+  virtual void VisitExpr(const  SymbolicExpr&) {
+      result = false;
+  }
+  virtual void VisitAstWrap(const SymbolicAstWrap&) {
+      result = false;
+  }
 };
 
 class ConstEQ : public EQOperator
@@ -251,11 +261,21 @@ class CompareOperator : public SymbolicVisitor
  protected:
   MapObject<SymbolicVal,SymbolicBound>* GetFunc() { return func; }
   CompareRel result;
-  virtual void VisitConst( const SymbolicConst &v) { result = REL_UNKNOWN; }
-  virtual void VisitVar( const SymbolicVar &v) { result = REL_UNKNOWN; }
-  virtual void VisitFunction( const SymbolicFunction &v) { result = REL_UNKNOWN; }
-  virtual void VisitExpr( const  SymbolicExpr& v) { result = REL_UNKNOWN; }
-  void VisitAstWrap( const SymbolicAstWrap& v) { result = REL_UNKNOWN; }
+  virtual void VisitConst(const SymbolicConst&) {
+      result = REL_UNKNOWN;
+  }
+  virtual void VisitVar(const SymbolicVar&) {
+      result = REL_UNKNOWN;
+  }
+  virtual void VisitFunction(const SymbolicFunction&) {
+      result = REL_UNKNOWN;
+  }
+  virtual void VisitExpr(const SymbolicExpr&) {
+      result = REL_UNKNOWN;
+  }
+  void VisitAstWrap(const SymbolicAstWrap&) {
+      result = REL_UNKNOWN;
+  }
 
   void Default1( const SymbolicVal &v1, const SymbolicVal &v2)
   {
@@ -408,10 +428,18 @@ class SelectCompare  : public CompareOperator
   }
 
 
-  virtual void VisitConst( const SymbolicConst &v) { Default0(); }
-  virtual void VisitAstWrap( const SymbolicAstWrap &v) { Default0(); }
-  virtual void VisitVar( const SymbolicVar &v) { Default0(); }
-  virtual void VisitFunction( const SymbolicFunction &v) { Default0(); }
+  virtual void VisitConst(const SymbolicConst&) {
+      Default0();
+  }
+  virtual void VisitAstWrap(const SymbolicAstWrap &) {
+      Default0();
+  }
+  virtual void VisitVar(const SymbolicVar&) {
+      Default0();
+  }
+  virtual void VisitFunction(const SymbolicFunction &) {
+      Default0();
+  }
   virtual void VisitExpr( const  SymbolicExpr& e2)
            {  SymOpType t1 = e1.GetOpType(), t2 = e2.GetOpType();
               unsigned c1 = e1.NumOfOpds(), c2 = e2.NumOfOpds();
@@ -475,9 +503,15 @@ class ValCompare  : public CompareOperator
         CompareOperator::Default0(v1,v2);
       }
   }
-  void VisitConst( const SymbolicConst &v) { Default0(); }
-  void VisitVar( const SymbolicVar &v) { Default0(); }
-  void VisitFunction( const SymbolicFunction &v) { Default0(); }
+  void VisitConst(const SymbolicConst&) {
+      Default0();
+  }
+  void VisitVar(const SymbolicVar&) {
+      Default0();
+  }
+  void VisitFunction(const SymbolicFunction&) {
+      Default0();
+  }
   void VisitExpr( const  SymbolicExpr& v)
           { switch (v.GetOpType()) {
              case SYMOP_MULTIPLY:

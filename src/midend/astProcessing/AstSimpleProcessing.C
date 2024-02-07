@@ -35,9 +35,7 @@ AstSimpleProcessing::evaluateInheritedAttribute(SgNode* astNode,
 // the visit() method. However, only one of these will be invoked for each
 // node, depending on the traversal order flag.
 DummyAttribute 
-AstSimpleProcessing::evaluateSynthesizedAttribute(SgNode* astNode,
-        DummyAttribute inheritedValue,
-        SynthesizedAttributesList)
+AstSimpleProcessing::evaluateSynthesizedAttribute(SgNode* astNode, DummyAttribute, SynthesizedAttributesList)
 {
     visit(astNode);
     // dummy attribute, return default

@@ -145,7 +145,7 @@ template <class PropMap, class BinOp>
 typename BinOp::result_type
 accumulate_neighbors(
     const PRE::myControlFlowGraph& cfg,
-    int v,
+    int,
     const PropMap& prop,
     const vector<int>& edges,
     int (PRE::simpleGraph::*edge_to_neighbor)(int) const,

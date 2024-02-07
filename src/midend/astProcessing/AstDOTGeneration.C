@@ -1357,7 +1357,7 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
 
 // DQ (11/1/2003) added mechanism to add additional options (to add color, etc.)
 string
-AstDOTGeneration::additionalEdgeInfo(SgNode* from, SgNode* to, string label)
+AstDOTGeneration::additionalEdgeInfo(SgNode*, SgNode*, string)
    {
   // return an empty string for default implementation
 #if 0
@@ -1417,7 +1417,7 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
 
 // DQ (11/1/2003) added mechanism to add additional options (to add color, etc.)
 string
-AstDOTGeneration::additionalEdgeOptions(SgNode* from, SgNode* to, string label)
+AstDOTGeneration::additionalEdgeOptions(SgNode*, SgNode*, string)
    {
   // return an empty string for default implementation, but set the parent edge to blue
      return "";
