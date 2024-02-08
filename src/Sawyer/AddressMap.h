@@ -1756,6 +1756,7 @@ public:
             flags |= MATCH_CONTIGUOUS;
         MatchedConstraints<AddressMap> m = matchConstraints(*this, c.prohibit(Access::IMMUTABLE), flags);
         if (buf) {
+            size_t totalWritten = 0;
             for (Node &node: m.nodes_) {
                 Segment &segment = node.value();
                 Sawyer::Container::Interval<Address> part = m.interval_ & node.key(); // part of segment to write
@@ -1775,11 +1776,16 @@ public:
 
                 Address bufferOffset = part.least() - node.key().least() + segment.offset();
                 Address nValues = buffer->write(buf, bufferOffset, part.size());
-                if (nValues != part.size()) {
+                if (0 == nValues) {
+                    // The underlying buffer is not writable (e.g., it's mmap'd read-only)
+                    return Sawyer::Container::Interval<Address>::baseSize(m.interval_.least(), totalWritten);
+                } else if (nValues != part.size()) {
                     checkConsistency();
                     ASSERT_not_reachable("something is wrong with the memory map");
+                } else {
+                    buf += nValues;
+                    totalWritten += nValues;
                 }
-                buf += nValues;
             }
         }
         return m.interval_;
