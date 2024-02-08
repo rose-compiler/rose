@@ -3081,7 +3081,7 @@ void EasyStorage < std::map<std::string,int> > :: readFromFile (std::istream& in
    **           Implementations for EasyStorage < std::map<SgNode*,int> >          **
    ****************************************************************************************
 */
-void EasyStorage < std::map<SgNode*,int> > :: storeDataInEasyStorageClass(const std::map<SgNode*,int>& data_) 
+void EasyStorage < std::map<SgNode*,int> > :: storeDataInEasyStorageClass(const std::map<SgNode*,int>& /*data_*/)
    {
 
   // DQ (10/5/2006): Comment out so that we can debug the linking issues
@@ -3190,7 +3190,7 @@ void EasyStorage < std::map<SgNode*,int> > :: readFromFile (std::istream& inputF
    **      Implementations for EasyStorage < std::map<int,std::string> >                 **
    ****************************************************************************************
 */
-void EasyStorage < std::map<SgNode*,std::string> > :: storeDataInEasyStorageClass(const std::map<SgNode*,std::string>& data_) 
+void EasyStorage < std::map<SgNode*,std::string> > :: storeDataInEasyStorageClass(const std::map<SgNode*,std::string>& /*data_*/)
    {
   // DQ (10/6/2006): Comment out so that we can debug the compiling issues
 #if 0
