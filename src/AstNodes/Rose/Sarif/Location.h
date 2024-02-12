@@ -1,7 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_SARIF
-#ifndef ROSE_Sarif_Location_H
-#define ROSE_Sarif_Location_H
 #include <Rose/Sarif/Node.h>
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
@@ -23,22 +21,13 @@ namespace Sarif {
  *
  *  Each location may also have a @ref message "text message" property.
  *
- *  Example source location:
+ *  Example:
  *
- *  @snippet{trimleft} sarifUnitTests.C position_source_example
- *
- *  Example binary location:
- *
- *  @snippet{trimleft} sarifUnitTests.C log_with_location */
+ *  @snippet{trimleft} sarifUnitTests.C sarif_location */
 class Location: public Node {
-public:
-    /** Shared-ownership pointer to a @ref Location object.
-     *
-     * @{ */
-    using Ptr = LocationPtr;
-    using ConstPtr = LocationConstPtr;
-    /** @} */
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     // Info for a source location or region. If the end location is valid, then the begin location is also valid.
     SourceLocation sourceBegin_, sourceEnd_;
@@ -49,18 +38,14 @@ private:
     BinaryAnalysis::AddressInterval binaryRegion_;
 #endif
 
-    // Each location can have a message
-    std::string message_;
-
 public:
-    ~Location();
-protected:
-    explicit Location(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg);
+    /** Property: Text message. */
+    [[Rosebud::property]]
+    std::string message;
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-    Location(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval&, const std::string &mesg);
-#endif
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Constructors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Allocating constructor for a source location. */
     static Ptr instance(const SourceLocation&, const std::string &mesg = "");
@@ -92,6 +77,10 @@ public:
     static Ptr instance(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval&, const std::string &mesg = "");
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Public functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Source location.
      *
      *  Returns the source location. If this is a source region, then the beginning location of the region is returned. If this is a
@@ -129,23 +118,19 @@ public:
     std::pair<std::string, BinaryAnalysis::AddressInterval> binaryRegion() const;
 #endif
 
-    /** Property: Text message.
-     *
-     * @{ */
-    const std::string& message() const;
-    void message(const std::string&);
-    /** @} */
-
-public:
-    void emitYaml(std::ostream&, const std::string&) override;
-    std::string emissionPrefix() override;
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void emitMessage(std::ostream&, const std::string &prefix);
+    void checkConsistency() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Overrides
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool emit(std::ostream&) override;
 };
 
 } // namespace
 } // namespace
-
-#endif
 #endif

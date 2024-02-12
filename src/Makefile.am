@@ -192,6 +192,7 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(top_builddir)/src/generated/BinaryAnalysis/libroseGeneratedBinaryAnalysis.la \
    $(top_builddir)/src/generated/Jovial/libroseGeneratedJovial.la \
+   $(top_builddir)/src/generated/Rose/Sarif/libSrcGeneratedRoseSarif.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
    $(libroseExperimentalFlangParserlibraries) \
@@ -598,18 +599,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/Sarif.h									\
-	Rose/Sarif/Analysis.h								\
-	Rose/Sarif/Artifact.h								\
 	Rose/Sarif/BasicTypes.h								\
-	Rose/Sarif/CodeFlow.h								\
 	Rose/Sarif/Exception.h								\
-	Rose/Sarif/Location.h								\
-	Rose/Sarif/Log.h								\
-	Rose/Sarif/Node.h								\
-	Rose/Sarif/Result.h								\
-	Rose/Sarif/Rule.h								\
-	Rose/Sarif/ThreadFlow.h								\
-	Rose/Sarif/ThreadFlowLocation.h							\
 	Rose/SourceLocation.h								\
 	Rose/StringUtility.h								\
 	Rose/StringUtility/Convert.h							\

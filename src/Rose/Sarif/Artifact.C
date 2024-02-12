@@ -8,140 +8,55 @@
 namespace Rose {
 namespace Sarif {
 
-Artifact::~Artifact() {}
-
-Artifact::Artifact(const std::string &uri)
-    : uri_(uri) {}
-
-Artifact::Ptr
-Artifact::instance(const std::string &uri) {
-    return Ptr(new Artifact(uri));
-}
-
-const std::string&
-Artifact::uri() const {
-    return uri_;
-}
-
-const std::string&
-Artifact::mimeType() const {
-    return mimeType_;
-}
-
-void
-Artifact::mimeType(const std::string &s) {
-    if (s == mimeType_)
-        return;
-    checkPropertyChange("Artifact", "mimeType", mimeType_.empty(), {});
-    mimeType_ = s;
-    if (isIncremental())
-        emitMimeType(incrementalStream(), emissionPrefix());
-}
-
-const std::string&
-Artifact::sourceLanguage() const {
-    return sourceLanguage_;
-}
-
-void
-Artifact::sourceLanguage(const std::string &s) {
-    if (s == sourceLanguage_)
-        return;
-    checkPropertyChange("Artifact", "sourceLanguage", sourceLanguage_.empty(), {});
-    sourceLanguage_ = s;
-    if (isIncremental())
-        emitSourceLanguage(incrementalStream(), emissionPrefix());
-}
-
-const std::pair<std::string, std::string>&
-Artifact::hash() const {
-    return hash_;
-}
-
 void
 Artifact::hash(const std::string &name, const std::string &value) {
-    if (name == hash_.first && value == hash_.second)
-        return;
-    checkPropertyChange("Artifact", "hash", hash_.first.empty() && hash_.second.empty(), {});
-    hash_ = std::make_pair(name, value);
-    if (isIncremental())
-        emitHash(incrementalStream(), emissionPrefix());
+    hash(std::make_pair(name, value));
 }
 
-void
-Artifact::hash(const std::pair<std::string, std::string> &h) {
-    hash(h.first, h.second);
-}
+bool
+Artifact::emit(std::ostream &out) {
+    if (uri().empty() && mimeType().empty() && sourceLanguage().empty() && hash().first.empty() && hash().second.empty() &&
+        description().empty()) {
+        return false;
+    } else {
+        std::string sep;
+        out <<"{";
 
-const std::string&
-Artifact::description() const {
-    return description_;
-}
+        if (!uri().empty()) {
+            out <<sep <<"\"location\":{"
+                <<"\"uri\":\"" <<StringUtility::jsonEscape(uri()) <<"\""
+                <<"}";
+            sep = ",";
+        }
 
-void
-Artifact::description(const std::string &s) {
-    if (s == description_)
-        return;
-    checkPropertyChange("Artifact", "description", description_.empty(), {});
-    description_ = s;
-    if (isIncremental())
-        emitDescription(incrementalStream(), emissionPrefix());
-}
+        if (!mimeType().empty()) {
+            out <<sep <<"\"mimeType\":\"" <<StringUtility::jsonEscape(mimeType()) <<"\"";
+            sep = ",";
+        }
 
-void
-Artifact::emitUri(std::ostream &out, const std::string &firstPrefix) {
-    if (!uri_.empty()) {
-        const std::string pp = makeObjectPrefix(firstPrefix);
-        out <<firstPrefix <<"location:\n"
-            <<pp <<"uri: " <<StringUtility::yamlEscape(uri_) <<"\n";
+        if (!sourceLanguage().empty()) {
+            out <<sep <<"\"sourceLanguage\":\"" <<StringUtility::jsonEscape(sourceLanguage()) <<"\"";
+            sep = ",";
+        }
+
+        if (!hash().first.empty() || !hash().second.empty()) {
+            out <<sep <<"\"hashes\":[{\""
+                <<StringUtility::jsonEscape(hash().first) <<"\":\"" <<StringUtility::jsonEscape(hash().second) <<"\""
+                <<"}]";
+            sep = ",";
+        }
+
+        if (!description().empty()) {
+            out <<sep <<"\"description\":{"
+                <<"\"message\":{"
+                <<"\"text\":\"" <<StringUtility::jsonEscape(description()) <<"\""
+                <<"}}";
+            sep = ",";
+        }
+
+        return "}";
+        return true;
     }
-}
-
-void
-Artifact::emitMimeType(std::ostream &out, const std::string &firstPrefix) {
-    if (!mimeType_.empty())
-        out <<firstPrefix <<"mimeType: " <<StringUtility::yamlEscape(mimeType_) <<"\n";
-}
-
-void
-Artifact::emitSourceLanguage(std::ostream &out, const std::string &firstPrefix) {
-    if (!sourceLanguage_.empty())
-        out <<firstPrefix <<"sourceLanguage: " <<StringUtility::yamlEscape(sourceLanguage_) <<"\n";
-}
-
-void
-Artifact::emitHash(std::ostream &out, const std::string &firstPrefix) {
-    if (!hash_.first.empty() || !hash_.second.empty()) {
-        const std::string pp = makeObjectPrefix(firstPrefix);
-        out <<firstPrefix <<"hashes:\n"
-            <<pp <<StringUtility::yamlEscape(hash_.first) <<": " <<StringUtility::yamlEscape(hash_.second) <<"\n";
-    }
-}
-
-void
-Artifact::emitDescription(std::ostream &out, const std::string &firstPrefix) {
-    if (!description_.empty()) {
-        const std::string pp = makeObjectPrefix(firstPrefix);
-        const std::string ppp = makeObjectPrefix(pp);
-        out <<firstPrefix <<"description:\n"
-            <<pp <<"message:\n"
-            <<ppp <<"text: " <<StringUtility::yamlEscape(description_) <<"\n";
-    }
-}
-
-void
-Artifact::emitYaml(std::ostream &out, const std::string &firstPrefix) {
-    emitUri(out, firstPrefix);
-    const std::string p = makeNextPrefix(firstPrefix);
-    emitMimeType(out, p);
-    emitSourceLanguage(out, p);
-    emitHash(out, p);
-    emitDescription(out, p);
-}
-
-std::string
-Artifact::emissionPrefix() {
-    return makeObjectPrefix(makeObjectPrefix(parent->emissionPrefix()));
 }
 
 } // namespace

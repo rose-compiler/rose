@@ -29,7 +29,6 @@ namespace Rose {
  *  "locations" that refer to parts of artifacts. The SARIF IR uses the Sawyer @ref Sawyer::Tree::Vertex "Tree API" which has
  *  numerous benefits over the older ROSETTA-based IR used by most of the rest of ROSE. Some of these benefits are:
  *
- *  @li No generated code. All SARIF IR classes are plain C++ class defintions.
  *  @li Automatic parent pointers. It is impossible to mess up parent/child relationships.
  *  @li Immediately enforced tree invariants. No need to call a separate tree consistency checker.
  *  @li Reference counted vertices. Use of smart pointers for clear ownership and safe deletion.
@@ -48,30 +47,9 @@ namespace Rose {
  *  null dereference.  The result might also have @ref Sarif::Artifact objects that describe any additional outputs for the result,
  *  such as an optional memory slice file.
  *
- *  The SARIF IR can be unparsed in two ways: either the whole tree can be unparsed at once to create a SARIF file, or the tree can
- *  be unparsed incrementally as it is modified.  The latter approach works well for tools that run for an undetermined length of
- *  time or tools that run the risk of being killed for using too many resources. The former approach works well for tools that need
- *  to modify the IR extensively before emitting it. Both unparsing mechanisms support building the SARIF tree from top-down or
- *  bottom-up.
+ *  Example:
  *
- *  A SARIF tree is placed in incremental mode by calling @ref Sarif::Log::incremental and supplying a @c std::ostream as an
- *  argument.  Once incremental mode is activated, the existing tree is emitted and then parts of the tree become read-only. An
- *  incremental tree enforces certain constraints on the order that things can be added to the tree. For instance, because SARIF
- *  represents artifacts and results as disjoint lists, it is not possible to incrementally emit both artifacts and results--the
- *  implementation requires that all artifacts are emitted before any result is emitted. Violating the ordering constraints will
- *  result in a @ref Sarif::IncrementalError being thrown. Furthermore, because every stage of the incremental output must be a
- *  syntactically valid file, this implementation emits SARIF as YAML instead of JSON even though the SARIF standard requires that
- *  the at-rest representation is JSON. Numerous free tools are available to convert YAML to JSON.
- *
- *  Here's an example from the SARIF unit testing that shows how to create a log with a single analysis result refering to a single
- *  artifact and having no results.
- *
- *  @snippet{trimleft} sarifUnitTests.C log_with_artifact
- *
- *  Here's an example from the SARIF unit testing that shows how to create a log with a single analysis that has a single location
- *  refering to an address in virtual memory.
- *
- *  @snippet{trimleft} sarifUnitTests.C log_with_location */
+ *  @snippet{trimleft} sarifUnitTests.C sarif_example */
 namespace Sarif {}
 
 } // namespace

@@ -6,100 +6,46 @@
 #include <Rose/Sarif/ThreadFlowLocation.h>
 #include <ROSE_UNUSED.h>
 
-#include <boost/bind/bind.hpp>
-
-using namespace boost::placeholders;
-
 namespace Rose {
 namespace Sarif {
 
-ThreadFlow::~ThreadFlow() {}
-
-ThreadFlow::ThreadFlow(const std::string &message)
-    : message_(message), locations(*this) {
-    locations.beforeResize(boost::bind(&ThreadFlow::checkLocationsResize, this, _1, _2));
-    locations.afterResize(boost::bind(&ThreadFlow::handleLocationsResize, this, _1, _2));
-}
-
 ThreadFlow::Ptr
 ThreadFlow::instance(const std::string &message) {
-    return Ptr(new ThreadFlow(message));
-}
-
-const std::string&
-ThreadFlow::message() const {
-    return message_;
-}
-
-void
-ThreadFlow::message(const std::string &s) {
-    if (s == message_)
-        return;
-    checkPropertyChange("ThreadFlow", "message", message_.empty(), {{"locations", locations.empty()}});
-    message_ = s;
-    if (isIncremental())
-        emitMessage(incrementalStream(), emissionPrefix());
+    auto self = instance();
+    self->message(message);
+    return self;
 }
 
 bool
-ThreadFlow::emitMessage(std::ostream &out, const std::string &firstPrefix) {
-    if (!message_.empty()) {
-        out <<firstPrefix <<"message:\n";
-        const std::string pp = makeObjectPrefix(firstPrefix);
-        out <<pp <<"text: " <<StringUtility::yamlEscape(message_) <<"\n";
-        return true;
-    } else {
+ThreadFlow::emit(std::ostream &out) {
+    if (message().empty() && locations().empty()) {
         return false;
-    }
-}
+    } else {
+        std::string sep1;
+        out <<"{";
 
-void
-ThreadFlow::checkLocationsResize(int delta, const ThreadFlowLocation::Ptr &threadFlowLocation) {
-    if (!threadFlowLocation)
-        throw Sarif::Exception("cannot add null thread flow location to a thread flow");
-    if (isIncremental() && delta < 0)
-        throw IncrementalError("thread flow locations cannot be removed from a thread flow");
-}
-
-void
-ThreadFlow::handleLocationsResize(int delta, const ThreadFlowLocation::Ptr &threadFlowLocation) {
-    if (isIncremental()) {
-        ROSE_UNUSED(delta);
-        ASSERT_require(1 == delta);
-        ASSERT_forbid(locations.empty());
-        lock(locations.back(), "locations");
-        if (locations.size() >= 2)
-            locations[locations.size() - 2]->freeze();
-
-        std::ostream &out = incrementalStream();
-        const std::string p = emissionPrefix();
-        if (1 == locations.size())
-            out <<p <<"locations:\n";
-        threadFlowLocation->emitYaml(out, makeListPrefix(p));
-    }
-}
-
-void
-ThreadFlow::emitYaml(std::ostream &out, const std::string &firstPrefix) {
-    const bool emittedMessage = emitMessage(out, firstPrefix);
-
-    if (!locations.empty()) {
-        const std::string p = emittedMessage ? makeNextPrefix(firstPrefix) : firstPrefix;
-        out <<p <<"locations:\n";
-        for (auto &threadFlowLocation: locations) {
-            threadFlowLocation->emitYaml(out, makeListPrefix(p));
-            if (isIncremental()) {
-                lock(threadFlowLocation, "locations");
-                if (threadFlowLocation != locations.back())
-                    threadFlowLocation->freeze();
-            }
+        if (!message().empty()) {
+            out <<sep1 <<"\"message\":{"
+                <<"\"text\":\"" <<StringUtility::jsonEscape(message()) <<"\""
+                <<"}";
+            sep1 = ",";
         }
-    }
-}
 
-std::string
-ThreadFlow::emissionPrefix() {
-    return makeObjectPrefix(makeObjectPrefix(parent->emissionPrefix()));
+        if (!locations().empty()) {
+            out <<sep1 <<"\"locations\":[";
+            std::string sep2;
+            for (auto &threadFlowLocation: locations()) {
+                out <<sep2;
+                threadFlowLocation->emit(out);
+                sep2 = ",";
+            }
+            out <<"]";
+            sep1 = ",";
+        }
+
+        out <<"}";
+        return true;
+    }
 }
 
 } // namespace

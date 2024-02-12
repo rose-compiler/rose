@@ -171,7 +171,8 @@ set(rose_LIB_OBJS
   RoseCodeGen
   roseGeneratedBinaryAnalysis
   roseGeneratedJovial
-  mstl)
+  mstl
+  libSrcGeneratedRoseSarif)
 
 set(rose_LIB_SRCS
   dummyCppFileForLibrose.C

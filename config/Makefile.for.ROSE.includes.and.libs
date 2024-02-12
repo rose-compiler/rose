@@ -308,6 +308,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
+     -I$(top_srcdir)/src/generated \
      -I$(top_srcdir)/src/frontend \
      -I$(top_srcdir)/src/frontend/SageIII \
      -I$(top_srcdir)/src/frontend/SageIII/astFixup \
@@ -363,6 +364,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
+     -I$(top_srcdir)/src/generated \
      -I$(top_srcdir)/src/frontend \
      -I$(top_srcdir)/src/frontend/SageIII \
      -I$(top_srcdir)/src/frontend/SageIII/astFixup \

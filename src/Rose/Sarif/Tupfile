@@ -14,15 +14,5 @@ run $(librose_compile)				\
     ThreadFlowLocation.C
 
 run $(public_header) -o include/rose/Rose/Sarif	\
-    Analysis.h					\
-    Artifact.h					\
     BasicTypes.h				\
-    CodeFlow.h					\
-    Exception.h					\
-    Location.h					\
-    Log.h					\
-    Node.h					\
-    Result.h					\
-    Rule.h					\
-    ThreadFlow.h				\
-    ThreadFlowLocation.h
+    Exception.h

@@ -4,57 +4,71 @@
 #include <Rose/Sarif/Location.h>
 
 #include <Rose/Affirm.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/Sarif/Exception.h>
 
 namespace Rose {
 namespace Sarif {
 
-Location::~Location() {}
-
-Location::Location(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg)
-    : sourceBegin_(begin), sourceEnd_(end), message_(mesg) {
-    if (!begin)
-        throw Sarif::Exception("source location begin address must be valid");
-    if (end) {
-        if (begin.fileName() != end.fileName())
+void
+Location::checkConsistency() const {
+    // User errors
+    if (sourceEnd_) {
+        if (!sourceBegin_)
+            throw Sarif::Exception("source location begin address must be valid");
+        if (sourceBegin_.fileName() != sourceEnd_.fileName())
             throw Sarif::Exception("source region endpoints must have the same file name");
-        if (begin.line() > end.line())
+        if (sourceBegin_.line() > sourceEnd_.line())
             throw Sarif::Exception("source begin line number must be less than than or equal to end line number");
-        if (begin.line() == end.line() && begin.column() && end.column() && *begin.column() >= *end.column())
+        if (sourceBegin_.line() == sourceEnd_.line() &&
+            sourceBegin_.column() && sourceEnd_.column() && *sourceBegin_.column() >= *sourceEnd_.column())
             throw Sarif::Exception("source begin column number must be less than end column number on same line");
     }
 }
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-Location::Location(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval &addrs, const std::string &mesg)
-    : binaryArtifact_(binaryArtifact), binaryRegion_(addrs), message_(mesg) {
-    if (addrs.isEmpty())
-        throw Sarif::Exception("binary region cannot be empty");
-}
-#endif
-
 Location::Ptr
 Location::instance(const SourceLocation &loc, const std::string &mesg) {
-    return Ptr(new Location(loc, SourceLocation(), mesg));
+    if (!loc)
+        throw Sarif::Exception("source location begin address must be valid");
+    auto self = instance();
+    self->sourceBegin_ = loc;
+    self->message(mesg);
+    self->checkConsistency();
+    return self;
 }
 
 Location::Ptr
 Location::instance(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg) {
     ASSERT_require(end);
-    return Ptr(new Location(begin, end, mesg));
+    auto self = instance();
+    self->sourceBegin_ = begin;
+    self->sourceEnd_ = end;
+    self->message(mesg);
+    self->checkConsistency();
+    return self;
 }
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 Location::Ptr
 Location::instance(const std::string &binaryArtifact, rose_addr_t addr, const std::string &mesg) {
-    return Ptr(new Location(binaryArtifact, addr, mesg));
+    auto self = instance();
+    self->binaryArtifact_ = binaryArtifact;
+    self->binaryRegion_ = addr;
+    self->message(mesg);
+    return self;
 }
 #endif
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 Location::Ptr
 Location::instance(const std::string &binaryArtifact, const BinaryAnalysis::AddressInterval &addrs, const std::string &mesg) {
-    return Ptr(new Location(binaryArtifact, addrs, mesg));
+    if (addrs.isEmpty())
+        throw Sarif::Exception("binary region cannot be empty");
+    auto self = instance();
+    self->binaryArtifact_ = binaryArtifact;
+    self->binaryRegion_ = addrs;
+    self->message(mesg);
+    return self;
 }
 #endif
 
@@ -86,74 +100,55 @@ Location::binaryRegion() const {
 }
 #endif
 
-const std::string&
-Location::message() const {
-    return message_;
-}
-
-void
-Location::message(const std::string &s) {
-    if (s == message_)
-        return;
-    checkPropertyChange("Location", "message", message_.empty(), {});
-    message_ = s;
-    if (isIncremental())
-        emitMessage(incrementalStream(), emissionPrefix());
-}
-
-void
-Location::emitMessage(std::ostream &out, const std::string &firstPrefix) {
-    if (!message_.empty()) {
-        out <<firstPrefix <<"message:\n";
-        out <<makeObjectPrefix(firstPrefix) <<"text: " <<StringUtility::yamlEscape(message_) <<"\n";
-    }
-}
-
-void
-Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
-    const std::string p = makeNextPrefix(firstPrefix);
-    const std::string pp = makeObjectPrefix(p);
-    const std::string ppp = makeObjectPrefix(pp);
+bool
+Location::emit(std::ostream &out) {
+    out <<"{";
 
     if (sourceBegin_) {
-        out <<firstPrefix <<"physicalLocation:\n";
-        out <<pp <<"artifactLocation:\n";
-        out <<ppp <<"uri: " <<StringUtility::yamlEscape(sourceBegin_.fileName().string()) <<"\n";
-        out <<pp <<"region:\n";
-        out <<ppp <<"startLine: " <<sourceBegin_.line() <<"\n";
+        out <<"\"physicalLocation\":{"
+            <<"\"artifactLocation\":{"
+            <<"\"uri\":\"" <<StringUtility::jsonEscape(sourceBegin_.fileName().string()) <<"\""
+            <<"}"
+            <<",\"region\":{"
+            <<"\"startLine\":" <<sourceBegin_.line();
         if (const auto col = sourceBegin_.column())
-            out <<ppp <<"startColumn: " <<*col <<"\n";
+            out <<",\"startColumn\":" <<*col;
         if (sourceEnd_) {
-            out <<ppp <<"endLine: " <<sourceEnd_.line() <<"\n";
+            out <<",\"endLine\":" <<sourceEnd_.line();
             if (const auto col = sourceEnd_.column())
-                out <<ppp <<"endColumn: " <<*col <<"\n";
+                out <<",\"endColumn\":" <<*col;
         }
+        out <<"}}";
 
     } else {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
         ASSERT_forbid(binaryRegion_.isEmpty());
-        out <<firstPrefix <<"physicalLocation:\n";
-        out <<pp <<"artifactLocation:\n";
-        out <<ppp <<"uri: " <<StringUtility::yamlEscape(binaryArtifact_) <<"\n";
-        out <<pp <<"region:\n";
-        out <<ppp <<"byteOffset: " <<StringUtility::addrToString(binaryRegion_.least()) <<"\n";
+        out <<"\"physicalLocation\":{"
+            <<"\"artifactLocation\":{"
+            <<"\"uri\":\"" <<StringUtility::jsonEscape(binaryArtifact_) <<"\""
+            <<"}"
+            <<",\"region\":{"
+            <<"\"byteOffset\":" <<binaryRegion_.least();
         if (binaryRegion_ == BinaryAnalysis::AddressInterval::whole()) {
-            out <<ppp <<"# WARNING: byteLength has been reduced by one to work around SARIF design flaw\n";
-            out <<ppp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.greatest()) <<"\n";
+            static_assert(sizeof(BinaryAnalysis::AddressInterval::Value)==8);
+            out <<",\"byteLength\":18446744073709551616";
         } else {
-            out <<ppp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.size()) <<"\n";
+            out <<",\"byteLength\":" <<binaryRegion_.size();
         }
+        out <<"}}";
 #else
         ASSERT_not_reachable("binary analysis is not supported");
 #endif
     }
 
-    emitMessage(out, p);
-}
+    if (!message().empty()) {
+        out <<",\"message\":{"
+            <<"\"text\":\"" <<StringUtility::jsonEscape(message()) <<"\""
+            <<"}";
+    }
 
-std::string
-Location::emissionPrefix() {
-    return makeObjectPrefix(makeObjectPrefix(parent->emissionPrefix()));
+    out <<"}";
+    return true;
 }
 
 } // namespace

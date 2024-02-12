@@ -15,17 +15,7 @@ add_library(roseSarif OBJECT
 add_dependencies(roseSarif rosetta_generated)
 
 install(FILES
-  Analysis.h
-  Artifact.h
   BasicTypes.h
-  CodeFlow.h
   Exception.h
-  Location.h
-  Log.h
-  Node.h
-  Result.h
-  Rule.h
-  ThreadFlow.h
-  ThreadFlowLocation.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/Sarif)

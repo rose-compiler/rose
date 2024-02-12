@@ -1060,6 +1060,7 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sage_support
   ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
   ${ROSE_TOP_SRC_DIR}/src
+  ${ROSE_TOP_SRC_DIR}/src/generated
   ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/
   ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_3.3/src
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII

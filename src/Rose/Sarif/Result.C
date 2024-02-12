@@ -11,317 +11,144 @@
 #include <Rose/Sarif/Rule.h>
 #include <ROSE_UNUSED.h>
 
-#include <boost/bind/bind.hpp>
-
-using namespace boost::placeholders;
-
 namespace Rose {
 namespace Sarif {
 
-Result::~Result() {}
-
-Result::Result(Kind kind, Severity severity, const std::string &mesg)
-    : kind_(kind), severity_(severity), message_(mesg), locations(*this), codeFlows(*this) {
-    ASSERT_require((kind == Kind::FAIL && severity != Severity::NONE) ||
-                   (kind != Kind::FAIL && severity == Severity::NONE));
-    locations.beforeResize(boost::bind(&Result::checkLocationsResize, this, _1, _2));
-    locations.afterResize(boost::bind(&Result::handleLocationsResize, this, _1, _2));
-
-    codeFlows.beforeResize(boost::bind(&Result::checkCodeFlowsResize, this, _1, _2));
-    codeFlows.afterResize(boost::bind(&Result::handleCodeFlowsResize, this, _1, _2));
-}
 
 Result::Ptr
 Result::instance(Kind kind, const std::string &mesg) {
     ASSERT_forbid(kind == Kind::FAIL);
-    return Ptr(new Result(kind, Severity::NONE, mesg));
+    auto self = Ptr(new Result);
+    self->forceSetKind(kind);
+    self->forceSetSeverity(Severity::NONE);
+    self->message(mesg);
+    return self;
 }
 
 Result::Ptr
 Result::instance(Kind kind, const std::string &mesg, const LocationPtr &location) {
     ASSERT_not_null(location);
-    auto result = instance(kind, mesg);
-    result->locations.push_back(location);
-    return result;
+    auto self = instance(kind, mesg);
+    self->locations().push_back(location);
+    return self;
 }
 
 Result::Ptr
 Result::instance(Severity severity, const std::string &mesg) {
     ASSERT_forbid(severity == Severity::NONE);
-    return Ptr(new Result(Kind::FAIL, severity, mesg));
+    auto self = Ptr(new Result);
+    self->forceSetKind(Kind::FAIL);
+    self->forceSetSeverity(severity);
+    self->message(mesg);
+    return self;
 }
 
 Result::Ptr
 Result::instance(Severity severity, const std::string &mesg, const LocationPtr &location) {
     ASSERT_not_null(location);
-    auto result = instance(severity, mesg);
-    result->locations.push_back(location);
-    return result;
+    auto self = instance(severity, mesg);
+    self->locations().push_back(location);
+    return self;
 }
 
-Kind
-Result::kind() const {
-    return kind_;
-}
+bool
+Result::emit(std::ostream &out) {
+    out <<"{";
 
-Severity
-Result::severity() const {
-    return severity_;
-}
-
-const std::string&
-Result::message() const {
-    return message_;
-}
-
-void
-Result::message(const std::string &s) {
-    if (s == message_)
-        return;
-    checkPropertyChange("Result", "message", message_.empty(),
-                        {{"locations", locations.empty()},
-                         {"codeFlows", codeFlows.empty()}});
-    message_ = s;
-    if (isIncremental())
-        emitMessage(incrementalStream(), emissionPrefix());
-}
-
-void
-Result::emitMessage(std::ostream &out, const std::string &firstPrefix) {
-    if (!message_.empty()) {
-        out <<firstPrefix <<"message:\n";
-        const std::string pp = makeObjectPrefix(firstPrefix);
-        out <<pp <<"text: " <<StringUtility::yamlEscape(message_) <<"\n";
+    switch (kind()) {
+        case Kind::PASS:
+            out <<"\"kind\":\"pass\"";
+            break;
+        case Kind::OPEN:
+            out <<"\"kind\":\"open\"";
+            break;
+        case Kind::INFORMATIONAL:
+            out <<"\"kind\":\"informational\"";
+            break;
+        case Kind::NOT_APPLICABLE:
+            out <<"\"kind\":\"notApplicable\"";
+            break;
+        case Kind::REVIEW:
+            out <<"\"kind\":\"review\"";
+            break;
+        case Kind::FAIL:
+            out <<"\"kind\":\"fail\"";
+            break;
     }
-}
 
-const std::string&
-Result::id() const {
-    return id_;
-}
+    switch (severity()) {
+        case Severity::NONE:
+            out <<",\"level\":\"none\"";
+            break;
+        case Severity::NOTE:
+            out <<",\"level\":\"note\"";
+            break;
+        case Severity::WARNING:
+            out <<",\"level\"::\"warning\"";
+            break;
+        case Severity::ERROR:
+            out <<",\"level\":\"error\"";
+            break;
+    }
 
-void
-Result::id(const std::string &s) {
-    if (s == id_)
-        return;
-    checkPropertyChange("Result", "id", id_.empty(),
-                        {{"locations", locations.empty()},
-                         {"codeFlows", codeFlows.empty()}});
-    id_ = s;
-    if (isIncremental())
-        emitId(incrementalStream(), emissionPrefix());
-}
+    if (!message().empty()) {
+        out <<",\"message\":{"
+            <<"\"text\":\"" <<StringUtility::jsonEscape(message()) <<"\""
+            <<"}";
+    }
 
-void
-Result::emitId(std::ostream &out, const std::string &firstPrefix) {
-    if (!id_.empty())
-        out <<firstPrefix <<"id: " <<StringUtility::yamlEscape(id_) <<"\n";
-}
+    if (!id().empty())
+        out <<",\"id\":\"" <<StringUtility::jsonEscape(id()) <<"\"";
 
-Rule::Ptr
-Result::rule() const {
-    return rule_;
-}
-
-void
-Result::rule(const Rule::Ptr &r) {
-    if (r == rule_)
-        return;
-    checkPropertyChange("Result", "rule", !rule_,
-                        {{"locations", locations.empty()},
-                         {"codeFlows", codeFlows.empty()}});
-    if (isIncremental() && !findRuleIndex(r))
-        throw IncrementalError::notAttached("Result::rule");
-    rule_ = r;
-    if (isIncremental())
-        emitRule(incrementalStream(), emissionPrefix());
-}
-
-void
-Result::emitRule(std::ostream &out, const std::string &firstPrefix) {
-    if (rule_) {
-        out <<firstPrefix <<"ruleId: " <<StringUtility::yamlEscape(rule_->id()) <<"\n";
-        const std::string p = makeNextPrefix(firstPrefix);
-        if (auto idx = findRuleIndex(rule_)) {
-            out <<p <<"ruleIndex: " <<*idx <<"\n";
+    if (rule()) {
+        out <<",\"ruleId\":\"" <<StringUtility::jsonEscape(rule()->id()) <<"\"";
+        if (auto idx = findRuleIndex(rule())) {
+            out <<",\"ruleIndex\":" <<*idx;
         } else {
             throw Sarif::Exception("Result::rule must be attached to the log before the result is emitted");
         }
     }
-}
 
-Artifact::Ptr
-Result::analysisTarget() const {
-    return analysisTarget_;
-}
-
-void
-Result::analysisTarget(const Artifact::Ptr &artifact) {
-    if (artifact == analysisTarget_)
-        return;
-    checkPropertyChange("Result", "analysisTarget", !analysisTarget_,
-                        {{"locations", locations.empty()},
-                         {"codeFlows", codeFlows.empty()}});
-    if (isIncremental() && !findArtifactIndex(artifact))
-        throw IncrementalError::notAttached("Result::analysisTarget");
-    analysisTarget_ = artifact;
-    if (isIncremental())
-        emitAnalysisTarget(incrementalStream(), emissionPrefix());
-}
-
-void
-Result::emitAnalysisTarget(std::ostream &out, const std::string &firstPrefix) {
-    if (analysisTarget_) {
-        if (!findArtifactIndex(analysisTarget_))
+    if (analysisTarget()) {
+        if (!findArtifactIndex(analysisTarget()))
             throw Sarif::Exception("Result::analysisTarget must be attached to the log before the result is emitted");
-        out <<firstPrefix <<"analysisTarget:\n";
-        const std::string pp = makeObjectPrefix(firstPrefix);
-        out <<pp <<"uri: " <<StringUtility::yamlEscape(analysisTarget_->uri()) <<"\n";
-    }
-}
-
-void
-Result::checkLocationsResize(int delta, const Location::Ptr &location) {
-    if (!location)
-        throw Sarif::Exception("cannot add null location to a result");
-    if (isIncremental() && delta < 0)
-        throw IncrementalError("location cannot be removed from a result");
-    checkPropertyChange("Result", "locations", true,
-                        {{"codeFlows", codeFlows.empty()}});
-}
-
-void
-Result::handleLocationsResize(int delta, const Location::Ptr &location) {
-    if (isIncremental()) {
-        ROSE_UNUSED(delta);
-        ASSERT_require(1 == delta);
-        ASSERT_forbid(locations.empty());
-
-        // Make sure we can't change this pointer in the future
-        lock(locations.back(), "locations");
-
-        // Prior location can no longer be modified
-        if (locations.size() >= 2)
-            locations[locations.size() - 2]->freeze();
-
-        // Emit this new location
-        std::ostream &out = incrementalStream();
-        const std::string p = emissionPrefix();
-        if (1 == locations.size())
-            out <<p <<"locations:\n";
-        location->emitYaml(out, makeListPrefix(p));
-    }
-}
-
-void
-Result::checkCodeFlowsResize(int delta, const CodeFlow::Ptr &codeFlow) {
-    if (!codeFlow)
-        throw Sarif::Exception("cannot add null code flow to a result");
-    if (isIncremental() && delta < 0)
-        throw IncrementalError("code flow cannot be removed from a result");
-    checkPropertyChange("Result", "codeFlows", true, {});
-}
-
-void
-Result::handleCodeFlowsResize(int delta, const CodeFlow::Ptr &codeFlow) {
-    if (isIncremental()) {
-        ROSE_UNUSED(delta);
-        ASSERT_require(1 == delta);
-        ASSERT_forbid(codeFlows.empty());
-        lock(codeFlows.back(), "codeFlows");
-        if (codeFlows.size() >= 2)
-            codeFlows[codeFlows.size() - 2]->freeze();
-
-        std::ostream &out = incrementalStream();
-        const std::string p = emissionPrefix();
-        if (1 == codeFlows.size())
-            out <<p <<"codeFlows:\n";
-        codeFlow->emitYaml(out, makeListPrefix(p));
-    }
-}
-
-void
-Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
-    switch (kind_) {
-        case Kind::PASS:
-            out <<firstPrefix <<"kind: pass\n";
-            break;
-        case Kind::OPEN:
-            out <<firstPrefix <<"kind: open\n";
-            break;
-        case Kind::INFORMATIONAL:
-            out <<firstPrefix <<"kind: informational\n";
-            break;
-        case Kind::NOT_APPLICABLE:
-            out <<firstPrefix <<"kind: notApplicable\n";
-            break;
-        case Kind::REVIEW:
-            out <<firstPrefix <<"kind: review\n";
-            break;
-        case Kind::FAIL:
-            out <<firstPrefix <<"kind: fail\n";
-            break;
+        out <<",\"analysisTarget\":{"
+            <<"\"uri\":\"" <<StringUtility::jsonEscape(analysisTarget()->uri()) <<"\""
+            <<"}";
     }
 
-    const std::string p = makeNextPrefix(firstPrefix);
-    const std::string pp = makeObjectPrefix(p);
-
-    switch (severity_) {
-        case Severity::NONE:
-            out <<p <<"level: none\n";
-            break;
-        case Severity::NOTE:
-            out <<p <<"level: note\n";
-            break;
-        case Severity::WARNING:
-            out <<p <<"level: warning\n";
-            break;
-        case Severity::ERROR:
-            out <<p <<"level: error\n";
-            break;
-    }
-
-    emitMessage(out, p);
-    emitId(out, p);
-    emitRule(out, p);
-    emitAnalysisTarget(out, p);
-
-    if (!locations.empty()) {
-        out <<p <<"locations:\n";
-        for (auto &location: locations) {
-            location->emitYaml(out, makeListPrefix(p));
-            if (isIncremental()) {
-                lock(location, "locations");
-                if (location != locations.back())
-                    location->freeze();
-            }
+    if (!locations().empty()) {
+        out <<",\"locations\":[";
+        std::string sep;
+        for (auto &location: locations()) {
+            out <<sep;
+            location->emit(out);
+            sep = ",";
         }
+        out <<"]";
     }
 
-    if (!codeFlows.empty()) {
-        out <<p <<"codeFlows:\n";
-        for (auto &codeFlow: codeFlows) {
-            codeFlow->emitYaml(out, makeListPrefix(p));
-            if (isIncremental()) {
-                lock(codeFlow, "codeFlows");
-                if (codeFlow != codeFlows.back())
-                    codeFlow->freeze();
-            }
+    if (!codeFlows().empty()) {
+        out <<",\"codeFlows\":[";
+        std::string sep;
+        for (auto &codeFlow: codeFlows()) {
+            out <<sep;
+            codeFlow->emit(out);
+            sep = ",";
         }
+        out <<"]";
     }
-}
 
-std::string
-Result::emissionPrefix() {
-    return makeObjectPrefix(makeObjectPrefix(parent->emissionPrefix()));
+    out <<"}";
+    return true;
 }
 
 Sawyer::Optional<size_t>
 Result::findRuleIndex(const Rule::Ptr &rule) {
     if (rule) {
         if (auto ana = findFirstAncestor<Analysis>()) {
-            for (size_t i = 0; i < ana->rules.size(); ++i) {
-                if (ana->rules[i] == rule)
+            for (size_t i = 0; i < ana->rules().size(); ++i) {
+                if (ana->rules()[i] == rule)
                     return i;
             }
         }
@@ -333,8 +160,8 @@ Sawyer::Optional<size_t>
 Result::findArtifactIndex(const Artifact::Ptr &artifact) {
     if (artifact) {
         if (auto ana = findFirstAncestor<Analysis>()) {
-            for (size_t i = 0; i < ana->artifacts.size(); ++i) {
-                if (ana->artifacts[i] == artifact)
+            for (size_t i = 0; i < ana->artifacts().size(); ++i) {
+                if (ana->artifacts()[i] == artifact)
                     return i;
             }
         }

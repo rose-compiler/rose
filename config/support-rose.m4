@@ -2002,6 +2002,8 @@ src/Rosebud/Makefile
 src/generated/Makefile
 src/generated/BinaryAnalysis/Makefile
 src/generated/Jovial/Makefile
+src/generated/Rose/Makefile
+src/generated/Rose/Sarif/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
