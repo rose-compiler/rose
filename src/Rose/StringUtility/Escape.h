@@ -53,6 +53,11 @@ ROSE_UTIL_API std::string bourneEscape(const std::string&);
  *  Assumes that the context is outside of any quoting and possibly adds quotes. */
 ROSE_UTIL_API std::string yamlEscape(const std::string&);
 
+/** Escapes characters that are special inside a JSON string.
+ *
+ *  Assumes that the provided string is already inside double quotes; no additional quotes are added to the return value. */
+ROSE_UTIL_API std::string jsonEscape(const std::string&);
+
 /** Escapes characters that are special in CSV tables.
  *
  *  Assumes that the context is outside of any quoting and possib9 adds quotes. See RFC 4180 for details. */

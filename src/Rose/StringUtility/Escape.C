@@ -219,6 +219,11 @@ yamlEscape(const std::string &s) {
 }
 
 std::string
+jsonEscape(const std::string &s) {
+    return cEscape(s);
+}
+
+std::string
 csvEscape(const std::string &s) {
     const std::string quote = s.find_first_of(",\r\n\"") == std::string::npos ? "" : "\"";
     return quote + boost::replace_all_copy(s, "\"", "\"\"") + quote;
