@@ -35,6 +35,11 @@ CxxGenerator::genDestructor(std::ostream &header, std::ostream &impl, const Ast:
     }
 }
 
+void
+CxxGenerator::genConstructorBody(std::ostream &impl, const Ast::Class::Ptr &c) {
+    ASSERT_not_null(c);
+}
+
 // Emit the default constructor
 void
 CxxGenerator::genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, Access access) {
@@ -60,12 +65,14 @@ CxxGenerator::genDefaultConstructor(std::ostream &header, std::ostream &impl, co
                      <<"    " <<(0 == nInits++ ? ": " : ", ") <<propertyDataMemberName(p()) <<"(" <<expr <<")";
             }
         }
-        impl <<" {}\n";
+        impl <<" {";
+        genConstructorBody(impl, c);
+        impl <<"}\n";
     }
 }
 
 // Emit the ctor_args constructor
-void
+bool
 CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h,
                                  Access access) {
     ASSERT_not_null(c);
@@ -73,7 +80,7 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
     // Get the properties that are constructor arguments. If there are none, then we don't need this constructor.
     std::vector<Ast::Property::Ptr> args = allConstructorArguments(c, h);
     if (args.empty())
-        return;
+        return false;
 
     //--------------------------------------------------------------------------------------------------------------------------
     // Constructor declaration
@@ -88,7 +95,7 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
         auto argClass = p->findAncestor<Ast::Class>();
         ASSERT_not_null(argClass);
         header <<(p == args.front() ? "" : ",\n    " + std::string(c->name.size() + 1, ' '))
-               <<constRef(removeVolatileMutable(valueType(p))) <<" " <<p->name;
+               <<constRef(propertyMutatorArgumentType(p)) <<" " <<p->name;
     }
     header <<");\n";
 
@@ -110,7 +117,7 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
     for (const auto &p: args) {
         auto argClass = p->findAncestor<Ast::Class>();
         impl <<(p == args.front() ? "" : ",\n" + std::string(2*c->name.size()+3, ' '))
-             <<constRef(removeVolatileMutable(valueType(p))) <<" " <<p->name;
+             <<constRef(propertyMutatorArgumentType(p)) <<" " <<p->name;
     }
     impl <<")";
 
@@ -165,7 +172,10 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
         }
     }
 
-    impl <<" {}\n";
+    impl <<" {";
+    genConstructorBody(impl, c);
+    impl <<"}\n";
+    return true;
 }
 
 // Initializer expression for property constructors
@@ -186,7 +196,7 @@ CxxGenerator::resetStatement(const Ast::Property::Ptr &p) {
 }
 
 std::string
-CxxGenerator::dataMemberType(const Ast::Property::Ptr &p) {
+CxxGenerator::propertyDataMemberType(const Ast::Property::Ptr &p) {
     ASSERT_not_null(p);
     ASSERT_not_null(p->cType);
     const std::string retval = p->cType->string();
@@ -195,8 +205,37 @@ CxxGenerator::dataMemberType(const Ast::Property::Ptr &p) {
 }
 
 std::string
+CxxGenerator::propertyAccessorReturnType(const Ast::Property::Ptr &p) {
+    return removeVolatileMutable(propertyDataMemberType(p));
+}
+
+std::string
+CxxGenerator::propertyMutatorArgumentType(const Ast::Property::Ptr &p) {
+    return propertyDataMemberType(p);
+}
+
+std::string
+CxxGenerator::removePointer(const std::string &type) const {
+    // Raw pointer
+    std::regex rawPtr("(.*?)\\s*\\*");
+    std::smatch found;
+    if (std::regex_match(type, found, rawPtr)) {
+        return found.str(1);
+    }
+
+    // ROSE naming convention pointer
+    std::regex rosePtr("(.*?)(::)?(Const)?Ptr");
+    if (std::regex_match(type, found, rosePtr)) {
+        return found.str(1);
+    }
+
+    // Like std::remove_pointer, anything else is returned as-is
+    return type;
+}
+
+std::string
 CxxGenerator::valueType(const Ast::Property::Ptr &p) {
-    const std::string retval = removeVolatileMutable(dataMemberType(p));
+    const std::string retval = removeVolatileMutable(propertyDataMemberType(p));
     ASSERT_forbid(retval.empty());
     return retval;
 }

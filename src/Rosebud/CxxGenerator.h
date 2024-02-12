@@ -52,7 +52,17 @@ protected:
     /** Type for the data member for a property.
      *
      *  The base implementation simply returns the property type from the input. */
-    virtual std::string dataMemberType(const Ast::PropertyPtr&);
+    virtual std::string propertyDataMemberType(const Ast::PropertyPtr&);
+
+    /** Type for the return value for a property accessor.
+     *
+     *  This is usually the same as the property data member type but without any 'mutable'. Do not add reference or 'const'. */
+    virtual std::string propertyAccessorReturnType(const Ast::PropertyPtr&);
+
+    /** Type for the argument for a property mutator.
+     *
+     *  If the property data member type is `T`, then this is usually `const T&`. */
+    virtual std::string propertyMutatorArgumentType(const Ast::PropertyPtr&);
 
     /** Initial value expression for the property.
      *
@@ -84,11 +94,26 @@ protected:
     /** Emit code for the class default constructor. */
     virtual void genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, Access);
 
-    /** Emit code for the constructor with ctor_args property arguments. */
-    virtual void genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&, Access);
+    /** Emit code for the constructor with ctor_args property arguments.
+     *
+     *  Returns true if it generated a constructor. */
+    virtual bool genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&, Access);
+
+    /** Emit code for the constructor body. */
+    virtual void genConstructorBody(std::ostream&, const Ast::ClassPtr&);
 
     /** Emit code that initializes all local properties. */
     virtual void genInitProperties(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
+
+    /** Given a type name, remove the outer pointer if present.
+     *
+     *  @li Given "Thing*" return "Thing"
+     *  @li Given "ThingPtr" return "Thing"
+     *  @li Given "ThingConstPtr" return "Thing"
+     *  @li Given "Thing::Ptr" return "Thing"
+     *  @li Given "Thing::ConstPtr" return "Thing"
+     *  @li Given "Thing" (not a pointer) return "Thing" */
+    virtual std::string removePointer(const std::string&) const;
 };
 
 } // namespace

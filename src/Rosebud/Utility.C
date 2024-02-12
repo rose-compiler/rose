@@ -6,8 +6,10 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptors.hpp>
 
@@ -202,6 +204,131 @@ toString(Access access) {
     }
     ASSERT_not_reachable("invalid access");
 }
+
+std::string
+camelCase(const std::string &s, const CamelCase firstCase) {
+    std::string result;
+    bool toUpper = false;
+
+    for (char ch: s) {
+        if (std::isalpha(ch)) {
+            if (result.empty()) {
+                switch (firstCase) {
+                    case CamelCase::LOWER:
+                        result += std::tolower(ch);
+                        break;
+                    case CamelCase::UPPER:
+                        result += std::toupper(ch);
+                        break;
+                    case CamelCase::UNCHANGED:
+                        result += ch;
+                        break;
+                }
+            } else if (toUpper) {
+                result += std::toupper(ch);
+            } else {
+                result += ch;
+            }
+            toUpper = false;
+        } else if ('_' == ch) {
+            toUpper = true;
+        } else {
+            toUpper = true;
+            result += ch;
+        }
+    }
+    return result;
+}
+
+std::string
+pascalCase(const std::string &s) {
+    return camelCase(s, CamelCase::UPPER);
+}
+
+std::string
+cEscape(const char ch, const char context) {
+    std::string result;
+    switch (ch) {
+        case '\a':
+            result += "\\a";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\v':
+            result += "\\v";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\"':
+            if ('"' == context) {
+                result += "\\\"";
+            } else {
+                result += ch;
+            }
+            break;
+        case '\'':
+            if ('\'' == context) {
+                result += "\\'";
+            } else {
+                result += ch;
+            }
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        default:
+            if (isprint(ch)) {
+                result += ch;
+            } else {
+                result += (boost::format("\\%03o") % (unsigned)(unsigned char)ch).str();
+            }
+            break;
+    }
+    return result;
+}
+
+std::string
+cEscape(const std::string &s, const char context) {
+    std::string result;
+    for (char ch: s)
+        result += cEscape(ch, context);
+    return result;
+}
+
+std::string
+bourneEscape(const std::string &s) {
+    // If the string is empty it needs to be quoted.
+    if (s.empty())
+        return "''";
+
+    // The presence of non-printing characters or single quotes trumps all others and requires C-style quoting
+    for (char ch: s) {
+        if (!std::isprint(ch) || '\'' == ch)
+            return "$'" + cEscape(s, '\'') + "'";
+    }
+
+    // If the string contains any shell meta characters or white space that must be quoted then single-quote the entire string
+    // and escape backslashes.
+    for (char ch: s) {
+        if (!std::isalnum(ch) && !strchr("_-+./=", ch))
+            return "'" + boost::replace_all_copy(s, "\\", "\\\\") + "'";
+    }
+
+    // No quoting or escaping necessary
+    return s;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filesystem utilities
@@ -662,7 +789,15 @@ locationDirective(const Ast::Node::Ptr &node, const Token &token) {
 
 std::string
 toCppSymbol(const std::string &s) {
-    return std::regex_replace(s, std::regex("::|[^_a-zA-Z0-9]"), "_");
+    size_t offset = boost::starts_with(s, "::") ? 2 : 0;
+    const std::string underscored = std::regex_replace(s.substr(offset), std::regex("::|[^_a-zA-Z0-9]"), "_");
+    if (boost::starts_with(underscored, "Rose_")) {
+        return "ROSE_" + underscored.substr(5);
+    } else if (boost::starts_with(underscored, "src_Rose_")) {
+        return "ROSE_" + underscored.substr(9);
+    } else {
+        return underscored;
+    }
 }
 
 std::vector<std::string>

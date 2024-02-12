@@ -16,8 +16,8 @@ rosebud_SOURCES =				\
 	Generator.C				\
 	NoneGenerator.C				\
 	NoneSerializer.C			\
-	RoseGenerator.C				\
 	RosettaGenerator.C			\
+	SawyerGenerator.C			\
 	Serializer.C				\
 	Utility.C				\
 	YamlGenerator.C
@@ -33,8 +33,8 @@ headers =					\
 	Generator.h				\
 	NoneGenerator.h				\
 	NoneSerializer.h			\
-	RoseGenerator.h				\
 	RosettaGenerator.h			\
+	SawyerGenerator.h			\
 	Serializer.h				\
 	Utility.h				\
 	YamlGenerator.h

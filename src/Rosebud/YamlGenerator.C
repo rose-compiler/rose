@@ -215,6 +215,9 @@ YamlGenerator::genClass(Sawyer::Yaml::Node &root, const Ast::Class::Ptr &c, cons
             genLocation(root["end_text_location"], c, c->endTextToken);
     }
 
+    if (!c->qualifiedNamespace.empty())
+        root["namespace"] = c->qualifiedNamespace;
+
     const Classes dcs = derivedClasses(c, h);
     if (!dcs.empty()) {
         for (const auto &dc: dcs)

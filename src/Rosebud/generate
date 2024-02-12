@@ -82,3 +82,17 @@ fi
 	       --rosetta-strict-parents \
 	       "$@" \
 	       "$RG_SRC"/src/AstNodes/Jovial/*.h
+
+# Rose::Sarif
+"$ROSEBUD_EXE" --no-locations \
+	       --backend=sawyer --serializer=none \
+	       --sawyer-generated="$RG_SRC/src/generated/Rose/Sarif" \
+	       "$@" \
+	       "$RG_SRC"/src/AstNodes/Rose/Sarif/*.h
+
+# # Experimental
+# "$ROSEBUD_EXE" --no-locations \
+# 	       --backend=sawyer --serializer=none \
+# 	       --sawyer-generated="$RG_SRC/src/generated/Rose/Experimental/Ast/BinaryAnalysis" \
+# 	       "$@" \
+# 	       "$RG_SRC"/src/AstNodes/Experimental/BinaryAnalysis/*.h

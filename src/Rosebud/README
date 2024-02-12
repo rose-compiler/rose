@@ -2,17 +2,6 @@ This is Rosebud, which reads a C++-like domain specific language (DSL)
 for defining ROSE IR node types, and generates a variety of outputs
 including YAML, ROSETTA input, and C++ source code.
 
-This directory contains the Rosebud tool and documentation for its API
-and is probably not that useful to people trying to define ROSE IR
-nodes. But...
-
-The documentation for the DSL is located in the directory that
-contains the input for Rosebud, namely $ROSE/src/AstNodes. See the
-README in that directory.
-
-
-TODO
-====
-
-* Ast::ListNode needs const_iterator, reverse_iterator, and
-  const_reverse_iterator types, functions, and unit tests.
+The Rosebud input language and API documentation can be found in the
+Doxygen-generated documentation for the `::Rosebud` namespace, or you
+can look at the source documentation in src/Rosebud/BasicTypes.h.

@@ -58,7 +58,7 @@ namespace Ast {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------------------------------------------------------
-// Base class of all AST nodes for Rosebud
+/** Base class of all AST nodes for Rosebud. */
 class Node: public Sawyer::Tree::Vertex<Node> {
 public:
     using Ptr = NodePtr;
@@ -385,6 +385,9 @@ public:
     /** If non-empty, overrides the tag name for this type. */
     std::string tag;
 
+    /** If non-empty, the qualified namespace in which this class is defined. */
+    std::string qualifiedNamespace;
+
 protected:
     /** Default constructor used only by derived classes. */
     Class();
@@ -507,7 +510,7 @@ public:
 
     /** Input string for file region.
      *
-     *  Returns the content of the file from character position @p begin (inclusive) to @p end (exclusvie). If the @p end is less
+     *  Returns the content of the file from character position @p begin (inclusive) to @p end (exclusive). If the @p end is less
      *  than or equal to @p begin, then an empty string is returned. The text is modified by removing trailing white space from each
      *  line, replacing consecutive blank lines with a single blank line, and removing leading and trailing blank lines. If an @p
      *  exclude token is specified, then its text is not included in the returned string.
@@ -550,6 +553,11 @@ public:
      *  The returned classes are in the order they appear in a depth-first traversal of the AST, which is the same order they were
      *  encountered during parsing. */
     std::vector<ClassPtr> allClassesFileOrder();
+
+    /** Find a class by name.
+     *
+     *  If the class name exists, then return a pointer to the class, otherwise return null. */
+    ClassPtr findClassByName(const std::string&);
 };
 
 } // namespace

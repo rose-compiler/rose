@@ -497,6 +497,7 @@ endif
 support_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE) \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/generated \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/sageInterface \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalyses \

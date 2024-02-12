@@ -459,8 +459,16 @@ Project::allClassesFileOrder() {
     return retval;
 }
 
-
-
+Class::Ptr
+Project::findClassByName(const std::string &name) {
+    for (const auto &file: files) {
+        for (const auto &c: file->classes) {
+            if (name == c->name)
+                return c();
+        }
+    }
+    return Class::Ptr();
+}
 
 } // namespace
 } // namespace

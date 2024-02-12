@@ -90,6 +90,30 @@ std::string bestMatch(const std::vector<std::string> &candidates, const std::str
 /** Convert an access enum to a C++ string. */
 std::string toString(Access);
 
+/** What to do with the first letter of the return value. */
+enum class CamelCase {
+    LOWER,                                              /**< Make the first character lower case. */
+    UPPER,                                              /**< Make the first character upper case. */
+    UNCHANGED                                           /**< Leave the first character as it is in the input. */
+};
+
+/** Convert snake case to camelCase. */
+
+std::string camelCase(const std::string&, CamelCase = CamelCase::LOWER);
+
+/** Convert a symbol to PascalCase. */
+std::string pascalCase(const std::string&);
+
+/** Escape as if in C single or double quotes.
+ *
+ * @{ */
+std::string cEscape(char ch, char context = '\'');
+std::string cEscape(const std::string&, char context = '"');
+/** @} */
+
+/** Quote string to make it shell safe. */
+std::string bourneEscape(const std::string&);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filesystem utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -275,7 +299,8 @@ std::string locationDirective(const Ast::NodePtr&, const Token&);
 
 /** Convert a C++ qualified name to a CPP symbol.
  *
- *  This is done by replacing all the "::" with "_". */
+ *  This is done by replacing all the "::" with "_". Leading underscores are removed. A leading "Rose_" string is replaced with
+ *  "ROSE_". */
 std::string toCppSymbol(const std::string&);
 
 /** Extract all matching C preprocessor directives from the text.

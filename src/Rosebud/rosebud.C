@@ -32,6 +32,7 @@ static const std::vector<std::string> validPropertyAttrNames {
     "Rosebud::no_serialize",                            // don't serialize the attribute
     "Rosebud::property",                                // data member is a property even if no other attributes are specified
     "Rosebud::mutators",                                // mutator names or empty
+    "Rosebud::not_null",                                // attribute evaluates to True in a Boolean context
     "Rosebud::rosetta",                                 // make attribute known to ROSETTA
     "Rosebud::traverse",                                // make attribute part of the traversed AST
 
@@ -41,6 +42,8 @@ static const std::vector<std::string> validPropertyAttrNames {
 
 static const std::vector<std::string> validClassAttrNames {
     "Rosebud::abstract",                                // class cannot be instantiated
+    "Rosebud::no_constructors",                         // don't generate constructors
+    "Rosebud::no_destructor",                           // gon't generate the destructor
     "Rosebud::suppress",                                // don't generate code for this type
     "Rosebud::tag"                                      // specify the tag string, 3rd arg of ROSETTA's NEW_TERMINAL_MACRO
 };
@@ -267,10 +270,10 @@ isAtClassDefinition(const Ast::File::Ptr &file, size_t at) {
         (file->matches(at + 2, ":") || file->matches(at + 2, "{"));
 }
 
-// Parse the file to the beginning of the next class definition, unmatched right token, or attribute list.  Does not consume an
-// unmatched right or the class definition.
+// Parse the file to the beginning of the next namespace, class definition, unmatched right token, or attribute list.  Does not
+// consume an unmatched right or the class definition.
 static void
-parseToClassDefinitionOrAttributeList(const Ast::File::Ptr &file) {
+parseToNamespaceClassDefinitionOrAttributeList(const Ast::File::Ptr &file) {
     std::vector<Token> parenStack;
     while (file->token()) {
         if (parenStack.empty() && file->matches(0, "[") && file->matches(1, "[")) {
@@ -278,6 +281,8 @@ parseToClassDefinitionOrAttributeList(const Ast::File::Ptr &file) {
         } else if (adjustParens(file, 0, parenStack)) {
             file->consume();
         } else if (file->token().type() == TOK_RIGHT) {
+            break;
+        } else if (file->matches(0, "namespace")) {
             break;
         } else if (isAtClassDefinition(file, 0)) {
             break;
@@ -327,6 +332,35 @@ parseQualifiedName(const Ast::File::Ptr &file) {
     const std::vector<Token> tokens = parseQualifiedName(file, 0);
     file->consume(tokens.size());
     return file->content(tokens, Expand::NONE);
+}
+
+// Make a qualified name by combining the specified names separating them with "::"
+static std::string
+makeQualifiedName(const std::vector<std::string> &names) {
+    std::string retval;
+    for (const std::string &name: names)
+        retval += (retval.empty() ? "" : "::") + name;
+    return retval;
+}
+
+// Parse and consume optional "namespace X {" and return the (possibly qualified) name.
+static std::string
+parseOptionalNamespaceDeclaration(const Ast::File::Ptr &file) {
+    ASSERT_not_null(file);
+
+    if (!file->matches(0, "namespace"))
+        return {};
+
+    std::vector<Token> nameTokens = parseQualifiedName(file, 1);
+    if (nameTokens.empty())
+        return {};
+
+    const size_t curly = 1 + nameTokens.size();
+    if (!file->matches(curly, "{"))
+        return {};
+
+    file->consume(1 + nameTokens.size() + 1);
+    return file->content(nameTokens, Expand::NONE);
 }
 
 // If at "<", consume and return this token and all tokens up to and including the balanced ">".
@@ -580,6 +614,8 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
             message(INFO, file, seen[attr->fqName]->nameTokens, "previously specified here");
 
         } else if ("Rosebud::abstract" == attr->fqName ||
+                   "Rosebud::no_constructors" == attr->fqName ||
+                   "Rosebud::no_destructor" == attr->fqName ||
                    "Rosebud::suppress" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
 
@@ -618,7 +654,8 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
                    "Rosebud::no_serialize" == attr->fqName ||
                    "Rosebud::property" == attr->fqName ||
                    "Rosebud::traverse" == attr->fqName ||
-                   "Rosebud::cloneptr" == attr->fqName) {
+                   "Rosebud::cloneptr" == attr->fqName ||
+                   "Rosebud::not_null" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
 
         } else if ("Rosebud::rosetta" == attr->fqName) {
@@ -922,15 +959,25 @@ parseFile(const std::string &fileName) {
 
     size_t filePos = 0;
     Ast::CppStack::Stack runningCppStack;
-    std::vector<Token> nestingStack;
+    std::vector<std::string> namespaceStack;
 
     while (file->token()) {
-        parseToClassDefinitionOrAttributeList(file);
-        size_t startOfClass = file->token().begin();
+        parseToNamespaceClassDefinitionOrAttributeList(file);
+        size_t startOfConstruct = file->token().begin();
+
+        // Handle namespace declarations like "namespace Foo {" or "namespace Foo::Bar::...::Baz" {"
+        const std::string ns = parseOptionalNamespaceDeclaration(file);
+        if (!ns.empty()) {
+            namespaceStack.push_back(ns);
+            continue;
+        }
+
+        // Handle class declarations
         if (auto c = parseClassDefinition(file, runningCppStack)) {
             // Parse area before the class
-            parsePriorRegion(file, c, runningCppStack, filePos, startOfClass);
-            c->priorText = file->trimmedContent(filePos, startOfClass, c->docToken, c->priorTextToken);
+            parsePriorRegion(file, c, runningCppStack, filePos, startOfConstruct);
+            c->priorText = file->trimmedContent(filePos, startOfConstruct, c->docToken, c->priorTextToken);
+            c->qualifiedNamespace = makeQualifiedName(namespaceStack);
             file->classes.push_back(c);
             filePos = file->token().prior();
 
@@ -942,9 +989,18 @@ parseFile(const std::string &fileName) {
                 if (!std::isupper(c->name[0]) || c->name.find('_') != std::string::npos)
                     message(WARN, file, c->nameToken, "class name \"" + c->name + "\" should be PascalCase");
             }
-        } else {
-            file->consume();
+            continue;
         }
+
+        // Handle end of namespace curly brace.
+        if (!namespaceStack.empty() && file->matches(0, "}")) {
+            namespaceStack.pop_back();
+            file->consume();
+            continue;
+        }
+
+        // Handle anything else
+        file->consume();
     }
 
     // Accumulate the part of the file that appears after the last class definition
@@ -998,6 +1054,8 @@ int main(int argc, char *argv[]) {
     timer.restart();
     Generator::Ptr generator = Generator::lookup(settings.backend);
     ASSERT_not_null(generator);
+    ASSERT_require(argc > args.size());
+    generator->commandLine(std::vector<std::string>(argv, argv + argc - args.size()));
     generator->generate(project);
     SAWYER_MESG(mlog[INFO]) <<"generating output files; took " <<timer.toString() <<"\n";
 
