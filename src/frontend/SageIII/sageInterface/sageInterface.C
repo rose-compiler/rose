@@ -27591,6 +27591,7 @@ static int isBeginDirective (PreprocessingInfo* info)
 //!  Extract sequences like " #endif #endif ...  #if | #ifdef| #ifndef" buried inside subtree of lnode.
 //  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
 // This should be done before removing or replace the statement: lnode
+// TODO: need to handle #else #elseif etc, very messy!
 int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 {
     int retVal=0;
@@ -27660,28 +27661,39 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    // move from old containers, and add into lnode's after position
    for (auto ki = keepers.begin(); ki != keepers.end(); ki ++) 
    {
-       AttachedPreprocessingInfoType* infoList =  (*ki).first;
-       relatedInfoList.insert (infoList);
-       int cidx=  (*ki).second;
+     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+     relatedInfoList.insert (infoList);
+     int cidx=  (*ki).second;
 
-       PreprocessingInfo* info = (*infoList)[cidx];
-       // rewrite relative position
-       info->setRelativePosition(PreprocessingInfo::after);
-     
+     PreprocessingInfo* info = (*infoList)[cidx];
+     // rewrite relative position
+     info->setRelativePosition(PreprocessingInfo::after);
+
      // insert after lnode
-                lnode->addToAttachedPreprocessingInfo (info);
-   
-      // zero out from original list
-      (*infoList)[cidx]= NULL; 
-      retVal++;
+     lnode->addToAttachedPreprocessingInfo (info);
+
+     // zero out from original list
+     (*infoList)[cidx]= NULL; 
+     retVal++;
    }
    
-     // erase: based on null ptr now. we eventually will remove containers, no need to remove null comments now
-#if 0     // 
-        while (mcounter>=1)
-        {
-        } 
-#endif    
-    return retVal; 
+     // erase: based on null ptr now. The statements attached with comments may remain in the final AST
+   // some unparser function has an assertion for non-null preprocessing info.
+   // using reverse iterator to remove from backwards
+   for (auto ki = keepers.rbegin(); ki != keepers.rend(); ki ++) 
+   {
+     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+     int cidx=  (*ki).second;
 
+     PreprocessingInfo* info = (*infoList)[cidx];
+
+     ROSE_ASSERT (info==NULL);
+
+     // erase start+offset
+     AttachedPreprocessingInfoType::iterator k = infoList->begin();
+     infoList->erase(k+cidx);
+
+   }
+
+    return retVal; 
 }
