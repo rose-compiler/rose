@@ -331,7 +331,7 @@ std::string LoopTreeNode :: TreeToString() const
 std::string LoopTreeRoot :: toString() const
 {
   char buf[20];
-  sprintf( buf, "%d", level);
+  snprintf(buf, sizeof(buf), "%d", level);
   return "LOOP_TREE_ROOT at level" + std::string(buf);
 }
 

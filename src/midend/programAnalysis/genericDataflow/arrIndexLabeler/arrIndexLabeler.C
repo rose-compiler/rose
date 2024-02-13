@@ -259,7 +259,7 @@ class arrayIndexLabeler : public SgTopDownBottomUpProcessing<aiRecord, adRecord>
                 // label this node with its read/write access information
                 arrIndexAttribute* aiAttr = new arrIndexAttribute(dr);
                 char attrName[100];
-                sprintf(attrName, "ArrayIndex: [%d, %d, %p, %d]", dr.arrayIndexFlag, dr.topArrayRefExpFlag, dr.arrayNameExp, dr.arrayDim);
+                snprintf(attrName, sizeof(attrName), "ArrayIndex: [%d, %d, %p, %d]", dr.arrayIndexFlag, dr.topArrayRefExpFlag, dr.arrayNameExp, dr.arrayDim);
                 n->addNewAttribute(attrName, aiAttr);
                 n->updateAttribute("ArrayIndex", aiAttr);
                 

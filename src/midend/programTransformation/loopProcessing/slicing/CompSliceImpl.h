@@ -91,7 +91,7 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
   virtual std::string toString() const
     { 
        char buf[20];
-       sprintf( buf, "%d", align);
+       snprintf(buf, sizeof(buf), "%d", align);
        return  "stmt: " + GetRepr()->toString() + "\nslicing alignment: " + std::string(buf)+"\n";
     }
   virtual std::string CompSliceGetClassName() const { return "CompSliceStmt"; }

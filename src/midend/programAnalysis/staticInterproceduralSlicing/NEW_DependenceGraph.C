@@ -252,7 +252,7 @@ void DependenceGraph::writeDot(char *filename)
         SimpleDirectedGraphNode *d = *i;
         char buf[sizeof(SimpleDirectedGraphNode *) * 2 + 3];
 
-        sprintf(buf, "%p", d);
+        snprintf(buf, sizeof(buf), "%p", d);
         f << "\"" << buf << "\" [";
                                 // label
                                 f<<"label = \"";
@@ -311,8 +311,8 @@ void DependenceGraph::writeDot(char *filename)
             char buf1[sizeof(DependenceNode *) * 2 + 3];
             char buf2[sizeof(DependenceNode *) * 2 + 3];
 
-            sprintf(buf1, "%p", d1);
-            sprintf(buf2, "%p", d2);
+            snprintf(buf1, sizeof(buf1), "%p", d1);
+            snprintf(buf2, sizeof(buf2), "%p", d2);
 
             f << "\"" << buf1 << "\" -> \"" << buf2 << "\"";
             std::set < EdgeType > ets = edgeType(d1, d2);
@@ -375,7 +375,7 @@ void DependenceGraph::writeDotAndHighlightAllowedEdgesOnly(char *filename, std::
         SimpleDirectedGraphNode *d = *i;
         char buf[sizeof(SimpleDirectedGraphNode *) * 2 + 3];
 
-        sprintf(buf, "%p", d);
+        snprintf(buf, sizeof(buf), "%p", d);
         f << "\"" << buf << "\" [";
                                 // label
                                 f<<"label = \"";
@@ -434,8 +434,8 @@ void DependenceGraph::writeDotAndHighlightAllowedEdgesOnly(char *filename, std::
             char buf1[sizeof(DependenceNode *) * 2 + 3];
             char buf2[sizeof(DependenceNode *) * 2 + 3];
 
-            sprintf(buf1, "%p", d1);
-            sprintf(buf2, "%p", d2);
+            snprintf(buf1, sizeof(buf1), "%p", d1);
+            snprintf(buf2, sizeof(buf2), "%p", d2);
 
             f << "\"" << buf1 << "\" -> \"" << buf2 << "\"";
             std::set < EdgeType > ets = edgeType(d1, d2);

@@ -76,7 +76,7 @@ display( std::string label ) const
           ListOfStatementsType topOfStack = tempStack.top();
 
           char buffer[256];
-          sprintf (buffer,"counter = %d topOfStack.size() = %" PRIuPTR "",counter,topOfStack.size());
+          snprintf (buffer,sizeof(buffer),"counter = %d topOfStack.size() = %" PRIuPTR "",counter,topOfStack.size());
           std::string displayString = buffer;
           printf ("     Display new scope: %s \n",displayString.c_str());
 
@@ -124,7 +124,7 @@ display ( StackOfListsType tempStack, std::string label ) const
           ListOfStatementsType topOfStack = tempStack.top();
 
           char buffer[256];
-          sprintf (buffer,"counter = %d topOfStack.size() = %" PRIuPTR "",counter,topOfStack.size());
+          snprintf (buffer,sizeof(buffer),"counter = %d topOfStack.size() = %" PRIuPTR "",counter,topOfStack.size());
           std::string displayString = buffer;
           printf ("     Display new scope: %s \n",displayString.c_str());
 #if 1

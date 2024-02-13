@@ -292,7 +292,7 @@ class rwAccessLabeler : public AstTopDownProcessing<lrRecord>
                 // label this node with its read/write access information
                 rwAccessAttribute* rwAttr = new rwAccessAttribute(r);
                 /*char attrName[100];
-                sprintf(attrName, "rwAccess: %d", rwAttr->access);
+                snprintf(attrName, sizeof(attrName), "rwAccess: %d", rwAttr->access);
                 n->addNewAttribute(attrName, rwAttr);*/
                 // if this node doesn't already have an attribute, add it
                 if(!n->attributeExists("rwAccess"))

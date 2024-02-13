@@ -169,12 +169,12 @@ std:: string DepRel :: toString(bool dir_only) const
   if (dir_only) return res;
   char buf[20];
   if (align != ALIGN_ALL) {
-    sprintf(buf, "%d", align);
+    snprintf(buf, sizeof(buf), "%d", align);
     res = res + std:: string(buf);
   }
   int s = AlignRangeSize( entryType );
   if ( s > 1)  {
-    sprintf(buf, ",%d", s);
+    snprintf(buf, sizeof(buf), ",%d", s);
     res = res + std:: string(buf);
   }
   return res;

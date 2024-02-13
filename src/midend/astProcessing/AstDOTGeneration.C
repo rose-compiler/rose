@@ -744,13 +744,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           if (asmDwarfLine != NULL)
              {
                char buffer[100];
-
-            // It does not work to embed the "\n" into the single sprintf parameter.
-            // sprintf(buffer," Addr: 0x%08"PRIx64" \n line: %d col: %d ",asmDwarfLine->get_address(),asmDwarfLine->get_line(),asmDwarfLine->get_column());
-
-               sprintf(buffer,"Addr: 0x%08" PRIx64,asmDwarfLine->get_address());
+               snprintf(buffer,sizeof(buffer),"Addr: 0x%08" PRIx64,asmDwarfLine->get_address());
                name = buffer;
-               sprintf(buffer,"line: %d col: %d",asmDwarfLine->get_line(),asmDwarfLine->get_column());
+               snprintf(buffer,sizeof(buffer),"line: %d col: %d",asmDwarfLine->get_line(),asmDwarfLine->get_column());
                name += string("\\n") + buffer;
              }
 

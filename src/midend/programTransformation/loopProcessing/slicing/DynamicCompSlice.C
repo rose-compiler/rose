@@ -97,7 +97,7 @@ Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
     AstInterface::AstNodeList args;
     char buf[11];
     for (int i = 1; i <= num; ++i) {
-       sprintf(buf, "%1d", i);
+       snprintf(buf, sizeof(buf), "%1d", i);
        std::string name = groupVar + buf;
        fa.NewVar(fa.GetType("int"), name);
        args.push_back( fa.CreateVarRef( name).get_ptr() );
@@ -113,7 +113,7 @@ Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
     for (CompSlice::ConstStmtIterator p = slice->GetConstStmtIterator();
          !p.ReachEnd(); ++p) {
         LoopTreeNode* stmt = p.Current();
-        sprintf(buf, "%1d", slice->QuerySliceStmtGroupIndex(stmt));
+        snprintf(buf, sizeof(buf), "%1d", slice->QuerySliceStmtGroupIndex(stmt));
         LoopTreeEmbedStmt()( nr, stmt, SymbolicVar(groupVar + buf, AST_NULL) );
     }
     DependenceHoisting::Transform(c, slice, root);

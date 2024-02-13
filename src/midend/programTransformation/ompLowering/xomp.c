@@ -34,8 +34,9 @@ FILE* fp = 0;
 extern char* current_time_to_str(void);
 char* current_time_to_str(void)
 {
-  /* careful about the size: match sprintf () */
-  char *timestamp = (char *)malloc(sizeof(char) * 20);
+  /* careful about the size: match snprintf () */
+  const size_t TIMESTAMP_SIZE = sizeof(char) * 20;
+  char *timestamp = (char *)malloc(TIMESTAMP_SIZE);
   time_t ltime;
   ltime=time(NULL);
   struct tm *tm;
@@ -43,7 +44,7 @@ char* current_time_to_str(void)
 
   assert(timestamp != NULL);
   assert(tm != NULL);
-  sprintf(timestamp,"%04d_%02d_%02d_%02d_%02d_%02d", tm->tm_year+1900, tm->tm_mon+1, // month starts from 0
+  snprintf(timestamp,TIMESTAMP_SIZE,"%04d_%02d_%02d_%02d_%02d_%02d", tm->tm_year+1900, tm->tm_mon+1, // month starts from 0
       tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
   return timestamp;
 }
@@ -52,7 +53,6 @@ double xomp_time_stamp(void)
 {
   struct timeval t;
   double time;
-//  static double prev_time=0.0;
 
   gettimeofday(&t, NULL);
   time = t.tv_sec + 1.0e-6*t.tv_usec;

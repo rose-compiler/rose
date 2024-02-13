@@ -2850,7 +2850,7 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 
       if (yyresult)
         {
-          /* Avoid sprintf, as that infringes on the user's name space.
+          /* Avoid snprintf, as that infringes on the user's name space.
              Don't have undefined behavior even if the translation
              produced a string with the wrong number of "%s"s.  */
           char *yyp = yyresult;

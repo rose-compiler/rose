@@ -213,7 +213,7 @@ is_array_exp( CPPAstInterface& fa, const AstNodePtr& array,
     SymbolicFunctionDeclarationGroup len;
     char buf[20];
     for (int i = 0; i < dim; ++i) {
-      sprintf(buf, "length_%d", i);
+      snprintf(buf, sizeof(buf), "length_%d", i);
       SymbolicValDescriptor parval(i);
       ExtendibleParamDescriptor par_i(parval);
       SymbolicValDescriptor tmp;

@@ -30,9 +30,9 @@ SymbolicConst::  SymbolicConst( int _val, int _d)
      {
         char buf[40];
         if (_d == 1)
-           sprintf( buf, "%d", _val);
+           snprintf(buf, sizeof(buf), "%d", _val);
         else
-           sprintf( buf, "%d/%d", _val,_d);
+           snprintf(buf, sizeof(buf), "%d/%d", _val,_d);
         val = buf;
      }
 

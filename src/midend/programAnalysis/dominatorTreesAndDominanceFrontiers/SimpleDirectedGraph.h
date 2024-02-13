@@ -54,7 +54,7 @@ public:
   //! virtual function to support displaying node information
   virtual void writeOut(std::ostream & os) {
     char buf[sizeof(SimpleDirectedGraphNode *)*2 + 3];
-    sprintf(buf, "%p", this);
+    snprintf(buf, sizeof(buf), "%p", this);
     os << buf;
   }
   
@@ -140,7 +140,7 @@ public:
     for (i = _nodes.begin(); i != _nodes.end(); i++) {
       SimpleDirectedGraphNode * d = *i;
       char buf[sizeof(SimpleDirectedGraphNode *)*2 + 3];
-      sprintf(buf, "%p", d);
+      snprintf(buf, sizeof(buf), "%p", d);
       f << "\"" << buf << "\" [label = \"";
       _displayData(d, f);
       f << "\"];" << std::endl;
@@ -157,8 +157,8 @@ public:
         char buf1[sizeof(SimpleDirectedGraphNode *)*2 + 3];
         char buf2[sizeof(SimpleDirectedGraphNode *)*2 + 3];
         
-        sprintf(buf1, "%p", d1);
-        sprintf(buf2, "%p", d2);
+        snprintf(buf1, sizeof(buf1), "%p", d1);
+        snprintf(buf2, sizeof(buf2), "%p", d2);
 
         f << "\"" << buf1 << "\" -> \"" << buf2 << "\";" << std::endl;
       }

@@ -292,7 +292,7 @@ private:
         int result = xc_domctl(xc_iface, cmd);
         if (result<0) {
             char buf[256];
-            sprintf(buf, "xc_domctl(request=%u) failed", cmd->u.ether.command_code);
+            snprintf(buf, sizeof(buf), "xc_domctl(request=%u) failed", cmd->u.ether.command_code);
             throw Exception(buf);
         }
     }

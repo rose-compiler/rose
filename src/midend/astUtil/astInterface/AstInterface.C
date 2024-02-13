@@ -834,7 +834,7 @@ NewVar( SgType* type, const std::string& _name, bool makeunique, bool delayDecl,
   }
   if (makeunique) {
      char buf[20]; 
-     sprintf(buf, "%d", newVarIndex);
+     snprintf(buf, sizeof(buf), "%d", newVarIndex);
      varname = varname + std::string(buf);
      ++newVarIndex; 
   }

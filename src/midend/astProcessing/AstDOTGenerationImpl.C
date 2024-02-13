@@ -130,7 +130,6 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
           SgAsmDwarfLine* asmDwarfLine = isSgAsmDwarfLine(node);
           if (asmDwarfLine != NULL)
                  {
-                // It does not work to embed the "\n" into the single sprintf parameter.
                      name = "Addr: " + Rose::StringUtility::addrToString(asmDwarfLine->get_address()) +
                             "\\nline: " + Rose::StringUtility::numberToString(asmDwarfLine->get_line()) +
                             " col: " + Rose::StringUtility::numberToString(asmDwarfLine->get_column());

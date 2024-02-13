@@ -143,13 +143,13 @@ public:
 
   virtual void writeOut(std::ostream & os) {
     char buf[sizeof(ControlNode *)*2 + 3];
-    sprintf(buf, "%p", this);
+    snprintf(buf, sizeof(buf), "%p", this);
     os << "(" << _forID << "/" << _backID << ": " << buf << ") ";
     if (_type == EMPTY) {
       os << "EMPTY";
     } else {
       char buf[sizeof(SgNode *) * 2 + 3];
-      sprintf(buf, "%p", _node);
+      snprintf(buf, sizeof(buf), "%p", _node);
       os << buf << ":" << _node->sage_class_name() << " ";
       os << "[" << escapeString(_node->unparseToString()) << "]";
     }

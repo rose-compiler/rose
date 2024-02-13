@@ -283,7 +283,7 @@ evaluateInheritedAttribute (
 
 #if PRINT_DEBUGGING_INFO
           char buffer[256];
-          sprintf (buffer,"At base of evaluateInheritedAttribute: stackOfScopes.size() = %" PRIuPTR "",stackOfScopes.size());
+          snprintf (buffer,sizeof(buffer),"At base of evaluateInheritedAttribute: stackOfScopes.size() = %" PRIuPTR "",stackOfScopes.size());
           std::string displayString = buffer;
           display(displayString);
 
@@ -908,38 +908,20 @@ generatePrefixStringLocalDeclarations()
 #endif
 
                bool skipStatementListTrailingDirectives = stackCounter < lastScopeIndex;
-            // bool containsAdditionalScopes = false;
                bool containsAdditionalScopes = stackCounter < lastScopeIndex;
 
-            // DQ (8/8/2005): Skip output of initial "{" with the first local scope 
-            // (since it is part of the function template for the secondary file).
-            // if (j > 0)
-            //      localPrefixString += "\n   {";
-
                char buffer[128] = "";
-               sprintf (buffer,"\n{ /* local stack #%d */ \n",j);
-            // sprintf (buffer," /* local stack #%d */ \n",j);
+               snprintf (buffer,sizeof(buffer),"\n{ /* local stack #%d */ \n",j);
 
-            // localPrefixString +=  "\n{ /* local stack */ \n";
                localPrefixString += std::string(buffer);
                localPrefixString += generatePrefixStringFromStatementList (
                                          tempList,skipStatementListTrailingDirectives,
-//                                       openingIfCounter,closingEndifCounter,
                                          containsAdditionalScopes);
-
-            // printf ("In generatePrefixStringLocalDeclarations() incremental build: localPrefixString = %s \n",localPrefixString.c_str());
 
                stackCounter++;
                tempStack.pop();
-
-//             localPrefixString += generateEndifForPrefixString();
              }
-
-       // printf ("After loop through non-global scopes: localPrefixString = %s \n",localPrefixString.c_str());
-       // localPrefixString += generateEndifForPrefixString ( /* openingIfCounter, closingEndifCounter */ );
         }
-
-  // printf ("After generateEndifForPrefixString(): localPrefixString = %s \n",localPrefixString.c_str());
 
 #if 0
      printf ("############################### \n");

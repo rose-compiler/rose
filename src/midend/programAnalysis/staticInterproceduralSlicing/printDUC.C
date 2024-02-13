@@ -31,7 +31,7 @@ void printNode(std::ofstream &f,SgInitializedName * name,SgNode* interestingNode
   if (printedSet->count(interestingNode)) return;
   printedSet->insert(interestingNode);
   char ptrStr[100];
-  sprintf(ptrStr,"%p",interestingNode);
+  snprintf(ptrStr,sizeof(ptrStr),"%p",interestingNode);
   f <<"\""<<ptrStr<<"\" [label=\"Var:";
     f<<isSgInitializedName(name)->get_name ().getString();
 //  f<<"\\n in interesting node: "<<interestingNode->unparseToString();
@@ -44,8 +44,8 @@ void printNode(std::ofstream &f,SgInitializedName * name,SgNode* interestingNode
 void printEdge(std::ofstream & f,SgNode * source,SgNode*dest,int type,set<pair<SgNode*,SgNode*> > * printedSet)
 {
   char defPtrStr[100],usePtrStr[100];
-  sprintf(usePtrStr,"%p",dest);
-  sprintf(defPtrStr,"%p",source);
+  snprintf(usePtrStr,sizeof(usePtrStr),"%p",dest);
+  snprintf(defPtrStr,sizeof(usePtrStr),"%p",source);
   if (printedSet->count(pair<SgNode*,SgNode*>(source,dest)))
     return;
   printedSet->insert(pair<SgNode*,SgNode*>(source,dest));
