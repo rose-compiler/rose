@@ -164,7 +164,7 @@ public:
                         std::string const& description);
 
 public:
-    ~Rule();
+    virtual ~Rule();
 };
 
 } // namespace

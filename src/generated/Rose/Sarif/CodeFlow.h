@@ -111,7 +111,7 @@ public:
     static Ptr instance();
 
 public:
-    ~CodeFlow();
+    virtual ~CodeFlow();
 };
 
 } // namespace

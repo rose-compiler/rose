@@ -226,7 +226,7 @@ public:
     static Ptr instance(std::string const& name);
 
 public:
-    ~Analysis();
+    virtual ~Analysis();
 };
 
 } // namespace

@@ -182,7 +182,7 @@ public:
     static Ptr instance();
 
 public:
-    ~Location();
+    virtual ~Location();
 };
 
 } // namespace

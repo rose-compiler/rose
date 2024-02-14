@@ -228,7 +228,7 @@ protected:
     Result();
 
 public:
-    ~Result();
+    virtual ~Result();
 };
 
 } // namespace

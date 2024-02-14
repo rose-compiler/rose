@@ -113,7 +113,7 @@ public:
     static Ptr instance();
 
 public:
-    ~ThreadFlow();
+    virtual ~ThreadFlow();
 };
 
 } // namespace

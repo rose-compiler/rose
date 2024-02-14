@@ -90,7 +90,7 @@ public:
     static Ptr instance();
 
 public:
-    ~Log();
+    virtual ~Log();
 };
 
 } // namespace

@@ -154,7 +154,7 @@ public:
     static Ptr instance(std::string const& uri);
 
 public:
-    ~Artifact();
+    virtual ~Artifact();
 };
 
 } // namespace

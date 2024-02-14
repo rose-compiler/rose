@@ -118,7 +118,7 @@ protected:
     ThreadFlowLocation();
 
 public:
-    ~ThreadFlowLocation();
+    virtual ~ThreadFlowLocation();
 };
 
 } // namespace

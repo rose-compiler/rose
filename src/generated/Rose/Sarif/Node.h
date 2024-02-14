@@ -51,7 +51,7 @@ protected:
     Node();
 
 public:
-    ~Node();
+    virtual ~Node();
 };
 
 } // namespace
