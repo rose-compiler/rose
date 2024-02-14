@@ -1002,7 +1002,7 @@ void BuildVisitor::Build(parser::TypeDeclarationStmt &x) {
 
   std::list<LanguageTranslation::ExpressionKind> modifiers{};
   for (auto &attr : std::get<std::list<AttrSpec>>(x.t)) {
-    getAttrSpec(attr, modifiers);
+    getAttrSpec(attr, modifiers, type);
   }
 
   std::list<EntityDeclTuple> initInfo{};
@@ -1223,7 +1223,6 @@ void EntityDecls(std::list<Fortran::parser::EntityDecl> &x, std::list<EntityDecl
     std::string name{std::get<0>(entity.t).ToString()};
 
     if (auto &opt = std::get<1>(entity.t)) {  // ArraySpec
-      ABORT_NO_IMPL;
       Build(opt.value(), type, baseType);
     }
     if (auto &opt = std::get<2>(entity.t)) {  // CoarraySpec
@@ -1245,8 +1244,23 @@ void Build(parser::ArraySpec &x, SgType* &type, SgType* baseType)
 {
   // std::variant<> - std::list<ExplicitShapeSpec>, std::list<AssumedShapeSpec>,
   //                  DeferredShapeSpecList, AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
+  using namespace Fortran::parser;
+
   std::cout << "Rose::builder::Build(ArraySpec)\n";
-  ABORT_NO_IMPL;
+
+  common::visit(common::visitors{
+             [&](const DeferredShapeSpecList &y) {
+                    SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
+                    for (int ii{0}; ii < y.v; ii++) {
+                      dimInfo->get_expressions().push_back(SageBuilder::buildColonShapeExp_nfi());
+                    }
+                    type = SageBuilder::buildArrayType(baseType, dimInfo);
+                  },
+             [&](const auto &y) {
+                    ABORT_NO_IMPL;
+                  }
+           },
+     x.u);
 }
 
 // CoarraySpec
@@ -2799,7 +2813,7 @@ void getModifiers(parser::LanguageBindingSpec &x, LanguageTranslation::Expressio
   ABORT_NO_IMPL;
 }
 
-void getAttrSpec(parser::AttrSpec &x, std::list<LanguageTranslation::ExpressionKind> &modifiers) {
+void getAttrSpec(parser::AttrSpec &x, std::list<LanguageTranslation::ExpressionKind> &modifiers, SgType* &baseType) {
   // std::variant<> AccessSpec, Allocatable, Asynchronous, CoarraySpec, Contiguous,
   //                ArraySpec, External, IntentSpec, Intrinsic, LanguageBindingSpec, Optional,
   //                Parameter, Pointer, Protected, Save, Target, Value, Volatile,
@@ -2807,9 +2821,14 @@ void getAttrSpec(parser::AttrSpec &x, std::list<LanguageTranslation::ExpressionK
   using namespace Fortran::parser;
   using namespace LanguageTranslation;
 
-  std::cout << "[WARN] getAttrSpec(MAYBE need build of expression for ArraySpec, ...\n";
   common::visit(common::visitors{
-                  [&](const ArraySpec &) { ABORT_NO_IMPL; /*DIMENSION*/ },
+                  [&](ArraySpec &y) {
+                         /*DIMENSION*/
+                         // modifiers.push_back(ExpressionKind::e_type_modifier_dimension);
+                         SgType* type{nullptr};
+                         Build(y, type, baseType);
+                         baseType = type;
+                     },
                   [&](const CoarraySpec &) { ABORT_NO_IMPL; /*CODIMENSION*/ },
                   [&](const ComponentArraySpec &) { ABORT_NO_IMPL; /*DIMENSION*/ },
                   [&](const IntentSpec &) { ABORT_NO_IMPL; /*INTENT*/ },

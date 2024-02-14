@@ -284,7 +284,7 @@ void getSubroutineStmt(Fortran::parser::SubroutineStmt &, std::list<std::string>
                        LanguageTranslation::FunctionModifierList &);
 
 // AttrSpec
-void getAttrSpec(Fortran::parser:: AttrSpec &, std::list<LanguageTranslation::ExpressionKind> &);
+void getAttrSpec(Fortran::parser:: AttrSpec &, std::list<LanguageTranslation::ExpressionKind> &, SgType* &);
 
 void getModifiers(Fortran::parser:: AccessSpec &, LanguageTranslation::ExpressionKind &);
 void getModifiers(Fortran::parser:: IntentSpec &, LanguageTranslation::ExpressionKind &);
