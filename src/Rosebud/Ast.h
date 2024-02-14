@@ -61,6 +61,8 @@ namespace Ast {
 /** Base class of all AST nodes for Rosebud. */
 class Node: public Sawyer::Tree::Vertex<Node> {
 public:
+    virtual ~Node() {}
+
     using Ptr = NodePtr;
 
     template<class T>

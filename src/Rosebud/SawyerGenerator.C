@@ -487,7 +487,7 @@ SawyerGenerator::genClassConstructors(std::ostream &header, std::ostream &impl, 
     header <<"\n"
            <<THIS_LOCATION <<locationDirective(c, c->nameToken)
            <<"public:\n"
-           <<"    ~" <<c->name <<"();\n";
+           <<"    virtual ~" <<c->name <<"();\n";
 
     impl <<"\n"
          <<THIS_LOCATION <<locationDirective(c, c->nameToken)
