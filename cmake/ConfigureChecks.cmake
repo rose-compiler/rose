@@ -20,7 +20,7 @@ include(TestBigEndian)
 test_big_endian(WORDS_BIGENDIAN)
 
 if(CMAKE_REQUIRED_QUIET)
-  message(STATUS "Checking for common configuration values by inspecing headers...")
+  message(STATUS "Checking for common configuration values by inspecting headers...")
 endif()
 
 check_include_file(argz.h HAVE_ARGZ_H)
