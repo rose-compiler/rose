@@ -96,7 +96,7 @@ main(int argc, char *argv[]) {
     //! [partition]
 
     //! [unparse]
-    Unparser::Base::Ptr unparser = partitioner->unparser();
+    Rose::BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
     unparser->unparse(outputFile(settings), partitioner, Rose::Progress::instance());
     //! [unparse]
 }

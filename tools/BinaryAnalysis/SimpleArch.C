@@ -336,25 +336,25 @@ public:
 // Unparser generates assembly listings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class SimpleUnparser: public Unparser::Base {
+class SimpleUnparser: public Rose::BinaryAnalysis::Unparser::Base {
 public:
     using Ptr = Sawyer::SharedPointer<SimpleUnparser>;
 
-    struct Settings: public Unparser::Settings {};
+    struct Settings: public Rose::BinaryAnalysis::Unparser::Settings {};
 
 private:
     Settings settings_;
 
 protected:
     SimpleUnparser(const Architecture::Base::ConstPtr &arch, const Settings &settings)
-        : Unparser::Base(arch), settings_(settings) {}
+        : Rose::BinaryAnalysis::Unparser::Base(arch), settings_(settings) {}
 
 public:
     static Ptr instance(const Architecture::Base::ConstPtr &arch, const Settings &settings = Settings()) {
         return Ptr(new SimpleUnparser(arch, settings));
     }
 
-    Unparser::Base::Ptr copy() const {
+    Rose::BinaryAnalysis::Unparser::Base::Ptr copy() const override {
         return instance(architecture(), settings());
     }
 
@@ -763,12 +763,12 @@ public:
     }
 
     // Return a new unparser
-    Unparser::Base::Ptr newUnparser() const override {
+    Rose::BinaryAnalysis::Unparser::Base::Ptr newUnparser() const override {
         return SimpleUnparser::instance(shared_from_this());
     }
 
     // Return new instruction dispatcher
-    BS::Dispatcher::Ptr newInstructionDispatcher(const BS::RiscOperators::Ptr &ops) const {
+    BS::Dispatcher::Ptr newInstructionDispatcher(const BS::RiscOperators::Ptr &ops) const override {
         ASSERT_not_null(ops);
         return SimpleDispatcher::instance(shared_from_this(), ops);
     }
@@ -869,7 +869,7 @@ public:
             case InsnKind::BEQ:
             case InsnKind::BLT:
                 retval.insert(insn->get_address() + insn->get_size());
-                [[fallthrough]]
+                [[fallthrough]];
 
             case InsnKind::JMP:
             case InsnKind::CALL:
@@ -1001,7 +1001,7 @@ public:
     }
 
 private:
-    void error(const std::string &mesg) const [[noreturn]] {
+    void error(const std::string &mesg) const {
         mlog[ERROR] <<"stdin:" <<lineNumber_ <<": error: " <<mesg <<"\n";
     }
 
