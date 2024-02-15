@@ -63,13 +63,13 @@ die() {
 cached_rose_source=
 rose-source() {
     if [ "$cached_rose_source" = "" ]; then
-	local rose_src=
-	for rose_src in "$ROSE_SOURCE" "$RG_SRC" "$dir0/.." "$ROSE"; do
-	    if [ -n "$rose_src" ] && [ -d "$rose_src/." ] && [ -f "$rose_src/ROSE_VERSION" ]; then
-		cached_rose_source="$(cd "$rose_src"; pwd)"
-		break
-	    fi
-	done
+        local rose_src=
+        for rose_src in "$ROSE_SOURCE" "$RG_SRC" "$dir0/.." "$ROSE"; do
+            if [ -n "$rose_src" ] && [ -d "$rose_src/." ] && [ -f "$rose_src/ROSE_VERSION" ]; then
+                cached_rose_source="$(cd "$rose_src"; pwd)"
+                break
+            fi
+        done
     fi
     [ -n "$cached_rose_source" ] || die "cannot find the top of the ROSE source tree"
     echo "$cached_rose_source"
@@ -86,12 +86,12 @@ rose-version-long() {
     
     local branch="$(git branch --show-current)"
     if [ -n "$branch" ]; then
-	echo "$branch"
+        echo "$branch"
     fi
 
     local commit="$(git rev-parse --short HEAD)"
     if [ -n "$commit" ]; then
-	echo "$commit"
+        echo "$commit"
     fi
 
 }
@@ -108,8 +108,8 @@ check-prerequisites() {
 # List known configuration files
 list-known-configs() {
     for config in $(rose-source)/docs/*.cfg; do
-	local basename="${config##*/}"
-	echo "${basename%.cfg}"
+        local basename="${config##*/}"
+        echo "${basename%.cfg}"
     done
 }
 
@@ -119,11 +119,11 @@ list-known-configs() {
 config-file() {
     local name="${1-}"
     for config in "$name" "$(rose-source)/docs/$name" "$(rose-source)/docs/$name.cfg"; do
-	if [ -f "$config" ]; then
-	    echo "$config"
-	    echo "$arg0: configuring Doxygen with $config" >&2
-	    return 0
-	fi
+        if [ -f "$config" ]; then
+            echo "$config"
+            echo "$arg0: configuring Doxygen with $config" >&2
+            return 0
+        fi
     done
     die "cannot find Doxygen config file for \"$name\""
 }
@@ -133,8 +133,8 @@ config-file() {
 fail-if-not-empty() {
     local n=0
     while IFS=$'\n' read -r line; do
-	echo "$line"
-	n=$[n + 1]
+        echo "$line"
+        n=$[n + 1]
     done
     [ $n -eq 0 ] || false
 }
@@ -173,12 +173,12 @@ filter-doxygen-warnings() {
     sed -e "
         #   Pattern                                                               Reasons (see above)
         #-----------------------------------------------------------------------#--------------------
-	/unable to resolve reference to 'SageInterface/d			# 1
-	/unable to resolve reference to 'InstructionMap'/d			# 1
-	/unable to resolve reference to 'frontend'/d				# 1, 2.BAD_NAME
-	/unable to resolve reference to 'Sg_File_Info'/d			# 1, 2.BAD_NAME
-	/unable to resolve reference to 'rose_addr_t'/d				# 1, 2.BAD_NAME
-	"
+        /unable to resolve reference to 'SageInterface/d                        # 1
+        /unable to resolve reference to 'InstructionMap'/d                      # 1
+        /unable to resolve reference to 'frontend'/d                            # 1, 2.BAD_NAME
+        /unable to resolve reference to 'Sg_File_Info'/d                        # 1, 2.BAD_NAME
+        /unable to resolve reference to 'rose_addr_t'/d                         # 1, 2.BAD_NAME
+        "
 }
 
 ####################################################################################################################################
@@ -189,18 +189,42 @@ make-output-directories() {
     local config="$1"
     local last_name=
     for dir in $(sed -n 's/^OUTPUT_DIRECTORY[ \t]*=[ \t]*\([^ \t]\+\).*/\1/p' "${all_inputs[@]}" /dev/null); do
-	dir="$(echo "$dir" |sed "s|\$(ROSE_SOURCE)|$(rose-source)|g")"
-	dir="$(echo "$dir" |sed "s|\$(ROSE_VERSION)|$(rose-version-short)|g")"
-	last_name="$dir"
+        dir="$(echo "$dir" |sed "s|\$(ROSE_SOURCE)|$(rose-source)|g")"
+        dir="$(echo "$dir" |sed "s|\$(ROSE_VERSION)|$(rose-version-short)|g")"
+        last_name="$dir"
+        echo "$dir"
 
-	if [ -n "$(echo "$dir" |sed -n '/^[-+.\/_a-zA-Z0-9]\+$/p')" ]; then
-	    mkdir -p "$dir"
-	fi
+        if [ -n "$(echo "$dir" |sed -n '/^[-+.\/_a-zA-Z0-9]\+$/p')" ]; then
+            mkdir -p "$dir"
+        fi
     done
 
     if [ -n "$last_name" ]; then
-	echo "$arg0: documentation output to $last_name"
+        echo "$arg0: documentation output to $last_name" >&2
     fi
+}
+
+####################################################################################################################################
+# Post-process the HTML. Too bad doxygen doesn't have a way to run these kinds of things on the intermediate representation.
+fixup-html() {
+    local root_dir="$1"
+    echo -n "$arg0: post-processing HTML files..." >&2
+    local i=0
+    find "$root_dir" -type f -name '*.html' |
+        while IFS="" read -r html_file; do
+            printf " %5d\b\b\b\b\b\b" $[++i] >&2
+
+            # The files in the AstNodes/{BinaryAnalysis,Expression,Jovial} directories are actually Rosebud inputs for generating
+            # ROSETTA inputs. The eventual ROSETTA output headers don't need any path component in their #include names.
+            #
+            # The other files under AstNodes are Rosebud inputs for which Rosebud generates the C++ output (ROSETTA is not involved).
+            # For these, if the input is named AstNodes/Foo/Bar/Baz.h then the #include should be <Foo/Bar/Baz.h>
+            sed -i \
+                -e 's%^\(<p><code>#include.*>\)AstNodes/\(BinaryAnalysis\|Expression\|Jovial\)/\(.*\)%\1\3%' \
+                -e 's%^\(<p><code>#include.*>\)AstNodes/\(.*\)%\1\2%' \
+                "$html_file"
+        done
+    echo >&2
 }
 
 ####################################################################################################################################
@@ -208,24 +232,24 @@ make-output-directories() {
 # Parse command-line
 while [ "$#" -gt 0 ]; do
     case "$1" in
-	--help|-h)
-	    help
-	    exit 0
-	    ;;
-	--list|-l)
-	    list-known-configs
-	    exit 0
-	    ;;
-	--version|-V)
-	    rose-version-long
-	    exit 0
-	    ;;
-	-*)
-	    die "invalid switch \"$1\"; see source code for help"
-	    ;;
-	*)
-	    break
-	    ;;
+        --help|-h)
+            help
+            exit 0
+            ;;
+        --list|-l)
+            list-known-configs
+            exit 0
+            ;;
+        --version|-V)
+            rose-version-long
+            exit 0
+            ;;
+        -*)
+            die "invalid switch \"$1\"; see source code for help"
+            ;;
+        *)
+            break
+            ;;
     esac
 done
 if [ "$#" -gt 1 ]; then
@@ -238,9 +262,13 @@ check-prerequisites
 CONFIG="$(config-file "${1-$DEFAULT_CONFIG}")"
 [ -r "$CONFIG" ] || die "cannot find Doxygen config file for \"${1-$DEFAULT_CONFIG}\""
 
-make-output-directories "$CONFIG"
+root_dirs="$(make-output-directories "$CONFIG")"
 
 env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version-short)" ROSE_VERSION_LONG="$(rose-version-long)" \
     doxygen "$CONFIG" 2>&1 |
     filter-doxygen-warnings |
     fail-if-not-empty
+
+for root_dir in $root_dirs; do
+    fixup-html "$root_dir"
+done
