@@ -535,6 +535,7 @@ package body Asis_Adapter.Element.Definitions is
          begin
             State.Add_To_Dot_Label ("Access_Type_Kind", Access_Type_Kind'Image);
             Result.Access_Type_Kind := To_Access_Type_Kinds (Access_Type_Kind);
+            Result.Has_Null_Exclusion := Add_And_Return_Has_Null_Exclusion; 
          end Add_Common_Items;
 
          use all type Asis.Access_Type_Kinds;
