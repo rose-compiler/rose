@@ -308,6 +308,16 @@ struct GraphTraits {
 
     /** User-defined edge type without connectivity information. */
     typedef typename G::EdgeValue EdgeValue;
+
+    /** Predicate returning true for all vertices. */
+    static bool allVertices(const Vertex&) {
+        return true;
+    }
+
+    /** Predicate returning true for all edges. */
+    static bool allEdges(const Edge&) {
+        return true;
+    }
 };
 
 // GraphTraits specialization for const graphs.
@@ -321,6 +331,8 @@ struct GraphTraits<const G> {
     typedef const typename G::Edge Edge;
     typedef const typename G::VertexValue VertexValue;
     typedef const typename G::EdgeValue EdgeValue;
+    static bool allVertices(const Vertex&) { return true; }
+    static bool allEdges(const Edge&) { return true; }
 };
 
 /** %Graph containing user-defined vertices and edges.

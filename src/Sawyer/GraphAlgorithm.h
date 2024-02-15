@@ -310,6 +310,110 @@ graphDependentOrder(Graph &g) {
     return retval;
 }
 
+/** Copy one graph to another and return vertex and edge mappings.
+ *
+ *  This is identical to @ref copyGraph but in addition to returning the copied graph, it returns two vectors mapping the original
+ *  vertex and edge IDs to the new vertices and edges. The vectors are indexed by the IDs from the original graph and the values
+ *  are the pointers (iterators) in the returned graph. If a vertex or edge of the old graph was not copied to the new graph then
+ *  the iterator is an end iterator of the new graph.
+ *
+ * @{ */
+template<class DestinationGraph, class SourceGraph, class VertexSelector, class EdgeSelector>
+std::tuple<DestinationGraph,                                                    // copy of graph
+           std::vector<typename GraphTraits<DestinationGraph>::VertexIterator>, // source vertex ID to destination vertex ptr
+           std::vector<typename GraphTraits<DestinationGraph>::EdgeIterator>>   // source edge ID to destination edge ptr
+copyGraphMapped(SourceGraph &src, VertexSelector vertexSelector, EdgeSelector edgeSelector) {
+    DestinationGraph dst;
+
+    std::vector<typename GraphTraits<DestinationGraph>::VertexIterator> vertexMap(src.nVertices(), dst.vertices().end());
+    for (const auto &srcVertex: src.vertices()) {
+        if (vertexSelector(srcVertex)) {
+            auto newVertex = dst.insertVertex(typename DestinationGraph::VertexValue(srcVertex.value()));
+            vertexMap[srcVertex.id()] = newVertex;
+        }
+    }
+
+    std::vector<typename GraphTraits<DestinationGraph>::EdgeIterator> edgeMap(src.nEdges(), dst.edges().end());
+    for (const auto &srcEdge: src.edges()) {
+        const auto dstSource = vertexMap[srcEdge.source()->id()];
+        const auto dstTarget = vertexMap[srcEdge.target()->id()];
+        if (dstSource != dst.vertices().end() && dstTarget != dst.vertices().end() && edgeSelector(srcEdge)) {
+            auto newEdge = dst.insertEdge(dstSource, dstTarget, typename DestinationGraph::EdgeValue(srcEdge.value()));
+            edgeMap[srcEdge.id()] = newEdge;
+        }
+    }
+
+    return {dst, vertexMap, edgeMap};
+}
+
+template<class DestinationGraph, class SourceGraph, class VertexSelector>
+std::tuple<DestinationGraph,                                                    // copy of graph
+           std::vector<typename GraphTraits<DestinationGraph>::VertexIterator>, // source vertex ID to destination vertex ptr
+           std::vector<typename GraphTraits<DestinationGraph>::EdgeIterator>>   // source edge ID to destination edge ptr
+copyGraphMapped(SourceGraph &src, VertexSelector vertexSelector) {
+    return copyGraphMapped<DestinationGraph>(src, vertexSelector, GraphTraits<SourceGraph>::allEdges);
+}
+
+template<class DestinationGraph, class SourceGraph>
+std::tuple<DestinationGraph,                                                    // copy of graph
+           std::vector<typename GraphTraits<DestinationGraph>::VertexIterator>, // source vertex ID to destination vertex ptr
+           std::vector<typename GraphTraits<DestinationGraph>::EdgeIterator>>   // source edge ID to destination edge ptr
+copyGraphMapped(SourceGraph &src) {
+    return copyGraphMapped<DestinationGraph>(src, GraphTraits<SourceGraph>::allVertices, GraphTraits<SourceGraph>::allEdges);
+}
+/** @} */
+
+/** Copy one graph to another.
+ *
+ *  Copies the specified source graph to the return value by copying each selected vertex and each selected edge. The graphs need
+ *  not be the same type as long as the vertex values of the destination graph can be constructed from the vertex values of the
+ *  source graph, and the edge values of the destination graph can be constructed from the edge values of the source graph.
+ *
+ *  The @p vertexSelector is a predicate invoked with a vertex argument (i.e., `GraphTraits<SourceGraph>::Vertex`) and the vertex
+ *  is copied if and only if the predicate returns true. The vertex selector is optional if the edge selector is not present. An
+ *  omitted vertex selector selects all vertices.
+ *
+ *  The @p edgeSelector is a predicate invoked with an edge reference argument (i.e., `GraphTraits<SourceGraph>::Edge`) and the edge
+ *  is copied if and only if the predicate returns true. The edge selector predicate is only called if the edge's source and
+ *  destination vertices are both copied. An edge selector is optional. An omitted edge selector selects all edges.
+ *
+ *  For example, if the source graph is constructed like this:
+ *
+ *  @snippet graphUnitTests.C sawyer_graph_copy_source
+ *
+ *  Then the way one might copy all vertices but those labeled "v3" and all edges incident to only copied vertices and not having
+ *  the edge value 4 is:
+ *
+ *  @snippet graphUnitTests.C sawyer_graph_copy_example1
+ *
+ *  To copy the source graph to a different kind of graph whose vertex values are integers and whose edges have no value, one could
+ *  do something like this:
+ *
+ *  @snippet graphUnitTests.C sawyer_graph_copy_example2
+ *
+ *  See also, @ref copyGraphMapped which returns additional information about how vertices and edges of the source graph correspond
+ *  to vertices and edges of the returned graph. Additionally, graphs define an assignment operator and a copy constructor.
+ *
+ * @{ */
+template<class DestinationGraph, class SourceGraph, class VertexSelector, class EdgeSelector>
+DestinationGraph
+copyGraph(SourceGraph &src, VertexSelector vertexSelector, EdgeSelector edgeSelector) {
+    return std::get<0>(copyGraphMapped<DestinationGraph>(src, vertexSelector, edgeSelector));
+}
+
+template<class DestinationGraph, class SourceGraph, class VertexSelector>
+DestinationGraph
+copyGraph(SourceGraph &src, VertexSelector vertexSelector) {
+    return copyGraph<DestinationGraph>(src, vertexSelector, GraphTraits<SourceGraph>::allEdges);
+}
+
+template<class DestinationGraph, class SourceGraph>
+DestinationGraph
+copyGraph(SourceGraph &src) {
+    return copyGraph<DestinationGraph>(src, GraphTraits<SourceGraph>::allVertices, GraphTraits<SourceGraph>::allEdges);
+}
+/** @} */
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Common subgraph isomorphism (CSI)
 // Loosely based on the algorithm presented by Evgeny B. Krissinel and Kim Henrick

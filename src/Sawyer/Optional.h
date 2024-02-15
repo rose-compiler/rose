@@ -28,9 +28,19 @@ namespace Sawyer {
  *  Optional<int> opt2(Nothing());
  *  Optional<int> opt3 = 123;
  *  opt3 = Nothing();
+ * @endcode
+ *
+ * Anything can be assigned to @ref Nothing objects and nothing is stored:
+ *
+ * @code
+ *  Nothing nothing(123); // still empty after this
+ *  nothing = "testing";  // still empty after this
  * @endcode */
 class Nothing {                                         // final
 public:
+    Nothing() {}
+    template<class T> explicit Nothing(T) {}
+    template<class T> Nothing& operator=(T) { return *this; }
     bool operator==(const Nothing&) const { return true; }
     bool operator!=(const Nothing&) const { return false; }
     bool operator>(const Nothing&) const { return false; }

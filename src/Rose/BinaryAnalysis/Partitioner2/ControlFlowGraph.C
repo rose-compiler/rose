@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 
 namespace Rose {
@@ -426,39 +427,31 @@ ControlFlowGraph
 functionCfgByErasure(const ControlFlowGraph &gcfg, const Function::Ptr &function,
                      ControlFlowGraph::VertexIterator &entry/*out*/) {
     ASSERT_not_null(function);
+    using namespace Sawyer::Container::Algorithm;
 
-    ControlFlowGraph fcfg = gcfg;
-    entry = fcfg.vertices().end();
-
-    // Start by erasing all vertices that aren't owned by the function, but keep the indeterminate vertex.
-    ControlFlowGraph::VertexIterator vi = fcfg.vertices().begin();
-    ControlFlowGraph::VertexIterator indet = fcfg.vertices().end();
-    while (vi != fcfg.vertices().end()) {
-        if (vi->value().type() == V_INDETERMINATE) {
-            indet = vi++;
-        } else if (!vi->value().isOwningFunction(function)) {
-            fcfg.eraseVertex(vi++);
-        } else if (vi->value().type() == V_BASIC_BLOCK && vi->value().address() == function->address()) {
-            entry = vi++;
+    Sawyer::Optional<size_t> indetId, entryId;
+    auto copy = copyGraphMapped<ControlFlowGraph>(gcfg, [&function, &indetId, &entryId](const ControlFlowGraph::Vertex &vertex) {
+        if (vertex.value().type() == V_INDETERMINATE) {
+            indetId = vertex.id();
+            return true;
+        } else if (vertex.value().isOwningFunction(function)) {
+            if (vertex.value().optionalAddress().isEqual(function->address()))
+                entryId = vertex.id();
+            return true;
         } else {
-            ++vi;
+            return false;
         }
-    }
+    });
 
-    // If there's an indeterminate vertex, erase all the E_FUNCTION_RETURN edges.
-    if (indet != fcfg.vertices().end()) {
-        std::vector<ControlFlowGraph::EdgeIterator> toErase;
-        for (ControlFlowGraph::EdgeIterator edge = indet->inEdges().begin(); edge != indet->inEdges().end(); ++edge) {
-            if (edge->value().type() == E_FUNCTION_RETURN)
-                toErase.push_back(edge);
-        }
-        for (ControlFlowGraph::EdgeIterator &edge: toErase)
-            fcfg.eraseEdge(edge);
-    }
+    ControlFlowGraph &fcfg = std::get<0>(copy);
+    const auto &vertexMap = std::get<1>(copy);
+    entry = entryId ? vertexMap[*entryId] : fcfg.vertices().end();
 
-    // Erase the indeterminate vertex if appropriate
-    if (indet != fcfg.vertices().end() && indet->degree() == 0)
-        fcfg.eraseVertex(indet);
+    if (indetId) {
+        auto indet = vertexMap[*indetId];
+        if (indet->degree() == 0)
+            fcfg.eraseVertex(indet);
+    }
 
     return fcfg;
 }
