@@ -471,10 +471,11 @@ struct Declaration_Struct {
   //     A_Task_Body_Declaration
   //     A_Task_Body_Stub
   bool                           Has_Task;
-  //     A_Type_Definition
-  //     An_Access_Definition
-  //     A_Subtype_Indication
-  bool                           Has_Null_Exclusion;
+  // A_Discriminant_Specification
+  // A_Parameter_Specification
+  // A_Formal_Object_Declaration
+  // An_Object_Renaming_Declaration
+  bool                           Has_Null_Exclusion; // ??
   //       A_Function_Declaration
   //       A_Function_Body_Declaration
   //       An_Expression_Function_Declaration
@@ -980,11 +981,10 @@ typedef struct _Type_Definition_Struct {
   bool                 Has_Tagged;
   // A_Task_Definition
   bool                 Has_Task;
-  // A_Discriminant_Specification
-  // A_Parameter_Specification
-  // A_Formal_Object_Declaration
-  // An_Object_Renaming_Declaration
-  bool                 Has_Null_Exclusion;
+  //     A_Type_Definition
+  //     An_Access_Definition
+  //     A_Subtype_Indication
+  bool                 Has_Null_Exclusion; // ??
   // An_Interface_Type_Definition
   Interface_Kinds      Interface_Kind;
   // A_Root_Type_Definition

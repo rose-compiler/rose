@@ -268,7 +268,14 @@ ROSE_DLL_API SgModifierType* buildModifierType(SgType* base_type = NULL);
 ROSE_DLL_API SgModifierType* buildConstType(SgType* base_type = NULL);
 
 //! Build an aliased type for Ada.
-ROSE_DLL_API SgModifierType* buildAliasedType(SgType* base_type = NULL);
+//! \pre  base_type != nullptr
+//! \post result != nullptr
+ROSE_DLL_API SgModifierType* buildAliasedType(SgType* base_type);
+
+//! Build a not null type for Ada.
+//! \pre  base_type != nullptr
+//! \post result != nullptr
+ROSE_DLL_API SgModifierType* buildNotNullType(SgType* base_type);
 
 //! Build a volatile type.
 ROSE_DLL_API SgModifierType* buildVolatileType(SgType* base_type = NULL);
@@ -314,7 +321,7 @@ ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, 
 //! DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier);
 
-//! Pei-Hung (06/30/2023): support for SgPointerMemberType 
+//! Pei-Hung (06/30/2023): support for SgPointerMemberType
 ROSE_DLL_API SgPointerMemberType* buildPointerMemberType(SgType* base_type, SgType* classType);
 
 // PP (07/14/2016):
@@ -1862,7 +1869,7 @@ namespace Rose {
         static std::string str() { return ""; }
         static void fill(std::vector<SgTemplateArgument *> & tpl_args) {}
       };
-      
+
       template <typename T>
       struct TemplateArgumentList<T> {
         static std::string str(T v) {
@@ -1872,7 +1879,7 @@ namespace Rose {
           tpl_args.push_back(buildTemplateArgument(v));
         }
       };
-      
+
       template <typename T, typename... Args>
       struct TemplateArgumentList<T, Args...> {
         static std::string str(T v, Args... args) {

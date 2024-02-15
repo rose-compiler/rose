@@ -92,7 +92,7 @@ namespace Ada_ROSE_Translation
   SgAdaDigitsConstraint&
   mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
 
-  /// builds a null constraint
+  /// builds an empty constraint, representing an unconstrained subtype
   SgAdaNullConstraint&
   mkAdaNullConstraint();
 
@@ -227,6 +227,9 @@ namespace Ada_ROSE_Translation
 
   /// creates an aliased type for \ref basety
   SgType& mkAliasedType(SgType& underType);
+
+  /// creates a not null type for \ref basety
+  SgType& mkNotNullType(SgType& underType);
 
   /// creates a function/procedure type with return type \ref returnType
   /// \todo add parameter list and ada parameter profiles (types + name)

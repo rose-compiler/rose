@@ -177,6 +177,7 @@ mkAdaDeltaConstraint(SgExpression& delta, bool isDecimal, SgAdaTypeConstraint* s
   return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt, isDecimal);
 }
 
+
 SgAdaNullConstraint&
 mkAdaNullConstraint()
 {
@@ -419,6 +420,11 @@ SgType& mkConstType(SgType& underType)
 SgType& mkAliasedType(SgType& underType)
 {
   return SG_DEREF(sb::buildAliasedType(&underType));
+}
+
+SgType& mkNotNullType(SgType& underType)
+{
+  return SG_DEREF(sb::buildNotNullType(&underType));
 }
 
 

@@ -181,8 +181,8 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
      ROSE_ASSERT (memberFunctionDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true);
 
 #if 0
-  // DQ (6/27/2021): Added debugging information.  It appears that when we build the prototype for a default 
-  // constructor we also build the defining declaration, which might not always exist in the original source 
+  // DQ (6/27/2021): Added debugging information.  It appears that when we build the prototype for a default
+  // constructor we also build the defining declaration, which might not always exist in the original source
   // file.  So this seems like a potential subtle error.
      printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
      printf (" --- memberFunctionDeclaration                                    = %p \n",memberFunctionDeclaration);
@@ -502,9 +502,9 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %p = %s returnName = %s \n",*i,(*i)->class_name().c_str(),returnName.str());
 #endif
 
-       // DQ (2/5/2022): We need to use a fully qualified name as demonstrated by test2022_05.C. 
-       // Where there are two different template arguments with the same name (e.g. in different 
-       // namespaces) the generated names will be the same and the symbols will collide in the 
+       // DQ (2/5/2022): We need to use a fully qualified name as demonstrated by test2022_05.C.
+       // Where there are two different template arguments with the same name (e.g. in different
+       // namespaces) the generated names will be the same and the symbols will collide in the
        // symbol table for the scope where they are both constructed.
        // So a fix is to add the fully qualified name of the scope of the expression used as a template argument.
 
@@ -513,7 +513,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
 #define DEBUG_TEMPLATE_ARGUMENT_NAMES 0
 
-       // DQ (2/6/2022): This is the newly refactored implementation to add name qualification to 
+       // DQ (2/6/2022): This is the newly refactored implementation to add name qualification to
        // the template arguments in the used in symbol tables key for template instantiations.
           SgTemplateArgument* templateArgument = *i;
           ROSE_ASSERT(templateArgument != NULL);
@@ -758,14 +758,15 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
-#if 0
-  // This allows me to test a large number of input codes and identify ones that are using specific features (e.g. template template parameters).
-     if (exit_after_name_is_generated == true)
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-        }
-#endif
+     if (false) // was: #if 0
+         {
+            // This allows me to test a large number of input codes and identify ones that are using specific features (e.g. template template parameters).
+             if (exit_after_name_is_generated == true)
+                {
+                  printf ("Exiting as a test! \n");
+                  ROSE_ASSERT(false);
+                }
+         } // #endif
 
      delete info;
      info = NULL;
@@ -2653,15 +2654,15 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
    }
 
 
-SgPointerMemberType* 
+SgPointerMemberType*
 SageBuilder::buildPointerMemberType(SgType* base_type, SgType* classType)
    {
-     ROSE_ASSERT(base_type != NULL);   
+     ROSE_ASSERT(base_type != NULL);
 
      ROSE_ASSERT(classType != NULL);
      SgPointerMemberType* pointerToMemberType = new SgPointerMemberType(base_type,classType);
      return pointerToMemberType;
- 
+
    }
 
 //----------------------------------------------------
@@ -9226,20 +9227,38 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
    }
 
 
-// PP (7/7/21): model builder function after buildRestrictType
+namespace
+{
+  // PP (2/16/24): model builder function after buildRestrictType
+  SgModifierType*
+  _buildModifierType(SgType* base_type, std::function<void(SgModifierType*)> setModifiers)
+  {
+    ASSERT_not_null(base_type);
+
+    SgModifierType* result  = new SgModifierType(base_type);
+
+    setModifiers(result);
+
+    SgModifierType* result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+    if (result != result2) delete result;
+
+    return result2;
+  }
+}
+
+
 SgModifierType* SageBuilder::buildAliasedType(SgType* base_type)
    {
-     ROSE_ASSERT(base_type != NULL);
+     auto op = [](SgModifierType* ty) { ty->get_typeModifier().setAliased(); };
 
-     SgModifierType* result = new SgModifierType(base_type);
-     ROSE_ASSERT(result!=NULL);
+     return _buildModifierType(base_type, op);
+   }
 
-     result->get_typeModifier().setAliased();
+SgModifierType* SageBuilder::buildNotNullType(SgType* base_type)
+   {
+     auto op = [](SgModifierType* ty) { ty->get_typeModifier().setNotNull(); };
 
-     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
-     if (result != result2) delete result;
-
-     return result2;
+     return _buildModifierType(base_type, op);
    }
 
 
@@ -14359,9 +14378,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           SgGlobal* globalScope = sourceFile->get_globalScope();
           ROSE_ASSERT(globalScope != NULL);
 
-       // DQ (6/24/2021): We need to end this function with the isModified flag set to false.  This is 
+       // DQ (6/24/2021): We need to end this function with the isModified flag set to false.  This is
        // important for the support of the token based unparsing when building a dynamic library.
-       // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function 
+       // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function
        // to generate the correct settings for nodes in the second file constructed from the original file.
           if (globalScope->get_isModified() == true)
              {
@@ -14660,7 +14679,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
 #if 0
-  // DQ (6/24/2021): This can be expected to fail, because the new AST has been build and all of the 
+  // DQ (6/24/2021): This can be expected to fail, because the new AST has been build and all of the
   // nodes are marked as isModified until rest in the AstPostProcessing() step (below).
   // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
      ROSE_ASSERT(project != NULL);
@@ -15124,7 +15143,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
                  // unparsing headr file optimizations to be the same across thje two file.
 
                  // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
-                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file
                  // data members have been removed.
                  // temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
                  // temp_file->set_header_file_unparsing_optimization_source_file(sourceFile->get_header_file_unparsing_optimization_source_file());
@@ -15293,9 +15312,9 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf ("globalScope->get_isModified()                       = %s \n",globalScope->get_isModified() ? "true" : "false");
 #endif
 
-  // DQ (6/1/2021): We need to end this function with the isModified flag set to false.  This is 
+  // DQ (6/1/2021): We need to end this function with the isModified flag set to false.  This is
   // important for the support of the token based unparsing when building a dynamic library.
-  // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function 
+  // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function
   // to generate the correct settings for nodes in the second file constructed from the original file.
      if (globalScope->get_isModified() == true)
         {

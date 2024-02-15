@@ -1628,12 +1628,13 @@ std::ostream & operator<< ( std::ostream& os, const SgAdaDeltaConstraint& c)
 SOURCE_ADA_DELTA_CONSTRAINT_END
 
 
+
 SOURCE_ADA_NULL_CONSTRAINT_START
 void SgAdaNullConstraint::post_construction_initialization() {};
 
 std::string SgAdaNullConstraint::displayString() const
 {
-  return "$ada$nulc";
+  return "$ada$noc";
 }
 
 void SgAdaNullConstraint::display ( std::string label ) const

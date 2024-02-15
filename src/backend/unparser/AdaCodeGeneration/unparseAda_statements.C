@@ -1712,8 +1712,8 @@ namespace
     void handle(SgFunctionDeclaration& n)
     {
       const bool      separate = si::Ada::isSeparatedDefinition(n);
-      const bool      isFunc  = si::Ada::isFunction(n.get_type());
-      std::string     keyword = isFunc ? " function" : " procedure";
+      const bool      isFunc   = si::Ada::isFunction(n.get_type());
+      std::string     keyword  = isFunc ? " function" : " procedure";
 
       if (separate) prnSeparateQual(n);
 

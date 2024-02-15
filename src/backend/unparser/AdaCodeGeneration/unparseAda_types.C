@@ -162,6 +162,9 @@ namespace
     {
       const SgTypeModifier& tm = n.get_typeModifier();
 
+      if (tm.isNotNull())
+        prn(" not null ");
+
       if (tm.isAliased())
         prn(" aliased ");
 

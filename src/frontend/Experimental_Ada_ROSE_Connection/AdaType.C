@@ -312,8 +312,13 @@ namespace
     return getExprType(elem.The_Union.Expression, ctx);
   }
 
+  SgType&
+  excludeNullIf(SgType& ty, bool exclNull, AstContext)
+  {
+    return exclNull ? mkNotNullType(ty) : ty;
+  }
 
-  SgAdaAccessType&
+  SgType&
   getAnonymousAccessType(Definition_Struct& def, AstContext ctx)
   {
     ADA_ASSERT(def.Definition_Kind == An_Access_Definition);
@@ -378,10 +383,12 @@ namespace
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
-    return mkAdaAccessType(SG_DEREF(underty), true /* anonymous */);
+    SgType& res = mkAdaAccessType(SG_DEREF(underty), true /* anonymous */);
+
+    return excludeNullIf(res, access.Has_Null_Exclusion, ctx);
   }
 
-  SgAdaAccessType&
+  SgType&
   getAccessType(Access_Type_Struct& access_type, AstContext ctx)
   {
     auto access_type_kind = access_type.Access_Type_Kind;
@@ -450,7 +457,7 @@ namespace
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
-    return SG_DEREF(access_t);
+    return excludeNullIf(SG_DEREF(access_t), access_type.Has_Null_Exclusion, ctx);
   }
 
 
@@ -774,7 +781,7 @@ namespace
       case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
         {
           logKind("An_Access_Type_Definition");
-          SgAdaAccessType& access_t = getAccessType(typenode.Access_Type, ctx);
+          SgType& access_t = getAccessType(typenode.Access_Type, ctx);
           res.sageNode(access_t);
           break;
         }
@@ -811,7 +818,7 @@ namespace
           TypeData resdata = getTypeFoundation("", def, ctx);
 
           res = isSgType(&resdata.sageNode());
-          ADA_ASSERT(res);
+          ADA_ASSERT(res != nullptr);
           break;
         }
 
@@ -833,9 +840,7 @@ namespace
             res = &mkAdaSubtype(SG_DEREF(res), range);
           }
 
-          /* unused fields:
-                bool       Has_Null_Exclusion;
-          */
+          res = &excludeNullIf(SG_DEREF(res), subtype.Has_Null_Exclusion, ctx);
           break;
         }
 

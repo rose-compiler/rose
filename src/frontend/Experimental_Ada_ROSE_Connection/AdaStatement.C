@@ -788,8 +788,8 @@ namespace
 
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = allNames(range, ctx);
-    SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
     const bool               aliased  = (asisDecl.Declaration_Kind == A_Parameter_Specification) && asisDecl.Has_Aliased;
+    SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
     SgType&                  parmtype = aliased ? mkAliasedType(basety) : basety;
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
                                                                          asisVars(),
@@ -801,7 +801,6 @@ namespace
 
     attachSourceLocation(sgnode, elem, ctx);
     /* unused fields:
-         bool                           Has_Null_Exclusion;
     */
     return sgnode;
   }
@@ -869,7 +868,6 @@ namespace
 
     attachSourceLocation(sgnode, elem, ctx);
     /* unused fields:
-         bool                           Has_Null_Exclusion;
     */
     return sgnode;
   }

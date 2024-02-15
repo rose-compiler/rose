@@ -870,6 +870,7 @@ namespace sg
     GEN_VISIT(SgAdaUnscopedBlock)
     GEN_VISIT(SgAdaVariantDecl)
     GEN_VISIT(SgAdaVariantWhenStmt)
+    GEN_VISIT(SgJovialLabelDeclaration)
 
 
 #if WITH_BINARY_NODES

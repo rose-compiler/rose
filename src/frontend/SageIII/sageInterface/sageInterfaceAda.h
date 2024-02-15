@@ -187,6 +187,13 @@ namespace
   bool unconstrained(const SgArrayType& ty);
   /// @}
 
+  /// tests if \ref ty is an anonymous access type
+  /// \return true iff ty is an anonymous access type
+  /// @{
+  bool anonymousAccess(const SgType* ty);
+  bool anonymousAccess(const SgType& ty);
+  /// @}
+
   using StatementRange = std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>;
 
   /// returns all statements/declarations in the global scope that were defined

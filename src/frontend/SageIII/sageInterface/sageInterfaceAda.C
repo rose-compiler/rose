@@ -199,7 +199,7 @@ namespace
       {
         SgAdaTypeConstraint* constraint = n.get_constraint();
 
-        // if the subtype has a null constraint, then the real array types
+        // if the subtype is unconstrained, then the real array types
         //   must be located underneath.
         if (isSgAdaNullConstraint(constraint))
         {
@@ -709,8 +709,28 @@ namespace Ada
 
   bool unconstrained(const SgArrayType* ty)
   {
-    return unconstrained(SG_DEREF(ty));
+    return ty && unconstrained(*ty);
   }
+
+  bool anonymousAccess(const SgType* ty)
+  {
+    return ty && anonymousAccess(*ty);
+  }
+
+  bool anonymousAccess(const SgType& ty)
+  {
+    const SgAdaAccessType* accty = isSgAdaAccessType(ty.stripType(SgType::STRIP_MODIFIER_TYPE));
+
+    if (accty && !accty->get_is_anonymous())
+    {
+      using namespace Rose::Diagnostics;
+
+      mlog[TRACE] << "surprising non-anonymous access type." << std::endl;
+    }
+
+    return accty != nullptr;
+  }
+
 
   SgAdaPackageSpecDecl*
   getSpecificationDeclaration(const SgAdaPackageBodyDecl* bodyDecl)
@@ -2248,9 +2268,6 @@ namespace Ada
 
 
 
-  // ******
-  // \todo move code below to Ada to C++ translator
-  // ******
 
   struct ConversionTraversal : AstSimpleProcessing
   {
@@ -3076,11 +3093,9 @@ namespace Ada
     return res;
   }
 
-
-
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
-    ROSE_ASSERT(root);
+    ASSERT_not_null(root);
 
     ConversionTraversal converter(std::move(fn));
 
@@ -3441,7 +3456,7 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
   for (const SgInitializedName* parm : SG_DEREF(dcl.get_parameterList()).get_args())
   {
     ASSERT_not_null(parm);
-    // PP: note for self: BaseTypeDecl::find does NOT skip the initial typedef decl
+    // PP: note to self: BaseTypeDecl::find does NOT skip the initial typedef decl
     const SgDeclarationStatement* tydcl = associatedDeclaration(parm->get_type());
 
     if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))

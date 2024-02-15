@@ -1537,6 +1537,8 @@ HEADER_TYPE_MODIFIER_START
 
             // PP (7/7/21): add support for Ada aliased declarations
                e_aliased                             = 38,/*!< Ada aliased variable/parameter/field declaration */
+            // PP (2/16/24): add support for Ada null exclusion
+               e_notnull                             = 39,/*!< Ada not null access types */
 
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
@@ -1807,6 +1809,11 @@ HEADER_TYPE_MODIFIER_START
           bool isAliased() const;
           void setAliased();
           void unsetAliased();
+
+       // Ada attribute for not null access types
+          bool isNotNull() const;
+          void setNotNull();
+          void unsetNotNull();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3795,6 +3802,11 @@ bool SgTypeModifier::isAliased() const  { return checkBit(e_aliased,p_modifierVe
 void SgTypeModifier::setAliased()       { setBit(e_aliased,p_modifierVector); }
 void SgTypeModifier::unsetAliased()     { unsetBit(e_aliased,p_modifierVector); }
 
+bool SgTypeModifier::isNotNull() const  { return checkBit(e_notnull,p_modifierVector); }
+void SgTypeModifier::setNotNull()       { setBit(e_notnull,p_modifierVector); }
+void SgTypeModifier::unsetNotNull()     { unsetBit(e_notnull,p_modifierVector); }
+
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3803,6 +3815,7 @@ $CLASSNAME::displayString() const
      s += std::string("isDefault() = ")                + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isRestrict() = ")               + std::string(isRestrict() ? "true " : "false ");
      s += std::string("isAliased() = ")                + std::string(isAliased()  ? "true " : "false ");
+     s += std::string("isNotNull() = ")                + std::string(isNotNull()  ? "true " : "false ");
      s += std::string("gnu_extension_machine_mode = ") + Rose::StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
      s += std::string("gnu_attribute_alignment = ")    + Rose::StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
      s += std::string("gnu_attribute_sentinel = ")     + Rose::StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";

@@ -253,7 +253,7 @@ Grammar::setUpNodes ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 #if 0
-  // DQ (5/2/2021): We need a concept of contains modified code relative to the parent node so that we can support file 
+  // DQ (5/2/2021): We need a concept of contains modified code relative to the parent node so that we can support file
   // the unparsing from the token stream when header files are nested.
      Node.setDataPrototype("bool","containsTransformationRelativeToPresentNodeFile","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -398,7 +398,7 @@ Grammar::setUpNodes ()
      AdaDigitsConstraint.setFunctionPrototype    ( "HEADER_ADA_DIGITS_CONSTRAINT"    , "../Grammar/LocatedNode.code");
      AdaDeltaConstraint.setFunctionPrototype     ( "HEADER_ADA_DELTA_CONSTRAINT"     , "../Grammar/LocatedNode.code");
      AdaDiscriminantConstraint.setFunctionPrototype ( "HEADER_ADA_DISCRIMINANT_CONSTRAINT", "../Grammar/LocatedNode.code");
-     AdaNullConstraint.setFunctionPrototype      ( "HEADER_ADA_NULL_CONSTRAINT", "../Grammar/LocatedNode.code");
+     AdaNullConstraint.setFunctionPrototype        ( "HEADER_ADA_NULL_CONSTRAINT", "../Grammar/LocatedNode.code");
 
 
   // ***************************************************************************************

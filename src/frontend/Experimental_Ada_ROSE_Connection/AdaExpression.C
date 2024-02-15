@@ -485,7 +485,7 @@ namespace
 
     if (name == "=")
     {
-      ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
+      // ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
 
 
       // requires (  nonLimitedArgumentType(domTy, ctx)

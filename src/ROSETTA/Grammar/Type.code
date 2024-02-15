@@ -5076,6 +5076,8 @@ SgModifierType::get_mangled (void) const
 
      // PP (02/17/22) Add aliased information to mangled name
      if (type_mod.isAliased())   mangled_name << "A";
+     // PP (02/16/24) Add not null information to mangled name
+     if (type_mod.isNotNull())   mangled_name << "N";
 
      if (cv_mod.isConst())       mangled_name << "C";
      if (cv_mod.isVolatile())    mangled_name << "V";
