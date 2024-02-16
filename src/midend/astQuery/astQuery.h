@@ -46,50 +46,37 @@ namespace AstQueryNamespace
 {
 
   template<typename AstQuerySynthesizedAttributeType>
-    struct helpFunctionalOneParamater
-    : public std::unary_function<SgNode* , Rose_STL_Container<AstQuerySynthesizedAttributeType> >
-    {
-      // When elementMatchCount == 1 then a match has been made
-      typedef Rose_STL_Container<AstQuerySynthesizedAttributeType> (*roseFunctionPointerOneParameter)  (SgNode *);
-      roseFunctionPointerOneParameter queryFunctionOneParameter;
+  struct helpFunctionalOneParamater {
+    using FunctorType = std::function<Rose_STL_Container<AstQuerySynthesizedAttributeType>(SgNode*)>;
+    FunctorType functor_;
 
-      // Constructor
-      helpFunctionalOneParamater (roseFunctionPointerOneParameter function)
-      {
-        queryFunctionOneParameter = function;
-      }
+    explicit helpFunctionalOneParamater(FunctorType f) : functor_{f} { }
 
-      typename Rose_STL_Container<AstQuerySynthesizedAttributeType>  operator()(SgNode* node)
-      {
-        return queryFunctionOneParameter(node);
-      }
-    };
+    FunctorType operator()(SgNode* node) {
+      return functor_(node);
+    }
+  };
 
-  struct helpF : public std::binary_function<bool,bool,bool >
+  struct helpF
   {
-    bool operator()(bool x, bool /*y*/)
+    using result_type = bool;
+    result_type operator()(bool x, bool /*y*/)
     {
       return x;
     }
   };
 
   template<typename AstQuerySynthesizedAttributeType, typename ArgumentType>
-    struct helpFunctionalTwoParamaters
-    : public std::binary_function<SgNode*,ArgumentType, Rose_STL_Container<AstQuerySynthesizedAttributeType> >
-    {
-      // When elementMatchCount==1 then a match has been made
-      typedef Rose_STL_Container<AstQuerySynthesizedAttributeType> (*roseFunctionPointerTwoParameters)  (SgNode *, ArgumentType);
-      roseFunctionPointerTwoParameters queryFunctionTwoParameters;
+  struct helpFunctionalTwoParamaters {
+    using FunctorType = std::function<Rose_STL_Container<AstQuerySynthesizedAttributeType>(SgNode*,ArgumentType)>;
+    FunctorType functor_;
 
-      helpFunctionalTwoParamaters(roseFunctionPointerTwoParameters function)
-      {
-        queryFunctionTwoParameters = function;
-      }
-      Rose_STL_Container<AstQuerySynthesizedAttributeType>  operator()(SgNode* node, ArgumentType arg)
-      {
-        return queryFunctionTwoParameters(node,arg);
-      }
-    };
+    explicit helpFunctionalTwoParamaters(FunctorType f) : functor_{f} { }
+
+    FunctorType operator()(SgNode* node, ArgumentType arg) {
+      return functor_(node,arg);
+    }
+  };
 
   enum QueryDepth
   {
@@ -150,17 +137,14 @@ namespace AstQueryNamespace
     This class represents a library of queries.. Basically it will support a large number of
     different types of queries that can be ask of an AST and that return a list of SgNode pointers.
    */
-  class DefaultNodeFunctional :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> > 
-  {
-    public:
-      result_type operator()(SgNode* node ) 
-      { 
-        result_type returnType;
-        returnType.push_back(node);
-        return returnType; 
-      }
+  struct DefaultNodeFunctional {
+    using result_type = Rose_STL_Container<SgNode*>;
+    result_type operator()(SgNode* node) const {
+      result_type returnType;
+      returnType.push_back(node);
+      return returnType;
+    }
   };
-
 
   class AstQuery_DUMMY{};
 

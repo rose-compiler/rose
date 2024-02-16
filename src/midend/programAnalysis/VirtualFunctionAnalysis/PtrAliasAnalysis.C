@@ -36,10 +36,10 @@ struct FunctionFilter
         }
 };
 
-struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDeclaration*>
+struct OnlyNonCompilerGenerated
 {
-
-    bool operator() (SgFunctionDeclaration * node) const
+    using result_type = bool;
+    result_type operator() (SgFunctionDeclaration * node) const
     {
         // false will filter out ALL nodes
         bool filterNode = true;

@@ -94,18 +94,10 @@ inline bool operator>=(const my_pair<_T1, _T2, _T3>& x, const my_pair<_T1, _T2,_
 
 //END MY_PAIR
 
-// Functor implemtation to support filtering of the generated AST graphs
+// Functor implementation to support filtering of the generated AST graphs
 
-// Build a simpler type to simplify the code
 typedef std::pair<SgNode*,std::string> NodeType;
-#if 0
-typedef struct{ 
-          bool addToGraph;
-          std::string DOTOptions;
-         } FunctionalReturnType;
-#endif
 typedef my_pair<bool,std::string,std::string> FunctionalReturnType;
-
 typedef std::vector<NodeType> NodeTypeVector;
 
 
@@ -114,9 +106,11 @@ typedef std::vector<NodeType> NodeTypeVector;
  *   struct defaultFilterUnary
  * is an example filter on nodes.
  **************************************************************************************/
-struct ROSE_DLL_API defaultFilterUnary: public std::unary_function<NodeType,FunctionalReturnType >
+struct ROSE_DLL_API defaultFilterUnary
    {
   // This functor filters SgFileInfo objects and IR nodes from the GNU compatability file
+     using argument_type = NodeType;
+     using result_type = FunctionalReturnType;
      result_type operator() (argument_type x );
    };
 
@@ -125,34 +119,38 @@ struct ROSE_DLL_API defaultFilterUnary: public std::unary_function<NodeType,Func
  *   struct defaultFilterBinary
  * is an example filter on edges.
  **************************************************************************************/
-struct ROSE_DLL_API defaultFilterBinary: public std::binary_function<SgNode*,NodeType,FunctionalReturnType >
+struct ROSE_DLL_API defaultFilterBinary
    {
   // This functor filters SgFileInfo objects and IR nodes from the GNU compatability file
+     using first_argument_type = SgNode*;
+     using second_argument_type = NodeType;
+     using result_type = FunctionalReturnType;
      result_type operator() ( first_argument_type x, second_argument_type y);
    };
 
 
-
-
-// This functor is derived from the STL functor mechanism
-struct nodePartOfGraph: public std::unary_function< std::pair< SgNode*, std::string>&,FunctionalReturnType >
+struct nodePartOfGraph
    {
+     using argument_type = std::pair<SgNode*, std::string> &;
+     using result_type = FunctionalReturnType;
      result_type operator() ( argument_type x );
    };
 
 
-// This functor is derived from the STL functor mechanism
-struct filterSgFileInfo: public std::unary_function< std::pair< SgNode*, std::string>&,FunctionalReturnType >
+struct filterSgFileInfo
    {
   // This functor filters SgFileInfo objects from being built in the generated graph
+     using argument_type = std::pair<SgNode*, std::string> &;
+     using result_type = FunctionalReturnType;
      result_type operator() ( argument_type x );
    };
 
 
-// This functor is derived from the STL functor mechanism
-struct filterSgFileInfoAndGnuCompatabilityNode: public std::unary_function< std::pair< SgNode*, std::string>&, FunctionalReturnType >
+struct filterSgFileInfoAndGnuCompatabilityNode
    {
   // This functor filters SgFileInfo objects and IR nodes from the GNU compatability file
+     using argument_type = std::pair<SgNode*, std::string> &;
+     using result_type = FunctionalReturnType;
      result_type operator() ( argument_type x );
    };
 

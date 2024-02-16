@@ -1034,65 +1034,45 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList ( NodeQuerySynthesize
      return NodeQuery::queryNodeList(queryList,VariantVector(targetVariant));
    }
 
-#if 0
-// DQ (3/14/207): Older version using a return type of std::list
-class TypeQueryDummyFunctionalTest :  public std::unary_function<SgNode*, std::list<SgNode*> > 
+struct TypeQueryDummyFunctionalTest
    {
-     public:
-          result_type operator()(SgNode* node );
-   };
-
-TypeQueryDummyFunctionalTest::result_type
-TypeQueryDummyFunctionalTest::operator()(SgNode* node )
-   {
-     result_type returnType;
-     returnType.push_back(node);
-     return returnType; 
-   }
-#endif
-
-class TypeQueryDummyFunctionalTest :  public std::binary_function<SgNode*, Rose_STL_Container<SgNode*>*, void* >
-   {
-     public:
-          result_type operator()(SgNode* node, Rose_STL_Container<SgNode*>* ) const;
+     using result_type = void*;
+     result_type operator()(SgNode* node, Rose_STL_Container<SgNode*>* ) const;
    };
 
 TypeQueryDummyFunctionalTest::result_type
 TypeQueryDummyFunctionalTest::operator()(SgNode* node, Rose_STL_Container<SgNode*>* returnList) const
    {
      returnList->push_back(node);
-
-  // DQ (9/25/2007): Fixed up to return NULL pointer! Approved fix by Andreas.
-     return NULL;
+     return nullptr;
    }
 
 typedef SgNode* node_ptr;
 
 // Making this use a std::vector instead of std::list might make it more efficient as well.
-class TwoParamaters :  public std::binary_function<node_ptr, Rose_STL_Container<SgNode*>* , void* >
+struct TwoParamaters
 {
-  public:
-    result_type operator()(first_argument_type node, const second_argument_type returnList ) const
+    using result_type = void*;
+    using first_argument_type = node_ptr;
+    using second_argument_type = Rose_STL_Container<SgNode*>*;
+    result_type operator()(first_argument_type node, const second_argument_type returnList) const
     {
       // second_argument_type curr_list = (second_argument_type) returnList;
       returnList->push_back(node);
-      return NULL;
+      return nullptr;
     }
 };
 
-class OneParamater :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
+struct OneParamater
 {
-  public:
-    result_type operator()(SgNode* node ) const
+    using result_type = Rose_STL_Container<SgNode*>;
+    result_type operator()(SgNode* node) const
     {
-      Rose_STL_Container<SgNode*> returnList;
+      result_type returnList;
       returnList.push_back(node);
       return returnList;
     }
 };
-
-
-
 
 Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
 {

@@ -72,11 +72,11 @@ namespace XMLUtil
 
     //! Function to match an attribute by name
     struct MatchName
-      : public std::unary_function <XMLAttr, bool>
     {
+      using result_type = bool;
       std::string name; //!< Name to match 
       MatchName (const std::string& n); //!< Construct with name to match 
-      bool operator() (const XMLAttr& a); //!< Ask if a matches 
+      result_type operator() (const XMLAttr& a); //!< Ask if a matches
     };
   };
 
@@ -100,11 +100,11 @@ namespace XMLUtil
 
     //! Function to match an element by name
     struct MatchName
-      : public std::unary_function <XMLElem, bool>
     {
+      using result_type = bool;
       std::string name; //!< Name to match 
       MatchName (const std::string& n); //!< Construct with name to match 
-      bool operator() (const XMLElem& e); //!< Ask if e matches 
+      result_type operator() (const XMLElem& e); //!< Ask if e matches
     };
   };
 

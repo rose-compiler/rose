@@ -655,20 +655,20 @@ class AttributeListMap {
        ///////////////////////////////////////////////////////////////////////////////////// 
 
        template<typename TokenIterator, typename DirectiveType>
-               struct findDirective: public std::binary_function<TokenIterator,DirectiveType,bool>
+       struct findDirective
                {
-                       bool operator()(TokenIterator node, DirectiveType directive) const{
-                               bool returnValue = false;
+                 using result_type = bool;
+                 result_type operator()(TokenIterator node, DirectiveType directive) const {
+                   using namespace boost::wave;
+                   result_type returnValue = false;
 
-                               using namespace boost::wave;
+                   token_id wave_typeid = token_id(node);
+                   if (wave_typeid == directive) {
+                     returnValue = true;
+                   }
 
-                               token_id wave_typeid = token_id(node);
-
-                               if(wave_typeid == directive)
-                                       returnValue = true;
-
-                               return returnValue;
-                       };
+                   return returnValue;
+                 };
 
                };
 
@@ -679,25 +679,20 @@ class AttributeListMap {
        // helps to see if the token is of one of the types in directiveList.
        ///////////////////////////////////////////////////////////////////////////////////// 
        template<typename TokenIterator, typename DirectiveType>
-               struct findDirectiveInList: public std::binary_function<TokenIterator,std::list<DirectiveType>,bool>
+       struct findDirectiveInList
                {
-                       bool operator()(TokenIterator node, std::list<DirectiveType> directiveList) const{
-                               bool returnValue = false;
+                 using result_type = bool;
+                 result_type operator()(TokenIterator node, std::list<DirectiveType> directiveList) const{
+                   using namespace boost::wave;
+                   result_type returnValue = false;
 
-                               using namespace boost::wave;
+                   token_id wave_typeid = token_id(node);
+                   if (std::find(directiveList.begin(),directiveList.end(), wave_typeid) != directiveList.end()) {
+                     returnValue = true;
+                   }
 
-                               token_id wave_typeid = token_id(node);
-#if 0
-             // DQ (4/17/2008): Commented out to avoid error in fly-make!
-                               if( T_PP_ELIF  == wave_typeid)
-                                       std::cout << "Found an #elif\n";
-#endif
-
-                               if(std::find(directiveList.begin(),directiveList.end(), wave_typeid) != directiveList.end())
-                                       returnValue = true;
-
-                               return returnValue;
-                       };
+                   return returnValue;
+                 };
 
                };
 

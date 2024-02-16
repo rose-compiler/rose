@@ -140,20 +140,16 @@ namespace AstQueryNamespace{
   void Merge(void*, void*) {}
 
 }
-// DQ (12/31/2005): This is OK if not declared in a header file
-
 
 template<typename AstQuerySynthesizedAttributeType>
-struct testFunctionals: public std::unary_function<SgNode*,std::list<AstQuerySynthesizedAttributeType> >{
-  //When elementMatchCount==1 then a match has been made
-  typedef std::list<AstQuerySynthesizedAttributeType> (*roseFunctionPointerOneParameter)  (SgNode *);
-  roseFunctionPointerOneParameter queryFunctionOneParameter;
+struct testFunctionals {
+  using FunctorType = std::function<std::list<AstQuerySynthesizedAttributeType>(SgNode*)>;
+  FunctorType functor_;
 
-  testFunctionals(roseFunctionPointerOneParameter function){
-    queryFunctionOneParameter=function;
-  }
-  typename std::list<AstQuerySynthesizedAttributeType>  operator()(SgNode* node) {
-    return queryFunctionOneParameter(node);
+  explicit testFunctionals(FunctorType f) : functor_{f} { }
+
+  FunctorType operator()(SgNode* node) {
+    return functor_(node);
   }
 };
 
@@ -170,13 +166,13 @@ std::list<SgNode*> queryNodeAnonymousTypedef2(SgNode* node)
   return returnList;
 } /* End function:queryNodeCLassDeclarationFromName() */
 
-struct testFunctionals2: public std::binary_function<SgNode*,SgNode*, std::list<SgNode*> >{
+struct testFunctionals2 {
+  using result_type = std::list<SgNode*>;
   int y;
-  void setPred(int x){
-    y=x;
-  } 
-  std::list<SgNode*>  operator()(SgNode*, SgNode*) const{
-      return std::list<SgNode*>();
+  void setPred(int x) {
+    y = x;
+  }
+  result_type operator()(SgNode*, SgNode*) const {
+    return std::list<SgNode*>();
   }
 };
-
