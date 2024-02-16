@@ -338,6 +338,11 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
               BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=14
               BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
               BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+          elif test $XCODE_VERSION_MAJOR -eq 15; then
+            # Rasmussen (02/14/2024): Updated results for clang --version 15.0.0
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=15
+              BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+              BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
           else
               AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR"])
           fi
