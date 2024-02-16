@@ -82,12 +82,15 @@ public:
          *  predicate does not apply to functions that match an inclusion predicate. */
         size_t minFunctionInsns = 0;
 
-        /** Identify functions by hash instead of library address.
+        /** Key functions by hash instead of library address.
          *
-         *  Functions are normally identified by the library to which they belong, and their starting address within that
-         *  library. However, since version zero of the database doesn't store starting addresses, we need some other way
-         *  to uniquely identify functions. Therefore, if this property is set, then functions are identified by their hash,
-         *  which precludes the ability for a function in an executable from matching multiple functions in a single database. */
+         *  Functions are stored in a database according to their key. Version zero of the database used the function's hash as its
+         *  key, which meant that smaller functions which often hash to the same value could not be distinguished from one another.
+         *  After version zero, the database uses a pair of values as the key: the library to which the function belongs, and the
+         *  entry address for the function.
+         *
+         *  If this data member is set, then the function hash will be used as the identification key instead of using the library
+         *  and starting address. */
         bool identifyFunctionsByHash = false;
     };
 

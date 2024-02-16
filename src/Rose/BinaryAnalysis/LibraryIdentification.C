@@ -245,12 +245,17 @@ LibraryIdentification::commandLineSwitches(Settings &settings) {
                    StringUtility::plural(settings.minFunctionInsns, "instructions") + "."));
 
     Rose::CommandLine::insertBooleanSwitch(sg, "identify-functions-by-hash", settings.identifyFunctionsByHash,
-                                           "Instead of identifying functions by their library and address, identify them by "
-                                           "their library and hash which is how version zero of the database worked. Oftentimes "
-                                           "very small functions such as accesses, mutators, and dynamic linking stubs have "
-                                           "the same hash, which means only one such instance of each function can be stored "
-                                           "in a database using the version zero mechanism.");
+                                           "Functions are stored in a database according to their key. Version zero of the "
+                                           "database used the function's hash as its key, which meant that small functions that "
+                                           "sometimes hash to the same value could not be distinguished from one another. "
+                                           "Databases after version zero (used by this tool) use a pair of values as the "
+                                           "identification key: the library to which the function belongs, and the entry address "
+                                           "of the function. When inserting a new function into the database, if the new "
+                                           "function's key matches the key of another function that's already in the database, "
+                                           "then the new function overwrites the existing function.\n\n"
 
+                                           "This switch causes version 1 and later of the database to use the version zero "
+                                           "design of identifying functions by their hashes.");
     return sg;
 }
 
