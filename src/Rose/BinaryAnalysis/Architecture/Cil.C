@@ -578,7 +578,7 @@ switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
 
     retval.insert(fallThrough);
 
-    for (int n{1}; n < insn->nOperands(); n++) {        // blame a97ec5f7819
+    for (uint n{1}; n < insn->nOperands(); n++) {
         if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
             retval.insert(fallThrough + ival->get_signedValue());
         }

@@ -20,8 +20,8 @@ class Namespace;
 class Code {
 public:
   virtual const uint8_t* bytes() const = 0;
-  virtual const size_t size() const = 0;
-  virtual const rose_addr_t offset() const = 0;
+  virtual size_t size() const = 0;
+  virtual rose_addr_t offset() const = 0;
 
 protected:
   Code() {}
@@ -29,14 +29,14 @@ protected:
 
 class Field {
 public:
-  virtual const std::string name() const = 0;
+  virtual std::string name() const = 0;
 protected:
   Field() {}
 };
 
 class Method {
 public:
-  virtual const std::string name() const = 0;
+  virtual std::string name() const = 0;
   virtual bool isSystemReserved(const std::string &name) const = 0;
 
   virtual const Code & code() const = 0;
@@ -66,23 +66,23 @@ protected:
 
 class Interface {
 public:
-  virtual const std::string name() const = 0;
+  virtual std::string name() const = 0;
 protected:
   Interface() {}
 };
 
 class Attribute {
 public:
-  virtual const std::string name() const = 0;
+  virtual std::string name() const = 0;
 protected:
   Attribute() {}
 };
 
 class Class {
 public:
-  virtual const std::string name() const = 0;
-  virtual const std::string super_name() const = 0;
-  virtual const std::string typeSeparator() const = 0;
+  virtual std::string name() const = 0;
+  virtual std::string super_name() const = 0;
+  virtual std::string typeSeparator() const = 0;
   virtual const std::vector<const Field*> &fields() const = 0;
   virtual const std::vector<const Method*> &methods() const = 0;
   virtual const std::vector<const Attribute*> &attributes() const = 0;
@@ -99,12 +99,12 @@ public:
 protected:
   rose_addr_t address_;
   std::shared_ptr<Namespace> namespace_;
-  Class(std::shared_ptr<Namespace> ns, rose_addr_t va) : namespace_{ns}, address_{va} {}
+  Class(std::shared_ptr<Namespace> ns, rose_addr_t va) : address_{va}, namespace_{ns} {}
 };
 
 class Namespace {
 public:
-  virtual const std::string name() const = 0;
+  virtual std::string name() const = 0;
   virtual void partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &) const;
 
   void append(std::shared_ptr<Class> ptr) {
@@ -121,7 +121,7 @@ protected:
 
 class Container {
 public:
-  virtual const std::string name() const = 0;
+  virtual std::string name() const = 0;
   virtual bool isSystemReserved(const std::string &name) const = 0;
   virtual void partition(const PartitionerPtr &partitioner) const;
 

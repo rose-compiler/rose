@@ -14,7 +14,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
 
-const std::string JvmField::name() const
+std::string JvmField::name() const
 {
   auto pool = jfh_->get_constant_pool();
   if (sgField_->get_name_index() != 0) {
@@ -41,7 +41,7 @@ JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method, rose_addr_
   }
 }
 
-const std::string JvmMethod::name() const
+std::string JvmMethod::name() const
 {
   auto pool = jfh_->get_constant_pool();
   if (sgMethod_->get_name_index() != 0) {
@@ -131,7 +131,7 @@ JvmMethod::annotate()
   }
 }
 
-const std::string
+std::string
 JvmInterface::name() const
 {
   auto pool = jfh_->get_constant_pool();
@@ -146,7 +146,7 @@ JvmInterface::name() const
   return std::string{""};
 }
 
-const std::string JvmAttribute::name() const
+std::string JvmAttribute::name() const
 {
   auto pool = jfh_->get_constant_pool();
   if (0 != index()) {
@@ -226,7 +226,7 @@ JvmClass::name(uint16_t index, const SgAsmJvmConstantPool* pool)
   return std::string{""};
 }
 
-const std::string JvmClass::name() const
+std::string JvmClass::name() const
 {
   auto pool = jfh_->get_constant_pool();
   auto class_index = jfh_->get_this_class();
@@ -237,7 +237,7 @@ const std::string JvmClass::name() const
   return std::string{""};
 }
 
-const std::string JvmClass::super_name() const
+std::string JvmClass::super_name() const
 {
   auto pool = jfh_->get_constant_pool();
   auto super_index = jfh_->get_super_class();
@@ -317,6 +317,11 @@ JvmContainer::isJvmSystemReserved(const std::string &name)
     return true;
   }
   return false;
+}
+
+std::string
+JvmContainer::name() const {
+  return "JvmContainer::name():UNIMPLEMENTED";
 }
 
 } // namespace

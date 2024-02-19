@@ -45,7 +45,8 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
     ROSE_ASSERT(false && "short read");
   }
 
-  T val = beToHost(*reinterpret_cast<T*>(buf));         // blame e380e4efa6
+  unsigned char* cptr{buf}; // work around warning message: "dereferencing type-punned pointer"
+  T val = beToHost(*reinterpret_cast<T*>(cptr));
   operands->appendOperand(SageBuilderAsm::buildValue(val));
 
   // TODO: Perhaps there is a more efficient way to do this

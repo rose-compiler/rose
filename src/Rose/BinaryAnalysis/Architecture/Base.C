@@ -130,6 +130,8 @@ Base::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, ro
 
 bool
 Base::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *ret) const {
+    std::cerr << "[ERROR] Base::isFunctionCallSlow: infinite recursion averted\n"; // [Rasmussen, 2024.02.17]
+    ROSE_ABORT();
     return isFunctionCallSlow(insns, target, ret);
 }
 

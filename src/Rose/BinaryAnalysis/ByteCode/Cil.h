@@ -9,15 +9,15 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
 
-class CilCode : public Code {
+class CilCode final : public Code {
 public:
   virtual const uint8_t* bytes() const {
     return bytes_; // UNIMPLEMENTED
   }
-  virtual const size_t size() const {
+  virtual size_t size() const {
     return size_; // UNIMPLEMENTED
   }
-  virtual const rose_addr_t offset() const {
+  virtual rose_addr_t offset() const {
     return offset_; // UNIMPLEMENTED
   }
 
@@ -31,9 +31,9 @@ private:
   rose_addr_t offset_;
 };
 
-class CilField : public Field {
+class CilField final : public Field {
 public:
-  virtual const std::string name() const {
+  virtual std::string name() const {
     return "CilField::name():UNIMPLEMENTED";
   }
 
@@ -42,9 +42,9 @@ public:
 private:
 };
 
-class CilMethod : public Method {
+class CilMethod final : public Method {
 public:
-  virtual const std::string name() const override;
+  virtual std::string name() const override;
   virtual bool isSystemReserved(const std::string &name) const override;
 
   virtual const Code & code() const override;
@@ -63,9 +63,9 @@ private:
   CilCode code_;
 };
 
-class CilInterface : public Interface {
+class CilInterface final : public Interface {
 public:
-  virtual const std::string name() const {
+  virtual std::string name() const {
     return "CilInterface::name():UNIMPLEMENTED";
   }
 
@@ -74,9 +74,9 @@ public:
 private:
 };
 
-class CilAttribute : public Attribute {
+class CilAttribute final : public Attribute {
 public:
-  virtual const std::string name() const {
+  virtual std::string name() const {
     return "CilAttribute::name():UNIMPLEMENTED";
   }
 
@@ -85,15 +85,15 @@ public:
 private:
 };
 
-class CilClass : public Class {
+class CilClass final : public Class {
 public:
-  virtual const std::string name() const {
+  virtual std::string name() const {
     return name_;
   }
-  virtual const std::string super_name() const {
+  virtual std::string super_name() const {
     return "CilClass::super_name():UNIMPLEMENTED";
   }
-  virtual const std::string typeSeparator() const {
+  virtual std::string typeSeparator() const {
     return ".";
   }
 
@@ -128,24 +128,26 @@ private:
     std::vector<std::string> strings_;
     std::string name_;
     SgAsmCilMetadataRoot* mdr_;
-    SgAsmCilTypeDef* sgCilTypeDef_;
+    //WARNING: not used yet!
+    //SgAsmCilTypeDef* sgCilTypeDef_;
 };
 
-class CilNamespace : public Namespace {
+class CilNamespace final : public Namespace {
 public:
-    virtual const std::string name() const;
+    virtual std::string name() const;
 
     CilNamespace() = delete;
     explicit CilNamespace(SgAsmCilMetadataRoot*, const std::string &);
 
 private:
-    SgAsmCilMetadataRoot* mdr_;
+    //WARNING: not used yet!
+    //SgAsmCilMetadataRoot* mdr_;
     std::string name_;
 };
 
-class CilContainer : public Container {
+class CilContainer final : public Container {
 public:
-  virtual const std::string name() const override;
+  virtual std::string name() const override;
   virtual bool isSystemReserved(const std::string &name) const override;
   static  bool isCilSystemReserved(const std::string &name);
 

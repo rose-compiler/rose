@@ -9,15 +9,15 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
 
-class JvmCode : public Code {
+class JvmCode final : public Code {
 public:
   virtual const uint8_t* bytes() const {
     return bytes_;
   }
-  virtual const size_t size() const {
+  virtual size_t size() const {
     return size_;
   }
-  rose_addr_t const offset() const {
+  rose_addr_t offset() const {
     return offset_;
   }
   void bytes(const uint8_t* buf) {
@@ -40,9 +40,9 @@ private:
   rose_addr_t offset_;
 };
 
-class JvmField : public Field {
+class JvmField final : public Field {
 public:
-  virtual const std::string name() const;
+  virtual std::string name() const;
 
   JvmField() = delete;
   explicit JvmField(SgAsmJvmFileHeader* jfh, SgAsmJvmField* field)
@@ -54,9 +54,9 @@ private:
   SgAsmJvmField* sgField_;
 };
 
-class JvmMethod : public Method {
+class JvmMethod final : public Method {
 public:
-  virtual const std::string name() const override;
+  virtual std::string name() const override;
   virtual bool isSystemReserved(const std::string &name) const override;
 
   virtual const Code & code() const override;
@@ -74,10 +74,10 @@ private:
   JvmCode code_;
 };
 
-class JvmInterface : public Interface {
+class JvmInterface final : public Interface {
 public:
-  virtual const std::string name() const;
-  const uint16_t index() const {return index_;}
+  virtual std::string name() const;
+  uint16_t index() const {return index_;}
 
   JvmInterface() = delete;
   explicit JvmInterface(SgAsmJvmFileHeader* jfh, uint16_t index)
@@ -89,10 +89,10 @@ private:
   uint16_t index_;
 };
 
-class JvmAttribute : public Attribute {
+class JvmAttribute final : public Attribute {
 public:
-  virtual const std::string name() const;
-  const uint16_t index() const {return index_;}
+  virtual std::string name() const;
+  uint16_t index() const {return index_;}
 
   JvmAttribute() = delete;
   explicit JvmAttribute(SgAsmJvmFileHeader* jfh, uint16_t index)
@@ -104,11 +104,11 @@ private:
   uint16_t index_;
 };
 
-class JvmClass : public Class {
+class JvmClass final : public Class {
 public:
-  virtual const std::string name() const;
-  virtual const std::string super_name() const;
-  virtual const std::string typeSeparator() const {
+  virtual std::string name() const;
+  virtual std::string super_name() const;
+  virtual std::string typeSeparator() const {
     return "::";
   }
 
@@ -145,10 +145,11 @@ private:
   std::vector<std::string> strings_;
 };
 
-class JvmContainer : public Container {
+class JvmContainer final : public Container {
 public:
-  static  bool isJvmSystemReserved(const std::string &name);
+  virtual std::string name() const override;
   virtual bool isSystemReserved(const std::string &name) const override;
+  static  bool isJvmSystemReserved(const std::string &name);
 };
 
 } // namespace

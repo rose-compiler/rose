@@ -195,7 +195,7 @@ CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod, ros
     }
 }
 
-const std::string
+std::string
 CilMethod::name() const {
   return utf8ToString(sgMethod_->get_Name_string());
 }
@@ -249,7 +249,7 @@ CilMethod::annotate() {
 }
 
 CilClass::CilClass(std::shared_ptr<Namespace> ns, SgAsmCilMetadataRoot* root, const std::string &name, size_t methodBegin, size_t methodLimit)
-  : Class{ns,0}, mdr_{root}, name_{name}
+  : Class{ns,0}, name_{name}, mdr_{root}
 {
     SgAsmCilMetadataHeap* metadataHeap = mdr_->get_MetadataHeap();
     ASSERT_not_null(metadataHeap);
@@ -370,12 +370,12 @@ void CilClass::dump()
   mlog[WARN] << "CilClass::dump() unimplemented\n";
 }
 
-CilNamespace::CilNamespace(SgAsmCilMetadataRoot* root, const std::string &name)
-  : mdr_{root}, name_{name}
+CilNamespace::CilNamespace(SgAsmCilMetadataRoot* /*root*/, const std::string &name)
+  : name_{name}
 {
 }
 
-const std::string
+std::string
 CilNamespace::name() const {
     return name_;
 }
@@ -426,7 +426,7 @@ CilContainer::CilContainer(SgAsmCilMetadataRoot* root) : mdr_{root} {
     }
 }
 
-const std::string
+std::string
 CilContainer::name() const {
   return "CilContainer::name():UNIMPLEMENTED";
 }

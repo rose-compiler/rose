@@ -16,7 +16,10 @@ class Exception: public Rose::Exception {
 public:
     /** Constructs exception with message. */
     Exception(const std::string &message);
-    ~Exception() throw();
+
+    // WARNING: Defined in Exception.C with different behavior
+    // ~Exception() throw();
+    ~Exception();
 };
 
 /** Error when an architecture is not found. */
@@ -24,7 +27,10 @@ class NotFound: public Exception {
 public:
     /** Constructs exception with message. */
     NotFound(const std::string &message);
-    ~NotFound() throw();
+
+    // WARNING: Defined in Exception.C with different behavior
+    // ~NotFound() throw();
+    ~NotFound();
 };
 
 } // namespace

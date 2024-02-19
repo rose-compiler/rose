@@ -191,7 +191,9 @@ public:
     /** Errors from the engine. */
     class Exception: public Partitioner2::Exception {
     public:
-        ~Exception() throw ();
+        // WARNING: Defined in Engine.C with different behavior
+        // ~Exception() throw();
+        ~Exception();
 
         /** Construct an exception with a message string. */
         explicit Exception(const std::string&);
