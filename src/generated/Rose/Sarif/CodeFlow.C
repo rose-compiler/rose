@@ -55,13 +55,14 @@ CodeFlow::CodeFlow()
     : threadFlows_P4678_(*this) {
     // Tree edge vector member cannot be set to null initially or later due to Rosebud::not_null attribute
     threadFlows_P4678_.beforeResize([](int delta, ThreadFlowPtr const& childPtr) {
-        if (1 == delta)
-            ASSERT_not_null2(childPtr, "property cannot be set to null");
+        if (1 == delta && !childPtr)
+            throw Rose::Exception("property \"threadFlows\" cannot be set to null");
     });
     threadFlows_P4678_.afterResize([this](int delta, ThreadFlowPtr const&) {
         if (1 == delta) {
             threadFlows_P4678_.back().beforeChange([](ThreadFlowPtr const&, ThreadFlowPtr const& childPtr) {
-                ASSERT_not_null2(childPtr, "property cannot be set to null");
+                if (!childPtr)
+                    throw Rose::Exception("property \"threadFlows\" cannot be set to null");
             });
         }
     });
