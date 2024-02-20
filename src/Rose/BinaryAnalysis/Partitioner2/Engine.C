@@ -91,6 +91,18 @@ Engine::FirstPositionalArguments::specimen(const std::vector<std::string> &args)
 }
 
 //------------------------------------------------------------------------------------------------------------------------
+Engine::AllButLastArguments::AllButLastArguments(size_t n)
+    : n_(n) {}
+
+std::vector<std::string>
+Engine::AllButLastArguments::specimen(const std::vector<std::string> &args) const {
+    std::vector<std::string> retval;
+    for (size_t i = 0; i + n_ < args.size(); ++i)
+        retval.push_back(args[i]);
+    return retval;
+}
+
+//------------------------------------------------------------------------------------------------------------------------
 Engine::GroupedPositionalArguments::GroupedPositionalArguments()
     : n_(1) {}
 

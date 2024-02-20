@@ -231,6 +231,15 @@ public:
         virtual std::vector<std::string> specimen(const std::vector<std::string>&) const override;
     };
 
+    /** All but the last N arguments are the specimen. */
+    class AllButLastArguments: public PositionalArgumentParser {
+        size_t n_;
+    public:
+        /** Constructor returning all but last @p n arguments. */
+        explicit AllButLastArguments(size_t n);
+        virtual std::vector<std::string> specimen(const std::vector<std::string>&) const override;
+    };
+
     /** Nth group of arguments are the specimen. */
     class GroupedPositionalArguments: public PositionalArgumentParser {
         size_t n_ = 0;

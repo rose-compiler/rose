@@ -142,7 +142,7 @@ public:
 
 protected:
     Partitioner2::PartitionerConstPtr partitioner_;     // not null
-    AddressInterval chunkAllocationRegion_;             // where chunks can be allocated
+    AddressInterval chunkAllocationRegion_;             // restricts addresses where new free-space chunks can be mapped
     size_t minChunkAllocationSize_;                     // size of each chunk in bytes (also the alignment)
     size_t chunkAllocationAlignment_;                   // alignment for allocating large chunks
     std::string chunkAllocationName_;                   // name to give new areas of the memory map
@@ -166,13 +166,24 @@ public:
 
     /** Property: Where chunks are allocated.
      *
-     *  This region defines the part of the memory map where new chunks are allocated in order to hold replacement code that
-     *  doesn't fit into the same space as the instructions its replacing.  The default is the part of the address space
+     *  This region defines the part of the memory map where new free space chunks will be mapped in order to hold replacement code
+     *  that doesn't fit into the same space as the instructions its replacing.  The default is the part of the address space
      *  immediately after the last mapped address in the partitioner passed to the constructor.
      *
      * @{ */
     const AddressInterval& chunkAllocationRegion() const { return chunkAllocationRegion_; }
     void chunkAllocationRegion(const AddressInterval& i) { chunkAllocationRegion_ = i; }
+    /** @} */
+
+    /** Property: Mapped free-space chunks.
+     *
+     *  This is the set of mapped regions that are considered to be free space. The allocator will prefer to obtain memory from
+     *  these already mapped regions before it tries to map additional free chunks within the @ref chunkAllocationRegion.
+     *
+     * @{ */
+    const AddressIntervalSet& mappedFreeSpace() const { return freeSpace_; }
+    AddressIntervalSet& mappedFreeSpace() { return freeSpace_; }
+    void mappedFreeSpace(const AddressIntervalSet &x) { freeSpace_ = x; }
     /** @} */
 
     /** Returns the parts of the virtual address space that were allocated for new instructions. The returned value will

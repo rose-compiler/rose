@@ -435,9 +435,13 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
     calculateSizes(&ent_size, &struct_size, &opt_size, &nentries);
-    ROSE_ASSERT(fhdr->get_phextrasz()==opt_size);
-    ROSE_ASSERT(fhdr->get_e_phnum()==nentries);
-    
+    ROSE_ASSERT(fhdr->get_phextrasz() == opt_size);
+    ROSE_ASSERT(fhdr->get_e_phnum() >= nentries);
+    ROSE_ASSERT(nentries == sections.size());
+
+    // What entries were written by the following loop
+    std::vector<bool> wasWritten(fhdr->get_e_phnum(), false);
+
     /* Write the segment table entries */
     for (size_t i=0; i < sections.size(); ++i) {
         SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
@@ -447,8 +451,8 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
         ROSE_ASSERT(shdr->get_offset()==section->get_offset()); /*segment table entry should have been updated in reallocate()*/
 
         int id = shdr->get_index();
-        ROSE_ASSERT(id>=0 && (size_t)id<nentries);
-            
+        ROSE_ASSERT(id >= 0 && (size_t)id < wasWritten.size());
+
         SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk32;
         SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk64;
         void *disk = NULL;
@@ -461,10 +465,19 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
             ROSE_ASSERT(!"invalid word size");
         }
         
-        /* The disk struct */
+        // Write the disk struct and extra data to the table slot
         rose_addr_t spos = write(f, id*ent_size, struct_size, disk);
         if (shdr->get_extra().size() > 0)
             write(f, spos, shdr->get_extra());
+        wasWritten[id] = true;
+    }
+
+    // Write zeroed entries to the unused slots of the segment table
+    for (size_t i = 0; i < fhdr->get_e_phnum(); ++i) {
+        if (!wasWritten[i]) {
+            std::vector<uint8_t> empty(ent_size, 0);
+            write(f, i*ent_size, ent_size, empty.data());
+        }
     }
 }
 

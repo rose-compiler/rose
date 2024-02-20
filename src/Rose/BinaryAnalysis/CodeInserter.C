@@ -519,16 +519,22 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
 }
 
 AddressInterval
-CodeInserter::allocateMemory(size_t nBytes, rose_addr_t jmpTargetVa, Commit::Boolean commit) {
+CodeInserter::allocateMemory(const size_t nBytes, const rose_addr_t jmpTargetVa, const Commit::Boolean commit) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"  allocateMemory(nBytes=" <<nBytes <<", jmpTargetVa=" <<StringUtility::addrToString(jmpTargetVa) <<"):"
+                       <<(Commit::YES == commit ? "" : " (test only)") <<"\n";
+
     // Find the first interval that's large enough, not considering the jump.  Then add the jump (whose size might depend
     // on the address) and see if there's still enough free space. If not, continue searching through the free space list.
-    AddressIntervalSet::ConstIntervalIterator found = freeSpace_.intervals().begin();
-    while (found != freeSpace_.intervals().end()) {
-        found = freeSpace_.firstFit(nBytes, found);
-        if (found != freeSpace_.intervals().end()) {
+    AddressIntervalSet::ConstIntervalIterator found = mappedFreeSpace().intervals().begin();
+    while (found != mappedFreeSpace().intervals().end()) {
+        found = mappedFreeSpace().firstFit(nBytes, found);
+        if (found != mappedFreeSpace().intervals().end()) {
             size_t totalBytes = nBytes + encodeJump(found->least() + nBytes, jmpTargetVa).size();
             if (totalBytes <= found->size()) {
                 AddressInterval retval = AddressInterval::baseSize(found->least(), totalBytes);
+                SAWYER_MESG(debug) <<"    reserved " <<StringUtility::addrToString(retval)
+                                   <<" from free space at " <<StringUtility::addrToString(*found) <<"\n";
                 commitAllocation(retval, commit);
                 return retval;
             } else {
@@ -540,33 +546,43 @@ CodeInserter::allocateMemory(size_t nBytes, rose_addr_t jmpTargetVa, Commit::Boo
     // If we didn't find enough free space in segments that are already mapped, then map big chunk and use the first part
     // of it to satisfy the request.
     static const size_t maxJmpEncodedSize = 16; // size of largest unconditional jump on any architecture
-    //AddressInterval chunkArea = AddressInterval::hull(0x80000000, 0xbfffffff); // restrinctions on chunk locations
+    //AddressInterval chunkArea = AddressInterval::hull(0x80000000, 0xbfffffff); // restrictions on chunk locations
     size_t chunkSize = std::max(nBytes + maxJmpEncodedSize, minChunkAllocationSize_);
     rose_addr_t chunkVa = 0;
     if (!partitioner_->memoryMap()->findFreeSpace(chunkSize, chunkAllocationAlignment_, chunkAllocationRegion_)
-        .assignTo(chunkVa))
+        .assignTo(chunkVa)) {
+        SAWYER_MESG(debug) <<"    cannot find " <<StringUtility::plural(chunkSize, "bytes")
+                           <<" of " <<chunkAllocationAlignment_ <<"-byte aligned free space"
+                           <<" in partitioner memory map"
+                           <<" within " <<StringUtility::addrToString(chunkAllocationRegion_) <<"\n";
         return AddressInterval();               // no virtual address space available
+    }
 
     // Create the chunk and map it
     AddressInterval chunkVas = AddressInterval::baseSize(chunkVa, chunkSize);
     partitioner_->memoryMap()->insert(chunkVas,
                                       MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(chunkSize),
                                                          0, MemoryMap::READ_EXECUTE, chunkAllocationName_));
-    freeSpace_ |= chunkVas;
+    mappedFreeSpace() |= chunkVas;
     allocatedChunks_ |= chunkVas;
+    SAWYER_MESG(debug) <<"    mapped new free-space region at " <<StringUtility::addrToString(chunkVas) <<"\n";
 
     // Use the first part of the new chunk
     size_t totalBytes = nBytes + encodeJump(chunkVa + nBytes, jmpTargetVa).size();
     ASSERT_require2(totalBytes <= chunkSize, "maxJmpEncodedSize is not large enough");
     AddressInterval retval = AddressInterval::baseSize(chunkVa, totalBytes);
+    SAWYER_MESG(debug) <<"    reserved " <<StringUtility::addrToString(retval)
+                       <<" from free space at " <<StringUtility::addrToString(chunkVas) <<"\n";
     commitAllocation(retval, commit);
     return retval;
 }
 
 void
 CodeInserter::commitAllocation(const AddressInterval &where, Commit::Boolean commit) {
-    if (Commit::YES == commit)
-        freeSpace_ -= where;
+    if (Commit::YES == commit) {
+        SAWYER_MESG(mlog[DEBUG]) <<"    commited allocation " <<StringUtility::addrToString(where) <<"\n";
+        mappedFreeSpace() -= where;
+    }
 }
 
 AddressIntervalSet

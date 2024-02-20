@@ -122,12 +122,13 @@ SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
 void
 SgAsmGenericHeader::removeSection(SgAsmGenericSection *section)
 {
-    if (section!=NULL) {
-        ROSE_ASSERT(p_sections != NULL);
+    if (section && p_sections) {
         SgAsmGenericSectionPtrList::iterator i = find(p_sections->get_sections().begin(),
-                                                        p_sections->get_sections().end(),
-                                                        section);
+                                                      p_sections->get_sections().end(),
+                                                      section);
         if (i != p_sections->get_sections().end()) {
+            if (*i)
+                (*i)->set_parent(nullptr);
             p_sections->get_sections().erase(i);
             p_sections->set_isModified(true);
         }
