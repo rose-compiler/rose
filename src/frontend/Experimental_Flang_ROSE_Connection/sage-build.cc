@@ -1260,23 +1260,32 @@ void Build(parser::ArraySpec &x, SgType* &type, SgType* baseType)
   using namespace Fortran::parser;
 
   common::visit(common::visitors{
-             [&] (const std::list<ExplicitShapeSpec> &y) {
+             [&] (std::list<ExplicitShapeSpec> &y) {
+                   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
+                   for (auto &spec : y) {
+                     SgExpression* expr{nullptr};
+                     WalkExpr(spec, expr);
+                     dimInfo->get_expressions().push_back(expr);
+                   }
+                   type = SageBuilder::buildArrayType(baseType, dimInfo);
+               },
+             [&] (std::list<AssumedShapeSpec> &y) {
                    ABORT_NO_IMPL;
                },
-             [&] (const std::list<AssumedShapeSpec> &y) {
-                   ABORT_NO_IMPL;
-               },
-             [&] (const DeferredShapeSpecList &y) {
+             [&] (DeferredShapeSpecList &y) {
                    SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
                    for (int ii{0}; ii < y.v; ii++) {
                      dimInfo->get_expressions().push_back(SageBuilder::buildColonShapeExp_nfi());
                    }
                    type = SageBuilder::buildArrayType(baseType, dimInfo);
                },
-             [&] (const AssumedSizeSpec &y) {
+             [&] (AssumedSizeSpec &y) {
+                   // std::tuple<std::list<ExplicitShapeSpec>, AssumedImpliedSpec> t;
+                   SgExpression* expr{nullptr};
+                   WalkExpr(y, expr);
                    ABORT_NO_IMPL;
                },
-             [&] (const ImpliedShapeSpec &y) {
+             [&] (ImpliedShapeSpec &y) {
                    SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
                    for (const AssumedImpliedSpec &spec : y.v) {
                      // std::optional<SpecificationExpr> spec.v
@@ -1292,7 +1301,7 @@ void Build(parser::ArraySpec &x, SgType* &type, SgType* baseType)
                    }
                    type = SageBuilder::buildArrayType(baseType, dimInfo);
                 },
-             [&] (const AssumedRankSpec &y) {
+             [&] (AssumedRankSpec &y) {
                     ABORT_NO_IMPL;
                 },
            },
