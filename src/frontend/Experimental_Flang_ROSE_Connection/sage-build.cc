@@ -952,10 +952,13 @@ void Build(parser::LetterSpec &x, std::tuple<char, boost::optional<char>> &lette
 #endif
 }
 
-//TEMPORARY_COOL
+#define TEMPORARY_COOL_FIXME 0
+#if TEMPORARY_COOL_FIXME
 const Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec & makeImplicitNone() {
-  return std::move(Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec::External);
+  //  return std::move(Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec::External);
+  return Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec::External;
 }
+#endif
 
 void BuildVisitor::Build(parser::ImplicitStmt &x) {
   // std::variant<> std::list<ImplicitSpec>, std::list<ImplicitNoneNameSpec>
@@ -983,14 +986,16 @@ void BuildVisitor::Build(parser::ImplicitStmt &x) {
     builder.Leave(stmt);
   }
 
+#if TEMPORARY_COOL_FIXME
   // Need variant I think (no, like an enum, just assign to ONE of the variants!)
   //  x.u = std::move(makeImplicitNone());
   //  const std::list<ImplicitStmt::ImplicitNoneNameSpec> &implicitList{makeImplicitNone()};
+#else
   const std::list<ImplicitStmt::ImplicitNoneNameSpec>
     &implicitList{ImplicitStmt::ImplicitNoneNameSpec::External, ImplicitStmt::ImplicitNoneNameSpec::Type};
   const ImplicitStmt & xx{std::move(implicitList)};
   x.u = std::move(implicitList);
-  //TEMPORARY_COOL
+#endif
 }
 
 void BuildVisitor::Build(parser::TypeDeclarationStmt &x) {
@@ -1244,21 +1249,52 @@ void Build(parser::ArraySpec &x, SgType* &type, SgType* baseType)
 {
   // std::variant<> - std::list<ExplicitShapeSpec>, std::list<AssumedShapeSpec>,
   //                  DeferredShapeSpecList, AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
+  //
+  // ExplicitShapeSpec - std::tuple<std::optional<SpecificationExpr>, SpecificationExpr> t;
+  // AssumedShapeSpec - std::optional<SpecificationExpr> v;
+  // DeferredShapeSpecList - int v;
+  // AssumedSizeSpec - std::tuple<std::list<ExplicitShapeSpec>, AssumedImpliedSpec> t;
+  // ImpliedShapeSpec - std::list<AssumedImpliedSpec> v;
+  // AssumedRankSpec - using EmptyTrait = std::true_type;
+  //
   using namespace Fortran::parser;
 
-  std::cout << "Rose::builder::Build(ArraySpec)\n";
-
   common::visit(common::visitors{
-             [&](const DeferredShapeSpecList &y) {
-                    SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
-                    for (int ii{0}; ii < y.v; ii++) {
-                      dimInfo->get_expressions().push_back(SageBuilder::buildColonShapeExp_nfi());
-                    }
-                    type = SageBuilder::buildArrayType(baseType, dimInfo);
-                  },
-             [&](const auto &y) {
+             [&] (const std::list<ExplicitShapeSpec> &y) {
+                   ABORT_NO_IMPL;
+               },
+             [&] (const std::list<AssumedShapeSpec> &y) {
+                   ABORT_NO_IMPL;
+               },
+             [&] (const DeferredShapeSpecList &y) {
+                   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
+                   for (int ii{0}; ii < y.v; ii++) {
+                     dimInfo->get_expressions().push_back(SageBuilder::buildColonShapeExp_nfi());
+                   }
+                   type = SageBuilder::buildArrayType(baseType, dimInfo);
+               },
+             [&] (const AssumedSizeSpec &y) {
+                   ABORT_NO_IMPL;
+               },
+             [&] (const ImpliedShapeSpec &y) {
+                   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
+                   for (const AssumedImpliedSpec &spec : y.v) {
+                     // std::optional<SpecificationExpr> spec.v
+                     if (spec.v) {
+                       SgExpression* expr{nullptr};
+                       WalkExpr(spec.v.value(), expr);
+                       ABORT_NO_TEST;
+                       dimInfo->get_expressions().push_back(expr);
+                     } else {
+                       // (*)
+                       dimInfo->get_expressions().push_back(SageBuilderCpp17::buildAsteriskShapeExp_nfi());
+                     }
+                   }
+                   type = SageBuilder::buildArrayType(baseType, dimInfo);
+                },
+             [&] (const AssumedRankSpec &y) {
                     ABORT_NO_IMPL;
-                  }
+                },
            },
      x.u);
 }
@@ -2824,13 +2860,12 @@ void getAttrSpec(parser::AttrSpec &x, std::list<LanguageTranslation::ExpressionK
   common::visit(common::visitors{
                   [&](ArraySpec &y) {
                          /*DIMENSION*/
-                         // modifiers.push_back(ExpressionKind::e_type_modifier_dimension);
                          SgType* type{nullptr};
                          Build(y, type, baseType);
                          baseType = type;
                      },
-                  [&](const CoarraySpec &) { ABORT_NO_IMPL; /*CODIMENSION*/ },
-                  [&](const ComponentArraySpec &) { ABORT_NO_IMPL; /*DIMENSION*/ },
+                  [&](CoarraySpec &) { ABORT_NO_IMPL; /*CODIMENSION*/ },
+                  [&](ComponentArraySpec &) { ABORT_NO_TEST; /*DIMENSION*/ },
                   [&](const IntentSpec &) { ABORT_NO_IMPL; /*INTENT*/ },
                   [&](const LanguageBindingSpec &) { ABORT_NO_IMPL; /*BINDING*/ },
                   [&](const common::CUDADataAttr &) { ABORT_NO_IMPL; /*CUDADataAttr*/ },
