@@ -123,7 +123,7 @@ Result::Result()
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    locations_P2292_.afterResize([this](int delta, LocationPtr const& childPtr) {
+    locations_P2292_.afterResize([this](int delta, LocationPtr const&) {
         if (1 == delta) {
             locations_P2292_.back().beforeChange([](LocationPtr const&, LocationPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");
@@ -136,7 +136,7 @@ Result::Result()
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    codeFlows_P1620_.afterResize([this](int delta, CodeFlowPtr const& childPtr) {
+    codeFlows_P1620_.afterResize([this](int delta, CodeFlowPtr const&) {
         if (1 == delta) {
             codeFlows_P1620_.back().beforeChange([](CodeFlowPtr const&, CodeFlowPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");

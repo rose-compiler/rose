@@ -45,7 +45,7 @@ Log::Log()
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    analyses_P2039_.afterResize([this](int delta, AnalysisPtr const& childPtr) {
+    analyses_P2039_.afterResize([this](int delta, AnalysisPtr const&) {
         if (1 == delta) {
             analyses_P2039_.back().beforeChange([](AnalysisPtr const&, AnalysisPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");

@@ -135,7 +135,7 @@ Analysis::Analysis(std::string const& name)
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    rules_P743_.afterResize([this](int delta, RulePtr const& childPtr) {
+    rules_P743_.afterResize([this](int delta, RulePtr const&) {
         if (1 == delta) {
             rules_P743_.back().beforeChange([](RulePtr const&, RulePtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");
@@ -148,7 +148,7 @@ Analysis::Analysis(std::string const& name)
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    artifacts_P9780_.afterResize([this](int delta, ArtifactPtr const& childPtr) {
+    artifacts_P9780_.afterResize([this](int delta, ArtifactPtr const&) {
         if (1 == delta) {
             artifacts_P9780_.back().beforeChange([](ArtifactPtr const&, ArtifactPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");
@@ -161,7 +161,7 @@ Analysis::Analysis(std::string const& name)
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    results_P9495_.afterResize([this](int delta, ResultPtr const& childPtr) {
+    results_P9495_.afterResize([this](int delta, ResultPtr const&) {
         if (1 == delta) {
             results_P9495_.back().beforeChange([](ResultPtr const&, ResultPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");

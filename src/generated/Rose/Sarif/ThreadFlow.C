@@ -58,7 +58,7 @@ ThreadFlow::ThreadFlow()
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    locations_P2292_.afterResize([this](int delta, ThreadFlowLocationPtr const& childPtr) {
+    locations_P2292_.afterResize([this](int delta, ThreadFlowLocationPtr const&) {
         if (1 == delta) {
             locations_P2292_.back().beforeChange([](ThreadFlowLocationPtr const&, ThreadFlowLocationPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");

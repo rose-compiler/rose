@@ -58,7 +58,7 @@ CodeFlow::CodeFlow()
         if (1 == delta)
             ASSERT_not_null2(childPtr, "property cannot be set to null");
     });
-    threadFlows_P4678_.afterResize([this](int delta, ThreadFlowPtr const& childPtr) {
+    threadFlows_P4678_.afterResize([this](int delta, ThreadFlowPtr const&) {
         if (1 == delta) {
             threadFlows_P4678_.back().beforeChange([](ThreadFlowPtr const&, ThreadFlowPtr const& childPtr) {
                 ASSERT_not_null2(childPtr, "property cannot be set to null");
