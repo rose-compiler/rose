@@ -2355,7 +2355,7 @@ void c_action_label(Token_t * lbl)
      * @param id Optional identifier in pass attribute.
      */
 // void c_action_binding_attr(int attr, Token_t * id)
-    void c_action_binding_attr(Token_t*, int attr, Token_t * id)
+    void c_action_binding_attr(Token_t*, int, Token_t*)
     {
     }
 

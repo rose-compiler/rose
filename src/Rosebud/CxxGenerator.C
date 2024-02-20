@@ -36,9 +36,7 @@ CxxGenerator::genDestructor(std::ostream &header, std::ostream &impl, const Ast:
 }
 
 void
-CxxGenerator::genConstructorBody(std::ostream &impl, const Ast::Class::Ptr &c) {
-    ASSERT_not_null(c);
-}
+CxxGenerator::genConstructorBody(std::ostream&, const Ast::Class::Ptr&) {}
 
 // Emit the default constructor
 void

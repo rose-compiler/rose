@@ -1054,7 +1054,7 @@ int main(int argc, char *argv[]) {
     timer.restart();
     Generator::Ptr generator = Generator::lookup(settings.backend);
     ASSERT_not_null(generator);
-    ASSERT_require(argc > args.size());
+    ASSERT_require(argc >= 0 && (size_t)argc > args.size());
     generator->commandLine(std::vector<std::string>(argv, argv + argc - args.size()));
     generator->generate(project);
     SAWYER_MESG(mlog[INFO]) <<"generating output files; took " <<timer.toString() <<"\n";

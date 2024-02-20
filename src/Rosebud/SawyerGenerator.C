@@ -383,7 +383,7 @@ SawyerGenerator::genConstructorBody(std::ostream &impl, const Ast::Class::Ptr &c
                      <<"        if (1 == delta)\n"
                      <<"            ASSERT_not_null2(childPtr, \"property cannot be set to null\");\n"
                      <<"    });\n"
-                     <<"    " <<propertyDataMemberName(p()) <<".afterResize([this](int delta, " <<t <<" childPtr) {\n"
+                     <<"    " <<propertyDataMemberName(p()) <<".afterResize([this](int delta, " <<t <<") {\n"
                      <<"        if (1 == delta) {\n"
                      <<"            " <<propertyDataMemberName(p()) <<".back().beforeChange([](" <<t <<", " <<t <<" childPtr) {\n"
                      <<"                ASSERT_not_null2(childPtr, \"property cannot be set to null\");\n"
