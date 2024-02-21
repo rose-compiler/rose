@@ -13,7 +13,7 @@ Unparse_PHP::~Unparse_PHP()
 }
 
 void
-Unparse_PHP::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_PHP::unparseStatement(SgStatement* stmt, SgUnparse_Info&)
 {
     Sg_File_Info *finfo = stmt->get_file_info();
     std::cout << finfo->get_line() << ":" << finfo->get_col() << std::endl;
