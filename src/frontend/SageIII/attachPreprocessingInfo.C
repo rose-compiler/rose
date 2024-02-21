@@ -91,7 +91,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr, std::map<std::string,ROSEAttr
 typedef std::map<int, ROSEAttributesList*> AttributeMapType;
 
 void
-attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
+attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& /*attributeMapForAllFiles*/)
    {
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
 
