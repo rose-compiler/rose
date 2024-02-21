@@ -19561,7 +19561,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param keyword The CONTAINS keyword token.
      * @param eos End of statement token.
      */
-    void c_action_contains_stmt(Token_t *label, Token_t *keyword, Token_t *eos)
+    void c_action_contains_stmt(Token_t *label, Token_t *keyword, Token_t */*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(

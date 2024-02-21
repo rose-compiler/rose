@@ -187,7 +187,7 @@ static int identify_operator_matching(string str)
 }
 #endif
 
-static void process_operator(string op) 
+static void process_operator(string) 
 {
 
 }
@@ -553,6 +553,7 @@ getFortranFixedFormatPreprocessorDirectives( std::string fileName )
      return ROSE_Fortran_fixed_format_token_stream_pointer;
    }
 
+#if 0
 static void clean_up_stream()
 {
 
@@ -565,7 +566,6 @@ static void clean_up_stream()
     //If the tokens are 
 
 
-#if 0
     for(SE_ITR ii = ROSE_Fortran_fixed_format_token_stream.begin(); ii != ROSE_Fortran_fixed_format_token_stream.end(); ii++)
     {
         if((*ii)->p_tok_elem->token_id == SgToken::FORTRAN_COMMENTS)
@@ -602,8 +602,8 @@ static void clean_up_stream()
         }
         cout<<"\n";  
     }
-#endif
 }
+#endif
 
 #if 0
 int main(int argc, char *argv[])

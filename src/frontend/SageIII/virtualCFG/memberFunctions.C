@@ -454,7 +454,7 @@ SgBasicBlock::cfgIndexForEnd() const {
   return this->get_statements().size();
 }
 
-bool SgBasicBlock::cfgIsIndexInteresting(unsigned int idx) const {
+bool SgBasicBlock::cfgIsIndexInteresting(unsigned int) const {
   return false;
 }
 
@@ -998,35 +998,35 @@ unsigned int SgUpcForAllStatement::cfgIndexForEnd() const
   // return doForallCfgIndexForEnd(this);
    }
 
-bool SgUpcForAllStatement::cfgIsIndexInteresting(unsigned int idx) const
+bool SgUpcForAllStatement::cfgIsIndexInteresting(unsigned int) const
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ABORT();
   // return doForallCfgIsIndexInteresting(this, idx);
    }
 
-unsigned int SgUpcForAllStatement::cfgFindChildIndex(SgNode* n)
+unsigned int SgUpcForAllStatement::cfgFindChildIndex(SgNode*)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ABORT();
   // return doForallCfgFindChildIndex(this, n);
    }
 
-unsigned int SgUpcForAllStatement::cfgFindNextChildIndex(SgNode* n)
+unsigned int SgUpcForAllStatement::cfgFindNextChildIndex(SgNode*)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ABORT();
   // return doForallCfgFindNextChildIndex(this, n);
    }
 
-std::vector<CFGEdge> SgUpcForAllStatement::cfgOutEdges(unsigned int idx)
+std::vector<CFGEdge> SgUpcForAllStatement::cfgOutEdges(unsigned int)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ABORT();
   // return doForallCfgOutEdges(this, idx);
    }
 
-std::vector<CFGEdge> SgUpcForAllStatement::cfgInEdges(unsigned int idx)
+std::vector<CFGEdge> SgUpcForAllStatement::cfgInEdges(unsigned int)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
      ROSE_ABORT();
@@ -1739,7 +1739,7 @@ SgTryStmt::cfgIndexForEnd() const {
   return 1;
 }
 
-bool SgTryStmt::cfgIsIndexInteresting(unsigned int idx) const {
+bool SgTryStmt::cfgIsIndexInteresting(unsigned int) const {
   return true;
 }
 
@@ -1783,7 +1783,7 @@ SgCatchStatementSeq::cfgIndexForEnd() const {
   return this->get_catch_statement_seq().size();
 }
 
-bool SgCatchStatementSeq::cfgIsIndexInteresting(unsigned int idx) const {
+bool SgCatchStatementSeq::cfgIsIndexInteresting(unsigned int) const {
   return false;
 }
 
@@ -3687,7 +3687,7 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
     return this->cfgFindChildIndex(n) + 1;
   }
 
-  std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int ) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ABORT ();
   }
@@ -5418,7 +5418,7 @@ SgInitializedName::cfgIndexForEnd() const {
 }
 
 bool
-SgInitializedName::cfgIsIndexInteresting(unsigned int idx) const {
+SgInitializedName::cfgIsIndexInteresting(unsigned int /*idx*/) const {
 #if 0 //TODO turn this on at some point, though we have filters to handle this.
   if ( this->get_initializer() ) // Liao 2/23/2012, more accurate handling. only the last one is interesting if there is an initializer
     return (idx == 1 );

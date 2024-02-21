@@ -44,7 +44,8 @@ std::ostream& operator<<(std::ostream& os, const SgFormatItemPtrList& bv)
       return os;
    }
 
-void doRTI(const char* fieldNameBase, void* fieldPtr, size_t fieldSize, void* thisPtr, const char* className, const char* typeString, const char* fieldName, const std::string& fieldContents, RTIMemberData& memberData) {
+void doRTI(const char* /*fieldNameBase*/, void* /*fieldPtr*/, size_t /*fieldSize*/, void* /*thisPtr*/, const char* /*className*/,
+           const char* typeString, const char* fieldName, const std::string& fieldContents, RTIMemberData& memberData) {
 #if ROSE_USE_VALGRIND
   doUninitializedFieldCheck(fieldNameBase, fieldPtr, fieldSize, thisPtr, className);
 #endif

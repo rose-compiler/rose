@@ -182,7 +182,7 @@ static int identify_operator_matching(string str)
 }
 #endif
 
-static void process_operator(string op) 
+static void process_operator(string) 
 {
 
 }

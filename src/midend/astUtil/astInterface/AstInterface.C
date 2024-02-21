@@ -591,7 +591,7 @@ LookupVar( const std::string& name, SgScopeStatement* loc)
 
 class SageSetTransformation: public AstTopDownProcessing< AstNodePtrImpl >
 {
-   AstNodePtrImpl evaluateInheritedAttribute(SgNode* astNode, AstNodePtrImpl inheritedValue)
+   AstNodePtrImpl evaluateInheritedAttribute(SgNode* astNode, AstNodePtrImpl)
      { 
          Sg_File_Info* r = astNode->get_file_info();
          r->setTransformation();
@@ -1006,7 +1006,7 @@ std::string AstInterface::getAstLocation(const AstNodePtr& _s)
   return r;
 }
 
-void AstInterface::FreeAstTree( const AstNodePtr& n)
+void AstInterface::FreeAstTree(const AstNodePtr&)
 { }
 
 void NotifyTreeCopy ( AstInterfaceImpl& fa, const AstNodePtr& _orig, const AstNodePtr& _n) 
