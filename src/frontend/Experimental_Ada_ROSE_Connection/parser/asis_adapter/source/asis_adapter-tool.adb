@@ -64,7 +64,7 @@ package body Asis_Adapter.Tool is
                                   Unit_Options   => Unit_Options,
                                   Outputs        => This.Outputs);
          This.Outputs.Graph.Write_File
-           (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
+           (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name, False, Debug);
          if Asis_Adapter.Log_On then
            This.Outputs.A_Nodes.Print_Stats;
          end if;

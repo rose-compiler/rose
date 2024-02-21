@@ -394,7 +394,8 @@ package Dot is
       procedure Write_File
         (This      : access Class;
          Name      : in     String;
-         Overwrite : in     Boolean := False);
+         Overwrite : in     Boolean := False;
+         Debug     : in     Boolean := False);
 
       Usage_Error : Exception;
 

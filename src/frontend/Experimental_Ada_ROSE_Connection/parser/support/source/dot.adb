@@ -563,7 +563,8 @@ package body Dot is
       procedure Write_File
         (This      : access Class;
          Name      : in     String;
-         Overwrite : in     Boolean := False)
+         Overwrite : in     Boolean := False;
+         Debug     : in     Boolean := False)
       is
          Output_File : ATI.File_Type;
          procedure Log (Message : in String) is
@@ -588,7 +589,9 @@ package body Dot is
 --                 end;
 --              end if;
             begin
-               Log ("Creating """ & File_Name & """");
+               if Debug = True then
+                 Log ("Creating """ & File_Name & """");
+               end if;
                ATI.Create (File => Output_File,
                            Mode => ATI.Out_File,
                            Name => File_Name);
