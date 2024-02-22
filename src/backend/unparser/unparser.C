@@ -3476,11 +3476,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     Rose::Cmdline::Ada::CmdlineSettings settings = Rose::Cmdline::Ada::commandlineSettings();
 
                     boost::filesystem::create_directory(settings.outputPath);
-
                     outputFilename = settings.outputPath + "/" + file->get_sourceFileNameWithoutPath();
 
-                    printf ("Ada output language: outputFilename = %s \n",outputFilename.c_str());
-                    printf ("INFO: SgFile::e_Ada_language detected in unparser (unparsing is experimental) \n");
+                    mlog[TRACE] << "Ada output language: outputFilename = " << outputFilename << std::endl;
                     break;
                   }
 

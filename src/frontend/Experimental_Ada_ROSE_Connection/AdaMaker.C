@@ -218,9 +218,8 @@ mkAdaDiscriminantConstraint(SgExpressionPtrList discriminants)
 SgAdaSubtype&
 mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr, bool fromRoot)
 {
-  SgAdaSubtype& sgnode = mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+  SgAdaSubtype& sgnode = mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr, fromRoot);
 
-  sgnode.set_fromRootType(fromRoot);
   constr.set_parent(&sgnode);
   return sgnode;
 }
@@ -293,7 +292,7 @@ SgType& mkQualifiedType(SgExpression& qual, SgType& base)
   SgTypeExpression& baseexp   = mkTypeExpression(base);
   SgDotExp&         qualified = SG_DEREF(sb::buildDotExp(&qual, &baseexp));
   //~ SgExprListExp     list     = mkExprListExp({&namequal, &baseexp});
-  SgDeclType&       sgnode   = mkNonSharedTypeNode<SgDeclType>(&qualified);
+  SgDeclType&       sgnode    = mkNonSharedTypeNode<SgDeclType>(&qualified);
 
   return sgnode;
 }
@@ -350,13 +349,11 @@ mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 }
 
 SgAdaAccessType&
-mkAdaAccessType(SgType& base_type, bool isAnonymous)
+mkAdaAccessType(SgType& base_type, bool generalAccess, bool anonymous)
 {
-  // \todo PP (28/1/22) this may need to be a shared type node
-  SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(&base_type);
-
-  sgnode.set_is_anonymous(isAnonymous);
-  return sgnode;
+  // goal:
+  //~ return mkTypeNode<SgAdaAccessType>(&base_type, generalAccess, anonymous);
+  return mkNonSharedTypeNode<SgAdaAccessType>(&base_type, generalAccess, anonymous);
 }
 
 namespace
@@ -364,7 +361,7 @@ namespace
 
 SgFunctionType& mkAdaEntryType(SgType& /* indexType ignored */, SgFunctionParameterList& lst)
 {
-  // \todo build entry type
+  // \TODO build entry type
   return SG_DEREF(sb::buildFunctionType(&mkTypeVoid(), &lst));
 }
 
@@ -2307,6 +2304,7 @@ namespace
 {
   SgType& accessTypeAttr(SgExpression& expr, SgExprListExp&)
   {
+    // \todo do we need to create general access for SgVarRefExp
     return mkAdaAccessType(SG_DEREF(expr.get_type()));
   }
 

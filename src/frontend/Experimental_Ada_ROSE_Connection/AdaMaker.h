@@ -13,7 +13,12 @@
 #include "sageBuilder.h"
 #include "sageGeneric.h"
 
-#include "Ada_to_ROSE.h"
+// PP(22/2/24)
+// THIS is the ONLY INSTALLED HEADER from the Ada frontend !!!
+// MUST NOT include any non-installed headers
+//   NO other headers from the Ada frontend.
+//   NO headers in ROSE that are not installed.
+// \todo consider moving this into SageBuilder..
 
 namespace Ada_ROSE_Translation
 {
@@ -186,7 +191,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an ada access type with \ref base_type as the type being referenced.
   SgAdaAccessType&
-  mkAdaAccessType(SgType& base_type, bool isAnonymous = false);
+  mkAdaAccessType(SgType& base_type, bool generalAccess = false, bool anonymous = false);
 
   /// creates a new subroutine type with return type \ref retty
   ///   and callback \ref complete, which fills in the argument names.
@@ -1031,7 +1036,7 @@ namespace Ada_ROSE_Translation
 
     using rose_rep_t = decltype(std::declval<SageValue>().get_value());
 
-    ADA_ASSERT(textrep);
+    ASSERT_not_null(textrep);
     return mkLocatedNode<SageValue>(convAdaLiteral<rose_rep_t>(textrep), textrep);
   }
 

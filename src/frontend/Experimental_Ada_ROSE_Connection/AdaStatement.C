@@ -823,16 +823,12 @@ namespace
 
       void operator()(Element_Struct& elem)
       {
-        SgVariableDeclaration&    decl = getParm(elem, ctx);
-        SgInitializedNamePtrList& args = parmlist.get_args();
+        SgVariableDeclaration& decl = getParm(elem, ctx);
 
         // in Ada multiple parameters can be declared
         //   within a single declaration.
         for (SgInitializedName* parm : decl.get_variables())
-        {
-          parm->set_parent(&parmlist);
-          args.push_back(parm);
-        }
+          parmlist.append_arg(parm);
       }
 
     private:

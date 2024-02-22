@@ -105,27 +105,40 @@ namespace sg
   template <class T>
   struct NotNull
   {
-      // explicit
+      // not explicit to enable auto-conversion
       NotNull(T* p)
       : ptr(p)
       {
-        report_error_if(p == nullptr, "failed null pointer check.");
+        if (ptr == nullptr)
+          throw std::runtime_error{"failed null pointer check."};
       }
 
       ~NotNull()                         = default;
       NotNull(const NotNull&)            = default;
       NotNull& operator=(const NotNull&) = default;
-      NotNull(NotNull&&)                 = default;
-      NotNull& operator=(NotNull&&)      = default;
 
-      operator T*()   const { return ptr; }
-      T& operator*()  const { return ptr; }
+      /// dereference operator returns reference to object
+      T& operator*()  const { return *ptr; }
+
+      /// arrow operator returns pointer to object
       T* operator->() const { return ptr; }
 
-    private:
-      T* ptr = nullptr;
+      /// implicit conversion operator
+      operator T*()   const { return ptr; }
 
-      NotNull() = delete;
+      /// explicit conversion operator
+      T* pointer()    const { return ptr; }
+
+    private:
+      T* ptr; // must be initialized in ctors
+
+      // no default construction
+      NotNull()                     = delete;
+
+      // NEITHER delete NOR define move ctor/assignment,
+      //   to make the compiler use the copy-versions.
+      // NotNull(NotNull&&)           = delete;
+      // NotNull& operator(NotNull&&) = delete;
   };
 
 

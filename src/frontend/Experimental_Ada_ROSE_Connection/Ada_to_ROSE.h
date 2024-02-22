@@ -11,11 +11,9 @@
 #include <boost/algorithm/string/case_conv.hpp>
 
 #include "Rose/Diagnostics.h"
-#include "cmdline.h"
 #include "sageGeneric.h"
 
 #include "Ada_to_ROSE_translation.h"
-#include "a_nodes.h"
 
 #define ADA_ASSERT(COND)      (sg::report_error_if(!(COND), "assertion failed: ", __FILE__, __LINE__))
 
@@ -41,10 +39,10 @@ extern Sawyer::Message::Facility mlog;
 /// converts all nodes reachable through the units in \ref head_nodes to ROSE
 /// \param head_nodes  entry point to ASIS
 /// \param file        the ROSE root for the translation unit
-void convertAsisToROSE(Nodes_Struct& head_nodes, SgSourceFile* file);
+void convertAsisToROSE(_Nodes_Struct& head_nodes, SgSourceFile* file);
 
 /// initialize translation settins
-void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
+// void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
 
 /// Ada identifier that can be used in maps/lookup tables
 /// \brief
@@ -391,7 +389,7 @@ struct ElemCreator
     : ctx(astctx), privateElems(privateItems)
     {}
 
-    void operator()(Element_Struct& elem);
+    void operator()(_Element_Struct& elem);
 
   private:
     AstContext ctx;
@@ -404,9 +402,9 @@ struct ElemCreator
 ///   the AST node \ref n.
 /// \note If an expression has decayed to a located node, the operator position will not be set.
 /// @{
-void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
-void attachSourceLocation(SgExpression& n, Element_Struct& elem, AstContext ctx);
-void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgLocatedNode& n, _Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgExpression& n, _Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgPragma& n, _Element_Struct& elem, AstContext ctx);
 /// @}
 
 /// computes a nodes source location from its children
@@ -450,7 +448,7 @@ struct UnitIdRange : Range<Unit_ID_Ptr>
 struct ElemIdRange : Range<Element_ID_Ptr>
 {
   using base = Range<Element_ID_Ptr>;
-  using value_type = Element_Struct;
+  using value_type = _Element_Struct;
 
   using base::base;
 };
@@ -633,7 +631,7 @@ namespace
   /// retrieves data from the big Asis map
   /// returns a nullptr if the element is not in the map.
   inline
-  Element_Struct*
+  _Element_Struct*
   retrieveElemOpt(const ASIS_element_id_to_ASIS_MapType& map, int key)
   {
     ADA_ASSERT(key >= 0); // fails on invalid elements
@@ -646,7 +644,7 @@ namespace
 
   /// retrieves data from the big Asis map
   inline
-  Element_Struct&
+  _Element_Struct&
   retrieveElem(const ASIS_element_id_to_ASIS_MapType& map, int key)
   {
     ADA_ASSERT(key != 0); // fails on optional elements
@@ -714,7 +712,7 @@ namespace
       }
       else
       {
-        logWarn() << "asis-element of type " << typeid(ElemT).name()
+        logWarn() << "asis-element of type " << typeid(el).name()
                   << " not available -- asismap[" << *first << "]=nullptr"
                   << std::endl;
       }
@@ -739,7 +737,7 @@ namespace
   /// creates a range for a contiguous sequence of IDs
   inline
   ElemIdRange
-  idRange(Element_ID_List lst)
+  idRange(_Element_ID_Array_Struct lst)
   {
     return ElemIdRange{lst.IDs, lst.IDs + lst.Length};
   }

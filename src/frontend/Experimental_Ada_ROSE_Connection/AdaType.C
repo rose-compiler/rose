@@ -272,6 +272,7 @@ namespace
           logKind("A_Selected_Component");
           res = &getExprTypeID(typeEx.Selector, ctx);
 
+/*
           /// temporary code to handle incomplete AST for generic instantiations
           /// \todo
           if (SgType* ty = isSgType(res))
@@ -284,6 +285,7 @@ namespace
             }
           }
           /// end temporary code
+*/
           break;
         }
 
@@ -340,10 +342,6 @@ namespace
         underty = &getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
 
         if (isConstant) underty = &mkConstType(*underty);
-
-        /** unused fields:
-               bool                         Has_Null_Exclusion;
-         */
         break;
       }
 
@@ -362,16 +360,16 @@ namespace
           logKind("An_Anonymous_Access_To_Protected_Function");
 
         // these are functions, so we need to worry about return types
-        const bool isFuncAccess = (  (access_type_kind == An_Anonymous_Access_To_Function)
-                                  || (access_type_kind == An_Anonymous_Access_To_Protected_Function)
-                                  );
-        const bool isProtected  = (  (access_type_kind == An_Anonymous_Access_To_Protected_Function)
-                                  || (access_type_kind == An_Anonymous_Access_To_Protected_Procedure)
-                                  );
+        const bool  isFuncAccess = (  (access_type_kind == An_Anonymous_Access_To_Function)
+                                   || (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                   );
+        const bool  isProtected  = (  (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                   || (access_type_kind == An_Anonymous_Access_To_Protected_Procedure)
+                                   );
 
-        ElemIdRange          params  = idRange(access.Access_To_Subprogram_Parameter_Profile);
-        SgType&              rettype = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
-                                                    : mkTypeVoid();
+        ElemIdRange params  = idRange(access.Access_To_Subprogram_Parameter_Profile);
+        SgType&     rettype = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
+                                           : mkTypeVoid();
         underty = &mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), isProtected);
         break;
       }
@@ -383,7 +381,7 @@ namespace
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
-    SgType& res = mkAdaAccessType(SG_DEREF(underty), true /* anonymous */);
+    SgType& res = mkAdaAccessType(SG_DEREF(underty), false /* general access */, true /* anonymous */);
 
     return excludeNullIf(res, access.Has_Null_Exclusion, ctx);
   }
@@ -413,8 +411,7 @@ namespace
         SgType* ato = &getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
 
         if (isConstant) ato = &mkConstType(*ato);
-        access_t = &mkAdaAccessType(SG_DEREF(ato));
-        if (isVariable) access_t->set_is_general_access(true);
+        access_t = &mkAdaAccessType(SG_DEREF(ato), isVariable /* general access */);
 
         break;
       }

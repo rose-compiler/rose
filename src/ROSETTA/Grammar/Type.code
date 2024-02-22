@@ -6751,9 +6751,12 @@ SgName
 SgAdaAccessType::get_mangled(void) const {
     const SgType* under_type = get_base_type();
 
-    string name("a'");
+    std::string name("a$a'");
 
+    name.append(1, get_is_anonymous()      ? 'a':'0');
+    name.append(1, get_is_general_access() ? 'g':'0');
     name.append(under_type->get_mangled());
+
     return SgName(name);
 }
 
@@ -6805,7 +6808,7 @@ SOURCE_ADA_DISCRIMINATED_TYPE_START
 
 SgName
 SgAdaDiscriminatedType::get_mangled() const {
-    string name("$ada$d'");
+    string name("a$d'");
     SgAdaDiscriminatedTypeDecl* dcl = isSgAdaDiscriminatedTypeDecl(get_declaration());
     ASSERT_not_null(dcl);
 
@@ -6830,9 +6833,9 @@ SOURCE_ADA_SUBTYPE_START
 SgName
 SgAdaSubtype::get_mangled(void) const {
     const SgType* under_type = get_base_type();
-    ROSE_ASSERT(under_type);
+    ASSERT_not_null(under_type);
 
-    std::string   name(under_type->get_mangled());
+    std::string name(under_type->get_mangled());
 
     name += ":>";
     name += get_constraint()->displayString();
@@ -6848,12 +6851,13 @@ SgAdaDerivedType::get_mangled(void) const {
     std::stringstream buf;
 
     const SgType* under_type = get_base_type();
-    ROSE_ASSERT(under_type);
+    ASSERT_not_null(under_type);
 
     // encode the this pointer since every new derived type is
     //   different.
-    buf << under_type->get_mangled()
-        << "$derived$"
+    buf << "a$D'"
+        << under_type->get_mangled()
+        << "'"
         << std::hex << this
         ;
 
@@ -6867,13 +6871,11 @@ SOURCE_ADA_MODULAR_TYPE_START
 
 SgName
 SgAdaModularType::get_mangled(void) const {
-    ROSE_ASSERT(get_modexpr());
-    std::stringstream buf;
+    ASSERT_not_null(get_modexpr());
+    std::string name = "a$mod'";
 
-    buf << "ada$modular$";
-    buf << get_modexpr()->unparseToString();
-
-    return SgName(buf.str());
+    name += get_modexpr()->unparseToString();
+    return SgName(name);
 }
 
 SOURCE_ADA_MODULAR_TYPE_END
@@ -6885,7 +6887,7 @@ SgAdaSubroutineType::get_mangled(void) const {
     ROSE_ASSERT(get_return_type() && get_parameterList() );
     std::stringstream buf;
 
-    buf << "ada$subroutine$";
+    buf << "a$subrout'";
     buf << get_return_type()->get_mangled();
     buf << get_parameterList()->get_mangled_name();
 
@@ -6904,14 +6906,13 @@ SgAdaFormalType::get_name() const {
 }
 
 
-
 SgName
 SgAdaFormalType::get_mangled(void) const {
   //~ SgAdaFormalTypeDecl* dcl = get_declaration();
   SgDeclarationStatement* dcl = get_declaration();
   ASSERT_not_null(dcl);
 
-  string name("ft'");
+  string name("a$f'");
   // name.append(get_type_name());
   name.append(dcl->get_mangled_name());
   return SgName(name);
@@ -8215,7 +8216,7 @@ SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type
           assert(newType != NULL);
 #else
           SgPointerType* newType = new SgPointerType(base_type);
-          assert(newType != NULL);
+          ASSERT_not_null(newType);
 
           SgName name = newType->get_mangled();
 
@@ -8279,7 +8280,7 @@ SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type
 #endif
 
           base_type->p_ptr_to = newType;
-          assert(base_type->p_ptr_to != NULL);
+          ASSERT_not_null(base_type->p_ptr_to);
 
           return base_type->p_ptr_to;
         }
@@ -8903,17 +8904,17 @@ SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
 SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_START
 
 SgAdaAccessType*
-SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran_type_kind*/)
+SgAdaAccessType::createType (SgType* base_type, bool generalAccess, bool anonymous, SgExpression* /*optional_fortran_type_kind*/)
 {
-  SgAdaAccessType  proto(base_type); // \pp not sure if stack allocation works
+  SgAdaAccessType  proto(base_type, generalAccess, anonymous);
   SgName           name = proto.get_mangled();
   SgType*          ty = get_globalTypeTable()->lookup_type(name);
 
   if (SgAdaAccessType* unified = isSgAdaAccessType(ty))
     return unified;
 
-  ROSE_ASSERT(ty == NULL);
-  SgAdaAccessType* res = new SgAdaAccessType(base_type);
+  ROSE_ASSERT(ty == nullptr && "type name mangling issue");
+  SgAdaAccessType* res = new SgAdaAccessType(base_type, generalAccess, anonymous);
 
   get_globalTypeTable()->insert_type(name, res);
   return res;
@@ -9256,16 +9257,16 @@ SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_START
 
 // SgModifierType* SgModifierType::createType(SgType* base_type, unsigned int f)
 SgModifierType*
-SgModifierType::createType(SgType* base_type, unsigned int f, SgExpression* optional_fortran_type_kind )
+SgModifierType::createType(SgType*, unsigned int, SgExpression*)
    {
   // DQ (7/28/2010): Now we make it an error to call this function!
      printf ("ERROR: This function should not be called (replaced by different API plus insertModifierTypeIntoTypeTable()) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
+#if 0
   // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
-#if 0
   // DQ (7/26/2010): Note that "unsigned int f" is not used!
      ROSE_ASSERT(base_type != NULL);
 

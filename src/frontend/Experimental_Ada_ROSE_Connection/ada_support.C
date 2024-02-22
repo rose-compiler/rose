@@ -66,57 +66,14 @@ int main(int argc, char** argv)
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
      Rose::Cmdline::Ada::CmdlineSettings settings = Rose::Cmdline::Ada::commandlineSettings();
-#if OBSOLETE_CODE
-     Rose::Cmdline::Ada::CmdlineSettings settingscpy = settings;
-
-     scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
-
-     p.errorStream(mlog[Sawyer::Message::FATAL]);               // print messages and exit rather than throwing exceptions
-     //~ p.with(CommandLine::genericSwitches());   // things like --help, --version, --log, --threads, etc.
-     //~ p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
-
-     // Create a group of switches specific to this tool
-     scl::SwitchGroup ada2Rose("Ada2ROSE (A2R) - specific switches");
-
-     ada2Rose.name("asis");  // the optional switch prefix
-
-     ada2Rose.insert(scl::Switch("process_predefined_units")
-           .intrinsicValue(true, settings.processPredefinedUnits)
-           .doc("With Asis's predefined units"));
-
-     ada2Rose.insert(scl::Switch("process_implementation_units")
-           .intrinsicValue(true, settings.processImplementationUnits)
-           .doc("Enables Asis implementation unit processing"));
-
-     ada2Rose.insert(scl::Switch("asis_debug")
-           .intrinsicValue(true, settings.asisDebug)
-           .doc("Sets Asis debug flag"));
-
-     ada2Rose.insert(scl::Switch("warn")
-           .intrinsicValue(true, settings.logWarn)
-           .doc("Enables warning messages"));
-
-     ada2Rose.insert(scl::Switch("trace")
-           .intrinsicValue(true, settings.logTrace)
-           .doc("Enables tracing messages"));
-
-     ada2Rose.insert(scl::Switch("info")
-           .intrinsicValue(true, settings.logInfo)
-           .doc("Enables info messages"));
-
-     scl::ParserResult cmdline = p.with(ada2Rose).parse(args).apply();
-
-     // the unparsed commands is likely to be passed into ASIS
-     std::vector<std::string> unparsedArgs = cmdline.unparsedArgs();
-#endif /* OBSOLETE_CODE */
      std::vector<std::string> unparsedArgs = args;
-     std::string ASISIncludeArgs;
-     std::string GNATArgs;
-     std::string ASISArgs;
 
+     std::string              ASISIncludeArgs;
+     std::string              GNATArgs;
+     std::string              ASISArgs;
+     std::vector<std::string> includePaths;
 
-     vector<string> includePaths;
-     for (unsigned int i=1; i < unparsedArgs.size(); i++)
+     for (unsigned int i=1; i < unparsedArgs.size(); ++i)
         {
        // most options appear as -<option>
        // have to process +w2 (warnings option) on some compilers so include +<option>
@@ -156,7 +113,9 @@ int main(int argc, char** argv)
 
      logctrl.control(warninglevels);
 
-     mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
+     mlog[Sawyer::Message::TRACE] << "In ada_support.C: In ada_main(): calling ada support for file = "
+                                  << file->getFileName()
+                                  << std::endl;
 
      const char* gnat_home = std::getenv("GNAT_HOME");
 
@@ -175,7 +134,7 @@ int main(int argc, char** argv)
 
      Rose::failedAssertionBehavior(Rose::throwOnFailedAssertion);
 
-     mprintf ("BEGIN.\n");
+     mlog[Sawyer::Message::TRACE] << "BEGIN." << std::endl;
 
      Nodes_Struct head_nodes;
 
@@ -228,10 +187,13 @@ int main(int argc, char** argv)
        asis_adapterinit();
 
     // PP (11/5/20): Use Charles' new adapter_wrapper_with_flags function
-       mprintf( "calling Asis: src:%s gnat:%s outdir:%s pdunit:%d implunit:%d dbg:%d\n",
-                cstring_SrcFile, gnat_home, cstring_GnatOutputDir,
-                settings.processPredefinedUnits, settings.processImplementationUnits, settings.asisDebug
-              );
+       mlog[Sawyer::Message::TRACE] << "calling Asis: src: " << cstring_SrcFile
+                                    << " gnat: " << gnat_home
+                                    << " outdir: " << cstring_GnatOutputDir
+                                    << " pdunit: " << settings.processPredefinedUnits
+                                    << " implunit: " << settings.processImplementationUnits
+                                    << " dbg: " << settings.asisDebug
+                                    << std::endl;
 
        head_nodes = adapter_wrapper_with_flags( cstring_SrcFile,
                                                 const_cast<char*>(gnat_home),
@@ -242,17 +204,20 @@ int main(int argc, char** argv)
                                                 settings.asisDebug
                                               );
 
-       if (head_nodes.Elements == NULL) {
-          mprintf ("adapter_wrapper_with_flags returned NO elements.\n");
+       if (head_nodes.Elements == nullptr) {
+          mlog[Sawyer::Message::FATAL] << "adapter_wrapper_with_flags returned NULL." << std::endl;
           status = 1;
        } else {
-          mprintf ("adapter_wrapper_with_flags returned %i elements.\n", head_nodes.Elements->Next_Count + 1);
+          mlog[Sawyer::Message::INFO] << "adapter_wrapper_with_flags returned "
+                                      << head_nodes.Elements->Next_Count + 1
+                                      << " elements."
+                                      << std::endl;
        }
 
        boostfs::current_path(currentDir);
      }
 
-     mprintf ("END.\n");
+     mlog[Sawyer::Message::TRACE] << "END." << std::endl;
 
      try
      {
@@ -279,7 +244,7 @@ int main(int argc, char** argv)
 
      // restore ROSE assertion behavior
      Rose::failedAssertionBehavior(roseFailureHandler);
-     mprintf ("Leaving ada_main(): status = %d \n", status);
+     mlog[Sawyer::Message::TRACE] << "Leaving ada_main(): status = " << status << std::endl;
      return status;
    }
 

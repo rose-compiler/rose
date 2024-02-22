@@ -728,7 +728,7 @@ Grammar::setUpTypes ()
   // PP (3/24/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
             "SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE",
-            "SgType* type = NULL");
+            "SgType* type, bool generalAccess, bool anonymous");
 
   // PP (3/31/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaSubtype,
@@ -1185,7 +1185,7 @@ Grammar::setUpTypes ()
 
      // MS: is it general access ("all") or not?
      AdaAccessType.setDataPrototype ("bool", "is_general_access", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      // PP (2/17/22) commented out and moved into a modifier
@@ -1211,7 +1211,7 @@ Grammar::setUpTypes ()
                                      //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaAccessType.setDataPrototype ("bool", "is_anonymous", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaSubtype.setFunctionPrototype ("HEADER_ADA_SUBTYPE", "../Grammar/Type.code" );
 
@@ -1224,7 +1224,7 @@ Grammar::setUpTypes ()
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaSubtype.setDataPrototype ("bool", "fromRootType", "= false",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaDerivedType.setFunctionPrototype ("HEADER_ADA_DERIVEDTYPE", "../Grammar/Type.code" );
 

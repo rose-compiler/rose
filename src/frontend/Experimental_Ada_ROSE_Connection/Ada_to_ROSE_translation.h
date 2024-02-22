@@ -19,14 +19,14 @@ namespace Ada_ROSE_Translation
      //~ template <class KeyType, class SageNode>
      //~ using map_t = std::map<KeyType, SageNode>;
 
-     using ASIS_element_id_to_ASIS_MapType = map_t<int, Element_Struct*> ;
+     using ASIS_element_id_to_ASIS_MapType = map_t<int, _Element_Struct*> ;
 
      // node mapping accessors, storage, and retrieval
      // of globally visible elements
      const ASIS_element_id_to_ASIS_MapType& elemMap();
            ASIS_element_id_to_ASIS_MapType& elemMap_update();
 
-     void ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSourceFile* file);
+     void ada_to_ROSE_translation(_Nodes_Struct& head_nodes, SgSourceFile* file);
    }
 
 

@@ -15,6 +15,7 @@
 #include "AdaExpression.h"
 #include "AdaStatement.h"
 #include "AdaType.h"
+#include "cmdline.h"
 
 #include "sageInterfaceAda.h"
 

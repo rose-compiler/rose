@@ -4828,43 +4828,24 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> /*inputCommandL
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
      SageBuilder::symbol_table_case_insensitive_semantics = false;
 
-     std::string frontEndCommandLineString;
-     //~ frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
-
-     if ( get_verbose() > 1 )
-        {
-          printf ("In build_Ada_AST(): Before calling ada_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-        }
-
-     //~ for (std::string& s : inputCommandLine) std::cerr << "ic: " << s << std::endl;
-     //~ for (std::string& s : argv) std::cerr << "ar: " << s << std::endl;
-
-     int frontendErrorLevel = 0;
-
-  // PP (11/09/20): pass unhandled args as string to the Ada frontend
-     //~ was:
-     //~ int ada_argc = 0;
-     //~ char **ada_argv = NULL;
-     //~ CommandlineProcessing::generateArgcArgvFromList(argv, ada_argc, ada_argv);
-
   // Rasmussen (10/9/2017) Added compile time check to build if not configured for Ada
 #ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-  // Prototype declaration.
-     //~ int ada_main(int argc, char** argv, SgSourceFile* file);
+  // Function prototype declaration.
      int ada_main(const std::vector<std::string>& args, SgSourceFile* file);
 
-     frontendErrorLevel = ada_main(argv, this);
+     mlog[TRACE] << "In build_Ada_AST(): Before calling ada_main()"
+                 << std::endl;
+
+     const int frontendErrorLevel = ada_main(argv, this);
+     mlog[TRACE] << "In build_Ada_AST(): After calling ada_main()"
+                 << std::endl;
+
+     return frontendErrorLevel;
 #else
-     printf ("ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined \n");
-     return frontendErrorLevel;
+     mlog[ERROR] << "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined."
+                 << std::endl;
+     return 0;
 #endif
-
-     if ( get_verbose() > 1 )
-        {
-          printf ("In build_Ada_AST(): After calling ada_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-        }
-
-     return frontendErrorLevel;
    }
 
 
@@ -6046,7 +6027,8 @@ int SgProject::link ( std::string linkerName )
   // DQ (30/8/2017): Csharp does not include a concept of linking, as I understand it presently.
      if (get_Csharp_only() == true || get_Ada_only() == true)
         {
-          printf ("WARNING: In SgProject::link(): New language support is skipping the linking step (for now) \n");
+          mlog[WARN] << "In SgProject::link(): New language support is skipping the linking step (for now)"
+                     << std::endl;
           return 0;
         }
      else if (get_Jovial_only() == true)

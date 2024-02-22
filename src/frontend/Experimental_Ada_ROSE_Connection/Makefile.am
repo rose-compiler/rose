@@ -25,13 +25,7 @@ else
 endif
 
 pkginclude_HEADERS := \
-    ada_support.h \
-    Ada_to_ROSE_translation.h \
-    Ada_to_ROSE.h \
-    AdaExpression.h \
-    AdaMaker.h \
-    AdaStatement.h \
-    AdaType.h
+    AdaMaker.h 
 
 # DQ (9/5/2017): We don't need this here, and linking is represented in ROSE/src directory's Makefile.am.
 # Temporary location, but these libraries need to be built into ROSE's build tree, and later installed into ROSE's install tree.
