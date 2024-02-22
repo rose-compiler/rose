@@ -2433,7 +2433,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 
 
 void
-Unparse_ExprStmt::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) {}
+Unparse_ExprStmt::unparseAssnExpr(SgExpression*, SgUnparse_Info&) {}
 
 
 void

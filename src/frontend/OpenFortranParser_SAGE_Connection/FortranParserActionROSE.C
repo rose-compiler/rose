@@ -1552,7 +1552,7 @@ void c_action_label(Token_t * lbl)
      * @param hasGenericNameList True if a generic-name-list is present.
      */
     void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * /*eos*/,
-            ofp_bool hasTypeAttrSpecList, ofp_bool hasGenericNameList)
+            ofp_bool /*hasTypeAttrSpecList*/, ofp_bool /*hasGenericNameList*/)
     {
         // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
 
@@ -12460,7 +12460,7 @@ void c_action_case_value()
      * do_term_action_stmt
      */
     void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword,
-            Token_t *doKeyword, Token_t *id, Token_t *eos, ofp_bool inserted)
+            Token_t */*doKeyword*/, Token_t */*id*/, Token_t */*eos*/, ofp_bool inserted)
     {
 #if 1 //=======================================================================================================
 #if 1
@@ -20060,7 +20060,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label: label of the statement
      * @param team_id: the team ID (optional)
      */
-    void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos)
+    void c_action_rice_end_with_team_stmt(Token_t */*label*/, Token_t */*team_id*/, Token_t *eos)
     {
         ROSE_ASSERT(eos != NULL);
 
