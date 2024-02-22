@@ -79,6 +79,11 @@ void BuildImpl(Fortran::parser::BOZLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::CharLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::LogicalLiteralConstant &, SgExpression* &);
 
+// ArraySpec ...
+void BuildImpl(Fortran::parser::AssumedImpliedSpec &, SgExpression* &);
+void BuildImpl(Fortran::parser::ExplicitShapeSpec &, SgExpression* &);
+void BuildImpl(Fortran::parser::AssumedShapeSpec &, SgExpression* &);
+
 // KindParam
 void BuildImpl(std::optional<Fortran::parser::KindParam> &, std::uint64_t &, std::string &);
 
@@ -122,6 +127,7 @@ void Build(Fortran::parser::            CharLength &, SgExpression* &);
 void Build(Fortran::parser::        Initialization &, SgExpression* &);
 void Build(Fortran::parser::          KindSelector &, SgExpression* &);
 
+#if USE_DEPRECATED
 // ArraySpec
 void Build(Fortran::parser::                   ExplicitShapeSpec &, SgExprListExp* &);
 void Build(Fortran::parser::                    AssumedShapeSpec &, SgExprListExp* &);
@@ -129,6 +135,7 @@ void Build(Fortran::parser::               DeferredShapeSpecList &, SgExprListEx
 void Build(Fortran::parser::                     AssumedSizeSpec &, SgExprListExp* &);
 void Build(Fortran::parser::                    ImpliedShapeSpec &, SgExprListExp* &);
 void Build(Fortran::parser::                     AssumedRankSpec &, SgExprListExp* &);
+#endif
 
 void Build(Fortran::parser::                   SpecificationExpr &, SgExpression* &);
 void Build(Fortran::parser::Scalar<Fortran::parser::IntExpr>     &, SgExpression* &);
@@ -256,12 +263,6 @@ void Build(Fortran::parser::    SelectTypeConstruct&);
 void Build(Fortran::parser::         WhereConstruct&);
 void Build(Fortran::parser::        ForallConstruct&);
 
-// DerivedTypeDef
-void Build(Fortran::parser::DerivedTypeStmt&, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifiers);
-void Build(Fortran::parser::DataComponentDefStmt &, SgStatement* &stmt);
-void Build(Fortran::parser::ComponentDecl &, std::list<EntityDeclTuple> &, SgType*);
-void Build(Fortran::parser::ComponentDecl &, std::string &name, SgExpression* &init, SgType* &type, SgType* baseType);
-
 // DoConstruct
 void Build(Fortran::parser::NonLabelDoStmt&, SgExpression* &name, SgExpression* &control);
 void Build(Fortran::parser::LoopControl::Concurrent&, SgExpression* &);
@@ -272,7 +273,6 @@ void Build(Fortran::parser::IfConstruct::  ElseBlock&, SgBasicBlock* &false_body
 void Build(std::list<Fortran::parser::IfConstruct::ElseIfBlock> &, SgBasicBlock* &else_if_block, SgIfStmt* &else_if_stmt);
 
 // SpecificationConstruct
-void Build(Fortran::parser::             DerivedTypeDef&);
 void Build(Fortran::parser::                    EnumDef&);
 void Build(Fortran::parser::             InterfaceBlock&);
 void Build(Fortran::parser::               StructureDef&);
@@ -289,6 +289,7 @@ void getAttrSpec(Fortran::parser:: AttrSpec &, std::list<LanguageTranslation::Ex
 void getModifiers(Fortran::parser:: AccessSpec &, LanguageTranslation::ExpressionKind &);
 void getModifiers(Fortran::parser:: IntentSpec &, LanguageTranslation::ExpressionKind &);
 void getModifiers(Fortran::parser:: LanguageBindingSpec &, LanguageTranslation::ExpressionKind &);
+void getModifiers(Fortran::parser:: TypeAttrSpec &, LanguageTranslation::ExpressionKind &);
 
 } // namespace Rose::builder
 

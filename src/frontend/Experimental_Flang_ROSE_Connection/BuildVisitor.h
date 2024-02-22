@@ -74,6 +74,9 @@ public:
   void Build(Fortran::parser::ImplicitStmt &);
   void Build(Fortran::parser::TypeDeclarationStmt &);
 
+  // SpecificationConstruct
+  void Build(Fortran::parser::DerivedTypeDef &);
+
   void Build(Fortran::parser::IntegerTypeSpec &);
   void Build(Fortran::parser::IntrinsicTypeSpec::Real &);
   void Build(Fortran::parser::IntrinsicTypeSpec::DoublePrecision &);

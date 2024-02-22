@@ -30,7 +30,7 @@ using namespace Rose;
 
 // Unparse language keywords
 void FortranCodeGeneration_locatedNode::
-curprint_keyword(const std::string &keyword, SgUnparse_Info& info)
+curprint_keyword(const std::string &keyword, SgUnparse_Info& /*info*/)
 {
   if (keywordsAreUpperCase) {
     // The default construction used below
@@ -44,7 +44,7 @@ curprint_keyword(const std::string &keyword, SgUnparse_Info& info)
 }
 
 inline bool
-namesMatch ( const string &x, const string &y )
+namesMatch (const string &x, const string &y)
    {
   // This function checks a case insensitive match of x against y.
   // This is required because Fortran is case insensitive.
@@ -1388,13 +1388,12 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
         {
        // Output the forward declaration only
 
-       // This is a special name for the case where the program header should not be output (it did not appear in the original source file).
-          if (proghdr->get_name() != ROSE_IMPLICIT_FORTRAN_PROGRAM_NAME)
-             {
-            // Are there possible qualifiers that we are missing?
-               curprint("PROGRAM ");
-               curprint(proghdr->get_name().str());
-             }
+       // The program header statement should not be output (it did not appear in the original source file).
+          std::string name{proghdr->get_name()};
+          if (name.size() > 0 && name != ROSE_IMPLICIT_FORTRAN_PROGRAM_NAME) {
+            curprint("PROGRAM ");
+            curprint(proghdr->get_name().str());
+          }
 
        // Output 1 new line so that new statements will appear on their own line after the SgProgramHeaderStatement declaration.
           unp->cur.insert_newline(1);
@@ -2298,7 +2297,7 @@ FortranCodeGeneration_locatedNode::unparseContinueStmt(SgContinueStmt* continueS
 }
 
 void
-FortranCodeGeneration_locatedNode::unparseFortranContinueStmt(SgFortranContinueStmt* continueStmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFortranContinueStmt(SgFortranContinueStmt* /*stmt*/, SgUnparse_Info& info)
 {
   curprint_keyword("CONTINUE", info);
   unp->cur.insert_newline(1);
@@ -4049,9 +4048,6 @@ FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, S
      ASSERT_not_null(exprList);
 
      curprint("allocate( ");
-
-  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
-  // unparseExprList(exprList, info, false /*paren*/);
      unparseExprList(exprList, info);
 
      if (s->get_stat_expression() != nullptr)
@@ -4084,9 +4080,6 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
      ASSERT_not_null(exprList);
 
      curprint("deallocate( ");
-
-  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
-  // unparseExprList(exprList, info, false /*paren*/);
      unparseExprList(exprList, info);
 
      if (s->get_stat_expression() != nullptr)

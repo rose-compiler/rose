@@ -58,6 +58,11 @@ public:
   void Build(Fortran::parser::IntLiteralConstant &);
   void Build(Fortran::parser::RealLiteralConstant &);
 
+  // ArraySpec ...
+  void Build(Fortran::parser::AssumedImpliedSpec &);
+  void Build(Fortran::parser::ExplicitShapeSpec &);
+  void Build(Fortran::parser::AssumedShapeSpec &);
+
   void Build(Fortran::parser::CharBlock &x) {
     // For future use with token-based unparsing?
 #if 0

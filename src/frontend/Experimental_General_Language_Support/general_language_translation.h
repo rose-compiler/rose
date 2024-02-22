@@ -71,6 +71,7 @@ namespace LanguageTranslation
        // Type modifiers
        // --------------
           e_type_modifier_list,
+          e_type_modifier_abstract,
           e_type_modifier_allocatable,
           e_type_modifier_asynchronous,
           e_type_modifier_bind_c,

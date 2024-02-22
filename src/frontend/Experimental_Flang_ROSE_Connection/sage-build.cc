@@ -94,10 +94,41 @@ void BuildExprVisitor::Build(Fortran::parser::IntLiteralConstant &x) {
   this->set(sg);
 }
 
+// RealLiteralConstant
 void BuildExprVisitor::Build(Fortran::parser::RealLiteralConstant &x) {
   SgExpression* sg{nullptr};
   BuildImpl(x, sg);
-#if 0
+#if REPLACE
+  Replace(x, sg);
+#endif
+  this->set(sg);
+}
+
+// AssumedImpliedSpec
+void BuildExprVisitor::Build(Fortran::parser::AssumedImpliedSpec &x) {
+  SgExpression* sg{nullptr};
+  BuildImpl(x, sg);
+#if REPLACE
+  Replace(x, sg);
+#endif
+  this->set(sg);
+}
+
+// AssumedShapeSpec
+void BuildExprVisitor::Build(Fortran::parser::AssumedShapeSpec &x) {
+  SgExpression* sg{nullptr};
+  BuildImpl(x, sg);
+#if REPLACE
+  Replace(x, sg);
+#endif
+  this->set(sg);
+}
+
+// ExplicitShapeSpec
+void BuildExprVisitor::Build(Fortran::parser::ExplicitShapeSpec &x) {
+  SgExpression* sg{nullptr};
+  BuildImpl(x, sg);
+#if REPLACE
   Replace(x, sg);
 #endif
   this->set(sg);
@@ -496,7 +527,6 @@ void BuildVisitor::Build(parser::Module &x)
   auto &stmt{std::get<Statement<ModuleStmt>>(x.t)};
   auto &end{std::get<Statement<EndModuleStmt>>(x.t)};
 
-  //TODO: Probably need to build scope statement here
   SgModuleStatement* module{nullptr};
   builder.Enter(module, stmt.statement.v.ToString());
 
@@ -509,6 +539,7 @@ void BuildVisitor::Build(parser::Module &x)
     endName = end.statement.v->ToString();
   }
 
+  // Leave SageTreeBuilder for SgModuleStatement
   builder.Leave(module);
 }
 
@@ -533,9 +564,14 @@ void Build(parser::Submodule &x) {
   ABORT_NO_IMPL;
 }
 
-  // BlockData
+// BlockData
 void Build(parser::BlockData &x) {
+  // std::tuple<> Statement<BlockDataStmt>, SpecificationPart, Statement<EndBlockDataStmt>
   std::cout << "Rose::builder::Build(BlockData)\n";
+
+  // BlockDataStmt std::optional<Name> v;
+  // EndBlockDataStmt std::optional<Name> v;
+
   ABORT_NO_IMPL;
 }
 
@@ -830,12 +866,61 @@ void BuildImpl(parser::CharLiteralConstant &x, SgExpression* &expr)
   expr = SageBuilder::buildStringVal_nfi(x.GetString());
 }
 
-void BuildImpl(const parser::LogicalLiteralConstant &x, SgExpression* &expr)
+void BuildImpl(parser::LogicalLiteralConstant &x, SgExpression* &expr)
 {
   std::cout << "BuildImpl(LogicalLiteralConstant)\n";
   ABORT_NO_TEST;
 
   expr = SageBuilder::buildBoolValExp_nfi(std::get<0>(x.t));
+}
+
+void BuildImpl(parser::AssumedImpliedSpec &x, SgExpression* &expr)
+{
+  // is [ lower-bound : ] *
+  // AssumedImpliedSpec std::optional<SpecificationExpr> v;
+  SgExpression* ub{SageBuilderCpp17::buildAsteriskShapeExp_nfi()};
+  expr = ub;
+
+  // There may be a lower-bound
+  if (x.v) {
+    SgExpression* lb{nullptr};
+    SgExpression* stride{SageBuilder::buildIntVal_nfi(std::string("1"))}; // default stride of 1
+    WalkExpr(x.v, lb);
+    expr = SageBuilder::buildSubscriptExpression_nfi(lb, ub, stride);
+  }
+}
+
+void BuildImpl(parser::AssumedShapeSpec &x, SgExpression* &expr)
+{
+  // is [ lower-bound ] :
+  // AssumedShapeSpec std::optional<SpecificationExpr> v;
+  SgExpression* lb{nullptr}; // maybe lower-bound
+  SgExpression* ub{SageBuilder::buildNullExpression_nfi()}; // no upper-bound
+  SgExpression* stride{SageBuilder::buildIntVal_nfi(std::string("1"))}; // default stride of 1
+
+  if (x.v) {
+    WalkExpr(x.v, lb);
+  }
+  expr = SageBuilder::buildSubscriptExpression_nfi(lb, ub, stride);
+}
+
+void BuildImpl(parser::ExplicitShapeSpec &x, SgExpression* &expr)
+{
+  // is [ lower-bound : ] upper-bound
+  // ExplicitShapeSpec std::tuple<std::optional<SpecificationExpr>, SpecificationExpr> t;
+
+  // There shall be an upper-bound
+  SgExpression* ub{nullptr};
+  WalkExpr(std::get<1>(x.t), ub);
+  expr = ub;
+
+  // There may be a lower-bound
+  if (std::get<0>(x.t)) {
+    SgExpression* lb{nullptr};
+    SgExpression* stride{SageBuilder::buildIntVal_nfi(std::string("1"))}; // default stride of 1
+    WalkExpr(std::get<0>(x.t).value(), lb);
+    expr = SageBuilder::buildSubscriptExpression_nfi(lb, ub, stride);
+  }
 }
 
 void BuildImpl(parser::UseStmt &x)
@@ -1018,12 +1103,38 @@ void BuildVisitor::Build(parser::TypeDeclarationStmt &x) {
   builder.Leave(varDecl, modifiers);
 }
 
+// SpecificationConstruct
+void BuildVisitor::Build(parser::DerivedTypeDef &x) {
+  // std::tuple<> Statement<DerivedTypeStmt>, std::list<Statement<TypeParamDefStmt>>,
+  //              std::list<Statement<PrivateOrSequence>>,
+  //              std::list<Statement<ComponentDefStmt>>,
+  //              std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>
+  using namespace Fortran::parser;
+
+  std::cerr << "BuildVisitor::Build(DerivedTypeDef)\n";
+
+  auto &stmt{std::get<Statement<DerivedTypeStmt>>(x.t)};
+  auto &end{std::get<Statement<EndTypeStmt>>(x.t)};
+
+  // DerivedTypeStmt std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;
+  std::string name{std::get<Name>(stmt.statement.t).ToString()};
+
+  SgDerivedTypeStatement* derived{nullptr};
+  builder.Enter(derived, name);
+
+  std::list<LanguageTranslation::ExpressionKind> modifiers;
+  for (auto &attr : std::get<0>(stmt.statement.t)) {
+    LanguageTranslation::ExpressionKind m;
+    getModifiers(attr, m);
+    modifiers.push_back(m);
+  }
+
+  // Leave SageTreeBuilder for SgDerivedTypeStmt
+  builder.Leave(derived, modifiers);
+}
+
 void Build(parser::DeclarationTypeSpec::Type &x, SgType* &type)
 {
-#if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(Type)\n";
-#endif
-
    Build(x.derived, type);   // DerivedTypeSpec
 }
 
@@ -1259,53 +1370,54 @@ void Build(parser::ArraySpec &x, SgType* &type, SgType* baseType)
   //
   using namespace Fortran::parser;
 
+  SgExpression* expr{nullptr};
+  SgExprListExp* dimInfo{SageBuilder::buildExprListExp_nfi()};
+
   common::visit(common::visitors{
              [&] (std::list<ExplicitShapeSpec> &y) {
-                   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
-                   for (auto &spec : y) {
-                     SgExpression* expr{nullptr};
-                     WalkExpr(spec, expr);
+                   for (ExplicitShapeSpec &spec : y) { // is [ lower-bound : ] upper-bound
+                     WalkExpr(spec, expr=nullptr);
                      dimInfo->get_expressions().push_back(expr);
                    }
-                   type = SageBuilder::buildArrayType(baseType, dimInfo);
                },
              [&] (std::list<AssumedShapeSpec> &y) {
-                   ABORT_NO_IMPL;
+                   for (AssumedShapeSpec &spec : y) { // is [ lower-bound ]:
+                     WalkExpr(spec, expr=nullptr);
+                     dimInfo->get_expressions().push_back(expr);
+                   }
                },
              [&] (DeferredShapeSpecList &y) {
-                   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
-                   for (int ii{0}; ii < y.v; ii++) {
+                   for (int ii{0}; ii < y.v; ii++) { // is :
                      dimInfo->get_expressions().push_back(SageBuilder::buildColonShapeExp_nfi());
                    }
-                   type = SageBuilder::buildArrayType(baseType, dimInfo);
                },
              [&] (AssumedSizeSpec &y) {
                    // std::tuple<std::list<ExplicitShapeSpec>, AssumedImpliedSpec> t;
-                   SgExpression* expr{nullptr};
-                   WalkExpr(y, expr);
-                   ABORT_NO_IMPL;
+                   for (ExplicitShapeSpec &spec : std::get<0>(y.t)) { // is [ lower-bound : ] upper-bound
+                     WalkExpr(spec, expr=nullptr);
+                     dimInfo->get_expressions().push_back(expr);
+                   }
+                   AssumedImpliedSpec &spec{std::get<1>(y.t)}; // is [ lower-bound : ] *
+                   WalkExpr(spec, expr=nullptr);
+                   dimInfo->get_expressions().push_back(expr);
                },
              [&] (ImpliedShapeSpec &y) {
-                   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
-                   for (const AssumedImpliedSpec &spec : y.v) {
-                     // std::optional<SpecificationExpr> spec.v
-                     if (spec.v) {
-                       SgExpression* expr{nullptr};
-                       WalkExpr(spec.v.value(), expr);
-                       ABORT_NO_TEST;
-                       dimInfo->get_expressions().push_back(expr);
-                     } else {
-                       // (*)
-                       dimInfo->get_expressions().push_back(SageBuilderCpp17::buildAsteriskShapeExp_nfi());
-                     }
+                   for (AssumedImpliedSpec &spec : y.v) { // is [ lower-bound : ] *
+                     WalkExpr(spec, expr=nullptr);
+                     dimInfo->get_expressions().push_back(expr);
                    }
-                   type = SageBuilder::buildArrayType(baseType, dimInfo);
                 },
              [&] (AssumedRankSpec &y) {
-                    ABORT_NO_IMPL;
-                },
+                   // is ..
+                   // TODO: Need new espression type in ROSE
+                   // dimInfo->get_expressions().push_back(SageBuilder::buildRankShapeExp_nfi());
+                   ABORT_NO_IMPL;
+                }
            },
      x.u);
+
+  // build the final array type as return value
+  type = SageBuilder::buildArrayType(baseType, dimInfo);
 }
 
 // CoarraySpec
@@ -1325,61 +1437,6 @@ void Build(parser::Initialization &x, SgExpression* &expr)
 {
   std::cout << "Rose::builder::Build(Initialization)\n";
    ABORT_NO_IMPL;
-}
-
-// ArraySpec
-//
-void Build(parser::ExplicitShapeSpec &x, SgExprListExp* &exprList)
-{
-  std::cout << "Rose::builder::Build(ExplicitShapeSpec)\n";
-  ABORT_NO_IMPL;
-
-  exprList = SageBuilder::buildExprListExp_nfi();
-#if 0
-  if (auto & specExpr1 = std::get<0>(x.t)) {
-    Build(specExpr1.value(), expr);      // 1st SpecificationExpr (optional)
-  }
-
-  Build(std::get<1>(x.t), expr);         // 2nd SpecificationExpr
-#endif
-}
-
-void Build(parser::AssumedShapeSpec &x, SgExprListExp* &exprList)
-{
-  std::cout << "Rose::builder::Build(AssumedShapeSpec)\n";
-  ABORT_NO_IMPL;
-}
-
-void Build(parser::DeferredShapeSpecList &x, SgExprListExp* &exprList)
-{
-  std::cout << "Rose::builder::Build(DeferredShapeSpecList)\n";
-  ABORT_NO_IMPL;
-
-  int rank{x.v};
-  exprList = SageBuilder::buildExprListExp_nfi();
-
-  for (int i = 0; i < rank; i++) {
-    SgColonShapeExp* colonExpr = SageBuilder::buildColonShapeExp_nfi();
-    exprList->get_expressions().push_back(colonExpr);
-  }
-}
-
-void Build(parser::AssumedSizeSpec &x, SgExprListExp* &exprList)
-{
-  std::cout << "Rose::builder::Build(AssumedSizeSpec)\n";
-  ABORT_NO_IMPL;
-}
-
-void Build(parser::ImpliedShapeSpec &x, SgExprListExp* &exprList)
-{
-  std::cout << "Rose::builder::Build(ImpliedShapeSpec)\n";
-  ABORT_NO_IMPL;
-}
-
-void Build(parser::AssumedRankSpec &x, SgExprListExp* &exprList)
-{
-  std::cout << "Rose::builder::Build(AssumedRankSpec)\n";
-  ABORT_NO_IMPL;
 }
 
 void Build(parser::SpecificationExpr &x, SgExpression* &expr)
@@ -2824,8 +2881,6 @@ void Build(parser::OpenACCDeclarativeConstruct &x)
 // AccessSpec
 void getModifiers(parser::AccessSpec &x, LanguageTranslation::ExpressionKind &m) {
   using namespace LanguageTranslation;
-  std::cout << "getModifiers(AccessSpec)\n";
-
   switch(x.v) {
     case parser::AccessSpec::Kind::Public:
       m = ExpressionKind::e_access_modifier_public;
@@ -2836,10 +2891,9 @@ void getModifiers(parser::AccessSpec &x, LanguageTranslation::ExpressionKind &m)
   }
 }
 
+// IntentSpec
 void getModifiers(parser::IntentSpec &x, LanguageTranslation::ExpressionKind &m) {
   using namespace LanguageTranslation;
-  std::cout << "getModifiers(IntentSpec)\n";
-
   switch(x.v) {
     case parser::IntentSpec::Intent::In:
       m = ExpressionKind::e_type_modifier_intent_in;
@@ -2853,9 +2907,35 @@ void getModifiers(parser::IntentSpec &x, LanguageTranslation::ExpressionKind &m)
   }
 }
 
+// LanguageBindingSpec
 void getModifiers(parser::LanguageBindingSpec &x, LanguageTranslation::ExpressionKind &m) {
   std::cout << "[WARN] getModifiers(LanguageBindingSpec): MAYBE need build of ScalarDefaultCharConstantExpr\n";
   ABORT_NO_IMPL;
+}
+
+// TypeAttrSpec
+void getModifiers(parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &m) {
+  // std::variant<> Abstract, AccessSpec, BindC, Extends
+  using namespace Fortran::parser;
+  using namespace LanguageTranslation;
+
+  std::cout << "[WARN] getModifiers(TypeAttrSpec):\n";
+
+  common::visit(common::visitors{
+             [&] (Abstract &y) {
+                   m = ExpressionKind::e_type_modifier_abstract;
+                },
+             [&] (AccessSpec &y) {
+                   getModifiers(y, m);
+                },
+             [&] (TypeAttrSpec::BindC &y) {
+                   m = ExpressionKind::e_type_modifier_bind_c;
+                },
+             [&] (TypeAttrSpec::Extends &y) {
+                   ABORT_NO_IMPL;
+                }
+           },
+     x.u);
 }
 
 void getAttrSpec(parser::AttrSpec &x, std::list<LanguageTranslation::ExpressionKind> &modifiers, SgType* &baseType) {
