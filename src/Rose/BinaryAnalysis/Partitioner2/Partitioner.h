@@ -1840,6 +1840,13 @@ public:
      *  Thread safety: Not thread safe. */
     void detachFunction(const FunctionPtr&);
 
+    /** Entry points of the binary.
+     * 
+     *  Returns a vector of functions which correspond to binary entry points.
+     *
+     *  Thread safety: Not thread safe. */
+    std::vector<Function::Ptr> entryFunctions();
+
     /** Finds functions that own the specified basic block.
      *
      *  Return the functions that own the specified basic block(s). The returned vector has distinct function pointers sorted

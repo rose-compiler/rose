@@ -2232,6 +2232,17 @@ Partitioner::detachFunction(const Function::Ptr &function) {
     function->thaw();
 }
 
+std::vector<Function::Ptr> 
+Partitioner::entryFunctions() {
+    std::vector<Function::Ptr> funs;
+    for (const auto & func : functions()) {
+        if (func->reasons() & SgAsmFunction::FunctionReason::FUNC_ENTRY_POINT)
+            funs.push_back(func);
+    }
+
+    return funs;
+}
+
 const CallingConvention::Analysis&
 Partitioner::functionCallingConvention(const Function::Ptr &function) const {
     return functionCallingConvention(function, CallingConvention::Definition::Ptr());
