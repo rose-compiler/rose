@@ -72,7 +72,10 @@ CustomAstDOTGeneration::~CustomAstDOTGeneration()
 void
 CustomAstDOTGenerationData::addNode(NodeType n)
    {
-     ASSERT_not_null(this);
+     // Here and in following, void* variable used in comparison to avoid warning messages.
+     // Apparently this code is not well-defined C++ as this can be NULL [Rasmussen, 2024.02.17].
+     void* autological_undefined_compare{this};
+     ASSERT_not_null(autological_undefined_compare);
      ASSERT_require(n.optionString.size() < 4000);
      nodeList.push_back(n);
    }
@@ -80,7 +83,8 @@ CustomAstDOTGenerationData::addNode(NodeType n)
 void
 CustomAstDOTGenerationData::addEdge(EdgeType e)
    {
-     ASSERT_not_null(this);
+     void* autological_undefined_compare{this};
+     ASSERT_not_null(autological_undefined_compare);
      edgeList.push_back(e);
    }
 
@@ -238,7 +242,8 @@ CustomAstDOTGenerationData::internalGenerateGraph( std::string filename, SgProje
 void
 CustomAstDOTGeneration::addNode( NodeType n )
    {
-     ASSERT_not_null(this);
+     void* autological_undefined_compare{this};
+     ASSERT_not_null(autological_undefined_compare);
      ASSERT_require(n.optionString.size() < 4000);
      DOTgraph.addNode(n);
    }
@@ -246,14 +251,16 @@ CustomAstDOTGeneration::addNode( NodeType n )
 void
 CustomAstDOTGeneration::addEdge( EdgeType e )
    {
-     ASSERT_not_null(this);
+     void* autological_undefined_compare{this};
+     ASSERT_not_null(autological_undefined_compare);
      DOTgraph.addEdge(e);
    }
 
 void
 CustomAstDOTGeneration::internalGenerateGraph( std::string filename, SgProject* project )
    {
-     ASSERT_not_null(this);
+     void* autological_undefined_compare{this};
+     ASSERT_not_null(autological_undefined_compare);
      DOTgraph.internalGenerateGraph(filename,project);
    }
 

@@ -766,13 +766,6 @@ void
 PRE::partialRedundancyEliminationFunction(SgFunctionDefinition* n)
 {
     // FIXME: do expressions in batches using bit vectors
-    typedef PRE::myControlFlowGraph ControlFlowGraph;
-    typedef int Vertex;
-    typedef int Edge;
-    typedef vector<int>::const_iterator VertexIter;
-    typedef vector<int>::const_iterator OutEdgeIter;
-    typedef vector<int>::const_iterator InEdgeIter;
-    typedef vector<int>::const_iterator EdgeIter;
 
     // DQ (4/8/2006): Call the new constant folding (not fully implemented except that it works well to eliminate the stored
     // constant expression trees in the AST which are redundant with the values on SgValueExp IR nodes.  The storage of the

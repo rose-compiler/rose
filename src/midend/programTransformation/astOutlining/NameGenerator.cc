@@ -15,7 +15,7 @@ using namespace std;
 NameGenerator::NameGenerator (size_t first_id)
 {
 // all other should also start with this first_id  
-  first_id_ = first_id; 
+  first_id_ = first_id;
   cur_id_[""]=first_id_;
 }
 
@@ -24,7 +24,7 @@ NameGenerator::NameGenerator (const string& pre,
                               const string& suf)
   : prefix_ (pre), suffix_ (suf)
 {
-  first_id = first_id; 
+  first_id_ = first_id;
   cur_id_[""]=first_id_;
 }
 

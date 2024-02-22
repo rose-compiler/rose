@@ -23,7 +23,6 @@ public:
   virtual ~NameGenerator (void) {}
 
   //! Returns the current ID number.
-  //size_t id (void) const;
   size_t id (std::string full_file_name= "") ;
 
   //! Returns the prefix.
@@ -33,16 +32,14 @@ public:
   std::string suffix (void) const;
 
   //! Returns the current name, based on the current ID number.
- // virtual std::string current (void) const;
   virtual std::string current (std::string full_file_name= "") ;
 
   //! Returns the next name, updating the current ID number.
-//  std::string next (void);
   // Per file based unique ID
   std::string next (std::string full_file_name= "");
 
 private:
-  size_t first_id_; 
+  size_t first_id_;
 //  size_t cur_id_; //!< Current ID number.
 //  If file_name is not provided, we use cur_id_[""]
 //  otherwise use cur_id[file_name]

@@ -79,7 +79,6 @@ DOTGeneration<Node>::evaluateSynthesizedAttribute(Node node, DOTInheritedAttribu
      DOTSynthesizedAttribute d(0);
 
   // add edges or null values
-     int testnum=0;
      for(iter=l.begin();iter!=l.end();iter++)
         {
        // DQ (3/5/2007): Added addional function to add more edge information to the label and option string
@@ -113,7 +112,6 @@ DOTGeneration<Node>::evaluateSynthesizedAttribute(Node node, DOTInheritedAttribu
                          assert(false);
                   }
              }
-          testnum++;
         }
 
      d.node=node;
