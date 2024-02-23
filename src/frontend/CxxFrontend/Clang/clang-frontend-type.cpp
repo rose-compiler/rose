@@ -1032,7 +1032,11 @@ bool ClangToSageTranslator::VisitTypeOfType(clang::TypeOfType * type_of_type, Sg
 #endif
     bool res = true;
 
+#if (__clang__)  && (__clang_major__ > 15)
+    SgType* underlyinigType = buildTypeFromQualifiedType(type_of_type->getUnmodifiedType());
+#else
     SgType* underlyinigType = buildTypeFromQualifiedType(type_of_type->getUnderlyingType());
+#endif
 
     SgType* type = SageBuilder::buildTypeOfType(NULL,underlyinigType);
 

@@ -1570,7 +1570,15 @@ bool ClangToDotTranslator::VisitSubstTemplateTypeParmType(clang::SubstTemplateTy
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
+#if (__clang__)  && (__clang_major__ > 15)
+     node_desc.successors.push_back(
+        std::pair<std::string, std::string>("replacement_decl", Traverse(subst_template_type_parm_type->getAssociatedDecl())) );
+
+     clang::TemplateTypeParmDecl* parmDecl = const_cast<clang::TemplateTypeParmDecl*>(subst_template_type_parm_type->getReplacedParameter());
+     node_desc.successors.push_back(std::pair<std::string, std::string>("replaced_parameter", Traverse(parmDecl)));
+#else
      node_desc.successors.push_back(std::pair<std::string, std::string>("replaced_parameter", Traverse(subst_template_type_parm_type->getReplacedParameter())));
+#endif
 
      node_desc.successors.push_back(
         std::pair<std::string, std::string>("replacement_type", Traverse(subst_template_type_parm_type->getReplacementType().getTypePtr())) );
@@ -1780,14 +1788,13 @@ bool ClangToDotTranslator::VisitTemplateSpecializationType(clang::TemplateSpecia
     const clang::TemplateName & template_name = template_specialization_type->getTemplateName();
     VisitTemplateName(template_name, node_desc, "template_name");
 
-    clang::TemplateSpecializationType::iterator it;
+    clang::ArrayRef<clang::TemplateArgument> args;
     unsigned cnt = 0;
-    for (it = template_specialization_type->begin(); it != template_specialization_type->end(); it++) {
+    for (const auto& arg : args) {
         std::ostringstream oss;
         oss << "template_argument[" << cnt++ << "]";
-        VisitTemplateArgument(*it, node_desc, oss.str());
+        VisitTemplateArgument(arg, node_desc, oss.str());
     }
-
     return VisitType(template_specialization_type, node_desc) && res;
 }
 #endif

@@ -28,8 +28,11 @@ if test "x$CONFIG_HAS_ROSE_ENABLE_CLANG_FRONTEND" = "xyes"; then
      AC_MSG_CHECKING([for Clang ld flags])
          if test -z "$CLANG_LDFLAGS"; then
              AC_MSG_CHECKING([for Clang version])
-             CLANG_VERSION_MAJOR=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
-             if test $CLANG_VERSION_MAJOR -ge 15; then
+             CLANG_VERSION_MAJOR=`${srcdir}/config/getClangMajorVersionNumber.sh`
+             if test $CLANG_VERSION_MAJOR -ge 16; then
+                 llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontendTool -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangIndex -lclangFrontend -lclangCodeGen  -lclangARCMigrate -lclangRewrite -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangEdit -lclangLex -lclangSupport -lclangCrossTU -lclangASTMatchers "
+                 llvm_ldflags+="`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option frontendopenmp windowsdriver` "
+             elif test $CLANG_VERSION_MAJOR -ge 15; then
                  llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontendTool -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangIndex -lclangFrontend -lclangCodeGen  -lclangARCMigrate -lclangRewrite -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangEdit -lclangLex -lclangSupport "
                  llvm_ldflags+="`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option frontendopenmp windowsdriver` "
              else
