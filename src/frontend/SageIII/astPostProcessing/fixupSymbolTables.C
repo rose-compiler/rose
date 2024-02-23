@@ -208,24 +208,16 @@ FixupAstSymbolTables::visit ( SgNode* node )
           std::vector<SgSymbol*> listOfSymbolsToRemove;
 
        // DQ (6/12/2011): Fixup symbol table by removing symbols that are not associated with a declaration in the current scope.
-          int idx = 0;
           SgSymbolTable::hash_iterator i = internalTable->begin();
           while (i != internalTable->end())
              {
-            // DQ: removed SgName casting operator to char*
-            // cout << "[" << idx << "] " << (*i).first.str();
                ROSE_ASSERT ( (*i).first.str() != NULL );
                ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
-#if 0
-               printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
-                       idx,(*i).first.str(),(*i).second->class_name().c_str());
-#endif
                SgSymbol* symbol = isSgSymbol((*i).second);
                ROSE_ASSERT ( symbol != NULL );
 
             // We have to look at each type of symbol separately!  This is because there is no virtual function,
             // the reason for this is that each get_declaration() function returns a different type!
-            // ROSE_ASSERT ( symbol->get_declaration() != NULL );
                switch(symbol->variantT())
                   {
                     case V_SgClassSymbol:
@@ -245,7 +237,6 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
                          SgName name = classDeclaration->get_name();
 
-                      // SgType* declarationType = declarationToFindInScope->get_type();
                          SgType* declarationType = classDeclaration->get_type();
                          ROSE_ASSERT(declarationType != NULL);
 
@@ -255,13 +246,11 @@ FixupAstSymbolTables::visit ( SgNode* node )
                               SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declarationToFindInScope);
                               ROSE_ASSERT(definingClassDeclaration != NULL);
 
-                           // SgType* definingDeclarationType = declarationToFindInScope->get_type();
                               SgType* definingDeclarationType = definingClassDeclaration->get_type();
                               ROSE_ASSERT(definingDeclarationType != NULL);
 
                            // DQ (6/22/2011): This assertion fails for CompileTests/copyAST_tests/copytest2007_24.C
                            // A simple rule that all declarations should follow (now that we have proper global type tables).
-                           // ROSE_ASSERT(definingDeclarationType == declarationType);
                               if (definingDeclarationType != declarationType)
                                  {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -275,16 +264,8 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
                          SgDeclarationStatement* declarationAssociatedToType = namedType->get_declaration();
                          ROSE_ASSERT(declarationAssociatedToType != NULL);
-#if 0
-                         printf ("Found a symbol without a matching declaration in the current scope (declList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
-                         printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
-#endif
                          SgScopeStatement* scopeOfDeclarationToFindInScope      = declarationToFindInScope->get_scope();
                          SgScopeStatement* scopeOfDeclarationAssociatedWithType = declarationAssociatedToType->get_scope();
-#if 0
-                         printf ("declarationToFindInScope = %p declarationToFindInScope->get_scope() = %p = %s \n",declarationToFindInScope,declarationToFindInScope->get_scope(),declarationToFindInScope->get_scope()->class_name().c_str());
-                         printf ("declarationAssociatedToType = %p declarationAssociatedToType->get_scope() = %p = %s \n",declarationAssociatedToType,declarationAssociatedToType->get_scope(),declarationAssociatedToType->get_scope()->class_name().c_str());
-#endif
                          if (scopeOfDeclarationToFindInScope != scopeOfDeclarationAssociatedWithType)
                             {
                            // DQ (6/12/2011): Houston, we have a problem!  The trick is to fix it...
@@ -295,50 +276,29 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
                            // Note that test2011_80.C still fails but the AST is at least correct (I think).
                               SgGlobal* scopeOfDeclarationToFindInScope_GlobalScope      = isSgGlobal(scopeOfDeclarationToFindInScope);
-                           // SgGlobal* scopeOfDeclarationAssociatedWithType_GlobalScope = isSgGlobal(scopeOfDeclarationAssociatedWithType);
-
                               if (scopeOfDeclarationToFindInScope_GlobalScope != NULL)
                                  {
                                 // In general which ever scope is the global scope is where the error is...???
                                 // This is because when we don't know where to put a symbol (e.g. from a declaration of a pointer) we put it into global scope.
                                 // There is even an agrument that this is correct as a default for C/C++, but only if it must exist (see test2011_80.C).
                                 // Remove the symbol from the symbol table of the global scope.
-
-#if 0
-                                   printf ("Remove the associated symbol in the current symbol table \n");
-#endif
-
-                                // DQ (6/22/2011): This assertion fails for CompileTests/copyAST_tests/copytest2007_24.C
-                                // ROSE_ASSERT (declarationToFindInScope->get_scope() == declarationAssociatedToType->get_scope());
-#if 0
-                                   if (declarationToFindInScope->get_scope() != declarationAssociatedToType->get_scope())
-                                        printf ("In fixupSymbolTables.C: Note that declarationToFindInScope->get_scope() != declarationAssociatedToType->get_scope() \n");
-#endif
                                  }
                                 else
                                  {
                                    listOfSymbolsToRemove.push_back(classSymbol);
                                  }
                             }
-                      // ROSE_ASSERT (declarationToFindInScope->get_scope() == declarationAssociatedToType->get_scope());
-
                          break;
                        }
 
                     default:
                        {
                       // It night be there are are no other types of symbols to consider...
-
-                      // printf ("Ignoring non SgClassSymbols (fixupSymbolTables.C) symbol = %s \n",symbol->class_name().c_str());
-                      // ROSE_ASSERT(false);
                        }
                   }
 
             // Increment iterator!
                i++;
-
-            // Increment counter!
-               idx++;
              }
 
        // DQ (6/18/2011): Now that we are through with the symbol table we can support removal of any 
@@ -356,12 +316,7 @@ FixupAstSymbolTables::visit ( SgNode* node )
                associatedSymbolTable->remove(removeSymbol);
 
                printf ("Redundant symbol removed...from symbol table \n");
-            // ROSE_ASSERT(false);
              }
-#if 0
-       // debugging
-          symbolTable->print("In FixupAstSymbolTables::visit(): printing out the symbol tables");
-#endif
         }
    }
 

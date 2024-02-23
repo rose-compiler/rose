@@ -216,73 +216,35 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
        // from the currentList.  Note sure if there is a simpler expression for this.
 
        // DQ (3/31/2013): Remove any previously handled declarations (list elements).
-#if 0
-          printf ("SCRUB THE LIST: REMOVING any previously seen elements from the list (2nd time): \n");
-#endif
           list<SgDeclarationStatement*>::iterator e = accumulatedList.begin();
-          unsigned int f = 0;
           while (e != accumulatedList.end())
              {
                if (find(currentList.begin(),currentList.end(),*e) != currentList.end())
                   {
-#if 0
-                    printf ("   ---   ---  erasing (remove) accumulatedList[%u] = %p from currentList \n",f,*e);
-#endif
                     currentList.remove(*e);
                   }
 
                e++;
-               f++;
              }
 
        // Add any new elements from currentList into the accumulatedList (so that we can use the accumulatedList to remove elements from the currentList at the end of the loop).
           list<SgDeclarationStatement*>::iterator l = currentList.begin();
-          unsigned int g = 0;
           while (l != currentList.end())
              {
             // Check is this is a previously seen declaration.
                if (find(accumulatedList.begin(),accumulatedList.end(),*l) == accumulatedList.end())
                   {
-#if 0
-                    printf ("   ---   ---  adding new ellements from currentList[%u] = %p to accumulatedList \n",g,*l);
-#endif
                     accumulatedList.push_back(*l);
                   }
                l++;
-               g++;
              }
-
-#if 0
-          printf ("   --- @@@@@ At end of prelink loop prelinkIterationCounter = %u currentList.size() = %lu \n",prelinkIterationCounter, (unsigned long) currentList.size());
-#endif
-#if 0
-          printf ("Exiting after first prelink iteration \n");
-          ROSE_ABORT();
-#endif
           prelinkIterationCounter++;
 
         }
 
-#if 0
-     printf ("Number of lists of required declarations = %" PRIuPTR " \n",listOfListsOfDeclarations.size());
-#endif
-
   // Convert the vector of lists to a set!
      set<SgDeclarationStatement*> setOfRequiredDeclarations;
-#if 0
-     for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
-        {
-#if 0
-          printf (" -- Size of listOfListsOfDeclarations[%d] = %" PRIuPTR " \n",n,listOfListsOfDeclarations[n].size());
-#endif
-          list<SgDeclarationStatement*>::iterator i = listOfListsOfDeclarations[n].begin();
-          while ( i != listOfListsOfDeclarations[n].end() )
-             {
-               setOfRequiredDeclarations.insert(*i);
-               i++;
-             }
-        }
-#else
+
   // DQ (3/31/2013): Use this simpler implementation.
      list<SgDeclarationStatement*>::iterator c = accumulatedList.begin();
      while (c != accumulatedList.end())
@@ -290,7 +252,6 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
           setOfRequiredDeclarations.insert(*c);
           c++;
         }
-#endif
 
      return setOfRequiredDeclarations;
    }
@@ -1214,7 +1175,6 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
    SgNode* node,
    MarkTemplateInstantiationsForOutputSupportInheritedAttribute inheritedAttribute )
    {
-     static int staticCounter = 0;
      MarkTemplateInstantiationsForOutputSupportInheritedAttribute returnAttribute = inheritedAttribute;
 
   // Mark this explicitly as false to turn off effect of SgGlobal turning it on
@@ -1254,32 +1214,11 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
                if (fileInfo->hasPositionInSource() == true)
                   {
                  // This node has a position is some source code so we can check if it is part of the current file!
-#if 0
-                    printf ("   --- In MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute(): currentFile = %s IR node from %s at line %d \n",
-                            currentFile->getFileName().c_str(),fileInfo->get_filename(),fileInfo->get_line());
-#endif
                     if ( (fileInfo->isSameFile(currentFile) == true) && (isSgGlobal(node) == NULL) )
                        {
                       // This is a node from the current file!
                          returnAttribute.insideDeclarationToOutput = true;
-#if 0
-                         printf ("   --- Found IR node %s from source file = %s at %d \n",node->sage_class_name(),fileInfo->get_filename(),fileInfo->get_line());
-#endif
-#if 0
-                         if (staticCounter > 1)
-                            {
-                              printf ("Exiting as a test ... \n");
-                              ROSE_ABORT();
-                            }
-#endif
-                         staticCounter++;
                        }
-                  }
-                 else
-                  {
-#if 0
-                    printf ("fileInfo->hasPositionInSource() == false \n");
-#endif
                   }
              }
         }

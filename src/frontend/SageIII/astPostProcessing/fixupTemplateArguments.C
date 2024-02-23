@@ -393,7 +393,6 @@ bool FixupTemplateArguments::contains_private_type ( SgTemplateArgumentPtrList &
           return false;
         }
 
-     int counter = 0;
      SgTemplateArgumentPtrList::const_iterator i = templateArgList.begin();
      while (returnValue == false && i != templateArgList.end())
         {
@@ -416,7 +415,6 @@ bool FixupTemplateArguments::contains_private_type ( SgTemplateArgumentPtrList &
 #endif
 #endif
           i++;
-          counter++;
         }
 
 #if DEBUG_PRIVATE_TYPE || 0
@@ -655,7 +653,6 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                     bool foundNonPrivateTypeAlias = false;
                     SgType* suitableTypeAlias = NULL;
 
-                    int counter = 0;
                     SgTypePtrList::iterator i = typedefList.begin();
                     while (foundNonPrivateTypeAlias == false && i != typedefList.end())
                       {
@@ -677,14 +674,8 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                              foundNonPrivateTypeAlias = true;
                            }
 
-                     // foundNonPrivateTypeAlias = !isPrivateType;
-
                         i++;
-                        counter++;
                       }
-#if 0
-                    printf ("foundNonPrivateTypeAlias = %s \n",foundNonPrivateTypeAlias ? "true" : "false");
-#endif
                     if (foundNonPrivateTypeAlias == true)
                        {
                          ROSE_ASSERT(suitableTypeAlias != NULL);
@@ -699,18 +690,6 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                          printf ("Found suitable type alias:         suitableTypeAlias = %p = %s = %s \n",suitableTypeAlias,suitableTypeAlias->class_name().c_str(),suitableTypeAlias->unparseToString().c_str());
 #endif
 #endif
-#if 0
-                         printf ("SageInterface::whereAmI(targetScope): \n");
-                         SageInterface::whereAmI(targetScope);
-                         printf ("SageInterface::whereAmI(typedefDeclaration): \n");
-                         SageInterface::whereAmI(typedefDeclaration);
-#endif
-#if 0
-                         printf ("Selecting alternative type to use for unparsing: \n");
-                         printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
-                         printf ("--- selecing instead : %s \n",suitableTypeAlias->unparseToString().c_str());
-#endif
-
                       // TV (10/05/2018): (ROSE-1431) Traverse the chain of all associated template arguments (coming from the same EDG template argument)
                          SgTemplateArgument * templateArgument_it = templateArgument;
                          while (templateArgument_it->get_previous_instance() != NULL) 
@@ -719,9 +698,6 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                             }
                          ROSE_ASSERT(templateArgument_it != NULL && templateArgument_it->get_previous_instance() == NULL);
                          do {
-#if 0
-                              printf ("  Update templateArgument = %p\n", templateArgument);
-#endif
                               templateArgument_it->set_unparsable_type_alias(suitableTypeAlias);
 
                            // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
