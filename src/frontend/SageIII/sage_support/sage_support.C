@@ -1824,8 +1824,6 @@ SgProject::parse()
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse()):");
 
-  // ROSE_ASSERT (p_fileList != NULL);
-
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
      FortranModuleInfo::setCurrentProject(this);
@@ -1846,7 +1844,6 @@ SgProject::parse()
 #endif
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
-     unsigned int i = 0;
 
   // The goal in this version of the code is to separate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
@@ -1867,7 +1864,7 @@ SgProject::parse()
           ASSERT_not_null(newFile->get_startOfConstruct());
           ASSERT_not_null(newFile->get_parent());
 
-       // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
+       // DQ (6/13/2013): Added to support error checking (separation of construction of SgFile IR nodes from calling the fronend on each one).
           ASSERT_not_null(isSgProject(newFile->get_parent()));
           ROSE_ASSERT(newFile->get_parent() == this);
 
@@ -1879,7 +1876,6 @@ SgProject::parse()
           vectorOfFiles.push_back(newFile);
 
           nameIterator++;
-          i++;
         } // end while
 
      errorCode = this->RunFrontend();
@@ -1947,18 +1943,6 @@ SgProject::parse()
   // is relevant where the AstPostProcessing mechanism must first mark nodes
   // to be output before preprocessing information is attached.
      SgFilePtrList & files = get_fileList();
-
-#if 0
-  // DQ (4/24/2021): Debugging the handling of header_file_unparsing_optimization for non-optimized case.
-     for (SgFile* file : files)
-        {
-          printf ("file = %s \n",file->getFileName().c_str());
-          printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
-          printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-          printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
-        }
-#endif
-
      bool unparse_using_tokens = false;
 
      for (SgFile* file : files)
@@ -1966,9 +1950,6 @@ SgProject::parse()
           ASSERT_not_null(file);
 
           SgSourceFile* sourceFile = isSgSourceFile(file);
-
-       // We can't assert this when supporting binary analysis.
-       // ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile != nullptr)
              {
             // DQ (4/25/2021): I think this should be a static bool data member.
@@ -1977,9 +1958,7 @@ SgProject::parse()
                     unparse_using_tokens = sourceFile->get_unparse_tokens();
                   }
              }
-#if 0
-          printf ("unparse_using_tokens = %s \n",unparse_using_tokens ? "true" : "false");
-#endif
+
           if (KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL)
              {
                std::cout
@@ -2006,98 +1985,13 @@ SgProject::parse()
              }
             else
              {
-#if 0
-               printf ("Test for call to secondaryPassOverSourceFile(): get_disable_edg_backend() = %s \n",
-                    file->get_disable_edg_backend() ? "true" : "false");
-#endif
-#if 0
-               display("Calling secondaryPassOverSourceFile()");
-#endif
-            // DQ (1/23/2018): If we are not doing the translation of EDG to ROSE, then we don't want to call this second pass.
-            // This will fix the negative test in Plum hall for what should be an error to the C preprocessor.
-            // file->secondaryPassOverSourceFile();
-
-            // if (file->get_skip_translation_from_edg_ast_to_rose_ast() == false)
                if (file->get_disable_edg_backend() == false)
                   {
-#if 0
-                 // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version
-                 // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
-                 // generateDOT ( *globalProject );
-                    printf ("\n\nGenerating a dot file of the secondaryPassOverSourceFile AST (could be very large) \n");
-                    generateDOT_withIncludes ( *this, "before_secondaryPassOverSourceFileAST" );
-                    printf ("DONE: Generating a dot file of the secondaryPassOverSourceFile AST \n");
-#endif
-#if 0
-                 // Output an optional graph of the AST (just the tree, when active)
-                    printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
-                 // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).
-                 // generateAstGraph(project, 2000);
-                 // generateDOT ( *project );
-                    generateDOTforMultipleFile(*this);
-#endif
-#if 0
-                    printf ("Exiting after test! \n");
-                    ROSE_ABORT();
-#endif
-#if 0
-                    printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
-                    printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
-#endif
                  // DQ (8/19/2019): Divide this into two parts, for optimization of header file unparsing, optionally
                  // support the main file collection of comments and CPP directives, and separately the header file
                  // collection of comments and CPP directives.
-#if 0
-                    printf ("######### In calling secondaryPassOverSourceFile() support an optimization improve performance of header file unparsing \n");
-#endif
-                 // DQ (1/27/2019): Comment out enough to generate the dot file to debug symbol with null basis.
-                 // printf ("ERROR: In Project::parse(): Comment out file->secondaryPassOverSourceFile() to generate the dot file to debug symbol with null basis \n");
-#if 0
-                    file->set_header_file_unparsing_optimization(false);
                     file->secondaryPassOverSourceFile();
-#else
-#if 0
-                    printf ("############### Setting file->set_header_file_unparsing_optimization(true): file = %p = %s \n",file,file->class_name().c_str());
-#endif
-#if 0
-                 // DQ (4/24/2021): This data member header_file_unparsing_optimization is now static (so we don't need this code).
-                    printf ("This is required to be set here, even though it is set in the codeSegregation tool explicitly \n");
-#endif
-                 // DQ (4/25/2021): Test without this code.
-                 // file->set_header_file_unparsing_optimization(true);
-
-                 // DQ (4/24/2021): Debugging header file optimization.
-                 // file->set_header_file_unparsing_optimization_source_file(true);
-#if 0
-                    printf ("In SgProject::parse(): Perform collection of comments and CPP directives only on the source file \n");
-                    printf ("###################################################### \n");
-                    printf ("Processing comments and CPP directives for source file \n");
-                    printf ("###################################################### \n");
-#endif
-                    file->secondaryPassOverSourceFile();
-#if 0
-                    printf ("Exiting after test! processed first phase of collecting comments and CPP directives for source file) \n");
-                    ROSE_ABORT();
-#endif
-#if 0
-                    printf ("############### Setting file->set_header_file_unparsing_optimization_source_file(false): file = %p = %s \n",file,file->class_name().c_str());
-                    printf ("############### Setting file->set_header_file_unparsing_optimization_header_file(true):  file = %p = %s \n",file,file->class_name().c_str());
-#endif
-
-#endif
-                 // DQ (4/25/2021): Test without this assertion.
-                 // DQ (9/18/2019): I think this is true, though it might depend on the command-line options.
-
                     ROSE_ASSERT(file->get_header_file_unparsing_optimization() == false);
-#if 0
-                    printf ("In SgProject::parse(): DONE: Calling secondaryPassOverSourceFile() \n");
-#endif
-                  }
-                 else
-                  {
-#if 0
-                    printf ("Skipping the call to secondaryPassOverSourceFile() \n");
-#endif
                   }
              }
         }
@@ -2114,39 +2008,10 @@ SgProject::parse()
         {
           CompilerOutputParser compilerOutputParser(this);
           const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
-#if 0
-          printf ("includedFilesMap.size() = %zu \n",includedFilesMap.size());
-          map<string, set<string> >::const_iterator i = includedFilesMap.begin();
-          while (i != includedFilesMap.end())
-            {
-              printf (" --- includedFilesMap: i.first = %s i.second.size() = %zu \n",i->first.c_str(),i->second.size());
-              set<string>::const_iterator ii = i->second.begin();
-              while (ii != i->second.end())
-                 {
-                   printf (" --- --- includedFilesMap: i.second element = %s \n",ii->c_str());
-                   ii++;
-                 }
-              i++;
-            }
-#endif
+
           IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesMap);
           const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
-#if 0
-          printf ("includingPreprocessingInfosMap.size() = %zu \n",includingPreprocessingInfosMap.size());
-          map<string, set<PreprocessingInfo*> >::const_iterator j = includingPreprocessingInfosMap.begin();
-          while (j != includingPreprocessingInfosMap.end())
-            {
-              printf (" --- includingPreprocessingInfosMap: j.first = %s j.second.size() = %zu \n",j->first.c_str(),j->second.size());
-              set<PreprocessingInfo*>::const_iterator jj = j->second.begin();
-              while (jj != j->second.end())
-                 {
-                   ASSERT_not_null(*jj);
-                   printf (" --- --- includingPreprocessingInfosMap: j.second element->get_string() = %s \n",(*jj)->getString().c_str());
-                   jj++;
-                 }
-              j++;
-            }
-#endif
+
           set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
 
           if (SgProject::get_verbose() >= 1)
@@ -2156,20 +2021,6 @@ SgProject::parse()
                CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
              }
 
-#if 0
-       // DQ (4/24/2021): This may be where we need to support the non-optimized header file unparsing, and process ALL header files.
-          printf ("This may be where we need to support the non optimized header file unparsing, and process ALL header files \n");
-#endif
-#if 0
-          for (SgFile* file : files)
-             {
-               printf ("file = %s \n",file->getFileName().c_str());
-               printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
-               printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-               printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
-             }
-#endif
-
        // DQ (4/25/2021): Adding code to process header files when file->get_header_file_unparsing_optimization() == false.
           if (SgFile::get_header_file_unparsing_optimization() == false)
              {
@@ -2177,66 +2028,26 @@ SgProject::parse()
                while (i != EDG_ROSE_Translation::edg_include_file_map.end())
                   {
                     string filename = i->first;
-#if 0
-                    printf ("filename = %s \n",filename.c_str());
-#endif
                     SgIncludeFile* include_file = i->second;
                     if (include_file != nullptr)
                        {
-#if 0
-                         printf ("include_file = %p filename = %s \n",include_file,include_file->get_filename().str());
-#endif
                          SgSourceFile* sourceFile = include_file->get_source_file();
                          if (sourceFile != nullptr)
                             {
-#if 0
-                              printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
-                              printf ("unparse_using_tokens = %s \n",unparse_using_tokens ? "true" : "false");
-                              printf ("sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
-#endif
                               if (sourceFile->get_unparse_tokens() == false && unparse_using_tokens == true)
                                  {
-#if 0
-                                   printf ("Setting sourceFile->set_unparse_tokens(true) \n");
-#endif
                                    sourceFile->set_unparse_tokens(true);
                                  }
                               ROSE_ASSERT(sourceFile->get_unparse_tokens() == unparse_using_tokens);
 
                               sourceFile->secondaryPassOverSourceFile();
                             }
-                           else
-                            {
-#if 0
-                              printf ("sourceFile == NULL \n");
-#endif
-                            }
                        }
 
                     i++;
                   }
-
-#if 0
-            // DQ (4/24/2021): Testing for case of non-optimized header file unparsing, need to process ALL header files.
-               printf ("In SgFile::parse(): file->get_header_file_unparsing_optimization() == false: Exiting as a test! \n");
-               ROSE_ABORT();
-#endif
              }
-
-#if 0
-       // DQ (4/24/2021): Testing for case of non-optimized header file unparsing, need to process ALL header files.
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
         }
-
-#if 0
-     printf ("Skipping processing of token stream for header files in the parse() function (should be moved to be consistent with attaching comments and CPP directives to header files) \n");
-
-  // DQ (8/18/2019): Test if we are calling this parsing support (which had dependence on the SgIncludeFile IR nodes.
-     printf ("Exiting after test! \n");
-     ROSE_ABORT();
-#endif
 
      if ( get_verbose() > 0 )
         {
@@ -2254,7 +2065,6 @@ SgProject::parse()
   // warnings from EDG processing are OK but not errors
      ROSE_ASSERT (errorCode <= 3);
 
-  // if (get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
         {
           cout << "C++ source(s) parsed. AST generated." << endl;
@@ -2583,7 +2393,6 @@ SgFile::callFrontEnd()
             }
            else
             {
-           // frontEndCommandLineString = "edgFrontEnd ";
               frontEndCommandLineString = "edgcpfe --g++ --gnu_version 40201 ";
             }
          frontEndCommandLineString += CommandlineProcessing::generateStringFromArgList(inputCommandLine,true,false);
@@ -2591,12 +2400,10 @@ SgFile::callFrontEnd()
          if ( get_verbose() > -1 )
               printf ("frontEndCommandLineString = %s \n\n",frontEndCommandLineString.c_str());
 
-      // ROSE_ASSERT (!"Should not get here");
          int status = system(frontEndCommandLineString.c_str());
 
          printf ("After calling edgcpfe as a test (status = %d) \n",status);
          ROSE_ASSERT(status == 0);
-      // ROSE_ASSERT(false);
         }
        else
         {
@@ -2609,12 +2416,6 @@ SgFile::callFrontEnd()
              }
             else
              {
-            // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryComposite IR node)
-            // Note that making buildAST() a virtual function does not appear to solve the problems since it is called form the base class.  This is
-            // awkward code which is temporary.
-#if 0
-               printf ("Before calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
-#endif
                switch (this->variantT())
                   {
                     case V_SgFile:
@@ -2650,41 +2451,12 @@ SgFile::callFrontEnd()
              }
         }
 
-#if 0
-     printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
-#endif
-
   // if there are warnings report that there are in the verbose mode and continue
      if (frontendErrorLevel > 0)
         {
           if ( get_verbose() >= 1 )
                cout << "Warnings in Rose parser/IR translation processing! (continuing ...) " << endl;
         }
-
-  // DQ (4/20/2006): This code was moved from the SgFile constructor so that is would
-  // permit the separate construction of the SgProject and call to the front-end cleaner.
-
-  // DQ (5/22/2005): This is a older function with a newer more up-to-date comment on why we have it.
-  // This function is a repository for minor AST fixups done as a post-processing step in the
-  // construction of the Sage III AST from the EDG frontend.  In some cases it fixes specific
-  // problems in either EDG or the translation of EDG to Sage III (more the later than the former).
-  // In other cases if does post-processing (e.g. setting parent pointers in the AST) can could
-  // only done from a more complete global view of the staticly defined AST.  In many cases these
-  // AST fixups are not so temporary so the name of the function might change at some point.
-  // Notice that all AST fixup is done before attachment of the comments to the AST.
-  // temporaryAstFixes(this);
-
-#if 0
-  // FMZ (this is just debugging support)
-     list<SgScopeStatement*> *stmp = &astScopeStack;
-     printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
-#endif
-
-  // GB (8/19/2009): Commented this out and moved it to SgProject::parse().
-  // Repeated calls to AstPostProcessing (one per file) can be slow on
-  // projects consisting of multiple files due to repeated memory pool
-  // traversals.
-  // AstPostProcessing(this);
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
@@ -2701,20 +2473,6 @@ SgFile::callFrontEnd()
         }
 #endif
 
-#if 0
-     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
-     display("At bottom of SgFile::callFrontEnd()");
-#endif
-#if 0
-     printf ("Exiting as a test of the F03 module support \n");
-     ROSE_ABORT();
-#endif
-
-#if 0
-     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d frontendErrorLevel = %d \n",fileNameIndex,frontendErrorLevel);
-#endif
-
-  // return the error code associated with the call to the C++ Front-end
      return frontendErrorLevel;
    }
 

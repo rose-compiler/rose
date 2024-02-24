@@ -911,31 +911,13 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
              // the mangle form is just the unmodified function name.
              // rtmp = fname;
               }
-#if 0
-            printf ("In mangleFunctionNameToString(): Before s_mangled.replace(): s_mangled = %s \n",s_mangled.c_str());
-#endif
          // DQ (2/7/2006): Bug fix for case of function such as operator_takes_lvalue_operand()
          // In the case of operator_takes_lvalue_operand() this should replace
          // "_takes_lvalue_operand" with "_takes_lvalue_operand" (trivial case).
             s_mangled.replace (n_opstr, s_op.size (), s_op_mangled);
-#if 0
-            printf ("In mangleFunctionNameToString(): After s_mangled.replace(): s_mangled = %s \n",s_mangled.c_str());
-#endif
           }
       }
     // else, leave name as is.
-     else
-      {
-#if 0
-        printf ("In mangleFunctionNameToString(): No operator syntax found \n");
-#endif
-      }
-
-#if 0
-  // DQ (7/24/2012): Added test (failing for test2004_141.C); fails later in AST consistency tests.
-     ROSE_ASSERT(s_mangled.find('&') == string::npos);
-     ROSE_ASSERT(s_mangled.find('*') == string::npos);
-#endif
 
      return s_mangled;
    }
@@ -956,8 +938,6 @@ mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, c
      ostringstream mangled_name;
      bool is_first = true;
 
-     size_t arg_counter = 0;
-
      for (SgTemplateArgumentPtrList::const_iterator i = b; i != e; ++i)
         {
           if (is_first == true)
@@ -966,24 +946,13 @@ mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, c
              }
             else
              {
-            // !is_first, so insert a seperator string.
+            // !is_first, so insert a separator string.
                mangled_name << "__sep__";
              }
 
           const SgTemplateArgument* arg = *i;
           ROSE_ASSERT (arg != NULL);
-#if 0
-          printf ("In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p = %s \n",arg_counter,arg,arg->unparseToString().c_str());
-#endif
-#if 0
-          printf ("In mangleTemplateArgsToString(): arg->get_mangled_name() = %s \n", arg->get_mangled_name().str());
-#endif
           mangled_name << arg->get_mangled_name().str();
-#if 0
-          string tmp_s = mangled_name.str();
-          printf ("DONE: In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p mangled_name = %s \n",arg_counter,arg,tmp_s.c_str());
-#endif
-          arg_counter++;
         }
 
      return mangled_name.str();
@@ -996,8 +965,6 @@ mangleTemplateParamsToString (const SgTemplateParameterPtrList::const_iterator b
      ostringstream mangled_name;
      bool is_first = true;
 
-     size_t param_counter = 0;
-
      for (SgTemplateParameterPtrList::const_iterator i = b; i != e; ++i)
         {
           if (is_first == true)
@@ -1006,24 +973,13 @@ mangleTemplateParamsToString (const SgTemplateParameterPtrList::const_iterator b
              }
             else
              {
-            // !is_first, so insert a seperator string.
+            // !is_first, so insert a separator string.
                mangled_name << "__sep__";
              }
 
           const SgTemplateParameter* param = *i;
           ROSE_ASSERT (param != NULL);
-#if 0
-          printf ("In mangleTemplateParamsToString(): calling template param->get_mangled_name(): param_counter = %zu param = %p = %s \n",param_counter,param,param->unparseToString().c_str());
-#endif
-#if 0
-          printf ("In mangleTemplateParamsToString(): param->get_mangled_name() = %s \n", param->get_mangled_name().str());
-#endif
           mangled_name << param->get_mangled_name().str();
-#if 0
-          string tmp_s = mangled_name.str();
-          printf ("DONE: In mangleTemplateParamsToString(): calling template param->get_mangled_name(): param_counter = %zu param = %p mangled_name = %s \n",param_counter,param,tmp_s.c_str());
-#endif
-          param_counter++;
         }
 
      return mangled_name.str();

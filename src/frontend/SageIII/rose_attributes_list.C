@@ -1719,8 +1719,6 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
 
      ROSE_ASSERT(rawTokenStream != NULL);
 
-#if 1
-  // DQ (11/16/2008): Added test.
      if (attributeList.empty() == false)
         {
        // Detect where these these have been previously built using a mechanism we are testing.
@@ -1736,53 +1734,27 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
              }
           attributeList.clear();
         }
-#endif
      ROSE_ASSERT(attributeList.empty() == true);
 
-  // printf ("In ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST(): rawTokenStream->size() = %" PRIuPTR " \n",rawTokenStream->size());
-
-     int count = 0;
      LexTokenStreamType::iterator i = rawTokenStream->begin();
      while (i != rawTokenStream->end())
         {
-       // print out the tokens
-       // printf ("token stream element #%d \n",count);
-
           token_element* token = (*i)->p_tok_elem;
           ROSE_ASSERT(token != NULL);
           file_pos_info & start = (*i)->beginning_fpi;
 
           bool isComment = (token->token_id == SgToken::FORTRAN_COMMENTS);
-#if 0
-          file_pos_info & end   = (*i)->ending_fpi;
-          printf ("Token #%3d isComment = %s start = %d:%d end = %d:%d token code = %d token = %s \n",
-               count,isComment ? "true " : "false",start.line_num,start.column_num,end.line_num,end.column_num,token->token_id,token->token_lexeme.c_str());
-#endif
           if (isComment == true)
              {
-            // PreprocessingInfo(DirectiveType, const std::string & inputString, const std::string & filenameString,
-            //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
-
                int numberOfLines = 1;
-            // bool copiedFlag   = false;
-            // bool unparsedFlag = false;
-            // PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,token->token_lexeme,file->get_sourceFileNameWithPath(),
-            //                                                    start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before,copiedFlag,unparsedFlag);
-            // PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,token->token_lexeme,filename,
-            //                                                    start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before,copiedFlag,unparsedFlag);
                PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,token->token_lexeme,filename,
                                                                   start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before);
                ROSE_ASSERT(comment != NULL);
                attributeList.push_back(comment);
-
-            // comment->display("In ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST() \n");
              }
 
           i++;
-          count++;
         }
-
-  // printf ("attributeList.size() = %" PRIuPTR " \n",attributeList.size());
    }
 
 
