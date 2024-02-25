@@ -278,35 +278,6 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
 
                         // Look at the next NodeState
                         i++; itS++;
-
-#if 0 // FW
-#error "DEAD CODE!"
-                        // if this is not the last NodeState associated with this CFG node
-                        if(itS!=nodeStates.end())
-                        {
-                                // Get the next NodeState
-                                //NodeState* nextState = NodeState::getNodeState(n, i);
-                                NodeState* nextState = *itS;
-                                ROSE_ASSERT(nextState);
-                                modified = propagateStateToNextNode(
-                                 dfInfoBelow, n, i-1,
-                                 nextState->getLatticeAbove((Analysis*)this), n) || modified;
-                        }
-#error "DEAD CODE!"
-#elseif 0 // BW version
-#error "DEAD CODE!"
-                        if(itS!=nodeStates.rend())
-                        {
-                                // Get the next NodeState
-                                //NodeState* nextState = NodeState::getNodeState(n, i);
-                                NodeState* nextState = *itS;
-                                ROSE_ASSERT(nextState);
-                                modified = propagateStateToNextNode(
-                                 dfInfoAbove, n, i-1,
-                                 nextState->getLatticeBelow((Analysis*)this), n) || modified;
-                        }
-#error "DEAD CODE!"
-#endif
                 }
                 ROSE_ASSERT(state);
                 
@@ -355,42 +326,6 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
         bool modified = !NodeState::eqLattices(getLatticeAnte(*(NodeState::getNodeStates(getUltimate(func)).begin())),
                                                getLatticePost(fState));
 
-#if 0
-#error "DEAD CODE!"
-        // XXX: This was dead code in the separate IntraFWDataflow::runAnalysis
-        // Update the the function's exit NodeState with the final state of this function's dataflow analysis.
-        NodeState* exitState = *(NodeState::getNodeStates(funcCFGEnd).begin());
-
-        const vector<Lattice*>& funcLatticesExit = exitState->getLatticeAbove(this);
-        Dbg::dbg << "    exitState Above"<<endl;
-        for(vector<Lattice*>::const_iterator it = funcLatticesExit.begin(); it !=funcLatticesExit.end(); it++)
-                Dbg::dbg << "        "<<(*it)->str("        ")<<endl;
-
-        const vector<Lattice*>& funcLatticesAfter = fState->getLatticeBelow(this);
-        Dbg::dbg << "    fState.below Before"<<endl;
-        for(vector<Lattice*>::const_iterator it = funcLatticesAfter.begin(); it !=funcLatticesAfter.end(); it++)
-                Dbg::dbg << "        "<<(*it)->str("        ")<<endl;
-
-        Dbg::dbg <<"     Equal = "<<NodeState::eqLattices(exitState->getLatticeAbove((Analysis*)this), fState->getLatticeBelow((Analysis*)this))<<endl;;
-        
-        NodeState::copyLattices_bEQa(/ *interAnalysis* /this, *fState, this, *exitState);
-
-        {
-                Dbg::dbg << "    fState.below After"<<endl;
-                const vector<Lattice*>& funcLatticesAfter = fState->getLatticeBelow(this);
-                for(vector<Lattice*>::const_iterator it = funcLatticesAfter.begin(); it!=funcLatticesAfter.end(); it++)
-                        Dbg::dbg << "        "<<(*it)->str("        ")<<endl;
-        }
-#error "DEAD CODE!"
-#elseif 0
-#error "DEAD CODE!"
-        // XXX: This was live code in the separate IntraBWDataflow::runAnalysis
-        // Update the the function's exit NodeState with the final state of this function's dataflow analysis.
-        NodeState* exitState = *(NodeState::getNodeStates(funcCFGStart).rbegin());
-        NodeState::copyLattices_aEQb(/*interAnalysis*/this, *fState, /*this, */*exitState);
-#error "DEAD CODE!"
-#endif
-        
         if(analysisDebugLevel>=1) Dbg::exitFunc(funcNameStr.str());
         
         return modified;
