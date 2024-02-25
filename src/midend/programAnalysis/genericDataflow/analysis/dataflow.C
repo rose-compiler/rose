@@ -18,17 +18,12 @@ using boost::mem_fn;
 NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, NodeState *fState)
 {
 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-// DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
 
   ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
   
-  //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
-  //Dbg::dbg << "funcCFGEnd="<<funcCFGEnd.getNode()<<" = ["<<Dbg::escape(funcCFGEnd.getNode()->unparseToString())<<" | "<<funcCFGEnd.getNode()->class_name()<<" | "<<funcCFGEnd.getIndex()<<"]"<<endl;
-  
   // Initialize the function's entry NodeState 
   NodeState* entryState = *(NodeState::getNodeStates(funcCFGEnd).rbegin());
-  //printf("before copyLattices on [%s | %s]\n", funcCFGStart.getNode()->class_name().c_str(), funcCFGStart.getNode()->unparseToString().c_str());
   NodeState::copyLattices_bEQb(this, *entryState, /*interAnalysis*//*this, */*fState);
   
   return entryState;
@@ -39,27 +34,8 @@ NodeState* IntraFWDataflow::initializeFunctionNodeState(const Function &func, No
   ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(), filter);
 
-// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-// DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
-  
-  //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
-  //Dbg::dbg << "funcCFGEnd="<<funcCFGEnd.getNode()<<" = ["<<Dbg::escape(funcCFGEnd.getNode()->unparseToString())<<" | "<<funcCFGEnd.getNode()->class_name()<<" | "<<funcCFGEnd.getIndex()<<"]"<<endl;
-
   // Initialize the function's entry NodeState 
   NodeState* entryState = *(NodeState::getNodeStates(funcCFGStart).begin());
-                
-  //printf("before copyLattices on [%s | %s] %d\n", funcCFGStart.getNode()->unparseToString().c_str(), funcCFGStart.getNode()->class_name().c_str(), funcCFGStart.getIndex());
-        
-  //int i=0;
-  //Dbg::dbg << "Before: entryState-above="<<entryState<<endl;
-  //for(vector<Lattice*>::const_iterator l=entryState->getLatticeAbove(this).begin(); l!=entryState->getLatticeAbove(this).end(); l++, i++)
-  //    Dbg::dbg << "Lattice "<<i<<": "<<*l<<" = "<<(*l)->str("            ")<<endl;
-  //i=0;
-  //Dbg::dbg << "Before: fState-above="<<fState<<endl;
-  //for(vector<Lattice*>::const_iterator l=fState->getLatticeAbove(this).begin(); l!=fState->getLatticeAbove(this).end(); l++, i++)
-  ///   Dbg::dbg << "Lattice "<<i<<": "<<*l<<" = "<<(*l)->str("            ")<<endl;
-  //Dbg::dbg << "this="<<this<<endl;
-        
   NodeState::copyLattices_aEQa(this, *entryState, /*interAnalysis*/this, *fState);
 
   return entryState;
@@ -91,8 +67,6 @@ IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool 
       {
         it->add(*callNode);
       }
-
-  //Dbg::dbg << "analyzeDueToCallers="<<analyzeDueToCallers<<" #calleesUpdated="<<calleesUpdated.size()<<" it="<<it.str()<<endl;
 
   return it;
 }
@@ -196,35 +170,16 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
         // Set of functions that have already been visited by this analysis, used
         // to make sure that the dataflow state of previously-visited functions is
         // not re-initialized when they are visited again.
-        //static set<Function> visited;
-        /*Dbg::dbg << "visited (#"<<visited.size()<<")="<<endl;
-        for(set<Function>::iterator f=visited.begin(); f!=visited.end(); f++)
-                Dbg::dbg << "    "<<f->str("        ")<<endl;*/
         
         bool firstVisit = visited.find(func) == visited.end();
         // Initialize the lattices used by this analysis, if this is the first time the analysis visits this function
         if(firstVisit)
         {
-                //Dbg::dbg << "Initializing Dataflow State"<<endl; 
                 InitDataflowState ids(this/*, initState*/);
                 ids.runAnalysis(func, fState);
-
-                //UnstructuredPassInterAnalysis upia_ids(ids);
-                //upia_ids.runAnalysis();
                 visited.insert(func);
         }
 
-        // Initialize the function's entry NodeState
-        //Akshatha(08/12): Uncommenting the code which updates the function's entry( As per Greg's suggestion)
-        /*NodeState* entryState =*/ initializeFunctionNodeState(func, fState);
-
-        // int i=0;
-        //Dbg::dbg << "after: entryState-above="<<endl;
-        //for(vector<Lattice*>::const_iterator l=entryState->getLatticeAbove(this).begin(); l!=entryState->getLatticeAbove(this).end(); l++, i++)
-        //      Dbg::dbg << "Lattice "<<i<<": "<<(*l)->str("            ")<<endl;
-        
-        //printf("IntraFWDataflow::runAnalysis() function %s()\n", func.get_name().getString());
-        
      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=deprecated-declarations.
      // DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
      // See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
@@ -253,22 +208,14 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                 ROSE_ASSERT(numStates == 1);
                 // the NodeStates themselves
                 const vector<NodeState*> nodeStates = NodeState::getNodeStates(n);
-                //printf("                               nodeStates.size()=%d\n", nodeStates.size());
                 int i=0;
-                //NodeState* state = NodeState::getNodeState(n, 0);
                 NodeState* state = NULL;
-                //ROSE_ASSERT(state);
                 
                 // Iterate over all of this node's NodeStates
-                //for(int i=0; i<numStates;)
                 for(vector<NodeState*>::const_iterator itS = nodeStates.begin(); itS!=nodeStates.end(); )
                 {
                         state = *itS;
-                        //printf("                               state=%p\n", state);
                                 
-                        // reset the modified state, since only the last NodeState's change matters
-                        //modified = false; 
-
                         // =================== Copy incoming lattices to outgoing lattices ===================
                         const vector<Lattice*> dfInfoAnte = getLatticeAnte(state);
                         const vector<Lattice*> dfInfoPost = getLatticePost(state);
@@ -277,7 +224,6 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                         // The transfer function will then operate on these Lattices to produce the
                         // correct state below this node.
                         
-                        //printf("                 dfInfoAnte.size()=%d, dfInfoPost.size()=%d, this=%p\n", dfInfoAnte.size(), dfInfoPost.size(), this);
                         vector<Lattice*>::const_iterator itA, itP;
                         int j=0;
                         for(itA  = dfInfoAnte.begin(), itP  = dfInfoPost.begin();
@@ -334,8 +280,8 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                         i++; itS++;
 
 #if 0 // FW
+#error "DEAD CODE!"
                         // if this is not the last NodeState associated with this CFG node
-                        //if((i+1)<numStates)
                         if(itS!=nodeStates.end())
                         {
                                 // Get the next NodeState
@@ -346,7 +292,9 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                  dfInfoBelow, n, i-1,
                                  nextState->getLatticeAbove((Analysis*)this), n) || modified;
                         }
+#error "DEAD CODE!"
 #elseif 0 // BW version
+#error "DEAD CODE!"
                         if(itS!=nodeStates.rend())
                         {
                                 // Get the next NodeState
@@ -357,10 +305,8 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                  dfInfoAbove, n, i-1,
                                  nextState->getLatticeBelow((Analysis*)this), n) || modified;
                         }
+#error "DEAD CODE!"
 #endif
-                //        if(analysisDebugLevel>=1){
-                 //               Dbg::dbg << "    ------------------"<<endl;
-                  //      }
                 }
                 ROSE_ASSERT(state);
                 
@@ -394,10 +340,6 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 
                                 // Propagate the Lattices below this node to its descendant
                                 modified = propagateStateToNextNode(getLatticePost(state), n, numStates-1, getLatticeAnte(nextState), nextNode);
-//                                if(analysisDebugLevel>=1){
-//                                        Dbg::dbg << "    propagated/merged, modified="<<modified<<endl;
-//                                        Dbg::dbg << "    ^^^^^^^^^^^^^^^^^^"<<endl;
-//                                }
                                 // If the next node's state gets modified as a result of the propagation, 
                                 // add the node to the processing queue.
                                 if(modified)
@@ -408,18 +350,13 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                 if(analysisDebugLevel>=1) Dbg::exitFunc(nodeNameStr.str());
         }
 
-#if 0
-        Dbg::dbg << "(*(NodeState::getNodeStates(funcCFGEnd).begin()))->getLatticeAbove((Analysis*)this) == fState->getLatticeBelow((Analysis*)this):"<<endl;
-        printf("fState->getLatticeBelow((Analysis*)this).size()=%d\n", fState->getLatticeBelow((Analysis*)interAnalysis).size());
-        printf("fState->getLatticeAbove((Analysis*)this).size()=%d\n", fState->getLatticeAbove((Analysis*)interAnalysis).size());
-#endif
-
         // Test if the Lattices at the end of the function after the analysis are equal to their
         // original values in the function state.
         bool modified = !NodeState::eqLattices(getLatticeAnte(*(NodeState::getNodeStates(getUltimate(func)).begin())),
                                                getLatticePost(fState));
 
 #if 0
+#error "DEAD CODE!"
         // XXX: This was dead code in the separate IntraFWDataflow::runAnalysis
         // Update the the function's exit NodeState with the final state of this function's dataflow analysis.
         NodeState* exitState = *(NodeState::getNodeStates(funcCFGEnd).begin());
@@ -444,11 +381,14 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                 for(vector<Lattice*>::const_iterator it = funcLatticesAfter.begin(); it!=funcLatticesAfter.end(); it++)
                         Dbg::dbg << "        "<<(*it)->str("        ")<<endl;
         }
+#error "DEAD CODE!"
 #elseif 0
+#error "DEAD CODE!"
         // XXX: This was live code in the separate IntraBWDataflow::runAnalysis
         // Update the the function's exit NodeState with the final state of this function's dataflow analysis.
         NodeState* exitState = *(NodeState::getNodeStates(funcCFGStart).rbegin());
         NodeState::copyLattices_aEQb(/*interAnalysis*/this, *fState, /*this, */*exitState);
+#error "DEAD CODE!"
 #endif
         
         if(analysisDebugLevel>=1) Dbg::exitFunc(funcNameStr.str());
