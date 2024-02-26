@@ -19,12 +19,20 @@ sub badTitleCategory {
     return;
 }
 
-# Return an error message if the title contains what looks like a JIRA issue.
-# Jira issues should be in the body of the commit because they don't mean much
-# to users that are looking at the titles.
+# Finds a ticket number within a string and returns it.
+sub findTicketNumber {
+    my($s) = @_;
+    my($ticket) = $s =~ /\b([A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d+)\b/;
+    return $ticket;
+}
+
+# Return an error message if the title contains what looks like an issue tracker ticket number.
+# Ticket numbers should not be in the body of the commit because they don't mean much to users that
+# are looking at the titles.
 sub badTitleIssue {
     my($title) = @_;
-    return "jira issue should not be in title" if $title =~ /\b[A-Z]+-\d+/;
+    my($ticket) = findTicketNumber($title);
+    return "issue tracker ticket number \"$ticket\" should not be in the title" if $ticket;
     return;
 }
 
@@ -37,11 +45,14 @@ sub badTitle {
     return;
 }
 
-# Return an error message if the commit lacks at least one JIRA issue
+# Return an error message if the commit body has no issue tracker ticket number lines
 sub badBodyIssue {
     my($body) = @_;
-    return "body lacks JIRA issue line(s)" unless $body =~ /^[A-Z]+(_[A-Z]+)*-\d+\s*$/m;
-    return;
+    for my $line (map {s/^(.*?)\s+$/\1/; $_} (split /\n/, $body)) {
+	my($ticket) = findTicketNumber($line);
+	return if $ticket && $ticket == $line;
+    }
+    return "body lacks issue tracker ticket number line(s)";
 }
 
 # Returns an error message if anything is wrong with the commit message body
