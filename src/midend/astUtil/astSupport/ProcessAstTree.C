@@ -107,8 +107,8 @@ bool ProcessAstTree<AstNodePtr>:: ProcessIf( AstInterface &fa, const AstNodePtr&
      }
 template <class AstNodePtr>
 bool ProcessAstTree<AstNodePtr>::
-ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s, AstInterface::AstList& params, AstInterface::AstList& outParams,
-                         const AstNodePtr& body, AstInterface::TraversalVisitType t)
+ProcessFunctionDefinition(AstInterface&, const AstNodePtr&, AstInterface::AstList&, AstInterface::AstList&,
+                          const AstNodePtr&, AstInterface::TraversalVisitType)
 { 
    return true;
 }
