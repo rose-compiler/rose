@@ -3,6 +3,7 @@ include_rules
 run $(support_compile_linklib) -I.. -o libRosebud \
     Ast.C \
     BoostSerializer.C \
+    CerealSerializer.C \
     CxxGenerator.C \
     Generator.C \
     NoneGenerator.C \

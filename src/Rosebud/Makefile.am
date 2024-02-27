@@ -12,6 +12,7 @@ rosebud_SOURCES =				\
 	rosebud.C				\
 	Ast.C					\
 	BoostSerializer.C			\
+	CerealSerializer.C			\
 	CxxGenerator.C				\
 	Generator.C				\
 	NoneGenerator.C				\
@@ -29,6 +30,7 @@ headers =					\
 	Ast.h					\
 	BasicTypes.h				\
 	BoostSerializer.h			\
+	CerealSerializer.h			\
 	CxxGenerator.h				\
 	Generator.h				\
 	NoneGenerator.h				\

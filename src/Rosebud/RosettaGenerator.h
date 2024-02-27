@@ -58,7 +58,7 @@ private:
     void genCppConditions(std::ostream &out, const Ast::FilePtr&, const std::string &text);
     void genClassDestructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
-    void genOtherContent(std::ostream &rosetta, const Ast::ClassPtr&, const std::string &content);
+    void genOtherContent(std::ostream &rosetta, const Ast::ClassPtr&, const Hierarchy&, const std::string &content);
     std::vector<std::string> implementationFileNames(const Classes&);
     void adjustNodeList(const std::shared_ptr<Ast::Project>&);
     void genTupFile(const std::vector<std::string> &implFileNames);

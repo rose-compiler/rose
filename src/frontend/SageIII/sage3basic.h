@@ -25,6 +25,18 @@
 // this header.
 #include "featureTests.h"
 
+// These symbols are defined here because they need to be defined early, before any other Cereal headers are included. And we
+// need to define them in order to avoid conflicts with boost::serialization that uses the same names.
+#ifdef ROSE_HAVE_CEREAL
+    #ifdef CEREAL_SERIALIZE_FUNCTION_NAME
+        #include <rose_pragma_message.h>
+        ROSE_PRAGMA_MESSAGE("sage3basic.h must be included before Cereal header files")
+    #endif
+    #define CEREAL_SAVE_FUNCTION_NAME cerealSave
+    #define CEREAL_LOAD_FUNCTION_NAME cerealLoad
+    #define CEREAL_SERIALIZE_FUNCTION_NAME cerealSerialize
+#endif
+
 // Much of ROSE's binary support uses the intX_t and uintX_t types (where X is a bit width), so we need to have the stdc printf
 // format macros defined for portability.  We do that here because it needs to be done before <inttypes.h> is included for the
 // first time, and we know that most source files for the ROSE library include this file (sage3basic.h) at or near the

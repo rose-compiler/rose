@@ -85,7 +85,7 @@ fi
 
 # Rose::Sarif
 "$ROSEBUD_EXE" --no-locations \
-	       --backend=sawyer --serializer=none \
+	       --backend=sawyer --serializer=cereal \
 	       --sawyer-generated="$RG_SRC/src/generated/Rose/Sarif" \
 	       --sawyer-header-prefix="rose/Rose/Sarif" \
 	       "$@" \

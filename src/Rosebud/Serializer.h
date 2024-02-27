@@ -2,6 +2,8 @@
 #define Rosebud_Serializer_H
 #include <Rosebud/Ast.h>
 
+#include <Rosebud/Utility.h>
+
 namespace Rosebud {
 
 /** Base class for serialization generators.
@@ -59,11 +61,29 @@ public:
      *  Returns true if this class should have serilization and deserialization functions. */
     virtual bool isSerializable(const Ast::ClassPtr&) const = 0;
 
-    /** Generate code for the specified class.
+    /** Generate prologue code.
+     *
+     *  In the header file, the prologue goes immediately after the generated include-once protection and before any user-written
+     *  pre-class-definition code. */
+    virtual void genPrologue(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&,
+                             const Generator&) const = 0;
+
+    /** Generate main serialization code for the specified class.
+     *
+     *  This code emitted by this function will appear inside the class definition in the header, and near the end of the
+     *  implementation file.
      *
      *  The @p header and @p impl streams are output streams for the C++ header file and implementation file, respectively. The
      *  generator is from whence this serializer was called. */
-    virtual void generate(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Generator&) const = 0;
+    virtual void genBody(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&,
+                         const Generator&) const = 0;
+
+    /** Generate epilogue code.
+     *
+     *  In the header file, this goes at the end of the file, after the class definition and after the namespace (if any) but
+     *  before the closing compile-once directives. */
+    virtual void genEpilogue(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&,
+                             const Generator&) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Support

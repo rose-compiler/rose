@@ -4,6 +4,10 @@
 
 #include <string>
 
+#ifdef ROSE_HAVE_CEREAL
+#include <cereal/types/utility.hpp>
+#endif
+
 namespace Rose {
 namespace Sarif {
 

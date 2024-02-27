@@ -4,6 +4,7 @@ add_executable(rosebud
   rosebud.C
   Ast.C
   BoostSerializer.C
+  CerealSerializer.C
   CxxGenerator.C
   Generator.C
   NoneGenerator.C

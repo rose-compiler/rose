@@ -1,6 +1,7 @@
 #include <Rosebud/Serializer.h>
 
 #include <Rosebud/BoostSerializer.h>
+#include <Rosebud/CerealSerializer.h>
 #include <Rosebud/NoneSerializer.h>
 
 #include <boost/range/adaptor/reversed.hpp>
@@ -15,6 +16,7 @@ Serializer::initRegistry() {
     static bool initialized = false;
     if (!initialized) {
         registry_.push_back(BoostSerializer::instance());
+        registry_.push_back(CerealSerializer::instance());
         registry_.push_back(NoneSerializer::instance());
         initialized = true;
     }

@@ -28,6 +28,12 @@ NoneSerializer::isSerializable(const Ast::ClassPtr&) const {
 }
 
 void
-NoneSerializer::generate(std::ostream&, std::ostream&, const Ast::Class::Ptr&, const Generator&) const {}
+NoneSerializer::genPrologue(std::ostream&, std::ostream&, const Ast::Class::Ptr&, const Hierarchy&, const Generator&) const {}
+
+void
+NoneSerializer::genBody(std::ostream&, std::ostream&, const Ast::Class::Ptr&, const Hierarchy&, const Generator&) const {}
+
+void
+NoneSerializer::genEpilogue(std::ostream&, std::ostream&, const Ast::Class::Ptr&, const Hierarchy&, const Generator&) const {}
 
 } // namespace

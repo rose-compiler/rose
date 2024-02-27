@@ -1,5 +1,7 @@
 #include <Rosebud/SawyerGenerator.h>
 
+#include <Rosebud/Serializer.h>
+
 #include <Rose/Affirm.h>
 
 #include <Sawyer/Optional.h>
@@ -483,8 +485,11 @@ SawyerGenerator::genClassConstructors(std::ostream &header, std::ostream &impl, 
            <<"\n"
            <<title("    Generated constructors, etc.");
 
-    if (!genArgsConstructor(header, impl, c, h, Access::PUBLIC))
-        genDefaultConstructor(header, impl, c, Access::PUBLIC);
+    const bool hasArgsConstructor = genArgsConstructor(header, impl, c, h, Access::PUBLIC);
+
+    // The default constructor is always needed for serialization, but it should not be callable by users if we generated another
+    // constructor that has arguments.
+    genDefaultConstructor(header, impl, c, hasArgsConstructor ? Access::PRIVATE : Access::PUBLIC);
 
     header <<"\n"
            <<THIS_LOCATION <<locationDirective(c, c->nameToken)
@@ -502,7 +507,9 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
 
     if (c->findAttribute("rosebud::suppress"))
         return;
+    auto serializer = notnull(Serializer::lookup(settings.serializer));
 
+    // Open files
     auto file = notnull(c->findAncestor<Ast::File>());
     const boost::filesystem::path headerName = generatedDir / toPath(c->name, ".h");
     const boost::filesystem::path implName = generatedDir / toPath(c->name, ".C");
@@ -518,8 +525,9 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
     }
 
     // Emit stuff before the beginning of the class
-    genImplOpen(impl, c);
     genHeaderOpen(header, c);
+    genImplOpen(impl, c);
+    serializer->genPrologue(header, impl, c, h, *this);
     if (!c->priorText.empty()) {
         std::regex implRe("#\\s*(ifdef\\s+ROSE_IMPL|if\\s+defined\\s*\\(\\s*ROSE_IMPL\\s*\\))");
         const std::string cppImplSymbol = toCppSymbol(c->qualifiedNamespace + "::" + c->name) + "_IMPL";
@@ -575,8 +583,9 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
                <<THIS_LOCATION <<locationDirective(c, c->endTextToken)
                <<c->endText;
 
-    // Constructors and destructors
+    // Other generated members
     genClassConstructors(header, impl, c, h);
+    serializer->genBody(header, impl, c, h, *this);
 
     // Emit stuff after the class
     header <<"};\n";
@@ -588,6 +597,7 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
              <<THIS_LOCATION <<locationDirective(file, file->endTextToken)
              <<file->endText <<"\n";
     }
+    serializer->genEpilogue(header, impl, c, h, *this);
     genHeaderClose(header, c);
     genImplClose(impl, c);
 }
