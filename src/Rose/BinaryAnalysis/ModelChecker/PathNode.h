@@ -12,15 +12,14 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-/* One node of an execution path.
+/** One node of an execution path.
  *
- * An execution path node points to its predecessor, but the predecessor does not point back. Execution paths must always
- * be referenced according to their final node, and all references are counted.  This method of organizing the nodes has
- * a number of advantages over bi-directional pointing.
+ *  An execution path node points to its predecessor, but the predecessor does not point back. Execution paths must always be
+ *  referenced according to their final node, and all references are counted.  This method of organizing the nodes has a number of
+ *  advantages over bi-directional pointing.
  *
- * The execution nodes form a tree data structure. A worklist points to the leaves of the tree and worker threads try to
- * advance the frontier.  The tree is dynamically created by the workers, and parts of it are deleted when no longer
- * required. */
+ *  The execution nodes form a tree data structure. A worklist points to the leaves of the tree and worker threads try to advance
+ *  the frontier.  The tree is dynamically created by the workers, and parts of it are deleted when no longer required. */
 class PathNode {
 public:
     /** Shared-ownership pointer. */
