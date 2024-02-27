@@ -817,11 +817,6 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
    {
   // DQ (7/24/2012): This causes a problem for the isspace(s[n_opstr]) test below (likely not the cause of the problem).
      string s_mangled (trimSpaces (s));
-  // string s_mangled(s);
-
-#if 0
-     printf ("In mangleFunctionNameToString(s = %s ret_type_name = %s) \n",s.c_str(),ret_type_name.c_str());
-#endif
 
     // Special case: destructor names
     if (s[0] == '~')
@@ -840,9 +835,6 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
 
     if (s.substr (0, n_opstr) == opstr) // begins with "operator"
       {
-#if 0
-        printf ("In mangleFunctionNameToString(): Found operator syntax isspace(s[n_opstr]) = %s \n",isspace(s[n_opstr]) ? "true" : "false");
-#endif
         if (isspace(s[n_opstr]))
           {
             if (s.substr (n_opstr+1) == newstr) // is "operator new"
@@ -860,9 +852,6 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
         else // real operator (suffix after the substring "operator ")
           {
             string s_op = s.substr (n_opstr);
-#if 0
-            printf ("In mangleFunctionNameToString(): s_op = %s \n",s_op.c_str());
-#endif
          // DQ (2/7/2006): Bug fix for case of function: operator_takes_lvalue_operand()
          // (this test appears in test2005_198.C).
             string s_op_mangled = s_op;
