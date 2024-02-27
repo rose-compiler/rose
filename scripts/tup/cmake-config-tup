@@ -429,6 +429,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	$(language_vars "$@") \
 	WITH_BOOST="$(value_or_no "$(config_switch -DBOOST_ROOT "$@")")" \
 	WITH_CAPSTONE="$(value_or_no "$(config_switch -DCAPSTONE_ROOT "$@")")" \
+	WITH_CEREAL="$(value_or_no "$(config_switch -DCEREAL_ROOT "$@")")" \
 	WITH_DLIB="$(value_or_no "$(config_switch -DDLIB_ROOT "$@")")" \
 	WITH_DWARF="$(value_or_no "$(config_switch -DDWARF_ROOT "$@")")" \
 	WITH_ELF="$(value_or_no "$(config_switch -DELF_ROOT "$@")")" \

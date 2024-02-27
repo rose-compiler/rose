@@ -182,21 +182,29 @@ endif
 ifneq (@(WITH_CAPSTONE),no)
     CAPSTONE_ROOT = @(WITH_CAPSTONE)
     ifneq (@(WITH_CAPSTONE),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(CAPSTONE_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(CAPSTONE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(CAPSTONE_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(CAPSTONE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)capstone
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)capstone
+endif
+
+# Serial serialization
+ifneq (@(WITH_CEREAL),no)
+    CEREAL_ROOT = @(WITH_CEREAL)
+    ifneq (@(WITH_CEREAL),system)
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(CEREAL_ROOT)/include
+    endif
 endif
 
 # Dlib general-purpose cross platform library
 ifneq (@(WITH_DLIB),no)
     DLIB_ROOT = @(WITH_DLIB)
     ifneq (@(WITH_DLIB),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DLIB_ROOT)/include
-	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(DLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DLIB_ROOT)/include
+        LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(DLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)dlib
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)dlib
@@ -211,9 +219,9 @@ endif
 ifneq (@(WITH_DWARF),no)
     DWARF_ROOT = @(WITH_DWARF)
     ifneq (@(WITH_DWARF),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DWARF_ROOT)/include
-	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DWARF_ROOT)/lib
-	LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(DWARF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DWARF_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DWARF_ROOT)/include
+        LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DWARF_ROOT)/lib
+        LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(DWARF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DWARF_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)dwarf
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)dwarf
@@ -223,9 +231,9 @@ endif
 ifneq (@(WITH_ELF),no)
     ELF_ROOT = @(WITH_ELF)
     ifneq (@(WITH_ELF),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(ELF_ROOT)/include
-	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(ELF_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(ELF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(ELF_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(ELF_ROOT)/include
+        LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(ELF_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(ELF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(ELF_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)elf
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)elf
@@ -235,9 +243,9 @@ endif
 ifneq (@(WITH_GCRYPT),no)
     GCRYPT_ROOT = @(WITH_GCRYPT)
     ifneq (@(WITH_GCRYPT),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GCRYPT_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GCRYPT_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GCRYPT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GCRYPT_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GCRYPT_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GCRYPT_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GCRYPT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GCRYPT_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)gcrypt
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)gcrypt
@@ -247,9 +255,9 @@ endif
 ifneq (@(WITH_GPG_ERROR),no)
     GPG_ERROR_ROOT = @(WITH_GPG_ERROR)
     ifneq (@(WITH_GPG_ERROR),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GPG_ERROR_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GPG_ERROR_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GPG_ERROR_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GPG_ERROR_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GPG_ERROR_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GPG_ERROR_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GPG_ERROR_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GPG_ERROR_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)gpg-error
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)gpg-error
@@ -260,8 +268,8 @@ ifneq (@(WITH_INTEL_PIN),no)
     INTEL_PIN_ROOT = @(WITH_INTEL_PIN)
     ifneq (@(WITH_INTEL_PIN),system)
         CPPFLAGS += @(CPP_INCDIR_SWITCH)$(INTEL_PIN_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(INTEL_PIN_ROOT)/intel64/lib-ext
-	LDFLAGS_SHARED  += @(CXX_LIBDIR_SWITCH)$(INTEL_PIN_ROOT)/intel64/lib-ext
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(INTEL_PIN_ROOT)/intel64/lib-ext
+        LDFLAGS_SHARED  += @(CXX_LIBDIR_SWITCH)$(INTEL_PIN_ROOT)/intel64/lib-ext
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)pin
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pin
@@ -271,9 +279,9 @@ endif
 ifneq (@(WITH_MAGIC),no)
     MAGIC_ROOT = @(WITH_MAGIC)
     ifneq (@(WITH_MAGIC),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(MAGIC_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(MAGIC_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(MAGIC_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(MAGIC_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(MAGIC_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(MAGIC_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(MAGIC_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(MAGIC_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)magic
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)magic
@@ -283,9 +291,9 @@ endif
 ifneq (@(WITH_PQXX),no)
     PQXX_ROOT = @(WITH_PQXX)
     ifneq (@(WITH_PQXX),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PQXX_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(PQXX_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(PQXX_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PQXX_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PQXX_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(PQXX_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(PQXX_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PQXX_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)pqxx
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pqxx
@@ -296,9 +304,9 @@ ifneq (@(WITH_QT),no)
     QT_ROOT = @(WITH_QT)
     ifneq (@(WITH_QT),system)
         CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtCore
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtGui
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtWidgets
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtCore
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtGui
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtWidgets
         LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(QT_ROOT)/lib
         LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(QT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(QT_ROOT)/lib
     endif
@@ -321,9 +329,9 @@ endif
 ifneq (@(WITH_READLINE),no)
     READLINE_ROOT = @(WITH_READLINE)
     ifneq (@(WITH_READLINE),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(READLINE_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(READLINE_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(READLINE)/lib @(CXX_LIBDIR_SWITCH)$(READLINE_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(READLINE_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(READLINE_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(READLINE)/lib @(CXX_LIBDIR_SWITCH)$(READLINE_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)readline
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)readline
@@ -333,9 +341,9 @@ endif
 ifneq (@(WITH_SQLITE),no)
     SQLITE_ROOT = @(WITH_SQLITE)
     ifneq (@(WITH_SQLITE),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(SQLITE_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(SQLITE_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(SQLITE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(SQLITE_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(SQLITE_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(SQLITE_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(SQLITE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(SQLITE_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)sqlite3
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)sqlite3
@@ -345,9 +353,9 @@ endif
 ifneq (@(WITH_WT),no)
     WT_ROOT = @(WITH_WT)
     ifneq (@(WITH_WT),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(WT_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(WT_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
     endif
 
     # The -lwthttp and -lwtfcgi libraries are intentionallly absent because its up to the application
@@ -365,9 +373,9 @@ endif
 ifneq (@(WITH_YAMLCPP),no)
     YAMLCPP_ROOT = @(WITH_YAMLCPP)
     ifneq (@(WITH_YAMLCPP),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(YAMLCPP_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(YAMLCPP_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(YAMLCPP_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(YAMLCPP_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(YAMLCPP_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(YAMLCPP_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(YAMLCPP_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(YAMLCPP_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)yaml-cpp
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)yaml-cpp
@@ -377,9 +385,9 @@ endif
 ifneq (@(WITH_Z3),no)
     Z3_ROOT = @(WITH_Z3)
     ifneq (@(WITH_Z3),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(Z3_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(Z3_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(Z3_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(Z3_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(Z3_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(Z3_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(Z3_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(Z3_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)z3
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)z3
@@ -391,9 +399,9 @@ ifeq (@(WITH_BOOST),no)
 else
     BOOST_ROOT = @(WITH_BOOST)
     ifneq (@(WITH_BOOST),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(BOOST_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(BOOST_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(BOOST_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(BOOST_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(BOOST_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(BOOST_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(BOOST_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(BOOST_ROOT)/lib
     endif
     # BOOST_SYSTEM_NO_DEPRECATED avoids warnings about boost::system::generic_category etc. defined but not used
     CPPFLAGS += -DBOOST_SYSTEM_NO_DEPRECATED=1
@@ -433,8 +441,8 @@ ifneq (@(WITH_PYTHON),no)
     PYTHON_ROOT = @(WITH_PYTHON)
     ifneq (@(WITH_PYTHON),system)
         CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PYTHON_ROOT)/include/python@(PYTHON_VERSION)m
-	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
-	LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(PYTHON_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
+        LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
+        LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(PYTHON_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
     endif
     # Note: static linking with python is not yet tested
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_python
@@ -450,9 +458,9 @@ ifeq (@(WITH_ZLIB),no)
 else
     ZLIB_ROOT = @(WITH_ZLIB)
     ifneq (@(WITH_ZLIB),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(ZLIB_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(ZLIB_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(ZLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(ZLIB_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(ZLIB_ROOT)/include
+        LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(ZLIB_ROOT)/lib
+        LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(ZLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(ZLIB_ROOT)/lib
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)z
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)z
@@ -681,8 +689,8 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/support
 
 # Compilers
-librose_CC  	 = $(CC)
-librose_CXX 	 = $(CXX)
+librose_CC       = $(CC)
+librose_CXX      = $(CXX)
 
 # C preprocessor flags
 librose_CPPFLAGS += $(CPPFLAGS)
@@ -857,8 +865,8 @@ tool_compile_linklib = $(COMPILER_RULES) --phase=tool --link=lib --linkage=@(LIN
 tool_compile         = $(COMPILER_RULES) --phase=tool --link=none --begin-deps $(tool_GENHDR) --end-deps
 
 ########################################################################################################################
-#							Testing
-#					   This section is for running tests
+#                                                       Testing
+#                                          This section is for running tests
 ########################################################################################################################
 
 # To run a tester to check it's exit status, do one of these

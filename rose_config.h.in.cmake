@@ -85,6 +85,9 @@
 /* Define if Capstone is available. */
 #cmakedefine ROSE_HAVE_CAPSTONE
 
+/* Define if Cereal is available. */
+#cmakedefine ROSE_HAVE_CEREAL
+
 /* Define if libreadline is available. */
 #cmakedefine ROSE_HAVE_LIBREADLINE
 

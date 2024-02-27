@@ -715,6 +715,10 @@ find_dlib()
 include(FindCapstone)
 find_capstone()
 
+# To use Cereal, set CEREAL_ROOT to the Cereal installation prefix. To avoid Cereal set CEREAL_ROOT=no
+include(FindCereal)
+find_cereal()
+
 # To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=no
 include(FindGcrypt)
 find_gcrypt()
