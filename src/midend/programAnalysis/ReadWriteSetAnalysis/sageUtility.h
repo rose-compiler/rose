@@ -7,6 +7,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <sage3basic.h>
 
 namespace SageUtil
 {

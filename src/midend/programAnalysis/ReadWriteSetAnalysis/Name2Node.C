@@ -1,6 +1,5 @@
-#include <sage3basic.h>
 #include "Name2Node.h"
-#include <AstProcessing.h>
+#include <rose.h>
 #include "VxUtilFuncs.h"
 #include <stdexcept>
 
@@ -114,7 +113,7 @@ SgNode* Name2Node::getVariable(std::string name) {
         return NULL;
     }
 
-    Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "In Name2Node::getVariable(): got to end of function";
+    mlog[Sawyer::Message::Common::ERROR] << "In Name2Node::getVariable(): got to end of function";
     ROSE_ABORT();
     return NULL;
 }

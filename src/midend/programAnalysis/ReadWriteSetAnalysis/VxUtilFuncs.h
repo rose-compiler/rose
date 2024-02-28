@@ -1,7 +1,11 @@
 #ifndef VX_UTIL_FUNCS_H
 #define VX_UTIL_FUNCS_H
 
+#include <sage3basic.h>
 #include <limits>
+
+//This is the logging facility
+extern Sawyer::Message::Common::Facility mlog;
 
 namespace VxUtilFuncs 
 {
@@ -180,18 +184,6 @@ namespace VxUtilFuncs
  * check if obj is a cast, and if it is, return it's operand.
  **/
   SgNode* extractFromPossibleCast(SgNode* obj);
-
-/**
- * extractParentFromPossibleCast
- *
- * Sometimes the you want a node's parent, but if the parent is a cast
- * you need to step up again. 
- * Rather than writing the code to manually check every time, this function will
- * check if the parent is a cast, and if it is, return it's the cast's
- * parent..
- **/
-  SgNode* extractParentFromPossibleCast(SgNode* obj);
-  
 
  /** 
   * getUniqueDeclaration

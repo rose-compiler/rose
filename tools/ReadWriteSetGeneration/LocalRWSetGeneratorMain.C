@@ -2,7 +2,7 @@
 #include <sageInterface.h>
 #include <Rose/CommandLine.h>
 #include <nlohmann/json.hpp>
-#include <Rose/Yaml.h>
+#include <Yaml.hpp>
 #include "LocalRWSetGenerator.h"
 #include <sstream>
 // 03/20/2023): Adding boost filesystem usage:
@@ -29,6 +29,9 @@ using namespace SageInterface;
 using namespace Sawyer::Message::Common;
 using namespace nlohmann;
 
+Sawyer::Message::Common::Facility mlog;
+
+    
 
 //---------------------------------------------------------------------------------
 // Settings that can be adjusted from the command line and their default values.
@@ -64,7 +67,7 @@ void readConfigFile(Settings& settings)
         Yaml::Node config;
         try
         {
-            Sawyer::Yaml::Parse(config, settings.yamlConfigFilename);
+            Yaml::Parse(config, settings.yamlConfigFilename.c_str());
         }
         catch (const Yaml::Exception& e)
         {
@@ -100,6 +103,7 @@ main(size_t argc, char *argv[]) {
     Rose::CommandLine::versionString =
         TOOL_VERSION_STRING " using " +
         Rose::CommandLine::versionString;
+    Diagnostics::initAndRegister(&mlog, "LocalRWSetGenerator");
     Rose::Diagnostics::initialize(); 
 
     //~  CodeThorn::initDiagnostics();
@@ -109,6 +113,7 @@ main(size_t argc, char *argv[]) {
     Settings settings;
     using namespace Sawyer::CommandLine;
     Parser p = CommandLine::createEmptyParserStage(purpose, description);
+    p.errorStream(mlog[FATAL]);                         // print messages and exit rather than throwing exceptions
     p.with(CommandLine::genericSwitches());   // things like --help, --version, --log, --threads, etc.
     p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
 
@@ -162,7 +167,7 @@ main(size_t argc, char *argv[]) {
     rwSetGen.collectReadWriteSets(root);
     rwSetGen.outputCache(settings.rwSetsFilename);
   
-    Sawyer::Message::mlog[INFO] << "LocalRWSetGenerator Completed Successfully" <<    std::endl;
+    mlog[INFO] << "LocalRWSetGenerator Completed Successfully" <<    std::endl;
 
    return 0;
 }

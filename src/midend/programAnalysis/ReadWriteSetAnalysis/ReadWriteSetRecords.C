@@ -1,4 +1,3 @@
-#include <sage3basic.h>
 #include "ReadWriteSetRecords.h"
 #include <string>
 #include <algorithm>
@@ -30,7 +29,6 @@ const char* ReadWriteSets::varTypeStrings[] = {
 
 const char* ReadWriteSets::accessTypeStrings[] = {
   "NORMAL",
-  "FIELD_ACCESS",
   "ARRAY_INDEX",
   "ADDRESS_OF",
   "POINTER_DEREFERENCE",
@@ -121,7 +119,6 @@ void ReadWriteSets::initStringToVarTypeMap() {
 
 void ReadWriteSets::initStringToAccessTypeMap() {
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("NORMAL", NORMAL));
-  stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("FIELD_ACCESS", FIELD_ACCESS));
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("ARRAY_INDEX", ARRAY_INDEX));
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("ADDRESS_OF",ADDRESS_OF));
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("POINTER_DEREFERENCE",POINTER_DEREFERENCE));
@@ -145,25 +142,6 @@ void ReadWriteSets::leafFieldInsert(std::set<AccessSetRecord>& targetSet, std::s
     leafFieldInsert(target.fields, records);
   }
 }
-
-/**
- * \brief Iterate down to bottom field and insert record.
- * Used to insert field AccessSetRecords when recursing down an a.b.c type access.
- **/
-/*void ReadWriteSets::leafFieldInsert2(AccessSetRecord& target, std::set<AccessSetRecord>& records) {
-  if(target.fields.size() == 0) {
-    target.accessType = FIELD_ACCESS;
-    for(auto &record : records) {
-      target.fields.insert(record);
-    }
-    return;
-  } 
-//auto &targetChild : target.fields) {
-  for(std::set<AccessSetRecord>::iterator targetChild = target.fields.begin(); targetChild != target.fields.end(); ++targetChild) {
-    leafFieldInsert2(*targetChild, records);
-  }
-}
-*/
 
 /**
  * \brief Insert index into indexes of record in targetSet 
@@ -706,10 +684,10 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     SgFunctionRefExp* funcRef = isSgFunctionRefExp(current);
     SgFunctionDeclaration* funcDecl = funcRef->getAssociatedFunctionDeclaration();
     if(funcDecl) {
-      Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Got function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
+      mlog[Sawyer::Message::Common::INFO] << "Got function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
       return GLOBALITY_UNKNOWN;  
     } else {
-      Sawyer::Message::mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
+      mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
       return GLOBALITY_UNKNOWN;
     }
   }
@@ -717,10 +695,10 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(current);
     SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
     if(funcDecl) {
-      Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Got Member function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
+      mlog[Sawyer::Message::Common::INFO] << "Got Member function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
       return GLOBALITY_UNKNOWN;    
     } else {
-      Sawyer::Message::mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgMemberFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
+      mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgMemberFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
       return GLOBALITY_UNKNOWN;
     }
   }
@@ -729,7 +707,7 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     //TemplateFunctionRefExp only happen when an uninstantiated
     //template calls a templated function.  Which should never been
     //seen in the RWSets.  So this is left here as a safetly check.
-    Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "We got an SgTemplateMemberFunctionRefExp, which shouldn't be possible.  Contact ROSE team."  << std::endl;
+    mlog[Sawyer::Message::Common::ERROR] << "We got an SgTemplateMemberFunctionRefExp, which shouldn't be possible.  Contact ROSE team."  << std::endl;
     ROSE_ABORT();
   }
   if (isSgConstructorInitializer(current)) {
@@ -743,11 +721,11 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     return MEMBERS;
   }
     
-  Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+  mlog[Sawyer::Message::Common::ERROR] <<
     "meetsGlobalityConstraints: " <<
     current->get_file_info()->get_filename() << ":" <<
     current->get_file_info()->get_line() << "-" << current->get_file_info()->get_col()<<std::endl;
-  Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+  mlog[Sawyer::Message::Common::ERROR] <<
     "In meetsGlobalityConstraints: unhandled reference type:"  <<
     current->class_name()<<std::endl;
   ROSE_ABORT();

@@ -1,11 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <sage3basic.h>
 #include <ReadWriteSetRecords.h>
 #include <TestabilityGrader.h>
 
 #include <nlohmann/json.hpp>
-#include <Sawyer/Yaml.h>
+#include <Yaml.hpp>
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
@@ -27,6 +26,7 @@ static const char *description =
 using namespace nlohmann;
 
 
+Sawyer::Message::Common::Facility mlog;
 using namespace Sawyer::CommandLine;
 using namespace Sawyer::Message;
 
@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
   p.purpose(purpose)
     .doc("description", description)
     .doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
+  p.errorStream(Sawyer::Message::mlog[Sawyer::Message::FATAL]);                         // print messages and exit rather than throwing exceptions
 
   // Create a group of switches specific to this tool
   SwitchGroup testabilityGraderSwitches("-specific switches");

@@ -1,9 +1,9 @@
-#include "sage3basic.h"
 #include "VxUtilFuncs.h"
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/algorithm/string.hpp>
+#include "sage3basic.h"
 #include "SgNodeHelper.h"
 #include "sageInterface.h"
 
@@ -239,7 +239,7 @@ std::string VxUtilFuncs::getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
     if(defFuncDecl) {
         filepathStr = defFuncDecl->get_file_info()->get_filename();
     } else {
-        Sawyer::Message::mlog[Sawyer::Message::Common::WARN] << "Cannot identify defining file for " << inFuncDecl->get_name().getString() << std::endl;       
+        mlog[Sawyer::Message::Common::WARN] << "Cannot identify defining file for " << inFuncDecl->get_name().getString() << std::endl;       
         filepathStr = tempDecl->get_file_info()->get_filename();    
     }
     
@@ -247,7 +247,7 @@ std::string VxUtilFuncs::getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
     filepathStr = inFuncDecl->get_definingDeclaration()->get_file_info()->get_filename();
   }
   boost::filesystem::path filePath = boost::filesystem::weakly_canonical(filepathStr);  
-  return filePath.string();
+  return filePath.native();
 
 }
 
@@ -305,7 +305,7 @@ bool VxUtilFuncs::isInProject(SgFunctionDeclaration* inFuncDecl) {
   boost::filesystem::path filePath = boost::filesystem::weakly_canonical(trueFilePath);  
   boost::filesystem::path rootDir  = boost::filesystem::weakly_canonical(rootDirStr);
 
-  if(filePath.string().substr(0, rootDir.string().size()) == rootDir) {
+  if(filePath.native().substr(0, rootDir.native().size()) == rootDir) {
     return true;
   }
   return false;
@@ -319,7 +319,7 @@ std::string VxUtilFuncs::getRelativePath(const std::string& rootPathStr, const s
   boost::filesystem::path rootPath(rootPathStr);
   boost::filesystem::path filePath(filePathStr);
   boost::filesystem::path relativePath = boost::filesystem::relative(filePath, rootPath);
-  return relativePath.string();
+  return relativePath.native();
 }
 
 /**
@@ -340,9 +340,9 @@ std::string VxUtilFuncs::getNodeRelativePath(SgNode* node) {
   
   //If the user didn't define an application root, just return the absolute path
   if(rootDirStr == "") {
-    return filePath.string();
+    return filePath.native();
   }
-  return getRelativePath(rootDirStr, filePath.string());
+  return getRelativePath(rootDirStr, filePath.native());
 }
 
 /**
@@ -364,10 +364,10 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
   //Force everything canonical before compare
   boost::filesystem::path filePath = boost::filesystem::weakly_canonical(getTrueFilePath(inFuncDecl));  
   if(rootDirStr == "") {
-    return filePath.string();  //User didn't specify a root, so no relativity
+    return filePath.native();  //User didn't specify a root, so no relativity
   }
   boost::filesystem::path rootDir  = boost::filesystem::weakly_canonical(rootDirStr);
-  return getRelativePath(rootDir.string(), filePath.string());
+  return getRelativePath(rootDir.native(), filePath.native());
 }
 
 /**
@@ -385,22 +385,6 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
    return cast->get_operand();
  }
 
-/**
- * extractParentFromPossibleCast
- *
- * Sometimes the you want a node's parent, but if the parent is a cast
- * you need to step up again. 
- * Rather than writing the code to manually check every time, this function will
- * check if the parent is a cast, and if it is, return it's the cast's
- * parent..
- **/
- SgNode* VxUtilFuncs::extractParentFromPossibleCast(SgNode* obj) {
-   while(obj->variantT() == V_SgCastExp) {
-     obj = obj->get_parent();
-   }
-   return obj;   
- }
-
  /** 
   * getUniqueDeclaration
   *
@@ -413,8 +397,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "      From: " << func->get_file_info()->displayString() << std::endl;  
+     mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[Sawyer::Message::Common::INFO] << "      From: " << func->get_file_info()->displayString() << std::endl;  
      return NULL;
    }
  }
@@ -424,8 +408,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
+     mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
      return NULL;
    }
    //   return isSgFunctionDeclaration(func->getAssociatedFunctionDeclaration()->get_firstNondefiningDeclaration());
@@ -436,8 +420,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
+     mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
      return NULL;
    }
    //   return isSgFunctionDeclaration(func->getAssociatedFunctionDeclaration()->get_firstNondefiningDeclaration());
@@ -451,8 +435,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
+     mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
      return NULL;
    }
    //   return isSgFunctionDeclaration(func->getAssociatedFunctionDeclaration()->get_firstNondefiningDeclaration());
@@ -496,8 +480,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      if(derefExp) {
          return extractVarRefFromAnything(derefExp->get_operand());       
      }
-     Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "Could not extract Variable Reference from unhandled type:" << obj->class_name() << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "  From: " << obj->get_file_info()->displayString() << std::endl;   
+     mlog[Sawyer::Message::Common::ERROR] << "Could not extract Variable Reference from unhandled type:" << obj->class_name() << std::endl;
+     mlog[Sawyer::Message::Common::ERROR] << "  From: " << obj->get_file_info()->displayString() << std::endl;   
      return NULL;
  }
 
@@ -654,7 +638,7 @@ std::string VxUtilFuncs::generateAccessNameStrings(SgInitializedName* coarseName
   SgStatement* coarseNameScope = coarseName->get_scope();
   SgType* coarseType = coarseName->get_type();
   ROSE_ASSERT(coarseType);
-  //Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << coarseNameScope->class_name() << std::endl;
+  //mlog[Sawyer::Message::Common::INFO] << coarseNameScope->class_name() << std::endl;
 
   
   //global case
@@ -705,11 +689,11 @@ std::string VxUtilFuncs::generateAccessNameStrings(SgInitializedName* coarseName
         coarseName->get_qualified_name().getString();        
     }
   }
-    Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+    mlog[Sawyer::Message::Common::ERROR] <<
     "generateAccessNameStrings: " <<
     coarseName->get_file_info()->get_filename() << ":" <<
     coarseName->get_file_info()->get_line() << "-" << coarseName->get_file_info()->get_col()<<std::endl;
-  Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+  mlog[Sawyer::Message::Common::ERROR] <<
     "In generateAccessNameStrings: got to end of function:"  <<
     coarseName->class_name()<<std::endl;
   ROSE_ABORT();

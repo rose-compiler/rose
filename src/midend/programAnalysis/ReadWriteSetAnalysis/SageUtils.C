@@ -1,4 +1,3 @@
-#include "sage3basic.h"
 #include "SageUtils.h"
 #include <sageInterface.h>
 
@@ -8,6 +7,7 @@ using namespace SageInterface;
 using namespace Sawyer::Message::Common;
 
 
+extern Sawyer::Message::Common::Facility mlog;
 
 /**
  * walkupDots

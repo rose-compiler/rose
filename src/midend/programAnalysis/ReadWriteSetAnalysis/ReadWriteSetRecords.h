@@ -2,6 +2,7 @@
 #ifndef ReadWriteSetRecords_H
 #define ReadWriteSetRecords_H
 
+#include <sage3basic.h>
 #include <Rose/AST/NodeId.h>
 #include <limits>
 #include <unordered_map>
@@ -58,13 +59,12 @@ namespace ReadWriteSets {
    **/ 
   enum AccessType {
     NORMAL = 0,
-    FIELD_ACCESS = 1,
-    ARRAY_INDEX = 2,
-    ADDRESS_OF = 3,
-    POINTER_DEREFERENCE = 4,
-    POINTER_ARROW = 5,
-    FUNCTION_POINTER_DEREF = 6, 
-    ACCESSTYPE_UNKNOWN = 7
+    ARRAY_INDEX = 1,
+    ADDRESS_OF = 2,
+    POINTER_DEREFERENCE = 3,
+    POINTER_ARROW = 4,
+    FUNCTION_POINTER_DEREF = 5, 
+    ACCESSTYPE_UNKNOWN = 6
   };
   //! String names for Globality
   extern const char* globalityStrings[8];
@@ -73,7 +73,7 @@ namespace ReadWriteSets {
   extern const char* varTypeStrings[9];
 
   //! String names for AccessType
-  extern const char* accessTypeStrings[8];
+  extern const char* accessTypeStrings[7];
 
   //! Map to convert strings to globality
   extern std::unordered_map<std::string, Globality> stringToGlobalityMap; 
@@ -180,13 +180,13 @@ namespace ReadWriteSets {
        *
        **/
       AccessSetRecord(SgFunctionDeclaration* funcDecl, SgThisExp* thisExp) : variableName(VxUtilFuncs::generateAccessNameStrings(funcDecl, thisExp)),
-                                            globality(Globality::MEMBERS),
-                                            varType(STRUCTS),
-                                            accessType(POINTER_ARROW),
-                                            nodeId(Rose::AST::NodeId(thisExp).toString()),
+					    globality(Globality::MEMBERS),
+					    varType(STRUCTS),
+					    accessType(POINTER_ARROW),
+					    nodeId(Rose::AST::NodeId(thisExp).toString()),
                                             type(""), 
                                             filename(""),
-                                            noteStr("") {};
+					    noteStr("") {};
 
     //! \brief copy constructor
     AccessSetRecord(const AccessSetRecord &rhs) : 
