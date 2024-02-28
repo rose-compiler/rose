@@ -190,15 +190,24 @@ Engine::reset() {
 }
 
 void
-Engine::insertStartingPoint(const ExecutionUnit::Ptr &unit) {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+Engine::insertStartingPoint(const ExecutionUnit::Ptr &unit, Prune prune) {
     ASSERT_not_null(unit);
     ASSERT_not_null(frontierPredicate_);
     ASSERT_not_null(semantics_);
     auto path = Path::instance(unit);
-    frontier_.insert(path);                             // intentionally not checking the insertion predicate
-    SAWYER_MESG(mlog[DEBUG]) <<"starting at " <<unit->printableName() <<"\n";
-    newWork_.notify_all();
+    insertStartingPoint(path, prune);
+}
+
+void
+Engine::insertStartingPoint(const Path::Ptr &path, Prune prune) {
+    ASSERT_not_null(path);
+    ASSERT_forbid(path->isEmpty());
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    if (Prune::NO == prune || (frontierPredicate_ && frontierPredicate_->test(settings_, path).first)) {
+        frontier_.insert(path);
+        SAWYER_MESG(mlog[DEBUG]) <<"starting at " <<path->printableName() <<"\n";
+        newWork_.notify_all();
+    }
 }
 
 void

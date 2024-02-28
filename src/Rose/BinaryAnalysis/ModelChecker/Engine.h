@@ -204,14 +204,15 @@ public:
      *  work according to a user-defined path prioritizer.  As many starting points as desired can be inserted, but no starting
      *  point should be inserted more than once.
      *
-     *  Insertion of starting points is not limited by the @ref explorationPredicate.
+     *  Insertion of starting points is not limited by the @ref explorationPredicate unless @p prune is `YES` and the @ref
+     *  explorationPredicate is not null.
      *
      *  Thread safety: This method is thread safe. New starting points can be inserted before the model checker starts
      *  executing, or during execution.
      *
      * @{ */
-    void insertStartingPoint(const ExecutionUnitPtr&);
-    void insertStartingPoint(const PathPtr&);
+    void insertStartingPoint(const ExecutionUnitPtr&, Prune = Prune::NO);
+    void insertStartingPoint(const PathPtr&, Prune = Prune::NO);
     /** @} */
 
 

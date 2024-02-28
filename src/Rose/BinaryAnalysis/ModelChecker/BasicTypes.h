@@ -172,6 +172,11 @@ enum class IoMode {
     READ                                                /**< Data is moving from storage. */
 };
 
+/** Whether to test path before inserting. */
+enum class Prune {
+    NO,                                                 /**< Path is inserted as is. */
+    YES                                                 /**< Path is inserted only if the insertion predicate returns true. */
+};
 
 // Worker states. Used internally.
 enum class WorkerState {
