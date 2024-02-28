@@ -23,18 +23,65 @@ class SgAsmOp;
 
 class Unparser;
 
-struct ScopeStackEntry
-{
-  explicit
-  ScopeStackEntry(SgUnparse_Info* info = nullptr, SgScopeStatement* scope = nullptr)
-  : unparseInfo(info), parentScope(scope), addedRenamings(), addedUsedScopes()
-  {}
+#if EXPLORING_BETTER_UNPARSER
 
-  SgUnparse_Info*                      unparseInfo = nullptr;
-  SgScopeStatement*                    parentScope = nullptr;
-  std::vector<const SgScopeStatement*> addedRenamings;
-  std::vector<const SgScopeStatement*> addedUsedScopes;
+struct AdaPrinter
+{
+  using StringView = boost::string_view;
+  // using StringView = std::string_view;
+
+  AdaPrinter& prn(StringView vw)
+  {
+    col += vw.size();
+    curprint(vw);
+
+    return *this;
+  }
+
+  AdaPrinter& newline()
+  {
+    col = 0;
+    ++line;
+
+    curprint("\n");
+    return *this;
+  }
+
+  private:
+    std::function<void(StringView)> curprint;
+    std::size_t line = 0;
+    std::size_t col  = 0;
 };
+
+struct AdaPrinterNewLine {};
+
+template <char D>
+struct AdaPrinterOutput
+{
+
+
+  std::string_view txt;
+};
+
+using Keyword     = AdaPrinterOutput<0>;
+using WhiteSpace  = AdaPrinterOutput<1>;
+using OtherToken  = AdaPrinterOutput<2>;
+using LineComment = AdaPrinterOutput<3>;
+
+template <char D>
+AdaPrinter& operator<<(AdaPrinter& ap, AdaPrinterOutput<D> out)
+{
+  return ap.prn(out.txt);
+}
+
+template <char D>
+AdaPrinter& operator<<(AdaPrinter& ap, AdaPrinterNewLine)
+{
+  return ap.newline();
+}
+
+
+#endif
 
 struct Unparse_Ada : UnparseLanguageIndependentConstructs
    {

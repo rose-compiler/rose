@@ -1709,7 +1709,7 @@ $CLASSNAME::get_type() const
      if (const SPECDECL_TYPE* spdcl = isSPECDECL_TYPE(dcl))
        res = spdcl->get_type();
      else if (const TYPEDECL_TYPE* tydcl = isTYPEDECL_TYPE(dcl))
-       res = spdcl->get_type();
+       res = tydcl->get_type();
 
      ASSERT_not_null(res);
      return res;

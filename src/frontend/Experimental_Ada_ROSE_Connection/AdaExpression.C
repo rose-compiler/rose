@@ -1288,6 +1288,24 @@ namespace
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
 
+#if FOR_DEBUGGING
+  void print(const SgExpression* n, const Sg_File_Info* fi)
+  {
+    if (!isSgIntVal(n)) return;
+
+    if (fi == nullptr) { std::cerr << "null" << std::endl; return; }
+    if (fi->isCompilerGenerated()) { std::cerr << " cg "; }
+    if (fi->isTransformation()) { std::cerr << " tf "; }
+
+    if (fi->get_line() == 4 && fi->get_col() == 46)
+    {
+      std::cerr << "";
+    }
+
+    std::cerr << "  :" << n << " @" << fi->get_line() << ':' << fi->get_col();
+  }
+#endif /* FOR_DEBUGGING */
+
   /// creates expressions from elements, but does not decorate
   ///   aggregates with SgAggregateInitializers
   SgExpression&
@@ -1395,7 +1413,6 @@ namespace
           logKind("An_Integer_Literal", elem.ID);
 
           res = &mkAdaIntegerLiteral(expr.Value_Image);
-
           /* unused fields: (Expression_Struct)
                enum Attribute_Kinds  Attribute_Kind
           */
@@ -2004,7 +2021,7 @@ SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool operatorCallSy
 }
 
 SgExpression&
-getEnumRepresentationValue(Element_Struct& el, AstContext /*ctx*/)
+getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
 {
   ADA_ASSERT(el.Element_Kind == A_Defining_Name);
 
@@ -2013,7 +2030,10 @@ getEnumRepresentationValue(Element_Struct& el, AstContext /*ctx*/)
             || def.Defining_Name_Kind == A_Defining_Character_Literal
             );
 
-  return mkAdaIntegerLiteral(def.Representation_Value_Image);
+  SgExpression& sgnode = mkAdaIntegerLiteral(def.Representation_Value_Image);
+
+  attachSourceLocation(sgnode, el, ctx);
+  return sgnode;
 }
 
 SgNode*

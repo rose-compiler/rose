@@ -35,7 +35,7 @@ namespace Ada_ROSE_Translation
 
 extern Sawyer::Message::Facility mlog;
 
-static bool fail_on_error = false;
+static bool fail_on_error = true;
 
 
 //
@@ -240,34 +240,49 @@ AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
   ADA_ASSERT(s.get_parent() == &scope);
 }
 
+///
 
-void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
+
+namespace
 {
-  ADA_ASSERT(n && orig);
-
-  n->unsetCompilerGenerated();
-  n->unsetTransformation();
-  n->set_physical_filename(orig->get_physical_filename());
-  n->set_filenameString(orig->get_filenameString());
-  n->set_line(orig->get_line());
-  n->set_col(orig->get_line());
-
-  n->setOutputInCodeGeneration();
-}
-
-template <class SageNode>
-void setFileInfo( SageNode& n,
-                  void (SageNode::*setter)(Sg_File_Info*),
-                  Sg_File_Info* (SageNode::*getter)() const,
-                  const std::string& filename,
-                  int line,
-                  int col
-                )
-{
-  if (Sg_File_Info* info = (n.*getter)())
+/*
+  void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
   {
+    ADA_ASSERT(n && orig);
+
+    n->unsetCompilerGenerated();
+    n->unsetTransformation();
+    n->set_physical_filename(orig->get_physical_filename());
+    n->set_filenameString(orig->get_filenameString());
+    n->set_line(orig->get_line());
+    n->set_col(orig->get_line());
+
+    n->setOutputInCodeGeneration();
+  }
+*/
+
+  template <class SageNode>
+  void setFileInfo( SageNode& n,
+                    void (SageNode::*setter)(Sg_File_Info*),
+                    Sg_File_Info* (SageNode::*getter)() const,
+                    const std::string& filename,
+                    int line,
+                    int col
+                  )
+  {
+    Sg_File_Info* info = (n.*getter)();
+
+    if (info == nullptr)
+    {
+      info = &mkFileInfo(filename, line, col);
+      (n.*setter)(info);
+    }
+
+    info->set_parent(&n);
+
     info->unsetCompilerGenerated();
     info->unsetTransformation();
+    info->unsetShared();
     info->set_physical_filename(filename);
     info->set_filenameString(filename);
     info->set_line(line);
@@ -275,29 +290,20 @@ void setFileInfo( SageNode& n,
     info->set_col(col);
 
     info->setOutputInCodeGeneration();
-    return;
   }
 
-  (n.*setter)(&mkFileInfo(filename, line, col));
-}
+  void cpyFileInfo( SgLocatedNode& n,
+                    void (SgLocatedNode::*setter)(Sg_File_Info*),
+                    Sg_File_Info* (SgLocatedNode::*getter)() const,
+                    const SgLocatedNode& src
+                  )
+  {
+    const Sg_File_Info& info  = SG_DEREF((src.*getter)());
 
-void cpyFileInfo( SgLocatedNode& n,
-                  void (SgLocatedNode::*setter)(Sg_File_Info*),
-                  Sg_File_Info* (SgLocatedNode::*getter)() const,
-                  const SgLocatedNode& src
-                )
-{
-  const Sg_File_Info& info  = SG_DEREF((src.*getter)());
-
-  setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
-}
+    setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+  }
 
 
-///
-
-
-namespace
-{
   /// \private
   template <class SageNode>
   void attachSourceLocation_internal(SageNode& n, Element_Struct& elem, AstContext ctx)
@@ -312,6 +318,18 @@ namespace
     setFileInfo( n,
                  &SageNode::set_endOfConstruct,   &SageNode::get_endOfConstruct,
                  unit, loc.Last_Line,  loc.Last_Column );
+    //~ if (SgIntVal* var = isSgIntVal(&n))
+    if (false)
+    {
+      std::cerr << "\n    attach " << &n << "  " << typeid(n).name() << " " // << var->get_symbol()->get_name()
+                << " @" << loc.First_Line << ":" << loc.First_Column
+                << " .. " << loc.Last_Line << ":" << loc.Last_Column
+                //~ << " tf = " << n.isTransformation()
+                << "  c=" << n.get_startOfConstruct()
+                << std::endl;
+
+      std::cerr << "";
+    }
   }
 }
 
@@ -1106,13 +1124,17 @@ namespace
 
       if (n == nullptr || !n->isTransformation()) return;
 
-      // \todo consider using computeSourceRangeFromChildren which seems more accurate.
-      SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
-      ADA_ASSERT(parentNode && !parentNode->isTransformation());
+      logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation();
 
-      updFileInfo(n->get_file_info(),        parentNode->get_file_info());
-      updFileInfo(n->get_startOfConstruct(), parentNode->get_startOfConstruct());
-      updFileInfo(n->get_endOfConstruct(),   parentNode->get_endOfConstruct());
+      computeSourceRangeFromChildren(*n);
+
+      if (n->isTransformation())
+      {
+        logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
+                   << "  c=" << n->get_startOfConstruct()
+                   << " " << isSgVarRefExp(n)->get_symbol()->get_name()
+                   << std::endl;
+      }
 
       ADA_ASSERT(!n->isTransformation());
     }
@@ -1121,9 +1143,12 @@ namespace
   /// sets the file info to the parents file info if not set otherwise
   void genFileInfo(SgSourceFile* file)
   {
+    logTrace() << "check and generate missing file info" << std::endl;
+
     GenFileInfo fixer;
 
-    fixer.traverse(file, preorder);
+    fixer.traverse(file, postorder);
+    //~ fixer.traverse(file, preorder);
   }
 
 
@@ -1952,9 +1977,6 @@ namespace
   }
 
 
-#define EXPERIMENTAL_CODE_1 1
-
-#if EXPERIMENTAL_CODE_1
   /// checks if the scope of the type returned by \ref is the same
   ///   as the scope where \ref ty was declared.
   /// \todo implement full type check and rename to typeCheckCallContext ..
@@ -2038,7 +2060,6 @@ namespace
                    }
                  );
   }
-#endif /* EXPERIMENTAL_CODE_1 */
 
 
   void resolveInheritedFunctionOverloads(SgGlobal& scope)
@@ -2175,9 +2196,7 @@ namespace
       }
     }
 
-#if EXPERIMENTAL_CODE_1
     typecastLiteralEquivalentFunctionsIfNeeded(allrefs);
-#endif /* EXPERIMENTAL_CODE_1 */
   }
 } // anonymous
 
@@ -2192,6 +2211,12 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   ADA_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
+
+  // the SageBuilder should not mess with source location information
+  //   the mode is not well supported in ROSE
+  auto defaultSourcePositionClassificationMode = sb::getSourcePositionClassificationMode();
+
+  sb::setSourcePositionClassificationMode(sb::e_sourcePositionFrontendConstruction);
 
   Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
   SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
@@ -2216,18 +2241,18 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   // free space that was allocated to store all translation mappings
   clearMappings();
 
-  //~ std::string astDotFile = astDotFileName(*file);
-  //~ logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
-  //~ generateDOT(&astScope, astDotFile);
-
   logInfo() << "Checking AST post-production" << std::endl;
   genFileInfo(file);
   //~ astSanityCheck(file);
 
-  file->set_processedToIncludeCppDirectivesAndComments(false);
-  logInfo() << "Building ROSE AST done" << std::endl;
 
-  //~ si::Ada::convertToOperatorRepresentation(&astScope);
+  file->set_processedToIncludeCppDirectivesAndComments(false);
+
+  // si::Ada::convertToOperatorRepresentation(&astScope);
+
+  // undo changes to SageBuilder setup
+  sb::setSourcePositionClassificationMode(defaultSourcePositionClassificationMode);
+  logInfo() << "Building ROSE AST done" << std::endl;
 }
 
 bool FAIL_ON_ERROR(AstContext ctx)

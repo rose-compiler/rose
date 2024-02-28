@@ -632,11 +632,11 @@ namespace Ada
 
 
   std::vector<IfExpressionInfo>
-  flattenIfExpressions(SgConditionalExp& n)
+  flattenIfExpressions(const SgConditionalExp& n)
   {
     std::vector<IfExpressionInfo> res;
-    SgConditionalExp*             next = &n;
-    SgConditionalExp*             cond = nullptr;
+    const SgConditionalExp*       next = &n;
+    const SgConditionalExp*       cond = nullptr;
     bool                          last = false;
 
     // flatten a sequence of unparenthesized conditional expressions
@@ -662,11 +662,11 @@ namespace Ada
   }
 
   std::vector<IfStatementInfo>
-  flattenIfStatements(SgIfStmt& n)
+  flattenIfStatements(const SgIfStmt& n)
   {
     std::vector<IfStatementInfo> res;
-    SgIfStmt*                    next = &n;
-    SgIfStmt*                    cond = nullptr;
+    const SgIfStmt*              next = &n;
+    const SgIfStmt*              cond = nullptr;
 
     // flatten a sequence of if a then A (else if b then B (else if c then C else D)) if statements
     // into <a, A>, <b, B>, <c, C>, <nullptr, D>

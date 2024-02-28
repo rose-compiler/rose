@@ -290,11 +290,11 @@ namespace
 
   /// returns a flat representation of if expressions
   std::vector<IfExpressionInfo>
-  flattenIfExpressions(SgConditionalExp& n);
+  flattenIfExpressions(const SgConditionalExp& n);
 
   /// returns a flat representation of if-elsif-else statements
   std::vector<IfStatementInfo>
-  flattenIfStatements(SgIfStmt& n);
+  flattenIfStatements(const SgIfStmt& n);
 
   /// integer constant folding
   /// \returns an integral value for an Ada expression if possible

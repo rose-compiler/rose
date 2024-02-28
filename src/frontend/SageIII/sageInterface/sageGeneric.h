@@ -1202,10 +1202,10 @@ namespace sg
   typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
   _dispatch(RoseVisitor&& rv, SgNode* n)
   {
-    typedef typename std::remove_reference<RoseVisitor>::type  RoseVisitorNoref;
-    typedef typename std::remove_const<RoseVisitorNoref>::type RoseHandler;
+    using RoseVisitorNoref = typename std::remove_reference<RoseVisitor>::type;
+    using RoseHandler      = typename std::remove_const<RoseVisitorNoref>::type;
 
-    ROSE_ASSERT(n);
+    ASSERT_not_null(n);
 
     VisitDispatcher<RoseHandler> vis( std::forward<RoseVisitor>(rv),
                                       std::is_lvalue_reference<RoseVisitor>()

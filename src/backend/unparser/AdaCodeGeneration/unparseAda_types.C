@@ -162,8 +162,10 @@ namespace
     {
       const SgTypeModifier& tm = n.get_typeModifier();
 
+/*    \todo temporary disabled
       if (tm.isNotNull())
         prn(" not null ");
+*/
 
       if (tm.isAliased())
         prn(" aliased ");

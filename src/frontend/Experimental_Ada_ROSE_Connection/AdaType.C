@@ -1641,7 +1641,7 @@ void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int re
 {
   SgEnumType&         enumty = SG_DEREF(enumdcl.get_type());
   SgExpression&       sginit = SG_DEREF(sb::buildIntVal(repval));
-  sginit.unsetTransformation();
+  markCompilerGenerated(sginit);
 
   SgInitializedName&  sgnode = mkInitializedName(name, enumty, &sginit);
 

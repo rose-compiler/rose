@@ -79,13 +79,6 @@ Sg_File_Info& mkFileInfo()
   Sg_File_Info& sgnode = SG_DEREF( Sg_File_Info::generateDefaultFileInfoForTransformationNode() );
 
   sgnode.setOutputInCodeGeneration();
-
-#if NOT_USED
-  Sg_File_Info& sgnode = SG_DEREF( Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode() );
-
-  //~ sgnode.setOutputInCodeGeneration();
-  sgnode.unsetTransformation();
-#endif /* NOT_USED */
   return sgnode;
 }
 
@@ -94,24 +87,8 @@ Sg_File_Info& mkFileInfo(const std::string& file, int line, int col)
   Sg_File_Info& sgnode = mkBareNode<Sg_File_Info>(file, line, col);
 
   sgnode.setOutputInCodeGeneration();
-  //~ sgnode.unsetTransformation();
   return sgnode;
 }
-
-#if NOT_USED
-Sg_File_Info& mkFileInfo(const Sg_File_Info& orig)
-{
-  return mkBareNode<Sg_File_Info>(orig);
-}
-
-void copyFileInfo(const SgLocatedNode& src, SgLocatedNode& tgt)
-{
-  //~ tgt.set_file_info       (&mkFileInfo(SG_DEREF(src.get_file_info())));
-  tgt.set_startOfConstruct(&mkFileInfo(SG_DEREF(src.get_startOfConstruct())));
-  tgt.set_endOfConstruct  (&mkFileInfo(SG_DEREF(src.get_endOfConstruct())));
-}
-#endif /* NOT_USED */
-
 
 void markCompilerGenerated(SgLocatedNode& n)
 {
@@ -136,6 +113,69 @@ void setSymbolTableCaseSensitivity(SgScopeStatement& n)
 
   sytable.setCaseInsensitive(true);
 }
+
+
+template <class SageNode>
+Sg_File_Info& ensureFileInfo( SageNode& n,
+                              void (SageNode::*setter)(Sg_File_Info*),
+                              Sg_File_Info* (SageNode::*getter)() const,
+                              const std::string& filename,
+                              int line,
+                              int col
+                            )
+{
+  Sg_File_Info* info = (n.*getter)();
+
+  if (info == nullptr)
+  {
+    info = &mkFileInfo(filename, line, col);
+    (n.*setter)(info);
+  }
+
+  return SG_DEREF(info);
+}
+
+template <class SageNode>
+void setFileInfo( SageNode& n,
+                  void (SageNode::*setter)(Sg_File_Info*),
+                  Sg_File_Info* (SageNode::*getter)() const,
+                  const std::string& filename,
+                  int line,
+                  int col
+                )
+{
+  Sg_File_Info& info = ensureFileInfo(n, setter, getter, filename, line, col);
+
+  info.set_parent(&n);
+  info.unsetCompilerGenerated();
+  info.unsetTransformation();
+  info.unsetShared();
+  info.set_physical_filename(filename);
+  info.set_filenameString(filename);
+  info.set_line(line);
+  info.set_physical_line(line);
+  info.set_col(col);
+
+  info.setOutputInCodeGeneration();
+}
+
+template <class SageLocatedNode>
+void cpyFileInfo( SageLocatedNode& n,
+                  void (SageLocatedNode::*setter)(Sg_File_Info*),
+                  Sg_File_Info* (SageLocatedNode::*getter)() const,
+                  const SageLocatedNode& src
+                )
+{
+  const Sg_File_Info* infox = (src.*getter)();
+
+  if (infox == nullptr)
+    logError() << typeid(src).name() << " w/o fileinfo" << std::endl;
+
+  const Sg_File_Info& info  = *infox;
+
+  setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+}
+
 
 
 //
@@ -1542,6 +1582,30 @@ mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body, SgTryStmt& trySt
 
 namespace
 {
+  void cpFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src)
+  {
+    cpyFileInfo( tgt,
+                 &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+                 src
+               );
+
+    cpyFileInfo( tgt,
+                 &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+                 src
+               );
+  }
+
+
+  void cpFileInfo(SgExpression& tgt, const SgExpression& src)
+  {
+    cpFileInfo(static_cast<SgLocatedNode&>(tgt), src);
+
+    cpyFileInfo( tgt,
+                 &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
+                 src
+               );
+  }
+
   struct InitMaker : sg::DispatchHandler<SgInitializer*>
   {
       using base = sg::DispatchHandler<SgInitializer*>;
@@ -1552,14 +1616,28 @@ namespace
       {}
 
       void handle(SgNode& n)        { SG_UNEXPECTED_NODE(n); }
-      void handle(SgExpression& n)  { res = &mkAssignInitializer(n, *vartype); }
-      void handle(SgExprListExp& n) { res = &mkAggregateInitializer(n, *vartype); }
+      void handle(SgExpression& n)
+      {
+        SgAssignInitializer& sgnode = mkAssignInitializer(n, *vartype);
+
+        cpFileInfo(sgnode, n);
+        res = &sgnode;
+      }
+
+      void handle(SgExprListExp& n)
+      {
+        SgAggregateInitializer& sgnode = mkAggregateInitializer(n, *vartype);
+
+        cpFileInfo(sgnode, n);
+        res = &sgnode;
+      }
+
       void handle(SgInitializer& n) { res = &n; }
 
       void handle(SgAggregateInitializer& n)
       {
         // \todo recursively set aggregate initializer types in subtrees
-        //       according to straucture of vartype.
+        //       according to structure of vartype.
         n.set_expression_type(vartype);
         res = &n;
       }
