@@ -243,10 +243,10 @@ ROSE_DLL_API SgTypeUnsignedInt* buildUnsignedIntType(SgExpression* kind_expr);
 ROSE_DLL_API SgType* buildFortranImplicitType(SgName name);
 
 //! Build a pointer type
-ROSE_DLL_API SgPointerType* buildPointerType(SgType *base_type = NULL);
+ROSE_DLL_API SgPointerType* buildPointerType(SgType *base_type = nullptr);
 
 //! Build a reference type
-ROSE_DLL_API SgReferenceType* buildReferenceType(SgType *base_type = NULL);
+ROSE_DLL_API SgReferenceType* buildReferenceType(SgType *base_type = nullptr);
 
 //! Build a rvalue reference type
 ROSE_DLL_API SgRvalueReferenceType* buildRvalueReferenceType(SgType *base_type);
@@ -257,15 +257,11 @@ ROSE_DLL_API SgDeclType* buildDeclType(SgExpression *base_expression, SgType* ba
 //! Build a GNU typeof operator
 ROSE_DLL_API SgTypeOfType* buildTypeOfType(SgExpression *base_expression, SgType* base_type);
 
-// Liao, entirely phase out this function ! Build a modifier type with no modifiers set
-//SgModifierType* buildModifierType(SgType *base_type = NULL);
-
-// DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
 //! Build a modifier type.
-ROSE_DLL_API SgModifierType* buildModifierType(SgType* base_type = NULL);
+ROSE_DLL_API SgModifierType* buildModifierType(SgType* base_type = nullptr);
 
 //! Build a const type.
-ROSE_DLL_API SgModifierType* buildConstType(SgType* base_type = NULL);
+ROSE_DLL_API SgModifierType* buildConstType(SgType* base_type = nullptr);
 
 //! Build an aliased type for Ada.
 //! \pre  base_type != nullptr
@@ -278,16 +274,16 @@ ROSE_DLL_API SgModifierType* buildAliasedType(SgType* base_type);
 ROSE_DLL_API SgModifierType* buildNotNullType(SgType* base_type);
 
 //! Build a volatile type.
-ROSE_DLL_API SgModifierType* buildVolatileType(SgType* base_type = NULL);
+ROSE_DLL_API SgModifierType* buildVolatileType(SgType* base_type = nullptr);
 
 //! Build a const volatile type.
-ROSE_DLL_API SgModifierType* buildConstVolatileType(SgType* base_type = NULL);
+ROSE_DLL_API SgModifierType* buildConstVolatileType(SgType* base_type = nullptr);
 
 //! Build a restrict type.
 ROSE_DLL_API SgModifierType* buildRestrictType(SgType* base_type);
 
 //! Build ArrayType
-ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
+ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type=nullptr, SgExpression* index=nullptr);
 
 // RASMUSSEN (1/25/2018)
 //! Build an ArrayType based on dimension information.
@@ -304,19 +300,13 @@ ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type, SgExprListExp* dim_i
 ROSE_DLL_API SgModifierType* buildFortranKindType(SgType* base_type, SgExpression* kindExpression );
 
 //! Build function type from return type and parameter type list
-ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=NULL);
+ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=nullptr);
 
 //! Build function type from return type and parameter list
-ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
+ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=nullptr);
 
 // DQ (1/10/2020): removed the default argument since we need to make sure it is used.
-//! DQ (1/16/2009): Added to support member function in C++ (for new interface)
-// ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier);
-
-// DQ (3/20/2017): This function is not used (so let's see if we can remove it).
-//! DQ (12/2/2011): Added for symetry with other functios to generate SgFunctionType
-// ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
 
 //! DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier);
@@ -358,29 +348,28 @@ ROSE_DLL_API SgType* buildOpaqueType(std::string const type_name, SgScopeStateme
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
 //! Build a UPC strict type
-ROSE_DLL_API SgModifierType* buildUpcStrictType(SgType *base_type = NULL);
+ROSE_DLL_API SgModifierType* buildUpcStrictType(SgType *base_type = nullptr);
 
 //! Build a UPC relaxed type
-ROSE_DLL_API SgModifierType* buildUpcRelaxedType(SgType *base_type = NULL);
+ROSE_DLL_API SgModifierType* buildUpcRelaxedType(SgType *base_type = nullptr);
 
 //! Build a UPC shared type
-ROSE_DLL_API SgModifierType* buildUpcSharedType(SgType *base_type = NULL, long layout = -1);
-// SgModifierType* buildUpcSharedType(SgType *base_type = NULL);
+ROSE_DLL_API SgModifierType* buildUpcSharedType(SgType *base_type = nullptr, long layout = -1);
 
 //! Build a UPC shared[] type
-ROSE_DLL_API SgModifierType* buildUpcBlockIndefiniteType(SgType *base_type = NULL);
+ROSE_DLL_API SgModifierType* buildUpcBlockIndefiniteType(SgType *base_type = nullptr);
 
 //! Build a UPC shared[*] type
-ROSE_DLL_API SgModifierType* buildUpcBlockStarType(SgType *base_type = NULL);
+ROSE_DLL_API SgModifierType* buildUpcBlockStarType(SgType *base_type = nullptr);
 
 //! Build a UPC shared[n] type
 ROSE_DLL_API SgModifierType* buildUpcBlockNumberType(SgType *base_type, long block_factor);
 
 //! Build a complex type
-ROSE_DLL_API SgTypeComplex* buildComplexType(SgType *base_type = NULL);
+ROSE_DLL_API SgTypeComplex* buildComplexType(SgType *base_type = nullptr);
 
 //! Build an imaginary type
-ROSE_DLL_API SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
+ROSE_DLL_API SgTypeImaginary* buildImaginaryType(SgType *base_type = nullptr);
 
 //! Build a const/volatile type qualifier
 ROSE_DLL_API SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
@@ -1173,7 +1162,6 @@ ROSE_DLL_API SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration
 
 // DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
 //! Build a function declaration with a function body
-// SgFunctionDeclaration* buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgFunctionDeclaration* first_nondefinng_declaration);
 ROSE_DLL_API SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation = false, SgFunctionDeclaration* first_nondefinng_declaration = NULL, SgTemplateArgumentPtrList* templateArgumentsList = NULL);
 
@@ -1189,7 +1177,7 @@ ROSE_DLL_API SgProcedureHeaderStatement* buildProcedureHeaderStatement(const SgN
 ROSE_DLL_API SgProcedureHeaderStatement*
 buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope, SgProcedureHeaderStatement* first_nondefining_declaration );
 
-// CR (9/24/2020)
+// Rasmussen (9/24/2020)
 //! Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently
 ROSE_DLL_API SgProcedureHeaderStatement*
 buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type, SgFunctionParameterList* param_list,

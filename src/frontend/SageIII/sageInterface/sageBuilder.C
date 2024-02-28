@@ -11,28 +11,19 @@
    #include "roseAdapter.h"
    #include "markLhsValues.h"
    #include <fstream>
-   #include <boost/algorithm/string/trim.hpp>
-   #include <boost/foreach.hpp>
    #include "Outliner.hh"
 #else
    #include <fstream>
-   #include <boost/algorithm/string/trim.hpp>
-   #include <boost/foreach.hpp>
-
    #include "transformationSupport.h"
 #endif
 
+#include <boost/algorithm/string/trim.hpp>
 
 // DQ (4/3/2012): Added so that I can enforce some rules as the AST is constructed.
 #include "AstConsistencyTests.h"
 
 // DQ (2/27/2014): We need this feature to support the function: fixupCopyOfAstFromSeparateFileInNewTargetAst()
 #include "RoseAst.h"
-
-// DQ (3/31/2012): Is this going to be an issue for C++11 use with ROSE?
-#define foreach BOOST_FOREACH
-
-
 
 // DQ (2/17/2013): This is a operation on the global AST that we don't need to do too often
 // depending on the grainularity sought for the debugging information.  It is done on the
@@ -45,7 +36,6 @@ using namespace std;
 using namespace Rose;
 using namespace SageInterface;
 using namespace Rose::Diagnostics;
-
 
 namespace EDG_ROSE_Translation
    {
@@ -8316,8 +8306,9 @@ SageBuilder::buildPythonPrintStmt_nfi(SgExpression* dest, SgExprListExp* values)
 SgPythonGlobalStmt*
 SageBuilder::buildPythonGlobalStmt(SgInitializedNamePtrList& names) {
     SgPythonGlobalStmt* result = new SgPythonGlobalStmt();
-    foreach (SgInitializedName* name, names)
+    for (SgInitializedName* name: names) {
         result->append_name(name);
+    }
     setOneSourcePositionForTransformation(result);
     return result;
 }
@@ -8325,8 +8316,9 @@ SageBuilder::buildPythonGlobalStmt(SgInitializedNamePtrList& names) {
 SgPythonGlobalStmt*
 SageBuilder::buildPythonGlobalStmt_nfi(SgInitializedNamePtrList& names) {
     SgPythonGlobalStmt* result = new SgPythonGlobalStmt();
-    foreach (SgInitializedName* name, names)
+    for (SgInitializedName* name: names) {
         result->append_name(name);
+    }
     setOneSourcePositionNull(result);
     return result;
 }
