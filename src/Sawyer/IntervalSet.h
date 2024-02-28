@@ -647,21 +647,39 @@ public:
 
     /** In-place union.
      *
-     *  Inserts the members of @p other set into @p this set. */
+     *  Inserts the members of @p other set into @p this set.
+     *
+     * @{ */
     IntervalSet& operator|=(const IntervalSet &other) {
         insertMultiple(other);
         return *this;
     }
-    
+
+    IntervalSet& operator+=(const IntervalSet &other) {
+        insertMultiple(other);
+        return *this;
+    }
+    /** @} */
+
     /** In-place union with interval.
      *
-     *  Inserts the @p interval into @p this set. */
+     *  Inserts the @p interval into @p this set.
+     *
+     * @{ */
     IntervalSet& operator|=(const Interval &interval) {
         insert(interval);
         return *this;
     }
 
-    /** Union of two sets. */
+    IntervalSet& operator+=(const Interval &interval) {
+        insert(interval);
+        return *this;
+    }
+    /** @} */
+
+    /** Union of two sets.
+     *
+     * @{ */
     IntervalSet operator|(const IntervalSet &other) const {
         if (nIntervals() < other.nIntervals()) {
             IntervalSet tmp = other;
@@ -673,14 +691,26 @@ public:
         return tmp;
     }
 
+    IntervalSet operator+(const IntervalSet &other) const {
+        return *this | other;
+    }
+    /** @} */
+
     /** Union of set with interval.
      *
-     *  It's probably more efficient to insert the interval in place, but this method is sometimes convenient. */
+     *  It's probably more efficient to insert the interval in place, but this method is sometimes convenient.
+     *
+     * @{ */
     IntervalSet operator|(const Interval &interval) const {
         IntervalSet retval = *this;
         retval.insert(interval);
         return retval;
     }
+
+    IntervalSet operator+(const Interval &interval) const {
+        return *this | interval;
+    }
+    /** @} */
 
     /** In-place intersection.
      *

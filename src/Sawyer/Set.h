@@ -300,12 +300,21 @@ public:
 
     /** Unions this set with another.
      *
-     *  Adds those members of @p other that are not already members of this set. */
+     *  Adds those members of @p other that are not already members of this set.
+     *
+     * @{ */
     Set& operator|=(const Set &other) {
         BOOST_FOREACH (const Value &v, other.values())
             set_.insert(v);
         return *this;
     }
+
+    Set& operator+=(const Set &other) {
+        BOOST_FOREACH (const Value &v, other.values())
+            set_.insert(v);
+        return *this;
+    }
+    /** @} */
 
     /** Differences two sets.
      *
@@ -339,12 +348,19 @@ public:
 
     /** Compute the union of this set with another.
      *
-     *  Returns a new set containing the union of all members of this set and the @p other set. */
+     *  Returns a new set containing the union of all members of this set and the @p other set.
+     *
+     * @{ */
     Set operator|(const Set &other) const {
         Set retval = *this;
         retval |= other;
         return retval;
     }
+
+    Set operator+(const Set &other) const {
+        return *this | other;
+    }
+    /** @} */
 
     /** Compute the difference of this set with another.
      *

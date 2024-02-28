@@ -425,6 +425,12 @@ public:
         insertMany(other);
         return *this;
     }
+
+    template<class SawyerContainer>
+    DenseIntegerSet& operator+=(const SawyerContainer &other) {
+        insertMany(other);
+        return *this;
+    }
     /** @} */
 
     /** Erase a value.
@@ -520,13 +526,20 @@ public:
 
     /** Compute the union of this set with another.
      *
-     *  Returns a new set containing the union of all members of this set and the @p other set. */
+     *  Returns a new set containing the union of all members of this set and the @p other set.
+     *
+     * @{ */
     template<class SawyerContainer>
     DenseIntegerSet operator|(const SawyerContainer &other) const {
         DenseIntegerSet retval = *this;
         retval |= other;
         return retval;
     }
+    template<class SawyerContainer>
+    DenseIntegerSet operator+(const SawyerContainer &other) const {
+        return *this | other;
+    }
+    /** @} */
 
     /** Compute the difference of this set with another.
      *
