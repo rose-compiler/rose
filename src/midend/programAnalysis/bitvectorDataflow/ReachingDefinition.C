@@ -70,7 +70,9 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
         add_ref(varname, scope, std::pair<AstNodePtr, AstNodePtr>(cur, AST_NULL) );
   }
   ConstructReachingDefinitionBase collect(fa, *this);
-  std::function<bool(AstNodePtr,AstNodePtr)> collect_f(collect);
+  std::function<bool(AstNodePtr,AstNodePtr)> collect_f = [&collect](AstNodePtr first,AstNodePtr second) {
+       return collect(first, second);
+  };
   StmtSideEffectCollect<AstNodePtr> op(fa, a);
   op(h, &collect_f);
 }
@@ -173,7 +175,8 @@ finalize( AstInterface& fa, const ReachingDefinitionGenerator& g,
 {
   CollectLocalDefinitions collectgen(fa, g);
   CollectKillDefinitions collectkill(fa, g);
-  std::function<bool(AstNodePtr, AstNodePtr)> collectgen_f(collectgen), collectkill_f(collectkill);
+  std::function<bool(AstNodePtr, AstNodePtr)> collectgen_f = [&collectgen](AstNodePtr first, AstNodePtr second) { return collectgen(first, second); };
+  std::function<bool(AstNodePtr, AstNodePtr)> collectkill_f = [&collectkill](AstNodePtr first, AstNodePtr second) { return collectkill(first, second); }; 
   StmtSideEffectCollect<AstNodePtr> op(fa, a);
   std::list <AstNodePtr>& stmts = GetStmts();
   for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();

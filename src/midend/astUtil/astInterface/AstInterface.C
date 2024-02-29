@@ -1765,7 +1765,6 @@ bool AstInterfaceImpl::
 IsVarRef( SgNode* exp, SgType** vartype, string* varname,
           SgNode** _scope, bool *isglobal, bool use_global_unique_name) 
 { 
-  exp = AstInterface::SkipCasting(exp); //If there's a cast, skip it
   SgNode *decl = 0;
   switch (exp->variantT()) {
     case V_SgNonrealRefExp:
