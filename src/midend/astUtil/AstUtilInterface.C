@@ -86,6 +86,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
         case OperatorSideEffect::Call:
            funcAnnot->add_call(op_decl, desc);
              break;
+        default: break;
      }
   }
   return std::pair<std::string, std::string>(op_decl.get_signiture(), varname);
@@ -97,6 +98,7 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
           return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
      case V_SgUsingDirectiveStatement:
           return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
+     default: break;
     }
     if (AstInterface::IsFunctionDefinition(variable)) {
         AstInterfaceImpl astImpl(variable);
