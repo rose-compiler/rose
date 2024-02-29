@@ -27646,7 +27646,8 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    vector < pair< AttachedPreprocessingInfoType*, int> > keepers; // preprocessing info. to be kept
    // for the middle directives like #else or #elif, sometimes their status (balanced or not) is directly associatd with its preceeding begin directive
    // it is not always an independent decision.
-   unordered_map < AttachedPreprocessingInfoType* , vector< pair<AttachedPreprocessingInfoType*, int>> > associated_directives;  
+   // Note : the association is between individual preprocessing info. however, to faciliate removing them, the second part uses  InfoList vs offset
+   unordered_map < PreprocessingInfo * , vector< pair<AttachedPreprocessingInfoType*, int>> > associated_directives;  
 
    for(;ast_i!=ast.end();++ast_i) {
        SgLocatedNode* current  = isSgLocatedNode(*ast_i);
@@ -27684,7 +27685,7 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
                else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
                {
                   // we associated this middle directive with the beginning directive
-                  associated_directives[keepers.back().first].push_back(make_pair (infoList,commentIndex)); 
+                  associated_directives[(*(keepers.back().first))[keepers.back().second] ].push_back(make_pair (infoList,commentIndex)); 
                } 
            } 
            // end directive
@@ -27733,9 +27734,9 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
      (*infoList)[cidx]= NULL; 
 
      // we additionally process the associated directives, if any
-     if (associated_directives.count (infoList)!=0)
+     if (associated_directives.count (info)!=0)
      {
-        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[infoList];
+        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[info];
         for (auto vec_i  = a_list_vec.begin(); vec_i != a_list_vec.end(); vec_i ++  ) 
         {
            AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first; 
@@ -27763,9 +27764,9 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
      infoList->erase(k+cidx);
 
      // we also must erase the associated directives if any
-     if (associated_directives.count (infoList)!=0)
+     if (associated_directives.count (info)!=0)
      {
-        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[infoList];
+        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[info];
 
         for (auto vec_i  = a_list_vec.begin(); vec_i != a_list_vec.end(); vec_i ++  ) 
         {
