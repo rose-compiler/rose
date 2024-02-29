@@ -382,7 +382,7 @@ sub load_config {
     } elsif (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
       die "$file: unknown setting: $var\n" unless exists $conf{$var};
       if (ref $conf{$var}) {
-        push @{$conf{$var}}, $val;
+        push @{$conf{$var}}, $val unless $val eq '';
       } else {
         $conf{$var} = $val;
       }
@@ -656,9 +656,9 @@ if (!$status && $config{answer} ne 'no') {
     print CMD_STDERR "$answer: no such file\n";
     $status = 1;
   } elsif (0 != @{$config{filter}} ) {
-    print CMD_STDERR "Running filters:\n";
     my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout_file, tempname);
     foreach my $filter (@{$config{filter}}) {
+        print CMD_STDERR "Running filter: '$filter' \n";
 	$status ||= (run_command($config{timeout}, undef, "(set -x; $filter) <$a1 >$a2"))[0];
 	$status ||= (run_command($config{timeout}, undef, "(set -x; $filter) <$b1 >$b2"))[0];
 	$a1 = tempname if $a1 eq $answer;
