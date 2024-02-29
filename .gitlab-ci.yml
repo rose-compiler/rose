@@ -321,8 +321,6 @@ Push-Weekly:
     tags:
         - network
     resource_group: deployment
-    before_script:
-        - echo "Nothing needed."
     script:
         - ./$TEST_DIRECTORY/util/push_weekly.sh
 
@@ -368,6 +366,12 @@ Plumhall-XVS:
     extends: .release-base 
     script:
         - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 3660 #Second arg is EXPECTED_SUCCESS
+
+SAPOH-Autoconf:
+    extends: .release-base 
+
+SAPOH-CMake:
+    extends: .release-base 
     
 Doxygen:
     extends: .release-base 
