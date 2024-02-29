@@ -51,6 +51,7 @@
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
 #include <map>
+#include <unordered_map>
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 #   include "jni.h"
@@ -27569,7 +27570,11 @@ SageInterface::findFirstSgCastExpMarkedAsTransformation(SgNode* n, const std::st
    }
 
 
-// A helper function to check begin (return 1) or end directive (return -1) or neither return 0;
+// A helper function to check 
+//   begin: return 1
+//   middle (#else, #elif): return 2
+//   end directive: return -1 
+// othewise return 0;
 static int isBeginDirective (PreprocessingInfo* info)
 {
    ROSE_ASSERT (info != NULL);
@@ -27580,6 +27585,11 @@ static int isBeginDirective (PreprocessingInfo* info)
     {
         return 1;
     }
+    else if (dtype==PreprocessingInfo::CpreprocessorElseDeclaration|| 
+             dtype==PreprocessingInfo::CpreprocessorElifDeclaration)
+    {
+       return 2;
+    }
     else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
     {
        return -1;
@@ -27587,6 +27597,27 @@ static int isBeginDirective (PreprocessingInfo* info)
 
     return 0;
 }
+
+// a helper function to move things
+static void moveInofListToNewPlace(AttachedPreprocessingInfoType* infoList, int cidx, set <AttachedPreprocessingInfoType*>& relatedInfoList, SgLocatedNode* lnode, int &retVal)
+{
+//     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+//     int cidx=  (*ki).second;
+
+     relatedInfoList.insert (infoList);
+
+     PreprocessingInfo* info = (*infoList)[cidx];
+     // rewrite relative position
+     info->setRelativePosition(PreprocessingInfo::after);
+
+     // insert after lnode
+     lnode->addToAttachedPreprocessingInfo (info);
+     retVal++;
+
+     // zero out from original list
+     (*infoList)[cidx]= NULL; 
+}
+
 
 //!  Extract sequences like " #endif #endif ...  #if | #ifdef| #ifndef" buried inside subtree of lnode.
 //  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
@@ -27613,6 +27644,10 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 
   // we store both the container and the element's index within the container. so later we can easily remove elements from containers
    vector < pair< AttachedPreprocessingInfoType*, int> > keepers; // preprocessing info. to be kept
+   // for the middle directives like #else or #elif, sometimes their status (balanced or not) is directly associatd with its preceeding begin directive
+   // it is not always an independent decision.
+   unordered_map < AttachedPreprocessingInfoType* , vector< pair<AttachedPreprocessingInfoType*, int>> > associated_directives;  
+
    for(;ast_i!=ast.end();++ast_i) {
        SgLocatedNode* current  = isSgLocatedNode(*ast_i);
        if (current ==NULL ) // skip non located nodes
@@ -27629,10 +27664,30 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
            // Or just duplicate them (easier)
            PreprocessingInfo * info = *ci;
 
+           // begin directives
            if ( isBeginDirective(info) == 1)
            {
                keepers.push_back(make_pair (infoList,commentIndex));
            }
+           // the middle #else, #elif, 
+           else if (isBeginDirective(info) == 2) 
+           {
+               // two situtations for immediate decision of unbalanced status
+               //1. empty stack, or 
+               // 2.  top of stack is not one of #if #ifdef #ifndef. This is an unbalanced directive (keeper)
+               if (keepers.size()==0)
+                    keepers.push_back(make_pair (infoList,commentIndex));
+               else if (isBeginDirective( (*(keepers.back().first))[keepers.back().second]  )!=1 ) // not empty , top of the stack is not beginning
+               {
+                  keepers.push_back(make_pair (infoList,commentIndex)); 
+               } 
+               else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
+               {
+                  // we associated this middle directive with the beginning directive
+                  associated_directives[keepers.back().first].push_back(make_pair (infoList,commentIndex)); 
+               } 
+           } 
+           // end directive
            else if ( isBeginDirective(info) == -1)
            {
               bool neutralized = false;
@@ -27662,8 +27717,9 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    for (auto ki = keepers.begin(); ki != keepers.end(); ki ++) 
    {
      AttachedPreprocessingInfoType* infoList =  (*ki).first;
-     relatedInfoList.insert (infoList);
      int cidx=  (*ki).second;
+     // TODO replace the code block below with moveInofListToNewPlace()
+     relatedInfoList.insert (infoList);
 
      PreprocessingInfo* info = (*infoList)[cidx];
      // rewrite relative position
@@ -27671,10 +27727,23 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 
      // insert after lnode
      lnode->addToAttachedPreprocessingInfo (info);
+     retVal++;
 
      // zero out from original list
      (*infoList)[cidx]= NULL; 
-     retVal++;
+
+     // we additionally process the associated directives, if any
+     if (associated_directives.count (infoList)!=0)
+     {
+        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[infoList];
+        for (auto vec_i  = a_list_vec.begin(); vec_i != a_list_vec.end(); vec_i ++  ) 
+        {
+           AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first; 
+           int cidx=  (*vec_i).second;
+           moveInofListToNewPlace (a_infoList, cidx, relatedInfoList, lnode, retVal);
+
+        }
+     } // each begin directive may associate multiple other middle directives
    }
    
      // erase: based on null ptr now. The statements attached with comments may remain in the final AST
@@ -27692,6 +27761,26 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
      // erase start+offset
      AttachedPreprocessingInfoType::iterator k = infoList->begin();
      infoList->erase(k+cidx);
+
+     // we also must erase the associated directives if any
+     if (associated_directives.count (infoList)!=0)
+     {
+        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[infoList];
+
+        for (auto vec_i  = a_list_vec.begin(); vec_i != a_list_vec.end(); vec_i ++  ) 
+        {
+           AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first; 
+           int acidx=  (*vec_i).second;
+           PreprocessingInfo* a_info = (*a_infoList)[acidx];
+
+           ROSE_ASSERT (a_info==NULL);
+
+           // erase start+offset
+           AttachedPreprocessingInfoType::iterator ak = a_infoList->begin();
+           a_infoList->erase(ak+acidx);
+        }
+     } // each begin directive may associate multiple other middle directives
+    
 
    }
 
