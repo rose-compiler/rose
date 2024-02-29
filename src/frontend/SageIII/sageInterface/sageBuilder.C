@@ -4241,33 +4241,30 @@ buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctio
 
 //! Build a Fortran subroutine or procedure
 SgProcedureHeaderStatement*
-SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_type, SgFunctionParameterList * paralist,
-                                            SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,
-                                            SgProcedureHeaderStatement* first_nondefining_declaration)
-   {
-     ASSERT_not_null(first_nondefining_declaration);
+SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* returnType, SgFunctionParameterList* params,
+                                           SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=nullptr*/,
+                                           SgProcedureHeaderStatement* firstNondefDecl)
+{
+  ASSERT_not_null(firstNondefDecl);
+  SgProcedureHeaderStatement* func{nullptr};
 
-     if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind)
-        {
-          ASSERT_require(return_type == buildVoidType());
-        }
-       else
-        {
-          if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind)
-             {
-               mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:"
-                           << kind << endl;
-               ROSE_ABORT();
-             }
-        }
+  if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind ||
+      kind == SgProcedureHeaderStatement::e_block_data_subprogram_kind) {
+    ASSERT_require(returnType == buildVoidType());
+  }
+  else if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind) {
+    mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:"
+                << kind << endl;
+    ROSE_ABORT();
+  }
 
-     SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (SgName(name),return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration, NULL);
-     ROSE_ASSERT(func != NULL);
+  func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement>(SgName(name), returnType, params, /*isMemberFunction =*/false,
+                                                                        scope, nullptr, 0U, firstNondefDecl, nullptr);
+  ASSERT_not_null(func);
+  func->set_subprogram_kind(kind);
 
-     func->set_subprogram_kind(kind);
-
-     return func;
-   }
+  return func;
+}
 
 //------------------build value expressions -------------------
 //-------------------------------------------------------------
