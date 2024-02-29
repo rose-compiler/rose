@@ -200,53 +200,78 @@ SawyerGenerator::genPropertyDataMember(std::ostream &header, const Ast::Property
 }
 
 void
-SawyerGenerator::genPropertyAccessors(std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
+SawyerGenerator::genPropertyAccessor(std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p,
+                                     Access access, const std::string &returnType, const std::string &accessorName,
+                                     const std::string &thisQualifiers) {
     ASSERT_not_null(p);
 
+    const auto c = p->findAncestor<Ast::Class>();
+    ASSERT_not_null(c);
+
+    // Header
+    header <<THIS_LOCATION <<locationDirective(p, p->startToken)
+           <<accessSpecifier(access)
+           <<"    // Automatically generated; do not modify!\n"
+           <<"    " <<returnType <<" " <<accessorName <<"()" <<withLeadSpace(thisQualifiers) <<";\n";
+
+    // Implementation
+    impl <<"\n"
+         <<THIS_LOCATION <<locationDirective(p, p->startToken)
+         <<"// Automatically generated; do not modify!\n"
+         <<"auto " <<c->name <<"::" <<accessorName <<"()" <<withLeadSpace(thisQualifiers) <<" -> " <<returnType <<" {\n";
+    if (p->findAttribute("Rosebud::not_null") && !isTreeVectorEdge(p))
+        impl <<"    ASSERT_not_null(" <<propertyDataMemberName(p) <<");\n";
+    impl <<"    return " <<propertyDataMemberName(p) <<";\n"
+         <<"}\n";
+}
+
+void
+SawyerGenerator::genPropertyAccessors(std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
+    ASSERT_not_null(p);
+    const bool isLarge = isTreeEdge(p) || p->findAttribute("Rosebud::large");
+    const std::string type = propertyAccessorReturnType(p);
+
     for (const std::string &accessorName: propertyAccessorNames(p)) {
-        const std::string type = propertyAccessorReturnType(p);
-        const auto c = p->findAncestor<Ast::Class>();
-        const bool isLarge = isTreeEdge(p) || p->findAttribute("Rosebud::large");
-        ASSERT_not_null(c);
-
-        //--------------------------------------------------------------------
         // Normal type: `const T& property() const;`
-        {
-            const std::string constRefType = constRef(type);
-            header <<THIS_LOCATION <<locationDirective(p, p->startToken)
-                   <<"public:\n"
-                   <<"    // Automatically generated; do not modify!\n"
-                   <<"    " <<constRefType <<" " <<accessorName <<"() const;\n";
+        genPropertyAccessor(header, impl, p, Access::PUBLIC, constRef(type), accessorName, "const");
 
-            impl <<"\n"
-                 <<THIS_LOCATION <<locationDirective(p, p->startToken)
-                 <<"// Automatically generated; do not modify!\n"
-                 <<"auto " <<c->name <<"::" <<accessorName <<"() const -> " <<constRefType <<" {\n";
-            if (p->findAttribute("Rosebud::not_null") && !isTreeVectorEdge(p))
-                impl <<"    ASSERT_not_null(" <<propertyDataMemberName(p) <<");\n";
-            impl <<"    return " <<propertyDataMemberName(p) <<";\n"
-                 <<"}\n";
-        }
-
-        //--------------------------------------------------------------------
         // Large type: `T& property();`
-        if (isLarge) {
-            const std::string refType = type + "&";
-            header <<THIS_LOCATION <<locationDirective(p, p->startToken)
-                   <<"public:\n"
-                   <<"    // Automatically generated; do not modify!\n"
-                   <<"    " <<refType <<" " <<accessorName <<"();\n";
-
-            impl <<"\n"
-                 <<THIS_LOCATION <<locationDirective(p, p->startToken)
-                 <<"// Automatically generated; do not modify!\n"
-                 <<"auto " <<c->name <<"::" <<accessorName <<"() -> " <<refType <<" {\n";
-            if (p->findAttribute("Rosebud::not_null") && !isTreeVectorEdge(p))
-                impl <<"    ASSERT_not_null(" <<propertyDataMemberName(p) <<");\n";
-            impl <<"    return " <<propertyDataMemberName(p) <<";\n"
-                 <<"}\n";
-        }
+        if (isLarge)
+            genPropertyAccessor(header, impl, p, Access::PUBLIC, type + "&", accessorName, "");
     }
+
+    // If no accessors are given, we still want the class itself to be able to access the data member. This is hard to do if the
+    // data member names are hidden by a random name generator.
+    if (propertyAccessorNames(p).empty()) {
+        genPropertyAccessor(header, impl, p, Access::PRIVATE, constRef(type), p->name, "const");
+        if (isLarge)
+            genPropertyAccessor(header, impl, p, Access::PRIVATE, type + "&", p->name, "");
+    }
+}
+
+void
+SawyerGenerator::genPropertyMutator(std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p,
+                                    Access access, const std::string &mutatorName, const std::string &argumentType) {
+    ASSERT_not_null(p);
+    const auto c = p->findAncestor<Ast::Class>();
+    ASSERT_not_null(c);
+
+    // Header
+    header <<THIS_LOCATION <<locationDirective(p, p->startToken)
+           <<accessSpecifier(access)
+           <<"    // Automatically generated; do not modify!\n"
+           <<"    void " <<mutatorName <<"(" <<argumentType <<");\n";
+
+    // Implementation
+    impl <<"\n"
+         <<THIS_LOCATION <<locationDirective(p, p->startToken)
+         <<"// Automatically generated; do not modify!\n"
+         <<"void\n"
+         <<c->name <<"::" <<mutatorName <<"(" <<argumentType <<" x) {\n";
+    if (p->findAttribute("Rosebud::not_null"))
+        impl <<"    ASSERT_not_null2(x, \"property cannot be set to null\");\n";
+    impl <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
+         <<"}\n";
 }
 
 void
@@ -270,50 +295,15 @@ SawyerGenerator::genPropertyMutators(std::ostream &header, std::ostream &impl, c
 
     const std::string type = propertyMutatorArgumentType(p);
     const std::string constRefType = constRef(type);
-    const auto c = p->findAncestor<Ast::Class>();
-    ASSERT_not_null(c);
 
     // The normal mutators for all users of this class.
-    for (const std::string &mutatorName: propertyMutatorNames(p)) {
-        // Declaration
-        header <<THIS_LOCATION <<locationDirective(p, p->startToken)
-               <<"public:\n"
-               <<"    // Automatically generated; do not modify!\n"
-               <<"    void " <<mutatorName <<"(" <<constRefType <<");\n";
+    for (const std::string &mutatorName: propertyMutatorNames(p))
+        genPropertyMutator(header, impl, p, Access::PUBLIC, mutatorName, constRef(type));
 
-        // Implementation
-        impl <<"\n"
-             <<THIS_LOCATION <<locationDirective(p, p->startToken)
-             <<"// Automatically generated; do not modify!\n"
-             <<"void\n"
-             <<c->name <<"::" <<mutatorName <<"(" <<constRefType <<" x) {\n";
-        if (p->findAttribute("Rosebud::not_null"))
-            impl <<"    ASSERT_not_null2(x, \"property cannot be set to null\");\n";
-        impl <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
-             <<"}\n";
-    }
-
-    // If no mutators are given, we still might want the class itself to be able to modify the data member, such as in hand-written
-    // constructors. This is hard to do if the data member names are hidden by a random name generator. We don't want the mutation
-    // mechanism to be too easy since that might encourage class authors to abuse it -- so we make it stand out a bit by modifying
-    // the mutator name.
-    if (propertyMutatorNames(p).empty()) {
-        // Declaration
-        header <<THIS_LOCATION <<locationDirective(p, p->startToken)
-               <<"private:\n"
-               <<"    // Automatically generated; do not modify!\n"
-               <<"    void forceSet" <<pascalCase(p->name) <<"(" <<constRefType <<");\n";
-
-        // Implementation
-        impl <<"\n"
-             <<THIS_LOCATION <<locationDirective(p, p->startToken)
-             <<"// Automatically generated; do not modify!\n"
-             <<"void "<<c->name <<"::forceSet" <<pascalCase(p->name) <<"(" <<constRefType <<" x) {\n";
-        if (p->findAttribute("Rosebud::not_null"))
-            impl <<"    ASSERT_not_null2(x, \"property cannot be set to null\");\n";
-        impl <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
-             <<"}\n";
-    }
+    // If no mutators are given, we still want the class itself to be able to modify the data member. This is hard to do if the data
+    // member names are hidden by a random name generator.
+    if (propertyMutatorNames(p).empty())
+        genPropertyMutator(header, impl, p, Access::PRIVATE, p->name, constRef(type));
 }
 
 void
@@ -348,9 +338,9 @@ SawyerGenerator::genProperty(std::ostream &header, std::ostream &impl, const Ast
         header <<"\n"
                <<THIS_LOCATION <<locationDirective(p, p->docToken) <<doc.first;
 
-    genPropertyDataMember(header, p);
     genPropertyAccessors(header, impl, p);
     genPropertyMutators(header, impl, p);
+    genPropertyDataMember(header, p);
 
     // Close documentation
     header <<doc.second;

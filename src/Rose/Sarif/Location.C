@@ -13,15 +13,16 @@ namespace Sarif {
 void
 Location::checkConsistency() const {
     // User errors
-    if (sourceEnd_) {
-        if (!sourceBegin_)
+    if (sourceEnd()) {
+        if (!sourceBegin())
             throw Sarif::Exception("source location begin address must be valid");
-        if (sourceBegin_.fileName() != sourceEnd_.fileName())
+        if (sourceBegin().fileName() != sourceEnd().fileName())
             throw Sarif::Exception("source region endpoints must have the same file name");
-        if (sourceBegin_.line() > sourceEnd_.line())
+        if (sourceBegin().line() > sourceEnd().line())
             throw Sarif::Exception("source begin line number must be less than than or equal to end line number");
-        if (sourceBegin_.line() == sourceEnd_.line() &&
-            sourceBegin_.column() && sourceEnd_.column() && *sourceBegin_.column() >= *sourceEnd_.column())
+        if (sourceBegin().line() == sourceEnd().line() &&
+            sourceBegin().column() && sourceEnd().column() &&
+            *sourceBegin().column() >= *sourceEnd().column())
             throw Sarif::Exception("source begin column number must be less than end column number on same line");
     }
 }
@@ -31,7 +32,7 @@ Location::instance(const SourceLocation &loc, const std::string &mesg) {
     if (!loc)
         throw Sarif::Exception("source location begin address must be valid");
     auto self = instance();
-    self->sourceBegin_ = loc;
+    self->sourceBegin(loc);
     self->message(mesg);
     self->checkConsistency();
     return self;
@@ -41,8 +42,8 @@ Location::Ptr
 Location::instance(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg) {
     ASSERT_require(end);
     auto self = instance();
-    self->sourceBegin_ = begin;
-    self->sourceEnd_ = end;
+    self->sourceBegin(begin);
+    self->sourceEnd(end);
     self->message(mesg);
     self->checkConsistency();
     return self;
@@ -52,8 +53,8 @@ Location::instance(const SourceLocation &begin, const SourceLocation &end, const
 Location::Ptr
 Location::instance(const std::string &binaryArtifact, rose_addr_t addr, const std::string &mesg) {
     auto self = instance();
-    self->binaryArtifact_ = binaryArtifact;
-    self->binaryRegion_ = addr;
+    self->binaryArtifact(binaryArtifact);
+    self->binaryAddresses(addr);
     self->message(mesg);
     return self;
 }
@@ -65,8 +66,8 @@ Location::instance(const std::string &binaryArtifact, const BinaryAnalysis::Addr
     if (addrs.isEmpty())
         throw Sarif::Exception("binary region cannot be empty");
     auto self = instance();
-    self->binaryArtifact_ = binaryArtifact;
-    self->binaryRegion_ = addrs;
+    self->binaryArtifact(binaryArtifact);
+    self->binaryAddresses(addrs);
     self->message(mesg);
     return self;
 }
@@ -74,19 +75,19 @@ Location::instance(const std::string &binaryArtifact, const BinaryAnalysis::Addr
 
 const SourceLocation&
 Location::sourceLocation() const {
-    return sourceBegin_;
+    return sourceBegin();
 }
 
 std::pair<SourceLocation, SourceLocation>
 Location::sourceRegion() const {
-    return std::make_pair(sourceBegin_, sourceEnd_);
+    return std::make_pair(sourceBegin(), sourceEnd());
 }
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 std::pair<std::string, rose_addr_t>
 Location::binaryLocation() const {
-    if (binaryRegion_) {
-        return std::make_pair(binaryArtifact_, binaryRegion_.least());
+    if (binaryAddresses()) {
+        return std::make_pair(binaryArtifact(), binaryAddresses().least());
     } else {
         return std::make_pair("", 0);
     }
@@ -96,7 +97,7 @@ Location::binaryLocation() const {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 std::pair<std::string, BinaryAnalysis::AddressInterval>
 Location::binaryRegion() const {
-    return std::make_pair(binaryArtifact_, binaryRegion_);
+    return std::make_pair(binaryArtifact(), binaryAddresses());
 }
 #endif
 
@@ -104,36 +105,36 @@ bool
 Location::emit(std::ostream &out) {
     out <<"{";
 
-    if (sourceBegin_) {
+    if (sourceBegin()) {
         out <<"\"physicalLocation\":{"
             <<"\"artifactLocation\":{"
-            <<"\"uri\":\"" <<StringUtility::jsonEscape(sourceBegin_.fileName().string()) <<"\""
+            <<"\"uri\":\"" <<StringUtility::jsonEscape(sourceBegin().fileName().string()) <<"\""
             <<"}"
             <<",\"region\":{"
-            <<"\"startLine\":" <<sourceBegin_.line();
-        if (const auto col = sourceBegin_.column())
+            <<"\"startLine\":" <<sourceBegin().line();
+        if (const auto col = sourceBegin().column())
             out <<",\"startColumn\":" <<*col;
-        if (sourceEnd_) {
-            out <<",\"endLine\":" <<sourceEnd_.line();
-            if (const auto col = sourceEnd_.column())
+        if (sourceEnd()) {
+            out <<",\"endLine\":" <<sourceEnd().line();
+            if (const auto col = sourceEnd().column())
                 out <<",\"endColumn\":" <<*col;
         }
         out <<"}}";
 
     } else {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-        ASSERT_forbid(binaryRegion_.isEmpty());
+        ASSERT_forbid(binaryAddresses().isEmpty());
         out <<"\"physicalLocation\":{"
             <<"\"artifactLocation\":{"
-            <<"\"uri\":\"" <<StringUtility::jsonEscape(binaryArtifact_) <<"\""
+            <<"\"uri\":\"" <<StringUtility::jsonEscape(binaryArtifact()) <<"\""
             <<"}"
             <<",\"region\":{"
-            <<"\"byteOffset\":" <<binaryRegion_.least();
-        if (binaryRegion_ == BinaryAnalysis::AddressInterval::whole()) {
+            <<"\"byteOffset\":" <<binaryAddresses().least();
+        if (binaryAddresses() == BinaryAnalysis::AddressInterval::whole()) {
             static_assert(sizeof(BinaryAnalysis::AddressInterval::Value)==8);
             out <<",\"byteLength\":18446744073709551616";
         } else {
-            out <<",\"byteLength\":" <<binaryRegion_.size();
+            out <<",\"byteLength\":" <<binaryAddresses().size();
         }
         out <<"}}";
 #else

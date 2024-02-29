@@ -30,12 +30,19 @@ class Location: public Node {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     // Info for a source location or region. If the end location is valid, then the begin location is also valid.
-    SourceLocation sourceBegin_, sourceEnd_;
+    [[using Rosebud: accessors(), mutators()]]
+    SourceLocation sourceBegin;
+
+    [[using Rosebud: accessors(), mutators()]]
+    SourceLocation sourceEnd;
 
     // Info for a binary location or region. These are valid only if source is not valid.
-    std::string binaryArtifact_;
+    [[using Rosebud: accessors(), mutators()]]
+    std::string binaryArtifact;
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-    BinaryAnalysis::AddressInterval binaryRegion_;
+    [[using Rosebud: accessors(), mutators()]]
+    BinaryAnalysis::AddressInterval binaryAddresses;
 #endif
 
 public:

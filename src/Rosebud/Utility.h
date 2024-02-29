@@ -20,7 +20,8 @@ namespace Rosebud {
 enum class Access {
     PRIVATE,                                            /**< Like C++ @c private access. */
     PROTECTED,                                          /**< Like C++ @c protected access. */
-    PUBLIC                                              /**< Like C++ @c public access. */
+    PUBLIC,                                             /**< Like C++ @c public access. */
+    DEFAULT                                             /**< Use whatever access is already present. */
 };
 
 /** Command-line settings for the rosebud tool. */
@@ -113,6 +114,16 @@ std::string cEscape(const std::string&, char context = '"');
 
 /** Quote string to make it shell safe. */
 std::string bourneEscape(const std::string&);
+
+/** String with one leading space. */
+std::string withLeadSpace(const std::string&);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// C++ code generation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Return an access specifier with colon and trailing linefeed. */
+std::string accessSpecifier(Access);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filesystem utilities

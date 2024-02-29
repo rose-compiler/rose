@@ -58,12 +58,11 @@ namespace Rose {
  *  This class is intended to be extended through derivation to provide additional location features such as scope information, but those
  *  things are not included here because they're not always needed or even available. */
 class SourceLocation: public Location {
-    using NamePtr = boost::shared_ptr<boost::filesystem::path>;
+    using NamePtr = std::shared_ptr<boost::filesystem::path>;
     NamePtr fileName_;                                  // null iff default constructed
     size_t line_;
     Sawyer::Optional<size_t> column_;
 
-    
     // Shared index for file names
     struct NameHasher { size_t operator()(const NamePtr&) const; };
     struct NameEquivalence { bool operator()(const NamePtr&, const NamePtr&) const; };
@@ -71,8 +70,8 @@ class SourceLocation: public Location {
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     // protects the following static data members
     static FileNames fileNames_;
 
-private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
     friend class boost::serialization::access;
 
     template<class S>

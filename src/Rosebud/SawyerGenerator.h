@@ -44,8 +44,12 @@ private:
     void genImplClose(std::ostream&, const Ast::ClassPtr&);
     void genImplOpen(std::ostream&, const Ast::ClassPtr&);
     void genProperty(std::ostream&, std::ostream&, const Ast::PropertyPtr&);
+    void genPropertyAccessor(std::ostream&, std::ostream&, const Ast::PropertyPtr&, Access, const std::string &returnType,
+                             const std::string &accessorName, const std::string &thisTypeQualifiers);
     void genPropertyAccessors(std::ostream&, std::ostream&, const Ast::PropertyPtr&);
     void genPropertyDataMember(std::ostream&, const Ast::PropertyPtr&);
+    void genPropertyMutator(std::ostream&, std::ostream&, const Ast::PropertyPtr&, Access, const std::string &mutatorName,
+                            const std::string &argumentType);
     void genPropertyMutators(std::ostream&, std::ostream&, const Ast::PropertyPtr&);
     void genTupFile(const std::vector<std::string> &implNames, const std::vector<std::string> &hdrNames);
     void genMakeFile(const std::vector<std::string> &implNames, const std::vector<std::string> &hdrNames);

@@ -57,7 +57,7 @@ public:
      * @{ */
     [[Rosebud::large]]
     std::pair<std::string, std::string> hash;
-
+public:
     void hash(const std::string &name, const std::string &value);
     /** @} */
 

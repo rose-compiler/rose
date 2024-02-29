@@ -19,8 +19,8 @@ Result::Ptr
 Result::instance(Kind kind, const std::string &mesg) {
     ASSERT_forbid(kind == Kind::FAIL);
     auto self = Ptr(new Result);
-    self->forceSetKind(kind);
-    self->forceSetSeverity(Severity::NONE);
+    self->kind(kind);
+    self->severity(Severity::NONE);
     self->message(mesg);
     return self;
 }
@@ -37,8 +37,8 @@ Result::Ptr
 Result::instance(Severity severity, const std::string &mesg) {
     ASSERT_forbid(severity == Severity::NONE);
     auto self = Ptr(new Result);
-    self->forceSetKind(Kind::FAIL);
-    self->forceSetSeverity(severity);
+    self->kind(Kind::FAIL);
+    self->severity(severity);
     self->message(mesg);
     return self;
 }

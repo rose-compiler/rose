@@ -201,6 +201,8 @@ toString(Access access) {
             return "protected";
         case Access::PUBLIC:
             return "public";
+        case Access::DEFAULT:
+            return "";
     }
     ASSERT_not_reachable("invalid access");
 }
@@ -329,6 +331,23 @@ bourneEscape(const std::string &s) {
     return s;
 }
 
+std::string
+withLeadSpace(const std::string &s) {
+    return s.empty() ? "" : " " + boost::trim_left_copy(s);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// C++ code generation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+accessSpecifier(Access access) {
+    if (Access::DEFAULT == access) {
+        return "";
+    } else {
+        return toString(access) + ":\n";
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filesystem utilities
