@@ -1,0 +1,42 @@
+#ifndef ROSE_serialize_uuid_H
+#define ROSE_serialize_uuid_H
+#include <featureTests.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Boost
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#include <boost/uuid/uuid_serialize.hpp>
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Cereal
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_HAVE_CEREAL
+#include <boost/uuid/string_generator.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+namespace cereal {
+
+template<class Archive>
+void
+CEREAL_SAVE_FUNCTION_NAME(Archive &archive, const boost::uuids::uuid &x) {
+    const std::string uuid = boost::uuids::to_string(x);
+    archive(CEREAL_NVP(uuid));
+}
+
+template<class Archive>
+void
+CEREAL_LOAD_FUNCTION_NAME(Archive &archive, boost::uuids::uuid &x) {
+    std::string uuid;
+    archive(CEREAL_NVP(uuid));
+    x = boost::uuids::string_generator()(uuid);
+}
+
+} // namespace
+
+#endif
+#endif

@@ -83,4 +83,6 @@ install(FILES
   compilationFileDatabase.h LinearCongruentialGenerator.h
   Map.h timing.h rose_getline.h rose_strtoull.h
   roseTraceLib.c ParallelSort.h rose_isnan.h rose_pragma_message.h
+  rose_serialize_path.h
+  rose_serialize_uuid.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

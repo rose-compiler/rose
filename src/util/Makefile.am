@@ -61,6 +61,8 @@ pkginclude_HEADERS =				\
 	rose_isnan.h				\
 	rose_pragma_message.h			\
 	rose_paths.h				\
+	rose_serialize_path.h			\
+	rose_serialize_uuid.h			\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
 	setup.h
