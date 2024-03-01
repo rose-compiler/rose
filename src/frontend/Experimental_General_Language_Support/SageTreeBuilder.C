@@ -498,21 +498,87 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
                          const boost::optional<std::string> &name,
                          const boost::optional<std::string> &label)
 {
-   ASSERT_not_null(program_decl);
+  ASSERT_not_null(program_decl);
 
-   SgFunctionDefinition* program_def = program_decl->get_definition();
-   ASSERT_not_null(program_def);
+  SgFunctionDefinition* program_def = program_decl->get_definition();
+  ASSERT_not_null(program_def);
 
-   if (label)
-      {
-         SageInterface::setFortranNumericLabel(program_decl, atoi(label->c_str()),
-                                               SgLabelSymbol::e_end_label_type, /*label_scope=*/ program_def);
-      }
+  if (label) {
+    SageInterface::setFortranNumericLabel(program_decl, atoi(label->c_str()),
+                                          SgLabelSymbol::e_end_label_type, /*label_scope=*/ program_def);
+  }
 
-   if (name)
-      {
-         program_decl->set_named_in_end_statement(true);
-      }
+  if (name) {
+    program_decl->set_named_in_end_statement(true);
+  }
+}
+
+// Used by Fortran BlockData
+void SageTreeBuilder::
+Enter(SgProcedureHeaderStatement* &declaration, const boost::optional<std::string> &name) {
+  mlog[TRACE] << "SageTreeBuilder::Enter(SgProcedureHeaderStatement*&) \n";
+
+  // The block data statement is implemented to build a function (which initializes data)
+  // Note that it can be declared with the "EXTERNAL" statement and as such it works much
+  // the same as any other procedure.
+
+  SgFunctionDefinition* definition{nullptr};
+  SgBasicBlock* body{nullptr};
+  auto kind = SgProcedureHeaderStatement::e_block_data_subprogram_kind;
+
+  SgScopeStatement* scope = SageBuilder::topScopeStack();
+  ASSERT_not_null(scope);
+  ASSERT_require(scope->variantT() == V_SgGlobal);
+
+  SgName sgName{"BlockDataNameNotPresent__"};
+  if (name) {
+    sgName = *name;
+  }
+
+  SgFunctionParameterList* params = SageBuilder::buildFunctionParameterList_nfi();
+  SgType* type = SageBuilder::buildVoidType();
+
+  declaration = SageBuilder::buildProcedureHeaderStatement(sgName, type, params, kind, scope);
+
+  definition = declaration->get_definition();
+  body = definition->get_body();
+
+  SageBuilder::pushScopeStack(definition);
+  SageBuilder::pushScopeStack(body);
+
+  body->set_parent(definition);
+  definition->set_parent(declaration);
+
+  // source position (need more accurate information from caller)
+  SageInterface::setSourcePosition(declaration);
+  SageInterface::setSourcePosition(declaration->get_parameterList());
+  SageInterface::setSourcePosition(body);
+  SageInterface::setSourcePosition(definition);
+
+  // set labels
+#if 0
+  if (SageInterface::is_Fortran_language() && labels.size() == 1) {
+    SageInterface::setFortranNumericLabel(program_decl, atoi(labels.front().c_str()),
+                                          SgLabelSymbol::e_start_label_type, /*label_scope=*/ definition);
+  }
+#endif
+}
+
+void SageTreeBuilder::
+Leave(SgProcedureHeaderStatement* declaration, bool hasEndName) {
+  mlog[TRACE] << "SageTreeBuilder::Leave(SgProcedureHeaderStatement*) \n";
+
+  ASSERT_not_null(declaration);
+  declaration->set_named_in_end_statement(hasEndName);
+
+  popScopeStack(/*attach_comments*/true);  // procedure body
+  popScopeStack(/*attach_comments*/true);  // procedure definition
+
+  // Attach any remaining comments
+  auto scope = declaration->get_definition()->get_body();
+  attachComments(scope, /*at_end*/true);
+
+  SageInterface::appendStatement(declaration, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -642,87 +708,84 @@ Leave(SgFunctionDefinition* function_def)
 }
 
 void SageTreeBuilder::
-Enter(SgFunctionDeclaration* &function_decl,const std::string &name, SgType* return_type, SgFunctionParameterList* param_list,
-                                            const LanguageTranslation::FunctionModifierList &modifiers, bool is_defining_decl,
-                                            const SourcePositions &sources, std::vector<Rose::builder::Token> &comments)
+Enter(SgFunctionDeclaration* &declaration, const std::string &name, SgType* returnType, SgFunctionParameterList* params,
+                                           const LanguageTranslation::FunctionModifierList &modifiers, bool isDefDecl,
+                                           const SourcePositions &sources, std::vector<Rose::builder::Token> &comments)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) "
-               << sources.get<0>() << ":" << sources.get<1>() << ":" << sources.get<2>() << "\n";
+  mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) "
+              << sources.get<0>() << ":" << sources.get<1>() << ":" << sources.get<2>() << "\n";
 
-   SgFunctionDefinition* function_def = nullptr;
-   SgBasicBlock* function_body = nullptr;
-   SgProcedureHeaderStatement::subprogram_kind_enum subprogram_kind;
+  SgFunctionDefinition* definition{nullptr};
+  SgBasicBlock* body{nullptr};
+  SgProcedureHeaderStatement::subprogram_kind_enum kind;
 
-   function_decl = nullptr;
+  declaration = nullptr;
 
-   SgScopeStatement* scope = SageBuilder::topScopeStack();
-   ASSERT_not_null(scope);
+  SgScopeStatement* scope = SageBuilder::topScopeStack();
+  ASSERT_not_null(scope);
 
-   if (return_type == nullptr) {
-      return_type = SageBuilder::buildVoidType();
-      subprogram_kind = SgProcedureHeaderStatement::e_subroutine_subprogram_kind;
-   }
-   else {
-      subprogram_kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
-   }
+  if (returnType == nullptr) {
+    returnType = SageBuilder::buildVoidType();
+    kind = SgProcedureHeaderStatement::e_subroutine_subprogram_kind;
+  }
+  else {
+    kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
+  }
 
-   if (is_defining_decl) {
-      // Warning: this calls the unparser to get mangled function name (potentially slow)!
-      function_decl = SB::buildProcedureHeaderStatement(SgName(name), return_type,
-                                                        param_list, subprogram_kind, scope);
-      ASSERT_not_null(function_decl);
+  if (isDefDecl) {
+    // Warning: this calls the unparser to get mangled function name (potentially slow)!
+    declaration = SB::buildProcedureHeaderStatement(SgName(name), returnType, params, kind, scope);
 
-      function_def = function_decl->get_definition();
-      function_body = function_def->get_body();
-      ASSERT_not_null(function_def);
-      ASSERT_not_null(function_body);
+    definition = declaration->get_definition();
+    body = definition->get_body();
+    ASSERT_not_null(definition);
+    ASSERT_not_null(body);
 
-      SageBuilder::pushScopeStack(function_def);
-      SageBuilder::pushScopeStack(function_body);
-   }
-   else {
-      function_decl = SB::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
-                                                                   param_list, subprogram_kind, scope);
-   }
-   ASSERT_not_null(function_decl);
+    SageBuilder::pushScopeStack(definition);
+    SageBuilder::pushScopeStack(body);
+  }
+  else {
+    declaration = SB::buildNondefiningProcedureHeaderStatement(SgName(name), returnType, params, kind, scope);
+  }
+  ASSERT_not_null(declaration);
 
-// set source position and attach comments (order important, from list first, decl before body)
-   const SourcePosition &fs = sources.get<0>();
-   const SourcePosition &bs = sources.get<1>();
-   const SourcePosition &fe = sources.get<2>();
-   attachComments(function_decl, comments, PosInfo{fs.line,fs.column,fe.line,fe.column});
-   attachComments(function_body, comments, PosInfo{bs.line,bs.column,fe.line,fe.column});
+  // set source position and attach comments (order important, from list first, decl before body)
+  const SourcePosition &fs = sources.get<0>();
+  const SourcePosition &bs = sources.get<1>();
+  const SourcePosition &fe = sources.get<2>();
+  attachComments(declaration, comments, PosInfo{fs.line,fs.column,fe.line,fe.column});
+  attachComments(body, comments, PosInfo{bs.line,bs.column,fe.line,fe.column});
 
-   if (function_decl) setSourcePosition(function_decl, sources.get<0>(), sources.get<2>());
-   if (function_def)  setSourcePosition(function_def,  sources.get<1>(), sources.get<2>());
-   if (function_body) setSourcePosition(function_body, sources.get<1>(), sources.get<2>());
+  if (declaration) setSourcePosition(declaration, sources.get<0>(), sources.get<2>());
+  if (definition) setSourcePosition(definition, sources.get<1>(), sources.get<2>());
+  if (body) setSourcePosition(body, sources.get<1>(), sources.get<2>());
 
-   SageInterface::setSourcePosition(function_decl->get_parameterList());
+  SageInterface::setSourcePosition(declaration->get_parameterList());
 
-   if (list_contains(modifiers, LT::e_function_modifier_definition))  function_decl->get_declarationModifier().setJovialDef();
-   if (list_contains(modifiers, LT::e_function_modifier_reference ))  function_decl->get_declarationModifier().setJovialRef();
+  if (list_contains(modifiers, LT::e_function_modifier_definition))  declaration->get_declarationModifier().setJovialDef();
+  if (list_contains(modifiers, LT::e_function_modifier_reference ))  declaration->get_declarationModifier().setJovialRef();
 
-   if (list_contains(modifiers, LT::e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
-   if (list_contains(modifiers, LT::e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
+  if (list_contains(modifiers, LT::e_function_modifier_recursive))   declaration->get_functionModifier().setRecursive();
+  if (list_contains(modifiers, LT::e_function_modifier_reentrant))   declaration->get_functionModifier().setReentrant();
 
-   if (list_contains(modifiers, LT::e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
-   if (list_contains(modifiers, LT::e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
+  if (list_contains(modifiers, LT::e_function_modifier_pure     ))   declaration->get_functionModifier().setPure();
+  if (list_contains(modifiers, LT::e_function_modifier_elemental))   declaration->get_functionModifier().setElemental();
 
-   if (list_contains(modifiers, LT::e_function_modifier_cuda_device)) function_decl->get_functionModifier().setCudaDevice();
-   if (list_contains(modifiers, LT::e_function_modifier_cuda_host))   function_decl->get_functionModifier().setCudaHost();
-   if (list_contains(modifiers, LT::e_function_modifier_cuda_global)) function_decl->get_functionModifier().setCudaGlobalFunction();
-   if (list_contains(modifiers, LT::e_function_modifier_cuda_grid_global)) function_decl->get_functionModifier().setCudaGridGlobal();
+  if (list_contains(modifiers, LT::e_function_modifier_cuda_device)) declaration->get_functionModifier().setCudaDevice();
+  if (list_contains(modifiers, LT::e_function_modifier_cuda_host))   declaration->get_functionModifier().setCudaHost();
+  if (list_contains(modifiers, LT::e_function_modifier_cuda_global)) declaration->get_functionModifier().setCudaGlobalFunction();
+  if (list_contains(modifiers, LT::e_function_modifier_cuda_grid_global)) declaration->get_functionModifier().setCudaGridGlobal();
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
+Leave(SgFunctionDeclaration* declaration, SgScopeStatement* param_scope)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
-   ASSERT_not_null(function_decl);
+   ASSERT_not_null(declaration);
 
-   SgName function_name = function_decl->get_name();
-   SgVariableSymbol* result_symbol = param_scope->lookup_variable_symbol(function_decl->get_name());
+   SgName function_name = declaration->get_name();
+   SgVariableSymbol* result_symbol = param_scope->lookup_variable_symbol(declaration->get_name());
    bool is_defining_decl = (isSgFunctionParameterScope(param_scope) == nullptr);
 
 // If this is a defining declaration then the function body has to be moved from the
@@ -739,13 +802,13 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
 
     // Connect the result SgInitializedName initially created in param_scope into the scope of the function body
        if (result_symbol) {
-         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(function_decl);
+         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(declaration);
          SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
          ASSERT_not_null(proc_decl);
          ASSERT_not_null(result_name);
 
          proc_decl->set_result_name(result_name);
-         result_name->set_parent(function_decl);
+         result_name->set_parent(declaration);
          result_name->set_scope(function_body);
          ASSERT_not_null(function_body->lookup_symbol(function_name));
        }
@@ -761,45 +824,45 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
    else
      {
        ASSERT_not_null(isSgFunctionParameterScope(param_scope));
-       ASSERT_require(function_decl->get_functionParameterScope() == nullptr);
-       function_decl->set_functionParameterScope(isSgFunctionParameterScope(param_scope));
+       ASSERT_require(declaration->get_functionParameterScope() == nullptr);
+       declaration->set_functionParameterScope(isSgFunctionParameterScope(param_scope));
 
        if (result_symbol) {
-         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(function_decl);
+         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(declaration);
          SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
          ASSERT_not_null(proc_decl);
          ASSERT_not_null(result_name);
 
          proc_decl->set_result_name(result_name);
-         result_name->set_parent(function_decl);
+         result_name->set_parent(declaration);
        }
      }
 
    if (is_defining_decl) {
       // Attach any remaining comments
-      auto scope = function_decl->get_definition()->get_body();
+      auto scope = declaration->get_definition()->get_body();
       attachComments(scope, /*at_end*/true);
    }
 
    // Finished using the map for labels
    labels_.clear();
 
-   SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
+   SageInterface::appendStatement(declaration, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt, const std::string &result_name /* = "" */)
+Leave(SgFunctionDeclaration* declaration, SgScopeStatement* param_scope, bool have_end_stmt, const std::string &result_name /* = "" */)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
    // Call more generic leave for SgFunctionDeclaration, will move declarations out of param_scope into
    // the body of the function declaration and will set the result name as name of the function
-   Leave(function_decl, param_scope);
+   Leave(declaration, param_scope);
 
    // If result is named, get symbol and init name of the result to set it for the function declaration
    if (!result_name.empty()) {
       // Get symbol and associated initialized name
-      SgFunctionDefinition* func_def = function_decl->get_definition();
+      SgFunctionDefinition* func_def = declaration->get_definition();
       ASSERT_not_null(func_def);
       SgBasicBlock* body = func_def->get_body();
       ASSERT_not_null(body);
@@ -808,7 +871,7 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool 
       SgInitializedName* init_name = symbol->get_declaration();
       ASSERT_not_null(init_name);
 
-      SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(function_decl);
+      SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(declaration);
       ASSERT_not_null(proc_header_stmt);
 
       // If result is named but not declared, need to fix up initialized name created earlier for it
@@ -824,7 +887,7 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool 
 
    // Set named end statement if needed
    if (have_end_stmt) {
-      function_decl->set_named_in_end_statement(have_end_stmt);
+      declaration->set_named_in_end_statement(have_end_stmt);
    }
 }
 
@@ -2069,27 +2132,21 @@ Leave(SgTypedefDeclaration* type_def)
 // Fortran specific nodes
 
 void SageTreeBuilder::
-Enter(SgCommonBlock* &common_block, std::list<SgCommonBlockObject*> &common_block_object_list)
+Enter(SgCommonBlock* &stmt)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgCommonBlock* &, ...) \n";
+  mlog[TRACE] << "SageTreeBuilder::Enter(SgCommonBlock* &)\n";
 
-   common_block = SageBuilder::buildCommonBlock();
-   SageInterface::setSourcePosition(common_block);
-
-   SgCommonBlockObjectPtrList & list = common_block->get_block_list();
-
-   BOOST_FOREACH(SgCommonBlockObject* common_block_object, common_block_object_list) {
-      list.push_back(common_block_object);
-   }
+  stmt = SageBuilder::buildCommonBlock();
+  SageInterface::setSourcePosition(stmt);
 }
 
 void SageTreeBuilder::
-Leave(SgCommonBlock* common_block)
+Leave(SgCommonBlock* stmt)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgCommonBlock*) \n";
+  mlog[TRACE] << "SageTreeBuilder::Leave(SgCommonBlock*)\n";
+  ASSERT_not_null(stmt);
 
-   ASSERT_not_null(common_block);
-   SageInterface::appendStatement(common_block, SageBuilder::topScopeStack());
+  SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
 }
 
 // Jovial allows implicitly declared variables (like Fortran?) but does require there to

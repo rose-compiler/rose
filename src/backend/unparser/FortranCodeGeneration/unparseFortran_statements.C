@@ -3582,8 +3582,9 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
     // so we just want to finish it off with "PROGRAM <name>".
 
     unparseStatementNumbersSupport(procedureHeader->get_end_numeric_label(),info);
-    curprint("END " + typeOfFunction + " ");
+    curprint("END " + typeOfFunction);
     if (procedureHeader->get_named_in_end_statement()) {
+      curprint(" ");
       curprint(procedureHeader->get_name().str());
     }
 
@@ -3640,15 +3641,20 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
       unp->u_fortran_type->unparseType(returnType,info);
     }
 
-    // Are there possible qualifiers that we are missing?
-    curprint(typeOfFunction + " ");
-    curprint(procedureHeader->get_name().str());
+    if (procedureHeader->isBlockData()) {
+      curprint(typeOfFunction);
+      if (procedureHeader->get_name().str() != std::string{"BlockDataNameNotPresent__"}) {
+        curprint(" ");
+        curprint(procedureHeader->get_name().str());
+      }
+    }
+    else {
+      curprint(typeOfFunction + " ");
+      curprint(procedureHeader->get_name().str());
 
-    SgUnparse_Info ninfo2(info);
-    ninfo2.set_inArgList();
+      SgUnparse_Info ninfo2(info);
+      ninfo2.set_inArgList();
 
-    // Fortran Block Data statements don't have operands (I think)
-    if (procedureHeader->isBlockData() == false) {
       curprint("(");
       unparseFunctionArgs(procedureHeader,ninfo2);
       curprint(")");

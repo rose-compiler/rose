@@ -64,17 +64,21 @@ public:
   // ProgramUnit
   void Build(Fortran::parser::MainProgram &);
   void Build(Fortran::parser::Module &);
+  void Build(Fortran::parser::Submodule &);
   void Build(Fortran::parser::FunctionSubprogram &);
   void Build(Fortran::parser::SubroutineSubprogram &);
   void Build(Fortran::parser::InternalSubprogramPart &);
   void Build(Fortran::parser::ModuleSubprogramPart &);
+  void Build(Fortran::parser::BlockData &);
   void Build(Fortran::parser::ContainsStmt &);
 
   // SpecificationPart
   void Build(Fortran::parser::ImplicitStmt &);
+  void Build(Fortran::parser::CommonStmt &);
   void Build(Fortran::parser::TypeDeclarationStmt &);
 
   // SpecificationConstruct
+  void Build(Fortran::parser::DataStmt &);
   void Build(Fortran::parser::DerivedTypeDef &);
 
   void Build(Fortran::parser::IntegerTypeSpec &);

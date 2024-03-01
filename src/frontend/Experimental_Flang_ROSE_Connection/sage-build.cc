@@ -104,6 +104,16 @@ void BuildExprVisitor::Build(Fortran::parser::RealLiteralConstant &x) {
   this->set(sg);
 }
 
+// CommonBlockObject
+void BuildExprVisitor::Build(Fortran::parser::CommonBlockObject &x) {
+  SgExpression* sg{nullptr};
+  BuildImpl(x, sg);
+#if REPLACE
+  Replace(x, sg);
+#endif
+  this->set(sg);
+}
+
 // AssumedImpliedSpec
 void BuildExprVisitor::Build(Fortran::parser::AssumedImpliedSpec &x) {
   SgExpression* sg{nullptr};
@@ -556,23 +566,47 @@ void BuildVisitor::Build(parser::ModuleSubprogramPart &x)
 }
 
 // Submodule
-void Build(parser::Submodule &x) {
+void BuildVisitor::Build(parser::Submodule &x) {
   // std::tuple<> Statement<SubmoduleStmt>, SpecificationPart,
   //              std::optional<ModuleSubprogramPart>, Statement<EndSubmoduleStmt>
-
   std::cout << "Rose::builder::Build(Submodule)\n";
   ABORT_NO_IMPL;
 }
 
 // BlockData
-void Build(parser::BlockData &x) {
-  // std::tuple<> Statement<BlockDataStmt>, SpecificationPart, Statement<EndBlockDataStmt>
-  std::cout << "Rose::builder::Build(BlockData)\n";
-
+void BuildVisitor::Build(parser::BlockData &x) {
+  // BlockData std::tuple<> Statement<BlockDataStmt>, SpecificationPart, Statement<EndBlockDataStmt>
   // BlockDataStmt std::optional<Name> v;
   // EndBlockDataStmt std::optional<Name> v;
 
-  ABORT_NO_IMPL;
+  using namespace Fortran::parser;
+  std::cout << "Rose::builder::Build(BlockData)\n";
+
+  boost::optional<std::string> name{boost::none};
+  bool hasEndName{false};
+
+  auto &stmt{std::get<Statement<BlockDataStmt>>(x.t)};
+  auto &end{std::get<Statement<EndBlockDataStmt>>(x.t)};
+
+  if (stmt.statement.v) {
+    name = stmt.statement.v->ToString();
+  }
+  if (end.statement.v) {
+    hasEndName = true;
+  }
+
+  // Begin SageTreeBuilder for SgProcedureHeaderStatement
+  SgProcedureHeaderStatement* procHeader{nullptr};
+  builder.Enter(procHeader, name);
+
+  std::optional<SourcePosition> srcBegin{BuildSourcePosition(stmt, Order::begin)};
+  SourcePosition srcEnd{BuildSourcePosition(end, Order::end)};
+  builder.setSourcePosition(procHeader, *srcBegin, srcEnd);
+
+  Walk(std::get<parser::SpecificationPart>(x.t));
+
+  // Leave SageTreeBuilder for SgProcedureHeaderStatement
+  builder.Leave(procHeader, hasEndName);
 }
 
 void BuildFunctionReturnType(const parser::SpecificationPart &x, std::string &result_name, SgType* &return_type)
@@ -874,6 +908,20 @@ void BuildImpl(parser::LogicalLiteralConstant &x, SgExpression* &expr)
   expr = SageBuilder::buildBoolValExp_nfi(std::get<0>(x.t));
 }
 
+void BuildImpl(parser::CommonBlockObject &x, SgExpression* &expr)
+{
+  // CommonBlockObject std::tuple<Name, std::optional<ArraySpec>> t;
+
+  // ArraySpec
+  if (std::get<std::optional<parser::ArraySpec>>(x.t)) {
+    std::cout << "BuildImpl(CommonBlockObject): TODO: optional ArraySpec\n";
+    ABORT_NO_IMPL;
+  }
+
+  std::string name{std::get<parser::Name>(x.t).ToString()};
+  expr = SageBuilder::buildVarRefExp(name);
+}
+
 void BuildImpl(parser::AssumedImpliedSpec &x, SgExpression* &expr)
 {
   // is [ lower-bound : ] *
@@ -1081,6 +1129,67 @@ void BuildVisitor::Build(parser::ImplicitStmt &x) {
   const ImplicitStmt & xx{std::move(implicitList)};
   x.u = std::move(implicitList);
 #endif
+}
+
+void BuildVisitor::Build(parser::CommonStmt &x) {
+  // CommonStmt std::list<Block> blocks;
+  // Block std::tuple<std::optional<Name>, std::list<CommonBlockObject>> t;
+
+  // Begin SageTreeBuilder for SgCommonBlock
+  SgCommonBlock* blockStmt{nullptr};
+  builder.Enter(blockStmt);
+
+  for (auto &block: x.blocks) {
+    std::string blockName{""};
+    SgExprListExp* blockObjects{SageBuilder::buildExprListExp_nfi()};
+
+    if (std::get<std::optional<parser::Name>>(block.t)) {
+      blockName = std::get<std::optional<parser::Name>>(block.t)->ToString();
+    }
+
+    // CommonBlockObject(s)
+    for (auto &object: std::get<std::list<parser::CommonBlockObject>>(block.t)) {
+      SgExpression* varRef{nullptr};
+      WalkExpr(object, varRef);
+      blockObjects->get_expressions().push_back(varRef);
+    }
+
+    SgCommonBlockObject* sageObject = SageBuilder::buildCommonBlockObject(blockName, blockObjects);
+    blockStmt->get_block_list().push_back(sageObject);
+  }
+
+  // Leave SageTreeBuilder for SgCommonBlock
+  builder.Leave(blockStmt);
+}
+
+void BuildVisitor::Build(parser::DataStmt &x)
+{
+  // DataStmt std::list<DataStmtSet> v
+  // DataStmtSet std::tuple<std::list<DataStmtObject>, std::list<DataStmtValue>> t;
+  // DataStmtObject std::variant<common::Indirection<Variable>, DataImpliedDo> u;
+  // DataStmtValue mutable std::int64_t repetitions{1};
+  //   std::tuple<std::optional<DataStmtRepeat>, DataStmtConstant> t;
+  // DataStmtConstant
+  //   CharBlock source;
+  //   mutable TypedExpr typedExpr;
+  //   std::variant<LiteralConstant, SignedIntLiteralConstant,
+  //      SignedRealLiteralConstant, SignedComplexLiteralConstant, NullInit,
+  //      common::Indirection<Designator>, StructureConstructor>
+  //      u;
+
+  std::cout << "BuildVisitor::Build(DataStmt)\n";
+
+  for (auto &set: x.v) {
+    ABORT_NO_IMPL;
+  }
+
+#if 0
+        buildAttributeSpecificationStatement(
+                SgAttributeSpecificationStatement::e_dataStatement, label, keyword);
+#endif
+
+
+
 }
 
 void BuildVisitor::Build(parser::TypeDeclarationStmt &x) {
@@ -1481,12 +1590,6 @@ void Build(parser::ConstantExpr &x, SgExpression* &expr)
 }
 
 // DeclarationConstruct
-
-void BuildImpl(parser::DataStmt &x)
-{
-  std::cout << "BuildImpl(DataStmt)\n";
-  ABORT_NO_IMPL;
-}
 
 void BuildImpl(parser::FormatStmt &x)
 {
@@ -1980,63 +2083,6 @@ void BuildImpl(parser::OldParameterStmt &x)
 {
   std::cout << "BuildImpl(OldParameterStmt)\n";
   ABORT_NO_IMPL;
-}
-
-void BuildImpl(parser::CommonStmt &x)
-{
-  // Flang::parser::CommonStmt -> SgCommonBlock in ROSE
-  std::cout << "BuildImpl(CommonStmt)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   std::list<SgCommonBlockObject*> common_block_object_list;
-   Build(x.blocks, common_block_object_list);   // std::list<Block> blocks;
-
-   SgCommonBlock* common_block = nullptr;
-   builder.Enter(common_block, common_block_object_list);
-   builder.Leave(common_block);
-#endif
-}
-
-void Build(parser::CommonStmt::Block&x, SgCommonBlockObject* &common_block_object)
-{
-  // Flang::parser::CommonStmt::Block -> SgCommonBlockObject in ROSE
-  std::cout << "Rose::builder::Build(CommonStmt::Block)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   // Get name of CommonStmt::Block
-   std::string name;
-   if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
-      Build(opt.value(), name);
-   }
-
-   // Build std::list of variable references built from names in Flang::Parser::CommonBlockObject
-   std::list<SgExpression*> var_ref_list;
-   Build(std::get<1>(x.t), var_ref_list);
-
-   // Build SgExprListExp from std::list of variable references
-   SgExprListExp* sg_list = SageBuilder::buildExprListExp_nfi(var_ref_list);
-
-   // Build ROSE SgCommonBlockObject from name of CommonStmt::Block and sg_list of variable references
-   common_block_object = SageBuilder::buildCommonBlockObject(name, sg_list);
-#endif
-}
-
-void Build(parser::CommonBlockObject&x, SgExpression* &var_ref)
-{
-  // Flang::parser::CommonBlockObject -> an SgExpression in the SgExprListExp member of SgCommonBlockObject in ROSE
-  std::cout << "Rose::builder::Build(CommonBlockObject)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   parser::Name name = std::get<parser::Name>(x.t);
-
-   Build(name, var_ref);
-
-   if (auto & opt = std::get<1>(x.t)) {   // std::optional<ArraySpec>
-   }
-#endif
 }
 
 // Expr

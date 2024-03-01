@@ -36,9 +36,6 @@ void setSgSourceFile(SgSourceFile* sg_file);
 // Converts parsed program to ROSE Sage nodes
 void Build(Fortran::parser:: Program &, Fortran::parser::AllCookedSources &);
 
-void Build(Fortran::parser:: Submodule &);
-void Build(Fortran::parser:: BlockData &);
-
 void Build(Fortran::parser:: CompilerDirective &);
 void Build(Fortran::parser:: OpenACCRoutineConstruct &);
 void Build(Fortran::parser:: OpenMPDeclarativeConstruct &);
@@ -78,6 +75,9 @@ void BuildImpl(Fortran::parser::ComplexLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::BOZLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::CharLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::LogicalLiteralConstant &, SgExpression* &);
+
+// CommonBlockObject
+void BuildImpl(Fortran::parser::CommonBlockObject &, SgExpression* &);
 
 // ArraySpec ...
 void BuildImpl(Fortran::parser::AssumedImpliedSpec &, SgExpression* &);
@@ -127,16 +127,6 @@ void Build(Fortran::parser::            CharLength &, SgExpression* &);
 void Build(Fortran::parser::        Initialization &, SgExpression* &);
 void Build(Fortran::parser::          KindSelector &, SgExpression* &);
 
-#if USE_DEPRECATED
-// ArraySpec
-void Build(Fortran::parser::                   ExplicitShapeSpec &, SgExprListExp* &);
-void Build(Fortran::parser::                    AssumedShapeSpec &, SgExprListExp* &);
-void Build(Fortran::parser::               DeferredShapeSpecList &, SgExprListExp* &);
-void Build(Fortran::parser::                     AssumedSizeSpec &, SgExprListExp* &);
-void Build(Fortran::parser::                    ImpliedShapeSpec &, SgExprListExp* &);
-void Build(Fortran::parser::                     AssumedRankSpec &, SgExprListExp* &);
-#endif
-
 void Build(Fortran::parser::                   SpecificationExpr &, SgExpression* &);
 void Build(Fortran::parser::Scalar<Fortran::parser::IntExpr>     &, SgExpression* &);
 void Build(Fortran::parser::Scalar<Fortran::parser::LogicalExpr> &, SgExpression* &);
@@ -155,7 +145,6 @@ void Build(Fortran::parser::CharSelector::LengthAndKind &, SgExpression* &);
 void Build(Fortran::parser::             TypeParamValue &, SgExpression* &);
 
 // DeclarationConstruct
-void Build(Fortran::parser::        DataStmt &);
 void Build(Fortran::parser::StmtFunctionStmt &);
 void Build(Fortran::parser::   ErrorRecovery &);
 
@@ -217,10 +206,6 @@ void Build(Fortran::parser::           AssignStmt &);
 void Build(Fortran::parser::     AssignedGotoStmt &);
 void Build(Fortran::parser::            PauseStmt &);
 void Build(Fortran::parser::         NamelistStmt &);
-
-void BuildImpl(Fortran::parser:: CommonStmt &);
-void Build(Fortran::parser::    CommonStmt::Block &, SgCommonBlockObject* &);
-void Build(Fortran::parser::    CommonBlockObject &, SgExpression*        &);
 
 // Expr
 //

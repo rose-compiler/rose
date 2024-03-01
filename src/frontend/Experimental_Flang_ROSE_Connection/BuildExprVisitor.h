@@ -58,6 +58,9 @@ public:
   void Build(Fortran::parser::IntLiteralConstant &);
   void Build(Fortran::parser::RealLiteralConstant &);
 
+  // CommonBlockObject
+  void Build(Fortran::parser::CommonBlockObject &);
+
   // ArraySpec ...
   void Build(Fortran::parser::AssumedImpliedSpec &);
   void Build(Fortran::parser::ExplicitShapeSpec &);

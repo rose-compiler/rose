@@ -8,6 +8,9 @@
 #include <boost/tuple/tuple.hpp>
 #include <sstream>
 
+#define DEPRECATED_STB 0
+
+#if DEPRECATED_STB
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
 //
@@ -57,6 +60,7 @@ class SgVariableDeclaration;
 class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
+#endif
 
 using SgExpressionPtrList = std::vector<SgExpression*>;
 
@@ -146,6 +150,9 @@ public:
    void setFortranEndProgramStmt(SgProgramHeaderStatement*,
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
+
+   void Enter(SgProcedureHeaderStatement* &, const boost::optional<std::string> &);
+   void Leave(SgProcedureHeaderStatement*, bool);
 
    void Enter(SgFunctionParameterList* &, SgScopeStatement* &, const std::string &, SgType*, bool);
    void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<LanguageTranslation::FormalParameter> &);
@@ -269,14 +276,14 @@ public:
    void Enter(SgJovialOverlayDeclaration* &, SgExpression* address, SgExprListExp* overlay);
    void Leave(SgJovialOverlayDeclaration*);
 
-   void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
+   void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool isBlock=false);
    void Leave(SgJovialTableStatement*);
 #endif
 
 // Fortran specific nodes
 //
-   void Enter(SgCommonBlock* &, std::list<SgCommonBlockObject*> &);
-   void Leave(SgCommonBlock* common_block);
+   void Enter(SgCommonBlock* &);
+   void Leave(SgCommonBlock*);
 
 private:
    LanguageEnum language_;
