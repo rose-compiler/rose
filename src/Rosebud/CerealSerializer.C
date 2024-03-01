@@ -28,17 +28,20 @@ CerealSerializer::isSerializable(const Ast::Class::Ptr&) const {
 
 void
 CerealSerializer::genPrologue(std::ostream &header, std::ostream&, const Ast::Class::Ptr&, const Hierarchy&,
-                              const Generator&r) const {
-    header <<"\n"
-           <<THIS_LOCATION <<"#include <rosePublicConfig.h>\n"
-           <<"#ifdef ROSE_HAVE_CEREAL\n"
-           <<"#include <cereal/access.hpp>\n"
-           <<"#include <cereal/cereal.hpp>\n"
-           <<"#endif\n";
+                              const Generator &generator) const {
+    if (generator.name() != "rosetta") {
+        header <<"\n"
+               <<THIS_LOCATION <<"#include <rosePublicConfig.h>\n"
+               <<"#ifdef ROSE_HAVE_CEREAL\n"
+               <<"#include <cereal/access.hpp>\n"
+               <<"#include <cereal/cereal.hpp>\n"
+               <<"#include <cereal/types/memory.hpp>\n"
+               <<"#endif\n";
+    }
 }
 
 void
-CerealSerializer::genBody(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h,
+CerealSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class::Ptr &c, const Hierarchy &h,
                           const Generator &generator) const {
     ASSERT_not_null(c);
 
@@ -62,8 +65,10 @@ CerealSerializer::genBody(std::ostream &header, std::ostream &impl, const Ast::C
     }
     for (const auto &p: c->properties) {
         if (!p->findAttribute("Rosebud::no_serialize")) {
+            p->cppStack->emitOpen(body);
             const std::string dataMember = generator.propertyDataMemberName(p());
             body <<THIS_LOCATION <<"        archive(" <<"cereal::make_nvp(\"" <<p->name <<"\", " <<dataMember <<"));\n";
+            p->cppStack->emitClose(body);
         }
     }
 

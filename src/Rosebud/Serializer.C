@@ -45,4 +45,17 @@ Serializer::lookup(const std::string &name) {
     return {};
 }
 
+std::vector<Serializer::Ptr>
+Serializer::lookup(const std::vector<std::string> &names) {
+    std::vector<Ptr> retval;
+    for (const std::string &name: names) {
+        if (auto serializer = lookup(name)) {
+            retval.push_back(serializer);
+        } else {
+            throw std::runtime_error("no such serializer: " + name);
+        }
+    }
+    return retval;
+}
+
 } // namespace

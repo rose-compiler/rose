@@ -93,7 +93,9 @@ makeCommandLineParser() {
                      }()));
 
     parser.with(Switch("serializer")
-                .argument("name", anyParser(settings.serializer))
+                .argument("name", listParser(anyParser(settings.serializers), ","))
+                .explosiveLists(true)
+                .whichValue(SAVE_ALL)
                 .doc("Name of the serialization code generator. The choices are:" +
                      []() {
                          std::string choices;
@@ -127,9 +129,11 @@ makeCommandLineParser() {
         message(FATAL, "invalid backend code generator \"" + settings.backend + "\"; see --help\n");
         exit(1);
     }
-    if (!Serializer::lookup(settings.serializer)) {
-        message(FATAL, "invalid serialization code generator \"" + settings.serializer + "\"; see --help\n");
-        exit(1);
+    for (const std::string &name: settings.serializers) {
+        if (!Serializer::lookup(name)) {
+            message(FATAL, "invalid serialization code generator \"" + name + "\"; see --help\n");
+            exit(1);
+        }
     }
 
     return parser;

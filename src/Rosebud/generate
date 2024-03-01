@@ -61,6 +61,7 @@ fi
 [ -f "$RG_SRC/src/Rosebud/rosebud.C" ] ||
     die "cannot find top of ROSE source tree at \"$RG_SRC\""
 
+# Binary Analysis AST nodes
 "$ROSEBUD_EXE" --no-warnings --no-locations \
 	       --backend=rosetta --serializer=boost \
 	       --rosetta-output="$RG_SRC/src/ROSETTA/src/binaryInstruction.C" \
@@ -72,6 +73,7 @@ fi
 	       "$@" \
 	       "$RG_SRC"/src/AstNodes/BinaryAnalysis/*.h
 
+# Jovial analysis AST nodes
 "$ROSEBUD_EXE" --warnings --no-locations \
 	       --backend=rosetta --serializer=none \
 	       --rosetta-output="$RG_SRC/src/ROSETTA/src/jovialNodes.C" \
@@ -83,17 +85,10 @@ fi
 	       "$@" \
 	       "$RG_SRC"/src/AstNodes/Jovial/*.h
 
-# Rose::Sarif
+# Rose::Sarif AST
 "$ROSEBUD_EXE" --no-locations \
-	       --backend=sawyer --serializer=cereal \
+	       --backend=sawyer --serializer=boost,cereal \
 	       --sawyer-generated="$RG_SRC/src/generated/Rose/Sarif" \
 	       --sawyer-header-prefix="rose/Rose/Sarif" \
 	       "$@" \
 	       "$RG_SRC"/src/AstNodes/Rose/Sarif/*.h
-
-# # Experimental
-# "$ROSEBUD_EXE" --no-locations \
-# 	       --backend=sawyer --serializer=none \
-# 	       --sawyer-generated="$RG_SRC/src/generated/Rose/Experimental/Ast/BinaryAnalysis" \
-# 	       "$@" \
-# 	       "$RG_SRC"/src/AstNodes/Experimental/BinaryAnalysis/*.h

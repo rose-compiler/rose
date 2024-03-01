@@ -27,7 +27,7 @@ enum class Access {
 /** Command-line settings for the rosebud tool. */
 struct Settings {
     std::string backend = "yaml";                       /**< Name of main backend code generator to use. */
-    std::string serializer = "boost";                   /**< Name of the serializer code generator to use. */
+    std::vector<std::string> serializers;               /**< Name of the serializer code generator to use. */
     bool showingWarnings = true;                        /**< Show warnings about the input. */
     bool showingLocations = true;                       /**< Output should show source location from whence it came. */
     bool debugging = false;                             /**< Generate additional debugging output. */

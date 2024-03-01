@@ -215,14 +215,16 @@ SawyerGenerator::genPropertyAccessor(std::ostream &header, std::ostream &impl, c
            <<"    " <<returnType <<" " <<accessorName <<"()" <<withLeadSpace(thisQualifiers) <<";\n";
 
     // Implementation
-    impl <<"\n"
-         <<THIS_LOCATION <<locationDirective(p, p->startToken)
+    impl <<"\n";
+    p->cppStack->emitOpen(impl);
+    impl <<THIS_LOCATION <<locationDirective(p, p->startToken)
          <<"// Automatically generated; do not modify!\n"
          <<"auto " <<c->name <<"::" <<accessorName <<"()" <<withLeadSpace(thisQualifiers) <<" -> " <<returnType <<" {\n";
     if (p->findAttribute("Rosebud::not_null") && !isTreeVectorEdge(p))
         impl <<"    ASSERT_not_null(" <<propertyDataMemberName(p) <<");\n";
     impl <<"    return " <<propertyDataMemberName(p) <<";\n"
          <<"}\n";
+    p->cppStack->emitClose(impl);
 }
 
 void
@@ -263,8 +265,9 @@ SawyerGenerator::genPropertyMutator(std::ostream &header, std::ostream &impl, co
            <<"    void " <<mutatorName <<"(" <<argumentType <<");\n";
 
     // Implementation
-    impl <<"\n"
-         <<THIS_LOCATION <<locationDirective(p, p->startToken)
+    impl <<"\n";
+    p->cppStack->emitOpen(impl);
+    impl <<THIS_LOCATION <<locationDirective(p, p->startToken)
          <<"// Automatically generated; do not modify!\n"
          <<"void\n"
          <<c->name <<"::" <<mutatorName <<"(" <<argumentType <<" x) {\n";
@@ -272,6 +275,7 @@ SawyerGenerator::genPropertyMutator(std::ostream &header, std::ostream &impl, co
         impl <<"    ASSERT_not_null2(x, \"property cannot be set to null\");\n";
     impl <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
          <<"}\n";
+    p->cppStack->emitClose(impl);
 }
 
 void
@@ -497,7 +501,7 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
 
     if (c->findAttribute("rosebud::suppress"))
         return;
-    auto serializer = notnull(Serializer::lookup(settings.serializer));
+    std::vector<Serializer::Ptr> serializers = Serializer::lookup(settings.serializers);
 
     // Open files
     auto file = notnull(c->findAncestor<Ast::File>());
@@ -517,7 +521,8 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
     // Emit stuff before the beginning of the class
     genHeaderOpen(header, c);
     genImplOpen(impl, c);
-    serializer->genPrologue(header, impl, c, h, *this);
+    for (const Serializer::Ptr &serializer: serializers)
+        serializer->genPrologue(header, impl, c, h, *this);
     if (!c->priorText.empty()) {
         std::regex implRe("#\\s*(ifdef\\s+ROSE_IMPL|if\\s+defined\\s*\\(\\s*ROSE_IMPL\\s*\\))");
         const std::string cppImplSymbol = toCppSymbol(c->qualifiedNamespace + "::" + c->name) + "_IMPL";
@@ -575,7 +580,8 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
 
     // Other generated members
     genClassConstructors(header, impl, c, h);
-    serializer->genBody(header, impl, c, h, *this);
+    for (const Serializer::Ptr &serializer: serializers)
+        serializer->genBody(header, impl, c, h, *this);
 
     // Emit stuff after the class
     header <<"};\n";
@@ -587,7 +593,8 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
              <<THIS_LOCATION <<locationDirective(file, file->endTextToken)
              <<file->endText <<"\n";
     }
-    serializer->genEpilogue(header, impl, c, h, *this);
+    for (const Serializer::Ptr &serializer: serializers)
+        serializer->genEpilogue(header, impl, c, h, *this);
     genHeaderClose(header, c);
     genImplClose(impl, c);
 }

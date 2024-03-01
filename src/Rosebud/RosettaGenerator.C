@@ -480,15 +480,15 @@ RosettaGenerator::genOtherContent(std::ostream &rosetta, const Ast::Class::Ptr &
 
         // Serialization. ROSETTA cannot generate code that goes before or after the class definition since all class definitions
         // are emitted to a single ROSETTA-generated header file (Cxx_Grammar.h).
-        auto serializer = Serializer::lookup(settings.serializer);
-        ASSERT_not_null(serializer);
-        {
-            std::ostringstream ss;
-            serializer->genPrologue(rosetta, rosetta, c, h, *this);
-            serializer->genEpilogue(rosetta, rosetta, c, h, *this);
-            ASSERT_require2(ss.str().empty(), "the \"" + serializer->name() + "\" serializer is not supported for this generator");
+        for (const Serializer::Ptr &serializer: Serializer::lookup(settings.serializers)) {
+            {
+                std::ostringstream ss;
+                serializer->genPrologue(rosetta, rosetta, c, h, *this);
+                serializer->genEpilogue(rosetta, rosetta, c, h, *this);
+                ASSERT_require2(ss.str().empty(), "the \"" + serializer->name() + "\" serializer is not supported for this generator");
+            }
+            serializer->genBody(rosetta, rosetta, c, h, *this);
         }
-        serializer->genBody(rosetta, rosetta, c, h, *this);
 
         rosetta <<content
                 <<"#endif // " <<c->name <<"_OTHERS\n";
@@ -536,10 +536,12 @@ RosettaGenerator::genNonterminalMacros(std::ostream &rosetta, const Ast::Class::
     genNewNonterminalMacro(rosetta, c, h);
     rosetta <<THIS_LOCATION <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n";
 
-    auto serializer = Serializer::lookup(settings.serializer);
-    ASSERT_not_null(serializer);
-    if (serializer->isSerializable(c))
-        rosetta <<THIS_LOCATION <<shortName(c) <<".isBoostSerializable(true);\n";
+    for (const Serializer::Ptr &serializer: Serializer::lookup(settings.serializers)) {
+        if (serializer->name() == "boost" && serializer->isSerializable(c)) {
+            rosetta <<THIS_LOCATION <<shortName(c) <<".isBoostSerializable(true);\n";
+            break;
+        }
+    }
 
     rosetta <<THIS_LOCATION <<shortName(c) <<".setAutomaticGenerationOfConstructor(false);\n"
             <<shortName(c) <<".setAutomaticGenerationOfDestructor(false);\n"
@@ -556,10 +558,10 @@ RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c)
         rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS2(" <<shortName(c) <<", " <<c->tag <<");\n";
     }
 
-    auto serializer = Serializer::lookup(settings.serializer);
-    ASSERT_not_null(serializer);
-    if (serializer->isSerializable(c))
-        rosetta <<THIS_LOCATION <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
+    for (const Serializer::Ptr &serializer: Serializer::lookup(settings.serializers)) {
+        if (serializer->name() == "boost" && serializer->isSerializable(c))
+            rosetta <<THIS_LOCATION <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
+    }
 }
 
 void
@@ -695,7 +697,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
     if (nPragmas > 0 && settings.showingWarnings) {
         message(WARN, c->findAncestor<Ast::File>(), c->nameToken,
                 "class " + c->name + " contains " + boost::lexical_cast<std::string>(nPragmas) + " pragma " +
-                std::string(1 == nPragmas ? "directive" : "directives") + " which should only be used only as a last resort to "
+                std::string(1 == nPragmas ? "directive" : "directives") + " which should be used only as a last resort to "
                 "achieve ROSETTA compatibility. Most of the things done with these pragmas can be done more effectively and "
                 "with less generated code by using C++ features like dynamic dispatch, template metaprogramming and "
                 "introspection. The presence of ROSETTA-specific pragmas will likely hinder our ability to write other code "
