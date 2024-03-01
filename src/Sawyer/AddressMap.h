@@ -22,9 +22,6 @@
 #include <boost/cstdint.hpp>
 #include <boost/integer_traits.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/nvp.hpp>
 
 #if __cplusplus >= 201103L
 #include <type_traits>
@@ -554,6 +551,17 @@ public:
     typedef T Value;
     typedef AddressSegment<A, T> Segment;
 
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive&) {
+        // no data to serialize here
+    }
+#endif
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -561,6 +569,7 @@ private:
     void serialize(S&, const unsigned /*version*/) {
         // no data to serialize here
     }
+#endif
 
 public:
     bool merge(const Sawyer::Container::Interval<Address> &leftInterval, Segment &leftSegment,

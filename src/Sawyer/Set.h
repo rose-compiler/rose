@@ -11,18 +11,22 @@
 #include <Sawyer/Interval.h>
 #include <Sawyer/Sawyer.h>
 
-// Work around a bug in boost::serialization for 1.74.0
-#include <boost/version.hpp>
-#if BOOST_VERSION == 107400
-     #include <boost/serialization/library_version_type.hpp>
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
+    // Work around a bug in boost::serialization for 1.74.0
+    #include <boost/version.hpp>
+    #if BOOST_VERSION == 107400
+         #include <boost/serialization/library_version_type.hpp>
+    #endif
+    #include <boost/serialization/serialization.hpp>        // needed by <boost/serialization/set.hpp> in boost 1.58 - 1.60
+    #include <boost/serialization/set.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/set.hpp>
 #endif
 
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <boost/serialization/serialization.hpp>        // needed by <boost/serialization/set.hpp> in boost 1.58 - 1.60
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/set.hpp>
 #include <vector>
 
 namespace Sawyer {
@@ -61,6 +65,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -68,7 +73,18 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(set_);
     }
-    
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(set_));
+    }
+#endif
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Construction
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

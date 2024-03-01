@@ -16,9 +16,14 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/cstdint.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 #include <boost/serialization/string.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/string.hpp>
+#endif
 
 namespace Sawyer {
 namespace Container {
@@ -44,6 +49,11 @@ public:
     typedef A Address;                                  /**< Address types expected to be used by the underlying buffer. */
     typedef T Value;                                    /**< Type of values stored by the underlying buffer. */
 
+
+    //-------------------------------------------------------------------------------------------------------------------
+    // Serialization
+    //-------------------------------------------------------------------------------------------------------------------
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -57,6 +67,20 @@ private:
         s & BOOST_SERIALIZATION_NVP(accessibility_);
         s & BOOST_SERIALIZATION_NVP(name_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(buffer_));
+        archive(CEREAL_NVP(offset_));
+        archive(CEREAL_NVP(accessibility_));
+        archive(CEREAL_NVP(name_));
+    }
+#endif
 
     //-------------------------------------------------------------------------------------------------------------------
     // Constructors

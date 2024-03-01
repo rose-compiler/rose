@@ -16,9 +16,6 @@
 #include <Sawyer/Optional.h>                            // for Sawyer::Nothing
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <boost/unordered_map.hpp>
 #include <ostream>
 #if 1 /*DEBUGGING [Robb Matzke 2014-04-21]*/
@@ -1318,17 +1315,18 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
-    struct SerializableEdge {
+    struct BoostSerializableEdge {
         size_t srcId, tgtId;
         EdgeValue value;
 
-        SerializableEdge()
+        BoostSerializableEdge()
             : srcId(-1), tgtId(-1) {}
 
-        SerializableEdge(size_t srcId, size_t tgtId, const EdgeValue &value)
+        BoostSerializableEdge(size_t srcId, size_t tgtId, const EdgeValue &value)
             : srcId(srcId), tgtId(tgtId), value(value) {}
 
         template<class S>
@@ -1350,7 +1348,7 @@ private:
         s <<BOOST_SERIALIZATION_NVP(ne);
         for (size_t i=0; i<ne; ++i) {
             ConstEdgeIterator edge = findEdge(i);
-            SerializableEdge se(edge->source()->id(), edge->target()->id(), edge->value());
+            BoostSerializableEdge se(edge->source()->id(), edge->target()->id(), edge->value());
             s <<BOOST_SERIALIZATION_NVP(se);
         }
     }
@@ -1369,7 +1367,7 @@ private:
         size_t ne = 0;
         s >>BOOST_SERIALIZATION_NVP(ne);
         for (size_t i=0; i<ne; ++i) {
-            SerializableEdge se;
+            BoostSerializableEdge se;
             s >>BOOST_SERIALIZATION_NVP(se);
             ASSERT_require(se.srcId < nv && se.tgtId < nv);
             insertEdge(findVertex(se.srcId), findVertex(se.tgtId), se.value);
@@ -1377,7 +1375,67 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    struct CerealSerializableEdge {
+        size_t srcId, tgtId;
+        EdgeValue value;
+
+        CerealSerializableEdge()
+            : srcId(-1), tgtId(-1) {}
+
+        CerealSerializableEdge(size_t srcId, size_t tgtId, const EdgeValue &value)
+            : srcId(srcId), tgtId(tgtId), value(value) {}
+
+        template<class Archive>
+        void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+            archive(CEREAL_NVP(srcId));
+            archive(CEREAL_NVP(tgtId));
+            archive(CEREAL_NVP(value));
+        }
+    };
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        size_t nv = nVertices();
+        archive(CEREAL_NVP(nv));
+        for (size_t i = 0; i < nv; ++i)
+            archive(cereal::make_nvp("vertex", findVertex(i)->value()));
+
+        size_t ne = nEdges();
+        archive(CEREAL_NVP(ne));
+        for (size_t i = 0; i < ne; ++i) {
+            ConstEdgeIterator edge = findEdge(i);
+            CerealSerializableEdge se(edge->source()->id(), edge->target()->id(), edge->value());
+            archive(CERAL_NVP(se));
+        }
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        clear();
+        size_t nv = 0;
+        archive(CEREAL_NVP(nv));
+        for (size_t i = 0; i < nv; ++i) {
+            VertexValue vv;
+            archive(cereal::make_nvp("vertex", vv));
+            insertVertex(vv);
+        }
+
+        size_t ne = 0;
+        archive(CEREAL_NVP(ne));
+        for (size_t i = 0; i < ne; ++i) {
+            CerealSerializableEdge se;
+            archive(CEREAL_NVP(se));
+            ASSERT_require(se.srcId < nv && se.tgtId < nv);
+            insertEdge(findVertex(se.srcId), findVertex(se.tgtId), se.value);
+        }
+    }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Initialization

@@ -18,6 +18,16 @@
 #include <string>
 #include <vector>
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/vector.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
+#endif
+
 namespace Sawyer {
 
 /** Tree data structure.
@@ -249,12 +259,16 @@ private:
         // point backward through the list.
         EdgeBase *prev;
 
+    protected:
+        UserBase &parent_;                              // required parent owning this child edge
+
+    public:
         virtual ~EdgeBase() {}
         EdgeBase() = delete;
         EdgeBase(const EdgeBase&) = delete;
         EdgeBase& operator=(const EdgeBase&) = delete;
-        explicit EdgeBase(EdgeBase *prev)
-            : prev(prev) {}
+        explicit EdgeBase(EdgeBase *prev, UserBase &parent)
+            : prev(prev), parent_(parent) {}
 
         // Number of child pointers in this edge. Edges are either 1:1 or 1:N. Some of the child pointers could be null.
         virtual size_t size() const = 0;
@@ -280,6 +294,28 @@ private:
             }
             return decltype(visitor(std::shared_ptr<T>(), TraversalEvent::ENTER))();
         }
+
+        // Return the list of child pointers for this edge. An `Edge` will have exactly one pointer, and an `EdgeVector` will
+        // have any number of pointers. The pointers may be null.
+        std::vector<UserBasePtr> immediateChildren() const {
+            std::vector<UserBasePtr> retval;
+            retval.reserve(size());
+            for (size_t i = 0; i < size(); ++i)
+                retval.push_back(pointer(i));
+            return retval;
+        }
+
+    protected:
+        // Return this edge and the previous edges in the order they were initialized. Each member is either a non-null pointer to
+        // an `Edge` or a non-null pointer to an `EdgeVector`.
+        std::vector<EdgeBase*> baseEdgeList() const {
+            std::vector<EdgeBase*> retval;
+            for (EdgeBase *child = this; child; child = prev)
+                retval.push_back(child);
+            std::reverse(retval.begin(), retval.end());
+            return retval;
+        }
+
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,10 +367,29 @@ public:
         using ChangeSignal = boost::signals2::signal<void(ChildPtr, ChildPtr)>;
 
     private:
-        UserBase &parent_;                              // required parent owning this child edge
         ChildPtr child_;                                // optional child to which this edge points
         ChangeSignal beforeChange_;                     // signal emitted before the child pointer is changed
         ChangeSignal afterChange_;                      // signal emitted after the child pointer is changed
+
+#ifdef SAWYER_HAVE_CEREAL
+    private:
+        friend class cereal::access;
+
+        template<class Archive>
+        void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+            archive(cereal::make_nvp("child", child_));
+        }
+#endif
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
+    private:
+        friend class boost::serialization::access;
+
+        template<class Archive>
+        void serialize(Archive &archive, const unsigned /*version*/) {
+            archive & boost::serialization::make_nvp("child", child_);
+        }
+#endif
 
     public:
         /** Destructor clears child's parent. */
@@ -409,7 +464,7 @@ public:
 
                 // Link new child into the tree
                 if (newChild) {
-                    newChild->parent.set(parent_);
+                    newChild->parent.set(this->parent_);
                     child_ = newChild;
                 }
 
@@ -595,10 +650,63 @@ public:
         using iterator = Iterator<typename Vector::iterator>;
 
     private:
-        UserBase &parent_;                              // required parent owning this child edge
         Vector edges_;
         ResizeSignal beforeResize_;                     // signal emitted before a resize operation
         ResizeSignal afterResize_;                      // signal emitted after a resize operation
+
+#ifdef SAWYER_HAVE_CEREAL
+    private:
+        friend class cereal::access;
+
+        template<class Archive>
+        void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+            const size_t nEdges = edges_.size();
+            archive(CEREAL_NVP(nEdges));
+            for (size_t i = 0; i < nEdges; ++i) {
+                ChildPtr child = at(i)();
+                archive(CEREAL_NVP(child));
+            }
+        }
+
+        template<class Archive>
+        void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+            size_t nEdges = 0;
+            archive(CEREAL_NVP(nEdges));
+            for (size_t i = 0; i < nEdges; ++i) {
+                ChildPtr child;
+                archive(CEREAL_NVP(child));
+                push_back(child);
+            }
+        }
+#endif
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
+    private:
+        friend class boost::serialization::access;
+
+        template<class Archive>
+        void save(Archive &archive, const unsigned /*version*/) const {
+            const size_t nEdges = edges_.size();
+            archive <<BOOST_SERIALIZATION_NVP(nEdges);
+            for (size_t i = 0; i < nEdges; ++i) {
+                ChildPtr child = at(i)();
+                archive <<BOOST_SERIALIZATION_NVP(child);
+            }
+        }
+
+        template<class Archive>
+        void load(Archive &archive, const unsigned /*version*/) {
+            size_t nEdges = 0;
+            archive >>BOOST_SERIALIZATION_NVP(nEdges);
+            for (size_t i = 0; i < nEdges; ++i) {
+                ChildPtr child;
+                archive >>BOOST_SERIALIZATION_NVP(child);
+                push_back(child);
+            }
+        }
+
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 
     public:
         /** Destructor clears children's parents. */
@@ -642,7 +750,7 @@ public:
          *  vertex, and its parent pointer will be adjusted automatically. */
         void push_back(const ChildPtr& elmt) {
             beforeResize_(+1, elmt);
-            auto edge = std::unique_ptr<Edge<Child>>(new Edge<Child>(Link::NO, parent_, elmt));
+            auto edge = std::unique_ptr<Edge<Child>>(new Edge<Child>(Link::NO, this->parent_, elmt));
             edges_.push_back(std::move(edge));
             afterResize_(+1, elmt);
         }
@@ -746,7 +854,91 @@ public:
      *  A vertex's parent pointer is adjusted automatically when the vertex is inserted or removed as a child of another vertex. An
      *  invariant of this design is that whenever vertex A is a child of vertex B, then vertex B is a parent of vertex A. */
     ReverseEdge parent;
+
+private:
     EdgeBase *treeEdges_ = nullptr;
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    // This base class is responsible for serializing the parts of the EdgeBase data members pointed to by `treeEdges_`, but not
+    // their child pointers. The child pointers are serialized by the derived classes where those data members are defined.
+    template<class Archive>
+    void
+    CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        const std::vector<EdgeBase*> baseEdgeList = [this]() {
+            if (treeEdges_) {
+                return treeEdges_->baseEdgeList();
+            } else {
+                return std::vector<EdgeBase*>();
+            }
+        }();
+
+        const size_t nBases = baseEdgeList.size();
+        archive(CEREAL_NVP(nBases));
+        for (const EdgeBase *baseEdge: baseEdgeList) {
+            const size_t baseOffset = (char*)baseEdge - (char*)this;
+            archive(CEREAL_NVP(baseOffset));
+        }
+    }
+
+    template<class Archive>
+    void
+    CEREAL_LOAD_FUNCTION_NAME(Archive &archive) const {
+        const size_t nBases = 0;
+        archive(CEREAL_NVP(nBases));
+        for (size_t i = 0; i < nBases; ++i) {
+            size_t baseOffset = 0;
+            archive(CEREAL_NVP(baseOffset));
+            EdgeBase *baseEdge = (EdgeBase*)((char*)this + baseOffset);
+            baseEdge->reset(treeEdges_);
+            treeEdges_ = baseEdge;
+        }
+    }
+#endif
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    // This base class is responsible for serializing the parts of the EdgeBase data members pointed to by `treeEdges_`, but not
+    // their child pointers. The child pointers are serialized by the derived classes where those data members are defined.
+    template<class Archive>
+    void
+    save(Archive &archive, const unsigned /*version*/) const {
+        const std::vector<EdgeBase*> baseEdgeList = [this]() {
+            if (treeEdges_) {
+                return treeEdges_->baseEdgeList();
+            } else {
+                return std::vector<EdgeBase*>();
+            }
+        }();
+
+        const size_t nBases = baseEdgeList.size();
+        archive <<BOOST_SERIALIZATION_NVP(nBases);
+        for (const EdgeBase *baseEdge: baseEdgeList) {
+            const size_t baseOffset = (char*)baseEdge - (char*)this;
+            archive <<BOOST_SERIALIZATION_NVP(baseOffset);
+        }
+    }
+
+    template<class Archive>
+    void
+    load(Archive &archive, const unsigned /*version*/) {
+        const size_t nBases = 0;
+        archive >>BOOST_SERIALIZATION_NVP(nBases);
+        for (size_t i = 0; i < nBases; ++i) {
+            size_t baseOffset = 0;
+            archive >>BOOST_SERIALIZATION_NVP(baseOffset);
+            EdgeBase *baseEdge = (EdgeBase*)((char*)this + baseOffset);
+            baseEdge->reset(treeEdges_);
+            treeEdges_ = baseEdge;
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 
 protected:
     virtual void destructorHelper() {}
@@ -1011,17 +1203,17 @@ Vertex<B>::Edge<T>::~Edge() {
 template<class B>
 template<class T>
 Vertex<B>::Edge<T>::Edge(UserBase &parent)
-    : EdgeBase(parent.treeEdges_), parent_(parent) {
-    parent_.treeEdges_ = this;
+    : EdgeBase(parent.treeEdges_, parent) {
+    this->parent_.treeEdges_ = this;
 }
 
 #ifndef DOCUMENTATION                                   // doxygen has problems with this
 template<class B>
 template<class T>
 Vertex<B>::Edge<T>::Edge(UserBase &parent, const std::shared_ptr<T> &child)
-    : EdgeBase(parent.treeEdges_), parent_(parent), child_(child) {
+    : EdgeBase(parent.treeEdges_, parent), child_(child) {
     checkChildInsertion(child);
-    parent_.treeEdges_ = this;                          // must be after checkChildInsertin for exception safety
+    this->parent_.treeEdges_ = this;                    // must be after checkChildInsertin for exception safety
     if (child)
         child->parent.set(parent);
 }
@@ -1031,10 +1223,10 @@ Vertex<B>::Edge<T>::Edge(UserBase &parent, const std::shared_ptr<T> &child)
 template<class B>
 template<class T>
 Vertex<B>::Edge<T>::Edge(Link link, UserBase &parent, const std::shared_ptr<T> &child)
-    : EdgeBase(Link::YES == link ? parent.treeEdges_ : nullptr), parent_(parent), child_(child) {
+    : EdgeBase(Link::YES == link ? parent.treeEdges_ : nullptr, parent), child_(child) {
     checkChildInsertion(child);
     if (Link::YES == link)
-        parent_.treeEdges_ = this;                      // must be after checkChildInsertin for exception safety
+        this->parent_.treeEdges_ = this;                // must be after checkChildInsertin for exception safety
     if (child)
         child->parent.set(parent);
 }
@@ -1048,7 +1240,7 @@ Vertex<B>::Edge<T>::checkChildInsertion(const std::shared_ptr<T> &child) const {
         if (child->parent)
             throw InsertionError(child);
 #ifndef NDEBUG
-        for (const UserBase *p = &parent_; p; p = p->parent().get()) {
+        for (const UserBase *p = &this->parent_; p; p = p->parent().get()) {
             if (p == child.get())
                 throw CycleError(child);
         }
@@ -1122,8 +1314,8 @@ Vertex<B>::Edge<T>::operator!=(const Edge<U> &other) const {
 template<class B>
 template<class T>
 Vertex<B>::EdgeVector<T>::EdgeVector(UserBase &parent)
-    : EdgeBase(parent.treeEdges_), parent_(parent) {
-    parent_.treeEdges_ = this;
+    : EdgeBase(parent.treeEdges_, parent) {
+    this->parent_.treeEdges_ = this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -11,10 +11,6 @@
 #include <Sawyer/Buffer.h>
 #include <Sawyer/Sawyer.h>
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/nvp.hpp>
-
 namespace Sawyer {
 namespace Container {
 
@@ -32,6 +28,7 @@ public:
 private:
     Address size_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42,6 +39,24 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(size_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(cereal::base_class<Super>());
+        archive(CEREAL_NVP(size_));
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::base_class<Super>());
+        archive(CEREAL_NVP(size_));
+    }
+#endif
 
 protected:
     NullBuffer(): Super(".NullBuffer"), size_(0) {}

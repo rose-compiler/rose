@@ -13,11 +13,13 @@
 #include <Sawyer/Buffer.h>
 #include <Sawyer/Sawyer.h>
 
-#include <boost/serialization/access.hpp>
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 #include <boost/serialization/array.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/array.hpp>
+#endif
 
 namespace Sawyer {
 namespace Container {
@@ -38,6 +40,7 @@ private:
     Address size_;
     bool rdonly_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -59,6 +62,29 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(cereal::base_class<Super>());
+        archive(CEREAL_NVP(size_));
+        archive(CEREAL_NVP(rdonly_));
+        archive(cereal::binary_data(values_, size_));
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::base_class<Super>());
+        archive(CEREAL_NVP(size_));
+        archive(CEREAL_NVP(rdonly_));
+        values_ = new Value[size_];
+        archive(cereal::binary_data(values_, size_));
+    }
+#endif
 
 private:
     // For serialization only

@@ -13,8 +13,6 @@
 #include <boost/integer_traits.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -37,6 +35,7 @@ public:
 private:
     T lo_, hi_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -45,6 +44,18 @@ private:
         s & BOOST_SERIALIZATION_NVP(lo_);
         s & BOOST_SERIALIZATION_NVP(hi_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(lo_));
+        archive(CEREAL_NVP(hi_));
+    }
+#endif
 
 public:
     /** Bidirectional forward iterator.

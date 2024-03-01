@@ -14,9 +14,6 @@
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/Synchronization.h>
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <cstddef>
 #include <ostream>
 
@@ -76,6 +73,7 @@ private:
     // Returns number of owners remaining
     static size_t releaseOwnership(Pointee *rawPtr);
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -94,7 +92,27 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
-    
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(CEREAL_NVP(pointee_));
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        if (pointee_ != nullptr && 0 == releaseOwnership(pointee_))
+            delete pointee_;
+        pointee_ = nullptr;
+        archive(CEREAL_NVP(pointee_));
+        acquireOwnership(pointee_);
+    }
+#endif
+
 public:
     /** Constructs an empty shared pointer.
      *

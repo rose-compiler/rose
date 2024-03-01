@@ -10,8 +10,6 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Optional.h>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 
@@ -47,6 +45,7 @@ public:
 private:
     mutable Sawyer::Optional<Value> value_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -54,7 +53,18 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(value_);
     }
-    
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(value_));
+    }
+#endif
+
 public:
     /** Initialize to an empty value. */
     Cached() {}

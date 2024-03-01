@@ -12,9 +12,6 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/range/iterator_range.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <boost/unordered_map.hpp>
 #include <stdexcept>
 
@@ -42,6 +39,7 @@ private:
     typedef boost::unordered_map<Key, Value, Hasher, Comparator, Allocator> ImplMap;
     ImplMap map_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -72,6 +70,39 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    // Apparently no serialization functions for boost::unordered_map, so do it the hard way.
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        size_t nElmts = map_.size();
+        archive(CEREAL_NVP(nElmts));
+        for (typename ImplMap::const_iterator iter = map_.begin(); iter != map_.end(); ++iter) {
+            const Key &key = iter->first;
+            archive(CEREAL_NVP(key));
+            const Value &value = iter->second;
+            archive(CEREAL_NVP(value));
+        }
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        size_t nElmts;
+        archive(CEREAL_NVP(nElmts));
+        for (size_t i = 0; i < nElmts; ++i) {
+            Key key;
+            archive(CEREAL_NVP(key));
+            Value value;
+            archive(CEREAL_NVP(key));
+            map_.insert(std::make_pair(key, value));
+        }
+    }
+#endif
+
 
 public:
     /** Type for stored nodes.

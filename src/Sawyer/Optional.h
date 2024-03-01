@@ -9,9 +9,6 @@
 #define Sawyer_Optional_H
 
 #include <Sawyer/Sawyer.h>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <boost/type_traits/aligned_storage.hpp>
 #include <boost/type_traits/type_with_alignment.hpp>
 
@@ -69,6 +66,7 @@ class Optional {
     void *address() { return &mayAlias_; }
     const void*address() const { return &mayAlias_; }
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -91,7 +89,31 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
-        
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(cereal::make_nvp("isEmpty", isEmpty_));
+        if (!isEmpty_)
+            archive(cereal::make_nvp("value", get()));
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        *this = Nothing();
+        bool isEmpty = false;
+        archive(CEREAL_NVP(isEmpty));
+        if (!isEmpty) {
+            *this = T{};
+            archive(cereal::make_nvp("value", get()));
+        }
+    }
+#endif
+
 public:
     /** Type of stored value. */
     typedef T Value;

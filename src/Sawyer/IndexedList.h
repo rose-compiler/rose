@@ -14,9 +14,6 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/range/iterator_range.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <iterator>
 #include <vector>
 
@@ -311,6 +308,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -349,6 +347,46 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        size_t n = size();
+        archive(CEREAL_NVP(n));
+        for (const ProtoNode *pnode = head_->next; pnode != head_; pnode = pnode->next) {
+            ASSERT_require(n-- > 0);
+            size_t id = pnode->dereference().id();
+            const Value &value = pnode->dereference().value();
+            archive(CEREAL_NVP(id));
+            archive(CEREAL_NVP(value));
+        }
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        clear();
+        size_t n = 0;
+        archive(CEREAL_NVP(n));
+        ASSERT_require(index_.empty());
+        index_.resize(n, NULL);
+        for (size_t i = 0; i < n; ++i) {
+            size_t id = 0;
+            archive(CEREAL_NVP(id));
+            Node *node = new (allocator_.allocate(sizeof(Node))) Node(id, Value());
+            archive(cereal::make_nvp("value", node->value()));
+
+            ASSERT_require(id < index_.size());
+            ASSERT_require(index_[id] == NULL);
+            index_[id] = node;
+
+            head_->insert(node->linkage_);              // append to end of node list
+        }
+    }
+#endif
 
         
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

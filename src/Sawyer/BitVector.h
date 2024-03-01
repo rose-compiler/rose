@@ -15,9 +15,14 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 #include <boost/serialization/vector.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/vector.hpp>
+#endif
 
 namespace Sawyer {
 namespace Container {
@@ -70,13 +75,27 @@ private:
     std::vector<Word> words_;
     size_t size_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
+
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(size_);
         s & BOOST_SERIALIZATION_NVP(words_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(size_));
+        archive(CEREAL_NVP(words_));
+    }
+#endif
 
 public:
     /** Default construct an empty vector. */

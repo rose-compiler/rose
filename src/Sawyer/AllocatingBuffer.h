@@ -12,10 +12,15 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/nvp.hpp>
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 #include <boost/serialization/vector.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/vector.hpp>
+#endif
+
 #include <cstring>                                      // memcpy
 #include <string>
 
@@ -36,6 +41,7 @@ public:
 private:
     std::vector<Value> values_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -46,6 +52,18 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(values_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::base_class<Super>());
+        archive(CEREAL_NVP(values_));
+    }
+#endif
 
 protected:
     explicit AllocatingBuffer(Address size = 0): Super(".AllocatingBuffer"), values_(size) {}

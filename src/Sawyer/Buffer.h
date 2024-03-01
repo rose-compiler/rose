@@ -10,8 +10,6 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/SharedPointer.h>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
 #include <string>
 
 namespace Sawyer {
@@ -29,6 +27,7 @@ class Buffer: public SharedObject {
 protected:
     explicit Buffer(const std::string &name = ""): name_(generateSequentialName()+name), copyOnWrite_(false) {}
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37,6 +36,24 @@ private:
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(copyOnWrite_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(CEREAL_NVP(name_));
+        archive(CEREAL_NVP(copyOnWrite_));
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(name_));
+        archive(CEREAL_NVP(copyOnWrite_));
+    }
+#endif
 
 public:
     /** Reference counting smart pointer.

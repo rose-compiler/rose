@@ -14,9 +14,6 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-
 namespace Sawyer {
 namespace Container {
 
@@ -45,6 +42,7 @@ public:
     typedef I Interval;
     typedef T Value;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -52,6 +50,17 @@ private:
     void serialize(S&, const unsigned /*version*/) {
         // nothing to serialize in this class
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive&) {
+        // nothing to serialize in this class
+    }
+#endif
 
 public:
     /** Merge two values if possible.
@@ -226,6 +235,7 @@ private:
     Policy policy_;
     typename Interval::Value size_;                     // number of values (map_.size is number of intervals)
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -235,6 +245,19 @@ private:
         s & BOOST_SERIALIZATION_NVP(policy_);
         s & BOOST_SERIALIZATION_NVP(size_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(map_));
+        archive(CEREAL_NVP(policy_));
+        archive(CEREAL_NVP(size_));
+    }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors

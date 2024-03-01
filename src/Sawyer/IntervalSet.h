@@ -14,8 +14,6 @@
 
 #include <boost/integer_traits.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -57,6 +55,7 @@ class IntervalSet {
     typedef IntervalMap<I, int> Map;
     Map map_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -64,6 +63,18 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(map_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(map_));
+    }
+#endif
+
 
 public:
     typedef I Interval;

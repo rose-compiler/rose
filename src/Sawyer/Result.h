@@ -11,9 +11,6 @@
 #include <Sawyer/Optional.h>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
 #include <boost/variant.hpp>
 #include <exception>
 #include <string>
@@ -42,6 +39,7 @@ public:
 private:
     Value ok_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -49,6 +47,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(ok_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::make_nvp("ok", ok_));
+    }
+#endif
 
 public:
     Ok() = delete;
@@ -94,6 +103,7 @@ public:
 private:
     std::string ok_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -101,6 +111,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(ok_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::make_nvp("ok", ok_));
+    }
+#endif
 
 public:
     Ok() = delete;
@@ -153,6 +174,7 @@ public:
 private:
     Value error_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -160,6 +182,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(error_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::make_nvp("error", error_));
+    }
+#endif
 
 public:
     Error() = delete;
@@ -205,6 +238,7 @@ public:
 private:
     std::string error_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -212,6 +246,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(error_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::make_nvp("error", error_));
+    }
+#endif
 
 public:
     Error() = delete;
@@ -277,6 +322,7 @@ public:
 private:
     boost::variant<Ok<T>, Error<E>> result_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -306,6 +352,37 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(cereal::make_nvp("isOk", isOk()));
+        if (isOk()) {
+            archive(cereal::make_nvp("ok", unwrap()));
+        } else {
+            archive(cereal::make_nvp("error", unwrapError()));
+        }
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        bool isOk;
+        archive(cereal::make_nvp("isOk", isOk));
+        if (isOk) {
+            T ok;
+            archive(cereal::make_nvp("ok", ok));
+            result_ = OkType(ok);
+        } else {
+            E error;
+            archive(cereal::make_nvp("error", error));
+            result_ = ErrorType(error);
+        }
+    }
+#endif
 
 public:
     template<class U = T>

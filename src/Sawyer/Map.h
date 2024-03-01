@@ -12,9 +12,15 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 #include <boost/serialization/map.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/map.hpp>
+#endif
+
 #include <stdexcept>
 
 namespace Sawyer {
@@ -74,6 +80,7 @@ private:
     typedef std::map<Key, Value, Comparator, Alloc> StlMap;
     StlMap map_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -81,6 +88,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(map_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(CEREAL_NVP(map_));
+    }
+#endif
 
 public:
     /** %Type for stored nodes.

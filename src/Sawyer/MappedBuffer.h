@@ -17,11 +17,14 @@
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/split_member.hpp>
+
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 #include <boost/serialization/string.hpp>
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+#include <cereal/types/string.hpp>
+#endif
 
 namespace Sawyer {
 namespace Container {
@@ -49,6 +52,7 @@ public:
     typedef T Value;                                    /**< Type of values. */
     typedef Buffer<A, T> Super;                         /**< Type of base class. */
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -91,6 +95,46 @@ private:
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SAVE_FUNCTION_NAME(Archive &archive) const {
+        archive(cereal::base_class<Super>());
+        archive(cereal::make_nvp("path", params_.path));
+        archive(cereal::make_nvp("flags", params_.flags));
+        archive(cereal::make_nvp("mode", params_.mode));
+        archive(cereal::make_nvp("offset", params_.offset));
+        archive(cereal::make_nvp("length", params_.length));
+        archive(cereal::make_nvp("new_file_size", params_.new_file_size));
+
+        boost::uint64_t hint;
+        BOOST_STATIC_ASSERT(sizeof hint >= sizeof params_.hint);
+        hint = (boost::uint64_t)(params_.hint);
+        archive(CEREAL_NVP(hint));
+    }
+
+    template<class Archive>
+    void CEREAL_LOAD_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::base_class<Super>());
+        archive(cereal::make_nvp("path", params_.path));
+        archive(cereal::make_nvp("flags", params_.flags));
+        archive(cereal::make_nvp("mode", params_.mode));
+        archive(cereal::make_nvp("offset", params_.offset));
+        archive(cereal::make_nvp("length", params_.length));
+        archive(cereal::make_nvp("new_file_size", params_.new_file_size));
+
+        boost::uint64_t hint;
+        BOOST_STATIC_ASSERT(sizeof hint >= sizeof params_.hint);
+        archive(CEREAL_NVP(hint));
+        params_.hint = (const char*)hint;
+
+        device_.open(params_);
+    }
+#endif
 
 protected:
     MappedBuffer()

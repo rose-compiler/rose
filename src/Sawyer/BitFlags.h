@@ -11,7 +11,6 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/foreach.hpp>
-#include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
 #include <vector>
 
@@ -71,6 +70,7 @@ public:
 private:
     Vector vector_;
 
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -78,6 +78,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(vector_);
     }
+#endif
+
+#ifdef SAWYER_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void serialize(Archive &archive) {
+        archive(CEREAL_NVP(vector_));
+    }
+#endif
 
 public:
     /** Default constructor with all bits clear. */
