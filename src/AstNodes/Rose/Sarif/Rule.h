@@ -3,6 +3,7 @@
 #include <Rose/Sarif/Node.h>
 
 #include <boost/uuid/uuid.hpp>
+#include <rose_serialize_uuid.h>
 
 namespace Rose {
 namespace Sarif {

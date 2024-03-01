@@ -4,14 +4,23 @@
 #include <Rose/Location.h>
 
 #include <boost/filesystem.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/unordered_set.hpp>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Synchronization.h>
 #include <ostream>
 #include <string>
+#include <rose_serialize_path.h>
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/unordered_set.hpp>
+#endif
+
+#ifdef ROSE_HAVE_CEREAL
+#include <cereal/access.hpp>
+#include <cereal/cereal.hpp>
+#endif
 
 namespace Rose {
 
@@ -80,6 +89,18 @@ private:
         s & BOOST_SERIALIZATION_NVP(line_);
         s & BOOST_SERIALIZATION_NVP(column_);
         registerFileName();                             // necessary for de-serialization; okay to also call for serialization
+    }
+#endif
+
+#ifdef ROSE_HAVE_CEREAL
+private:
+    friend class cereal::access;
+
+    template<class Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &archive) {
+        archive(cereal::make_nvp("fileName", fileName_));
+        archive(cereal::make_nvp("line", line_));
+        archive(cereal::make_nvp("column", column_));
     }
 #endif
 
