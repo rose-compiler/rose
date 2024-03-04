@@ -7,7 +7,6 @@ using namespace SageInterface;
 using namespace Sawyer::Message::Common;
 
 
-extern Sawyer::Message::Common::Facility mlog;
 
 /**
  * walkupDots

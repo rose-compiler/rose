@@ -4,9 +4,6 @@
 #include <sage3basic.h>
 #include <limits>
 
-//This is the logging facility
-extern Sawyer::Message::Common::Facility mlog;
-
 namespace VxUtilFuncs 
 {
 

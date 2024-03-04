@@ -31,8 +31,6 @@ using namespace SageInterface;
 using namespace Sawyer::Message::Common;
 using namespace nlohmann;
 
-Sawyer::Message::Common::Facility mlog;
-
     
 
 //---------------------------------------------------------------------------------
@@ -91,7 +89,6 @@ main(int argc, char *argv[]) {
     Rose::CommandLine::versionString =
         TOOL_VERSION_STRING " using " +
         Rose::CommandLine::versionString;
-    Diagnostics::initAndRegister(&mlog, "Name2Node");
     Rose::Diagnostics::initialize(); 
 
     //~  CodeThorn::initDiagnostics();
@@ -101,7 +98,6 @@ main(int argc, char *argv[]) {
     Settings settings;
     using namespace Sawyer::CommandLine;
     Parser p = CommandLine::createEmptyParserStage(purpose, description);
-    p.errorStream(mlog[FATAL]);                         // print messages and exit rather than throwing exceptions
     p.with(CommandLine::genericSwitches());   // things like --help, --version, --log, --threads, etc.
     p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
 
@@ -128,7 +124,7 @@ main(int argc, char *argv[]) {
     readConfigFile(settings);
 
     if(settings.rwSetsFilename == "") {
-        mlog[ERROR] << "Please provide a non-empty RWSets JSON file" <<    std::endl;
+        Sawyer::Message::mlog[ERROR] << "Please provide a non-empty RWSets JSON file" <<    std::endl;
         exit(12);
     }
 
@@ -152,7 +148,7 @@ main(int argc, char *argv[]) {
     inFile >> c;  //flag eof if at end of file, doesn't seem to throw exception
     if(inFile.eof()) {  //nlohmann doesn't like empty files
         inFile.close();
-        mlog[ERROR] << "Please provide a RWSets JSON file" <<    std::endl;
+        Sawyer::Message::mlog[ERROR] << "Please provide a RWSets JSON file" <<    std::endl;
         exit(13);
     }
     inFile.seekg(0, std::ios_base::beg);

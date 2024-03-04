@@ -19,11 +19,6 @@
 #define TOOL_VERSION_STRING "0.1.0"
 
 
-//This is the logging facility
-extern Sawyer::Message::Common::Facility mlog;
-
-
-
 class LocalRWSetGenerator 
 {
 
