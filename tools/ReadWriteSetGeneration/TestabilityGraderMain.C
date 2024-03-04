@@ -4,7 +4,7 @@
 #include <TestabilityGrader.h>
 
 #include <nlohmann/json.hpp>
-#include <Yaml.hpp>
+#include <Sawyer/Yaml.h>
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>

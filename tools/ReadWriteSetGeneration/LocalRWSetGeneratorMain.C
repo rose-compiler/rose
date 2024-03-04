@@ -2,7 +2,7 @@
 #include <sageInterface.h>
 #include <Rose/CommandLine.h>
 #include <nlohmann/json.hpp>
-#include <Yaml.hpp>
+#include <Rose/Yaml.h>
 #include "LocalRWSetGenerator.h"
 #include <sstream>
 // 03/20/2023): Adding boost filesystem usage:
@@ -67,7 +67,7 @@ void readConfigFile(Settings& settings)
         Yaml::Node config;
         try
         {
-            Yaml::Parse(config, settings.yamlConfigFilename.c_str());
+            Sawyer::Yaml::Parse(config, settings.yamlConfigFilename);
         }
         catch (const Yaml::Exception& e)
         {
