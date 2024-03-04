@@ -101,13 +101,13 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
                        AstInterface::TraversalVisitType t)
 {
  if (t == AstInterface::PreVisit) {
-   AstInterface::AstNodePtr lhs, rhs;
+   AstInterface::AstNodePtr lhs, rhs, body;
    AstInterface::AstNodeList vars, args;
    AstInterface::OperatorEnum opr;
    bool readlhs = false;
 
    AstNodePtr s_ptr = AstNodePtrImpl(s).get_ptr();
-   if (fa.IsFunctionDefinition(s, 0, &vars, &args)) {
+   if (fa.IsFunctionDefinition(s, 0, &vars, &args, &body)) {
       curstmt = AstNodePtrImpl(s).get_ptr();
       for (AstInterface::AstNodePtr param : vars) {
          AppendReadLoc(fa, AstNodePtrImpl(param).get_ptr());
@@ -117,6 +117,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
             AppendModLoc(fa, AstNodePtrImpl(lhs).get_ptr(), AstNodePtrImpl(rhs).get_ptr());
          } 
       }
+      SkipUntil(body);
       return true;
    }
    else if (fa.IsStatement(s)) {
