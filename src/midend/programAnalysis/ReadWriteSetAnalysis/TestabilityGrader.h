@@ -3,9 +3,6 @@
 #include <unordered_set>
 #include <ReadWriteSetRecords.h>
 
-//This is the logging facility
-extern Sawyer::Message::Common::Facility mlog;
-
 /**
  * \class TestabilityGrader
  *

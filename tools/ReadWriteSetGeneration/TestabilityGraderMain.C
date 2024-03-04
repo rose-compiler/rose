@@ -26,7 +26,6 @@ static const char *description =
 using namespace nlohmann;
 
 
-Sawyer::Message::Common::Facility mlog;
 using namespace Sawyer::CommandLine;
 using namespace Sawyer::Message;
 
@@ -53,7 +52,6 @@ int main(int argc, char** argv) {
   p.purpose(purpose)
     .doc("description", description)
     .doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
-  p.errorStream(Sawyer::Message::mlog[Sawyer::Message::FATAL]);                         // print messages and exit rather than throwing exceptions
 
   // Create a group of switches specific to this tool
   SwitchGroup testabilityGraderSwitches("-specific switches");
