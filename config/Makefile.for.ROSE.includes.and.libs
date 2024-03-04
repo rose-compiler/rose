@@ -451,6 +451,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
      -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
+     -I$(top_srcdir)/src/midend/programAnalysis/ReadWriteSetAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
      -I$(top_srcdir)/src/midend/programAnalysis/variableRenaming \
       $(ROSE_SIDEEFFECTS_INCLUDE) \

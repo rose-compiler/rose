@@ -2,7 +2,7 @@
 #include <sageInterface.h>
 #include <Rose/CommandLine.h>
 #include <nlohmann/json.hpp>
-#include <Yaml.hpp>
+#include <Rose/Yaml.h>
 #include "Name2Node.h"
 #include "ReadWriteSetRecords.h"
 #include <sstream>
@@ -69,7 +69,7 @@ void readConfigFile(Settings& settings)
         Yaml::Node config;
         try
             {
-                Yaml::Parse(config, settings.yamlConfigFilename.c_str());
+                Sawyer::Yaml::Parse(config, settings.yamlConfigFilename);
             }
         catch (const Yaml::Exception& e)
             {

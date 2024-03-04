@@ -49,7 +49,7 @@ include $(srcdir)/staticInterproceduralSlicing/Makefile_variables
 include $(srcdir)/valuePropagation/Makefile_variables
 include $(srcdir)/variableRenaming/Makefile_variables
 include $(srcdir)/EditDistance/Makefile_variables
-
+include $(srcdir)/ReadWriteSetAnalysis/Makefile_variables
 
 mpaArithmeticIntensityPath=$(srcdir)/arithmeticIntensity#
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -67,6 +67,7 @@ mpaStaticInterproceduralSlicingPath=$(srcdir)/staticInterproceduralSlicing#
 mpaValuePropagationPath=$(srcdir)/valuePropagation#
 mpaVariableRenamingPath=$(srcdir)/variableRenaming#
 mpaEditDistancePath=$(srcdir)/EditDistance#
+mpaReadWriteSetAnalysisPath=$(srcdir)/ReadWriteSetAnalysis#
 
 ###############################################################################
 
@@ -97,6 +98,7 @@ AM_CPPFLAGS=\
 	$(mpaValuePropagation_includes) \
 	$(mpaVariableRenaming_includes) \
 	$(mpaEditDistance_includes) \
+	$(mpaReadWriteSetAnalysis_includes) \
 	$(AM_CPPFLAGS_OMP)
 
 
@@ -121,7 +123,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaStaticInterproceduralSlicing_la_sources) \
 	$(mpaValuePropagation_la_sources) \
 	$(mpaVariableRenaming_la_sources) \
-	$(mpaEditDistance_la_sources)
+	$(mpaEditDistance_la_sources) \
+	$(mpaReadWriteSetAnalysis_la_sources)
 
 # DQ (10/7/2015): We don't want this to depend on this variable which is about what 
 # backend compiler is used more than what compiler is used to compile ROSE itself.
@@ -155,7 +158,8 @@ pkginclude_HEADERS=\
 	$(mpaStaticInterproceduralSlicing_includeHeaders) \
 	$(mpaValuePropagation_includeHeaders) \
 	$(mpaVariableRenaming_includeHeaders) \
-	$(mpaEditDistance_includeHeaders)
+	$(mpaEditDistance_includeHeaders) \
+	$(mpaReadWriteSetAnalysis_includeHeaders)
 
 EXTRA_DIST=\
 	CMakeLists.txt \
@@ -176,7 +180,8 @@ EXTRA_DIST=\
 	$(mpaStaticInterproceduralSlicing_extraDist) \
 	$(mpaValuepropagation_extraDist) \
 	$(mpaVariableRenaming_extraDist) \
-	$(mpaEditDistance_extraDist)
+	$(mpaEditDistance_extraDist) \
+	$(mpaReadWriteSetAnalysis_extraDist)
 
 if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
 BUILT_SOURCES=$(mpaAnnotationLanguageParser_builtSources)
@@ -205,6 +210,7 @@ clean-local:
 	$(mpaValuePropagation_cleanLocal)
 	$(mpaVariableRenaming_cleanLocal)
 	$(mpaEditDistance_cleanLocal)
+	$(mpaReadWriteSetAnalysis_cleanLocal)
 
 
 distclean-local:
@@ -223,7 +229,7 @@ distclean-local:
 	$(mpaValuePropagation_distCleanLocal)
 	$(mpaVariableRenaming_distCleanLocal)
 	$(mpaEditDistance_distCleanLocal)
-
+	$(mpaReadWriteSetAnalysis_distCleanLocal)
 
 
 

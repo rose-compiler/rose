@@ -1,7 +1,7 @@
 # Build the ROSE-based tools
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = globalVariablesInLambdas classMemberVariablesInLambdas checkFortranInterfaces BinaryAnalysis featureVector PortabilityTesting CodeThorn
+SUBDIRS = globalVariablesInLambdas classMemberVariablesInLambdas checkFortranInterfaces BinaryAnalysis featureVector PortabilityTesting CodeThorn ReadWriteSetGeneration 
 
 EXTRA_DIST = 
 

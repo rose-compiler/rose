@@ -2111,6 +2111,7 @@ tools/globalVariablesInLambdas/Makefile
 tools/PortabilityTesting/Makefile
 tools/PortabilityTesting/scripts/Makefile
 tools/PortabilityTesting/src/Makefile
+tools/ReadWriteSetGeneration/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

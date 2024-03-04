@@ -1,0 +1,28 @@
+# -*- makefile -*-
+
+# Follow the pattern established by the parent makefile.  "mpa" means "midend/programAnalysis".
+mpaReadWriteSetAnalysis_includes = -I$(mpaReadWriteSetAnalysisPath) $(ROSE_INCLUDES)
+
+mpaReadWriteSetAnalysis_la_sources =				\
+	$(mpaReadWriteSetAnalysisPath)/LocalRWSetGenerator.C	\
+	$(mpaReadWriteSetAnalysisPath)/Name2Node.C		\
+	$(mpaReadWriteSetAnalysisPath)/ReadWriteSetRecords.C	\
+	$(mpaReadWriteSetAnalysisPath)/SageUtils.C		\
+	$(mpaReadWriteSetAnalysisPath)/TestabilityGrader.C	\
+	$(mpaReadWriteSetAnalysisPath)/VxUtilFuncs.C
+	
+
+mpaReadWriteSetAnalysis_includeHeaders =			\
+	$(mpaReadWriteSetAnalysisPath)/LocalRWSetGenerator.h	\
+	$(mpaReadWriteSetAnalysisPath)/Name2Node.h		\
+	$(mpaReadWriteSetAnalysisPath)/ReadWriteSetRecords.h	\
+	$(mpaReadWriteSetAnalysisPath)/sageUtility.h		\
+	$(mpaReadWriteSetAnalysisPath)/SageUtils.h		\
+	$(mpaReadWriteSetAnalysisPath)/TestabilityGrader.h	\
+	$(mpaReadWriteSetAnalysisPath)/VxUtilFuncs.h
+
+mpaReadWriteSetAnalysis_extraDist = $(mpaReadWriteSetAnalysisPath)/CMakeLists.txt
+
+mpaReadWriteSetAnalysis_cleanLocal =
+
+mpaReadWriteSetAnalysis_distCleanLocal =
