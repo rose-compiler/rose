@@ -39,6 +39,7 @@ BoostSerializer::genPrologue(std::ostream &header, std::ostream&, const Ast::Cla
                <<"#include <boost/serialization/base_object.hpp>\n"
                <<"#include <boost/serialization/map.hpp>\n"
                <<"#include <boost/serialization/set.hpp>\n"
+               <<"#include <boost/serialization/shared_ptr.hpp>\n"
                <<"#include <boost/serialization/vector.hpp>\n"
                <<"#include <boost/serialization/version.hpp>\n"
                <<"#endif\n";
