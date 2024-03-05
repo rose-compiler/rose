@@ -1,6 +1,6 @@
 /** CIL AssemblyRefOS node (II.22.6). */
 class SgAsmCilAssemblyRefOS: public SgAsmCilMetadata {
-public:
+
     /** Property: OSPlatformID.
      *
      *  A 4-byte constant. */
@@ -26,7 +26,9 @@ public:
     uint32_t AssemblyRefOS = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_AssemblyRefOS_object() const;
 };

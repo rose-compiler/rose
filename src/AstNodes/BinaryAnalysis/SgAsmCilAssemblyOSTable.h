@@ -1,6 +1,5 @@
 /** CIL AssemblyOS tables. */
 class SgAsmCilAssemblyOSTable: public SgAsmCilMetadata {
-public:
     [[using Rosebud: rosetta, traverse, mutators(), large]]
     std::vector<SgAsmCilAssemblyOS*> elements;
 

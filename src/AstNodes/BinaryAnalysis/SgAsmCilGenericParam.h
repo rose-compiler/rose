@@ -1,6 +1,6 @@
 /** CIL GenericParam node (II.22.20). */
 class SgAsmCilGenericParam: public SgAsmCilMetadata {
-public:
+
     /** Property: Number.
      *
      *  The 2-byte index of the generic parameter. */
@@ -26,7 +26,9 @@ public:
     uint32_t Name = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Owner_object() const;
     const std::uint8_t* get_Name_string() const;

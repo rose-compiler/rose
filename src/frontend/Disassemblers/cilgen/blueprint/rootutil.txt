@@ -14,8 +14,9 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
   using base = std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>;
   using base::base;
 
+  // accessors
   std::uint16_t flags() const          { return std::get<0>(*this); }
-  bool          tiny()  const          { return (flags() & FORMAT) == TINY; }
+  bool          tiny()  const          { return (flags() & FORMAT) != FAT; }
   bool          moreSections()  const  { return (flags() & FLAGS) == MORE_SECTS; }
   bool          initLocals()  const    { return (flags() & FLAGS) == INIT_LOCALS; }
   std::uint8_t  headerSize() const     { return tiny() ? 1 : FAT_HEADER_LEN; }
@@ -23,13 +24,48 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
   std::uint16_t maxStackSize() const   { return std::get<1>(*this); }
   std::uint32_t codeSize() const       { return std::get<2>(*this); }
   std::uint32_t localVarSigTok() const { return std::get<3>(*this); }
+
+  // mutators
+  void flags(bool hasMoreSects, bool initsLocals)
+  { 
+    std::uint16_t val = hasMoreSects || initsLocals ? FAT : TINY;
+    
+    if (hasMoreSects) val |= MORE_SECTS; 
+    if (initsLocals)  val |= INIT_LOCALS;     
+ 
+    std::get<0>(*this) = val;
+  }
+   
+  void useFatHeaderIf(bool requiresFatHeader)
+  {
+    if (requiresFatHeader && tiny())
+      std::get<0>(*this) |= FAT;  
+  }
+  
+  void maxStackSize(std::uint16_t len)   
+  { 
+    useFatHeaderIf(len != 8);
+    std::get<1>(*this) = len; 
+  }
+  
+  void codeSize(std::uint32_t len)       
+  { 
+    useFatHeaderIf(len >= (1 << 6));
+    std::get<2>(*this) = len; 
+  }
+  
+  void localVarSigTok(std::uint32_t sig) 
+  { 
+    useFatHeaderIf(sig != 0);
+    std::get<3>(*this) = sig; 
+  }
 };
 
 MethodHeader
 parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
 {
   std::uint8_t         buf[12];
-  const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
+  const std::size_t    nread = fhdr->get_loaderMap()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
 
   const std::uint16_t  flags    = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
@@ -43,11 +79,13 @@ parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
   return res;
 }
 
+
 MethodHeader
 parseTinyHeader(std::uint8_t header)
 {
   return { header & MethodHeader::FORMAT, 8, header >> 2, 0 };
 }
+
 
 SgAsmBlock*
 disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
@@ -71,27 +109,35 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
     lst.push_back(instr);
     addr += instr->get_size();
 
-    if (instr->isUnknown()) {
+    if (disasm->architecture()->isUnknown(instr)) {
       // Pad block with noops because something went wrong
       // TODO: don't pad with noops, pad by expanding current unknown instruction
       SgUnsignedCharList rawBytes(1,'\0');
       while (addr < sz) {
-        auto insn = new SgAsmCilInstruction(base_va+addr, "nop", Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
-        insn->set_raw_bytes(rawBytes);
-        ASSERT_require(insn->get_raw_bytes().size() == 1);
+        SgAsmCilInstruction* insn = new SgAsmCilInstruction(base_va+addr, disasm->architecture()->name(), "nop",
+                                            Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
+        insn->set_rawBytes(rawBytes);
+        ASSERT_require(insn->get_rawBytes().size() == 1);
         lst.push_back(insn);
         addr += insn->get_size();
       }
     }
 
-    // Just checking for when last instruction is not return from function
+    // Just checking for when last instruction is not return from function (or similar terminating instruction)
     ASSERT_require(addr <= sz);
     if (addr == sz) {
-      if (instr->get_anyKind() != 0 &&
-          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_ret &&
-          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_throw &&
-          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_br) {
-        mlog[INFO] << "last instruction in block is not Cil_ret, is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
+      switch (instr->get_anyKind())
+      {
+        namespace rb = Rose::BinaryAnalysis;
+        case 0:
+        case rb::CilInstructionKind::Cil_ret:
+        case rb::CilInstructionKind::Cil_throw:
+        case rb::CilInstructionKind::Cil_br:
+        case rb::CilInstructionKind::Cil_br_s:
+        case rb::CilInstructionKind::Cil_endfinally:
+          break;
+        default:
+          mlog[INFO] << "last instruction in block is not Cil_ret (or like), is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
       }
     }
   }
@@ -104,14 +150,34 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
   return sb::buildBasicBlock(lst);
 }
 
-void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root)
+enum struct code_type
 {
-  constexpr std::uint8_t CIL_CODE       = 0;
-  constexpr std::uint8_t NATIVE_CODE    = 1;
-  constexpr std::uint8_t OPTIL_RESERVED = 2;
-  constexpr std::uint8_t RUNTIME_CODE   = 3;
-  constexpr std::uint8_t CODE_TYPE_MASK = CIL_CODE | NATIVE_CODE | OPTIL_RESERVED | RUNTIME_CODE;
+  cil            = 0,
+  native         = 1,
+  optil_reserved = 2,
+  runtime        = 3,
+  mask           = cil | native | optil_reserved | runtime,
+};
 
+code_type operator&(int lhs, code_type rhs)
+{
+  return static_cast<code_type>(lhs & int(rhs));
+}
+
+code_type operator&(code_type lhs, int rhs)
+{
+  return static_cast<code_type>(int(lhs) & rhs);
+}
+
+code_type operator&(code_type lhs, code_type rhs)
+{
+  return static_cast<code_type>(int(lhs) & int(rhs));
+}
+
+
+void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root, 
+                    size_t dbgbuf_beg, size_t dbgbuf_lim)
+{
   ASSERT_not_null(mdh); ASSERT_not_null(root);
 
   SgAsmCilUint8Heap* stringHeap = root->get_StringHeap();
@@ -134,7 +200,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       
     // parse header
     std::uint8_t   mh0;
-    std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
+    std::size_t    nread = fhdr->get_loaderMap()->readQuick(&mh0, base_va + rva, 1);
     ROSE_ASSERT(nread == 1);
 
     const bool     isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
@@ -149,25 +215,39 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     rose_addr_t    codeRVA = rva + mh.headerSize();
     std::uint32_t  codeLen = mh.codeSize();
 
+    std::cerr << "base_va: "    << base_va    << " <= "
+              << "code_beg: "   << base_va + codeRVA << " <= "
+              << "code_lim: "   << base_va + codeRVA + codeLen << " <= "
+              << "dbgbuf_beg: " << dbgbuf_beg << " <= "
+              << "dbgbuf_lim: " << dbgbuf_lim 
+              << std::endl;
+    
+    //ASSERT_require(dbgbuf_beg                  <= base_va + codeRVA);
+    //ASSERT_require(base_va + codeRVA + codeLen <= dbgbuf_lim);
+
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
-    ROSE_ASSERT(nreadCode == codeLen);
+    std::size_t nreadCode = fhdr->get_loaderMap()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    ASSERT_require(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
     
-    switch (m->get_ImplFlags() & CODE_TYPE_MASK)
+    switch (m->get_ImplFlags() & code_type::mask)
     {
       namespace rb = Rose::BinaryAnalysis;
 
-      case CIL_CODE:
-        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance());
+      case code_type::cil: {
+        auto arch = rb::Architecture::findByName("cil").orThrow();
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance(arch));
         break;
+      }
 
-      case NATIVE_CODE:
-        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+      case code_type::native: {
+        auto arch = rb::Architecture::findByName("intel-pentium4").orThrow();
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(arch));
         break;
-
-      case RUNTIME_CODE:
+      }
+        
+      case code_type::runtime :
         std::cerr << "  - runtime provided: " << code.size()
                   << std::endl;
         // looking for sample code
@@ -182,6 +262,111 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     m->set_body(blk);
   }
 }
+
+
+std::vector<std::uint8_t> 
+unparseMethodHeader(const MethodHeader& mh)
+{
+  std::vector<std::uint8_t> res;
+
+  if (mh.tiny())
+  {
+    const std::uint8_t hd = mh.flags() + (mh.codeSize() << 2);
+    
+    res.push_back(hd);
+    return res;
+  }
+  
+  std::size_t loc{0};
+  
+  ASSERT_require(loc == res.size());
+  write16bitValue(mh.flags(),          res, loc); 
+  write16bitValue(mh.maxStackSize(),   res, loc);
+  write32bitValue(mh.codeSize(),       res, loc);
+  write32bitValue(mh.localVarSigTok(), res, loc);
+  
+  return res;
+}
+
+std::vector<std::uint8_t> 
+unparseMethodHeader(SgAsmCilMethodDef* m, std::size_t codesize)
+{
+  ASSERT_not_null(m);
+  
+  MethodHeader mh;
+  
+  mh.flags(m->get_hasMoreSections(), m->get_initLocals());
+  mh.maxStackSize(m->get_stackSize());
+  mh.codeSize(codesize);
+  // \todo mh.localVarSigTok(m->get_LocalVarSigTok());
+  
+  return unparseMethodHeader(mh);
+}
+
+
+
+std::vector<std::uint8_t> 
+unparseCode(SgAsmBlock* blk)
+{
+  ASSERT_not_null(blk);
+  
+  std::vector<std::uint8_t> res;
+  
+  for (SgAsmStatement const* asmstmt : blk->get_statementList())
+  {
+    SgAsmInstruction const*   instr = isSgAsmInstruction(asmstmt);
+    ASSERT_not_null(instr);
+    
+    SgUnsignedCharList const& iraw  = instr->get_rawBytes();
+    
+    std::copy(iraw.begin(), iraw.end(), std::back_inserter(res));
+  }
+    
+  return res;
+}
+
+
+void encodeMetadata(std::vector<std::uint8_t>& buf, rose_addr_t base_va, rose_addr_t limit_va, const SgAsmCilMetadataHeap* mdh, const SgAsmCilMetadataRoot* root)
+{
+  ASSERT_not_null(mdh); ASSERT_not_null(root);
+  ASSERT_require(buf.size() >= limit_va);
+  
+  SgAsmCilUint8Heap* stringHeap = root->get_StringHeap();
+  ASSERT_not_null(stringHeap);
+
+  SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
+  ASSERT_not_null(fhdr);
+  
+  SgAsmCilMethodDefTable* mtbl = mdh->get_MethodDefTable();
+  ASSERT_not_null(mtbl);
+  
+  // decode methods
+  for (SgAsmCilMethodDef* m : mtbl->get_elements())
+  {
+    ASSERT_not_null(m);
+
+    const rose_addr_t rva = static_cast<std::uint32_t>(m->get_RVA());
+    
+    if (rva == 0) continue;
+    
+    // only code that can be parsed can be unparsed ..
+    ASSERT_require(  ((m->get_ImplFlags() & code_type::mask) == code_type::cil)
+                  || ((m->get_ImplFlags() & code_type::mask) == code_type::native)
+                  );
+                  
+    // \todo revise and write directly into buf              
+    
+    std::vector<std::uint8_t> code = unparseCode(m->get_body());
+    std::vector<std::uint8_t> mh   = unparseMethodHeader(m, code.size());
+    
+    // any code must be written before the metadata object section
+    ASSERT_require(limit_va > rva + base_va + mh.size() + code.size());
+    
+    std::copy(mh.begin(),   mh.end(),   buf.data() + rva + base_va);
+    std::copy(code.begin(), code.end(), buf.data() + rva + base_va + mh.size());
+  }
+}    
+
 
 template <class SageAsmCilHeap>
 SageAsmCilHeap*
@@ -198,6 +383,20 @@ getHeapInternal(const std::vector<SgAsmCilDataStream*>& streams, int8_t& idx, co
     return dynamic_cast<SageAsmCilHeap*>(streams[idx]);
 
   return nullptr;
+}
+
+void dumpCilStream(std::ostream& os, const std::string& name, const SgAsmCilDataStream* stream, const int& idx)
+{
+  if (stream == nullptr)
+  {
+    os << "  " << name << " not available." << std::endl;
+    return;
+  }
+  
+  assert(idx >= 0);
+  os << "  " << name << " @ get_Streams[" << idx << "]" << std::endl;
+    
+  stream->dump(os);
 }
 
 }

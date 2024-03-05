@@ -1,6 +1,6 @@
 /** CIL MethodImpl node (II.22.27). */
 class SgAsmCilMethodImpl: public SgAsmCilMetadata {
-public:
+
     /** Property: Class.
      *
      *  An index into the TypeDef table. */
@@ -20,7 +20,9 @@ public:
     uint32_t MethodDeclaration = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Class_object() const;
     const SgAsmCilMetadata* get_MethodBody_object() const;

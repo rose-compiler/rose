@@ -1,6 +1,6 @@
 /** CIL MethodSpec node (II.22.29). */
 class SgAsmCilMethodSpec: public SgAsmCilMetadata {
-public:
+
     /** Property: Method.
      *
      *  An index into the MethodDef or MemberRef table. */
@@ -14,7 +14,9 @@ public:
     uint32_t Instantiation = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Method_object() const;
     const std::uint8_t* get_Instantiation_blob() const;

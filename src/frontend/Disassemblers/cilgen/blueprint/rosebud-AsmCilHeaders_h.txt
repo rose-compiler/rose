@@ -28,7 +28,9 @@ class SgAsmCil`cl.Name`: public Sg`cl.Baseclass` {`for_each fl = cl.Fields`
     `xtr.Type` `xtr.Name` = 0;
 `end_for`
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 `for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
     const std::uint8_t* get_`fl.Name`_blob() const;
   `else_if fl.RefKind eq "guid_heap"`
@@ -109,7 +111,13 @@ public:
     };
         
     /** parses the metadata objects from the buffer. */
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    
+    /** unparses the metadata objects into the buffer */
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+    
+    /** Prints the object's data in a human readable form to @ref os. */ 
+    void dump(std::ostream& os) const override;
 
     /** looks up the node associated with the coded index @ref idx in the metadata table
      *  associated with @ref tblcode.
@@ -168,7 +176,13 @@ public:
      *   parse will add get_Offset to startOfMetaData to find the first byte of a
      *   stream.
      */
-    virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) { /* FIXME: should be abstract */ }
+    virtual void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData); /* FIXME: should be abstract */ 
+    
+    /** unparses the metadata objects into the buffer */
+    virtual void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const; /* FIXME: should be abstract */
+    
+    /** Prints the object's data in a human readable form to @ref os. */ 
+    virtual void dump(std::ostream& os) const; /* FIXME: should be abstract */
 };
 
 -- cut:SgAsmCilUint8Heap.h
@@ -178,7 +192,9 @@ class SgAsmCilUint8Heap : public SgAsmCilDataStream {
     std::vector<uint8_t> Stream;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+    void dump(std::ostream& os) const override;
 };
 
 -- cut:SgAsmCilUint32Heap.h
@@ -188,7 +204,9 @@ class SgAsmCilUint32Heap : public SgAsmCilDataStream {
     std::vector<uint32_t> Stream;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+    void dump(std::ostream& os) const override;
 };
 
 -- cut:SgAsmCilMetadataRoot.h
@@ -234,7 +252,16 @@ public:
      *  @param index the start location of the metadata root object.
      *         buf[index] is the location of the magic number.
      */
-    void parse(std::vector<uint8_t>& buf, size_t index);
+    void parse(const std::vector<uint8_t>& buf, size_t index);
+    
+    /** Declares the unparse function as called from the Cli section header object. */
+    void unparse(std::ostream& f) const;
+    
+    /** unparses the metadata objects into a buffer starting at index @ref idx. */
+    void unparse(std::vector<uint8_t>&, std::size_t) const;
+    
+    /** Prints the object's data in a human readable form to @ref os. */
+    void dump(std::ostream& os) const;
 
     /** accessor functions to return specific heaps
      * @{ */

@@ -7,49 +7,49 @@
         {
           "Doc": "A 4-byte constant of type AssemblyHashAlgorithm.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "HashAlgId",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 2-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "MajorVersion",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 2-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "MinorVersion",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 2-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "BuildNumber",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 2-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "RevisionNumber",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 4-byte bitmask of type AssemblyFlags.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "PublicKey",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -57,7 +57,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -65,7 +65,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Culture",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -81,21 +81,21 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "OSPlatformID",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "OSMajorVersion",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "OSMinorVersion",
           "Type": "uint32_t"
         }
@@ -110,7 +110,7 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Processor",
           "Type": "uint32_t"
         }
@@ -125,42 +125,42 @@
         {
           "Doc": "Major version number.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "MajorVersion",
           "Type": "uint16_t"
         },
         {
           "Doc": "Minor version number.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "MinorVersion",
           "Type": "uint16_t"
         },
         {
           "Doc": "Build number.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "BuildNumber",
           "Type": "uint16_t"
         },
         {
           "Doc": "Revision number.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "RevisionNumber",
           "Type": "uint16_t"
         },
         {
           "Doc": "Shall have only one bit set, the PublicKey bit.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the Blob heap, can be null, or non-null.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "PublicKeyOrToken",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -168,7 +168,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -176,7 +176,7 @@
         {
           "Doc": "An index into the String heap, null or non-null.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Culture",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -184,7 +184,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "HashValue",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -200,28 +200,28 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "OSPlatformID",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "OSMajorVersion",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "OSMinorVersion",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the AssemblyRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "AssemblyRefOS",
           "Type": "uint32_t",
           "RefKind": "assembly_ref"
@@ -237,14 +237,14 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Processor",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the AssemblyRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "AssemblyRef",
           "Type": "uint32_t",
           "RefKind": "assembly_ref"
@@ -260,21 +260,21 @@
         {
           "Doc": "A 2-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "PackingSize",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "ClassSize",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -290,20 +290,21 @@
         {
           "Doc": "A 1-byte constant.",
           "Init": "read8bitValue(buf,index)",
-        "Serial": "write8bitValue(buf,index)",
+          "Serial": "write8bitValue(get_`Name`(),buf,index)",
           "Name": "Type",
           "Type": "uint8_t"
         },
         {
           "Doc": "A 1-byte zero padding.",
           "Init": "read8bitPadding(buf,index,0)",
+          "Serial": "write8bitPadding(buf,index,get_`Name`(),0)",
           "Name": "Padding",
           "Type": "uint8_t"
         },
         {
           "Doc": "An index into the Param, Field, or Property table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "has_constant"
@@ -311,7 +312,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Value",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -328,7 +329,7 @@
         {
           "Doc": "An index into a metadata table that has an associated HasCustomAttribute index.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "has_custom_attribute"
@@ -336,7 +337,7 @@
         {
           "Doc": "An index into the MethodDef or MemberRef table (more precisely, a CustomAttributeType coded index).",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Type",
           "Type": "uint32_t",
           "RefKind": "custom_attribute_type"
@@ -344,7 +345,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Value",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -360,14 +361,14 @@
         {
           "Doc": "A 2-byte value.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Action",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the TypeDef, MethodDef, or Assembly table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "has_decl_security"
@@ -375,7 +376,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "PermissionSet",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -391,14 +392,14 @@
         {
           "Doc": "A 2-byte bitmask of type EventAttribute.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "EventFlags",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -406,7 +407,7 @@
         {
           "Doc": "An index into a TypeDef, a TypeRef, or TypeSpec table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "EventType",
           "Type": "uint32_t",
           "RefKind": "type_def_or_ref"
@@ -422,7 +423,7 @@
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -430,7 +431,7 @@
         {
           "Doc": "An index into the Event table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "EventList",
           "Type": "uint32_t",
           "RefKind": "event"
@@ -446,21 +447,21 @@
         {
           "Doc": "A 4-byte bitmask of type TypeAttribute.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "EventFlags",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 4-byte index into a TypeDef table of another module in this Assembly.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "TypeDefIdName",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "TypeName",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -468,7 +469,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "TypeNamespace",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -476,7 +477,7 @@
         {
           "Doc": "An index into the File table, ExportedType table, or the AssemblyRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Implementation",
           "Type": "uint32_t",
           "RefKind": "implementation"
@@ -492,14 +493,14 @@
         {
           "Doc": "A 2-byte bitmask of type FieldAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -507,7 +508,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Signature",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -523,14 +524,14 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Offset",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the Field table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Field",
           "Type": "uint32_t",
           "RefKind": "field"
@@ -546,7 +547,7 @@
         {
           "Doc": "An index into Field or Param table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "has_field_marshall"
@@ -554,7 +555,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "NativeType",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -570,14 +571,14 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "RVA",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into Field table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Field",
           "Type": "uint32_t",
           "RefKind": "field"
@@ -593,14 +594,14 @@
         {
           "Doc": "A 4-byte bitmask of type FileAttributes.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -608,7 +609,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "HashValue",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -624,21 +625,21 @@
         {
           "Doc": "The 2-byte index of the generic parameter.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Number",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 2-byte bitmask of type GenericParamAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the TypeDef or MethodDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Owner",
           "Type": "uint32_t",
           "RefKind": "type_or_method_def"
@@ -646,7 +647,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -662,7 +663,7 @@
         {
           "Doc": "An index into the GenericParam table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Owner",
           "Type": "uint32_t",
           "RefKind": "generic_param"
@@ -670,7 +671,7 @@
         {
           "Doc": "An index into the TypeDef, TypeRef, or TypeSpec table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Constraint",
           "Type": "uint32_t",
           "RefKind": "type_def_or_ref"
@@ -686,14 +687,14 @@
         {
           "Doc": "A 2-byte bitmask of type PInvokeAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "MappingFlags",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the Field or MethodDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "MemberForwarded",
           "Type": "uint32_t",
           "RefKind": "member_forwarded"
@@ -701,7 +702,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "ImportName",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -709,7 +710,7 @@
         {
           "Doc": "An index into the ModuleRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "ImportScope",
           "Type": "uint32_t",
           "RefKind": "module_ref"
@@ -725,7 +726,7 @@
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Class",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -733,7 +734,7 @@
         {
           "Doc": "An index into the TypeDef, TypeRef, or TypeSpec table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Interface",
           "Type": "uint32_t",
           "RefKind": "type_def_or_ref"
@@ -749,21 +750,21 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Offset",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 4-byte constant of type ManifestResourceAttributes.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -771,7 +772,7 @@
         {
           "Doc": "An index into a File table, a AssemblyRef table, or null.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Implementation",
           "Type": "uint32_t",
           "RefKind": "implementation"
@@ -787,7 +788,7 @@
         {
           "Doc": "An index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Class",
           "Type": "uint32_t",
           "RefKind": "member_ref_parent"
@@ -795,7 +796,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -803,7 +804,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Signature",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -846,28 +847,28 @@
         {
           "Doc": "A 4-byte constant.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "RVA",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 2-byte bitmask of type MethodImplAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "ImplFlags",
           "Type": "uint32_t"
         },
         {
           "Doc": "A 2-byte bitmask of type MethodAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -875,7 +876,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Signature",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -883,7 +884,7 @@
         {
           "Doc": "An index into the Param table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "ParamList",
           "Type": "uint32_t",
           "RefKind": "param"
@@ -899,7 +900,7 @@
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Class",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -907,7 +908,7 @@
         {
           "Doc": "An index into the MethodDef or MemberRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "MethodBody",
           "Type": "uint32_t",
           "RefKind": "method_def_or_ref"
@@ -915,7 +916,7 @@
         {
           "Doc": "An index into the MethodDef or MemberRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "MethodDeclaration",
           "Type": "uint32_t",
           "RefKind": "method_def_or_ref"
@@ -931,14 +932,14 @@
         {
           "Doc": "A 2-byte bitmask of type MethodSemanticsAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Semantics",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the MethodDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Method",
           "Type": "uint32_t",
           "RefKind": "method_def"
@@ -946,7 +947,7 @@
         {
           "Doc": "An index into the Event or Property table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Association",
           "Type": "uint32_t",
           "RefKind": "has_semantics"
@@ -962,7 +963,7 @@
         {
           "Doc": "An index into the MethodDef or MemberRef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Method",
           "Type": "uint32_t",
           "RefKind": "method_def_or_ref"
@@ -970,7 +971,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Instantiation",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -986,14 +987,14 @@
         {
           "Doc": "A 2-byte value, reserved, shall be zero.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Generation",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1001,7 +1002,7 @@
         {
           "Doc": "An index into the Guid heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Mvid",
           "Type": "uint32_t",
           "RefKind": "guid_heap"
@@ -1009,7 +1010,7 @@
         {
           "Doc": "An index into the Guid heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Encld",
           "Type": "uint32_t",
           "RefKind": "guid_heap"
@@ -1017,7 +1018,7 @@
         {
           "Doc": "An index into the Guid heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "EncBaseId",
           "Type": "uint32_t",
           "RefKind": "guid_heap"
@@ -1033,7 +1034,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1049,7 +1050,7 @@
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "NestedClass",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -1057,7 +1058,7 @@
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "EnclosingClass",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -1073,21 +1074,21 @@
         {
           "Doc": "A 2-byte bitmask of type ParamAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint16_t"
         },
         {
           "Doc": "A 2-byte constant.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Sequence",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -1103,14 +1104,14 @@
         {
           "Doc": "A 2-byte bitmask of type PropertyAttributes.",
           "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(buf,index)",
+          "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint16_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1118,7 +1119,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Type",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -1134,7 +1135,7 @@
         {
           "Doc": "An index into the TypeDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Parent",
           "Type": "uint32_t",
           "RefKind": "type_def"
@@ -1142,7 +1143,7 @@
         {
           "Doc": "An index into the Property table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "PropertyList",
           "Type": "uint32_t",
           "RefKind": "property"
@@ -1158,7 +1159,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Signature",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -1174,14 +1175,14 @@
         {
           "Doc": "A 4-byte bitmask of type TypeAttributes.",
           "Init": "read32bitValue(buf,index)",
-          "Serial": "write32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "Flags",
           "Type": "uint32_t"
         },
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "TypeName",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1189,7 +1190,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "TypeNamespace",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1197,7 +1198,7 @@
         {
           "Doc": "An index into the TypeDef, TypeRef, or TypeSpec table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Extends",
           "Type": "uint32_t",
           "RefKind": "type_def_or_ref"
@@ -1205,7 +1206,7 @@
         {
           "Doc": "An index into the Field table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "FieldList",
           "Type": "uint32_t",
           "RefKind": "field"
@@ -1213,7 +1214,7 @@
         {
           "Doc": "An index into the MethodDef table.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "MethodList",
           "Type": "uint32_t",
           "RefKind": "method_def"
@@ -1229,7 +1230,7 @@
         {
           "Doc": "An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "ResolutionScope",
           "Type": "uint16_t",
           "RefKind": "resolution_scope"
@@ -1237,7 +1238,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "TypeName",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1245,7 +1246,7 @@
         {
           "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "TypeNamespace",
           "Type": "uint32_t",
           "RefKind": "string_heap"
@@ -1261,7 +1262,7 @@
         {
           "Doc": "An index into the Blob heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
-          "Serial": "writeValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
+          "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Signature",
           "Type": "uint32_t",
           "RefKind": "blob_heap"
@@ -1277,62 +1278,63 @@
       {
         "Doc": "4 reserved bytes.",
         "Init": "readExpected(read32bitValue, buf, index, 0)",
+        "Serial": "writeExpected(write32bitValue,buf,index,get_`Name`(),0)",
         "Name": "ReservedAlwaysZero",
         "Type": "uint32_t"
       },
       {
         "Doc": "A 1-byte constant.",
         "Init": "read8bitValue(buf,index)",
-        "Serial": "write8bitValue(buf,index)",
+        "Serial": "write8bitValue(get_`Name`(),buf,index)",
         "Name": "MajorVersion",
         "Type": "uint8_t"
       },
       {
         "Doc": "A 1-byte constant.",
         "Init": "read8bitValue(buf,index)",
-        "Serial": "write8bitValue(buf,index)",
+        "Serial": "write8bitValue(get_`Name`(),buf,index)",
         "Name": "MinorVersion",
         "Type": "uint8_t"
       },
       {
         "Doc": "A 1-byte constant indicating the index sizes of streams.",
         "Init": "read8bitValue(buf,index)",
-        "Serial": "write8bitValue(buf,index)",
+        "Serial": "write8bitValue(get_`Name`(),buf,index)",
         "Name": "HeapSizes",
         "Type": "uint8_t"
       },
       {
         "Doc": "A 1-byte constant.",
         "Init": "readExpected(read8bitValue,buf,index,1)",
-        "Serial": "writeExpected(write8bitValue,buf,index,1)",
+        "Serial": "writeExpected(write8bitValue,buf,index,get_`Name`(),1)",
         "Name": "ReservedAlwaysOne",
         "Type": "uint8_t"
       },
       {
         "Doc": "A 4-byte value indicating which metadata tables are present.",
         "Init": "read64bitValue(buf,index);  std::vector<int8_t> posInRowVector = computePositionInRowVector(get_Valid())",
-        "Serial": "write64bitValue(TODO)",
+        "Serial": "write64bitValue(get_`Name`(),buf,index); std::vector<int8_t> posInRowVector = computePositionInRowVector(get_`Name`())",
         "Name": "Valid",
         "Type": "uint64_t"
       },
       {
         "Doc": "A 4-byte value.",
         "Init": "read64bitValue(buf,index)",
-        "Serial": "write64bitValue(buf,index)",
+        "Serial": "write64bitValue(get_`Name`(),buf,index)",
         "Name": "Sorted",
         "Type": "uint64_t"
       },
       {
         "Doc": "A vector indicating how many rows the present tables contain.",
         "Init": "readVector(read32bitValue, Rose::BitOps::nSet(get_Valid()), buf, index)",
-        "Serial": "TODO",
+        "Serial": "writeVector(write32bitValue, get_`Name`(), Rose::BitOps::nSet(get_Valid()), buf, index)",
         "Name": "NumberOfRows",
         "Type": "std::vector<uint32_t>"
       },
       {
         "Doc": "precomputed flags that determine whether a metadata reference is stored as 2 or 4 byte value in the file.",
         "Init": "computeDataSizeFlags(get_HeapSizes(), posInRowVector, get_NumberOfRows())",
-        "Serial": "TODO",
+        "Serial": "/*`Name` not unparsed - FIXME: validate fields*/",
         "Name": "DataSizeFlags",
         "Type": "uint64_t"
       }
@@ -1345,63 +1347,63 @@
       {
         "Doc": "Magic signature for physical metadata (always 0x424A5342)",
         "Init": "readExpected(read32bitValue, buf, index, MAGIC_SIGNATURE)",
-        "Serial": "writeExpected(write32bitValue, buf, index, MAGIC_SIGNATURE)",
+        "Serial": "writeExpected(write32bitValue,buf,index,get_`Name`(),MAGIC_SIGNATURE)",
         "Name": "Signature",
         "Type": "uint32_t"
       },
       {
         "Doc": "Major version number.",
         "Init": "read16bitValue(buf, index)",
-        "Serial": "write16bitValue(buf, index)",
+        "Serial": "write16bitValue(get_`Name`(),buf, index)",
         "Name": "MajorVersion",
         "Type": "uint16_t"
       },
       {
         "Doc": "Minor version number.",
         "Init": "read16bitValue(buf, index)",
-        "Serial": "write16bitValue(buf, index)",
+        "Serial": "write16bitValue(get_`Name`(),buf, index)",
         "Name": "MinorVersion",
         "Type": "uint16_t"
       },
       {
         "Doc": "Reserved space.",
         "Init": "readExpected(read32bitValue, buf, index, 0)",
-        "Serial": "writeExpected(write32bitValue, buf, index, 0)",
+        "Serial": "writeExpected(write32bitValue,buf,index,get_`Name`(),0)",
         "Name": "Reserved0",
         "Type": "uint32_t"
       },
       {
         "Doc": "Number of bytes allocated to hold version string (including null terminator).",
-        "Init": "read32bitValue(buf, index)",        
-        "Serial": "write32bitValue(buf, index)",
+        "Init": "read32bitValue(buf,index)",        
+        "Serial": "write32bitValue(get_`Name`(),buf,index)",
         "Name": "Length",
         "Type": "uint32_t"
       },
       {
         "Doc": "Version string.",
         "Init": "readUtf8String(buf, index, get_Length())",
-        "Serial": "writeUtf8String(buf, index, get_Length())",
+        "Serial": "writeUtf8String(get_`Name`(),buf,index,get_Length())",
         "Name": "Version",
         "Type": "std::string"
       },
       {
         "Doc": "Padding to next 4-byte boundary.",
         "Init": "readStringPadding(buf, index, p_Version.size(), get_Length())",
-        "Serial": "writeStringPadding(buf, index, p_Version.size(), get_Length())",
+        "Serial": "writeStringPadding(get_`Name`(),buf,index,p_Version.size(),get_Length())",
         "Name": "VersionPadding",
         "Type": "uint32_t"
       },
       {
         "Doc": "Reserved space.",
         "Init": "readExpected(read16bitValue, buf, index, 0)",
-        "Serial": "writeExpected(read16bitValue, buf, index, 0)",
+        "Serial": "writeExpected(write16bitValue,buf,index,get_`Name`(),0)",
         "Name": "Flags",
         "Type": "uint16_t"
       },
       {
         "Doc": "Reserved space.",
         "Init": "read16bitValue(buf, index)",
-        "Serial": "write16bitValue(buf, index)",
+        "Serial": "write16bitValue(get_`Name`(),buf,index)",
         "Name": "NumberOfStreams",
         "Type": "uint16_t"
       }

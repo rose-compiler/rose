@@ -1,6 +1,7 @@
 /** CIL SgAsmCilMetadataRoot. */
 class SgAsmCilMetadataRoot: public SgAsmCilNode {
-public:
+
+
     /** Property: Magic signature for physical metadata (always 0x424A5342) */
     [[using Rosebud: rosetta]]
     uint32_t Signature = 0;
@@ -69,7 +70,16 @@ public:
      *  @param index the start location of the metadata root object.
      *         buf[index] is the location of the magic number.
      */
-    void parse(std::vector<uint8_t>& buf, size_t index);
+    void parse(const std::vector<uint8_t>& buf, size_t index);
+
+    /** Declares the unparse function as called from the Cli section header object. */
+    void unparse(std::ostream& f) const;
+
+    /** unparses the metadata objects into a buffer starting at index @ref idx. */
+    void unparse(std::vector<uint8_t>&, std::size_t) const;
+
+    /** Prints the object's data in a human readable form to @ref os. */
+    void dump(std::ostream& os) const;
 
     /** accessor functions to return specific heaps
      * @{ */

@@ -7,10 +7,13 @@
 #include "sage3basic.h"
 
 #include <unordered_map>
-#include "Rose/Diagnostics.h"
-#include "Rose/BinaryAnalysis/Disassembler/Cil.h"
-#include "Rose/BinaryAnalysis/Disassembler/X86.h"
-#include "frontend/SageIII/sageInterface/SageBuilderAsm.h"
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <frontend/SageIII/sageInterface/SageBuilderAsm.h>
+
 
 namespace sb = Rose::SageBuilderAsm;
 using namespace Rose::Diagnostics; // mlog WARN, ...
@@ -18,7 +21,7 @@ using namespace Rose::Diagnostics; // mlog WARN, ...
 `insert "blueprint/util.txt"`
 `for_each cl = .metadata`
 
-void SgAsmCil`cl.Name`::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCil`cl.Name`::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { `for_each fl = cl.Fields`
   p_`fl.Name` = `fl.Init !`;
   `end_for`
@@ -29,6 +32,22 @@ void SgAsmCil`cl.Name`::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
     `end_for`
   }
 }
+
+void SgAsmCil`cl.Name`::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
+{ `for_each fl = cl.Fields`
+  `fl.Serial !`;
+  `end_for`
+}
+
+void SgAsmCil`cl.Name`::dump(std::ostream& os) const
+{`for_each fl = cl.Fields`
+  os << "p_`fl.Name` = " << get_`fl.Name`()  `if exists fl.RefKind` `if fl.RefKind eq "string_heap"`  
+     << " = \"" << get_`fl.Name`_string() << "\""
+ `end_if` `end_if`  
+     << std::endl;
+ `end_for`
+}
+
 `for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
 const std::uint8_t*
 SgAsmCil`cl.Name`::get_`fl.Name`_blob() const
@@ -59,14 +78,34 @@ SgAsmCil`cl.Name`::get_`fl.Name`_object() const
 `end_for`  
 `end_for` 
 
-void SgAsmCilUint8Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
+void SgAsmCilUint8Heap::parse(const std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   p_Stream = parseIntStream<uint8_t>(buf, startOfMetaData, get_Offset(), get_Size());
 }
 
-void SgAsmCilUint32Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
+void SgAsmCilUint8Heap::unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const
+{
+  unparseIntStream(buf, startOfMetaData, get_Offset(), get_Size(), get_Stream());
+}
+
+void SgAsmCilUint8Heap::dump(std::ostream& os) const
+{
+  os << "    size = " << get_Stream().size() << std::endl;
+}
+
+void SgAsmCilUint32Heap::parse(const std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   p_Stream = parseIntStream<uint32_t>(buf, startOfMetaData, get_Offset(), get_Size());
+}
+
+void SgAsmCilUint32Heap::unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const
+{
+  unparseIntStream(buf, startOfMetaData, get_Offset(), get_Size(), get_Stream());
+}
+
+void SgAsmCilUint32Heap::dump(std::ostream& os) const
+{
+  os << "    size = " << get_Stream().size() << std::endl;
 }
 
 const std::string SgAsmCilDataStream::ID_STRING_HEAP{"#Strings"};
@@ -109,7 +148,7 @@ table_kind_to_string ( SgAsmCilMetadataHeap::TableKind e )
 `insert "blueprint/heaputil.txt"`
 
 
-void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
+void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   const uint32_t ofs = get_Offset();
 
@@ -152,6 +191,67 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
   }
 }
 
+void SgAsmCilMetadataHeap::unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const
+{
+  const uint32_t ofs = get_Offset();
+
+  size_t index = startOfMetaData + ofs;
+
+`for_each fl = .metadataheap.Fields`
+  `fl.Serial !`;
+`end_for`
+
+  for (size_t kind = 0; kind < posInRowVector.size(); ++kind)
+  {
+    const int    tblpos = posInRowVector[kind];
+    if (tblpos < 0) continue;
+
+    const size_t rows = p_NumberOfRows.at(tblpos);
+
+    // Build the associated table.
+    switch (kind)
+    { `for_each tbl = .metadata`
+      case e_`tbl.Name`:
+        unparseMetadataTable(get_`tbl.Name`Table(), buf, index, get_DataSizeFlags(), rows, "`tbl.Name`");
+        break;
+      `end_for`
+      default:
+        std::cerr << "default reached:\n"
+                  << "unparsing not implemented for kind = " << kind << table_kind_to_string(SgAsmCilMetadataHeap::TableKind(kind))
+                  << std::endl;
+        ROSE_ABORT();
+        break;
+    }
+  }
+}
+
+namespace
+{
+  template <class SageAsmCilMetadataTable>
+  void dumpTable(std::ostream& os, const SageAsmCilMetadataTable* tbl)
+  {
+    if (tbl == nullptr) return;
+    
+    os << "  * " << tbl->class_name() << ":" << std::endl;
+    
+    for (const typename SageAsmCilMetadataTable::CilMetadataType* el : tbl->get_elements())
+      el->dump(os);
+      
+    os << std::endl;
+  }
+}
+
+
+void SgAsmCilMetadataHeap::dump(std::ostream& os) const
+{
+  os << "  Metadata Stream" << std::endl
+  `for_each fl = .metadataheap.Fields`
+     << "    `fl.Name` = " << traceRep(p_`fl.Name`) << std::endl
+  `end_for`;
+  `for_each tbl = .metadata`
+  dumpTable(os, get_`tbl.Name`Table());
+  `end_for`
+}
 
 SgAsmCilMetadata*
 SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
@@ -198,12 +298,12 @@ void SgAsmCilMetadataRoot::parse()
   SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
   ASSERT_not_null(fhdr);
 
-  uint64_t    metaData = clih->get_metaData();
-  uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
-  rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
-  size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
-  rose_addr_t base_va = clih->get_base_va();
-  rose_addr_t rva_offset = clih->get_rva_offset(rva);
+  uint64_t          metaData = clih->get_metaData();
+  uint8_t*          data = reinterpret_cast<uint8_t*>(&metaData);
+  const rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  const size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
+  const rose_addr_t base_va = clih->get_baseVa();
+  const rose_addr_t rva_offset = clih->get_rvaOffset(rva);
 
   if (TRACE_CONSTRUCTION)
   {
@@ -216,16 +316,16 @@ void SgAsmCilMetadataRoot::parse()
   // Note: probably want to allocate a larger buffer
   std::vector<uint8_t> buf(size, 0);
 
-  size_t nread = fhdr->get_loader_map()->readQuick(buf.data(), base_va + rva, size);
+  const size_t nread = fhdr->get_loaderMap()->readQuick(buf.data(), base_va + rva, size);
   ASSERT_require(nread == size);
 
   this->parse(buf, 0);
-  decodeMetadata(base_va, get_MetadataHeap(), this);
+  decodeMetadata(base_va, get_MetadataHeap(), this, base_va + rva, base_va + rva + size);
 }
 
 
 
-void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
+void SgAsmCilMetadataRoot::parse(const std::vector<uint8_t>& buf, size_t index)
 {
   size_t start_of_MetadataRoot = index;
 
@@ -243,6 +343,72 @@ void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
   if (TRACE_CONSTRUCTION)
     std::cerr << "`str.Name` has " << p_`str.Name`.size() << " elements." << std::endl;
   `end_for`
+}
+
+void SgAsmCilMetadataRoot::unparse(std::ostream& os) const
+{
+  std::vector<uint8_t> bytes;
+
+  SgAsmCliHeader* clih = isSgAsmCliHeader(get_parent());
+  ASSERT_not_null(clih);
+
+  SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+  ASSERT_not_null(fhdr);
+
+  uint64_t    metaData = clih->get_metaData();
+  uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
+  rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  // size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
+  rose_addr_t base_va = clih->get_baseVa();
+  rose_addr_t rva_offset = clih->get_rvaOffset(rva);
+  
+  // assuming no modification, then the rva location must be past the code section
+
+  //   create output buffer up to metadata section
+  ensureSize(bytes, rva);
+  
+  //   write out the code
+  //     ( normally, this would also recompute some of the metadata
+  //       such as rvas to the code, codesize, ..
+  //       assuming no change => no metadata update ).
+  encodeMetadata(bytes, 0, rva, get_MetadataHeap(), this);
+  
+  //   write out the metadata
+  unparse(bytes, rva);
+  
+  // unparse @ base_va
+  os.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+}
+
+ 
+void SgAsmCilMetadataRoot::unparse(std::vector<uint8_t>& buf, std::size_t index) const
+{
+  size_t start_of_MetadataRoot = index;
+  
+  // buf.resize(index);
+  ensureSize(buf, index);
+
+  `for_each fl = .metadataroot.Fields`
+  `fl.Serial !`;
+  `end_for`
+  `for_each str = .metadataroot.Streams`
+  `str.Serial !`;
+  `end_for`
+}
+
+
+void SgAsmCilMetadataRoot::dump(std::ostream& os) const
+{
+  os << "Cil Metadata Root Object" << std::endl
+  `for_each fl = .metadataroot.Fields`
+     << "  `fl.Name` = " << get_`fl.Name`() << std::endl
+  `end_for`;
+     
+  dumpCilStream(os, "StringHeap",   get_StringHeap(),   idxStringHeap);
+  dumpCilStream(os, "BlobHeap",     get_BlobHeap(),     idxBlobHeap);
+  dumpCilStream(os, "UsHeap",       get_UsHeap(),       idxUsHeap);
+  dumpCilStream(os, "GuidHeap",     get_GuidHeap(),     idxGuidHeap);
+  dumpCilStream(os, "MetaDataHeap", get_MetadataHeap(), idxMetadataHeap);     
 }
 
 SgAsmCilUint8Heap*
@@ -275,4 +441,43 @@ SgAsmCilMetadataRoot::get_MetadataHeap() const
   return getHeapInternal<SgAsmCilMetadataHeap>(get_Streams(), idxMetadataHeap, SgAsmCilDataStream::ID_METADATA_HEAP);
 }
 
+void SgAsmCilDataStream::parse(const std::vector<uint8_t>&, size_t) { abstractFunctionCall(); }
+void SgAsmCilDataStream::unparse(std::vector<uint8_t>&, size_t) const { abstractFunctionCall(); } 
+void SgAsmCilDataStream::dump(std::ostream&) const { abstractFunctionCall(); } 
+
+/* ===== manually added methods ===== */
+
+const SgAsmCilMetadata*
+SgAsmCilTypeDef::get_MethodList_object(const SgAsmCilMethodDef* methodDef) const
+{
+  // Also need to know the index of the next typedef (can I get my index, probably not)?
+  uint32_t methodListIndex{get_MethodList()};
+  uint32_t nextMethodListIndex{methodListIndex};
+
+  // Need to find current first?
+  uint32_t myTypeDefIndex{0};
+
+  auto mdh = getMetadataHeap(this);
+  SgAsmCilTypeDefTable* tdt = mdh.get_TypeDefTable();
+  auto types = tdt->get_elements();
+  for (uint32_t ii = 0; ii < types.size(); ii++) {
+    myTypeDefIndex = ii;
+    auto type = types[ii];
+    if (this == type) break;
+  }
+
+  uint32_t nextTypeDefIndex = myTypeDefIndex + 1;
+  if (nextTypeDefIndex < types.size()) {
+    nextMethodListIndex = types[nextTypeDefIndex]->get_MethodList();
+  }
+
+  for (uint32_t ii = methodListIndex; ii < nextMethodListIndex; ii++) {
+    auto md = mdh.get_CodedMetadataNode(ii, SgAsmCilMetadataHeap::e_ref_method_def);
+    if (md == methodDef) return md;
+  }
+
+  // It is not required that an object be found
+  return nullptr;
+}
+    
 #endif /* ROSE_ENABLE_BINARY_ANALYSIS */

@@ -1,6 +1,6 @@
 /** CIL Property node (II.22.34). */
 class SgAsmCilProperty: public SgAsmCilMetadata {
-public:
+
     /** Property: Flags.
      *
      *  A 2-byte bitmask of type PropertyAttributes. */
@@ -20,7 +20,9 @@ public:
     uint32_t Type = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Type_blob() const;

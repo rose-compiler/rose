@@ -1,7 +1,6 @@
 /** Base class for CIL branch of binary analysis IR nodes. */
 [[Rosebud::abstract]]
 class SgAsmCilDataStream : public SgAsmCilNode {
-public:
     /** Property: Start offset of the byte stream. */
     [[using Rosebud: rosetta, ctor_arg]]
     uint32_t Offset;
@@ -39,6 +38,12 @@ public:
      *   parse will add get_Offset to startOfMetaData to find the first byte of a
      *   stream.
      */
-    virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) { /* FIXME: should be abstract */ }
+    virtual void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData); /* FIXME: should be abstract */
+
+    /** unparses the metadata objects into the buffer */
+    virtual void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const; /* FIXME: should be abstract */
+
+    /** Prints the object's data in a human readable form to @ref os. */
+    virtual void dump(std::ostream& os) const; /* FIXME: should be abstract */
 };
 

@@ -1,6 +1,6 @@
 /** CIL MethodDef node (II.22.26). */
 class SgAsmCilMethodDef: public SgAsmCilMetadata {
-public:
+
     /** Property: RVA.
      *
      *  A 4-byte constant. */
@@ -62,7 +62,9 @@ public:
     [[using Rosebud: rosetta]]
     bool hasMoreSections = 0;
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Signature_blob() const;

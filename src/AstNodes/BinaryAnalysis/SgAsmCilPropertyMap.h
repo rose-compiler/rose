@@ -1,6 +1,6 @@
 /** CIL PropertyMap node (II.22.35). */
 class SgAsmCilPropertyMap: public SgAsmCilMetadata {
-public:
+
     /** Property: Parent.
      *
      *  An index into the TypeDef table. */
@@ -14,7 +14,9 @@ public:
     uint32_t PropertyList = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_PropertyList_object() const;

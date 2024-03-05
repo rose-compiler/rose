@@ -1,6 +1,6 @@
 /** CIL Event node (II.22.13). */
 class SgAsmCilEvent: public SgAsmCilMetadata {
-public:
+
     /** Property: EventFlags.
      *
      *  A 2-byte bitmask of type EventAttribute. */
@@ -20,7 +20,9 @@ public:
     uint32_t EventType = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const SgAsmCilMetadata* get_EventType_object() const;

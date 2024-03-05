@@ -1,6 +1,6 @@
 /** CIL MemberRef node (II.22.25). */
 class SgAsmCilMemberRef: public SgAsmCilMetadata {
-public:
+
     /** Property: Class.
      *
      *  An index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables. */
@@ -20,7 +20,9 @@ public:
     uint32_t Signature = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Class_object() const;
     const std::uint8_t* get_Name_string() const;

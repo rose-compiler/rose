@@ -1,6 +1,6 @@
 /** CIL SgAsmCilMetadataHeap node. */
 class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
-public:
+
     /** Property: 4 reserved bytes. */
     [[using Rosebud: rosetta]]
     uint32_t ReservedAlwaysZero  = 0;
@@ -270,20 +270,26 @@ public:
     };
 
     /** parses the metadata objects from the buffer. */
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 
-    /** looks up the node associated with the coded index @p idx in the metadata table
-     *  associated with @p tblcode.
+    /** unparses the metadata objects into the buffer */
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+
+    /** Prints the object's data in a human readable form to @ref os. */
+    void dump(std::ostream& os) const override;
+
+    /** looks up the node associated with the coded index @ref idx in the metadata table
+     *  associated with @ref tblcode.
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;
 
-    /** looks up the node associated with the coded index @p refcode in the metadata tables
-     *  under the assumption that @p refcode is of kind @p knd
+    /** looks up the node associated with the coded index @ref refcode in the metadata tables
+     *  under the assumption that @refval is of kind @ref knd
      */
     SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-    /** looks up the node associated with the coded index @p refcode in the metadata tables
-     *  under the assumption that @p refcode is of kind @p knd
+    /** looks up the node associated with the coded index @ref refcode in the metadata tables
+     *  under the assumption that @refval is of kind @ref knd
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 };

@@ -1,6 +1,6 @@
 /** CIL Assembly node (II.22.2). */
 class SgAsmCilAssembly: public SgAsmCilMetadata {
-public:
+
     /** Property: HashAlgId.
      *
      *  A 4-byte constant of type AssemblyHashAlgorithm. */
@@ -56,7 +56,9 @@ public:
     uint32_t Culture = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_PublicKey_blob() const;
     const std::uint8_t* get_Name_string() const;

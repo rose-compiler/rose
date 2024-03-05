@@ -1,6 +1,6 @@
 /** CIL CustomAttribute node (II.22.10). */
 class SgAsmCilCustomAttribute: public SgAsmCilMetadata {
-public:
+
     /** Property: Parent.
      *
      *  An index into a metadata table that has an associated HasCustomAttribute index. */
@@ -20,7 +20,9 @@ public:
     uint32_t Value = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_Type_object() const;

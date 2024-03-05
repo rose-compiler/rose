@@ -1,6 +1,6 @@
 /** CIL TypeDef node (II.22.37). */
 class SgAsmCilTypeDef: public SgAsmCilMetadata {
-public:
+
     /** Property: Flags.
      *
      *  A 4-byte bitmask of type TypeAttributes. */
@@ -38,12 +38,13 @@ public:
     uint32_t MethodList = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_TypeName_string() const;
     const std::uint8_t* get_TypeNamespace_string() const;
     const SgAsmCilMetadata* get_Extends_object() const;
     const SgAsmCilMetadata* get_FieldList_object() const;
     const SgAsmCilMetadata* get_MethodList_object() const;
-    const SgAsmCilMetadata* get_MethodList_object(const SgAsmCilMethodDef*) const;
 };

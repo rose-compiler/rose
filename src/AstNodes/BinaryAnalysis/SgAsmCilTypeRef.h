@@ -1,6 +1,6 @@
 /** CIL TypeRef node (II.22.38). */
 class SgAsmCilTypeRef: public SgAsmCilMetadata {
-public:
+
     /** Property: ResolutionScope.
      *
      *  An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null. */
@@ -20,7 +20,9 @@ public:
     uint32_t TypeNamespace = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_ResolutionScope_object() const;
     const std::uint8_t* get_TypeName_string() const;

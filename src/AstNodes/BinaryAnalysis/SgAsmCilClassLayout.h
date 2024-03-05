@@ -1,6 +1,6 @@
 /** CIL ClassLayout node (II.22.8). */
 class SgAsmCilClassLayout: public SgAsmCilMetadata {
-public:
+
     /** Property: PackingSize.
      *
      *  A 2-byte constant. */
@@ -20,7 +20,9 @@ public:
     uint32_t Parent = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
 };

@@ -29974,7 +29974,9 @@ public:
     std::vector<uint8_t> const& get_Stream() const;
     std::vector<uint8_t>& get_Stream();
 public:
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+    void dump(std::ostream& os) const override;
 public:
     /** Destructor. */
     virtual ~SgAsmCilUint8Heap();
@@ -30043,7 +30045,9 @@ public:
     std::vector<uint32_t> const& get_Stream() const;
     std::vector<uint32_t>& get_Stream();
 public:
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+    void dump(std::ostream& os) const override;
 public:
     /** Destructor. */
     virtual ~SgAsmCilUint32Heap();
@@ -30180,7 +30184,9 @@ public:
     void set_Signature(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Signature_blob() const;
 public:
@@ -30346,7 +30352,9 @@ public:
     void set_TypeNamespace(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_ResolutionScope_object() const;
     const std::uint8_t* get_TypeName_string() const;
@@ -30565,7 +30573,9 @@ public:
     void set_MethodList(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_TypeName_string() const;
     const std::uint8_t* get_TypeNamespace_string() const;
@@ -30702,7 +30712,9 @@ public:
     void set_Signature(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Signature_blob() const;
 public:
@@ -30913,7 +30925,9 @@ public:
     void set_PropertyList(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_PropertyList_object() const;
@@ -31018,7 +31032,9 @@ public:
     void set_Type(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Type_blob() const;
@@ -31185,7 +31201,9 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_blob() const;
 public:
@@ -31334,7 +31352,9 @@ public:
     void set_EnclosingClass(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_NestedClass_object() const;
     const SgAsmCilMetadata* get_EnclosingClass_object() const;
@@ -31529,7 +31549,9 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
 public:
@@ -31667,7 +31689,9 @@ public:
     void set_EncBaseId(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint32_t* get_Mvid_guid() const;
@@ -31819,7 +31843,9 @@ public:
     void set_Instantiation(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Method_object() const;
     const std::uint8_t* get_Instantiation_blob() const;
@@ -31986,7 +32012,9 @@ public:
     void set_Association(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Method_object() const;
     const SgAsmCilMetadata* get_Association_object() const;
@@ -32153,7 +32181,9 @@ public:
     void set_MethodDeclaration(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Class_object() const;
     const SgAsmCilMetadata* get_MethodBody_object() const;
@@ -32440,7 +32470,9 @@ public:
     void set_hasMoreSections(bool const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Signature_blob() const;
@@ -32671,7 +32703,16 @@ public:
      *  @param index the start location of the metadata root object.
      *         buf[index] is the location of the magic number.
      */
-    void parse(std::vector<uint8_t>& buf, size_t index);
+    void parse(const std::vector<uint8_t>& buf, size_t index);
+
+    /** Declares the unparse function as called from the Cli section header object. */
+    void unparse(std::ostream& f) const;
+
+    /** unparses the metadata objects into a buffer starting at index @ref idx. */
+    void unparse(std::vector<uint8_t>&, std::size_t) const;
+
+    /** Prints the object's data in a human readable form to @ref os. */
+    void dump(std::ostream& os) const;
 
     /** accessor functions to return specific heaps
      * @{ */
@@ -33515,10 +33556,16 @@ public:
     };
 
     /** parses the metadata objects from the buffer. */
-    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 
-    /** looks up the node associated with the coded index @p idx in the metadata table
-     *  associated with @p tblcode.
+    /** unparses the metadata objects into the buffer */
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+
+    /** Prints the object's data in a human readable form to @ref os. */
+    void dump(std::ostream& os) const override;
+
+    /** looks up the node associated with the coded index @ref idx in the metadata table
+     *  associated with @p refcode.
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;
 
@@ -33701,7 +33748,9 @@ public:
     void set_Signature(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Class_object() const;
     const std::uint8_t* get_Name_string() const;
@@ -33886,7 +33935,9 @@ public:
     void set_Implementation(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const SgAsmCilMetadata* get_Implementation_object() const;
@@ -34036,7 +34087,9 @@ public:
     void set_Interface(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Class_object() const;
     const SgAsmCilMetadata* get_Interface_object() const;
@@ -34301,7 +34354,9 @@ public:
     void set_ImportScope(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_MemberForwarded_object() const;
     const std::uint8_t* get_ImportName_string() const;
@@ -34486,7 +34541,9 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Owner_object() const;
     const std::uint8_t* get_Name_string() const;
@@ -34636,7 +34693,9 @@ public:
     void set_Constraint(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Owner_object() const;
     const SgAsmCilMetadata* get_Constraint_object() const;
@@ -34803,7 +34862,9 @@ public:
     void set_HashValue(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_HashValue_blob() const;
@@ -35015,7 +35076,9 @@ public:
     void set_Field(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Field_object() const;
 public:
@@ -35164,7 +35227,9 @@ public:
     void set_NativeType(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_NativeType_blob() const;
@@ -35314,7 +35379,9 @@ public:
     void set_Field(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Field_object() const;
 public:
@@ -35418,7 +35485,9 @@ public:
     void set_Signature(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Signature_blob() const;
@@ -35619,7 +35688,9 @@ public:
     void set_Implementation(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_TypeName_string() const;
     const std::uint8_t* get_TypeNamespace_string() const;
@@ -35832,7 +35903,9 @@ public:
     void set_EventList(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_EventList_object() const;
@@ -35937,7 +36010,9 @@ public:
     void set_EventType(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const SgAsmCilMetadata* get_EventType_object() const;
@@ -36104,7 +36179,9 @@ public:
     void set_PermissionSet(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_PermissionSet_blob() const;
@@ -36253,7 +36330,13 @@ public:
      *   parse will add get_Offset to startOfMetaData to find the first byte of a
      *   stream.
      */
-    virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) { /* FIXME: should be abstract */ }
+    virtual void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData); /* FIXME: should be abstract */
+
+    /** unparses the metadata objects into the buffer */
+    virtual void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const; /* FIXME: should be abstract */
+
+    /** Prints the object's data in a human readable form to @ref os. */
+    virtual void dump(std::ostream& os) const; /* FIXME: should be abstract */
 public:
     /** Destructor. */
     virtual ~SgAsmCilDataStream();
@@ -36424,7 +36507,9 @@ public:
     void set_Value(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_Type_object() const;
@@ -36609,7 +36694,9 @@ public:
     void set_Value(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_Value_blob() const;
@@ -36776,7 +36863,9 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
 public:
@@ -37049,7 +37138,9 @@ public:
     void set_AssemblyRef(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_AssemblyRef_object() const;
 public:
@@ -37232,7 +37323,9 @@ public:
     void set_AssemblyRefOS(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_AssemblyRefOS_object() const;
 public:
@@ -37438,7 +37531,9 @@ public:
     void set_HashValue(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_PublicKeyOrToken_blob() const;
     const std::uint8_t* get_Name_string() const;
@@ -37573,7 +37668,9 @@ public:
     void set_Processor(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyProcessor();
@@ -37737,7 +37834,9 @@ public:
     void set_OSMinorVersion(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyOS();
@@ -37941,7 +38040,9 @@ public:
     void set_Culture(uint32_t const&);
     /** @} */
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_PublicKey_blob() const;
     const std::uint8_t* get_Name_string() const;

@@ -1,6 +1,6 @@
 /** CIL DeclSecurity node (II.22.11). */
 class SgAsmCilDeclSecurity: public SgAsmCilMetadata {
-public:
+
     /** Property: Action.
      *
      *  A 2-byte value. */
@@ -20,7 +20,9 @@ public:
     uint32_t PermissionSet = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_PermissionSet_blob() const;

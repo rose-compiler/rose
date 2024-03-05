@@ -1,6 +1,6 @@
 /** CIL MethodSemantics node (II.22.28). */
 class SgAsmCilMethodSemantics: public SgAsmCilMetadata {
-public:
+
     /** Property: Semantics.
      *
      *  A 2-byte bitmask of type MethodSemanticsAttributes. */
@@ -20,7 +20,9 @@ public:
     uint32_t Association = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_Method_object() const;
     const SgAsmCilMetadata* get_Association_object() const;

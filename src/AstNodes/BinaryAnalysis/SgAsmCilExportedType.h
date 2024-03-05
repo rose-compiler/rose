@@ -1,6 +1,6 @@
 /** CIL ExportedType node (II.22.14). */
 class SgAsmCilExportedType: public SgAsmCilMetadata {
-public:
+
     /** Property: EventFlags.
      *
      *  A 4-byte bitmask of type TypeAttribute. */
@@ -32,7 +32,9 @@ public:
     uint32_t Implementation = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_TypeName_string() const;
     const std::uint8_t* get_TypeNamespace_string() const;

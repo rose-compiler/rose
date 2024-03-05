@@ -1,6 +1,6 @@
 /** CIL Module node (II.22.30). */
 class SgAsmCilModule: public SgAsmCilMetadata {
-public:
+
     /** Property: Generation.
      *
      *  A 2-byte value, reserved, shall be zero. */
@@ -32,7 +32,9 @@ public:
     uint32_t EncBaseId = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_string() const;
     const std::uint32_t* get_Mvid_guid() const;

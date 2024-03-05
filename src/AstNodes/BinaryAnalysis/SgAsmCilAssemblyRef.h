@@ -1,6 +1,6 @@
 /** CIL AssemblyRef node (II.22.5). */
 class SgAsmCilAssemblyRef: public SgAsmCilMetadata {
-public:
+
     /** Property: MajorVersion.
      *
      *  Major version number. */
@@ -56,7 +56,9 @@ public:
     uint32_t HashValue = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_PublicKeyOrToken_blob() const;
     const std::uint8_t* get_Name_string() const;

@@ -1,6 +1,6 @@
 /** CIL Param node (II.22.33). */
 class SgAsmCilParam: public SgAsmCilMetadata {
-public:
+
     /** Property: Flags.
      *
      *  A 2-byte bitmask of type ParamAttributes. */
@@ -20,7 +20,9 @@ public:
     uint32_t Name = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const std::uint8_t* get_Name_blob() const;
 };

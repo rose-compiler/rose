@@ -1,6 +1,6 @@
 /** CIL AssemblyOS node (II.22.3). */
 class SgAsmCilAssemblyOS: public SgAsmCilMetadata {
-public:
+
     /** Property: OSPlatformID.
      *
      *  A 4-byte constant. */
@@ -20,6 +20,8 @@ public:
     uint32_t OSMinorVersion = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
 };

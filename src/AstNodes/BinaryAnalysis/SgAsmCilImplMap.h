@@ -1,6 +1,6 @@
 /** CIL ImplMap node (II.22.22). */
 class SgAsmCilImplMap: public SgAsmCilMetadata {
-public:
+
     /** Property: MappingFlags.
      *
      *  A 2-byte bitmask of type PInvokeAttributes. */
@@ -26,7 +26,9 @@ public:
     uint32_t ImportScope = 0;
 
 public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+    void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
+    void dump(std::ostream&) const;
 
     const SgAsmCilMetadata* get_MemberForwarded_object() const;
     const std::uint8_t* get_ImportName_string() const;

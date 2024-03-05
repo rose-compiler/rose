@@ -210,7 +210,7 @@ computeAccessPair( const std::vector<int8_t>& posInRowVector,
 template <class SageAsmCilMetadataTable>
 SageAsmCilMetadataTable*
 parseMetadataTable( SgAsmCilMetadataHeap* parent,
-                    std::vector<uint8_t>& buf,
+                    const std::vector<uint8_t>& buf,
                     size_t& index,
                     uint64_t sizeFlags,
                     size_t rows,
@@ -243,6 +243,27 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
     std::cerr << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
   return sgnode;
+}
+
+template <class SageAsmCilMetadataTable>
+void
+unparseMetadataTable( SageAsmCilMetadataTable* sgnode,
+                      std::vector<uint8_t>& buf,
+                      size_t& index,
+                      uint64_t sizeFlags,
+                      size_t rows,
+                      const char* tblName
+                    )
+{
+  using CilMetadataType = typename SageAsmCilMetadataTable::CilMetadataType;
+  
+  std::vector<CilMetadataType*>& elems = sgnode->get_elements();
+  ROSE_ASSERT(elems.size() == rows);
+
+  for (const CilMetadataType* el : elems)
+  {
+    unparseAsmCilNode(el,buf,index,sizeFlags);
+  }
 }
 
 template <class T>
