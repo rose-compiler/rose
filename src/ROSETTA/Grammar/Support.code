@@ -2087,7 +2087,7 @@ HEADER_DATA_STATEMENT_VALUE_START
              {
                e_unknown           = 0, /*!< error value */
                e_default           = 1, /*!< default value */
-               e_explict_list      = 2, /*!< list of value expressions */
+               e_explicit_list     = 2, /*!< list of value expressions */
                e_implicit_list     = 3, /*!< repeat-count * value */
                e_implied_do        = 4, /*!< implied do loop initializer */
                e_last_initializer_form  /*!< last value (upper bound on range of values, used in error checking) */

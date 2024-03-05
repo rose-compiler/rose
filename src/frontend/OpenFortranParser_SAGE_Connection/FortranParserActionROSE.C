@@ -5043,40 +5043,34 @@ void c_action_label(Token_t * lbl)
         {
             if (astExpressionStack.size() == 1)
             {
-                if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-                printf(
-                        "Case of SgDataStatementValue::e_explict_list (expression, typically a simple value) \n");
+                if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL) {
+                   printf("Case of SgDataStatementValue::e_explicit_list (expression, typically a simple value)\n");
+                }
 
-                dataValue->set_data_initialization_format(
-                        SgDataStatementValue::e_explict_list);
+                dataValue->set_data_initialization_format(SgDataStatementValue::e_explicit_list);
 
                 // Make sure this is not an implied DO expression
-                ROSE_ASSERT(isSgImpliedDo(astExpressionStack.front()) == NULL);
+                ASSERT_require(isSgImpliedDo(astExpressionStack.front()) == nullptr);
             }
             else
             {
-                if (astExpressionStack.size() == 2)
-                {
-                    if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-                    printf(
-                            "Case of SgDataStatementValue::e_implicit_list (repeat * value) \n");
-
-                    dataValue->set_data_initialization_format(
-                            SgDataStatementValue::e_implicit_list);
+                if (astExpressionStack.size() == 2) {
+                   if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL) {
+                      printf("Case of SgDataStatementValue::e_implicit_list (repeat * value)\n");
+                   }
+                   dataValue->set_data_initialization_format(SgDataStatementValue::e_implicit_list);
                 }
-                else
-                {
-                    // See test2007_107.f90
-                    printf(
-                            "This might be an implied do loop (need an example to debug this case!) \n");
-                    ROSE_ABORT();
+                else {
+                   // See test2007_107.f90
+                  printf("This might be an implied do loop (need an example to debug this case!)\n");
+                  ROSE_ABORT();
                 }
             }
         }
 
         switch (dataValue->get_data_initialization_format())
         {
-            case SgDataStatementValue::e_explict_list:
+            case SgDataStatementValue::e_explicit_list:
             {
                 SgExpression* expression = astExpressionStack.front();
                 astExpressionStack.pop_front();
@@ -5107,10 +5101,6 @@ void c_action_label(Token_t * lbl)
                 ROSE_ABORT();
             }
         }
-
-        // We should have a SgDataStatementObject at the top of the astNodeStack...
-        // SgDataStatementObject* dataObject = isSgDataStatementObject(astNodeStack.front());
-        // ROSE_ASSERT(dataObject != NULL);
 
         dataGroup->get_value_list().push_back(dataValue);
 

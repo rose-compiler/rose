@@ -95710,7 +95710,7 @@ namespace stringify { namespace SgDataStatementValue {
         switch (i) {
             case 0L: return "e_unknown";
             case 1L: return "e_default";
-            case 2L: return "e_explict_list";
+            case 2L: return "e_explicit_list";
             case 3L: return "e_implicit_list";
             case 4L: return "e_implied_do";
             case 5L: return "e_last_initializer_form";

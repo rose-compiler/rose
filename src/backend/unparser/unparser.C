@@ -1141,9 +1141,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
        // DQ (6/30/2013): Added support to time the unparsing of the file.
           TimingPerformance timer ("Source code generation from AST:");
-#if 0
-          printf ("This is not a Fortran file! \n");
-#endif
           if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) || (file->get_OpenCL_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_language) ) ||
                ( (file->get_outputLanguage() == SgFile::e_C_language) || (file->get_outputLanguage() == SgFile::e_Cxx_language) ) )
              {
@@ -1151,7 +1148,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #error "DEAD CODE!"
 #error "DEAD CODE!"
 
-            // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
                if (unparseScope != nullptr)
                   {
                     if (isSgGlobal(unparseScope) != nullptr || isSgClassDefinition(unparseScope) != nullptr)
@@ -1233,13 +1229,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                                    unparser.unparseX10File(file, info);
 #endif
                                  }
-                                else
-                                 {
-#error "DEAD CODE!"
-
-                                   printf ("Error: unclear how to unparse the input code! \n");
-                                   ROSE_ABORT();
-                                 }
                             }
                        }
 #error "DEAD CODE!"
@@ -1249,71 +1238,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
 #endif
 
-  // DQ (7/19/2004): Added newline at end of file
-  // (some compilers (e.g. g++) complain if no newline is present)
-  // This does not work, not sure why
-  // cur << "\n/* EOF: can't insert newline at end of file to avoid g++ compiler warning */ \n\n";
-
-  // DQ: This does not compile
-  // cur << std::endl;
-
-  // DQ: This does not force a new line either!
-  // cur << "\n\n\n";
      cur.flush();
 
   // MH-20140701 removed comment-out
 #if DEBUG_UNPARSE_FILE
      printf ("Leaving Unparser::unparseFile(): file = %s = %s \n",file->get_sourceFileNameWithPath().c_str(),file->get_sourceFileNameWithoutPath().c_str());
      printf ("Leaving Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
-#endif
-
-#if 0
-     if (file->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/BAtest_144.h")
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
-
-#if 0
-  // DQ (7/17/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
-     printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
-     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_177.h")
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
-#if 0
-  // DQ (7/17/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
-     printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
-     if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_177.h")
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
-
-#if 0
-  // DQ (7/17/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
-     printf ("In unparseFile(): unparsedFile->getFileName() = %s \n",file->getFileName().c_str());
-     if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/multifile_tests/sources/test_01/test_01.h")
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
-
-#if 0
-  // DQ (7/22/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
-     printf ("In unparseFile(): unparsedFile->getFileName()         = %s \n",file->getFileName().c_str());
-     printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/multifile_tests/test_01a/test_01/test_01a.cpp")
-     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/multifile_tests/test_01a/test_01/test_01a.cpp")
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
 #endif
 
   // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
@@ -1327,9 +1257,6 @@ int
 Unparser::getNumberOfLines( std::string internalString )
    {
   // This code is copied from the similar support in rose_attributes_list.C.
-
-  // ASSERT_not_null(this);
-
      int line = 0;
      int i    = 0;
      while (internalString[i] != '\0')
@@ -1348,9 +1275,6 @@ int
 Unparser::getColumnNumberOfEndOfString( std::string internalString )
    {
   // This code is copied from the similar support in rose_attributes_list.C.
-
-  // ASSERT_not_null(this);
-
      int col = 1;
      int i   = 0;
 
@@ -1429,11 +1353,6 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
 #if 0
      printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
 #endif
 
   // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
@@ -2614,9 +2533,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
           const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
           if (templateArgument != nullptr)
              {
-            // debugging code!
-            // printf ("Exiting to debug case of SgTemplateArgument \n");
-            // ROSE_ASSERT(false);
 #if 0
             // DQ (9/15/2012): Commented this out since while we build the AST we don't have parents of classes set (until the class declaration is attached to the AST).
                SgScopeStatement* scope = templateArgument->get_scope();
@@ -2944,10 +2860,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     printf ("Detected SgTemplateArgumentPtrList: templateArgumentList = %p size = %zu \n",templateArgumentList,templateArgumentList->size());
 #endif
                     roseUnparser.u_exprStmt->unparseTemplateArgumentList(*templateArgumentList, inheritedAttributeInfo );
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
                   }
 
                if (templateParameterList != nullptr)
@@ -2956,10 +2868,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     printf ("Detected SgTemplateParameterPtrList: templateParameterList = %p size = %zu \n",templateParameterList,templateParameterList->size());
 #endif
                     roseUnparser.u_exprStmt->unparseTemplateParameterList(*templateParameterList, inheritedAttributeInfo );
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
                   }
              }
 
@@ -3301,7 +3209,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case SgFile::e_C_language:
                case SgFile::e_Cxx_language:
                   {
-                 // printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 #if 0
                  // DQ (9/14/2018): Set the output filename.
                  // const string& tmp_outputFileName = FileHelper::concatenatePaths(unparseRootPath, unparseMapEntry -> second);
@@ -3318,20 +3225,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
                  // DQ (9/17/2018): When used withouth header file unparsing, this is a valid string.  So likely in needs to be setup else
                  // where so that we have consistancy of how it is setup independent of if the header file unparsing is used or not.
-                 // ROSE_ASSERT(file->get_sourceFileNameWithoutPath().empty() == true);
                     ROSE_ASSERT(file->get_sourceFileNameWithoutPath().empty() == false);
-
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 0
-                    printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
-#endif
-#if 0
-                    printf("In unparseFile(SgFile* file): outputFilename = %s \n",outputFilename.c_str());
-#endif
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
 
                  // Liao 12/29/2010, generate cuda source files
                     if (file->get_Cuda_only() == true)
@@ -3360,8 +3255,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_Java_language:
                   {
-                 // printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
                     ROSE_ASSERT(file->get_Java_only() == true);
 
                  // We try to get the package information back to output the translated source file in the correct folder structure.
@@ -3375,7 +3268,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     string package_name = (package_statement ? package_statement -> get_name().getString() : "");
 
                  // NOTE: Default package equals the empty string ""
-                 // ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
                     string outFolder = "";
                     string ds = project -> get_Java_source_destdir();
                     if (ds != "")

@@ -681,58 +681,50 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
    {
      SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(stmt);
 
-     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_dimensionStatement)
-        {
-       // The dimension statement will have changed the type and the original declaration will have been
-       // output with the dimension computed as part of the type. The only exception is that there may 
-       // have been no explicit declaration (only an implicit declaration from the dimension statement).
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_dimensionStatement) {
+        // The dimension statement will have changed the type and the original declaration will have been
+        // output with the dimension computed as part of the type. The only exception is that there may
+        // have been no explicit declaration (only an implicit declaration from the dimension statement).
 
-       // DQ (12/9/2007):
-       // This test checks if we will need a dimension statement, we still might not want all entries in
-       // the dimension statement to be unparsed (because some, but not all, might have appeared in an 
-       // explicit declaration previously. I hate this part of Fortran!
-
-          if (unparseDimensionStatement(stmt) == false)
-             {
-            // Output the new line so that we leave a hole where the dimension statement was and don't
-            // screwup the formatting of the labels (in columns 1-6)
-            // curprint("! Skipping output of dimension statement (handled in declaration)");
-               unp->cur.insert_newline(1);
-               return;
-             }
+        // DQ (12/9/2007):
+        // This test checks if we will need a dimension statement, we still might not want all entries in
+        // the dimension statement to be unparsed (because some, but not all, might have appeared in an
+        // explicit declaration previously. I hate this part of Fortran!
+        if (unparseDimensionStatement(stmt) == false) {
+           // Output the new line so that we leave a hole where the dimension statement was and don't
+           // screwup the formatting of the labels (in columns 1-6)
+           // curprint("! Skipping output of dimension statement (handled in declaration)");
+          unp->cur.insert_newline(1);
+          return;
         }
+     }
 
      string name;
-     switch(attributeSpecificationStatement->get_attribute_kind())
-        {
-          case SgAttributeSpecificationStatement::e_unknown_attribute_spec: name = "unknown_attribute"; break;
-          case SgAttributeSpecificationStatement::e_accessStatement_private:name = "private";           break;
-          case SgAttributeSpecificationStatement::e_accessStatement_public: name = "public";            break;
-          case SgAttributeSpecificationStatement::e_allocatableStatement:   name = "allocatable";       break;
-          case SgAttributeSpecificationStatement::e_asynchronousStatement:  name = "asynchronous";      break;
-          case SgAttributeSpecificationStatement::e_bindStatement:          name = "bind";              break;
-          case SgAttributeSpecificationStatement::e_dataStatement:          name = "data";              break;
-          case SgAttributeSpecificationStatement::e_dimensionStatement:     name = "dimension";         break;
-          case SgAttributeSpecificationStatement::e_externalStatement:      name = "external";          break;
-          case SgAttributeSpecificationStatement::e_intentStatement:        name = "intent";            break;
-          case SgAttributeSpecificationStatement::e_intrinsicStatement:     name = "intrinsic";         break;
-          case SgAttributeSpecificationStatement::e_optionalStatement:      name = "optional";          break;
-          case SgAttributeSpecificationStatement::e_parameterStatement:     name = "parameter";         break;
-          case SgAttributeSpecificationStatement::e_pointerStatement:       name = "pointer";           break;
-          case SgAttributeSpecificationStatement::e_protectedStatement:     name = "protected";         break;
-          case SgAttributeSpecificationStatement::e_saveStatement:          name = "save";              break;
-          case SgAttributeSpecificationStatement::e_targetStatement:        name = "target";            break;
-          case SgAttributeSpecificationStatement::e_valueStatement:         name = "value";             break;
-          case SgAttributeSpecificationStatement::e_volatileStatement:      name = "volatile";          break;
-          case SgAttributeSpecificationStatement::e_last_attribute_spec:    name = "last_attribute";    break;
-
-          default:
-             {
-               printf ("Error: default reached %d \n",attributeSpecificationStatement->get_attribute_kind());
-               ROSE_ABORT();
-             }
-        }
-
+     switch(attributeSpecificationStatement->get_attribute_kind()) {
+        case SgAttributeSpecificationStatement::e_unknown_attribute_spec: name = "unknown_attribute"; break;
+        case SgAttributeSpecificationStatement::e_accessStatement_private:name = "private";           break;
+        case SgAttributeSpecificationStatement::e_accessStatement_public: name = "public";            break;
+        case SgAttributeSpecificationStatement::e_allocatableStatement:   name = "allocatable";       break;
+        case SgAttributeSpecificationStatement::e_asynchronousStatement:  name = "asynchronous";      break;
+        case SgAttributeSpecificationStatement::e_bindStatement:          name = "bind";              break;
+        case SgAttributeSpecificationStatement::e_dataStatement:          name = "data";              break;
+        case SgAttributeSpecificationStatement::e_dimensionStatement:     name = "dimension";         break;
+        case SgAttributeSpecificationStatement::e_externalStatement:      name = "external";          break;
+        case SgAttributeSpecificationStatement::e_intentStatement:        name = "intent";            break;
+        case SgAttributeSpecificationStatement::e_intrinsicStatement:     name = "intrinsic";         break;
+        case SgAttributeSpecificationStatement::e_optionalStatement:      name = "optional";          break;
+        case SgAttributeSpecificationStatement::e_parameterStatement:     name = "parameter";         break;
+        case SgAttributeSpecificationStatement::e_pointerStatement:       name = "pointer";           break;
+        case SgAttributeSpecificationStatement::e_protectedStatement:     name = "protected";         break;
+        case SgAttributeSpecificationStatement::e_saveStatement:          name = "save";              break;
+        case SgAttributeSpecificationStatement::e_targetStatement:        name = "target";            break;
+        case SgAttributeSpecificationStatement::e_valueStatement:         name = "value";             break;
+        case SgAttributeSpecificationStatement::e_volatileStatement:      name = "volatile";          break;
+        case SgAttributeSpecificationStatement::e_last_attribute_spec:    name = "last_attribute";    break;
+        default:
+           printf ("Error: default reached %d \n",attributeSpecificationStatement->get_attribute_kind());
+           ROSE_ABORT();
+     }
      curprint(name);
 
      if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_intentStatement)
@@ -764,166 +756,129 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
         }
 
   // The parameter statement is a bit different from the other attribute statements (perhaps enough for it to be it's own IR node.
-     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_parameterStatement)
-        {
-          ASSERT_not_null(attributeSpecificationStatement->get_parameter_list());
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_parameterStatement) {
+        ASSERT_not_null(attributeSpecificationStatement->get_parameter_list());
+        curprint("(");
+        unparseExpression(attributeSpecificationStatement->get_parameter_list(),info);
+        curprint(")");
+     }
 
-          curprint("(");
-          unparseExpression(attributeSpecificationStatement->get_parameter_list(),info);
-          curprint(")");
-        }
-
-     if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_bindStatement )
-        {
-          ASSERT_not_null(attributeSpecificationStatement->get_bind_list());
-          ROSE_ASSERT(attributeSpecificationStatement->get_declarationModifier().isBind());
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_bindStatement) {
+        ASSERT_not_null(attributeSpecificationStatement->get_bind_list());
+        ROSE_ASSERT(attributeSpecificationStatement->get_declarationModifier().isBind());
           
-          curprint("(");
-          curprint(attributeSpecificationStatement->get_linkage());
-          if (attributeSpecificationStatement->get_binding_label().empty() == false)
-             {
-               curprint(",NAME=\"");
-               curprint(attributeSpecificationStatement->get_binding_label());
-               curprint("\"");
-             }
-          curprint(")");
+        curprint("(");
+        curprint(attributeSpecificationStatement->get_linkage());
+        if (attributeSpecificationStatement->get_binding_label().empty() == false) {
+           curprint(",NAME=\"");
+           curprint(attributeSpecificationStatement->get_binding_label());
+           curprint("\"");
         }
+        curprint(")");
+     }
 
      if ( (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_parameterStatement) &&
           (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_dataStatement) && 
           ( (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_accessStatement_private && 
              attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_accessStatement_public) && 
              attributeSpecificationStatement->get_parameter_list() != nullptr) )
-        {
-       // The parameter and data statement do not use "::" in their syntax
+       {
+          // The parameter and data statement do not use "::" in their syntax
           curprint(" :: ");
-        }
-       else
-        {
-       // Need a space to prevent variables from being too close to the keywords (e.g. "privatei" should be "private i").
+       }
+       else {
+          // Need a space to prevent variables from being too close to the keywords (e.g. "privatei" should be "private i").
           curprint(" ");
-        }
+       }
 
-     if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_bindStatement )
-        {
-          ASSERT_not_null(attributeSpecificationStatement->get_bind_list());
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_bindStatement) {
+        ASSERT_not_null(attributeSpecificationStatement->get_bind_list());
+        unparseExpression(attributeSpecificationStatement->get_bind_list(),info);
+     }
 
-          unparseExpression(attributeSpecificationStatement->get_bind_list(),info);
-        }
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_allocatableStatement) {
+        ASSERT_not_null(attributeSpecificationStatement->get_parameter_list());
+        unparseExpression(attributeSpecificationStatement->get_parameter_list(),info);
+     }
 
-     if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_allocatableStatement )
-        {
-          ASSERT_not_null(attributeSpecificationStatement->get_parameter_list());
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_externalStatement) {
+        // for this case the functions need to be output just as names without the "()"
+       ASSERT_not_null(attributeSpecificationStatement->get_parameter_list());
 
-          unparseExpression(attributeSpecificationStatement->get_parameter_list(),info);
-        }
+       SgExpressionPtrList & functionNameList = attributeSpecificationStatement->get_parameter_list()->get_expressions();
+       SgExpressionPtrList::iterator i = functionNameList.begin();
+       while (i != functionNameList.end()) {
+          SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(*i);
+          ASSERT_not_null(functionRefExp);
 
-     if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_externalStatement )
-        {
-       // for this case the functions need to be output just as names without the "()"
-          ASSERT_not_null(attributeSpecificationStatement->get_parameter_list());
+          SgName name = functionRefExp->get_symbol()->get_name();
+          curprint(name);
+          if (++i != functionNameList.end()) {
+            curprint(", ");
+          }
+       }
+     }
 
-          SgExpressionPtrList & functionNameList = attributeSpecificationStatement->get_parameter_list()->get_expressions();
-          SgExpressionPtrList::iterator i = functionNameList.begin();
-          while (i != functionNameList.end())
-             {
-               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(*i);
-               ASSERT_not_null(functionRefExp);
+     if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_dataStatement) {
+        curprint(" ");
 
-               SgName name = functionRefExp->get_symbol()->get_name();
-               curprint(name);
-               
-               i++;
-
-               if (i != functionNameList.end())
-                    curprint(", ");
-             }
-        }
-
-     if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_dataStatement )
-        {
-          curprint(" ");
-
-          SgDataStatementGroupPtrList & dataStatementGroupList = attributeSpecificationStatement->get_data_statement_group_list();
+        SgDataStatementGroupPtrList &dataStatementGroupList = attributeSpecificationStatement->get_data_statement_group_list();
           SgDataStatementGroupPtrList::iterator i_group = dataStatementGroupList.begin();
           while (i_group != dataStatementGroupList.end())
              {
                SgDataStatementObjectPtrList & dataStatementObjectList = (*i_group)->get_object_list();
                SgDataStatementObjectPtrList::iterator i_object = dataStatementObjectList.begin();
 
-               while (i_object != dataStatementObjectList.end())
-                  {
-                    unparseExpression((*i_object)->get_variableReference_list(),info);
-                    i_object++;
-                    if (i_object != dataStatementObjectList.end())
-                       {
-                         curprint(", ");
-                       }
+               while (i_object != dataStatementObjectList.end()) {
+                  unparseExpression((*i_object)->get_variableReference_list(),info);
+                  if (++i_object != dataStatementObjectList.end()) {
+                     curprint(", ");
                   }
+               }
 
             // Now output the data values
-               curprint(" / ");
+               curprint("/");
                SgDataStatementValuePtrList  & dataStatementValueList  = (*i_group)->get_value_list();
                SgDataStatementValuePtrList::iterator i_value  = dataStatementValueList.begin();
-               while (i_value != dataStatementValueList.end())
-                  {
+               while (i_value != dataStatementValueList.end()) {
                     SgDataStatementValue::data_statement_value_enum value_kind = (*i_value)->get_data_initialization_format();
-                    switch(value_kind)
-                       {
-                         case SgDataStatementValue::e_unknown:
-                         case SgDataStatementValue::e_default:
-                            {
-                              printf ("Error: value_kind == e_unknown or e_default value_kind = %d \n",value_kind);
-                              ROSE_ABORT();
-                            }
+                    switch(value_kind) {
+                       case SgDataStatementValue::e_unknown:
+                       case SgDataStatementValue::e_default:
+                          printf ("Error: value_kind == e_unknown or e_default value_kind = %d \n",value_kind);
+                          ROSE_ABORT();
+                       case SgDataStatementValue::e_explicit_list:
+                          unparseExpression((*i_value)->get_initializer_list(),info);
+                          break;
+                       case SgDataStatementValue::e_implicit_list: {
+                          ASSERT_require((*i_value)->get_initializer_list()->get_expressions().empty());
+                          SgExpression* repeatExpression = (*i_value)->get_repeat_expression();
+                          ASSERT_not_null(repeatExpression);
+                          SgExpression* constantExpression = (*i_value)->get_constant_expression();
+                          ASSERT_not_null(constantExpression);
 
-                         case SgDataStatementValue::e_explict_list:
-                            {
-                              unparseExpression((*i_value)->get_initializer_list(),info);
-                              break;
-                            }
-
-                         case SgDataStatementValue::e_implicit_list:
-                            {
-                              ROSE_ASSERT((*i_value)->get_initializer_list()->get_expressions().empty());
-
-                              SgExpression* repeatExpression   = (*i_value)->get_repeat_expression();
-                              ASSERT_not_null(repeatExpression);
-                              SgExpression* constantExpression = (*i_value)->get_constant_expression();
-                              ASSERT_not_null(constantExpression);
-
-                              unparseExpression(repeatExpression,info);
-                              curprint(" * ");
-                              unparseExpression(constantExpression,info);
-                              break;
-                            }
-
+                          unparseExpression(repeatExpression,info);
+                          curprint(" * ");
+                          unparseExpression(constantExpression,info);
+                          break;
+                       }
                          case SgDataStatementValue::e_implied_do:
-                            {
-                              printf ("Error: value_kind == e_implied_do (not yet supported) \n");
-                              break;
-                            }
-
+                            printf ("Error: value_kind == e_implied_do (not yet supported) \n");
+                            break;
                          default:
-                            {
-                              printf ("Error: default reached value_kind = %d \n",value_kind);
-                              ROSE_ABORT();
-                            }
-                       }
+                            printf ("Error: default reached value_kind = %d \n",value_kind);
+                            ROSE_ABORT();
+                    }
 
-                    i_value++;
-                    if (i_value != dataStatementValueList.end())
-                       {
-                         curprint(", ");
-                       }
-                  }
-               curprint(" / ");
+                    if (++i_value != dataStatementValueList.end()) {
+                       curprint(", ");
+                    }
+               }
+               curprint("/");
 
-               i_group++;
-               if (i_group != dataStatementGroupList.end())
-                  {
-                    curprint(", ");
-                  }
+               if (++i_group != dataStatementGroupList.end()) {
+                  curprint(", ");
+               }
              }
         }
 
@@ -1491,10 +1446,10 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
      SgCommonBlockObjectPtrList::iterator i = blockList.begin();
      while (i != blockList.end())
         {
-          curprint("/ ");
+          curprint("/");
           curprint((*i)->get_block_name());
-          curprint(" / ");
-     // Pei-Hung (07/30/2020) if declaration stmt is not available, the type attribute has to be unparsed
+          curprint("/");
+          // Pei-Hung (07/30/2020) if declaration stmt is not available, the type attribute has to be unparsed
           SgExprListExp* expr_list = isSgExprListExp((*i)->get_variable_reference_list()); 
           ASSERT_not_null(expr_list);
           SgExpressionPtrList::iterator iexp = expr_list->get_expressions().begin();
