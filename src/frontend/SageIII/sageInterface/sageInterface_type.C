@@ -4,8 +4,12 @@
 #include "sageInterface.h"
 #include <map>
 #include <boost/foreach.hpp>
-using namespace std;
+#include "Rose/AST/Utils.h" 
+#include <unordered_map>
+#include "RoseAst.h"
 
+using namespace std;
+using namespace Rose;
 #define foreach BOOST_FOREACH
 
 #define DEBUG_QUADRATIC_BEHAVIOR 0
@@ -2326,3 +2330,274 @@ if (!sgClassType) { \
 
 } //end of namespace
 
+// A helper function to check 
+//   begin: return 1
+//   middle (#else, #elif): return 2
+//   end directive: return -1 
+// othewise return 0;
+static int isBeginDirective (PreprocessingInfo* info)
+{
+   ROSE_ASSERT (info != NULL);
+    PreprocessingInfo::DirectiveType dtype= info->getTypeOfDirective();
+    if (dtype == PreprocessingInfo::CpreprocessorIfdefDeclaration  ||
+        dtype == PreprocessingInfo::CpreprocessorIfndefDeclaration ||
+        dtype == PreprocessingInfo::CpreprocessorIfDeclaration )
+    {
+        return 1;
+    }
+    else if (dtype==PreprocessingInfo::CpreprocessorElseDeclaration|| 
+             dtype==PreprocessingInfo::CpreprocessorElifDeclaration)
+    {
+       return 2;
+    }
+    else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
+    {
+       return -1;
+    }
+
+    return 0;
+}
+
+// a helper function to move things, the associated directive in the middle
+static void moveInofListToNewPlace(AttachedPreprocessingInfoType* infoList, int cidx, set <AttachedPreprocessingInfoType*>& relatedInfoList, SgLocatedNode* lnode, int &retVal)
+{
+//     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+//     int cidx=  (*ki).second;
+
+     relatedInfoList.insert (infoList);
+
+     PreprocessingInfo* info = (*infoList)[cidx];
+     // rewrite relative position
+     info->setRelativePosition(PreprocessingInfo::after);
+
+     // insert after lnode
+     lnode->addToAttachedPreprocessingInfo (info);
+     retVal++;
+
+     // zero out from original list
+     (*infoList)[cidx]= NULL; 
+}
+
+//TODO test it as a static function first, later move to SageInterface namespace
+// Return the number of NULL PreprocessingInfo* within a subtree of a SgLocatedNode, inclusive
+int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode) 
+{
+   int retVal=0;
+   ROSE_ASSERT(lnode);
+
+   // collecting NULL entries
+   RoseAst ast(lnode);
+   RoseAst::iterator ast_i=ast.begin(); 
+
+   vector < pair< AttachedPreprocessingInfoType*, int> > empty_entries; // preprocessing info. to be erased, list vs. idx/offset
+   for(;ast_i!=ast.end();++ast_i) {
+       SgLocatedNode* current  = isSgLocatedNode(*ast_i);
+       if (current ==NULL ) // skip non located nodes
+         continue; 
+
+       AttachedPreprocessingInfoType* infoList = current->getAttachedPreprocessingInfo();
+       if (infoList == NULL) continue; 
+
+       int commentIndex=0;
+       for (Rose_STL_Container<PreprocessingInfo*>::iterator ci = (*infoList).begin(); ci != (*infoList).end(); ci++)
+       {
+           ROSE_ASSERT(*ci != NULL);
+           // fundamentally, we want to move individual PreprocessingInfo objects
+           // Or just duplicate them (easier)
+           PreprocessingInfo * info = *ci;
+	   if (info==NULL)
+	       empty_entries.push_back( make_pair (infoList, commentIndex) );
+	   commentIndex++;
+     }
+  }
+
+   // using reverse iterator to remove from backwards
+   for (auto ki = empty_entries.rbegin(); ki != empty_entries.rend(); ki ++) 
+   {
+     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+     int cidx=  (*ki).second;
+
+     PreprocessingInfo* info = (*infoList)[cidx];
+     ROSE_ASSERT (info==NULL);
+
+     // erase start+offset
+     AttachedPreprocessingInfoType::iterator k = infoList->begin();
+     infoList->erase(k+cidx);
+//     cout<<"debugging: direct erasing: info@"<< infoList<< " idx="<<cidx<<endl;
+     retVal ++;     
+   }
+  return retVal;
+}
+
+// This may be expensive to run since it is called anytime replace() is called. 
+//!  Extract sequences like " #endif #endif ...  #if | #ifdef| #ifndef" buried inside subtree of lnode.
+//  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
+// This should be done before removing or replace the statement: lnode
+// TODO: need to handle #else #elseif etc, very messy!
+// TODO: this may need to be a recursive function for multiple levels of nested directives.
+int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
+{
+    int retVal=0;
+    ROSE_ASSERT(lnode);
+    int pcounter =0; 
+
+// algorithm: using a queue (vector to simulate it)
+// queue <PreProcessingInfo* >  q; 
+//  start from 2nd node: ignore the first root node
+//  if  start preprocessing info: (if, ifndef, ifdef), push to the end of q 
+//  if  end of preprocessing info. (endif),  neturalize possible end p info at the end of q, otherwise push it to the end
+//
+//  the queue in the end may contain mixed  preprocessing info.   #endif #endif ... #if   #ifndef
+//  They cannot neutralize each other. 
+//  They should be attached to be after lnode !
+   RoseAst ast(lnode);
+   RoseAst::iterator ast_i=ast.begin(); 
+   ++ast_i; // skip the root node itself
+
+  // we store both the container and the element's index within the container. so later we can easily remove elements from containers
+   vector < pair< AttachedPreprocessingInfoType*, int> > keepers; // preprocessing info. to be kept
+   // for the middle directives like #else or #elif, sometimes their status (balanced or not) is directly associatd with its preceeding begin directive
+   // it is not always an independent decision.
+   // Note : the association is between individual preprocessing info. however, to faciliate removing them, the second part uses  InfoList vs offset
+   unordered_map < PreprocessingInfo * , vector< pair<AttachedPreprocessingInfoType*, int>> > associated_directives;  
+
+   // store the associated middle directives what should be erased in the end
+   // we have to store this separatedly since the begin diretive pinfo becomes NULL after they have been erased!
+   // associated_directives[BeginInfo] will not retrieve them! 
+   vector< pair<AttachedPreprocessingInfoType*, int>> associated_erase; 
+   for(;ast_i!=ast.end();++ast_i) {
+       SgLocatedNode* current  = isSgLocatedNode(*ast_i);
+       if (current ==NULL ) // skip non located nodes
+         continue; 
+
+       AttachedPreprocessingInfoType* infoList = current->getAttachedPreprocessingInfo();
+       if (infoList == NULL) continue; 
+
+       int commentIndex=0;
+       for (Rose_STL_Container<PreprocessingInfo*>::iterator ci = (*infoList).begin(); ci != (*infoList).end(); ci++)
+       {
+           ROSE_ASSERT(*ci != NULL);
+           // fundamentally, we want to move individual PreprocessingInfo objects
+           // Or just duplicate them (easier)
+           PreprocessingInfo * info = *ci;
+
+           // begin directives
+           if ( isBeginDirective(info) == 1)
+           {
+               keepers.push_back(make_pair (infoList,commentIndex));
+           }
+           // the middle #else, #elif, 
+           else if (isBeginDirective(info) == 2) 
+           {
+               // two situtations for immediate decision of unbalanced status
+               //1. empty stack, or 
+               // 2.  top of stack is not one of #if #ifdef #ifndef. This is an unbalanced directive (keeper)
+               if (keepers.size()==0)
+                    keepers.push_back(make_pair (infoList,commentIndex));
+               else if (isBeginDirective( (*(keepers.back().first))[keepers.back().second]  )!=1 ) // not empty , top of the stack is not beginning
+               {
+                  keepers.push_back(make_pair (infoList,commentIndex)); 
+               } 
+               else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
+               {
+		       PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
+                  // we associated this middle directive with the beginning directive
+                  associated_directives[begin_info].push_back(make_pair (infoList,commentIndex)); 
+               } 
+           } 
+           // end directive
+           else if ( isBeginDirective(info) == -1)
+           {
+              bool neutralized = false;
+               // neutralize an internall matched pair, if any
+               if (keepers.size()>0)
+               { 
+                  AttachedPreprocessingInfoType* comments = keepers.back().first;
+                  int idx = keepers.back().second;
+                 
+                  if(isBeginDirective( (*comments)[idx] )==1)
+                  {
+                      keepers.pop_back();
+                      neutralized = true;
+                  }
+                }
+
+               if (!neutralized)
+                   keepers.push_back(make_pair (infoList,commentIndex));
+           }
+           commentIndex++;
+       }
+   }
+// TODO this variable is not used in the end.
+   set <AttachedPreprocessingInfoType*> relatedInfoList; // containers with comments to be moved
+   // now we go through the keepers: those to be moved to the new location!! They are also the ones to be erased from original location!
+   // move from old containers, and add into lnode's after position
+   for (auto ki = keepers.begin(); ki != keepers.end(); ki ++) 
+   {
+     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+     int cidx=  (*ki).second;
+     // TODO replace the code block below with moveInofListToNewPlace()
+     relatedInfoList.insert (infoList);
+
+     PreprocessingInfo* info = (*infoList)[cidx];
+     // rewrite relative position
+     info->setRelativePosition(PreprocessingInfo::after);
+
+     // insert after lnode
+     lnode->addToAttachedPreprocessingInfo (info);
+     retVal++;
+
+     // we additionally process the associated directives, if any, TODO: reverse processing also??
+     if (associated_directives.count (info)!=0)
+     {
+        vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[info];
+        for (auto vec_i  = a_list_vec.rbegin(); vec_i != a_list_vec.rend(); vec_i ++  ) 
+        {
+           AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first; 
+           int aidx=  (*vec_i).second;
+           moveInofListToNewPlace (a_infoList, aidx, relatedInfoList, lnode, retVal);
+	   associated_erase.push_back(make_pair (a_infoList, aidx));
+        }
+     } // each begin directive may associate multiple other middle directives
+
+     // Doing this after the associated directives are processed.
+     // zero out from original list, Note this element slot is NULL now!
+     (*infoList)[cidx]= NULL; 
+
+   }
+#if 0   
+     // erase: based on null ptr now. The statements attached with comments may remain in the final AST
+   // some unparser function has an assertion for non-null preprocessing info.
+   // using reverse iterator to remove from backwards
+   for (auto ki = keepers.rbegin(); ki != keepers.rend(); ki ++) 
+   {
+     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+     int cidx=  (*ki).second;
+
+     PreprocessingInfo* info = (*infoList)[cidx];
+
+     ROSE_ASSERT (info==NULL);
+
+     // erase start+offset
+     AttachedPreprocessingInfoType::iterator k = infoList->begin();
+     infoList->erase(k+cidx);
+     cout<<"debugging: direct erasing: info@"<< infoList<< " idx="<<cidx<<endl;
+   }
+
+   //erase associated, secondary directives, if any
+   for (auto ki = associated_erase.rbegin(); ki != associated_erase.rend(); ki ++) 
+   {
+     AttachedPreprocessingInfoType* infoList =  (*ki).first;
+     int cidx=  (*ki).second;
+
+     PreprocessingInfo* info = (*infoList)[cidx];
+     ROSE_ASSERT (info==NULL);
+cout<<"debugging: associated erasing: info@"<< info << " idx="<<cidx<<endl;
+     // erase start+offset
+     AttachedPreprocessingInfoType::iterator k = infoList->begin();
+     infoList->erase(k+cidx);
+   }
+#endif
+    eraseNullPreprocessingInfo (lnode);
+    return retVal; 
+}

@@ -834,14 +834,20 @@ PreprocessingInfo* attachComment(
  */
 void guardNode(SgLocatedNode * target, std::string guard);
 
-  /* \brief move inner danglling #endif .. #if | #ifdef| #ifndef to be after lnode
+/* \brief move inner danglling #endif .. #if | #ifdef| #ifndef to be after lnode
      This is needed when we remove a target statement with internal statements.
      Some of the internal statements may have a dangling #endif  #if, #ifdef #ifndef.
      We need to move them to be attached to after position of lnode.
      Then we can safely remove or replace lnode (often a statement)
-   */
+*/
 ROSE_DLL_API int moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode);
 
+/* \brief scanning subtree from lnode, find and erase any NULL PreprocessingInfo pointers
+   The unparser expects PreprocessingInfo pointers are not NULL. 
+   We may introduce NULL pointers after moving some preprocessing info. from one place to another.
+*/
+
+ROSE_DLL_API int eraseNullPreprocessingInfo (SgLocatedNode* lnode);
 
 //@}
 

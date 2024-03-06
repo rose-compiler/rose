@@ -5444,6 +5444,10 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
      SgExpression* func_exp = buildFunctionCallExp("GOMP_single_start", buildBoolType(), NULL, scope);
 #endif
 
+     // target vs. if_stmt should not share a subtree of AST (the body)
+     // We need to disconnect it from old statement (target)
+     // Later replaceStement has the logic to move dangling directives. repeated subtree will cause troubles.
+     target->set_body(NULL);
      if_stmt = buildIfStmt(func_exp, body, NULL); 
    }
 
