@@ -1,1 +1,2 @@
 add_subdirectory(BinaryAnalysis)
+add_subdirectory(ReadWriteSetGeneration)

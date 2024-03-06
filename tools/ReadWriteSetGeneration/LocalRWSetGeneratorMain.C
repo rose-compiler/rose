@@ -3,7 +3,7 @@
 #include <Rose/CommandLine.h>
 #include <nlohmann/json.hpp>
 #include <Rose/Yaml.h>
-#include "LocalRWSetGenerator.h"
+#include <LocalRWSetGenerator.h>
 #include <sstream>
 // 03/20/2023): Adding boost filesystem usage:
 #include <boost/filesystem.hpp>
