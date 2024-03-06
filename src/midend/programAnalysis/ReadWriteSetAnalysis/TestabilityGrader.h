@@ -1,7 +1,7 @@
 #ifndef TESTABILITYGRADER_H
 #define TESTABILITYGRADER_H
 #include <unordered_set>
-#include <ReadWriteSetRecords.h>
+#include "ReadWriteSetRecords.h"
 
 /**
  * \class TestabilityGrader
