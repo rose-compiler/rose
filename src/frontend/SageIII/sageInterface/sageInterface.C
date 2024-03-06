@@ -27643,9 +27643,9 @@ int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
            // fundamentally, we want to move individual PreprocessingInfo objects
            // Or just duplicate them (easier)
            PreprocessingInfo * info = *ci;
-	   if (info==NULL)
-	       empty_entries.push_back( make_pair (infoList, commentIndex) );
-	   commentIndex++;
+           if (info==NULL)
+               empty_entries.push_back( make_pair (infoList, commentIndex) );
+           commentIndex++;
      }
   }
 
@@ -27737,7 +27737,7 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
                } 
                else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
                {
-		       PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
+                       PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
                   // we associated this middle directive with the beginning directive
                   associated_directives[begin_info].push_back(make_pair (infoList,commentIndex)); 
                } 
@@ -27793,7 +27793,7 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
            AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first; 
            int aidx=  (*vec_i).second;
            moveInofListToNewPlace (a_infoList, aidx, relatedInfoList, lnode, retVal);
-	   associated_erase.push_back(make_pair (a_infoList, aidx));
+           associated_erase.push_back(make_pair (a_infoList, aidx));
         }
      } // each begin directive may associate multiple other middle directives
 
