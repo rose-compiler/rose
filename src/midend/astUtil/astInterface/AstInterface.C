@@ -1339,6 +1339,8 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
          return AstNodePtrImpl(isSgConstructorInitializer(s)->get_declaration());
     case V_SgDotExp:
          return GetFunctionDecl( AstNodePtrImpl(isSgDotExp(s)->get_rhs_operand()));
+    case V_SgVarRefExp:
+         return AstNodePtrImpl(isSgVarRefExp(s)->get_symbol()->get_declaration());
     default: 
         mlog[ERROR] << "Error: not recognizable function type : " << s->sage_class_name() << endl;
         mlog[ERROR] << " at " << s->get_file_info()->get_filenameString() << ":" << s->get_file_info()->get_line() << std::endl;
@@ -1350,9 +1352,10 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
 
 //! Returns whether t is a function type and if yes, returns its parameter
 //! types and return type.
-bool AstInterface:: IsFunctionType( const AstNodeType& t,
+bool AstInterface:: IsFunctionType( const AstNodeType& _t,
                        AstTypeList* paramtypes, AstNodeType* returntype) {
-    SgFunctionType* ftype = isSgFunctionType(AstNodeTypeImpl(t).get_ptr());
+    SgType* t = AstNodeTypeImpl(_t).get_ptr(); 
+    SgFunctionType* ftype = isSgFunctionType(t);
      if (ftype != 0) {
         if (paramtypes != 0) {
         SgTypePtrList atypes = ftype->get_arguments();
@@ -1364,6 +1367,15 @@ bool AstInterface:: IsFunctionType( const AstNodeType& t,
            *returntype = AstNodeTypeImpl(ftype->get_return_type());
         return true;
     }
+    SgTypedefType* dtype = isSgTypedefType(t);
+    if (dtype != 0) {
+       return IsFunctionType(AstNodeTypeImpl(dtype->get_base_type()), paramtypes, returntype);
+    }
+    SgPointerType* ptype = isSgPointerType(t);
+    if (ptype != 0) {
+       return IsFunctionType(AstNodeTypeImpl(ptype->get_base_type()), paramtypes, returntype);
+    }
+    std::cerr << "Not function type:" << t->class_name() << ":" << t->unparseToString() << "\n";
     return false;
 }
 
@@ -1489,7 +1501,19 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       break;
   }  
-  
+  case V_SgInitializedName:
+  {
+      SgInitializedName* var = isSgInitializedName(d);
+      SgType* t = var->get_type();
+      std::cerr << "type of sgInitializedName: " << t->class_name() << "\n";
+      if (IsFunctionType(AstNodeTypeImpl(t), paramtype, returntype)) {
+         if (name != 0) {
+            *name = var->get_name().str();
+         } 
+         return true;
+      }
+      return false;
+  }
   default: 
     return false;
   }
@@ -2679,8 +2703,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
        ROSE_ABORT();
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
-     ROSE_ASSERT(t != NULL);
-     if (t->variantT() == V_SgPointerType)
+     if (t != 0 && t->variantT() == V_SgPointerType)
         t = static_cast<SgPointerType*>(t)->get_base_type();
      if (!IsFunctionType(_ftype, paramtypes, returntype)) {// not a function type
         AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
@@ -2688,8 +2711,10 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
             std::cerr << "func has no decl: " << AstToString(s) << "\n";
            ROSE_ABORT();
         }
-        if (!IsFunctionDefinition(fdecl, 0,0,0,0,paramtypes,returntype))
-         ROSE_ABORT();
+        if (!IsFunctionDefinition(fdecl, 0,0,0,0,paramtypes,returntype)) {
+           std::cerr << "expecting function definition but has :" << AstToString(fdecl) << "\n";
+            ROSE_ABORT();
+        }
      }
      // Store arguments of reference types into outargs
      if (outargs != 0) {
@@ -2697,7 +2722,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         for (AstTypeList::const_iterator p = paramtypes->begin(); 
              p != paramtypes->end(); ++p,++p1) {
            SgType* t = AstNodeTypeImpl(*p).get_ptr();
-           if (t->variantT() == V_SgReferenceType)
+           if (t != 0 && t->variantT() == V_SgReferenceType)
               outargs->push_back(*p1); 
         }
      }

@@ -158,17 +158,22 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       }
    }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
-     if (DebugLocalInfoCollect())
+      if (DebugLocalInfoCollect())
         std::cerr << "Is variable declaration.\n";
       AstInterface::AstNodeList::const_iterator pv = vars.begin();
       AstInterface::AstNodeList::const_iterator pa = args.begin();
       modstack.push_back(s_ptr);
       while (pv != vars.end()) {
          AstNodePtr ast = AstNodePtrImpl(*pv).get_ptr();
-         modstack.back().modmap[ast] = ModRecord(ast,false);
+         AstNodePtr read_ast = AstNodePtrImpl(*pa).get_ptr();
+         if (read_ast != AST_NULL) {
+            operator()(fa, read_ast);
+         }
+        AppendModLoc( fa, ast, read_ast);
          ++pv;
          ++pa;
       }
+      Skip(s);
    }
    else  if (fa.IsIOInputStmt(s, &args)) {
      if (DebugLocalInfoCollect())
@@ -360,9 +365,10 @@ template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 {
- std::cerr << "Inside AppendFuncCall\n";
  CollectReadRefWrap<AstNodePtr> read(fa, funcanal, curstmt, readcollect);
- std::cerr << "Checking function info\n";
+ if (DebugLocalInfoCollect()) {
+    std::cerr << "Checking function info: " << AstInterface::AstToString(fc) << std::endl;
+ }
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
       AstNodePtr callee;

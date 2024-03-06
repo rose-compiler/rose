@@ -233,7 +233,7 @@ public:
 
   //! Returns whether t is a function type and if yes, returns its parameter
   //! types and return type.
-  bool IsFunctionType( const AstNodeType& t, 
+  static bool IsFunctionType( const AstNodeType& t, 
                        AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
   bool IsMin(const AstNodePtr& exp);
   bool IsMax(const AstNodePtr& exp);
