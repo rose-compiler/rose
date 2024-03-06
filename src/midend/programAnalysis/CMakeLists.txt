@@ -24,7 +24,7 @@ add_subdirectory(dataflowAnalysis)
 add_subdirectory(ssaUnfilteredCfg)
 add_subdirectory(systemDependenceGraph)
 add_subdirectory(EditDistance)
-
+add_subdirectory(ReadWriteSetAnalysis)
 
 if (NOT enable-internalFrontendDevelopment)
  add_library(midend_pa OBJECT
@@ -73,7 +73,13 @@ if (NOT enable-internalFrontendDevelopment)
    staticSingleAssignment/reachingDef.C
    staticSingleAssignment/staticSingleAssignmentInterprocedural.C
    EditDistance/EditDistance.C
-   EditDistance/TreeEditDistance.C)
+   EditDistance/TreeEditDistance.C
+   ReadWriteSetAnalysis/LocalRWSetGenerator.C
+   ReadWriteSetAnalysis/Name2Node.C
+   ReadWriteSetAnalysis/ReadWriteSetRecords.C
+   ReadWriteSetAnalysis/SageUtils.C
+   ReadWriteSetAnalysis/TestabilityGrader.C
+   ReadWriteSetAnalysis/VxUtilFuncs.C)
 
   add_dependencies(midend_pa rosetta_generated)
 endif()
