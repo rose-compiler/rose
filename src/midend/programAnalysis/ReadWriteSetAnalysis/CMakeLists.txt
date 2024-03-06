@@ -1,6 +1,6 @@
 # Include the directories for header files
 include_directories(
-  ${PROJECT_SOURCE_DIR}/config
+  ${ROSE_TOP_SOURCE_DIR}/config
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_SOURCE_DIR}/src/midend/loopProcessing
   ${CMAKE_SOURCE_DIR}/src/midend/astUtil
