@@ -133,10 +133,28 @@ SgExpression * Factory<CRT, API>::access(symbol_t<otag> * API::* obj, SgExpressi
 #endif
   }
 
+  while (isSgModifierType(ptype)) { ptype = ((SgModifierType*)ptype)->get_base_type(); }
+#if DEBUG__Factory__access_expr
+  std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
+  std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
+#endif
+
   bool lhs_has_ptr_type = isSgPointerType(parent->get_type());
   if (lhs_has_ptr_type) {
     ptype = ((SgPointerType*)ptype)->get_base_type(); // TODO strip type modifiers and references
   }
+#if DEBUG__Factory__access_expr
+  std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
+  std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
+#endif
+
+  while (isSgModifierType(ptype)) { ptype = ((SgModifierType*)ptype)->get_base_type(); }
+#if DEBUG__Factory__access_expr
+  std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
+  std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
+#endif
+
+  while (isSgReferenceType(ptype)) { ptype = ((SgReferenceType*)ptype)->get_base_type(); }
 #if DEBUG__Factory__access_expr
   std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
   std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;

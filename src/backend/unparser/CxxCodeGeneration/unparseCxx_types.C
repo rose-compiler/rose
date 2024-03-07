@@ -924,11 +924,15 @@ Unparse_Type::unparseDeclType(SgType* type, SgUnparse_Info& info)
      ASSERT_not_null(decltype_node);
      ASSERT_not_null(decltype_node->get_base_expression());
 
-     if (info.isTypeFirstPart() == true)
+#if 0
+     printf ("In Unparse_Type::unparseDeclType(): decltype_node = %p \n",decltype_node);
+     printf ("   --- info.isTypeFirstPart()             = %s \n",info.isTypeFirstPart() ? "true" : "false");
+     printf ("   --- info.isTypeSecondPart()            = %s \n",info.isTypeSecondPart() ? "true" : "false");
+#endif
+
+     if (!info.isTypeSecondPart())
         {
 #if 0
-       // DQ (12/13/2015): We need to know if this is using the C++11 mode, else we need to output "__decltype(" instead.
-          info.display("debugging decltype for non-c++11 mode");
           printf ("decltype_node->get_base_expression() = %p = %s \n",decltype_node->get_base_expression(),decltype_node->get_base_expression()->class_name().c_str());
 #endif
           SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(decltype_node->get_base_expression());

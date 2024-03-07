@@ -19812,7 +19812,7 @@ SgType * instantiateNonrealTypes(
     } else {
       ROSE_ABORT();
     }
-  } else if (isSgTypeVoid(type) || isSgTypeUnsignedLong(type) || isSgTypeUnsignedInt(type) || isSgTypedefType(type) || isSgClassType(type)) {
+  } else if (isSgTypeVoid(type) || isSgTypeUnsignedLong(type) || isSgTypeInt(type) || isSgTypeLong(type) || isSgTypeUnsignedInt(type) || isSgTypedefType(type) || isSgClassType(type)) {
     return type;
   } else if (isSgModifierType(type)) {
     SgModifierType * mtype = (SgModifierType *)type;
