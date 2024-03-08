@@ -56,6 +56,7 @@ pkginclude_HEADERS =				\
 	processSupport.h			\
 	ROSE_ABORT.h				\
 	ROSE_ASSERT.h                           \
+	ROSE_DEPRECATED.h			\
 	ROSE_UNUSED.h				\
 	rose_getline.h				\
 	rose_isnan.h				\
