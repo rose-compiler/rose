@@ -174,6 +174,7 @@ clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files cxx_templates Cxx_Grammar* grammar.dot translationSupport.code
 
 distclean-local:
-	rm -rf Cxx_Grammar.h Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h \
+	rm -rf Cxx_Grammar.h Cxx_GrammarDeclarations.h Cxx_GrammarVariants.h \
+	  Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h \
           Cxx_GrammarTreeTraversalClass.C
 	rm -rf grammar.tex grammar.dot

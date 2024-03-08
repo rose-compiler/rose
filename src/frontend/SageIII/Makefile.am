@@ -103,6 +103,8 @@ DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
+	Cxx_GrammarDeclarations.h \
+	Cxx_GrammarVariants.h \
 	Cxx_Grammar.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
@@ -125,6 +127,8 @@ GENERATED_SOURCE = \
 else
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
+	Cxx_GrammarDeclarations.h \
+	Cxx_GrammarVariants.h \
 	Cxx_Grammar.C \
 	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
@@ -329,6 +333,8 @@ pkginclude_HEADERS = \
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_pkginclude_HEADERS = \
    Cxx_Grammar.h \
+   Cxx_GrammarDeclarations.h \
+   Cxx_GrammarVariants.h \
    Cxx_GrammarMemoryPoolSupport.h \
    Cxx_GrammarTreeTraversalAccessEnums.h \
    AST_FILE_IO.h StorageClasses.h \

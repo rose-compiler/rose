@@ -319,6 +319,7 @@ class Grammar
           std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className, size_t index);
           void buildRTIFile(AstNodeClass* rootNode, Rose::StringUtility::FileWithLineNumbers& rttiFile);
           Rose::StringUtility::FileWithLineNumbers buildVariants ();
+          void emitForwardDeclarations(std::ostream&) const;
           Rose::StringUtility::FileWithLineNumbers buildForwardDeclarations ();
 
        // DQ (12/28/2009): Added to support optionally smaller (but more numerous header files for ROSE).

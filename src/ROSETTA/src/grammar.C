@@ -2407,23 +2407,24 @@ Grammar::buildIncludesForSeparateHeaderFiles( AstNodeClass & node, StringUtility
    }
 
 
+// Emit a forward declaration for each class of the grammar.
+void
+Grammar::emitForwardDeclarations(std::ostream &s) const {
+    std::vector<std::string> names;
+    names.reserve(terminalList.size());
+    for (const auto &terminal: terminalList)
+        names.push_back(terminal->name);
 
+    std::sort(names.begin(), names.end());
+    for (const std::string &name: names)
+        s <<"class " <<name <<";\n";
+}
 
 StringUtility::FileWithLineNumbers
 Grammar::buildForwardDeclarations ()
    {
   // DQ (4/23/2006): Need to add forward declarations of "Sg[CLASSNAME]* isSg[CLASSNAME](SgNode*)" friend functions
-
-     string header = "\n\n\n//! Forward Declarations used to represent the grammar used in ROSE \n";
-
      StringUtility::FileWithLineNumbers returnString;
-     returnString.push_back(StringUtility::StringWithLineNumber(header, "" /* "<buildForwardDeclarations header>" */, 1));
-
-     for (unsigned int i=0; i < terminalList.size(); i++)
-        {
-          returnString.push_back(StringUtility::StringWithLineNumber("class " + terminalList[i]->name + ";", "" /* "<forward decl for " + terminalList[i].name + ">" */, 1));
-        }
-
      returnString.push_back(StringUtility::StringWithLineNumber("\n\n// Forward declaration of \"<classname> is<classname> (SgNode* n)\" friend functions.\n", "" /* "<unknown>" */, 1));
      returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
 
@@ -2999,24 +3000,43 @@ Grammar::buildCode ()
      footerString = GrammarString::copyEdit (footerString,"$IFDEF_MARKER",getGrammarName());
      ROSE_ArrayGrammarHeaderFile << headerString;
 
-  // Build (old) ast node variants and write them to the header file ...
-  // BP 10/19/2001, bugfix to prevent memory leak
-  // OLD variants
-     StringUtility::FileWithLineNumbers variantsString = buildVariants();
-     variantsString = GrammarString::copyEdit ( variantsString,"$MARKER",getGrammarName());
-     ROSE_ArrayGrammarHeaderFile += variantsString;
+     // Generate type variant enums
+     {
+         // Old enum
+         StringUtility::FileWithLineNumbers variantsSource;
+         variantsSource <<"#ifndef ROSE_Cxx_GrammarVariants_H\n";
+         variantsSource <<"#define ROSE_Cxx_GrammarVariants_H\n";
+         StringUtility::FileWithLineNumbers tmp = buildVariants();
+         variantsSource += GrammarString::copyEdit(tmp, "$MARKER", getGrammarName());
 
-  // MS: NEW variants
-  // build new variants (access with variantT())
-     string variantEnumString = buildVariantEnums();
-     ROSE_ArrayGrammarHeaderFile << variantEnumString;
+         // New enum
+         variantsSource <<buildVariantEnums();
+         variantsSource <<"#endif\n";
+         Grammar::writeFile(variantsSource, target_directory, getGrammarName() + "Variants", ".h");
+     }
+     ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Variants.h>\n";
 
-  // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
-     buildVariantsStringPrototype ( ROSE_ArrayGrammarHeaderFile );
+     // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
+     buildVariantsStringPrototype(ROSE_ArrayGrammarHeaderFile);
 
-     StringUtility::FileWithLineNumbers forwardDeclString = buildForwardDeclarations();
-     forwardDeclString = StringUtility::copyEdit (forwardDeclString,"$MARKER",getGrammarName());
-     ROSE_ArrayGrammarHeaderFile += forwardDeclString;
+     // Forward declarations
+     {
+         const std::string fileName = target_directory + "/" + getGrammarName() + "Declarations.h";
+         std::ofstream declarations(fileName.c_str());
+         declarations <<"#ifndef ROSE_Cxx_GrammarDeclarations_H\n"
+                      <<"#define ROSE_Cxx_GrammarDeclarations_H\n"
+                      <<"#line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+         emitForwardDeclarations(declarations);
+         declarations <<"#endif\n";
+     }
+     ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Declarations.h>\n";
+
+     // Is-a predicates
+     {
+         StringUtility::FileWithLineNumbers sourceLines = buildForwardDeclarations();
+         sourceLines = StringUtility::copyEdit(sourceLines, "$MARKER", getGrammarName());
+         ROSE_ArrayGrammarHeaderFile += sourceLines;
+     }
 
   // JH (01/09/2006) : Adding the declaration of the ParentStorageClass: above!
      ROSE_ArrayGrammarHeaderFile << buildStorageClassDeclarations();

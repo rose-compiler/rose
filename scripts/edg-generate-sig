@@ -60,6 +60,8 @@ ROSE_BLD="$2"
 
 # These are the ROSETTA-generated files on which the EDG binary tarball depends
 EDG_GENERATED_DEPENDENCIES=("$ROSE_BLD/src/frontend/SageIII/Cxx_Grammar.h"
+			    "$ROSE_BLD/src/frontend/SageIII/Cxx_GrammarDeclarations.h"
+			    "$ROSE_BLD/src/frontend/SageIII/Cxx_GrammarVariants.h"
 			    "$ROSE_BLD/src/frontend/SageIII/AstQueryMemoryPool.h"
 			    "$ROSE_BLD/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h"
 			    "$ROSE_BLD/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.h"

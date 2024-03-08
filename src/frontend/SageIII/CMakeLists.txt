@@ -106,6 +106,8 @@ install(
     sage3basic.hhh sage_support/cmdline.h sage_support/sage_support.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSerialization.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_Grammar.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarDeclarations.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarVariants.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarMemoryPoolSupport.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarTreeTraversalAccessEnums.h
     ${CMAKE_CURRENT_BINARY_DIR}/AST_FILE_IO.h
