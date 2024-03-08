@@ -19,4 +19,4 @@ install(FILES
   LineVector.h Map.h MappedBuffer.h Message.h NullBuffer.h Optional.h Parse.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h
   Result.h SharedPointer.h SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h Time.h
   Trace.h Tracker.h Tree.h Type.h WarningsOff.h WarningsRestore.h WorkList.h Yaml.h
-  DESTINATION include/Sawyer) # installed in $PREFIX/Sawyer, not $PREFIX/rose/Sawyer.
+  DESTINATION include/rose/Sawyer)
