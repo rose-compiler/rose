@@ -1894,7 +1894,9 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
      string marker   = "MEMBER_FUNCTION_DECLARATIONS";
      string fileName = "../Grammar/grammarClassDeclarationMacros.macro";
 
-     StringUtility::FileWithLineNumbers headerBeforeInsertion = buildHeaderStringBeforeMarker(marker,fileName);
+     StringUtility::FileWithLineNumbers headerBeforeInsertion;
+     headerBeforeInsertion <<node.preDefinitionText;
+     headerBeforeInsertion += buildHeaderStringBeforeMarker(marker,fileName);
      StringUtility::FileWithLineNumbers headerAfterInsertion  = buildHeaderStringAfterMarker (marker,fileName);
 
   // DQ (3/24/2006): Have this be generated from the CommonCode.code file

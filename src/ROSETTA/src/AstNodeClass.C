@@ -94,6 +94,11 @@ AstNodeClass::setCppCondition(const std::string &s) {
     cppCondition = s;
 }
 
+void
+AstNodeClass::appendPreDefinitionText(const std::string &text) {
+    preDefinitionText += text;
+}
+
 bool
 AstNodeClass::isBoostSerializable() const {
     return p_isBoostSerializable;
