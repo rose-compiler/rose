@@ -398,14 +398,6 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           curprint(" mutable ");
         }
 
-#if 0
-     if (lambdaFunction->get_is_mutable() == true)
-        {
-          curprint(" throw() ");
-        }
-#else
-#endif
-
      if (lambdaExp->get_explicit_return_type() == true)
         {
           curprint(" -> ");
@@ -443,15 +435,6 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
      ASSERT_not_null(functionParameterRefExp);
 
 #if 0
-     if (functionParameterRefExp->get_base_expression() != NULL)
-        {
-          unp->u_exprStmt->unparseExpression(functionParameterRefExp->get_base_expression(),info);
-        }
-       else
-        {
-          ASSERT_not_null(functionParameterRefExp->get_base_type());
-          unp->u_type->unparseType(functionParameterRefExp->get_base_type(),info);
-        }
 #else
   // DQ (2/14/2015): We at least require this sort of funcationality for C++11 test2015_13.C.
      if (functionParameterRefExp->get_parameter_number() == 0 && functionParameterRefExp->get_parameter_levels_up() == 0)
@@ -529,9 +512,6 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
 
   // DQ (5/7/2013): I think these should be false so that the full type will be output.
-     if (info.isTypeFirstPart()  == true)
-        {
-        }
      ROSE_ASSERT(info.isTypeSecondPart() == false);
 
   // DQ (6/21/2011): Refactored this code to generate more than templated class names.
@@ -2634,6 +2614,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         {
        // set the length difference between "operator" and function
           diff = (uses_operator_syntax == true) ? strlen(func_name.c_str()) - strlen("operator") : 0;
+
        // DQ (1/6/2006): trap out cases of global new and delete functions called
        // using ("::operator new" or "::operator delete" syntax).  In these cases
        // the function are treated as normal function calls and not classified in
@@ -2988,29 +2969,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
           if (functionCallExp != NULL)
              {
                uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-            // is_compiler_generated = functionCallExp->isCompilerGenerated();
-#if 0
-            // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
-            // So we have to detect such operators and then detect if they are implicit then mark them to use the operator
-            // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
-            // output, except that this is more complex for the non-operator syntax unparsing (I think).
-
-               SgFunctionSymbol* functionSymbol = mfunc_ref->get_symbol();
-               ASSERT_not_null(functionSymbol);
-               SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-               ASSERT_not_null(functionDeclaration);
-               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
-               ASSERT_not_null(memberFunctionDeclaration);
-
-               if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
-                  {
-                 // Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
-                    uses_operator_syntax = true;
-                    if (is_compiler_generated == true)
-                       {
-                       }
-                  }
-#endif
              }
         }
 
@@ -3126,9 +3084,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                   }
 #endif
              }
-        }
-       else
-        {
         }
 
 #if MFuncRefSupport_DEBUG
@@ -3539,11 +3494,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          printf ("In unparseMFuncRefSupport(): is_unary_operator     = %s \n",is_unary_operator     ? "true" : "false");
                       // printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
 #endif
-#if 1
                       // DQ (7/6/2014): If this is compiler generated then supress the output of the operator name.
                          if (isPartOfArrowOperatorChain == false)
                             {
-#endif
                       // DQ (7/5/2014): Adding operator-> as an additional special case.
                       // These operators require special handling since they are prefix operators when unparsed using operator syntax.
                          if ( (is_unary_operator == false) || (is_unary_operator == true && full_function_name != "operator*" && full_function_name != "operator&"))
@@ -3571,7 +3524,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #endif
                                  }
                             }
-#if 1
                             }
                            else
                             {
@@ -3580,7 +3532,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                               curprint("/* In unparseMFuncRefSupport(): case of isPartOfArrowOperatorChain == true: function name is NOT output for this operator:  func_name = " + func_name + " */ \n");
 #endif
                             }
-#endif
                        }
                   }
              }
@@ -3597,8 +3548,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
 #if MFuncRefSupport_DEBUG
      printf ("Leaving unparseMFuncRefSupport \n");
-#endif
-#if MFuncRefSupport_DEBUG
      curprint ("\n/* leaving unparseMFuncRefSupport */ \n");
 #endif
    }
@@ -4200,15 +4149,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 
                     unparseExpression(expression,info2);
 #else
-                 // This should be the 2nd operand.
-                    ROSE_ASSERT(operand != list.begin());
 #error "DEAD CODE!"
-                    SgDotExp* dotExp = isSgDotExp(expression);
-                    ASSERT_not_null(dotExp);
-                    SgExpression* field = dotExp->get_rhs_operand();
-
-                 // Output the data member field only.
-                    unparseExpression(field,info);
 #endif
                   }
                  else
@@ -6468,17 +6409,8 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
 
      if (statementDefiningType != NULL)
         {
-#if 0
-          printf ("Calling SageInterface::isAncestor(): statementDefiningType = %p = %s \n",statementDefiningType,statementDefiningType->class_name().c_str());
-          printf ("Calling SageInterface::isAncestor(): expr                  = %p = %s \n",expr,expr->class_name().c_str());
-#endif
           result = SageInterface::isAncestor(statementDefiningType,expr);
         }
-#endif
-
-#if 0
-     printf ("In sharesSameStatement(SgExpression* expr, SgType* expressionType): result = %s \n",result ? "true" : "false");
-     printf ("   --- statementDefiningType = %p = %s \n",statementDefiningType,(statementDefiningType == NULL) ? "null" : statementDefiningType->class_name().c_str());
 #endif
 
      return result;
@@ -6512,9 +6444,6 @@ containsIncludeDirective(SgLocatedNode* locatedNode)
                        }
                   }
              }
-        }
-       else
-        {
         }
 
      return returnResult;
@@ -6833,18 +6762,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ASSERT_not_null(aggr_init);
 
-#if 0
-  // DQ (1/26/2014): This would not be as portabile of a solution, but it is more robus in other ways. So this is a compromize.
-  // DQ (9/11/2013): It is a better solution to always unparse the ggregate attributes and to remove the #include that would be a problem.
-  // Skip the entire thing if the initializer is from an included file
-     if (isFromAnotherFile (expr))
-        {
-          printf ("In unparseAggrInit(): This SgAggregateInitializer (aggr_init = %p) is from another file so its subtree will not be output in the generated code \n",aggr_init);
-
-          return;
-        }
-#endif
-
      static int depth = 0;
 
      depth++;
@@ -6856,7 +6773,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      curprint ("/* In unparseAggrInit() */ ");
 #endif
 
-#if 1
   // See what the structure of this initialization is to see if it is using the C++11 initialization features for structs.
      bool need_cxx11_class_specifier = uses_cxx11_initialization (expr);
 
@@ -6867,7 +6783,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         {
           need_cxx11_class_specifier = false;
         }
-#endif
 
   // DQ  (3/12/2018): Moved to outer functions scope so that we can reuse it in the loop over initializers.
      SgUnparse_Info newinfo2(info);
@@ -7106,20 +7021,11 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                ASSERT_not_null(aggregateInitializer);
                SgClassType* classType = isSgClassType(aggregateInitializer->get_type());
 
-            // DQ (6/27/2018): Make this more restrictive since need_cxx11_class_specifier is set more often to be true.
-            // ASSERT_not_null(classType);
                if (classType != NULL)
                   {
-#if 0
-               printf ("In unparseAggrInit(): need_cxx11_class_specifier == true: aggregateInitializer = %p \n",aggregateInitializer);
-               printf ("In unparseAggrInit(): need_cxx11_class_specifier == true: classType            = %p \n",classType);
-#endif
-            // DQ (3/12/2018): Trying something different.
-            // unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo2);
                if (aggregateInitializer != NULL && classType != NULL)
                   {
                     newinfo2.set_SkipClassSpecifier();
-
                     unp->u_type->outputType<SgAggregateInitializer>(aggregateInitializer,classType,newinfo2);
                   }
                   }
@@ -7130,13 +7036,10 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           curprint ("/* output class name between array elements */ ");
 #endif
 
-#if 1
-       // DQ (5/17/2019): Moved from the top of the function to be closer to where it is used.
           SgUnparse_Info newinfo(info);
 
        // DQ (5/17/2019): Set this so that we can know to skip the output of type elaboration.
           newinfo.set_inAggregateInitializer();
-#endif
 
 #if DEBUG_AGGREGATE_INITIALIZER
        // printf ("In unparseAggrInit(): before output of SgConstructorInitializer: need_explicit_braces          = %s \n",need_explicit_braces ? "true" : "false");
@@ -7183,15 +7086,6 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgCompoundInitializer* comp_init = isSgCompoundInitializer(expr);
      ASSERT_not_null(comp_init);
-
-#if 0
-  // Skip the entire thing if the initializer is from an included file
-     if (isFromAnotherFile (expr))
-        {
-          return;
-        }
-#endif
-
      SgUnparse_Info newinfo(info);
 
      curprint("(");
@@ -7206,9 +7100,6 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
                unparseExpression(list[index], newinfo);
                if (index!= last_index)
                     curprint ( ", ");
-             }
-            else
-             {
              }
         }
 
@@ -7886,7 +7777,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
 
        // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
-          bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false);
+          bool newinfo_input = con_init->get_is_braced_initialized() || (con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false));
 
        // DQ (8/27/2020): Check the form that avoids a compiler warning with clearer use of parentheses.
           bool alternative_value = con_init->get_is_braced_initialized() || (con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false));
@@ -7995,7 +7886,7 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ASSERT_not_null(assn_init);
 
-      if (assn_init->get_is_explicit_cast() == true)
+     if (assn_init->get_is_explicit_cast() == true)
         {
        // TV (11/15/2018): fixing weird behavior introduced with EDG 5.0 on Cxx_tests/test2006_70.C
        //                  happens when unparsing the "parameterList_syntax" for a parameter that has a default value
@@ -8257,55 +8148,11 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
      curprint ( ")" );
    }
 
-
-#if 0
-static bool
-subTreeContainsDesignatedInitializer ( SgExpression* exp )
-   {
-  // DQ (7/22/2013): This function traverses the AST and detects any SgDesignatedInitializer IR node.
-  // The goal more specifically is to detect the use of array initializers that don't require the "="
-  // in ther unparsed syntax.
-
-     class ContainsDesignatedInitializer : public AstSimpleProcessing
-        {
-          public:
-              bool hasDesignatedInitializer;
-
-              ContainsDesignatedInitializer() : hasDesignatedInitializer(false) {}
-
-              void visit ( SgNode* astNode )
-                 {
-                   SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(astNode);
-                   if (designatedInitializer != NULL)
-                      {
-                     // This depends on the implemantation to have a SgExprListExp (which I would like to eliminate in the IR node design).
-                        if ( isSgUnsignedLongVal(designatedInitializer->get_designatorList()->get_expressions()[0]) != NULL)
-                           {
-                             hasDesignatedInitializer = true;
-                           }
-                      }
-                 }
-        };
-
-      ContainsDesignatedInitializer traversal;
-
-      traversal.traverse(exp,preorder);
-
-      return traversal.hasDesignatedInitializer;
-   }
-#endif
-
-
 void
 Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
 
 #define DEBUG_DESIGNATED_INITIALIZER 0
-
-#if DEBUG_DESIGNATED_INITIALIZER
-     printf ("TOP of unparseDesignatedInitializer: expr = %p \n",expr);
-     curprint (string("\n/* Top of unparseDesignatedInitializer(") + expr->class_name().c_str() + ") */ \n");
-#endif
 
 #if 1
   // DQ (7/22/2013): New version of unparser code for this IR node. I think this is now
@@ -8491,14 +8338,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                curprint (".");
                unparseVarRef(designator, info);
              }
-            else
-             {
-#if DEBUG_DESIGNATED_INITIALIZER
-               printf ("Reset outputDesignatedInitializerAssignmentOperator = false \n");
-#endif
-            // DQ (10/22/2016): This variable is not used.
-            // outputDesignatedInitializerAssignmentOperator = false;
-             }
         }
        else
         {
@@ -8529,13 +8368,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #endif
 
 #if 0
-  // DQ (5/11/2015): Older code.
-     if (outputDesignatedInitializerAssignmentOperator == true)
-        {
-          curprint (" = ");
-        }
-
-     unparseExpression(initializer, info);
 #else
 
   // DQ (5/11/2015): We need to look at the SgAggregateInitializer and see if it will be outputing "{}".
@@ -8545,8 +8377,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if 0
      printf ("In unparseDesignatedInitializer: Changed default value of need_explicit_braces in unparser (must be set correctly in AST) \n");
 
-  // Variable used to control output of normalized syntax "={}".
-  // bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
      bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == true);
 #else
   // Variable used to control output of normalized syntax "={}".
@@ -8592,8 +8422,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           printf ("In unparseDesignatedInitializer: isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
           printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
 #endif
-       // if (isInitializer_AggregateInitializer == false)
-       // if (need_explicit_braces == false)
           if (need_explicit_braces == true)
              {
                curprint ("{");
@@ -8615,30 +8443,16 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #endif
 
 #else
-  // Liao, fixing bug 355, 6/16/2009
-  // for multidimensional array's designated initializer, don't emit '=' until it reaches the last dimension
-  // TODO this is not the ultimate fix: EDG uses nested tree for multidimensional array's designated initializer
-  // while ROSE's SgDesignatedInitializer is designed to have a flat list for designators
-  // But the EDG_SAGE_connect part generated nested ROSE AST tree following EDG's IR tree.
-     bool lastDesignator           = true;
-     bool isArrayElementDesignator = false;
-
 #error "DEAD CODE!"
 
-  // DQ (10/22/2012): Only output the SgDesignatedInitializer if it is not compiler generated or if it is compiler generated, only if it is marked to be output.
      bool outputDesignatedInitializer = (expr->get_startOfConstruct()->isCompilerGenerated() == false);
      if (expr->get_startOfConstruct()->isCompilerGenerated() == true && expr->get_startOfConstruct()->isOutputInCodeGeneration() == false)
         {
           outputDesignatedInitializer = false;
         }
 
-  // DQ (7/20/2013): Reset this.
      printf ("Always output the designated initializer: outputDesignatedInitializer = %s (will be reset) \n",outputDesignatedInitializer ? "true" : "false");
      outputDesignatedInitializer = true;
-
-#if 0
-     printf ("In unparseDesignatedInitializer: outputDesignatedInitializer = %s \n",outputDesignatedInitializer ? "true" : "false");
-#endif
 
      if (outputDesignatedInitializer == true)
         {
@@ -8706,9 +8520,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
        else
         {
        // This is the case taken for the test2012_74.c test code.
-#if 0
-          printf ("This SgDesignatedInitializer is compiler generated and should not be output \n");
-#endif
           SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
           unparseExpression(di->get_memberInit(), info);
         }
