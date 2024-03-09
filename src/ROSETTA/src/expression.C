@@ -351,13 +351,10 @@ Grammar::setUpExpressions () {
     AssignOp.setFunctionPrototype ( "HEADER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if USE_FORTRAN_IR_NODES
+    // Rasmussen (3/6/2024): Used for array shape (Fortran,Jovial) and StarSize kind (Fortran) expressions
     NEW_TERMINAL_MACRO (AsteriskShapeExp,       "AsteriskShapeExp",       "TEMP_AsteriskShapeExp" );
-    // DQ (11/24/2007): renamed
-    // SubscriptAsterisk.editSubstitute   ( "PRECEDENCE_VALUE", " 2" );
     AsteriskShapeExp.editSubstitute    ( "PRECEDENCE_VALUE", " 2" );
     AsteriskShapeExp.setFunctionPrototype  ( "HEADER_ASTERISK_SHAPE_EXPRESSION", "../Grammar/Expression.code" );
-#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_X10_IR_NODES

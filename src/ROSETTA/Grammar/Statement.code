@@ -4741,7 +4741,7 @@ SgStatement::replace_expression(SgExpression * original_expression, SgExpression
 SgScopeStatement*
 SgStatement::get_scope(void) const
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
   // This is a function called after the parents have been set.  It is not called by the
   // EDG/SAGE interface and is only called after the SAGE AST has been built and the parent
@@ -4755,7 +4755,7 @@ SgStatement::get_scope(void) const
   // explicitly.
 
      SgStatement *stmt = const_cast<SgStatement*>(this);
-     ROSE_ASSERT (stmt != NULL);
+     ASSERT_not_null(stmt);
 
   // Make sure that parents have been set already (assume this means that all parents have been set)
 #define WARN_NULL_PARENT_IN_GET_SCOPE 0
@@ -15318,46 +15318,13 @@ SOURCE_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_END
 SOURCE_TEMPLATE_INSTANTIATION_FUNCTION_DECLARATION_STATEMENT_START
 void
 SgTemplateInstantiationFunctionDecl::post_construction_initialization()
-   {
-  // DQ (4/19/2005): Removed since it is redundant with the define of the template support in ROSE
-  // set_from_template(true);
-
-  // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
-  // JJW (8/6/2008): This is not a pointer anymore
-#if 0
-     if (p_templateArguments != NULL)
-        {
-#endif
-          SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
-          while (i != p_templateArguments.end())
-             {
-               (*i)->set_parent(this);
-               i++;
-             }
-#if 0
-        }
-       else
-        {
-          printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationFunctionDecl = %p \n",this);
-        }
-#endif
-
-#if 0
-  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
-  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to
-  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
-     if (p_type != NULL)
-        {
-          printf ("Note: SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
-        }
-  // ROSE_ASSERT(p_type == NULL);
-#endif
-
-#if 0
-  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
-     printf ("In SgTemplateInstantiationFunctionDecl::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
-#endif
-   }
+  {
+     SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
+     while (i != p_templateArguments.end()) {
+        (*i)->set_parent(this);
+        i++;
+     }
+  }
 
 void
 SgTemplateInstantiationFunctionDecl::resetTemplateName ()
@@ -15440,17 +15407,12 @@ SgTemplateInstantiationFunctionDecl::SgTemplateInstantiationFunctionDecl ( SgNam
 #endif
    {
   // Custom constructor to support same interface and allow for a templated function to to build SgFunctionDeclaration,
-  // SgTemplateInstantiationFunctionDecl, SgMemberFunctionDeclaration, and SgTemplateInstantiationMemberFunctionDecl.
 
-  // Only two lines of additional code to allow use of same code as in generated constructor (below).
-  // SgTemplateDeclaration* templateDeclaration = NULL;
      SgTemplateArgumentPtrList templateArguments;
 
   // Same code as in generated constructor.
      p_templateName = "";
-
-  // p_templateDeclaration = templateDeclaration;
-     p_templateDeclaration = NULL;
+     p_templateDeclaration = nullptr;
 
      p_templateArguments = templateArguments;
      p_nameResetFromMangledForm = false;
@@ -15460,7 +15422,7 @@ SgTemplateInstantiationFunctionDecl::SgTemplateInstantiationFunctionDecl ( SgNam
      post_construction_initialization();
 
   // Test the isSgTemplateInstantiationFunctionDecl() function since it has been problematic
-     assert(isSgTemplateInstantiationFunctionDecl(this) != NULL);
+     ASSERT_not_null(isSgTemplateInstantiationFunctionDecl(this));
    }
 
 SOURCE_TEMPLATE_INSTANTIATION_FUNCTION_DECLARATION_STATEMENT_END
@@ -15468,46 +15430,13 @@ SOURCE_TEMPLATE_INSTANTIATION_FUNCTION_DECLARATION_STATEMENT_END
 SOURCE_TEMPLATE_INSTANTIATION_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
 void
 SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization()
-   {
-  // DQ (4/19/2005): Removed since it is redundant with the define of the template support in ROSE
-  // set_from_template(true);
-
-  // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
-  // JJW (8/6/2008): This is not a pointer anymore
-#if 0
-     if (p_templateArguments != NULL)
-        {
-#endif
-          SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
-          while (i != p_templateArguments.end())
-             {
-               (*i)->set_parent(this);
-               i++;
-             }
-#if 0
-        }
-       else
-        {
-          printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationMemberFunctionDecl = %p \n",this);
-        }
-#endif
-
-#if 0
-  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
-  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to
-  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
-     if (p_type != NULL)
-        {
-          printf ("Note: SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
-        }
-  // ROSE_ASSERT(p_type == NULL);
-#endif
-
-#if 0
-  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
-     printf ("In SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
-#endif
-   }
+  {
+     SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
+     while (i != p_templateArguments.end()) {
+        (*i)->set_parent(this);
+        i++;
+     }
+  }
 
 void
 SgTemplateInstantiationMemberFunctionDecl::resetTemplateName ()
@@ -15586,15 +15515,12 @@ SgTemplateInstantiationMemberFunctionDecl::SgTemplateInstantiationMemberFunction
 #endif
    {
   // Custom constructor to support same interface and allow for a templated function to to build SgMemberFunctionDeclaration,
-  // SgTemplateInstantiationMemberFunctionDecl, SgFunctionDeclaration, and SgTemplateInstantiationFunctionDecl.
 
   // Only two lines of additional code to allow use of same code as in generated constructor (below).
-  // SgTemplateDeclaration* templateDeclaration = NULL;
      SgTemplateArgumentPtrList templateArguments;
 
   // Same code as in generated constructor.
      p_templateName = "";
-  // p_templateDeclaration = templateDeclaration;
      p_templateDeclaration = NULL;
      p_templateArguments = templateArguments;
      p_nameResetFromMangledForm = false;

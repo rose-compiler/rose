@@ -10,7 +10,7 @@ if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
   libexperimentalRoseFlang_la_SOURCES = \
       fortran_flang_support.C           \
       unparse-sage.cpp                  \
-      sage-build.cc
+      sage-build.C
 endif
 
 pkginclude_HEADERS = fortran_flang_support.h

@@ -106,17 +106,20 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool printA
 //----------------------------------------------------------------------------
 
 void 
-UnparseFortran_type::unparseTypeKind(SgType* type, SgUnparse_Info& info)
-   {
-     SgExpression* kindExpression = type->get_type_kind();
-     if (kindExpression != nullptr)
-        {
-          curprint("(");
-          curprint("kind=");
-          unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
-          curprint(")");
-        }
-   }
+UnparseFortran_type::unparseTypeKind(SgType* type, SgUnparse_Info &info) {
+  SgExpression* kindExpression = type->get_type_kind();
+  if (kindExpression != nullptr) {
+    if (type->get_hasTypeKindStar()) {
+      curprint("*");
+      unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
+    }
+    else {
+      curprint("(kind=");
+      unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
+      curprint(")");
+    }
+  }
+}
 
 void
 UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* lengthExpression, SgUnparse_Info & info)
@@ -126,7 +129,7 @@ UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* length
         {
           curprint("(");
 
-          if (lengthExpression != NULL)
+          if (lengthExpression != nullptr)
              {
                curprint("len=");
                unp->u_fortran_locatedNode->unparseExpression(lengthExpression,info);

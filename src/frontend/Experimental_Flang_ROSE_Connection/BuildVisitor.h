@@ -44,6 +44,35 @@ public:
   }
   template <typename T> void Post(T &) {}
 
+  void setKindSelectorType(std::optional<Fortran::parser::KindSelector> &x) {
+    // KindSelector std::variant<ScalarIntConstantExpr, StarSize> u;
+    using namespace Fortran;
+    if (x) {
+      common::visit(common::visitors {
+          [&] (Fortran::parser::KindSelector::StarSize &y) {
+                 if (type_ != nullptr) {
+                   type_->set_hasTypeKindStar(true);
+                 }
+             },
+          [&] (auto &y) { return; }
+        },
+        x->u);
+      }
+  }
+
+  void Post(Fortran::parser::IntrinsicTypeSpec &x) {
+    // IntrinsicTypeSpec std::variant<IntegerTypeSpec, Real, DoublePrecision, Complex, Character, Logical, DoubleComplex> u;
+    using namespace Fortran;
+    common::visit(common::visitors {
+        [&] (Fortran::parser::IntrinsicTypeSpec::DoublePrecision &y) { return; },
+        [&] (Fortran::parser::IntrinsicTypeSpec::Character &y) { std::exit(-1); },
+        [&] (Fortran::parser::IntrinsicTypeSpec::DoubleComplex &y) { return; },
+        [&] (Fortran::parser::IntegerTypeSpec &y) { setKindSelectorType(y.v); },
+        [&] (auto &y) { setKindSelectorType(y.kind); }
+      },
+      x.u);
+  }
+
   // Call back to the traversal framework.
   template <typename T> void Walk(T &x) {
     Fortran::parser::Walk(x, *this);

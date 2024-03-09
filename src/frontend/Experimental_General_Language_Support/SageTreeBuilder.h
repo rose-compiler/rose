@@ -189,6 +189,13 @@ public:
    void Enter(SgNamespaceDeclarationStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgNamespaceDeclarationStatement*);
 
+   void Enter(SgAttributeSpecificationStatement* &, SgAttributeSpecificationStatement::attribute_spec_enum);
+   void Leave(SgAttributeSpecificationStatement*);
+
+   void Enter(SgDataStatementGroup* &);
+   void Enter(SgDataStatementObject* &);
+   void Enter(SgDataStatementValue* &, SgDataStatementValue::data_statement_value_enum);
+
    void Enter(SgExprStatement* &, const std::string &, SgExprListExp*, const std::string &);
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &);
    void Leave(SgExprStatement*, std::vector<std::string> &);

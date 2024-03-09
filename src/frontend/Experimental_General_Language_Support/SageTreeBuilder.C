@@ -971,6 +971,54 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 }
 
 void SageTreeBuilder::
+Enter(SgAttributeSpecificationStatement* &stmt, SgAttributeSpecificationStatement::attribute_spec_enum kind)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgAttributeSpecificationStatement* &,...) \n";
+   stmt = SageBuilder::buildAttributeSpecificationStatement(kind);
+}
+
+void SageTreeBuilder::
+Leave(SgAttributeSpecificationStatement* stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgAttributeSpecificationStatement*) \n";
+   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgDataStatementGroup* &stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgDataStatementGroup* &) \n";
+   stmt = new SgDataStatementGroup;
+}
+
+void SageTreeBuilder::
+Enter(SgDataStatementObject* &dataObject)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgDataStatementObject* &) \n";
+   dataObject = new SgDataStatementObject;
+
+   auto refList{SageBuilder::buildExprListExp_nfi()};
+   dataObject->set_variableReference_list(refList);
+   refList->set_parent(dataObject);
+   SageInterface::setSourcePosition(refList);
+}
+
+void SageTreeBuilder::
+Enter(SgDataStatementValue* &dataValue, SgDataStatementValue::data_statement_value_enum kind)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgDataStatementValue* &) \n";
+   dataValue = new SgDataStatementValue(kind);
+
+   auto initList{SageBuilder::buildExprListExp_nfi()};
+   dataValue->set_initializer_list(initList);
+   initList->set_parent(dataValue);
+   SageInterface::setSourcePosition(initList);
+
+   // TODO: other variants
+   ASSERT_require(kind == SgDataStatementValue::e_explicit_list);
+}
+
+void SageTreeBuilder::
 Enter(SgExprStatement* &proc_call_stmt, const std::string &proc_name,
       SgExprListExp* param_list, const std::string &abort_phrase)
 {
@@ -2316,6 +2364,7 @@ wrapStmtWithLabels(SgStatement* stmt, const std::vector<std::string> &labels)
    return stmt;
 }
 
+#define NO_CPP17 0
 
 // Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
 //
@@ -2323,31 +2372,6 @@ namespace SageBuilderCpp17 {
 
 // Types
 //
-SgType* buildComplexType(SgType* base_type)
-{
-   return SageBuilder::buildComplexType(base_type);
-}
-
-SgType* buildBoolType(SgExpression* kind_expr)
-{
-   return SageBuilder::buildBoolType(kind_expr);
-}
-
-SgType* buildIntType(SgExpression* kind_expr)
-{
-   return SageBuilder::buildIntType(kind_expr);
-}
-
-SgType* buildFloatType(SgExpression* kind_expr)
-{
-   return SageBuilder::buildFloatType(kind_expr);
-}
-
-SgType* buildStringType(SgExpression* stringLengthExpression)
-{
-   return SageBuilder::buildStringType(stringLengthExpression);
-}
-
 SgType* buildArrayType(SgType* baseType, std::list<SgExpression*> &explicitShapeList)
 {
    SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();

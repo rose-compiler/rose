@@ -283,37 +283,16 @@ Grammar::setUpTypes ()
   // [DT] 8/14/2000 -- substitutedForTemplateParam
      Type.setDataPrototype("int","substitutedForTemplateParam","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // MK: Type.excludeDataPrototype ("int","substitutedForTemplateParam","= 0");
 
-  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
-  // Reference to reference type
-  // Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
-  // Reference to pointer type
-  // Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
-  // Reference to modifier nodes (I forget the purpose of this)
-  // Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Reference to typedef type \attention{(need to check that these are fully resolved within mapping from EDG)}
-#if 1
-  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
-  // Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-  // #else
-  //     Type.setDataPrototype("SgTypePtrList","typedefs","",
-  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (7/29/2014): Adding support for C++11 rvalue references.
      Type.setDataPrototype("SgRvalueReferenceType*","rvalue_ref_to","= NULL",
@@ -324,32 +303,18 @@ Grammar::setUpTypes ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
-     Type.setDataPrototype("SgTypeOfType*","typeof_ref_to","= NULL",
+     Type.setDataPrototype("SgTypeOfType*","typeof_ref_to","= nullptr",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 1
-  // DQ (10/5/2010): I think we can move back to an implementation with DEF_DELETE now (the other uninitialized memory problem was fixed).
-  // DQ (10/3/2010): Note that without the NO_DELETE the Fortran jacobi.f file will sometimes fail.
-  // DQ (10/2/10): This is the better place for the Fortran kind mechanism (only meaningful for Fortran)
-  // DQ (9/17/2007): Support for Fortran kind mechanism
-  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
-  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     Type.setDataPrototype("SgExpression*","type_kind","= NULL",
+     Type.setDataPrototype("SgExpression*","type_kind","= nullptr",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
-#endif
+     Type.setDataPrototype("bool","hasTypeKindStar","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 1
-  // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
-  // DQ (1/24/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
-  // Modified implementation to only be at specific IR nodes.  Beata appears to use attributes
-  // on SgTypes (even though they are shared; doesn't appear to be a problem for them).
-  // Type.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Type.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
      Type.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Type.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-#endif
 
 #ifdef BUILD_X_VERSION_TERMINALS
 
@@ -375,19 +340,12 @@ Grammar::setUpTypes ()
   // The only two types that don't have a get_mangled() member function
      PartialFunctionType.excludeFunctionPrototype   ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
      NamedType.excludeFunctionPrototype             ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
-  // NamedType.setAutomaticGenerationOfCopyFunction(false);
 
-  // TypeUnknown.setFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-  // TypeUnknown.setFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-  // CR (8/9/2020): Jovial allows implicit forward declarations of typed pointers
+  // Rasmussen (8/9/2020): Jovial allows implicit forward declarations of typed pointers
      TypeUnknown.setDataPrototype("std::string", "type_name", "= \"\"",
                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeUnknown.setDataPrototype("bool", "has_type_name", "= false",
                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (1/31/2006): Need to support addition of builtin_type pointers into the IR using ROSETTA
-  // static $CLASSNAME* builtin_type;
 
   // Use simple "static CLASSNAME builtin_type;" on most classed derived from Type
      Type.setSubTreeFunctionPrototype ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
@@ -395,79 +353,6 @@ Grammar::setUpTypes ()
 
      Type.setSubTreeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
      Type.excludeFunctionSource       ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
-
-#if 0
-  // DQ (10/12/2014): This is no longer used (commented out code).
-
-  // DQ (12/26/2005): Support for builtin type traversal
-     Type.setSubTreeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     Type.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     Type.setSubTreeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     Type.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-  // DQ (12/26/2005): This function has to handle all the different bit field lengths
-     TypeInt.excludeFunctionSource          ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     ReferenceType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     ReferenceType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     RvalueReferenceType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     RvalueReferenceType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     ModifierType.excludeFunctionPrototype  ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     ModifierType.excludeFunctionSource     ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     PointerType.excludeFunctionPrototype   ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     PointerType.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     ArrayType.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-
-     JovialBitType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     JovialBitType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-  // Rasmussen (2/18/2020): Added TypeFixed for Jovial
-     TypeFixed.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeFixed.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeFixed.excludeFunctionSource        ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
-     TypeFixed.setFunctionSource            ( "SOURCE_GET_MANGLED_TYPE_FIXED", "../Grammar/Type.code");
-
-  // DQ (8/2/2014): Adding support for C++11 decltype().
-     DeclType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     DeclType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
-     TypeOfType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeOfType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     TemplateType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TemplateType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-  // TemplateType.excludeFunctionPrototype        ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
-
-     FunctionType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     FunctionType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     MemberFunctionType.excludeFunctionPrototype  ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     MemberFunctionType.excludeFunctionSource     ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     PartialFunctionType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     PartialFunctionType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     PointerMemberType.excludeFunctionPrototype   ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     PointerMemberType.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     QualifiedNameType.excludeFunctionPrototype       ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     QualifiedNameType.excludeFunctionSource          ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-  // FMZ (4/8/2009): Added for Cray Pointer
-     TypeCrayPointer.excludeFunctionPrototype   ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeCrayPointer.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-  // DQ (6/18/2007): Not sure if we need this.
-  // TemplateType.excludeFunctionPrototype      ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
-  // TemplateType.excludeFunctionSource         ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     TypeComplex.excludeFunctionPrototype       ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeComplex.excludeFunctionSource          ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     TypeImaginary.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeImaginary.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     TypeString.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeString.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-#endif
 
 #if 1
   // The code was commented out
@@ -1005,46 +890,11 @@ Grammar::setUpTypes ()
   // DQ (4/23/2014): I think this has to be defined as DEF_TRAVERSAL so that we can traverse the nested type.
   // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
   // and any other type with a base_type.
-  // ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
-  //                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // DQ (4/22/2004): Old way of handling modifiers
-  // ModifierType.setDataPrototype     ("unsigned int","bitfield","= 0",
-  //           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (4/13/2004): Added to support more uniform modifier handling and fix several bugs
-  // Only cv-modifiers and restrict were ever in SAGE III previously
-  // ModifierType.setDataPrototype     ("SgTypeModifier","typeModifier","= SgTypeModifier::e_unknown",
-  //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgTypeModifier","typeModifier","",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 0
-     ModifierType.setDataPrototype     ("SgStorageModifier","storageModifier","= SgStorageModifier::e_unknown",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ModifierType.setDataPrototype     ("SgAccessModifier","accessModifier","= SgAccessModifier::e_unknown",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ModifierType.setDataPrototype     ("SgFunctionModifier","functionModifier","= SgFunctionModifier::e_unknown",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // OR we could use a SgDeclarationModifier!
-     ModifierType.setDataPrototype     ("SgDeclarationModifier","declarationModifier","",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ModifierType.setDataPrototype     ("SgSpecialFunctionModifier","specialFunctionModifier","",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#if 0
-  // DQ (10/2/2010): The Fortran specific support for kind has been moved to the base class because so
-  // many types in Fortran can have a kind parameter that is better to represent it in the base class.
-  // DQ (12/1/2007): Support for Fortran kind mechanism (moved from SgType to SgModifierType)
-     ModifierType.setDataPrototype("SgExpression*","type_kind","= NULL",
-          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
-  // DQ (12/1/2007): Added support for Fortran type parameter mechanism
-  // Note that CHARACTER*52 becomes a statically types array of CHARACTER, but CHARACTER*52 becomes SGModifierType with a CHARACTER base type
-  // ModifierType.setDataPrototype("SgExpression*","type_parameter","= NULL",
-  //      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
-#endif
-
   // DQ (8/12/2012): This is used as a wrapper to support type references that will be fixed up after the AST
   // is build and all types exist. It is part of the new C++ support and required for types hidden in template
   // instantiations that have not yet been processed yet.
@@ -1057,14 +907,9 @@ Grammar::setUpTypes ()
   // node at present.
   // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly in the AST
   // Exclude the get_mangled function since we include it in the HEADER_MODIFIER_TYPE string
-  // QualifiedNameType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      QualifiedNameType.setFunctionPrototype ("HEADER_QUALIFIED_NAME_TYPE", "../Grammar/Type.code" );
      QualifiedNameType.setDataPrototype     ("SgType*","base_type","= NULL",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // QualifiedNameType.setDataPrototype ( "static SgQualifiedNamePtrList", "defaultQualifiedNamePtrList", "",
-  //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // QualifiedNameType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= p_defaultQualifiedNamePtrList",
-  //           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      QualifiedNameType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1075,31 +920,11 @@ Grammar::setUpTypes ()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("SgType*", "orig_return_type","= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#if 1
   // DQ (7/20/2004): Modified to NOT traverse this object (later: likely OK to traverse)
   // FunctionType.setDataPrototype("SgFunctionParameterTypeList*", "arguments", "= NULL",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL);
      FunctionType.setDataPrototype("SgFunctionParameterTypeList*", "argument_list", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-#else
-     FunctionType.setDataPrototype("SgTypePtrList", "arguments", "",
-               NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
-
-#if 0
-  // DQ (12/21/2005): This global qualification is now replaced by a more general mechanism to handle
-  // qualified names. Here we have a list of qualified names a global qualification is represented by
-  // a SgQualifiedName that contains a pointer to the SgGlobal scope. This is so variables such as
-  // "::X::Y::Z::variable" can be represented properly.
-     FunctionType.setDataPrototype ( "SgQualifiedNamePtrList", "returnTypeQualifiedNameList", "",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-  // MK: FunctionType.excludeDataPrototype ("SgType*", "orig_return_type","= NULL");
-
-  // Don't use the setDataPrototype method since the access functions require a reference return type
-  // FunctionType.setDataPrototype       ("SgTypePtrList", "arguments","");
-
      MemberFunctionType.setFunctionPrototype ("HEADER_MEMBER_FUNCTION_TYPE", "../Grammar/Type.code" );
      MemberFunctionType.setDataPrototype     ("SgType*", "class_type","= NULL",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

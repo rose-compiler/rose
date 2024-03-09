@@ -130,44 +130,9 @@ HEADER_START
           SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE |
                                                       STRIP_POINTER_TYPE  | STRIP_ARRAY_TYPE     | STRIP_TYPEDEF_TYPE          | STRIP_POINTER_MEMBER_TYPE ) const;
 
-       // DQ (6/30/2005): Added to support invistigation of hidden types
+       // DQ (6/30/2005): Added to support investigation of hidden types
       //! This only strips away typedefs and modifiers (specialized usage).
           SgType* stripTypedefsAndModifiers() const;
-
-       // DQ (6/30/2005): Would these functions also be useful?
-       // SgType* stripTypedefs() const;
-       // SgType* stripModifiers() const;
-
-       // DQ (7/26/2010): Now we finally need this function!
-       // Generates a new SgModifierType with modifiers set according to input parameter.
-       // SgModifierType* matchModifiers(unsigned int f);
-
-       // void printName(SgUnparse_Info& ui, ostream& os);
-
-#if 0
-       // This codes was part of an experiment to distinguish struct tag { int x; } X; from struct tag X;
-       // It turns out that the declaration of the tag in this case in placed into the EDG orphan list
-       // as a type and that we don't require this mechanism (thought we might in the future so for now
-       // it is just commented out.
-
-       // DQ Added to support unparsing of autonomous declarations
-       // Support for variable declearations where the type is explicitly defined as a structure
-          enum useWithinDeclarationEnum {
-           // handle cases of struct B btag { int x; } b_1st; and struct btag b_2nd;
-               e_first_declaration          = 0x00000001,
-           // distinguish between B { int x; } b; and B btag { int x; } b;
-               e_autonomous_tag_declaration = 0x00000002
-                                    };
-          useWithinDeclarationEnum p_useWithinDeclaration;
-
-       // These are for support of the useWithinDeclaration variable
-          bool isFirstDeclaration() const;
-          void setFirstDeclaration();
-          void unsetFirstDeclaration();
-          bool isAutonomousTagDeclaration() const;
-          void setAutonomousTagDeclaration();
-          void unsetAutonomousTagDeclaration();
-#endif
 
        // DQ (9/7/2007): Support for Fortran attribute specifiers
           enum fortran_attribute_specifiers_enum
@@ -228,14 +193,6 @@ HEADER_START
 
           SgDeclarationStatement* getAssociatedDeclaration() const;
 
-#if 0
-       // DQ (11/28/2015): This has been moved from the SgModifierType class to the SgType class since it is a general requirement.
-       // DQ (11/28/2015): Adding operator==() function to use in symbol table lookup when template
-       // arguments or parameters resolve to SgModifierType and we need to know if it is the same type.
-       // One might expect that with type tables they would only be the same if there were the same
-       // pointer, but I think this is not alwasy true for SgModifierType nodes.
-       // bool operator== (const SgType & Y) const;
-#endif
        // DQ (12/8/2015): Insead of the operator==(), we require a more nuanced approach.
        // There are concepts of type equivalence (where for example a typedef of an int would
        // be the same type as the int) and type intechangablity, where two equivalent types will
@@ -266,38 +223,14 @@ HEADER_BUILTIN_TYPE_SUPPORT_END
 
 HEADER_COMMON_CREATE_TYPE_START
       //! example of type used where construction is particularly simple
-       // DQ (1/31/2006): Modified to build all types in the memory pools
-       // static $CLASSNAME builtin_type;
-       // static $CLASSNAME* builtin_type;
-
-       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required
-       // since we don't store the type explicitly anymore except in a few IR nodes which have there
-       // own data member and associated access function.
-       // static $CLASSNAME* get_builtin_type();
-
-       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required
-       // since we don't store the type explicitly anymore except in a few IR nodes which have there
-       // own data member and associated access function.
-       // static void set_builtin_type($CLASSNAME* builtin_type);
 
       //! function returns example of type
        // DQ (10/4/2010): Added support for optional Fotran type_kind specification.
-       // static $CLASSNAME* createType(void);
-          static $CLASSNAME* createType(SgExpression* optional_fortran_type_kind = NULL);
+          static $CLASSNAME* createType(SgExpression* optional_fortran_type_kind = nullptr);
 HEADER_COMMON_CREATE_TYPE_END
 
 
 HEADER_CREATE_TYPE_WITH_PARAMETER_START
-       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required
-       // since we don't store the type explicitly anymore except in a few IR nodes which have there
-       // own data member and associated access function.
-       // static $CLASSNAME* get_builtin_type();
-
-       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required
-       // since we don't store the type explicitly anymore except in a few IR nodes which have there
-       // own data member and associated access function.
-       // static void set_builtin_type($CLASSNAME* builtin_type);
-
       //! more sophisticated version for more complex types like $CLASSNAME (types whose constructors take parameters)
        // DQ (10/4/2010): Added support for optional Fotran type_kind specification.
        // static $CLASSNAME* createType(CREATE_TYPE_PARAMETER);
@@ -311,9 +244,6 @@ HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_TYPE_ARRAY_START
 
        //! builtin_type variable specific to the SgArrayType object (for maxBitLength=32 bit integers)
        // Could not use maxBitLength in array size below (so I just used the #define value directly).
-       // DQ (1/31/2006): Modified to build all types in the memory pools
-       // static $CLASSNAME builtin_type[ROSE_INTEGER_TYPE_MAX_BIT_LENGTH];
-       // static $CLASSNAME* builtin_type[ROSE_INTEGER_TYPE_MAX_BIT_LENGTH];
 HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_TYPE_ARRAY_END
 
 
@@ -321,17 +251,6 @@ HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_START
        // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required
        // since we don't store the type explicitly anymore except in a few IR nodes which have there
        // own data member and associated access function.
-       // static $CLASSNAME* get_builtin_type();
-
-       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required
-       // since we don't store the type explicitly anymore except in a few IR nodes which have there
-       // own data member and associated access function.
-       // static set_builtin_type($CLASSNAME* builtin_type);
-
-       //! builtin_type variable specific to the $CLASSNAME object
-       // DQ (1/31/2006): Modified to build all types in the memory pools
-       // static $CLASSNAME builtin_type;
-       // static $CLASSNAME* builtin_type;
 HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_END
 
 
@@ -470,20 +389,6 @@ HEADER_MODIFIER_TYPE_START
           \internal Return type should be changed to "bool."
           \todo implement type modifier query functions in SgType class.
        */
-#if 0
-      //! Tests for declaration as const
-          bool isConst() const ;
-      //! Test for declaration as volatile
-          bool isVolatile() const ;
-      //! Tests for declaration as restrict
-          bool isRestrict() const ;
-      //! Tests for declaration as UPC shared
-          bool isUPC_Shared() const ;
-      //! Tests for declaration as UPC strict
-          bool isUPC_Strict() const ;
-      //! Tests for declaration as UPC relaxed
-          bool isUPC_Relaxed() const ;
-#endif
        /*! */
 
   // DQ (7/28/2010): Make this private so that we can support API that would force the type table to be used.
@@ -498,273 +403,7 @@ HEADER_MODIFIER_TYPE_START
 
   // DQ (7/28/2010): Make this public as the end of the previous private region.
      public:
-       // friend namespace SageBuilder;
-       // friend SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/);
-
           static SgModifierType* insertModifierTypeIntoTypeTable( SgModifierType* result );
-
-#if 0
-       // DQ (11/28/2015): This has been move to the SgType class since it is a general requirement.
-       // DQ (11/28/2015): Adding operator==() function to use in symbol table lookup when template
-       // arguments or parameters resolve to SgModifierType and we need to know if it is the same type.
-       // One might expect that with type tables they would only be the same if there were the same
-       // pointer, but I think this is not alwasy true for SgModifierType nodes.
-       // bool operator== (const SgModifierType & X, const SgModifierType & Y);
-          bool operator== (const SgModifierType & Y) const;
-#endif
-#if 0
-          void unsetRestrict();
-          void setRestrict();
-          void unsetConst();
-          void setConst();
-          void unsetVolatile();
-          void setVolatile();
-          void unsetUPC_Shared();
-          void setUPC_Shared();
-          void unsetUPC_Strict();
-          void setUPC_Strict();
-          void unsetUPC_Relaxed();
-          void setUPC_Relaxed();
-#endif
-
-#if 0
-       // Tests not implemented!
-
-      //! Tests for declaration as extern
-          bool isExtern() const ;
-      //! Tests for declaration as typedef
-          bool isTypedef() const ;
-      //! Tests for declaration as virtual
-          bool isVirtual() const ;
-      //! Test for declaration as protected
-          bool isProtected() const ;
-      //! Test for declaration as private
-          bool isPrivate() const ;
-      //! Test for declaration as public
-          bool isPublic() const ;
-      //! Test for declaration as auto (default)
-          bool isAuto() const ;
-#endif
-
-#if 0
-      //! Enum type containing all modifiers
-          enum modifiers
-             {
-               m_volatile = 0x01, //!< storage modifier
-               m_global   = 0x02, //!< not use by ROSE
-               m_sync     = 0x04, //!< not use by ROSE
-               m_const    = 0x08, //!< const modifier
-               m_restrict = 0x10,//!< support for restrict keyword (specifies non-aliased pointers)
-               m_shared   = 0x20, //!< UPC shared modifier
-               m_strict   = 0x40, //!< UPC strict modifier
-               m_relaxed  = 0x80, //!< UPC relaxed modifier
-             };
-
-       //! mask bits on
-          void set_modifier   (int flag);
-
-       //! mask bits off
-          void unset_modifier (int flag);
-
-      //! Access function for modifiers
-          bool isConst() const;
-          bool isSync() const;
-          bool isGlobal() const;
-          bool isVolatile() const;
-          bool isRestrict() const;
-
-       // UPC specific
-          bool isShared() const;
-          bool isStrict() const;
-          bool isRelaxed() const;
-
-      //! Set/unset functions for specific modifiers
-          void unsetSync();
-          void setSync();
-          void unsetGlobal();
-          void setGlobal();
-          void unsetConst();
-          void setConst();
-          void unsetRestrict();
-          void setRestrict();
-
-       // UPC specific
-          void unsetShared();
-          void setShared();
-          void unsetStrict();
-          void setStrict();
-          void unsetRelaxed();
-          void setRelaxed();
-
-      //! Get whole bit field fr modifier set
-          unsigned int bitfield(void);
-#endif
-
-#if 0
-       // DQ (4/6/2004): Added to provide uniform support for type modifiers
-          enum type_modifier_enum
-             {
-            // Bit values can support multiple values in a single enum type
-               e_unknown     =   0x000,   // Unknown value (default)
-               e_const       =   0x001,   // Const qualifier
-               e_volatile    =   0x002,   // Volatile qualifier
-               e_restrict    =   0x004,   // Restrict qualifier
-               e_unaligned   =   0x008,   // Microsoft __unaligned qualifier
-               e_near        =   0x010,   // near
-               e_far         =   0x020,   // far
-               e_upc_shared  =   0x040,   // UPC shared
-               e_upc_strict  =   0x080,   // UPC strict
-               e_upc_relaxed =   0x100,   // UPC relaxed
-               e_last_type_modifier = 0x200
-             };
-
-       // DQ (4/6/2004): Added to provide uniform support for storage modifiers
-          enum storage_modifier_enum
-             {
-            // Only one value can be specified (at least in C, what about C++)
-               e_unknown_storage,
-               e_extern,
-               e_static,
-               e_auto,
-               e_unspecified,
-               e_typedef,
-               e_register,
-               e_asm,
-#ifdef FORTRAN_SUPPORTED
-               e_local,              // Auto or static at back end's preference
-               e_common,             // A COMMON block
-               e_associated,         // Variable is part of an association
-               e_intrinsic,          // Intrinsic function or subroutine
-               e_pointer_based,      // Pointee of a POINTER definition
-#endif
-               e_last_storage_modifier
-             };
-
-       // DQ (4/6/2004): Added to provide uniform support for access modifiers
-          enum access_modifier_enum
-             {
-            // Only one value can be specified (at least in C, what about C++)
-               e_unknown_access,
-               e_private,
-               e_protected,
-               e_public,
-               e_virtual,  // support for virtual base class (applies only in case of inheritance)
-               e_last_access_modifier
-             };
-
-          int checkBit(type_modifier_enum bit) const;
-          void setBit(type_modifier_enum bit);
-          void unsetBit(type_modifier_enum bit);
-#endif
-
-#if 0
-       // DQ (4/13/2004): This new design organizes the modifiers in SAGE
-
-      //! Modifier Interface (implementation is hidden in specific modifier objects)
-      //! Type Modifier Support
-
-       // Interface from cv-specifier in type-specifier
-          int isConst() const;
-          void setConst();
-          void unsetConst();
-
-       // Interface from cv-specifier in type-specifier
-          int isVolatile() const;
-          void setVolatile();
-          void unsetVolatile();
-
-       // Interface from type-specifier
-          int isRestrict() const;
-          void setRestrict();
-          void unsetRestrict();
-#if 0
-          int isUnaligned() const;
-          void setUnaligned();
-          void unsetUnaligned();
-
-          int isNear() const;
-          void setNear();
-          void unsetNear();
-
-          int isFar() const;
-          void setFar();
-          void unsetFar();
-#endif
-          int isUPC_Shared() const;
-          void setUPC_Shared();
-          void unsetUPC_Shared();
-
-          int isUPC_Strict() const;
-          void setUPC_Strict();
-          void unsetUPC_Strict();
-
-          int isUPC_Relaxed() const;
-          void setUPC_Relaxed();
-          void unsetUPC_Relaxed();
-
-      //! Storage Modifier Support
-          int isUnknownStorage() const;
-          void setUnknownStorage();
-
-          int isExtern() const;
-          void setExtern();
-
-          int isStatic() const;
-          void setStatic();
-
-          int isAuto() const;
-          void setAuto();
-
-          int isUnspecified() const;
-          void setUnspecified();
-
-       // This is not used (but is present in the EDG AST)
-          int isTypedef() const;
-          void setTypedef();
-
-          int isRegister() const;
-          void setRegister();
-
-          int isAsm() const;
-          void setAsm();
-
-#ifdef FORTRAN_SUPPORTED
-       // These remaining access functions are specific to FORTRAN
-          int isLocal() const;
-          void setLocal();
-
-          int isCommon() const;
-          void setCommon();
-
-          int isAssociated() const;
-          void setAssociated();
-
-          int isIntrinsic() const;
-          void setIntrinsic();
-
-          int isPointerBased() const;
-          void setPointerBased();
-#endif
-
-      //! Access Modifier Support
-          int isUnknownAccess() const;
-          void setUnknownAccess();
-
-          int isPrivate() const;
-          void setPrivate();
-
-          int isProtected() const;
-          void setProtected();
-
-          int isPublic() const;
-          void setPublic();
-
-          int isVirtual() const;
-          void setVirtual();
-
-      //! Get whole bit field fr modifier set
-          unsigned int bitfield(void);
-#endif
 
       //! Performs final initialization of data members (called by constructors)
           void post_construction_initialization() override;
@@ -845,7 +484,6 @@ HEADER_MEMBER_FUNCTION_TYPE_START
       //! Performs final initialization of data members (called by constructors)
           void post_construction_initialization() override;
 
-#if 1
       //! Enum for const and volatile function modifiers
           enum mfunc_specifier_enum
              {
@@ -858,17 +496,6 @@ HEADER_MEMBER_FUNCTION_TYPE_START
                e_ref_qualifier_rvalue = 0x00000010
              };
 
-       // static SgMemberFunctionType* createType(SgPartialFunctionType *);
-
-#if 0
-      //! const access/set/unset member functions for member function type
-          int isUnknownFunc();
-          void setUnknownFunc();
-
-      //! const access/set/unset member functions for member function type
-          int isDefaultFunc();
-          void setDefaultFunc();
-#endif
       //! const access/set/unset member functions for member function type
           bool isConstFunc() const; // RV (2/1/2006): Made 'const' member
           void setConstFunc();
@@ -878,13 +505,12 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           bool isVolatileFunc() const; // RV (2/1/2006): Made 'const' member
           void setVolatileFunc();
           void unsetVolatileFunc();
-#if 1
+
        // DQ (3/8/2012): Enabled the use of rescrict recorded in the function type.
       //! restrict access/set/unset member functions for member function type
           bool isRestrictFunc() const;
           void setRestrictFunc();
           void unsetRestrictFunc();
-#endif
 
        // DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
       //! L-value reference access/set/unset member functions and member function type
@@ -896,25 +522,14 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           bool isRvalueReferenceFunc() const;
           void setRvalueReferenceFunc();
           void unsetRvalueReferenceFunc();
-#endif
-
-       // void set_mfunc_specifier(unsigned long i);
-       // SgName get_mangled(SgUnparse_Info &);
-
-      //! Mangled name support for unparser
-      //  SgName get_mangled_name(SgUnparse_Info&);
 
       //! Mangled name support
-       // SgName get_mangled_type();
-       // RV (2/1/2006): Changed signature, and removed 'get_mangled_type()'.
           virtual SgName get_mangled_name (void) const;
 
        // DQ (12/6/2012): Adding member function specifier data (since this will be a part of the generated mangled name).
        // DQ (12/3/2011): Added better support for member function name mangling (symetric with SgFunctionType).
-       // static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType );
           static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgType* classType, unsigned int mfunc_specifier );
 
-      //! I forget why this is here.
           SgMemberFunctionType * mkAnotherType(SgType *);
 
       //! \deprecated The struct_name property has been replaced by the class_type property, an SgType
@@ -949,7 +564,6 @@ HEADER_TYPE_INT_TYPE_END
 
 HEADER_TYPE_COMPLEX_TYPE_START
       //! function returns example of type
-       // static $CLASSNAME* createType(SgType* base_type);
           static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
        // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
           virtual SgExpression* get_type_kind () const override;
@@ -979,7 +593,6 @@ HEADER_POINTER_MEMBER_TYPE_START
 
        // DQ (4/20/2019): Renamed these to make them more clear, since there are two locations for name qualification in a SgPointerMemberType.
        // DQ (4/18/2019): Added support for name qualification of type chains of SgPointerMemberType.
-       // SgName get_qualified_name_prefix() const;
           SgName get_qualified_name_prefix_for_class_of() const;
           SgName get_qualified_name_prefix_for_base_type() const;
 
@@ -987,8 +600,7 @@ HEADER_POINTER_MEMBER_TYPE_END
 
 HEADER_TYPE_STRING_TYPE_START
        // DQ (8/17/2010): Support for Fortran use of SgTypeString.
-       // static $CLASSNAME* createType(SgExpression*, size_t length, SgExpression* optional_fortran_type_kind = NULL);
-          static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
+          static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = nullptr);
 
       //! Performs final initialization of data members (called by constructors)
           void post_construction_initialization() override;
@@ -1024,7 +636,7 @@ HEADER_DECL_TYPE_END
 
 HEADER_TYPEOF_TYPE_START
 
-          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = nullptr);
 
           void set_base_type(SgType* base_type);
 
@@ -1127,7 +739,6 @@ SOURCE_GET_MANGLED_START
     There are two different cases of source code for the get_mangled member function
     This one is used in all but the classes containing a base type
  */
-// SgName $CLASSNAME::get_mangled ( SgUnparse_Info & info )
 SgName
 $CLASSNAME::get_mangled (void) const
    {
@@ -1138,8 +749,6 @@ $CLASSNAME::get_mangled (void) const
      SgName name = "MANGLED_ID_STRING";
      if (get_type_kind() != NULL)
         {
-       // name += get_type_kind()->get_mangled();
-       // name += SageInterface::generateUniqueName(get_type_kind(),false);
           SgValueExp* value = isSgValueExp(get_type_kind());
           if (value != NULL)
              {
@@ -1155,14 +764,11 @@ $CLASSNAME::get_mangled (void) const
             // types with the same name, and there is only a choice of SgNamedTypes: SgClassType, SgTypedefType,
             // and SgEnumType.  These can't have the same name, so we need not have a unity prefix for each type.
             // I think the issue is that MANGLED_ID_STRING is not defined for any of the SgNameType IR nodes.
-#if 0
-               printf ("In get_mangled(void): (get_type_kind() != NULL): this = %p = %s MANGLED ID STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
-#endif
                name += SageInterface::generateUniqueName(get_type_kind(),false);
              }
         }
 
-  // CR (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
+  // Rasmussen (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
   // REMOVE_ME please!
      if (isSgTypeFixed(this))
         {
@@ -1184,10 +790,6 @@ $CLASSNAME::get_mangled (void) const
                   }
              }
         }
-
-#if 0
-     printf("Leaving get_mangled(void): this = %p = %s mangled name = %s \n",this,this->class_name().c_str(),name.str());
-#endif
 
      return name;
    }
@@ -1214,22 +816,11 @@ $CLASSNAME::get_mangled (void) const
      const SgType* base_type = get_base_type();
      ROSE_ASSERT (base_type != NULL);
 
-#if 0
-     printf ("In $CLASSNAME::get_mangled(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
-#endif
-
      SgName base_name = base_type->get_mangled();
 
-#if 0
-     printf ("DONE: In $CLASSNAME::get_mangled(): base_type = %p = %s base_name = %s \n",base_type,base_type->class_name().c_str(),base_name.str());
-#endif
-
-  // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
-  // ROSE_ASSERT (base_name.get_length ());
      if (base_name.is_null() == true)
         {
        // This happens for code such as: "typedef struct {int id; } *XYZ;"
-       // printf ("Warning: In $CLASSNAME::get_mangled(), empty base type name found \n");
           base_name = "un_named_base_type";
         }
      ROSE_ASSERT (base_name.is_null() == false);
@@ -1239,39 +830,13 @@ $CLASSNAME::get_mangled (void) const
                   << base_name.str () // base type
                   << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
 
-  // printf ("LEAVING: In $CLASSNAME::get_mangled(): base_type = %p = %s mangled_name = %s \n",base_type,base_type->class_name().c_str(),mangled_name.str());
-
      return mangled_name;
    }
-
-#if 0
-// Old version of function
-SgName
-$CLASSNAME::get_mangled ( SgUnparse_Info & info )
-   {
-     SgName tmp("MANGLED_ID_STRING");
-
-  // DQ (3/15/2005): Should be be using a qualified name???
-
-     ROSE_ASSERT(get_base_type() != NULL);
-     ROSE_ASSERT(get_base_type()->get_mangled(info).get_length() > 0);
-     tmp << get_base_type()->get_mangled(info).str();
-
-#if 0
-     printf ("###########  In $CLASSNAME::get_mangled(): tmp = %s (get_base_type() = %s is a %s) ########## \n",
-          tmp.str(),get_base_type()->get_mangled(info).str(),get_base_type()->sage_class_name());
-  // ROSE_ASSERT(false);
-#endif
-
-     return tmp;
-   }
-#endif
 
 SOURCE_GET_MANGLED_BASE_TYPE_END
 
 
 SOURCE_POINTER_MEMBER_GET_MANGLED_START
-// RV (2/3/2006): Updated this routine to use the mangling of the parent type.
 SgName
 $CLASSNAME::get_mangled (void) const
    {
@@ -1293,26 +858,6 @@ $CLASSNAME::get_mangled (void) const
 
      return SgName (mangled_name.c_str ());
    }
-
-#if 0
-// Old code
-SgName
-$CLASSNAME::get_mangled ( SgUnparse_Info& info )
-   {
-     SgName tmp("M");
-     int cnt = 0;
-     ROSE_ASSERT(get_class_of() != NULL);
-     tmp << get_class_of()->get_mangled_qualified_name(cnt).str();
-
-#if 0
-     printf ("###########  In $CLASSNAME::get_mangled(): tmp = %s (get_base_type() = %s is a %s) ########## \n",
-          tmp.str(),get_class_of()->get_mangled_qualified_name(cnt).str(),get_class_of()->sage_class_name());
-  // ROSE_ASSERT(false);
-#endif
-
-     return tmp;
-   }
-#endif
 
 SOURCE_POINTER_MEMBER_GET_MANGLED_END
 
@@ -1365,12 +910,6 @@ SgTypeString::get_mangled (void) const
   // Note that a better implementation would separate out the mangling of scalar valued length expressions.
      SgValueExp* valueExpression = isSgValueExp(p_lengthExpression);
 #if 0
-     if (valueExpression != NULL)
-        {
-          printf ("In SgTypeString::get_mangled(): separate out case of where lengthExpression is a SgValueExp. \n");
-        }
-#endif
-#if 0
      if (this->p_definedUsingScalarLength == true)
         {
             mangled_length_name = Rose::StringUtility::numberToString(this->p_lengthScalar);
@@ -1407,7 +946,7 @@ SgTypeString::get_mangled (void) const
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
 
-// CR (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
+// Rasmussen (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
 SOURCE_GET_MANGLED_TYPE_FIXED_START
 
 SgName
@@ -1449,43 +988,12 @@ SgTypeFixed::get_mangled (void) const
 SOURCE_GET_MANGLED_TYPE_FIXED_END
 
 SOURCE_CONSTRUCTOR_START
-#if 0
-/*! this is the generated constructor */
-$CLASSNAME::$CLASSNAME ( INITIALIZER_LIST_SOURCE )
-   BASE_CLASS_CONSTRUCTOR_CALL
-   {
-     p_field_size = field_size;
- //! now a call to the user defined intialization function
-     post_construction_initialization();
-   }
-#endif
 SOURCE_CONSTRUCTOR_END
 
 SOURCE_CONSTRUCTOR_WITH_BASECLASS_TAKING_PARAMETER_START
-#if 0
-/*! this is the generated constructor */
-$CLASSNAME::$CLASSNAME ( SgDeclarationStatement* declaration )
-   :BASECLASS(declaration)
-   {
-  //! now a call to the user defined intialization function
-     post_construction_initialization();
-   }
-#endif
 SOURCE_CONSTRUCTOR_WITH_BASECLASS_TAKING_PARAMETER_END
 
 SOURCE_DATA_ACCESS_FUNCTIONS_START
-#if 0
-DATA_TYPE
-$CLASSNAME::get_DATA() const
-   {
-     return p_DATA;
-   }
-
-void $CLASSNAME::set_DATA ( DATA_TYPE )
-   {
-     p_DATA = DATA;
-   }
-#endif
 SOURCE_DATA_ACCESS_FUNCTIONS_END
 
 
@@ -1600,18 +1108,6 @@ SgType::SgType(const SgType & X)
   // I think if we copy X then we want to assume that it has these values, but it might
   // be acceptable if it didn't, but then a more complex copy would be required.
 
-#if 0
-  // DQ (10/17/2007) Commented out (see copytest2007_14.C).
-     ROSE_ASSERT(p_ref_to == NULL);
-     ROSE_ASSERT(p_ptr_to == NULL);
-     ROSE_ASSERT(p_modifiers == NULL);
-     ROSE_ASSERT(p_rvalue_ref_to == NULL);
-     ROSE_ASSERT(p_decltype_ref_to == NULL);
-     ROSE_ASSERT(p_typeof_ref_to == NULL);
-  // DQ (12/1/2007): This has been moved to the SgModifierType
-  // ROSE_ASSERT(p_type_kind == NULL);
-#endif
-
   // FMZ (2/6/2009): Added a flag for CoArray
      p_isCoArray = false;
 
@@ -1619,15 +1115,6 @@ SgType::SgType(const SgType & X)
      ROSE_ASSERT(p_typedefs != NULL);
      p_typedefs->set_parent(this);
    }
-
-
-#if 0
-SgType::~SgType()
-   {
-     delete p_modifiers;
-     delete p_typedefs;
-   }
-#endif
 
 // SgName $CLASSNAME::get_mangled(SgUnparse_Info& info)
 SgName
@@ -1639,52 +1126,6 @@ SgType::get_mangled(void) const
 
      return "";
    }
-
-#if 0
-// DQ (3/2/2003): Implement get_parent from SgNode
-SgNode*
-SgType::get_parent() const
-   {
-     ROSE_ASSERT(this != NULL);
-     return NULL;   // this is the original sage 2 code (but I think it should return p_parent)
-  // return (SgType*) p_parent;
-   }
-#endif
-
-#if 0
-//! virtual functions define to return false
-//! (will be overwritten on only a few of the derived classes)
-bool SgType::isConst() const       { return false; }
-bool SgType::isVolatile() const    { return false; }
-bool SgType::isRestrict() const    { return false; }
-bool SgType::isUPC_Shared() const  { return false; }
-bool SgType::isUPC_Strict() const  { return false; }
-bool SgType::isUPC_Relaxed() const { return false; }
-#endif
-
-#if 0
-bool SgType::isExtern() const    { return false; }
-bool SgType::isTypedef() const   { return false; }
-bool SgType::isVirtual() const   { return false; }
-bool SgType::isProtected() const { return false; }
-bool SgType::isPrivate() const   { return false; }
-bool SgType::isPublic() const    { return false; }
-bool SgType::isAuto() const      { return false; }
-#endif
-
-// bool SgType::isGlobal() const    { return false; }
-// bool SgType::isSync() const      { return false; }
-
-#if 0
-// These are unimplemented within SAGE 2
-bool
-SgType::isLong() const
-   { return false; }
-
-bool
-SgType::isShort() const
-   { return false; }
-#endif
 
 #if 0
 // This codes was part of an experiment to distinguish struct tag { int x; } X; from struct tag X;

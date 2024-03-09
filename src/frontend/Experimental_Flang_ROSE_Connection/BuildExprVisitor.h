@@ -35,6 +35,16 @@ public:
     Fortran::parser::Walk(x, *this);
   }
 
+  // Replace is hard for most types and needs testing (don't do it by default)
+  template <typename T> void Replace(T &, SgExpression*) { }
+
+  template <typename T> void BuildReplace(T &x) {
+    SgExpression* sg{nullptr};
+    BuildImpl(x, sg);
+    Replace(x, sg);
+    this->set(sg);
+  }
+
   // IntrinsicOperator
   void Build(Fortran::parser::Expr::Power &);
   void Build(Fortran::parser::Expr::Multiply &);
@@ -55,16 +65,17 @@ public:
   void Build(Fortran::parser::Expr::NEQV &);
 
   void Build(Fortran::parser::Name &);
-  void Build(Fortran::parser::IntLiteralConstant &);
-  void Build(Fortran::parser::RealLiteralConstant &);
+  void Build(Fortran::parser::IntLiteralConstant &x) { BuildReplace(x); }
+  void Build(Fortran::parser::RealLiteralConstant &x) { BuildReplace(x); }
+  void Build(Fortran::parser::KindSelector::StarSize &x) { BuildReplace(x); }
 
   // CommonBlockObject
-  void Build(Fortran::parser::CommonBlockObject &);
+  void Build(Fortran::parser::CommonBlockObject &x) { BuildReplace(x); }
 
   // ArraySpec ...
-  void Build(Fortran::parser::AssumedImpliedSpec &);
-  void Build(Fortran::parser::ExplicitShapeSpec &);
-  void Build(Fortran::parser::AssumedShapeSpec &);
+  void Build(Fortran::parser::AssumedImpliedSpec &x) { BuildReplace(x); }
+  void Build(Fortran::parser::ExplicitShapeSpec &x) { BuildReplace(x); }
+  void Build(Fortran::parser::AssumedShapeSpec &x) { BuildReplace(x); }
 
   void Build(Fortran::parser::CharBlock &x) {
     // For future use with token-based unparsing?

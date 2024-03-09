@@ -34,12 +34,12 @@ void UnparseSage(llvm::raw_ostream &out, const Fortran::parser::Program &program
   ABORT_NO_IMPL;
 }
 
+// NOTE: This is in a holding pattern as pattern for Replace
+#if REPLACE
 void Replace(Fortran::parser::IntLiteralConstant &x, const SgExpression* sg) {
-  auto sage{isSgLongLongIntVal(sg)};
   ASSERT_not_null(isSgLongLongIntVal(sg));
 
   // Testing for now
-#if REPLACE
   std::string value{sage->get_valueString()};
 
   std::cerr << "Replace(Fortran::parser::IntLiteralConstant: need memory for string " << value << "\n";
@@ -50,8 +50,8 @@ void Replace(Fortran::parser::IntLiteralConstant &x, const SgExpression* sg) {
   std::tuple<parser::CharBlock, std::optional<parser::KindParam>> tup{std::move(cb),std::nullopt};
 
   x.t = std::move(tup);
-#endif
 }
+#endif
 
 }// namespace Fortran::parser
 
@@ -84,64 +84,6 @@ void BuildExprVisitor::BuildExpressions(T &x, SgExpression* &lhs, SgExpression* 
 void BuildExprVisitor::Build(Fortran::parser::Name &x) {
   std::string name{x.ToString()};
   this->set(SageBuilderCpp17::buildVarRefExp_nfi(name));
-}
-
-// IntLiteralConstant
-void BuildExprVisitor::Build(Fortran::parser::IntLiteralConstant &x) {
-  SgExpression* sg{nullptr};
-  BuildImpl(x, sg);
-  Replace(x, sg);
-  this->set(sg);
-}
-
-// RealLiteralConstant
-void BuildExprVisitor::Build(Fortran::parser::RealLiteralConstant &x) {
-  SgExpression* sg{nullptr};
-  BuildImpl(x, sg);
-#if REPLACE
-  Replace(x, sg);
-#endif
-  this->set(sg);
-}
-
-// CommonBlockObject
-void BuildExprVisitor::Build(Fortran::parser::CommonBlockObject &x) {
-  SgExpression* sg{nullptr};
-  BuildImpl(x, sg);
-#if REPLACE
-  Replace(x, sg);
-#endif
-  this->set(sg);
-}
-
-// AssumedImpliedSpec
-void BuildExprVisitor::Build(Fortran::parser::AssumedImpliedSpec &x) {
-  SgExpression* sg{nullptr};
-  BuildImpl(x, sg);
-#if REPLACE
-  Replace(x, sg);
-#endif
-  this->set(sg);
-}
-
-// AssumedShapeSpec
-void BuildExprVisitor::Build(Fortran::parser::AssumedShapeSpec &x) {
-  SgExpression* sg{nullptr};
-  BuildImpl(x, sg);
-#if REPLACE
-  Replace(x, sg);
-#endif
-  this->set(sg);
-}
-
-// ExplicitShapeSpec
-void BuildExprVisitor::Build(Fortran::parser::ExplicitShapeSpec &x) {
-  SgExpression* sg{nullptr};
-  BuildImpl(x, sg);
-#if REPLACE
-  Replace(x, sg);
-#endif
-  this->set(sg);
 }
 
 //-------------------------------------------
@@ -908,6 +850,13 @@ void BuildImpl(parser::LogicalLiteralConstant &x, SgExpression* &expr)
   expr = SageBuilder::buildBoolValExp_nfi(std::get<0>(x.t));
 }
 
+void BuildImpl(parser::KindSelector::StarSize &x, SgExpression* &expr) {
+  // StarSize std::uint64_t v
+  uint64_t kind{x.v};
+  std::string strVal{std::to_string(kind)};
+  expr = SageBuilder::buildLongLongIntVal_nfi(kind, strVal);
+}
+
 void BuildImpl(parser::CommonBlockObject &x, SgExpression* &expr)
 {
   // CommonBlockObject std::tuple<Name, std::optional<ArraySpec>> t;
@@ -1170,26 +1119,59 @@ void BuildVisitor::Build(parser::DataStmt &x)
   // DataStmtValue mutable std::int64_t repetitions{1};
   //   std::tuple<std::optional<DataStmtRepeat>, DataStmtConstant> t;
   // DataStmtConstant
-  //   CharBlock source;
-  //   mutable TypedExpr typedExpr;
-  //   std::variant<LiteralConstant, SignedIntLiteralConstant,
-  //      SignedRealLiteralConstant, SignedComplexLiteralConstant, NullInit,
-  //      common::Indirection<Designator>, StructureConstructor>
-  //      u;
+  //   std::variant<> LiteralConstant, SignedIntLiteralConstant, SignedRealLiteralConstant, SignedComplexLiteralConstant,
+  //   NullInit, common::Indirection<Designator>, StructureConstructor
 
-  std::cout << "BuildVisitor::Build(DataStmt)\n";
+  // Begin SageTreeBuilder for SgAttributeSpecificationStatement
+  SgAttributeSpecificationStatement* dataStmt{nullptr};
+  auto kind{SgAttributeSpecificationStatement::e_dataStatement};
+  builder.Enter(dataStmt, kind);
+
+  // An SgDataStatementGroup corresponds to a DataStmtSet
+  auto &groups{dataStmt->get_data_statement_group_list()};
 
   for (auto &set: x.v) {
-    ABORT_NO_IMPL;
+    SgDataStatementGroup* dataGroup{nullptr};
+    builder.Enter(dataGroup);
+
+    // Add data statement groups
+    for (auto &setObject: std::get<0>(set.t)) {
+      SgExpression* expr{nullptr};
+      WalkExpr(setObject, expr);
+      ASSERT_not_null(expr);
+
+      SgDataStatementObject* dataObject{nullptr};
+      builder.Enter(dataObject);
+
+      dataObject->get_variableReference_list()->get_expressions().push_back(expr);
+      builder.Leave(dataObject);
+
+      dataGroup->get_object_list().push_back(dataObject);
+    }
+
+    // Add data statement values
+    for (auto &setValue: std::get<1>(set.t)) {
+      SgExpression* expr{nullptr};
+      WalkExpr(setValue, expr);
+      ASSERT_not_null(expr);
+
+      // TODO: other kind variants
+      auto valueKind{SgDataStatementValue::e_explicit_list};
+      SgDataStatementValue* dataValue{nullptr};
+      builder.Enter(dataValue, valueKind);
+
+      dataValue->get_initializer_list()->get_expressions().push_back(expr);
+      builder.Leave(dataValue);
+
+      dataGroup->get_value_list().push_back(dataValue);
+    }
+
+    builder.Leave(dataGroup);
+    groups.push_back(dataGroup);
   }
 
-#if 0
-        buildAttributeSpecificationStatement(
-                SgAttributeSpecificationStatement::e_dataStatement, label, keyword);
-#endif
-
-
-
+  // Leave SageTreeBuilder for SgAttributeSpecificationStatement
+  builder.Leave(dataStmt);
 }
 
 void BuildVisitor::Build(parser::TypeDeclarationStmt &x) {
@@ -1220,10 +1202,7 @@ void BuildVisitor::Build(parser::DerivedTypeDef &x) {
   //              std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>
   using namespace Fortran::parser;
 
-  std::cerr << "BuildVisitor::Build(DerivedTypeDef)\n";
-
   auto &stmt{std::get<Statement<DerivedTypeStmt>>(x.t)};
-  auto &end{std::get<Statement<EndTypeStmt>>(x.t)};
 
   // DerivedTypeStmt std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;
   std::string name{std::get<Name>(stmt.statement.t).ToString()};
@@ -1293,58 +1272,42 @@ void Build(parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modifier)
   ABORT_NO_IMPL;
 }
 
-void Build(parser::KindSelector &x, SgExpression* &expr)
-{
-  std::cout << "Rose::builder::Build(KindSelector)\n";
-  ABORT_NO_IMPL;
-}
-
 void BuildVisitor::Build(parser::IntegerTypeSpec &x)
 {
   SgType* type{nullptr};
-  if (auto &kind = x.v) {   // std::optional<KindSelector>
-    ABORT_NO_IMPL;
-#if 0
-    SgExpression* kind_expr = nullptr;
-    Build(kind.value(), kind_expr);
-    type = SageBuilder::buildIntType(kind_expr);
-#endif
-  } else {
-    type = SageBuilder::buildIntType();
+  SgExpression* expr{nullptr};
+
+  if (auto &kind = x.v) { // std::optional<KindSelector>
+    WalkExpr(kind.value(), expr);
   }
+  type = SageBuilder::buildIntType(expr);
   this->set(type); // synthesized attribute
 }
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::Real &x)
 {
   SgType* type{nullptr};
-  if (auto &kind = x.kind) {   // std::optional<KindSelector>
-#if 0
-    SgExpression* kind_expr{nullptr};
-    Build(kind.value(), kind_expr);
-    type = SageBuilder::buildFloatType(kind_expr);
-#endif
-  } else {
-    type = SageBuilder::buildFloatType();
+  SgExpression* expr{nullptr};
+
+  if (x.kind) { // std::optional<KindSelector>
+    WalkExpr(x.kind.value(), expr);
   }
+  type = SageBuilder::buildFloatType(expr);
   this->set(type); // synthesized attribute
 }
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::DoublePrecision &x)
 {
-  SgType* type{nullptr};
-  std::cout << "Rose::builder::Build(DoublePrecision)\n";
+  SgType* type{SageBuilder::buildDoubleType()}; // no KindSelector
   ABORT_NO_TEST;
-
-  type = SageBuilder::buildDoubleType();
-  this->set(type); // sythesized attribute
+  this->set(type); // synthesized attribute
 }
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::Complex &x)
 {
   SgType* type{nullptr};
   std::cout << "Rose::builder::Build(Complex)\n";
-  ABORT_NO_TEST;
+  ABORT_NO_IMPL;
 
   SgType* base_type = SageBuilder::buildIntType();
   type = SageBuilder::buildComplexType(base_type);
@@ -1371,16 +1334,12 @@ void BuildVisitor::Build(parser::IntrinsicTypeSpec::Character &x)
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::Logical &x) {
   SgType* type{nullptr};
-  if (auto & kind = x.kind) {   // std::optional<KindSelector>
-    SgExpression* kindExpr = nullptr;
-    ABORT_NO_IMPL;
-#if 0
-    Build(kind.value(), kindExpr);
-    type = SageBuilder::buildBoolType(kindExpr);
-#endif
-  } else {
-    type = SageBuilder::buildBoolType();
+  SgExpression* expr{nullptr};
+
+  if (x.kind) { // std::optional<KindSelector>
+    WalkExpr(x.kind.value(), expr);
   }
+  type = SageBuilder::buildBoolType(expr);
   this->set(type); // synthesized attribute
 }
 
@@ -2322,11 +2281,10 @@ void Build(parser::CoindexedNamedObject &x, SgExpression* &expr)
 void Build(parser::ImageSelector &x, SgExpression* &expr)
 {
   std::cout << "Rose::builder::Build(ImageSelector)\n";
-
-  SgExprListExp* cosubscripts{nullptr}, selectors{nullptr};
   ABORT_NO_IMPL;
 
 #if 0
+  SgExprListExp* cosubscripts{nullptr}, selectors{nullptr};
   Build(std::get<0>(x.t), cosubscripts);  // std::list<Cosubscript> - Cosubscript = Scalar<IntExpr>
   Build(std::get<1>(x.t), selectors);     // std::list<ImageSelectorSpec>
 #endif

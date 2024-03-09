@@ -77,12 +77,14 @@ SageBuilder::buildAttributeSpecificationStatement(SgAttributeSpecificationStatem
     case SgAttributeSpecificationStatement::e_dimensionStatement:
     case SgAttributeSpecificationStatement::e_allocatableStatement:
       {
-        SgExprListExp* parameterList = new SgExprListExp();
+        SgExprListExp* parameterList{SageBuilder::buildExprListExp_nfi()};
         attributeSpecificationStatement->set_parameter_list(parameterList);
         parameterList->set_parent(attributeSpecificationStatement);
         setSourcePositionForTransformation(parameterList);
         break;
       }
+    case SgAttributeSpecificationStatement::e_dataStatement:
+        break;
     default:
       cerr<<"SageBuilder::buildAttributeSpecificationStatement(), unhandled attribute specification kind:"<<kind <<endl;
       ROSE_ABORT ();

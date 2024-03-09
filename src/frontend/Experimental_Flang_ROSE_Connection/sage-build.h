@@ -76,6 +76,8 @@ void BuildImpl(Fortran::parser::BOZLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::CharLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::LogicalLiteralConstant &, SgExpression* &);
 
+void BuildImpl(Fortran::parser::KindSelector::StarSize &, SgExpression* &);
+
 // CommonBlockObject
 void BuildImpl(Fortran::parser::CommonBlockObject &, SgExpression* &);
 
@@ -125,7 +127,6 @@ void Build(Fortran::parser::           CoarraySpec &, SgType* &, SgType*);
 void Build(Fortran::parser::       IntegerTypeSpec &, SgType* &);
 void Build(Fortran::parser::            CharLength &, SgExpression* &);
 void Build(Fortran::parser::        Initialization &, SgExpression* &);
-void Build(Fortran::parser::          KindSelector &, SgExpression* &);
 
 void Build(Fortran::parser::                   SpecificationExpr &, SgExpression* &);
 void Build(Fortran::parser::Scalar<Fortran::parser::IntExpr>     &, SgExpression* &);
@@ -147,10 +148,6 @@ void Build(Fortran::parser::             TypeParamValue &, SgExpression* &);
 // DeclarationConstruct
 void Build(Fortran::parser::StmtFunctionStmt &);
 void Build(Fortran::parser::   ErrorRecovery &);
-
-// DataStmt
-void Build(Fortran::parser::   DataStmtValue &, SgExpression* &);
-void Build(Fortran::parser::DataStmtConstant &, SgExpression* &);
 
 // ActionStmt
 void Build(Fortran::parser::         ContinueStmt &, const OptLabel &);
