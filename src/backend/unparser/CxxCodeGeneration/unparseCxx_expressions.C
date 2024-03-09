@@ -434,14 +434,11 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
      SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(expr);
      ASSERT_not_null(functionParameterRefExp);
 
-#if 0
-#else
   // DQ (2/14/2015): We at least require this sort of funcationality for C++11 test2015_13.C.
      if (functionParameterRefExp->get_parameter_number() == 0 && functionParameterRefExp->get_parameter_levels_up() == 0)
         {
           unp->u_exprStmt->curprint("this ");
         }
-#endif
    }
 
 
@@ -482,11 +479,6 @@ Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& inf
      unparseFuncRefSupport<SgTemplateFunctionRefExp>(expr,info);
    }
 #else
-void
-Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& info)
-   {
-     unp->u_exprStmt->curprint ("Output TemplateFunctionRefExp");
-   }
 #endif
 
 #if 1
@@ -498,11 +490,6 @@ Unparse_ExprStmt::unparseTemplateMFuncRef ( SgExpression* expr, SgUnparse_Info& 
    }
 
 #else
-void
-Unparse_ExprStmt::unparseTemplateMFuncRef(SgExpression* expr, SgUnparse_Info& info)
-   {
-     unp->u_exprStmt->curprint ("Output TemplateMemberFunctionRefExp");
-   }
 #endif
 
 void
@@ -606,10 +593,6 @@ SgTemplateArgument::outputTemplateArgument()
 
 #define DEBUG_OUTPUT_TEMPLATE_ARGUMENT 0
 
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-     printf ("In SgTemplateArgument::outputTemplateArgument() \n");
-#endif
-
      bool isExplicitlySpecified = this->get_explicitlySpecified();
      bool isPackElement    = this->get_is_pack_element();
 
@@ -620,103 +603,47 @@ SgTemplateArgument::outputTemplateArgument()
      if (classDeclaration != NULL)
         {
        // In this case the isExplicitlySpecified can NOT be used, so assume it is always true.
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-          printf ("In SgTemplateArgument::outputTemplateArgument(): Template Argument is part of class instantiation declaration \n");
-#endif
           isExplicitlySpecified = true;
 
        // DQ (2/11/2019): I think this is required to pass test2019_93.C.
-       // isPackElement         = true;
         }
        else
         {
           if (functionDeclaration != NULL)
              {
             // In this case the isExplicitlySpecified CAN be used.
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-               printf ("In SgTemplateArgument::outputTemplateArgument(): Template Argument is part of function instantiation declaration \n");
-#endif
              }
             else
              {
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-               printf ("In SgTemplateArgument::outputTemplateArgument(): Template Argument is neither a function nor a class: parentOfTemplateArgument = %p = %s \n",
-                    parentOfTemplateArgument,parentOfTemplateArgument->class_name().c_str());
-#endif
              }
         }
 
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-     printf ("In SgTemplateArgument::outputTemplateArgument(): isPackElement         = %s \n",isPackElement ? "true" : "false");
-     printf ("In SgTemplateArgument::outputTemplateArgument(): isExplicitlySpecified = %s \n",isExplicitlySpecified ? "true" : "false");
-#endif
-
-  // isPackElement = isPackElement && isExplicitlySpecified;
      if (isPackElement && isExplicitlySpecified)
        {
          isPackElement = false;
        }
 
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-     printf ("In SgTemplateArgument::outputTemplateArgument(): (after reset) isPackElement = %s \n",isPackElement ? "true" : "false");
-#endif
-
      bool isAnonymousClass = this->isTemplateArgumentFromAnonymousClass();
-
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-     printf ("In SgTemplateArgument::outputTemplateArgument(): isAnonymousClass = %s \n",isAnonymousClass ? "true" : "false");
-#endif
-
      bool isAssociatedWithLambdaExp = false;
      if (this->get_argumentType() == SgTemplateArgument::type_argument)
         {
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-          printf ("In SgTemplateArgument::outputTemplateArgument(): found a SgTemplateArgument::type_argument \n");
-#endif
           if (SgClassType * ctype = isSgClassType (this->get_type()))
              {
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-               printf ("In SgTemplateArgument::outputTemplateArgument(): ctype != NULL \n");
-#endif
                if (SgNode* pnode = ctype->get_declaration()->get_parent())
                   {
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-                    printf ("In SgTemplateArgument::outputTemplateArgument(): pnode != NULL \n");
-#endif
                     if (isSgLambdaExp(pnode))
                        {
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-                         printf ("In SgTemplateArgument::outputTemplateArgument(): Found a SgLambdaExp parent for the class: set hasLambdaFollowed = true  \n");
-#endif
                          isAssociatedWithLambdaExp = true;
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ABORT();
-#endif
                        }
                   }
              }
         }
 
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-     printf ("In SgTemplateArgument::outputTemplateArgument(): isAssociatedWithLambdaExp = %s \n",isAssociatedWithLambdaExp ? "true" : "false");
-#endif
-
-  // if ( ((*copy_iter)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) && (isAnonymousClass == false) && (isPackElement == false) )
-  // if ( ( (*copy_iter)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument ) &&
-  //      (isAnonymousClass == false) && (isPackElement == false) && (isAssociatedWithLambdaExp == false) )
      if ( ( this->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument ) &&
           (isAnonymousClass == false) && (isPackElement == false || isExplicitlySpecified == true) && (isAssociatedWithLambdaExp == false) )
         {
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-          printf ("In SgTemplateArgument::outputTemplateArgument(): set returnValue = true \n");
-#endif
           returnValue = true;
         }
-
-#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
-     printf ("Leaving SgTemplateArgument::outputTemplateArgument(): returnValue = %s \n",returnValue ? "true" : "false");
-#endif
 
      return returnValue;
    }
@@ -3036,32 +2963,12 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
              }
           else
 #else
-         // DQ (7/9/2019): Debugging test2019_493.C.
-         // printf ("In unparseMFuncRefSupport(): Don't use the globalTypeNameMap since it uses the class specifier! \n");
 #endif
              {
 #if MFuncRefSupport_DEBUG
                printf ("Could not find saved name qualified function name in globalTypeNameMap: using key: nodeReferenceToFunction = %p = %s \n",nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
 #endif
-#if 0
-            // DQ (6/23/2013): If it was not present in the globalTypeNameMap, then look in the globalQualifiedNameMapForNames.
-            // However, this is the qualified name for the member function ref, not the generated name of the member function.
-               std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(mfunc_ref);
-               if (i != SgNode::get_globalQualifiedNameMapForNames().end())
-                  {
-                 // I think this branch supports template member functions (called with explicit template arguments) (see test2013_221.C).
 
-#error "DEAD CODE!"
-
-                    printf ("Commented out usingGeneratedNameQualifiedFunctionNameString: Not using the saved generated name from globalQualifiedNameMapForNames() \n");
-                 // usingGeneratedNameQualifiedFunctionNameString = true;
-
-                    functionNameString = i->second.c_str();
-                  }
-                 else
-                  {
-                  }
-#endif
 #if 1
             // DQ (6/23/2013): This will get any generated name for the member function (typically only generated if template argument name qualification was required).
                std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(mfunc_ref);
@@ -3324,10 +3231,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                        {
                       // DQ (2/9/2010): Fix for test2010_03.C
 #if 0
-                      // DQ (6/15/2013): This is the older version of the code (which si a problem for test2013_206.C).
-                      // curprint(func_name);
-#error "DEAD CODE!"
-                         curprint(" " + func_name + " ");
 #else
 #if 1
                       // DQ (6/15/2013): The code for processing the function name when it contains template arguments that requires name qualification.
@@ -3378,52 +3281,17 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                       // DQ (11/12/2004) Added support for qualification of function names output as function calls
                          if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
                             {
-                           // DQ (8/6/2007): Now that we have a more sophisticated name qualifiation mechanism using
-                           // hidden declaration lists, we don't have to force the qualification of function names.
-                           // DQ (10/15/2006): Force output of any qualified names for function calls.
-                           // info.set_forceQualifiedNames();
-
-                           // curprint ( "/* unparseFuncRef calling info.set_forceQualifiedNames() */ ";
-
-                           // DQ (5/12/2011): Support for new name qualification.
                               SgUnparse_Info tmp_info(info);
                               tmp_info.set_name_qualification_length(func_ref->get_name_qualification_length());
                               tmp_info.set_global_qualification_required(func_ref->get_global_qualification_required());
 
 #error "DEAD CODE!"
-                           // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, info );
-                           // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, tmp_info );
-
-                           // DQ (5/29/2011): Newest refactored support for name qualification.
-                           // printf ("In unparseFuncRef(): Looking for name qualification for SgFunctionRefExp = %p \n",func_ref);
                               SgName nameQualifier = func_ref->get_qualified_name_prefix();
-#if 0
-                              printf ("In unparseMFuncRefSupport(): nameQualifier = %s \n",nameQualifier.str());
-                              printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
-                              printf ("In unparseMFuncRefSupport(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
-                           // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
-#endif
-#if 0
-                              SgFunctionCallExp* functionCallExpression = isSgFunctionCallExp(expr->get_parent());
-                              if (functionCallExpression != NULL)
-                                 {
-                                   printf ("Found the function call, global qualification is defined here functionCallExpression->get_global_qualified_name() = %s \n",
-                                        functionCallExpression->get_global_qualified_name() == true ? "true" : "false");
-                                   if (functionCallExpression->get_global_qualified_name() == true)
-                                      {
-                                        curprint ("::");
-                                      }
-                                 }
-#endif
                               curprint (nameQualifier.str());
-                           // curprint (nameQualifier.str() + " ";
 #error "DEAD CODE!"
                             }
                            else
                             {
-#if 0
-                              printf ("In unparseFuncRef(): No name qualification permitted in this case! \n");
-#endif
                             }
                        }
 #endif
@@ -4140,7 +4008,6 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
             // DQ (3/19/2015): For the case of the __offsetof() builtin function we have to avoid output of the structure (e.g. "(0*).field").
                if (functionNameString == "__offsetof" || functionNameString == "__builtin_offsetof")
                   {
-#if 1
                  // DQ (3/25/2015): Develop new way to supress output of "(0*)" in "(0*).field".
                  // This is the more general form required for test2013_104.c "offsetof(zip_header_t, formatted.extra_len)".
                     SgUnparse_Info info2(info);
@@ -4148,9 +4015,6 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
                     ROSE_ASSERT(info2.skipCompilerGeneratedSubExpressions() == true);
 
                     unparseExpression(expression,info2);
-#else
-#error "DEAD CODE!"
-#endif
                   }
                  else
                   {
@@ -8179,7 +8043,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if 0
   // DQ (5/11/2015): This is part of an overly sophisticated approach to control the use of "={}" syntax.
   // It is easier to just always normalize to the use of "={}" and then restrict specific cases where it is not allowed.
-
+#error "DEAD CODE!"
      if (isInitializer_AggregateInitializer == true)
         {
 #if DEBUG_DESIGNATED_INITIALIZER
@@ -8198,15 +8062,16 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                if (designatedInitializer != NULL)
                   {
 #if 1
+#error "DEAD CODE!"
                  // DQ (5/10/2015): This fails for test2015_85.c.
 #if DEBUG_DESIGNATED_INITIALIZER || 0
                     printf ("--- Before possible reset: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
                     printf ("--- Mark outputDesignatedInitializerAssignmentOperator as false since there is a nested SgDesignatedInitializer \n");
 #endif
+
 #if 0
-                 // DQ (5/10/2015): This code works for test2015_119.c, but fails for test2015_117.c.
-                    outputDesignatedInitializerAssignmentOperator = false;
 #else
+#error "DEAD CODE!"
                  // DQ (5/10/2015): Handle the different between test2015_119.c and test2015_117.c.
                     SgAggregateInitializer* nested_aggregateInitializer = isSgAggregateInitializer(designatedInitializer->get_memberInit());
                     SgAssignInitializer*    nested_assignInitializer    = isSgAssignInitializer(designatedInitializer->get_memberInit());
@@ -8229,23 +8094,14 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                     printf ("isArrayReference_outer      = %s \n",isArrayReference_outer ? "true" : "false");
                     printf ("isClassReference            = %s \n",isClassReference ? "true" : "false");
 #endif
-                 // For test2015_119.c: (nested_aggregateInitializer != NULL && nested_varRefExp != NULL)
-                 // For test2013_37.c: (nested_assignInitializer != NULL && nested_varRefExp == NULL)
+#error "DEAD CODE!"
 
-                 // if (nested_assignInitializer != NULL)
-                 // if (nested_aggregateInitializer != NULL)
-                 // if (nested_aggregateInitializer != NULL && nested_varRefExp != NULL)
-                 // if (nested_assignInitializer == NULL && nested_varRefExp != NULL)
-                 // if (nested_aggregateInitializer != NULL && nested_varRefExp == NULL)
-                 // if (nested_assignInitializer == NULL && nested_varRefExp != NULL)
 #if 1
-                 // DQ (5/10/2015): This is an overly complex rule, so we need a better one.  However, this will pass all regression tests.
-                 // if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true)
+#error "DEAD CODE!"
                     if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true ||
                          (nested_assignInitializer != NULL && nested_varRefExp != NULL && isClassReference == true && varRefExp == NULL) )
 #else
 #error "DEAD CODE!"
-                    if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true || isClassReference == true)
 #endif
                        {
 #if DEBUG_DESIGNATED_INITIALIZER
@@ -8256,6 +8112,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if DEBUG_DESIGNATED_INITIALIZER
                     printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
 #endif
+
 #endif
 #else
                  // DQ (4/11/2015): Testing for test2015_85.c.
@@ -8276,10 +8133,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      printf ("In unparseDesignatedInitializer: isInitializer_AggregateInitializer            = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
      printf ("In unparseDesignatedInitializer: isDataMemberDesignator                        = %s \n",isDataMemberDesignator ? "true" : "false");
      printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
-#endif
-
-#if 0
-     info.display("In unparseDesignatedInitializer()");
 #endif
 
   // DQ (5/11/2015): This needs to be defined outside of this conditional case so that it can be used to supress the output of the "={}" syntax.
@@ -8303,14 +8156,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
        // int x = (((union ABC { int __in; int __i; }) { .__in = 42 }).__i);
        // isInUnion = false;
 #if 0
-
 #error "DEAD CODE!"
-
-       // DQ (7/25/2013): We need to detect if this is in a function argument list.
-          if (info.SkipClassDefinition() == false)
-             {
-               isInUnion = false;
-             }
 #else
        // Comment out to process test2013_32.c
        // isInUnion = false;
@@ -8375,9 +8221,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      bool need_explicit_braces_in_aggregateInitializer = (aggregateInitializer != NULL && aggregateInitializer->get_need_explicit_braces());
 
 #if 0
-     printf ("In unparseDesignatedInitializer: Changed default value of need_explicit_braces in unparser (must be set correctly in AST) \n");
-
-     bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == true);
 #else
   // Variable used to control output of normalized syntax "={}".
      bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
@@ -8444,85 +8287,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 
 #else
 #error "DEAD CODE!"
-
-     bool outputDesignatedInitializer = (expr->get_startOfConstruct()->isCompilerGenerated() == false);
-     if (expr->get_startOfConstruct()->isCompilerGenerated() == true && expr->get_startOfConstruct()->isOutputInCodeGeneration() == false)
-        {
-          outputDesignatedInitializer = false;
-        }
-
-     printf ("Always output the designated initializer: outputDesignatedInitializer = %s (will be reset) \n",outputDesignatedInitializer ? "true" : "false");
-     outputDesignatedInitializer = true;
-
-     if (outputDesignatedInitializer == true)
-        {
-       // The SgDesignatedInitializer is generally compiler generated, but not always wanted as output (see test2012_74.c).
-          SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
-          const SgExpressionPtrList& designators = di->get_designatorList()->get_expressions();
-          for (size_t i = 0; i < designators.size(); ++i)
-             {
-               SgExpression* designator = designators[i];
-
-               printf ("In loop: designator = %p = %s \n",designator,designator->class_name().c_str());
-
-            // DQ (7/20/2013): Make up for incorrect handling of SgDesignatedInitializer in AST (as a test, then fix it properly if this works).
-               if (isSgExprListExp(designator) != NULL)
-                  {
-                    SgExprListExp* designatorList = isSgExprListExp(designator);
-                    ROSE_ASSERT(designatorList->get_expressions().size() == 1);
-                    designator = designatorList->get_expressions()[0];
-
-                    printf ("In loop (reset): designator = %p = %s \n",designator,designator->class_name().c_str());
-                  }
-
-               if (isSgVarRefExp(designator))
-                  {
-                 // A struct field
-                    curprint ( "." );
-                    unparseVarRef(designator, info);
-                  }
-                 else
-                  {
-                    if (isSgValueExp(designator))
-                       {
-                         curprint ( "[" );
-                         unparseValue(designator, info);
-                         curprint ( "]" );
-                         isArrayElementDesignator = true;
-                       }
-                  }
-             }
-
-       // check if the current designator is the last one within an aggregate initializer
-       // e.g. double grid[3] [4] = { [0][1]=8};
-       // [0] is not the last one, [1] is.  Only emit '=' after [1].
-       // The reference code is gen_designator() in cp_gen_be.c
-          if (isSgAggregateInitializer(expr->get_parent()->get_parent()))
-             {
-               SgInitializer* child_init = di->get_memberInit();
-               if (isSgAggregateInitializer(child_init))
-                  {
-                 // grab the first one
-                    SgExpression* grand_child = (isSgAggregateInitializer(child_init)->get_initializers()->get_expressions())[0];
-                    if (isSgDesignatedInitializer(grand_child))
-                         lastDesignator = false;
-                  }
-             }
-
-       // Don't emit '=' if it is an array element and is not the last designator
-          if ( !(isArrayElementDesignator && !lastDesignator) )
-             {
-               curprint (" = ");
-             }
-
-          unparseExpression(di->get_memberInit(), info);
-        }
-       else
-        {
-       // This is the case taken for the test2012_74.c test code.
-          SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
-          unparseExpression(di->get_memberInit(), info);
-        }
 #endif
    }
 
