@@ -52,7 +52,9 @@ Grammar::Grammar ( const string& inputGrammarName,
                    const string& inputPrefixName,
                    const string& inputGrammarNameBaseClass,
                    const Grammar* inputParentGrammar,
-                   const string& t_directory)
+                   const string& t_directory,
+                   const string& smallHeadersDir)
+    : smallHeadersDir(smallHeadersDir)
    {
 
   // Intialize some member data
@@ -1976,15 +1978,26 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file (each class in its own file)!
-     string fileExtension = ".h";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-     writeFile ( editedHeaderFileString, directoryName, node.getName(), fileExtension );
-#endif
-
-  // Also output strings to single file (this outputs everything to a single file)
+  // Output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
+
+     if (!smallHeadersDir.empty()
+#ifdef WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+         || true
+#endif
+         ) {
+         // Now write out the header file (each class in its own file)!
+         const std::string directoryName = smallHeadersDir.empty() ? target_directory + sourceCodeDirectoryName() : smallHeadersDir;
+         editedHeaderFileString.insert(editedHeaderFileString.begin(),
+                                       StringUtility::StringWithLineNumber("#ifndef ROSE_" + node.getName() + "_H\n"
+                                                                           "#define ROSE_" + node.getName() + "_H\n"
+                                                                           "#include <RoseFirst.h>\n"
+                                                                           "#include <Cxx_GrammarDeclarations.h>\n",
+                                                                           __FILE__, __LINE__));
+         editedHeaderFileString.push_back(StringUtility::StringWithLineNumber("#endif // ROSE_" + node.getName() + "_H",
+                                                                              __FILE__, __LINE__));
+         writeFile(editedHeaderFileString, directoryName, node.getName(), ".h");
+     }
 
      vector<AstNodeClass *>::iterator treeListIterator;
      for( treeListIterator = node.subclasses.begin(); treeListIterator != node.subclasses.end(); treeListIterator++ )

@@ -163,9 +163,10 @@ class Grammar
            */
           Grammar ( const std::string& inputGrammarName, 
                     const std::string& inputPrefixName,
-                    const std::string& inputGrammarNameBaseClass = "ROSE_BaseGrammar",
-                    const Grammar* parentGrammar = NULL,
-                    const std::string& t_directory = "");
+                    const std::string& inputGrammarNameBaseClass,
+                    const Grammar* parentGrammar,
+                    const std::string& t_directory,
+                    const std::string &smallHeadersDir);
          ~Grammar ();
 
      public:
@@ -176,6 +177,9 @@ class Grammar
 
           //The directory name we should generate the files to
           std::string target_directory;
+
+       // The optional directory for small headers
+          std::string smallHeadersDir;
 
           AstNodeClass* rootNode;
 

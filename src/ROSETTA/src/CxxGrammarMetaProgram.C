@@ -23,6 +23,7 @@ static const char *description =
 #include <vector>
 
 bool verbose = false;
+std::string smallHeadersDir;
 
 // Parse command-line, returning the positional (non-switch) arguments.
 static std::vector<std::string>
@@ -55,6 +56,12 @@ parseCommandLine(int argc, char *argv[]) {
     p.with(Switch("verbose", 'v')
            .intrinsicValue(true, verbose)
            .doc("Print some information to standard output as this generator runs."));
+
+    p.with(Switch("small-headers")
+           .argument("dir", anyParser(smallHeadersDir))
+           .doc("Generate a header file for each AST node type, and place those headers in the specified directory, which must "
+                "already exist. The header files are named according to the class name with a \".h\" extension. If @v{dir} "
+                "is the empty string then small header files are not created. The default is \"" + smallHeadersDir + "\"."));
 
     return p.parse(argc, argv).apply().unreachedArgs();
 }
@@ -89,7 +96,8 @@ main(int argc, char * argv[])
                            /* Prefix to names */ "Sg", 
                            /* Parent Grammar  */ "ROSE_BaseGrammar",
                            /* No parent Grammar */ NULL,
-                           target_directory 
+                           target_directory,
+                           smallHeadersDir
                            );
 
   // Build the header files and source files representing the
