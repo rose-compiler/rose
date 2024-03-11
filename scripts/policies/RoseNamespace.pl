@@ -260,6 +260,7 @@ my @extra_words = qw/
     dereference                 # act of obtaining a pointee from a pointer
     enum
     enums
+    hexdump			# the name of an established Unix tool reimplemented in ROSE
     i386                        # Intel 80386
     linux                       # an operating system kernel
     LLVM                        # the compiler technology
