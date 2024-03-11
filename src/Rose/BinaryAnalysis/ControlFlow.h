@@ -3,6 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/InstructionMap.h>
+
 #include "Map.h"
 #include "WorkLists.h"
 #include "SageBuilderAsm.h"

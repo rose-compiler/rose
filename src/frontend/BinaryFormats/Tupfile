@@ -5,7 +5,7 @@ ifneq (@(WITH_INTEL_PIN),no)
 endif
 
 SOURCES +=														\
-    BinaryComposite.C CilImpl.C CliHeader.C DataConversion.C ExtentMap.C Hexdump.C					\
+    BinaryComposite.C CilImpl.C CliHeader.C DataConversion.C ExtentMap.C						\
     GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C		\
     PeExport.C PeFileHeader.C PeImportDirectory.C PeImportItem.C							\
     PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C					\

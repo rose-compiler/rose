@@ -57,7 +57,9 @@ pkginclude_HEADERS =				\
 	ROSE_ABORT.h				\
 	ROSE_ASSERT.h                           \
 	ROSE_DEPRECATED.h			\
+	ROSE_NELMTS.h				\
 	ROSE_UNUSED.h				\
+	rose_extent.h				\
 	rose_getline.h				\
 	rose_isnan.h				\
 	rose_pragma_message.h			\

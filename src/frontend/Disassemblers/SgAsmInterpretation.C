@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::BinaryAnalysis;

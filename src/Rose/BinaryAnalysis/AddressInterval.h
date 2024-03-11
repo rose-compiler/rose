@@ -3,13 +3,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Sawyer/Interval.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
 /** An interval of addresses. */
-using AddressInterval = Sawyer::Container::Interval<rose_addr_t>;
+using AddressInterval = Sawyer::Container::Interval<Address>;
 
 } // namespace
 } // namespace

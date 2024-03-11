@@ -32,6 +32,7 @@ add_library(roseBinaryAnalysis OBJECT
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
+  Hexdump.C
   HotPatch.C
   InstructionCache.C
   InstructionProvider.C
@@ -67,8 +68,10 @@ add_dependencies(roseBinaryAnalysis rosetta_generated)
 
 install(FILES
   AbstractLocation.h
+  Address.h
   AddressInterval.h
   AddressIntervalSet.h
+  AddressSet.h
   Alignment.h
   AsmFunctionIndex.h
   AstHash.h
@@ -92,6 +95,7 @@ install(FILES
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h
+  Hexdump.h
   HotPatch.h
   InstructionCache.h
   InstructionEnumsAarch32.h
@@ -102,6 +106,7 @@ install(FILES
   InstructionEnumsMips.h
   InstructionEnumsPowerpc.h
   InstructionEnumsX86.h
+  InstructionMap.h
   InstructionProvider.h
   InstructionSemantics.h
   InstructionSemantics2.h

@@ -101,6 +101,8 @@ if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
 	Cxx_GrammarDeclarations.h \
+	Cxx_GrammarDowncast.h \
+	Cxx_GrammarStorageClasses.h \
 	Cxx_GrammarVariants.h \
 	Cxx_Grammar.C \
 	Cxx_GrammarMemoryPoolSupport.C \
@@ -125,6 +127,8 @@ else
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
 	Cxx_GrammarDeclarations.h \
+	Cxx_GrammarDowncast.h \
+	Cxx_GrammarStorageClasses.h \
 	Cxx_GrammarVariants.h \
 	Cxx_Grammar.C \
 	Cxx_GrammarRTI.C \
@@ -321,6 +325,8 @@ pkginclude_HEADERS = \
 nodist_pkginclude_HEADERS = \
    Cxx_Grammar.h \
    Cxx_GrammarDeclarations.h \
+   Cxx_GrammarDowncast.h \
+   Cxx_GrammarStorageClasses.h \
    Cxx_GrammarVariants.h \
    Cxx_GrammarMemoryPoolSupport.h \
    Cxx_GrammarTreeTraversalAccessEnums.h \

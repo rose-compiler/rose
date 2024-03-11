@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>

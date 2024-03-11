@@ -724,6 +724,8 @@ CxxGrammarMetaProgram_GENHDR = \
  $(ROSE)/src/ROSETTA/src/AstSpecificDataManagingClass.h \
  $(ROSE)/src/ROSETTA/src/Cxx_Grammar.h \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarDeclarations.h \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarDowncast.h \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarStorageClasses.h \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarVariants.h \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarMemoryPoolSupport.h \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarSerialization.h \

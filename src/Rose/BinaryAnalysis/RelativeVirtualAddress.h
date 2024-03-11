@@ -128,6 +128,9 @@ public:
 } // namespace
 } // namespace
 
+// Old name used from 2008-2024
+using rose_rva_t = Rose::BinaryAnalysis::RelativeVirtualAddress;
+
 std::ostream &operator<<(std::ostream&, const Rose::BinaryAnalysis::RelativeVirtualAddress&);
 
 rose_addr_t operator-(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1,

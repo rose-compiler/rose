@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 #include "AssemblerX86.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 #include <Rose/FileSystem.h>
@@ -1667,8 +1668,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         hf.prefix = "            ";
         hf.width = 16;
         hf.pad_numeric = hf.show_chars = false;
-        SgAsmExecutableFileFormat::hexdump(p_debug, insn->get_address(),  &(insn->get_rawBytes()[0]),
-                                           insn->get_size(), hf);
+        hexdump(p_debug, insn->get_address(),  &(insn->get_rawBytes()[0]), insn->get_size(), hf);
         fprintf(p_debug, " | %s\n", unparseInstruction(insn).c_str());
 #if 0 /*DEBUGGING*/
         fprintf(p_debug, "  baseSize=%d, operandSize=%d\n", 
@@ -1712,7 +1712,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
             hf.addr_fmt = "";
             hf.width = 16;
             hf.pad_numeric = hf.show_chars = false;
-            SgAsmExecutableFileFormat::hexdump(p_debug, 0, &(s[0]), s.size(), hf);
+            hexdump(p_debug, 0, &(s[0]), s.size(), hf);
             fprintf(p_debug, "\n");
         }
 

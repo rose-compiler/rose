@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
@@ -518,7 +519,7 @@ ConcolicExecutor::run() {
             } else {
                 mlog[FATAL] <<"no executable memory mapped at " <<StringUtility::addrToString(executionVa) <<"\n";
                 mlog[FATAL] <<StringUtility::plural(buf.size(), "bytes") <<" starting at this address:\n";
-                SgAsmExecutableFileFormat::hexdump(mlog[FATAL], executionVa, "  ", buf, true);
+                hexdump(mlog[FATAL], executionVa, "  ", buf, true);
             }
             ASSERT_not_reachable("terminating due to prior error");
         }

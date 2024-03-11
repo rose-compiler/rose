@@ -3,6 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/Diagnostics.h>
 #include "stringify.h"
 
@@ -561,7 +562,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSectionTableEntry.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     
     fprintf(f, "%s%-*s = %u bytes into strtab\n",                      p, w, "sh_name",        p_sh_name);
     fprintf(f, "%s%-*s = 0x%x (%d) %s\n",                              p, w, "sh_type", 
@@ -576,7 +577,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",       p, w, "sh_entsize",     p_sh_entsize, p_sh_entsize);
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_extra.size());
-        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
 
@@ -674,7 +675,7 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     SgAsmGenericSection::dump(f, p, -1);
 
     if (variantT() == V_SgAsmElfSectionTable) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 #endif

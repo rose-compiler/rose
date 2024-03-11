@@ -6902,6 +6902,7 @@ $CLASSNAME::createType ( SgType* base_type, SgType *class_type, SgExpression* op
 SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE_START
+#define ROSE_INTEGER_TYPE_MAX_BIT_LENGTH 32
 const int SgTypeInt::maxBitLength = ROSE_INTEGER_TYPE_MAX_BIT_LENGTH;
 // DQ (1/31/2006): Modified to build all types in the memory pools
 // SgTypeInt SgTypeInt::builtin_type[maxBitLength];

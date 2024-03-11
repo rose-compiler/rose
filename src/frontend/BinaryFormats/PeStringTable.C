@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/Diagnostics.h>
 
 using namespace Rose;

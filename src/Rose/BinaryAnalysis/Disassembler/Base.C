@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/Diagnostics.h>
 

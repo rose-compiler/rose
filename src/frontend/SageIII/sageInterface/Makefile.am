@@ -7,33 +7,39 @@ AM_CPPFLAGS += $(JAVA_JVM_INCLUDE)
 endif
 
 noinst_LTLIBRARIES = libsageInterface.la
-libsageInterface_la_SOURCES      = \
-     sageInterface.h \
-     sageInterface.C \
-     sageInterfaceAda.h \
-     sageInterfaceAda.C \
-     sageInterface_type.C \
-     generateUniqueName.C \
-     sageBuilder.h \
-     sageBuilder.C \
-     sageBuilder_fortran.C \
-     abiStuff.C \
-     sageInterfaceAsm.C \
-     sageInterface_asm.C \
-     SageBuilderAsm.C
+libsageInterface_la_SOURCES      =		\
+     abiStuff.C					\
+     generateUniqueName.C			\
+     SageBuilderAsm.C				\
+     sageBuilder.C				\
+     sageBuilder_fortran.C			\
+     sageBuilder.h				\
+     sageInterfaceAda.C				\
+     sageInterfaceAda.h				\
+     sageInterface_asm.C			\
+     sageInterfaceAsm.C				\
+     sageInterface.C				\
+     sageInterface.h				\
+     sageInterface_type.C
 
 libsageInterface_la_LIBADD       =
 libsageInterface_la_DEPENDENCIES =
 
-pkginclude_HEADERS = \
-     sageInterface.h \
-     sageInterfaceAda.h \
-     sageBuilder.h \
-     sageGeneric.h \
-     sageFunctors.h \
-     integerOps.h \
-     abiStuff.h \
-     sageInterfaceAsm.h \
-     SageBuilderAsm.h
+pkginclude_HEADERS =				\
+     abiStuff.h					\
+     integerOps.h				\
+     SageBuilderAsm.h				\
+     sageBuilder.h				\
+     sageContainer.h				\
+     sageCopy.h					\
+     sageFunctors.h				\
+     sageGeneric.h				\
+     sageHash.h					\
+     sageInterfaceAda.h				\
+     sageInterfaceAsm.h				\
+     sageInterface.h				\
+     sageMemory.h				\
+     sageRti.h					\
+     sageTraversal.h
 
 EXTRA_DIST = CMakeLists.txt

@@ -6,6 +6,7 @@
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
@@ -557,8 +558,7 @@ AsmUnparser::InsnRawBytes::operator()(bool enabled, const InsnArgs &args)
     if (enabled) {
         HexdumpFormat tmp_fmt = fmt;
         tmp_fmt.addr_fmt = args.unparser->get_prefix_format();
-        SgAsmExecutableFileFormat::hexdump(args.output, args.insn->get_address(), &(args.insn->get_rawBytes()[0]),
-                                           args.insn->get_size(), tmp_fmt);
+        hexdump(args.output, args.insn->get_address(), &(args.insn->get_rawBytes()[0]), args.insn->get_size(), tmp_fmt);
     }
     return enabled;
 }
@@ -948,8 +948,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
         if (!tmp_fmt.multiline)
             args.output <<tmp_fmt.prefix;
 
-        SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_rawBytes()[0]),
-                                           args.data->get_size(), tmp_fmt);
+        hexdump(args.output, start_address, &(args.data->get_rawBytes()[0]), args.data->get_size(), tmp_fmt);
         if (addr_fmt != NULL)
             free(addr_fmt);
     }

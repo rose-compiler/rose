@@ -10,6 +10,8 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/AstQueryMemoryPool.h  
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_Grammar.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarDeclarations.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarDowncast.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarStorageClasses.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarVariants.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h
    )

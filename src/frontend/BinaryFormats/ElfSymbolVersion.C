@@ -16,6 +16,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
+
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
 #if defined(__GNUC__) && __GNUC__ >= 9
@@ -50,7 +52,7 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSymver.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
   
     fprintf(f, "%s%-*s = %" PRIuPTR "", p, w, "", p_value);
     switch (p_value) {
@@ -142,7 +144,7 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSymverSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
   
     SgAsmElfSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "entries.size", p_entries->get_entries().size());
@@ -151,7 +153,7 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
   
     if (variantT() == V_SgAsmElfSymverSection) /*unless a base class*/
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 /*========================================================================================================================
@@ -188,7 +190,7 @@ SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSymverDefinedAux.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
   
     fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->get_string(true).c_str());
 }
@@ -247,7 +249,7 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSymverDefinedEntry.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     /* compact one-line-per-entry format */
     if (0==idx)
@@ -421,7 +423,7 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
     } else {
         snprintf(p, sizeof(p), "%sElfSymverDefinedSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
   
     SgAsmElfSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "ElfSymverDefined.size", p_entries->get_entries().size());
@@ -430,7 +432,7 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
     }
   
     if (variantT() == V_SgAsmElfSymverDefinedSection) /*unless a base class*/
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 /*========================================================================================================================
@@ -465,7 +467,7 @@ SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSymverNeededAux.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
     fprintf(f, "%s%-*s = %04zx\n", p, w, "other", get_other());
     fprintf(f, "%s%-*s = 0x%08x\n", p, w, "hash", get_hash());
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags", get_flags());
@@ -542,7 +544,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSymverNeededEntry.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     /* compact one-line-per-entry format */
     if (0==idx)
@@ -726,7 +728,7 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
     } else {
         snprintf(p, sizeof(p), "%sElfSymverNeededSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
   
     SgAsmElfSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "ElfSymverNeeded.size", p_entries->get_entries().size());
@@ -735,7 +737,7 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
     }
   
     if (variantT() == V_SgAsmElfSymverNeededSection) /*unless a base class*/
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 SgAsmGenericString*

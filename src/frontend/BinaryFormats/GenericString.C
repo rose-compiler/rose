@@ -83,7 +83,7 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sBasicString.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string(true).c_str());
 }
     
@@ -164,7 +164,7 @@ SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sStoredString.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     
     fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)get_storage());
     if (get_storage())
@@ -188,7 +188,7 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sStringStorage.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     
     fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
     SgAsmGenericStrtab *strtab = get_strtab();
@@ -430,7 +430,7 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sStrtab.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     
     if (container) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "container",

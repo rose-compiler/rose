@@ -3,6 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include "stringify.h"
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
@@ -121,7 +122,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     } else {
         snprintf(p, sizeof(p), "%sElfRelocEntry", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     /* compact one-line-per-reloc format */
     if (0==idx) {
@@ -168,7 +169,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     /* Auxiliary data */
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, ".extra", p_extra.size());
-        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
 
@@ -327,7 +328,7 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sRelocSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmElfSection::dump(f, p, -1);
     SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_linkedSection());
@@ -346,7 +347,7 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     if (variantT() == V_SgAsmElfRelocSection) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 bool

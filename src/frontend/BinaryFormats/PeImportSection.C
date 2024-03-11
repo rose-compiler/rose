@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
 
@@ -229,7 +230,7 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sPEImportSection.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmPESection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "ndirectories", p_importDirectories->get_vector().size());
@@ -237,7 +238,7 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_importDirectories->get_vector()[i]->dump(f, p, i);
 
     if (variantT() == V_SgAsmPEImportSection) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 SgAsmPEImportDirectoryList*

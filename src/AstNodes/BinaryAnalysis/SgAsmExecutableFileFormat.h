@@ -312,37 +312,6 @@ public:
      *  This is called automatically by @ref Rose::initialize. */
     static void initDiagnostics();
 
-    /** Display binary data.
-     *
-     *  This function displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric
-     *  byte values, character byte values.  The format of the output is configurable through the HexdumpFormat
-     *  argument. There are other versions that output containers of data.  The hexdump comes in three flavors: output to a
-     *  C++ stream, output to a C FILE, and output to an std::string.  The FILE and string versions are implemented in
-     *  terms of the stream version.
-     *
-     * @{ */
-    static void hexdump(std::ostream&, rose_addr_t base_addr, const unsigned char *data, size_t data_sz,
-                        const HexdumpFormat&);
-    static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
-                        bool multiline=true);
-    static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
-                        bool multiline=true);
-
-    // Same, but returning a string instead.
-    static std::string hexdump(rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-    static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
-                               bool multiline=true);
-    static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
-                               bool multiline=true);
-
-    // Same, but output to a FILE* instead.
-    static void hexdump(FILE*, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-    static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
-                        bool multiline=true);
-    static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
-                        bool multiline=true);
-    /** @} */
-
     // These convert enums to strings. It is better to use the automatic enum stringification instead. They have names like
     // Rose::stringifySgAsmExecutableFileFormatInsnSetArchitecture, etc. */
     static std::string isaFamilyToString(SgAsmExecutableFileFormat::InsSetArchitecture);

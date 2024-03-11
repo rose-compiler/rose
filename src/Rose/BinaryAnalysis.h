@@ -2,8 +2,10 @@
 #define ROSE_BinaryAnalysis_H
 
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/AddressSet.h>
 #include <Rose/BinaryAnalysis/Alignment.h>
 #include <Rose/BinaryAnalysis/Architecture.h>
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
@@ -29,6 +31,7 @@
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
 #include <Rose/BinaryAnalysis/InstructionCache.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
@@ -39,6 +42,7 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>

@@ -4,7 +4,9 @@
 #include "sage3basic.h"
 
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <ROSE_NELMTS.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
@@ -378,14 +380,14 @@ SgAsmElfFileHeader::get_segmentTableSections()
 void *
 SgAsmElfFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32FileHeader_disk *disk) const
 {
-    ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
-    for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
+    ROSE_ASSERT(p_magic.size() == ROSE_NELMTS(disk->e_ident_magic));
+    for (size_t i=0; i<ROSE_NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_ident_file_version, &(disk->e_ident_file_version));
-    ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
-    for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
+    ROSE_ASSERT(p_e_ident_padding.size() == ROSE_NELMTS(disk->e_ident_padding));
+    for (size_t i=0; i<ROSE_NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_type, &(disk->e_type));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_machine, &(disk->e_machine));
@@ -425,14 +427,14 @@ SgAsmElfFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf3
 void *
 SgAsmElfFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64FileHeader_disk *disk) const
 {
-    ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
-    for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
+    ROSE_ASSERT(p_magic.size() == ROSE_NELMTS(disk->e_ident_magic));
+    for (size_t i=0; i < ROSE_NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_ident_file_version,&(disk->e_ident_file_version));
-    ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
-    for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
+    ROSE_ASSERT(p_e_ident_padding.size() == ROSE_NELMTS(disk->e_ident_padding));
+    for (size_t i=0; i<ROSE_NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_type, &(disk->e_type));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_machine, &(disk->e_machine));
@@ -586,7 +588,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfFileHeader.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     const char *class_s = 1==p_e_ident_file_class ? " (32-bit)" :
@@ -618,7 +620,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     if (variantT() == V_SgAsmElfFileHeader) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 const char*

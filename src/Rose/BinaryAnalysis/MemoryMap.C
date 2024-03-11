@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FileSystem.h>
 #include <rose_getline.h>
@@ -562,14 +563,14 @@ MemoryMap::adjustMap(const std::string &locatorString) {
                 rose_addr_t nRemain = selected.size();
                 rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
                 if (nLeader != 16) {
-                    SgAsmExecutableFileFormat::hexdump(out, va, data, nLeader, fmt);
+                    hexdump(out, va, data, nLeader, fmt);
                     va += nLeader;
                     data += nLeader;
                     nRemain -= nLeader;
                     out <<"\n";
                 }
                 if (nRemain > 0) {
-                    SgAsmExecutableFileFormat::hexdump(out, va, data, nRemain, fmt);
+                    hexdump(out, va, data, nRemain, fmt);
                     out <<"\n";
                 }
                 if (selected.greatest() == region.greatest())

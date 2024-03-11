@@ -32,6 +32,23 @@ SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, S
 #include "ClassHierarchyGraph.h"
 #endif
 
+// DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
+// using values that overflow signed values of int.
+// DQ (1/2/2006): Support for computing the total number of IR nodes in use within an AST
+// computation is done based on the memory pools (so it is exact).
+// int numberOfNodes();
+// int memoryUsage();
+ROSE_DLL_API size_t numberOfNodes();
+ROSE_DLL_API size_t memoryUsage();
+
+// DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
+ROSE_DLL_API std::string globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = nullptr );
+
+// DQ: These functions are used by soem specific STL containers to connect the unparser (in ROSE) to the AST (mostly for name qualification).
+// DQ (9/13/2014): Added support for more general unparsing of STL containers of IR nodes (at least these).
+ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer = nullptr );
+ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateArgumentPtrList* templateArgumentList, SgUnparse_Info* inputUnparseInfoPointer = nullptr );
+
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
 ROSE_DLL_API std::string getVariantName (VariantT v);

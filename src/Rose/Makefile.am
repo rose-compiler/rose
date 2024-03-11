@@ -134,6 +134,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/FeasiblePath.C							\
 	BinaryAnalysis/FunctionCall.C							\
 	BinaryAnalysis/FunctionSimilarity.C						\
+	BinaryAnalysis/Hexdump.C							\
 	BinaryAnalysis/HotPatch.C							\
 	BinaryAnalysis/InstructionCache.C						\
 	BinaryAnalysis/InstructionProvider.C						\

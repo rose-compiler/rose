@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
@@ -26,9 +27,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
-
-/** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
-typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
 /** Virtual base class for instruction disassemblers.
  *

@@ -4,6 +4,7 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include "stringify.h"
 
 using namespace Rose;
@@ -117,7 +118,7 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
     std::set<rose_addr_t> callee_vas;
     if (interp) {
-        const InstructionMap &imap = interp->get_instructionMap();
+        const BinaryAnalysis::InstructionMap &imap = interp->get_instructionMap();
         const SgAsmIntegerValuePtrList &successors = get_successors();
         for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = (*si)->get_absoluteValue();

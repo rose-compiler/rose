@@ -8,6 +8,7 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/CommandLine.h>
@@ -162,14 +163,14 @@ public:
         // out some stuff to get the rest aligned if necessary.
         rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
         if (nLeader != 16) {
-            SgAsmExecutableFileFormat::hexdump(stream, va, data, nLeader, fmt_);
+            hexdump(stream, va, data, nLeader, fmt_);
             va += nLeader;
             data += nLeader;
             nRemain -= nLeader;
             stream <<"\n";
         }
 
-        SgAsmExecutableFileFormat::hexdump(stream, va, data, nRemain, fmt_);
+        hexdump(stream, va, data, nRemain, fmt_);
         stream <<"\n";
     }
 };

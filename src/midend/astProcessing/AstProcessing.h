@@ -7,7 +7,7 @@
 #define ROSE_SYNTHESIZED 1
 #define ROSE_BOTH 2
 
-
+typedef enum {preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "staticCFG.h"

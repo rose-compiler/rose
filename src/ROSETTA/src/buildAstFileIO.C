@@ -150,24 +150,19 @@ Grammar::getListOfAbstractClasses()
 //#############################################################################
 /* JH (10/25/2005): This covers the forward decalration of the 
  * StorageClasses placed in the beginning of the file "Cxx_Grammar.h".
-*/
-string 
-Grammar::buildStorageClassDeclarations()
-   { 
-     std::string nodeNameString;
-     std::string declareStorageClasses;
-     declareStorageClasses += "// JH (01/18/2006) Forward declarations for the StorageClasses,"\
-                              " needed by the ast file i/o\n\n";
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i]->name;
-          declareStorageClasses += "  class " + nodeNameString + "StorageClass; \n";
-        }
-     declareStorageClasses += "\n  template <class A>\n  class EasyStorage;";
-     declareStorageClasses += "\n  class AstSpecificDataManagingClass;\n";
-     declareStorageClasses += "\n// ***** end of storage classes declarations **********\n\n";
-     return declareStorageClasses;
-   }
+ * JH (01/18/2006) Forward declarations for the StorageClasses, needed by the ast file i/o\n";
+ */
+void
+Grammar::emitStorageClassDeclarations(std::ostream &out) const {
+    for (const auto &terminal: terminalList)
+        out <<"class " <<terminal->name <<"StorageClass;\n";
+
+    out <<"\n"
+        <<"template <class A>\n"
+        <<"class EasyStorage;\n"
+        <<"\n"
+        <<"class AstSpecificDataManagingClass;\n";
+}
 
 //#############################################################################
 /* JH (10/25/2005): Method that builds the AST_FILE_IO.h contents. However, 

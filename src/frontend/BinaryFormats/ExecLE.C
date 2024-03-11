@@ -3,6 +3,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <ROSE_NELMTS.h>
+
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
 #if defined(__GNUC__) && __GNUC__ >= 9
@@ -185,7 +187,7 @@ SgAsmLEFileHeader::isLe(SgAsmGenericFile *file)
 void *
 SgAsmLEFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, LEFileHeader_disk *disk) const
 {
-    for (size_t i=0; i<NELMTS(disk->e_magic); i++)
+    for (size_t i=0; i<ROSE_NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
     hostToDisk(sex, p_e_byte_order,             &(disk->e_byte_order));
     hostToDisk(sex, p_e_word_order,             &(disk->e_word_order));
@@ -297,7 +299,7 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%s%sFileHeader.", prefix, formatName());
     }
 
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_byte_order",             p_e_byte_order);
@@ -442,7 +444,7 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sPageTableEntry.", prefix);
     }
 
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags",  p_flags);
     fprintf(f, "%s%-*s = %u\n",     p, w, "pageno", p_pageno);
@@ -549,7 +551,7 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sLESectionTableEntry.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "mapped_size",      p_mappedSize);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",   p, w, "base_addr",        p_baseAddr);
@@ -805,7 +807,7 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sLENameTable.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
@@ -868,7 +870,7 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sEntryPoint.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = 0x%02x",    p, w, "flags",        p_flags);
     if (p_flags & 0x01)
@@ -959,7 +961,7 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%s%sEntryTable.", prefix, get_header()->formatName());
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "size", p_entries.size());
@@ -1020,7 +1022,7 @@ SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%s%sRelocTable.", prefix, get_header()->formatName());
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "size", p_entries.size());

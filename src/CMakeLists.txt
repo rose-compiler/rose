@@ -50,6 +50,8 @@ set(ROSETTA_HEADERS
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/AstQueryMemoryPool.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_Grammar.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarDeclarations.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarDowncast.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarStorageClasses.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVariants.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h

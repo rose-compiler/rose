@@ -7,6 +7,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/Diagnostics.h>
 
 using namespace Rose;
@@ -123,7 +124,7 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sCIE.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = %d\n", p, w, "version", get_version());
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "augStr", get_augmentation_string().c_str());
@@ -145,7 +146,7 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (get_instructions().size()>0) {
         fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "instructions",
                 get_instructions().size(), get_instructions().size());
-        hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
     }
     for (size_t i=0; i<get_fd_entries()->get_entries().size(); i++) {
         SgAsmElfEHFrameEntryFD *fde = get_fd_entries()->get_entries()[i];
@@ -232,16 +233,16 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sFDE.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().toString().c_str());
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n", p, w, "size", get_size(), get_size());
     fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "aug_data",
             get_augmentation_data().size(), get_augmentation_data().size());
-    hexdump(f, 0, std::string(p)+"data at ", get_augmentation_data());
+    Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", get_augmentation_data());
     fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "instructions",
             get_instructions().size(), get_instructions().size());
-    hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
+    Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }
 
 SgAsmElfEHFrameSection::SgAsmElfEHFrameSection(SgAsmElfFileHeader *fhdr)

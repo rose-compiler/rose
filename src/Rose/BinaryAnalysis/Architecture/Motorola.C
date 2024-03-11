@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Motorola.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>

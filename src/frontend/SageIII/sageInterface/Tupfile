@@ -1,8 +1,30 @@
 include_rules
 
-run $(librose_compile) sageInterface.C sageInterface_type.C generateUniqueName.C sageBuilder.C sageBuilder_fortran.C \
-    abiStuff.C sageInterfaceAsm.C sageInterface_asm.C SageBuilderAsm.C sageInterfaceAda.C
+run $(librose_compile)				\
+    abiStuff.C					\
+    generateUniqueName.C			\
+    SageBuilderAsm.C				\
+    sageBuilder.C				\
+    sageBuilder_fortran.C			\
+    sageInterfaceAda.C				\
+    sageInterface_asm.C				\
+    sageInterfaceAsm.C				\
+    sageInterface.C				\
+    sageInterface_type.C
 
-run $(public_header) sageInterface.h sageBuilder.h sageGeneric.h sageFunctors.h integerOps.h abiStuff.h \
-    sageInterfaceAsm.h SageBuilderAsm.h sageInterfaceAda.h
-
+run $(public_header)				\
+    abiStuff.h					\
+    integerOps.h				\
+    SageBuilderAsm.h				\
+    sageBuilder.h				\
+    sageContainer.h				\
+    sageCopy.h					\
+    sageFunctors.h				\
+    sageGeneric.h				\
+    sageHash.h					\
+    sageInterfaceAda.h				\
+    sageInterfaceAsm.h				\
+    sageInterface.h				\
+    sageMemory.h				\
+    sageRti.h					\
+    sageTraversal.h

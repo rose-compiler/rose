@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 class SgAsmInstruction;
@@ -401,7 +402,7 @@ public:
      *  set_prefix_format(). See class HexdumpFormat for how to configure the hex dumper. */
     class InsnRawBytes: public UnparserCallback {
     public:
-        HexdumpFormat fmt;
+        Rose::BinaryAnalysis::HexdumpFormat fmt;
         InsnRawBytes() {
             fmt.width = 8;              /* Max instruction bytes per line of output. */
             fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */
@@ -554,7 +555,7 @@ public:
         bool show_address;              /* Should we show the address in the left margin? */
         bool show_offset;               /* If show_address is true, then should we display START+OFFSET or just an address? */
 
-        HexdumpFormat fmt;
+        Rose::BinaryAnalysis::HexdumpFormat fmt;
         StaticDataRawBytes() {
             show_address = true;
             show_offset = false;

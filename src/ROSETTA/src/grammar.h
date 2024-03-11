@@ -319,12 +319,13 @@ class Grammar
           void buildRTIFile(AstNodeClass* rootNode, Rose::StringUtility::FileWithLineNumbers& rttiFile);
           Rose::StringUtility::FileWithLineNumbers buildVariants ();
           void emitForwardDeclarations(std::ostream&) const;
-          Rose::StringUtility::FileWithLineNumbers buildForwardDeclarations ();
+          void emitIsaDeclarations(std::ostream&);
 
        // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
           void buildVariantsStringPrototype ( Rose::StringUtility::FileWithLineNumbers & outputFile );
           void buildVariantsStringDataBase ( Rose::StringUtility::FileWithLineNumbers & outputFile );
 
+          void buildClassDefinition(AstNodeClass&, Rose::StringUtility::FileWithLineNumbers&);
           void buildHeaderFiles ( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
 
           std::string buildStringForPrototypes( AstNodeClass & node );
@@ -674,7 +675,7 @@ class Grammar
           void buildStorageClassHeaderFiles ( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
           void buildIRNodeConstructorOfStorageClassSource ( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
           std::string buildStringForStorageClassSource ( AstNodeClass & node );
-          std::string buildStorageClassDeclarations ( );
+          void emitStorageClassDeclarations(std::ostream&) const;
 
        // DQ (4/6/2006): Added in Jochen's new version
           std::string buildStaticDataMemberListClassEntries( AstNodeClass & node);

@@ -13405,6 +13405,7 @@ IS_SERIALIZABLE(AsmInterpretation);
 DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #endif // SgAsmInterpretation_HEADERS
 
@@ -13503,7 +13504,7 @@ public:
     // ROSETTA doesn't understand this type, but we want it serialized. Therfore, we'll define it as a property, but we'll
     // supply our own accessor and no mutator.
 private:
-    mutable InstructionMap instruction_map;
+    mutable Rose::BinaryAnalysis::InstructionMap instruction_map;
 
 public:
     /** Property: Cached map of instructions by address.
@@ -13513,10 +13514,10 @@ public:
      *  map. No attempt is made to make sure that the map is up-to-date with respect to the current state of the AST.
      *
      *  @{ */
-         // cached instruction map
+ // cached instruction map
 
-    InstructionMap& get_instructionMap(bool recompute = false);
-    void set_instructionMap(const InstructionMap&);
+    Rose::BinaryAnalysis::InstructionMap& get_instructionMap(bool recompute = false);
+    void set_instructionMap(const Rose::BinaryAnalysis::InstructionMap&);
     /** @} */
 public:
     /** Property: code coverage percent.
@@ -13550,14 +13551,14 @@ public:
     /** Populate a map of instructions indexed by their virtual addresses.
      *
      *  This function traverses the AST rooted at the @ref globalBlock and inserts each encountered instruction into the provided
-     *  @ref InstructionMap based on its starting virtual address. */
-    void insertInstructions(InstructionMap&/*in,out*/);
+     *  @ref Rose::BinaryAnalysis::InstructionMap based on its starting virtual address. */
+    void insertInstructions(Rose::BinaryAnalysis::InstructionMap&/*in,out*/);
 
     /** Erase instructions from a map.
      *
      *  This function traverses the AST rooted at the @ref globalBlock and erases each encountered instruction from the provided
-     *  @ref InstructionMap based on its starting virtual address. */
-    void eraseInstructions(InstructionMap&/*in,out*/);
+     *  @ref Rose::BinaryAnalysis::InstructionMap based on its starting virtual address. */
+    void eraseInstructions(Rose::BinaryAnalysis::InstructionMap&/*in,out*/);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -13565,10 +13566,10 @@ public:
 public:
     SgAsmBlock* get_global_block() const ROSE_DEPRECATED("use get_globalBlock");
     void set_global_block(SgAsmBlock*) ROSE_DEPRECATED("use set_globalBlock");
-    InstructionMap& get_instruction_map(bool=false) ROSE_DEPRECATED("use get_instructionMap");
-    void set_instruction_map(const InstructionMap&) ROSE_DEPRECATED("use set_instructionMap");
-    void insert_instructions(InstructionMap&) ROSE_DEPRECATED("use insertInstructions");
-    void erase_instructions(InstructionMap&) ROSE_DEPRECATED("use eraseInstructions");
+    Rose::BinaryAnalysis::InstructionMap& get_instruction_map(bool=false) ROSE_DEPRECATED("use get_instructionMap");
+    void set_instruction_map(const Rose::BinaryAnalysis::InstructionMap&) ROSE_DEPRECATED("use set_instructionMap");
+    void insert_instructions(Rose::BinaryAnalysis::InstructionMap&) ROSE_DEPRECATED("use insertInstructions");
+    void erase_instructions(Rose::BinaryAnalysis::InstructionMap&) ROSE_DEPRECATED("use eraseInstructions");
 public:
     /** Destructor. */
     virtual ~SgAsmInterpretation();
@@ -40128,37 +40129,6 @@ public:
      *  This is called automatically by @ref Rose::initialize. */
     static void initDiagnostics();
 
-    /** Display binary data.
-     *
-     *  This function displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric
-     *  byte values, character byte values.  The format of the output is configurable through the HexdumpFormat
-     *  argument. There are other versions that output containers of data.  The hexdump comes in three flavors: output to a
-     *  C++ stream, output to a C FILE, and output to an std::string.  The FILE and string versions are implemented in
-     *  terms of the stream version.
-     *
-     * @{ */
-    static void hexdump(std::ostream&, rose_addr_t base_addr, const unsigned char *data, size_t data_sz,
-                        const HexdumpFormat&);
-    static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
-                        bool multiline=true);
-    static void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
-                        bool multiline=true);
-
-    // Same, but returning a string instead.
-    static std::string hexdump(rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-    static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
-                               bool multiline=true);
-    static std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
-                               bool multiline=true);
-
-    // Same, but output to a FILE* instead.
-    static void hexdump(FILE*, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-    static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data,
-                        bool multiline=true);
-    static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
-                        bool multiline=true);
-    /** @} */
-
     // These convert enums to strings. It is better to use the automatic enum stringification instead. They have names like
     // Rose::stringifySgAsmExecutableFileFormatInsnSetArchitecture, etc. */
     static std::string isaFamilyToString(SgAsmExecutableFileFormat::InsSetArchitecture);
@@ -41002,7 +40972,7 @@ private:
             s & BOOST_SERIALIZATION_NVP(n);
         }
 #endif
-};
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties

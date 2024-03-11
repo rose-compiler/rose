@@ -16,7 +16,7 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p),"%sFormat.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     
     fprintf(f, "%s%-*s = %s\n", p, w, "family", toString(get_family()).c_str());
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", toString(get_purpose()).c_str());

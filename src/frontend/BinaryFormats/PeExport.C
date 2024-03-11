@@ -3,6 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
@@ -79,7 +80,7 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sPEExportDirectory.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = \"%s\"\n",                    p, w, "name", p_name->get_string(true).c_str());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "res1", p_res1, p_res1);
@@ -119,7 +120,7 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sPEExportEntry.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = [ordinal raw=%u", p, w, "info", p_ordinal);
     if (auto ordinal = biasedOrdinal()) {

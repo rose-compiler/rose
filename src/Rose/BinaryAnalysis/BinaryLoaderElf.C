@@ -493,7 +493,7 @@ BinaryLoaderElf::VersionedSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         snprintf(p, sizeof(p), "%sVersionedSymbol.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", getName().c_str());
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "version", getVersion().c_str());
     fprintf(f, "%s%-*s =%s%s%s%s\n", p, w, "attributes",

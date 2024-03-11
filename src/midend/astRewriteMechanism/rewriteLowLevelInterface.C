@@ -1316,6 +1316,10 @@ appendPrependTreeFragment (
        // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %" PRIuPTR " \n",parentStatementList.size());
 
 #if 0
+
+// Turn on internal debugging by default during development
+#define SAGE_INTERNAL_DEBUG
+
 #ifdef SAGE_INTERNAL_DEBUG
        // error checking
           if ( SAGE_DEBUG > -1 )

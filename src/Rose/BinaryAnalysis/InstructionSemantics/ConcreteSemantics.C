@@ -3,8 +3,11 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
+
 #include <rose_isnan.h>
 #include "integerOps.h"
+
 #include "SageBuilderAsm.h"
 #include <Sawyer/BitVectorSupport.h>
 
@@ -202,7 +205,7 @@ MemoryState::print(std::ostream &out, Formatter &fmt) const {
             HexdumpFormat hdFmt;
             hdFmt.prefix = fmt.get_line_prefix();
             out <<fmt.get_line_prefix();
-            SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, hdFmt);
+            hexdump(out, pageVa, (const unsigned char*)page, pageSize_, hdFmt);
             out <<"\n";
             if (pageVa + (pageSize_-1) == map_->hull().greatest())
                 break;

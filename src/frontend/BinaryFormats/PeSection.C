@@ -3,6 +3,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
+
 SgAsmPESection::SgAsmPESection(SgAsmPEFileHeader *fhdr)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     set_section_entry(nullptr);
@@ -91,7 +93,7 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_section_entry->dump(f, p, -1);
 
     if (variantT() == V_SgAsmPESection) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 #endif

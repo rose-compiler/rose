@@ -4,6 +4,7 @@ static const char *description =
 
 #include <rose.h>
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -113,9 +114,9 @@ main(int argc, char *argv[]) {
             if (settings.printingData) {
                 std::cout <<"    ";
                 std::vector<uint8_t> data = db->read(partitioner->memoryMap());
-                HexdumpFormat fmt;
+                BinaryAnalysis::HexdumpFormat fmt;
                 fmt.prefix = "    ";
-                SgAsmExecutableFileFormat::hexdump(std::cout, db->address(), &data[0], db->size(), fmt);
+                BinaryAnalysis::hexdump(std::cout, db->address(), &data[0], db->size(), fmt);
                 std::cout <<"\n";
             }
         }

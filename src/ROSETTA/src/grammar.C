@@ -1824,8 +1824,7 @@ Grammar::buildHeaderStringAfterMarker( const string& marker, const string& fileN
    }
 
 void
-Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
-   {
+Grammar::buildClassDefinition(AstNodeClass &node, StringUtility::FileWithLineNumbers &outputFile) {
      string marker   = "MEMBER_FUNCTION_DECLARATIONS";
      string fileName = "../Grammar/grammarClassDeclarationMacros.macro";
 
@@ -1926,7 +1925,12 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
                                                                               __FILE__, __LINE__));
          writeFile(editedHeaderFileString, smallHeadersDir, node.getName(), ".h");
      }
+}
 
+void
+Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+   {
+     buildClassDefinition(node, outputFile);
      vector<AstNodeClass *>::iterator treeListIterator;
      for( treeListIterator = node.subclasses.begin(); treeListIterator != node.subclasses.end(); treeListIterator++ )
         {
@@ -2306,7 +2310,7 @@ Grammar::buildVariants()
      return returnString;
    }
 
-// Emit a forward declaration for each class of the grammar.
+// Emit a declaration for each class of the grammar.
 void
 Grammar::emitForwardDeclarations(std::ostream &s) const {
     std::vector<std::string> names;
@@ -2319,45 +2323,42 @@ Grammar::emitForwardDeclarations(std::ostream &s) const {
         s <<"class " <<name <<";\n";
 }
 
-StringUtility::FileWithLineNumbers
-Grammar::buildForwardDeclarations ()
-   {
-  // DQ (4/23/2006): Need to add forward declarations of "Sg[CLASSNAME]* isSg[CLASSNAME](SgNode*)" friend functions
-     StringUtility::FileWithLineNumbers returnString;
-     returnString.push_back(StringUtility::StringWithLineNumber("\n\n// Forward declaration of \"<classname> is<classname> (SgNode* n)\" friend functions.\n", "" /* "<unknown>" */, 1));
-     returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
+// Emit a declaration for each of the isSg* functions
+void
+Grammar::emitIsaDeclarations(std::ostream &out) {
+    out <<"#include <rosedll.h>\n";
+    for (const auto &terminal: terminalList) {
+        const std::string name = terminal->name;
+        out <<"ROSE_DLL_API "+ name + "* is" + name + "(SgNode* node);\n"
+            <<"ROSE_DLL_API const " + name + "* is" + name + "(const SgNode* node);\n";
+    }
 
-     returnString.push_back(StringUtility::StringWithLineNumber("\n\n#include \"rosedll.h\"\n", "" /* "<unknown>" */, 1));
-     // Milind Chabbi (8/28/2013): Performance refactoring: make rose_ClassHierarchyCastTable accessible for IS_SgXXX_FAST_MACRO()s
-     size_t maxRows= getRowsInClassHierarchyCastTable();
-     size_t maxCols = getColumnsInClassHierarchyCastTable();
-     string externDeclarationForClassHierarchyCastTable = "\nextern const uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] ;\n";
-     returnString.push_back(StringUtility::StringWithLineNumber(externDeclarationForClassHierarchyCastTable, "", 1));
-     for (unsigned int i=0; i < terminalList.size(); i++)
-        {
-          string className = terminalList[i]->name;
-          returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API "+className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
-          returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
-          // Milind Chabbi (8/28/2013): Performance refactoring.
-          // Providing additional MACRO for each isSgXXX() function.
-          // One can substitue each isSgXXX() function with IS_SgXXX_FAST_MACRO() function.
-          // Being a macro, IS_SgXXX_FAST_MACRO() is unsafe and should be used with care.
-          // Using IS_SgXXX_FAST_MACRO() with side effect expressions. e.g., IS_SgXXX_FAST_MACRO(*it++) will cause undefined effects.
-          // However, it can be used safely for side effect free expressions e.g., IS_SgXXX_FAST_MACRO(node) and this will improve performance.
-          // A good use case of using IS_SgXXX_FAST_MACRO() is in places where isSgXXX() is very heavily used.
-          // Substituting all isSgXXX() with IS_SgXXX_FAST_MACRO() worked fine for entire of rose but failed in unsafe uses in tests e.g. src/optimizer/programAnalysis/StencilAnalysis.C
-          string fromVariantString = "(node)->variantT()";
-          string toVariantString = className +"::static_variant";
-          string toVariantBytePositionString = toVariantString + " >> 3";
-          string toVariantbitMaskPositionString =  "(1 << (" +  toVariantString + " & 7))";
-          string rose_ClassHierarchyCastTableAccessString = " (rose_ClassHierarchyCastTable[" + fromVariantString + "][" + toVariantBytePositionString + "] & " + toVariantbitMaskPositionString   + ")";
-          returnString.push_back(StringUtility::StringWithLineNumber("#define IS_" + className + "_FAST_MACRO(node) ( (node) ? ((" + rose_ClassHierarchyCastTableAccessString + ") ? ((" + className + "*) (node)) : NULL) : NULL)", "" /* "<downcast MACRO for " + className + ">" */, 1));
-          // One can replace all isSgXXX() with IS_SgXXX_FAST_MACRO() by enabling the line below. This exists for possible future use.
-          //returnString.push_back(StringUtility::StringWithLineNumber("#define is" + className + "(node) IS_" + className + "_FAST_MACRO(node)", "" /* "<MACRO replacement for " + className + ">" */, 1));
-        }
+    out <<"\n"
+        <<"extern const uint8_t rose_ClassHierarchyCastTable"
+        <<"[" <<getRowsInClassHierarchyCastTable() <<"]"
+        <<"[" <<getColumnsInClassHierarchyCastTable() <<"];\n"
+        <<"\n";
 
-     return returnString;
-   }
+    // Milind Chabbi (8/28/2013): Performance refactoring.  Providing additional MACRO for each isSgXXX() function.  One can
+    // substitue each isSgXXX() function with IS_SgXXX_FAST_MACRO() function.  Being a macro, IS_SgXXX_FAST_MACRO() is unsafe and
+    // should be used with care.  Using IS_SgXXX_FAST_MACRO() with side effect expressions. e.g., IS_SgXXX_FAST_MACRO(*it++) will
+    // cause undefined effects.  However, it can be used safely for side effect free expressions e.g., IS_SgXXX_FAST_MACRO(node) and
+    // this will improve performance.  A good use case of using IS_SgXXX_FAST_MACRO() is in places where isSgXXX() is very heavily
+    // used.  Substituting all isSgXXX() with IS_SgXXX_FAST_MACRO() worked fine for entire of rose but failed in unsafe uses in
+    // tests e.g. src/optimizer/programAnalysis/StencilAnalysis.C
+    for (const auto &terminal: terminalList) {
+        const std::string className = terminal->name;
+        const std::string fromVariantString = "(node)->variantT()";
+        const std::string toVariantString = className +"::static_variant";
+        const std::string toVariantBytePositionString = toVariantString + " >> 3";
+        const std::string toVariantbitMaskPositionString =  "(1 << (" +  toVariantString + " & 7))";
+        const std::string rose_ClassHierarchyCastTableAccessString = " (rose_ClassHierarchyCastTable[" + fromVariantString + "]"
+                                                                     "[" + toVariantBytePositionString + "] & " +
+                                                                     toVariantbitMaskPositionString   + ")";
+        out <<"#define IS_" + className + "_FAST_MACRO(node) ( (node) ? ((" + rose_ClassHierarchyCastTableAccessString + ") ? "
+            <<"((" + className + "*) (node)) : NULL) : NULL)\n";
+    }
+}
 
 string
 Grammar::buildTransformationSupport()
@@ -2903,8 +2904,8 @@ Grammar::buildCode ()
      {
          // Old enum
          StringUtility::FileWithLineNumbers variantsSource;
-         variantsSource <<"#ifndef ROSE_Cxx_GrammarVariants_H\n";
-         variantsSource <<"#define ROSE_Cxx_GrammarVariants_H\n";
+         variantsSource <<"#ifndef ROSE_" <<getGrammarName() <<"Variants_H\n";
+         variantsSource <<"#define ROSE_" <<getGrammarName() <<"Variants_H\n";
          StringUtility::FileWithLineNumbers tmp = buildVariants();
          variantsSource += GrammarString::copyEdit(tmp, "$MARKER", getGrammarName());
 
@@ -2922,62 +2923,57 @@ Grammar::buildCode ()
      {
          const std::string fileName = target_directory + "/" + getGrammarName() + "Declarations.h";
          std::ofstream declarations(fileName.c_str());
-         declarations <<"#ifndef ROSE_Cxx_GrammarDeclarations_H\n"
-                      <<"#define ROSE_Cxx_GrammarDeclarations_H\n"
-                      <<"#line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+         declarations.exceptions(std::ofstream::failbit);
+         declarations <<"#ifndef ROSE_" <<getGrammarName() <<"Declarations_H\n"
+                      <<"#define ROSE_" <<getGrammarName() <<"Declarations_H\n"
+                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
          emitForwardDeclarations(declarations);
          declarations <<"#endif\n";
+         ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Declarations.h>\n";
      }
-     ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Declarations.h>\n";
 
-     // Is-a predicates
+     // Is-a down-casting declarations
      {
-         StringUtility::FileWithLineNumbers sourceLines = buildForwardDeclarations();
-         sourceLines = StringUtility::copyEdit(sourceLines, "$MARKER", getGrammarName());
-         ROSE_ArrayGrammarHeaderFile += sourceLines;
+         const std::string fileName = target_directory + "/" + getGrammarName() + "Downcast.h";
+         std::ofstream declarations(fileName.c_str());
+         declarations.exceptions(std::ofstream::failbit);
+         declarations <<"#ifndef ROSE_" <<getGrammarName() <<"Downcast_H\n"
+                      <<"#define ROSE_" <<getGrammarName() <<"Downcast_H\n"
+                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+         emitIsaDeclarations(declarations);
+         declarations <<"#endif\n";
+         ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Downcast.h>\n";
      }
 
-  // JH (01/09/2006) : Adding the declaration of the ParentStorageClass: above!
-     ROSE_ArrayGrammarHeaderFile << buildStorageClassDeclarations();
+     // Sg*StorageClass and related declarations
+     {
+         const std::string fileName = target_directory + "/" + getGrammarName() + "StorageClasses.h";
+         std::ofstream declarations(fileName.c_str());
+         declarations.exceptions(std::ofstream::failbit);
+         declarations <<"#ifndef ROSE_" <<getGrammarName() <<"StorageClasses_H\n"
+                      <<"#define ROSE_" <<getGrammarName() <<"StorageClasses_H\n"
+                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+         emitStorageClassDeclarations(declarations);
+         declarations <<"#endif\n";
+         ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "StorageClasses.h>\n";
+     }
 
-     ROSE_ArrayGrammarHeaderFile << "\n\n";
-     ROSE_ArrayGrammarHeaderFile << "ROSE_DLL_API std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
+     // Declarations for I/O functions. These never depended on any of the CxxGrammarMetaProgram tool's inputs, so they've been
+     // moved to a non-generated header file.
+     ROSE_ArrayGrammarHeaderFile <<"#include <sageContainer.h>\n";
 
-  // DQ (12/6/2003): Added output function for SgBitVector objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::vector<bool>&);\n\n";
-
-  // DQ (8/3/2005): Added output function for STL set objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::set<int>&);\n\n";
-
-  // DQ (10/4/2006): Added output function for STL map objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::map<SgNode*,int>&);\n\n";
-
-  // DQ (10/6/2006): Added output function for STL map objects
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::map<SgNode*,std::string>&);\n\n";
-
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmStatement*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmExpression*>&);\n\n";
-#endif
-
-  // DQ (11/20/2007): Part of support for the Fortran data statement
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDataStatementObject*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDataStatementValue*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgCommonBlockObject*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDimensionObject*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgLabelSymbol*>&);\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgFormatItem*>&);\n\n";
-
-  // traversal order
-  // ROSE_ArrayGrammarHeaderFile << "typedef enum {preorder, postorder} t_traverseOrder;\n\n";
-  // GB (7/6/2007): Changed these values so we can build bitmasks. This makes
-  // it possible to define somewhat more general traversals that have both pre
-  // and post order components. The user doesn't notice this change.
-     ROSE_ArrayGrammarHeaderFile << "typedef enum \n{preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;\n\n";
-
-  // Now declare the classes representing the terminals and nonterminals within the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     // Generate class definitions
      buildHeaderFiles(*rootNode,ROSE_ArrayGrammarHeaderFile);
+
+     if (!smallHeadersDir.empty()) {
+         // Include all the generated AST node class definition header files. The headers are deterministic, so it doesn't matter
+         // what order they're included.
+         //
+         // FIXME[Robb Matzke 2024-03-11]: The whole point of this work is to *not* have to include all the class definitions into
+         // every compilation unit, but we're not there yet.
+         for (const auto &node: terminalList)
+             ROSE_ArrayGrammarHeaderFile <<"#include <" <<node->name <<".h>\n";
+     }
 
   // DQ (11/26/2005): Support for visitor pattern.
      string visitorSupport = buildVisitorBaseClass();

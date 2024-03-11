@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 
 #include "stringify.h"
 
@@ -117,7 +118,7 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSegmentTableEntry.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = %" PRIuPTR "\n",                             p, w, "index",  p_index);
     fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  toString(p_type).c_str());
@@ -137,7 +138,7 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",           p, w, "align",  p_align, p_align);
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_extra.size());
-        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
 
@@ -494,7 +495,7 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     SgAsmGenericSection::dump(f, p, -1);
 
     if (variantT() == V_SgAsmElfSegmentTable) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 #endif

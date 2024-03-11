@@ -36,7 +36,7 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sDLL.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "lib_name", p_name->get_string(true).c_str());
     for (size_t i = 0; i < p_symbols.size(); i++)
@@ -88,7 +88,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sSymbol.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->get_string(true).c_str());
 

@@ -7,6 +7,7 @@
 #include "stringify.h"
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
@@ -841,7 +842,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, 4096, "%sSection.", prefix);
     }
     
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = \"%s\"",                      p, w, "name",        p_name->get_string(true).c_str());
     if (!p_shortName.empty())

@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 /** Represents an interpretation of a binary container.
@@ -42,10 +43,10 @@ public:
      *
      *  @{ */
     [[using Rosebud: data(instruction_map), accessors(), mutators()]]
-    mutable InstructionMap instruction_map;         // cached instruction map
+    mutable Rose::BinaryAnalysis::InstructionMap instruction_map; // cached instruction map
 
-    InstructionMap& get_instructionMap(bool recompute = false);
-    void set_instructionMap(const InstructionMap&);
+    Rose::BinaryAnalysis::InstructionMap& get_instructionMap(bool recompute = false);
+    void set_instructionMap(const Rose::BinaryAnalysis::InstructionMap&);
     /** @} */
 
     /** Property: code coverage percent.
@@ -73,14 +74,14 @@ public:
     /** Populate a map of instructions indexed by their virtual addresses.
      *
      *  This function traverses the AST rooted at the @ref globalBlock and inserts each encountered instruction into the provided
-     *  @ref InstructionMap based on its starting virtual address. */
-    void insertInstructions(InstructionMap&/*in,out*/);
+     *  @ref Rose::BinaryAnalysis::InstructionMap based on its starting virtual address. */
+    void insertInstructions(Rose::BinaryAnalysis::InstructionMap&/*in,out*/);
 
     /** Erase instructions from a map.
      *
      *  This function traverses the AST rooted at the @ref globalBlock and erases each encountered instruction from the provided
-     *  @ref InstructionMap based on its starting virtual address. */
-    void eraseInstructions(InstructionMap&/*in,out*/);
+     *  @ref Rose::BinaryAnalysis::InstructionMap based on its starting virtual address. */
+    void eraseInstructions(Rose::BinaryAnalysis::InstructionMap&/*in,out*/);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -88,8 +89,8 @@ public:
 public:
     SgAsmBlock* get_global_block() const ROSE_DEPRECATED("use get_globalBlock");
     void set_global_block(SgAsmBlock*) ROSE_DEPRECATED("use set_globalBlock");
-    InstructionMap& get_instruction_map(bool=false) ROSE_DEPRECATED("use get_instructionMap");
-    void set_instruction_map(const InstructionMap&) ROSE_DEPRECATED("use set_instructionMap");
-    void insert_instructions(InstructionMap&) ROSE_DEPRECATED("use insertInstructions");
-    void erase_instructions(InstructionMap&) ROSE_DEPRECATED("use eraseInstructions");
+    Rose::BinaryAnalysis::InstructionMap& get_instruction_map(bool=false) ROSE_DEPRECATED("use get_instructionMap");
+    void set_instruction_map(const Rose::BinaryAnalysis::InstructionMap&) ROSE_DEPRECATED("use set_instructionMap");
+    void insert_instructions(Rose::BinaryAnalysis::InstructionMap&) ROSE_DEPRECATED("use insertInstructions");
+    void erase_instructions(Rose::BinaryAnalysis::InstructionMap&) ROSE_DEPRECATED("use eraseInstructions");
 };

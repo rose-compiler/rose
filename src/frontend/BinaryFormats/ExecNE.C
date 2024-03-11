@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/Diagnostics.h>
+#include <ROSE_NELMTS.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
@@ -205,7 +206,7 @@ SgAsmNEFileHeader::isNe(SgAsmGenericFile *file)
 void *
 SgAsmNEFileHeader::encode(SgAsmNEFileHeader::NEFileHeader_disk *disk) const
 {
-    for (size_t i = 0; i < NELMTS(disk->e_magic); i++)
+    for (size_t i = 0; i < ROSE_NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
     Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_linker_major,         &(disk->e_linker_major));
     Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_linker_minor,         &(disk->e_linker_minor));
@@ -278,7 +279,7 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNEFileHeader.", prefix);
     }
 
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_major",         p_e_linker_major);
@@ -394,7 +395,7 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
         snprintf(p, sizeof(p), "%sNESectionTableEntry.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = %u",                      p, w, "sector",          p_sector);
     if (fhdr)
@@ -448,7 +449,7 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNESection.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
@@ -647,7 +648,7 @@ SgAsmNENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNENameTable.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
@@ -735,7 +736,7 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNEModuleTable.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
 
@@ -802,7 +803,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     SgAsmGenericSection::dump(f, p, -1);
 
 #if 0 /*Can't parse strings because it would affect the list of referenced bytes*/
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
     bool was_congealed = get_congealed();
     congeal();
     rose_addr_t at=0;
@@ -842,7 +843,7 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNEEntryPoint.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     if (0 == get_sectionIndex()) {
         fprintf(f, "%s%-*s = %s\n", p, w, "type", "unused");
@@ -1017,7 +1018,7 @@ SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNEEntryTable.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " bundles\n", p, w, "nbundles", p_bundle_sizes.size());
@@ -1222,7 +1223,7 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sRelocEntry.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     const char *s;
     switch (p_src_type) {
@@ -1348,7 +1349,7 @@ SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sNERelocTable.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "size", p_entries.size());

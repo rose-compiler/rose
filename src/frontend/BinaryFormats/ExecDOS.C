@@ -3,6 +3,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
+#include <ROSE_NELMTS.h>
+
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
 #if defined(__GNUC__) && __GNUC__ >= 9
@@ -149,7 +152,7 @@ SgAsmDOSFileHeader::updateFromRealModeSection()
 void *
 SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
 {
-    for (size_t i=0; i<NELMTS(disk->e_magic); i++)
+    for (size_t i=0; i<ROSE_NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
     Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_last_page_size,     &(disk->e_last_page_size));
     Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_total_pages,        &(disk->e_total_pages));
@@ -277,7 +280,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sDOSFileHeader.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u bytes\n",              p, w, "e_last_page_size",     p_e_last_page_size);
@@ -307,7 +310,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = none\n",        p, w, "rm_section");
     }
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Extended DOS File Header
@@ -385,7 +388,7 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sDOSExtendedHeader.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res1",     p_e_res1, p_e_res1);
@@ -399,7 +402,7 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %" PRIu64 " byte offset (0x%" PRIx64 ")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
 
     if (variantT() == V_SgAsmDOSExtendedHeader) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 const char*

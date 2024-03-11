@@ -97,7 +97,7 @@ SgAsmPEImportItem::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sImportItem.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     if (p_by_ordinal) {
         fprintf(f, "%s%-*s = 0x%04x (%u)", p, w, "ordinal", p_ordinal, p_ordinal);

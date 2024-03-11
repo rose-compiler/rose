@@ -22,6 +22,7 @@ run $(librose_compile)				\
     FeasiblePath.C				\
     FunctionCall.C				\
     FunctionSimilarity.C			\
+    Hexdump.C					\
     HotPatch.C					\
     InstructionCache.C				\
     InstructionProvider.C			\
@@ -55,8 +56,10 @@ run $(librose_compile)				\
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AbstractLocation.h						\
+    Address.h							\
     AddressInterval.h						\
     AddressIntervalSet.h					\
+    AddressSet.h						\
     Alignment.h							\
     AsmFunctionIndex.h						\
     AstHash.h							\
@@ -80,6 +83,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     FeasiblePath.h						\
     FunctionCall.h						\
     FunctionSimilarity.h					\
+    Hexdump.h							\
     HotPatch.h							\
     InstructionCache.h						\
     InstructionEnumsAarch32.h					\
@@ -90,6 +94,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     InstructionEnumsMips.h					\
     InstructionEnumsPowerpc.h					\
     InstructionEnumsX86.h					\
+    InstructionMap.h						\
     InstructionProvider.h					\
     InstructionSemantics.h					\
     InstructionSemantics2.h					\

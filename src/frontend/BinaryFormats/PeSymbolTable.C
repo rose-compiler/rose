@@ -3,6 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/Diagnostics.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
@@ -200,7 +201,8 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             // FIXME[Robb P Matzke 2017-05-17]: The record format isn't documented in the reference listed above.
             if (debug) {
                 debug <<"COFF aux comdat " <<escapeString(p_st_name) <<": aux record ignored\n";
-                hexdump(debug, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_auxiliaryData);
+                Rose::BinaryAnalysis::hexdump(debug, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ",
+                                              p_auxiliaryData);
             }
 
         } else {
@@ -208,7 +210,8 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
                 mlog[WARN] <<"COFF aux unknown " <<escapeString(p_st_name)
                            <<": st_storage_class=" <<p_st_storage_class
                            <<", st_type=" <<p_st_type <<", st_section_num=" <<p_st_section_num <<"\n";
-                hexdump(mlog[WARN], symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_auxiliaryData);
+                Rose::BinaryAnalysis::hexdump(mlog[WARN], symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ",
+                                              p_auxiliaryData);
             }
         }
     }
@@ -250,7 +253,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sCOFFSymbol.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSymbol::dump(f, p, -1);
 
@@ -337,7 +340,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", escapeString(p_st_name).c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
     fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n",        p, w, "aux_data", p_auxiliaryData.size());
-    hexdump(f, 0, std::string(p)+"aux_data at ", p_auxiliaryData);
+    Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"aux_data at ", p_auxiliaryData);
 }
 
 SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
@@ -444,7 +447,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sCOFFSymtab.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " symbols\n", p, w, "size", p_symbols->get_symbols().size());
@@ -453,7 +456,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     if (variantT() == V_SgAsmCoffSymbolTable) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 const SgUnsignedCharList&

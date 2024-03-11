@@ -3,9 +3,12 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/Diagnostics.h>
+#include <ROSE_NELMTS.h>
+
 #include <boost/format.hpp>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
@@ -391,7 +394,7 @@ SgAsmPEFileHeader::parse()
 void *
 SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
 {
-    for (size_t i=0; i<NELMTS(disk->e_magic); i++)
+    for (size_t i=0; i<ROSE_NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
     ByteOrder::hostToLe(p_e_cpu_type,           &(disk->e_cpu_type));
     ByteOrder::hostToLe(p_e_nsections,          &(disk->e_nsections));
@@ -922,7 +925,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sPEFileHeader.", prefix);
     }
 
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
     time_t t = p_e_time;
     char time_str[128];
     struct tm *tm = localtime(&t);
@@ -974,7 +977,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < get_rvaSizePairs()->get_pairs().size(); i++) {
         std::string p2 = (boost::format("%s.pair[%d].") %p %i).str();
-        w = std::max(1, DUMP_FIELD_WIDTH-(int)p2.size());
+        w = std::max(size_t{1}, DUMP_FIELD_WIDTH - p2.size());
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08" PRIx64 " (%" PRIu64 ")\n", p2.c_str(), w, "..",
                 get_rvaSizePairs()->get_pairs()[i]->get_e_rva().toString().c_str(),
                 get_rvaSizePairs()->get_pairs()[i]->get_e_size(), get_rvaSizePairs()->get_pairs()[i]->get_e_size());

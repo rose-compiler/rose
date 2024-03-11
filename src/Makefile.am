@@ -271,8 +271,10 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
+	Rose/BinaryAnalysis/Address.h							\
 	Rose/BinaryAnalysis/AddressInterval.h						\
 	Rose/BinaryAnalysis/AddressIntervalSet.h					\
+	Rose/BinaryAnalysis/AddressSet.h						\
 	Rose/BinaryAnalysis/Alignment.h							\
 	Rose/BinaryAnalysis/Architecture.h						\
 	Rose/BinaryAnalysis/Architecture/Amd64.h					\
@@ -380,6 +382,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/FeasiblePath.h						\
 	Rose/BinaryAnalysis/FunctionCall.h						\
 	Rose/BinaryAnalysis/FunctionSimilarity.h					\
+	Rose/BinaryAnalysis/Hexdump.h							\
 	Rose/BinaryAnalysis/HotPatch.h							\
 	Rose/BinaryAnalysis/InstructionCache.h						\
 	Rose/BinaryAnalysis/InstructionEnumsAarch32.h					\
@@ -390,6 +393,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionEnumsMips.h					\
 	Rose/BinaryAnalysis/InstructionEnumsPowerpc.h					\
 	Rose/BinaryAnalysis/InstructionEnumsX86.h					\
+	Rose/BinaryAnalysis/InstructionMap.h						\
 	Rose/BinaryAnalysis/InstructionProvider.h					\
 	Rose/BinaryAnalysis/InstructionSemantics.h					\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h		\

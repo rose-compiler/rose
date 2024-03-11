@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>

@@ -3,6 +3,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
+
 SgAsmElfSection*
 SgAsmElfSection::get_linked_section() const {
     return get_linkedSection();
@@ -286,7 +288,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfSection.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
     
     SgAsmGenericSection::dump(f, p, -1);
     
@@ -303,7 +305,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     if (variantT() == V_SgAsmElfSection) //unless a base class
-        hexdump(f, 0, std::string(p)+"data at ", p_data);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 SgAsmElfSectionTableEntry*

@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/StringUtility/NumberToString.h>
 #include <ROSE_UNUSED.h>
@@ -1018,7 +1019,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
             HexdumpFormat fmt;
             fmt.prefix = "  ";
             debug <<fmt.prefix;
-            SgAsmExecutableFileFormat::hexdump(debug, va, buffer, totalRead, fmt);
+            hexdump(debug, va, buffer, totalRead, fmt);
             debug <<"\n";
         }
     }
@@ -1077,7 +1078,7 @@ Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
             HexdumpFormat fmt;
             fmt.prefix = "  ";
             debug <<fmt.prefix;
-            SgAsmExecutableFileFormat::hexdump(debug, va, buffer, totalWritten, fmt);
+            hexdump(debug, va, buffer, totalWritten, fmt);
             debug <<"\n";
         }
     }

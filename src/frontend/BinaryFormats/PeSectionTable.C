@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/Diagnostics.h>
 
@@ -185,7 +186,7 @@ SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         snprintf(p, sizeof(p), "%sPESectionTableEntry.", prefix);
     }
 
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "virtual_size",     p_virtual_size);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",              p, w, "rva",              p_rva);

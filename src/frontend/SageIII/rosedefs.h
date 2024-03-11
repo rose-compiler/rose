@@ -1,6 +1,7 @@
 #ifndef __rosedefs
 #define __rosedefs
 
+#include <Rose/BinaryAnalysis/Address.h>
 
 #include "stdio.h"
 #include <cassert>
@@ -22,7 +23,6 @@
 // #endif
 
 #include "stdint.h"
-typedef uint64_t rose_addr_t; /* address and size (file and memory) */
 
 // DQ (2/10/2010): Added assert.h (not clear where else it is included).
 #include "assert.h"

@@ -3,6 +3,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Hexdump.h>
+
 SgAsmElfNoteEntry::SgAsmElfNoteEntry(SgAsmElfNoteSection *section) {
     initializeProperties();
 
@@ -147,13 +149,13 @@ SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         snprintf(p, sizeof(p), "%sElfNoteEntry", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(size_t{1}, Rose::DUMP_FIELD_WIDTH - strlen(p));
 
     fprintf(f, "%s%-*s \"%s\"\n", p, w, "name", p_name->get_string(true).c_str());
     fprintf(f, "%s%-*s %u\n", p, w, "type", p_type);
     if (p_payload.size()>0) {
         fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_payload.size());
-        hexdump(f, 0, std::string(p)+"extra at ", p_payload);
+        Rose::BinaryAnalysis::hexdump(f, 0, std::string(p)+"extra at ", p_payload);
     }
 }
 

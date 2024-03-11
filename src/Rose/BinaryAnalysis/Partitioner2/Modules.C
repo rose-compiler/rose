@@ -5,6 +5,7 @@
 #include "AsmUnparser_compat.h"
 
 #include <Rose/BinaryAnalysis/Demangler.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/String.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
@@ -400,7 +401,7 @@ HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
             const unsigned char *data = (const unsigned char*)segment.buffer()->data() + offsetWithinBuffer;
             ASSERT_not_null(data);
             debug <<fmt.prefix;
-            SgAsmExecutableFileFormat::hexdump(debug, avail.least(), data, nPrint, fmt);
+            hexdump(debug, avail.least(), data, nPrint, fmt);
             debug <<"\n";
             if (avail.least() + (nPrint-1) == settings_.what.greatest())
                 break;                                  // avoid possible overflow

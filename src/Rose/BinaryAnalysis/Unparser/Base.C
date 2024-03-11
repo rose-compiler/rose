@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -1818,7 +1819,7 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
                 uint8_t buf[8192];                      // multiple of 16
                 size_t maxSize = std::min(where.size(), (rose_addr_t)(sizeof buf));
                 AddressInterval read = state.partitioner()->memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
-                SgAsmExecutableFileFormat::hexdump(out, read.least(), buf, read.size(), fmt);
+                hexdump(out, read.least(), buf, read.size(), fmt);
                 if (read.greatest() == where.greatest())
                     break;                              // avoid possible overflow
                 where = AddressInterval::hull(read.greatest()+1, where.greatest());
