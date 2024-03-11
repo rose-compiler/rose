@@ -467,7 +467,6 @@ Unparse_ExprStmt::unparseTemplateParameterValue(SgExpression* expr, SgUnparse_In
    }
 
 
-#if 1
 // DQ (4/25/2012): Added support for new template IR nodes.
 void
 Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& info)
@@ -478,10 +477,8 @@ Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& inf
   // Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref);
      unparseFuncRefSupport<SgTemplateFunctionRefExp>(expr,info);
    }
-#else
-#endif
 
-#if 1
+
 // DQ (4/25/2012): Added support for new template IR nodes.
 void
 Unparse_ExprStmt::unparseTemplateMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
@@ -489,8 +486,6 @@ Unparse_ExprStmt::unparseTemplateMFuncRef ( SgExpression* expr, SgUnparse_Info& 
      unparseMFuncRefSupport<SgTemplateMemberFunctionRefExp>(expr,info);
    }
 
-#else
-#endif
 
 void
 Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info)
@@ -583,71 +578,6 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
           unparseTemplateArgumentList(templateInstantiationMemberFunctionDeclaration->get_templateArguments(),info);
         }
    }
-
-#if 0
-// DQ (2/11/2019): Localize the logic specific to if a template argument should be unparsed or not.
-bool
-SgTemplateArgument::outputTemplateArgument()
-   {
-     bool returnValue = false;
-
-#define DEBUG_OUTPUT_TEMPLATE_ARGUMENT 0
-
-     bool isExplicitlySpecified = this->get_explicitlySpecified();
-     bool isPackElement    = this->get_is_pack_element();
-
-  // DQ (2/11/2019): If this is a function then we can expect to use the isExplicitlySpecified, else it should not be used.
-     SgNode* parentOfTemplateArgument = this->get_parent();
-     SgClassDeclaration*    classDeclaration    = isSgClassDeclaration(parentOfTemplateArgument);
-     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parentOfTemplateArgument);
-     if (classDeclaration != NULL)
-        {
-       // In this case the isExplicitlySpecified can NOT be used, so assume it is always true.
-          isExplicitlySpecified = true;
-
-       // DQ (2/11/2019): I think this is required to pass test2019_93.C.
-        }
-       else
-        {
-          if (functionDeclaration != NULL)
-             {
-            // In this case the isExplicitlySpecified CAN be used.
-             }
-            else
-             {
-             }
-        }
-
-     if (isPackElement && isExplicitlySpecified)
-       {
-         isPackElement = false;
-       }
-
-     bool isAnonymousClass = this->isTemplateArgumentFromAnonymousClass();
-     bool isAssociatedWithLambdaExp = false;
-     if (this->get_argumentType() == SgTemplateArgument::type_argument)
-        {
-          if (SgClassType * ctype = isSgClassType (this->get_type()))
-             {
-               if (SgNode* pnode = ctype->get_declaration()->get_parent())
-                  {
-                    if (isSgLambdaExp(pnode))
-                       {
-                         isAssociatedWithLambdaExp = true;
-                       }
-                  }
-             }
-        }
-
-     if ( ( this->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument ) &&
-          (isAnonymousClass == false) && (isPackElement == false || isExplicitlySpecified == true) && (isAssociatedWithLambdaExp == false) )
-        {
-          returnValue = true;
-        }
-
-     return returnValue;
-   }
-#endif
 
 #define DEBUG_OUTPUT_TEMPLATE_ARGUMENT 0
 
@@ -2947,29 +2877,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
           printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
-#if 0
-       // DQ (7/9/2019): This will cause the class specifier to be output.
-          std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
-          if (i != SgNode::get_globalTypeNameMap().end())
-             {
-            // I think this branch supports non-template member functions in template classes (called with explicit template arguments).
-               usingGeneratedNameQualifiedFunctionNameString = true;
-
-               functionNameString = i->second.c_str();
-#if MFuncRefSupport_DEBUG
-               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
-                    functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
-#endif
-             }
-          else
-#else
-#endif
              {
 #if MFuncRefSupport_DEBUG
                printf ("Could not find saved name qualified function name in globalTypeNameMap: using key: nodeReferenceToFunction = %p = %s \n",nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
 #endif
 
-#if 1
             // DQ (6/23/2013): This will get any generated name for the member function (typically only generated if template argument name qualification was required).
                std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(mfunc_ref);
                if (j != SgNode::get_globalTypeNameMap().end())
@@ -2989,7 +2901,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                     printf ("Could not find saved name qualified function name in globalTypeNameMap: using key: mfunc_ref = %p = %s \n",mfunc_ref,mfunc_ref->class_name().c_str());
 #endif
                   }
-#endif
              }
         }
 
@@ -3271,29 +3182,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                               curprint(" " + func_name + " ");
                             }
 #else
-                 // DQ (10/21/2006): Only do name qualification of function names for C++
-                    if (SageInterface::is_Cxx_language() == true)
-                       {
 #error "DEAD CODE!"
-                      // DQ (12/2/2004): Added diff == 0 to avoid qualification of operators (avoids "i__gnu_cxx::!=0")
-                      // added some extra spaces to make it more clear if it is ever wrong again (i.e. "i __gnu_cxx:: != 0")
-                      // DQ (11/13/2004) Modified to avoid qualified name for friend functions
-                      // DQ (11/12/2004) Added support for qualification of function names output as function calls
-                         if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
-                            {
-                              SgUnparse_Info tmp_info(info);
-                              tmp_info.set_name_qualification_length(func_ref->get_name_qualification_length());
-                              tmp_info.set_global_qualification_required(func_ref->get_global_qualification_required());
-
 #error "DEAD CODE!"
-                              SgName nameQualifier = func_ref->get_qualified_name_prefix();
-                              curprint (nameQualifier.str());
 #error "DEAD CODE!"
-                            }
-                           else
-                            {
-                            }
-                       }
 #endif
 #endif
                        }
@@ -4003,7 +3894,6 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
              }
             else
              {
-#if 1
             // DQ (3/24/2015): Added case of "__builtin_offsetof" to make it consistant with the change in the EDG/ROSE translation.
             // DQ (3/19/2015): For the case of the __offsetof() builtin function we have to avoid output of the structure (e.g. "(0*).field").
                if (functionNameString == "__offsetof" || functionNameString == "__builtin_offsetof")
@@ -4020,11 +3910,6 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
                   {
                     unparseExpression(expression,info);
                   }
-#else
-               printf ("In unparseTypeTraitBuiltinExp(): Skipping special conversion for functionNameString == __offsetof \n");
-#error "DEAD CODE!"
-               unparseExpression(expression,info);
-#endif
              }
           operand++;
         }
@@ -6248,33 +6133,7 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
              }
         }
 #else
-     SgStatement* statementDefiningType         = NULL;
-     if (namedType != NULL)
-        {
-          ASSERT_not_null(namedType->get_declaration());
-
 #error "DEAD CODE!"
-
-       // DQ (9/14/2013): If this is a scope statement then we want to use the declaration directly (else everything
-       // will be an ancestor in the case of this being a global scope).  See test2013_70.c for what we need this.
-       // statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
-          if (isSgScopeStatement(namedType->get_declaration()->get_parent()) != NULL)
-             {
-            // The declaration for the type is declared in a scope and not as part of being embedded in another statement.
-            // statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration());
-               statementDefiningType = namedType->get_declaration();
-             }
-            else
-             {
-            // This is the case of the type embedded in another statement (e.g. for a GNU statement expression).
-               statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
-             }
-        }
-
-     if (statementDefiningType != NULL)
-        {
-          result = SageInterface::isAncestor(statementDefiningType,expr);
-        }
 #endif
 
      return result;
@@ -8046,9 +7905,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #error "DEAD CODE!"
      if (isInitializer_AggregateInitializer == true)
         {
-#if DEBUG_DESIGNATED_INITIALIZER
-          printf ("--- Found memberInit to be a SgAggregateInitializer \n");
-#endif
           SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
           ASSERT_not_null(aggregateInitializer);
           SgExprListExp* exprListExp = aggregateInitializer->get_initializers();
@@ -8064,60 +7920,39 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if 1
 #error "DEAD CODE!"
                  // DQ (5/10/2015): This fails for test2015_85.c.
-#if DEBUG_DESIGNATED_INITIALIZER || 0
-                    printf ("--- Before possible reset: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
-                    printf ("--- Mark outputDesignatedInitializerAssignmentOperator as false since there is a nested SgDesignatedInitializer \n");
-#endif
 
 #if 0
 #else
 #error "DEAD CODE!"
-                 // DQ (5/10/2015): Handle the different between test2015_119.c and test2015_117.c.
-                    SgAggregateInitializer* nested_aggregateInitializer = isSgAggregateInitializer(designatedInitializer->get_memberInit());
-                    SgAssignInitializer*    nested_assignInitializer    = isSgAssignInitializer(designatedInitializer->get_memberInit());
-
-                 // Check the lhs to be a SgVarRef expression and not an array index (see test2013_37.c for case of array index).
-                    SgExpression* nested_designator = designatedInitializer->get_designatorList()->get_expressions()[0];
-                    SgVarRefExp*  nested_varRefExp  = isSgVarRefExp(nested_designator);
-
-                    bool isArrayReference = (nested_aggregateInitializer != NULL && isSgArrayType(nested_aggregateInitializer->get_type()) != NULL);
-                 // bool isClassReference = (nested_aggregateInitializer != NULL && isSgClassType(nested_aggregateInitializer->get_type()) != NULL);
-                    bool isClassReference = (aggregateInitializer != NULL && isSgClassType(aggregateInitializer->get_type()) != NULL);
-                    bool isArrayReference_outer = (aggregateInitializer != NULL && isSgArrayType(aggregateInitializer->get_type()) != NULL);
-#if DEBUG_DESIGNATED_INITIALIZER
-                    printf ("varRefExp                   = %p \n",varRefExp);
-                    printf ("valueExp                    = %p \n",valueExp);
-                    printf ("nested_aggregateInitializer = %p \n",nested_aggregateInitializer);
-                    printf ("nested_assignInitializer    = %p \n",nested_assignInitializer);
-                    printf ("nested_varRefExp            = %p \n",nested_varRefExp);
-                    printf ("isArrayReference            = %s \n",isArrayReference ? "true" : "false");
-                    printf ("isArrayReference_outer      = %s \n",isArrayReference_outer ? "true" : "false");
-                    printf ("isClassReference            = %s \n",isClassReference ? "true" : "false");
-#endif
 #error "DEAD CODE!"
 
 #if 1
 #error "DEAD CODE!"
-                    if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true ||
-                         (nested_assignInitializer != NULL && nested_varRefExp != NULL && isClassReference == true && varRefExp == NULL) )
 #else
 #error "DEAD CODE!"
 #endif
                        {
+#error "DEAD CODE!"
 #if DEBUG_DESIGNATED_INITIALIZER
                          printf ("In unparseDesignatedInitializer: RESET outputDesignatedInitializerAssignmentOperator \n");
 #endif
+#error "DEAD CODE!"
                          outputDesignatedInitializerAssignmentOperator = false;
                        }
+#error "DEAD CODE!"
 #if DEBUG_DESIGNATED_INITIALIZER
                     printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
 #endif
+#error "DEAD CODE!"
 
 #endif
 #else
+#error "DEAD CODE!"
                  // DQ (4/11/2015): Testing for test2015_85.c.
                     printf ("--- Skip the reset of outputDesignatedInitializerAssignmentOperator as false for detected nesting of SgDesignatedInitializer \n");
+#error "DEAD CODE!"
 #endif
+#error "DEAD CODE!"
                   }
              }
         }
@@ -8214,6 +8049,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #endif
 
 #if 0
+#error "DEAD CODE!"
 #else
 
   // DQ (5/11/2015): We need to look at the SgAggregateInitializer and see if it will be outputing "{}".
