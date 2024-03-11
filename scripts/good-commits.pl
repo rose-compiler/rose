@@ -22,7 +22,8 @@ sub badTitleCategory {
 # Finds a ticket number within a string and returns it.
 sub findTicketNumber {
     my($s) = @_;
-    my($ticket) = $s =~ /\b([A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d+)\b/;
+    #---------------------- Upper-case word, hyphen, number     |Gitlab issue
+    my($ticket) = $s =~ /\b([A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d+|Issue #\d+\+?)\b/;
     return $ticket;
 }
 
