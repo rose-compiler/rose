@@ -1,6 +1,6 @@
 // DQ (5/4/2011): This is the redesign of the support for name qualification.
 // The steps are:
-// 1) All using directives put alias sysmbols into place into the scope 
+// 1) All using directives put alias sysmbols into place into the scope
 //    where they appear and for each symbol in the scope being used.
 // 1) Compute the hidden type tables
 // 2) Use the hidden type tables to determine which types need qualification.
@@ -14,8 +14,8 @@
 //    3) It resolves ambiguity of named constructs.
 //    4) It resolves where type elaboration is required.
 //    5) The inputs are carried in the SgUnparse_Info object for uniform handling.
-//    6) The the values in the SgUnparse_Info object are copied from the AST references to the named 
-//       constructs to avoid where named constructs are referenced from multiple locations and the 
+//    6) The the values in the SgUnparse_Info object are copied from the AST references to the named
+//       constructs to avoid where named constructs are referenced from multiple locations and the
 //       name qulification might be different.
 //
 //    7) What about base class qualification? I might have forgotten this one! No this is handled using standard rules (above).
@@ -44,18 +44,20 @@ class HiddenListSynthesizedAttribute
    };
 
 
+#if NOT_USED
 class nameQualificationInformation
    {
    };
+#endif /* NOT_USED */
 
 class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheritedAttribute, HiddenListSynthesizedAttribute>
    {
      private:
        // We might want to keep track of types that have been seen already.
-       // Though, as a detail, all names in a class would be included as 
-       // having been seen as we enter the scope of the class (not as they 
+       // Though, as a detail, all names in a class would be included as
+       // having been seen as we enter the scope of the class (not as they
        // are traversed in the class).
-       // * Keep a set of SgNodes that have been seen as declarations 
+       // * Keep a set of SgNodes that have been seen as declarations
        //   (referenced names don't count if they don't specify a scope (location)).
        // * So we need a function to gather all the name in a class.
 
@@ -64,20 +66,20 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
           std::set<SgNode*> & referencedNameSet;
 
        // We keep the qualified names as a map of strings with keys defined by the SgNode pointer values.
-       // These are referenced to the static data members in SgNode (SgNode::get_globalQualifiedNameMapForNames() 
+       // These are referenced to the static data members in SgNode (SgNode::get_globalQualifiedNameMapForNames()
        // and SgNode::get_globalQualifiedNameMapForTypes()).  A later implementation could refernece the versions
-       // in SgNode directly. Initially in the design these were not references, they were built up and assigned 
-       // to the static data members in SgNode, but this does not permit the proper handling of nexted types in 
-       // templates since the unparser uses the SgNode static members directly.  so the switch to make this a 
+       // in SgNode directly. Initially in the design these were not references, they were built up and assigned
+       // to the static data members in SgNode, but this does not permit the proper handling of nexted types in
+       // templates since the unparser uses the SgNode static members directly.  so the switch to make this a
        // reference fixes this problem.
           std::map<SgNode*,std::string> & qualifiedNameMapForNames;
           std::map<SgNode*,std::string> & qualifiedNameMapForTypes;
 
-       // DQ (6/3/2011): This is to save the names of types where they can be named differently when referenced 
+       // DQ (6/3/2011): This is to save the names of types where they can be named differently when referenced
        // from different locations in the source code.
           std::map<SgNode*,std::string> & typeNameMap;
 
-       // Member functions: 
+       // Member functions:
           std::list<SgNode*> gatherNamesInClass( SgClassDefinition* classDefinition );
 
      public:
@@ -85,7 +87,7 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // HiddenListTraversal(SgNode* root);
           HiddenListTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet);
 
-       // Evaluates how much name qualification is required (typically 0 (no qualification), but sometimes 
+       // Evaluates how much name qualification is required (typically 0 (no qualification), but sometimes
        // the depth of the nesting of scopes plus 1 (full qualification with global scoping operator)).
        // int nameQualificationDepth ( SgClassDefinition* classDefinition );
           int nameQualificationDepth ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement, bool forceMoreNameQualification = false );
@@ -149,7 +151,7 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
 
        // Supporting function for different overloaded versions of the setNameQualification() function.
           std::string setNameQualificationSupport ( SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation );
- 
+
        // DQ (5/14/2011): type elaboration only works between non-types and types.  Different types must be distinquished using name qualification.
           bool requiresTypeElaboration(SgSymbol* symbol);
 
@@ -160,13 +162,13 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForNames() const;
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForTypes() const;
 
-       // DQ (6/3/2011): Evaluate types to permit the strings representing unparsing the types 
-       // are saved in a separate map associated with the IR node referencing the type.  This 
-       // supports the cases where a type with template arguments may require different name 
-       // qualifications on its template arguments when it is referenced from different locations 
-       // in the source code.  The name qualification support saved in qualifiedNameMapForTypes 
-       // only saves the name qualification of the type and not the name of the type which can 
-       // itself have and require name qualification of its subtypes.  I am not clear how this 
+       // DQ (6/3/2011): Evaluate types to permit the strings representing unparsing the types
+       // are saved in a separate map associated with the IR node referencing the type.  This
+       // supports the cases where a type with template arguments may require different name
+       // qualifications on its template arguments when it is referenced from different locations
+       // in the source code.  The name qualification support saved in qualifiedNameMapForTypes
+       // only saves the name qualification of the type and not the name of the type which can
+       // itself have and require name qualification of its subtypes.  I am not clear how this
        // may interact with function types, but we could just same the substring representing the
        // template parameters if required, my preference is to save the string for the whole time.
           void traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement );

@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "sageInterfaceAda.h"
+
 #define ALIAS_SYMBOL_DEBUGGING 0
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
@@ -20,7 +22,7 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
    {
   // DQ (8/16/2020): This function is called for Fortran, and yet it has been modified to be more specific to C++ rules.
 
-  // DQ (4/14/2010): For Cxx only.  
+  // DQ (4/14/2010): For Cxx only.
   // Adding support for symbol aliasing as a result of using declarations
   // (and other use directives, etc.).
 
@@ -31,7 +33,7 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
      FixupAstSymbolTablesToSupportAliasedSymbols astFixupTraversal;
 
 #if 1
-  // DQ (4/17/2010): Comment this new option out for now while I focus on getting the 
+  // DQ (4/17/2010): Comment this new option out for now while I focus on getting the
   // language only configure options into place.
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
@@ -45,7 +47,7 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
      printf ("ERROR: COMMENTED OUT CALL TO FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
 #endif
 
-  // DQ (1/23/2019): The set maintained in SgSymbolTable::get_aliasSymbolCausalNodeSet() should likely be 
+  // DQ (1/23/2019): The set maintained in SgSymbolTable::get_aliasSymbolCausalNodeSet() should likely be
   // cleared after use in this function.
 #if ALIAS_SYMBOL_DEBUGGING
      printf ("In fixupAstSymbolTablesToSupportAliasedSymbols(): SgSymbolTable::get_aliasSymbolCausalNodeSet().size() = %zu (should be cleared) \n",SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
@@ -55,10 +57,10 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
    }
 
 
-void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics() 
+void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
    {
      static bool initialized = false;
-     if (!initialized) 
+     if (!initialized)
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstSymbolTablesToSupportAliasedSymbols");
@@ -73,7 +75,7 @@ bool
 FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( SgClassDeclaration* classDeclaration, SgSymbol* symbol )
    {
   // DQ (1/22/2019): This is the wrong function for where we need it below.  This function (which is recursive over the derived classes)
-  // would be useful as a consistancy test at some point, but does not address the immediate problem to detect only if a symbol is from 
+  // would be useful as a consistancy test at some point, but does not address the immediate problem to detect only if a symbol is from
   // a private base class.  No recursion is required to address this (simpler) question.
 
   // This function assumes that the first layer of base class has been stripped away.
@@ -153,7 +155,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
      if (classDefinition != NULL)
         {
-       // bool symbol_exists (const SgSymbol *sp) const 
+       // bool symbol_exists (const SgSymbol *sp) const
           if (classDefinition->symbol_exists(symbol) == true)
              {
                printf ("Found class definition ROOT for symbol: classDeclaration name = %s symbol = %p = %s \n",classDeclaration->get_name().str(),symbol,symbol->class_name().c_str());
@@ -295,7 +297,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
      if (classDefinition != NULL)
         {
-       // bool symbol_exists (const SgSymbol *sp) const 
+       // bool symbol_exists (const SgSymbol *sp) const
           if (classDefinition->symbol_exists(symbol) == true)
              {
                printf ("Found class definition ROOT for symbol: classDeclaration name = %s symbol = %p = %s \n",classDeclaration->get_name().str(),symbol,symbol->class_name().c_str());
@@ -348,7 +350,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
 // DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
 void
-FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( 
+FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope (
    SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel, bool calledFromUsingDirective )
    {
      ROSE_ASSERT(referencedScope != NULL);
@@ -503,9 +505,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              }
 #endif
 
-       // DQ (1/21/2019): The test2019_21.C demonstrates that while a private base class is visible in the derived 
-       // class, it an subsequent derived class it should not be visible.  So we can't just copy all of the symbols 
-       // from one class into another.  We need to check the causal node and see if it is associated with a private 
+       // DQ (1/21/2019): The test2019_21.C demonstrates that while a private base class is visible in the derived
+       // class, it an subsequent derived class it should not be visible.  So we can't just copy all of the symbols
+       // from one class into another.  We need to check the causal node and see if it is associated with a private
        // base class within the class whose nodes were are copying.
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
@@ -519,8 +521,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
 #define DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT 0
 
-       // DQ (1/25/2019): This code should be refactored to a seperate function since it is just about the 
-       // private base class support.  An alternative implementation could use a isInherited flag or 
+       // DQ (1/25/2019): This code should be refactored to a seperate function since it is just about the
+       // private base class support.  An alternative implementation could use a isInherited flag or
        // isInheritedThroughPrivateBaseClass flag that might simplify the implementation (suggested by Tristan).
        // The flag would be added to the SgAliasSymbol, unclear if this is redundant with the causal node list.
 
@@ -539,7 +541,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
             // Check if the symbol here is from another base class and if is a private base class.
             // Iterate for each symbol through the associated base classes until we reach a non-alias symbol.
-            // Note that the alias symbols do no form an alias chain, so we have to go through the causal 
+            // Note that the alias symbols do no form an alias chain, so we have to go through the causal
             // nodes within each iteration.
 
                SgClassDefinition* derivedClassDefinition = isSgClassDefinition(baseClass->get_parent());
@@ -579,7 +581,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                if (baseScope->symbol_exists(original_symbol) == true)
                   {
-                 // Sense we found the original symbol in the base class, we know that the symbol would visible in the derivedClassDeclaration 
+                 // Sense we found the original symbol in the base class, we know that the symbol would visible in the derivedClassDeclaration
                  // only because of the derivation from the base class.  Then the only point is if the base class is a private base class or not.
                  // If it is a private base class then we don't want to build the alias symbol, but if it is public or protected then we do want
                  // to insert the symbol (through a SgAliasSymbol).
@@ -639,7 +641,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                             }
 
-                         default: 
+                         default:
                             {
 #if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
                               printf ("Default reached in switch: Symbol = %p = %s name = %s is not handled in switch \n",symbol,symbol->class_name().c_str(),name.str());
@@ -745,9 +747,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
 
        // DQ (8/15/2020): We need to account for the access permission being a new value SgAccessModifier::e_default.
-       // DQ (1/24/2019): Added support for where we detect that a symbol should not be aliased because it 
+       // DQ (1/24/2019): Added support for where we detect that a symbol should not be aliased because it
        // comes from a pribvate base class derivation in a nested derivation.
-       // DQ (12/23/2015): See test2015_140.C for where even private base classes will require representations 
+       // DQ (12/23/2015): See test2015_140.C for where even private base classes will require representations
        // of it's symbols in the derived class (to support correct name qualification).
        // if (declarationAccessLevel >= accessLevel)
        // if ( (declarationAccessLevel >= accessLevel) || isSgBaseClass(causalNode) != NULL)
@@ -755,8 +757,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
        // DQ (8/15/2020): This original code is fine as long as the accessLevel is set properly as function input.
           if ( (declarationAccessLevel >= accessLevel) || (isSgBaseClass(causalNode) != NULL && definedThroughPrivateBaseClass == false))
 #else
-          if ( (declarationAccessLevel == SgAccessModifier::e_public) || 
-               (declarationAccessLevel >= accessLevel) || 
+          if ( (declarationAccessLevel == SgAccessModifier::e_public) ||
+               (declarationAccessLevel >= accessLevel) ||
                (isSgBaseClass(causalNode) != NULL && definedThroughPrivateBaseClass == false))
 #endif
              {
@@ -846,9 +848,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                printf ("This declaration is visible, so build an alias \n");
 #endif
 
-            // DQ (7/24/2011): Need to make sure that the symbol is not already present in the symbol table 
-            // (else injection would be redundant. This is a likely key to the problem we are having with 
-            // symbol table explosions for some codes.  This should be refactored to a member function of 
+            // DQ (7/24/2011): Need to make sure that the symbol is not already present in the symbol table
+            // (else injection would be redundant. This is a likely key to the problem we are having with
+            // symbol table explosions for some codes.  This should be refactored to a member function of
             // the symbol table support.
             // Note that this change improves the performance from 15 minutes to 5 seconds for the outlining example.
                bool alreadyExists = currentScope->symbol_exists(name);
@@ -901,7 +903,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                          case V_SgLabelSymbol:
                          case V_SgNonrealSymbol:
                             {
-                           // Liao, 10/31/2012. 
+                           // Liao, 10/31/2012.
                            // Using lookup_function_symbol () etc. is not good enough since it returns the first match only.
                            // There might be multiple hits. We have to go through them all instead of checking only the first hit
                               alreadyExists = false; // reset to be false
@@ -920,14 +922,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table ->equal_range (name);
                               for (rose_hash_multimap::iterator i = range.first; i != range.second; ++i)
                                  {
-                                   SgSymbol * orig_current_symbol = i->second; 
+                                   SgSymbol * orig_current_symbol = i->second;
                                    ROSE_ASSERT (orig_current_symbol != NULL);
 #if ALIAS_SYMBOL_DEBUGGING
                                    printf ("In loop: orig_current_symbol = %p = %s name = %s \n",orig_current_symbol,
                                         orig_current_symbol->class_name().c_str(),SageInterface::get_name(orig_current_symbol).c_str());
 #endif
                                 // strip off alias symbols
-                                   SgSymbol * non_alias_symbol = orig_current_symbol; 
+                                   SgSymbol * non_alias_symbol = orig_current_symbol;
                                    while (isSgAliasSymbol(non_alias_symbol))
                                       {
                                         non_alias_symbol = isSgAliasSymbol(non_alias_symbol) ->get_alias();
@@ -953,7 +955,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                                         alreadyExists = true;
 
                                      // DQ (8/15/2020): Not clear if this is correct.
-                                     // DQ (8/14/2020): Commented out. 
+                                     // DQ (8/14/2020): Commented out.
                                      // break;
                                       }
                                  } // end for
@@ -1217,6 +1219,25 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
    }
 
+namespace
+{
+  SgClassDefinition*
+  getClassDefinition(const SgDeclarationStatement* classDecl)
+  {
+    SgClassDefinition* res = nullptr;
+
+    if (SgClassDeclaration* defDecl = isSgClassDeclaration(classDecl->get_definingDeclaration()))
+      res = defDecl->get_definition();
+
+    if (SgProject::get_verbose() > 0) {
+      if (res == nullptr)
+        mprintf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
+    }
+
+    return res;
+  }
+}
+
 
 
 void
@@ -1232,7 +1253,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
         {
        // This must be done in the Fortran AST construction since aliased symbols must be inserted
        // before they are looked up as part of name resolution of variable, functions, and types.
-       // For C++ we can be more flexible and support the construction of symbol aliases within 
+       // For C++ we can be more flexible and support the construction of symbol aliases within
        // post-processing.
         }
 
@@ -1304,7 +1325,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                   }
              }
 
-       // Note that "std", as a predefined namespace, can have a null definition, so we can't 
+       // Note that "std", as a predefined namespace, can have a null definition, so we can't
        // insist that we inject all symbols in namespaces that we can't see explicitly.
           if (referencedScope != NULL)
              {
@@ -1331,49 +1352,44 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
      if (classDefinition != NULL)
         {
        // Handle any derived classes.
-          SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
-          SgBaseClassPtrList::iterator i = baseClassList.begin();
-          for ( ; i != baseClassList.end(); ++i)
+          for (SgBaseClass* baseClass : classDefinition->get_inheritances())
              {
             // Check each base class.
-               SgBaseClass* baseClass = *i;
-               ROSE_ASSERT(baseClass != NULL);
-
-               /* skip processing for SgExpBaseClasses (which don't have to define p_base_class) */
-               if (baseClass->variantT() == V_SgExpBaseClass) {
-                   continue;
-               }
+               ASSERT_not_null(baseClass);
 
             // printf ("baseClass->get_baseClassModifier().displayString()                      = %s \n",baseClass->get_baseClassModifier().displayString().c_str());
             // printf ("baseClass->get_baseClassModifier().get_accessModifier().displayString() = %s \n",baseClass->get_baseClassModifier().get_accessModifier().displayString().c_str());
             // DQ (1/21/2019): get_baseClassModifier() returns a pointer instead of a value.
             // DQ (6/22/2011): Define the access level for alias symbol's declarations to be included.
-               ROSE_ASSERT(baseClass->get_baseClassModifier() != NULL);
-               SgAccessModifier::access_modifier_enum accessLevel = baseClass->get_baseClassModifier()->get_accessModifier().get_modifier();
+               SgAccessModifier::access_modifier_enum accessLevel;
+
+               if (baseClass->get_baseClassModifier())
+                 accessLevel = baseClass->get_baseClassModifier()->get_accessModifier().get_modifier();
 
                SgScopeStatement * referencedScope = NULL;
                if (baseClass->variantT() == V_SgBaseClass) {
-                 SgClassDeclaration * tmpClassDeclaration = isSgClassDeclaration(baseClass->get_base_class());
-                 ROSE_ASSERT(tmpClassDeclaration != NULL);
-                 if (tmpClassDeclaration->get_definingDeclaration() != NULL) {
-                    SgClassDeclaration * targetDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
-                    ROSE_ASSERT(targetDeclaration != NULL);
-                    referencedScope  = targetDeclaration->get_definition();
-                 } else {
-                    if (SgProject::get_verbose() > 0) {
-                      mprintf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
-                    }
-                 }
+                 referencedScope = getClassDefinition(baseClass->get_base_class());
                } else if (baseClass->variantT() == V_SgNonrealBaseClass) {
                  SgNonrealDecl * nrdecl = isSgNonrealBaseClass(baseClass)->get_base_class_nonreal();
                  ROSE_ASSERT(nrdecl != NULL);
 
                  referencedScope = isSgDeclarationScope(nrdecl->get_parent());
+               } else if (SageInterface::is_Ada_language() && (baseClass->variantT() == V_SgExpBaseClass)) {
+                 SgExpBaseClass* expBaseClass = isSgExpBaseClass(baseClass);
+                 ASSERT_not_null(expBaseClass);
+
+                 SgTypeExpression* tyExp = isSgTypeExpression(expBaseClass->get_base_class_exp());
+                 ASSERT_not_null(tyExp);
+
+                 SgDeclarationStatement* tyDecl = SageInterface::Ada::associatedDeclaration(tyExp->get_type());
+                 ASSERT_not_null(tyDecl);
+
+                 referencedScope = getClassDefinition(tyDecl);
                } else {
                  ROSE_ABORT();
                }
 
-               if (referencedScope != NULL) 
+               if (referencedScope != NULL)
                   {
                     bool calledFromUsingDirective = false;
                     injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,baseClass,accessLevel,calledFromUsingDirective);
