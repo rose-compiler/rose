@@ -1901,7 +1901,7 @@ namespace Ada
         void handle(const SgTypeFloat&)           { res = pkgStandardScope(); }
         void handle(const SgTypeDouble&)          { res = pkgStandardScope(); }
 
-        void handle(const SgTypeChar& n)          { res = pkgStandardScope(); }
+        void handle(const SgTypeChar&)            { res = pkgStandardScope(); }
         void handle(const SgTypeChar16&)          { res = pkgStandardScope(); }
         void handle(const SgTypeChar32&)          { res = pkgStandardScope(); }
 

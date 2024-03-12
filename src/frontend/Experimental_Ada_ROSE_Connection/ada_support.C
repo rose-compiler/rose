@@ -30,25 +30,6 @@ namespace Ada_ROSE_Translation
   void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
 }
 
-#if OBSOLETE_CODE
-namespace
-{
-  bool eq( const Rose::Cmdline::Ada::CmdlineSettings& lhs,
-           const Rose::Cmdline::Ada::CmdlineSettings& rhs
-         )
-  {
-    return (  lhs.processPredefinedUnits == rhs.processPredefinedUnits
-           && lhs.processImplementationUnits == rhs.processImplementationUnits
-           && lhs.failhardAdb == rhs.failhardAdb
-           && lhs.asisDebug == rhs.asisDebug
-           && lhs.logWarn == rhs.logWarn
-           && lhs.logInfo == rhs.logInfo
-           && lhs.logTrace == rhs.logTrace
-           );
-  }
-}
-#endif /* OBSOLETE_CODE */
-
 #ifdef BUILD_EXECUTABLE
 int main(int argc, char** argv)
    {

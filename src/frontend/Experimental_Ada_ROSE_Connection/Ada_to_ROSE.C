@@ -2257,6 +2257,8 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
 bool FAIL_ON_ERROR(AstContext ctx)
 {
+  return true;
+/*
   static const char* failSuffix = ".adb";
 
   if (!fail_on_error)
@@ -2267,11 +2269,13 @@ bool FAIL_ON_ERROR(AstContext ctx)
   return (  filename.size() > 3
          && std::equal(filename.end()-4, filename.end(), failSuffix)
          );
+*/
 }
 
 /// initialize translation settins
 void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings)
 {
+  // settings.failhardAdb and fail_on_error are obsolete
   if (settings.failhardAdb) fail_on_error = true;
 }
 

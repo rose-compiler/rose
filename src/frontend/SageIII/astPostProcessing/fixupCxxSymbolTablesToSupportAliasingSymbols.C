@@ -554,13 +554,15 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
             // Need to iterate through base classes chains. iterate past the first layer.
             // TV (01/30/2019): changes to handle the case of nonreal base class.
-               SgScopeStatement* baseScope = NULL;
 
-               SgNonrealBaseClass * nrBaseClass = isSgNonrealBaseClass(baseClass);
-               if (nrBaseClass != NULL) {
+               SgScopeStatement* baseScope = NULL; // why is this not just referencedScope?
+
+               if (SgNonrealBaseClass* nrBaseClass = isSgNonrealBaseClass(baseClass)) {
                  SgNonrealDecl* baseNonrealDeclaration = nrBaseClass->get_base_class_nonreal();
                  ROSE_ASSERT(baseNonrealDeclaration != NULL);
                  baseScope = baseNonrealDeclaration->get_nonreal_decl_scope();
+               } else if (/*SgExpBaseClass* expBaseClass =*/ isSgExpBaseClass(baseClass)) {
+                 baseScope = referencedScope;
                } else {
                  SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
                  ROSE_ASSERT(baseClassDeclaration != NULL);
@@ -1381,6 +1383,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                  SgTypeExpression* tyExp = isSgTypeExpression(expBaseClass->get_base_class_exp());
                  ASSERT_not_null(tyExp);
 
+                 // \todo also inject the discriminants if available
                  SgDeclarationStatement* tyDecl = SageInterface::Ada::associatedDeclaration(tyExp->get_type());
                  ASSERT_not_null(tyDecl);
 

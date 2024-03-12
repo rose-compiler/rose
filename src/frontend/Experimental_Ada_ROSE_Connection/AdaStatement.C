@@ -517,7 +517,7 @@ namespace
   SgStatement&
   labelIfNeeded(SgStatement& stmt, Statement_Struct& adastmt, AstContext ctx)
   {
-    typedef NameCreator::result_container name_container;
+    using name_container = NameCreator::result_container;
 
     ElemIdRange    range  = idRange(adastmt.Label_Names);
     name_container names  = allNames(range, ctx);
@@ -651,8 +651,11 @@ namespace
       lst.push_back(&dcl);
       recordNonUniqueNode(m, id, dcl, true /* overwrite existing entries if needed */);
 
+      //~ logError() << name << " = " << id << std::endl;
+
       if (!secondaries.empty())
       {
+        //~ logError() << name << "' = " << secondaries.back() << std::endl;
         recordNonUniqueNode(m, secondaries.back(), dcl, true /* overwrite existing entries if needed */);
         secondaries.pop_back();
       }
@@ -730,7 +733,6 @@ namespace
                || decl.Declaration_Kind == An_Integer_Number_Declaration
                || decl.Declaration_Kind == A_Component_Declaration
                || decl.Declaration_Kind == A_Discriminant_Specification
-               || decl.Declaration_Kind == A_Discriminant_Specification
                || decl.Declaration_Kind == A_Formal_Object_Declaration
                );
 
@@ -777,7 +779,7 @@ namespace
   SgVariableDeclaration&
   getParm(Element_Struct& elem, AstContext ctx)
   {
-    typedef NameCreator::result_container name_container;
+    using name_container = NameCreator::result_container;
 
     ADA_ASSERT (elem.Element_Kind == A_Declaration);
 
@@ -842,7 +844,7 @@ namespace
   SgVariableDeclaration&
   getDiscriminant(Element_Struct& elem, std::vector<Element_ID>& secondaries, AstContext ctx)
   {
-    typedef NameCreator::result_container name_container;
+    using name_container = NameCreator::result_container;
 
     ADA_ASSERT (elem.Element_Kind == A_Declaration);
 
@@ -875,10 +877,11 @@ namespace
       : params(SG_DEREF(discrNode.get_discriminants())), secondaries(std::move(sec)), ctx(astctx)
       {}
 
+/*
       DiscriminantCreator(SgAdaFormalTypeDecl& discrNode, AstContext astctx)
       : params(SG_DEREF(discrNode.get_discriminants())), secondaries(), ctx(astctx)
       {}
-
+*/
       void operator()(Element_Struct& elem)
       {
         SgVariableDeclaration& decl = getDiscriminant(elem, secondaries, ctx);
@@ -3238,28 +3241,13 @@ namespace
     return res;
   }
 
-#if 0
-  void
-  recordSecondaryDiscriminants(SgAdaDiscriminatedTypeDecl& sgnode, Element_Struct* secondary, AstContext ctx)
+  template <class Container>
+  Container reverseElems(Container cont)
   {
-    ElemIdRange secondaryIDs = secondaryKnownDiscrimnants(secondary, ctx);
-
-    if (secondaryIDs.empty()) return;
-
-    std::vector<SgInitializedName*> parameters  = flattenDiscriminants(sgnode, ctx);
-    std::vector<Element_ID>         secondaries = flattenNameLists(secondaryIDs, ctx);
-
-    ADA_ASSERT(parameters.size() == secondaries.size());
-
-    foreach_pair( parameters.begin(), parameters.end(),
-                  secondaries.begin(),
-                  [](SgInitializedName* ini, Element_ID id) -> void
-                  {
-                    recordNonUniqueNode(asisVars(), id, SG_DEREF(ini), true);
-                  }
-                );
+    std::reverse(cont.begin(), cont.end());
+    return cont;
   }
-#endif /* 0 */
+
 
   SgAdaDiscriminatedTypeDecl&
   createDiscriminatedDeclID(Element_Struct& elem, Element_Struct* secondary, AstContext ctx)
@@ -3280,22 +3268,12 @@ namespace
     {
       logKind("A_Known_Discriminant_Part", elem.ID);
 
+      SgScopeStatement&       scope         = SG_DEREF(sgnode.get_discriminantScope());
       ElemIdRange             discriminants = idRange(def.The_Union.The_Known_Discriminant_Part.Discriminants);
-      ElemIdRange             secondaryIDs = secondaryKnownDiscrimnants(secondary, ctx);
-      std::vector<Element_ID> secondaries;
-
-      if (!secondaryIDs.empty())
-      {
-        secondaries = flattenNameLists(secondaryIDs, ctx);
-        std::reverse(secondaries.begin(), secondaries.end());
-      }
-
-      SgScopeStatement& scope         = SG_DEREF(sgnode.get_discriminantScope());
+      ElemIdRange             secondaryIDs  = secondaryKnownDiscrimnants(secondary, ctx);
+      std::vector<Element_ID> secondaries   = reverseElems(flattenNameLists(secondaryIDs, ctx));
 
       traverseIDs(discriminants, elemMap(), DiscriminantCreator{sgnode, std::move(secondaries), ctx.scope(scope)});
-
-      //~ recordSecondaryDiscriminants(sgnode, secondary, ctx);
-      ADA_ASSERT(secondaries.empty());
     }
     else
     {
@@ -5256,7 +5234,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("An_Exception_Declaration", elem.ID);
 
-        typedef NameCreator::result_container name_container;
+        using name_container = NameCreator::result_container;
 
         ElemIdRange              range    = idRange(decl.Names);
         name_container           names    = allNames(range, ctx);
@@ -5837,9 +5815,13 @@ processInheritedSubroutines( SgNamedType& derivedType,
          traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
 
          if (!declarations.empty())
-           logWarn() << "A derived/extension record type's implicit declaration is not empty: "
+         {
+           // fields will be added later during the fixup pass: FixupAstSymbolTablesToSupportAliasedSymbols
+           // \todo also implement fixup for discriminants and enumerations..
+           logInfo() << "A derived/extension record type's implicit declaration is not empty: "
                      << derivedType.get_name()
                      << std::endl;
+         }
        };
 
   ctx.storeDeferredUnitCompletion(std::move(deferredSubRoutineProcessing));

@@ -37,23 +37,20 @@ namespace
     ADA_ASSERT(elem.Element_Kind == An_Association);
 
     Association_Struct& assoc      = elem.The_Union.Association;
-    ADA_ASSERT(  assoc.Association_Kind == A_Parameter_Association
-               || assoc.Association_Kind == A_Pragma_Argument_Association
-               || assoc.Association_Kind == A_Generic_Association
-               );
 
-    switch (assoc.Association_Kind) {
-    case A_Parameter_Association:
-      logKind("A_Parameter_Association", elem.ID);
-      break;
-    case A_Pragma_Argument_Association:
-      logKind("A_Pragma_Argument_Association", elem.ID);
-      break;
-    case A_Generic_Association:
-      logKind("A_Generic_Association", elem.ID);
-      break;
-    default:
-      ADA_ASSERT(false);
+    switch (assoc.Association_Kind)
+    {
+      case A_Parameter_Association:
+        logKind("A_Parameter_Association", elem.ID);
+        break;
+      case A_Pragma_Argument_Association:
+        logKind("A_Pragma_Argument_Association", elem.ID);
+        break;
+      case A_Generic_Association:
+        logKind("A_Generic_Association", elem.ID);
+        break;
+      default:
+        ADA_ASSERT(false);
     }
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
@@ -370,6 +367,10 @@ namespace
 
   /// old operator call, currently serves as fallback
   /// \todo remove from code base
+  /// \note surviving use cases:
+  ///       * pragma inline("+")
+  ///       * generic instantiations is instance(integer, "+")
+  ///       * ??
   SgExpression&
   getOperator_fallback(Expression_Struct& expr, AstContext ctx)
   {
@@ -377,27 +378,27 @@ namespace
     using OperatorMakerMap = std::map<Operator_Kinds, std::pair<const char*, MkWrapperFn> >;
 
     static const OperatorMakerMap makerMap =
-    { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp_nfi> }},
-      { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp_nfi> }},
-      { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp_nfi> }},
-      { An_Equal_Operator,                {"An_Equal_Operator",                mk2_wrapper<SgEqualityOp,       sb::buildEqualityOp_nfi> }},
-      { A_Not_Equal_Operator,             {"A_Not_Equal_Operator",             mk2_wrapper<SgNotEqualOp,       sb::buildNotEqualOp_nfi> }},
-      { A_Less_Than_Operator,             {"A_Less_Than_Operator",             mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp_nfi> }},
-      { A_Less_Than_Or_Equal_Operator,    {"A_Less_Than_Or_Equal_Operator",    mk2_wrapper<SgLessOrEqualOp,    sb::buildLessOrEqualOp_nfi> }},
-      { A_Greater_Than_Operator,          {"A_Greater_Than_Operator",          mk2_wrapper<SgGreaterThanOp,    sb::buildGreaterThanOp_nfi> }},
-      { A_Greater_Than_Or_Equal_Operator, {"A_Greater_Than_Or_Equal_Operator", mk2_wrapper<SgGreaterOrEqualOp, sb::buildGreaterOrEqualOp_nfi> }},
-      { A_Plus_Operator,                  {"A_Plus_Operator",                  mk2_wrapper<SgAddOp,            sb::buildAddOp_nfi> }},
-      { A_Minus_Operator,                 {"A_Minus_Operator",                 mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp_nfi> }},
-      { A_Concatenate_Operator,           {"A_Concatenate_Operator",           mk2_wrapper<SgConcatenationOp,  sb::buildConcatenationOp_nfi> }},
-      { A_Unary_Plus_Operator,            {"A_Unary_Plus_Operator",            mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp_nfi> }},
-      { A_Unary_Minus_Operator,           {"A_Unary_Minus_Operator",           mk1_wrapper<SgMinusOp,          sb::buildMinusOp_nfi> }},
-      { A_Multiply_Operator,              {"A_Multiply_Operator",              mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp_nfi> }},
-      { A_Divide_Operator,                {"A_Divide_Operator",                mk2_wrapper<SgDivideOp,         sb::buildDivideOp_nfi> }},
-      { A_Mod_Operator,                   {"A_Mod_Operator",                   mk2_wrapper<SgModOp,            sb::buildModOp_nfi> }},
-      { A_Rem_Operator,                   {"A_Rem_Operator",                   mk2_wrapper<SgRemOp,            sb::buildRemOp_nfi> }},
-      { An_Exponentiate_Operator,         {"An_Exponentiate_Operator",         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp_nfi> }},
-      { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            sb::buildAbsOp_nfi> }},
-      { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp_nfi> }},
+    { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
+      { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
+      { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
+      { An_Equal_Operator,                {"An_Equal_Operator",                mk2_wrapper<SgEqualityOp,       sb::buildEqualityOp> }},
+      { A_Not_Equal_Operator,             {"A_Not_Equal_Operator",             mk2_wrapper<SgNotEqualOp,       sb::buildNotEqualOp> }},
+      { A_Less_Than_Operator,             {"A_Less_Than_Operator",             mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp> }},
+      { A_Less_Than_Or_Equal_Operator,    {"A_Less_Than_Or_Equal_Operator",    mk2_wrapper<SgLessOrEqualOp,    sb::buildLessOrEqualOp> }},
+      { A_Greater_Than_Operator,          {"A_Greater_Than_Operator",          mk2_wrapper<SgGreaterThanOp,    sb::buildGreaterThanOp> }},
+      { A_Greater_Than_Or_Equal_Operator, {"A_Greater_Than_Or_Equal_Operator", mk2_wrapper<SgGreaterOrEqualOp, sb::buildGreaterOrEqualOp> }},
+      { A_Plus_Operator,                  {"A_Plus_Operator",                  mk2_wrapper<SgAddOp,            sb::buildAddOp> }},
+      { A_Minus_Operator,                 {"A_Minus_Operator",                 mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp> }},
+      { A_Concatenate_Operator,           {"A_Concatenate_Operator",           mk2_wrapper<SgConcatenationOp,  sb::buildConcatenationOp> }},
+      { A_Unary_Plus_Operator,            {"A_Unary_Plus_Operator",            mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp> }},
+      { A_Unary_Minus_Operator,           {"A_Unary_Minus_Operator",           mk1_wrapper<SgMinusOp,          sb::buildMinusOp> }},
+      { A_Multiply_Operator,              {"A_Multiply_Operator",              mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp> }},
+      { A_Divide_Operator,                {"A_Divide_Operator",                mk2_wrapper<SgDivideOp,         sb::buildDivideOp> }},
+      { A_Mod_Operator,                   {"A_Mod_Operator",                   mk2_wrapper<SgModOp,            sb::buildModOp> }},
+      { A_Rem_Operator,                   {"A_Rem_Operator",                   mk2_wrapper<SgRemOp,            sb::buildRemOp> }},
+      { An_Exponentiate_Operator,         {"An_Exponentiate_Operator",         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> }},
+      { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            sb::buildAbsOp> }},
+      { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
     };
 
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
@@ -464,29 +465,40 @@ namespace
   /// \param  domArgPos the dominant argument position
   /// \param  ctx the translator context
   /// \return an adjusted operator call supplement
+  /// \note
+  ///   since we rely on a solid frontend, we may not need to check all the requirements
   OperatorCallSupplement
   operatorSignature(AdaIdentifier name, const OperatorCallSupplement& suppl, std::size_t domArgPos, AstContext ctx)
   {
-    static const std::string left_arg  = "left";
-    static const std::string right_arg = "right";
-
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-5-2.html
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-4.html
 
-    // \todo reorder suppl.args() if arguments are named..
-
     if (name == "&")
     {
-      logFlaw() << "gen arg types .. [incomplete]" << std::endl;
-      return { suppl.args(), suppl.args().front().type() };
+      SgType* resTy = nullptr;
+      SgType& lhsTy = SG_DEREF( suppl.args().front().type() );
+
+      if (SgArrayType* lhsArrTy = si::Ada::getArrayTypeInfo(lhsTy).type())
+        resTy = lhsArrTy;
+      else if (SgArrayType* rhsArrTy = si::Ada::getArrayTypeInfo(suppl.args().back().type()).type())
+        resTy = rhsArrTy;
+      else
+      {
+        SgType&        positive = SG_DEREF(adaTypes().at("POSITIVE"));
+        SgExprListExp& idx = mkExprListExp({&mkTypeExpression(positive)});
+
+        resTy = &mkArrayType(lhsTy, idx, true /* unconstrained */);
+      }
+
+      ADA_ASSERT(resTy != nullptr);
+      return { suppl.args(), resTy };
     }
 
-    SgType* domTy = suppl.args().at(domArgPos).type();
+    SgType* const domTy = suppl.args().at(domArgPos).type();
 
     if (name == "=")
     {
       // ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
-
 
       // requires (  nonLimitedArgumentType(domTy, ctx)
       //          && equalArgumentTypes(suppl, ctx)     // will be adjusted
@@ -596,6 +608,11 @@ namespace
 
   void sortByArgumentName(OperatorCallSupplement::ArgDescList& lst)
   {
+    // assumes arguments are named Left and Right
+    // i.e., sorts Left before Right
+    // \todo what if the call is written as
+    //       "+"(Left => 2, 3) ?
+
     if (lst.size() < 2) return;
     ADA_ASSERT(lst.size() == 2);
 
@@ -625,12 +642,19 @@ namespace
     return { &scope, dom.pos() };
   }
 
+  bool pragmaProcessing(const AstContext& ctx)
+  {
+    return isSgPragmaDeclaration(ctx.pragmaAspectAnchor());
+  }
+
   SgExpression*
   generateOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
   {
     if (!suppl.args_valid())
     {
-      logWarn() << "suppl.args() is null" << std::endl;
+      if (!pragmaProcessing(ctx))
+        logWarn() << "suppl.args() is null" << std::endl;
+
       return nullptr;
     }
 
@@ -731,8 +755,9 @@ namespace
     if (SgExpression* res = generateOperator(fnname, std::move(suppl), ctx))
       return *res;
 
-    logWarn() << "Using first version generator as fallback to model operator " << expr.Name_Image
-              << std::endl;
+    if (!pragmaProcessing(ctx))
+      logWarn() << "Using first version generator as fallback to model operator " << expr.Name_Image
+                << std::endl;
 
     /* unused fields:
        Defining_Name_List    Corresponding_Name_Definition_List;
@@ -1233,9 +1258,12 @@ namespace
     return elem.The_Union.Expression.Expression_Kind;
   }
 
+
   SgInitializedName*
-  queryByNameInDeclarationID(const AdaIdentifier& name, Declaration_ID id)
+  queryByNameInDeclarationID(const AdaIdentifier& name, Declaration_ID id, AstContext ctx)
   {
+    using name_container = std::vector<NameData>;
+
     if (id <= 0)
       return nullptr;
 
@@ -1244,11 +1272,26 @@ namespace
       return nullptr;
 
     Declaration_Struct& decl = elem->The_Union.Declaration;
-    if (decl.Declaration_Kind != A_Component_Declaration)
-      return nullptr;
+    const bool          supported = (  decl.Declaration_Kind == A_Component_Declaration
+                                    || decl.Declaration_Kind == A_Discriminant_Specification
+                                    );
 
-    ElemIdRange range = idRange(decl.Names);
+    if (!supported) return nullptr;
 
+    ElemIdRange         range = idRange(decl.Names);
+    name_container      names = allNames(range, ctx);
+    auto const          byNameFinder = [name](const NameData& nd) -> bool
+                                       {
+                                         return boost::iequals(name, nd.ident);
+                                       };
+
+    auto const          lim = names.end();
+    auto const          pos = std::find_if(names.begin(), lim, byNameFinder);
+
+    return pos != lim ? findFirst(asisVars(), pos->id())
+                      : nullptr;
+
+/*
     for (Element_ID_Ptr pos = range.first; pos != range.second; ++pos)
     {
       if (Element_Struct* el = retrieveElemOpt(elemMap(), *pos))
@@ -1264,6 +1307,7 @@ namespace
     }
 
     return nullptr;
+*/
   }
 
   SgScopeStatement& scopeForUnresolvedNames(AstContext ctx)
@@ -1305,6 +1349,7 @@ namespace
     std::cerr << "  :" << n << " @" << fi->get_line() << ':' << fi->get_col();
   }
 #endif /* FOR_DEBUGGING */
+
 
   /// creates expressions from elements, but does not decorate
   ///   aggregates with SgAggregateInitializers
@@ -1349,7 +1394,7 @@ namespace
             {
               res = &mkTypeExpression(*ty);
             }
-            else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration))
+            else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
             {
               res = sb::buildVarRefExp(fld, &ctx.scope());
             }
@@ -1361,6 +1406,12 @@ namespace
             {
               res = &mkExceptionRef(*exc, ctx.scope());
             }
+/*
+            else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
+            {
+              res = sb::buildVarRefExp(dsc, &ctx.scope());
+            }
+*/
             else
             {
               SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
