@@ -8,121 +8,136 @@
 #include "grammarString.h"
 #include <string>
 
-using std::string;
-
-
 // ################################################################
 // #                   Grammar Member Functions                   #
 // ################################################################
 
-string localOutputVisitorSupport ( string name ) {
-     string s;
-     s += string("          virtual void visit(");
-     s += name;
-     s += " *variable_";
-     s += name;
+static void
+emitLocalOutputVisitorSupport(std::ostream &header, std::ostream &impl, const std::string &visitorType,
+                              const std::string &nodeType) {
+    header <<"    virtual void visit(" <<nodeType <<"*);\n";
 
-  // DQ (11/26/2005): Not clear if these should be pure virtual
-  // s += ") = 0;\n";
-
-  // DQ (12/23/2005): Need to build the implementation and let 
-  // derived classed overload as appropriate
-     // DXN (08/27/2010): instead of do nothing, call visitDefault() which does nothing.
-     s += ") { visitDefault(variable_" + name +"); }\n";
-
-     return s;
+    // DQ (12/23/2005): Need to build the implementation and let derived classed overload as appropriate
+    // DXN (08/27/2010): instead of do nothing, call visitDefault() which does nothing.
+    impl <<"\n"
+         <<"void " <<visitorType <<"::visit(" <<nodeType <<" *x) {\n"
+         <<"    visitDefault(x);\n"
+         <<"}\n";
 }
 
-string localOutputVisitorParentSupport ( string name ) {
-     if (name == "SgNode")
-       return localOutputVisitorSupport(name);
+static void
+emitLocalOutputVisitorParentSupport(std::ostream &header, std::ostream &impl, const std::string &visitorType,
+                                    const std::string &nodeType) {
+    if (nodeType == "SgNode") {
+        emitLocalOutputVisitorSupport(header, impl, visitorType, nodeType);
 
-     string s;
-     s += string("          void visit(");
-     s += name;
-     s += " *variable_";
-     s += name;
+    } else {
+        header <<"    void visit(" <<nodeType <<"*);\n";
 
-     // If not over-ridden by the child class, call the visit method
-     // as applied to this node's parent class
-     s += ") { visit(static_cast<" + name + "::base_node_type *>(variable_" + name +")); }\n";
-
-     return s;
+        impl <<"\n"
+             <<"void " <<visitorType <<"::visit(" <<nodeType <<" *x) {\n"
+             <<"    visit(static_cast<" <<nodeType <<"::base_node_type*>(x));\n"
+             <<"}\n";
+    }
 }
 
-/** the visit method for a given node type.
- * @param name a node type name
- */
-string delegate2strategy ( string name ) {
-     string s;
-     s += string("    virtual void visit(");
-     s += name;
-     s += " *variable_";
-     s += name;
-     // delegates visit call to strategy:
-     s += ") { _strategy->visit(variable_" + name +"); }\n";
-
-     return s;
+// The visit method for a given node type. Generates code that delegates visit call to strategy.
+static void
+emitDelegateToStrategy(std::ostream &header, const std::string &nodeType) {
+    header <<"\n"
+           <<"    virtual void visit(" <<nodeType <<" *x) {\n"
+           <<"        _strategy->visit(x);\n"
+           <<"    }\n";
 }
 
-string Grammar::buildVisitorBaseClass()
-   {
-  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
-  // string s = string("class ROSE_VisitorPattern  {\npublic:\n    virtual ~ROSE_VisitorPattern() {};\n");
-     string s;
-  // s += string("#ifndef ROSE_USE_SWIG_SUPPORT \n\n");
-     s += string("#ifndef SWIG \n\n");
-     s += string("class ROSE_VisitorPattern  {\npublic:\n    virtual ~ROSE_VisitorPattern() {};\n");
+void
+Grammar::emitVisitorBaseClass(std::ostream &header, std::ostream &impl) {
+    impl <<"#include <Cxx_GrammarVisitorSupport.h>\n"
+         <<"\n"
+         <<"#include <Cxx_Grammar.h>\n";
 
-     for (size_t i=0; i < terminalList.size(); i++) {
-          string name = terminalList[i]->name;
-          s += localOutputVisitorSupport(name);
-        }
-     // DXN (08/27/210): add the default case that does nothing as a catch-all;
-     // Let the derived class override if so desired.
-     s += "    virtual void visitDefault(SgNode*) {}\n";
-     s += "};\n\n";
+    header <<"#ifndef ROSE_CxxGrammarVisitorSupport_H\n"
+           <<"#define ROSE_CxxGrammarVisitorSupport_H\n"
+           <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n"
+           <<"#include <Cxx_GrammarDeclarations.h>\n"
+           <<"\n"
+           <<"#ifndef SWIG\n"
+           <<"class ROSE_VisitorPattern  {\n"
+           <<"public:\n"
+           <<"    virtual ~ROSE_VisitorPattern() {};\n"
+           <<"    virtual void visitDefault(SgNode*) {}\n"
+           <<"\n";
 
-     s += "class ROSE_VisitorPatternDefaultBase : public ROSE_VisitorPattern  {\npublic:\n";
-     for (size_t i=0; i < terminalList.size(); i++) {
-          string name = terminalList[i]->name;
-          s += localOutputVisitorParentSupport(name);
-        }
-     s += "};\n\n";
+    for (const auto &terminal: terminalList)
+        emitLocalOutputVisitorSupport(header, impl, "ROSE_VisitorPattern", terminal->name);
 
-     // DXN (08/28/2010): add template base class for visitors that return results.
-     s += "template <class R> class Visitor_R: public ROSE_VisitorPattern {\n ";
-     s += "protected:\n  /** Result of a visit method.\n    */\n    R _result;\npublic:\n";
-     s += "    virtual ~Visitor_R() {}\n        /**@return the result of the visitor's computation.\n    */\n";
-     s += "    virtual R& getResult() { return _result; }\n";
-     s += "    /**@return the result of the visitor's computation.\n    */\n";
-     s += "    virtual const R& getResult() const { return _result; }\n};\n\n";
+    header <<"};\n"
+           <<"\n"
+           <<"class ROSE_VisitorPatternDefaultBase: public ROSE_VisitorPattern {\n"
+           <<"public:\n";
+    for (const auto &terminal: terminalList)
+        emitLocalOutputVisitorParentSupport(header, impl, "ROSE_VisitorPatternDefaultBase", terminal->name);
 
-     // DXN: (08/29/2010): add template base class for the strategy pattern.
-     s += "/** Strategy pattern applied to visitors: serves as a context to a strategy,\n";
-     s += " * which itself is a visitor; delegates all requests to the current strategy;\n";
-     s += " * capable of switching strategy at will.  Derived classes may declare the\n";
-     s += " * known strategies as friend to facilitate communication between the strategies\n";
-     s += " * and their context.\n";
-     s += " */\ntemplate <class R> class ContextVis_R: public Visitor_R<R> {\n";
-     s += "protected:\n /** Strategy to process a node, can be set dynamically.\n       */\n";
-     s += "    ROSE_VisitorPattern* _strategy; // not owned by this context.\n public:\n";
-     s += "    virtual ~ContextVis_R() {_strategy = NULL; }\n";
-     s += "    /** Allows the strategy to be set dynamically.\n";
-     s += "     * @param strategy a visitor to process a node.\n    */\n";
-     s += "    void setStrategy(ROSE_VisitorPattern* strategy)  {_strategy = strategy; }\n\n";
-     for (size_t i = 0; i < terminalList.size(); i++) {
-         string name = terminalList[i]->name;
-         s += delegate2strategy(name);
-     }
-     s += "    virtual void visitDefault(SgNode* n) { _strategy->visitDefault(n); }\n";
-     s += "};\n";
+    header <<"};\n"
+           <<"\n";
 
-  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
-     s += string("#endif // endif for ifndef SWIG \n\n");
+    // DXN (08/28/2010): add template base class for visitors that return results.
+    header << "template<class R>\n"
+           <<"class Visitor_R: public ROSE_VisitorPattern {\n"
+           <<"protected:\n"
+           <<"    /** Result of a visit method. */\n"
+           <<"    R _result;\n"
+           <<"\n"
+           <<"public:\n"
+           <<"    virtual ~Visitor_R() {}\n"
+           <<"\n"
+           <<"    /** Return the result of the visitor's computation. */\n"
+           <<"    virtual R& getResult() {\n"
+           <<"        return _result;\n"
+           <<"    }\n"
+           <<"\n"
+           << "   /** Return the result of the visitor's computation. */\n"
+           << "   virtual const R& getResult() const {\n"
+           <<"        return _result;\n"
+           <<"    }\n"
+           <<"};\n"
+           <<"\n";
 
-     return s;
+    // DXN: (08/29/2010): add template base class for the strategy pattern.
+    header <<"/** Strategy pattern applied to visitors.\n"
+           <<" *\n"
+           <<" * Serves as a context to a strategy,\n"
+           <<" * which itself is a visitor; delegates all requests to the current strategy;\n"
+           <<" * capable of switching strategy at will.  Derived classes may declare the\n"
+           <<" * known strategies as friend to facilitate communication between the strategies\n"
+           <<" * and their context. */\n"
+           <<"template<class R>\n"
+           <<"class ContextVis_R: public Visitor_R<R> {\n"
+           <<"protected:\n"
+           <<"    /** Strategy to process a node, can be set dynamically. */\n"
+           <<"    ROSE_VisitorPattern* _strategy; // not owned by this context.\n"
+           <<"\n"
+           <<"public:\n"
+           <<"    virtual ~ContextVis_R() {\n"
+           <<"        _strategy = nullptr;\n"
+           <<"    }\n"
+           <<"\n"
+           <<"    /** Allows the strategy to be set dynamically.\n"
+           <<"      *\n"
+           <<"      * @param strategy a visitor to process a node. */\n"
+           <<"    void setStrategy(ROSE_VisitorPattern* strategy) {\n"
+           <<"        _strategy = strategy;\n"
+           <<"    }\n"
+           <<"\n"
+           <<"    virtual void visitDefault(SgNode *x) {\n"
+           <<"        _strategy->visitDefault(x);\n"
+           <<"    }\n";
+    for (const auto &terminal: terminalList)
+        emitDelegateToStrategy(header, terminal->name);
+
+    header <<"};\n"
+           <<"\n"
+           <<"#endif // SWIG\n"
+           <<"#endif // include-once\n";
+
 }
-
-
-

@@ -103,7 +103,14 @@ GENERATED_SOURCE = \
 	Cxx_GrammarDeclarations.h \
 	Cxx_GrammarDowncast.h \
 	Cxx_GrammarStorageClasses.h \
+	Cxx_GrammarSgNodeDefinitions.h \
+	Cxx_GrammarSgAsmNodeDefinitions.h \
+	Cxx_GrammarSgAsmCilNodeDefinitions.h \
+	Cxx_GrammarSgAsmDwarfNodeDefinitions.h \
+	Cxx_GrammarSgAsmJvmNodeDefinitions.h \
 	Cxx_GrammarVariants.h \
+	Cxx_GrammarVisitorSupport.h \
+	Cxx_GrammarVisitorSupport.C \
 	Cxx_Grammar.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
@@ -129,7 +136,14 @@ GENERATED_SOURCE = \
 	Cxx_GrammarDeclarations.h \
 	Cxx_GrammarDowncast.h \
 	Cxx_GrammarStorageClasses.h \
+	Cxx_GrammarSgNodeDefinitions.h \
+	Cxx_GrammarSgAsmNodeDefinitions.h \
+	Cxx_GrammarSgAsmCilNodeDefinitions.h \
+	Cxx_GrammarSgAsmDwarfNodeDefinitions.h \
+	Cxx_GrammarSgAsmJvmNodeDefinitions.h \
 	Cxx_GrammarVariants.h \
+	Cxx_GrammarVisitorSupport.h \
+	Cxx_GrammarVisitorSupport.C \
 	Cxx_Grammar.C \
 	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
@@ -327,7 +341,13 @@ nodist_pkginclude_HEADERS = \
    Cxx_GrammarDeclarations.h \
    Cxx_GrammarDowncast.h \
    Cxx_GrammarStorageClasses.h \
+   Cxx_GrammarSgNodeDefinitions.h \
+   Cxx_GrammarSgAsmNodeDefinitions.h \
+   Cxx_GrammarSgAsmCilNodeDefinitions.h \
+   Cxx_GrammarSgAsmDwarfNodeDefinitions.h \
+   Cxx_GrammarSgAsmJvmNodeDefinitions.h \
    Cxx_GrammarVariants.h \
+   Cxx_GrammarVisitorSupport.h \
    Cxx_GrammarMemoryPoolSupport.h \
    Cxx_GrammarTreeTraversalAccessEnums.h \
    AST_FILE_IO.h StorageClasses.h \

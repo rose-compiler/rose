@@ -97,8 +97,11 @@ class AstNodeClass
   // Content that should appear before the start of the class definition, such as CPP include directives
   std::string preDefinitionText;
 
-  // Wher class supports boost::serialization
+  // Whether class supports boost::serialization
   bool p_isBoostSerializable;
+
+  // Whether class can be emitted to a small header file
+  bool useSmallHeader_ = false;
 
   enum locationInTree
   {
@@ -383,7 +386,12 @@ class AstNodeClass
   /** Whether node supports boost::serialization. */
   bool isBoostSerializable() const;
   void isBoostSerializable(bool b);
-  
+
+  // If true, then emit the class definition to its own small header file, and in the Cxx_Grammar.h file only emit a class
+  // declaration.
+  bool useSmallHeader() const;
+  void useSmallHeader(bool);
+
   /* JH (10/28/2005): declaration of the source building methods for the storage classes
      concenrning the ast file IO. More about them one can find in the AstNodeClass.C file. They
      are called while the code generation of ROSETTA by the method 'buildStringForStorageClassSource'

@@ -1,5 +1,5 @@
-#ifndef __ROSEDLL__
-#define __ROSEDLL__
+#ifndef ROSE_rosedll_H
+#define ROSE_rosedll_H
 
 /******************************************************************
  * tps (02/24/2010)
@@ -28,47 +28,30 @@
  ******************************************************************/
 
 #if defined _WIN32 || defined __CYGWIN__
-  #define ROSE_DLL_HELPER_DLL_IMPORT __declspec(dllimport)
-  #define ROSE_DLL_HELPER_DLL_EXPORT __declspec(dllexport)
-  #define ROSE_DLL_HELPER_DLL_LOCAL
-#else
-#if __GNUC__ >= 4 && !defined(USE_ROSE)
+    #define ROSE_DLL_HELPER_DLL_IMPORT __declspec(dllimport)
+    #define ROSE_DLL_HELPER_DLL_EXPORT __declspec(dllexport)
+    #define ROSE_DLL_HELPER_DLL_LOCAL
+#elif __GNUC__ >= 4 && !defined(USE_ROSE)
     #define ROSE_DLL_HELPER_DLL_IMPORT __attribute__ ((visibility("default")))
     #define ROSE_DLL_HELPER_DLL_EXPORT __attribute__ ((visibility("default")))
     #define ROSE_DLL_HELPER_DLL_LOCAL  __attribute__ ((visibility("hidden")))
-  #else
+#else
     #define ROSE_DLL_HELPER_DLL_IMPORT
     #define ROSE_DLL_HELPER_DLL_EXPORT
     #define ROSE_DLL_HELPER_DLL_LOCAL
-  #endif
 #endif
 
 // ROSE_DLL_EXPORTS is only defined for cmake
-  #ifdef ROSE_DLL_EXPORTS // defined if we are building the ROSE DLL (instead of using it)
+#ifdef ROSE_DLL_EXPORTS // defined if we are building the ROSE DLL (instead of using it)
     #define ROSE_DLL_API ROSE_DLL_HELPER_DLL_EXPORT
-  #else
+#else
     #define ROSE_DLL_API ROSE_DLL_HELPER_DLL_IMPORT
-  #endif // ROSE_DLL_DLL_EXPORTS
-  #define ROSE_DLL_LOCAL ROSE_DLL_HELPER_DLL_LOCAL
-  #ifdef ROSE_UTIL_EXPORTS
+#endif
+
+#ifdef ROSE_UTIL_EXPORTS
     #define ROSE_UTIL_API ROSE_DLL_HELPER_DLL_EXPORT
-  #else
+#else
     #define ROSE_UTIL_API ROSE_DLL_HELPER_DLL_IMPORT
-  #endif
-
-
-// DQ (10/19/2010): Need to test if we can remove this.
-// We should not reference CXX_IS_ROSE_ANALYSIS except in source code.
-// tps : this is probably not needed anymore
-// undef ROSE_ROSETTA_API if rose analyses itself.
-// #if CXX_IS_ROSE_ANALYSIS
-//  #undef ROSE_DLL_API
-//  #define ROSE_DLL_API
-//#endif 
-
-#ifdef USE_ROSE
-// #error "ROSE_DLL_API = "ROSE_DLL_API
-// #define ROSE_DLL_API
 #endif
 
 #endif

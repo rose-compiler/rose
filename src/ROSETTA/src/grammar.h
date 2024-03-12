@@ -165,8 +165,7 @@ class Grammar
                     const std::string& inputPrefixName,
                     const std::string& inputGrammarNameBaseClass,
                     const Grammar* parentGrammar,
-                    const std::string& t_directory,
-                    const std::string &smallHeadersDir);
+                    const std::string& t_directory);
          ~Grammar ();
 
      public:
@@ -177,9 +176,6 @@ class Grammar
 
           //The directory name we should generate the files to
           std::string target_directory;
-
-       // The optional directory for small headers
-          std::string smallHeadersDir;
 
           AstNodeClass* rootNode;
 
@@ -287,6 +283,10 @@ class Grammar
           void traverseTreeToSetupAllNodeList ( AstNodeClass & node );
 
           std::string getDerivedClassDeclaration ( AstNodeClass & node );
+
+       // Build aggregate header files. E.g., "Cxx_GrammarSgAsmNodes.h" includes all header files for node types whose names start
+       // with "SgAsm". Returns the file name (without path) that was created.
+          std::string emitAggregateHeader(const std::string &prefix);
 
           Rose::StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
           Rose::StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
@@ -639,7 +639,7 @@ class Grammar
           std::string buildMemoryStorageEvaluationSupport();
 
        // DQ (11/26/2005): Support for visitor patterns (experimental)
-          std::string buildVisitorBaseClass();
+          void emitVisitorBaseClass(std::ostream &header, std::ostream &impl);
 
        // DQ (12/23/2005): Support for building the code to use the visitor 
        // pattern on the IR nodes in memory pools.

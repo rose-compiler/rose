@@ -109,6 +109,16 @@ AstNodeClass::isBoostSerializable(bool b) {
     p_isBoostSerializable = b;
 }
 
+bool
+AstNodeClass::useSmallHeader() const {
+    return useSmallHeader_;
+}
+
+void
+AstNodeClass::useSmallHeader(bool b) {
+    useSmallHeader_ = b;
+}
+
 void
 AstNodeClass::setBaseClass(AstNodeClass* bc) {baseClass = bc;}
 

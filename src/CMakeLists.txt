@@ -52,7 +52,13 @@ set(ROSETTA_HEADERS
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarDeclarations.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarDowncast.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarStorageClasses.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarSgNodeDefinitions.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarSgAsmNodeDefinitions.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarSgAsmCilNodeDefinitions.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarSgAsmDwarfNodeDefinitions.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarSgAsmJvmNodeDefinitions.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVariants.h
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVisitorSupport.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.h)
@@ -74,6 +80,7 @@ set(ROSETTA_SRC
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTraverseMemoryPool.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTreeTraversalSuccessorContainer.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVariantEnumNames.C
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVisitorSupport.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/AST_FILE_IO.C)
 
@@ -84,6 +91,7 @@ if(MSVC)
   set_source_files_properties(
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_Grammar.C
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_VisitorSupport.C
     PROPERTIES COMPILE_FLAGS /bigobj)
 endif()
 
@@ -238,7 +246,7 @@ set_target_properties(ROSE_DLL PROPERTIES
 install(TARGETS ROSE_DLL DESTINATION ${ROSE_LIB_DIR_NAME})
 install(
   FILES
-    featureTests.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
+    featureTests.h RoseFirst.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
     ${CMAKE_BINARY_DIR}/rosePublicConfig.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
 

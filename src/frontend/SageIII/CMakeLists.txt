@@ -107,7 +107,13 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarDeclarations.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarDowncast.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarStorageClasses.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSgNodeDefinitions.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSgAsmNodeDefinitions.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSgAsmCilNodeDefinitions.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSgAsmDwarfNodeDefinitions.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSgAsmJvmNodeDefinitions.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarVariants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarVisitorSupport.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarMemoryPoolSupport.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarTreeTraversalAccessEnums.h
     ${CMAKE_CURRENT_BINARY_DIR}/AST_FILE_IO.h

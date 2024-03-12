@@ -95,6 +95,7 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 	@echo "Running ROSETTA to generated ROSE IR code:"
 #       Add "--verbose" if you want the old, noisy output from CxxGrammarMetaProgram
 	mkdir -p  ${top_builddir}/src/frontend/SageIII/Rose/Traits
+	touch $(addprefix $(top_builddir)/src/frontend/SageIII/,$(rosetta_generated_definitions))
 	$(AM_V_GEN) $(VALGRIND) ./CxxGrammarMetaProgram ${top_builddir}/src/frontend/SageIII/
 
 noinst_PROGRAMS = CxxGrammarMetaProgram
@@ -169,6 +170,11 @@ clean-local:
 
 distclean-local:
 	rm -rf Cxx_Grammar.h Cxx_GrammarDeclarations.h Cxx_GrammarDowncast.h Cxx_GrammarStorageClasses.h Cxx_GrammarVariants.h \
-	  Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h \
-          Cxx_GrammarTreeTraversalClass.C
-	rm -rf grammar.tex grammar.dot
+	  Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h Cxx_GrammarVisitorSupport.h \
+	  Cxx_GrammarVisitorSupport.h Cxx_GrammarTreeTraversalClass.C \
+	  Cxx_GrammarSgNodeDefinitions.h		\
+	  Cxx_GrammarSgAsmNodeDefinitions.h		\
+	  Cxx_GrammarSgAsmCilNodeDefinitions.h		\
+	  Cxx_GrammarSgAsmDwarfNodeDefinitions.h	\
+	  Cxx_GrammarSgAsmJvmNodeDefinitions.h		\
+	  grammar.tex grammar.dot

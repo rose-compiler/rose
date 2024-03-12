@@ -48,9 +48,7 @@ Grammar::Grammar ( const string& inputGrammarName,
                    const string& inputPrefixName,
                    const string& inputGrammarNameBaseClass,
                    const Grammar* inputParentGrammar,
-                   const string& t_directory,
-                   const string& smallHeadersDir)
-    : smallHeadersDir(smallHeadersDir)
+                   const string& t_directory)
    {
 
   // Intialize some member data
@@ -1823,12 +1821,30 @@ Grammar::buildHeaderStringAfterMarker( const string& marker, const string& fileN
      return headerFileTemplate;
    }
 
+static std::string
+centeredSingleLineBanner(const std::string &title) {
+    static const size_t totalWidth = 132;               // ROSE coding standard: maximum source line width in characters
+    return std::string("\n\n") +
+        std::string(totalWidth, '/') + "\n" +
+        "// " + std::string(3 + title.size() > 132 ? 0 : (132 - (3 + title.size())) / 2, ' ') + title + "\n" +
+        std::string(totalWidth, '/') + "\n";
+}
+
 void
 Grammar::buildClassDefinition(AstNodeClass &node, StringUtility::FileWithLineNumbers &outputFile) {
      string marker   = "MEMBER_FUNCTION_DECLARATIONS";
      string fileName = "../Grammar/grammarClassDeclarationMacros.macro";
+     const std::string includeOnceSymbol = "ROSE_" + node.getName() + "_H";
 
+     // Append include-once and initial header inclusions. It doesn't matter whether `outputFile` will eventually be emitted to
+     // one giant header that has everything, or small per-class definition headers.
      StringUtility::FileWithLineNumbers headerBeforeInsertion;
+     headerBeforeInsertion <<"\n";
+     headerBeforeInsertion <<"#ifndef " + includeOnceSymbol + "\n";
+     headerBeforeInsertion <<"#define " + includeOnceSymbol + "\n";
+     headerBeforeInsertion <<"#include <RoseFirst.h>\n";
+     headerBeforeInsertion <<"#include <Cxx_GrammarDeclarations.h>\n";
+     headerBeforeInsertion <<"\n";
      headerBeforeInsertion <<node.preDefinitionText;
      headerBeforeInsertion += buildHeaderStringBeforeMarker(marker,fileName);
      StringUtility::FileWithLineNumbers headerAfterInsertion  = buildHeaderStringAfterMarker (marker,fileName);
@@ -1850,7 +1866,7 @@ Grammar::buildClassDefinition(AstNodeClass &node, StringUtility::FileWithLineNum
   // This should be fixed!
      StringUtility::FileWithLineNumbers editStringStart = GrammarString::copyEdit (headerBeforeInsertion,"$BASECLASS",derivedClassString);
 
-  // C preprocessor condition wrapping this entire class declaration.
+  // C preprocessor condition wrapping this entire class definition.
      string cppCondition = node.getCppCondition();
      if (cppCondition.empty())
          cppCondition = "1";
@@ -1901,6 +1917,7 @@ Grammar::buildClassDefinition(AstNodeClass &node, StringUtility::FileWithLineNum
 
      StringUtility::FileWithLineNumbers postdeclarationString(1, StringUtility::StringWithLineNumber(node.getPostdeclarationString(), "" /* "<getPostdeclarationString " + node.getToken().getName() + ">" */, 1));
      editedHeaderFileString = GrammarString::copyEdit (editedHeaderFileString,"$POSTDECLARATIONS",postdeclarationString);
+     editedHeaderFileString <<"#endif // " + includeOnceSymbol + "\n";
 
   // DQ (3/21/2017): Modify code generation to eliminate Clang C++11 override warning.
      if (className == "SgNode")
@@ -1912,18 +1929,15 @@ Grammar::buildClassDefinition(AstNodeClass &node, StringUtility::FileWithLineNum
 
   // Output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
+     outputFile <<centeredSingleLineBanner(node.getName() + " class definition");
 
-     if (!smallHeadersDir.empty()) {
+     if (node.useSmallHeader()) {
          // Now write out the header file (each class in its own file)!
-         editedHeaderFileString.insert(editedHeaderFileString.begin(),
-                                       StringUtility::StringWithLineNumber("#ifndef ROSE_" + node.getName() + "_H\n"
-                                                                           "#define ROSE_" + node.getName() + "_H\n"
-                                                                           "#include <RoseFirst.h>\n"
-                                                                           "#include <Cxx_GrammarDeclarations.h>\n",
-                                                                           __FILE__, __LINE__));
-         editedHeaderFileString.push_back(StringUtility::StringWithLineNumber("#endif // ROSE_" + node.getName() + "_H",
-                                                                              __FILE__, __LINE__));
-         writeFile(editedHeaderFileString, smallHeadersDir, node.getName(), ".h");
+         writeFile(editedHeaderFileString, target_directory, node.getName(), ".h");
+         outputFile <<"#include <" + node.getName() + ".h>\n";
+     } else {
+         // Output strings to single file (this outputs everything to a single file)
+         outputFile += editedHeaderFileString;
      }
 }
 
@@ -2061,12 +2075,13 @@ Grammar::buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & out
   // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
   // This has been changed to use the newer V_SgNode form of the IR node names.
 
-     string startString = "typedef struct \n" \
-                         "   { \n" \
-                         "     VariantT variant; \n" \
-                         "     std::string name; \n" \
-                         "   } TerminalNamesType; \n\n" \
-                         "extern TerminalNamesType $MARKERTerminalNames[$LIST_LENGTH]; \n\n";
+     string startString = "#include <string>\n"
+                          "typedef struct {\n"
+                          "     VariantT variant;\n"
+                          "     std::string name;\n"
+                          "} TerminalNamesType;\n"
+                          "\n"
+                          "extern TerminalNamesType $MARKERTerminalNames[$LIST_LENGTH];\n";
 
   // Set the type name using the grammarName variable contained within the grammar
      startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarName());
@@ -2857,6 +2872,21 @@ Grammar::buildReferenceToPointerHandlerCode()
      return s;
    }
 
+std::string
+Grammar::emitAggregateHeader(const std::string &prefix) {
+    const std::string headerBaseName = getGrammarName() + prefix + "NodeDefinitions";
+    std::ofstream header((target_directory + "/" + headerBaseName + ".h").c_str());
+    header.exceptions(std::ofstream::failbit);
+    header <<"#ifndef ROSE_" <<headerBaseName <<"_H\n"
+           <<"#define ROSE_" <<headerBaseName <<"_H\n";
+    for (const auto &terminal: terminalList) {
+        if (terminal->useSmallHeader() && terminal->name.substr(0, prefix.size()) == prefix) {
+            header <<"#include <" <<terminal->name <<".h>\n";
+        }
+    }
+    header <<"#endif // include-once guard\n";
+    return headerBaseName + ".h";
+}
 
 void
 Grammar::buildCode ()
@@ -2887,18 +2917,31 @@ Grammar::buildCode ()
   // grammars can be automatically documented).
 
   // DQ (12/28/2009): Removed references to files that should be elsewhere to simplify splitting large files generated by ROSETTA..
-     string headerString = "// MACHINE GENERATED HEADER FILE --- DO NOT MODIFY! \n\n\n" \
-                           "//! AST implementation generated by ROSETTA \n" \
-                           "//  (in many this is an object oriented IR based upon Sage II's implementation (Gannon et. al.). \n\n\n" \
-                           "#ifndef $IFDEF_MARKER_H \n" \
-                           "#define $IFDEF_MARKER_H \n\n";
+     string headerString = "#ifndef $IFDEF_MARKER_H\n"
+                           "#define $IFDEF_MARKER_H\n"
+                           "\n"
+                           "// MACHINE GENERATED HEADER FILE --- DO NOT MODIFY!\n"
+                           "//\n"
+                           "// This file was generated by ROSETTA's CxxGrammarMetaProgram tool.\n"
+                           "//\n"
+                           "// This generated code is an object oriented IR based upon Sage II's implementation (Gannon et. al.)."
+                           "//\n"
+                           "#include <RoseFirst.h>\n";
 
-     string footerString = "\n\n\n#endif // ifndef IFDEF_MARKER_H \n\n\n";
+     string footerString = "\n"
+                           "#endif // include-once protection\n";
 
   // Get the strings onto the heap so that copy edit can process it (is this poor design? MS: yes)
      headerString = GrammarString::copyEdit (headerString,"$IFDEF_MARKER",getGrammarName());
      footerString = GrammarString::copyEdit (footerString,"$IFDEF_MARKER",getGrammarName());
      ROSE_ArrayGrammarHeaderFile << headerString;
+
+     // Generate aggregate header files. These #include headers for various classes of AST node types based on the type names.
+     {
+         static const std::vector<std::string> prefixes{"Sg", "SgAsm", "SgAsmCil", "SgAsmJvm", "SgAsmDwarf"};
+         for (const std::string &prefix: prefixes)
+             emitAggregateHeader(prefix);
+     }
 
      // Generate type variant enums
      {
@@ -2965,19 +3008,17 @@ Grammar::buildCode ()
      // Generate class definitions
      buildHeaderFiles(*rootNode,ROSE_ArrayGrammarHeaderFile);
 
-     if (!smallHeadersDir.empty()) {
-         // Include all the generated AST node class definition header files. The headers are deterministic, so it doesn't matter
-         // what order they're included.
-         //
-         // FIXME[Robb Matzke 2024-03-11]: The whole point of this work is to *not* have to include all the class definitions into
-         // every compilation unit, but we're not there yet.
-         for (const auto &node: terminalList)
-             ROSE_ArrayGrammarHeaderFile <<"#include <" <<node->name <<".h>\n";
+     // Support for visitor pattern.
+     {
+         const std::string headerName = target_directory + "/" + getGrammarName() + "VisitorSupport.h";
+         const std::string implName = target_directory + "/" + getGrammarName() + "VisitorSupport.C";
+         std::ofstream header(headerName.c_str());
+         std::ofstream impl(implName.c_str());
+         header.exceptions(std::ofstream::failbit);
+         impl.exceptions(std::ofstream::failbit);
+         emitVisitorBaseClass(header, impl);
+         ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "VisitorSupport.h>\n";
      }
-
-  // DQ (11/26/2005): Support for visitor pattern.
-     string visitorSupport = buildVisitorBaseClass();
-     ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(visitorSupport, "", 1));
 
      ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(footerString, "", 1));
 

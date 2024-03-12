@@ -12,7 +12,13 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarDeclarations.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarDowncast.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarStorageClasses.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarSgNodeDefinitions.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarSgAsmNodeDefinitions.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarSgAsmCilNodeDefinitions.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarSgAsmDwarfNodeDefinitions.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarSgAsmJvmNodeDefinitions.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarVariants.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarVisitorSupport.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h
    )
 
@@ -35,6 +41,7 @@ set(GENERATED_SRC
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/StorageClasses.C
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarMemoryPoolSupport.C  
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarRTI.C
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/Cxx_GrammarVisitorSupport.C
     )
 #Copy the generated files to ${BUILD_DIR}/src/frontend/SageIII
 foreach (src ${GENERATED_HEADERS} ${GENERATED_SRC})
