@@ -134,6 +134,13 @@ namespace Ada_ROSE_Translation
                                     ElemIdRange declarations,
                                     AstContext ctx
                                   );
+
+  /// appends pragmas in \ref pragmalst to the list of unprocessed pragmas
+  ///   and then places all unprocessed pragmas inside the scopes in \ref scopes.
+  /// \param pragmalst    a new pragma list
+  /// \param sacopes      one or two scopes in which all unprocessed pragmas need to be placed
+  /// \param ctx          the translation context, incl a pointer to the unprocessed pragma list
+  void processAndPlacePragmas(Pragma_Element_ID_List pragmalst, std::vector<SgScopeStatement*> scopes, AstContext ctx);
 }
 
 #endif /* _ADA_STATEMENT */

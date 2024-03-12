@@ -342,7 +342,7 @@ struct AstContext
     ///   to create new unbound identifiers that appear in pragmas and aspects.
     /// \{
     AstContext pragmaAspectAnchor(SgDeclarationStatement& dcl) const;
-    SgDeclarationStatement* pragmaAspectAnchor() { return pragma_aspect_anchor; };
+    SgDeclarationStatement* pragmaAspectAnchor() const { return pragma_aspect_anchor; };
     /// \}
 
     /// handles deferred unit completions (currently only aspects)

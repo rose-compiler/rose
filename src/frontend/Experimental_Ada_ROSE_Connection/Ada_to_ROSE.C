@@ -586,32 +586,6 @@ namespace
     bool        logBodyUnit   = false;
     std::string kindName;
 
-  //  A_Procedure,
-  //  A_Function,
-  //  A_Package,
-  //  A_Generic_Procedure,
-  //  A_Generic_Function,
-  //  A_Generic_Package,
-  //  A_Procedure_Instance,
-  //  A_Function_Instance,
-  //  A_Package_Instance,
-  //  A_Procedure_Renaming,
-  //  A_Function_Renaming,
-  //  A_Package_Renaming,
-  //  A_Generic_Procedure_Renaming,
-  //  A_Generic_Function_Renaming,
-  //  A_Generic_Package_Renaming,
-  //  A_Procedure_Body,
-  //  A_Function_Body,
-  //  A_Package_Body,
-
-  //  A_Procedure,
-  //  A_Function,
-  //  A_Package,
-  //  A_Generic_Procedure,
-  //  A_Generic_Function,
-  //  A_Generic_Package,
-
     // dispatch based on unit kind
     switch (adaUnit.Unit_Kind)
     {
@@ -700,8 +674,10 @@ namespace
     if (processUnit)
     {
       std::string                             unitFile{adaUnit.Text_Name};
+      AstContext::PragmaContainer             pragmalist;
       AstContext::DeferredCompletionContainer compls;
       AstContext                              ctx = context.sourceFileName(unitFile)
+                                                           .pragmas(pragmalist)
                                                            .deferredUnitCompletionContainer(compls);
 
       logTrace()   << "A " << kindName
@@ -724,8 +700,7 @@ namespace
       traverseIDs(range, elemMap(), ElemCreator{ctx});
       handleElementID(adaUnit.Unit_Declaration, ctx, privateDecl);
 
-      // \todo process compilation pragmas
-      //~ ElemIdRange pragmaRange = idRange(adaUnit.Compilation_Pragmas);
+      processAndPlacePragmas(adaUnit.Compilation_Pragmas, { &ctx.scope() }, ctx);
 
       for (AstContext::DeferredCompletion& c : compls) c();
     }
