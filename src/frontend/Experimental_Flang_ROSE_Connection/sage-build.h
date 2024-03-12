@@ -77,6 +77,8 @@ void BuildImpl(Fortran::parser::CharLiteralConstant &, SgExpression* &);
 void BuildImpl(Fortran::parser::LogicalLiteralConstant &, SgExpression* &);
 
 void BuildImpl(Fortran::parser::KindSelector::StarSize &, SgExpression* &);
+void BuildImpl(Fortran::parser::CharLength &, SgExpression* &);
+void BuildImpl(Fortran::parser::TypeParamValue &, SgExpression* &);
 
 // CommonBlockObject
 void BuildImpl(Fortran::parser::CommonBlockObject &, SgExpression* &);
@@ -125,7 +127,9 @@ void Build(Fortran::parser::              AttrSpec &, LanguageTranslation::Expre
 void Build(Fortran::parser::             ArraySpec &, SgType* &, SgType*);
 void Build(Fortran::parser::           CoarraySpec &, SgType* &, SgType*);
 void Build(Fortran::parser::       IntegerTypeSpec &, SgType* &);
+#if USE_DEPRECATED
 void Build(Fortran::parser::            CharLength &, SgExpression* &);
+#endif
 void Build(Fortran::parser::        Initialization &, SgExpression* &);
 
 void Build(Fortran::parser::                   SpecificationExpr &, SgExpression* &);
@@ -140,10 +144,12 @@ void Build(Fortran::parser::IntrinsicTypeSpec:: Character &);
 void Build(Fortran::parser::IntrinsicTypeSpec:: Logical &);
 void Build(Fortran::parser::IntrinsicTypeSpec:: DoubleComplex &);
 
+#if USE_DEPRECATED
 void Build(Fortran::parser::               CharSelector &, SgExpression* &);
 void Build(Fortran::parser::             LengthSelector &, SgExpression* &);
 void Build(Fortran::parser::CharSelector::LengthAndKind &, SgExpression* &);
 void Build(Fortran::parser::             TypeParamValue &, SgExpression* &);
+#endif
 
 // DeclarationConstruct
 void Build(Fortran::parser::StmtFunctionStmt &);

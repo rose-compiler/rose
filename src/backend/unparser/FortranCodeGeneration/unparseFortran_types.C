@@ -159,16 +159,17 @@ UnparseFortran_type::unparseBaseType(SgType* type, const std::string & nameOfTyp
    }
 
 void 
-UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info, bool printAttrs)
-   {
-     SgTypeString* string_type = isSgTypeString(type);
-     ASSERT_not_null(string_type);
-     curprint ("CHARACTER");
-     if (printAttrs)
-        unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
-     else //   the length will be printed as part of the entity_decl.
-        unparseTypeKind(type, info);
-   }
+UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info, bool printAttrs) {
+  SgTypeString* stringType{isSgTypeString(type)};
+  ASSERT_not_null(stringType);
+  curprint ("CHARACTER");
+  if (printAttrs) {
+    unparseTypeLengthAndKind(stringType, stringType->get_lengthExpression(), info);
+  }
+  else { // the length will be printed as part of the entity_decl.
+    unparseTypeKind(type, info);
+  }
+}
 
 
 void 

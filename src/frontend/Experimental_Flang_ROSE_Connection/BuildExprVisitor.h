@@ -67,7 +67,10 @@ public:
   void Build(Fortran::parser::Name &);
   void Build(Fortran::parser::IntLiteralConstant &x) { BuildReplace(x); }
   void Build(Fortran::parser::RealLiteralConstant &x) { BuildReplace(x); }
+
   void Build(Fortran::parser::KindSelector::StarSize &x) { BuildReplace(x); }
+  void Build(Fortran::parser::CharLength &x) { BuildReplace(x); }
+  void Build(Fortran::parser::TypeParamValue &x) { BuildReplace(x); }
 
   // CommonBlockObject
   void Build(Fortran::parser::CommonBlockObject &x) { BuildReplace(x); }

@@ -49,7 +49,7 @@ public:
     using namespace Fortran;
     if (x) {
       common::visit(common::visitors {
-          [&] (Fortran::parser::KindSelector::StarSize &y) {
+          [&] (parser::KindSelector::StarSize &y) {
                  if (type_ != nullptr) {
                    type_->set_hasTypeKindStar(true);
                  }
@@ -65,7 +65,7 @@ public:
     using namespace Fortran;
     common::visit(common::visitors {
         [&] (Fortran::parser::IntrinsicTypeSpec::DoublePrecision &y) { return; },
-        [&] (Fortran::parser::IntrinsicTypeSpec::Character &y) { std::exit(-1); },
+        [&] (Fortran::parser::IntrinsicTypeSpec::Character &y) { return; },
         [&] (Fortran::parser::IntrinsicTypeSpec::DoubleComplex &y) { return; },
         [&] (Fortran::parser::IntegerTypeSpec &y) { setKindSelectorType(y.v); },
         [&] (auto &y) { setKindSelectorType(y.kind); }

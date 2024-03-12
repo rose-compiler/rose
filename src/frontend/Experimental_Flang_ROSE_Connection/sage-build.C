@@ -857,6 +857,49 @@ void BuildImpl(parser::KindSelector::StarSize &x, SgExpression* &expr) {
   expr = SageBuilder::buildLongLongIntVal_nfi(kind, strVal);
 }
 
+void BuildImpl(parser::TypeParamValue &x, SgExpression* &expr) {
+  // TypeParamValue std::variant<ScalarIntExpr, Star, Deferred> u;
+  // Star is "*", Deferred is ":"
+  std::cerr << "TypeParamValue\n";
+  common::visit(
+      common::visitors{
+          [&] (parser::ScalarIntExpr &y) {
+                // Walking inside of a visitor not fully explored,
+                // for now make sure no previous value for expr
+                 ASSERT_require(expr == nullptr);
+                 WalkExpr(y, expr);
+              },
+          [&] (parser::Star &y) {
+                 expr = new SgAsteriskShapeExp();
+                 SageInterface::setSourcePosition(expr);
+              },
+          [&] (parser::TypeParamValue::Deferred &y) {
+                 expr = new SgColonShapeExp();
+                 SageInterface::setSourcePosition(expr);
+                 ABORT_NO_TEST;
+              }
+      },
+      x.u);
+}
+
+void BuildImpl(parser::CharLength &x, SgExpression* &expr) {
+  // CharLength std::variant<TypeParamValue, std::uint64_t> u;
+  using namespace Fortran;
+
+  common::visit(
+      common::visitors{
+          [&] (unsigned long long &y) {
+                 std::string strVal{std::to_string(y)};
+                 expr = SageBuilder::buildLongLongIntVal_nfi(y, strVal);
+              },
+          [&] (parser::TypeParamValue &y) {
+                 WalkExpr(y, expr);
+                 ABORT_NO_TEST;
+              }
+      },
+      x.u);
+}
+
 void BuildImpl(parser::CommonBlockObject &x, SgExpression* &expr)
 {
   // CommonBlockObject std::tuple<Name, std::optional<ArraySpec>> t;
@@ -1299,36 +1342,65 @@ void BuildVisitor::Build(parser::IntrinsicTypeSpec::Real &x)
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::DoublePrecision &x)
 {
   SgType* type{SageBuilder::buildDoubleType()}; // no KindSelector
-  ABORT_NO_TEST;
   this->set(type); // synthesized attribute
 }
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::Complex &x)
 {
   SgType* type{nullptr};
-  std::cout << "Rose::builder::Build(Complex)\n";
-  ABORT_NO_IMPL;
+  SgExpression* expr{nullptr};
 
-  SgType* base_type = SageBuilder::buildIntType();
-  type = SageBuilder::buildComplexType(base_type);
-  this->set(type); // sythesized attribute
+  if (x.kind) { // std::optional<KindSelector>
+    WalkExpr(x.kind.value(), expr);
+  }
+
+  SgType* base = SageBuilder::buildFloatType(expr);
+  type = SageBuilder::buildComplexType(base);
+  this->set(type); // synthesized attribute
 }
+
+#if DEPRECATED
+void BuildVisitor::Build(parser::CharLength &x) {
+  // CharLength std::variant<TypeParamValue, std::uint64_t> u;
+  SgExpression* expr{nullptr};
+  WalkExpr(x,expr);
+}
+
+void BuildVisitor::Build(parser::LengthSelector &x) {
+  // CharLength std::variant<TypeParamValue, std::uint64_t> u;
+  SgExpression* expr{nullptr};
+  WalkExpr(x,expr);
+}
+#endif
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::Character &x)
 {
   SgType* type{nullptr};
-  std::cout << "Rose::builder::Build(Character)\n";
-  ABORT_NO_TEST;
 
-  if (auto & opt = x.selector) {    // std::optional<CharSelector> selector
-#if 0
-    SgExpression* expr{nullptr};
-    Build(opt.value(), expr);
-    type = SageBuilder::buildStringType(expr);
-#endif
-  } else {
+  if (x.selector) { // std::optional<CharSelector>
+    SgExpression *len{nullptr}, *kind{nullptr};
+
+    common::visit(common::visitors {
+        [&] (parser::LengthSelector &y) {
+               WalkExpr(y, len);
+           },
+        [&] (parser::CharSelector::LengthAndKind &y) {
+          if (y.length) {
+                 WalkExpr(y.length, len);
+               }
+               WalkExpr(y.kind, kind);
+           }
+      },
+      x.selector->u);
+
+    type = SageBuilder::buildStringType(len);
+    type->set_type_kind(kind);
+  }
+  else {
     type = SageBuilder::buildCharType();
   }
+
+  ASSERT_not_null(type);
   this->set(type); // synthesized attribute
 }
 
@@ -1345,26 +1417,9 @@ void BuildVisitor::Build(parser::IntrinsicTypeSpec::Logical &x) {
 
 void BuildVisitor::Build(parser::IntrinsicTypeSpec::DoubleComplex &x)
 {
-  std::cout << "Rose::builder::Build(DoubleComplex)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-  SgType* base_type = SageBuilder::buildDoubleType();
-  type = SageBuilder::buildComplexType(base_type);
+  SgType* base{SageBuilder::buildDoubleType()};
+  SgType* type{SageBuilder::buildComplexType(base)}; // no KindSelector
   this->set(type); // synthesized attribute
-#endif
-}
-
-void Build(parser::CharSelector &x, SgExpression* &expr)
-{
-  // std::variant<LengthSelector, LengthAndKind> u;
-  std::cout << "Rose::builder::Build(CharSelector)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-  auto CharSelectorVisitor = [&](const auto& y) { Build(y, expr); };
-  std::visit(CharSelectorVisitor, x.u);
-#endif
 }
 
 void Build(parser::VectorTypeSpec &x, SgType* &type)
@@ -1373,18 +1428,16 @@ void Build(parser::VectorTypeSpec &x, SgType* &type)
   ABORT_NO_IMPL;
 }
 
+#if DEPRECATED
 void Build(parser::LengthSelector &x, SgExpression* &expr)
 {
   // std::variant<TypeParamValue, CharLength> u;
   std::cout << "Rose::builder::Build(LengthSelector)\n";
   ABORT_NO_IMPL;
-
-#if 0
-   auto LengthSelectorVisitor = [&](const auto& y) { Build(y, expr); };
-   std::visit(LengthSelectorVisitor, x.u);
-#endif
 }
+#endif
 
+#if DEPRECATED
 void Build(parser::CharSelector::LengthAndKind &x, SgExpression* &expr)
 {
   //    std::optional<TypeParamValue> length;
@@ -1392,12 +1445,15 @@ void Build(parser::CharSelector::LengthAndKind &x, SgExpression* &expr)
   std::cout << "Rose::builder::Build(LengthAndKind)\n";
   ABORT_NO_IMPL;
 }
+#endif
 
+#if DEPRECATED
 void Build(parser::TypeParamValue &x, SgExpression* &expr)
 {
   std::cout << "Rose::builder::Build(TypeParamVale)\n";
   ABORT_NO_IMPL;
 }
+#endif
 
 void EntityDecls(std::list<Fortran::parser::EntityDecl> &x, std::list<EntityDeclTuple> &entityDecls, SgType* baseType)
 {

@@ -146,7 +146,6 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
   // the best way to handle this would be to do the type checking, and I'm OK with that approach.  The backup plan is to embed names
   // into (what) that would trigger these to be treated as alternative return arguments.
   // We could also check if the enclosing statement is an IO statement.  So there are a number of options here.
-  // curprint("*");
 
      SgStatement* tmp_statement = SageInterface::getEnclosingStatement(labelRefExp);
      ASSERT_not_null(tmp_statement);
