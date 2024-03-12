@@ -89,7 +89,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
 
   SgNode* CreateFunction( std::string name, int numOfPars);
   SgNode* CreateFunctionCall( SgNode* func, AstNodeList::const_iterator, AstNodeList::const_iterator e);
-  bool IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args);
+  static bool IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args);
 
   /*QY: if yes, set ivar,lb,ub,step, and body accordingly */
   static bool IsFortranLoop( const SgNode* s, SgNode** ivar = 0,

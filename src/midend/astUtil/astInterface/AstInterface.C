@@ -189,6 +189,20 @@ bool DebugSymbol()
   }
   return r == 1;
 }
+void DebugDiff(const std::string& debug_string)
+{
+  static int r = 0;
+  if (r == 0) {
+    if (CmdOptions::GetInstance()->HasOption("-debugdiff"))
+       r = 1;
+    else
+       r = -1;
+  }
+  if (r == 1) {
+    std::cerr << debug_string << "\n";
+  }
+}
+
 
 Sg_File_Info* GetFileInfo()
    {
@@ -1208,6 +1222,17 @@ bool AstInterface::IsIf( const AstNodePtr& _s, AstNodePtr* cond,
         *falsebody = AST_NULL;
     }
     break;
+  case V_SgConditionalExp:
+    {
+      SgConditionalExp *is = isSgConditionalExp(s);
+      if (cond != 0)
+        *cond = AstNodePtrImpl(is->get_conditional_exp());
+      if (truebody != 0)
+        *truebody = AstNodePtrImpl(is->get_true_exp());
+      if (falsebody != 0)
+        *falsebody = AstNodePtrImpl(is->get_false_exp());
+    }
+    break;
   default:
     return false;
   }
@@ -1708,7 +1733,9 @@ IsConstant( const AstNodePtr& _exp, string* valtype, string *val)
   switch (exp->variantT()) {
   case V_SgStringVal:
       if (valtype != 0) *valtype = "string";
-      break;
+      // Do not want to use unparseToString for SgStringVal;
+      if (val != 0) *val = isSgStringVal(exp)->get_value();
+      return true;
   case V_SgCharVal:
   case V_SgWcharVal:
   case V_SgUnsignedCharVal:
@@ -2467,115 +2494,109 @@ bool AstInterface::IsBlock( const AstNodePtr& _exp)
 //@
 static bool IsBlock( const AstNodePtr& exp);
 
-bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second) {
+bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second, 
+                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff) 
+{
   SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
-  std::cerr << "Checking Type Identical:" << first->unparseToString() << " vs " << second->unparseToString() << "\n";
+  DebugDiff("Checking Type Identical:" + first->unparseToString() + " vs " + second->unparseToString());
   if (first->unparseToString() == second->unparseToString()) {
-    std::cerr << "Ast Type is equivalent.\n";
+    DebugDiff("Ast Type is equivalent.");
     return true;
   }
-  std::cerr << "Ast Type is not equivalent.\n";
+  DebugDiff("Ast Type is not equivalent.");
   return false;
 }
 
-bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _second) {
+bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _second,
+                   std::function<bool(const AstNodePtr& first, const AstNodePtr& second)>* call_on_diff,
+                   std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type) { 
   SgNode* first = AstNodePtrImpl(_first).get_ptr(); 
   SgNode* second = AstNodePtrImpl(_second).get_ptr(); 
   if (first == second) {
     return true;
   }
   if (first == 0 || second == 0) {
-     std::cerr << "AST different: one of them is null.\n";
+     DebugDiff("AST different: one of them is null.");
      return false;
   }
-  std::cerr << "Checking AST Identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
-  if (first->variantT() != second->variantT()) {
-    std::cerr << "AST different: different variant: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-    return false;
+  DebugDiff("Checking AST Identical:" + AstToString(_first) + " vs " + AstToString(_second));
+  if (first->variantT() != second->variantT()) { 
+      if (call_on_diff != 0 && !(*call_on_diff)(_first, _second)) {
+         DebugDiff("AST considered the same with different variant due to caller intervention: " + AstToString(_first) + " vs " + AstToString(_second));
+         return true;
+      }
+      DebugDiff("AST different variant: " + AstToString(_first) + " vs " + AstToString(_second));
+      return false;
   }
+  {
   std::string name1, name2;
-  AstList params1, params2;
+  AstNodePtr f1, f2;
+  AstList params1, params2, args1, args2;
   AstNodePtr body1, body2;
   AstTypeList paramtypes1, paramtypes2;
   AstNodeType returntype1, returntype2;
-  if (IsFunctionDefinition(first, &name1, &params1, 0, &body1, &paramtypes1, &returntype1)) {
-    if (!IsFunctionDefinition(_second,&name2, &params2, 0, &body2, &paramtypes2, &returntype2)) {
-        std::cerr << "AST different: one is definition the other is not: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-        return false;
+  if (IsFunctionCall(_first, &f1, &params1, &args1, &paramtypes1, &returntype1) && 
+       IsFunctionCall(_second, &f2, &params2, &args2, &paramtypes2, &returntype2)) {
+     return AstIdentical(f1, f2, call_on_diff, call_on_diff_type) &&
+             AstIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
+             AstIdentical<AstNodeList, AstNodePtr>(args1, args2, call_on_diff) &&
+             AstIdentical(body1, body2, call_on_diff, call_on_diff_type) &&
+             AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
+             AstIdentical(returntype1, returntype2, call_on_diff_type);
+  }
+  if ((IsFunctionDefinition(first, &name1, &params1, 0, &body1, &paramtypes1, &returntype1) &&
+      IsFunctionDefinition(_second,&name2, &params2, 0, &body2, &paramtypes2, &returntype2))) {
+      if (name1 != name2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
+         DebugDiff("AST different function name: " + AstToString(_first) + " vs " + AstToString(_second));
+         return false;
+      }
+      return AstIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
+             AstIdentical<AstNodeList, AstNodePtr>(args1, args2, call_on_diff) &&
+             AstIdentical(body1, body2, call_on_diff) &&
+             AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
+             AstIdentical(returntype1, returntype2, call_on_diff_type); 
     }
-    if (name1 != name2) {
-       std::cerr << "AST different function name: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-       return false;
-    }
-    if (!AstIdentical<AstNodeList, AstNodePtr>(params1, params2)) {
-       std::cerr << "AST different function parameter: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-       return false;
-    }
-    if (!AstIdentical(body1, body2)) {
-       std::cerr << "AST different function body: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-       return false;
-    }
-    if (!AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2)) {
-       std::cerr << "AST different function parameter types: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-       return false;
-    }
-    if (!AstIdentical(returntype1, returntype2)) {
-       std::cerr << "AST different function return types: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-       return false;
-    }
-    std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
-    return true;
   }
   if (IsBlock(_first)) {
-     return AstIdentical<AstNodeList,AstNodePtr>(GetBlockStmtList(_first), GetBlockStmtList(_second));
+     return AstIdentical<AstNodeList,AstNodePtr>(GetBlockStmtList(_first), GetBlockStmtList(_second), call_on_diff);
   }
-  { AstNodePtr cond1, cond2, falsebody1, falsebody2;
-    if (IsIf(_first, &cond1, &body1, &falsebody1)) {
-      if (!IsIf(_second, &cond2, &body2, &falsebody2)) {
-        std::cerr << "AST different: one is if-else the other is not: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-        return false;
-      }
-      if (AstIdentical(cond1, cond2) &&  AstIdentical(body1, body2) 
-            && AstIdentical(falsebody1, falsebody2)) {
-          std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
-          return true;
-      }
-      std::cerr << "AST different If-else " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-      return false;
+  { AstNodePtr exp1, exp2;
+    if (IsExprStmt(_first, &exp1) && IsExprStmt(_second, &exp2)) {
+       return AstIdentical(exp1, exp2, call_on_diff, call_on_diff_type);
+    }
+  }
+  { AstNodePtr cond1, cond2, body1, body2, falsebody1, falsebody2;
+    if (IsIf(_first, &cond1, &body1, &falsebody1) && IsIf(_second, &cond2, &body2, &falsebody2)) {
+       return(AstIdentical(cond1, cond2, call_on_diff) &&  AstIdentical(body1, body2, call_on_diff) 
+            && AstIdentical(falsebody1, falsebody2, call_on_diff));
     }
   }
   { AstNodePtr lhs1, lhs2, rhs1, rhs2;
-    if (IsAssignment(_first, &lhs1, &rhs1)) {
-      if (!IsAssignment(_second, &lhs2, &rhs2)) {
-          std::cerr << "AST different: one is assignment the other is not: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-          return false;
-      }
-      if (AstIdentical(lhs1, lhs2) && AstIdentical(rhs1, rhs2)) {
-          std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
-          return true;
-      }
-      std::cerr << "AST different assignment: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
-      return false;
+    if (IsAssignment(_first, &lhs1, &rhs1) && IsAssignment(_second, &lhs2, &rhs2)) {
+      return AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type) && AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type);
     }
   }
-  switch (first->variantT()) {
-  // Todo: expand the following to check individual components if need more diff details.
-  case V_SgUsingDirectiveStatement:
-  case V_SgVariableDeclaration:
-  case V_SgInitializedName:
-  case V_SgExprStatement:
-  case V_SgForStatement:
-  case V_SgReturnStmt:
-  case V_SgVarRefExp:
-  case V_SgEnumVal:
-      break;
-  default: break;
+  { AstNodePtr lhs1, lhs2, rhs1, rhs2;
+    OperatorEnum opr1, opr2;
+    if (IsBinaryOp(_first, &opr1, &lhs1, &rhs1) && IsBinaryOp(_second, &opr2, &lhs2, &rhs2)) {
+      if (opr1 != opr2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
+         DebugDiff("AST different operation: " + AstToString(_first) + " vs " + AstToString(_second));
+         return false;
+      }
+      return AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type) && AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type);
+    }
+    if (IsUnaryOp(_first, &opr1, &lhs1) && IsUnaryOp(_second, &opr2, &lhs2)) {
+      if (opr1 != opr2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
+         DebugDiff("AST different operation: " + AstToString(_first) + " vs " + AstToString(_second));
+         return false;
+      }
+      return AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type);
+    }
   }
-  if (AstToString(_first) != AstToString(_second)) {
-    std::cerr << "AST different:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+  if (AstToString(_first) != AstToString(_second) &&  (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
+    DebugDiff("AST different unparseToString:" + AstToString(_first) + " vs " + AstToString(_second));
     return false;
   } 
-  std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
   return true;
 }
 //! Check if $s$ is a function call; if yes, return the function and arguments
@@ -2587,9 +2608,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   SgExprListExp *argexp = 0;
   
   switch (exp->variantT()) {
-    //  case V_SgNonrealRefExp:
-    // SgNonrealRef is from an uninstantiated template, so ignore it.  -Jim Leek
-    //return false;
   case V_SgExprStatement:
      exp = isSgExprStatement(exp)->get_expression();
      return IsFunctionCall(exp, func, args);
@@ -2603,6 +2621,15 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
       argexp = fs->get_args(); // SgExprListExp
     }
     break;
+  case V_SgStaticAssertionDeclaration:
+    {
+      SgStaticAssertionDeclaration* fs = isSgStaticAssertionDeclaration(exp);
+      if (func != 0) {
+         *func = fs;
+      }
+      if (args != 0)  { args->push_back(fs->get_condition()); }
+      return true;
+    }
   default:
     return false;
   }
@@ -2673,7 +2700,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
       args = &Args;
   SgNode* f;
   // Grab functionRefExp and argument expression list
-  if (!impl->IsFunctionCall(s.get_ptr(), &f, args))
+  if (!AstInterfaceImpl::IsFunctionCall(s.get_ptr(), &f, args))
      return false;
      
   if(f->variantT() == V_SgNonrealRefExp) {

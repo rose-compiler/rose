@@ -93,16 +93,21 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
 } 
 
 std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
+     AstInterfaceImpl astImpl(variable);
+     AstInterface fa(&astImpl);
     switch (variable->variantT()) {
      case V_SgNamespaceDeclarationStatement:
           return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
      case V_SgUsingDirectiveStatement:
           return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
+     case V_SgTypedefDeclaration:
+     case V_SgTemplateTypedefDeclaration:
+          return "typedef_" + AstInterface::GetScopeName(variable->get_parent()) + "::" + isSgTypedefDeclaration(variable)->get_name().getString();
+     case V_SgStaticAssertionDeclaration:
+          return OperatorDeclaration::operator_signature(fa, variable);
      default: break;
     }
     if (AstInterface::IsFunctionDefinition(variable)) {
-        AstInterfaceImpl astImpl(variable);
-        AstInterface fa(&astImpl);
         return OperatorDeclaration::operator_signature(fa, variable);
     } 
     return AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);

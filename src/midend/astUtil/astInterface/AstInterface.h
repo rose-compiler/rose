@@ -154,19 +154,29 @@ public:
   //! Check whether the given AST is a block of statements that may include local variables.
   static bool IsBlock( const AstNodePtr& exp);
   //! Check whether the two given AST are identical syntax trees.
-  static bool AstIdentical(const AstNodePtr& first, const AstNodePtr& second);
+  //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
+  //! different only if the function returns true.
+  static bool AstIdentical(const AstNodePtr& first, const AstNodePtr& second, 
+                           std::function<bool(const AstNodePtr& first, const AstNodePtr& second)>* call_on_diff = 0,
+                   std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type = 0);
   //! Check whether the two given AST types are identical syntax trees.
-  static bool AstIdentical(const AstNodeType& first, const AstNodeType& second);
+  //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
+  //! different only if the function returns true.
+  static bool AstIdentical(const AstNodeType& first, const AstNodeType& second, 
+                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff = 0);
   //! Check whether the two given lists are identical syntax trees.
+  //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
+  //! different only if the function returns true.
   template <class List, class Node>
-  static bool AstIdentical(const List& first, const List& second) {
+  static bool AstIdentical(const List& first, const List& second, 
+                           std::function<bool(const Node& first, const Node& second)>* call_on_diff = 0) {
     if (first.size() != second.size()) {
        return false;
     }
     for (typename List::const_iterator p1 = first.begin(), p2 = second.begin();
          p1 != first.end(); p1++, p2++) {
        Node cur1 = *p1, cur2 = *p2;
-       if (!AstIdentical(cur1, cur2)) {
+       if (!AstIdentical(cur1, cur2, call_on_diff)) {
          return false;
        }
     }
@@ -227,7 +237,7 @@ public:
 
   //!  Returns whether s is a function call, and if yes, returns information
   //!  about its parameters and return values.
-  bool IsFunctionCall( const AstNodePtr& s, AstNodePtr* f = 0, 
+  static bool IsFunctionCall( const AstNodePtr& s, AstNodePtr* f = 0, 
                        AstList* args = 0, AstList* outargs = 0, 
                        AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
 
@@ -262,7 +272,7 @@ public:
   AstNodePtr CreateConstInt( int val)  ;
 
   //!Check whether $exp$ is a constant value of type int, float, string, etc.
-  bool IsConstant( const AstNodePtr& exp, std::string* valtype=0, std::string* value = 0) ;
+  static bool IsConstant( const AstNodePtr& exp, std::string* valtype=0, std::string* value = 0) ;
   //! Create AST for constant values of  types int, bool, string, float, etc. as well as names of variable and function references. e.g: CreateConstant("memberfunction","floatArray::length")
   AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
 
@@ -316,9 +326,9 @@ public:
                                    AstList* index = 0)  ;
   static AstNodePtr CreateArrayAccess( const AstNodePtr& arr, const AstNodePtr& index);
 
-  bool IsBinaryOp(  const AstNodePtr& exp, OperatorEnum* opr=0, 
+  static bool IsBinaryOp(  const AstNodePtr& exp, OperatorEnum* opr=0, 
                     AstNodePtr* opd1 = 0, AstNodePtr* opd2 = 0);
-  bool IsUnaryOp( const AstNodePtr& exp, OperatorEnum* op = 0, 
+  static bool IsUnaryOp( const AstNodePtr& exp, OperatorEnum* op = 0, 
                    AstNodePtr* opd = 0); 
   AstNodePtr CreateBinaryOP( OperatorEnum op, const AstNodePtr& a0, 
                                    const AstNodePtr& a2);
