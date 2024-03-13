@@ -162,10 +162,8 @@ namespace
     {
       const SgTypeModifier& tm = n.get_typeModifier();
 
-/*    \todo temporary disabled
       if (tm.isNotNull())
         prn(" not null ");
-*/
 
       if (tm.isAliased())
         prn(" aliased ");
@@ -251,15 +249,6 @@ namespace
       ROSE_ABORT();
     }
 
-/*
-    void handle(const SgAdaFloatType& n)
-    {
-      prn("digits ");
-      expr(n.get_digits());
-
-      support_opt(n.get_constraint());
-    }
-*/
 
     void handle(const SgFunctionType& n)
     {

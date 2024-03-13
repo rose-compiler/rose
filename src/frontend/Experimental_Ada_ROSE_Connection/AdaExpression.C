@@ -2042,11 +2042,11 @@ createArgDescList(const SgExpressionPtrList& args)
                             if (SgActualArgumentExpression* act = isSgActualArgumentExpression(exp))
                               optArgName = act->get_argument_name();
 
-                            if (true)
+                            if (false)
                             {
                               SgType* ty = si::Ada::typeOfExpr(exp).typerep();
 
-                              logTrace() << exp->unparseToString() << " " << si::Ada::typeOfExpr(exp).typerep()
+                              logTrace() << "argDescExtractor: " << exp->unparseToString() << " " << si::Ada::typeOfExpr(exp).typerep()
                                          << " " << (ty ? typeid(*ty).name() : std::string{"!"})
                                          << std::endl;
                             }

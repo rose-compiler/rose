@@ -2411,7 +2411,7 @@ namespace
         // if a package is not available otherwise, maybe it is part of the Ada standard?
         if (!used)
         {
-          logWarn() << "using unknown package/type: "
+          logInfo() << "using unknown package/type: "
                     << usedEl.fullName << " : "
                     << expr.Corresponding_Name_Definition << " / " << expr.Corresponding_Name_Declaration
                     << "\n   in scope type: " << typeid(ctx.scope()).name()

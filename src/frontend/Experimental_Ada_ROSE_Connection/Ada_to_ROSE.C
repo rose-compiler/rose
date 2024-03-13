@@ -741,11 +741,6 @@ namespace
     return os << id.name << (id.isbody ? " (body)" : "");
   }
 
-  bool startsWith(const std::string& s, const std::string& sub)
-  {
-    return (s.rfind(sub, 0) == 0);
-  }
-
   bool isSpecialCompilerPackage(const AdaIdentifier& name, const char* unitRootInCAPS)
   {
     return startsWith(name, unitRootInCAPS);
@@ -2229,6 +2224,12 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   sb::setSourcePositionClassificationMode(defaultSourcePositionClassificationMode);
   logInfo() << "Building ROSE AST done" << std::endl;
 }
+
+bool startsWith(const std::string& s, const std::string& sub)
+{
+  return (s.rfind(sub, 0) == 0);
+}
+
 
 bool FAIL_ON_ERROR(AstContext ctx)
 {

@@ -1279,6 +1279,16 @@ namespace Ada
            );
   }
 
+  namespace
+  {
+    bool isScalarGenericType(const SgType& ty)
+    {
+      const SgAdaFormalType* formTy = isSgAdaFormalType(&ty);
+
+      return formTy && isScalarType(formTy->get_formal_type());
+    }
+  }
+
   bool isScalarType(const SgType* ty)
   {
     ty = si::Ada::typeRoot(const_cast<SgType*>(ty)).typerep();
@@ -1295,6 +1305,7 @@ namespace Ada
            || isFixedType(*ty)
            || isDecimalFixedType(*ty)
            || isSgEnumType(ty)
+           || isScalarGenericType(*ty)
            );
   }
 
@@ -1592,6 +1603,62 @@ namespace Ada
     }
 
 
+    bool isUniversalInteger(const SgType* ty) { return isSgTypeLongLong(ty) != nullptr; }
+    bool isUniversalReal   (const SgType* ty) { return isSgTypeLongDouble(ty) != nullptr; }
+
+    bool isUniversalFixed  (const SgType* ty)
+    {
+      const SgTypeFixed* fx = isSgTypeFixed(ty);
+
+      return fx && (fx->get_fraction() == nullptr) && (fx->get_scale() == nullptr);
+    }
+
+    // bool isUniversalPointer(const SgType* ty) { return isNullptrType(ty); }
+
+    bool isUniversalType(const SgType* ty)
+    {
+      return (  isUniversalInteger(ty)
+             || isUniversalReal(ty)
+             || isUniversalFixed(ty)
+             //~ || isUniversalPointer(ty)
+             );
+    }
+
+    SgType*
+    simpleCommonDenominator(SgType* lhs, SgType* rhs)
+    {
+      if (lhs == nullptr) return rhs;
+      if (rhs == nullptr) return lhs;
+
+      if (isUniversalType(lhs)) return rhs;
+      if (isUniversalType(rhs)) return lhs;
+
+      return nullptr;
+    }
+
+    SgType*
+    commonDenominator(SgType* lhs, SgType* rhs)
+    {
+      if (SgType* com = simpleCommonDenominator(lhs, rhs))
+        return com;
+
+      TypeDescription lhsDesc = typeRoot(lhs);
+      TypeDescription rhsDesc = typeRoot(rhs);
+
+      if (SgType* com = simpleCommonDenominator(lhsDesc.typerep(), rhsDesc.typerep()))
+        return com;
+
+      {
+        using namespace Rose::Diagnostics;
+
+        mlog[WARN] << "*FLAW* commonDenominator: type mismatch"
+                   << std::endl;
+      }
+
+      return lhsDesc.typerep();
+    }
+
+
     // \todo should this be moved into the Sage class hierarchy?
     struct ExprTypeFinder : sg::DispatchHandler<TypeDescription>
     {
@@ -1661,6 +1728,10 @@ namespace Ada
         res = TypeDescription{n.get_type()};
       }
 
+      void handle(const SgIntVal& n)         { res = TypeDescription{ integralType() }; }
+      void handle(const SgLongIntVal& n)     { res = TypeDescription{ integralType() }; }
+      void handle(const SgLongLongIntVal& n) { res = TypeDescription{ integralType() }; }
+
       // SgTypeString does not preserve the 'wideness', so let's just get
       //   this info from the literal.
       void handle(const SgStringVal& n)
@@ -1674,6 +1745,14 @@ namespace Ada
         ASSERT_not_null(strty);
         //~ std::cerr << typeid(*strty).name() << std::endl;
         res = TypeDescription{strty};
+      }
+
+      void handle(const SgConditionalExp& n)
+      {
+        TypeDescription truDesc = typeOfExpr(n.get_true_exp());
+        TypeDescription falDesc = typeOfExpr(n.get_false_exp());
+
+        res = TypeDescription{ commonDenominator(truDesc.typerep(), falDesc.typerep()) };
       }
 
       // Currently, we have no concept of class-wide type,

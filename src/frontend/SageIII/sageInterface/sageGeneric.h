@@ -1616,7 +1616,7 @@ namespace sg
   void
   forAllNodes(void (*fn)(SageNode*), SgNode* root, AstSimpleProcessing::Order order = postorder)
   {
-    forAllNodes(createTransformExecutor(fn), root, order);
+    forAllNodes(createTraversalFunction(fn), root, order);
   }
 
 #if !defined(NDEBUG)

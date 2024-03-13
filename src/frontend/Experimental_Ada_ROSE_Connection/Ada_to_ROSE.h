@@ -419,6 +419,13 @@ void computeSourceRangeFromChildren(SgLocatedNode&);
 void logKind(const char* kind, int elemID = -1);
 
 
+/// tests if \ref s starts with \ref sub
+/// \param  s    a string
+/// \param  sub  a potential substring of s
+/// \return true if \ref s starts with \ref sub
+bool startsWith(const std::string& s, const std::string& sub);
+
+
 /// A range abstraction for a contiguous sequence
 template <class T>
 struct Range : std::pair<T, T>

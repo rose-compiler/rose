@@ -2730,6 +2730,8 @@ namespace
 SgAdaInheritedFunctionSymbol&
 mkAdaInheritedFunctionSymbol(SgFunctionSymbol& baseSym, SgNamedType& assocType, SgScopeStatement& scope)
 {
+  static const std::string pthreadString = "pthread";
+
   SgFunctionDeclaration& fn     = SG_DEREF(baseSym.get_declaration());
   SgFunctionType&        functy = baseFunctionType(fn, baseSym);
   SgFunctionType&        dervty = convertToDerivedType(functy, assocType);
@@ -2738,8 +2740,11 @@ mkAdaInheritedFunctionSymbol(SgFunctionSymbol& baseSym, SgNamedType& assocType, 
   {
     // \todo in a first step, just report the errors in the log.
     //       => fix this issues for all ROSE and ACATS tests.
-    logWarn() << "Inherited subroutine w/o type modification: " << fn.get_name()
-              << std::endl;
+    ( startsWith(fn.get_name().getString(), pthreadString)
+          ? logInfo()
+          : logWarn()
+    ) << "Inherited subroutine w/o type modification: " << fn.get_name()
+      << std::endl;
   }
 
   SgFunctionSymbol*      visfun = si::Ada::findPubliclyVisibleFunction(baseSym, dervty, assocType);
