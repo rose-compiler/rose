@@ -1844,6 +1844,18 @@ Grammar::buildClassDefinition(AstNodeClass &node, StringUtility::FileWithLineNum
      headerBeforeInsertion <<"#define " + includeOnceSymbol + "\n";
      headerBeforeInsertion <<"#include <RoseFirst.h>\n";
      headerBeforeInsertion <<"#include <Cxx_GrammarDeclarations.h>\n";
+
+     // Include header file for base class definition.
+     if (node.useSmallHeader() && node.baseClass) {
+         if (node.baseClass->useSmallHeader()) {
+             headerBeforeInsertion <<"#include <" + node.baseClass->name + ".h>\n";
+         } else {
+             std::cerr <<__FILE__ <<":" <<__LINE__ <<": since " <<node.name <<" uses small headers, its base class "
+                       <<node.baseClass->name <<" must also use small headers\n";
+             exit(1);
+         }
+     }
+
      headerBeforeInsertion <<"\n";
      headerBeforeInsertion <<node.preDefinitionText;
      headerBeforeInsertion += buildHeaderStringBeforeMarker(marker,fileName);
@@ -2740,7 +2752,10 @@ Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &def
                  <<"#ifndef " <<includeOnce <<"\n"
                  <<"#define " <<includeOnce <<"\n"
                  <<"\n"
+                 <<"#include <featureTests.h>\n"
                  <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+                 <<"#include <RoseFirst.h>\n"
+                 <<"#include <" <<getGrammarName() <<"Declarations.h>\n"
                  <<"\n"
                  <<"// sage3basic.h or rose.h must be inlucded first from a .C file (don't do it here!)\n"
                  <<"#include <boost/serialization/export.hpp>\n\n";
@@ -2949,6 +2964,7 @@ Grammar::buildCode ()
          StringUtility::FileWithLineNumbers variantsSource;
          variantsSource <<"#ifndef ROSE_" <<getGrammarName() <<"Variants_H\n";
          variantsSource <<"#define ROSE_" <<getGrammarName() <<"Variants_H\n";
+         variantsSource <<"#include <RoseFirst.h>\n";
          StringUtility::FileWithLineNumbers tmp = buildVariants();
          variantsSource += GrammarString::copyEdit(tmp, "$MARKER", getGrammarName());
 
@@ -2969,7 +2985,8 @@ Grammar::buildCode ()
          declarations.exceptions(std::ofstream::failbit);
          declarations <<"#ifndef ROSE_" <<getGrammarName() <<"Declarations_H\n"
                       <<"#define ROSE_" <<getGrammarName() <<"Declarations_H\n"
-                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n"
+                      <<"#include <RoseFirst.h>\n";
          emitForwardDeclarations(declarations);
          declarations <<"#endif\n";
          ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Declarations.h>\n";
@@ -2982,7 +2999,8 @@ Grammar::buildCode ()
          declarations.exceptions(std::ofstream::failbit);
          declarations <<"#ifndef ROSE_" <<getGrammarName() <<"Downcast_H\n"
                       <<"#define ROSE_" <<getGrammarName() <<"Downcast_H\n"
-                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n"
+                      <<"#include <RoseFirst.h>\n";
          emitIsaDeclarations(declarations);
          declarations <<"#endif\n";
          ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "Downcast.h>\n";
@@ -2995,7 +3013,8 @@ Grammar::buildCode ()
          declarations.exceptions(std::ofstream::failbit);
          declarations <<"#ifndef ROSE_" <<getGrammarName() <<"StorageClasses_H\n"
                       <<"#define ROSE_" <<getGrammarName() <<"StorageClasses_H\n"
-                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n";
+                      <<"// #line " <<__LINE__ <<" \"" <<__FILE__ <<"\"\n"
+                      <<"#include <RoseFirst.h>\n";
          emitStorageClassDeclarations(declarations);
          declarations <<"#endif\n";
          ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "StorageClasses.h>\n";

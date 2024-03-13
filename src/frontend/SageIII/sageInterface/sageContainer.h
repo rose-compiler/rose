@@ -1,8 +1,9 @@
 #ifndef ROSE_sageContainer_H
 #define ROSE_sageContainer_H
-#include <featureTests.h>
+#include <RoseFirst.h>
 #include <rosedll.h>
 #include <Cxx_GrammarDeclarations.h>
+#include <Cxx_GrammarVariants.h>
 
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 

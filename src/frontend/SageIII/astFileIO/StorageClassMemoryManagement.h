@@ -11,6 +11,8 @@
 #include <rosePublicConfig.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <sageContainer.h>
+
 #include <Sawyer/BitVector.h>
 
 #define INITIAL_SIZE_OF_MEMORY_BLOCKS 10000
@@ -330,6 +332,8 @@ class EasyStorageMapEntry <SgName,T>
 
 // EasyStorage for storing the rose_hash_multimap  
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+class rose_hash_multimap;
+
 template < >
 class EasyStorage <rose_hash_multimap*> : 
     public StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > 

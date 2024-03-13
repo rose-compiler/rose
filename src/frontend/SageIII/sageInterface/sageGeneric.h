@@ -11,6 +11,7 @@
 
 // note: the comments are right aligned to support code-blocks doxygen 1.3.X :)
 
+#include <Cxx_GrammarVisitorSupport.h>
 #include <type_traits>
 
 #if !defined(NDEBUG)

@@ -17,7 +17,7 @@ run $(support_compile_linkexe) $(CxxGrammarMetaProgram_SOURCES) $(CxxGrammarMeta
 : CxxGrammarMetaProgram						\
   |> ^o support GEN ROSETTA grammar^				\
      mkdir -p astFileIO &&					\
-     ./CxxGrammarMetaProgram --small-headers=. &&		\
+     ./CxxGrammarMetaProgram &&					\
      mv astFileIO/* . && rmdir astFileIO			\
   |> $(CxxGrammarMetaProgram_OUTPUT) <CxxGrammarMetaProgram>
 

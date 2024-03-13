@@ -2,6 +2,9 @@
 #define ROSE_BinaryAnalysis_RelativeVirtualAddress_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Address.h>
+
+#include <ROSE_DEPRECATED.h>
 
 #include <Sawyer/Optional.h>
 

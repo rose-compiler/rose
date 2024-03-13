@@ -52,9 +52,8 @@ emitDelegateToStrategy(std::ostream &header, const std::string &nodeType) {
 
 void
 Grammar::emitVisitorBaseClass(std::ostream &header, std::ostream &impl) {
-    impl <<"#include <Cxx_GrammarVisitorSupport.h>\n"
-         <<"\n"
-         <<"#include <Cxx_Grammar.h>\n";
+    impl <<"#include <sage3basic.h>\n"
+         <<"#include <Cxx_GrammarVisitorSupport.h>\n";
 
     header <<"#ifndef ROSE_CxxGrammarVisitorSupport_H\n"
            <<"#define ROSE_CxxGrammarVisitorSupport_H\n"

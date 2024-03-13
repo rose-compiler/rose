@@ -1,7 +1,7 @@
 #ifndef Rose_Traits_describe_declarations_h
 #define Rose_Traits_describe_declarations_h
+#include <RoseFirst.h>
 
-#include "sage3basic.hhh"
 #include "Rose/metaprog.h"
 
 namespace Rose {

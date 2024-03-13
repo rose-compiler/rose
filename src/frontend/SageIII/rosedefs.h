@@ -13,9 +13,6 @@
 #include <map>
 #include <sstream>
 
-// DQ (9/25/2007): Need to move this to here so that all of ROSE will see it.
-#define Rose_STL_Container std::vector
-
 // DQ (2/5/2010): include stdint.h always.
 // #ifdef _MSC_VER
 // #include "stdint.h"

@@ -319,61 +319,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmDwarfVolatileType           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmDwarfVolatileType);
-IS_SERIALIZABLE(AsmDwarfVolatileType);
-
-#ifdef DOCUMENTATION
-class SgAsmDwarfVolatileType: public SgAsmDwarfConstruct {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmDwarfVolatileType);
-#if defined(SgAsmDwarfVolatileType_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmDwarfVolatileType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmDwarfVolatileType");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
-        debugSerializationEnd("SgAsmDwarfVolatileType");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmDwarfVolatileType();
-
-public:
-    /** Default constructor. */
-    SgAsmDwarfVolatileType();
-
-public:
-    /** Constructor. */
-    SgAsmDwarfVolatileType(int const& nesting_level,
-                           uint64_t const& offset,
-                           uint64_t const& overall_offset);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmDwarfVolatileType_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmVectorType           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22122,6 +22067,61 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmDwarfVolatileType           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmDwarfVolatileType);
+IS_SERIALIZABLE(AsmDwarfVolatileType);
+
+#ifdef DOCUMENTATION
+class SgAsmDwarfVolatileType: public SgAsmDwarfConstruct {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmDwarfVolatileType);
+#if defined(SgAsmDwarfVolatileType_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmDwarfVolatileType -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfVolatileType");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfVolatileType");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmDwarfVolatileType();
+
+public:
+    /** Default constructor. */
+    SgAsmDwarfVolatileType();
+
+public:
+    /** Constructor. */
+    SgAsmDwarfVolatileType(int const& nesting_level,
+                           uint64_t const& offset,
+                           uint64_t const& overall_offset);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmDwarfVolatileType_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfVariantPart           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26338,8 +26338,8 @@ AstNodeClass& AsmDwarfConstruct = nonTerminalConstructor(
         | AsmDwarfVariable
         | AsmDwarfVariant
         | AsmDwarfVariantPart
-        | AsmDwarfWithStmt
         | AsmDwarfVolatileType
+        | AsmDwarfWithStmt
     , false);
 assert(AsmDwarfConstruct.associatedGrammar != nullptr);
 AsmDwarfConstruct.setCppCondition("!defined(DOCUMENTATION)");

@@ -44,4 +44,7 @@
     #define CEREAL_SERIALIZE_FUNCTION_NAME cerealSerialize
 #endif
 
+// DQ (9/25/2007): Need to move this to here so that all of ROSE will see it.
+#define Rose_STL_Container std::vector
+
 #endif

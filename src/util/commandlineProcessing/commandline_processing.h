@@ -1,10 +1,10 @@
 #ifndef ROSE_COMMANDLINE_UTILITY_H
 #define ROSE_COMMANDLINE_UTILITY_H
+#include <RoseFirst.h>
 #include "setup.h"
 //#include "rosedefs.h"
 #include "rosedll.h"
 #include <list>
-#define Rose_STL_Container std::vector
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
 //! Command line processing utility functions. Functions in this namespace are in the ROSE Utilities library and

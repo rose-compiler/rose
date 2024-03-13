@@ -1,4 +1,3 @@
-
 #include "sageInterfaceAda.h"
 #include "sageInterface.h"
 #include "sageGeneric.h"
