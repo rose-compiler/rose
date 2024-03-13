@@ -25340,13 +25340,15 @@ void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemaining, o
         {
             out<<*i<<" classification="<<PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str ();
             out<<" string="<<(*i)->getString ().c_str ();
-            out<<" relative pos=";
+            out<<" relative pos=" ; // << (*i)->getRelativePosition ();
+#if 1	    
             if ((*i)->getRelativePosition () == PreprocessingInfo::inside)
                 out<<"inside";
             else if ((*i)->getRelativePosition () == PreprocessingInfo::before)
-                out<<"inside";
+                out<<"before";
             else
                 out<<"after";
+#endif		
         }
         out<<">";
       }
