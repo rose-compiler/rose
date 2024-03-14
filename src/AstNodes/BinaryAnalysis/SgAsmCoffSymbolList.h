@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of COFF symbols. */
 class SgAsmCoffSymbolList: public SgAsmExecutableFileFormat {
 public:

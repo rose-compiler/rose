@@ -14,9 +14,12 @@ CxxGrammarMetaProgram_LIBS = \
 
 run $(support_compile_linkexe) $(CxxGrammarMetaProgram_SOURCES) $(CxxGrammarMetaProgram_LIBS) -o CxxGrammarMetaProgram
 
+# CxxGrammarMetaProgram doesn't generate class definition files for classes that are not compiled. Therefore, we use `touch` to
+# create all possible files and let CxxGrammarMetaProgram overwrite any of these empty files with an actual definition.
 : CxxGrammarMetaProgram						\
   |> ^o support GEN ROSETTA grammar^				\
      mkdir -p astFileIO &&					\
+     touch $(CxxGrammarMetaProgram_GENDEFN) &&			\
      ./CxxGrammarMetaProgram &&					\
      mv astFileIO/* . && rmdir astFileIO			\
   |> $(CxxGrammarMetaProgram_OUTPUT) <CxxGrammarMetaProgram>

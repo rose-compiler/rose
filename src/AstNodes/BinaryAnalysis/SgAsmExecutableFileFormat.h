@@ -1,3 +1,5 @@
+#include <Rose/Exception.h>
+
 /** Base class for many binary analysis nodes. */
 [[Rosebud::abstract]]
 class SgAsmExecutableFileFormat: public SgAsmNode {

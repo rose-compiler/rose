@@ -120,4 +120,5 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/StorageClasses.h
     ${CMAKE_CURRENT_BINARY_DIR}/AstQueryMemoryPool.h
     ${CMAKE_CURRENT_BINARY_DIR}/astFileIO/AstSpecificDataManagingClass.h
+    ${ROSETTA_GENERATED_DEFINITIONS}
   DESTINATION ${INCLUDE_INSTALL_DIR})

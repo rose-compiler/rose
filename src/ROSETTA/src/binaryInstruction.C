@@ -28116,6 +28116,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmCoffSymbolList);
 IS_SERIALIZABLE(AsmCoffSymbolList);
 
+DECLARE_HEADERS(AsmCoffSymbolList);
+#if defined(SgAsmCoffSymbolList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmCoffSymbolList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of COFF symbols. */
 class SgAsmCoffSymbolList: public SgAsmExecutableFileFormat {
@@ -39797,6 +39802,11 @@ AsmExecutableFileFormat.isBoostSerializable(true);
 AsmExecutableFileFormat.setAutomaticGenerationOfConstructor(false);
 AsmExecutableFileFormat.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmExecutableFileFormat);
+#if defined(SgAsmExecutableFileFormat_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/Exception.h>
+#endif // SgAsmExecutableFileFormat_HEADERS
 
 #ifdef DOCUMENTATION
 /** Base class for many binary analysis nodes. */
