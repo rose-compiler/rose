@@ -11,7 +11,7 @@ add_library(roseDisassemblers OBJECT Assembler.C AssemblerX86.C
   SgAsmM68kInstruction.C SgAsmCilInstruction.C SgAsmJvmInstruction.C
   SgAsmMipsInstruction.C SgAsmNullInstruction.C SgAsmPEExportEntry.C
   SgAsmPowerpcInstruction.C SgAsmUserInstruction.C SgAsmX86Instruction.C
-  x86InstructionProperties.C SgAsmOperandList.C)
+  x86InstructionProperties.C SgAsmOperandList.C SgAsmGenericHeader.C)
 
 add_dependencies(roseDisassemblers rosetta_generated)
 

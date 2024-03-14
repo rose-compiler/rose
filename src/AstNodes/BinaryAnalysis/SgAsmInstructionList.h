@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of SgAsmInstruction nodes. */
 class SgAsmInstructionList: public SgAsmNode {
 public:

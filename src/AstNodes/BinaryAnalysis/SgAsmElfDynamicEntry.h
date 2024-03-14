@@ -1,5 +1,6 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
 
 /** One entry from the dynamic linking table. */
 class SgAsmElfDynamicEntry: public SgAsmExecutableFileFormat {

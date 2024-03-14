@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Declaration-like nodes that encapsulate multiple instructions.
  *
  *  Binary ASTs have two sides: the container side that corresponds to the ELF/PE/etc. file formats, and the interpretation

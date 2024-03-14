@@ -1,3 +1,9 @@
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmBasicString.h>
+#endif
+
 /** One entry of an ELF notes table. */
 class SgAsmElfNoteEntry: public SgAsmExecutableFileFormat {
 public:

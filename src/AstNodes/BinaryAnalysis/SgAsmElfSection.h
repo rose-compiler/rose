@@ -1,3 +1,8 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfSectionTableEntry.h>
+#include <SgAsmElfSegmentTableEntry.h>
+#endif
+
 /** Base class for ELF file sections. */
 class SgAsmElfSection: public SgAsmGenericSection {
 public:

@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfRelocEntryList.h>
+#endif
+
 /** Represents an ELF relocation section. */
 class SgAsmElfRelocSection: public SgAsmElfSection {
 public:

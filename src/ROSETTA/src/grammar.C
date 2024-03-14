@@ -3055,7 +3055,15 @@ Grammar::buildCode ()
   // **************************************************************
 
      StringUtility::FileWithLineNumbers ROSE_ArrayGrammarSourceFile;
-  // Now build the source files
+
+     // Before including the definitions for all the AST classes, we need to define some macros to indicate that this compilation
+     // unit is implementing the member functions of those classes. Those classes may have code and CPP directives that are intended
+     // only for the implementation compilation unit that are not needed only for the declarations. In Rosebud, this is done by
+     // surrounding the implementation-specific stuff with `#ifdef ROSE_IMPL` which gets transformed to `#ifdef ROSE_xxxx_IMPL`
+     // in the generated headers (where `xxxx` is the class name).
+     ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber("", __FILE__, __LINE__));
+     for (const auto &terminal: terminalList)
+         ROSE_ArrayGrammarSourceFile <<"#define ROSE_" + terminal->name + "_IMPL\n";
 
      string includeHeaderFileName = "sage3basic.h";
      string includeHeaderString =

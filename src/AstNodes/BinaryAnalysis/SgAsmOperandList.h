@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of operands for an instruction. */
 class SgAsmOperandList: public SgAsmNode {
 public:

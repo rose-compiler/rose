@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfSymverDefinedEntryList.h>
+#endif
+
 /** The GNU symbol version definitions.
  *
  *  This section is usually named ".gnu.version_d".  The @ref SgAsmElfSymverDefinedSection points to a list of entries (@ref

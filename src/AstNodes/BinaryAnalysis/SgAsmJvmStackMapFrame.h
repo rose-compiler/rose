@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Represents a frame in a stack map table.
  *
  */

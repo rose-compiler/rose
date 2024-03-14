@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfSymverEntryList.h>
+#endif
+
 /** The ELF symbol version table.
  *
  *  Often named ".gnu.version section", this section points to an @ref SgAsmElfSymverEntryList containing a list of

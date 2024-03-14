@@ -1,5 +1,11 @@
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmCoffSymbolTable.h>
+#include <SgAsmPERVASizePairList.h>
+#include <SgAsmPESectionTable.h>
+#endif
+
 /** Windows PE file header.
  *
  *  Most of the properties come directly from the PE specification and their documentation is not repeated here. */

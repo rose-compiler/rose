@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of ELF EH frame CI entries.
  *
  *  See official ELF specification. The only reason this node exists is because of ROSETTA limitations which prevent the

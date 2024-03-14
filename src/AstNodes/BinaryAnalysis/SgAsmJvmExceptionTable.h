@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Represents a JVM exception_info table/array.
  *
  *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.

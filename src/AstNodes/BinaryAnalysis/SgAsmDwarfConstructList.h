@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 class SgAsmDwarfConstructList: public SgAsmDwarfInformation {
 public:
     [[using Rosebud: rosetta, traverse, large]]

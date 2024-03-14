@@ -524,7 +524,7 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
     for (const Serializer::Ptr &serializer: serializers)
         serializer->genPrologue(header, impl, c, h, *this);
     if (!c->priorText.empty()) {
-        std::regex implRe("#\\s*(ifdef\\s+ROSE_IMPL|if\\s+defined\\s*\\(\\s*ROSE_IMPL\\s*\\))");
+        static const std::regex implRe("#\\s*(ifdef\\s+ROSE_IMPL|if\\s+defined\\s*\\(\\s*ROSE_IMPL\\s*\\))");
         const std::string cppImplSymbol = toCppSymbol(c->qualifiedNamespace + "::" + c->name) + "_IMPL";
         const std::string s = std::regex_replace(c->priorText, implRe, "#ifdef " + cppImplSymbol);
 
@@ -534,6 +534,7 @@ SawyerGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
         impl <<"\n"
              <<THIS_LOCATION <<"#define " <<cppImplSymbol <<"\n"
              <<"#include <" <<toPath(c->qualifiedNamespace + "::" + c->name, ".h").string() <<">\n"
+             <<"#include <Rose/Exception.h>\n"
              <<locationDirective(c, c->priorTextToken)
              <<s <<"\n";
     }
@@ -678,9 +679,6 @@ SawyerGenerator::genImplOpen(std::ostream &impl, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
     impl <<THIS_LOCATION <<machineGenerated()
          <<generatedByRosebud("//");
-
-    // FIXME[Robb Matzke 2024-02-09]: we want to eventually remove this since it takes a long time to compile
-    impl <<"#include <sage3basic.h>\n";
 }
 
 void
@@ -696,7 +694,8 @@ SawyerGenerator::genHeaderOpen(std::ostream &header, const Ast::Class::Ptr &c) {
     header <<THIS_LOCATION <<machineGenerated()
            <<generatedByRosebud("//")
            <<"#ifndef " <<once <<"\n"
-           <<"#define " <<once <<"\n";
+           <<"#define " <<once <<"\n"
+           <<"#include <RoseFirst.h>\n";
 }
 
 void

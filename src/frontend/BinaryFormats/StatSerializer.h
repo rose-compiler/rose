@@ -12,6 +12,7 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
 
+#include <sys/stat.h>
 #include <sys/types.h>
 
 // Serialization for struct stat

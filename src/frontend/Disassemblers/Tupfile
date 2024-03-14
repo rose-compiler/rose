@@ -7,7 +7,7 @@ SOURCES = Assembler.C AssemblerX86.C AssemblerX86Init1.C AssemblerX86Init2.C Ass
     SgAsmExpression.C SgAsmFloatValueExpression.C SgAsmFunction.C SgAsmInstruction.C SgAsmIntegerValueExpression.C		\
     SgAsmInterpretation.C SgAsmM68kInstruction.C SgAsmCilInstruction.C SgAsmJvmInstruction.C SgAsmMipsInstruction.C             \
     SgAsmNullInstruction.C SgAsmPowerpcInstruction.C SgAsmType.C SgAsmX86Instruction.C x86InstructionProperties.C		\
-    SgAsmOperandList.C SgAsmUserInstruction.C
+    SgAsmOperandList.C SgAsmUserInstruction.C SgAsmGenericHeader.C
 
 run $(librose_compile) $(SOURCES)
 

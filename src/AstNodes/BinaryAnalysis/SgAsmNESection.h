@@ -1,3 +1,8 @@
+#ifdef ROSE_IMPL
+#include <SgAsmNESectionTableEntry.h>
+#include <SgAsmNERelocTable.h>
+#endif
+
 class SgAsmNESection: public SgAsmGenericSection {
 public:
     [[using Rosebud: rosetta, traverse]]

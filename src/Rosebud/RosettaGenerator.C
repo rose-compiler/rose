@@ -243,6 +243,9 @@ RosettaGenerator::genImplFileBegin(std::ostream &impl, const Ast::Class::Ptr &c)
     // been emitted in the header file for this node.
     c->cppStack->emitOpen(impl);
 
+    // Make sure the headers know that we're implementing the members of this class.
+    impl <<THIS_LOCATION <<"#define ROSE_" <<c->name <<"_IMPL\n";
+
     // If we're using ROSETTA's useSmallHeader facility, then we should include a small set of default dependencies plus whatever
     // the definition says we need, otherwise we should include the monstrous Cxx_Grammar.h file which we do so by including
     // <sage3basic.h>.
@@ -677,10 +680,13 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
     // ROSETTA "headers" for the class. This is usually just #include statements, but it can be anything
     // needed before the ROSETTA-generated class definition.
     if (!c->priorText.empty()) {
+        static const std::regex implRe("#\\s*(ifdef\\s+ROSE_IMPL|if\\s+defined\\s*\\(\\s*ROSE_IMPL\\s*\\))");
+        const std::string cppImplSymbol = "ROSE_" + c->name + "_IMPL";
+        const std::string s = std::regex_replace(c->priorText, implRe, "#ifdef " + cppImplSymbol);
         rosetta <<"\n"
                 <<THIS_LOCATION <<"DECLARE_HEADERS(" <<shortName(c) <<");\n"
                 <<"#if defined(" <<c->name <<"_HEADERS) || defined(DOCUMENTATION)\n"
-                <<locationDirective(c, c->priorTextToken) <<c->priorText <<"\n";
+                <<locationDirective(c, c->priorTextToken) <<s <<"\n";
         c->cppStack->emitClose(rosetta);
         rosetta <<"#endif // " <<c->name <<"_HEADERS\n";
     }

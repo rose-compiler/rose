@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** JVM Exceptions attribute.
  *
  *  The Exceptions attribute is a variable-length attribute in the attributes table of a method_info

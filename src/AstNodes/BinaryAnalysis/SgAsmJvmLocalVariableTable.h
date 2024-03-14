@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** JVM LocalVariableTable attribute.
  *
  *  The LocalVariableTable attribute is an optional variable-length attribute in the attributes table of a Code

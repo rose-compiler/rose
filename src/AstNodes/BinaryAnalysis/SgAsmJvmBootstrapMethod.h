@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** JVM BootstrapMethod.
  *
  *  Each bootstrap_method entry contains an index to a CONSTANT_MethodHandle_info structure which specifies

@@ -1,5 +1,11 @@
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmGenericString.h>
+#include <SgAsmPEImportItemList.h>
+#endif
 
 /** One import directory per library.
  *

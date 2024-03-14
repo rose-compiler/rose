@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+
 class SgAsmDwarfEnumerationType: public SgAsmDwarfConstruct {
 public:
     [[using Rosebud: rosetta, traverse]]

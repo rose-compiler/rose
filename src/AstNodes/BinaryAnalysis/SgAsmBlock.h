@@ -1,3 +1,9 @@
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmInstruction.h>                           // for SgAsmInstruction::INVALID_STACK_DELTA
+#endif
+
 /** Instruction basic block.
  *
  *  A SgAsmBlock usually represents a sequence of instructions. It's also used for grouping other things such as

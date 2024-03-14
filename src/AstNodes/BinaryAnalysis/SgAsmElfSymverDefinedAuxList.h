@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of symbol version aux entries.
  *
  *  The only purpose of this node is to hold the list of pointers, which can't be contained in the classes that need the

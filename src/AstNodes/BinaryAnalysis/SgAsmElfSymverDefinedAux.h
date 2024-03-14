@@ -1,5 +1,9 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmGenericString.h>
+#endif
+
 /** Auxiliary data for an ELF Symbol Version. */
 class SgAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

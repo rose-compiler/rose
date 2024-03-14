@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfSymbolList.h>
+#endif
+
 /** ELF file section containing symbols. */
 class SgAsmElfSymbolSection: public SgAsmElfSection {
 public:

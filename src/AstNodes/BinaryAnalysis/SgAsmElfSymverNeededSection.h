@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfSymverNeededEntryList.h>
+#endif
+
 /** GNU symbol version requirements table.
  *
  *  This section is usually named ".gnu.version_r".  The format of this table is similar to the GNU Symbol Version

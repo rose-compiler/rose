@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmExprListExp.h>
+#endif
+
 /** Static representation of instruction semantics.
  *
  *  Instruction semantics are not added to the AST by default since this would make it very, very large.  Instead, ROSE has

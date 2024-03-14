@@ -1,5 +1,9 @@
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmPEImportDirectoryList.h>
+#endif
+
 /** Portable Executable Import Section.
  *
  *  Constructs an SgAsmPEImportSection that represents either a PE ".idata" section as defined by the PE Section Table, or

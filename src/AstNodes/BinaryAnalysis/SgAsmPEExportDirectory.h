@@ -1,5 +1,9 @@
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmGenericString.h>
+#endif
+
 /** Export directory. */
 class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,9 @@
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmBasicString.h>
+#endif
+
 /** A single imported object.
  *
  *  Each of these nodes is created from a combination of the PE Import Lookup Table and the PE Import Address Table, pointers to

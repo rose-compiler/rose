@@ -1,3 +1,8 @@
+#ifdef ROSE_IMPL
+#include <SgAsmInstructionList.h>
+#include <SgAsmJvmAttributeTable.h>
+#endif
+
 /** JVM Method.
  *
  *  A method describes an instance of an initialization method (2.9.1) and the class or interface initialization method (2.9.2), see

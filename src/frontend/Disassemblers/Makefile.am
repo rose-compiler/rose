@@ -19,7 +19,7 @@ libroseDisassemblers_la_SOURCES = SgAsmBlock.C SgAsmFunction.C					\
 	Assembler.C AssemblerX86.C AssemblerX86Init.C SgAsmOperandList.C			\
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C				\
 	AssemblerX86Init4.C AssemblerX86Init5.C AssemblerX86Init6.C				\
-	AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
+	AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C SgAsmGenericHeader.C
 
 pkginclude_HEADERS = BitPattern.h		\
 	Assembler.h AssemblerX86.h		\

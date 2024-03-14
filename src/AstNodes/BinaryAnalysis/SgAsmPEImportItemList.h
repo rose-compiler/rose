@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** A list of imported items.
  *
  *  The only purpose of this node is to hold a list of pointers to other nodes. This list cannot be contained directly in the nodes

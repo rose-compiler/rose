@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** The BootstrapMethods attribute is a variable-length attribute in the attributes table of a ClassFile
  *  structure (Section 4.1). The BootstrapMethods attribute records bootstrap methods used to produce
  *  dynamically-computed constants and dynamically-computed call sites (Section 4.4.10).

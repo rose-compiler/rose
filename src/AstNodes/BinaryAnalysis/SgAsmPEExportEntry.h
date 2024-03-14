@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <Sawyer/Result.h>
 
 /** Export entry. */
 class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {

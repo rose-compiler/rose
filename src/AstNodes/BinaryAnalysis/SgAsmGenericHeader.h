@@ -1,5 +1,15 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
+#include <SgAsmGenericFormat.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmGenericDLLList.h>
+#include <SgAsmGenericSectionList.h>
+#endif
+
+class SgAsmGenericDLL;
+class SgAsmGenericDLLList;
 
 /** Base class for container file headers. */
 class SgAsmGenericHeader: public SgAsmGenericSection {
@@ -57,10 +67,7 @@ public:
     void addDll(SgAsmGenericDLL *dll);
 
     /** Vector of dynamically loaded libraries. */
-    std::vector<SgAsmGenericDLL*>& get_dlls() {
-        ROSE_ASSERT(p_dlls != NULL);
-        return p_dlls->get_dlls();
-    }
+    std::vector<SgAsmGenericDLL*>& get_dlls();
 
     /** Returns the RVA of the first entry point.
      *

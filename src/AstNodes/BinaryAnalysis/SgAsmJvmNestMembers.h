@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** JVM NestMembers attribute.
  *
  *  The NestMembers attribute records the classes and interfaces that are authorized to claim

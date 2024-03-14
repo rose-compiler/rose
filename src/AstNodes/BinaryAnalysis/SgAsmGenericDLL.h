@@ -1,3 +1,9 @@
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmBasicString.h>
+#endif
+
 /** Base class for dynamically linked library information. */
 class SgAsmGenericDLL: public SgAsmExecutableFileFormat {
 public:

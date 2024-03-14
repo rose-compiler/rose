@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 
 /** Represents one entry of a segment table. */
 class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {

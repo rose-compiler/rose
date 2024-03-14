@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of ELF relocation entries.
  *
  *  The only purpose of this node is to hold a list of the actual relocation entry nodes since ROSETTA limitations prevent

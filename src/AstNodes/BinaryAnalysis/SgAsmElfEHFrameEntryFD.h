@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
 
 /** ELF error handling frame entry frame description entry. */
 class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {

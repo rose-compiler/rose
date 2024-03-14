@@ -1,5 +1,11 @@
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmBasicString.h>
+#endif
 
 /** Contiguous region of a file.
  *

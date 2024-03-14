@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Represents a JVM InnerClasses attribute.
  *
  *  The InnerClasses attribute is a variable-length attribute in the attributes table of a ClassFile structure. See section 4.7.6 of

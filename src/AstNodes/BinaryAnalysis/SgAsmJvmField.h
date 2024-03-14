@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmJvmAttributeTable.h>
+#endif
+
 /** JVM Field.
  *
  *  Each field is described by a field_info structure. */

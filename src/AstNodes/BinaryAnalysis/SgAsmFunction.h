@@ -1,4 +1,9 @@
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmInstruction.h>
+#endif
 
 /** Represents a synthesized function.
  *

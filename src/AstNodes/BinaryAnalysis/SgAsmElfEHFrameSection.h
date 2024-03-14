@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfEHFrameEntryCIList.h>
+#endif
+
 /** Represents an ELF EH frame section. */
 class SgAsmElfEHFrameSection: public SgAsmElfSection {
 public:

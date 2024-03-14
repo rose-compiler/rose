@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 class SgAsmElfSegmentTableEntryList: public SgAsmExecutableFileFormat {
 public:
     /** Property: Segment table entries.

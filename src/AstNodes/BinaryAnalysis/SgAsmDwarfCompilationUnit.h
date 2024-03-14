@@ -1,3 +1,9 @@
+#ifdef ROSE_IMPL
+#include <SgAsmDwarfConstructList.h>
+#include <SgAsmDwarfLineList.h>
+#include <SgAsmDwarfMacroList.h>
+#endif
+
 class SgAsmDwarfCompilationUnit: public SgAsmDwarfConstruct {
 public:
     [[using Rosebud: rosetta]]

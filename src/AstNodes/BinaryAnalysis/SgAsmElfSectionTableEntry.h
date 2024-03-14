@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 
 /** Represents one entry in an ELF section table. */
 class SgAsmElfSectionTableEntry: public SgAsmExecutableFileFormat {

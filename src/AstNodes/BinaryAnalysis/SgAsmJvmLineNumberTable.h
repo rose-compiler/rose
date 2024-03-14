@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** JVM LineNumberTable attribute.
  *
  *  The LineNumberTable attribute is an optional variable-length attribute in the attributes table of a Code attribute (4.7.3). It

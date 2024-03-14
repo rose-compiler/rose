@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Represents static data in an executable.
  *
  *  For now, we don't associate any type with the data because ROSE's data type infrastructure (source or binary) is not

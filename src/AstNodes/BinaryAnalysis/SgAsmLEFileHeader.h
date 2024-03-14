@@ -1,5 +1,14 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmDOSExtendedHeader.h>
+#include <SgAsmLEEntryTable.h>
+#include <SgAsmLENameTable.h>
+#include <SgAsmLEPageTable.h>
+#include <SgAsmLERelocTable.h>
+#include <SgAsmLESectionTable.h>
+#endif
+
 class SgAsmLEFileHeader: public SgAsmGenericHeader {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types

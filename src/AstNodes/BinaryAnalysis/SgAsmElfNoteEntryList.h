@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Node to hold list of ELF note entries.
  *
  *  This node's only purpose is to hold the list of pointers to note entries, which must be done like this because of

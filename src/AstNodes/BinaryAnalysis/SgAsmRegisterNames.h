@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** An ordered list of registers. */
 class SgAsmRegisterNames: public SgAsmExpression {
 public:

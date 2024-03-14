@@ -1,5 +1,9 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmGenericString.h>
+#endif
+
 /** Auxiliary info for needed symbol version. */
 class SgAsmElfSymverNeededAux: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

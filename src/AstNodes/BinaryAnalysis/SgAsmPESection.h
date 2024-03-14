@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmPESectionTableEntry.h>
+#endif
+
 /** Base class for PE sections. */
 class SgAsmPESection: public SgAsmGenericSection {
 public:

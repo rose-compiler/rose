@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** The StackMapTable attribute is a variable-length attribute in the attributes table
  *  of a Code attribute (see section 4.7.3). A StackMapTable attribute is used during the
  *  process of verification by type checking (4.10.1).

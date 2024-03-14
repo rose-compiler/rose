@@ -9,6 +9,8 @@
 #include <Combinatorics.h>
 #include <Rose/Exception.h>
 
+#include <sageContainer.h>
+
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
 #include <Sawyer/AllocatingBuffer.h>

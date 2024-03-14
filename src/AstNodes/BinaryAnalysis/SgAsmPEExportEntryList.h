@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of pointers to other AST nodes.
  *
  *  The only purpose of this node is to hold a list of pointers to other nodes. We cannot store the list directly in the nodes that

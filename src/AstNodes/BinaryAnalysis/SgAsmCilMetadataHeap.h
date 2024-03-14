@@ -1,3 +1,44 @@
+#ifdef ROSE_IMPL
+#include <SgAsmCilAssemblyTable.h>
+#include <SgAsmCilAssemblyOSTable.h>
+#include <SgAsmCilAssemblyProcessorTable.h>
+#include <SgAsmCilAssemblyRefTable.h>
+#include <SgAsmCilAssemblyRefOSTable.h>
+#include <SgAsmCilAssemblyRefProcessorTable.h>
+#include <SgAsmCilClassLayoutTable.h>
+#include <SgAsmCilConstantTable.h>
+#include <SgAsmCilCustomAttributeTable.h>
+#include <SgAsmCilDeclSecurityTable.h>
+#include <SgAsmCilEventTable.h>
+#include <SgAsmCilEventMapTable.h>
+#include <SgAsmCilExportedTypeTable.h>
+#include <SgAsmCilFieldTable.h>
+#include <SgAsmCilFieldLayoutTable.h>
+#include <SgAsmCilFieldMarshalTable.h>
+#include <SgAsmCilFieldRVATable.h>
+#include <SgAsmCilFileTable.h>
+#include <SgAsmCilGenericParamTable.h>
+#include <SgAsmCilGenericParamConstraintTable.h>
+#include <SgAsmCilImplMapTable.h>
+#include <SgAsmCilInterfaceImplTable.h>
+#include <SgAsmCilManifestResourceTable.h>
+#include <SgAsmCilMemberRefTable.h>
+#include <SgAsmCilMethodDefTable.h>
+#include <SgAsmCilMethodImplTable.h>
+#include <SgAsmCilMethodSemanticsTable.h>
+#include <SgAsmCilMethodSpecTable.h>
+#include <SgAsmCilModuleTable.h>
+#include <SgAsmCilModuleRefTable.h>
+#include <SgAsmCilNestedClassTable.h>
+#include <SgAsmCilParamTable.h>
+#include <SgAsmCilPropertyTable.h>
+#include <SgAsmCilPropertyMapTable.h>
+#include <SgAsmCilStandAloneSigTable.h>
+#include <SgAsmCilTypeDefTable.h>
+#include <SgAsmCilTypeRefTable.h>
+#include <SgAsmCilTypeSpecTable.h>
+#endif
+
 /** CIL SgAsmCilMetadataHeap node. */
 class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
 

@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of SgAsmPERVASizePair AST nodes.
  *
  *  The only reason this AST node exists rather than storing the list directly in the nodes that need it is due to ROSETTA

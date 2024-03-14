@@ -4,6 +4,12 @@
 #include "DataConversion.h"
 #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
 
+#ifdef ROSE_IMPL
+#include <SgAsmDwarfCompilationUnitList.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericHeaderList.h>
+#endif
+
 /** Base class for binary files. */
 class SgAsmGenericFile: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

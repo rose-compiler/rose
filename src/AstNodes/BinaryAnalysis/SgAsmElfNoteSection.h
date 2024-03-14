@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfNoteEntryList.h>
+#endif
+
 class SgAsmElfNoteSection: public SgAsmElfSection {
 public:
     /** Property: List of note entries.

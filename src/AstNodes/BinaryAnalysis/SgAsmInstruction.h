@@ -1,6 +1,12 @@
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <sageContainer.h>
 #include <Sawyer/Cached.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmExprListExp.h>
+#include <SgAsmOperandList.h>
+#endif
 
 /** Base class for machine instructions.
  *

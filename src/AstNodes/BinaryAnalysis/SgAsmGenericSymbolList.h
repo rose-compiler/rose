@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** Node to hold a list of symbol node pointers.
  *
  *  The only reason this node exists is because a ROSETTA limitation prevents us from storing the list directly in the nodes that

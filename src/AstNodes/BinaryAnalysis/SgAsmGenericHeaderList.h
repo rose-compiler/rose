@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of generic file headers.
  *
  *  The only purpose of this AST node is to hold a list of pointers which cannot be contained directly in other nodes

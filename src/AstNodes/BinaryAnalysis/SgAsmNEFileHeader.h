@@ -1,3 +1,13 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmDOSExtendedHeader.h>
+#include <SgAsmNEEntryTable.h>
+#include <SgAsmNEModuleTable.h>
+#include <SgAsmNENameTable.h>
+#include <SgAsmNESectionTable.h>
+#endif
+
 class SgAsmNEFileHeader: public SgAsmGenericHeader {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types

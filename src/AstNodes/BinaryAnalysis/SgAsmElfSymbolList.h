@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 class SgAsmElfSymbolList: public SgAsmExecutableFileFormat {
 public:
     /** Property: Symbol list.

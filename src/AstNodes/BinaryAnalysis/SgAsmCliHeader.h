@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmCilMetadataRoot.h>
+#endif
+
 /** CIL Managed Code section.
  *
  *  "CLI" means "common language infrastructure; "CIL" is "common intermediate language". */

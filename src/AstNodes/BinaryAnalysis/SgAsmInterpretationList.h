@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 class SgAsmInterpretationList: public SgAsmNode {
 public:
     /** Property: Interpretation list.

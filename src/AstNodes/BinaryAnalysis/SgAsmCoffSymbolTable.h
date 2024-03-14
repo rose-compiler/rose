@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmCoffSymbolList.h>
+#endif
+
 /** COFF symbol table.
  *
  *  This is a symbol table used by Microsoft PE format. */

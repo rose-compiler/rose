@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+
 class SgAsmDwarfUnionType: public SgAsmDwarfConstruct {
 public:
     [[using Rosebud: rosetta, traverse]]

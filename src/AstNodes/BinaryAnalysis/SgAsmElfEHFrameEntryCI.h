@@ -1,3 +1,9 @@
+#include <sageContainer.h>
+
+#ifdef ROSE_IMPL
+#include <SgAsmElfEHFrameEntryFDList.h>
+#endif
+
 /** ELF error handling frame entry, common information entry.
  *
  *  Most of the properties of this class are documented in the official ELF specification. */

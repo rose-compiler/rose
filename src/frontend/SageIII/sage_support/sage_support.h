@@ -61,12 +61,6 @@
    #include <dlfcn.h>
 #endif
 
-#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
-// DQ (8/12/2008): This constructor is implemented in sageSupport.C and
-// will be removed later once the new IR nodes are integrated into use.
-   #include "ExecELF.h"
-#endif
-
 // Needed for boost::filesystem::exists(...)
 #include "boost/filesystem.hpp"
 #include <stdio.h>

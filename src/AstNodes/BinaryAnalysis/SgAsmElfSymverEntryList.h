@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of entries from a symbol version table.
  *
  *  The only reason this node exists instead of storing the entries directly in the parent node that needs them is due to

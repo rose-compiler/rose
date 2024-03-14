@@ -1,3 +1,8 @@
+#ifdef ROSE_IMPL
+#include <SgAsmPEExportDirectory.h>
+#include <SgAsmPEExportEntryList.h>
+#endif
+
 /** Export file section. */
 class SgAsmPEExportSection: public SgAsmPESection {
 public:

@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmNEStringTable.h>
+#endif
+
 class SgAsmNEModuleTable: public SgAsmGenericSection {
 public:
     [[using Rosebud: rosetta, traverse]]

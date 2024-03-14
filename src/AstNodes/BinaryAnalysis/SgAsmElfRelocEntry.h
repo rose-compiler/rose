@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 
 /** One entry of an ELF relocation table. */
 class SgAsmElfRelocEntry: public SgAsmExecutableFileFormat {

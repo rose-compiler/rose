@@ -1,3 +1,5 @@
+#include <sageContainer.h>
+
 /** List of pointers to other nodes.
  *
  *  The only reason this node type exists is because ROSETTA limitations prevent the list from being included directly in the nodes

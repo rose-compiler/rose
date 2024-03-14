@@ -1,4 +1,5 @@
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 
 /** Represents a single ELF symbol.
  *

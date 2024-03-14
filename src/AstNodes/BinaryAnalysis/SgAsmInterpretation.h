@@ -2,6 +2,11 @@
 #include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
+#ifdef ROSE_IMPL
+#include <SgAsmBlock.h>
+#include <SgAsmGenericHeaderList.h>
+#endif
+
 /** Represents an interpretation of a binary container.
  *
  *  An interpretation is a collection of the parts of a binary specimen that represent a coherent program, library, core

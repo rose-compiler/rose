@@ -1,3 +1,7 @@
+#ifdef ROSE_IMPL
+#include <SgAsmElfDynamicEntryList.h>
+#endif
+
 /** ELF section containing dynamic linking information. */
 class SgAsmElfDynamicSection: public SgAsmElfSection {
 public:
