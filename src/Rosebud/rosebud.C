@@ -43,7 +43,8 @@ static const std::vector<std::string> validPropertyAttrNames {
 static const std::vector<std::string> validClassAttrNames {
     "Rosebud::abstract",                                // class cannot be instantiated
     "Rosebud::no_constructors",                         // don't generate constructors
-    "Rosebud::no_destructor",                           // gon't generate the destructor
+    "Rosebud::no_destructor",                           // don't generate the destructor
+    "Rosebud::small_header",                            // ROSETTA-style small header
     "Rosebud::suppress",                                // don't generate code for this type
     "Rosebud::tag"                                      // specify the tag string, 3rd arg of ROSETTA's NEW_TERMINAL_MACRO
 };
@@ -620,6 +621,7 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
         } else if ("Rosebud::abstract" == attr->fqName ||
                    "Rosebud::no_constructors" == attr->fqName ||
                    "Rosebud::no_destructor" == attr->fqName ||
+                   "Rosebud::small_header" == attr->fqName ||
                    "Rosebud::suppress" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
 

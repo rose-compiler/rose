@@ -16,6 +16,7 @@ private:
     std::string grammarFunctionName = "Grammar::no_name"; // name of ROSETTA function being generated
     std::string cppProtection;                          // conditional compilation expression protecting all generated code
     bool strictParents = false;                         // generate extra parent pointer checks and adjustments
+    bool smallHeaders = false;                          // pretend every class has `Rosebud::small_header`
 
 protected:
     RosettaGenerator() {}

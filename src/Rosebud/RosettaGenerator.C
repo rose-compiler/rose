@@ -95,6 +95,16 @@ RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
               .key("strict-parents")
               .hidden(true));
 
+    sg.insert(Switch("small-headers")
+              .intrinsicValue(true, smallHeaders)
+              .doc("Acts as if the `Rosebud::small_header` attribute is set for every class, which causes ROSETTA to generate "
+                   "one header file per class definition. The @s{no-small-headers} switch turns this overriding off. The default "
+                   "is to " + std::string(smallHeaders ? "" : "not ") + "automatically add this attribute."));
+    sg.insert(Switch("no-small-headers")
+              .intrinsicValue(false, smallHeaders)
+              .key("small-headers")
+              .hidden(true));
+
     parser.with(sg);
 }
 
@@ -230,10 +240,17 @@ RosettaGenerator::genImplFileBegin(std::ostream &impl, const Ast::Class::Ptr &c)
 
     // The CPP conditional compilation directives that appeared before the class definition in the Rosebud input need to also be in
     // effect in this implementation file. However, we don't need to include any files or define any macros because those would have
-    // been emitted in the header file for this node (actually, in the monstrous Cxx_Grammar.h file, but we'll fix that later and
-    // for now we'll include it by including <sage3basic.h> just like we do per policy in all other librose source files).
+    // been emitted in the header file for this node.
     c->cppStack->emitOpen(impl);
-    impl <<THIS_LOCATION <<"#include <sage3basic.h>\n";
+
+    // If we're using ROSETTA's useSmallHeader facility, then we should include a small set of default dependencies plus whatever
+    // the definition says we need, otherwise we should include the monstrous Cxx_Grammar.h file which we do so by including
+    // <sage3basic.h>.
+    if (smallHeaders || c->findAttribute("Rosebud::small_header")) {
+        impl <<THIS_LOCATION <<"#include <" <<c->name <<".h>\n";
+    } else {
+        impl <<THIS_LOCATION <<"#include <sage3basic.h>\n"; // beware: includes over half a million lines of code
+    }
 }
 
 void
@@ -647,6 +664,14 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
         genNonterminalMacros(rosetta, c, h);
     } else {
         genLeafMacros(rosetta, c);
+    }
+
+    // Small header classes are classes whose definition ROSETTA will emit to its own header.
+    if (smallHeaders || c->findAttribute("Rosebud::small_header")) {
+        rosetta <<"\n"
+                <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
+                <<shortName(c) <<".useSmallHeader(true);\n"
+                <<"#endif // !DOCUMENTATION\n";
     }
 
     // ROSETTA "headers" for the class. This is usually just #include statements, but it can be anything

@@ -92,6 +92,9 @@
  *  @li The `Rosebud::no_destructor` attribute [prevents the generation of a destructor so the user can define his own destructor
  *  (Sawyer)] [is ignored and a destructor is always generated (ROSETTA)].
  *
+ *  @li The `Rosebud::small_header` attribute [is ignored since all headers are small (Sawyer)] [causes ROSETTA to generate a header
+ *  file that contains only this single class definition (ROSETTA)].
+ *
  *  @li The `Rosebud::suppress` attribute prevents the backend from generating any code at all for this class. This is useful when
  *  Rosebud needs to know the class definition in order to generate code for subclasses, but should not generate the base class.
  *
