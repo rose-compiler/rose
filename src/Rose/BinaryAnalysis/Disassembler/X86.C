@@ -1,17 +1,29 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 
-#include <Assembler.h>
-#include <AssemblerX86.h>
-#include <AsmUnparser_compat.h>
-#include <SageBuilderAsm.h>
-#include <integerOps.h>
-#include <stringify.h>
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmIndirectRegisterExpression.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmOperandList.h>
+#include <SgAsmVectorType.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <Assembler.h>
+#include <AssemblerX86.h>
+#include <SageBuilderAsm.h>
+#include <integerOps.h>
+#include <stringify.h>
 #include <sstream>
 
 namespace Rose {
@@ -95,39 +107,28 @@ X86::init(size_t wordsize)
 void
 X86::commentIpRelative(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-
-    struct Visitor: AstSimpleProcessing {
-        SgAsmInstruction *insn;
-        size_t nBits;
-
-        Visitor(SgAsmInstruction *insn, size_t nBits)
-            : insn(insn), nBits(nBits) {}
-
-        void visit(SgNode *node) override {
-            if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
-                SgAsmDirectRegisterExpression *reg = NULL;
-                SgAsmIntegerValueExpression *ival = NULL;
-                if ((reg = isSgAsmDirectRegisterExpression(add->get_lhs()))) {
-                    ival = isSgAsmIntegerValueExpression(add->get_rhs());
-                } else if ((reg = isSgAsmDirectRegisterExpression(add->get_rhs()))) {
-                    ival = isSgAsmIntegerValueExpression(add->get_lhs());
-                }
-
-                if (reg && ival && reg->get_descriptor().majorNumber() == x86_regclass_ip &&
-                    reg->get_descriptor().minorNumber() == 0 && reg->get_descriptor().offset() == 0 &&
-                    reg->get_descriptor().nBits() == nBits) {
-                    rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
-                    rose_addr_t offset = ival->get_absoluteValue();
-                    rose_addr_t va = (fallThroughVa + offset) & BitOps::lowMask<rose_addr_t>(nBits);
-                    std::string vaStr = "absolute=" + StringUtility::addrToString(va, nBits);
-                    std::string comment = add->get_comment();
-                    comment = comment.empty() ? vaStr : vaStr + "," + comment;
-                    add->set_comment(comment);
-                }
-            }
+    const rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+    const size_t nBits = architecture()->bitsPerWord();
+    AST::Traversal::forwardPre<SgAsmBinaryAdd>(insn, [&fallThroughVa, &nBits](SgAsmBinaryAdd *add) {
+        SgAsmDirectRegisterExpression *reg = nullptr;
+        SgAsmIntegerValueExpression *ival = nullptr;
+        if ((reg = isSgAsmDirectRegisterExpression(add->get_lhs()))) {
+            ival = isSgAsmIntegerValueExpression(add->get_rhs());
+        } else if ((reg = isSgAsmDirectRegisterExpression(add->get_rhs()))) {
+            ival = isSgAsmIntegerValueExpression(add->get_lhs());
         }
-    } v(insn, architecture()->bitsPerWord());
-    v.traverse(insn, preorder);
+
+        if (reg && ival && reg->get_descriptor().majorNumber() == x86_regclass_ip &&
+            reg->get_descriptor().minorNumber() == 0 && reg->get_descriptor().offset() == 0 &&
+            reg->get_descriptor().nBits() == nBits) {
+            const rose_addr_t offset = ival->get_absoluteValue();
+            const rose_addr_t va = (fallThroughVa + offset) & BitOps::lowMask<rose_addr_t>(nBits);
+            const std::string vaStr = "absolute=" + StringUtility::addrToString(va, nBits);
+            std::string comment = add->get_comment();
+            comment = comment.empty() ? vaStr : vaStr + "," + comment;
+            add->set_comment(comment);
+        }
+    });
 }
 
 SgAsmInstruction *

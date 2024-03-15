@@ -1,12 +1,33 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
-
-#include <sage3basic.h>
-#include <Rose/BitOps.h>
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
+#include <Rose/AST/Traversal.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BitOps.h>
+
+#include <SgAsmAarch32Coprocessor.h>
+#include <SgAsmAarch32Instruction.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryAsr.h>
+#include <SgAsmBinaryConcat.h>
+#include <SgAsmBinaryLsl.h>
+#include <SgAsmBinaryLsr.h>
+#include <SgAsmBinaryPostupdate.h>
+#include <SgAsmBinaryRor.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmBinarySubtract.h>
+#include <SgAsmByteOrder.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmFloatValueExpression.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmRegisterNames.h>
+
+#include <Cxx_GrammarDowncast.h>
 #include <SageBuilderAsm.h>
 
 using namespace Rose::Diagnostics;
@@ -276,36 +297,27 @@ void
 Aarch32::commentIpRelative(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
-    struct Visitor: AstSimpleProcessing {
-        SgAsmInstruction *insn;
-        const RegisterDescriptor REG_PC = RegisterDescriptor(aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32);
+    const RegisterDescriptor REG_PC = RegisterDescriptor(aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32);
+    const rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
 
-        Visitor(SgAsmInstruction *insn)
-            : insn(insn) {}
-
-        void visit(SgNode *node) override {
-            if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
-                SgAsmDirectRegisterExpression *reg = NULL;
-                SgAsmIntegerValueExpression *ival = NULL;
-                if ((reg = isSgAsmDirectRegisterExpression(add->get_lhs()))) {
-                    ival = isSgAsmIntegerValueExpression(add->get_rhs());
-                } else if ((reg = isSgAsmDirectRegisterExpression(add->get_rhs()))) {
-                    ival = isSgAsmIntegerValueExpression(add->get_lhs());
-                }
-
-                if (reg && ival && reg->get_descriptor() == REG_PC) {
-                    rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
-                    rose_addr_t offset = ival->get_absoluteValue();
-                    rose_addr_t va = (fallThroughVa + offset + 4) & BitOps::lowMask<rose_addr_t>(32);
-                    std::string vaStr = "absolute=" + StringUtility::addrToString(va, 32);
-                    std::string comment = add->get_comment();
-                    comment = comment.empty() ? vaStr : vaStr + "," + comment;
-                    add->set_comment(comment);
-                }
-            }
+    AST::Traversal::forwardPre<SgAsmBinaryAdd>(insn, [&REG_PC, &fallThroughVa](SgAsmBinaryAdd *add) {
+        SgAsmDirectRegisterExpression *reg = NULL;
+        SgAsmIntegerValueExpression *ival = NULL;
+        if ((reg = isSgAsmDirectRegisterExpression(add->get_lhs()))) {
+            ival = isSgAsmIntegerValueExpression(add->get_rhs());
+        } else if ((reg = isSgAsmDirectRegisterExpression(add->get_rhs()))) {
+            ival = isSgAsmIntegerValueExpression(add->get_lhs());
         }
-    } v(insn);
-    v.traverse(insn, preorder);
+
+        if (reg && ival && reg->get_descriptor() == REG_PC) {
+            const rose_addr_t offset = ival->get_absoluteValue();
+            const rose_addr_t va = (fallThroughVa + offset + 4) & BitOps::lowMask<rose_addr_t>(32);
+            const std::string vaStr = "absolute=" + StringUtility::addrToString(va, 32);
+            std::string comment = add->get_comment();
+            comment = comment.empty() ? vaStr : vaStr + "," + comment;
+            add->set_comment(comment);
+        }
+    });
 }
 
 SgAsmInstruction*

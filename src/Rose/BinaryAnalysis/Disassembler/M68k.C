@@ -1,20 +1,28 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmM68kInstruction.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmRegisterNames.h>
+
+#include <Cxx_GrammarDowncast.h>
+
 #include "integerOps.h"
 #include "stringify.h"
 #include "SageBuilderAsm.h"
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
-
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
-#include "AsmUnparser_compat.h"
-#endif
 
 namespace Rose {
 namespace BinaryAnalysis {

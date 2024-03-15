@@ -5,6 +5,9 @@
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/Exception.h>
+
+#include <SgAsmGenericHeader.h>
+
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>

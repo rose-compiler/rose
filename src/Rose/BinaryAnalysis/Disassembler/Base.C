@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Assembler.h>
@@ -11,6 +10,10 @@
 #include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/Diagnostics.h>
+
+#include <SgAsmGenericFile.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmInterpretation.h>
 
 #include <integerOps.h>
 #include <stringify.h>

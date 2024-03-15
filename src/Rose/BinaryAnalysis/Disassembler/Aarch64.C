@@ -1,13 +1,39 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
+#include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 
-#include <sage3basic.h>
 #include <Rose/BitOps.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <ROSE_UNUSED.h>
 
+#include <SgAsmAarch64AtOperand.h>
+#include <SgAsmAarch64BarrierOperand.h>
+#include <SgAsmAarch64CImmediateOperand.h>
+#include <SgAsmAarch64Instruction.h>
+#include <SgAsmAarch64PrefetchOperand.h>
+#include <SgAsmAarch64SysMoveOperand.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryAsr.h>
+#include <SgAsmBinaryLsl.h>
+#include <SgAsmBinaryLsr.h>
+#include <SgAsmBinaryMsl.h>
+#include <SgAsmBinaryPostupdate.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmBinaryRor.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmFloatValueExpression.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmUnarySignedExtend.h>
+#include <SgAsmUnaryTruncate.h>
+#include <SgAsmUnaryUnsignedExtend.h>
+#include <SgAsmVectorType.h>
+
+#include <Cxx_GrammarDowncast.h>
 #include <SageBuilderAsm.h>
 
 using namespace Rose::Diagnostics;

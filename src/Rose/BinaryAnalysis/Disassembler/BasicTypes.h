@@ -2,7 +2,9 @@
 #define ROSE_BinaryAnalysis_Disassembler_BasicTypes_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <RoseFirst.h>
 
+#include <Sawyer/Message.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <string>

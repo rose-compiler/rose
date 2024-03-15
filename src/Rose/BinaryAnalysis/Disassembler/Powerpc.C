@@ -1,15 +1,22 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
-
-#include "Assembler.h"
-#include "AssemblerX86.h"
-#include "AsmUnparser_compat.h"
-#include "SageBuilderAsm.h"
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmPowerpcInstruction.h>
+#include <SgAsmVectorType.h>
+
+#include "Assembler.h"
+#include "AssemblerX86.h"
+#include "SageBuilderAsm.h"
+
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -1,10 +1,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmCilInstruction.h>
+#include <SgAsmFloatValueExpression.h>
+#include <SgAsmIntegerValueExpression.h>
 
 #include <SageBuilderAsm.h>
 

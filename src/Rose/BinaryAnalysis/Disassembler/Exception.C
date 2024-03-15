@@ -1,13 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
-
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
+
 #include <Rose/StringUtility/NumberToString.h>
 
 #include <SgAsmInstruction.h>
-
-#include <AsmUnparser_compat.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -20,7 +17,7 @@ void
 Exception::print(std::ostream &o) const {
     if (insn) {
         o <<"disassembly failed at " <<StringUtility::addrToString(ip)
-          <<" [" <<unparseInstruction(insn) <<"]"
+          <<" [" <<insn->toString() <<"]"
           <<": " <<what();
     } else if (ip>0) {
         o <<"disassembly failed at " <<StringUtility::addrToString(ip);

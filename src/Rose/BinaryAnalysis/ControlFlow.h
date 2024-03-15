@@ -8,6 +8,7 @@
 #include "Map.h"
 #include "WorkLists.h"
 #include "SageBuilderAsm.h"
+#include <AstSimpleProcessing.h>
 
 #include <boost/foreach.hpp>                            // needed for iteration over boost::vertices
 #include <boost/graph/adjacency_list.hpp>

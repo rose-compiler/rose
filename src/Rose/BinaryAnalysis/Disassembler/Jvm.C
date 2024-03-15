@@ -1,10 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmJvmInstruction.h>
 
 #include <SageBuilderAsm.h>
 

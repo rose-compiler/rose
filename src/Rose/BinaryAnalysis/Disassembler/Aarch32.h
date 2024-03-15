@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Disassembler_Aarch32_H
 #define ROSE_BinaryAnalysis_Disassembler_Aarch32_H
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 

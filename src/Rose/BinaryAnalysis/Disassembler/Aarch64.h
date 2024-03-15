@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Disassembler_Aarch64_H
 #define ROSE_BinaryAnalysis_Disassembler_Aarch64_H
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <capstone/capstone.h>
 

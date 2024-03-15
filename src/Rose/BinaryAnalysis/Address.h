@@ -1,5 +1,6 @@
 #ifndef ROSE_BinaryAnalysis_Address_H
 #define ROSE_BinaryAnalysis_Address_H
+#include <RoseFirst.h>
 
 #include <cstdint>
 

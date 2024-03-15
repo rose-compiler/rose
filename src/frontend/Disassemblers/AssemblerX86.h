@@ -7,6 +7,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "Assembler.h"
 
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 

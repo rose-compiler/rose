@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 
 #include "integerOps.h"
@@ -8,6 +7,14 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
 #include <ROSE_UNUSED.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmMipsInstruction.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
