@@ -5393,6 +5393,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
+       // DQ (3/11/2024): Turn this on for debugging the generated code for unit testing.
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif

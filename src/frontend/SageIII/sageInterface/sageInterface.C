@@ -10188,6 +10188,13 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
      //  pcounter -- if #endif is countered
      //  Normally the final pcounter ==0, if pcounter>=1, a #endif is missing somewhere. We should patch it up.
 
+#if REMOVE_STATEMENT_DEBUG
+     printf ("Output the comments attached to sourceStatement: \n");
+     printOutComments(sourceStatement);
+     printf ("Output the comments attached to targetStatement: \n");
+     printOutComments(targetStatement);
+#endif
+
   // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
      vector<int>::const_iterator j = indexList.begin();
      PreprocessingInfo* prevTargetAnchorComment = NULL;
@@ -10347,6 +10354,10 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
 #if REMOVE_STATEMENT_DEBUG
           printf ("   targetStmt->get_file_info()->get_file_id()           = %d \n",targetStmt->get_file_info()->get_file_id());
 #endif
+#if REMOVE_STATEMENT_DEBUG
+          printf ("Before loop: surroundingStatement = %p = %s name = %s surroundingStatement_fileId = %d \n",surroundingStatement,
+                  surroundingStatement->class_name().c_str(),SageInterface::get_name(surroundingStatement).c_str(),surroundingStatement_fileId);
+#endif
           bool returningNullSurroundingStatement = false;
        // while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
           while ((returningNullSurroundingStatement == false) && (surroundingStatement != NULL) && surroundingStatement_fileId != targetStmt->get_file_info()->get_file_id())
@@ -10356,6 +10367,12 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
             // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
             // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
                surroundingStatement = getPreviousStatement(surroundingStatement);
+
+#if REMOVE_STATEMENT_DEBUG
+               printf ("In loop: after getPreviousStatement(): surroundingStatement = %p = %s name = %s \n",surroundingStatement,
+                    surroundingStatement->class_name().c_str(),SageInterface::get_name(surroundingStatement).c_str());
+#endif
+               
                if (surroundingStatement == NULL)
                   {
                     surroundingStatement_fileId = Sg_File_Info::BAD_FILE_ID;

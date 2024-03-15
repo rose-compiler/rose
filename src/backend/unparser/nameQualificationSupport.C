@@ -17723,12 +17723,16 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): outputGlobalQualification                                 = %s \n",outputGlobalQualification ? "true" : "false");
 #endif
 
+  // DQ (2/18/2024): Note that there may not be a nondefining declaration, and then we still don't want to output the global name qualification.
   // DQ (2/16/2013): Note that test2013_67.C is a case where name qualification of the friend function is required.
   // I think it is because it is a non defining declaration instead of a defining declaration.
   // DQ (3/31/2012): I don't think that global qualification is allowed for friend functions (so test for this).
   // test2012_57.C is an example of this issue.
   // if (outputGlobalQualification == true && functionDeclaration->get_declarationModifier().isFriend() == true)
-     if ( (outputGlobalQualification == true) && (functionDeclaration->get_declarationModifier().isFriend() == true) && (functionDeclaration == functionDeclaration->get_definingDeclaration()))
+  // if ( (outputGlobalQualification == true) && (functionDeclaration->get_declarationModifier().isFriend() == true) && (functionDeclaration == functionDeclaration->get_definingDeclaration()))
+     if ( (outputGlobalQualification == true) &&
+          (functionDeclaration->get_declarationModifier().isFriend() == true) &&
+          ( (functionDeclaration->get_definingDeclaration() == NULL) || (functionDeclaration == functionDeclaration->get_definingDeclaration()) ) )
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           mfprintf(mlog [ WARN ] ) ("WARNING: We can't specify global qualification of friend function (qualifier reset to be empty string) \n");

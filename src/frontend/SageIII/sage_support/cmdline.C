@@ -5821,9 +5821,19 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // TV (10/09/2018): ROSE-1392
      optionCount = sla(argv, "-rose:", "($)", "unparse_edg_normalized_method_ROSE_1392",1);
 
+  // DQ (2/17/2024): Need to support stripping out c++03 type options, so that we can support
+  // alternative languages versions. Adding the complete list of C and C++ language versions.
+  // We need to remove them here and then add them when we build the backend compiler command
+  // line, so that we can have the added language version be generated.
+  // DQ (2/18/2024): Full list taken from running "man g++" (for gnu g++ version 10.3), plus
+  // added entries for c++20, c++23, and c++26.
   // TV (11/20/2018): ROSE-1529: removed non-standard standard selection
   // Rasmussen (11/17/2018): ROSE-1584: separated "++" into single characters [+][+] for regex handling.
-     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
+  // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
+  // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
+  // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c11|c18|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
+     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c9x|c11|c1x|c17|c18|gnu89|gnu90|gnu9x|gnu11|gnu1x|gnu17|gnu18|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]0x|gnu[+][+]11|gnu[+][+]0x|c[+][+]14|c[+][+]1y|gnu[+][+]14|gnu[+][+]1y|c[+][+]17|c[+][+]1z|gnu[+][+]17|gnu[+][+]1z|c[+][+]20|c[+][+]2a|gnu[+][+]2a|c[+][+]23|c[+][+]26)",1);
+
 
   // AST I/O
      optionCount = sla(argv, "-rose:ast:", "($)", "merge",1);

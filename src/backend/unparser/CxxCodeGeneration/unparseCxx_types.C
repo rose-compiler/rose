@@ -808,7 +808,24 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
        // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
           switch (type->variant())
              {
-               case T_UNKNOWN:            curprint ( get_type_name(type) + " ");          break;
+            // DQ (1/17/2024): We only want to unparse this in the first part of the type (not the second).
+            // NOTE: This is use to unparse a type which is output at UNKNOWN (this will be an error if not
+            // defined away (e.g. #define UNKNOWN )).  This is a temporary technique to support the generation
+            // of defining function declarations as GoogleTests.  It may be supported more formally in the
+            // near future.
+            // case T_UNKNOWN:            curprint ( get_type_name(type) + " ");          break;
+               case T_UNKNOWN:
+                  {
+                    if (info.isTypeSecondPart() == true)
+                       {
+                         /* do nothing */
+                       }
+                      else
+                       {
+                         curprint ( get_type_name(type) + " ");
+                       }
+                    break;
+                  }
                case T_CHAR:
                case T_SIGNED_CHAR:
                case T_UNSIGNED_CHAR:
