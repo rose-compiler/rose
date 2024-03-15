@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_Debugger_ThreadId_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <RoseFirst.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

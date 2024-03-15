@@ -2,8 +2,9 @@
 #define ROSE_BinaryAnalysis_Debugger_Gdb_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_DEBUGGER_GDB
-
 #include <Rose/BinaryAnalysis/Debugger/Base.h>
+
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/Debugger/GdbResponse.h>
 #include <Rose/Yaml.h>
 

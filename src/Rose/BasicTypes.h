@@ -1,5 +1,6 @@
 #ifndef ROSE_BasicTypes_H
 #define ROSE_BasicTypes_H
+#include <RoseFirst.h>
 
 #include <Sawyer/SharedPointer.h>
 

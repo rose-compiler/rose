@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_BasicTypes_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <RoseFirst.h>
 
 // #include's for subdirectories and sub-namespaces are at the end of this header.
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>

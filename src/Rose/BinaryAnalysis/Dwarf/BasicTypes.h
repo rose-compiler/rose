@@ -2,6 +2,9 @@
 #define ROSE_BinaryAnalysis_Dwarf_BasicTypes_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <RoseFirst.h>
+
+#include <Cxx_GrammarDeclarations.h>
 
 #include <Sawyer/Message.h>
 

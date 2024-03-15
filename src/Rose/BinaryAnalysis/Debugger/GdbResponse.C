@@ -1,10 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_DEBUGGER_GDB
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/GdbResponse.h>
+
 #include <Rose/StringUtility/Convert.h>
+#include <Rose/StringUtility/Escape.h>
 #include <stringify.h>
 
+#include <Sawyer/Message.h>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <cstring>
@@ -12,6 +14,37 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Debugger {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GdbResponse::Token
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+GdbResponse::Token::Token() {}
+
+GdbResponse::Token::Token(TokenType type, size_t begin, size_t end)
+    : type_(type), begin_(begin), end_(end) {
+    ASSERT_require(end >= begin);
+}
+
+GdbResponse::TokenType
+GdbResponse::Token::type() const {
+    return type_;
+}
+
+size_t
+GdbResponse::Token::begin() const {
+    return begin_;
+}
+
+size_t
+GdbResponse::Token::end() const {
+    return end_;
+}
+
+size_t
+GdbResponse::Token::size() const {
+    return end_ - begin_;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GdbReponse::TokenStream

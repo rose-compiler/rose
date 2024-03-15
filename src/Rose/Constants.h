@@ -5,6 +5,7 @@
 //
 #ifndef ROSE_Constants_H
 #define ROSE_Constants_H
+#include <RoseFirst.h>
 
 #include <rosedll.h>
 #include <cstddef>

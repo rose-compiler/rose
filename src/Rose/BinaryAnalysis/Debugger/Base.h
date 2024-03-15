@@ -4,7 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/Debugger/ThreadId.h>
+#include <Rose/Constants.h>
 
 #include <Sawyer/BitVector.h>
 #include <Sawyer/SharedObject.h>

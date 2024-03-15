@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_DEBUGGER_GDB
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>

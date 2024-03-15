@@ -2,8 +2,8 @@
 #define ROSE_BinaryAnalysis_Debugger_GdbResponse_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_DEBUGGER_GDB
-
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
+
 #include <Rose/Yaml.h>
 
 namespace Rose {
@@ -35,27 +35,13 @@ class GdbResponse {
         size_t end_ = 0;
 
     public:
-        Token() {}
-        Token(TokenType type, size_t begin, size_t end)
-            : type_(type), begin_(begin), end_(end) {
-            ASSERT_require(end >= begin);
-        }
+        Token();
+        Token(TokenType, size_t begin, size_t end);
 
-        TokenType type() const {
-            return type_;
-        }
-
-        size_t begin() const {
-            return begin_;
-        }
-
-        size_t end() const {
-            return end_;
-        }
-
-        size_t size() const {
-            return end_ - begin_;
-        }
+        TokenType type() const;
+        size_t begin() const;
+        size_t end() const;
+        size_t size() const;
     };
 
     // Lexical analysis and the resulting sequence of tokens.

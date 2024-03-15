@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_DEBUGGER_LINUX
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>

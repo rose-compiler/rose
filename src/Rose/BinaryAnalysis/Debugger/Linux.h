@@ -2,8 +2,9 @@
 #define ROSE_BinaryAnalysis_Debugger_Linux_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_DEBUGGER_LINUX
-
 #include <Rose/BinaryAnalysis/Debugger/Base.h>
+
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/SystemCall.h>
 
 #include <Sawyer/Optional.h>
