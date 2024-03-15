@@ -110,11 +110,7 @@ public:
     virtual RegisterDescriptor stackFrameRegister() const override;
     virtual RegisterDescriptor callReturnRegister() const override;
 
-    virtual int iprocKey(SgAsmInstruction *insn_) const override {
-        SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
-        assert(insn!=NULL);
-        return insn->get_kind();
-    }
+    virtual int iprocKey(SgAsmInstruction *insn_) const override;
 
     /** Set the XER OV and SO bits as specified.
      *

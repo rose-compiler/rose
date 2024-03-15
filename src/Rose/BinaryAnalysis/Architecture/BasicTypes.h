@@ -6,6 +6,9 @@
 #include <Rose/BinaryAnalysis/Architecture/Exception.h> // needed for Result<T,NotFound>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
+class SgAsmGenericHeader;
+class SgAsmInterpretation;
+
 #include <Sawyer/Message.h>
 #include <Sawyer/Result.h>
 #include <boost/filesystem.hpp>

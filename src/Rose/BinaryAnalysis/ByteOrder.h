@@ -3,7 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BitOps.h>
+#include <ROSE_DEPRECATED.h>
+
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace Rose {

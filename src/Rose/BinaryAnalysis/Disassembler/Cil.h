@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>

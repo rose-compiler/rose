@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -147,15 +149,8 @@ public:
     virtual RegisterDescriptor stackPointerRegister() const override;
     virtual RegisterDescriptor stackFrameRegister() const override;
     virtual RegisterDescriptor callReturnRegister() const override;
-
-    virtual int iprocKey(SgAsmInstruction *insn_) const override {
-        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-        assert(insn!=NULL);
-        return insn->get_kind();
-    }
-
+    virtual int iprocKey(SgAsmInstruction *insn_) const override;
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) override;
-
     virtual void initializeState(const BaseSemantics::StatePtr&) override;
 
     enum AccessMode { READ_REGISTER, PEEK_REGISTER };

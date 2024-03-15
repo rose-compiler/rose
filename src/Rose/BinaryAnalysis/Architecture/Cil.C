@@ -1,10 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Cil.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
+
+#include <SgAsmCilInstruction.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

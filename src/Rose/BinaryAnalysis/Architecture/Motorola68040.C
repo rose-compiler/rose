@@ -1,12 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Motorola68040.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
+
+#include <SgAsmExecutableFileFormat.h>
+#include <SgAsmGenericHeader.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

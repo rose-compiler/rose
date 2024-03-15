@@ -5,6 +5,9 @@
 
 #include <AssemblerX86Init.h>                           // for X86InstructionKind
 
+#include <SgAsmRiscOperation.h>
+#include <SgAsmOperandList.h>
+
 namespace Rose {
 
 /** Functions to build binary analysis ASTs. */

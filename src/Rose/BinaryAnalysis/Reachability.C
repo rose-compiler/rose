@@ -301,7 +301,13 @@ Reachability::resize(const P2::Partitioner::ConstPtr &partitioner) {
 }
 
 size_t
-Reachability::markStartingPoints(const P2::Partitioner::ConstPtr &partitioner, MemoryMap::Ptr map/*=NULL*/) {
+Reachability::markStartingPoints(const P2::Partitioner::ConstPtr &partitioner) {
+    return markStartingPoints(partitioner, MemoryMap::Ptr());
+}
+
+size_t
+Reachability::markStartingPoints(const P2::Partitioner::ConstPtr &partitioner, const MemoryMap::Ptr &map_/*=NULL*/) {
+    MemoryMap::Ptr map = map_;
     Sawyer::Message::Stream trace(mlog[TRACE]);
     SAWYER_MESG(trace) <<"marking starting addresss:";
     Sawyer::Stopwatch timer;

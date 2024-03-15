@@ -1,5 +1,6 @@
 #ifndef ROSE_Exception_H
 #define ROSE_Exception_H
+#include <RoseFirst.h>
 
 #include <stdexcept>
 

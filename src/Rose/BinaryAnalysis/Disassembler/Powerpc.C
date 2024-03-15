@@ -35,6 +35,18 @@ namespace Disassembler {
 #define T_V2_FLOAT32 (SageBuilderAsm::buildTypeVector(2, T_FLOAT32))
 #define T_V2_FLOAT64 (SageBuilderAsm::buildTypeVector(2, T_FLOAT64))
 
+Powerpc::ExceptionPowerpc::ExceptionPowerpc(const std::string &mesg, const State &state, size_t bit)
+: Exception(mesg, state.ip) {
+    // Convert four-byte instruction to big-endian buffer. Note that PowerPC is big-endian, but PowerPC can support
+    // both big- and little-endian processor modes (with much weirdness; e.g. PDP endian like propoerties). */
+    bytes.push_back((state.insn>>24) & 0xff);
+    bytes.push_back((state.insn>>16) & 0xff);
+    bytes.push_back((state.insn>>8) & 0xff);
+    bytes.push_back(state.insn & 0xff);
+    ASSERT_require(bit<=32);
+    this->bit = 8*(4-(bit/8)) + bit%8;          // convert from native uint32_t bit position to big-endian
+}
+
 Powerpc::Powerpc(const Architecture::Base::ConstPtr &arch)
     : Base(arch),
       wordSize_(4 == arch->bytesPerWord() ? powerpc_32 : powerpc_64),
@@ -1013,6 +1025,310 @@ Powerpc::decode_MDS_formInstruction(State &state) {
             throw ExceptionPowerpc("invalid MDS-Form extended opcode: " + StringUtility::addrToString(int(fld<27, 30>(state))), state);
     }
     ASSERT_not_reachable("opcode not handled");
+}
+
+bool
+Powerpc::AA(State &state) const {
+    return fld<30, 30>(state);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BA(State &state) const {
+    return makeRegister(state, powerpc_regclass_cr, fld<11, 15>(state), powerpc_condreggranularity_bit);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BB(State &state) const {
+    return makeRegister(state, powerpc_regclass_cr, fld<16, 20>(state), powerpc_condreggranularity_bit);
+}
+
+uint64_t
+Powerpc::BD(State &state) const {
+    return IntegerOps::signExtend<16, 64>((uint64_t)state.insn & 0xfffc);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BF_cr(State &state) const {
+    return makeRegister(state, powerpc_regclass_cr, fld<6, 8>(state), powerpc_condreggranularity_field);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BF_fpscr(State &state) const {
+    return makeRegister(state, powerpc_regclass_fpscr, fld<6, 8>(state), powerpc_condreggranularity_field);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BFA_cr(State &state) const {
+    return makeRegister(state, powerpc_regclass_cr, fld<11, 13>(state), powerpc_condreggranularity_field);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BFA_fpscr(State &state) const {
+    return makeRegister(state, powerpc_regclass_fpscr, fld<11, 13>(state), powerpc_condreggranularity_field);
+}
+
+SgAsmValueExpression*
+Powerpc::BH(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<19, 20>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BI(State &state) const {
+    return BA(state);
+}
+
+SgAsmValueExpression*
+Powerpc::BO(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<6, 10>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::BT(State &state) const {
+    return makeRegister(state, powerpc_regclass_cr, fld<6, 10>(state), powerpc_condreggranularity_bit);
+}
+
+SgAsmValueExpression*
+Powerpc::D(State &state) const {
+    switch (wordSize_) {
+        case powerpc_32:
+            return SageBuilderAsm::buildValueU32(IntegerOps::signExtend<16, 32>((uint64_t)fld<16, 31>(state)));
+        case powerpc_64:
+            return SageBuilderAsm::buildValueU64(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>(state)));
+    }
+    ASSERT_not_reachable("invalid word size");
+}
+
+SgAsmValueExpression*
+Powerpc::DS(State &state) const {
+    switch (wordSize_) {
+        case powerpc_32:
+            return SageBuilderAsm::buildValueU32(IntegerOps::signExtend<16, 32>((uint64_t)fld<16, 31>(state) & 0xfffc));
+        case powerpc_64:
+            return SageBuilderAsm::buildValueU64(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>(state) & 0xfffc));
+    }
+    ASSERT_not_reachable("invalid word size");
+}
+
+SgAsmValueExpression*
+Powerpc::FLM(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<7, 14>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::FRA(State &state) const {
+    return makeRegister(state, powerpc_regclass_fpr, fld<11, 15>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::FRB(State &state) const {
+    return makeRegister(state, powerpc_regclass_fpr, fld<16, 20>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::FRC(State &state) const {
+    return makeRegister(state, powerpc_regclass_fpr, fld<21, 25>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::FRS(State &state) const {
+    return makeRegister(state, powerpc_regclass_fpr, fld<6, 10>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::FRT(State &state) const {
+    return FRS(state);
+}
+
+SgAsmValueExpression*
+Powerpc::FXM(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<12, 19>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::L_10(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<10, 10>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::L_15(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<15, 15>(state));
+}
+
+uint8_t
+Powerpc::L_sync(State &state) const {
+    return fld<9, 10>(state);
+}
+
+SgAsmValueExpression*
+Powerpc::LEV(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<20, 26>(state));
+}
+
+uint64_t
+Powerpc::LI(State &state) const {
+    return IntegerOps::signExtend<26, 64>(uint64_t(fld<6, 29>(state) * 4));
+}
+
+bool
+Powerpc::LK(State &state) const {
+    return fld<31, 31>(state);
+}
+
+SgAsmValueExpression*
+Powerpc::MB_32bit(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<21, 25>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::ME_32bit(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<26, 30>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::MB_64bit(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<21, 25>(state) + 32 * fld<26, 26>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::ME_64bit(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<21, 25>(state) + 32 * fld<26, 26>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::NB(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<16, 20>(state) == 0 ? 32 : fld<16, 20>(state));
+}
+
+bool
+Powerpc::OE(State &state) const {
+    return fld<21, 21>(state);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::RA(State &state) const {
+    return makeRegister(state, powerpc_regclass_gpr, fld<11, 15>(state));
+}
+
+SgAsmExpression*
+Powerpc::RA_or_zero(State &state) const {
+    return fld<11, 15>(state) == 0 ? (SgAsmExpression*)SageBuilderAsm::buildValueU8(0) : RA(state);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::RB(State &state) const {
+    return makeRegister(state, powerpc_regclass_gpr, fld<16, 20>(state));
+}
+
+bool
+Powerpc::Rc(State &state) const {
+    return fld<31, 31>(state);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::RS(State &state) const {
+    return makeRegister(state, powerpc_regclass_gpr, fld<6, 10>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::RT(State &state) const {
+    return RS(state);
+}
+
+SgAsmValueExpression*
+Powerpc::SH_32bit(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<16, 20>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::SH_64bit(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<16, 20>(state) + fld<30, 30>(state) * 32); // FIXME check
+}
+
+SgAsmValueExpression*
+Powerpc::SI(State &state) const {
+    return D(state);
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::SPR(State &state) const {
+    return makeRegister(state, powerpc_regclass_spr, fld<16, 20>(state) * 32 + fld<11, 15>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::SR(State &state) const {
+    return makeRegister(state, powerpc_regclass_sr, fld<12, 15>(state));
+}
+
+SgAsmRegisterReferenceExpression*
+Powerpc::TBR(State &state) const {
+    return makeRegister(state, powerpc_regclass_tbr, fld<16, 20>(state) * 32 + fld<11, 15>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::TH(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<9, 10>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::TO(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<6, 10>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::U(State &state) const {
+    return SageBuilderAsm::buildValueU8(fld<16, 19>(state));
+}
+
+SgAsmValueExpression*
+Powerpc::UI(State &state) const {
+    switch (wordSize_) {
+        case powerpc_32:
+            return SageBuilderAsm::buildValueU32(fld<16, 31>(state));
+        case powerpc_64:
+            return SageBuilderAsm::buildValueU64(fld<16, 31>(state));
+    }
+    ASSERT_not_reachable("invalid word size");
+}
+
+SgAsmMemoryReferenceExpression*
+Powerpc::memref(State &state, SgAsmType* t) const {
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), D(state)), NULL, t);
+}
+
+SgAsmMemoryReferenceExpression*
+Powerpc::memrefds(State &state, SgAsmType *t) const {
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), DS(state)), NULL, t);
+}
+
+SgAsmMemoryReferenceExpression*
+Powerpc::memrefra(State &state, SgAsmType *t) const {
+    return SageBuilderAsm::buildMemoryReferenceExpression(RA_or_zero(state), NULL, t);
+}
+
+SgAsmMemoryReferenceExpression*
+Powerpc::memrefx(State &state, SgAsmType* t) const {
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), RB(state)),
+                                                          NULL, t);
+}
+
+SgAsmMemoryReferenceExpression*
+Powerpc::memrefu(State &state, SgAsmType* t) const {
+    if (fld<11, 15>(state) == 0)
+        throw ExceptionPowerpc("bits 11-15 must be nonzero", state);
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(state), D(state)), NULL, t);
+}
+
+SgAsmMemoryReferenceExpression*
+Powerpc::memrefux(State &state, SgAsmType* t) const {
+    if (fld<11, 15>(state) == 0)
+        throw ExceptionPowerpc("bits 11-15 must be nonzero", state);
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(state), RB(state)), NULL, t);
+}
+
+void
+Powerpc::startInstruction(State &state, rose_addr_t start_va, uint32_t c) const {
+    state.ip = start_va;
+    state.insn = c;
 }
 
 } // namespace

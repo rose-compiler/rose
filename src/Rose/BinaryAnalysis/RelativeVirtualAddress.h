@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/Address.h>
 
 #include <ROSE_DEPRECATED.h>
+#include <Cxx_GrammarDeclarations.h>
 
 #include <Sawyer/Optional.h>
 

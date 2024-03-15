@@ -3,6 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/AddressInterval.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include <boost/serialization/access.hpp>

@@ -1,12 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Powerpc.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
+
+#include <SgAsmPowerpcInstruction.h>
+#include <Cxx_GrammarDowncast.h>
+#include <sageInterface.h>
 
 #include <boost/lexical_cast.hpp>
 

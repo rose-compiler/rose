@@ -1,11 +1,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/IntelPentiumiii.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
+
+#include <SgAsmExecutableFileFormat.h>
+#include <SgAsmGenericHeader.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

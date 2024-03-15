@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Amd64.h>
@@ -28,6 +27,10 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/Escape.h>
+
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmInterpretation.h>
 
 #include <Sawyer/Synchronization.h>
 #include <boost/filesystem.hpp>

@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
@@ -12,6 +11,10 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 #include <Rose/CommandLine/Parser.h>
+
+#include <SgAsmX86Instruction.h>
+#include <Cxx_GrammarDowncast.h>
+#include <sageInterface.h>
 
 #include <Sawyer/Message.h>
 #include <boost/lexical_cast.hpp>

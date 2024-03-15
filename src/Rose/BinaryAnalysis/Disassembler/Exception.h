@@ -4,6 +4,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/Exception.h>
+
+#include <Cxx_GrammarDeclarations.h>
+#include <sageContainer.h>
+
 #include <ostream>
 #include <string>
 
@@ -30,9 +34,7 @@ public:
         {}
 
     /** An exception bound to a particular instruction being assembled. */
-    Exception(const std::string &reason, SgAsmInstruction *insn)
-        : Rose::Exception(reason), ip(insn->get_address()), bit(0), insn(insn)
-        {}
+    Exception(const std::string &reason, SgAsmInstruction*);
 
     ~Exception() throw() {}
 

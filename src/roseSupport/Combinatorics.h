@@ -3,6 +3,8 @@
 
 #include <rosePublicConfig.h>
 
+#include <Rose/Constants.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <algorithm>

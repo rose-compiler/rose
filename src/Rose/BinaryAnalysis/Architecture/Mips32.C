@@ -1,11 +1,17 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
+
+#include <SgAsmExecutableFileFormat.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMipsInstruction.h>
+#include <SgAsmRegisterReferenceExpression.h>
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -5,11 +5,16 @@
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/StringUtility/NumberToString.h>
 
+#include <SgAsmInstruction.h>
+
 #include <AsmUnparser_compat.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
+
+Exception::Exception(const std::string &reason, SgAsmInstruction *insn)
+    : Rose::Exception(reason), ip(insn->get_address()), bit(0), insn(insn) {}
 
 void
 Exception::print(std::ostream &o) const {

@@ -1,11 +1,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch64.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
+
+#include <SgAsmAarch64Instruction.h>
+#include <SgAsmExecutableFileFormat.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmOperandList.h>
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -1089,7 +1096,7 @@ ArmAarch64::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) co
 
 Sawyer::Optional<rose_addr_t>
 ArmAarch64::branchTarget(SgAsmInstruction *insn_) const {
-    auto insn = isSgAsmAarch32Instruction(insn_);
+    auto insn = isSgAsmAarch64Instruction(insn_);
     ASSERT_not_null(insn);
 
     const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();

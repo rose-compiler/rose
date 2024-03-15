@@ -4078,6 +4078,13 @@ DispatcherX86::promote(const BaseSemantics::Dispatcher::Ptr &d) {
     return retval;
 }
 
+int
+DispatcherX86::iprocKey(SgAsmInstruction *insn_) const {
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
+    assert(insn!=NULL);
+    return insn->get_kind();
+}
+
 void
 DispatcherX86::iproc_init()
 {

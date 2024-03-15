@@ -1,12 +1,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch32.h>
 
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
+
+#include <SgAsmAarch32Instruction.h>
+#include <SgAsmExecutableFileFormat.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

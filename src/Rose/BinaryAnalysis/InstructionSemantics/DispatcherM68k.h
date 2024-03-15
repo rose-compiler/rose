@@ -109,13 +109,7 @@ public:
     virtual RegisterDescriptor stackPointerRegister() const override;
     virtual RegisterDescriptor stackFrameRegister() const override;
     virtual RegisterDescriptor callReturnRegister() const override;
-
-    virtual int iprocKey(SgAsmInstruction *insn_) const override {
-        SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
-        ASSERT_not_null(insn);
-        return insn->get_kind();
-    }
-
+    virtual int iprocKey(SgAsmInstruction *insn_) const override;
     virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) override;
 
     /** Set or clear FPSR EXC INAN bit. */

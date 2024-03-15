@@ -3526,6 +3526,13 @@ DispatcherM68k::promote(const BaseSemantics::Dispatcher::Ptr &d) {
     return retval;
 }
 
+int
+DispatcherM68k::iprocKey(SgAsmInstruction *insn_) const {
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
+    ASSERT_not_null(insn);
+    return insn->get_kind();
+}
+
 void
 DispatcherM68k::iproc_init() {
     iprocSet(m68k_abcd,        new M68k::IP_abcd);

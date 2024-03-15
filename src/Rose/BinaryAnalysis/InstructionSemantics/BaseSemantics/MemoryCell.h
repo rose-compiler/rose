@@ -2,8 +2,10 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_MemoryCell_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+
+#include <Rose/BinaryAnalysis/AddressSet.h>
+#include <Combinatorics.h>                              // rose
 
 #include <Sawyer/Set.h>
 

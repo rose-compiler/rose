@@ -2800,6 +2800,13 @@ DispatcherPowerpc::callReturnRegister() const {
     return REG_LR;
 }
 
+int
+DispatcherPowerpc::iprocKey(SgAsmInstruction *insn_) const {
+    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
+    assert(insn!=NULL);
+    return insn->get_kind();
+}
+
 void
 DispatcherPowerpc::setXerOverflow(const BaseSemantics::SValue::Ptr &overflow) {
     ASSERT_not_null(overflow);

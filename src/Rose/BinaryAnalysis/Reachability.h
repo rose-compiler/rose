@@ -206,8 +206,12 @@ public:
      *
      *  Returns number of affected vertices.
      *
-     *  See also, @ref markEntryFunctions, @ref markExportFunctions. */
-    size_t markStartingPoints(const Partitioner2::PartitionerConstPtr&, MemoryMapPtr map = MemoryMap::Ptr());
+     *  See also, @ref markEntryFunctions, @ref markExportFunctions.
+     *
+     * @{ */
+    size_t markStartingPoints(const Partitioner2::PartitionerConstPtr&);
+    size_t markStartingPoints(const Partitioner2::PartitionerConstPtr&, const MemoryMapPtr&);
+    /** @} */
 
     /** Mark entry points as intrinsically reachable.
      *

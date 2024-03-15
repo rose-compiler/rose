@@ -1,10 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Jvm.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
+
+#include <SgAsmExecutableFileFormat.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmJvmInstruction.h>
+#include <Cxx_GrammarDowncast.h>
 
 // FIXME[Robb Matzke 2023-12-04]: copied from old code; use Sawyer::Message instead.
 #define DEBUG_PRINT 0
