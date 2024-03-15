@@ -11,5 +11,6 @@ namespace AST {}
 #include <Rose/AST/Checker.h>
 #include <Rose/AST/Utils.h>
 #include <Rose/AST/NodeId.h>
+#include <Rose/AST/Traversal.h>
 
 #endif /* Rose_AST_h */

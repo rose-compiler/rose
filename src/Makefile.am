@@ -266,6 +266,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/AST/Defect.h								\
 	Rose/AST/IO.h									\
 	Rose/AST/NodeId.h								\
+	Rose/AST/Traversal.h								\
 	Rose/AST/Utils.h								\
 	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
