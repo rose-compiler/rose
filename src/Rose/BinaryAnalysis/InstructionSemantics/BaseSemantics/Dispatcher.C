@@ -1,14 +1,36 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryAsr.h>
+#include <SgAsmBinaryLsl.h>
+#include <SgAsmBinaryLsr.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmBinaryPostupdate.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmBinaryRor.h>
+#include <SgAsmBinarySubtract.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIndirectRegisterExpression.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmType.h>
+#include <SgAsmUnarySignedExtend.h>
+#include <SgAsmUnaryTruncate.h>
+#include <SgAsmUnaryUnsignedExtend.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <sageInterface.h>
 
 #include <boost/scope_exit.hpp>
 
@@ -217,98 +239,70 @@ void
 Dispatcher::initializeState(const State::Ptr&) {}
 
 void
-Dispatcher::decrementRegisters(SgAsmExpression *e)
-{
-    struct T1: AstSimpleProcessing {
-        RiscOperators::Ptr ops;
-        T1(const RiscOperators::Ptr &ops): ops(ops) {}
-        void visit(SgNode *node) {
-            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                RegisterDescriptor reg = rre->get_descriptor();
-                if (rre->get_adjustment() < 0) {
-                    SValue::Ptr adj = ops->number_(64, (int64_t)rre->get_adjustment());
-                    if (reg.nBits() <= 64) {
-                        adj = ops->unsignedExtend(adj, reg.nBits());  // truncate
-                    } else {
-                        adj = ops->signExtend(adj, reg.nBits());      // extend
-                    }
-                    ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
-                }
+Dispatcher::decrementRegisters(SgAsmExpression *e) {
+    using namespace Rose::AST::Traversal;
+    RiscOperators::Ptr ops = operators();
+    forwardPre<SgAsmRegisterReferenceExpression>(e, [&ops](SgAsmRegisterReferenceExpression *rre) {
+        RegisterDescriptor reg = rre->get_descriptor();
+        if (rre->get_adjustment() < 0) {
+            SValue::Ptr adj = ops->number_(64, (int64_t)rre->get_adjustment());
+            if (reg.nBits() <= 64) {
+                adj = ops->unsignedExtend(adj, reg.nBits());  // truncate
+            } else {
+                adj = ops->signExtend(adj, reg.nBits());      // extend
             }
+            ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
         }
-    } t1(operators());
-    t1.traverse(e, preorder);
+    });
 }
 
 void
-Dispatcher::incrementRegisters(SgAsmExpression *e)
-{
-    struct T1: AstSimpleProcessing {
-        RiscOperators::Ptr ops;
-        T1(const RiscOperators::Ptr &ops): ops(ops) {}
-        void visit(SgNode *node) {
-            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                RegisterDescriptor reg = rre->get_descriptor();
-                if (rre->get_adjustment() > 0) {
-                    SValue::Ptr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.nBits());
-                    ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
-                }
-            }
+Dispatcher::incrementRegisters(SgAsmExpression *e) {
+    using namespace Rose::AST::Traversal;
+    RiscOperators::Ptr ops = operators();
+    forwardPre<SgAsmRegisterReferenceExpression>(e, [&ops](SgAsmRegisterReferenceExpression *rre) {
+        RegisterDescriptor reg = rre->get_descriptor();
+        if (rre->get_adjustment() > 0) {
+            SValue::Ptr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.nBits());
+            ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
         }
-    } t1(operators());
-    t1.traverse(e, preorder);
+    });
 }
 
 void
 Dispatcher::preUpdate(SgAsmExpression *e, const BaseSemantics::SValue::Ptr &enabled) {
-    struct T1: AstSimpleProcessing {
-        Dispatcher *self;
-        BaseSemantics::SValue::Ptr enabled;
-        T1(Dispatcher *self, const BaseSemantics::SValue::Ptr &enabled)
-            : self(self), enabled(enabled) {}
-        void visit(SgNode *node) override {
-            if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(node)) {
-                if (enabled->isTrue()) {
-                    // Definitely updating, therefore not necessary to read old value
-                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
-                    self->write(op->get_lhs(), newValue);
-                } else if (!enabled->isConcrete() || enabled->toUnsigned().get() != 0) {
-                    // Maybe updating (but not "definitely not updating")
-                    BaseSemantics::SValue::Ptr oldValue = self->read(op->get_lhs());
-                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
-                    BaseSemantics::SValue::Ptr maybe = self->operators()->ite(enabled, newValue, oldValue);
-                    self->write(op->get_lhs(), maybe);
-                }
-            }
+    using namespace Rose::AST::Traversal;
+    forwardPre<SgAsmBinaryPreupdate>(e, [this, &enabled](SgAsmBinaryPreupdate *op) {
+        if (enabled->isTrue()) {
+            // Definitely updating, therefore not necessary to read old value
+            BaseSemantics::SValue::Ptr newValue = read(op->get_rhs());
+            write(op->get_lhs(), newValue);
+        } else if (!enabled->isConcrete() || enabled->toUnsigned().get() != 0) {
+            // Maybe updating (but not "definitely not updating")
+            BaseSemantics::SValue::Ptr oldValue = read(op->get_lhs());
+            BaseSemantics::SValue::Ptr newValue = read(op->get_rhs());
+            BaseSemantics::SValue::Ptr maybe = operators()->ite(enabled, newValue, oldValue);
+            write(op->get_lhs(), maybe);
         }
-    } t1(this, enabled);
-    t1.traverse(e, postorder);
+    });
 }
 
 void
 Dispatcher::postUpdate(SgAsmExpression *e, const BaseSemantics::SValue::Ptr &enabled) {
-    struct T1: AstSimpleProcessing {
-        Dispatcher *self;
-        BaseSemantics::SValue::Ptr enabled;
-        T1(Dispatcher *self, const BaseSemantics::SValue::Ptr &enabled)
-            : self(self), enabled(enabled) {}
-        void visit(SgNode *node) override {
-            if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(node)) {
-                if (enabled->isTrue()) {
-                    // Definitely updating, therefore not necessary to read old value
-                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
-                    self->write(op->get_lhs(), newValue);
-                } else if (!enabled->isConcrete() || enabled->toUnsigned().get() != 0) {
-                    // Maybe updating (but not "definitely not updating")
-                    BaseSemantics::SValue::Ptr oldValue = self->read(op->get_lhs());
-                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
-                    BaseSemantics::SValue::Ptr maybe = self->operators()->ite(enabled, newValue, oldValue);
-                    self->write(op->get_lhs(), maybe);
-                }
-            }
+    using namespace Rose::AST::Traversal;
+    forwardPre<SgAsmBinaryPostupdate>(e, [this, &enabled](SgAsmBinaryPostupdate *op) {
+        if (enabled->isTrue()) {
+            // Definitely updating, therefore not necessary to read old value
+            BaseSemantics::SValue::Ptr newValue = read(op->get_rhs());
+            write(op->get_lhs(), newValue);
+        } else if (!enabled->isConcrete() || enabled->toUnsigned().get() != 0) {
+            // Maybe updating (but not "definitely not updating")
+            BaseSemantics::SValue::Ptr oldValue = read(op->get_lhs());
+            BaseSemantics::SValue::Ptr newValue = read(op->get_rhs());
+            BaseSemantics::SValue::Ptr maybe = operators()->ite(enabled, newValue, oldValue);
+            write(op->get_lhs(), maybe);
         }
-    } t1(this, enabled);
-    t1.traverse(e, postorder);
+    });
 }
     
 SValue::Ptr

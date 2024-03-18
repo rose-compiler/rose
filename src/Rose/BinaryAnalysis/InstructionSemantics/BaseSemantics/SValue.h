@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Combinatorics.h>                              // rose
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>

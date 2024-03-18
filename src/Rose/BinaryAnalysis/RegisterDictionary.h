@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
 #include <rose_extent.h>
+#include <Map.h>                                        // rose
 
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/SharedObject.h>

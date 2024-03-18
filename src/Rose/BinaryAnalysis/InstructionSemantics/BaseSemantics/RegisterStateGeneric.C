@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
@@ -10,6 +9,7 @@
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
+#include <Rose/StringUtility/NumberToString.h>
 #include <ROSE_UNUSED.h>
 
 #include <Sawyer/IntervalSet.h>

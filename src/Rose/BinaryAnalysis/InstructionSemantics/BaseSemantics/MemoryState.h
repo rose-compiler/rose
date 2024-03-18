@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Combinatorics.h>                              // rose
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>

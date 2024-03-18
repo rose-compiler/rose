@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/Exception.h>
 
+class SgAsmInstruction;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {

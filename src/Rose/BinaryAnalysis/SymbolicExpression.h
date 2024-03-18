@@ -2,10 +2,8 @@
 #define ROSE_BinaryAnalysis_SymbolicExpression_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/Exception.h>
 
 #include "Map.h"
 
@@ -21,7 +19,6 @@
 #include <boost/unordered_map.hpp>
 #include <cassert>
 #include <inttypes.h>
-#include <Rose/Exception.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Optional.h>

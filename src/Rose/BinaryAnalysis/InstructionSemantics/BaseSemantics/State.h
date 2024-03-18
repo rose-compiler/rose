@@ -2,8 +2,10 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_State_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+
+#include <Rose/BinaryAnalysis/RegisterDescriptor.h>
+#include <Combinatorics.h>                              // rose
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
