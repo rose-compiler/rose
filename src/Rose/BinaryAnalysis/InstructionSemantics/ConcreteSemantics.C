@@ -1,14 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 
 #include <Rose/BinaryAnalysis/Hexdump.h>
+#include <Rose/StringUtility/NumberToString.h>
 
 #include <rose_isnan.h>
-#include "integerOps.h"
+#include <integerOps.h>                                 // rose
 
-#include "SageBuilderAsm.h"
+#include <SageBuilderAsm.h>
 #include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
@@ -23,11 +23,75 @@ namespace ConcreteSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SValue::SValue(size_t nbits)
+    : BaseSemantics::SValue(nbits), bits_(nbits) {}
+
+SValue::SValue(size_t nbits, uint64_t number)
+    : BaseSemantics::SValue(nbits) {
+    bits_ = Sawyer::Container::BitVector(nbits);
+    bits_.fromInteger(number);
+}
+
+SValue::Ptr
+SValue::instance() {
+    return SValue::Ptr(new SValue(1));
+}
+
+SValue::Ptr
+SValue::instance(size_t nbits) {
+    return SValue::Ptr(new SValue(nbits));
+}
+
+SValue::Ptr
+SValue::instance(size_t nbits, uint64_t value) {
+    return SValue::Ptr(new SValue(nbits, value));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(size_t nbits) const {
+    return instance(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(size_t nbits) const {
+    return instance(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(size_t nbits) const {
+    return instance(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(size_t nbits, uint64_t value) const {
+    return instance(nbits, value);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::boolean_(bool value) const {
+    return instance(1, value ? 1 : 0);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t new_width) const {
+    SValue::Ptr retval(new SValue(*this));
+    if (new_width!=0 && new_width!=retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
 SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &/*other*/, const BaseSemantics::Merger::Ptr&,
                             const SmtSolverPtr&) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) {
+    SValuePtr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
 }
 
 void
@@ -46,6 +110,11 @@ SValue::hash(Combinatorics::Hasher &hasher) const {
         uint64_t value = bits_.toInteger(where);
         hasher.insert(value);
     }
+}
+
+bool
+SValue::isBottom() const {
+    return false;
 }
 
 bool
@@ -85,6 +154,53 @@ SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      MemoryState
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MemoryState::MemoryState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval)
+    : BaseSemantics::MemoryState(addrProtoval, valProtoval), pageSize_(4096) {
+    (void) SValue::promote(addrProtoval);               // for its checking side effects
+    (void) SValue::promote(valProtoval);
+}
+
+MemoryState::MemoryState(const MemoryState &other)
+    : BaseSemantics::MemoryState(other), map_(other.map_), pageSize_(other.pageSize_) {
+    if (map_) {
+        for (MemoryMap::Segment &segment: map_->values())
+            segment.buffer()->copyOnWrite(true);
+        map_ = map_->shallowCopy();
+    }
+}
+
+MemoryState::Ptr
+MemoryState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) {
+    return MemoryState::Ptr(new MemoryState(addrProtoval, valProtoval));
+}
+
+MemoryState::Ptr
+MemoryState::instance(const MemoryState::Ptr &other) {
+    return MemoryState::Ptr(new MemoryState(*other));
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::clone() const {
+    return MemoryState::Ptr(new MemoryState(*this));
+}
+
+MemoryState::Ptr
+MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+    MemoryState::Ptr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+void
+MemoryState::clear() {
+    map_ = MemoryMap::Ptr();
+}
 
 void
 MemoryState::pageSize(rose_addr_t nBytes) {
@@ -232,6 +348,21 @@ RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSo
 }
 
 RiscOperators::~RiscOperators() {}
+
+SValue::Ptr
+RiscOperators::svalueNumber(size_t nbits, uint64_t value) {
+    return SValue::promote(number_(nbits, value));
+}
+
+SValue::Ptr
+RiscOperators::svalueBoolean(bool b) {
+    return SValue::promote(boolean_(b));
+}
+
+SValue::Ptr
+RiscOperators::svalueZero(size_t nbits) {
+    return SValue::promote(number_(nbits, 0));
+}
 
 RiscOperators::Ptr
 RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {

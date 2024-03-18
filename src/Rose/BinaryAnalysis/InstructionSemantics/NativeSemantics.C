@@ -1,11 +1,12 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS) && defined(ROSE_ENABLE_DEBUGGER_LINUX)
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmInstruction.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

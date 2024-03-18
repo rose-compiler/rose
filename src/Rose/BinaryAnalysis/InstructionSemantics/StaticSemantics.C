@@ -1,11 +1,21 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 
+#include <Rose/AST/Traversal.h>
+#include <Rose/AST/Utils.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmExprListExp.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <SageBuilderAsm.h>
 #include "stringify.h"
 
 namespace Rose {
@@ -28,8 +38,12 @@ void attachInstructionSemantics(SgNode *ast, const Architecture::Base::ConstPtr 
 }
 
 void attachInstructionSemantics(SgNode *ast, const BaseSemantics::Dispatcher::Ptr &cpu) {
-    // We cannot use an AST traversal because we'd be modifying the AST while traversing, which is bad.
-    std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(ast);
+    using namespace Rose::AST::Traversal;
+    std::vector<SgAsmInstruction*> insns;
+    forwardPre<SgAsmInstruction>(ast, [&insns](SgAsmInstruction *node) {
+        insns.push_back(node);
+    });
+
     for (SgAsmInstruction *insn: insns) {
         if (insn->get_semantics()==NULL) {
             try {
@@ -180,20 +194,7 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
         }
 
         // We're about to make a copy of the a->ast(), so we need to ensure all the parent pointers are correct.
-        struct T1: AstPrePostProcessing {
-            std::vector<SgNode*> path;
-            void preOrderVisit(SgNode *node) override {
-                if (!path.empty())
-                    node->set_parent(path.back());
-                path.push_back(node);
-            }
-            void postOrderVisit(SgNode *node) override {
-                ASSERT_always_require(!path.empty());
-                ASSERT_always_require(path.back() == node);
-                path.pop_back();
-            }
-        } t1;
-        t1.traverse(a->ast());
+        AST::Utils::checkParentPointers(a->ast());
 
         // Deep-copy the SValue's AST because we're about to link it into the real AST.
         SgTreeCopy deep;
@@ -208,32 +209,164 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+SValue::SValue(size_t nbits, SgAsmRiscOperation::RiscOperator op)
+    : BaseSemantics::SValue(nbits) {
+    static uint64_t nVars = 0;
+    ast_ = SageBuilderAsm::buildRiscOperation(op, SageBuilderAsm::buildValueU64(nVars++));
+}
+
+SValue::SValue(size_t nbits, uint64_t number)
+    : BaseSemantics::SValue(nbits) {
+    SgAsmType *type = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, nbits, false /*unsigned*/));
+    ast_ = SageBuilderAsm::buildValueInteger(number, type);
+}
+
+SValue::SValue(const SValue &other)
+    : BaseSemantics::SValue(other) {
+    SgTreeCopy deep;
+    SgNode *copied = other.ast_->copy(deep);
+    ASSERT_require(isSgAsmExpression(copied));
+    ast_ = isSgAsmExpression(copied);
+}
+
+SValue::Ptr
+SValue::instance() {
+    return SValue::Ptr(new SValue(1, SgAsmRiscOperation::OP_undefined));
+}
+
+SValue::Ptr
+SValue::instance_bottom(size_t nbits) {
+    return SValue::Ptr(new SValue(nbits, SgAsmRiscOperation::OP_bottom));
+}
+
+SValue::Ptr
+SValue::instance_undefined(size_t nbits) {
+    return SValue::Ptr(new SValue(nbits, SgAsmRiscOperation::OP_undefined));
+}
+
+SValue::Ptr
+SValue::instance_unspecified(size_t nbits) {
+    return SValue::Ptr(new SValue(nbits, SgAsmRiscOperation::OP_unspecified));
+}
+
+SValue::Ptr
+SValue::instance_integer(size_t nbits, uint64_t value) {
+    return SValue::Ptr(new SValue(nbits, value));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(size_t nbits) const {
+    return instance_bottom(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(size_t nbits) const {
+    return instance_unspecified(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(size_t nbits, uint64_t value) const {
+    return instance_integer(nbits, value);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::boolean_(bool value) const {
+    return instance_integer(1, value ? 1 : 0);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t new_width) const {
+    SValue::Ptr retval(new SValue(*this));
+    if (new_width!=0 && new_width!=retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr&, const BaseSemantics::Merger::Ptr&, const SmtSolver::Ptr&) const {
+    throw BaseSemantics::NotImplemented("StaticSemantics is not suitable for dataflow analysis", NULL);
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) {
+    SValue::Ptr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+bool
+SValue::may_equal(const BaseSemantics::SValue::Ptr &/*other*/, const SmtSolver::Ptr&) const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+bool
+SValue::must_equal(const BaseSemantics::SValue::Ptr &/*other*/, const SmtSolver::Ptr&) const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+void
+SValue::set_width(size_t /*nbits*/) {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+bool
+SValue::isBottom() const {
+    return false;
+}
+
+bool
+SValue::is_number() const {
+    return false;
+}
+
+uint64_t
+SValue::get_number() const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+void
+SValue::hash(Combinatorics::Hasher&) const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
 void
 SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
     if (ast_) {
-        struct T1: AstPrePostProcessing {
-            std::ostream &out;
-
-            T1(std::ostream &out): out(out) {}
-            
-            void preOrderVisit(SgNode *node) {
+        AST::Traversal::forward<SgNode>(ast_, [&out](SgNode *node, const AST::Traversal::Order order) {
+            if (AST::Traversal::Order::PRE == order) {
                 out <<" (";
                 if (SgAsmRiscOperation *riscOp = isSgAsmRiscOperation(node)) {
                     out <<stringifySgAsmRiscOperationRiscOperator(riscOp->get_riscOperator(), "OP_");
                 } else {
                     out <<node->class_name();
                 }
-            }
-
-            void postOrderVisit(SgNode*) {
+            } else {
                 out <<")";
             }
-        } t1(out);
-        t1.traverse(ast_);
+        });
     } else {
         out <<" null";
     }
 }
+
+SgAsmExpression*
+SValue::ast() {
+    return ast_;
+}
+
+void
+SValue::ast(SgAsmExpression *x) {
+    ASSERT_not_null(x);
+    ASSERT_require(x->get_parent() == NULL);
+    ast_ = x;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RiscOperators

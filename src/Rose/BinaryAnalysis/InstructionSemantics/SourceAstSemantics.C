@@ -1,9 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // FIXME[Robb Matzke 2024-03-18] Rose::BinaryAnalysis::Partitioner2
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 
-#include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -76,6 +75,96 @@ SValue::SValue(const SValue &other): BaseSemantics::SValue(other) {
     ctext_ = other.ctext_;
 }
 
+SValue::Ptr
+SValue::instance() {
+    return SValue::Ptr(new SValue(1));
+}
+
+SValue::Ptr
+SValue::instance_undefined(size_t nbits) {
+    return SValue::Ptr(new SValue(nbits));
+}
+
+SValue::Ptr
+SValue::instance_integer(size_t nbits, uint64_t value) {
+    return SValue::Ptr(new SValue(nbits, value));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(size_t nbits, uint64_t value) const {
+    return instance_integer(nbits, value);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::boolean_(bool value) const {
+    return instance_integer(1, value ? 1 : 0);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t new_width) const {
+    SValue::Ptr retval(new SValue(*this));
+    if (new_width!=0 && new_width!=retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
+Sawyer::Optional<BaseSemantics::SValue::Ptr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr&, const BaseSemantics::Merger::Ptr&, const SmtSolver::Ptr&) const {
+    throw BaseSemantics::NotImplemented("SourceAstSemantics is not suitable for dataflow analysis", NULL);
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) { // hot
+    SValue::Ptr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+bool
+SValue::isBottom() const {
+    return false;
+}
+
+bool
+SValue::may_equal(const BaseSemantics::SValue::Ptr &/*other*/, const SmtSolver::Ptr&) const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+bool
+SValue::must_equal(const BaseSemantics::SValue::Ptr &/*other*/, const SmtSolver::Ptr&) const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+void
+SValue::set_width(size_t /*nbits*/) {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
+bool
+SValue::is_number() const {
+    return false;
+}
+
+uint64_t
+SValue::get_number() const {
+    ASSERT_not_reachable("no implementation necessary");
+}
+
 void
 SValue::hash(Combinatorics::Hasher &hasher) const {
     hasher.insert(nBits());
@@ -87,6 +176,39 @@ void
 SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
     out <<ctext_;
 }
+
+const std::string&
+SValue::ctext() const {
+    return ctext_;
+}
+
+void
+SValue::ctext(const std::string &s) {
+    ctext_ = s;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RiscOperators::SideEffect
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RiscOperators::SideEffect::~SideEffect() {}
+
+RiscOperators::SideEffect::SideEffect() {}
+
+RiscOperators::SideEffect::SideEffect(const BaseSemantics::SValue::Ptr &location, const BaseSemantics::SValue::Ptr &temporary,
+                                      const BaseSemantics::SValue::Ptr &expression)
+    : location(location), temporary(temporary), expression(expression) {}
+
+bool
+RiscOperators::SideEffect::isValid() const {
+    return expression != NULL;
+}
+
+bool
+RiscOperators::SideEffect::isSubstitution() const {
+    return isValid() && location==NULL && temporary!=NULL;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions
@@ -188,6 +310,10 @@ RiscOperators::substitute(const BaseSemantics::SValue::Ptr &expression) {
     return retval;
 }
 
+const RiscOperators::SideEffects&
+RiscOperators::sideEffects() const {
+    return sideEffects_;
+}
 
 // C global variable name for a register.
 std::string
@@ -202,6 +328,13 @@ RiscOperators::registerVariableName(RegisterDescriptor reg) {
                 "_" + numberToString(reg.nBits()));
     }
     return "R_" + name;
+}
+
+void
+RiscOperators::reset() {
+    sideEffects_.clear();
+    executionHalted_ = false;
+    resetState();
 }
 
 // Create a mask consisting of nset shifted upward by sa.

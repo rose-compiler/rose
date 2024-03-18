@@ -2,11 +2,13 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_DispatcherX86_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <sageContainer.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>

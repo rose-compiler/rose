@@ -1,16 +1,27 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 
-#include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
-#include "integerOps.h"
-#include "stringify.h"
+
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmM68kInstruction.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmOperandList.h>
+#include <SgAsmRegisterNames.h>
+
+#include <sageContainer.h>
+#include <SageBuilderAsm.h>
+#include <Cxx_GrammarDowncast.h>
+
+#include <integerOps.h>                                 // rose
+#include <stringify.h>                                  // rose
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 using namespace Rose::Diagnostics;

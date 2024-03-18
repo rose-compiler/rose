@@ -1,17 +1,20 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h>
 
-#include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
-#include "integerOps.h"
-#include "stringify.h"
-#include <boost/foreach.hpp>
+
+#include <SgAsmCilInstruction.h>
+#include <SgAsmFloatType.h>
+
+#include <Cxx_GrammarDowncast.h>
+
+#include <integerOps.h>                                 // rose
+#include <stringify.h>                                  // rose
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 using namespace Rose::Diagnostics;
@@ -173,6 +176,13 @@ DispatcherCil::callReturnRegister() const {
 SValuePtr
 DispatcherCil::condition(CilInstructionKind, RiscOperators*) {
     ASSERT_not_implemented("DQ (10/8/2021): Not clear what if any CIL support may be required here.");
+}
+
+int
+DispatcherCil::iprocKey(SgAsmInstruction *insn_) const {
+    SgAsmCilInstruction *insn = isSgAsmCilInstruction(insn_);
+    ASSERT_not_null(insn);
+    return insn->get_kind();
 }
 
 // Override Dispatcher::read so that if we read the PC register we get the address of the current instruction plus 2.  See

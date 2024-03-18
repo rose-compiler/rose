@@ -1,17 +1,25 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/Diagnostics.h>
-#include "AsmUnparser_compat.h"
-#include "integerOps.h"
-#include "stringify.h"
+
+#include <SgAsmBlock.h>
+#include <SgAsmFunction.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <integerOps.h>                                 // rose
+#include <stringify.h>                                  // rose
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -383,11 +391,9 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
 void
 RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 {
-    using namespace SageInterface;
-
-    SgAsmBlock *bb = getEnclosingNode<SgAsmBlock>(latest_insn);
-    SgAsmFunction *func = getEnclosingNode<SgAsmFunction>(bb);
-    SgAsmInterpretation *interp = getEnclosingNode<SgAsmInterpretation>(func);
+    SgAsmBlock *bb = AST::Traversal::findParentTyped<SgAsmBlock>(latest_insn);
+    SgAsmFunction *func = AST::Traversal::findParentTyped<SgAsmFunction>(bb);
+    SgAsmInterpretation *interp = AST::Traversal::findParentTyped<SgAsmInterpretation>(func);
     ASSERT_not_null(interp);                            // instructions must be part of the global AST
     const InstructionMap &insns = interp->get_instructionMap();
     SValue::Ptr eip = get_instruction_pointer();
@@ -402,14 +408,14 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     //       quiet-errors mode is enabled, and therefore might be completely invalid.
     if (auto eipVal = eip->toUnsigned()) {
         SgAsmInstruction *dst_insn = insns.get_value_or(*eipVal, NULL);
-        SgAsmFunction *dst_func = getEnclosingNode<SgAsmFunction>(dst_insn);
+        SgAsmFunction *dst_func = AST::Traversal::findParentTyped<SgAsmFunction>(dst_insn);
         if (!dst_func) {
             o <<prefix() <<"unreachable\n";
         } else if (func!=dst_func) {                    // func could be null
             std::string funcname = function_label(dst_func);
             o <<prefix() <<"call void " <<funcname <<"()\n";
             rose_addr_t ret_addr = fallthrough_va;
-            SgAsmFunction *ret_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(ret_addr, NULL));
+            SgAsmFunction *ret_func = AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(ret_addr, NULL));
             if (ret_func!=func) {
                 // The fall through address might be invalid or in a different function if the call never returns.
                 o <<prefix() <<"unreachable\n";
@@ -438,8 +444,8 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             rose_addr_t false_va = leaf2->toUnsigned().get();
             if (false_va != fallthrough_va)
                 std::swap(true_va, false_va);
-            SgAsmFunction *true_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(true_va, NULL));
-            SgAsmFunction *false_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(false_va, NULL));
+            SgAsmFunction *true_func = AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(true_va, NULL));
+            SgAsmFunction *false_func = AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(false_va, NULL));
             const SgAsmIntegerValuePtrList &succs = bb->get_successors();
             std::vector<rose_addr_t> succs_va;
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si)
@@ -454,7 +460,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
                   <<", label %" <<addr_label(true_va) <<", label %" <<addr_label(false_va) <<"\n";
                 return;
             } else if (succs.size()==1 && (succs_va[0]==true_va || succs_va[0]==false_va) &&
-                       getEnclosingNode<SgAsmFunction>(insns.get_value_or(succs_va[0], NULL))==func) {
+                       AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(succs_va[0], NULL))==func) {
                 // An intra-function conditional branch with opaque predicate.
                 o <<prefix() <<"br label %" <<addr_label(succs_va[0]) <<"\n";
                 return;
@@ -481,7 +487,11 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // If this function is a thunk, then we need to treat it as an LLVM function call (because LLVM doesn't allow
     // inter-function branches).  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
     if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
-        std::vector<SgAsmInstruction*> func_insns = querySubTree<SgAsmInstruction>(func);
+        std::vector<SgAsmInstruction*> func_insns;
+        AST::Traversal::forwardPre<SgAsmInstruction>(func, [&func_insns](SgAsmInstruction *insn) {
+            func_insns.push_back(insn);
+        });
+
         if (func_insns.size()==1 && func_insns.front()==insn_x86 &&
             (insn_x86->get_kind() == x86_jmp || insn_x86->get_kind() == x86_farjmp)) {
             LeafPtr t1 = emit_expression(o, eip);
@@ -518,7 +528,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
         std::string dflt_label = next_label();
         o <<prefix() <<"switch " <<type <<" " <<llvm_term(t1) <<", label %" <<dflt_label <<" [";
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            if (getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->isFirstInBlock())
+            if (AST::Traversal::findParentTyped<SgAsmFunction>(ii->second)==func && ii->second->isFirstInBlock())
                 o <<" " <<type <<" " <<ii->first <<", label %" <<addr_label(ii->first);
         }
         o <<" ]\n";
@@ -1500,18 +1510,10 @@ Transcoder::emitFilePrologue()
 }
 
 void
-Transcoder::emitFunctionDeclarations(SgNode *ast, std::ostream &o)
-{
-    struct T1: AstSimpleProcessing {
-        RiscOperators *ops;
-        std::ostream &o;
-        T1(RiscOperators *ops, std::ostream &o): ops(ops), o(o) {}
-        void visit(SgNode *node) {
-            if (SgAsmFunction *func = isSgAsmFunction(node))
-                o <<ops->prefix() <<"declare void " <<ops->function_label(func) <<"()\n";
-        }
-    } t1(operators.get(), o);
-    t1.traverse(ast, preorder);
+Transcoder::emitFunctionDeclarations(SgNode *ast, std::ostream &o) {
+    AST::Traversal::forwardPre<SgAsmFunction>(ast, [this, &o](SgAsmFunction *func) {
+        o <<operators->prefix() <<"declare void " <<operators->function_label(func) <<"()\n";
+    });
 }
 
 std::string
@@ -1541,7 +1543,11 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     ASSERT_this();
     if (!bb)
         return 0;
-    std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(bb);
+    std::vector<SgAsmInstruction*> insns;
+    AST::Traversal::forwardPre<SgAsmInstruction>(bb, [&insns](SgAsmInstruction *insn) {
+        insns.push_back(insn);
+    });
+
 #if 0 // [Robb Matzke 2015-12-23]: doesn't handle HLT, INT, INT3, REP, etc.
     operators->reset();
     for (size_t i=0; i<insns.size(); ++i) {
@@ -1602,7 +1608,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
 #else
     o <<"\n" <<operators->prefix() <<"; Basic block " <<StringUtility::addrToString(bb->get_address()) <<"\n";
     for (SgAsmInstruction *insn: insns) {
-        o <<operators->prefix() <<operators->addr_label(insn->get_address()) <<":    ; " <<unparseInstruction(insn) <<"\n";
+        o <<operators->prefix() <<operators->addr_label(insn->get_address()) <<":    ; " <<insn->toStringNoAddr() <<"\n";
         try {
             operators->reset();
             dispatcher->processInstruction(insn);
@@ -1710,7 +1716,11 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp, std::ostream &o
     emitFunctionDeclarations(interp, o);
 #endif
 
-    std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(interp);
+    std::vector<SgAsmFunction*> functions;
+    AST::Traversal::forwardPre<SgAsmFunction>(interp, [&functions](SgAsmFunction *function) {
+        functions.push_back(function);
+    });
+
     for (size_t i=0; i<functions.size(); ++i) {
         o <<"\n\n" <<std::string(100, ';') <<"\n";
         transcodeFunction(functions[i], o);

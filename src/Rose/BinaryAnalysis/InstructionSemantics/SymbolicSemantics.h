@@ -2,30 +2,33 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_SymbolicSemantics_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
-
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/SmtSolver.h>
+
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
-#include "Cxx_GrammarSerialization.h"
+#include <Cxx_GrammarSerialization.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/set.hpp>
 
+#include <inttypes.h>
 #include <map>
 #include <vector>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** A fully symbolic semantic domain.
 *
@@ -74,25 +77,19 @@ using MergerPtr = Sawyer::SharedPointer<class Merger>;
 
 /** Controls merging of symbolic values. */
 class Merger: public BaseSemantics::Merger {
-    size_t setSizeLimit_;
+    size_t setSizeLimit_ = 1;
 protected:
-    Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
+    Merger();
 
 public:
     /** Shared-ownership pointer for a @ref Merger object. */
     typedef MergerPtr Ptr;
 
     /** Allocating constructor. */
-    static Ptr instance() {
-        return Ptr(new Merger);
-    }
+    static Ptr instance();
 
     /** Allocating constructor. */
-    static Ptr instance(size_t n) {
-        Ptr retval = Ptr(new Merger);
-        retval->setSizeLimit(n);
-        return retval;
-    }
+    static Ptr instance(size_t);
 
     /** Property: Maximum set size.
      *
@@ -227,75 +224,42 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    SValue() {}                                         // needed for serialization
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        expr = SymbolicExpression::makeIntegerVariable(nbits);
-    }
-    SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        expr = SymbolicExpression::makeIntegerConstant(nbits, number);
-    }
-    SValue(ExprPtr expr): BaseSemantics::SValue(expr->nBits()) {
-        this->expr = expr;
-    }
+    SValue();                                           // needed for serialization
+    explicit SValue(size_t nbits);
+    SValue(size_t nbits, uint64_t number);
+    SValue(ExprPtr expr);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
-    }
+    static SValuePtr instance();
 
     /** Instantiate a new data-flow bottom value of specified width. */
-    static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
-    }
+    static SValuePtr instance_bottom(size_t nbits);
 
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
-    }
+    static SValuePtr instance_undefined(size_t nbits);
 
     /** Instantiate a new unspecified value of specified width. */
-    static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
-    }
+    static SValuePtr instance_unspecified(size_t nbits);
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
-    }
+    static SValuePtr instance_integer(size_t nbits, uint64_t value);
 
     /** Instantiate a new symbolic value. */
-    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value) {
-        ASSERT_not_null(value);
-        return SValuePtr(new SValue(value));
-    }
+    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
-        return instance_bottom(nbits);
-    }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
-        return instance_unspecified(nbits);
-    }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
-        return instance_integer(nbits, value);
-    }
-    virtual BaseSemantics::SValuePtr boolean_(bool value) const override {
-        return instance_integer(1, value?1:0);
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override;
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
+
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
                         const SmtSolverPtr&) const override;
@@ -304,11 +268,7 @@ public:
     // Dynamic pointer casts
 public:
     /** Promote a base value to a SymbolicSemantics value.  The value @p v must have a SymbolicSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
@@ -327,16 +287,9 @@ protected: // when implementing use these names; but when calling, use the camel
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpression, which might be shared with many unrelated values whose size we don't want to affect.
-    virtual void set_width(size_t nbits) override {
-        ASSERT_always_require(nbits==nBits());
-    }
-
-    virtual bool is_number() const override {
-        return expr->isIntegerConstant();
-    }
-
+    virtual void set_width(size_t nbits) override;
+    virtual bool is_number() const override;
     virtual uint64_t get_number() const override;
-
     virtual std::string get_comment() const override;
     virtual void set_comment(const std::string&) const override;
 
@@ -358,40 +311,21 @@ public:
      *  add_defining_instructions().
      *
      * @{ */
-    virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
-        add_defining_instructions(set3);
-        defined_by(insn, set1, set2);
-    }
-    virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2) {
-        add_defining_instructions(set2);
-        defined_by(insn, set1);
-    }
-    virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1) {
-        add_defining_instructions(set1);
-        defined_by(insn);
-    }
-    virtual void defined_by(SgAsmInstruction *insn) {
-        add_defining_instructions(insn);
-    }
+    virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3);
+    virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2);
+    virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1);
+    virtual void defined_by(SgAsmInstruction *insn);
     /** @} */
 
     /** Returns the expression stored in this value.
      *
      *  Expressions are reference counted; the reference count of the returned expression is not incremented. */
-    virtual const ExprPtr& get_expression() const {
-        return expr;
-    }
+    virtual const ExprPtr& get_expression() const;
 
     /** Changes the expression stored in the value.
      * @{ */
-    virtual void set_expression(const ExprPtr &new_expr) {
-        ASSERT_not_null(new_expr);
-        expr = new_expr;
-        width = new_expr->nBits();
-    }
-    virtual void set_expression(const SValuePtr &source) {
-        set_expression(source->get_expression());
-    }
+    virtual void set_expression(const ExprPtr &new_expr);
+    virtual void set_expression(const SValuePtr &source);
     /** @} */
 
     /** Returns the set of instructions that defined this value.
@@ -408,9 +342,7 @@ public:
      *
      *  the defining set for the value stored in EAX will be instructions {1, 2} and the defining set for the value stored in
      *  EBX will be {4}.  Defining sets for values stored in other registers are the empty set. */
-    virtual const InsnSet& get_defining_instructions() const {
-        return defs;
-    }
+    virtual const InsnSet& get_defining_instructions() const;
 
     /** Adds definitions to the list of defining instructions.
      *
@@ -418,9 +350,7 @@ public:
      *
      * @{ */
     virtual size_t add_defining_instructions(const InsnSet &to_add);
-    virtual size_t add_defining_instructions(const SValuePtr &source) {
-        return add_defining_instructions(source->get_defining_instructions());
-    }
+    virtual size_t add_defining_instructions(const SValuePtr &source);
     virtual size_t add_defining_instructions(SgAsmInstruction *insn);
     /** @} */
 
@@ -429,12 +359,8 @@ public:
      *  This discards the old set of defining instructions and replaces it with the specified set.
      *
      *  @{ */
-    virtual void set_defining_instructions(const InsnSet &new_defs) {
-        defs = new_defs;
-    }
-    virtual void set_defining_instructions(const SValuePtr &source) {
-        set_defining_instructions(source->get_defining_instructions());
-    }
+    virtual void set_defining_instructions(const InsnSet &new_defs);
+    virtual void set_defining_instructions(const SValuePtr &source);
     virtual void set_defining_instructions(SgAsmInstruction *insn);
     /** @} */
 };
@@ -569,37 +495,23 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryListState()                                   // for serialization
-        : cellCompressor_(CellCompressorChoice::instance()) {}
-
-    explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
-        : BaseSemantics::MemoryCellList(protocell), cellCompressor_(CellCompressorChoice::instance()) {}
-
-    MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cellCompressor_(CellCompressorChoice::instance()) {}
-
-    MemoryListState(const MemoryListState &other)
-        : BaseSemantics::MemoryCellList(other), cellCompressor_(other.cellCompressor_) {}
+    MemoryListState();                                  // for serialization
+    explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell);
+    MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
+    MemoryListState(const MemoryListState &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static MemoryListStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MemoryListStatePtr(new MemoryListState(protocell));
-    }
+    static MemoryListStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell);
 
     /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
      * as the cell type. */
-    static  MemoryListStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
-                                        const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryListStatePtr(new MemoryListState(addrProtoval, valProtoval));
-    }
+    static  MemoryListStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
 
     /** Instantiates a new deep copy of an existing state. */
-    static MemoryListStatePtr instance(const MemoryListStatePtr &other) {
-        return MemoryListStatePtr(new MemoryListState(*other));
-    }
+    static MemoryListStatePtr instance(const MemoryListStatePtr &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
@@ -607,30 +519,20 @@ public:
     /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
      * BaseSemantics::MemoryCell as the cell type. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override;
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override {
-        return instance(protocell);
-    }
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override;
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
-        return BaseSemantics::MemoryStatePtr(new MemoryListState(*this));
-    }
+    virtual BaseSemantics::MemoryStatePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
      *  not have a run-time type that is a SymbolicSemantics::MemoryListState or subclass thereof. */
-    static MemoryListStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryListStatePtr retval = boost::dynamic_pointer_cast<MemoryListState>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static MemoryListStatePtr promote(const BaseSemantics::MemoryStatePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
@@ -727,33 +629,24 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryMapState() {}                                 // for serialization
+    MemoryMapState();                                   // for serialization
 
-    explicit MemoryMapState(const BaseSemantics::MemoryCellPtr &protocell)
-        : BaseSemantics::MemoryCellMap(protocell) {}
+    explicit MemoryMapState(const BaseSemantics::MemoryCellPtr &protocell);
 
-    MemoryMapState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryCellMap(addrProtoval, valProtoval) {}
+    MemoryMapState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static MemoryMapStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MemoryMapStatePtr(new MemoryMapState(protocell));
-    }
+    static MemoryMapStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell);
 
     /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
      *  as the cell type. */
-    static MemoryMapStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
-                                      const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryMapStatePtr(new MemoryMapState(addrProtoval, valProtoval));
-    }
+    static MemoryMapStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
 
     /** Instantiates a new deep copy of an existing state. */
-    static MemoryMapStatePtr instance(const MemoryMapStatePtr &other) {
-        return MemoryMapStatePtr(new MemoryMapState(*other));
-    }
+    static MemoryMapStatePtr instance(const MemoryMapStatePtr &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
@@ -761,30 +654,20 @@ public:
     /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
      * BaseSemantics::MemoryCell as the cell type. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override;
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
-        return instance(protocell);
-    }
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const;
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
-        return BaseSemantics::MemoryStatePtr(new MemoryMapState(*this));
-    }
+    virtual BaseSemantics::MemoryStatePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
      *  not have a run-time type that is a SymbolicSemantics::MemoryMapState or subclass thereof. */
-    static MemoryMapStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryMapStatePtr retval = boost::dynamic_pointer_cast<MemoryMapState>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static MemoryMapStatePtr promote(const BaseSemantics::MemoryStatePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from the super class (documented in the super class)
@@ -934,50 +817,20 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inherited methods for constructing values.
 public:
-    virtual BaseSemantics::SValuePtr boolean_(bool b) override {
-        SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
-            retval->defined_by(currentInstruction());
-        return retval;
-    }
-
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) override {
-        SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
-            retval->defined_by(currentInstruction());
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr boolean_(bool b) override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
-    SValuePtr svalueExpr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
-        SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
-        newval->set_expression(expr);
-        newval->set_defining_instructions(defs);
-        return newval;
-    }
+    SValuePtr svalueExpr(const ExprPtr &expr, const InsnSet &defs=InsnSet());
 
 protected:
-    SValuePtr svalueUndefined(size_t nbits) {
-        return SValue::promote(undefined_(nbits));
-    }
-
-    SValuePtr svalueBottom(size_t nbits) {
-        return SValue::promote(bottom_(nbits));
-    }
-
-    SValuePtr svalueUnspecified(size_t nbits) {
-        return SValue::promote(unspecified_(nbits));
-    }
-
-    SValuePtr svalueNumber(size_t nbits, uint64_t value) {
-        return SValue::promote(number_(nbits, value));
-    }
-
-    SValuePtr svalueBoolean(bool b) {
-        return SValue::promote(boolean_(b));
-    }
+    SValuePtr svalueUndefined(size_t nbits);
+    SValuePtr svalueBottom(size_t nbits);
+    SValuePtr svalueUnspecified(size_t nbits);
+    SValuePtr svalueNumber(size_t nbits, uint64_t value);
+    SValuePtr svalueBoolean(bool b);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties

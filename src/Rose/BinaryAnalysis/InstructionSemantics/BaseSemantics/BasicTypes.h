@@ -30,6 +30,7 @@ class Formatter;
 class Merger;
 class SValue;
 class RegisterState;
+class RegisterStateGeneric;
 class MemoryCell;
 class MemoryState;
 class State;
@@ -48,6 +49,9 @@ typedef Sawyer::SharedPointer<SValue> SValuePtr;
 
 /** Shared-ownership pointer to a register state. */
 typedef boost::shared_ptr<RegisterState> RegisterStatePtr;
+
+/** Shared-ownership pointer to generic register states. */
+typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
 
 /** Shared-ownership pointer to a memory state. */
 typedef boost::shared_ptr<MemoryState> MemoryStatePtr;

@@ -1,15 +1,24 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+
+#include <Rose/AST/Traversal.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include "integerOps.h"
+#include <Rose/Diagnostics.h>
+
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmType.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <integerOps.h>                                 // rose
 #include <SageBuilderAsm.h>
 
 #undef si_value                                         // name pollution from siginfo.h
@@ -63,26 +72,19 @@ InsnProcessor::assert_args(I insn, A args, size_t nargs) {
 // contains a register which isn't part of the dictionary.
 void
 InsnProcessor::check_arg_width(D d, I insn, A args) {
-    struct T1: AstSimpleProcessing {
-        D d;
-        I insn;
-        size_t argWidth;
-        T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
-        void visit(SgNode *node) {
-            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                RegisterDictionary::Ptr regdict = d->registerDictionary();
-                ASSERT_not_null(regdict);
-                if (regdict->lookup(rre->get_descriptor()).empty())
-                    throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
-                                                   "-bit operands not supported for " + regdict->name(),
-                                                   insn);
-            }
-        }
-    };
     for (size_t i=0; i<args.size(); ++i) {
-        size_t nbits = asm_type_width(args[i]->get_type());
-        if (nbits > 32)
-            T1(d, insn, nbits).traverse(args[i], preorder);
+        const size_t nBits = asm_type_width(args[i]->get_type());
+        if (nBits > 32) {
+            AST::Traversal::forwardPre<SgAsmRegisterReferenceExpression>(args[i],
+                [&d, &insn, &nBits](SgAsmRegisterReferenceExpression *rre) {
+                    RegisterDictionary::Ptr regdict = d->registerDictionary();
+                    ASSERT_not_null(regdict);
+                    if (regdict->lookup(rre->get_descriptor()).empty())
+                        throw BaseSemantics::Exception(StringUtility::numberToString(nBits) +
+                                                       "-bit operands not supported for " + regdict->name(),
+                                                       insn);
+                });
+        }
     }
 }
 

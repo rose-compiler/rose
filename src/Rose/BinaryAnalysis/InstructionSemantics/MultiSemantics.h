@@ -95,13 +95,8 @@ protected:
 
 protected:
     // Protected constructors
-    explicit SValue(size_t nbits)
-        : BaseSemantics::SValue(nbits) {}
-
-    SValue(const SValue &other)
-        : BaseSemantics::SValue(other.nBits()) {
-        init(other);
-    }
+    explicit SValue(size_t nbits);
+    SValue(const SValue &other);
 
     void init(const SValue &other);
 
@@ -109,16 +104,10 @@ protected:
     // Static allocating constructors
 public:
     /** Construct a prototypical value.  Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
-    }
+    static SValuePtr instance();
 
     /** Promote a base value to a MultiSemantics value.  The value @p v must have a MultiSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
@@ -142,14 +131,10 @@ public:
 
     /** Create a new MultiSemantics value with no valid subvalues.  The caller will probably construct a value iteratively by
      *  invoking set_subvalue() one or more times. */
-    virtual SValuePtr create_empty(size_t nbits) const {
-        return SValuePtr(new SValue(nbits));
-    }
-    
-    virtual BaseSemantics::SValuePtr copy(size_t /*new_width*/=0) const override {
-        return BaseSemantics::SValuePtr(new SValue(*this));
-    }
-    
+    virtual SValuePtr create_empty(size_t nbits) const;
+
+    virtual BaseSemantics::SValuePtr copy(size_t /*new_width*/=0) const override;
+
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
                         const SmtSolverPtr&) const override;
@@ -192,29 +177,19 @@ public:
 public:
     /** Returns true if a subdomain value is valid.  A subdomain value is valid if the specified index has a non-null SValue
      *  pointer. It is permissible to call this with an index that is out of range (false is returned in that case). */
-    virtual bool is_valid(size_t idx) const { // hot
-        return idx<subvalues.size() && subvalues[idx]!=NULL;
-    }
+    virtual bool is_valid(size_t idx) const;
 
     /** Removes a subdomain value and marks it as invalid.  It is permissible to call this with an index that does not
      *  correspond to a valid subdomain value. */
     virtual void invalidate(size_t idx);
 
     /** Return a subdomain value.  The subdomain must be valid according to is_valid(). */
-    virtual BaseSemantics::SValuePtr get_subvalue(size_t idx) const { // hot
-        ASSERT_require(idx<subvalues.size() && subvalues[idx]!=NULL); // you should have called is_valid() first
-        return subvalues[idx];
-    }
+    virtual BaseSemantics::SValuePtr get_subvalue(size_t idx) const;
 
     /** Insert a subdomain value.  The specified value is inserted at the specified index.  No attempt is made to validate
      *  whether the value has a valid dynamic type for that slot.  If the value is not a null pointer, then is_valid() will
      *  return true after this call. */
-    virtual void set_subvalue(size_t idx, const BaseSemantics::SValuePtr &value) { // hot
-        ASSERT_require(value==NULL || value->nBits()==nBits());
-        if (idx>=subvalues.size())
-            subvalues.resize(idx+1);
-        subvalues[idx] = value;
-    }
+    virtual void set_subvalue(size_t idx, const BaseSemantics::SValuePtr &value);
 };
 
 
@@ -322,9 +297,7 @@ public:
     }
     
     /** Returns the number of subdomains added to this MultiDomain. */
-    virtual size_t nsubdomains() const {
-        return subdomains.size();
-    }
+    virtual size_t nsubdomains() const;
 
     /** Returns the RiscOperators for a subdomain. The @p idx need not be valid. */
     virtual BaseSemantics::RiscOperatorsPtr get_subdomain(size_t idx) const;
@@ -332,15 +305,11 @@ public:
     /** Returns true if a subdomain is active. Active subdomains participate in MultiSemantics RISC operations, provided all
      *  their operands are valid.  This method returns false if @p idx is out of range or the subdomain's RiscOperators are
      *  null. */
-    virtual bool is_active(size_t idx) const {
-        return idx<subdomains.size() && subdomains[idx]!=NULL && active[idx];
-    }
+    virtual bool is_active(size_t idx) const;
 
     /** Makes a subdomain inactive.  The subdomain's RiscOperators object is not removed or deleted by this method; the
      *  subdomain can be made active again at a later time. */
-    virtual void clear_active(size_t idx) {
-        set_active(idx, false);
-    }
+    virtual void clear_active(size_t idx);
 
     /** Makes a subdomain active or inactive.  When making a subdomain inactive, its RiscOperators object is not removed or
      *  deleted, and it can be reactivated later.  An invalid @p idx is ignored when deactivating; it must refer to a valid
@@ -384,14 +353,8 @@ public:
         size_t idx_;
     public:
         Cursor(RiscOperators *ops, const SValuePtr &arg1=SValuePtr(), const SValuePtr &arg2=SValuePtr(),
-               const SValuePtr &arg3=SValuePtr())
-            : ops_(ops), idx_(0) {
-            init(arg1, arg2, arg3);
-        }
-        Cursor(RiscOperators *ops, const Inputs &inputs)
-            : ops_(ops), inputs_(inputs), idx_(0) {
-            init();
-        }
+               const SValuePtr &arg3=SValuePtr());
+        Cursor(RiscOperators *ops, const Inputs &inputs);
 
         /** Class method to construct the array of inputs from a variable number of arguments.  This is used only by the
          *  SUBDOMAINS macro in the MultiSemantics source code so that the input values can be passed as a parenthesized

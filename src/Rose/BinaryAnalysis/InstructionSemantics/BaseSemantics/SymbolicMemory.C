@@ -4,6 +4,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/StringUtility/NumberToString.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

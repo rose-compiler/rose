@@ -15,6 +15,8 @@
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Synchronization.h>
 
+// Serialization
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/set.hpp>

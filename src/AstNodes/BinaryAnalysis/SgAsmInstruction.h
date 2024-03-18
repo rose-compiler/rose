@@ -401,6 +401,11 @@ public:
      *  The return value is an address, colon, mnemonic, and arguments. Only one space is used between the parts. */
     virtual std::string toString() const;
 
+    /** Converts the instruction to a string.
+     *
+     *  The return value is a mnemonic, and arguments. Only one space is used between the parts. */
+    virtual std::string toStringNoAddr() const;
+
     /** Explicit constants.
      *
      *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called

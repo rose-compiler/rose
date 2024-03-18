@@ -3,21 +3,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <stdint.h>
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
-
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include "integerOps.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
+
+#include <Sawyer/IntervalSet.h>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {       // documented elsewhere
-
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** An interval analysis semantic domain. */
 namespace IntervalSemantics {
@@ -50,110 +44,56 @@ protected:
 
 protected:
     // Protected constructors. See base class and public members for documentation
-    explicit SValue(size_t nbits):
-        BaseSemantics::SValue(nbits), isBottom_(false){
-        intervals_.insert(Interval::hull(0, IntegerOps::genMask<uint64_t>(nbits)));
-    }
-    SValue(size_t nbits, uint64_t number)
-        : BaseSemantics::SValue(nbits), isBottom_(false) {
-        number &= IntegerOps::genMask<uint64_t>(nbits);
-        intervals_.insert(number);
-    }
-    SValue(size_t nbits, uint64_t v1, uint64_t v2):
-        BaseSemantics::SValue(nbits), isBottom_(false) {
-        v1 &= IntegerOps::genMask<uint64_t>(nbits);
-        v2 &= IntegerOps::genMask<uint64_t>(nbits);
-        ASSERT_require(v1<=v2);
-        intervals_.insert(Interval::hull(v1, v2));
-    }
-    SValue(size_t nbits, const Intervals &intervals):
-        BaseSemantics::SValue(nbits), isBottom_(false) {
-        ASSERT_require(!intervals.isEmpty());
-        ASSERT_require((intervals.greatest() <= IntegerOps::genMask<uint64_t>(nbits)));
-        intervals_ = intervals;
-    }
+    explicit SValue(size_t nbits);
+    SValue(size_t nbits, uint64_t number);
+    SValue(size_t nbits, uint64_t v1, uint64_t v2);
+    SValue(size_t nbits, const Intervals &intervals);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
-    }
+    static SValuePtr instance();
 
     /** Instantiate a new data-flow-bottom value of specified width. */
-    static SValuePtr instance_bottom(size_t nbits) {
-        SValue *self = new SValue(nbits);
-        self->isBottom_ = true;
-        return SValuePtr(self);
-    }
+    static SValuePtr instance_bottom(size_t nbits);
 
     /** Instantiate a new undefined value of particular width.  Currently, there is no distinction between an unspecified
      *  value, an undefined value, and an interval that can represent any value of the specified size. */
-    static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
-    }
+    static SValuePtr instance_undefined(size_t nbits);
 
     /** Instantiate a new unspecified value of specific width.
      *
      *  Currently, there is no distinction between an unspecified value, an undefined value, and an interval that can represent
      *  any value of the specified size. */
-    static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
-    }
+    static SValuePtr instance_unspecified(size_t nbits);
 
     /** Instantiate a new concrete value of particular width. */
-    static SValuePtr instance_integer(size_t nbits, uint64_t number) {
-        return SValuePtr(new SValue(nbits, number));
-    }
+    static SValuePtr instance_integer(size_t nbits, uint64_t number);
 
     /** Instantiate a new value from a set of intervals. */
-    static SValuePtr instance_intervals(size_t nbits, const Intervals &intervals) {
-        return SValuePtr(new SValue(nbits, intervals));
-    }
+    static SValuePtr instance_intervals(size_t nbits, const Intervals &intervals);
 
     /** Instantiate a new value that's constrained to be between two unsigned values, inclusive. */
-    static SValuePtr instance_hull(size_t nbits, uint64_t v1, uint64_t v2) {
-        return SValuePtr(new SValue(nbits, v1, v2));
-    }
+    static SValuePtr instance_hull(size_t nbits, uint64_t v1, uint64_t v2);
 
     /** Instantiate a new copy of an existing value. */
-    static SValuePtr instance_copy(const SValuePtr &other) {
-        return SValuePtr(new SValue(*other));
-    }
-    
+    static SValuePtr instance_copy(const SValuePtr&);
+
     /** Create a value from a set of possible bits. */
     static SValuePtr instance_from_bits(size_t nbits, uint64_t possible_bits);
 
     /** Promote a base value to an IntevalSemantics value. The value @p v must have an IntervalSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
-        ASSERT_not_null(retval);
-        return retval;
-    }
-    
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors inherited from the super class
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
-        return instance_bottom(nbits);
-    }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
-        return instance_unspecified(nbits);
-    }
-
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t number) const override {
-        return instance_integer(nbits, number);
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t number) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
 
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
@@ -163,33 +103,22 @@ public:
     // Virtual allocating constructors first defined at this level of the class hierarchy
 public:
     /** Construct a ValueType that's constrained to be between two unsigned values, inclusive. */
-    virtual SValuePtr create(size_t nbits, uint64_t v1, uint64_t v2) {
-        return instance_hull(nbits, v1, v2);
-    }
+    virtual SValuePtr create(size_t nbits, uint64_t v1, uint64_t v2);
 
     /** Construct a ValueType from a rangemap. Note that this does not truncate the rangemap to contain only values that would
      *  be possible for the ValueType size--see unsignedExtend() for that. */
-    virtual SValuePtr create(size_t nbits, const Intervals &intervals) {
-        return instance_intervals(nbits, intervals); 
-    }
+    virtual SValuePtr create(size_t nbits, const Intervals&);
 
     /** Generate ranges from bits. Given the set of bits that could be set, generate a range.  We have to be careful here
      *  because we could end up generating very large rangemaps: a rangemap where the high 31 bits could be set but the zero
      *  bit must be cleared would create a rangemap with 2^31 singleton entries. */
-    virtual SValuePtr create_from_bits(size_t nbits, uint64_t possible_bits) {
-        return instance_from_bits(nbits, possible_bits);
-    }
-            
+    virtual SValuePtr create_from_bits(size_t nbits, uint64_t possible_bits);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
     virtual void hash(Combinatorics::Hasher&) const override;
-
-    virtual bool isBottom() const override {
-        return isBottom_;
-    }
-
+    virtual bool isBottom() const override;
     virtual void print(std::ostream &output, BaseSemantics::Formatter&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,32 +134,22 @@ public:
                             const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     // See isConcrete
-    virtual bool is_number() const override {
-        return 1==intervals_.size();
-    }
+    virtual bool is_number() const override;
 
     // See toUnsigned and toSigned
-    virtual uint64_t get_number() const override {
-        ASSERT_require(1==intervals_.size());
-        return intervals_.least();
-    }
+    virtual uint64_t get_number() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods introduced at this level of the class hierarchy
 public:
     /** Returns the rangemap stored in this value. */
-    const Intervals& get_intervals() const {
-        return intervals_;
-    }
+    const Intervals& get_intervals() const;
 
     /** Changes the rangemap stored in the value. */
-    void set_intervals(const Intervals &intervals) {
-        intervals_ = intervals;
-    }
+    void set_intervals(const Intervals&);
 
     /** Returns all possible bits that could be set. */
     uint64_t possible_bits() const;
-
 };
 
 
@@ -270,45 +189,28 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
-        : BaseSemantics::MemoryCellList(protocell) {}
-
-    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval) {}
-
-    MemoryState(const MemoryState &other)
-        : BaseSemantics::MemoryCellList(other) {}
+    MemoryState(const BaseSemantics::MemoryCellPtr &protocell);
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
+    MemoryState(const MemoryState &);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new memory state with specified prototypical cells and values. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MemoryStatePtr(new MemoryState(protocell));
-    }
+    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell);
 
     /** Instantiate a new memory state with prototypical value. This constructor uses BaseSemantics::MemoryCell as the cell
      * type. The address protoval and value protoval are usually the same (or at least the same dynamic type). */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
-    }
-    
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override {
-        return instance(protocell);
-    }
-
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override;
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
+                                                 const BaseSemantics::SValuePtr &valProtoval) const;
+    virtual BaseSemantics::MemoryStatePtr clone() const override;
 
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
-        return MemoryStatePtr(new MemoryState(*this));
-    }
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
@@ -403,15 +305,11 @@ public:
 
     /** Create a new SValue from a set of possible bits.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
-    virtual SValuePtr svalue_from_bits(size_t nbits, uint64_t possible_bits) {
-        return SValue::promote(protoval())->create_from_bits(nbits, possible_bits);
-    }
+    virtual SValuePtr svalue_from_bits(size_t nbits, uint64_t possible_bits);
 
     /** Create a new SValue from a set of intervals.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
-    virtual SValuePtr svalue_from_intervals(size_t nbits, const Intervals &intervals) {
-        return SValue::promote(protoval())->create(nbits, intervals);
-    }
+    virtual SValuePtr svalue_from_intervals(size_t nbits, const Intervals &intervals);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.

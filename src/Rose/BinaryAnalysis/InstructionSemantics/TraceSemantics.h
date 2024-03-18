@@ -8,8 +8,8 @@
 #include <Rose/Diagnostics.h>
 
 namespace Rose {
-namespace BinaryAnalysis {                      // documented elsewhere
-namespace InstructionSemantics {                // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** A semantics domain wrapper that prints and checks all RISC operators as they occur.
  *

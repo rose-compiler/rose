@@ -1,11 +1,21 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
-#include <integerOps.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/NumberToString.h>
+
+#include <SgAsmInstruction.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmIntegerType.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <integerOps.h>                                 // rose
 #include <SageBuilderAsm.h>
 
 namespace Rose {
@@ -28,10 +38,116 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merger
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Merger::Merger() {}
+
+Merger::Ptr
+Merger::instance() {
+    return Ptr(new Merger);
+}
+
+Merger::Ptr
+Merger::instance(size_t n) {
+    Ptr retval = Ptr(new Merger);
+    retval->setSizeLimit(n);
+    return retval;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SValue::SValue() {}
+
+SValue::SValue(size_t nbits)
+    : BaseSemantics::SValue(nbits) {
+    expr = SymbolicExpression::makeIntegerVariable(nbits);
+}
+
+SValue::SValue(size_t nbits, uint64_t number)
+    : BaseSemantics::SValue(nbits) {
+    expr = SymbolicExpression::makeIntegerConstant(nbits, number);
+}
+
+SValue::SValue(ExprPtr expr)
+    : BaseSemantics::SValue(expr->nBits()) {
+    this->expr = expr;
+}
+
+SValue::Ptr
+SValue::instance() {
+    return SValue::Ptr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
+}
+
+SValue::Ptr
+SValue::instance_bottom(size_t nbits) {
+    return SValue::Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
+}
+
+SValue::Ptr
+SValue::instance_undefined(size_t nbits) {
+    return SValue::Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
+}
+
+SValue::Ptr
+SValue::instance_unspecified(size_t nbits) {
+    return SValue::Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
+}
+
+SValue::Ptr
+SValue::instance_integer(size_t nbits, uint64_t value) {
+    return SValue::Ptr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
+}
+
+SValue::Ptr
+SValue::instance_symbolic(const SymbolicExpression::Ptr &value) {
+    ASSERT_not_null(value);
+    return SValuePtr(new SValue(value));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(size_t nbits) const {
+    return instance_bottom(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(size_t nbits) const {
+    return instance_unspecified(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(size_t nbits, uint64_t value) const {
+    return instance_integer(nbits, value);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::boolean_(bool value) const {
+    return instance_integer(1, value?1:0);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t new_width) const {
+    SValue::Ptr retval(new SValue(*this));
+    if (new_width!=0 && new_width!=retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValuePtr &v) {
+    SValuePtr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 bool
 SValue::isBottom() const {
@@ -94,6 +210,16 @@ SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const Base
     return changed ? Sawyer::Optional<BaseSemantics::SValue::Ptr>(retval) : Sawyer::Nothing();
 }
 
+void
+SValue::set_width(size_t nbits) {
+    ASSERT_always_require(nbits==nBits());
+}
+
+bool
+SValue::is_number() const {
+    return expr->isIntegerConstant();
+}
+
 uint64_t
 SValue::get_number() const
 {
@@ -108,6 +234,66 @@ SValue::substitute(const SValue::Ptr &from, const SValue::Ptr &to, const SmtSolv
     SValue::Ptr retval = SValue::promote(copy());
     retval->set_expression(retval->get_expression()->substitute(from->get_expression(), to->get_expression(), solver));
     return retval;
+}
+
+void
+SValue::defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
+    add_defining_instructions(set3);
+    defined_by(insn, set1, set2);
+}
+
+void
+SValue::defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2) {
+    add_defining_instructions(set2);
+    defined_by(insn, set1);
+}
+
+void
+SValue::defined_by(SgAsmInstruction *insn, const InsnSet &set1) {
+    add_defining_instructions(set1);
+    defined_by(insn);
+}
+
+void
+SValue::defined_by(SgAsmInstruction *insn) {
+    add_defining_instructions(insn);
+}
+
+const ExprPtr&
+SValue::get_expression() const {
+    return expr;
+}
+
+void
+SValue::set_expression(const ExprPtr &new_expr) {
+    ASSERT_not_null(new_expr);
+    expr = new_expr;
+    width = new_expr->nBits();
+}
+
+void
+SValue::set_expression(const SValue::Ptr &source) {
+    set_expression(source->get_expression());
+}
+
+const InsnSet&
+SValue::get_defining_instructions() const {
+    return defs;
+}
+
+size_t
+SValue::add_defining_instructions(const SValue::Ptr &source) {
+    return add_defining_instructions(source->get_defining_instructions());
+}
+
+void
+SValue::set_defining_instructions(const InsnSet &new_defs) {
+    defs = new_defs;
+}
+
+void
+SValue::set_defining_instructions(const SValue::Ptr &source) {
+    set_defining_instructions(source->get_defining_instructions());
 }
 
 size_t
@@ -217,10 +403,59 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 //                                      List-base Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+MemoryListState::MemoryListState()
+    : cellCompressor_(CellCompressorChoice::instance()) {}
+
+MemoryListState::MemoryListState(const BaseSemantics::MemoryCell::Ptr &protocell)
+    : BaseSemantics::MemoryCellList(protocell), cellCompressor_(CellCompressorChoice::instance()) {}
+
+MemoryListState::MemoryListState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval)
+    : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cellCompressor_(CellCompressorChoice::instance()) {}
+
+MemoryListState::MemoryListState(const MemoryListState &other)
+    : BaseSemantics::MemoryCellList(other), cellCompressor_(other.cellCompressor_) {}
+
 // class method
 MemoryListState::CellCompressor::Ptr
 MemoryListState::CellCompressorMcCarthy::instance() {
     return Ptr(new CellCompressorMcCarthy);
+}
+
+MemoryListState::Ptr
+MemoryListState::instance(const BaseSemantics::MemoryCell::Ptr &protocell) {
+    return MemoryListState::Ptr(new MemoryListState(protocell));
+}
+
+MemoryListState::Ptr
+MemoryListState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) {
+    return MemoryListState::Ptr(new MemoryListState(addrProtoval, valProtoval));
+}
+
+MemoryListState::Ptr
+MemoryListState::instance(const MemoryListState::Ptr &other) {
+    return MemoryListState::Ptr(new MemoryListState(*other));
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryListState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryListState::create(const BaseSemantics::MemoryCell::Ptr &protocell) const {
+    return instance(protocell);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryListState::clone() const {
+    return BaseSemantics::MemoryState::Ptr(new MemoryListState(*this));
+}
+
+MemoryListState::Ptr
+MemoryListState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+    MemoryListState::Ptr retval = boost::dynamic_pointer_cast<MemoryListState>(x);
+    ASSERT_not_null(retval);
+    return retval;
 }
 
 SValue::Ptr
@@ -427,6 +662,51 @@ MemoryListState::writeMemory(const BaseSemantics::SValue::Ptr &address, const Ba
 //                                      Map-based Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+MemoryMapState::MemoryMapState() {}
+
+MemoryMapState::MemoryMapState(const BaseSemantics::MemoryCell::Ptr &protocell)
+    : BaseSemantics::MemoryCellMap(protocell) {}
+
+MemoryMapState::MemoryMapState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval)
+    : BaseSemantics::MemoryCellMap(addrProtoval, valProtoval) {}
+
+MemoryMapState::Ptr
+MemoryMapState::instance(const BaseSemantics::MemoryCell::Ptr &protocell) {
+    return MemoryMapState::Ptr(new MemoryMapState(protocell));
+}
+
+MemoryMapState::Ptr
+MemoryMapState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) {
+    return MemoryMapStatePtr(new MemoryMapState(addrProtoval, valProtoval));
+}
+
+MemoryMapState::Ptr
+MemoryMapState::instance(const MemoryMapState::Ptr &other) {
+    return MemoryMapState::Ptr(new MemoryMapState(*other));
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryMapState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryMapState::create(const BaseSemantics::MemoryCell::Ptr &protocell) const {
+    return instance(protocell);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryMapState::clone() const {
+    return BaseSemantics::MemoryState::Ptr(new MemoryMapState(*this));
+}
+
+MemoryMapState::Ptr
+MemoryMapState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+    MemoryMapState::Ptr retval = boost::dynamic_pointer_cast<MemoryMapState>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 BaseSemantics::MemoryCellMap::CellKey
 MemoryMapState::generateCellKey(const BaseSemantics::SValue::Ptr &addr_) const {
     SValue::Ptr addr = SValue::promote(addr_);
@@ -502,6 +782,55 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
     Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
+}
+
+BaseSemantics::SValue::Ptr
+RiscOperators::boolean_(bool b) {
+    SValue::Ptr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
+    if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
+        retval->defined_by(currentInstruction());
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+RiscOperators::number_(size_t nbits, uint64_t value) {
+    SValue::Ptr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
+    if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
+        retval->defined_by(currentInstruction());
+    return retval;
+}
+
+SValue::Ptr
+RiscOperators::svalueExpr(const ExprPtr &expr, const InsnSet &defs) {
+    SValue::Ptr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
+    newval->set_expression(expr);
+    newval->set_defining_instructions(defs);
+    return newval;
+}
+
+SValue::Ptr
+RiscOperators::svalueUndefined(size_t nbits) {
+    return SValue::promote(undefined_(nbits));
+}
+
+SValue::Ptr
+RiscOperators::svalueBottom(size_t nbits) {
+    return SValue::promote(bottom_(nbits));
+}
+
+SValue::Ptr
+RiscOperators::svalueUnspecified(size_t nbits) {
+    return SValue::promote(unspecified_(nbits));
+}
+
+SValue::Ptr
+RiscOperators::svalueNumber(size_t nbits, uint64_t value) {
+    return SValue::promote(number_(nbits, value));
+}
+
+SValue::Ptr
+RiscOperators::svalueBoolean(bool b) {
+    return SValue::promote(boolean_(b));
 }
 
 void

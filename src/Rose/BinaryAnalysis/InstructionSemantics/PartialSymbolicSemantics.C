@@ -1,10 +1,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/FormatRestorer.h>
+
 #include <Rose/CommandLine.h>
+#include <integerOps.h>                                 // rose
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -25,9 +31,88 @@ Formatter::rename(uint64_t orig_name)
     return found->second;
 }
 
-/*******************************************************************************************************************************
- *                                      SValue
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      SValue
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SValue::SValue(size_t nbits)
+    : BaseSemantics::SValue(nbits), name(nextName()), offset(0), negate(false) {}
+
+SValue::SValue(size_t nbits, uint64_t number)
+    : BaseSemantics::SValue(nbits), name(0), offset(number), negate(false) {
+    if (nbits <= 64) {
+        this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+    } else {
+        name = nextName();
+        offset = 0;
+    }
+}
+
+SValue::SValue(size_t nbits, uint64_t name, uint64_t offset, bool negate)
+    : BaseSemantics::SValue(nbits), name(name), offset(offset), negate(negate) {
+    this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+    ASSERT_require(nbits <= 64 || name != 0);
+}
+
+SValue::Ptr
+SValue::instance() {
+    return SValue::Ptr(new SValue(1));
+}
+
+SValue::Ptr
+SValue::instance(size_t nbits) {
+    return SValue::Ptr(new SValue(nbits));
+}
+
+SValue::Ptr
+SValue::instance(size_t nbits, uint64_t value) {
+    return SValue::Ptr(new SValue(nbits, value));
+}
+
+SValue::Ptr
+SValue::instance(size_t nbits, uint64_t name, uint64_t offset, bool negate) {
+    return SValue::Ptr(new SValue(nbits, name, offset, negate));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(size_t nbits) const {
+    return instance(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(size_t nbits) const {
+    return instance(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(size_t nbits) const {
+    return instance(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(size_t nbits, uint64_t value) const {
+    return instance(nbits, value);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t new_width) const {
+    SValue::Ptr retval(new SValue(*this));
+    if (new_width!=0 && new_width!=retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+SValue::create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
+    return instance(nbits, name, offset, negate);
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) {
+    SValue::Ptr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 // class method
 uint64_t
@@ -94,7 +179,7 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
         }
     } else {
         /* This is a constant */
-        ROSE_ASSERT(!negate);
+        ASSERT_require(!negate);
         stream <<"0x" <<std::hex <<offset;
         if (negative)
             stream <<" (-0x" <<std::hex <<negative <<")";
@@ -103,10 +188,66 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
     stream <<"[" <<std::dec <<nBits() <<"]";
 }
 
+void
+SValue::set_width(size_t nbits) {
+    if (nbits > 64 && name == 0) {
+        *this = SValue(nbits);
+    } else {
+        ASSERT_require(nbits <= 64 || name != 0);
+        BaseSemantics::SValue::set_width(nbits);
+        offset &= IntegerOps::genMask<uint64_t>(nbits);
+    }
+}
+
 
 /*******************************************************************************************************************************
  *                                      State
  *******************************************************************************************************************************/
+
+State::State(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory)
+    : BaseSemantics::State(registers, memory) {
+    // This state should use PartialSymbolicSemantics values (or subclasses thereof)
+    ASSERT_not_null(registers);
+    (void) SValue::promote(registers->protoval());
+    ASSERT_not_null(memory);
+    (void) SValue::promote(memory->get_addr_protoval());
+    (void) SValue::promote(memory->get_val_protoval());
+
+    // This state should use a memory that is not byte restricted.
+    MemoryState::Ptr mcl = MemoryState::promote(memory);
+    ASSERT_require(!mcl->byteRestricted());
+}
+
+State::State(const State &other)
+    : BaseSemantics::State(other) {}
+
+State::Ptr
+State::instance(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory) {
+    return State::Ptr(new State(registers, memory));
+}
+
+State::Ptr
+State::instance(const State::Ptr &other) {
+    return State::Ptr(new State(*other));
+}
+
+BaseSemantics::State::Ptr
+State::create(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory) const {
+    return instance(registers, memory);
+}
+
+BaseSemantics::State::Ptr
+State::clone() const {
+    State::Ptr self = promote(boost::const_pointer_cast<BaseSemantics::State>(shared_from_this()));
+    return instance(self);
+}
+
+State::Ptr
+State::promote(const BaseSemantics::State::Ptr &x) {
+    State::Ptr retval = boost::dynamic_pointer_cast<State>(x);
+    ASSERT_not_null(x);
+    return retval;
+}
 
 void
 State::print_diff_registers(std::ostream&, const State::Ptr &/*other_state*/, Formatter&) const
@@ -180,6 +321,16 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
     Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
+}
+
+const MemoryMap::Ptr
+RiscOperators::get_memory_map() const {
+    return map;
+}
+
+void
+RiscOperators::set_memory_map(const MemoryMap::Ptr &m) {
+    map = m;
 }
 
 void

@@ -1,11 +1,25 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmAarch32Instruction.h>
+#include <SgAsmBinaryPostupdate.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmOperandList.h>
+#include <SgAsmRegisterNames.h>
+#include <SgAsmType.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <sageContainer.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 using namespace Rose::Diagnostics;
@@ -3260,7 +3274,7 @@ DispatcherAarch32::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t add
             retval = operators()->undefined_(REG_UNKNOWN.nBits());
         } else if (rre->get_descriptor() == REG_PC) {
             // Reading from the PC register (r15) adds either 4 or 8 depending on the current instruction set.
-            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(e);
+            SgAsmInstruction *insn = AST::Traversal::findParentTyped<SgAsmInstruction>(e);
             retval = readIpRegister(insn);
         }
 

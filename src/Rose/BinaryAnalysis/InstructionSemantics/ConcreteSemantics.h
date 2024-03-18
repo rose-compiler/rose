@@ -2,20 +2,16 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_ConcreteSemantics_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
-
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include "integerOps.h"
+
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+
 #include <Sawyer/BitVector.h>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** A concrete semantic domain.
  *
@@ -54,58 +50,34 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits), bits_(nbits) {}
-
-    SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        bits_ = Sawyer::Container::BitVector(nbits);
-        bits_.fromInteger(number);
-    }
+    explicit SValue(size_t nbits);
+    SValue(size_t nbits, uint64_t number);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
-    }
+    static SValuePtr instance();
 
     /** Instantiate a new undefined value of specified width.
      *
      *  This semantic domain has no representation for an undefined values--all values are defined. Therefore any attempt to
      *  create an undefined value will result in all bits being set to zero instead. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
-    }
+    static SValuePtr instance(size_t nbits);
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
-    }
-    
+    static SValuePtr instance(size_t nbits, uint64_t value);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
-        return instance(nbits);
-    }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
-        return instance(nbits);
-    }
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
-        return instance(nbits);
-    }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
-        return instance(nbits, value);
-    }
-    virtual BaseSemantics::SValuePtr boolean_(bool value) const override {
-        return instance(1, value ? 1 : 0);
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override;
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
+
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
                         const SmtSolverPtr&) const override;
@@ -114,21 +86,13 @@ public:
     // Dynamic pointer casts
 public:
     /** Promote a base value to a SymbolicSemantics value.  The value @p v must have a SymbolicSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
     virtual void hash(Combinatorics::Hasher&) const override;
-
-    virtual bool isBottom() const override {
-        return false;
-    }
-
+    virtual bool isBottom() const override;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,38 +164,22 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryState(addrProtoval, valProtoval), pageSize_(4096) {
-        (void) SValue::promote(addrProtoval);           // for its checking side effects
-        (void) SValue::promote(valProtoval);
-    }
+    explicit MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
+    MemoryState(const MemoryState &other);
 
-    MemoryState(const MemoryState &other)
-        : BaseSemantics::MemoryState(other), map_(other.map_), pageSize_(other.pageSize_) {
-        if (map_) {
-            for (MemoryMap::Segment &segment: map_->values())
-                segment.buffer()->copyOnWrite(true);
-            map_ = map_->shallowCopy();
-        }
-    }
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical value.
      *
      *  The @p addrProtoval and @p valProtoval must both be of ConcreteSemantics::SValue type or derived classes. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
-    }
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
 
     /** Instantiates a new deep copy of an existing state.
      *
      *  For efficiency purposes, the data buffers are not copied immediately but rather marked as copy-on-write. However, the
      *  newly constructed memory map will have its own segments, which hold the segment names, access permissions, etc. */
-    static MemoryStatePtr instance(const MemoryStatePtr &other) {
-        return MemoryStatePtr(new MemoryState(*other));
-    }
+    static MemoryStatePtr instance(const MemoryStatePtr &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
@@ -241,36 +189,26 @@ public:
      *  Creates a memory state having specified prototypical value, which should be of type ConcreteSemantics::SValue or
      *  subclasses. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override;
 
     /** Virtual copy constructor.
      *
      *  Creates a new deep copy of this memory state. For efficiency purposes, the data buffers are not copied immediately but
      *  rather marked as copy-on-write.  However, the newly constructed memory map will have its own segments, which hold the
      *  segment names, access permissions, etc. */
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
-        return MemoryStatePtr(new MemoryState(*this));
-    }
+    virtual BaseSemantics::MemoryStatePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a concrete memory state. This is a checked cast that will fail if the specified pointer does
      *  not have a run-time type that is a ConcreteSemantics::MemoryState or subclass thereof. */
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-    
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() override {
-        map_ = MemoryMap::Ptr();
-    }
+    virtual void clear() override;
 
     virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
                       BaseSemantics::RiscOperators *valOps) const override;
@@ -420,20 +358,11 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalueNumber(size_t nbits, uint64_t value) {
-        return SValue::promote(number_(nbits, value));
-    }
-
+    SValuePtr svalueNumber(size_t nbits, uint64_t value);
     SValuePtr svalueNumber(const Sawyer::Container::BitVector&);
+    SValuePtr svalueBoolean(bool b);
+    SValuePtr svalueZero(size_t nbits);
 
-    SValuePtr svalueBoolean(bool b) {
-        return SValue::promote(boolean_(b));
-    }
-
-    SValuePtr svalueZero(size_t nbits) {
-        return SValue::promote(number_(nbits, 0));
-    }
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:

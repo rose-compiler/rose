@@ -1,12 +1,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <Rose/BinaryAnalysis/RegisterNames.h>
+#include <Rose/StringUtility/Convert.h>
+#include <Rose/StringUtility/NumberToString.h>
 #include <Rose/StringUtility/SplitJoin.h>
 
-#include "AsmUnparser_compat.h"
+#include <SgAsmFloatType.h>
+#include <SgAsmInstruction.h>
+
+#include <SageBuilderAsm.h>
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -166,7 +170,7 @@ RiscOperators::before(const std::string &operator_name, SgAsmInstruction *insn, 
         if (showAddress) {
             SAWYER_MESG(stream_) <<operator_name <<"(" <<insn->toString() <<")";
         } else {
-            SAWYER_MESG(stream_) <<operator_name <<"(" <<StringUtility::trim(unparseInstruction(insn)) <<")";
+            SAWYER_MESG(stream_) <<operator_name <<"(" <<insn->toStringNoAddr() <<")";
         }
     }
     checkSubdomain();

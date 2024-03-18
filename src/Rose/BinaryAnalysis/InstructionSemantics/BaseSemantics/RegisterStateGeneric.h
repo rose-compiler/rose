@@ -18,9 +18,6 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-/** Shared-ownership pointer to generic register states. */
-typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
-
 /** A RegisterState for any architecture.
  *
  *  This state stores a list of non-overlapping registers and their values, typically only for the registers that have been

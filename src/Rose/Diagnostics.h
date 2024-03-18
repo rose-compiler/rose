@@ -1,6 +1,7 @@
 // Stuff related to ROSE diagnostics
 #ifndef ROSE_Diagnostics_H
 #define ROSE_Diagnostics_H
+#include <RoseFirst.h>
 
 #include "Sawyer/Assert.h"
 #include "Sawyer/Message.h"

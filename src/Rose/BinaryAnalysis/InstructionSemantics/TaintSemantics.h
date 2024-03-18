@@ -5,11 +5,10 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** Adds taint information to all symbolic values. */
 namespace TaintSemantics {

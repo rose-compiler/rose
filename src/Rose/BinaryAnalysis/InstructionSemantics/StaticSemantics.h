@@ -5,13 +5,15 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
-#include "SageBuilderAsm.h"
+
+#include <SgAsmRiscOperation.h>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** Generate static semantics and attach to the AST.
  *
@@ -83,142 +85,68 @@ protected:
     SgAsmExpression *ast_;
 
 protected:
-    SValue(size_t nbits, SgAsmRiscOperation::RiscOperator op): BaseSemantics::SValue(nbits) {
-        static uint64_t nVars = 0;
-        ast_ = SageBuilderAsm::buildRiscOperation(op, SageBuilderAsm::buildValueU64(nVars++));
-    }
+    SValue(size_t nbits, SgAsmRiscOperation::RiscOperator op);
+    SValue(size_t nbits, uint64_t number);
+    SValue(const SValue &other);
 
-    SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        SgAsmType *type = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, nbits,
-                                                                           false /*unsigned*/));
-        ast_ = SageBuilderAsm::buildValueInteger(number, type);
-    }
-
-    SValue(const SValue &other): BaseSemantics::SValue(other) {
-        SgTreeCopy deep;
-        SgNode *copied = other.ast_->copy(deep);
-        ASSERT_require(isSgAsmExpression(copied));
-        ast_ = isSgAsmExpression(copied);
-    }
-    
 public:
     /** Instantiate a prototypical SValue.
      *
      *  This SValue will be used only for its virtual constructors and will never appear in an expression. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1, SgAsmRiscOperation::OP_undefined));
-    }
+    static SValuePtr instance();
 
     /** Instantiate a data-flow bottom value. */
-    static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_bottom));
-    }
+    static SValuePtr instance_bottom(size_t nbits);
 
     /** Instantiate an undefined value.
      *
      *  Undefined values end up being a SgAsmRiscOperation of type OP_undefined which has a single child which is an integer
      *  identification number.  This allows two such nodes in the AST to be resolved to the same or different undefined value
      *  by virtue of their ID number. */
-    static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_undefined));
-    }
+    static SValuePtr instance_undefined(size_t nbits);
 
     /** Instantiate an unspecified value.
      *
      *  Unspecified values end up being a SgAsmRiscOperation of type OP_unspecified which has a single child which is an
      *  integer identification number.  This allows two such nodes in the AST to be resolved to the same or different
      *  unspecified value by virtue of their ID number. */
-    static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_unspecified));
-    }
+    static SValuePtr instance_unspecified(size_t nbits);
 
     /** Instantiate an integer constant. */
-    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
-    }
+    static SValuePtr instance_integer(size_t nbits, uint64_t value);
 
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
-        return instance_bottom(nbits);
-    }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
-        return instance_unspecified(nbits);
-    }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
-        return instance_integer(nbits, value);
-    }
-    virtual BaseSemantics::SValuePtr boolean_(bool value) const override {
-        return instance_integer(1, value ? 1 : 0);
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override;
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
+
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&,
-                        const SmtSolverPtr&) const override {
-        throw BaseSemantics::NotImplemented("StaticSemantics is not suitable for dataflow analysis", NULL);
-    }
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, const SmtSolverPtr&) const override;
 
 public:
     /** Promote a base value to a static semantics value. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
 public:
     // These are not needed since this domain never tries to compare semantic values.
-    virtual bool may_equal(const BaseSemantics::SValuePtr &/*other*/,
-                           const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
-
-    virtual bool must_equal(const BaseSemantics::SValuePtr &/*other*/,
-                            const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
-    
-    virtual void set_width(size_t /*nbits*/) override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
-
-    virtual bool isBottom() const override {
-        return false;
-    }
-    
-    virtual bool is_number() const override {
-        return false;
-    }
-
-    virtual uint64_t get_number() const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
-
-    virtual void hash(Combinatorics::Hasher&) const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
-
+    virtual bool may_equal(const BaseSemantics::SValuePtr &/*other*/, const SmtSolverPtr& = SmtSolverPtr()) const override;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &/*other*/, const SmtSolverPtr& = SmtSolverPtr()) const override;
+    virtual void set_width(size_t /*nbits*/) override;
+    virtual bool isBottom() const override;
+    virtual bool is_number() const override;
+    virtual uint64_t get_number() const override;
+    virtual void hash(Combinatorics::Hasher&) const override;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 
 public:
     /** Property: Abstract syntax tree.
      *
      * @{ */
-    virtual SgAsmExpression* ast() {
-        return ast_;
-    }
-    virtual void ast(SgAsmExpression *x) {
-        ASSERT_not_null(x);
-        ASSERT_require(x->get_parent() == NULL);
-        ast_ = x;
-    }
+    virtual SgAsmExpression* ast();
+    virtual void ast(SgAsmExpression*);
     /** @} */
 };
 

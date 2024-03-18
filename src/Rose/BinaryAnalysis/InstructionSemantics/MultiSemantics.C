@@ -1,7 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h>
+
+#include <SgAsmFloatType.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -11,6 +12,26 @@ namespace MultiSemantics {
 /*******************************************************************************************************************************
  *                                      Semantic values
  *******************************************************************************************************************************/
+
+SValue::SValue(size_t nbits)
+    : BaseSemantics::SValue(nbits) {}
+
+SValue::SValue(const SValue &other)
+    : BaseSemantics::SValue(other.nBits()) {
+    init(other);
+}
+
+SValue::Ptr
+SValue::instance() {
+    return SValue::Ptr(new SValue(1));
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) { // hot
+    SValue::Ptr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 void
 SValue::init(const SValue &/*other*/) {
@@ -57,6 +78,16 @@ SValue::number_(size_t nbits, uint64_t number) const
     for (size_t i=0; i<subvalues.size(); ++i)
         retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->number_(nbits, number) : BaseSemantics::SValue::Ptr());
     return retval;
+}
+
+SValue::Ptr
+SValue::create_empty(size_t nbits) const {
+    return SValue::Ptr(new SValue(nbits));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t /*new_width*/) const {
+    return BaseSemantics::SValue::Ptr(new SValue(*this));
 }
 
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
@@ -194,11 +225,39 @@ SValue::invalidate(size_t idx)
         subvalues[idx] = BaseSemantics::SValue::Ptr();
 }
 
+bool
+SValue::is_valid(size_t idx) const { // hot
+    return idx<subvalues.size() && subvalues[idx]!=NULL;
+}
+
+BaseSemantics::SValue::Ptr
+SValue::get_subvalue(size_t idx) const { // hot
+    ASSERT_require(idx<subvalues.size() && subvalues[idx]!=NULL); // you should have called is_valid() first
+    return subvalues[idx];
+}
+
+void
+SValue::set_subvalue(size_t idx, const BaseSemantics::SValue::Ptr &value) {
+    ASSERT_require(value==NULL || value->nBits()==nBits());
+    if (idx>=subvalues.size())
+        subvalues.resize(idx+1);
+    subvalues[idx] = value;
+}
 
 
 /*******************************************************************************************************************************
  *                                      Subdomain cursor
  *******************************************************************************************************************************/
+
+RiscOperators::Cursor::Cursor(RiscOperators *ops, const SValue::Ptr &arg1, const SValue::Ptr &arg2, const SValue::Ptr &arg3)
+    : ops_(ops), idx_(0) {
+    init(arg1, arg2, arg3);
+}
+
+RiscOperators::Cursor::Cursor(RiscOperators *ops, const Inputs &inputs)
+    : ops_(ops), inputs_(inputs), idx_(0) {
+    init();
+}
 
 void
 RiscOperators::Cursor::init(const SValue::Ptr &arg1, const SValue::Ptr &arg2, const SValue::Ptr &arg3)
@@ -359,6 +418,21 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &ops)
     RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(ops);
     ASSERT_not_null(retval);
     return retval;
+}
+
+size_t
+RiscOperators::nsubdomains() const {
+    return subdomains.size();
+}
+
+bool
+RiscOperators::is_active(size_t idx) const {
+    return idx<subdomains.size() && subdomains[idx]!=NULL && active[idx];
+}
+
+void
+RiscOperators::clear_active(size_t idx) {
+    set_active(idx, false);
 }
 
 size_t

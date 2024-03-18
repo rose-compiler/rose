@@ -1,12 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <boost/lexical_cast.hpp>
-#include <Sawyer/BitVector.h>
+#include <integerOps.h>                                 // rose
 
+#include <Sawyer/BitVector.h>
+#include <boost/lexical_cast.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -18,6 +21,109 @@ static const size_t maxComplexity = 50;                 // arbitrary max interva
 /*******************************************************************************************************************************
  *                                      Semantic value
  *******************************************************************************************************************************/
+
+SValue::SValue(size_t nbits)
+    : BaseSemantics::SValue(nbits), isBottom_(false) {
+    intervals_.insert(Interval::hull(0, IntegerOps::genMask<uint64_t>(nbits)));
+}
+
+SValue::SValue(size_t nbits, uint64_t number)
+    : BaseSemantics::SValue(nbits), isBottom_(false) {
+    number &= IntegerOps::genMask<uint64_t>(nbits);
+    intervals_.insert(number);
+}
+
+SValue::SValue(size_t nbits, uint64_t v1, uint64_t v2):
+    BaseSemantics::SValue(nbits), isBottom_(false) {
+    v1 &= IntegerOps::genMask<uint64_t>(nbits);
+    v2 &= IntegerOps::genMask<uint64_t>(nbits);
+    ASSERT_require(v1<=v2);
+    intervals_.insert(Interval::hull(v1, v2));
+}
+
+SValue::SValue(size_t nbits, const Intervals &intervals):
+    BaseSemantics::SValue(nbits), isBottom_(false) {
+    ASSERT_require(!intervals.isEmpty());
+    ASSERT_require((intervals.greatest() <= IntegerOps::genMask<uint64_t>(nbits)));
+    intervals_ = intervals;
+}
+
+SValue::Ptr
+SValue::instance() {
+    return SValuePtr(new SValue(1));
+}
+
+SValue::Ptr
+SValue::instance_bottom(size_t nbits) {
+    SValue *self = new SValue(nbits);
+    self->isBottom_ = true;
+    return SValuePtr(self);
+}
+
+SValue::Ptr
+SValue::instance_undefined(size_t nbits) {
+    return SValuePtr(new SValue(nbits));
+}
+
+SValue::Ptr
+SValue::instance_unspecified(size_t nbits) {
+    return SValuePtr(new SValue(nbits));
+}
+
+SValue::Ptr
+SValue::instance_integer(size_t nbits, uint64_t number) {
+    return SValuePtr(new SValue(nbits, number));
+}
+
+SValue::Ptr
+SValue::instance_intervals(size_t nbits, const Intervals &intervals) {
+    return SValuePtr(new SValue(nbits, intervals));
+}
+
+SValue::Ptr
+SValue::instance_hull(size_t nbits, uint64_t v1, uint64_t v2) {
+    return SValuePtr(new SValue(nbits, v1, v2));
+}
+
+SValue::Ptr
+SValue::instance_copy(const SValuePtr &other) {
+    return SValuePtr(new SValue(*other));
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) {
+    SValuePtr retval = v.dynamicCast<SValue>();
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(size_t nbits) const {
+    return instance_bottom(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(size_t nbits) const {
+    return instance_unspecified(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(size_t nbits, uint64_t number) const {
+    return instance_integer(nbits, number);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(size_t new_width) const {
+    SValuePtr retval(new SValue(*this));
+    if (new_width!=0 && new_width!=retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
 
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
 SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr&,
@@ -89,6 +195,21 @@ SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
     return SValue::instance_intervals(nbits, retval);
 }
 
+SValue::Ptr
+SValue::create(size_t nbits, uint64_t v1, uint64_t v2) {
+    return instance_hull(nbits, v1, v2);
+}
+
+SValue::Ptr
+SValue::create(size_t nbits, const Intervals &intervals) {
+    return instance_intervals(nbits, intervals);
+}
+
+SValue::Ptr
+SValue::create_from_bits(size_t nbits, uint64_t possible_bits) {
+    return instance_from_bits(nbits, possible_bits);
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr&) const
 {
@@ -144,6 +265,11 @@ SValue::hash(Combinatorics::Hasher &hasher) const {
     }
 }
 
+bool
+SValue::isBottom() const {
+    return isBottom_;
+}
+
 static std::string
 toString(uint64_t n, size_t nbits) {
     if (n <= 9) {
@@ -176,9 +302,64 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
     output <<"[" <<nBits() <<"]";
 }
 
+bool
+SValue::is_number() const {
+    return 1 == intervals_.size();
+}
+
+uint64_t
+SValue::get_number() const {
+    ASSERT_require(1==intervals_.size());
+    return intervals_.least();
+}
+
+const Intervals&
+SValue::get_intervals() const {
+    return intervals_;
+}
+
+void
+SValue::set_intervals(const Intervals &intervals) {
+    intervals_ = intervals;
+}
+
 /*******************************************************************************************************************************
  *                                      Memory state
  *******************************************************************************************************************************/
+
+MemoryState::MemoryState(const BaseSemantics::MemoryCell::Ptr &protocell)
+    : BaseSemantics::MemoryCellList(protocell) {}
+
+MemoryState::MemoryState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval)
+    : BaseSemantics::MemoryCellList(addrProtoval, valProtoval) {}
+
+MemoryState::MemoryState(const MemoryState &other)
+    : BaseSemantics::MemoryCellList(other) {}
+
+MemoryState::Ptr
+MemoryState::instance(const BaseSemantics::MemoryCell::Ptr &protocell) {
+    return MemoryState::Ptr(new MemoryState(protocell));
+}
+
+MemoryState::Ptr
+MemoryState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) {
+    return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::create(const BaseSemantics::MemoryCell::Ptr &protocell) const {
+    return instance(protocell);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::clone() const {
+    return MemoryState::Ptr(new MemoryState(*this));
+}
 
 BaseSemantics::SValue::Ptr
 MemoryState::readMemory(const BaseSemantics::SValue::Ptr &/*addr*/, const BaseSemantics::SValue::Ptr &/*dflt*/,
@@ -255,6 +436,16 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
     Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
+}
+
+SValue::Ptr
+RiscOperators::svalue_from_bits(size_t nbits, uint64_t possible_bits) {
+    return SValue::promote(protoval())->create_from_bits(nbits, possible_bits);
+}
+
+SValue::Ptr
+RiscOperators::svalue_from_intervals(size_t nbits, const Intervals &intervals) {
+    return SValue::promote(protoval())->create(nbits, intervals);
 }
 
 BaseSemantics::SValue::Ptr

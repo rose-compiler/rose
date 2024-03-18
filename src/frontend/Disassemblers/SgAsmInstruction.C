@@ -229,6 +229,24 @@ SgAsmInstruction::toString() const {
     return retval;
 }
 
+std::string
+SgAsmInstruction::toStringNoAddr() const {
+    if (isSgAsmUserInstruction(this))
+        return architecture()->toStringNoAddr(this);
+
+    // Old backward-compatible stuff that we'd like to eventually remove
+    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
+    std::string retval = unparseMnemonic(insn);
+    if (SgAsmOperandList *opList = insn->get_operandList()) {
+        const SgAsmExpressionPtrList &operands = opList->get_operands();
+        for (size_t i = 0; i < operands.size(); ++i) {
+            retval += i == 0 ? " " : ", ";
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, RegisterDictionary::Ptr()));
+        }
+    }
+    return retval;
+}
+
 std::set<rose_addr_t>
 SgAsmInstruction::explicitConstants() const {
     struct T1: AstSimpleProcessing {

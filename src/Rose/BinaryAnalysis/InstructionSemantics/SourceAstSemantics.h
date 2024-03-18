@@ -3,14 +3,14 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_SourceAstSemantics_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
+
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** Generate C source AST from binary AST.
  *
@@ -91,89 +91,47 @@ public:
     /** Instantiate a prototypical SValue.
      *
      *  This SValue will be used only for its virtual constructors and will never appear in an expression. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
-    }
+    static SValuePtr instance();
 
     /** Instantiate an undefined value.
      *
      *  Undefined values are distinct C variables that are never initialized. */
-    static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
-    }
+    static SValuePtr instance_undefined(size_t nbits);
 
     /** Instantiate an integer constant. */
-    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
-    }
+    static SValuePtr instance_integer(size_t nbits, uint64_t value);
 
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
-        return instance_integer(nbits, value);
-    }
-    virtual BaseSemantics::SValuePtr boolean_(bool value) const override {
-        return instance_integer(1, value ? 1 : 0);
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override;
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
+
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&,
-                        const SmtSolverPtr&) const override {
-        throw BaseSemantics::NotImplemented("SourceAstSemantics is not suitable for dataflow analysis", NULL);
-    }
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, const SmtSolverPtr&) const override;
 
 public:
     /** Promote a base instance to an instance of this class. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
 public:
-    virtual bool isBottom() const override {
-        return false;
-    }
-
+    virtual bool isBottom() const override;
     virtual void hash(Combinatorics::Hasher&) const override;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 
 public:
     // These are not needed since this domain never tries to compare semantic values.
     virtual bool may_equal(const BaseSemantics::SValuePtr &/*other*/,
-                           const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
+                           const SmtSolverPtr& = SmtSolverPtr()) const override;
 
     virtual bool must_equal(const BaseSemantics::SValuePtr &/*other*/,
-                            const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
-    
-    virtual void set_width(size_t /*nbits*/) override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
+                            const SmtSolverPtr& = SmtSolverPtr()) const override;
 
-    virtual bool is_number() const override {
-        return false;
-    }
-
-    virtual uint64_t get_number() const override {
-        ASSERT_not_reachable("no implementation necessary");
-    }
+    virtual void set_width(size_t /*nbits*/) override;
+    virtual bool is_number() const override;
+    virtual uint64_t get_number() const override;
 
 public:
     /** Name of integer type used for value.
@@ -187,12 +145,8 @@ public:
     /** C source text associated with this semantic value.
      *
      * @{ */
-    virtual const std::string& ctext() const {
-        return ctext_;
-    }
-    virtual void ctext(const std::string &s) {
-        ctext_ = s;
-    }
+    virtual const std::string& ctext() const;
+    virtual void ctext(const std::string&);
     /** @} */
 };
 
@@ -242,23 +196,22 @@ public:
         BaseSemantics::SValuePtr temporary;             /**< Optional Temporary variable. */
         BaseSemantics::SValuePtr expression;            /**< Expression. */
 
+        ~SideEffect();
+
         // Default constructor. Not normally used, but needed by <code>std::vector</code>. (DON'T DOCUMENT)
-        SideEffect() {}
+        SideEffect();
 
         // Used internally, not neede by users since data members are public.
         SideEffect(const BaseSemantics::SValuePtr &location, const BaseSemantics::SValuePtr &temporary,
-                   const BaseSemantics::SValuePtr &expression)
-            : location(location), temporary(temporary), expression(expression) {}
+                   const BaseSemantics::SValuePtr &expression);
 
         /** Predicate to determine whether side effect is valid. */
-        bool isValid() const { return expression != NULL; }
+        bool isValid() const;
 
         /** Predicate to determine whether side effect is rather a substitution. Substitutions are side effects in that they
          *  change the value of C variables, but the changes happen in an inner scope and don't affect the C program's main
          *  state. */
-        bool isSubstitution() const {
-            return isValid() && location==NULL && temporary!=NULL;
-        }
+        bool isSubstitution() const;
     };
 
     /** Side effects in the order they occur. */
@@ -328,10 +281,8 @@ public:
     /** Accumulated side effects and substitutions.
      *
      *  Returns the side effects and substitutions in the order they occurred. */
-    const SideEffects& sideEffects() const {
-        return sideEffects_;
-    }
-    
+    const SideEffects& sideEffects() const;
+
     /** Reset state to initial conditions. */
     void resetState();
 
@@ -342,11 +293,7 @@ public:
     std::string registerVariableName(RegisterDescriptor);
 
     /** Reset to initial state. */
-    void reset() {
-        sideEffects_.clear();
-        executionHalted_ = false;
-        resetState();
-    }
+    void reset();
 
     /** Halt execution.
      *

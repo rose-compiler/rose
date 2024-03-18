@@ -10,8 +10,8 @@
 #include <Rose/CommandLine.h>
 
 namespace Rose {
-namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
 
 /** Provides functions for testing binary instruction semantics.
  *

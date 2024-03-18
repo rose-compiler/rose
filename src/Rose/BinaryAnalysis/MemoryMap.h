@@ -3,12 +3,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
-
-#include <Combinatorics.h>
 #include <Rose/Exception.h>
 
+#include <Combinatorics.h>
+#include <rose_extent.h>
 #include <sageContainer.h>
 
 #include <Sawyer/Access.h>

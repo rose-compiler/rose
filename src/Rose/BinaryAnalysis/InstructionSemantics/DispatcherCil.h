@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -109,13 +110,7 @@ public:
     virtual RegisterDescriptor stackPointerRegister() const override;
     virtual RegisterDescriptor stackFrameRegister() const override;
     virtual RegisterDescriptor callReturnRegister() const override;
-
-    virtual int iprocKey(SgAsmInstruction *insn_) const override {
-        SgAsmCilInstruction *insn = isSgAsmCilInstruction(insn_);
-        ASSERT_not_null(insn);
-        return insn->get_kind();
-    }
-
+    virtual int iprocKey(SgAsmInstruction *insn_) const override;
     virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) override;
 
     /** Set or clear FPSR EXC INAN bit. */

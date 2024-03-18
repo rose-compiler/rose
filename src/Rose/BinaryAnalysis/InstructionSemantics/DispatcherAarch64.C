@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -8,6 +7,16 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BitOps.h>
 #include <Rose/Diagnostics.h>
+
+#include <SgAsmAarch64Instruction.h>
+#include <SgAsmBinaryLsl.h>
+#include <SgAsmExpression.h>
+#include <SgAsmOperandList.h>
+#include <SgAsmRegisterReferenceExpression.h>
+#include <SgAsmVectorType.h>
+
+#include <Cxx_GrammarDowncast.h>
+#include <sageContainer.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 using namespace Rose::Diagnostics;

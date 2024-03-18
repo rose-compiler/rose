@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_ASM_AARCH32
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
