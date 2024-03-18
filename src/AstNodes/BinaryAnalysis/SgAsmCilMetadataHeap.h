@@ -37,7 +37,6 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
     [[using Rosebud: rosetta]]
     uint64_t DataSizeFlags  = 0;
 
-
     /** Property: AssemblyTable. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmCilAssemblyTable* AssemblyTable;
@@ -275,22 +274,23 @@ public:
     /** unparses the metadata objects into the buffer */
     void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
 
-    /** Prints the object's data in a human readable form to @ref os. */
+    /** Prints the object's data in a human readable form. */
     void dump(std::ostream& os) const override;
 
-    /** looks up the node associated with the coded index @ref idx in the metadata table
-     *  associated with @ref tblcode.
-     */
+    /** Look up node by index.
+     *
+     *  Looks up the node associated with the coded index @p idx in the metadata table associated with @p tblcode. */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;
 
-    /** looks up the node associated with the coded index @ref refcode in the metadata tables
-     *  under the assumption that @refval is of kind @ref knd
-     */
+    /** Look up node by index.
+     *
+     *  Looks up the node associated with the coded index @p refcode in the metadata tables under the assumption that the value is
+     *  of kind @p knd. */
     SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-    /** looks up the node associated with the coded index @ref refcode in the metadata tables
-     *  under the assumption that @refval is of kind @ref knd
-     */
+    /** Look up node by index.
+     *
+     *  Looks up the node associated with the coded index @p refcode in the metadata tables under the assumption the value is of
+     *  kind @p knd. */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 };
-

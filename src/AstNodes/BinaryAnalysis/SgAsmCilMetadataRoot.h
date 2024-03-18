@@ -75,13 +75,14 @@ public:
     /** Declares the unparse function as called from the Cli section header object. */
     void unparse(std::ostream& f) const;
 
-    /** unparses the metadata objects into a buffer starting at index @ref idx. */
+    /** Unparses the metadata objects into a buffer starting at index @p idx. */
     void unparse(std::vector<uint8_t>&, std::size_t) const;
 
-    /** Prints the object's data in a human readable form to @ref os. */
+    /** Prints the object's data in a human readable form to @p os. */
     void dump(std::ostream& os) const;
 
-    /** accessor functions to return specific heaps
+    /** Accessor function to return a specific heap.
+     *
      * @{ */
     SgAsmCilUint8Heap*    get_StringHeap() const;
     SgAsmCilUint8Heap*    get_BlobHeap() const;
