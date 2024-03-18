@@ -61,9 +61,6 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* cal
     if (DebugLocalInfoCollect()) {
       std::cerr << "Function Argument: " << AstInterface::AstToString(c) << "\n";
     }
-    if (fa.IsMemoryAccess(c)) {
-       AppendReadLoc( fa, c);
-    }
     operator()(fa, c);
   }
 }
@@ -109,11 +106,12 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    AstNodePtr s_ptr = AstNodePtrImpl(s).get_ptr();
    if (fa.IsFunctionDefinition(s, 0, &vars, &args, &body)) {
       curstmt = AstNodePtrImpl(s).get_ptr();
-      for (AstInterface::AstNodePtr param : vars) {
-         AppendReadLoc(fa, AstNodePtrImpl(param).get_ptr());
-      }
+      // Below is necessary for constructors that initialize member variables.
       for (AstInterface::AstNodePtr param : args) {
          if (fa.IsAssignment(param, &lhs, &rhs, &readlhs)) {
+            if (rhs != AST_NULL) {
+               operator()(fa, AstNodePtrImpl(rhs).get_ptr());
+            }
             AppendModLoc(fa, AstNodePtrImpl(lhs).get_ptr(), AstNodePtrImpl(rhs).get_ptr());
          } 
       }
