@@ -1,9 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_SARIF
-#include <sage3basic.h>
 #include <Rose/Sarif/ThreadFlow.h>
 
 #include <Rose/Sarif/ThreadFlowLocation.h>
+#include <Rose/StringUtility/Escape.h>
 #include <ROSE_UNUSED.h>
 
 namespace Rose {

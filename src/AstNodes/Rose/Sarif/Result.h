@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_SARIF
 #include <Rose/Sarif/Node.h>
 
+#include <Sawyer/Optional.h>
+
 #ifdef ROSE_IMPL
 #include <Rose/Sarif/CodeFlow.h>
 #include <Rose/Sarif/Location.h>

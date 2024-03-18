@@ -2,6 +2,8 @@
 #define ROSE_Sarif_BasicTypes_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_SARIF
+#include <RoseFirst.h>
+
 #include <memory>
 
 #include <Rose/Sarif/NodeDeclarations.h>
