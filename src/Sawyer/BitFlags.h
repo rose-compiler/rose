@@ -10,8 +10,6 @@
 
 #include <Sawyer/Sawyer.h>
 
-#include <boost/foreach.hpp>
-#include <Sawyer/Assert.h>
 #include <vector>
 
 namespace Sawyer {
