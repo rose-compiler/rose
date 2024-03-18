@@ -1837,12 +1837,6 @@ SgProject::parse()
 
   // Simplify multi-file handling so that a single file is just the trivial
   // case and not a special separate case.
-#if DEBUG_PARSE
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("In SgProject::parse(): Loop through the source files on the command line! p_sourceFileNameList = %" PRIuPTR " \n",p_sourceFileNameList.size());
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-#endif
-
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
 
   // The goal in this version of the code is to separate the construction of the SgFile objects
@@ -3843,10 +3837,11 @@ Rose::Frontend::Run(SgProject* project)
 int
 Rose::Frontend::RunSerial(SgProject* project)
 {
-  if (SgProject::get_verbose() > 0)
-      std::cout << "[INFO] [Frontend] Running in serial mode" << std::endl;
-
   int status_of_function = 0;
+
+  if (SgProject::get_verbose() > 0) {
+    mlog[INFO] << "[Frontend] Running in serial mode\n";
+  }
 
   std::vector<SgFile*> all_files = project->get_fileList();
   {
@@ -3885,34 +3880,6 @@ Rose::Frontend::RunSerial(SgProject* project)
               printf ("In Rose::Frontend::RunSerial(): Skipping try...catch mechanism in call to file->runFrontend(status_of_file); \n");
               file->runFrontend(status_of_file);
 #else
-#if 0
-              try
-              {
-                  //-----------------------------------------------------------
-                  // Pass File to Frontend
-                  //-----------------------------------------------------------
-                  file->runFrontend(status_of_file);
-                  {
-                      status_of_function =
-                          max(status_of_file, status_of_function);
-                  }
-              }
-              catch(...)
-              {
-                  if (file != nullptr)
-                  {
-                     file->set_frontendErrorCode(100);
-                  }
-                  else
-                  {
-                      std::cout
-                          << "[FATAL] "
-                          << "Unable to keep going due to an unrecoverable internal error"
-                          << std::endl;
-                      exit(1);
-                  }
-              }
-#endif
               //-----------------------------------------------------------
               // Pass File to Frontend. Avoid using try/catch/re-throw if not necessary because it interferes with debugging
               // the exception (it makes it hard to find where the exception was originally thrown).  Also, no need to print a

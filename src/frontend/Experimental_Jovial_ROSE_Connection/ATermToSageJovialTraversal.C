@@ -3364,16 +3364,18 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
             }
 
             // Make a separate label statement for each name in the list
-            SgLabelStatement* labelStmt{nullptr};
+            //
+            // WARNING: Do not use SageTreeBuilder!
+            //   A StatementNameDeclaration should not create a symbol, it is effectively a noop,
+            //   as it is not needed for normal label handling and may get in the way, see gitlab-issue.310.jov
+            //   Thus statement creation has to be done here, can't even use SageBuilder.
 
-            // Begin SageTreeBuilder
-            sage_tree_builder.Enter(labelStmt, name);
+            SgLabelStatement* labelStmt{new SgLabelStatement(name, /*statement*/nullptr)};
+
             setSourcePosition(labelStmt, head);
             labelStmt->set_label_type(labelType);
 
-            // End SageTreeBuilder
-            std::vector<std::string> labels{};
-            sage_tree_builder.Leave(labelStmt, labels);
+            SageInterface::appendStatement(labelStmt, SageBuilder::topScopeStack());
          }
          else return ATfalse;
       }
