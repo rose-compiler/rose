@@ -406,7 +406,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    // Consider creating an instrinsic Compool module for the parameters?
 
    if (ATmatch(term, "BITSINBYTE")) {
-     mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
+     expr = SageBuilder::buildVarRefExp("BITSINBYTE", SageBuilder::getGlobalScopeFromScopeStack());
    }
    else if (ATmatch(term, "BITSINWORD")) {
      expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::getGlobalScopeFromScopeStack());
@@ -1796,10 +1796,7 @@ ATbool ATermToSageJovialTraversal::traverse_Dimension(ATerm term, SgExprListExp*
 
    SgSubscriptExpression* range = nullptr;
 
-   LanguageTranslation::ExpressionKind expr_enum = LanguageTranslation::e_unknown;
-
    if (ATmatch(term, "Dimension(<term>,<term>)", &t_opt_lower_bound, &t_upper_bound)) {
-      expr_enum = LanguageTranslation::e_explicit_dimension;
 
    // Lower bound (optional)
       if (ATmatch(t_opt_lower_bound, "no-lower-bound-option()")) {
@@ -1827,7 +1824,6 @@ ATbool ATermToSageJovialTraversal::traverse_Dimension(ATerm term, SgExprListExp*
       else return ATfalse;
    }
    else if (ATmatch(term, "DimensionSTAR()")) {
-      expr_enum = LanguageTranslation::e_star_dimension;
       lower_bound = SageBuilder::buildNullExpression_nfi();
       upper_bound = new SgAsteriskShapeExp();
       setSourcePosition(upper_bound, term);
@@ -3151,22 +3147,22 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
 // A TableTypeSpecifier looks a base class name or it is a primitive type
 //
-   SgType* base_type = nullptr;
-   SgJovialTableType* parent_type = nullptr;
+   SgType* base_type{nullptr};
+   SgJovialTableType* parent_type{nullptr};
 
    ASSERT_not_null(table_decl);
 
    ATerm t_dim_list, t_struct_spec, t_like_option, t_entry_spec, t_type_name;
-   std::string table_type_name, like_name;
+   std::string table_type_name;
    TableSpecifier table_spec;
 
-   bool has_table_type_name = false;
-   bool has_like_option = false;
+   bool hasLikeOption{false};
+   bool hasTableTypeName{false};
 
    SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
    ASSERT_not_null(table_type);
 
-   SgExprListExp* dim_info = table_type->get_dim_info();
+   SgExprListExp* dim_info{table_type->get_dim_info()};
 
 // TableTypeSpecifier with a name
    if (ATmatch(term, "TableTypeSpecifierName(<term>,<term>)", &t_dim_list, &t_type_name)) {
@@ -3181,7 +3177,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
       if (traverse_Name(t_type_name, table_type_name)) {
          // MATCHED TableTypeName
-         has_table_type_name = true;
+         hasTableTypeName = true;
       } else return ATfalse;
 
    // This type should have already been created by a type declaration statement, find it
@@ -3213,7 +3209,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
    else if (ATmatch(term, "TableTypeSpecifier(<term>,<term>,<term>,<term>)",
                           &t_dim_list, &t_struct_spec, &t_like_option, &t_entry_spec)) {
 
-      StructureSpecifier& struct_spec = table_spec.struct_spec;
+      StructureSpecifier& struct_spec{table_spec.struct_spec};
 
       if (dim_info == nullptr) {
          dim_info = SageBuilder::buildExprListExp_nfi();
@@ -3235,19 +3231,19 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       else if (ATmatch(t_like_option, "LikeOption(<term>)", &t_type_name)) {
          if (traverse_Name(t_type_name, table_type_name)) {
             // MATCHED Like option TableTypeName
-            has_like_option = true;
-            has_table_type_name = true;
+            hasLikeOption = true;
+            hasTableTypeName = true;
 
          // TODO: like-option (apparently not needed at the moment)
-            mlog[ERROR] << "UNIMPLEMENTED: LikeOption";
+            mlog[ERROR] << "UNIMPLEMENTED: LikeOption: " << hasLikeOption << ": hasTableTypeName:" << hasTableTypeName << "\n";
             ROSE_ABORT();
          } else return ATfalse;
       }
       else return ATfalse;
 
    // TODO - something with these
-      SgExpression* preset = nullptr;
-      SgExprListExp* attr_list = nullptr;
+      SgExpression* preset{nullptr};
+      SgExprListExp* attr_list{nullptr};
       LocationSpecifier loc_spec;
 
    // Entry specifier without a body
@@ -3262,11 +3258,11 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
       if (preset) {
          mlog[WARN] << "UNIMPLEMENTED: TableTypeSpecifier - preset (This is likely fixed, please confirm)\n";
-         ROSE_ASSERT(preset == nullptr);
+         ASSERT_require(preset == nullptr);
       }
       if (attr_list) {
          mlog[WARN] << "UNIMPLEMENTED: TableTypeSpecifier - attr_list\n";
-         ROSE_ASSERT(attr_list == nullptr);
+         ASSERT_require(attr_list == nullptr);
       }
    }
    else return ATfalse;
@@ -3280,7 +3276,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
    }
 
 // Set the structure specifier if present
-   StructureSpecifier& struct_spec = table_spec.struct_spec;
+   StructureSpecifier& struct_spec{table_spec.struct_spec};
    if (struct_spec.is_parallel) {
       table_type->set_structure_specifier(StrucSpecEnum::e_parallel);
    }
@@ -3369,6 +3365,14 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
             //   A StatementNameDeclaration should not create a symbol, it is effectively a noop,
             //   as it is not needed for normal label handling and may get in the way, see gitlab-issue.310.jov
             //   Thus statement creation has to be done here, can't even use SageBuilder.
+            //
+            //   Standard (MIL-STD-1589C) states that <statement-name-declaration> must either be a
+            //   <formal-input-parameter> to the subroutine containing the <statement-name-declaration>
+            //   or else must be used in a <label> in the immediate scope containing the
+            //   <statement-name-declaration> (i.e., no including nested scopes), or else
+            //   the <statement-name-declaration> must be a <ref-specification-choice>
+            //
+            //   It seems not creating a symbol will work (though may be a hack).
 
             SgLabelStatement* labelStmt{new SgLabelStatement(name, /*statement*/nullptr)};
 
