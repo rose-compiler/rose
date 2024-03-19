@@ -418,7 +418,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::getGlobalScopeFromScopeStack());
    }
    else if (ATmatch(term, "LOCSINWORD")) {
-     mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
+     expr = SageBuilder::buildVarRefExp("LOCSINWORD", SageBuilder::getGlobalScopeFromScopeStack());
    }
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
