@@ -1375,7 +1375,6 @@ bool AstInterface:: IsFunctionType( const AstNodeType& _t,
     if (ptype != 0) {
        return IsFunctionType(AstNodeTypeImpl(ptype->get_base_type()), paramtypes, returntype);
     }
-    std::cerr << "Not function type:" << t->class_name() << ":" << t->unparseToString() << "\n";
     return false;
 }
 
@@ -1505,7 +1504,6 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   {
       SgInitializedName* var = isSgInitializedName(d);
       SgType* t = var->get_type();
-      std::cerr << "type of sgInitializedName: " << t->class_name() << "\n";
       if (IsFunctionType(AstNodeTypeImpl(t), paramtype, returntype)) {
          if (name != 0) {
             *name = var->get_name().str();
@@ -1861,8 +1859,6 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
         if (vartype != 0) *vartype = var->get_type();
         if (varname != 0) *varname = "this";
         decl = exp->get_parent();
-        while (decl->variantT() != V_SgFunctionDefinition)
-          {decl = decl->get_parent();} 
       }
        break;
     case V_SgInitializedName:
