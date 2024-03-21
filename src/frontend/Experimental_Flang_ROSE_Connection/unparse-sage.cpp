@@ -88,7 +88,6 @@ public:
     Walk(x.label, " ");
   }
   template <typename T> void Post(const Statement<T> &x) {
-    auto sourceInfo{cooked_->GetSourcePositionRange(x.source)};
     if (auto range{cooked_->GetProvenanceRange(x.source)}) {
       auto src{cooked_->allSources().GetSource(range.value())};
       auto size = range.value().size();

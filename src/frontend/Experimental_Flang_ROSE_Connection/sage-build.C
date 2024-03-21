@@ -600,6 +600,77 @@ void BuildVisitor::Build(parser::AssignmentStmt &x)
   builder.Leave(stmt, labels);
 }
 
+static void BuildLoopControl(parser::NonLabelDoStmt &x, SgExpression* &name, SgExpression* &condition) {
+  // std::tuple<> std::optional<Name>, std::optional<Label>, std::optional<LoopControl>
+
+  name = nullptr;
+  condition = nullptr;
+
+  boost::optional<std::string> doName {boost::none};
+  if (std::get<0>(x.t)) {
+    doName = std::get<0>(x.t).value().ToString();
+    ABORT_NO_IMPL;
+  }
+
+  boost::optional<std::string> doLabel{boost::none};
+  if (std::get<1>(x.t)) {
+    doLabel = std::to_string(std::get<1>(x.t).value());
+    ABORT_NO_IMPL;
+  }
+
+  // LoopControl
+  if (std::get<2>(x.t)) {
+    WalkExpr(std::get<2>(x.t), condition);
+    ASSERT_not_null(condition);
+  }
+}
+
+void BuildVisitor::Build(parser::DoConstruct &x)
+{
+  //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
+  //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
+
+  SgWhileStmt* whileStmt{nullptr};
+  SgFortranDo* doStmt{nullptr};
+  SgExpression* condition{nullptr}; // loop-control
+  SgExpression* name{nullptr}; // do-construct-name
+
+  // Traverse NonLabelDoStmt to get the loop condition
+  BuildLoopControl(std::get<0>(x.t).statement, name, condition);
+
+  // Enter SageTreeBuilder
+  if (x.IsDoWhile()) {
+    builder.Enter(whileStmt, condition);
+  } else {
+    // Simple form for now
+    builder.Enter(doStmt);
+  }
+
+  // Traverse the body
+  Walk(std::get<1>(x.t));
+
+  // Leave SageTreeBuilder
+  if (x.IsDoWhile()) {
+    builder.Leave(whileStmt, /*hasEndDo*/true);
+  } else {
+    builder.Leave(doStmt);
+  }
+}
+
+// ActionStmt(s)
+//
+void BuildVisitor::Build(parser::ContinueStmt &) {
+  SgFortranContinueStmt* stmt{nullptr};
+  builder.Enter(stmt);
+  builder.Leave(stmt, getLabels());
+}
+
+void BuildVisitor::Build(parser::FailImageStmt &) {
+   SgProcessControlStatement* stmt{nullptr};
+   builder.Enter(stmt, "fail_image", boost::none, boost::none);
+   builder.Leave(stmt, getLabels());
+}
+
 void Build(parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
 {
   using namespace Fortran::parser;
@@ -844,9 +915,11 @@ void BuildImpl(parser::CharLiteralConstant &x, SgExpression* &expr)
 
 void BuildImpl(parser::LogicalLiteralConstant &x, SgExpression* &expr)
 {
-  std::cout << "BuildImpl(LogicalLiteralConstant)\n";
-  ABORT_NO_TEST;
-
+  // std::tuple<> bool, std::optional<KindParam>
+  if (std::get<1>(x.t)) {
+    // KindParam
+    ABORT_NO_IMPL;
+  }
   expr = SageBuilder::buildBoolValExp_nfi(std::get<0>(x.t));
 }
 
@@ -1608,12 +1681,14 @@ void Build(parser::ConstantExpr &x, SgExpression* &expr)
 
 void BuildImpl(parser::FormatStmt &x)
 {
+  // FormatStmt format::FormatSpecification v;
   std::cout << "BuildImpl(FormatStmt)\n";
   ABORT_NO_IMPL;
 }
 
 void BuildImpl(parser::EntryStmt &x)
 {
+  // EntryStmt std::tuple<> Name, std::list<DummyArg>, std::optional<Suffix>
   std::cout << "BuildImpl(EntryStmt)\n";
   ABORT_NO_IMPL;
 }
@@ -1652,46 +1727,6 @@ void Build(parser::DataStmtConstant &x, SgExpression* &expr)
 }
 
 // ActionStmt
-
-void Build(parser::ContinueStmt &x, const OptLabel &label)
-{
-  std::cout << "Rose::builder::Build(ContinueStmt)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   std::vector<std::string> labels{};
-   if (label) {
-      labels.push_back(std::to_string(label.value()));
-   }
-
-   // Begin SageTreeBuilder
-   SgFortranContinueStmt* continueStmt{nullptr};
-   builder.Enter(continueStmt);
-
-   // Finish SageTreeBuilder
-   builder.Leave(continueStmt, labels);
-#endif
-}
-
-void Build(parser::FailImageStmt &x, const OptLabel &label)
-{
-  std::cout << "Rose::builder::Build(FailImageStmt)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   std::vector<std::string> labels{};
-   if (label) {
-      labels.push_back(std::to_string(label.value()));
-   }
-
-   // Begin SageTreeBuilder
-   SgProcessControlStatement* failStmt{nullptr};
-   builder.Enter(failStmt, "fail_image", boost::none, boost::none);
-
-   // Finish SageTreeBuilder
-   builder.Leave(failStmt, labels);
-#endif
-}
 
 void BuildImpl(parser::AllocateStmt &x)
 {
@@ -1940,12 +1975,14 @@ void BuildImpl(parser::ReadStmt &x)
 
 void BuildImpl(parser::ReturnStmt &x)
 {
+  // ReturnStmt std::optional<ScalarIntExpr> v;
   std::cout << "BuildImpl(ReturnStmt)\n";
   ABORT_NO_IMPL;
 }
 
 void BuildImpl(parser::RewindStmt &x)
 {
+  // RewindStmt std::list<PositionOrFlushSpec> v;
   std::cout << "BuildImpl(RewindStmt)\n";
   ABORT_NO_IMPL;
 }
@@ -2516,45 +2553,6 @@ void Build(parser::EndDoStmt &x)
   ABORT_NO_IMPL;
 }
 
-void Build(parser::DoConstruct &x)
-{
-  //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
-  //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
-  std::cout << "Rose::builder::Build(DoConstruct)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-  SgStatement* blockStmt{nullptr};
-  SgWhileStmt* whileStmt{nullptr};
-  SgFortranDo* doStmt{nullptr};
-  SgExpression* condition{nullptr}; // loop-control
-  SgExpression* name{nullptr}; // do-construct-name
-
-  // Traverse NonLabelDoStmt to get the loop condition
-  Build(std::get<0>(x.t).statement, name, condition);
-
-  // Enter SageTreeBuilder
-  if (x.IsDoWhile()) {
-    builder.Enter(whileStmt, condition);
-  } else {
-    // Simple form for now
-    builder.Enter(doStmt);
-  }
-
-  // Traverse the body
-  //erasmus
-  //Build(std::get<1>(x.t), blockStmt);
-  ABORT_NO_IMPL;
-
-  // Leave SageTreeBuilder
-  if (x.IsDoWhile()) {
-    builder.Leave(whileStmt, true /* has_end_do_stmt */);
-  } else {
-    builder.Leave(doStmt);
-  }
-#endif
-}
-
 void Build(parser::IfConstruct &x)
 {
   // std::tuple<>
@@ -2749,7 +2747,7 @@ void Build(parser::OmpEndLoopDirective &x)
 }
 
 // DoConstructf3037
-void Build(parser::NonLabelDoStmt&x, SgExpression* &name, SgExpression* &control)
+void Build(parser::NonLabelDoStmt &x, SgExpression* &name, SgExpression* &control)
 {
   std::cout << "Rose::builder::Build(NonLabelDoStmt)\n";
   ABORT_NO_IMPL;

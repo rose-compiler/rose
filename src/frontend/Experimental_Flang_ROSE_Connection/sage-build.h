@@ -49,8 +49,6 @@ void Build(Fortran::parser:: CUFKernelDoConstruct &);
 
 void BuildFunctionReturnType(const Fortran::parser::SpecificationPart &, std::string &, SgType* &);
 
-void BuildImpl(Fortran::parser::AssignmentStmt &);
-
 void Build(Fortran::parser::FunctionStmt &, std::list<std::string> &, std::string &, std::string &, LanguageTranslation::FunctionModifierList &, SgType* &);
 void Build(Fortran::parser::SubroutineStmt &, std::list<std::string> &, std::string &, LanguageTranslation::FunctionModifierList &);
 
@@ -156,12 +154,10 @@ void Build(Fortran::parser::StmtFunctionStmt &);
 void Build(Fortran::parser::   ErrorRecovery &);
 
 // ActionStmt
-void Build(Fortran::parser::         ContinueStmt &, const OptLabel &);
 void Build(Fortran::parser::            CycleStmt &, const OptLabel &);
 void Build(Fortran::parser::        FailImageStmt &, const OptLabel &);
 void Build(Fortran::parser::             StopStmt &, const OptLabel &);
 
-void Build(Fortran::parser::         ContinueStmt &);
 void Build(Fortran::parser::        FailImageStmt &);
 
 void Build(Fortran::parser::         AllocateStmt &);
@@ -244,7 +240,6 @@ void Build(Fortran::parser::    ChangeTeamConstruct&);
 void Build(Fortran::parser::      CriticalConstruct&);
 void Build(Fortran::parser::            LabelDoStmt&);
 void Build(Fortran::parser::              EndDoStmt&);
-void Build(Fortran::parser::            DoConstruct&);
 void Build(Fortran::parser::            IfConstruct&);
 void Build(Fortran::parser::    SelectRankConstruct&);
 void Build(Fortran::parser::    SelectTypeConstruct&);

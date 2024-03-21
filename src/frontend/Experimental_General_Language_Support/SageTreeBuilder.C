@@ -1510,31 +1510,29 @@ Leave(SgPrintStatement* print_stmt)
 }
 
 void SageTreeBuilder::
-Enter(SgWhileStmt* &while_stmt, SgExpression* condition)
+Enter(SgWhileStmt* &stmt, SgExpression* condition)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgWhileStmt* &, ...) \n";
    ASSERT_not_null(condition);
 
-   SgExprStatement* condition_stmt = SageBuilder::buildExprStatement_nfi(condition);
+   SgExprStatement* conditionStmt = SageBuilder::buildExprStatement_nfi(condition);
    SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
 
-   while_stmt = SageBuilder::buildWhileStmt_nfi(condition_stmt, body, /*else_body*/nullptr);
+   stmt = SageBuilder::buildWhileStmt_nfi(conditionStmt, body, /*else_body*/nullptr);
 
 // Append before push (so that symbol lookup will work)
-   SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
+   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(body);
 }
 
 void SageTreeBuilder::
-Leave(SgWhileStmt* while_stmt, bool has_end_do_stmt)
+Leave(SgWhileStmt* stmt, bool hasEndDo)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgWhileStmt*, ...) \n";
-   ASSERT_not_null(while_stmt);
+   ASSERT_not_null(stmt);
 
-   // The default value of has_end_do_stmt is false so if true,
-   // then the language supports it and it needs to be set.
-   if (has_end_do_stmt) {
-      while_stmt->set_has_end_statement(true);
+   if (hasEndDo) {
+      stmt->set_has_end_statement(true);
    }
 
    SageBuilder::popScopeStack();  // while statement body

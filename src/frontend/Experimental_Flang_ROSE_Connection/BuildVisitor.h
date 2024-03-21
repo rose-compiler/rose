@@ -5,7 +5,8 @@ namespace Rose::builder {
 class BuildVisitor {
 public:
   BuildVisitor() : cooked_{nullptr} {}
-  BuildVisitor(Fortran::parser::AllCookedSources &cooked) : cooked_{&cooked}, type_{nullptr} {
+  BuildVisitor(Fortran::parser::AllCookedSources &cooked)
+    : cooked_{&cooked}, type_{nullptr}, label_{std::nullopt} {
   }
 
   // In nearly all cases, this code avoids defining Boolean-valued Pre()
@@ -14,6 +15,16 @@ public:
   // values for Pre() respectively.
   template <typename T> void Before(T &) {}
   template <typename T> double Build(T &); // not void, never used
+
+  // Save and subsequently remove any label
+  template <typename T> void Before(Fortran::parser::Statement<T> &x) {
+    if (x.label) {
+      label_ = x.label;
+    }
+  }
+  template <typename T> void Post(Fortran::parser::Statement<T> &x) {
+    label_ = std::nullopt;
+  }
 
   template <typename T> bool Pre(T &x) {
     if constexpr (std::is_void_v<decltype(Build(x))>) {
@@ -120,6 +131,11 @@ public:
 
   // ExecutionPart
   void Build(Fortran::parser::AssignmentStmt &);
+  void Build(Fortran::parser::DoConstruct &);
+
+  // ActionStmt
+  void Build(Fortran::parser::ContinueStmt &);
+  void Build(Fortran::parser::FailImageStmt &);
   void Build(Fortran::parser::StopStmt &);
 
   void Done() const { std::cerr << "Done()\n"; }
@@ -132,6 +148,15 @@ public:
   void BuildType(Fortran::parser::DeclarationTypeSpec &x, SgType* &type) {
     Walk(x);
     this->get(type); // get synthesized attribute
+  }
+
+  // Accessor for statement label
+  const std::vector<std::string> getLabels() const {
+    if (label_) {
+      std::vector<std::string> result{std::to_string(label_.value())};
+      return result;
+    }
+    return std::vector<std::string>{};
   }
 
   // Access functions for synthesized attributes
@@ -148,6 +173,7 @@ public:
 private:
   Fortran::parser::AllCookedSources* cooked_;
   SgType* type_; // synthesized attribute
+  std::optional<Fortran::parser::Label> label_;
 
 }; // BuildVisitor
 
