@@ -3141,9 +3141,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                       else
                        {
                       // DQ (2/9/2010): Fix for test2010_03.C
-#if 0
-#else
-#if 1
                       // DQ (6/15/2013): The code for processing the function name when it contains template arguments that requires name qualification.
 
                       // DQ (5/25/2013): Added support to unparse the template arguments seperately from the member function name (which should NOT
@@ -3181,12 +3178,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                            // DQ (6/15/2013): I think this mod is required for test2010_03.C.
                               curprint(" " + func_name + " ");
                             }
-#else
-#error "DEAD CODE!"
-#error "DEAD CODE!"
-#error "DEAD CODE!"
-#endif
-#endif
                        }
                   }
                  else
@@ -3199,9 +3190,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          printf ("In unparseMFuncRefSupport(): function name IS output \n");
                          curprint("/* In unparseMFuncRefSupport(): function name IS output */ \n");
 #endif
-#if 0
-#error "DEAD CODE!"
-#else
+
                       // DQ (5/25/2013): Added support to unparse the template arguments seperately from the member function name (which should NOT
                       // include the template arguments when unparsing). Note the the template arguments in the name are important for the generation
                       // of mangled names for use in symbol tabls, but that we need to output the member function name and it's template arguments
@@ -3235,7 +3224,6 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                             {
                               curprint (func_name);
                             }
-#endif
                        }
                       else
                        {
@@ -6101,7 +6089,7 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
 
      bool result = false;
      SgNamedType* namedType = isSgNamedType(expressionType);
-#if 1
+
   // DQ (9/14/2013): I think this is a better implementation (test2012_46.c was failing before).
   // This permits both test2013_70.c and test2012_46.c to unparse properly, where the two were
   // previously mutually exclusive.
@@ -6132,10 +6120,6 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
                result = false;
              }
         }
-#else
-#error "DEAD CODE!"
-#endif
-
      return result;
    }
 
@@ -6744,14 +6728,12 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                ASSERT_not_null(aggregateInitializer);
                SgClassType* classType = isSgClassType(aggregateInitializer->get_type());
 
-               if (classType != NULL)
-                  {
-               if (aggregateInitializer != NULL && classType != NULL)
-                  {
-                    newinfo2.set_SkipClassSpecifier();
-                    unp->u_type->outputType<SgAggregateInitializer>(aggregateInitializer,classType,newinfo2);
-                  }
-                  }
+               if (classType != nullptr) {
+                 if (aggregateInitializer != nullptr && classType != nullptr) {
+                   newinfo2.set_SkipClassSpecifier();
+                   unp->u_type->outputType<SgAggregateInitializer>(aggregateInitializer,classType,newinfo2);
+                 }
+               }
              }
 
 #if DEBUG_AGGREGATE_INITIALIZER
@@ -7920,32 +7902,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if 1
 #error "DEAD CODE!"
                  // DQ (5/10/2015): This fails for test2015_85.c.
-
-#if 0
-#else
-#error "DEAD CODE!"
-#error "DEAD CODE!"
-
-#if 1
-#error "DEAD CODE!"
-#else
-#error "DEAD CODE!"
-#endif
-                       {
-#error "DEAD CODE!"
-#if DEBUG_DESIGNATED_INITIALIZER
-                         printf ("In unparseDesignatedInitializer: RESET outputDesignatedInitializerAssignmentOperator \n");
-#endif
-#error "DEAD CODE!"
-                         outputDesignatedInitializerAssignmentOperator = false;
-                       }
-#error "DEAD CODE!"
-#if DEBUG_DESIGNATED_INITIALIZER
-                    printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
-#endif
-#error "DEAD CODE!"
-
-#endif
 #else
 #error "DEAD CODE!"
                  // DQ (4/11/2015): Testing for test2015_85.c.
@@ -7987,15 +7943,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if DEBUG_DESIGNATED_INITIALIZER
           printf ("In unparseDesignatedInitializer: isInUnion = %s info.SkipClassDefinition() = %s \n",isInUnion ? "true" : "false",info.SkipClassDefinition() ? "true" : "false");
 #endif
-       // DQ (7/24/2013): Force isInUnion to false so that we can handle test2012_46.c:
-       // int x = (((union ABC { int __in; int __i; }) { .__in = 42 }).__i);
-       // isInUnion = false;
-#if 0
-#error "DEAD CODE!"
-#else
-       // Comment out to process test2013_32.c
-       // isInUnion = false;
-
        // DQ (7/27/2013): Don't output designated initialized in function call arguments (appears to not be allowed).
           if (isInUnion == true)
              {
@@ -8011,7 +7958,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #endif
                   }
              }
-#endif
 
           if (isInUnion == false)
              {
@@ -8048,19 +7994,12 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      printf ("In unparseDesignatedInitializer: di->get_memberInit()                          = %p = %s \n",di->get_memberInit(),di->get_memberInit()->class_name().c_str());
 #endif
 
-#if 0
-#error "DEAD CODE!"
-#else
-
   // DQ (5/11/2015): We need to look at the SgAggregateInitializer and see if it will be outputing "{}".
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
      bool need_explicit_braces_in_aggregateInitializer = (aggregateInitializer != NULL && aggregateInitializer->get_need_explicit_braces());
 
-#if 0
-#else
   // Variable used to control output of normalized syntax "={}".
      bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
-#endif
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("In unparseDesignatedInitializer: initial value from AST: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
@@ -8093,7 +8032,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      printf ("In unparseDesignatedInitializer: isInUnion = %s \n",isInUnion ? "true" : "false");
 #endif
 
-  // if (outputDesignatedInitializerAssignmentOperator == true)
      if (isInUnion == false)
         {
           curprint (" = ");
@@ -8119,8 +8057,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #endif
              }
         }
-#endif
-
 #else
 #error "DEAD CODE!"
 #endif
