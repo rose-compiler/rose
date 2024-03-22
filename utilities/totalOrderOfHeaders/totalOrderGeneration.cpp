@@ -644,7 +644,8 @@ int main(int argc, char* argv[])
       std::string fileName = ent->d_name;
       if (fileName.length() > 5 && fileName.substr(fileName.length() - 5) == ".json") {
 	std::vector<std::string> paths = extractHeaderPaths(directoryPath + "/" + fileName);
-	allPaths.push_back(paths);
+	if (paths.size()>0)
+          allPaths.push_back(paths);
       }
     }
     closedir(dir);
