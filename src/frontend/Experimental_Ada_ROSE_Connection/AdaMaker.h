@@ -689,6 +689,8 @@ namespace Ada_ROSE_Translation
   /// \param parammode the parameter modifier (e.g., in, out)
   /// \param scope     the scope of the parameter list
   /// \pre the types of all initialized names must be the same
+  /// \note in contrast to other mk* functions, mkParameter attaches the
+  ///       new node to the scope (using fixVariableDeclaration).
   SgVariableDeclaration&
   mkParameter( const SgInitializedNamePtrList& parms,
                SgTypeModifier parmmode,

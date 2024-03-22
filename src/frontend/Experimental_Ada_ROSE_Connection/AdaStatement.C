@@ -4549,6 +4549,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         SgVariableDeclaration& sgnode = getParm(elem, ctx);
 
+        // \todo is the call to append statement required?
+        //       getParm -> mkParameter: which calls fixVariableDeclaration
         ctx.appendStatement(sgnode);
         /* unused fields:
         */

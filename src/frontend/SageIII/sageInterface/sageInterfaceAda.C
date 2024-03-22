@@ -849,6 +849,7 @@ namespace Ada
       return (  (prgName != "import")
              && (prgName != "export")
              && (prgName != "priority")
+             && (prgName != "volatile")
              );
     }
 
@@ -1603,35 +1604,38 @@ namespace Ada
     }
 
 
-    bool isUniversalInteger(const SgType* ty) { return isSgTypeLongLong(ty) != nullptr; }
-    bool isUniversalReal   (const SgType* ty) { return isSgTypeLongDouble(ty) != nullptr; }
+    bool isElementaryInteger(const SgType* ty) { return isSgTypeLongLong(ty) != nullptr; }
+    bool isElementaryReal   (const SgType* ty) { return isSgTypeLongDouble(ty) != nullptr; }
 
-    bool isUniversalFixed  (const SgType* ty)
+    bool isElementaryFixed  (const SgType* ty)
     {
       const SgTypeFixed* fx = isSgTypeFixed(ty);
 
       return fx && (fx->get_fraction() == nullptr) && (fx->get_scale() == nullptr);
     }
 
-    // bool isUniversalPointer(const SgType* ty) { return isNullptrType(ty); }
+    // bool isElementaryPointer(const SgType* ty) { return isNullptrType(ty); }
 
-    bool isUniversalType(const SgType* ty)
+    bool isElementaryType(const SgType* ty)
     {
-      return (  isUniversalInteger(ty)
-             || isUniversalReal(ty)
-             || isUniversalFixed(ty)
-             //~ || isUniversalPointer(ty)
+      return (  isElementaryInteger(ty)
+             || isElementaryReal(ty)
+             || isElementaryFixed(ty)
+             //~ || isElementaryPointer(ty)
              );
     }
 
     SgType*
     simpleCommonDenominator(SgType* lhs, SgType* rhs)
     {
+      // failure cases
       if (lhs == nullptr) return rhs;
       if (rhs == nullptr) return lhs;
 
-      if (isUniversalType(lhs)) return rhs;
-      if (isUniversalType(rhs)) return lhs;
+      // \todo check that the elementary value can be converted
+      //       to the other type.
+      if (isElementaryType(lhs)) return rhs;
+      if (isElementaryType(rhs)) return lhs;
 
       return nullptr;
     }
@@ -1749,6 +1753,8 @@ namespace Ada
 
       void handle(const SgConditionalExp& n)
       {
+        // \todo implement Ada type resolution
+        //       http://www.ada-auth.org/standards/rm12_w_tc1/html/RM-4-5-7.html#I2901
         TypeDescription truDesc = typeOfExpr(n.get_true_exp());
         TypeDescription falDesc = typeOfExpr(n.get_false_exp());
 
@@ -3932,6 +3938,19 @@ SgDeclarationStatement* associatedDeclaration(const SgSymbol& n)
 bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
 {
   return boost::iequals(attr.get_attribute().getString(), attrname);
+}
+
+
+SgExprListExp*
+isPragma(const SgPragmaDeclaration& prgdcl, const std::string& prgname)
+{
+  SgPragma* pragma = prgdcl.get_pragma();
+  if ((pragma == nullptr) || !boost::iequals(pragma->get_pragma(), prgname))
+    return nullptr;
+
+  SgExprListExp* res = pragma->get_args();
+  ASSERT_require(res);
+  return res;
 }
 
 

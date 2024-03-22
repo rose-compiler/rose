@@ -1000,6 +1000,15 @@ namespace
   /// tests if \ref attr is an attribute with name \ref attrname.
   bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname);
 
+  /// tests if \ref prgdcl is a pragma with name \ref pragmaname.
+  /// \param prgdcl     the pragma declaration
+  /// \param pragmaname the name to test for
+  /// \param the pragmas argument list (possibly empty) if \ref prgdcl is
+  ///        a \ref pragmaname pragma;
+  ///        nullptr otherwise.
+  SgExprListExp*
+  isPragma(const SgPragmaDeclaration& prgdcl, const std::string& pragmaname);
+
   /// Traverses all AST nodes in an unspecified order.
   /// \details
   ///   Only traverses the links that are commonly traversed by ROSE's standard
