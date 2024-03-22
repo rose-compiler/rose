@@ -238,7 +238,9 @@ vector<string> extractHeaderPaths(const std::string& filename) {
 
   // Ensure that the parsed object is an array
   if (!json.is_array()) {
-    throw std::runtime_error("JSON is not an array");
+    cerr<<"Warning: json file cannot be parsed as an array in extractHeaderPaths() when parsing "<< filename <<endl;
+    return allPaths;
+//    throw std::runtime_error("JSON is not an array");
   }
 
   // Iterate over the array
