@@ -1427,49 +1427,15 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      int current_line_number   = 1;
      int current_column_number = 1;
 
-#if 0
-     printf ("Starting: line = %d column = %d \n",current_line_number,current_column_number);
-#endif
-
-     int output_token_counter = 0;
      for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
         {
-#if 0
-          printf ("TOP OF LOOP: current_line_number: line = %d current_column_number: column = %d \n",current_line_number,current_column_number);
-#endif
-#if 0
-          printf ("   --- token #%d token = %p \n",output_token_counter,(*i)->p_tok_elem);
-          if ((*i)->p_tok_elem != nullptr)
-             {
-               printf ("   --- --- token id = %d token = %s \n",(*i)->p_tok_elem->token_id,(*i)->p_tok_elem->token_lexeme.c_str());
-             }
-
-       // DQ (9/29/2013): Added support for reference to the PreprocessingInfo object in the token stream.
-          printf ("   --- token #%d p_preprocessingInfo = %p \n",output_token_counter,(*i)->p_preprocessingInfo);
-          printf ("   --- token #%d beginning_fpi line  = %d column = %d \n",output_token_counter,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num);
-          printf ("   --- token #%d ending_fpi    line  = %d column = %d \n",output_token_counter,(*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num);
-#endif
-          output_token_counter++;
-
           std::string s   = (*i)->p_tok_elem->token_lexeme;
           int lines       = getNumberOfLines(s);
           int line_length = getColumnNumberOfEndOfString(s);
-#if 0
-       // DQ (12/26/2018): Added detection for windows line endings.
-          if (s.length() == 2 && s[0] == '\r' && s[1] == '\n')
-             {
-               printf ("   --- Found a Windows CR LF pair \n");
-             }
-#endif
-#if 0
-          printf ("   --- lines = %d \n",lines);
-          printf ("   --- line_length = %d \n",line_length);
-          printf ("   --- s = -->|%s|<-- \n",s.c_str());
-#endif
+
        // Check starting position
           if ((*i)->beginning_fpi.line_num != current_line_number)
              {
-            // printf ("error: (*i)->beginning_fpi.line_num = %d current_line_number = %d \n",(*i)->beginning_fpi.line_num,current_line_number);
                printf ("error: (*i)->beginning_fpi.line_num = %d \n",(*i)->beginning_fpi.line_num);
                printf ("error: current_line_number          = %d \n",current_line_number);
                ROSE_ABORT();
@@ -1488,9 +1454,6 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
           current_line_number += lines;
 
-#if 0
-          printf ("MIDDLE OF LOOP: current_line_number: line = %d current_column_number: column = %d \n",current_line_number,current_column_number);
-#endif
           if (lines == 0)
              {
             // Increment the column number.
@@ -1517,14 +1480,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
                printf ("error: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
                ROSE_ABORT();
              }
-#if 0
-          printf ("BASE OF LOOP: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
-#endif
         }
-
-  // We could output a banner, but this would make the input and output files different.
-  // cur << "/* ROSE Generated file from token stream */ \n";
-
 
   // DQ (10/27/2013): Use a different filename for the output of the raw token stream (not associated with individual statements).
      string outputFilename = "rose_raw_tokens_" + file->get_sourceFileNameWithoutPath();

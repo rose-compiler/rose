@@ -1217,7 +1217,7 @@ Unparse_ExprStmt::isAnonymousClass(SgType* templateArgumentType)
      bool returnValue = false;
 
      SgClassType* classType = isSgClassType(templateArgumentType);
-     if (classType != NULL)
+     if (classType != nullptr)
         {
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
 #if 0
@@ -4087,7 +4087,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                SgClassType* classType = isSgClassType(lhs->get_type());
                SgClassDeclaration* lhsClassDeclaration = NULL;
                SgClassDefinition*  lhsClassDefinition  = NULL;
-               if (classType != NULL)
+               if (classType != nullptr)
                   {
 #if DEBUG_FUNCTION_CALL
                     printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
@@ -6469,10 +6469,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ASSERT_not_null(aggr_init);
 
-     static int depth = 0;
-
-     depth++;
-
 #define DEBUG_AGGREGATE_INITIALIZER 0
 
 #if DEBUG_AGGREGATE_INITIALIZER || 0
@@ -6615,27 +6611,20 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
   // since we need this to work independent of the list size (see test2018_116.C).
 
 
-  // if (need_cxx11_class_specifier == true && list.size() == 0 && need_explicit_braces == true)
      if (need_cxx11_class_specifier == true && need_explicit_braces == true)
         {
        // Identified list size == 0
 
           ASSERT_not_null(aggr_init);
           SgClassType* classType = isSgClassType(aggr_init->get_type());
-#if 0
-          printf ("classType = %p \n",classType);
-#endif
-          if (classType != NULL)
+
+          if (classType != nullptr)
              {
-#if 0
-               printf ("Output the class name classType = %p = %s \n",classType,classType->class_name().c_str());
-#endif
                newinfo2.set_SkipClassSpecifier();
                unp->u_type->outputType<SgAggregateInitializer>(aggr_init,classType,newinfo2);
              }
         }
 
-  // if (aggr_init->get_need_explicit_braces())
      if (need_explicit_braces == true)
         {
        // DQ (3/12/2018): Could this be what should drive the introduction of the class name?
@@ -6649,9 +6638,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
   // DQ (3/12/2018): Set this so that we can only add class names inside of the first AggregateInitializer.
-#if 0
-     printf ("In unparseAggrInit(): Calling newinfo2.set_inAggregateInitializer() \n");
-#endif
      newinfo2.set_inAggregateInitializer();
 #endif
 
@@ -6723,7 +6709,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(list[index]);
 
        // DQ (6/27/2018): Make this more restrictive since need_cxx11_class_specifier is set more often to be true.
-          if (need_cxx11_class_specifier == true && aggregateInitializer != NULL)
+          if (need_cxx11_class_specifier == true && aggregateInitializer != nullptr)
              {
                ASSERT_not_null(aggregateInitializer);
                SgClassType* classType = isSgClassType(aggregateInitializer->get_type());
@@ -6781,8 +6767,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      printf ("Leaving unparseAggrInit() \n");
      curprint ("/* Leaving unparseAggrInit() */ ");
 #endif
-
-     depth--;
    }
 
 
@@ -7856,12 +7840,8 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
-
 #define DEBUG_DESIGNATED_INITIALIZER 0
 
-#if 1
-  // DQ (7/22/2013): New version of unparser code for this IR node. I think this is now
-  // organized differently (required for C support of more complex designator cases).
      SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
      ROSE_ASSERT(di->get_designatorList()->get_expressions().empty() == false);
 
@@ -7879,39 +7859,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("--- isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
-#endif
-
-#if 0
-  // DQ (5/11/2015): This is part of an overly sophisticated approach to control the use of "={}" syntax.
-  // It is easier to just always normalize to the use of "={}" and then restrict specific cases where it is not allowed.
-#error "DEAD CODE!"
-     if (isInitializer_AggregateInitializer == true)
-        {
-          SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
-          ASSERT_not_null(aggregateInitializer);
-          SgExprListExp* exprListExp = aggregateInitializer->get_initializers();
-          ASSERT_not_null(exprListExp);
-          if (exprListExp->get_expressions().size() == 1)
-             {
-               SgExpression* tmp_expr = exprListExp->get_expressions()[0];
-               ASSERT_not_null(tmp_expr);
-
-               SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(tmp_expr);
-               if (designatedInitializer != NULL)
-                  {
-#if 1
-#error "DEAD CODE!"
-                 // DQ (5/10/2015): This fails for test2015_85.c.
-#else
-#error "DEAD CODE!"
-                 // DQ (4/11/2015): Testing for test2015_85.c.
-                    printf ("--- Skip the reset of outputDesignatedInitializerAssignmentOperator as false for detected nesting of SgDesignatedInitializer \n");
-#error "DEAD CODE!"
-#endif
-#error "DEAD CODE!"
-                  }
-             }
-        }
 #endif
 
 #if DEBUG_DESIGNATED_INITIALIZER
@@ -8057,9 +8004,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #endif
              }
         }
-#else
-#error "DEAD CODE!"
-#endif
    }
 
 

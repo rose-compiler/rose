@@ -256,7 +256,6 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
   // Check if there is a function symbol of any kind, then narrow the selection.
      SgFunctionSymbol* func_symbol = nullptr;
 
-  // if (func_symbol == NULL)
         {
        // Use the static variant as a selector.
           switch((VariantT)T::static_variant)
@@ -397,7 +396,7 @@ SageBuilder::getGlobalScopeFromScopeStack()
 
   // The SgGlobal scope should be the first (front) element in the list (the current scope at the end (back) of the list).
      SgScopeStatement* tempScope = ScopeStack.front();
-     ROSE_ASSERT(isSgGlobal(tempScope) != NULL);
+     ASSERT_not_null(isSgGlobal(tempScope));
 
      return tempScope;
    }
@@ -419,7 +418,7 @@ bool SageBuilder::inSwitchScope()
      std::list<SgScopeStatement*>::iterator i;
      for (i = ScopeStack.begin(); i != ScopeStack.end(); i++)
         {
-          if (isSgSwitchStatement(*i) != NULL)
+          if (isSgSwitchStatement(*i) != nullptr)
                returnVar = true;
         }
 
@@ -452,7 +451,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
   // DQ (3/10/2018): This is now partially redundant with SgTemplateArgumentList::unparseToStringSupport().
      SgUnparse_Info *info = new SgUnparse_Info();
-     ROSE_ASSERT(info != NULL);
+     ASSERT_not_null(info);
 
      info->set_language(SgFile::e_Cxx_language);
      info->set_requiresGlobalNameQualification();
@@ -506,14 +505,14 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
        // DQ (2/6/2022): This is the newly refactored implementation to add name qualification to
        // the template arguments in the used in symbol tables key for template instantiations.
           SgTemplateArgument* templateArgument = *i;
-          ROSE_ASSERT(templateArgument != NULL);
+          ASSERT_not_null(templateArgument);
 
           switch (templateArgument->get_argumentType())
              {
                case SgTemplateArgument::type_argument:
                   {
                     SgType* type = templateArgument->get_type();
-                    ROSE_ASSERT(type != NULL);
+                    ASSERT_not_null(type);
 
 #if DEBUG_TEMPLATE_ARGUMENT_NAMES
                     printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: BEFORE stripType: type = %p = %s \n",type,type->class_name().c_str());
@@ -527,27 +526,20 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
                     printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: AFTER stripType: type = %p = %s \n",type,type->class_name().c_str());
 #endif
                  // DQ (2/6/2022): We need to find an example of the case where the template argument is a pointer type.
-                    if (isSgPointerType(templateArgument->get_type()) != NULL)
+                    if (isSgPointerType(templateArgument->get_type()) != nullptr)
                        {
 
 #if DEBUG_TEMPLATE_ARGUMENT_NAMES
                          printf ("Found a templateArgument->get_type() that is SgPointerType: name = %s \n",name.str());
 #endif
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
                        }
 
                     SgNamedType* namedType = isSgNamedType(type);
-                    if (namedType != NULL)
+                    if (namedType != nullptr)
                        {
-                      // printf ("type = %p = %s \n",type,type->class_name().c_str());
-                      // ROSE_ASSERT(namedType != NULL);
-
                       // DQ (2/5/2022): Since SgNonrealType is a SgNamedType, is this sufficiant to handle those cases?
                          SgDeclarationStatement* declaration = namedType->get_declaration();
-                         ROSE_ASSERT(declaration != NULL);
+                         ASSERT_not_null(declaration);
 
                          switch (declaration->variantT())
                             {
@@ -625,13 +617,12 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
                case SgTemplateArgument::nontype_argument:
                   {
                  // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
-                 // ASSERT_not_null(templateArgument->get_expression());
                     ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
                     ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
                     if (templateArgument->get_expression() != NULL)
                        {
                          SgExpression* expression = templateArgument->get_expression();
-                         ROSE_ASSERT(expression != NULL);
+                         ASSERT_not_null(expression);
 
                       // Now we care about types of expression that could require name qualification.
                       // Is there anything more than SgVarRefExp that we need to worry about?
