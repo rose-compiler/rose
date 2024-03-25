@@ -376,7 +376,7 @@ public:
      * @{ */
     template<class Interval2>
     bool isDistinct(const Interval2 &interval) const {
-        return !overlaps();
+        return !overlaps(interval);
     }
 
     template<class Interval2>

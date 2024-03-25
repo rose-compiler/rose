@@ -1206,7 +1206,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file) {
 
     ASSERT_require(file->get_dwarf_info() == nullptr);
     SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
-    file->set_dwarf_info(asmDwarfCompilationUnitList);
+    file->set_dwarfInfo(asmDwarfCompilationUnitList);
     asmDwarfCompilationUnitList->set_parent(file);
 
     /* Loop until it fails.  */
