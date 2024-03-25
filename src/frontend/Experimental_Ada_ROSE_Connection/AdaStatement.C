@@ -2353,12 +2353,9 @@ namespace
       {
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
-        NameData                   imported = getName(el, ctx);
-        Element_Struct&            impEl    = imported.elem();
-        SgExpression&              sgnode   = getExpr(impEl, ctx);
-
-        // make sure an early workaround is not used any longer
-        ADA_ASSERT(isSgVarRefExp(&sgnode) == nullptr);
+        NameData        imported = getName(el, ctx);
+        Element_Struct& impEl    = imported.elem();
+        SgExpression&   sgnode   = getExpr(impEl, ctx);
 
         // store source location of the fully qualified name
         attachSourceLocation(sgnode, el, ctx);
@@ -2386,46 +2383,57 @@ namespace
       : m(mapping), ctx(astctx)
       {}
 
+      SgDeclarationStatement* fromSymbolLookup(const NameData& nm)
+      {
+        const SgSymbol* sym = nullptr;
+
+        std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(nm.ident, ctx.scope());
+
+        return sym != nullptr ? si::Ada::associatedDeclaration(*sym)
+                              : nullptr;
+      }
+
+      SgDeclarationStatement* typeDeclarationFromStandard(const NameData& nm)
+      {
+        AdaIdentifier tyname{nm.ident};
+        SgType*       res = findFirst(adaTypes(), nm.ident);
+
+        if (SgNamedType* namedType = isSgNamedType(res))
+          return namedType->get_declaration();
+
+        return nullptr;
+      }
+
+      [[noreturn]]
+      bool fatalError(const Expression_Struct& expr, const NameData& nm)
+      {
+        logFatal() << "using unknown package/type: "
+                   << "'" << nm.fullName << "': "
+                   << expr.Corresponding_Name_Definition << " / " << expr.Corresponding_Name_Declaration
+                   << "\n   in scope type: " << typeid(ctx.scope()).name()
+                   << std::endl;
+
+        sg::report_error("using unknown package/type");
+      }
+
       void operator()(Element_Struct& el)
       {
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
-        NameData                usedEl = getName(el, ctx); // either unit or type
-        AdaIdentifier           fullName{usedEl.fullName};
-        Expression_Struct&      expr   = asisExpression(usedEl.elem());
-        SgDeclarationStatement* used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+        NameData                     usedEl = getName(el, ctx); // either unit or type
+        Expression_Struct&           expr   = asisExpression(usedEl.elem());
+        SgDeclarationStatement*      used   = nullptr;
 
-        // fallback code for packages that are not properly linked in Asis
-        //   i.e., generic packages withed in a formal part
-        if (!used)
-        {
-          // try to look up the symbol from the context by name
-          const SgSymbol*       sym = nullptr;
+        (used != nullptr)
+        || (used = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+        || (used = fromSymbolLookup(usedEl))
+        || (used = findFirst(adaPkgs(), usedEl.fullName)) // fullname or ident?
+        || (used = typeDeclarationFromStandard(usedEl))
+        || (fatalError(expr, usedEl))
+        ;
 
-          std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(fullName, ctx.scope());
-
-          // do we need to check the symbol type?
-          if (sym) used = si::Ada::associatedDeclaration(*sym);
-        }
-
-        // if a package is not available otherwise, maybe it is part of the Ada standard?
-        if (!used)
-        {
-          logInfo() << "using unknown package/type: "
-                    << usedEl.fullName << " : "
-                    << expr.Corresponding_Name_Definition << " / " << expr.Corresponding_Name_Declaration
-                    << "\n   in scope type: " << typeid(ctx.scope()).name()
-                    << std::endl;
-
-          used = findFirst(adaPkgs(), fullName);
-          if (!used)
-          {
-            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), fullName)))
-              used = ty->get_declaration();
-          }
-        }
-
-        SgUsingDeclarationStatement& sgnode  = mkUseClause(SG_DEREF(used));
+        SgUsingDeclarationStatement& sgnode  = mkUseClause(*used);
+        AdaIdentifier                fullName{usedEl.fullName};
         std::size_t                  attrPos = fullName.find("'");
 
         if (attrPos != std::string::npos)
@@ -2434,14 +2442,6 @@ namespace
           // \todo introduce proper flag
           sgnode.set_adaTypeAttribute(fullName.substr(attrPos+1));
         }
-
-
-        //~ std::cerr
-        //~ logError() << "use decl: " << usedEl.fullName
-                   //~ << " " << typeid(*used).name()
-                   //~ << " (" << expr.Corresponding_Name_Definition
-                   //~ << ", " << expr.Corresponding_Name_Declaration << ")"
-                   //~ << std::endl;
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
@@ -2568,7 +2568,7 @@ namespace
     {
       logKind("qid: A_Definition", elem.ID);
 
-      Definition_Struct&         def             = elem.The_Union.Definition;
+      Definition_Struct& def = elem.The_Union.Definition;
 
       if (def.Definition_Kind == A_Subtype_Indication)
       {
@@ -2615,10 +2615,9 @@ namespace
       return (  (expr.Expression_Kind == An_Identifier)
              && queryIfDerivedFromEnumID( expr.Corresponding_Name_Declaration,
                                           ctx,
-                                          [&expr](AstContext) -> bool
+                                          [tyName = AdaIdentifier{expr.Name_Image}](AstContext) -> bool
                                           {
-                                            // check for all enums in Standard
-                                            return AdaIdentifier{expr.Name_Image} == "BOOLEAN";
+                                            return isSgEnumType(adaTypes().at(tyName));
                                           }
                                         )
              );
@@ -3012,6 +3011,14 @@ namespace
 
       BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
       SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
+
+      // do not process derivations from Standard.*Char type.
+      //   the reason is that the derived enums will have its symbols
+      //   injected into the new scope as alias symbols, but for
+      //   character based enums, the symbols are not physically present.
+      if ( si::Ada::characterBaseType(origDecl.get_type()) )
+        return;
+
       ElemIdRange        range    = idRange(tydef.Implicit_Inherited_Declarations);
 
       // just traverse the IDs, as the elements are not present

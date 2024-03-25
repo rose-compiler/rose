@@ -10,7 +10,8 @@
 
 #include <boost/filesystem.hpp>
 
-#include "ada_support.h"
+// #include "ada_support.h"
+#include "Ada_to_ROSE_translation.h"
 
 #include "a_nodes.h"
 #include "adapter_wrapper.h"

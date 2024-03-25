@@ -1700,11 +1700,20 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["NATURAL"]             = &adaNaturalType;
 
   // characters
-  // \todo in Ada char, wide_char, and wide_wide_char are enums.
-  //       Consider revising the ROSE representation.
-  SgType& adaCharType               = SG_DEREF(sb::buildCharType());
-  SgType& adaWideCharType           = SG_DEREF(sb::buildChar16Type());
-  SgType& adaWideWideCharType       = SG_DEREF(sb::buildChar32Type());
+  //   in Ada character is of enum type.
+  //   Currently, the enum is not filled with members, but they are rather logically
+  //   injected via the adaParent_Type set to char char16 or char32.
+  SgEnumDeclaration& adaCharDecl         = mkEnumDecl("Character",           stdspec);
+  SgEnumDeclaration& adaWideCharDecl     = mkEnumDecl("Wide_Character",      stdspec);
+  SgEnumDeclaration& adaWideWideCharDecl = mkEnumDecl("Wide_Wide_Character", stdspec);
+
+  adaCharDecl.set_adaParentType(sb::buildCharType());
+  adaWideCharDecl.set_adaParentType(sb::buildChar16Type());
+  adaWideWideCharDecl.set_adaParentType(sb::buildChar32Type());
+
+  SgType& adaCharType               = SG_DEREF(adaCharDecl.get_type());
+  SgType& adaWideCharType           = SG_DEREF(adaWideCharDecl.get_type());
+  SgType& adaWideWideCharType       = SG_DEREF(adaWideWideCharDecl.get_type());
 
   adaTypes()["CHARACTER"]           = &adaCharType;
   adaTypes()["WIDE_CHARACTER"]      = &adaWideCharType;

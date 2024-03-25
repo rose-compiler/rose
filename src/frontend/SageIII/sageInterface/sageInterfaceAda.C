@@ -1515,7 +1515,7 @@ namespace Ada
       if (res == nullptr) res = sb::buildArrayType(base);
 
       return SG_DEREF(res);
-    };
+    }
 
     SgType& standardType(std::string name)
     {
@@ -1614,14 +1614,14 @@ namespace Ada
       return fx && (fx->get_fraction() == nullptr) && (fx->get_scale() == nullptr);
     }
 
-    // bool isElementaryPointer(const SgType* ty) { return isNullptrType(ty); }
+    // bool isElementaryAccess(const SgType* ty) { return isNullptrType(ty); }
 
     bool isElementaryType(const SgType* ty)
     {
       return (  isElementaryInteger(ty)
              || isElementaryReal(ty)
              || isElementaryFixed(ty)
-             //~ || isElementaryPointer(ty)
+             //~ || isElementaryAccess(ty)
              );
     }
 
@@ -1834,9 +1834,10 @@ namespace Ada
       void handle(SgTypeDouble&)          { res = TypeDescription{realType()}; }
       void handle(SgTypeFloat128&)        { res = TypeDescription{realType()}; }
 
-      void handle(SgTypeChar& n)          { res = TypeDescription{n}; }
-      void handle(SgTypeChar16& n)        { res = TypeDescription{n}; }
-      void handle(SgTypeChar32& n)        { res = TypeDescription{n}; }
+      // \todo remove CHARS_ARE_ENUM_IN_ADA
+      void handle(SgTypeChar& n)          { res = TypeDescription{n}; } // \todo find the type in Standard.
+      void handle(SgTypeChar16& n)        { res = TypeDescription{n}; } // \todo find the type in Standard.
+      void handle(SgTypeChar32& n)        { res = TypeDescription{n}; } // \todo find the type in Standard.
 
       // true fundamental types
       void handle(SgClassType& n)         { res = TypeDescription{n}; /* \todo check if this is a derived class */ }
@@ -1846,7 +1847,7 @@ namespace Ada
       void handle(SgAdaFormalType& n)     { res = TypeDescription{n}; /* what else? */ }
 
 
-      // an array is fundamental - its underlying type may not be, so it may can be discovered if needed
+      // an array is fundamental - its underlying type may not be, so it may be discovered if needed
       void handle(SgArrayType& n)
       {
         res = TypeDescription{arrayType(find(n.get_base_type()).typerep())};
@@ -2042,37 +2043,59 @@ namespace Ada
       return sg::dispatch(DeclScopeFinder{}, n);
     }
 
+    SgDeclarationStatement*
+    associatedDeclaration_internal(const SgType* ty, int skipNumAccessTypes = -1);
+
     /// \todo remove after adding Ada specific types to stripType
     struct DeclFinder : sg::DispatchHandler<SgDeclarationStatement*>
     {
-      void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+        explicit
+        DeclFinder(int skipLayers)
+        : skipAccessLayers(skipLayers)
+        {}
 
-      void handle(SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
+        SgDeclarationStatement* fromBaseType(SgType*);
 
-      // \todo may need to be reconsidered
-      void handle(SgModifierType& n)      { res = associatedDeclaration(n.get_base_type()); }
-      void handle(SgAdaSubtype& n)        { res = associatedDeclaration(n.get_base_type()); }
-      void handle(SgAdaDerivedType& n)    { res = associatedDeclaration(n.get_base_type()); }
-      void handle(SgPointerType& n)       { res = associatedDeclaration(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
-      void handle(SgAdaAccessType& n)     { res = associatedDeclaration(n.get_base_type()); } // \todo or scope of underlying type?
-      //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
-      // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
+        void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
-      // for records, enums, typedefs, discriminated types, and types with a real declarations
-      //   => return the associated declaration.
-      void handle(SgNamedType& n)         { res = n.get_declaration(); }
+        void handle(SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
+
+        // \todo may need to be reconsidered
+        void handle(SgModifierType& n)      { res = associatedDeclaration_internal(n.get_base_type(), skipAccessLayers); }
+        void handle(SgAdaSubtype& n)        { res = associatedDeclaration_internal(n.get_base_type(), skipAccessLayers); }
+        void handle(SgAdaDerivedType& n)    { res = associatedDeclaration_internal(n.get_base_type(), skipAccessLayers); }
+        void handle(SgPointerType& n)       { res = fromBaseType(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
+        void handle(SgAdaAccessType& n)     { res = fromBaseType(n.get_base_type()); } // \todo or scope of underlying type?
+        //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
+        // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
+
+        // for records, enums, typedefs, discriminated types, and types with a real declarations
+        //   => return the associated declaration.
+        void handle(SgNamedType& n)         { res = n.get_declaration(); }
+
+      private:
+        const int skipAccessLayers;
     };
+
+    SgDeclarationStatement*
+    DeclFinder::fromBaseType(SgType* baseTy)
+    {
+      if (skipAccessLayers == 0)
+        return nullptr;
+
+      return associatedDeclaration_internal(baseTy, (skipAccessLayers > 0) ? skipAccessLayers-1 : skipAccessLayers);
+    }
+
+    SgDeclarationStatement*
+    associatedDeclaration_internal(const SgType* ty, int skipNumAccessTypes)
+    {
+      return sg::dispatch(DeclFinder{ skipNumAccessTypes }, ty);
+    }
+
 
     struct ImportedUnit : sg::DispatchHandler<ImportedUnitResult>
     {
         using base = sg::DispatchHandler<ImportedUnitResult>;
-
-#if OBSOLETE_CODE
-        explicit
-        ImportedUnit(const SgImportStatement& import)
-        : base(), impdcl(import)
-        {}
-#endif /* OBSOLETE_CODE */
 
         void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
@@ -2257,7 +2280,7 @@ namespace Ada
 
   SgDeclarationStatement* associatedDeclaration(const SgType& ty)
   {
-    return sg::dispatch(DeclFinder{}, &ty);
+    return associatedDeclaration_internal(&ty);
   }
 
   SgDeclarationStatement* associatedDeclaration(const SgType* ty)
@@ -2265,22 +2288,10 @@ namespace Ada
     return ty ? associatedDeclaration(*ty) : nullptr;
   }
 
-#if OBSOLETE_CODE
-  const SgExpression&
-  importedElement(const SgImportStatement& n)
-  {
-    const SgExpressionPtrList& lst = n.get_import_list();
-    ROSE_ASSERT(lst.size() == 1);
-
-    return SG_DEREF(lst.back());
-  }
-#endif /* OBSOLETE_CODE */
 
   std::vector<ImportedUnitResult>
   importedUnits(const SgImportStatement& impdcl)
   {
-    //~ return sg::dispatch(ImportedUnit{ impdcl }, &importedElement(impdcl));
-
     std::vector<ImportedUnitResult> res;
     const SgExpressionPtrList&      lst = impdcl.get_import_list();
 
@@ -3542,6 +3553,7 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
   {
     ASSERT_not_null(parm);
     // PP: note to self: BaseTypeDecl::find does NOT skip the initial typedef decl
+    // \note consider using associatedDeclaration_internal(parm->get_type(), 1)
     const SgDeclarationStatement* tydcl = associatedDeclaration(parm->get_type());
 
     if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))
@@ -3734,12 +3746,47 @@ baseEnumDeclaration(SgType& ty)
 SgEnumDeclaration*
 baseEnumDeclaration(SgType* ty)
 {
-  SgDeclarationStatement* basedcl = associatedDeclaration(ty);
+  SgDeclarationStatement* basedcl = associatedDeclaration_internal(ty, 0);
 
   if (SgTypedefDeclaration* tydcl = isSgTypedefDeclaration(basedcl))
     return baseEnumDeclaration(tydcl->get_base_type());
 
   return isSgEnumDeclaration(basedcl);
+}
+
+
+SgEnumType*
+characterBaseType(SgEnumType& ty)
+{
+  return characterBaseType(&ty);
+}
+
+SgEnumType*
+characterBaseType(SgEnumType* last)
+{
+  auto baseEnumDecl =
+         [](SgEnumType* ty) -> SgEnumType*
+         {
+           if (SgType* baseTy = baseType(ty))
+             if (SgEnumDeclaration* enumdcl = isSgEnumDeclaration(BaseTypeDecl::find(baseTy)))
+               return enumdcl->get_type();
+
+           return nullptr;
+         };
+
+  while (SgEnumType* curr = baseEnumDecl(last))
+  {
+    last = curr;
+  }
+
+  SgEnumDeclaration* enumdcl = isSgEnumDeclaration(BaseTypeDecl::find(last));
+  if (enumdcl == nullptr) return nullptr;
+
+  const bool isCharType = (  (enumdcl->get_scope() == pkgStandardScope())
+                          && (boost::algorithm::ends_with(enumdcl->get_name().getString(), "Character"))
+                          );
+
+  return isCharType ? enumdcl->get_type() : nullptr;
 }
 
 
@@ -3858,7 +3905,7 @@ namespace
   }
 
 
-  struct AssociatedDecl : sg::DispatchHandler<SgDeclarationStatement*>
+  struct DeclFromSymbol : sg::DispatchHandler<SgDeclarationStatement*>
   {
     // for any valid return
     ReturnType filterReturnType(ReturnType v)   { return v; }
@@ -3932,7 +3979,7 @@ findSymbolInContext(std::string id, const SgScopeStatement& scope, const SgScope
 
 SgDeclarationStatement* associatedDeclaration(const SgSymbol& n)
 {
-  return sg::dispatch(AssociatedDecl{}, &n);
+  return sg::dispatch(DeclFromSymbol{}, &n);
 }
 
 bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
@@ -3986,6 +4033,7 @@ namespace sg
       //~ ROSE_ABORT();
 
       mlog[FATAL] << "[throw] " << desc << std::endl;
+      mlog[INFO] << "gdb: b sageInterfaceAda.C:" << __LINE__ << std::endl;
       throw std::runtime_error(desc);
 
     //~ std::cerr << "[exit] [FATAL] " << desc << std::endl;

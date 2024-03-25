@@ -769,7 +769,7 @@ namespace
   SgExpression&
   getBooleanEnumItem(AdaIdentifier boolid)
   {
-    SgEnumType&               enty  = SG_DEREF( isSgEnumType(adaTypes()["BOOLEAN"]) );
+    SgEnumType&               enty  = SG_DEREF( isSgEnumType(adaTypes().at("BOOLEAN")) );
     SgEnumDeclaration&        endcl = SG_DEREF( isSgEnumDeclaration(enty.get_declaration()) );
     SgInitializedNamePtrList& enlst = endcl.get_enumerators();
 
@@ -2090,11 +2090,9 @@ getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
 SgNode*
 queryBuiltIn(AdaIdentifier adaIdent)
 {
-  static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
-
   SgNode* res = nullptr;
 
-  findFirstMatch
+  (res != nullptr)
   || (res = findFirst(adaTypes(), adaIdent))
   || (res = findFirst(adaPkgs(),  adaIdent))
   || (res = findFirst(adaVars(),  adaIdent))
@@ -2107,13 +2105,11 @@ queryBuiltIn(AdaIdentifier adaIdent)
 SgNode*
 queryCorrespondingAstNode(Expression_Struct& expr, AstContext ctx)
 {
-  static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
-
   ADA_ASSERT(expr.Expression_Kind == An_Identifier);
 
   SgNode* res = nullptr;
 
-  findFirstMatch
+  (res != nullptr)
   || (res = findFirst(asisVars(),   expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
   || (res = findFirst(asisDecls(),  expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
   || (res = findFirst(asisExcps(),  expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))

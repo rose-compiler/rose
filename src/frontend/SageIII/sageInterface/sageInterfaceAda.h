@@ -222,9 +222,11 @@ namespace
   /// \}
 
   /// defines the result type for \ref getArrayTypeInfo
-  struct FlatArrayType : std::tuple<SgArrayType*, std::vector<SgExpression*> >
+  using FlatArrayTypeBase = std::tuple<SgArrayType*, std::vector<SgExpression*> >;
+
+  struct FlatArrayType : FlatArrayTypeBase
   {
-    using base = std::tuple<SgArrayType*, std::vector<SgExpression*> >;
+    using base = FlatArrayTypeBase;
     using base::base;
 
     SgArrayType*                      type() const { return std::get<0>(*this); }
@@ -245,9 +247,11 @@ namespace
   FlatArrayType getArrayTypeInfo(SgType& atype);
   /// @}
 
-  struct RecordField : std::tuple<const SgSymbol*>
+  using RecordFieldBase = std::tuple<const SgSymbol*>;
+
+  struct RecordField : RecordFieldBase
   {
-    using base = std::tuple<const SgSymbol*>;
+    using base = RecordFieldBase;
     using base::base;
 
     const SgSymbol&          symbol()         const;
@@ -514,11 +518,13 @@ namespace
   bool isSeparatedDefinition(const SgFunctionDeclaration* n);
   /// @}
 
-  struct TypeDescription : std::tuple<SgType*, bool, std::vector<SgAdaTypeConstraint*> >
+  using TypeDescriptionBase = std::tuple<SgType*, bool, std::vector<SgAdaTypeConstraint*> >;
+
+  struct TypeDescription : TypeDescriptionBase
   {
     static constexpr bool classwide = true;
 
-    using base = std::tuple<SgType*, bool, std::vector<SgAdaTypeConstraint*> >;
+    using base = TypeDescriptionBase;
 
     explicit
     TypeDescription(SgType& ty, bool polymorph = false, std::vector<SgAdaTypeConstraint*> constr = {})
@@ -565,9 +571,11 @@ namespace
   SgType* baseOfAccessType(const SgType& ty);
   /// @}
 
-  struct DominantArgInfo : std::tuple<const SgType*, std::size_t>
+  using DominantArgInfoBase = std::tuple<const SgType*, std::size_t>;
+
+  struct DominantArgInfo : DominantArgInfoBase
   {
-    using base = std::tuple<const SgType*, std::size_t>;
+    using base = DominantArgInfoBase;
     using base::base;
 
     const SgType* type() const { return std::get<0>(*this); }
@@ -577,9 +585,11 @@ namespace
   DominantArgInfo
   operatorArgumentWithNamedRootIfAvail(const SgTypePtrList& argtypes);
 
-  struct OperatorScopeInfo : std::tuple<SgScopeStatement*, std::size_t>
+  using OperatorScopeInfoBase = std::tuple<SgScopeStatement*, std::size_t>;
+
+  struct OperatorScopeInfo : OperatorScopeInfoBase
   {
-    using base = std::tuple<SgScopeStatement*, std::size_t>;
+    using base = OperatorScopeInfoBase;
     using base::base;
 
     // the scope associated with the dominant parameter
@@ -624,13 +634,15 @@ namespace
   /// \}
 
   /// describes properties of imported units
-  struct ImportedUnitResult : std::tuple< std::string,
-                                          const SgDeclarationStatement*,
-                                          const SgAdaRenamingDecl*,
-                                          const SgExpression*
-                                        >
+  using ImportedUnitResultBase = std::tuple< std::string,
+                                             const SgDeclarationStatement*,
+                                             const SgAdaRenamingDecl*,
+                                             const SgExpression*
+                                           >;
+
+  struct ImportedUnitResult : ImportedUnitResultBase
   {
-    using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*, const SgExpression*>;
+    using base = ImportedUnitResultBase;
     using base::base;
 
     const std::string&            name()         const { return std::get<0>(*this); }
@@ -654,12 +666,6 @@ namespace
   std::vector<ImportedUnitResult>
   importedUnits(const SgImportStatement& impdcl);
 
-#if OBSOLETE_CODE
-  /// returns the imported element (i.e., the first entry in n's import_list
-  const SgExpression&
-  importedElement(const SgImportStatement& n);
-#endif /* OBSOLETE_CODE */
-
 
   /// do not use, this is temporary
   SgScopeStatement* pkgStandardScope();
@@ -675,15 +681,14 @@ namespace
   std::string convertRoseOperatorNameToAdaOperator(const std::string& nameInRose);
 
   /// Details of expression aggregates
-  struct AggregateInfo : std::tuple< SgAdaAncestorInitializer*,
-                                     SgExpressionPtrList::const_iterator,
-                                     SgExpressionPtrList::const_iterator
-                                   >
+  using AggregateInfoBase = std::tuple< SgAdaAncestorInitializer*,
+                                        SgExpressionPtrList::const_iterator,
+                                        SgExpressionPtrList::const_iterator
+                                      >;
+
+  struct AggregateInfo : AggregateInfoBase
   {
-    using base = std::tuple< SgAdaAncestorInitializer*,
-                             SgExpressionPtrList::const_iterator,
-                             SgExpressionPtrList::const_iterator
-                           >;
+    using base = AggregateInfoBase;
     using base::base;
 
     /// returns the ancestor initializer iff it exists, otherwise null
@@ -744,9 +749,11 @@ namespace
   bool isExceptionRenaming(const SgAdaRenamingDecl& dcl);
   /// @}
 
-  struct PrimitiveParameterDesc : std::tuple<size_t, const SgInitializedName*>
+  using PrimitiveParameterDescBase = std::tuple<size_t, const SgInitializedName*>;
+
+  struct PrimitiveParameterDesc : PrimitiveParameterDescBase
   {
-    using base = std::tuple<size_t, const SgInitializedName*>;
+    using base = PrimitiveParameterDescBase;
     using base::base;
 
     /// the position within the parameter list
@@ -898,7 +905,7 @@ namespace
   ///   nullptr if no such declaration can be found.
   /// \todo remove after integrating functionality into SgType...
   /// \details
-  ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
+  ///    Skips over intermediate derived types, subtypes, access (pointer) types until a SgNamedType is found.
   ///    Returns the declaration of said type.
   /// \{
   SgDeclarationStatement* associatedDeclaration(const SgType& ty);
@@ -939,6 +946,22 @@ namespace
   SgEnumDeclaration*
   baseEnumDeclaration(SgType& ty);
   /// \}
+
+  /// checks if the type is based on one of the Standard character types.
+  /// \returns the base enum type (Character, Wide_Character, or Wide_Wide_Character),
+  ///          if the input type is based of one of them.
+  ///          otherwise, returns nullptr
+  /// \note
+  ///    In ROSE, character based enums currently do not have any member.
+  ///    Thus, some analysis may handle character based enums differently.
+  /// \{
+  SgEnumType*
+  characterBaseType(SgEnumType* ty);
+
+  SgEnumType*
+  characterBaseType(SgEnumType& ty);
+  /// \}
+
 
   /// returns true, iff \ref fndef is the body of an explicit null procedure
   bool explicitNullProcedure(const SgFunctionDefinition& fndef);
