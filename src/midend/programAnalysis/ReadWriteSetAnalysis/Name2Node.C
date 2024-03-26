@@ -1,5 +1,5 @@
 #include "Name2Node.h"
-#include <rose.h>
+#include <AstProcessing.h>
 #include "VxUtilFuncs.h"
 #include <stdexcept>
 
