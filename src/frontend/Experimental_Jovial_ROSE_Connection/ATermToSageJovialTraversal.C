@@ -4514,9 +4514,8 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
       if (traverse_AssignmentStatement(t_stmt, labels)) {
          // MATCHED AssignmentStatement
       }
-      else if (traverse_NullStatement(t_stmt)) {
+      else if (traverse_NullStatement(t_stmt, labels)) {
          // MATCHED NullStatement
-         if (labels.size() > 0) mlog[WARN] << "UNIMPLEMENTED labels: NullStatement: labels.size() > 0\n";
       }
       else if (traverse_NullBlockStatement(t_stmt)) {
          // MATCHED NullStatement
@@ -4582,7 +4581,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoundStatement(ATerm term)
       } else return ATfalse;
 
    // Begin SageTreeBuilder
-      sage_tree_builder.Enter(block);
+      sage_tree_builder.Enter(block, labels);
       setSourcePosition(block, term, false);
 
       if (traverse_StatementList(t_stmt)) {
@@ -4601,24 +4600,26 @@ ATbool ATermToSageJovialTraversal::traverse_CompoundStatement(ATerm term)
    ASSERT_not_null(block);
 
 // End SageTreeBuilder
-   sage_tree_builder.Leave(block);
+   sage_tree_builder.Leave(block, labels2);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_NullStatement(ATerm term)
+ATbool ATermToSageJovialTraversal::traverse_NullStatement(ATerm term, const std::vector<std::string> &labels)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_NullStatement: %s\n", ATwriteToString(term));
+  printf("... traverse_NullStatement: %s\n", ATwriteToString(term));
 #endif
 
-   if (ATmatch(term, "NullStatement()")) {
-      SgNullStatement* null_stmt = SageBuilder::buildNullStatement();
-      setSourcePosition(null_stmt, term);
-      SageInterface::appendStatement(null_stmt, SageBuilder::topScopeStack());
-   } else return ATfalse;
+  if (ATmatch(term, "NullStatement()")) {
+    SgNullStatement* stmt{nullptr};
+    sage_tree_builder.Enter(stmt);
+    setSourcePosition(stmt, term);
+    sage_tree_builder.Leave(stmt, labels);
+  }
+  else return ATfalse;
 
-   return ATtrue;
+  return ATtrue;
 }
 
 ATbool ATermToSageJovialTraversal::traverse_NullBlockStatement(ATerm term)
@@ -5109,7 +5110,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    setSourcePosition(if_stmt, term, /*attach_comments*/false);
 
 // End SageTreeBuilder
-   sage_tree_builder.Leave(if_stmt);
+   sage_tree_builder.Leave(if_stmt, labels);
 
    return ATtrue;
 }

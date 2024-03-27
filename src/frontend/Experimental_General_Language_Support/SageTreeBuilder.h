@@ -139,8 +139,8 @@ public:
    void Enter(SgScopeStatement* &);
    void Leave(SgScopeStatement*);
 
-   void Enter(SgBasicBlock* &);
-   void Leave(SgBasicBlock*);
+   void Enter(SgBasicBlock* &, const std::vector<std::string> &);
+   void Leave(SgBasicBlock*, const std::vector<std::string> &);
 
    void Enter(SgProgramHeaderStatement* &,
               const boost::optional<std::string> &, const std::vector<std::string> &,
@@ -214,10 +214,13 @@ public:
 
    void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, std::vector<Rose::builder::Token> &,
               bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
-   void Leave(SgIfStmt*);
+   void Leave(SgIfStmt*, const std::vector<std::string> &);
 
-   void Enter(SgLabelStatement* &, const std::string &label);
+   void Enter(SgLabelStatement* &, const std::string &);
    void Leave(SgLabelStatement*, const std::vector<std::string> &);
+
+   void Enter(SgNullStatement* &);
+   void Leave(SgNullStatement*, const std::vector<std::string> &);
 
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
                                             const boost::optional<SgExpression*> &quiet=boost::none);

@@ -371,22 +371,34 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
    attachRemainingComments(scope);
 }
 
-void SageTreeBuilder::Enter(SgBasicBlock* &block)
+void SageTreeBuilder::Enter(SgBasicBlock* &block, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &)\n";
 
    // Set the parent (at least temporarily) so that symbols can be traced.
    block = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
 
+  // Attach preceeding label(s) to the block (compound) statement
+   SgStatement* stmt = wrapStmtWithLabels(block, labels);
+
 // Append now (before Leave is called) so that symbol lookup will work
-   SageInterface::appendStatement(block, SageBuilder::topScopeStack());
+   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(block);
 }
 
-void SageTreeBuilder::Leave(SgBasicBlock* block)
+void SageTreeBuilder::
+Leave(SgBasicBlock* block, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgBasicBlock*) \n";
-   SageBuilder::popScopeStack();  // this basic block
+
+  // Attach trailing label(s) to a terminating null statement
+  if (labels.size() > 0) {
+    SgNullStatement* nullStmt{nullptr};
+    Enter(nullStmt);
+    Leave(nullStmt, labels);
+  }
+
+  SageBuilder::popScopeStack();  // this basic block
 }
 
 void SageTreeBuilder::
@@ -1208,12 +1220,13 @@ Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, Sg
 }
 
 void SageTreeBuilder::
-Leave(SgIfStmt* if_stmt)
+Leave(SgIfStmt* ifStmt, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgIfStmt*) \n";
 
-   ASSERT_not_null(if_stmt);
-   SageInterface::appendStatement(if_stmt, SageBuilder::topScopeStack());
+   // Append final label statement, if there are labels, otherwise stmt==ifStmt
+   SgStatement* stmt = wrapStmtWithLabels(ifStmt, labels);
+   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -1306,10 +1319,29 @@ Enter(SgLabelStatement* &labelStmt, const std::string &label)
 void SageTreeBuilder::
 Leave(SgLabelStatement* labelStmt, const std::vector<std::string> &labels)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgGotoStatement*, ...)\n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgLabelStatement*, ...)\n";
 
    // Append final label statement (if there are labels, otherwise stmt==labelStmt)
    SgStatement* stmt = wrapStmtWithLabels(labelStmt, labels);
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgNullStatement* &stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgNullStatement*)\n";
+
+   stmt = SageBuilder::buildNullStatement();
+   SageInterface::setSourcePosition(stmt);
+}
+
+void SageTreeBuilder::
+Leave(SgNullStatement* nullStmt, const std::vector<std::string> &labels)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgNullStatement*, ...)\n";
+
+   // Append final label statement (if there are labels, otherwise stmt==nullStmt)
+   SgStatement* stmt = wrapStmtWithLabels(nullStmt, labels);
    SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 

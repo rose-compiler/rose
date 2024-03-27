@@ -227,9 +227,9 @@ ATbool traverse_Statement(ATerm term);
 ATbool traverse_StatementList(ATerm term);
 ATbool traverse_SimpleStatement(ATerm term);
 ATbool traverse_CompoundStatement(ATerm term);
-ATbool traverse_NullStatement(ATerm term);
+ATbool traverse_NullStatement(ATerm term, const std::vector<std::string> &labels);
 ATbool traverse_NullBlockStatement(ATerm term);
-ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations);
+ATbool traverse_LabelList(ATerm term, std::vector<std::string> &labels, std::vector<PosInfo> &locations);
 
 // 4.1 ASSIGNMENT STATEMENTS
 ATbool traverse_AssignmentStatement(ATerm term, std::vector<std::string> &labels);
