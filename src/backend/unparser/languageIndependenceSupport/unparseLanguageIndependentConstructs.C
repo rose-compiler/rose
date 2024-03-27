@@ -4037,8 +4037,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
-		    // Liao: 2024/3/27: unparse inside comments of SgGlobal
-		    if (isSgGlobal(stmt))
+                    // Liao: 2024/3/27: unparse inside comments of SgGlobal
+                    if (isSgGlobal(stmt))
                         unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::inside);
 
 
