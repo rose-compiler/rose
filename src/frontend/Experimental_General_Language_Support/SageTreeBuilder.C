@@ -1405,12 +1405,14 @@ Enter(SgReturnStmt* &return_stmt, const boost::optional<SgExpression*> &opt_expr
 }
 
 void SageTreeBuilder::
-Leave(SgReturnStmt* return_stmt)
+Leave(SgReturnStmt* returnStmt, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgReturnStmt*, ...) \n";
-   ASSERT_not_null(return_stmt);
+   ASSERT_not_null(returnStmt);
 
-   SageInterface::appendStatement(return_stmt, SageBuilder::topScopeStack());
+   // Append final label statement (if there are labels, otherwise stmt==returnStmt)
+   SgStatement* stmt = wrapStmtWithLabels(returnStmt, labels);
+   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::

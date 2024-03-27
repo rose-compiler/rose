@@ -5493,7 +5493,7 @@ ATbool ATermToSageJovialTraversal::traverse_ReturnStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgReturnStmt* return_stmt = nullptr;
+   SgReturnStmt* returnStmt = nullptr;
 
    if (ATmatch(term, "ReturnStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
@@ -5503,11 +5503,11 @@ ATbool ATermToSageJovialTraversal::traverse_ReturnStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(return_stmt, boost::none);
-   setSourcePosition(return_stmt, term);
+   sage_tree_builder.Enter(returnStmt, boost::none);
+   setSourcePosition(returnStmt, term);
 
    // End SageTreeBuilder
-   sage_tree_builder.Leave(return_stmt);
+   sage_tree_builder.Leave(returnStmt, labels);
 
    return ATtrue;
 }
