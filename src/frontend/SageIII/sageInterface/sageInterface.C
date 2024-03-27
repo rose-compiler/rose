@@ -10211,7 +10211,16 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
           printf ("(*comments)[*j]->getRelativePosition() = %s \n",PreprocessingInfo::relativePositionName((*comments)[*j]->getRelativePosition()).c_str());
 #endif
 
-          if (surroundingStatementPreceedsTargetStatement == true)
+          // Liao 2024/3/27: special handling when surrounding statement is SgGlobal
+	  // It should not be treated as either before or after the source statement we want to move comments from
+	  // SgGlobal should be treated as the enclosing scope of the source statement
+	  // The comments of the source statements should be attached to inside position of SgGlobal.
+	  // This is a variant of the before position (SgGlobal vs. source statement). 
+	  // We do not treate SgGlobal as the same as  if sgGlobal is preceeding source 
+	  // because the comments of source statement would be attached to ::after of SgGlobal and  
+	  // all comments will show up in the end of the file. 
+	  // The ::inside location relies on the unparser to properly handle them later.
+          if (surroundingStatementPreceedsTargetStatement == true || isSgGlobal(targetStatement) != NULL )
              {
                  // dest
                  // src // comments to be moved up: all before positions become after position
@@ -10232,6 +10241,10 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   {
                     ROSE_ASSERT(false && "Comment relative position neither, before, after, nor end_of");
                   }
+
+                // special handling of inside position
+                if (isSgGlobal(targetStatement))
+		  (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside); 
 
                 targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
 

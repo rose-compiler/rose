@@ -4037,6 +4037,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+		    // Liao: 2024/3/27: unparse inside comments of SgGlobal
+		    if (isSgGlobal(stmt))
+                        unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::inside);
+
 
 #if DEBUG_USING_CURPRINT
                     curprint ("\n/* Test 2: This is where added test via AstUnparseAttribute using e_before_but_after_cpp_directives_and_comments */ \n");
