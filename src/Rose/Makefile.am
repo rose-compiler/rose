@@ -41,6 +41,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/AbstractLocation.C						\
 	BinaryAnalysis/AddressInterval.C						\
 	BinaryAnalysis/AddressIntervalSet.C						\
+	BinaryAnalysis/Alignment.C							\
 	BinaryAnalysis/Architecture/Amd64.C						\
 	BinaryAnalysis/Architecture/ArmAarch32.C					\
 	BinaryAnalysis/Architecture/ArmAarch64.C					\

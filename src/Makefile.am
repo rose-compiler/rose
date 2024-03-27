@@ -273,6 +273,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
 	Rose/BinaryAnalysis/AddressInterval.h						\
 	Rose/BinaryAnalysis/AddressIntervalSet.h					\
+	Rose/BinaryAnalysis/Alignment.h							\
 	Rose/BinaryAnalysis/Architecture.h						\
 	Rose/BinaryAnalysis/Architecture/Amd64.h					\
 	Rose/BinaryAnalysis/Architecture/ArmAarch32.h					\

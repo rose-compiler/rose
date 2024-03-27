@@ -14,6 +14,7 @@ add_library(roseBinaryAnalysis OBJECT
   AbstractLocation.C
   AddressInterval.C
   AddressIntervalSet.C
+  Alignment.C
   AsmFunctionIndex.C
   AstHash.C
   BestMapAddress.C
@@ -68,6 +69,7 @@ install(FILES
   AbstractLocation.h
   AddressInterval.h
   AddressIntervalSet.h
+  Alignment.h
   AsmFunctionIndex.h
   AstHash.h
   BasicTypes.h

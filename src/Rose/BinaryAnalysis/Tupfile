@@ -4,6 +4,7 @@ run $(librose_compile)				\
     AbstractLocation.C				\
     AddressInterval.C				\
     AddressIntervalSet.C			\
+    Alignment.C					\
     AsmFunctionIndex.C				\
     AstHash.C					\
     BestMapAddress.C				\
@@ -56,6 +57,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AbstractLocation.h						\
     AddressInterval.h						\
     AddressIntervalSet.h					\
+    Alignment.h							\
     AsmFunctionIndex.h						\
     AstHash.h							\
     BasicTypes.h						\
