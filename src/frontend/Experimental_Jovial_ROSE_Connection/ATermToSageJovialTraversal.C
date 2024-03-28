@@ -3372,12 +3372,19 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
             //   <statement-name-declaration> (i.e., no including nested scopes), or else
             //   the <statement-name-declaration> must be a <ref-specification-choice>
             //
-            //   It seems not creating a symbol will work (though may be a hack).
+            // NOTE: Perhaps a symbol is created by later processing, to encourage correct label handling,
+            //       see gitlab-issue-{310,343,345}, create an SgStringVal and save it for later. If not
+            //       needed it will need to be deleted.
+            //
 
-            SgLabelStatement* labelStmt{new SgLabelStatement(name, /*statement*/nullptr)};
+            SgLabelStatement* labelStmt = new SgLabelStatement(name, /*statement*/nullptr);
 
             setSourcePosition(labelStmt, head);
             labelStmt->set_label_type(labelType);
+
+            // Save an SgStringVal for later processing (if needed)
+            auto stringVal = SB::buildStringVal_nfi(name);
+            labelRefs_.insert(std::make_pair(name, stringVal));
 
             SageInterface::appendStatement(labelStmt, SageBuilder::topScopeStack());
          }
@@ -3993,6 +4000,30 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
 // Remaining source positions (last, comment processing may conflict with Leave() calls)
    setSourcePosition(param_list, t_proc_heading);
 
+//TODO: Replace with a function
+// There may be label strings that should be replaced by label references
+   for (const auto &kvp: labelRefs_) {
+     SgStringVal* strVal = kvp.second;
+
+     // If strVal has no parent, it won't have been used, delete it
+     if (strVal && strVal->get_parent() == nullptr) {
+       delete strVal;
+       continue;
+     }
+
+     if (strVal && strVal->get_parent() && strVal->get_value() == kvp.first) {
+       // Replace original SgStringVal with an SgLabelRefExp
+       SgScopeStatement* scope = function_decl->get_definition();
+       auto labelSymbol = isSgLabelSymbol(SI::lookupSymbolInParentScopes(kvp.first, scope));
+       if (labelSymbol) {
+         auto labelRef = SB::buildLabelRefExp(labelSymbol);
+         SI::setOneSourcePositionNull(labelRef);
+         SI::replaceExpression(strVal, labelRef, /*keepOldExp*/false);
+       }
+     }
+   }
+   labelRefs_.clear();
+
    return ATtrue;
 }
 
@@ -4205,10 +4236,18 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
 
+//TODO: Replace with a function
 // There may be label strings that should be replaced by label references
    for (const auto &kvp: labelRefs_) {
      SgStringVal* strVal = kvp.second;
-     if (strVal && strVal->get_value() == kvp.first) {
+
+     // If strVal has no parent, it won't have been used, delete it
+     if (strVal && strVal->get_parent() == nullptr) {
+       delete strVal;
+       continue;
+     }
+
+     if (strVal && strVal->get_parent() && strVal->get_value() == kvp.first) {
        // Replace original SgStringVal with an SgLabelRefExp
        SgScopeStatement* scope = function_decl->get_definition();
        auto labelSymbol = isSgLabelSymbol(SI::lookupSymbolInParentScopes(kvp.first, scope));
@@ -7082,6 +7121,13 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
                auto stringVal = SB::buildStringVal_nfi(name);
                labelRefs_.insert(std::make_pair(name, stringVal));
                locArgExpr = stringVal;
+            }
+            // Or perhaps there is a label REF
+            else {
+              auto kvp = labelRefs_.find(name);
+              if (kvp != labelRefs_.end()) {
+                locArgExpr = kvp->second;
+              }
             }
          }
       }
