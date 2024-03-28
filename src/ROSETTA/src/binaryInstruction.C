@@ -29969,7 +29969,7 @@ private:
         debugSerializationEnd("SgAsmCilUint8Heap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<uint8_t> const& get_Stream() const;
     std::vector<uint8_t>& get_Stream();
@@ -30040,7 +30040,7 @@ private:
         debugSerializationEnd("SgAsmCilUint32Heap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<uint32_t> const& get_Stream() const;
     std::vector<uint32_t>& get_Stream();
@@ -30111,7 +30111,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeSpecTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilTypeSpec*> const& get_elements() const;
     std::vector<SgAsmCilTypeSpec*>& get_elements();
@@ -30173,7 +30173,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeSpec");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Signature.
      *
@@ -30245,7 +30245,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilTypeRef*> const& get_elements() const;
     std::vector<SgAsmCilTypeRef*>& get_elements();
@@ -30321,7 +30321,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: ResolutionScope.
      *
@@ -30415,7 +30415,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeDefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilTypeDef*> const& get_elements() const;
     std::vector<SgAsmCilTypeDef*>& get_elements();
@@ -30512,7 +30512,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Flags.
      *
@@ -30639,7 +30639,7 @@ private:
         debugSerializationEnd("SgAsmCilStandAloneSigTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilStandAloneSig*> const& get_elements() const;
     std::vector<SgAsmCilStandAloneSig*>& get_elements();
@@ -30701,7 +30701,7 @@ private:
         debugSerializationEnd("SgAsmCilStandAloneSig");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Signature.
      *
@@ -30773,7 +30773,7 @@ private:
         debugSerializationEnd("SgAsmCilPropertyTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilProperty*> const& get_elements() const;
     std::vector<SgAsmCilProperty*>& get_elements();
@@ -30835,7 +30835,7 @@ private:
         debugSerializationEnd("SgAsmCilPropertyMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilPropertyMap*> const& get_elements() const;
     std::vector<SgAsmCilPropertyMap*>& get_elements();
@@ -30904,7 +30904,7 @@ private:
         debugSerializationEnd("SgAsmCilPropertyMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Parent.
      *
@@ -31001,7 +31001,7 @@ private:
         debugSerializationEnd("SgAsmCilProperty");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Flags.
      *
@@ -31094,7 +31094,7 @@ private:
         debugSerializationEnd("SgAsmCilParamTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilParam*> const& get_elements() const;
     std::vector<SgAsmCilParam*>& get_elements();
@@ -31170,7 +31170,7 @@ private:
         debugSerializationEnd("SgAsmCilParam");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Flags.
      *
@@ -31262,7 +31262,7 @@ private:
         debugSerializationEnd("SgAsmCilNestedClassTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilNestedClass*> const& get_elements() const;
     std::vector<SgAsmCilNestedClass*>& get_elements();
@@ -31331,7 +31331,7 @@ private:
         debugSerializationEnd("SgAsmCilNestedClass");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: NestedClass.
      *
@@ -31414,7 +31414,7 @@ private:
         debugSerializationEnd("SgAsmCilModuleTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilModule*> const& get_elements() const;
     std::vector<SgAsmCilModule*>& get_elements();
@@ -31476,7 +31476,7 @@ private:
         debugSerializationEnd("SgAsmCilModuleRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilModuleRef*> const& get_elements() const;
     std::vector<SgAsmCilModuleRef*>& get_elements();
@@ -31538,7 +31538,7 @@ private:
         debugSerializationEnd("SgAsmCilModuleRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Name.
      *
@@ -31638,7 +31638,7 @@ private:
         debugSerializationEnd("SgAsmCilModule");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Generation.
      *
@@ -31753,7 +31753,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSpecTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilMethodSpec*> const& get_elements() const;
     std::vector<SgAsmCilMethodSpec*>& get_elements();
@@ -31822,7 +31822,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSpec");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Method.
      *
@@ -31905,7 +31905,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSemanticsTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilMethodSemantics*> const& get_elements() const;
     std::vector<SgAsmCilMethodSemantics*>& get_elements();
@@ -31981,7 +31981,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSemantics");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Semantics.
      *
@@ -32074,7 +32074,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodImplTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilMethodImpl*> const& get_elements() const;
     std::vector<SgAsmCilMethodImpl*>& get_elements();
@@ -32150,7 +32150,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodImpl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Class.
      *
@@ -32244,7 +32244,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodDefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilMethodDef*> const& get_elements() const;
     std::vector<SgAsmCilMethodDef*>& get_elements();
@@ -32369,7 +32369,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: RVA.
      *
@@ -32596,7 +32596,7 @@ private:
         debugSerializationEnd("SgAsmCilMetadataRoot");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Magic signature for physical metadata (always 0x424A5342) 
      * 
@@ -32708,13 +32708,14 @@ public:
     /** Declares the unparse function as called from the Cli section header object. */
     void unparse(std::ostream& f) const;
 
-    /** unparses the metadata objects into a buffer starting at index @ref idx. */
+    /** Unparses the metadata objects into a buffer starting at index @p idx. */
     void unparse(std::vector<uint8_t>&, std::size_t) const;
 
-    /** Prints the object's data in a human readable form to @ref os. */
+    /** Prints the object's data in a human readable form to @p os. */
     void dump(std::ostream& os) const;
 
-    /** accessor functions to return specific heaps
+    /** Accessor function to return a specific heap.
+     *
      * @{ */
     SgAsmCilUint8Heap*    get_StringHeap() const;
     SgAsmCilUint8Heap*    get_BlobHeap() const;
@@ -33100,7 +33101,7 @@ private:
         debugSerializationEnd("SgAsmCilMetadataHeap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: 4 reserved bytes. 
      * 
@@ -33561,22 +33562,24 @@ public:
     /** unparses the metadata objects into the buffer */
     void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
 
-    /** Prints the object's data in a human readable form to @ref os. */
+    /** Prints the object's data in a human readable form. */
     void dump(std::ostream& os) const override;
 
-    /** looks up the node associated with the coded index @ref idx in the metadata table
-     *  associated with @p refcode.
-     */
+    /** Look up node by index.
+     *
+     *  Looks up the node associated with the coded index @p idx in the metadata table associated with @p tblcode. */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;
 
-    /** looks up the node associated with the coded index @p refcode in the metadata tables
-     *  under the assumption that @p refcode is of kind @p knd
-     */
+    /** Look up node by index.
+     *
+     *  Looks up the node associated with the coded index @p refcode in the metadata tables under the assumption that the value is
+     *  of kind @p knd. */
     SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-    /** looks up the node associated with the coded index @p refcode in the metadata tables
-     *  under the assumption that @p refcode is of kind @p knd
-     */
+    /** Look up node by index.
+     *
+     *  Looks up the node associated with the coded index @p refcode in the metadata tables under the assumption the value is of
+     *  kind @p knd. */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 public:
     /** Destructor. */
@@ -33641,7 +33644,7 @@ private:
         debugSerializationEnd("SgAsmCilMemberRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilMemberRef*> const& get_elements() const;
     std::vector<SgAsmCilMemberRef*>& get_elements();
@@ -33717,7 +33720,7 @@ private:
         debugSerializationEnd("SgAsmCilMemberRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Class.
      *
@@ -33811,7 +33814,7 @@ private:
         debugSerializationEnd("SgAsmCilManifestResourceTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilManifestResource*> const& get_elements() const;
     std::vector<SgAsmCilManifestResource*>& get_elements();
@@ -33894,7 +33897,7 @@ private:
         debugSerializationEnd("SgAsmCilManifestResource");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Offset.
      *
@@ -33997,7 +34000,7 @@ private:
         debugSerializationEnd("SgAsmCilInterfaceImplTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilInterfaceImpl*> const& get_elements() const;
     std::vector<SgAsmCilInterfaceImpl*>& get_elements();
@@ -34066,7 +34069,7 @@ private:
         debugSerializationEnd("SgAsmCilInterfaceImpl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Class.
      *
@@ -34230,7 +34233,7 @@ private:
         debugSerializationEnd("SgAsmCilImplMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilImplMap*> const& get_elements() const;
     std::vector<SgAsmCilImplMap*>& get_elements();
@@ -34313,7 +34316,7 @@ private:
         debugSerializationEnd("SgAsmCilImplMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: MappingFlags.
      *
@@ -34417,7 +34420,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParamTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilGenericParam*> const& get_elements() const;
     std::vector<SgAsmCilGenericParam*>& get_elements();
@@ -34500,7 +34503,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParam");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Number.
      *
@@ -34603,7 +34606,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParamConstraintTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
     std::vector<SgAsmCilGenericParamConstraint*>& get_elements();
@@ -34672,7 +34675,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParamConstraint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Owner.
      *
@@ -34755,7 +34758,7 @@ private:
         debugSerializationEnd("SgAsmCilFileTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilFile*> const& get_elements() const;
     std::vector<SgAsmCilFile*>& get_elements();
@@ -34831,7 +34834,7 @@ private:
         debugSerializationEnd("SgAsmCilFile");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Flags.
      *
@@ -34924,7 +34927,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilField*> const& get_elements() const;
     std::vector<SgAsmCilField*>& get_elements();
@@ -34986,7 +34989,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldRVATable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilFieldRVA*> const& get_elements() const;
     std::vector<SgAsmCilFieldRVA*>& get_elements();
@@ -35055,7 +35058,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldRVA");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: RVA.
      *
@@ -35137,7 +35140,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldMarshalTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilFieldMarshal*> const& get_elements() const;
     std::vector<SgAsmCilFieldMarshal*>& get_elements();
@@ -35206,7 +35209,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldMarshal");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Parent.
      *
@@ -35289,7 +35292,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldLayoutTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilFieldLayout*> const& get_elements() const;
     std::vector<SgAsmCilFieldLayout*>& get_elements();
@@ -35358,7 +35361,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldLayout");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Offset.
      *
@@ -35454,7 +35457,7 @@ private:
         debugSerializationEnd("SgAsmCilField");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Flags.
      *
@@ -35547,7 +35550,7 @@ private:
         debugSerializationEnd("SgAsmCilExportedTypeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilExportedType*> const& get_elements() const;
     std::vector<SgAsmCilExportedType*>& get_elements();
@@ -35637,7 +35640,7 @@ private:
         debugSerializationEnd("SgAsmCilExportedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: EventFlags.
      *
@@ -35751,7 +35754,7 @@ private:
         debugSerializationEnd("SgAsmCilEventTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilEvent*> const& get_elements() const;
     std::vector<SgAsmCilEvent*>& get_elements();
@@ -35813,7 +35816,7 @@ private:
         debugSerializationEnd("SgAsmCilEventMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilEventMap*> const& get_elements() const;
     std::vector<SgAsmCilEventMap*>& get_elements();
@@ -35882,7 +35885,7 @@ private:
         debugSerializationEnd("SgAsmCilEventMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Parent.
      *
@@ -35979,7 +35982,7 @@ private:
         debugSerializationEnd("SgAsmCilEvent");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: EventFlags.
      *
@@ -36072,7 +36075,7 @@ private:
         debugSerializationEnd("SgAsmCilDeclSecurityTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilDeclSecurity*> const& get_elements() const;
     std::vector<SgAsmCilDeclSecurity*>& get_elements();
@@ -36148,7 +36151,7 @@ private:
         debugSerializationEnd("SgAsmCilDeclSecurity");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Action.
      *
@@ -36277,7 +36280,7 @@ private:
         debugSerializationEnd("SgAsmCilDataStream");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Start offset of the byte stream. 
      * 
@@ -36310,9 +36313,9 @@ public:
     void set_NamePadding(uint32_t const&);
     /** @} */
 public:
-    /** Define constant strings for the known stream types
-     *  @{
-     */
+    /** Define constant strings for the known stream types.
+     *
+     *  @{ */
     static const std::string ID_STRING_HEAP;
     static const std::string ID_BLOB_HEAP;
     static const std::string ID_US_HEAP;
@@ -36320,22 +36323,21 @@ public:
     static const std::string ID_METADATA_HEAP;
     /** }@ */
 
-    /**
-     * Defines the parse function.
+    /** Defines the parse function.
+     *
      * @param buf the binary buffer.
      * @param startOfMetaData the location in buf where the metadata root (CIL ECMA II.24.2.1)
      *        is located.
      * @details
      *   buf[startOfMetaData] is the location of the metadata root magic number.
      *   parse will add get_Offset to startOfMetaData to find the first byte of a
-     *   stream.
-     */
+     *   stream. */
     virtual void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData); /* FIXME: should be abstract */
 
     /** unparses the metadata objects into the buffer */
     virtual void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const; /* FIXME: should be abstract */
 
-    /** Prints the object's data in a human readable form to @ref os. */
+    /** Prints the object's data in a human readable form. */
     virtual void dump(std::ostream& os) const; /* FIXME: should be abstract */
 public:
     /** Destructor. */
@@ -36400,7 +36402,7 @@ private:
         debugSerializationEnd("SgAsmCilCustomAttributeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilCustomAttribute*> const& get_elements() const;
     std::vector<SgAsmCilCustomAttribute*>& get_elements();
@@ -36476,7 +36478,7 @@ private:
         debugSerializationEnd("SgAsmCilCustomAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Parent.
      *
@@ -36570,7 +36572,7 @@ private:
         debugSerializationEnd("SgAsmCilConstantTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilConstant*> const& get_elements() const;
     std::vector<SgAsmCilConstant*>& get_elements();
@@ -36653,7 +36655,7 @@ private:
         debugSerializationEnd("SgAsmCilConstant");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Type.
      *
@@ -36756,7 +36758,7 @@ private:
         debugSerializationEnd("SgAsmCilClassLayoutTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilClassLayout*> const& get_elements() const;
     std::vector<SgAsmCilClassLayout*>& get_elements();
@@ -36832,7 +36834,7 @@ private:
         debugSerializationEnd("SgAsmCilClassLayout");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: PackingSize.
      *
@@ -36924,7 +36926,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilAssembly*> const& get_elements() const;
     std::vector<SgAsmCilAssembly*>& get_elements();
@@ -36986,7 +36988,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilAssemblyRef*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRef*>& get_elements();
@@ -37048,7 +37050,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefProcessorTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilAssemblyRefProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefProcessor*>& get_elements();
@@ -37117,7 +37119,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefProcessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Processor.
      *
@@ -37199,7 +37201,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefOSTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilAssemblyRefOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefOS*>& get_elements();
@@ -37282,7 +37284,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefOS");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: OSPlatformID.
      *
@@ -37440,7 +37442,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: MajorVersion.
      *
@@ -37595,7 +37597,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyProcessorTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilAssemblyProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyProcessor*>& get_elements();
@@ -37657,7 +37659,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyProcessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: Processor.
      *
@@ -37727,7 +37729,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyOSTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     std::vector<SgAsmCilAssemblyOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyOS*>& get_elements();
@@ -37803,7 +37805,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyOS");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: OSPlatformID.
      *
@@ -37949,7 +37951,7 @@ private:
         debugSerializationEnd("SgAsmCilAssembly");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: HashAlgId.
      *
