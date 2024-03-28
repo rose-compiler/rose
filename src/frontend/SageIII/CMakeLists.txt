@@ -1,6 +1,4 @@
 add_subdirectory(astFileIO)
-# tps (04/01/2010) : Added  GENERATED_CODE_DIRECTORY_Cxx_Grammar subdirectory
-add_subdirectory(GENERATED_CODE_DIRECTORY_Cxx_Grammar)
 add_subdirectory(astFixup)
 add_subdirectory(astPostProcessing)
 add_subdirectory(sageInterface)

@@ -20,9 +20,6 @@ else
    SUBDIRS = astFileIO astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
 endif
 
-# DQ (12/29/2009): This is only used to handle generated code as smaller files.
-SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
-
 # DQ (5/2/2009): This supports the optimization of the new 
 # Graph IR nodes (makes about 25% improvement, I think).
 # ROSE_OPTIMIZATION_LEVEL = -O3
@@ -267,16 +264,6 @@ libsage3_la_LIBADD= \
   astVisualization/libastVisualization.la \
   astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
   includeDirectivesProcessing/libincludeDirectivesProcessing.la
-endif
-
-
-# DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
-# although this will likely fail at least some of the nearly one hundred new name qualification tests.
-# DQ (6/24/2011): Removed now the the name qualification support in a part of src/backend/unparser.
-# astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
-
-if ROSE_USE_SMALLER_GENERATED_FILES
-   libsage3_la_LIBADD += GENERATED_CODE_DIRECTORY_Cxx_Grammar/libgeneratedIR.la
 endif
 
 rose_attributes_list.lo : rose_attributes_list.h 

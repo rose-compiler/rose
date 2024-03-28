@@ -40,10 +40,6 @@ vector<GrammarFile*> Grammar::fileList;
 // #                   Grammar Member Functions                   #
 // ################################################################
 
-#ifdef ROSE_USE_SMALLER_GENERATED_FILES
-#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS 1
-#endif
-
 Grammar::~Grammar ()
 {
 }
@@ -304,16 +300,6 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
      if (ROSE_ShowFile.good() == false)
         {
           fprintf(stderr, "outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
-          string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
-
-       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.C for an example.
-          if (verbose)
-              printf("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
-          if (system(command.c_str())) {
-              std::cerr <<"command failed: \"" <<StringUtility::cEscape(command) <<"\"\n";
-              exit(1);
-          }
-
        // retry opening the file...
           ROSE_ShowFile.open(outputFilename.c_str());
         }
@@ -354,14 +340,6 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
      ROSE_ShowFile.close();
      ROSE_ASSERT (outputStream.good() == true);
    }
-
-
-string
-Grammar::sourceCodeDirectoryName ()
-   {
-     return "GENERATED_CODE_DIRECTORY_" + getGrammarName();
-   }
-
 
 void
 Grammar::generateStringListsFromSubtreeLists ( AstNodeClass & node,
@@ -725,16 +703,7 @@ Grammar::buildNewAndDeleteOperators( AstNodeClass & node, StringUtility::FileWit
    {
      StringUtility::FileWithLineNumbers editString = buildStringForNewAndDeleteOperatorSource(node);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file (each class in its own file)!
-     string fileExtension = ".C";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-
-  // This should append the string to the target file.
-     appendFile ( editString, directoryName, node.getName(), fileExtension );
-#else
      outputFile += editString;
-#endif
 
   // Call this function recursively on the children of this node in the tree
      vector<AstNodeClass *>::iterator treeNodeIterator;
@@ -777,16 +746,7 @@ Grammar::buildTraverseMemoryPoolSupport( AstNodeClass & node, StringUtility::Fil
 
      StringUtility::FileWithLineNumbers editString = buildStringForTraverseMemoryPoolSource(node);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file (each class in its own file)!
-     string fileExtension = ".C";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-
-  // This should append the string to the target file.
-     appendFile ( editString, directoryName, node.getName(), fileExtension );
-#else
      outputFile += editString;
-#endif
 
   // Call this function recursively on the children of this node in the tree
      vector<AstNodeClass *>::iterator treeNodeIterator;
@@ -819,16 +779,7 @@ Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNum
 
      StringUtility::FileWithLineNumbers editString = buildStringForNodeIdSource(node);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file (each class in its own file)!
-     string fileExtension = ".C";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-
-  // This should append the string to the target file.
-     appendFile ( editString, directoryName, node.getName(), fileExtension );
-#else
      outputFile += editString;
-#endif
 
   // Call this function recursively on the children of this node in the tree
      vector<AstNodeClass *>::iterator treeNodeIterator;
@@ -887,16 +838,7 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass
    {
      StringUtility::FileWithLineNumbers editString = buildStringForCheckingIfDataMembersAreInMemoryPoolSource(node);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file (each class in its own file)!
-     string fileExtension = ".C";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-
-  // This should append the string to the target file.
-     appendFile ( editString, directoryName, node.getName(), fileExtension );
-#else
      outputFile += editString;
-#endif
 
   // Call this function recursively on the children of this node in the tree
      vector<AstNodeClass *>::iterator treeNodeIterator;
@@ -1784,16 +1726,7 @@ Grammar::buildCopyMemberFunctions ( AstNodeClass & node, StringUtility::FileWith
    {
      StringUtility::FileWithLineNumbers editString = buildCopyMemberFunctionSource(node);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file (each class in its own file)!
-     string fileExtension = ".C";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-
-  // This should append the string to the target file.
-     appendFile ( editString, directoryName, node.getName(), fileExtension );
-#else
      outputFile += editString;
-#endif
 
   // Call this function recursively on the children of this node in the tree
      vector<AstNodeClass *>::iterator treeNodeIterator;
@@ -1981,13 +1914,8 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // Output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
 
-     if (!smallHeadersDir.empty()
-#ifdef WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-         || true
-#endif
-         ) {
+     if (!smallHeadersDir.empty()) {
          // Now write out the header file (each class in its own file)!
-         const std::string directoryName = smallHeadersDir.empty() ? target_directory + sourceCodeDirectoryName() : smallHeadersDir;
          editedHeaderFileString.insert(editedHeaderFileString.begin(),
                                        StringUtility::StringWithLineNumber("#ifndef ROSE_" + node.getName() + "_H\n"
                                                                            "#define ROSE_" + node.getName() + "_H\n"
@@ -1996,7 +1924,7 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
                                                                            __FILE__, __LINE__));
          editedHeaderFileString.push_back(StringUtility::StringWithLineNumber("#endif // ROSE_" + node.getName() + "_H",
                                                                               __FILE__, __LINE__));
-         writeFile(editedHeaderFileString, directoryName, node.getName(), ".h");
+         writeFile(editedHeaderFileString, smallHeadersDir, node.getName(), ".h");
      }
 
      vector<AstNodeClass *>::iterator treeListIterator;
@@ -2206,15 +2134,7 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
      // BP : 10/25/2001, no need to duplicate here
 
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // DQ (12/29/2009): Add this to the top of each file.
-        // tps (01/06/2010) : If we include sage3.h instead of rose.h on Windows these files are
-                // currently only 7MB instead of 17MB - still to large though
-         string sourceHeader = "#include \"sage3basic.h\"   // sage3 from grammar.C \nusing namespace std;\n\n";
-     sourceBeforeInsertion.push_back(StringUtility::StringWithLineNumber(sourceHeader, "", 1));
-#else
      sourceBeforeInsertion += buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
-#endif
 
      StringUtility::FileWithLineNumbers sourceAfterInsertion = buildHeaderStringAfterMarker(sourceFileInsertionSeparator, fileName);
 
@@ -2245,15 +2165,7 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-  // Now write out the file!
-     string fileExtension = ".C";
-     string directoryName = target_directory + sourceCodeDirectoryName();
-
-     writeFile ( editedSourceFileString, directoryName, node.getName(), fileExtension );
-#endif
-
-// Also output strings to single file
+  // Also output strings to single file
      outputFile += editedSourceFileString;
 
   // Call this function recursively on the children of this node in the tree
@@ -2393,34 +2305,6 @@ Grammar::buildVariants()
 
      return returnString;
    }
-
-
-void
-Grammar::buildIncludesForSeparateHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
-   {
-  // DQ (12/28/2009): New function to support generation of includes for separate header files.
-  // This work is optionally included as an alternative to the generation of huge 300K line files.
-  // This is only a performance issue and perhaps an optimization issue for compiling ROSE on
-  // machines without large memories (or for 32bit machines).  It is also an attempt to address
-  // the complexity of handling Windows and the MSVC compiler (which does not appear to like
-  // large single files).
-
-     string includeDerictive = string("#include \"") + sourceCodeDirectoryName() + "/" + node.name + ".h\"";
-     outputFile.push_back(StringUtility::StringWithLineNumber(includeDerictive,"",1));
-
-  // Call this function recursively on the children of this node in the tree
-     vector<AstNodeClass *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.subclasses.begin();
-          treeNodeIterator != node.subclasses.end();
-          treeNodeIterator++ )
-        {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
-
-          buildIncludesForSeparateHeaderFiles(**treeNodeIterator,outputFile);
-        }
-   }
-
 
 // Emit a forward declaration for each class of the grammar.
 void
@@ -3091,35 +2975,9 @@ Grammar::buildCode ()
   // and post order components. The user doesn't notice this change.
      ROSE_ArrayGrammarHeaderFile << "typedef enum \n{preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;\n\n";
 
-  // DQ (12/28/2009): Make this a configure option to use the separate, dramatically smaller but more numerous header files for each IR node.
-     StringUtility::FileWithLineNumbers includesForSeparateHeaderFilesString;
-
-  // Note that this macro is defined in sage3.h.
-     includesForSeparateHeaderFilesString.push_back(StringUtility::StringWithLineNumber(string("#if ROSE_USING_SMALL_GENERATED_HEADER_FILES"),string(""),1));
-
-  // Build the includes for each of the files (later build in groups of N IR nodes at a time; rather than based on file length).
-  // Note that these files must exist so we can't have the include list be dependent upon file length triggered elsewhere in ROSETTA.
-  // includesForSeparateHeaderFilesString += buildIncludesForSeparateHeaderFiles();
-     buildIncludesForSeparateHeaderFiles(*rootNode,includesForSeparateHeaderFilesString);
-
-  // Close off the list with "#else".
-     includesForSeparateHeaderFilesString.push_back(StringUtility::StringWithLineNumber(string("#else // else for ifdef ROSE_USING_SMALL_GENERATED_HEADER_FILES"),string(""),1));
-
-  // includesForSeparateHeaderFilesString.push_back(StringUtility::StringWithLineNumber(string("#endif // endif for ifdef ROSE_USING_SMALL_GENERATED_HEADER_FILES"),string(""),1));
-  // includesForSeparateHeaderFilesString = GrammarString::copyEdit ( includesForSeparateHeaderFilesString,"$MARKER",getGrammarName());
-     ROSE_ArrayGrammarHeaderFile += includesForSeparateHeaderFilesString;
-
   // Now declare the classes representing the terminals and nonterminals within the grammar
      ROSE_ASSERT (rootNode != NULL);
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     StringUtility::FileWithLineNumbers ROSE_ArrayGrammarEmptyHeaderFile;
-     buildHeaderFiles(*rootNode,ROSE_ArrayGrammarEmptyHeaderFile);
-#else
      buildHeaderFiles(*rootNode,ROSE_ArrayGrammarHeaderFile);
-#endif
-
-  // DQ (12/29/2009): Attach endif associated with optional separate (smaller) header files.
-     ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(string("#endif // endif for ifdef ROSE_USING_SMALL_GENERATED_HEADER_FILES"),string(""),1));
 
   // DQ (11/26/2005): Support for visitor pattern.
      string visitorSupport = buildVisitorBaseClass();
@@ -3202,20 +3060,7 @@ Grammar::buildCode ()
 
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("Skipping output of source files into Cxx_Grammar.C ...\n");
-     StringUtility::FileWithLineNumbers ROSE_ArrayGrammarEmptySourceFile;
-
-  // Output all the source for each IR node into a single smaller file (one for each IR node).
-     buildSourceFiles(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-     buildNewAndDeleteOperators(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-     buildCopyMemberFunctions(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-     buildTraverseMemoryPoolSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-     buildNodeIdSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-     buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-#else //WRITE_SEPARATE_FILES_FOR_EACH_CLASS
      buildSourceFiles(*rootNode,ROSE_ArrayGrammarSourceFile);
-#endif //WRITE_SEPARATE_FILES_FOR_EACH_CLASS
      if (verbose)
          cout << "DONE: buildSourceFiles()" << endl;
 
@@ -3245,11 +3090,7 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("When generating small files we combine the New and Delete oporators into the source files above. \n");
-#else
      buildNewAndDeleteOperators(*rootNode,ROSE_NewAndDeleteOperatorSourceFile);
-#endif
      if (verbose)
          cout << "DONE: buildNewAndDeletOperators()" << endl;
 
@@ -3266,11 +3107,7 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("When generating small files we combine the Traversal Memory Pool support into the source files above. \n");
-#else
      buildTraverseMemoryPoolSupport(*rootNode,ROSE_TraverseMemoryPoolSourceFile);
-#endif
      if (verbose)
          cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
 
@@ -3285,11 +3122,7 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("When generating small files we combine the NodeId support into the source files above. \n");
-#else
      buildNodeIdSupport(*rootNode,ROSE_NodeIdSourceFile);
-#endif
      if (verbose)
          cout << "DONE: buildNodeIdSupport()" << endl;
 
@@ -3305,11 +3138,7 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("When generating small files we combine the CheckingIfDataMembersAreInMemoryPool support into the source files above. \n");
-#else
      buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile);
-#endif
      if (verbose)
          cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
 
@@ -3402,11 +3231,7 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("When generating small files we combine the Copy Member functions into the source files above. \n");
-#else
      buildCopyMemberFunctions(*rootNode,ROSE_CopyMemberFunctionsSourceFile);
-#endif
      if (verbose)
          cout << "DONE: buildCopyMemberFunctions()" << endl;
 

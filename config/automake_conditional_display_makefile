@@ -354,11 +354,6 @@ if ROSE_USE_SAT
 else
 	@echo "Automake conditional ROSE_USE_SAT: NOT defined"
 endif
-if ROSE_USE_SMALLER_GENERATED_FILES
-	@echo "Automake conditional ROSE_USE_SMALLER_GENERATED_FILES: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_SMALLER_GENERATED_FILES: NOT defined"
-endif
 if ROSE_USE_SQLITE_DATABASE
 	@echo "Automake conditional ROSE_USE_SQLITE_DATABASE: DEFINED"
 else

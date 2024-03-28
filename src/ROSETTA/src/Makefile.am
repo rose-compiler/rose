@@ -14,12 +14,6 @@ CXX_GRAMMAR_DIR   = $(top_builddir)/src/frontend/SageIII
 
 CXX_PREPROC_CODES = $(CXX_GRAMMAR_DIR)/Cxx_Grammar.h
 
-if ROSE_USE_SMALLER_GENERATED_FILES
-  CXX_PREPROC_CODES += $(CXX_GRAMMAR_DIR)/GENERATED_CODE_DIRECTORY_Cxx_Grammar/SgNode.h
-endif
-
-#                   $(CXX_GRAMMAR_DIR)/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C
-
 BUILT_SOURCES = $(CXX_PREPROC_CODES)
 
 # Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed

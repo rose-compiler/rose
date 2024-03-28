@@ -291,14 +291,9 @@ class Grammar
           Rose::StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
           Rose::StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
 
-          std::string sourceCodeDirectoryName();
-
           static Rose::StringUtility::FileWithLineNumbers readFileWithPos ( const std::string& inputFileName );
 
-       // DQ (12/28/2009): I don't think we want this to be static, since I want to call sourceCodeDirectoryName().
-       // static void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
-       //                         const std::string& className, const std::string& fileExtension );
-          void writeFile  ( const Rose::StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+          void writeFile  ( const Rose::StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName,
                             const std::string& className, const std::string& fileExtension );
        // DQ (12/31/2009): Added mechanism to append generated text to files.
           void appendFile ( const Rose::StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
@@ -325,10 +320,6 @@ class Grammar
           Rose::StringUtility::FileWithLineNumbers buildVariants ();
           void emitForwardDeclarations(std::ostream&) const;
           Rose::StringUtility::FileWithLineNumbers buildForwardDeclarations ();
-
-       // DQ (12/28/2009): Added to support optionally smaller (but more numerous header files for ROSE).
-       // StringUtility::FileWithLineNumbers buildIncludesForSeparateHeaderFiles();
-          void buildIncludesForSeparateHeaderFiles( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
           void buildVariantsStringPrototype ( Rose::StringUtility::FileWithLineNumbers & outputFile );

@@ -207,19 +207,6 @@ if test "x$enable_memory_pool_no_reuse" = "xyes"; then
   AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
 fi
 
-
-# ************************************************************
-# Option to control the size of the generated files by ROSETTA
-# ************************************************************
-
-# DQ (12/29/2009): This is part of optional support to reduce the sizes of some of the ROSETTA generated files.
-AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
-AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
-if test "x$enable_smaller_generated_files" = "xyes"; then
-  AC_MSG_WARN([using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR])
-  AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
-fi
-
 # DQ (11/14/2011): Added new configure mode to support faster development of langauge specific
 # frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
 AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
@@ -2026,7 +2013,6 @@ src/frontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/PythonFrontend/Makefile
-src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/Makefile
 src/frontend/SageIII/astFileIO/Makefile
 src/frontend/SageIII/astFixup/Makefile

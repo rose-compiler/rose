@@ -292,16 +292,6 @@ set(HAVE_BOOST_WAVE ${Boost_WAVE_FOUND})
 set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
 
 ########################################################################################################################
-# ROSETTA
-########################################################################################################################
-
-option(enable-smaller-generated-files "Build with smaller generated files for IR nodes")
-if(enable-smaller-generated-files)
-  add_definitions("-DsmallerGeneratedFiles" "-DROSE_USE_SMALLER_GENERATED_FILES")
-endif()
-
-
-########################################################################################################################
 # Compiler toolchain features
 ########################################################################################################################
 

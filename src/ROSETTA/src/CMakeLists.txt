@@ -93,48 +93,28 @@ if(WIN32)
 endif()
 target_link_libraries(CxxGrammarMetaProgram ${link_libs} roseUtil)
 
-if(enable-smaller-generated-files)
-  if(VERBOSE)
-    message(STATUS "Smaller generated files enabled")
-  endif()
-  
-  # define a custom command to call the code generator and generate source/header files
-  # Generate the edg-sage connection using ROSETTA
-  add_custom_command(
-    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
-    # depend on the code generator and input files
-    DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES} libgeneratedIR   
-    # We need to copy the input files to the build tree since the code generator will output the generated source files
-    # into the same directory as where the input files locate
-    COMMAND ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
-    # create this directory is needed since a few generated files will be put there        
-    COMMAND ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
-    COMMAND CxxGrammarMetaProgram ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/)
-
-else()
-  if(VERBOSE)
-    message(STATUS "Smaller generated files disabled")
-  endif()
-
-  # define a custom command to call the code generator and generate source/header files
-  # Generate the edg-sage connection using ROSETTA
-  add_custom_command(
-    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
-    # depend on the code generator and input files
-    DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES} 
-    # We need to copy the input files to the build tree since the code generator will output the generated source files
-    # into the same directory as where the input files locate
-    COMMAND ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
-    # create this directory is needed since a few generated files will be put there        
-    COMMAND ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
-    COMMAND ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/Rose/Traits
-    # COMMAND echo  "META_EXE_LOC =  ${META_EXE_LOC} ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/"
-    # STRING(REGEX REPLACE "\\\\" "/" META_EXE_LOC ${META_EXE_LOC} )
-    # COMMAND echo  "META_EXE_LOC =  ${META_EXE_LOC} ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/"
-    COMMAND CxxGrammarMetaProgram
-    # COMMAND "C:/ROSE/git-rose-tps/build/src/ROSETTA/src/Debug/CxxGrammarMetaProgram.exe "
-    ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/)
+if(VERBOSE)
+  message(STATUS "Smaller generated files disabled")
 endif()
+
+# define a custom command to call the code generator and generate source/header files
+# Generate the edg-sage connection using ROSETTA
+add_custom_command(
+  OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
+  # depend on the code generator and input files
+  DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES} 
+  # We need to copy the input files to the build tree since the code generator will output the generated source files
+  # into the same directory as where the input files locate
+  COMMAND ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
+  # create this directory is needed since a few generated files will be put there        
+  COMMAND ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+  COMMAND ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/Rose/Traits
+  # COMMAND echo  "META_EXE_LOC =  ${META_EXE_LOC} ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/"
+  # STRING(REGEX REPLACE "\\\\" "/" META_EXE_LOC ${META_EXE_LOC} )
+  # COMMAND echo  "META_EXE_LOC =  ${META_EXE_LOC} ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/"
+  COMMAND CxxGrammarMetaProgram
+  # COMMAND "C:/ROSE/git-rose-tps/build/src/ROSETTA/src/Debug/CxxGrammarMetaProgram.exe "
+  ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/)
 
 # a custom target depending on generated rosetta source and header files to trigger the building process
 add_custom_target(rosetta_generated ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC})
