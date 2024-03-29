@@ -19,6 +19,7 @@ class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
    rb::SageTreeBuilder sage_tree_builder;
+   std::multimap<const std::string, SgStringVal*> labelDecls_;
    std::multimap<const std::string, SgStringVal*> labelRefs_;
 
  protected:

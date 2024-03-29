@@ -3384,7 +3384,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
 
             // Save an SgStringVal for later processing (if needed)
             auto stringVal = SB::buildStringVal_nfi(name);
-            labelRefs_.insert(std::make_pair(name, stringVal));
+            labelDecls_.insert(std::make_pair(name, stringVal));
 
             SageInterface::appendStatement(labelStmt, SageBuilder::topScopeStack());
          }
@@ -4006,10 +4006,15 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
      SgStringVal* strVal = kvp.second;
 
      // If strVal has no parent, it won't have been used, delete it
+     // With labelDecls_ this should always be the case, delete labelDecls_ and stringVals
+     ASSERT_not_null(strVal);
+     ASSERT_not_null(strVal->get_parent());
+#if 0
      if (strVal && strVal->get_parent() == nullptr) {
        delete strVal;
        continue;
      }
+#endif
 
      if (strVal && strVal->get_parent() && strVal->get_value() == kvp.first) {
        // Replace original SgStringVal with an SgLabelRefExp
@@ -4023,6 +4028,12 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
      }
    }
    labelRefs_.clear();
+
+   for (const auto &kvp: labelDecls_) {
+     SgStringVal* strVal = kvp.second;
+     delete strVal;
+   }
+   labelDecls_.clear();
 
    return ATtrue;
 }
@@ -4242,10 +4253,15 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
      SgStringVal* strVal = kvp.second;
 
      // If strVal has no parent, it won't have been used, delete it
+     // With labelDecls_ this should always be the case, delete labelDecls_ and stringVals
+     ASSERT_not_null(strVal);
+     ASSERT_not_null(strVal->get_parent());
+#if 0
      if (strVal && strVal->get_parent() == nullptr) {
        delete strVal;
        continue;
      }
+#endif
 
      if (strVal && strVal->get_parent() && strVal->get_value() == kvp.first) {
        // Replace original SgStringVal with an SgLabelRefExp
@@ -4259,6 +4275,12 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
      }
    }
    labelRefs_.clear();
+
+   for (const auto &kvp: labelDecls_) {
+     SgStringVal* strVal = kvp.second;
+     delete strVal;
+   }
+   labelDecls_.clear();
 
    return ATtrue;
 }
@@ -7117,16 +7139,20 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
             // No symbol but perhaps a label statement already exists
             auto labels = sage_tree_builder.getLabels();
             if (labels.find(name) != labels.end()) {
-               // The SgStringVal will later need to be converted to SgLabelRefExp
+               // The SgStringVal will later need to be converted to SgLabelRefExp (when we have a symbol)
                auto stringVal = SB::buildStringVal_nfi(name);
                labelRefs_.insert(std::make_pair(name, stringVal));
                locArgExpr = stringVal;
             }
-            // Or perhaps there is a label REF
+            // Or perhaps there is a label DEF/REF declaration statement
             else {
-              auto kvp = labelRefs_.find(name);
-              if (kvp != labelRefs_.end()) {
-                locArgExpr = kvp->second;
+              auto kvp = labelDecls_.find(name);
+              if (kvp != labelDecls_.end()) {
+                // TODO: duplication somehow with above, simplify
+                // The SgStringVal will later need to be converted to SgLabelRefExp (when we have a symbol)
+                auto stringVal = SB::buildStringVal_nfi(name);
+                labelRefs_.insert(std::make_pair(name, stringVal));
+                locArgExpr = stringVal;
               }
             }
          }
