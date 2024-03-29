@@ -1,7 +1,6 @@
 #ifndef VX_UTIL_FUNCS_H
 #define VX_UTIL_FUNCS_H
 
-#include <sage3basic.h>
 #include <limits>
 
 namespace VxUtilFuncs 

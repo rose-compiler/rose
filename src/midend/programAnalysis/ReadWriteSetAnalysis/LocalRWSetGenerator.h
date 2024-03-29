@@ -1,7 +1,6 @@
 #ifndef LOCALRWSETGENERATOR_H
 #define LOCALRWSETGENERATOR_H
 
-#include <sage3basic.h>
 #include <CallGraph.h>
 
 #include <Rose/AST/NodeId.h>

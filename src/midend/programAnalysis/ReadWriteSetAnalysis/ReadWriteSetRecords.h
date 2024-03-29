@@ -2,7 +2,6 @@
 #ifndef ReadWriteSetRecords_H
 #define ReadWriteSetRecords_H
 
-#include <sage3basic.h>
 #include <Rose/AST/NodeId.h>
 #include <limits>
 #include <unordered_map>

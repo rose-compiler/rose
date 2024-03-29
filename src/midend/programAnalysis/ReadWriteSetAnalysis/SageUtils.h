@@ -1,7 +1,6 @@
 #ifndef SAGE_UTILS_H
 #define SAGE_UTILS_H
 
-#include "sage3basic.h"
 #include <limits>
 #include <vector>
 
