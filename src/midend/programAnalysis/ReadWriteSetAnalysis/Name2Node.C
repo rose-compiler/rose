@@ -1,3 +1,4 @@
+#include <sage3basic.h>
 #include "Name2Node.h"
 #include <AstProcessing.h>
 #include "VxUtilFuncs.h"

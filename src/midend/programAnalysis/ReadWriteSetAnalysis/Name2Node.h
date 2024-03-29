@@ -3,7 +3,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <sage3basic.h>
 
 /**
  * \class Name2Node
