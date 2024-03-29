@@ -179,13 +179,13 @@ namespace ReadWriteSets {
        *
        **/
       AccessSetRecord(SgFunctionDeclaration* funcDecl, SgThisExp* thisExp) : variableName(VxUtilFuncs::generateAccessNameStrings(funcDecl, thisExp)),
-					    globality(Globality::MEMBERS),
-					    varType(STRUCTS),
-					    accessType(POINTER_ARROW),
-					    nodeId(Rose::AST::NodeId(thisExp).toString()),
+                                            globality(Globality::MEMBERS),
+                                            varType(STRUCTS),
+                                            accessType(POINTER_ARROW),
+                                            nodeId(Rose::AST::NodeId(thisExp).toString()),
                                             type(""), 
                                             filename(""),
-					    noteStr("") {};
+                                            noteStr("") {};
 
     //! \brief copy constructor
     AccessSetRecord(const AccessSetRecord &rhs) : 

@@ -493,24 +493,24 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
         SgExpression* exp = isSgExpression(current);
         ROSE_ASSERT(exp != NULL);
         SgExpression* nameExp = NULL;
-	std::vector<SgExpression*> subscripts; //Subscripts to this array (there can be more than one?)
-	std::vector<SgExpression*>* ptr_subscripts = &subscripts; //I don't know why this call required a double pointer to a vector.  Weird.
+        std::vector<SgExpression*> subscripts; //Subscripts to this array (there can be more than one?)
+        std::vector<SgExpression*>* ptr_subscripts = &subscripts; //I don't know why this call required a double pointer to a vector.  Weird.
         suc = SageInterface::isArrayReference(exp,&nameExp, &ptr_subscripts);
         ROSE_ASSERT(suc == true);
         // has to resolve this recursively
         std::set<ReadWriteSets::AccessSetRecord> records = recursivelyMakeAccessRecord(funcDef, nameExp, accessOrigin, thisFuncThis);
         records = updateAccessTypes(records, ARRAYS);
         
-	for (SgExpression* idxExpr : subscripts) {
-	  std::string noteStr;
-	  Globality globality = records.begin()->globality;
-	  AccessType accessType = ARRAY_INDEX_EXPRESSIONS;
-	  std::string name = idxExpr->unparseToString();
-	  std::set<ReadWriteSets::AccessSetRecord> inner {
-	  AccessSetRecord(idxExpr, name, globality, accessType, "", "",  noteStr) };
-	  leafIndexInsert(records, inner);
-	}
-	return records;
+        for (SgExpression* idxExpr : subscripts) {
+          std::string noteStr;
+          Globality globality = records.begin()->globality;
+          AccessType accessType = ARRAY_INDEX_EXPRESSIONS;
+          std::string name = idxExpr->unparseToString();
+          std::set<ReadWriteSets::AccessSetRecord> inner {
+          AccessSetRecord(idxExpr, name, globality, accessType, "", "",  noteStr) };
+          leafIndexInsert(records, inner);
+        }
+        return records;
 **/
     }
     else if (isSgVarRefExp(current) != NULL)
