@@ -7840,8 +7840,6 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
-#define DEBUG_DESIGNATED_INITIALIZER 0
-
      SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
      ROSE_ASSERT(di->get_designatorList()->get_expressions().empty() == false);
 
@@ -7854,24 +7852,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      bool isCastDesignator         = (isSgCastExp(designator) != NULL);
      bool isAggregateInitializer   = (isSgAggregateInitializer(designator) != NULL);
      bool isAssignInitializer      = (isSgAssignInitializer(initializer) != NULL);
-
-  // DQ (3/15/2015): Look for nested SgDesignatedInitializer (so we can supress the unparsed "=" syntax) (this case is demonstrated in test2015_03.c).
-
-#if DEBUG_DESIGNATED_INITIALIZER
-     printf ("--- isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
-#endif
-
-#if DEBUG_DESIGNATED_INITIALIZER
-     printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
-     printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
-
-     printf ("In unparseDesignatedInitializer: isArrayElementDesignator                      = %s \n",isArrayElementDesignator ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: isAggregateInitializer                        = %s \n",isAggregateInitializer ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: isAssignInitializer                           = %s \n",isAssignInitializer ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: isInitializer_AggregateInitializer            = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: isDataMemberDesignator                        = %s \n",isDataMemberDesignator ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
-#endif
 
   // DQ (5/11/2015): This needs to be defined outside of this conditional case so that it can be used to supress the output of the "={}" syntax.
      bool isInUnion = false;
@@ -7887,22 +7867,13 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
              }
 
           isInUnion = (classDeclaration != NULL && classDeclaration->get_class_type() == SgClassDeclaration::e_union);
-#if DEBUG_DESIGNATED_INITIALIZER
-          printf ("In unparseDesignatedInitializer: isInUnion = %s info.SkipClassDefinition() = %s \n",isInUnion ? "true" : "false",info.SkipClassDefinition() ? "true" : "false");
-#endif
        // DQ (7/27/2013): Don't output designated initialized in function call arguments (appears to not be allowed).
           if (isInUnion == true)
              {
                bool isInFunctionCallArgument = SageInterface::getEnclosingNode<SgFunctionCallExp>(di);
-#if DEBUG_DESIGNATED_INITIALIZER
-               printf ("isInFunctionCallArgument = %s \n",isInFunctionCallArgument ? "true" : "false");
-#endif
                if (isInFunctionCallArgument == false)
                   {
                     isInUnion = false;
-#if DEBUG_DESIGNATED_INITIALIZER
-                    printf ("reset isInUnion: isInUnion = %s \n",isInUnion ? "true" : "false");
-#endif
                   }
              }
 
@@ -7936,21 +7907,12 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
              }
         }
 
-#if DEBUG_DESIGNATED_INITIALIZER
-     printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: di->get_memberInit()                          = %p = %s \n",di->get_memberInit(),di->get_memberInit()->class_name().c_str());
-#endif
-
   // DQ (5/11/2015): We need to look at the SgAggregateInitializer and see if it will be outputing "{}".
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
      bool need_explicit_braces_in_aggregateInitializer = (aggregateInitializer != NULL && aggregateInitializer->get_need_explicit_braces());
 
   // Variable used to control output of normalized syntax "={}".
      bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
-
-#if DEBUG_DESIGNATED_INITIALIZER
-     printf ("In unparseDesignatedInitializer: initial value from AST: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
-#endif
 
   // DQ (5/11/2015): Supress output of normalized syntax "={}" for specific kinds of initializers (to avoid warnings in generated code).
      if (need_explicit_braces == true && isAssignInitializer == true)
@@ -7974,18 +7936,9 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
              }
         }
 
-#if DEBUG_DESIGNATED_INITIALIZER
-     printf ("In unparseDesignatedInitializer: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
-     printf ("In unparseDesignatedInitializer: isInUnion = %s \n",isInUnion ? "true" : "false");
-#endif
-
      if (isInUnion == false)
         {
           curprint (" = ");
-#if DEBUG_DESIGNATED_INITIALIZER
-          printf ("In unparseDesignatedInitializer: isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
-          printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
-#endif
           if (need_explicit_braces == true)
              {
                curprint ("{");
@@ -7999,9 +7952,6 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           if (need_explicit_braces == true)
              {
                curprint ("}");
-#if DEBUG_DESIGNATED_INITIALIZER
-               curprint (" /* designated initializer */ ");
-#endif
              }
         }
    }

@@ -197,81 +197,23 @@ CommandlineProcessing::removeArgsWithParameters ( vector<string> & argv, string 
    {
      unsigned int prefixLength = prefix.length();
 
-  // printf ("In CommandlineProcessing::removeArgs prefix = %s prefixLength = %d \n",prefix.c_str(),prefixLength);
-
      for (unsigned int i=0; i < argv.size(); i++)
         {
           string argString = argv[i];
 
-       // printf ("i = %d argString = %s \n",i,argString.c_str());
-
           if ( (argString.length() >= prefixLength) && argString.substr(0,prefixLength) == prefix )
              {
-            // printf ("Found an option to remove (removeArgsWithParameters): %s \n",argString.c_str());
-               ROSE_ASSERT ( i+1 < argv.size());
-
-            // printf ("Argv[%d] = %s %s \n",i,argv[i],argv[i+1]);
-
+               ASSERT_require( i+1 < argv.size() );
                argv.erase(argv.begin() + i, argv.begin() + i + 2);
                --i; // To counteract the i++ in the loop header
              }
         }
-
-#if 0
-     printf ("Display arg list! \n");
-     Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
-     printf ("In removeArgs (at base): argv = \n%s \n",StringUtility::listToString(l).c_str());
-#endif
    }
+
 //! Remove file names specified in filenameList from argv, except for 'exceptFilename'
 void
 CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_STL_Container<std::string> filenameList, std::string exceptFilename )
-   {
-#if 0
-     printf ("In CommandlineProcessing::removeAllFileNamesExcept exceptFilename = %s \n",exceptFilename.c_str());
-     printf ("In removeAllFileNamesExcept (at top): argv         = \n%s \n",StringUtility::listToString(argv).c_str());
-     printf ("In removeAllFileNamesExcept (at top): filenameList = \n%s \n",StringUtility::listToString(filenameList).c_str());
-#endif
-
-#if 0 // Liao 11/15/2012. this code is confusing.
-     for (unsigned int i=0; i < argv.size(); i++)
-        {
-          string argString = argv[i];
-#if 0
-          printf ("i = %u argString = %s \n",i,argString.c_str());
-#endif
-          Rose_STL_Container<std::string>::iterator filenameIterator = filenameList.begin();
-          while (filenameIterator != filenameList.end())
-             {
-#if 0
-               printf ("filenameIterator = %s \n",filenameIterator->c_str());
-#endif
-            // DQ (1/17/2009): This is a match with filenameIterator = a.out and argString = a.out.new!
-            // I think we only want to do anything about exact matches.
-            // if ( argString.substr(0,filenameIterator->size()) == *filenameIterator )
-               if ( argString == *filenameIterator )
-                  {
-#if 0
-                    printf ("Found a file name (removeAllFileNamesExcept): %s \n",argString.c_str());
-#endif
-                    if (*filenameIterator != exceptFilename)
-                       {
-#if 0
-                         printf ("*filenameIterator != exceptFilename so erase end of argv for i = %u \n",i);
-#endif
-                      // This is not an iterator invalidation error, but it is strange code!
-                         argv.erase(argv.begin() + i);
-                         --i; // To counteract the i++ in the loop header
-#if 0
-                         printf ("After erase: i = %u argv = \n%s \n",i,StringUtility::listToString(argv).c_str());
-#endif
-                       }
-                  }
-
-               filenameIterator++;
-             }
-        }
-#endif
+{
     vector<string>::iterator argv_iter = argv.begin();
     while (argv_iter != argv.end())
     {
@@ -281,9 +223,6 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
       Rose_STL_Container<std::string>::iterator filenameIterator = filenameList.begin();
       while (filenameIterator != filenameList.end())
       {
-        // DQ (1/17/2009): This is a match with filenameIterator = a.out and argString = a.out.new!
-        // I think we only want to do anything about exact matches.
-        // if ( argString.substr(0,filenameIterator->size()) == *filenameIterator )
         if ( argString == *filenameIterator )
         {
           if (*filenameIterator != exceptFilename)
@@ -304,14 +243,10 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
       else
         argv_iter ++;
     } // end while argv_iter
-
-#if 0
-     printf ("Leaving removeAllFileNamesExcept (at bottom): argv         = \n%s \n",StringUtility::listToString(argv).c_str());
-#endif
-   }
+}
 
 Rose_STL_Container<string>
-CommandlineProcessing::generateOptionList (const Rose_STL_Container<string> & argList, string inputPrefix )
+CommandlineProcessing::generateOptionList (const Rose_STL_Container<string> & argList, string inputPrefix)
    {
   // This function returns a list of options using the inputPrefix (with the
   // inputPrefix stripped off). It does NOT modify the argList passed as a reference.
