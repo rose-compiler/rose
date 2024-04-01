@@ -639,7 +639,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl;
-   sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset);
+   sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
 
 // Begin language specific constructs
@@ -1481,7 +1481,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl = nullptr;
 
-   sage_tree_builder.Enter(var_decl, table_var_name, type, preset);
+   sage_tree_builder.Enter(var_decl, table_var_name, type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
 
 // Begin language specific constructs
@@ -2072,7 +2072,7 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    }
 
 // Begin SageTreeBuilder for variable
-   sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset);
+   sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
 
 // Jovial block and table members are visible in parent scope so create an alias
@@ -2380,7 +2380,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
    }
 
 // Begin SageTreeBuilder
-   sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset);
+   sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
 
 // The bitfield is used to contain both the start_bit and start_word as an expression list
@@ -2494,7 +2494,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl;
-   sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset);
+   sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
    if (preset) {
       // Set source position of initializer before var_decl for comment handling
@@ -2601,7 +2601,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
 
    // Begin SageTreeBuilder for variable declaration
    SgVariableDeclaration* var_decl = nullptr;
-   sage_tree_builder.Enter(var_decl, std::string(block_name), type, preset);
+   sage_tree_builder.Enter(var_decl, std::string(block_name), type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
 
    // Begin language specific constructs

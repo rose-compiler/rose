@@ -1172,26 +1172,26 @@ Enter(SgPntrArrRefExp* &array_ref, const std::string &name, SgExprListExp* subsc
 }
 
 void SageTreeBuilder::
-Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
+Enter(SgVarRefExp* &varRef, const std::string &name, bool compilerGenerate)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgVarRefExp* &, ...) \n";
 
-   SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
-   if (!var_sym && compiler_generate) {
-      SgVariableDeclaration* var_decl;
+   SgVariableSymbol* varSym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   if (!varSym && compilerGenerate) {
+      SgVariableDeclaration* varDecl;
 
       //TODO: check for single letter for name (Jovial control letter) and type is not really known
       SgType* type = SageBuilder::buildIntType();
 
       // Build variable declaration for the control letter
-      Enter(var_decl, name, type, nullptr);
-      Leave(var_decl);
+      Enter(varDecl, name, type, nullptr, std::vector<std::string>{}/*labels*/);
+      Leave(varDecl);
 
-      var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      varSym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
    }
-   ASSERT_not_null(var_sym);
+   ASSERT_not_null(varSym);
 
-   var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
+   varRef = SageBuilder::buildVarRefExp_nfi(varSym);
 }
 
 void SageTreeBuilder::
@@ -1965,19 +1965,18 @@ Leave(SgJovialTableStatement* table_type_stmt)
 #endif // ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 
 void SageTreeBuilder::
-Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, SgExpression* init_expr)
+Enter(SgVariableDeclaration* &varDecl, const std::string &name, SgType* type,
+      SgExpression* initExpr, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
-
    ASSERT_not_null(type);
 
-   SgName var_name = name;
-   SgInitializer* var_init = nullptr;
+   SgName varName = name;
+   SgInitializer* varInit = nullptr;
 
-   if (init_expr)
-      {
-         var_init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
-      }
+   if (initExpr) {
+     varInit = SageBuilder::buildAssignInitializer_nfi(initExpr, type);
+   }
 
 // Reset pointer base-type name so the base type can be replaced when it has been declared
    if (SgPointerType* pointer = isSgPointerType(type)) {
@@ -1988,81 +1987,84 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
       }
    }
 
-   var_decl = SB::buildVariableDeclaration_nfi(var_name, type, var_init, SB::topScopeStack());
+   varDecl = SB::buildVariableDeclaration_nfi(varName, type, varInit, SB::topScopeStack());
 
-   if (var_decl->get_definingDeclaration() == nullptr) {
-     var_decl->set_definingDeclaration(var_decl);
+   if (varDecl->get_definingDeclaration() == nullptr) {
+     varDecl->set_definingDeclaration(varDecl);
    }
 
-   SgVariableDefinition* var_def = var_decl->get_definition();
-   ASSERT_not_null(var_def);
+   SgVariableDefinition* varDef = varDecl->get_definition();
+   ASSERT_not_null(varDef);
 
-   SgInitializedName* init_name = var_decl->get_decl_item(var_name);
-   ASSERT_not_null(init_name);
+   SgInitializedName* initName = varDecl->get_decl_item(varName);
+   ASSERT_not_null(initName);
 
-   SgDeclarationStatement* decl_ptr = init_name->get_declptr();
-   ASSERT_not_null(decl_ptr);
-   ASSERT_require(decl_ptr == var_def);
+   SgDeclarationStatement* declPtr = initName->get_declptr();
+   ASSERT_not_null(declPtr);
+   ASSERT_require(declPtr == varDef);
 
-   SgInitializedName* var_defn = var_def->get_vardefn();
-   ASSERT_not_null(var_defn);
-   ASSERT_require(var_defn == init_name);
+   SgInitializedName* varDefn = varDef->get_vardefn();
+   ASSERT_not_null(varDefn);
+   ASSERT_require(varDefn == initName);
 
-   SI::appendStatement(var_decl, SB::topScopeStack());
+   // Append final label statement (if there are labels, otherwise stmt==varDecl)
+   SgStatement* stmt = wrapStmtWithLabels(varDecl, labels);
+   SI::appendStatement(stmt, SB::topScopeStack());
 
 // Look for a symbol previously implicitly declared and fix the variable reference
    if (forward_var_refs_.find(name) != forward_var_refs_.end()) {
-     if (SgVariableSymbol* var_sym = SI::lookupVariableSymbolInParentScopes(name)) {
-        SgVarRefExp* prev_var_ref = forward_var_refs_[name];
-        SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
-        ASSERT_not_null(prev_var_sym);
+     if (SgVariableSymbol* varSym = SI::lookupVariableSymbolInParentScopes(name)) {
+        SgVarRefExp* prevVarRef = forward_var_refs_[name];
+        SgVariableSymbol* prevVarSym = prevVarRef->get_symbol();
+        ASSERT_not_null(prevVarSym);
 
-        SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
-        ASSERT_require(prev_init_name->get_name() == init_name->get_name());
+        SgInitializedName* prevInitName = prevVarSym->get_declaration();
+        ASSERT_require(prevInitName->get_name() == initName->get_name());
 
      // Reset the symbol for the variable reference to the symbol for the explicit variable declaration
-        prev_var_ref->set_symbol(var_sym);
+        prevVarRef->set_symbol(varSym);
         forward_var_refs_.erase(name); // The dangling variable reference has been fixed
 
      // Delete the previous symbol and initialized name
-        delete prev_var_sym;
-        delete prev_init_name;
+        delete prevVarSym;
+        delete prevInitName;
      }
    }
 }
 
 void SageTreeBuilder::
-Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<std::string, SgType*, SgExpression*>> &init_info)
+Enter(SgVariableDeclaration* &varDecl, SgType* baseType,
+      std::list<std::tuple<std::string, SgType*, SgExpression*>> &initInfo, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, std::tuple<...>, ...) \n";
 
    // Step through list of tuples to create the multi variable declaration
-   for (std::list<std::tuple<std::string, SgType*, SgExpression*>>::iterator it = init_info.begin(); it != init_info.end(); ++it) {
+   for (std::list<std::tuple<std::string, SgType*, SgExpression*>>::iterator it = initInfo.begin(); it != initInfo.end(); ++it) {
       std::string name;
       SgType* type;
-      SgExpression* init_expr;
-      std::tie(name, type, init_expr) = *it;
+      SgExpression* initExpr;
+      std::tie(name, type, initExpr) = *it;
 
       if (!type) {
-         type = base_type;
+         type = baseType;
       }
 
-      if (it == init_info.begin()) {   // On first pass, call Enter() to create variable declaration
-         Enter(var_decl, name, type, init_expr);
+      if (it == initInfo.begin()) {   // On first pass, call Enter() to create variable declaration
+         Enter(varDecl, name, type, initExpr, labels);
       } else {                         // On later passes, create new initialized name and append to the var decl
          SgAssignInitializer* init = nullptr;
-         if (init_expr) {
-            init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
+         if (initExpr) {
+            init = SageBuilder::buildAssignInitializer_nfi(initExpr, type);
          }
 
-         SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(name, type, init);
-         var_decl->append_variable(init_name, init);
-         init_name->set_declptr(var_decl);
+         SgInitializedName* initName = SageBuilder::buildInitializedName_nfi(name, type, init);
+         varDecl->append_variable(initName, init);
+         initName->set_declptr(varDecl);
 
          // A symbol for the variable also has to be created
-         SgVariableSymbol* var_sym = new SgVariableSymbol(init_name);
-         ASSERT_not_null(var_sym);
-         SageBuilder::topScopeStack()->insert_symbol(SgName(name), var_sym);
+         SgVariableSymbol* varSym = new SgVariableSymbol(initName);
+         ASSERT_not_null(varSym);
+         SageBuilder::topScopeStack()->insert_symbol(SgName(name), varSym);
       }
    }
 }
@@ -2418,20 +2420,8 @@ SgType* buildArrayType(SgType* baseType, std::list<SgExpression*> &explicitShape
 // SgBasicBlock
 //
 
-SgBasicBlock* buildBasicBlock_nfi()
-{
-   return SageBuilder::buildBasicBlock_nfi();
-}
-
-void pushScopeStack(SgBasicBlock* stmt)
-{
-   SageBuilder::pushScopeStack(stmt);
-}
-
-void popScopeStack()
-{
-   SageBuilder::popScopeStack();
-}
+#if NO_CPP17
+#endif
 
 // Operators
 //

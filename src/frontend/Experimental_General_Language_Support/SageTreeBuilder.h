@@ -10,58 +10,6 @@
 
 #define DEPRECATED_STB 0
 
-#if DEPRECATED_STB
-// WARNING: This file has been designed to compile with -std=c++17
-// This limits the use of ROSE header files at the moment.
-//
-class SgBasicBlock;
-class SgCaseOptionStmt;
-class SgCastExp;
-class SgCommonBlock;
-class SgCommonBlockObject;
-class SgContainsStatement;
-class SgContinueStmt;
-class SgDefaultOptionStmt;
-class SgDerivedTypeStatement;
-class SgEnumDeclaration;
-class SgEnumType;
-class SgEnumVal;
-class SgExpression;
-class SgExprListExp;
-class SgExprStatement;
-class SgFunctionCallExp;
-class SgFunctionDeclaration;
-class SgFunctionDefinition;
-class SgFunctionParameterList;
-class SgFunctionParameterScope;
-class SgGlobal;
-class SgGotoStatement;
-class SgIfStmt;
-class SgImplicitStatement;
-class SgInitializedName;
-class SgLabelStatement;
-class SgLocatedNode;
-class SgModuleStatement;
-class SgNamedType;
-class SgNamespaceDeclarationStatement;
-class SgPntrArrRefExp;
-class SgPointerType;
-class SgPrintStatement;
-class SgProcessControlStatement;
-class SgProgramHeaderStatement;
-class SgReplicationOp;
-class SgReturnStmt;
-class SgScopeStatement;
-class SgSourceFile;
-class SgSwitchStatement;
-class SgType;
-class SgTypedefDeclaration;
-class SgVariableDeclaration;
-class SgUseStatement;
-class SgVarRefExp;
-class SgWhileStmt;
-#endif
-
 using SgExpressionPtrList = std::vector<SgExpression*>;
 
 namespace Rose {
@@ -162,7 +110,7 @@ public:
                                         const LanguageTranslation::FunctionModifierList &, bool,
                                         const SourcePositions &, std::vector<Rose::builder::Token> &);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*);
-   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, const std::string &result_name = "");
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, const std::string &result = "");
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -171,8 +119,10 @@ public:
    void Leave(SgDerivedTypeStatement*, std::list<LanguageTranslation::ExpressionKind> &);
    void Leave(SgDerivedTypeStatement*);
 
-   void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
-   void Enter(SgVariableDeclaration* &, SgType*, std::list<std::tuple<std::string, SgType*, SgExpression*>> &);
+   void Enter(SgVariableDeclaration* &, const std::string &, SgType*,
+              SgExpression*, const std::vector<std::string> &);
+   void Enter(SgVariableDeclaration* &, SgType*,
+              std::list<std::tuple<std::string, SgType*, SgExpression*>> &, const std::vector<std::string> &);
    void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
    void Leave(SgVariableDeclaration*);
 

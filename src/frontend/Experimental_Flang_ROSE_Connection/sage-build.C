@@ -1306,11 +1306,12 @@ void BuildVisitor::Build(parser::TypeDeclarationStmt &x) {
   EntityDecls(std::get<std::list<EntityDecl>>(x.t), initInfo, type); // std::list<EntityDecl>
 
   SgVariableDeclaration* varDecl{nullptr};
-  builder.Enter(varDecl, type, initInfo);
+  builder.Enter(varDecl, type, initInfo, getLabels());
   builder.Leave(varDecl, modifiers);
 }
 
 // SpecificationConstruct
+//
 void BuildVisitor::Build(parser::DerivedTypeDef &x) {
   // std::tuple<> Statement<DerivedTypeStmt>, std::list<Statement<TypeParamDefStmt>>,
   //              std::list<Statement<PrivateOrSequence>>,
@@ -1337,9 +1338,26 @@ void BuildVisitor::Build(parser::DerivedTypeDef &x) {
   builder.Leave(derived, modifiers);
 }
 
-void Build(parser::DeclarationTypeSpec::Type &x, SgType* &type)
+void BuildVisitor::Build(parser::DimensionStmt &x) {
+  std::cerr << "[WARN] BuildVisitor::Build(DimensionStmt) unimplemented\n";
+  ABORT_NO_IMPL;
+}
+
+void BuildVisitor::Build(parser::DeclarationTypeSpec::Type &x)
 {
-   Build(x.derived, type);   // DerivedTypeSpec
+  // Type DerivedTypeSpec derived;
+  //      DerivedTypeSpec std::tuple<Name, std::list<TypeParamSpec>> t;
+
+  std::cout << "Rose::builder::Build(DeclarationTypeSpec::Type)\n";
+  std::string name = std::get<parser::Name>(x.derived.t).ToString();
+  std::cout << "DerivedTypeSpec name is " << name << "\n";
+
+#if 0
+  Build(x.derived, type);   // DerivedTypeSpec
+  type = ?;
+#endif
+
+  ABORT_NO_IMPL;
 }
 
 void Build(parser::DeclarationTypeSpec::TypeStar &x, SgType* &type)
@@ -1368,18 +1386,6 @@ void Build(parser::DeclarationTypeSpec::Record &x, SgType* &type)
 {
   std::cout << "Rose::builder::Build(Record)\n";
   ABORT_NO_IMPL;
-}
-
-void Build(parser::DerivedTypeSpec &x, SgType* &type)
-{
-  std::cout << "Rose::builder::Build(DerivedTypeSpec)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   //   std::tuple<Name, std::list<TypeParamSpec>> t;
-   std::string name = std::get<parser::Name>(x.t).ToString();
-   std::cout << "DerivedTypeSpec name is " << name << "\n";
-#endif
 }
 
 void Build(parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modifier)
@@ -1844,9 +1850,19 @@ void Build(parser::FormTeamStmt &x)
   ABORT_NO_IMPL;
 }
 
-void Build(parser::GotoStmt &x)
+void BuildVisitor::Build(parser::GotoStmt &x)
 {
-  std::cout << "Rose::builder::Build(GotoStmt)\n";
+  std::cout << "BuildVisitor::Build(GotoStmt)\n";
+
+  std::string target;
+
+  target = std::string{"13"};
+
+  SgGotoStatement* stmt{nullptr};
+  builder.Enter(stmt, target);
+  builder.Leave(stmt, getLabels());
+
+  // need target
   ABORT_NO_IMPL;
 }
 
@@ -1973,11 +1989,18 @@ void BuildImpl(parser::ReadStmt &x)
   ABORT_NO_IMPL;
 }
 
-void BuildImpl(parser::ReturnStmt &x)
+void BuildVisitor::Build(parser::ReturnStmt &x)
 {
-  // ReturnStmt std::optional<ScalarIntExpr> v;
-  std::cout << "BuildImpl(ReturnStmt)\n";
-  ABORT_NO_IMPL;
+  SgReturnStmt* stmt{nullptr};
+  boost::optional<SgExpression*> code{boost::none};
+
+  if (x.v) {
+    SgExpression* expr{nullptr};
+    WalkExpr(x.v, expr);
+    code = expr;
+  }
+   builder.Enter(stmt, code);
+   builder.Leave(stmt, getLabels());
 }
 
 void BuildImpl(parser::RewindStmt &x)
@@ -1990,21 +2013,9 @@ void BuildImpl(parser::RewindStmt &x)
 void BuildVisitor::Build(parser::StopStmt &x)
 {
   // std::tuple<Kind, std::optional<StopCode>, std::optional<ScalarLogicalExpr>> t;
-  std::cout << "Rose::builder::Build(StopStmt)\n";
-  ABORT_NO_IMPL;
-  
-#if 0
   SgProcessControlStatement* stmt{nullptr};
   boost::optional<SgExpression*> code{boost::none}, quiet{boost::none};
   std::string_view kind{parser::StopStmt::EnumToString(std::get<0>(x.t))};
-
-  std::vector<std::string> labels;
-#if DO_TODO
-//TODO: labels
-  if (label) {
-    labels.push_back(std::to_string(*label));
-  }
-#endif
 
   // change strings to match builder function
   if (kind == "Stop") {
@@ -2014,25 +2025,22 @@ void BuildVisitor::Build(parser::StopStmt &x)
   }
 
   // stop code
-  if (auto & opt = std::get<1>(x.t)) {
+  if (std::get<1>(x.t)) {
     SgExpression* expr{nullptr};
-    WalkExpr(opt.value().v.thing, expr);
+    WalkExpr(std::get<1>(x.t), expr);
     code = expr;
   }
 
   // quiet
-#if 1
-  if (auto & opt = std::get<2>(x.t)) {
-    ABORT_NO_IMPL;
+  if (std::get<2>(x.t)) {
     SgExpression* expr{nullptr};
-    WalkExpr(opt.value(), expr);
+    WalkExpr(std::get<2>(x.t), expr);
     quiet = expr;
+    ABORT_NO_TEST;
   }
-#endif
 
   builder.Enter(stmt, std::string{kind}, code, quiet);
-  builder.Leave(stmt, labels);
-#endif
+  builder.Leave(stmt, getLabels());
 }
 
 void BuildImpl(parser::SyncAllStmt &x)
@@ -2080,12 +2088,6 @@ void BuildImpl(parser::WhereStmt &x)
 void BuildImpl(parser::WriteStmt &x)
 {
   std::cout << "BuildImpl(WriteStmt)\n";
-  ABORT_NO_IMPL;
-}
-
-void BuildImpl(parser::ComputedGotoStmt &x)
-{
-  std::cout << "BuildImpl(ComputedGotoStmt)\n";
   ABORT_NO_IMPL;
 }
 
@@ -2774,38 +2776,7 @@ void Build(parser::LoopControl::Concurrent &x, SgExpression* &expr)
 }
 
 // SpecificationConstruct
-void Build(parser::DerivedTypeDef &x)
-{
-  // std::tuple<Statement<DerivedTypeStmt>, std::list<Statement<TypeParamDefStmt>>,
-  //     std::list<Statement<PrivateOrSequence>>, std::list<Statement<ComponentDefStmt>>,
-  //     std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>> t;
-  std::cout << "Rose::builder::Build(DerivedTypeDef)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   std::string name{};
-   std::list<LanguageTranslation::ExpressionKind> modifiers;
-   Build(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t).statement, name, modifiers);
-
-   // Begin SageTreeBuilder for SgDerivedTypeStatement
-   SgDerivedTypeStatement* derivedTypeStmt{nullptr};
-   builder.Enter(derivedTypeStmt, name);
-
-   // Traverse body of type-def
-   std::list<SgStatement*> stmts{};
-   Build(std::get<3>(x.t), stmts);
-
-   // EndTypeStmt - std::optional<Name> v;
-   bool haveEndStmt{false};
-   if (auto &opt = std::get<parser::Statement<parser::EndTypeStmt>>(x.t).statement.v) {
-      haveEndStmt = true;
-   }
-
-   // Leave SageTreeBuilder for SgDerivedTypeStatement
-   builder.Leave(derivedTypeStmt, modifiers);
-#endif
-}
-
+//
 void Build(parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifiers)
 {
   // std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;

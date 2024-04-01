@@ -57,8 +57,6 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
    std::string lexeme{};
 
    int comment_type{static_cast<int>(Rose::builder::JovialEnum::comment)};
-   int define_type{static_cast<int>(Rose::builder::JovialEnum::define)};
-
    int previous{'\n'}; // pretend the file starts with a newline
 
    while ((c = in_stream.get()) != EOF) {

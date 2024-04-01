@@ -120,6 +120,7 @@ public:
   // SpecificationConstruct
   void Build(Fortran::parser::DataStmt &);
   void Build(Fortran::parser::DerivedTypeDef &);
+  void Build(Fortran::parser::DimensionStmt &);
 
   void Build(Fortran::parser::IntegerTypeSpec &);
   void Build(Fortran::parser::IntrinsicTypeSpec::Real &);
@@ -129,13 +130,17 @@ public:
   void Build(Fortran::parser::IntrinsicTypeSpec::Character &);
   void Build(Fortran::parser::IntrinsicTypeSpec::Logical &);
 
+  void Build(Fortran::parser::DeclarationTypeSpec::Type &x);
+
   // ExecutionPart
   void Build(Fortran::parser::AssignmentStmt &);
   void Build(Fortran::parser::DoConstruct &);
 
   // ActionStmt
   void Build(Fortran::parser::ContinueStmt &);
+  void Build(Fortran::parser::GotoStmt &);
   void Build(Fortran::parser::FailImageStmt &);
+  void Build(Fortran::parser::ReturnStmt &);
   void Build(Fortran::parser::StopStmt &);
 
   void Done() const { std::cerr << "Done()\n"; }
