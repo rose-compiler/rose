@@ -42,13 +42,7 @@ write( const Container& c, ostream& out)
   for (typename Container::const_iterator p = c.begin(); p != c.end(); ++p) {
     if (!first)
        out << sep;
-
-// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE. The error is:
-// sage_gen_be.C:10043: SgExpression* sage_gen_expr(an_expr_node*, a_boolean, DataRequiredForComputationOfSourcePostionInformation*): Assertion `optionalSourcePositionData->ok() == true' failed.
-#ifndef USE_ROSE
     (*p).write(out);
-#endif
-
     first = false;
   }
 
@@ -59,13 +53,6 @@ write( const Container& c, ostream& out)
 template <class First, class Second, char sep>
 bool CollectPair<First,Second, sep>:: read( istream& in)
    {
-
-      // pmp 08JUN05
-      //    made first snf second dependent on this->
-      //    was: if (!first.read(in))
-      //           return false;
-      //         ...
-      //         second.read(in);
       if (!this->first.read(in)) return false;
 
       if (sep != 0) {
@@ -79,9 +66,6 @@ bool CollectPair<First,Second, sep>:: read( istream& in)
 template <class First, class Second, char sep, char sel>
 bool SelectPair<First,Second, sep, sel>:: read( istream& in)
    {
-  // pmp 08JUN05
-  //   cmp previous comment
-
       if (!this->first.read(in))
           return false;
       bool succ = true;

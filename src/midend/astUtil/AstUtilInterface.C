@@ -67,7 +67,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
   OperatorDeclaration op_decl(fa, op_ast);
   OperatorSideEffectDescriptor desc;
   std::string varname = (relation == OperatorSideEffect::Call)? 
-    OperatorDeclaration::operator_signature(fa, var) : AstInterface::GetVarName(var, /*use_global_unique_name=*/true);
+    OperatorDeclaration::operator_signature(fa, var) : fa.GetVarName(var, /*use_global_unique_name=*/true);
   if (DebugAnnot()) {
     std::cerr << "Variable name is :" << varname << "\n";
   }
@@ -92,8 +92,8 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
   return std::pair<std::string, std::string>(op_decl.get_signiture(), varname);
 } 
 
-std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
-     AstInterfaceImpl astImpl(variable);
+std::string AstUtilInterface:: GetVariableSignature(SgNode* variable, SgNode* scope) {
+     AstInterfaceImpl astImpl(scope);
      AstInterface fa(&astImpl);
     switch (variable->variantT()) {
      case V_SgNamespaceDeclarationStatement:
@@ -102,7 +102,7 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
           return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
      case V_SgTypedefDeclaration:
      case V_SgTemplateTypedefDeclaration:
-          return "typedef_" + AstInterface::GetScopeName(variable->get_parent()) + "::" + isSgTypedefDeclaration(variable)->get_name().getString();
+          return "typedef_" + fa.GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString());
      case V_SgStaticAssertionDeclaration:
           return OperatorDeclaration::operator_signature(fa, variable);
      default: break;
@@ -110,6 +110,6 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     if (AstInterface::IsFunctionDefinition(variable)) {
         return OperatorDeclaration::operator_signature(fa, variable);
     } 
-    return AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);
+    return fa.GetVarName(variable, /*use_global_unique_name=*/true);
 }
 

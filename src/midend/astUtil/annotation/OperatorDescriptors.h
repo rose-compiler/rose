@@ -74,8 +74,6 @@ public:
   OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast);
   
   std::string get_signiture () const { return signiture; }
-  static std::string get_signiture( AstInterface& fa, const std::string& fname,
-                                    const AstInterface::AstTypeList& params);
   static std::string operator_signature(AstInterface& fa, 
                                  const AstNodePtr& exp, 
                                  AstInterface::AstNodeList* argp= 0,

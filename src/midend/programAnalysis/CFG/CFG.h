@@ -97,8 +97,9 @@ class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
   {
     if (s == AST_NULL)
         return true;
+    AstNodeList stmts;
     AstNodePtr first;
-    if (fa.IsBlock(s) && (first = fa.GetBlockFirstStmt(s)) == AST_NULL) {
+    if (fa.IsBlock(s, 0, &stmts) && stmts.size() == 0) {
       if (debug_cfg())
          std::cerr << "block " << AstInterface::AstToString(s) << " is empty " << std::endl;
       return true;
@@ -166,8 +167,8 @@ class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
   Node* AddStmt( AstInterface& fa, Node* n, const AstNodePtr& s) // add s to the node n
     { 
        assert(s != AST_NULL && n != 0);
-       if (fa.IsBlock(s)) {
-          AstInterface::AstNodeList l = fa.GetBlockStmtList(s);
+       AstInterface::AstNodeList l;
+       if (fa.IsBlock(s, 0, &l)) {
           for (AstInterface::AstNodeList::const_iterator p = l.begin();
                p != l.end(); ++p) {
               graph.AddNodeStmt(n,*p);
@@ -386,9 +387,10 @@ class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
                SetCurNode(n); 
             Node *n1 = GetStmtNode(s,EXIT); //MapStmt(fa, s, EXIT); 
             if (n1 != 0) {
-               AstNodePtr lastStmt = fa.GetBlockLastStmt(s);
-               if (lastStmt != AST_NULL)  
-                  SetStmtNode(lastStmt, n1, EXIT);
+               AstNodeList s_stmts;
+               if (fa.IsBlock(s, 0, &s_stmts) && s_stmts.size() > 0) {
+                  SetStmtNode(s_stmts.back(), n1, EXIT);
+               }
             }
         } 
         else if (lastNode != 0) {  // use exitMap to remember the last node of this block
@@ -412,8 +414,9 @@ class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
         if (fa.IsGotoAfter(s)) {
             Node* destNode = MapStmt(fa, dest, EXIT);
             AddBranch( lastNode, destNode, CFGConfig::ALWAYS);
-            while (fa.IsBlock(dest)) {
-              dest = fa.GetBlockLastStmt(dest);
+            AstNodeList blockstmts;
+            while (fa.IsBlock(dest, 0, &blockstmts)) {
+              dest = blockstmts.back();
               SetStmtNode(dest, destNode, EXIT); 
             }
         }

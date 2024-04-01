@@ -113,7 +113,7 @@ Get_VarName(AstInterface& fa, const AstNodePtr& rhs)
    if (fa.IsVarRef(rhs, 0, &readname, &readscope))  {
        assert(readname != "");
        res = Local_GetVarName(fa, readscope, readname);
-    }
+   }
    else if (fa.IsConstant(rhs,&res,&readname)) {
       if (res == "string") {
          readname =  Local_GetVarName(fa, rhs);

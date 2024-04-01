@@ -11,7 +11,6 @@
 #include <Rose/Diagnostics.h>
 
 class AstNodePtr;
-class SgNode;
 
 class AST_Error { 
    std::string msg;
@@ -151,8 +150,9 @@ public:
   static bool IsStatement( const AstNodePtr& s);
   //! Check whether the given AST n is an expresion statement, and if yes, save the expression in the given exp.
   static bool IsExprStmt(const AstNodePtr& n, AstNodePtr* exp = 0);
-  //! Check whether the given AST is a block of statements that may include local variables.
-  static bool IsBlock( const AstNodePtr& exp);
+  //! Check whether the given AST is a block of statements that may include local variables. Save the list of 
+  //! statements if true.
+  static bool IsBlock( const AstNodePtr& exp, std::string* blockname = 0, AstNodeList* stmts = 0);
   //! Check whether the two given AST are identical syntax trees.
   //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
   //! different only if the function returns true.
@@ -182,11 +182,6 @@ public:
     }
     return true;
   }
-  //! Returns the list of statements inside a statement block.
-  static AstList GetBlockStmtList( const AstNodePtr& n);
-  AstNodePtr GetBlockFirstStmt( const AstNodePtr& n);
-  AstNodePtr GetBlockLastStmt( const AstNodePtr& n);
-  int GetBlockSize( const AstNodePtr& n);
   AstNodePtr CreateBlock( const AstNodePtr& orig = AstNodePtr()) ;
   /* if flatter_s == true, always flatten s if it is a block*/
   void BlockAppendStmt( AstNodePtr& b, const AstNodePtr& s, bool flatten_s=false);
@@ -254,7 +249,8 @@ public:
   static bool IsFunctionDefinition(  const AstNodePtr& s, std::string* name = 0,
                     AstList* params = 0, AstList* outpars = 0,
                     AstNodePtr* body = 0,
-                    AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
+                    AstTypeList* paramtypes = 0, AstNodeType* returntype=0,
+                    bool use_global_unique_name = false);
 
   static bool IsAssignment( const AstNodePtr& s, AstNodePtr* lhs = 0, 
                                AstNodePtr* rhs = 0, bool* readlhs = 0); 
@@ -276,18 +272,13 @@ public:
   //! Create AST for constant values of  types int, bool, string, float, etc. as well as names of variable and function references. e.g: CreateConstant("memberfunction","floatArray::length")
   AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
 
-  //! If there is a case, extract the operand and return it, otherwise return exp
-  static SgNode* SkipCasting(SgNode*  exp);
-
+  static std::string GetGlobalUniqueName(const AstNodePtr& exp, std::string expname);
   //! Check whether $exp$ is a variable reference; If yes, return type, name, scope, and global/local etc.
   static bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
                    std::string* varname = 0, AstNodePtr* scope = 0, 
                     bool *isglobal = 0, bool use_global_unique_name=false) ;
-  //! Check whether $exp$ is a non-local variable referenced from inside $scope$.
-  static bool IsGlobalVarRef( const AstNodePtr& exp, const AstNodePtr& scope); 
 
-  static std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
-  static std::string GetScopeName( const AstNodePtr& scope);
+  std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
 
   bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
 

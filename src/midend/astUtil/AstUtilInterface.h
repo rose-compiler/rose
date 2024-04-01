@@ -37,6 +37,6 @@ namespace AstUtilInterface{
     std::pair<std::string, std::string>  AddOperatorSideEffectAnnotation(SgNode* op_ast, SgNode* var, OperatorSideEffect relation);
 
     //! Returns a string that uniquely identifies the given variable.
-    std::string GetVariableSignature(SgNode* variable);
+    std::string GetVariableSignature(SgNode* variable, SgNode* scope);
 };
 #endif

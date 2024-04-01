@@ -59,24 +59,6 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
 }
 
 bool OperatorDeclaration::unique = false;
-//! Get a unique string name for a type, similar to qualified names in C++
-string OperatorDeclaration::
-get_signiture( AstInterface& fa, const std::string& fname,
-                                    const AstInterface::AstTypeList& plist)
-{
-  std::stringstream fname_stream;
-  NameDescriptor::write(fname_stream, fname);
-  if (!unique)
-    for ( AstInterface::AstTypeList::const_iterator p = plist.begin();
-          p != plist.end();  ++p) {
-      AstNodeType t = *p;
-      string name;
-      fa.GetTypeInfo( t, &name);
-      fname_stream << "_";
-      NameDescriptor::write(fname_stream, name);
-    }
-  return fname_stream.str();
-}
 
 std::string OperatorDeclaration::operator_signature(AstInterface& fa, 
                                  const AstNodePtr& exp, 
@@ -86,28 +68,18 @@ std::string OperatorDeclaration::operator_signature(AstInterface& fa,
       std::cerr << "Creating operator signature:" << fa.AstToString(exp) << "\n";
     }
     std::string fname;
-    AstInterface::AstTypeList params;
     AstNodePtr f;
     AstNodeType t;
-    if (fa.IsVarRef(exp,&t,&fname, 0, 0, true) && fa.IsFunctionType(t, &params)) {
-       if (DebugAnnot()) {
-          std::cerr << "Generating signature from function type for: " << fname << "\n";
-       }
-       assert(argp == 0);
-    } else if (fa.IsFunctionCall(exp, &f, argp, 0, &params) && fa.IsVarRef(f,0,&fname)
-       || fa.IsFunctionDefinition(exp,&fname,argp,0,0, &params)) { 
-       if (DebugAnnot()) {
-          std::cerr << "Generating signature from function call or definition for: " << fname << "\n";
-       }
-    } else {
-      std::cerr << "Error: expecting a function but get: " << fa.AstToString(exp) << "\n";
-      assert(0);
+    AstTypeList params;
+    if ((fa.IsVarRef(exp,&t,&fname, 0, 0, /*use_globl_name=*/true) && fa.IsFunctionType(t, &params)) || 
+        (fa.IsFunctionCall(exp, &f, argp, 0, &params) && fa.IsVarRef(f,0,&fname, 0, 0, /*use_globl_name=*/true)) || 
+         fa.IsFunctionDefinition(exp,&fname,argp,0,0, &params, 0, /*use_globl_name=*/true)) { 
+       if (paramp != 0) *paramp = params;
     }
-    if (paramp != 0) {
-      *paramp = params;
+    if (DebugAnnot()) {
+      std::cerr << "Unexpected operator: not recognized:" << fa.AstToString(exp) << "\n";
     }
-    std::string sig = OperatorDeclaration::get_signiture(fa, fname, params);
-    return sig;
+    return fname;
   }
 
 OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast) {
@@ -118,7 +90,7 @@ OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast) {
     AstInterface::AstNodeList::const_iterator p1 = args.begin();
     AstInterface::AstTypeList::const_iterator p2 = params.begin(); 
     while (p2 != params.end() && p1 != args.end()) {
-       pars.add_param(AstInterface::GetTypeName(*p2), AstInterface::GetVarName(*p1));
+       pars.add_param(fa.GetTypeName(*p2), fa.GetVarName(*p1));
        ++p1; ++p2;
     }
 }

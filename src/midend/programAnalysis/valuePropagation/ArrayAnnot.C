@@ -255,9 +255,7 @@ known_unique_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDes
 {
    std::string varname; 
    AstNodePtr scope;
-   if (!fa.IsVarRef(array,0,&varname,&scope)) return false;
-   if (scope != AST_NULL)
-      varname = fa.GetScopeName(scope)+"::"+varname;
+   if (!fa.IsVarRef(array,0,&varname,&scope, 0, /*use_global_unique_name=*/true)) return false;
    if (unique_arrays.known_type(varname, d)) {
       return true;
    }
