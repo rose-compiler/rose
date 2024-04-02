@@ -4,6 +4,7 @@
 
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#define ROSE_SgAsmDwarfLine_IMPL
 #include <sage3basic.h>
 
 uint64_t const&
@@ -56,7 +57,7 @@ SgAsmDwarfLine::~SgAsmDwarfLine() {
 
 SgAsmDwarfLine::SgAsmDwarfLine()
     : p_address(0)
-    , p_file_id(Sg_File_Info::NULL_FILE_ID)
+    , p_file_id(-2)
     , p_line(0)
     , p_column(0) {}
 
@@ -77,7 +78,7 @@ SgAsmDwarfLine::SgAsmDwarfLine(uint64_t const& address,
 void
 SgAsmDwarfLine::initializeProperties() {
     p_address = 0;
-    p_file_id = Sg_File_Info::NULL_FILE_ID;
+    p_file_id = -2;
     p_line = 0;
     p_column = 0;
 }

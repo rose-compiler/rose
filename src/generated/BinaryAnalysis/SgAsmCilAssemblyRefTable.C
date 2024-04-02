@@ -4,6 +4,7 @@
 
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#define ROSE_SgAsmCilAssemblyRefTable_IMPL
 #include <sage3basic.h>
 
 std::vector<SgAsmCilAssemblyRef*> const&

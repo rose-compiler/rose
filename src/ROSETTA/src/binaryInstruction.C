@@ -1010,6 +1010,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmSynthesizedDataStructureDeclaration);
 IS_SERIALIZABLE(AsmSynthesizedDataStructureDeclaration);
 
+DECLARE_HEADERS(AsmSynthesizedDataStructureDeclaration);
+#if defined(SgAsmSynthesizedDataStructureDeclaration_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmSynthesizedDataStructureDeclaration_HEADERS
+
 #ifdef DOCUMENTATION
 /** Declaration-like nodes that encapsulate multiple instructions.
  *
@@ -1292,6 +1297,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmStaticData);
 IS_SERIALIZABLE(AsmStaticData);
 
+DECLARE_HEADERS(AsmStaticData);
+#if defined(SgAsmStaticData_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmStaticData_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents static data in an executable.
  *
@@ -1457,6 +1467,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmRiscOperation);
 IS_SERIALIZABLE(AsmRiscOperation);
+
+DECLARE_HEADERS(AsmRiscOperation);
+#if defined(SgAsmRiscOperation_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmRiscOperation_IMPL
+#include <SgAsmExprListExp.h>
+#endif
+#endif // SgAsmRiscOperation_HEADERS
 
 #ifdef DOCUMENTATION
 /** Static representation of instruction semantics.
@@ -1625,6 +1642,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmRegisterNames);
 IS_SERIALIZABLE(AsmRegisterNames);
+
+DECLARE_HEADERS(AsmRegisterNames);
+#if defined(SgAsmRegisterNames_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmRegisterNames_HEADERS
 
 #ifdef DOCUMENTATION
 /** An ordered list of registers. */
@@ -2233,6 +2255,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPERVASizePairList);
 IS_SERIALIZABLE(AsmPERVASizePairList);
 
+DECLARE_HEADERS(AsmPERVASizePairList);
+#if defined(SgAsmPERVASizePairList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmPERVASizePairList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of SgAsmPERVASizePair AST nodes.
  *
@@ -2454,6 +2481,10 @@ IS_SERIALIZABLE(AsmPEImportSection);
 DECLARE_HEADERS(AsmPEImportSection);
 #if defined(SgAsmPEImportSection_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
+#ifdef ROSE_SgAsmPEImportSection_IMPL
+#include <SgAsmPEImportDirectoryList.h>
+#endif
 #endif // SgAsmPEImportSection_HEADERS
 
 #ifdef DOCUMENTATION
@@ -2701,6 +2732,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEImportItemList);
 IS_SERIALIZABLE(AsmPEImportItemList);
 
+DECLARE_HEADERS(AsmPEImportItemList);
+#if defined(SgAsmPEImportItemList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmPEImportItemList_HEADERS
+
 #ifdef DOCUMENTATION
 /** A list of imported items.
  *
@@ -2773,6 +2809,10 @@ IS_SERIALIZABLE(AsmPEImportItem);
 DECLARE_HEADERS(AsmPEImportItem);
 #if defined(SgAsmPEImportItem_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
+#ifdef ROSE_SgAsmPEImportItem_IMPL
+#include <SgAsmBasicString.h>
+#endif
 #endif // SgAsmPEImportItem_HEADERS
 
 #ifdef DOCUMENTATION
@@ -2998,6 +3038,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEImportDirectoryList);
 IS_SERIALIZABLE(AsmPEImportDirectoryList);
 
+DECLARE_HEADERS(AsmPEImportDirectoryList);
+#if defined(SgAsmPEImportDirectoryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmPEImportDirectoryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** A list of PE Import Directories.
  *
@@ -3073,6 +3118,12 @@ DECLARE_HEADERS(AsmPEImportDirectory);
 #if defined(SgAsmPEImportDirectory_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmPEImportDirectory_IMPL
+#include <SgAsmGenericString.h>
+#include <SgAsmPEImportItemList.h>
+#endif
 #endif // SgAsmPEImportDirectory_HEADERS
 
 #ifdef DOCUMENTATION
@@ -3398,6 +3449,12 @@ IS_SERIALIZABLE(AsmPEFileHeader);
 DECLARE_HEADERS(AsmPEFileHeader);
 #if defined(SgAsmPEFileHeader_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
+#ifdef ROSE_SgAsmPEFileHeader_IMPL
+#include <SgAsmCoffSymbolTable.h>
+#include <SgAsmPERVASizePairList.h>
+#include <SgAsmPESectionTable.h>
+#endif
 #endif // SgAsmPEFileHeader_HEADERS
 
 #ifdef DOCUMENTATION
@@ -4316,6 +4373,14 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEExportSection);
 IS_SERIALIZABLE(AsmPEExportSection);
 
+DECLARE_HEADERS(AsmPEExportSection);
+#if defined(SgAsmPEExportSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmPEExportSection_IMPL
+#include <SgAsmPEExportDirectory.h>
+#include <SgAsmPEExportEntryList.h>
+#endif
+#endif // SgAsmPEExportSection_HEADERS
+
 #ifdef DOCUMENTATION
 /** Export file section. */
 class SgAsmPEExportSection: public SgAsmPESection {
@@ -4444,6 +4509,13 @@ AsmPESection.setAutomaticGenerationOfConstructor(false);
 AsmPESection.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmPESection);
+#if defined(SgAsmPESection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmPESection_IMPL
+#include <SgAsmPESectionTableEntry.h>
+#endif
+#endif // SgAsmPESection_HEADERS
+
 #ifdef DOCUMENTATION
 /** Base class for PE sections. */
 class SgAsmPESection: public SgAsmGenericSection {
@@ -4527,6 +4599,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEExportEntryList);
 IS_SERIALIZABLE(AsmPEExportEntryList);
 
+DECLARE_HEADERS(AsmPEExportEntryList);
+#if defined(SgAsmPEExportEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmPEExportEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of pointers to other AST nodes.
  *
@@ -4599,6 +4676,7 @@ IS_SERIALIZABLE(AsmPEExportEntry);
 DECLARE_HEADERS(AsmPEExportEntry);
 #if defined(SgAsmPEExportEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <Sawyer/Result.h>
 #endif // SgAsmPEExportEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -4741,6 +4819,10 @@ IS_SERIALIZABLE(AsmPEExportDirectory);
 DECLARE_HEADERS(AsmPEExportDirectory);
 #if defined(SgAsmPEExportDirectory_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
+#ifdef ROSE_SgAsmPEExportDirectory_IMPL
+#include <SgAsmGenericString.h>
+#endif
 #endif // SgAsmPEExportDirectory_HEADERS
 
 #ifdef DOCUMENTATION
@@ -5037,6 +5119,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmOperandList);
 IS_SERIALIZABLE(AsmOperandList);
+
+DECLARE_HEADERS(AsmOperandList);
+#if defined(SgAsmOperandList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmOperandList_HEADERS
 
 #ifdef DOCUMENTATION
 /** List of operands for an instruction. */
@@ -5486,6 +5573,14 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNESection);
 IS_SERIALIZABLE(AsmNESection);
+
+DECLARE_HEADERS(AsmNESection);
+#if defined(SgAsmNESection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmNESection_IMPL
+#include <SgAsmNESectionTableEntry.h>
+#include <SgAsmNERelocTable.h>
+#endif
+#endif // SgAsmNESection_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmNESection: public SgAsmGenericSection {
@@ -5992,6 +6087,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmNEModuleTable);
 IS_SERIALIZABLE(AsmNEModuleTable);
 
+DECLARE_HEADERS(AsmNEModuleTable);
+#if defined(SgAsmNEModuleTable_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmNEModuleTable_IMPL
+#include <SgAsmNEStringTable.h>
+#endif
+#endif // SgAsmNEModuleTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmNEModuleTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -6083,6 +6185,19 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNEFileHeader);
 IS_SERIALIZABLE(AsmNEFileHeader);
+
+DECLARE_HEADERS(AsmNEFileHeader);
+#if defined(SgAsmNEFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
+#ifdef ROSE_SgAsmNEFileHeader_IMPL
+#include <SgAsmDOSExtendedHeader.h>
+#include <SgAsmNEEntryTable.h>
+#include <SgAsmNEModuleTable.h>
+#include <SgAsmNENameTable.h>
+#include <SgAsmNESectionTable.h>
+#endif
+#endif // SgAsmNEFileHeader_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmNEFileHeader: public SgAsmGenericHeader {
@@ -7339,6 +7454,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmLESection);
 IS_SERIALIZABLE(AsmLESection);
 
+DECLARE_HEADERS(AsmLESection);
+#if defined(SgAsmLESection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmLESection_IMPL
+#include <SgAsmLESectionTableEntry.h>
+#endif
+#endif // SgAsmLESection_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLESection: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7733,6 +7855,15 @@ IS_SERIALIZABLE(AsmLEFileHeader);
 DECLARE_HEADERS(AsmLEFileHeader);
 #if defined(SgAsmLEFileHeader_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+
+#ifdef ROSE_SgAsmLEFileHeader_IMPL
+#include <SgAsmDOSExtendedHeader.h>
+#include <SgAsmLEEntryTable.h>
+#include <SgAsmLENameTable.h>
+#include <SgAsmLEPageTable.h>
+#include <SgAsmLERelocTable.h>
+#include <SgAsmLESectionTable.h>
+#endif
 #endif // SgAsmLEFileHeader_HEADERS
 
 #ifdef DOCUMENTATION
@@ -8570,6 +8701,7 @@ IS_SERIALIZABLE(AsmLEEntryPoint);
 DECLARE_HEADERS(AsmLEEntryPoint);
 #if defined(SgAsmLEEntryPoint_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 #endif // SgAsmLEEntryPoint_HEADERS
 
 #ifdef DOCUMENTATION
@@ -8916,6 +9048,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmStackMapTable);
 IS_SERIALIZABLE(AsmJvmStackMapTable);
 
+DECLARE_HEADERS(AsmJvmStackMapTable);
+#if defined(SgAsmJvmStackMapTable_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmStackMapTable_HEADERS
+
 #ifdef DOCUMENTATION
 /** The StackMapTable attribute is a variable-length attribute in the attributes table
  *  of a Code attribute (see section 4.7.3). A StackMapTable attribute is used during the
@@ -9003,6 +9140,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmStackMapFrame);
 IS_SERIALIZABLE(AsmJvmStackMapFrame);
+
+DECLARE_HEADERS(AsmJvmStackMapFrame);
+#if defined(SgAsmJvmStackMapFrame_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmStackMapFrame_HEADERS
 
 #ifdef DOCUMENTATION
 /** Represents a frame in a stack map table.
@@ -9359,6 +9501,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmNestMembers);
 IS_SERIALIZABLE(AsmJvmNestMembers);
 
+DECLARE_HEADERS(AsmJvmNestMembers);
+#if defined(SgAsmJvmNestMembers_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmNestMembers_HEADERS
+
 #ifdef DOCUMENTATION
 /** JVM NestMembers attribute.
  *
@@ -9701,6 +9848,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmMethodParameters);
 IS_SERIALIZABLE(AsmJvmMethodParameters);
 
+DECLARE_HEADERS(AsmJvmMethodParameters);
+#if defined(SgAsmJvmMethodParameters_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmMethodParameters_HEADERS
+
 #ifdef DOCUMENTATION
 /** JVM MethodParameters attribute.
  *
@@ -9887,6 +10039,14 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmMethod);
 IS_SERIALIZABLE(AsmJvmMethod);
 
+DECLARE_HEADERS(AsmJvmMethod);
+#if defined(SgAsmJvmMethod_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmJvmMethod_IMPL
+#include <SgAsmInstructionList.h>
+#include <SgAsmJvmAttributeTable.h>
+#endif
+#endif // SgAsmJvmMethod_HEADERS
+
 #ifdef DOCUMENTATION
 /** JVM Method.
  *
@@ -10036,6 +10196,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmLocalVariableTypeTable);
 IS_SERIALIZABLE(AsmJvmLocalVariableTypeTable);
+
+DECLARE_HEADERS(AsmJvmLocalVariableTypeTable);
+#if defined(SgAsmJvmLocalVariableTypeTable_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmLocalVariableTypeTable_HEADERS
 
 #ifdef DOCUMENTATION
 /** JVM LocalVariableTypeTable attribute.
@@ -10280,6 +10445,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmLocalVariableTable);
 IS_SERIALIZABLE(AsmJvmLocalVariableTable);
 
+DECLARE_HEADERS(AsmJvmLocalVariableTable);
+#if defined(SgAsmJvmLocalVariableTable_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmLocalVariableTable_HEADERS
+
 #ifdef DOCUMENTATION
 /** JVM LocalVariableTable attribute.
  *
@@ -10522,6 +10692,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmLineNumberTable);
 IS_SERIALIZABLE(AsmJvmLineNumberTable);
+
+DECLARE_HEADERS(AsmJvmLineNumberTable);
+#if defined(SgAsmJvmLineNumberTable_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmLineNumberTable_HEADERS
 
 #ifdef DOCUMENTATION
 /** JVM LineNumberTable attribute.
@@ -10788,6 +10963,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmInnerClasses);
 IS_SERIALIZABLE(AsmJvmInnerClasses);
+
+DECLARE_HEADERS(AsmJvmInnerClasses);
+#if defined(SgAsmJvmInnerClasses_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmInnerClasses_HEADERS
 
 #ifdef DOCUMENTATION
 /** Represents a JVM InnerClasses attribute.
@@ -11358,6 +11538,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmField);
 IS_SERIALIZABLE(AsmJvmField);
 
+DECLARE_HEADERS(AsmJvmField);
+#if defined(SgAsmJvmField_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmJvmField_IMPL
+#include <SgAsmJvmAttributeTable.h>
+#endif
+#endif // SgAsmJvmField_HEADERS
+
 #ifdef DOCUMENTATION
 /** JVM Field.
  *
@@ -11490,6 +11677,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
 IS_SERIALIZABLE(AsmJvmExceptionTable);
 
+DECLARE_HEADERS(AsmJvmExceptionTable);
+#if defined(SgAsmJvmExceptionTable_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmExceptionTable_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents a JVM exception_info table/array.
  *
@@ -11574,6 +11766,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmExceptions);
 IS_SERIALIZABLE(AsmJvmExceptions);
+
+DECLARE_HEADERS(AsmJvmExceptions);
+#if defined(SgAsmJvmExceptions_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmExceptions_HEADERS
 
 #ifdef DOCUMENTATION
 /** JVM Exceptions attribute.
@@ -12794,6 +12991,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmBootstrapMethods);
 IS_SERIALIZABLE(AsmJvmBootstrapMethods);
 
+DECLARE_HEADERS(AsmJvmBootstrapMethods);
+#if defined(SgAsmJvmBootstrapMethods_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmBootstrapMethods_HEADERS
+
 #ifdef DOCUMENTATION
 /** The BootstrapMethods attribute is a variable-length attribute in the attributes table of a ClassFile
  *  structure (Section 4.1). The BootstrapMethods attribute records bootstrap methods used to produce
@@ -12881,6 +13083,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmBootstrapMethod);
 IS_SERIALIZABLE(AsmJvmBootstrapMethod);
+
+DECLARE_HEADERS(AsmJvmBootstrapMethod);
+#if defined(SgAsmJvmBootstrapMethod_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmBootstrapMethod_HEADERS
 
 #ifdef DOCUMENTATION
 /** JVM BootstrapMethod.
@@ -13279,6 +13486,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmInterpretationList);
 IS_SERIALIZABLE(AsmInterpretationList);
 
+DECLARE_HEADERS(AsmInterpretationList);
+#if defined(SgAsmInterpretationList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmInterpretationList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmInterpretationList: public SgAsmNode {
 #endif // DOCUMENTATION
@@ -13352,6 +13564,11 @@ DECLARE_HEADERS(AsmInterpretation);
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+
+#ifdef ROSE_SgAsmInterpretation_IMPL
+#include <SgAsmBlock.h>
+#include <SgAsmGenericHeaderList.h>
+#endif
 #endif // SgAsmInterpretation_HEADERS
 
 #ifdef DOCUMENTATION
@@ -13790,6 +14007,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmInstructionList);
 IS_SERIALIZABLE(AsmInstructionList);
 
+DECLARE_HEADERS(AsmInstructionList);
+#if defined(SgAsmInstructionList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmInstructionList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of SgAsmInstruction nodes. */
 class SgAsmInstructionList: public SgAsmNode {
@@ -14000,6 +14222,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericSymbolList);
 IS_SERIALIZABLE(AsmGenericSymbolList);
 
+DECLARE_HEADERS(AsmGenericSymbolList);
+#if defined(SgAsmGenericSymbolList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmGenericSymbolList_HEADERS
+
 #ifdef DOCUMENTATION
 /** Node to hold a list of symbol node pointers.
  *
@@ -14069,6 +14296,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericSectionList);
 IS_SERIALIZABLE(AsmGenericSectionList);
 
+DECLARE_HEADERS(AsmGenericSectionList);
+#if defined(SgAsmGenericSectionList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmGenericSectionList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of pointers to file sections.
  *
@@ -14137,6 +14369,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmGenericHeaderList);
 IS_SERIALIZABLE(AsmGenericHeaderList);
+
+DECLARE_HEADERS(AsmGenericHeaderList);
+#if defined(SgAsmGenericHeaderList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmGenericHeaderList_HEADERS
 
 #ifdef DOCUMENTATION
 /** List of generic file headers.
@@ -14398,6 +14635,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericFileList);
 IS_SERIALIZABLE(AsmGenericFileList);
 
+DECLARE_HEADERS(AsmGenericFileList);
+#if defined(SgAsmGenericFileList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmGenericFileList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of AST file node pointers.
  *
@@ -14474,6 +14716,12 @@ DECLARE_HEADERS(AsmGenericFile);
 
 #include "DataConversion.h"
 #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
+
+#ifdef ROSE_SgAsmGenericFile_IMPL
+#include <SgAsmDwarfCompilationUnitList.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericHeaderList.h>
+#endif
 #endif // SgAsmGenericFile_HEADERS
 
 #ifdef DOCUMENTATION
@@ -15044,6 +15292,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericDLLList);
 IS_SERIALIZABLE(AsmGenericDLLList);
 
+DECLARE_HEADERS(AsmGenericDLLList);
+#if defined(SgAsmGenericDLLList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmGenericDLLList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of pointers to other nodes.
  *
@@ -15112,6 +15365,15 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmGenericDLL);
 IS_SERIALIZABLE(AsmGenericDLL);
+
+DECLARE_HEADERS(AsmGenericDLL);
+#if defined(SgAsmGenericDLL_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmGenericDLL_IMPL
+#include <SgAsmBasicString.h>
+#endif
+#endif // SgAsmGenericDLL_HEADERS
 
 #ifdef DOCUMENTATION
 /** Base class for dynamically linked library information. */
@@ -15209,6 +15471,11 @@ IS_SERIALIZABLE(AsmFunction);
 DECLARE_HEADERS(AsmFunction);
 #if defined(SgAsmFunction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmFunction_IMPL
+#include <SgAsmInstruction.h>
+#endif
 #endif // SgAsmFunction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -16328,6 +16595,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmExprListExp);
 IS_SERIALIZABLE(AsmExprListExp);
 
+DECLARE_HEADERS(AsmExprListExp);
+#if defined(SgAsmExprListExp_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmExprListExp_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of expression nodes. */
 class SgAsmExprListExp: public SgAsmExpression {
@@ -16396,6 +16668,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverSection);
 IS_SERIALIZABLE(AsmElfSymverSection);
+
+DECLARE_HEADERS(AsmElfSymverSection);
+#if defined(SgAsmElfSymverSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfSymverSection_IMPL
+#include <SgAsmElfSymverEntryList.h>
+#endif
+#endif // SgAsmElfSymverSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** The ELF symbol version table.
@@ -16491,6 +16770,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverNeededSection);
 IS_SERIALIZABLE(AsmElfSymverNeededSection);
+
+DECLARE_HEADERS(AsmElfSymverNeededSection);
+#if defined(SgAsmElfSymverNeededSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfSymverNeededSection_IMPL
+#include <SgAsmElfSymverNeededEntryList.h>
+#endif
+#endif // SgAsmElfSymverNeededSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** GNU symbol version requirements table.
@@ -16599,6 +16885,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverNeededEntryList);
 IS_SERIALIZABLE(AsmElfSymverNeededEntryList);
 
+DECLARE_HEADERS(AsmElfSymverNeededEntryList);
+#if defined(SgAsmElfSymverNeededEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSymverNeededEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of symbol version needed entries.
  *
@@ -16671,6 +16962,11 @@ IS_SERIALIZABLE(AsmElfSymverNeededEntry);
 DECLARE_HEADERS(AsmElfSymverNeededEntry);
 #if defined(SgAsmElfSymverNeededEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+
+#ifdef ROSE_SgAsmElfSymverNeededEntry_IMPL
+#include <SgAsmElfSymverNeededAuxList.h>
+#include <SgAsmGenericString.h>
+#endif
 #endif // SgAsmElfSymverNeededEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -16822,6 +17118,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverNeededAuxList);
 IS_SERIALIZABLE(AsmElfSymverNeededAuxList);
 
+DECLARE_HEADERS(AsmElfSymverNeededAuxList);
+#if defined(SgAsmElfSymverNeededAuxList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSymverNeededAuxList_HEADERS
+
 #ifdef DOCUMENTATION
 /** Hods a list of symbol version aux entries.
  *
@@ -16894,6 +17195,10 @@ IS_SERIALIZABLE(AsmElfSymverNeededAux);
 DECLARE_HEADERS(AsmElfSymverNeededAux);
 #if defined(SgAsmElfSymverNeededAux_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+
+#ifdef ROSE_SgAsmElfSymverNeededAux_IMPL
+#include <SgAsmGenericString.h>
+#endif
 #endif // SgAsmElfSymverNeededAux_HEADERS
 
 #ifdef DOCUMENTATION
@@ -17061,6 +17366,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverEntryList);
 IS_SERIALIZABLE(AsmElfSymverEntryList);
 
+DECLARE_HEADERS(AsmElfSymverEntryList);
+#if defined(SgAsmElfSymverEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSymverEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of entries from a symbol version table.
  *
@@ -17201,6 +17511,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedSection);
 IS_SERIALIZABLE(AsmElfSymverDefinedSection);
+
+DECLARE_HEADERS(AsmElfSymverDefinedSection);
+#if defined(SgAsmElfSymverDefinedSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfSymverDefinedSection_IMPL
+#include <SgAsmElfSymverDefinedEntryList.h>
+#endif
+#endif // SgAsmElfSymverDefinedSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** The GNU symbol version definitions.
@@ -17365,6 +17682,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedEntryList);
 IS_SERIALIZABLE(AsmElfSymverDefinedEntryList);
 
+DECLARE_HEADERS(AsmElfSymverDefinedEntryList);
+#if defined(SgAsmElfSymverDefinedEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSymverDefinedEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of entries for the ELF symbol version definition table.
  *
@@ -17437,6 +17759,10 @@ IS_SERIALIZABLE(AsmElfSymverDefinedEntry);
 DECLARE_HEADERS(AsmElfSymverDefinedEntry);
 #if defined(SgAsmElfSymverDefinedEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+
+#ifdef ROSE_SgAsmElfSymverDefinedEntry_IMPL
+#include <SgAsmElfSymverDefinedAuxList.h>
+#endif
 #endif // SgAsmElfSymverDefinedEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -17618,6 +17944,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedAuxList);
 IS_SERIALIZABLE(AsmElfSymverDefinedAuxList);
 
+DECLARE_HEADERS(AsmElfSymverDefinedAuxList);
+#if defined(SgAsmElfSymverDefinedAuxList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSymverDefinedAuxList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of symbol version aux entries.
  *
@@ -17690,6 +18021,10 @@ IS_SERIALIZABLE(AsmElfSymverDefinedAux);
 DECLARE_HEADERS(AsmElfSymverDefinedAux);
 #if defined(SgAsmElfSymverDefinedAux_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+
+#ifdef ROSE_SgAsmElfSymverDefinedAux_IMPL
+#include <SgAsmGenericString.h>
+#endif
 #endif // SgAsmElfSymverDefinedAux_HEADERS
 
 #ifdef DOCUMENTATION
@@ -17801,6 +18136,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymbolSection);
 IS_SERIALIZABLE(AsmElfSymbolSection);
+
+DECLARE_HEADERS(AsmElfSymbolSection);
+#if defined(SgAsmElfSymbolSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfSymbolSection_IMPL
+#include <SgAsmElfSymbolList.h>
+#endif
+#endif // SgAsmElfSymbolSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** ELF file section containing symbols. */
@@ -17935,6 +18277,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymbolList);
 IS_SERIALIZABLE(AsmElfSymbolList);
 
+DECLARE_HEADERS(AsmElfSymbolList);
+#if defined(SgAsmElfSymbolList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSymbolList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmElfSymbolList: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -18006,6 +18353,7 @@ IS_SERIALIZABLE(AsmElfSymbol);
 DECLARE_HEADERS(AsmElfSymbol);
 #if defined(SgAsmElfSymbol_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 #endif // SgAsmElfSymbol_HEADERS
 
 #ifdef DOCUMENTATION
@@ -18559,6 +18907,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSegmentTableEntryList);
 IS_SERIALIZABLE(AsmElfSegmentTableEntryList);
 
+DECLARE_HEADERS(AsmElfSegmentTableEntryList);
+#if defined(SgAsmElfSegmentTableEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfSegmentTableEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmElfSegmentTableEntryList: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -18630,6 +18983,7 @@ IS_SERIALIZABLE(AsmElfSegmentTableEntry);
 DECLARE_HEADERS(AsmElfSegmentTableEntry);
 #if defined(SgAsmElfSegmentTableEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 #endif // SgAsmElfSegmentTableEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -19074,6 +19428,7 @@ IS_SERIALIZABLE(AsmElfSectionTableEntry);
 DECLARE_HEADERS(AsmElfSectionTableEntry);
 #if defined(SgAsmElfSectionTableEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 #endif // SgAsmElfSectionTableEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -19448,6 +19803,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfRelocSection);
 IS_SERIALIZABLE(AsmElfRelocSection);
 
+DECLARE_HEADERS(AsmElfRelocSection);
+#if defined(SgAsmElfRelocSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfRelocSection_IMPL
+#include <SgAsmElfRelocEntryList.h>
+#endif
+#endif // SgAsmElfRelocSection_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents an ELF relocation section. */
 class SgAsmElfRelocSection: public SgAsmElfSection {
@@ -19572,6 +19934,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfRelocEntryList);
 IS_SERIALIZABLE(AsmElfRelocEntryList);
 
+DECLARE_HEADERS(AsmElfRelocEntryList);
+#if defined(SgAsmElfRelocEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfRelocEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of ELF relocation entries.
  *
@@ -19644,6 +20011,7 @@ IS_SERIALIZABLE(AsmElfRelocEntry);
 DECLARE_HEADERS(AsmElfRelocEntry);
 #if defined(SgAsmElfRelocEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <sageContainer.h>
 #endif // SgAsmElfRelocEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -19941,6 +20309,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfNoteSection);
 IS_SERIALIZABLE(AsmElfNoteSection);
 
+DECLARE_HEADERS(AsmElfNoteSection);
+#if defined(SgAsmElfNoteSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfNoteSection_IMPL
+#include <SgAsmElfNoteEntryList.h>
+#endif
+#endif // SgAsmElfNoteSection_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmElfNoteSection: public SgAsmElfSection {
 #endif // DOCUMENTATION
@@ -20020,6 +20395,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfNoteEntryList);
 IS_SERIALIZABLE(AsmElfNoteEntryList);
 
+DECLARE_HEADERS(AsmElfNoteEntryList);
+#if defined(SgAsmElfNoteEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfNoteEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** Node to hold list of ELF note entries.
  *
@@ -20088,6 +20468,15 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfNoteEntry);
 IS_SERIALIZABLE(AsmElfNoteEntry);
+
+DECLARE_HEADERS(AsmElfNoteEntry);
+#if defined(SgAsmElfNoteEntry_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmElfNoteEntry_IMPL
+#include <SgAsmBasicString.h>
+#endif
+#endif // SgAsmElfNoteEntry_HEADERS
 
 #ifdef DOCUMENTATION
 /** One entry of an ELF notes table. */
@@ -20708,6 +21097,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameSection);
 IS_SERIALIZABLE(AsmElfEHFrameSection);
 
+DECLARE_HEADERS(AsmElfEHFrameSection);
+#if defined(SgAsmElfEHFrameSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfEHFrameSection_IMPL
+#include <SgAsmElfEHFrameEntryCIList.h>
+#endif
+#endif // SgAsmElfEHFrameSection_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents an ELF EH frame section. */
 class SgAsmElfEHFrameSection: public SgAsmElfSection {
@@ -20805,6 +21201,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFDList);
 IS_SERIALIZABLE(AsmElfEHFrameEntryFDList);
 
+DECLARE_HEADERS(AsmElfEHFrameEntryFDList);
+#if defined(SgAsmElfEHFrameEntryFDList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfEHFrameEntryFDList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of ELF error handling frame descriptor entries.
  *
@@ -20877,6 +21278,7 @@ IS_SERIALIZABLE(AsmElfEHFrameEntryFD);
 DECLARE_HEADERS(AsmElfEHFrameEntryFD);
 #if defined(SgAsmElfEHFrameEntryFD_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
 #endif // SgAsmElfEHFrameEntryFD_HEADERS
 
 #ifdef DOCUMENTATION
@@ -21011,6 +21413,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCIList);
 IS_SERIALIZABLE(AsmElfEHFrameEntryCIList);
 
+DECLARE_HEADERS(AsmElfEHFrameEntryCIList);
+#if defined(SgAsmElfEHFrameEntryCIList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfEHFrameEntryCIList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of ELF EH frame CI entries.
  *
@@ -21079,6 +21486,15 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCI);
 IS_SERIALIZABLE(AsmElfEHFrameEntryCI);
+
+DECLARE_HEADERS(AsmElfEHFrameEntryCI);
+#if defined(SgAsmElfEHFrameEntryCI_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmElfEHFrameEntryCI_IMPL
+#include <SgAsmElfEHFrameEntryFDList.h>
+#endif
+#endif // SgAsmElfEHFrameEntryCI_HEADERS
 
 #ifdef DOCUMENTATION
 /** ELF error handling frame entry, common information entry.
@@ -21383,6 +21799,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfDynamicSection);
 IS_SERIALIZABLE(AsmElfDynamicSection);
 
+DECLARE_HEADERS(AsmElfDynamicSection);
+#if defined(SgAsmElfDynamicSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfDynamicSection_IMPL
+#include <SgAsmElfDynamicEntryList.h>
+#endif
+#endif // SgAsmElfDynamicSection_HEADERS
+
 #ifdef DOCUMENTATION
 /** ELF section containing dynamic linking information. */
 class SgAsmElfDynamicSection: public SgAsmElfSection {
@@ -21499,6 +21922,14 @@ AsmElfSection.isBoostSerializable(true);
 AsmElfSection.setAutomaticGenerationOfConstructor(false);
 AsmElfSection.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmElfSection);
+#if defined(SgAsmElfSection_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmElfSection_IMPL
+#include <SgAsmElfSectionTableEntry.h>
+#include <SgAsmElfSegmentTableEntry.h>
+#endif
+#endif // SgAsmElfSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** Base class for ELF file sections. */
@@ -21690,6 +22121,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfDynamicEntryList);
 IS_SERIALIZABLE(AsmElfDynamicEntryList);
 
+DECLARE_HEADERS(AsmElfDynamicEntryList);
+#if defined(SgAsmElfDynamicEntryList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmElfDynamicEntryList_HEADERS
+
 #ifdef DOCUMENTATION
 /** List of dynamic linking section entries.
  *
@@ -21763,6 +22199,7 @@ DECLARE_HEADERS(AsmElfDynamicEntry);
 #if defined(SgAsmElfDynamicEntry_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
 #endif // SgAsmElfDynamicEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -22623,6 +23060,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfUnionType);
 IS_SERIALIZABLE(AsmDwarfUnionType);
 
+DECLARE_HEADERS(AsmDwarfUnionType);
+#if defined(SgAsmDwarfUnionType_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfUnionType_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfUnionType_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfUnionType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -22965,6 +23409,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfSubroutineType);
 IS_SERIALIZABLE(AsmDwarfSubroutineType);
 
+DECLARE_HEADERS(AsmDwarfSubroutineType);
+#if defined(SgAsmDwarfSubroutineType_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfSubroutineType_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfSubroutineType_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfSubroutineType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23087,6 +23538,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfSubprogram);
 IS_SERIALIZABLE(AsmDwarfSubprogram);
 
+DECLARE_HEADERS(AsmDwarfSubprogram);
+#if defined(SgAsmDwarfSubprogram_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfSubprogram_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfSubprogram_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfSubprogram: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23153,6 +23611,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfStructureType);
 IS_SERIALIZABLE(AsmDwarfStructureType);
+
+DECLARE_HEADERS(AsmDwarfStructureType);
+#if defined(SgAsmDwarfStructureType_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfStructureType_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfStructureType_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfStructureType: public SgAsmDwarfConstruct {
@@ -23716,6 +24181,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfNamespace);
 IS_SERIALIZABLE(AsmDwarfNamespace);
 
+DECLARE_HEADERS(AsmDwarfNamespace);
+#if defined(SgAsmDwarfNamespace_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfNamespace_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfNamespace_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfNamespace: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24058,6 +24530,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfMacroList);
 IS_SERIALIZABLE(AsmDwarfMacroList);
 
+DECLARE_HEADERS(AsmDwarfMacroList);
+#if defined(SgAsmDwarfMacroList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmDwarfMacroList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfMacroList: public SgAsmDwarfInformation {
 #endif // DOCUMENTATION
@@ -24178,6 +24655,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfLineList);
 IS_SERIALIZABLE(AsmDwarfLineList);
 
+DECLARE_HEADERS(AsmDwarfLineList);
+#if defined(SgAsmDwarfLineList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmDwarfLineList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfLineList: public SgAsmDwarfInformation {
 #endif // DOCUMENTATION
@@ -24272,7 +24754,7 @@ class SgAsmDwarfLine: public SgAsmDwarfInformation {
 
 #ifndef DOCUMENTATION
     AsmDwarfLine.setDataPrototype(
-        "int", "file_id", "= Sg_File_Info::NULL_FILE_ID",
+        "int", "file_id", "= -2",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -24311,7 +24793,8 @@ public:
 public:
     uint64_t const& get_address() const;
     void set_address(uint64_t const&);
-
+    // FIXME[Robb Matzke 2024-03-14]: Sg_File_Info::NULL_FILE_ID == -2, but since Sg_File_Info's definition is in the
+    // huge Cxx_Grammar.h file we don't want to include it here.
 public:
     int const& get_file_id() const;
     void set_file_id(int const&);
@@ -24359,6 +24842,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfLexicalBlock);
 IS_SERIALIZABLE(AsmDwarfLexicalBlock);
+
+DECLARE_HEADERS(AsmDwarfLexicalBlock);
+#if defined(SgAsmDwarfLexicalBlock_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfLexicalBlock_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfLexicalBlock_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfLexicalBlock: public SgAsmDwarfConstruct {
@@ -24536,6 +25026,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfInlinedSubroutine);
 IS_SERIALIZABLE(AsmDwarfInlinedSubroutine);
+
+DECLARE_HEADERS(AsmDwarfInlinedSubroutine);
+#if defined(SgAsmDwarfInlinedSubroutine_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfInlinedSubroutine_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfInlinedSubroutine_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfInlinedSubroutine: public SgAsmDwarfConstruct {
@@ -25154,6 +25651,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfEnumerationType);
 IS_SERIALIZABLE(AsmDwarfEnumerationType);
 
+DECLARE_HEADERS(AsmDwarfEnumerationType);
+#if defined(SgAsmDwarfEnumerationType_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfEnumerationType_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfEnumerationType_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfEnumerationType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25386,6 +25890,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfConstructList);
 IS_SERIALIZABLE(AsmDwarfConstructList);
 
+DECLARE_HEADERS(AsmDwarfConstructList);
+#if defined(SgAsmDwarfConstructList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmDwarfConstructList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfConstructList: public SgAsmDwarfInformation {
 #endif // DOCUMENTATION
@@ -25557,6 +26066,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfCompilationUnitList);
 IS_SERIALIZABLE(AsmDwarfCompilationUnitList);
 
+DECLARE_HEADERS(AsmDwarfCompilationUnitList);
+#if defined(SgAsmDwarfCompilationUnitList_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmDwarfCompilationUnitList_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfCompilationUnitList: public SgAsmDwarfInformation {
 #endif // DOCUMENTATION
@@ -25617,6 +26131,15 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfCompilationUnit);
 IS_SERIALIZABLE(AsmDwarfCompilationUnit);
+
+DECLARE_HEADERS(AsmDwarfCompilationUnit);
+#if defined(SgAsmDwarfCompilationUnit_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfCompilationUnit_IMPL
+#include <SgAsmDwarfConstructList.h>
+#include <SgAsmDwarfLineList.h>
+#include <SgAsmDwarfMacroList.h>
+#endif
+#endif // SgAsmDwarfCompilationUnit_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfCompilationUnit: public SgAsmDwarfConstruct {
@@ -25850,6 +26373,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfCommonBlock);
 IS_SERIALIZABLE(AsmDwarfCommonBlock);
 
+DECLARE_HEADERS(AsmDwarfCommonBlock);
+#if defined(SgAsmDwarfCommonBlock_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfCommonBlock_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfCommonBlock_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfCommonBlock: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25916,6 +26446,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfClassType);
 IS_SERIALIZABLE(AsmDwarfClassType);
+
+DECLARE_HEADERS(AsmDwarfClassType);
+#if defined(SgAsmDwarfClassType_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfClassType_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfClassType_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfClassType: public SgAsmDwarfConstruct {
@@ -26148,6 +26685,13 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfArrayType);
 IS_SERIALIZABLE(AsmDwarfArrayType);
+
+DECLARE_HEADERS(AsmDwarfArrayType);
+#if defined(SgAsmDwarfArrayType_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmDwarfArrayType_IMPL
+#include <SgAsmDwarfConstructList.h>
+#endif
+#endif // SgAsmDwarfArrayType_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfArrayType: public SgAsmDwarfConstruct {
@@ -26966,6 +27510,16 @@ DECLARE_HEADERS(AsmGenericHeader);
 #if defined(SgAsmGenericHeader_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
+#include <SgAsmGenericFormat.h>
+
+#ifdef ROSE_SgAsmGenericHeader_IMPL
+#include <SgAsmGenericDLLList.h>
+#include <SgAsmGenericSectionList.h>
+#endif
+
+class SgAsmGenericDLL;
+class SgAsmGenericDLLList;
 #endif // SgAsmGenericHeader_HEADERS
 
 #ifdef DOCUMENTATION
@@ -27120,10 +27674,7 @@ public:
     void addDll(SgAsmGenericDLL *dll);
 
     /** Vector of dynamically loaded libraries. */
-    std::vector<SgAsmGenericDLL*>& get_dlls() {
-        ROSE_ASSERT(p_dlls != NULL);
-        return p_dlls->get_dlls();
-    }
+    std::vector<SgAsmGenericDLL*>& get_dlls();
 
     /** Returns the RVA of the first entry point.
      *
@@ -28027,6 +28578,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmCoffSymbolTable);
 IS_SERIALIZABLE(AsmCoffSymbolTable);
 
+DECLARE_HEADERS(AsmCoffSymbolTable);
+#if defined(SgAsmCoffSymbolTable_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmCoffSymbolTable_IMPL
+#include <SgAsmCoffSymbolList.h>
+#endif
+#endif // SgAsmCoffSymbolTable_HEADERS
+
 #ifdef DOCUMENTATION
 /** COFF symbol table.
  *
@@ -28186,6 +28744,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCoffSymbol);
 IS_SERIALIZABLE(AsmCoffSymbol);
+
+DECLARE_HEADERS(AsmCoffSymbol);
+#if defined(SgAsmCoffSymbol_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmCoffSymbol_HEADERS
 
 #ifdef DOCUMENTATION
 /** COFF symbol. */
@@ -28892,6 +29455,13 @@ protected:
 DECLARE_LEAF_CLASS(AsmCliHeader);
 IS_SERIALIZABLE(AsmCliHeader);
 
+DECLARE_HEADERS(AsmCliHeader);
+#if defined(SgAsmCliHeader_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmCliHeader_IMPL
+#include <SgAsmCilMetadataRoot.h>
+#endif
+#endif // SgAsmCliHeader_HEADERS
+
 #ifdef DOCUMENTATION
 /** CIL Managed Code section.
  *
@@ -29213,7 +29783,13 @@ AsmGenericSection.setAutomaticGenerationOfDestructor(false);
 DECLARE_HEADERS(AsmGenericSection);
 #if defined(SgAsmGenericSection_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmGenericSection_IMPL
+#include <SgAsmBasicString.h>
+#endif
 #endif // SgAsmGenericSection_HEADERS
 
 #ifdef DOCUMENTATION
@@ -32757,6 +33333,50 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMetadataHeap);
 IS_SERIALIZABLE(AsmCilMetadataHeap);
+
+DECLARE_HEADERS(AsmCilMetadataHeap);
+#if defined(SgAsmCilMetadataHeap_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_SgAsmCilMetadataHeap_IMPL
+#include <SgAsmCilAssemblyTable.h>
+#include <SgAsmCilAssemblyOSTable.h>
+#include <SgAsmCilAssemblyProcessorTable.h>
+#include <SgAsmCilAssemblyRefTable.h>
+#include <SgAsmCilAssemblyRefOSTable.h>
+#include <SgAsmCilAssemblyRefProcessorTable.h>
+#include <SgAsmCilClassLayoutTable.h>
+#include <SgAsmCilConstantTable.h>
+#include <SgAsmCilCustomAttributeTable.h>
+#include <SgAsmCilDeclSecurityTable.h>
+#include <SgAsmCilEventTable.h>
+#include <SgAsmCilEventMapTable.h>
+#include <SgAsmCilExportedTypeTable.h>
+#include <SgAsmCilFieldTable.h>
+#include <SgAsmCilFieldLayoutTable.h>
+#include <SgAsmCilFieldMarshalTable.h>
+#include <SgAsmCilFieldRVATable.h>
+#include <SgAsmCilFileTable.h>
+#include <SgAsmCilGenericParamTable.h>
+#include <SgAsmCilGenericParamConstraintTable.h>
+#include <SgAsmCilImplMapTable.h>
+#include <SgAsmCilInterfaceImplTable.h>
+#include <SgAsmCilManifestResourceTable.h>
+#include <SgAsmCilMemberRefTable.h>
+#include <SgAsmCilMethodDefTable.h>
+#include <SgAsmCilMethodImplTable.h>
+#include <SgAsmCilMethodSemanticsTable.h>
+#include <SgAsmCilMethodSpecTable.h>
+#include <SgAsmCilModuleTable.h>
+#include <SgAsmCilModuleRefTable.h>
+#include <SgAsmCilNestedClassTable.h>
+#include <SgAsmCilParamTable.h>
+#include <SgAsmCilPropertyTable.h>
+#include <SgAsmCilPropertyMapTable.h>
+#include <SgAsmCilStandAloneSigTable.h>
+#include <SgAsmCilTypeDefTable.h>
+#include <SgAsmCilTypeRefTable.h>
+#include <SgAsmCilTypeSpecTable.h>
+#endif
+#endif // SgAsmCilMetadataHeap_HEADERS
 
 #ifdef DOCUMENTATION
 /** CIL SgAsmCilMetadataHeap node. */
@@ -38358,6 +38978,15 @@ protected:
 DECLARE_LEAF_CLASS(AsmBlock);
 IS_SERIALIZABLE(AsmBlock);
 
+DECLARE_HEADERS(AsmBlock);
+#if defined(SgAsmBlock_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+
+#ifdef ROSE_SgAsmBlock_IMPL
+#include <SgAsmInstruction.h>                           // for SgAsmInstruction::INVALID_STACK_DELTA
+#endif
+#endif // SgAsmBlock_HEADERS
+
 #ifdef DOCUMENTATION
 /** Instruction basic block.
  *
@@ -40869,7 +41498,13 @@ DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <sageContainer.h>
 #include <Sawyer/Cached.h>
+
+#ifdef ROSE_SgAsmInstruction_IMPL
+#include <SgAsmExprListExp.h>
+#include <SgAsmOperandList.h>
+#endif
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION

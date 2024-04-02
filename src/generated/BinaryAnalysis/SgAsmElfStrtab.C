@@ -4,6 +4,7 @@
 
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#define ROSE_SgAsmElfStrtab_IMPL
 #include <sage3basic.h>
 
 SgAsmElfStrtab::~SgAsmElfStrtab() {

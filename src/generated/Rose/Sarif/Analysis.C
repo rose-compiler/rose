@@ -13,10 +13,10 @@
 //     https://rpm.is/rose
 //     http://rosecompiler.org/ROSE_HTML_Reference/index.html
 //
-#include <sage3basic.h>
 
 #define ROSE_Sarif_Analysis_IMPL
 #include <Rose/Sarif/Analysis.h>
+#include <Rose/Exception.h>
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_SARIF
 #include <Rose/Sarif/Node.h>

@@ -15,6 +15,7 @@
 //
 #ifndef ROSE_Sarif_Analysis_H
 #define ROSE_Sarif_Analysis_H
+#include <RoseFirst.h>
 
 #include <rosePublicConfig.h>
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB

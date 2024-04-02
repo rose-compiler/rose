@@ -4,6 +4,7 @@
 
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#define ROSE_SgAsmDwarfPtrToMemberType_IMPL
 #include <sage3basic.h>
 
 SgAsmDwarfPtrToMemberType::~SgAsmDwarfPtrToMemberType() {

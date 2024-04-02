@@ -4,6 +4,7 @@
 
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#define ROSE_SgAsmPERVASizePair_IMPL
 #include <sage3basic.h>
 
 Rose::BinaryAnalysis::RelativeVirtualAddress const&
