@@ -672,6 +672,8 @@ namespace
   {
     SgTypeModifier res;
 
+    res.unsetDefault();
+
     switch (asisKind)
     {
       case A_Default_In_Mode:
