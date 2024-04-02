@@ -247,7 +247,7 @@ std::string VxUtilFuncs::getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
     filepathStr = inFuncDecl->get_definingDeclaration()->get_file_info()->get_filename();
   }
   boost::filesystem::path filePath = boost::filesystem::weakly_canonical(filepathStr);  
-  return filePath.native();
+  return filePath.string();
 
 }
 
@@ -305,7 +305,7 @@ bool VxUtilFuncs::isInProject(SgFunctionDeclaration* inFuncDecl) {
   boost::filesystem::path filePath = boost::filesystem::weakly_canonical(trueFilePath);  
   boost::filesystem::path rootDir  = boost::filesystem::weakly_canonical(rootDirStr);
 
-  if(filePath.native().substr(0, rootDir.native().size()) == rootDir) {
+  if(filePath.string().substr(0, rootDir.string().size()) == rootDir) {
     return true;
   }
   return false;
@@ -319,7 +319,7 @@ std::string VxUtilFuncs::getRelativePath(const std::string& rootPathStr, const s
   boost::filesystem::path rootPath(rootPathStr);
   boost::filesystem::path filePath(filePathStr);
   boost::filesystem::path relativePath = boost::filesystem::relative(filePath, rootPath);
-  return relativePath.native();
+  return relativePath.string();
 }
 
 /**
@@ -340,9 +340,9 @@ std::string VxUtilFuncs::getNodeRelativePath(SgNode* node) {
   
   //If the user didn't define an application root, just return the absolute path
   if(rootDirStr == "") {
-    return filePath.native();
+    return filePath.string();
   }
-  return getRelativePath(rootDirStr, filePath.native());
+  return getRelativePath(rootDirStr, filePath.string());
 }
 
 /**
@@ -364,10 +364,10 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
   //Force everything canonical before compare
   boost::filesystem::path filePath = boost::filesystem::weakly_canonical(getTrueFilePath(inFuncDecl));  
   if(rootDirStr == "") {
-    return filePath.native();  //User didn't specify a root, so no relativity
+    return filePath.string();  //User didn't specify a root, so no relativity
   }
   boost::filesystem::path rootDir  = boost::filesystem::weakly_canonical(rootDirStr);
-  return getRelativePath(rootDir.native(), filePath.native());
+  return getRelativePath(rootDir.string(), filePath.string());
 }
 
 /**
