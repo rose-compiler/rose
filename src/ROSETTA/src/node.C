@@ -200,6 +200,7 @@ Grammar::setUpNodes ()
 #else
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol          , "Node", "NodeTag", false );
 #endif
+     Node.useSmallHeader(true);
 
   // ***********************************************************************
   // ***********************************************************************

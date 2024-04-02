@@ -70,6 +70,7 @@ fi
 	       --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
 	       --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
 	       --rosetta-strict-parents \
+	       --rosetta-small-headers \
 	       "$@" \
 	       "$RG_SRC"/src/AstNodes/BinaryAnalysis/*.h
 
