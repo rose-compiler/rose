@@ -2065,7 +2065,8 @@ namespace Ada
         void handle(SgAdaSubtype& n)        { res = associatedDeclaration_internal(n.get_base_type(), skipAccessLayers); }
         void handle(SgAdaDerivedType& n)    { res = associatedDeclaration_internal(n.get_base_type(), skipAccessLayers); }
         void handle(SgPointerType& n)       { res = fromBaseType(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
-        void handle(SgAdaAccessType& n)     { res = fromBaseType(n.get_base_type()); } // \todo or scope of underlying type?
+        void handle(SgAdaAccessType& n)     { res = fromBaseType(n.get_base_type()); }
+
         //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
         // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
 
@@ -3547,17 +3548,16 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
 {
   std::vector<PrimitiveParameterDesc> res;
   size_t                              parmpos = 0;
-  const SgScopeStatement*             scope = dcl.get_scope();
+  const SgScopeStatement*             scope   = dcl.get_scope();
 
   for (const SgInitializedName* parm : SG_DEREF(dcl.get_parameterList()).get_args())
   {
     ASSERT_not_null(parm);
     // PP: note to self: BaseTypeDecl::find does NOT skip the initial typedef decl
-    // \note consider using associatedDeclaration_internal(parm->get_type(), 1)
-    const SgDeclarationStatement* tydcl = associatedDeclaration(parm->get_type());
+    const SgDeclarationStatement* tydcl = associatedDeclaration_internal(parm->get_type(), 1);
 
     if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))
-      res.emplace_back(parmpos, parm);
+      res.emplace_back(parmpos, parm, tydcl);
 
     ++parmpos;
   }

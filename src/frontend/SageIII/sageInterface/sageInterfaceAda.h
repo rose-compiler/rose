@@ -749,7 +749,7 @@ namespace
   bool isExceptionRenaming(const SgAdaRenamingDecl& dcl);
   /// @}
 
-  using PrimitiveParameterDescBase = std::tuple<size_t, const SgInitializedName*>;
+  using PrimitiveParameterDescBase = std::tuple<size_t, const SgInitializedName*, const SgDeclarationStatement*>;
 
   struct PrimitiveParameterDesc : PrimitiveParameterDescBase
   {
@@ -763,9 +763,26 @@ namespace
     /// the parameter's name in form of an SgInitializedName
     const SgInitializedName*
     name() const { return std::get<1>(*this); }
+
+    /// the associated type declaration
+    const SgDeclarationStatement*
+    typeDeclaration() const { return std::get<2>(*this); }
   };
 
-  /// returns the descriptions for parameters that make an operation primitive
+  /// returns the descriptions for parameters that make an operation primitive.
+  ///   (e.g., derived types, tagged types, and anonymous access types of those.)
+  /// \note
+  ///   Different sources have (slightly) different definitions of primitive subprograms
+  ///   and primitive arguments.
+  ///   This implementation uses the definition by learn.adacore.com:
+  ///     "A primitive operation (or just a primitive) is a subprogram attached to a type.
+  ///      Ada defines primitives as subprograms defined in the same scope as the type."
+  ///     https://learn.adacore.com/courses/intro-to-ada/chapters/object_oriented_programming.html
+  ///   Thus, primitive parameters can also be of derived type.
+  ///
+  ///   Other online sources tie the notion of primitive arguments to tagged types.
+  ///   e.g., https://en.wikibooks.org/wiki/Ada_Programming/Object_Orientation#Primitive_operations .
+  ///         accessed on 04/01/26.
   /// @{
   std::vector<PrimitiveParameterDesc>
   primitiveParameterPositions(const SgFunctionDeclaration&);

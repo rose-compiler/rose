@@ -1884,10 +1884,6 @@ namespace
     const std::string            label    = n.get_string_label();
     const bool                   requiresBeginEnd = !adaStmtSequence(n);
 
-    //~ ROSE_ASSERT(aa == dcllimit || requiresBeginEnd);
-
-    // was: ( functionbody || (aa != dcllimit) || label.size() );
-
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
 
