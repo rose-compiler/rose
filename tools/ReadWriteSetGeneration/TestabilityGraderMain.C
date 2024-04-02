@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sage3basic.h>
 #include <ReadWriteSetRecords.h>
 #include <TestabilityGrader.h>
 
