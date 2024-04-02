@@ -19,9 +19,10 @@
 #include <Rose/Exception.h>
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_SARIF
-#include <Sawyer/Tree.h>
 #include <Rose/Sarif/BasicTypes.h>
 #include <Rose/Sarif/NodeDeclarations.h>
+
+#include <Sawyer/Tree.h>
 
 namespace Rose {
 namespace Sarif {
