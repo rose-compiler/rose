@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmIntegerValueExpression_IMPL
-#include <sage3basic.h>
+#include <SgAsmIntegerValueExpression.h>
 
 SgNode* const&
 SgAsmIntegerValueExpression::get_baseNode() const {

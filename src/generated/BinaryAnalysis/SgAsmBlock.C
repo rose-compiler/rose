@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmBlock_IMPL
-#include <sage3basic.h>
+#include <SgAsmBlock.h>
 
 rose_addr_t const&
 SgAsmBlock::get_id() const {

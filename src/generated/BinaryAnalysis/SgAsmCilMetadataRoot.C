@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilMetadataRoot_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilMetadataRoot.h>
 
 uint32_t const&
 SgAsmCilMetadataRoot::get_Signature() const {

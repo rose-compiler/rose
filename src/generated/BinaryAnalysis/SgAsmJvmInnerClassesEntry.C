@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmInnerClassesEntry_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmInnerClassesEntry.h>
 
 uint16_t const&
 SgAsmJvmInnerClassesEntry::get_inner_class_info_index() const {

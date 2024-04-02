@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmLEEntryTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmLEEntryTable.h>
 
 SgSizeTList const&
 SgAsmLEEntryTable::get_bundle_sizes() const {

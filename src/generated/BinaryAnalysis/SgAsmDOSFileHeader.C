@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDOSFileHeader_IMPL
-#include <sage3basic.h>
+#include <SgAsmDOSFileHeader.h>
 
 uint16_t const&
 SgAsmDOSFileHeader::get_e_last_page_size() const {

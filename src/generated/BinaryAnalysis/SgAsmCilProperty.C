@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilProperty_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilProperty.h>
 
 uint16_t const&
 SgAsmCilProperty::get_Flags() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmSourceFile_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmSourceFile.h>
 
 uint16_t const&
 SgAsmJvmSourceFile::get_sourcefile_index() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilMemberRef_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilMemberRef.h>
 
 uint32_t const&
 SgAsmCilMemberRef::get_Class() const {

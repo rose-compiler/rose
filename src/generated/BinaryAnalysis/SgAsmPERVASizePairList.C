@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmPERVASizePairList_IMPL
-#include <sage3basic.h>
+#include <SgAsmPERVASizePairList.h>
 
 SgAsmPERVASizePairPtrList const&
 SgAsmPERVASizePairList::get_pairs() const {

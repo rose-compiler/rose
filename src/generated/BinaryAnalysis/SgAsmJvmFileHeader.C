@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmFileHeader_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmFileHeader.h>
 
 uint16_t const&
 SgAsmJvmFileHeader::get_minor_version() const {

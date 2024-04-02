@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmElfFileHeader_IMPL
-#include <sage3basic.h>
+#include <SgAsmElfFileHeader.h>
 
 unsigned char const&
 SgAsmElfFileHeader::get_e_ident_file_class() const {

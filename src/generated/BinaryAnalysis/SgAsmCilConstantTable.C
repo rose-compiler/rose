@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilConstantTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilConstantTable.h>
 
 std::vector<SgAsmCilConstant*> const&
 SgAsmCilConstantTable::get_elements() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDwarfUnionType_IMPL
-#include <sage3basic.h>
+#include <SgAsmDwarfUnionType.h>
 
 SgAsmDwarfConstructList* const&
 SgAsmDwarfUnionType::get_body() const {

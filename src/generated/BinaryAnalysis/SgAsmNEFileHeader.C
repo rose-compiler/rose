@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmNEFileHeader_IMPL
-#include <sage3basic.h>
+#include <SgAsmNEFileHeader.h>
 
 unsigned const&
 SgAsmNEFileHeader::get_e_linker_major() const {

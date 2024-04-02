@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmBootstrapMethods_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmBootstrapMethods.h>
 
 SgAsmJvmBootstrapMethodPtrList const&
 SgAsmJvmBootstrapMethods::get_bootstrap_methods() const {

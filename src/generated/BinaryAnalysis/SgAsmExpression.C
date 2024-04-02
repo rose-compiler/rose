@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmExpression_IMPL
-#include <sage3basic.h>
+#include <SgAsmExpression.h>
 
 SgAsmType* const&
 SgAsmExpression::get_type() const {

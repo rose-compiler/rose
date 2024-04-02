@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmLocalVariableTypeTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmLocalVariableTypeTable.h>
 
 SgAsmJvmLocalVariableTypeEntryPtrList const&
 SgAsmJvmLocalVariableTypeTable::get_local_variable_type_table() const {

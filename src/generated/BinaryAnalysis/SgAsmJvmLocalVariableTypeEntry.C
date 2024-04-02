@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmLocalVariableTypeEntry_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmLocalVariableTypeEntry.h>
 
 uint16_t const&
 SgAsmJvmLocalVariableTypeEntry::get_start_pc() const {

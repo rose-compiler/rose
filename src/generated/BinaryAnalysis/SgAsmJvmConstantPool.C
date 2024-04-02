@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmConstantPool_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmConstantPool.h>
 
 SgAsmJvmConstantPoolEntryPtrList const&
 SgAsmJvmConstantPool::get_entries() const {

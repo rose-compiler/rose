@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmPEFileHeader_IMPL
-#include <sage3basic.h>
+#include <SgAsmPEFileHeader.h>
 
 unsigned const&
 SgAsmPEFileHeader::get_e_cpu_type() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmGenericFile_IMPL
-#include <sage3basic.h>
+#include <SgAsmGenericFile.h>
 
 SgAsmDwarfCompilationUnitList* const&
 SgAsmGenericFile::get_dwarfInfo() const {

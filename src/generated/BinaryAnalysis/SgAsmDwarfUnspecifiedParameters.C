@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDwarfUnspecifiedParameters_IMPL
-#include <sage3basic.h>
+#include <SgAsmDwarfUnspecifiedParameters.h>
 
 SgAsmDwarfUnspecifiedParameters::~SgAsmDwarfUnspecifiedParameters() {
     destructorHelper();

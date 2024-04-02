@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmPESectionTableEntry_IMPL
-#include <sage3basic.h>
+#include <SgAsmPESectionTableEntry.h>
 
 std::string const&
 SgAsmPESectionTableEntry::get_name() const {

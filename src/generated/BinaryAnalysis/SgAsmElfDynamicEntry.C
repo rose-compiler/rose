@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmElfDynamicEntry_IMPL
-#include <sage3basic.h>
+#include <SgAsmElfDynamicEntry.h>
 
 SgAsmElfDynamicEntry::EntryType const&
 SgAsmElfDynamicEntry::get_d_tag() const {

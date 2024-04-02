@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilManifestResource_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilManifestResource.h>
 
 uint32_t const&
 SgAsmCilManifestResource::get_Offset() const {

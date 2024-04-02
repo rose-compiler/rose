@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmElfSection_IMPL
-#include <sage3basic.h>
+#include <SgAsmElfSection.h>
 
 SgAsmElfSection* const&
 SgAsmElfSection::get_linkedSection() const {

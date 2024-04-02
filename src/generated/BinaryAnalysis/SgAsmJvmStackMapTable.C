@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmStackMapTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmStackMapTable.h>
 
 SgAsmJvmStackMapFramePtrList const&
 SgAsmJvmStackMapTable::get_entries() const {

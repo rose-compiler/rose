@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmCodeAttribute_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmCodeAttribute.h>
 
 uint16_t const&
 SgAsmJvmCodeAttribute::get_max_stack() const {

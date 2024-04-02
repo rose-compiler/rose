@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilFieldLayoutTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilFieldLayoutTable.h>
 
 std::vector<SgAsmCilFieldLayout*> const&
 SgAsmCilFieldLayoutTable::get_elements() const {

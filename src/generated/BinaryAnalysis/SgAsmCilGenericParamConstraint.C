@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilGenericParamConstraint_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilGenericParamConstraint.h>
 
 uint32_t const&
 SgAsmCilGenericParamConstraint::get_Owner() const {

@@ -6,7 +6,7 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #ifdef ROSE_ENABLE_ASM_AARCH64
 #define ROSE_SgAsmAarch64BarrierOperand_IMPL
-#include <sage3basic.h>
+#include <SgAsmAarch64BarrierOperand.h>
 
 Rose::BinaryAnalysis::Aarch64BarrierOperation const&
 SgAsmAarch64BarrierOperand::operation() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDwarfInterfaceType_IMPL
-#include <sage3basic.h>
+#include <SgAsmDwarfInterfaceType.h>
 
 SgAsmDwarfInterfaceType::~SgAsmDwarfInterfaceType() {
     destructorHelper();

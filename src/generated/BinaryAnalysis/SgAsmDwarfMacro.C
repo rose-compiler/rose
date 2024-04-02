@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDwarfMacro_IMPL
-#include <sage3basic.h>
+#include <SgAsmDwarfMacro.h>
 
 std::string const&
 SgAsmDwarfMacro::get_macro_string() const {

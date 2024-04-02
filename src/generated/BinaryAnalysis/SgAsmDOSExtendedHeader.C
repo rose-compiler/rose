@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDOSExtendedHeader_IMPL
-#include <sage3basic.h>
+#include <SgAsmDOSExtendedHeader.h>
 
 unsigned const&
 SgAsmDOSExtendedHeader::get_e_res1() const {

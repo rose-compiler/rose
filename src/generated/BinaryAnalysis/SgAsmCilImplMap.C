@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilImplMap_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilImplMap.h>
 
 uint16_t const&
 SgAsmCilImplMap::get_MappingFlags() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilTypeDefTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilTypeDefTable.h>
 
 std::vector<SgAsmCilTypeDef*> const&
 SgAsmCilTypeDefTable::get_elements() const {

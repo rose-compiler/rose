@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmDwarfSharedType_IMPL
-#include <sage3basic.h>
+#include <SgAsmDwarfSharedType.h>
 
 SgAsmDwarfSharedType::~SgAsmDwarfSharedType() {
     destructorHelper();

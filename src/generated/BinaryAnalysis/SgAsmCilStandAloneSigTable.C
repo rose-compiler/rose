@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilStandAloneSigTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilStandAloneSigTable.h>
 
 std::vector<SgAsmCilStandAloneSig*> const&
 SgAsmCilStandAloneSigTable::get_elements() const {

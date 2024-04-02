@@ -6,7 +6,7 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #ifdef ROSE_ENABLE_ASM_AARCH64
 #define ROSE_SgAsmAarch64CImmediateOperand_IMPL
-#include <sage3basic.h>
+#include <SgAsmAarch64CImmediateOperand.h>
 
 unsigned const&
 SgAsmAarch64CImmediateOperand::immediate() const {

@@ -6,7 +6,7 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #ifdef ROSE_ENABLE_ASM_AARCH32
 #define ROSE_SgAsmAarch32Instruction_IMPL
-#include <sage3basic.h>
+#include <SgAsmAarch32Instruction.h>
 
 Rose::BinaryAnalysis::Aarch32InstructionKind const&
 SgAsmAarch32Instruction::get_kind() const {

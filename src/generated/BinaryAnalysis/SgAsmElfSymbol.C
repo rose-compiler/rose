@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmElfSymbol_IMPL
-#include <sage3basic.h>
+#include <SgAsmElfSymbol.h>
 
 unsigned char const&
 SgAsmElfSymbol::get_st_info() const {

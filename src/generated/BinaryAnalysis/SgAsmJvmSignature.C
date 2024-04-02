@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmJvmSignature_IMPL
-#include <sage3basic.h>
+#include <SgAsmJvmSignature.h>
 
 uint16_t const&
 SgAsmJvmSignature::get_signature_index() const {

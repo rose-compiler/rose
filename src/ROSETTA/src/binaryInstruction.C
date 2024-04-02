@@ -107,6 +107,10 @@ void Grammar::setUpBinaryInstructions() {
 DECLARE_LEAF_CLASS(AsmX86Instruction);
 IS_SERIALIZABLE(AsmX86Instruction);
 
+#ifndef DOCUMENTATION
+AsmX86Instruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/BasicTypes.h>
@@ -325,6 +329,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmVectorType);
 IS_SERIALIZABLE(AsmVectorType);
 
+#ifndef DOCUMENTATION
+AsmVectorType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for vector types. */
 class SgAsmVectorType: public SgAsmType {
@@ -414,6 +422,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmUserInstruction);
 IS_SERIALIZABLE(AsmUserInstruction);
 
+#ifndef DOCUMENTATION
+AsmUserInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Instructions defined at runtime.
  *
@@ -494,6 +506,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmUnaryUnsignedExtend);
 IS_SERIALIZABLE(AsmUnaryUnsignedExtend);
 
+#ifndef DOCUMENTATION
+AsmUnaryUnsignedExtend.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression representing unsigned extending.
  *
@@ -551,6 +567,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmUnaryTruncate);
 IS_SERIALIZABLE(AsmUnaryTruncate);
+
+#ifndef DOCUMENTATION
+AsmUnaryTruncate.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression representing truncation.
@@ -610,6 +630,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmUnarySignedExtend);
 IS_SERIALIZABLE(AsmUnarySignedExtend);
 
+#ifndef DOCUMENTATION
+AsmUnarySignedExtend.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression representing sign extending.
  *
@@ -667,6 +691,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmUnaryRrx);
 IS_SERIALIZABLE(AsmUnaryRrx);
+
+#ifndef DOCUMENTATION
+AsmUnaryRrx.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmUnaryRrx);
 #if defined(SgAsmUnaryRrx_HEADERS) || defined(DOCUMENTATION)
@@ -726,6 +754,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmUnaryPlus);
 IS_SERIALIZABLE(AsmUnaryPlus);
 
+#ifndef DOCUMENTATION
+AsmUnaryPlus.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression representing a (no-op) unary plus operation. */
 class SgAsmUnaryPlus: public SgAsmUnaryExpression {
@@ -779,6 +811,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmUnaryMinus);
 IS_SERIALIZABLE(AsmUnaryMinus);
+
+#ifndef DOCUMENTATION
+AsmUnaryMinus.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression represting negation. */
@@ -852,6 +888,10 @@ AsmUnaryExpression.setAutomaticGenerationOfConstructor(false);
 AsmUnaryExpression.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmUnaryExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for unary expressions. */
 class SgAsmUnaryExpression: public SgAsmExpression {
@@ -920,6 +960,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmSynthesizedFieldDeclaration);
 IS_SERIALIZABLE(AsmSynthesizedFieldDeclaration);
+
+#ifndef DOCUMENTATION
+AsmSynthesizedFieldDeclaration.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmSynthesizedFieldDeclaration);
 #if defined(SgAsmSynthesizedFieldDeclaration_HEADERS) || defined(DOCUMENTATION)
@@ -1010,6 +1054,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmSynthesizedDataStructureDeclaration);
 IS_SERIALIZABLE(AsmSynthesizedDataStructureDeclaration);
 
+#ifndef DOCUMENTATION
+AsmSynthesizedDataStructureDeclaration.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmSynthesizedDataStructureDeclaration);
 #if defined(SgAsmSynthesizedDataStructureDeclaration_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -1090,6 +1138,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmStringStorage);
 IS_SERIALIZABLE(AsmStringStorage);
+
+#ifndef DOCUMENTATION
+AsmStringStorage.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Strings stored in an ELF or PE container. */
@@ -1198,6 +1250,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmStoredString);
 IS_SERIALIZABLE(AsmStoredString);
 
+#ifndef DOCUMENTATION
+AsmStoredString.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Strings stored in an ELF or PE container. */
 class SgAsmStoredString: public SgAsmGenericString {
@@ -1297,6 +1353,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmStaticData);
 IS_SERIALIZABLE(AsmStaticData);
 
+#ifndef DOCUMENTATION
+AsmStaticData.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmStaticData);
 #if defined(SgAsmStaticData_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -1391,6 +1451,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmStackExpression);
 IS_SERIALIZABLE(AsmStackExpression);
 
+#ifndef DOCUMENTATION
+AsmStackExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for references to a machine register. */
 class SgAsmStackExpression: public SgAsmExpression {
@@ -1467,6 +1531,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmRiscOperation);
 IS_SERIALIZABLE(AsmRiscOperation);
+
+#ifndef DOCUMENTATION
+AsmRiscOperation.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmRiscOperation);
 #if defined(SgAsmRiscOperation_HEADERS) || defined(DOCUMENTATION)
@@ -1643,6 +1711,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmRegisterNames);
 IS_SERIALIZABLE(AsmRegisterNames);
 
+#ifndef DOCUMENTATION
+AsmRegisterNames.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmRegisterNames);
 #if defined(SgAsmRegisterNames_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -1734,6 +1806,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPowerpcInstruction);
 IS_SERIALIZABLE(AsmPowerpcInstruction);
+
+#ifndef DOCUMENTATION
+AsmPowerpcInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_HEADERS) || defined(DOCUMENTATION)
@@ -1830,6 +1906,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEStringSection);
 IS_SERIALIZABLE(AsmPEStringSection);
 
+#ifndef DOCUMENTATION
+AsmPEStringSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** String section. */
 class SgAsmPEStringSection: public SgAsmPESection {
@@ -1903,6 +1983,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPESectionTable);
 IS_SERIALIZABLE(AsmPESectionTable);
 
+#ifndef DOCUMENTATION
+AsmPESectionTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Section table. */
 class SgAsmPESectionTable: public SgAsmGenericSection {
@@ -1969,6 +2053,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPESectionTableEntry);
 IS_SERIALIZABLE(AsmPESectionTableEntry);
+
+#ifndef DOCUMENTATION
+AsmPESectionTableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Section table entry. */
@@ -2255,6 +2343,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPERVASizePairList);
 IS_SERIALIZABLE(AsmPERVASizePairList);
 
+#ifndef DOCUMENTATION
+AsmPERVASizePairList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmPERVASizePairList);
 #if defined(SgAsmPERVASizePairList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -2329,6 +2421,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPERVASizePair);
 IS_SERIALIZABLE(AsmPERVASizePair);
+
+#ifndef DOCUMENTATION
+AsmPERVASizePair.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPERVASizePair);
 #if defined(SgAsmPERVASizePair_HEADERS) || defined(DOCUMENTATION)
@@ -2477,6 +2573,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEImportSection);
 IS_SERIALIZABLE(AsmPEImportSection);
+
+#ifndef DOCUMENTATION
+AsmPEImportSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPEImportSection);
 #if defined(SgAsmPEImportSection_HEADERS) || defined(DOCUMENTATION)
@@ -2732,6 +2832,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEImportItemList);
 IS_SERIALIZABLE(AsmPEImportItemList);
 
+#ifndef DOCUMENTATION
+AsmPEImportItemList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmPEImportItemList);
 #if defined(SgAsmPEImportItemList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -2805,6 +2909,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEImportItem);
 IS_SERIALIZABLE(AsmPEImportItem);
+
+#ifndef DOCUMENTATION
+AsmPEImportItem.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPEImportItem);
 #if defined(SgAsmPEImportItem_HEADERS) || defined(DOCUMENTATION)
@@ -3038,6 +3146,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEImportDirectoryList);
 IS_SERIALIZABLE(AsmPEImportDirectoryList);
 
+#ifndef DOCUMENTATION
+AsmPEImportDirectoryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmPEImportDirectoryList);
 #if defined(SgAsmPEImportDirectoryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -3113,6 +3225,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEImportDirectory);
 IS_SERIALIZABLE(AsmPEImportDirectory);
+
+#ifndef DOCUMENTATION
+AsmPEImportDirectory.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPEImportDirectory);
 #if defined(SgAsmPEImportDirectory_HEADERS) || defined(DOCUMENTATION)
@@ -3445,6 +3561,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEFileHeader);
 IS_SERIALIZABLE(AsmPEFileHeader);
+
+#ifndef DOCUMENTATION
+AsmPEFileHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPEFileHeader);
 #if defined(SgAsmPEFileHeader_HEADERS) || defined(DOCUMENTATION)
@@ -4373,6 +4493,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEExportSection);
 IS_SERIALIZABLE(AsmPEExportSection);
 
+#ifndef DOCUMENTATION
+AsmPEExportSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmPEExportSection);
 #if defined(SgAsmPEExportSection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmPEExportSection_IMPL
@@ -4509,6 +4633,10 @@ AsmPESection.setAutomaticGenerationOfConstructor(false);
 AsmPESection.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmPESection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmPESection);
 #if defined(SgAsmPESection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmPESection_IMPL
@@ -4599,6 +4727,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmPEExportEntryList);
 IS_SERIALIZABLE(AsmPEExportEntryList);
 
+#ifndef DOCUMENTATION
+AsmPEExportEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmPEExportEntryList);
 #if defined(SgAsmPEExportEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -4672,6 +4804,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEExportEntry);
 IS_SERIALIZABLE(AsmPEExportEntry);
+
+#ifndef DOCUMENTATION
+AsmPEExportEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPEExportEntry);
 #if defined(SgAsmPEExportEntry_HEADERS) || defined(DOCUMENTATION)
@@ -4815,6 +4951,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmPEExportDirectory);
 IS_SERIALIZABLE(AsmPEExportDirectory);
+
+#ifndef DOCUMENTATION
+AsmPEExportDirectory.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmPEExportDirectory);
 #if defined(SgAsmPEExportDirectory_HEADERS) || defined(DOCUMENTATION)
@@ -5120,6 +5260,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmOperandList);
 IS_SERIALIZABLE(AsmOperandList);
 
+#ifndef DOCUMENTATION
+AsmOperandList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmOperandList);
 #if defined(SgAsmOperandList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -5202,6 +5346,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmNullInstruction);
 IS_SERIALIZABLE(AsmNullInstruction);
 
+#ifndef DOCUMENTATION
+AsmNullInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmNullInstruction: public SgAsmInstruction {
 #endif // DOCUMENTATION
@@ -5262,6 +5410,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmNEStringTable);
 IS_SERIALIZABLE(AsmNEStringTable);
 
+#ifndef DOCUMENTATION
+AsmNEStringTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmNEStringTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -5313,6 +5465,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNESectionTable);
 IS_SERIALIZABLE(AsmNESectionTable);
+
+#ifndef DOCUMENTATION
+AsmNESectionTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmNESectionTable: public SgAsmGenericSection {
@@ -5418,6 +5574,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNESectionTableEntry);
 IS_SERIALIZABLE(AsmNESectionTableEntry);
+
+#ifndef DOCUMENTATION
+AsmNESectionTableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmNESectionTableEntry: public SgAsmExecutableFileFormat {
@@ -5574,6 +5734,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmNESection);
 IS_SERIALIZABLE(AsmNESection);
 
+#ifndef DOCUMENTATION
+AsmNESection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmNESection);
 #if defined(SgAsmNESection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmNESection_IMPL
@@ -5665,6 +5829,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmNERelocTable);
 IS_SERIALIZABLE(AsmNERelocTable);
 
+#ifndef DOCUMENTATION
+AsmNERelocTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmNERelocTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -5728,6 +5896,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNERelocEntry);
 IS_SERIALIZABLE(AsmNERelocEntry);
+
+#ifndef DOCUMENTATION
+AsmNERelocEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmNERelocEntry: public SgAsmExecutableFileFormat {
@@ -6006,6 +6178,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmNENameTable);
 IS_SERIALIZABLE(AsmNENameTable);
 
+#ifndef DOCUMENTATION
+AsmNENameTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmNENameTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -6086,6 +6262,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNEModuleTable);
 IS_SERIALIZABLE(AsmNEModuleTable);
+
+#ifndef DOCUMENTATION
+AsmNEModuleTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmNEModuleTable);
 #if defined(SgAsmNEModuleTable_HEADERS) || defined(DOCUMENTATION)
@@ -6185,6 +6365,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNEFileHeader);
 IS_SERIALIZABLE(AsmNEFileHeader);
+
+#ifndef DOCUMENTATION
+AsmNEFileHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmNEFileHeader);
 #if defined(SgAsmNEFileHeader_HEADERS) || defined(DOCUMENTATION)
@@ -6748,6 +6932,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmNEEntryTable);
 IS_SERIALIZABLE(AsmNEEntryTable);
 
+#ifndef DOCUMENTATION
+AsmNEEntryTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmNEEntryTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -6823,6 +7011,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmNEEntryPoint);
 IS_SERIALIZABLE(AsmNEEntryPoint);
+
+#ifndef DOCUMENTATION
+AsmNEEntryPoint.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmNEEntryPoint: public SgAsmExecutableFileFormat {
@@ -6945,6 +7137,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmMipsInstruction);
 IS_SERIALIZABLE(AsmMipsInstruction);
 
+#ifndef DOCUMENTATION
+AsmMipsInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmMipsInstruction);
 #if defined(SgAsmMipsInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
@@ -7026,6 +7222,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmMemoryReferenceExpression);
 IS_SERIALIZABLE(AsmMemoryReferenceExpression);
+
+#ifndef DOCUMENTATION
+AsmMemoryReferenceExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Reference to memory locations. */
@@ -7120,6 +7320,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmM68kInstruction);
 IS_SERIALIZABLE(AsmM68kInstruction);
 
+#ifndef DOCUMENTATION
+AsmM68kInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
@@ -7201,6 +7405,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmLESectionTable);
 IS_SERIALIZABLE(AsmLESectionTable);
 
+#ifndef DOCUMENTATION
+AsmLESectionTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmLESectionTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7252,6 +7460,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLESectionTableEntry);
 IS_SERIALIZABLE(AsmLESectionTableEntry);
+
+#ifndef DOCUMENTATION
+AsmLESectionTableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmLESectionTableEntry);
 #if defined(SgAsmLESectionTableEntry_HEADERS) || defined(DOCUMENTATION)
@@ -7454,6 +7666,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmLESection);
 IS_SERIALIZABLE(AsmLESection);
 
+#ifndef DOCUMENTATION
+AsmLESection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmLESection);
 #if defined(SgAsmLESection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmLESection_IMPL
@@ -7530,6 +7746,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmLERelocTable);
 IS_SERIALIZABLE(AsmLERelocTable);
 
+#ifndef DOCUMENTATION
+AsmLERelocTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmLERelocTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7592,6 +7812,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLEPageTable);
 IS_SERIALIZABLE(AsmLEPageTable);
+
+#ifndef DOCUMENTATION
+AsmLEPageTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmLEPageTable: public SgAsmGenericSection {
@@ -7657,6 +7881,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLEPageTableEntry);
 IS_SERIALIZABLE(AsmLEPageTableEntry);
+
+#ifndef DOCUMENTATION
+AsmLEPageTableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmLEPageTableEntry);
 #if defined(SgAsmLEPageTableEntry_HEADERS) || defined(DOCUMENTATION)
@@ -7774,6 +8002,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmLENameTable);
 IS_SERIALIZABLE(AsmLENameTable);
 
+#ifndef DOCUMENTATION
+AsmLENameTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmLENameTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7851,6 +8083,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLEFileHeader);
 IS_SERIALIZABLE(AsmLEFileHeader);
+
+#ifndef DOCUMENTATION
+AsmLEFileHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmLEFileHeader);
 #if defined(SgAsmLEFileHeader_HEADERS) || defined(DOCUMENTATION)
@@ -8623,6 +8859,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmLEEntryTable);
 IS_SERIALIZABLE(AsmLEEntryTable);
 
+#ifndef DOCUMENTATION
+AsmLEEntryTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmLEEntryTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -8697,6 +8937,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLEEntryPoint);
 IS_SERIALIZABLE(AsmLEEntryPoint);
+
+#ifndef DOCUMENTATION
+AsmLEEntryPoint.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmLEEntryPoint);
 #if defined(SgAsmLEEntryPoint_HEADERS) || defined(DOCUMENTATION)
@@ -8857,6 +9101,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmStackMapVerificationType);
 IS_SERIALIZABLE(AsmJvmStackMapVerificationType);
+
+#ifndef DOCUMENTATION
+AsmJvmStackMapVerificationType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents an entry in a stack map table.
@@ -9048,6 +9296,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmStackMapTable);
 IS_SERIALIZABLE(AsmJvmStackMapTable);
 
+#ifndef DOCUMENTATION
+AsmJvmStackMapTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmJvmStackMapTable);
 #if defined(SgAsmJvmStackMapTable_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -9140,6 +9392,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmStackMapFrame);
 IS_SERIALIZABLE(AsmJvmStackMapFrame);
+
+#ifndef DOCUMENTATION
+AsmJvmStackMapFrame.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmStackMapFrame);
 #if defined(SgAsmJvmStackMapFrame_HEADERS) || defined(DOCUMENTATION)
@@ -9336,6 +9592,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmSourceFile);
 IS_SERIALIZABLE(AsmJvmSourceFile);
 
+#ifndef DOCUMENTATION
+AsmJvmSourceFile.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM SourceFile attribute.
  *
@@ -9417,6 +9677,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmSignature);
 IS_SERIALIZABLE(AsmJvmSignature);
+
+#ifndef DOCUMENTATION
+AsmJvmSignature.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** JVM Signature attribute.
@@ -9500,6 +9764,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmNestMembers);
 IS_SERIALIZABLE(AsmJvmNestMembers);
+
+#ifndef DOCUMENTATION
+AsmJvmNestMembers.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmNestMembers);
 #if defined(SgAsmJvmNestMembers_HEADERS) || defined(DOCUMENTATION)
@@ -9593,6 +9861,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmNestHost);
 IS_SERIALIZABLE(AsmJvmNestHost);
 
+#ifndef DOCUMENTATION
+AsmJvmNestHost.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM NestHost attribute.
  *
@@ -9679,6 +9951,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmModuleMainClass);
 IS_SERIALIZABLE(AsmJvmModuleMainClass);
 
+#ifndef DOCUMENTATION
+AsmJvmModuleMainClass.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM ModuleMainClass attribute.
  *
@@ -9761,6 +10037,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmMethodTable);
 IS_SERIALIZABLE(AsmJvmMethodTable);
+
+#ifndef DOCUMENTATION
+AsmJvmMethodTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents a JVM method_info table/array.
@@ -9847,6 +10127,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmMethodParameters);
 IS_SERIALIZABLE(AsmJvmMethodParameters);
+
+#ifndef DOCUMENTATION
+AsmJvmMethodParameters.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmMethodParameters);
 #if defined(SgAsmJvmMethodParameters_HEADERS) || defined(DOCUMENTATION)
@@ -9937,6 +10221,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmMethodParametersEntry);
 IS_SERIALIZABLE(AsmJvmMethodParametersEntry);
+
+#ifndef DOCUMENTATION
+AsmJvmMethodParametersEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** JVM MethodParametersEntry.
@@ -10038,6 +10326,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmMethod);
 IS_SERIALIZABLE(AsmJvmMethod);
+
+#ifndef DOCUMENTATION
+AsmJvmMethod.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmMethod);
 #if defined(SgAsmJvmMethod_HEADERS) || defined(DOCUMENTATION)
@@ -10197,6 +10489,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmLocalVariableTypeTable);
 IS_SERIALIZABLE(AsmJvmLocalVariableTypeTable);
 
+#ifndef DOCUMENTATION
+AsmJvmLocalVariableTypeTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmJvmLocalVariableTypeTable);
 #if defined(SgAsmJvmLocalVariableTypeTable_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -10286,6 +10582,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmLocalVariableTypeEntry);
 IS_SERIALIZABLE(AsmJvmLocalVariableTypeEntry);
+
+#ifndef DOCUMENTATION
+AsmJvmLocalVariableTypeEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** JVM LocalVariableTypeEntry.
@@ -10445,6 +10745,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmLocalVariableTable);
 IS_SERIALIZABLE(AsmJvmLocalVariableTable);
 
+#ifndef DOCUMENTATION
+AsmJvmLocalVariableTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmJvmLocalVariableTable);
 #if defined(SgAsmJvmLocalVariableTable_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -10534,6 +10838,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmLocalVariableEntry);
 IS_SERIALIZABLE(AsmJvmLocalVariableEntry);
+
+#ifndef DOCUMENTATION
+AsmJvmLocalVariableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** JVM LocalVariableEntry.
@@ -10693,6 +11001,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmLineNumberTable);
 IS_SERIALIZABLE(AsmJvmLineNumberTable);
 
+#ifndef DOCUMENTATION
+AsmJvmLineNumberTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmJvmLineNumberTable);
 #if defined(SgAsmJvmLineNumberTable_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -10782,6 +11094,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmLineNumberEntry);
 IS_SERIALIZABLE(AsmJvmLineNumberEntry);
+
+#ifndef DOCUMENTATION
+AsmJvmLineNumberEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** JVM LineNumberEntry.
@@ -10882,6 +11198,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmInstruction);
 IS_SERIALIZABLE(AsmJvmInstruction);
 
+#ifndef DOCUMENTATION
+AsmJvmInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmJvmInstruction);
 #if defined(SgAsmJvmInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
@@ -10963,6 +11283,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmInnerClasses);
 IS_SERIALIZABLE(AsmJvmInnerClasses);
+
+#ifndef DOCUMENTATION
+AsmJvmInnerClasses.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmInnerClasses);
 #if defined(SgAsmJvmInnerClasses_HEADERS) || defined(DOCUMENTATION)
@@ -11054,6 +11378,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmInnerClassesEntry);
 IS_SERIALIZABLE(AsmJvmInnerClassesEntry);
+
+#ifndef DOCUMENTATION
+AsmJvmInnerClassesEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** A JVM InnerClasses attribute array entry.
@@ -11193,6 +11521,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmFileHeader);
 IS_SERIALIZABLE(AsmJvmFileHeader);
+
+#ifndef DOCUMENTATION
+AsmJvmFileHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents the file header of an JVM binary container.
@@ -11453,6 +11785,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmFieldTable);
 IS_SERIALIZABLE(AsmJvmFieldTable);
 
+#ifndef DOCUMENTATION
+AsmJvmFieldTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Represents a JVM field_info table/array.
  *
@@ -11537,6 +11873,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmField);
 IS_SERIALIZABLE(AsmJvmField);
+
+#ifndef DOCUMENTATION
+AsmJvmField.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmField);
 #if defined(SgAsmJvmField_HEADERS) || defined(DOCUMENTATION)
@@ -11677,6 +12017,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
 IS_SERIALIZABLE(AsmJvmExceptionTable);
 
+#ifndef DOCUMENTATION
+AsmJvmExceptionTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmJvmExceptionTable);
 #if defined(SgAsmJvmExceptionTable_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -11766,6 +12110,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmExceptions);
 IS_SERIALIZABLE(AsmJvmExceptions);
+
+#ifndef DOCUMENTATION
+AsmJvmExceptions.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmExceptions);
 #if defined(SgAsmJvmExceptions_HEADERS) || defined(DOCUMENTATION)
@@ -11857,6 +12205,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmExceptionHandler);
 IS_SERIALIZABLE(AsmJvmExceptionHandler);
+
+#ifndef DOCUMENTATION
+AsmJvmExceptionHandler.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** JVM ExceptionHandler.
@@ -11995,6 +12347,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmEnclosingMethod);
 IS_SERIALIZABLE(AsmJvmEnclosingMethod);
 
+#ifndef DOCUMENTATION
+AsmJvmEnclosingMethod.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM EnclosingMethod attribute.
  *
@@ -12097,6 +12453,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmConstantValue);
 IS_SERIALIZABLE(AsmJvmConstantValue);
 
+#ifndef DOCUMENTATION
+AsmJvmConstantValue.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM ConstantValue attribute.
  *
@@ -12179,6 +12539,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmConstantPool);
 IS_SERIALIZABLE(AsmJvmConstantPool);
+
+#ifndef DOCUMENTATION
+AsmJvmConstantPool.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents an JVM constant pool.
@@ -12282,6 +12646,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmConstantPoolEntry);
 IS_SERIALIZABLE(AsmJvmConstantPoolEntry);
+
+#ifndef DOCUMENTATION
+AsmJvmConstantPoolEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents an entry in a JVM constant pool.
@@ -12750,6 +13118,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmCodeAttribute);
 IS_SERIALIZABLE(AsmJvmCodeAttribute);
 
+#ifndef DOCUMENTATION
+AsmJvmCodeAttribute.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM Code attribute.
  *
@@ -12939,6 +13311,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmJvmClass);
 IS_SERIALIZABLE(AsmJvmClass);
 
+#ifndef DOCUMENTATION
+AsmJvmClass.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** JVM Class.
  *
@@ -12990,6 +13366,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmBootstrapMethods);
 IS_SERIALIZABLE(AsmJvmBootstrapMethods);
+
+#ifndef DOCUMENTATION
+AsmJvmBootstrapMethods.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmBootstrapMethods);
 #if defined(SgAsmJvmBootstrapMethods_HEADERS) || defined(DOCUMENTATION)
@@ -13083,6 +13463,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmBootstrapMethod);
 IS_SERIALIZABLE(AsmJvmBootstrapMethod);
+
+#ifndef DOCUMENTATION
+AsmJvmBootstrapMethod.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmJvmBootstrapMethod);
 #if defined(SgAsmJvmBootstrapMethod_HEADERS) || defined(DOCUMENTATION)
@@ -13191,6 +13575,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmJvmAttributeTable);
 IS_SERIALIZABLE(AsmJvmAttributeTable);
+
+#ifndef DOCUMENTATION
+AsmJvmAttributeTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents a JVM attribute_info table/array.
@@ -13306,6 +13694,10 @@ AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
 AsmJvmAttribute.isBoostSerializable(true);
 AsmJvmAttribute.setAutomaticGenerationOfConstructor(false);
 AsmJvmAttribute.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmJvmAttribute.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -13431,6 +13823,10 @@ AsmJvmNode.setAutomaticGenerationOfConstructor(false);
 AsmJvmNode.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmJvmNode.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for JVM branch of binary analysis IR nodes. */
 class SgAsmJvmNode: public SgAsmNode {
@@ -13485,6 +13881,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmInterpretationList);
 IS_SERIALIZABLE(AsmInterpretationList);
+
+#ifndef DOCUMENTATION
+AsmInterpretationList.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmInterpretationList);
 #if defined(SgAsmInterpretationList_HEADERS) || defined(DOCUMENTATION)
@@ -13558,6 +13958,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmInterpretation);
 IS_SERIALIZABLE(AsmInterpretation);
+
+#ifndef DOCUMENTATION
+AsmInterpretation.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
@@ -13761,6 +14165,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmIntegerValueExpression);
 IS_SERIALIZABLE(AsmIntegerValueExpression);
 
+#ifndef DOCUMENTATION
+AsmIntegerValueExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /**  Base class for integer values.
  *
@@ -13927,6 +14335,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmIntegerType);
 IS_SERIALIZABLE(AsmIntegerType);
 
+#ifndef DOCUMENTATION
+AsmIntegerType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmIntegerType);
 #if defined(SgAsmIntegerType_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
@@ -14007,6 +14419,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmInstructionList);
 IS_SERIALIZABLE(AsmInstructionList);
 
+#ifndef DOCUMENTATION
+AsmInstructionList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmInstructionList);
 #if defined(SgAsmInstructionList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -14081,6 +14497,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmIndirectRegisterExpression);
 IS_SERIALIZABLE(AsmIndirectRegisterExpression);
+
+#ifndef DOCUMENTATION
+AsmIndirectRegisterExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Registers accessed indirectly.
@@ -14222,6 +14642,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericSymbolList);
 IS_SERIALIZABLE(AsmGenericSymbolList);
 
+#ifndef DOCUMENTATION
+AsmGenericSymbolList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmGenericSymbolList);
 #if defined(SgAsmGenericSymbolList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -14295,6 +14719,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmGenericSectionList);
 IS_SERIALIZABLE(AsmGenericSectionList);
+
+#ifndef DOCUMENTATION
+AsmGenericSectionList.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmGenericSectionList);
 #if defined(SgAsmGenericSectionList_HEADERS) || defined(DOCUMENTATION)
@@ -14370,6 +14798,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericHeaderList);
 IS_SERIALIZABLE(AsmGenericHeaderList);
 
+#ifndef DOCUMENTATION
+AsmGenericHeaderList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmGenericHeaderList);
 #if defined(SgAsmGenericHeaderList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -14443,6 +14875,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmGenericFormat);
 IS_SERIALIZABLE(AsmGenericFormat);
+
+#ifndef DOCUMENTATION
+AsmGenericFormat.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmGenericFormat);
 #if defined(SgAsmGenericFormat_HEADERS) || defined(DOCUMENTATION)
@@ -14635,6 +15071,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericFileList);
 IS_SERIALIZABLE(AsmGenericFileList);
 
+#ifndef DOCUMENTATION
+AsmGenericFileList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmGenericFileList);
 #if defined(SgAsmGenericFileList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -14708,6 +15148,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmGenericFile);
 IS_SERIALIZABLE(AsmGenericFile);
+
+#ifndef DOCUMENTATION
+AsmGenericFile.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmGenericFile);
 #if defined(SgAsmGenericFile_HEADERS) || defined(DOCUMENTATION)
@@ -15292,6 +15736,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericDLLList);
 IS_SERIALIZABLE(AsmGenericDLLList);
 
+#ifndef DOCUMENTATION
+AsmGenericDLLList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmGenericDLLList);
 #if defined(SgAsmGenericDLLList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -15365,6 +15813,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmGenericDLL);
 IS_SERIALIZABLE(AsmGenericDLL);
+
+#ifndef DOCUMENTATION
+AsmGenericDLL.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmGenericDLL);
 #if defined(SgAsmGenericDLL_HEADERS) || defined(DOCUMENTATION)
@@ -15467,6 +15919,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmFunction);
 IS_SERIALIZABLE(AsmFunction);
+
+#ifndef DOCUMENTATION
+AsmFunction.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmFunction);
 #if defined(SgAsmFunction_HEADERS) || defined(DOCUMENTATION)
@@ -16005,6 +16461,10 @@ AsmSynthesizedDeclaration.setAutomaticGenerationOfConstructor(false);
 AsmSynthesizedDeclaration.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmSynthesizedDeclaration.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for synthesized declarations.
  *
@@ -16063,6 +16523,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmFloatValueExpression);
 IS_SERIALIZABLE(AsmFloatValueExpression);
+
+#ifndef DOCUMENTATION
+AsmFloatValueExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Floating-point value.
@@ -16169,6 +16633,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmFloatType);
 IS_SERIALIZABLE(AsmFloatType);
+
+#ifndef DOCUMENTATION
+AsmFloatType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
@@ -16360,6 +16828,10 @@ AsmScalarType.setAutomaticGenerationOfConstructor(false);
 AsmScalarType.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmScalarType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmScalarType);
 #if defined(SgAsmScalarType_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
@@ -16499,6 +16971,10 @@ AsmType.setAutomaticGenerationOfConstructor(false);
 AsmType.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for binary types. */
 class SgAsmType: public SgAsmNode {
@@ -16595,6 +17071,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmExprListExp);
 IS_SERIALIZABLE(AsmExprListExp);
 
+#ifndef DOCUMENTATION
+AsmExprListExp.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmExprListExp);
 #if defined(SgAsmExprListExp_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -16668,6 +17148,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverSection);
 IS_SERIALIZABLE(AsmElfSymverSection);
+
+#ifndef DOCUMENTATION
+AsmElfSymverSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverSection);
 #if defined(SgAsmElfSymverSection_HEADERS) || defined(DOCUMENTATION)
@@ -16770,6 +17254,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverNeededSection);
 IS_SERIALIZABLE(AsmElfSymverNeededSection);
+
+#ifndef DOCUMENTATION
+AsmElfSymverNeededSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverNeededSection);
 #if defined(SgAsmElfSymverNeededSection_HEADERS) || defined(DOCUMENTATION)
@@ -16885,6 +17373,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverNeededEntryList);
 IS_SERIALIZABLE(AsmElfSymverNeededEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfSymverNeededEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSymverNeededEntryList);
 #if defined(SgAsmElfSymverNeededEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -16958,6 +17450,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverNeededEntry);
 IS_SERIALIZABLE(AsmElfSymverNeededEntry);
+
+#ifndef DOCUMENTATION
+AsmElfSymverNeededEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverNeededEntry);
 #if defined(SgAsmElfSymverNeededEntry_HEADERS) || defined(DOCUMENTATION)
@@ -17118,6 +17614,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverNeededAuxList);
 IS_SERIALIZABLE(AsmElfSymverNeededAuxList);
 
+#ifndef DOCUMENTATION
+AsmElfSymverNeededAuxList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSymverNeededAuxList);
 #if defined(SgAsmElfSymverNeededAuxList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -17191,6 +17691,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverNeededAux);
 IS_SERIALIZABLE(AsmElfSymverNeededAux);
+
+#ifndef DOCUMENTATION
+AsmElfSymverNeededAux.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverNeededAux);
 #if defined(SgAsmElfSymverNeededAux_HEADERS) || defined(DOCUMENTATION)
@@ -17366,6 +17870,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverEntryList);
 IS_SERIALIZABLE(AsmElfSymverEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfSymverEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSymverEntryList);
 #if defined(SgAsmElfSymverEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -17440,6 +17948,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverEntry);
 IS_SERIALIZABLE(AsmElfSymverEntry);
 
+#ifndef DOCUMENTATION
+AsmElfSymverEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Entry in an ELF symbol version table. */
 class SgAsmElfSymverEntry: public SgAsmExecutableFileFormat {
@@ -17511,6 +18023,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedSection);
 IS_SERIALIZABLE(AsmElfSymverDefinedSection);
+
+#ifndef DOCUMENTATION
+AsmElfSymverDefinedSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverDefinedSection);
 #if defined(SgAsmElfSymverDefinedSection_HEADERS) || defined(DOCUMENTATION)
@@ -17682,6 +18198,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedEntryList);
 IS_SERIALIZABLE(AsmElfSymverDefinedEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfSymverDefinedEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSymverDefinedEntryList);
 #if defined(SgAsmElfSymverDefinedEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -17755,6 +18275,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedEntry);
 IS_SERIALIZABLE(AsmElfSymverDefinedEntry);
+
+#ifndef DOCUMENTATION
+AsmElfSymverDefinedEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverDefinedEntry);
 #if defined(SgAsmElfSymverDefinedEntry_HEADERS) || defined(DOCUMENTATION)
@@ -17944,6 +18468,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedAuxList);
 IS_SERIALIZABLE(AsmElfSymverDefinedAuxList);
 
+#ifndef DOCUMENTATION
+AsmElfSymverDefinedAuxList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSymverDefinedAuxList);
 #if defined(SgAsmElfSymverDefinedAuxList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -18017,6 +18545,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedAux);
 IS_SERIALIZABLE(AsmElfSymverDefinedAux);
+
+#ifndef DOCUMENTATION
+AsmElfSymverDefinedAux.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymverDefinedAux);
 #if defined(SgAsmElfSymverDefinedAux_HEADERS) || defined(DOCUMENTATION)
@@ -18136,6 +18668,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymbolSection);
 IS_SERIALIZABLE(AsmElfSymbolSection);
+
+#ifndef DOCUMENTATION
+AsmElfSymbolSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymbolSection);
 #if defined(SgAsmElfSymbolSection_HEADERS) || defined(DOCUMENTATION)
@@ -18277,6 +18813,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymbolList);
 IS_SERIALIZABLE(AsmElfSymbolList);
 
+#ifndef DOCUMENTATION
+AsmElfSymbolList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSymbolList);
 #if defined(SgAsmElfSymbolList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -18349,6 +18889,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymbol);
 IS_SERIALIZABLE(AsmElfSymbol);
+
+#ifndef DOCUMENTATION
+AsmElfSymbol.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSymbol);
 #if defined(SgAsmElfSymbol_HEADERS) || defined(DOCUMENTATION)
@@ -18609,6 +19153,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfStrtab);
 IS_SERIALIZABLE(AsmElfStrtab);
 
+#ifndef DOCUMENTATION
+AsmElfStrtab.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** ELF string table. */
 class SgAsmElfStrtab: public SgAsmGenericStrtab {
@@ -18715,6 +19263,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfStringSection);
 IS_SERIALIZABLE(AsmElfStringSection);
 
+#ifndef DOCUMENTATION
+AsmElfStringSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** ELF string table section.
  *
@@ -18808,6 +19360,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSegmentTable);
 IS_SERIALIZABLE(AsmElfSegmentTable);
+
+#ifndef DOCUMENTATION
+AsmElfSegmentTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents an ELF segment table.
@@ -18907,6 +19463,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSegmentTableEntryList);
 IS_SERIALIZABLE(AsmElfSegmentTableEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfSegmentTableEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfSegmentTableEntryList);
 #if defined(SgAsmElfSegmentTableEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -18979,6 +19539,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSegmentTableEntry);
 IS_SERIALIZABLE(AsmElfSegmentTableEntry);
+
+#ifndef DOCUMENTATION
+AsmElfSegmentTableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSegmentTableEntry);
 #if defined(SgAsmElfSegmentTableEntry_HEADERS) || defined(DOCUMENTATION)
@@ -19330,6 +19894,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSectionTable);
 IS_SERIALIZABLE(AsmElfSectionTable);
 
+#ifndef DOCUMENTATION
+AsmElfSectionTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Represents an ELF section table.
  *
@@ -19424,6 +19992,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSectionTableEntry);
 IS_SERIALIZABLE(AsmElfSectionTableEntry);
+
+#ifndef DOCUMENTATION
+AsmElfSectionTableEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSectionTableEntry);
 #if defined(SgAsmElfSectionTableEntry_HEADERS) || defined(DOCUMENTATION)
@@ -19803,6 +20375,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfRelocSection);
 IS_SERIALIZABLE(AsmElfRelocSection);
 
+#ifndef DOCUMENTATION
+AsmElfRelocSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfRelocSection);
 #if defined(SgAsmElfRelocSection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmElfRelocSection_IMPL
@@ -19934,6 +20510,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfRelocEntryList);
 IS_SERIALIZABLE(AsmElfRelocEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfRelocEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfRelocEntryList);
 #if defined(SgAsmElfRelocEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -20007,6 +20587,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfRelocEntry);
 IS_SERIALIZABLE(AsmElfRelocEntry);
+
+#ifndef DOCUMENTATION
+AsmElfRelocEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfRelocEntry);
 #if defined(SgAsmElfRelocEntry_HEADERS) || defined(DOCUMENTATION)
@@ -20309,6 +20893,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfNoteSection);
 IS_SERIALIZABLE(AsmElfNoteSection);
 
+#ifndef DOCUMENTATION
+AsmElfNoteSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfNoteSection);
 #if defined(SgAsmElfNoteSection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmElfNoteSection_IMPL
@@ -20395,6 +20983,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfNoteEntryList);
 IS_SERIALIZABLE(AsmElfNoteEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfNoteEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfNoteEntryList);
 #if defined(SgAsmElfNoteEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -20468,6 +21060,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfNoteEntry);
 IS_SERIALIZABLE(AsmElfNoteEntry);
+
+#ifndef DOCUMENTATION
+AsmElfNoteEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfNoteEntry);
 #if defined(SgAsmElfNoteEntry_HEADERS) || defined(DOCUMENTATION)
@@ -20617,6 +21213,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfFileHeader);
 IS_SERIALIZABLE(AsmElfFileHeader);
+
+#ifndef DOCUMENTATION
+AsmElfFileHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfFileHeader);
 #if defined(SgAsmElfFileHeader_HEADERS) || defined(DOCUMENTATION)
@@ -21097,6 +21697,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameSection);
 IS_SERIALIZABLE(AsmElfEHFrameSection);
 
+#ifndef DOCUMENTATION
+AsmElfEHFrameSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfEHFrameSection);
 #if defined(SgAsmElfEHFrameSection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmElfEHFrameSection_IMPL
@@ -21201,6 +21805,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFDList);
 IS_SERIALIZABLE(AsmElfEHFrameEntryFDList);
 
+#ifndef DOCUMENTATION
+AsmElfEHFrameEntryFDList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfEHFrameEntryFDList);
 #if defined(SgAsmElfEHFrameEntryFDList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -21274,6 +21882,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFD);
 IS_SERIALIZABLE(AsmElfEHFrameEntryFD);
+
+#ifndef DOCUMENTATION
+AsmElfEHFrameEntryFD.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfEHFrameEntryFD);
 #if defined(SgAsmElfEHFrameEntryFD_HEADERS) || defined(DOCUMENTATION)
@@ -21413,6 +22025,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCIList);
 IS_SERIALIZABLE(AsmElfEHFrameEntryCIList);
 
+#ifndef DOCUMENTATION
+AsmElfEHFrameEntryCIList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfEHFrameEntryCIList);
 #if defined(SgAsmElfEHFrameEntryCIList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -21486,6 +22102,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCI);
 IS_SERIALIZABLE(AsmElfEHFrameEntryCI);
+
+#ifndef DOCUMENTATION
+AsmElfEHFrameEntryCI.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfEHFrameEntryCI);
 #if defined(SgAsmElfEHFrameEntryCI_HEADERS) || defined(DOCUMENTATION)
@@ -21799,6 +22419,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfDynamicSection);
 IS_SERIALIZABLE(AsmElfDynamicSection);
 
+#ifndef DOCUMENTATION
+AsmElfDynamicSection.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfDynamicSection);
 #if defined(SgAsmElfDynamicSection_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmElfDynamicSection_IMPL
@@ -21921,6 +22545,10 @@ AsmElfSection.setCppCondition("!defined(DOCUMENTATION)");
 AsmElfSection.isBoostSerializable(true);
 AsmElfSection.setAutomaticGenerationOfConstructor(false);
 AsmElfSection.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmElfSection.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfSection);
@@ -22121,6 +22749,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfDynamicEntryList);
 IS_SERIALIZABLE(AsmElfDynamicEntryList);
 
+#ifndef DOCUMENTATION
+AsmElfDynamicEntryList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmElfDynamicEntryList);
 #if defined(SgAsmElfDynamicEntryList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -22194,6 +22826,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfDynamicEntry);
 IS_SERIALIZABLE(AsmElfDynamicEntry);
+
+#ifndef DOCUMENTATION
+AsmElfDynamicEntry.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmElfDynamicEntry);
 #if defined(SgAsmElfDynamicEntry_HEADERS) || defined(DOCUMENTATION)
@@ -22455,6 +23091,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfWithStmt);
 IS_SERIALIZABLE(AsmDwarfWithStmt);
 
+#ifndef DOCUMENTATION
+AsmDwarfWithStmt.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfWithStmt: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -22509,6 +23149,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfVolatileType);
 IS_SERIALIZABLE(AsmDwarfVolatileType);
+
+#ifndef DOCUMENTATION
+AsmDwarfVolatileType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfVolatileType: public SgAsmDwarfConstruct {
@@ -22565,6 +23209,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfVariantPart);
 IS_SERIALIZABLE(AsmDwarfVariantPart);
 
+#ifndef DOCUMENTATION
+AsmDwarfVariantPart.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfVariantPart: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -22619,6 +23267,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfVariant);
 IS_SERIALIZABLE(AsmDwarfVariant);
+
+#ifndef DOCUMENTATION
+AsmDwarfVariant.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfVariant: public SgAsmDwarfConstruct {
@@ -22675,6 +23327,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfVariable);
 IS_SERIALIZABLE(AsmDwarfVariable);
 
+#ifndef DOCUMENTATION
+AsmDwarfVariable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfVariable: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -22729,6 +23385,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfUpcStrictType);
 IS_SERIALIZABLE(AsmDwarfUpcStrictType);
+
+#ifndef DOCUMENTATION
+AsmDwarfUpcStrictType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfUpcStrictType: public SgAsmDwarfConstruct {
@@ -22785,6 +23445,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfUpcSharedType);
 IS_SERIALIZABLE(AsmDwarfUpcSharedType);
 
+#ifndef DOCUMENTATION
+AsmDwarfUpcSharedType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfUpcSharedType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -22839,6 +23503,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfUpcRelaxedType);
 IS_SERIALIZABLE(AsmDwarfUpcRelaxedType);
+
+#ifndef DOCUMENTATION
+AsmDwarfUpcRelaxedType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfUpcRelaxedType: public SgAsmDwarfConstruct {
@@ -22895,6 +23563,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfUnspecifiedType);
 IS_SERIALIZABLE(AsmDwarfUnspecifiedType);
 
+#ifndef DOCUMENTATION
+AsmDwarfUnspecifiedType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfUnspecifiedType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -22949,6 +23621,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfUnspecifiedParameters);
 IS_SERIALIZABLE(AsmDwarfUnspecifiedParameters);
+
+#ifndef DOCUMENTATION
+AsmDwarfUnspecifiedParameters.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfUnspecifiedParameters: public SgAsmDwarfConstruct {
@@ -23005,6 +23681,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfUnknownConstruct);
 IS_SERIALIZABLE(AsmDwarfUnknownConstruct);
 
+#ifndef DOCUMENTATION
+AsmDwarfUnknownConstruct.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfUnknownConstruct: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23059,6 +23739,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfUnionType);
 IS_SERIALIZABLE(AsmDwarfUnionType);
+
+#ifndef DOCUMENTATION
+AsmDwarfUnionType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfUnionType);
 #if defined(SgAsmDwarfUnionType_HEADERS) || defined(DOCUMENTATION)
@@ -23134,6 +23818,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfTypedef);
 IS_SERIALIZABLE(AsmDwarfTypedef);
 
+#ifndef DOCUMENTATION
+AsmDwarfTypedef.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfTypedef: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23188,6 +23876,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfTryBlock);
 IS_SERIALIZABLE(AsmDwarfTryBlock);
+
+#ifndef DOCUMENTATION
+AsmDwarfTryBlock.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfTryBlock: public SgAsmDwarfConstruct {
@@ -23244,6 +23936,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfThrownType);
 IS_SERIALIZABLE(AsmDwarfThrownType);
 
+#ifndef DOCUMENTATION
+AsmDwarfThrownType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfThrownType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23298,6 +23994,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfTemplateValueParameter);
 IS_SERIALIZABLE(AsmDwarfTemplateValueParameter);
+
+#ifndef DOCUMENTATION
+AsmDwarfTemplateValueParameter.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfTemplateValueParameter: public SgAsmDwarfConstruct {
@@ -23354,6 +24054,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfTemplateTypeParameter);
 IS_SERIALIZABLE(AsmDwarfTemplateTypeParameter);
 
+#ifndef DOCUMENTATION
+AsmDwarfTemplateTypeParameter.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfTemplateTypeParameter: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23408,6 +24112,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfSubroutineType);
 IS_SERIALIZABLE(AsmDwarfSubroutineType);
+
+#ifndef DOCUMENTATION
+AsmDwarfSubroutineType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfSubroutineType);
 #if defined(SgAsmDwarfSubroutineType_HEADERS) || defined(DOCUMENTATION)
@@ -23483,6 +24191,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfSubrangeType);
 IS_SERIALIZABLE(AsmDwarfSubrangeType);
 
+#ifndef DOCUMENTATION
+AsmDwarfSubrangeType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfSubrangeType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23537,6 +24249,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfSubprogram);
 IS_SERIALIZABLE(AsmDwarfSubprogram);
+
+#ifndef DOCUMENTATION
+AsmDwarfSubprogram.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfSubprogram);
 #if defined(SgAsmDwarfSubprogram_HEADERS) || defined(DOCUMENTATION)
@@ -23612,6 +24328,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfStructureType);
 IS_SERIALIZABLE(AsmDwarfStructureType);
 
+#ifndef DOCUMENTATION
+AsmDwarfStructureType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmDwarfStructureType);
 #if defined(SgAsmDwarfStructureType_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmDwarfStructureType_IMPL
@@ -23686,6 +24406,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfStringType);
 IS_SERIALIZABLE(AsmDwarfStringType);
 
+#ifndef DOCUMENTATION
+AsmDwarfStringType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfStringType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23740,6 +24464,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfSharedType);
 IS_SERIALIZABLE(AsmDwarfSharedType);
+
+#ifndef DOCUMENTATION
+AsmDwarfSharedType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfSharedType: public SgAsmDwarfConstruct {
@@ -23796,6 +24524,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfSetType);
 IS_SERIALIZABLE(AsmDwarfSetType);
 
+#ifndef DOCUMENTATION
+AsmDwarfSetType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfSetType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23850,6 +24582,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfRestrictType);
 IS_SERIALIZABLE(AsmDwarfRestrictType);
+
+#ifndef DOCUMENTATION
+AsmDwarfRestrictType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfRestrictType: public SgAsmDwarfConstruct {
@@ -23906,6 +24642,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfReferenceType);
 IS_SERIALIZABLE(AsmDwarfReferenceType);
 
+#ifndef DOCUMENTATION
+AsmDwarfReferenceType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfReferenceType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -23960,6 +24700,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfPtrToMemberType);
 IS_SERIALIZABLE(AsmDwarfPtrToMemberType);
+
+#ifndef DOCUMENTATION
+AsmDwarfPtrToMemberType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfPtrToMemberType: public SgAsmDwarfConstruct {
@@ -24016,6 +24760,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfPointerType);
 IS_SERIALIZABLE(AsmDwarfPointerType);
 
+#ifndef DOCUMENTATION
+AsmDwarfPointerType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfPointerType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24070,6 +24818,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfPartialUnit);
 IS_SERIALIZABLE(AsmDwarfPartialUnit);
+
+#ifndef DOCUMENTATION
+AsmDwarfPartialUnit.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfPartialUnit: public SgAsmDwarfConstruct {
@@ -24126,6 +24878,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfPackedType);
 IS_SERIALIZABLE(AsmDwarfPackedType);
 
+#ifndef DOCUMENTATION
+AsmDwarfPackedType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfPackedType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24180,6 +24936,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfNamespace);
 IS_SERIALIZABLE(AsmDwarfNamespace);
+
+#ifndef DOCUMENTATION
+AsmDwarfNamespace.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfNamespace);
 #if defined(SgAsmDwarfNamespace_HEADERS) || defined(DOCUMENTATION)
@@ -24255,6 +25015,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfNamelistItem);
 IS_SERIALIZABLE(AsmDwarfNamelistItem);
 
+#ifndef DOCUMENTATION
+AsmDwarfNamelistItem.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfNamelistItem: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24309,6 +25073,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfNamelist);
 IS_SERIALIZABLE(AsmDwarfNamelist);
+
+#ifndef DOCUMENTATION
+AsmDwarfNamelist.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfNamelist: public SgAsmDwarfConstruct {
@@ -24365,6 +25133,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfMutableType);
 IS_SERIALIZABLE(AsmDwarfMutableType);
 
+#ifndef DOCUMENTATION
+AsmDwarfMutableType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfMutableType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24419,6 +25191,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfModule);
 IS_SERIALIZABLE(AsmDwarfModule);
+
+#ifndef DOCUMENTATION
+AsmDwarfModule.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfModule: public SgAsmDwarfConstruct {
@@ -24475,6 +25251,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfMember);
 IS_SERIALIZABLE(AsmDwarfMember);
 
+#ifndef DOCUMENTATION
+AsmDwarfMember.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfMember: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24529,6 +25309,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfMacroList);
 IS_SERIALIZABLE(AsmDwarfMacroList);
+
+#ifndef DOCUMENTATION
+AsmDwarfMacroList.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfMacroList);
 #if defined(SgAsmDwarfMacroList_HEADERS) || defined(DOCUMENTATION)
@@ -24595,6 +25379,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfMacro);
 IS_SERIALIZABLE(AsmDwarfMacro);
 
+#ifndef DOCUMENTATION
+AsmDwarfMacro.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfMacro: public SgAsmDwarfInformation {
 #endif // DOCUMENTATION
@@ -24654,6 +25442,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfLineList);
 IS_SERIALIZABLE(AsmDwarfLineList);
+
+#ifndef DOCUMENTATION
+AsmDwarfLineList.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfLineList);
 #if defined(SgAsmDwarfLineList_HEADERS) || defined(DOCUMENTATION)
@@ -24741,6 +25533,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfLine);
 IS_SERIALIZABLE(AsmDwarfLine);
+
+#ifndef DOCUMENTATION
+AsmDwarfLine.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfLine: public SgAsmDwarfInformation {
@@ -24843,6 +25639,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfLexicalBlock);
 IS_SERIALIZABLE(AsmDwarfLexicalBlock);
 
+#ifndef DOCUMENTATION
+AsmDwarfLexicalBlock.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmDwarfLexicalBlock);
 #if defined(SgAsmDwarfLexicalBlock_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmDwarfLexicalBlock_IMPL
@@ -24917,6 +25717,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfLabel);
 IS_SERIALIZABLE(AsmDwarfLabel);
 
+#ifndef DOCUMENTATION
+AsmDwarfLabel.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfLabel: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -24972,6 +25776,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfInterfaceType);
 IS_SERIALIZABLE(AsmDwarfInterfaceType);
 
+#ifndef DOCUMENTATION
+AsmDwarfInterfaceType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfInterfaceType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25026,6 +25834,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfInlinedSubroutine);
 IS_SERIALIZABLE(AsmDwarfInlinedSubroutine);
+
+#ifndef DOCUMENTATION
+AsmDwarfInlinedSubroutine.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfInlinedSubroutine);
 #if defined(SgAsmDwarfInlinedSubroutine_HEADERS) || defined(DOCUMENTATION)
@@ -25101,6 +25913,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfInheritance);
 IS_SERIALIZABLE(AsmDwarfInheritance);
 
+#ifndef DOCUMENTATION
+AsmDwarfInheritance.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfInheritance: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25155,6 +25971,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfImportedUnit);
 IS_SERIALIZABLE(AsmDwarfImportedUnit);
+
+#ifndef DOCUMENTATION
+AsmDwarfImportedUnit.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfImportedUnit: public SgAsmDwarfConstruct {
@@ -25211,6 +26031,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfImportedModule);
 IS_SERIALIZABLE(AsmDwarfImportedModule);
 
+#ifndef DOCUMENTATION
+AsmDwarfImportedModule.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfImportedModule: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25265,6 +26089,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfImportedDeclaration);
 IS_SERIALIZABLE(AsmDwarfImportedDeclaration);
+
+#ifndef DOCUMENTATION
+AsmDwarfImportedDeclaration.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfImportedDeclaration: public SgAsmDwarfConstruct {
@@ -25321,6 +26149,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfFunctionTemplate);
 IS_SERIALIZABLE(AsmDwarfFunctionTemplate);
 
+#ifndef DOCUMENTATION
+AsmDwarfFunctionTemplate.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfFunctionTemplate: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25375,6 +26207,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfFriend);
 IS_SERIALIZABLE(AsmDwarfFriend);
+
+#ifndef DOCUMENTATION
+AsmDwarfFriend.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfFriend: public SgAsmDwarfConstruct {
@@ -25431,6 +26267,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfFormatLabel);
 IS_SERIALIZABLE(AsmDwarfFormatLabel);
 
+#ifndef DOCUMENTATION
+AsmDwarfFormatLabel.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfFormatLabel: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25485,6 +26325,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfFormalParameter);
 IS_SERIALIZABLE(AsmDwarfFormalParameter);
+
+#ifndef DOCUMENTATION
+AsmDwarfFormalParameter.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfFormalParameter: public SgAsmDwarfConstruct {
@@ -25541,6 +26385,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfFileType);
 IS_SERIALIZABLE(AsmDwarfFileType);
 
+#ifndef DOCUMENTATION
+AsmDwarfFileType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfFileType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25596,6 +26444,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfEnumerator);
 IS_SERIALIZABLE(AsmDwarfEnumerator);
 
+#ifndef DOCUMENTATION
+AsmDwarfEnumerator.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfEnumerator: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25650,6 +26502,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfEnumerationType);
 IS_SERIALIZABLE(AsmDwarfEnumerationType);
+
+#ifndef DOCUMENTATION
+AsmDwarfEnumerationType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfEnumerationType);
 #if defined(SgAsmDwarfEnumerationType_HEADERS) || defined(DOCUMENTATION)
@@ -25725,6 +26581,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfEntryPoint);
 IS_SERIALIZABLE(AsmDwarfEntryPoint);
 
+#ifndef DOCUMENTATION
+AsmDwarfEntryPoint.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfEntryPoint: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25779,6 +26639,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfDwarfProcedure);
 IS_SERIALIZABLE(AsmDwarfDwarfProcedure);
+
+#ifndef DOCUMENTATION
+AsmDwarfDwarfProcedure.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfDwarfProcedure: public SgAsmDwarfConstruct {
@@ -25835,6 +26699,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfConstType);
 IS_SERIALIZABLE(AsmDwarfConstType);
 
+#ifndef DOCUMENTATION
+AsmDwarfConstType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfConstType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -25889,6 +26757,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfConstructList);
 IS_SERIALIZABLE(AsmDwarfConstructList);
+
+#ifndef DOCUMENTATION
+AsmDwarfConstructList.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfConstructList);
 #if defined(SgAsmDwarfConstructList_HEADERS) || defined(DOCUMENTATION)
@@ -25956,6 +26828,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfConstant);
 IS_SERIALIZABLE(AsmDwarfConstant);
 
+#ifndef DOCUMENTATION
+AsmDwarfConstant.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfConstant: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -26011,6 +26887,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfCondition);
 IS_SERIALIZABLE(AsmDwarfCondition);
 
+#ifndef DOCUMENTATION
+AsmDwarfCondition.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfCondition: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -26065,6 +26945,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfCompilationUnitList);
 IS_SERIALIZABLE(AsmDwarfCompilationUnitList);
+
+#ifndef DOCUMENTATION
+AsmDwarfCompilationUnitList.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfCompilationUnitList);
 #if defined(SgAsmDwarfCompilationUnitList_HEADERS) || defined(DOCUMENTATION)
@@ -26131,6 +27015,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfCompilationUnit);
 IS_SERIALIZABLE(AsmDwarfCompilationUnit);
+
+#ifndef DOCUMENTATION
+AsmDwarfCompilationUnit.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfCompilationUnit);
 #if defined(SgAsmDwarfCompilationUnit_HEADERS) || defined(DOCUMENTATION)
@@ -26318,6 +27206,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfCommonInclusion);
 IS_SERIALIZABLE(AsmDwarfCommonInclusion);
 
+#ifndef DOCUMENTATION
+AsmDwarfCommonInclusion.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfCommonInclusion: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -26372,6 +27264,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfCommonBlock);
 IS_SERIALIZABLE(AsmDwarfCommonBlock);
+
+#ifndef DOCUMENTATION
+AsmDwarfCommonBlock.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfCommonBlock);
 #if defined(SgAsmDwarfCommonBlock_HEADERS) || defined(DOCUMENTATION)
@@ -26447,6 +27343,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfClassType);
 IS_SERIALIZABLE(AsmDwarfClassType);
 
+#ifndef DOCUMENTATION
+AsmDwarfClassType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmDwarfClassType);
 #if defined(SgAsmDwarfClassType_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_SgAsmDwarfClassType_IMPL
@@ -26521,6 +27421,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfClassTemplate);
 IS_SERIALIZABLE(AsmDwarfClassTemplate);
 
+#ifndef DOCUMENTATION
+AsmDwarfClassTemplate.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfClassTemplate: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -26575,6 +27479,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfCatchBlock);
 IS_SERIALIZABLE(AsmDwarfCatchBlock);
+
+#ifndef DOCUMENTATION
+AsmDwarfCatchBlock.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfCatchBlock: public SgAsmDwarfConstruct {
@@ -26631,6 +27539,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDwarfBaseType);
 IS_SERIALIZABLE(AsmDwarfBaseType);
 
+#ifndef DOCUMENTATION
+AsmDwarfBaseType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfBaseType: public SgAsmDwarfConstruct {
 #endif // DOCUMENTATION
@@ -26685,6 +27597,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfArrayType);
 IS_SERIALIZABLE(AsmDwarfArrayType);
+
+#ifndef DOCUMENTATION
+AsmDwarfArrayType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmDwarfArrayType);
 #if defined(SgAsmDwarfArrayType_HEADERS) || defined(DOCUMENTATION)
@@ -26759,6 +27675,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDwarfAccessDeclaration);
 IS_SERIALIZABLE(AsmDwarfAccessDeclaration);
+
+#ifndef DOCUMENTATION
+AsmDwarfAccessDeclaration.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 class SgAsmDwarfAccessDeclaration: public SgAsmDwarfConstruct {
@@ -26890,6 +27810,10 @@ AsmDwarfConstruct.setCppCondition("!defined(DOCUMENTATION)");
 AsmDwarfConstruct.isBoostSerializable(true);
 AsmDwarfConstruct.setAutomaticGenerationOfConstructor(false);
 AsmDwarfConstruct.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmDwarfConstruct.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -27031,6 +27955,10 @@ AsmDwarfInformation.setAutomaticGenerationOfConstructor(false);
 AsmDwarfInformation.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmDwarfInformation.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 class SgAsmDwarfInformation: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -27079,6 +28007,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmDOSFileHeader);
 IS_SERIALIZABLE(AsmDOSFileHeader);
+
+#ifndef DOCUMENTATION
+AsmDOSFileHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Represents the file header for DOS executables.
@@ -27506,6 +28438,10 @@ AsmGenericHeader.setAutomaticGenerationOfConstructor(false);
 AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmGenericHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmGenericHeader);
 #if defined(SgAsmGenericHeader_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/ByteOrder.h>
@@ -27808,6 +28744,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDOSExtendedHeader);
 IS_SERIALIZABLE(AsmDOSExtendedHeader);
 
+#ifndef DOCUMENTATION
+AsmDOSExtendedHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** DOS exteded header.
  *
@@ -28050,6 +28990,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmDirectRegisterExpression);
 IS_SERIALIZABLE(AsmDirectRegisterExpression);
 
+#ifndef DOCUMENTATION
+AsmDirectRegisterExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression representing a machine register. */
 class SgAsmDirectRegisterExpression: public SgAsmRegisterReferenceExpression {
@@ -28116,6 +29060,10 @@ AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
 AsmRegisterReferenceExpression.isBoostSerializable(true);
 AsmRegisterReferenceExpression.setAutomaticGenerationOfConstructor(false);
 AsmRegisterReferenceExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmRegisterReferenceExpression.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -28204,6 +29152,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmControlFlagsExpression);
 IS_SERIALIZABLE(AsmControlFlagsExpression);
 
+#ifndef DOCUMENTATION
+AsmControlFlagsExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmControlFlagsExpression);
 #if defined(SgAsmControlFlagsExpression_HEADERS) || defined(DOCUMENTATION)
 // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
@@ -28283,6 +29235,10 @@ AsmConstantExpression.setCppCondition("!defined(DOCUMENTATION)");
 AsmConstantExpression.isBoostSerializable(true);
 AsmConstantExpression.setAutomaticGenerationOfConstructor(false);
 AsmConstantExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmConstantExpression.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmConstantExpression);
@@ -28372,6 +29328,10 @@ AsmValueExpression.setCppCondition("!defined(DOCUMENTATION)");
 AsmValueExpression.isBoostSerializable(true);
 AsmValueExpression.setAutomaticGenerationOfConstructor(false);
 AsmValueExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmValueExpression.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -28513,6 +29473,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCommonSubExpression);
 IS_SERIALIZABLE(AsmCommonSubExpression);
 
+#ifndef DOCUMENTATION
+AsmCommonSubExpression.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmCommonSubExpression);
 #if defined(SgAsmCommonSubExpression_HEADERS) || defined(DOCUMENTATION)
 // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
@@ -28577,6 +29541,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCoffSymbolTable);
 IS_SERIALIZABLE(AsmCoffSymbolTable);
+
+#ifndef DOCUMENTATION
+AsmCoffSymbolTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmCoffSymbolTable);
 #if defined(SgAsmCoffSymbolTable_HEADERS) || defined(DOCUMENTATION)
@@ -28674,6 +29642,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCoffSymbolList);
 IS_SERIALIZABLE(AsmCoffSymbolList);
 
+#ifndef DOCUMENTATION
+AsmCoffSymbolList.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmCoffSymbolList);
 #if defined(SgAsmCoffSymbolList_HEADERS) || defined(DOCUMENTATION)
 #include <sageContainer.h>
@@ -28744,6 +29716,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCoffSymbol);
 IS_SERIALIZABLE(AsmCoffSymbol);
+
+#ifndef DOCUMENTATION
+AsmCoffSymbol.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmCoffSymbol);
 #if defined(SgAsmCoffSymbol_HEADERS) || defined(DOCUMENTATION)
@@ -28969,6 +29945,10 @@ AsmGenericSymbol.setAutomaticGenerationOfConstructor(false);
 AsmGenericSymbol.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmGenericSymbol.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmGenericSymbol);
 #if defined(SgAsmGenericSymbol_HEADERS) || defined(DOCUMENTATION)
 /* Base class for symbol tables. */
@@ -29177,6 +30157,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCoffStrtab);
 IS_SERIALIZABLE(AsmCoffStrtab);
 
+#ifndef DOCUMENTATION
+AsmCoffStrtab.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** COFF symbol string table. */
 class SgAsmCoffStrtab: public SgAsmGenericStrtab {
@@ -29250,6 +30234,10 @@ AsmGenericStrtab.setCppCondition("!defined(DOCUMENTATION)");
 AsmGenericStrtab.isBoostSerializable(true);
 AsmGenericStrtab.setAutomaticGenerationOfConstructor(false);
 AsmGenericStrtab.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmGenericStrtab.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmGenericStrtab);
@@ -29454,6 +30442,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCliHeader);
 IS_SERIALIZABLE(AsmCliHeader);
+
+#ifndef DOCUMENTATION
+AsmCliHeader.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmCliHeader);
 #if defined(SgAsmCliHeader_HEADERS) || defined(DOCUMENTATION)
@@ -29778,6 +30770,10 @@ AsmGenericSection.setCppCondition("!defined(DOCUMENTATION)");
 AsmGenericSection.isBoostSerializable(true);
 AsmGenericSection.setAutomaticGenerationOfConstructor(false);
 AsmGenericSection.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmGenericSection.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmGenericSection);
@@ -30524,6 +31520,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilUint8Heap);
 IS_SERIALIZABLE(AsmCilUint8Heap);
 
+#ifndef DOCUMENTATION
+AsmCilUint8Heap.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for CIL branch of binary analysis IR nodes. */
 class SgAsmCilUint8Heap: public SgAsmCilDataStream {
@@ -30594,6 +31594,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilUint32Heap);
 IS_SERIALIZABLE(AsmCilUint32Heap);
+
+#ifndef DOCUMENTATION
+AsmCilUint32Heap.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Base class for CIL branch of binary analysis IR nodes. */
@@ -30666,6 +31670,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilTypeSpecTable);
 IS_SERIALIZABLE(AsmCilTypeSpecTable);
 
+#ifndef DOCUMENTATION
+AsmCilTypeSpecTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL TypeSpec tables. */
 class SgAsmCilTypeSpecTable: public SgAsmCilMetadata {
@@ -30727,6 +31735,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilTypeSpec);
 IS_SERIALIZABLE(AsmCilTypeSpec);
+
+#ifndef DOCUMENTATION
+AsmCilTypeSpec.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL TypeSpec node (II.22.39). */
@@ -30800,6 +31812,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilTypeRefTable);
 IS_SERIALIZABLE(AsmCilTypeRefTable);
 
+#ifndef DOCUMENTATION
+AsmCilTypeRefTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL TypeRef tables. */
 class SgAsmCilTypeRefTable: public SgAsmCilMetadata {
@@ -30861,6 +31877,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilTypeRef);
 IS_SERIALIZABLE(AsmCilTypeRef);
+
+#ifndef DOCUMENTATION
+AsmCilTypeRef.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL TypeRef node (II.22.38). */
@@ -30970,6 +31990,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilTypeDefTable);
 IS_SERIALIZABLE(AsmCilTypeDefTable);
 
+#ifndef DOCUMENTATION
+AsmCilTypeDefTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL TypeDef tables. */
 class SgAsmCilTypeDefTable: public SgAsmCilMetadata {
@@ -31031,6 +32055,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilTypeDef);
 IS_SERIALIZABLE(AsmCilTypeDef);
+
+#ifndef DOCUMENTATION
+AsmCilTypeDef.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL TypeDef node (II.22.37). */
@@ -31194,6 +32222,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilStandAloneSigTable);
 IS_SERIALIZABLE(AsmCilStandAloneSigTable);
 
+#ifndef DOCUMENTATION
+AsmCilStandAloneSigTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL StandAloneSig tables. */
 class SgAsmCilStandAloneSigTable: public SgAsmCilMetadata {
@@ -31255,6 +32287,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilStandAloneSig);
 IS_SERIALIZABLE(AsmCilStandAloneSig);
+
+#ifndef DOCUMENTATION
+AsmCilStandAloneSig.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL StandAloneSig node (II.22.36). */
@@ -31328,6 +32364,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilPropertyTable);
 IS_SERIALIZABLE(AsmCilPropertyTable);
 
+#ifndef DOCUMENTATION
+AsmCilPropertyTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Property tables. */
 class SgAsmCilPropertyTable: public SgAsmCilMetadata {
@@ -31390,6 +32430,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilPropertyMapTable);
 IS_SERIALIZABLE(AsmCilPropertyMapTable);
 
+#ifndef DOCUMENTATION
+AsmCilPropertyMapTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL PropertyMap tables. */
 class SgAsmCilPropertyMapTable: public SgAsmCilMetadata {
@@ -31451,6 +32495,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilPropertyMap);
 IS_SERIALIZABLE(AsmCilPropertyMap);
+
+#ifndef DOCUMENTATION
+AsmCilPropertyMap.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL PropertyMap node (II.22.35). */
@@ -31541,6 +32589,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilProperty);
 IS_SERIALIZABLE(AsmCilProperty);
+
+#ifndef DOCUMENTATION
+AsmCilProperty.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Property node (II.22.34). */
@@ -31649,6 +32701,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilParamTable);
 IS_SERIALIZABLE(AsmCilParamTable);
 
+#ifndef DOCUMENTATION
+AsmCilParamTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Param tables. */
 class SgAsmCilParamTable: public SgAsmCilMetadata {
@@ -31710,6 +32766,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilParam);
 IS_SERIALIZABLE(AsmCilParam);
+
+#ifndef DOCUMENTATION
+AsmCilParam.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Param node (II.22.33). */
@@ -31817,6 +32877,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilNestedClassTable);
 IS_SERIALIZABLE(AsmCilNestedClassTable);
 
+#ifndef DOCUMENTATION
+AsmCilNestedClassTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL NestedClass tables. */
 class SgAsmCilNestedClassTable: public SgAsmCilMetadata {
@@ -31878,6 +32942,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilNestedClass);
 IS_SERIALIZABLE(AsmCilNestedClass);
+
+#ifndef DOCUMENTATION
+AsmCilNestedClass.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL NestedClass node (II.22.32). */
@@ -31969,6 +33037,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilModuleTable);
 IS_SERIALIZABLE(AsmCilModuleTable);
 
+#ifndef DOCUMENTATION
+AsmCilModuleTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Module tables. */
 class SgAsmCilModuleTable: public SgAsmCilMetadata {
@@ -32031,6 +33103,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilModuleRefTable);
 IS_SERIALIZABLE(AsmCilModuleRefTable);
 
+#ifndef DOCUMENTATION
+AsmCilModuleRefTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL ModuleRef tables. */
 class SgAsmCilModuleRefTable: public SgAsmCilMetadata {
@@ -32092,6 +33168,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilModuleRef);
 IS_SERIALIZABLE(AsmCilModuleRef);
+
+#ifndef DOCUMENTATION
+AsmCilModuleRef.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL ModuleRef node (II.22.31). */
@@ -32164,6 +33244,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilModule);
 IS_SERIALIZABLE(AsmCilModule);
+
+#ifndef DOCUMENTATION
+AsmCilModule.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Module node (II.22.30). */
@@ -32308,6 +33392,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilMethodSpecTable);
 IS_SERIALIZABLE(AsmCilMethodSpecTable);
 
+#ifndef DOCUMENTATION
+AsmCilMethodSpecTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL MethodSpec tables. */
 class SgAsmCilMethodSpecTable: public SgAsmCilMetadata {
@@ -32369,6 +33457,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMethodSpec);
 IS_SERIALIZABLE(AsmCilMethodSpec);
+
+#ifndef DOCUMENTATION
+AsmCilMethodSpec.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL MethodSpec node (II.22.29). */
@@ -32460,6 +33552,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilMethodSemanticsTable);
 IS_SERIALIZABLE(AsmCilMethodSemanticsTable);
 
+#ifndef DOCUMENTATION
+AsmCilMethodSemanticsTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL MethodSemantics tables. */
 class SgAsmCilMethodSemanticsTable: public SgAsmCilMetadata {
@@ -32521,6 +33617,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMethodSemantics);
 IS_SERIALIZABLE(AsmCilMethodSemantics);
+
+#ifndef DOCUMENTATION
+AsmCilMethodSemantics.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL MethodSemantics node (II.22.28). */
@@ -32629,6 +33729,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilMethodImplTable);
 IS_SERIALIZABLE(AsmCilMethodImplTable);
 
+#ifndef DOCUMENTATION
+AsmCilMethodImplTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL MethodImpl tables. */
 class SgAsmCilMethodImplTable: public SgAsmCilMetadata {
@@ -32690,6 +33794,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMethodImpl);
 IS_SERIALIZABLE(AsmCilMethodImpl);
+
+#ifndef DOCUMENTATION
+AsmCilMethodImpl.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL MethodImpl node (II.22.27). */
@@ -32799,6 +33907,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilMethodDefTable);
 IS_SERIALIZABLE(AsmCilMethodDefTable);
 
+#ifndef DOCUMENTATION
+AsmCilMethodDefTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL MethodDef tables. */
 class SgAsmCilMethodDefTable: public SgAsmCilMetadata {
@@ -32860,6 +33972,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMethodDef);
 IS_SERIALIZABLE(AsmCilMethodDef);
+
+#ifndef DOCUMENTATION
+AsmCilMethodDef.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL MethodDef node (II.22.26). */
@@ -33087,6 +34203,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMetadataRoot);
 IS_SERIALIZABLE(AsmCilMetadataRoot);
+
+#ifndef DOCUMENTATION
+AsmCilMetadataRoot.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL SgAsmCilMetadataRoot. */
@@ -33333,6 +34453,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMetadataHeap);
 IS_SERIALIZABLE(AsmCilMetadataHeap);
+
+#ifndef DOCUMENTATION
+AsmCilMetadataHeap.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmCilMetadataHeap);
 #if defined(SgAsmCilMetadataHeap_HEADERS) || defined(DOCUMENTATION)
@@ -34243,6 +35367,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilMemberRefTable);
 IS_SERIALIZABLE(AsmCilMemberRefTable);
 
+#ifndef DOCUMENTATION
+AsmCilMemberRefTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL MemberRef tables. */
 class SgAsmCilMemberRefTable: public SgAsmCilMetadata {
@@ -34304,6 +35432,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilMemberRef);
 IS_SERIALIZABLE(AsmCilMemberRef);
+
+#ifndef DOCUMENTATION
+AsmCilMemberRef.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL MemberRef node (II.22.25). */
@@ -34413,6 +35545,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilManifestResourceTable);
 IS_SERIALIZABLE(AsmCilManifestResourceTable);
 
+#ifndef DOCUMENTATION
+AsmCilManifestResourceTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL ManifestResource tables. */
 class SgAsmCilManifestResourceTable: public SgAsmCilMetadata {
@@ -34474,6 +35610,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilManifestResource);
 IS_SERIALIZABLE(AsmCilManifestResource);
+
+#ifndef DOCUMENTATION
+AsmCilManifestResource.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL ManifestResource node (II.22.24). */
@@ -34599,6 +35739,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilInterfaceImplTable);
 IS_SERIALIZABLE(AsmCilInterfaceImplTable);
 
+#ifndef DOCUMENTATION
+AsmCilInterfaceImplTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL InterfaceImpl tables. */
 class SgAsmCilInterfaceImplTable: public SgAsmCilMetadata {
@@ -34660,6 +35804,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilInterfaceImpl);
 IS_SERIALIZABLE(AsmCilInterfaceImpl);
+
+#ifndef DOCUMENTATION
+AsmCilInterfaceImpl.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL InterfaceImpl node (II.22.23). */
@@ -34751,6 +35899,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilInstruction);
 IS_SERIALIZABLE(AsmCilInstruction);
 
+#ifndef DOCUMENTATION
+AsmCilInstruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmCilInstruction);
 #if defined(SgAsmCilInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
@@ -34832,6 +35984,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilImplMapTable);
 IS_SERIALIZABLE(AsmCilImplMapTable);
 
+#ifndef DOCUMENTATION
+AsmCilImplMapTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL ImplMap tables. */
 class SgAsmCilImplMapTable: public SgAsmCilMetadata {
@@ -34893,6 +36049,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilImplMap);
 IS_SERIALIZABLE(AsmCilImplMap);
+
+#ifndef DOCUMENTATION
+AsmCilImplMap.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL ImplMap node (II.22.22). */
@@ -35019,6 +36179,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilGenericParamTable);
 IS_SERIALIZABLE(AsmCilGenericParamTable);
 
+#ifndef DOCUMENTATION
+AsmCilGenericParamTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL GenericParam tables. */
 class SgAsmCilGenericParamTable: public SgAsmCilMetadata {
@@ -35080,6 +36244,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilGenericParam);
 IS_SERIALIZABLE(AsmCilGenericParam);
+
+#ifndef DOCUMENTATION
+AsmCilGenericParam.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL GenericParam node (II.22.20). */
@@ -35205,6 +36373,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilGenericParamConstraintTable);
 IS_SERIALIZABLE(AsmCilGenericParamConstraintTable);
 
+#ifndef DOCUMENTATION
+AsmCilGenericParamConstraintTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL GenericParamConstraint tables. */
 class SgAsmCilGenericParamConstraintTable: public SgAsmCilMetadata {
@@ -35266,6 +36438,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilGenericParamConstraint);
 IS_SERIALIZABLE(AsmCilGenericParamConstraint);
+
+#ifndef DOCUMENTATION
+AsmCilGenericParamConstraint.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL GenericParamConstraint node (II.22.21). */
@@ -35357,6 +36533,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilFileTable);
 IS_SERIALIZABLE(AsmCilFileTable);
 
+#ifndef DOCUMENTATION
+AsmCilFileTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL File tables. */
 class SgAsmCilFileTable: public SgAsmCilMetadata {
@@ -35418,6 +36598,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilFile);
 IS_SERIALIZABLE(AsmCilFile);
+
+#ifndef DOCUMENTATION
+AsmCilFile.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL File node (II.22.19). */
@@ -35526,6 +36710,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilFieldTable);
 IS_SERIALIZABLE(AsmCilFieldTable);
 
+#ifndef DOCUMENTATION
+AsmCilFieldTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Field tables. */
 class SgAsmCilFieldTable: public SgAsmCilMetadata {
@@ -35588,6 +36776,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilFieldRVATable);
 IS_SERIALIZABLE(AsmCilFieldRVATable);
 
+#ifndef DOCUMENTATION
+AsmCilFieldRVATable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL FieldRVA tables. */
 class SgAsmCilFieldRVATable: public SgAsmCilMetadata {
@@ -35649,6 +36841,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilFieldRVA);
 IS_SERIALIZABLE(AsmCilFieldRVA);
+
+#ifndef DOCUMENTATION
+AsmCilFieldRVA.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL FieldRVA node (II.22.18). */
@@ -35739,6 +36935,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilFieldMarshalTable);
 IS_SERIALIZABLE(AsmCilFieldMarshalTable);
 
+#ifndef DOCUMENTATION
+AsmCilFieldMarshalTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL FieldMarshal tables. */
 class SgAsmCilFieldMarshalTable: public SgAsmCilMetadata {
@@ -35800,6 +37000,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilFieldMarshal);
 IS_SERIALIZABLE(AsmCilFieldMarshal);
+
+#ifndef DOCUMENTATION
+AsmCilFieldMarshal.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL FieldMarshal node (II.22.17). */
@@ -35891,6 +37095,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilFieldLayoutTable);
 IS_SERIALIZABLE(AsmCilFieldLayoutTable);
 
+#ifndef DOCUMENTATION
+AsmCilFieldLayoutTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL FieldLayout tables. */
 class SgAsmCilFieldLayoutTable: public SgAsmCilMetadata {
@@ -35952,6 +37160,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilFieldLayout);
 IS_SERIALIZABLE(AsmCilFieldLayout);
+
+#ifndef DOCUMENTATION
+AsmCilFieldLayout.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL FieldLayout node (II.22.16). */
@@ -36041,6 +37253,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilField);
 IS_SERIALIZABLE(AsmCilField);
+
+#ifndef DOCUMENTATION
+AsmCilField.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Field node (II.22.15). */
@@ -36149,6 +37365,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilExportedTypeTable);
 IS_SERIALIZABLE(AsmCilExportedTypeTable);
 
+#ifndef DOCUMENTATION
+AsmCilExportedTypeTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL ExportedType tables. */
 class SgAsmCilExportedTypeTable: public SgAsmCilMetadata {
@@ -36210,6 +37430,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilExportedType);
 IS_SERIALIZABLE(AsmCilExportedType);
+
+#ifndef DOCUMENTATION
+AsmCilExportedType.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL ExportedType node (II.22.14). */
@@ -36353,6 +37577,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilEventTable);
 IS_SERIALIZABLE(AsmCilEventTable);
 
+#ifndef DOCUMENTATION
+AsmCilEventTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Event tables. */
 class SgAsmCilEventTable: public SgAsmCilMetadata {
@@ -36415,6 +37643,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilEventMapTable);
 IS_SERIALIZABLE(AsmCilEventMapTable);
 
+#ifndef DOCUMENTATION
+AsmCilEventMapTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL EventMap tables. */
 class SgAsmCilEventMapTable: public SgAsmCilMetadata {
@@ -36476,6 +37708,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilEventMap);
 IS_SERIALIZABLE(AsmCilEventMap);
+
+#ifndef DOCUMENTATION
+AsmCilEventMap.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL EventMap node (II.22.12). */
@@ -36566,6 +37802,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilEvent);
 IS_SERIALIZABLE(AsmCilEvent);
+
+#ifndef DOCUMENTATION
+AsmCilEvent.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Event node (II.22.13). */
@@ -36674,6 +37914,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilDeclSecurityTable);
 IS_SERIALIZABLE(AsmCilDeclSecurityTable);
 
+#ifndef DOCUMENTATION
+AsmCilDeclSecurityTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL DeclSecurity tables. */
 class SgAsmCilDeclSecurityTable: public SgAsmCilMetadata {
@@ -36735,6 +37979,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilDeclSecurity);
 IS_SERIALIZABLE(AsmCilDeclSecurity);
+
+#ifndef DOCUMENTATION
+AsmCilDeclSecurity.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL DeclSecurity node (II.22.11). */
@@ -36856,6 +38104,10 @@ AsmCilDataStream.setCppCondition("!defined(DOCUMENTATION)");
 AsmCilDataStream.isBoostSerializable(true);
 AsmCilDataStream.setAutomaticGenerationOfConstructor(false);
 AsmCilDataStream.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmCilDataStream.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -37001,6 +38253,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilCustomAttributeTable);
 IS_SERIALIZABLE(AsmCilCustomAttributeTable);
 
+#ifndef DOCUMENTATION
+AsmCilCustomAttributeTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL CustomAttribute tables. */
 class SgAsmCilCustomAttributeTable: public SgAsmCilMetadata {
@@ -37062,6 +38318,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilCustomAttribute);
 IS_SERIALIZABLE(AsmCilCustomAttribute);
+
+#ifndef DOCUMENTATION
+AsmCilCustomAttribute.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL CustomAttribute node (II.22.10). */
@@ -37171,6 +38431,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilConstantTable);
 IS_SERIALIZABLE(AsmCilConstantTable);
 
+#ifndef DOCUMENTATION
+AsmCilConstantTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Constant tables. */
 class SgAsmCilConstantTable: public SgAsmCilMetadata {
@@ -37232,6 +38496,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilConstant);
 IS_SERIALIZABLE(AsmCilConstant);
+
+#ifndef DOCUMENTATION
+AsmCilConstant.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Constant node (II.22.9). */
@@ -37357,6 +38625,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilClassLayoutTable);
 IS_SERIALIZABLE(AsmCilClassLayoutTable);
 
+#ifndef DOCUMENTATION
+AsmCilClassLayoutTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL ClassLayout tables. */
 class SgAsmCilClassLayoutTable: public SgAsmCilMetadata {
@@ -37418,6 +38690,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilClassLayout);
 IS_SERIALIZABLE(AsmCilClassLayout);
+
+#ifndef DOCUMENTATION
+AsmCilClassLayout.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL ClassLayout node (II.22.8). */
@@ -37525,6 +38801,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilAssemblyTable);
 IS_SERIALIZABLE(AsmCilAssemblyTable);
 
+#ifndef DOCUMENTATION
+AsmCilAssemblyTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL Assembly tables. */
 class SgAsmCilAssemblyTable: public SgAsmCilMetadata {
@@ -37586,6 +38866,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssemblyRefTable);
 IS_SERIALIZABLE(AsmCilAssemblyRefTable);
+
+#ifndef DOCUMENTATION
+AsmCilAssemblyRefTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL AssemblyRef tables. */
@@ -37649,6 +38933,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilAssemblyRefProcessorTable);
 IS_SERIALIZABLE(AsmCilAssemblyRefProcessorTable);
 
+#ifndef DOCUMENTATION
+AsmCilAssemblyRefProcessorTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL AssemblyRefProcessor tables. */
 class SgAsmCilAssemblyRefProcessorTable: public SgAsmCilMetadata {
@@ -37710,6 +38998,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssemblyRefProcessor);
 IS_SERIALIZABLE(AsmCilAssemblyRefProcessor);
+
+#ifndef DOCUMENTATION
+AsmCilAssemblyRefProcessor.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL AssemblyRefProcessor node (II.22.7). */
@@ -37800,6 +39092,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilAssemblyRefOSTable);
 IS_SERIALIZABLE(AsmCilAssemblyRefOSTable);
 
+#ifndef DOCUMENTATION
+AsmCilAssemblyRefOSTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL AssemblyRefOS tables. */
 class SgAsmCilAssemblyRefOSTable: public SgAsmCilMetadata {
@@ -37861,6 +39157,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssemblyRefOS);
 IS_SERIALIZABLE(AsmCilAssemblyRefOS);
+
+#ifndef DOCUMENTATION
+AsmCilAssemblyRefOS.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL AssemblyRefOS node (II.22.6). */
@@ -37984,6 +39284,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssemblyRef);
 IS_SERIALIZABLE(AsmCilAssemblyRef);
+
+#ifndef DOCUMENTATION
+AsmCilAssemblyRef.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL AssemblyRef node (II.22.5). */
@@ -38196,6 +39500,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilAssemblyProcessorTable);
 IS_SERIALIZABLE(AsmCilAssemblyProcessorTable);
 
+#ifndef DOCUMENTATION
+AsmCilAssemblyProcessorTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL AssemblyProcessor tables. */
 class SgAsmCilAssemblyProcessorTable: public SgAsmCilMetadata {
@@ -38257,6 +39565,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssemblyProcessor);
 IS_SERIALIZABLE(AsmCilAssemblyProcessor);
+
+#ifndef DOCUMENTATION
+AsmCilAssemblyProcessor.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL AssemblyProcessor node (II.22.4). */
@@ -38328,6 +39640,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmCilAssemblyOSTable);
 IS_SERIALIZABLE(AsmCilAssemblyOSTable);
 
+#ifndef DOCUMENTATION
+AsmCilAssemblyOSTable.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** CIL AssemblyOS tables. */
 class SgAsmCilAssemblyOSTable: public SgAsmCilMetadata {
@@ -38389,6 +39705,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssemblyOS);
 IS_SERIALIZABLE(AsmCilAssemblyOS);
+
+#ifndef DOCUMENTATION
+AsmCilAssemblyOS.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL AssemblyOS node (II.22.3). */
@@ -38493,6 +39813,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmCilAssembly);
 IS_SERIALIZABLE(AsmCilAssembly);
+
+#ifndef DOCUMENTATION
+AsmCilAssembly.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** CIL Assembly node (II.22.2). */
@@ -38792,6 +40116,10 @@ AsmCilMetadata.setAutomaticGenerationOfConstructor(false);
 AsmCilMetadata.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmCilMetadata.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for CIL branch of binary analysis IR nodes. */
 class SgAsmCilMetadata: public SgAsmCilNode {
@@ -38857,6 +40185,10 @@ AsmCilNode.setAutomaticGenerationOfConstructor(false);
 AsmCilNode.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmCilNode.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for CIL branch of binary analysis IR nodes. */
 class SgAsmCilNode: public SgAsmNode {
@@ -38906,6 +40238,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmByteOrder);
 IS_SERIALIZABLE(AsmByteOrder);
+
+#ifndef DOCUMENTATION
+AsmByteOrder.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmByteOrder);
 #if defined(SgAsmByteOrder_HEADERS) || defined(DOCUMENTATION)
@@ -38977,6 +40313,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBlock);
 IS_SERIALIZABLE(AsmBlock);
+
+#ifndef DOCUMENTATION
+AsmBlock.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmBlock);
 #if defined(SgAsmBlock_HEADERS) || defined(DOCUMENTATION)
@@ -39375,6 +40715,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinarySubtract);
 IS_SERIALIZABLE(AsmBinarySubtract);
 
+#ifndef DOCUMENTATION
+AsmBinarySubtract.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that subtracts the second operand from the first. */
 class SgAsmBinarySubtract: public SgAsmBinaryExpression {
@@ -39430,6 +40774,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryRor);
 IS_SERIALIZABLE(AsmBinaryRor);
 
+#ifndef DOCUMENTATION
+AsmBinaryRor.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that performs a right rotate. */
 class SgAsmBinaryRor: public SgAsmBinaryExpression {
@@ -39484,6 +40832,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBinaryPreupdate);
 IS_SERIALIZABLE(AsmBinaryPreupdate);
+
+#ifndef DOCUMENTATION
+AsmBinaryPreupdate.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression that represents an update to a storage location.
@@ -39543,6 +40895,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryPostupdate);
 IS_SERIALIZABLE(AsmBinaryPostupdate);
 
+#ifndef DOCUMENTATION
+AsmBinaryPostupdate.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that represents an update to a storage location.
  *
@@ -39601,6 +40957,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryMultiply);
 IS_SERIALIZABLE(AsmBinaryMultiply);
 
+#ifndef DOCUMENTATION
+AsmBinaryMultiply.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that multiplies two operands. */
 class SgAsmBinaryMultiply: public SgAsmBinaryExpression {
@@ -39655,6 +41015,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBinaryMsl);
 IS_SERIALIZABLE(AsmBinaryMsl);
+
+#ifndef DOCUMENTATION
+AsmBinaryMsl.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression that performs a logical left shift operation filling low-order bits with one.
@@ -39713,6 +41077,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryMod);
 IS_SERIALIZABLE(AsmBinaryMod);
 
+#ifndef DOCUMENTATION
+AsmBinaryMod.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that returns the remainder when dividing the first operand by the second. */
 class SgAsmBinaryMod: public SgAsmBinaryExpression {
@@ -39767,6 +41135,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBinaryLsr);
 IS_SERIALIZABLE(AsmBinaryLsr);
+
+#ifndef DOCUMENTATION
+AsmBinaryLsr.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression that performs a logical, sign-bit non-preserving right shift. */
@@ -39823,6 +41195,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryLsl);
 IS_SERIALIZABLE(AsmBinaryLsl);
 
+#ifndef DOCUMENTATION
+AsmBinaryLsl.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that performs a logical left shift operation. */
 class SgAsmBinaryLsl: public SgAsmBinaryExpression {
@@ -39877,6 +41253,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBinaryDivide);
 IS_SERIALIZABLE(AsmBinaryDivide);
+
+#ifndef DOCUMENTATION
+AsmBinaryDivide.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression that divides the first operand by the second. */
@@ -39933,6 +41313,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryConcat);
 IS_SERIALIZABLE(AsmBinaryConcat);
 
+#ifndef DOCUMENTATION
+AsmBinaryConcat.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that concatenates two values to form a wider value. */
 class SgAsmBinaryConcat: public SgAsmBinaryExpression {
@@ -39988,6 +41372,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmBinaryAsr);
 IS_SERIALIZABLE(AsmBinaryAsr);
 
+#ifndef DOCUMENTATION
+AsmBinaryAsr.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Expression that performs an arithmetic, sign-bit preserving right shift. */
 class SgAsmBinaryAsr: public SgAsmBinaryExpression {
@@ -40042,6 +41430,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBinaryAdd);
 IS_SERIALIZABLE(AsmBinaryAdd);
+
+#ifndef DOCUMENTATION
+AsmBinaryAdd.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Expression that adds two operands. */
@@ -40121,6 +41513,10 @@ AsmBinaryExpression.setCppCondition("!defined(DOCUMENTATION)");
 AsmBinaryExpression.isBoostSerializable(true);
 AsmBinaryExpression.setAutomaticGenerationOfConstructor(false);
 AsmBinaryExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmBinaryExpression.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -40207,6 +41603,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmBasicString);
 IS_SERIALIZABLE(AsmBasicString);
+
+#ifndef DOCUMENTATION
+AsmBasicString.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** String associated with a binary file.
@@ -40295,6 +41695,10 @@ AsmGenericString.setCppCondition("!defined(DOCUMENTATION)");
 AsmGenericString.isBoostSerializable(true);
 AsmGenericString.setAutomaticGenerationOfConstructor(false);
 AsmGenericString.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmGenericString.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -40430,6 +41834,10 @@ AsmExecutableFileFormat.setCppCondition("!defined(DOCUMENTATION)");
 AsmExecutableFileFormat.isBoostSerializable(true);
 AsmExecutableFileFormat.setAutomaticGenerationOfConstructor(false);
 AsmExecutableFileFormat.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmExecutableFileFormat.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmExecutableFileFormat);
@@ -40817,6 +42225,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmAarch64SysMoveOperand);
 IS_SERIALIZABLE(AsmAarch64SysMoveOperand);
 
+#ifndef DOCUMENTATION
+AsmAarch64SysMoveOperand.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmAarch64SysMoveOperand);
 #if defined(SgAsmAarch64SysMoveOperand_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH64
@@ -40892,6 +42304,10 @@ protected:
 #ifdef ROSE_ENABLE_ASM_AARCH64
 DECLARE_LEAF_CLASS(AsmAarch64PrefetchOperand);
 IS_SERIALIZABLE(AsmAarch64PrefetchOperand);
+
+#ifndef DOCUMENTATION
+AsmAarch64PrefetchOperand.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmAarch64PrefetchOperand);
 #if defined(SgAsmAarch64PrefetchOperand_HEADERS) || defined(DOCUMENTATION)
@@ -40970,6 +42386,10 @@ protected:
 #ifdef ROSE_ENABLE_ASM_AARCH64
 DECLARE_LEAF_CLASS(AsmAarch64Instruction);
 IS_SERIALIZABLE(AsmAarch64Instruction);
+
+#ifndef DOCUMENTATION
+AsmAarch64Instruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmAarch64Instruction);
 #if defined(SgAsmAarch64Instruction_HEADERS) || defined(DOCUMENTATION)
@@ -41087,6 +42507,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmAarch64CImmediateOperand);
 IS_SERIALIZABLE(AsmAarch64CImmediateOperand);
 
+#ifndef DOCUMENTATION
+AsmAarch64CImmediateOperand.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmAarch64CImmediateOperand);
 #if defined(SgAsmAarch64CImmediateOperand_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH64
@@ -41163,6 +42587,10 @@ protected:
 DECLARE_LEAF_CLASS(AsmAarch64BarrierOperand);
 IS_SERIALIZABLE(AsmAarch64BarrierOperand);
 
+#ifndef DOCUMENTATION
+AsmAarch64BarrierOperand.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 DECLARE_HEADERS(AsmAarch64BarrierOperand);
 #if defined(SgAsmAarch64BarrierOperand_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH64
@@ -41238,6 +42666,10 @@ protected:
 #ifdef ROSE_ENABLE_ASM_AARCH64
 DECLARE_LEAF_CLASS(AsmAarch64AtOperand);
 IS_SERIALIZABLE(AsmAarch64AtOperand);
+
+#ifndef DOCUMENTATION
+AsmAarch64AtOperand.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmAarch64AtOperand);
 #if defined(SgAsmAarch64AtOperand_HEADERS) || defined(DOCUMENTATION)
@@ -41316,6 +42748,10 @@ protected:
 #ifdef ROSE_ENABLE_ASM_AARCH32
 DECLARE_LEAF_CLASS(AsmAarch32Instruction);
 IS_SERIALIZABLE(AsmAarch32Instruction);
+
+#ifndef DOCUMENTATION
+AsmAarch32Instruction.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmAarch32Instruction);
 #if defined(SgAsmAarch32Instruction_HEADERS) || defined(DOCUMENTATION)
@@ -41492,6 +42928,10 @@ AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
 AsmInstruction.isBoostSerializable(true);
 AsmInstruction.setAutomaticGenerationOfConstructor(false);
 AsmInstruction.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmInstruction.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmInstruction);
@@ -42079,6 +43519,10 @@ AsmStatement.setAutomaticGenerationOfConstructor(false);
 AsmStatement.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+AsmStatement.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
 #ifdef DOCUMENTATION
 /** Base class for statement-like subclasses.
  *
@@ -42167,6 +43611,10 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmAarch32Coprocessor);
 IS_SERIALIZABLE(AsmAarch32Coprocessor);
+
+#ifndef DOCUMENTATION
+AsmAarch32Coprocessor.useSmallHeader(true);
+#endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
 /** Operand referencing a Co-processor. */
@@ -42272,6 +43720,10 @@ AsmExpression.setCppCondition("!defined(DOCUMENTATION)");
 AsmExpression.isBoostSerializable(true);
 AsmExpression.setAutomaticGenerationOfConstructor(false);
 AsmExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmExpression.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 #ifdef DOCUMENTATION
@@ -42395,6 +43847,10 @@ AsmNode.setCppCondition("!defined(DOCUMENTATION)");
 AsmNode.isBoostSerializable(true);
 AsmNode.setAutomaticGenerationOfConstructor(false);
 AsmNode.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+AsmNode.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
 DECLARE_HEADERS(AsmNode);

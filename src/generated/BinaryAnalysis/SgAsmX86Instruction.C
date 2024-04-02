@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmX86Instruction_IMPL
-#include <sage3basic.h>
+#include <SgAsmX86Instruction.h>
 
 Rose::BinaryAnalysis::X86InstructionKind const&
 SgAsmX86Instruction::get_kind() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmGenericDLL_IMPL
-#include <sage3basic.h>
+#include <SgAsmGenericDLL.h>
 
 SgAsmGenericString* const&
 SgAsmGenericDLL::get_name() const {

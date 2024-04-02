@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilEventTable_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilEventTable.h>
 
 std::vector<SgAsmCilEvent*> const&
 SgAsmCilEventTable::get_elements() const {

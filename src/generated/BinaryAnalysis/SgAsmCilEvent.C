@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilEvent_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilEvent.h>
 
 uint16_t const&
 SgAsmCilEvent::get_EventFlags() const {

@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmCilMethodSpec_IMPL
-#include <sage3basic.h>
+#include <SgAsmCilMethodSpec.h>
 
 uint32_t const&
 SgAsmCilMethodSpec::get_Method() const {

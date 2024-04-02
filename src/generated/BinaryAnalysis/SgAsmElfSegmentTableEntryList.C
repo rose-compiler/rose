@@ -5,7 +5,7 @@
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #define ROSE_SgAsmElfSegmentTableEntryList_IMPL
-#include <sage3basic.h>
+#include <SgAsmElfSegmentTableEntryList.h>
 
 SgAsmElfSegmentTableEntryPtrList const&
 SgAsmElfSegmentTableEntryList::get_entries() const {
