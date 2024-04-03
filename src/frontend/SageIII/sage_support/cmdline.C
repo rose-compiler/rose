@@ -16,12 +16,12 @@
 
 #include "Outliner.hh"
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <Sawyer/CommandLine.h>
 
-using namespace Rose;                                   // temporary, until this file lives in namespace Rose
+using namespace Rose; // temporary, until this file lives in namespace Rose
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 #include <inttypes.h> /* for %" PRIuPTR " vs. %Iu handling */
 
@@ -187,7 +187,7 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
  * unrecognized by the operating system on which they're intended to run (and thus unrecongizable also by this function).
  * Furthermore, CommandlineProcessing::isBinaryExecutableFile() contains similar magic number checking. [RPM 2010-01-15] */
 bool
-CommandlineProcessing::isExecutableFilename ( string name )
+CommandlineProcessing::isExecutableFilename(string name)
    {
      initExecutableFileSuffixList();
 
@@ -214,7 +214,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
                     FILE* f = fopen(name.c_str(), "rb");
                     ASSERT_not_null(f);
 
-                 // Check for if this is a binary executable file!
+                 // Check if this is a binary executable file!
                     int character0 = fgetc(f);
                     int character1 = fgetc(f);
 
@@ -315,11 +315,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
           argument == "-rose:outputFormat" ||
-#if 0
-       // DQ (1/21/2017): Moved to be an option that has three parameters (rose option, edg option, and edg option's parameter).
-          argument == "-edg_parameter:" ||
-          argument == "--edg_parameter:" ||
-#endif
+
           argument == "-rose:generateSourcePositionCodes" ||
           argument == "-rose:embedColorCodesInGeneratedCode" ||
           argument == "-rose:instantiation" ||
@@ -632,10 +628,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // This function now makes an internal copy of the command line parameters to
   // allow the originals to remain unmodified (SLA modifies the command line).
 
-#if 0
-     printf ("Inside of SgProject::processCommandLine() \n");
-#endif
-
   // local copies of argc and argv variables
   // The purpose of building local copies is to avoid
   // the modification of the command line by SLA (to save the original command line)
@@ -713,38 +705,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           exit(0);
         }
 
-#if 0
-  // DQ (11/1/2009): To be consistant with other tools disable -h and -help options (use --h and --help instead).
-  // This is a deprecated option
-  //
-  // Use 1 at end of argument list to SLA to force removal of option from argv and decrement of agrc
-  // optionCount = sla(&argc, argv, "--", "($)", "(V|version)",1);
-     optionCount = sla_none(local_commandLineArgumentList, "-rose:", "($)", "(V|version)",1);
-     if ( optionCount > 0 )
-        {
-       // printf ("SgProject::processCommandLine(): option --version found \n");
-       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-          printf ("This is a deprecated option in ROSE (use --V or --version instead).\n");
-          cout << version_message() << endl;
-          exit(0);
-        }
-#endif
-
-#if 0
-  // DQ (8/6/2006): Not sure that I want this here!
-  //
-  // version option (using -rose:version)
-  //
-     if ( CommandlineProcessing::isOption(argc,argv,"-rose:","(V|version)",true) == true )
-        {
-       // function in SAGE III to access version number of EDG
-          extern std::string edgVersionString();
-       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-          cout << version_message() << endl;
-          printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
-        }
-#endif
-
   // DQ (10/15/2005): Added because verbose was not set when the number of files (source files) was zero (case for linking only)
   //
   // specify verbose setting for projects (should be set even for linking where there are no source files
@@ -754,7 +714,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      ROSE_ASSERT (get_verbose() <= 10);
 
      int integerOptionForVerbose = 0;
-  // if ( CommandlineProcessing::isOptionWithParameter(argc,argv,"-rose:","(v|verbose)",integerOptionForVerbose,true) == true )
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-rose:","(v|verbose)",integerOptionForVerbose,true) == true )
         {
        // set_verbose(true);
@@ -817,18 +776,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
                   }
              }
-
-
-#if 0
-          printf ("Exiting as a test in SgProject::processCommandLine() \n");
-          ROSE_ABORT();
-#endif
         }
 
   //
   // Standard compiler options (allows alternative -E option to just run CPP)
   //
-  // if ( CommandlineProcessing::isOption(argc,argv,"-","(E)",false) == true )
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","(E)",false) == true )
         {
 #if 0
@@ -861,15 +813,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
           if ( SgProject::get_verbose() >= 1 )
                printf ("-undefined option specified on command line (for SgFile)\n");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
         }
 
 #if 0
   // DQ (12/10/2016): This does not take a parameter on any later version compiler that I know of.
   // DQ (1/26/2014): Adding support for gnu -MM option to ROSE command line.
+#error "DEAD CODE!"
      string stringOptionForMakeDepenenceFile;
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-","(MM)",stringOptionForMakeDepenenceFile,true) == true )
         {
@@ -879,10 +828,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
           if ( SgProject::get_verbose() >= 1 )
                printf ("-MM dependence file specification specified on command line (for SgFile)\n");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
+#error "DEAD CODE!"
         }
 #else
   // DQ (12/10/2016): Areas build system appears to use the "-MM" option on the command line and this is a problem for ROSE when not specified using a parameter.
@@ -905,10 +851,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
           if ( SgProject::get_verbose() >= 1 )
                printf ("-version-info option specified on command line (for SgFile)\n");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
         }
 
   // DQ (1/20/2014): Adding support for "-m32" option for 32-bit mode on 64-bit systems.
@@ -1622,7 +1564,7 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
   std::vector<std::string> r_argv;
 
   bool looking_for_include_path_arg = false;
-  BOOST_FOREACH(std::string arg, argv)
+  for (std::string arg : argv)
   {
       // Must be first since there could be, for example, "-I -I",
       // in which case, the else if branch checking for -I would
@@ -1859,7 +1801,7 @@ StripRoseOptions (std::vector<std::string>& argv)
           Cmdline::Fortran::option_prefix,    // Current prefix, e.g. "-rose:fortran:"
           "-");                               // New prefix, e.g. "-"
 
-  BOOST_FOREACH(std::string fortran_option, fortran_options)
+  for (std::string fortran_option : fortran_options)
   {
       // TOO1 (2/13/2014): There are no ROSE-specific Fortran options yet.
       // Skip ROSE-specific Fortran options
@@ -1880,8 +1822,7 @@ GetRoseClasspath ()
 {
   string classpath = "-Djava.class.path=";
 
-  // CER (6/6/2011): Added support for OFP version 0.8.3 which requires antlr-3.3-complete.jar.
-  // CER (2/12/2019): Added support for OFP version 0.8.5 requiring antlr-3.5.2-complete.jar.
+  // Rasmussen (2/12/2019): Added support for OFP version 0.8.5 requiring antlr-3.5.2-complete.jar.
   ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
   ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
 
@@ -1893,7 +1834,7 @@ GetRoseClasspath ()
   classpath += ":";
 
   // Open Fortran Parser (OFP) support (this is the jar file)
-  // CER (10/4/2011): Switched to using date-based version for OFP jar file.
+  // Rasmussen (10/4/2011): Switched to using date-based version for OFP jar file.
   //
   string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_VERSION_STRING + string(".jar");
   string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
@@ -1937,7 +1878,7 @@ StripRoseOptions (std::vector<std::string>& argv)
   // TOO1 (2/13/2014): Skip ALL ROSE-specific OFP options;
   //                   at this stage, we only have "-rose:fortran:ofp:jvm_options",
   //                   and this is only inteded for the OFP frontend's JVM.
-  BOOST_FOREACH(std::string ofp_option, ofp_options)
+  for (std::string ofp_option : ofp_options)
   {
       if (SgProject::get_verbose() > 1)
       {
@@ -2348,29 +2289,26 @@ ProcessClasspath (SgProject* project, std::vector<std::string>& argv)
 
   if (has_java_classpath)
   {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Processing Java classpath option" << std::endl;
+      if (SgProject::get_verbose() > 1) {
+         mlog[INFO] << "Processing Java classpath option\n";
+      }
 
       // Parse and register the Java classpath in the project
       std::list<std::string> classpath_list =
           StringUtility::tokenize(classpath, ':');
       project->set_Java_classpath(classpath_list);
 
-      // Sanity check: Check existence of paths in Classpath
-      BOOST_FOREACH(std::string path, classpath_list)
+      // Sanity check: Check existence of paths in classpath
+      for (std::string path : classpath_list)
       {
           bool path_exists = boost::filesystem::exists(path);
-          if (!path_exists)
-          {
-              std::cout
-                  << "[WARN] "
-                  << "Invalid path specified in -classpath; path does not exist: "
-                  << "'" << path << "'"
-                  << std::endl;
+          if (!path_exists) {
+              mlog[WARN] << "Invalid path specified in -classpath; path does not exist: "
+                         << "'" << path << "'\n";
           }
-      }// sanity check
-  }// has_java_classpath
-}// Cmdline::Java::ProcessClasspath
+      } // sanity check
+  } // has_java_classpath
+} // Cmdline::Java::ProcessClasspath
 
 void
 Rose::Cmdline::Java::
@@ -2398,7 +2336,7 @@ ProcessBootclasspath (SgProject* project, std::vector<std::string>& argv)
       project->set_Java_bootclasspath(bootclasspath_list);
 
       // Sanity check: Check existence of paths in Bootbootclasspath
-      BOOST_FOREACH(std::string path, bootclasspath_list)
+      for (std::string path : bootclasspath_list)
       {
           bool path_exists = boost::filesystem::exists(path);
           if (!path_exists)
@@ -2446,7 +2384,7 @@ ProcessSourcepath (SgProject* project, std::vector<std::string>& argv)
       project->set_Java_sourcepath(sourcepath_list);
 
       // Sanity check: Check existence of paths in sourcepath
-      BOOST_FOREACH(std::string path, sourcepath_list)
+      for (std::string path : sourcepath_list)
       {
           bool path_exists = boost::filesystem::exists(path);
           if (!path_exists)
@@ -2919,7 +2857,7 @@ StripRoseOptions (std::vector<std::string>& argv)
   // TOO1 (2/11/2014): Skip ALL ROSE-specific ECJ options;
   //                   at this stage, we only have "-rose:java:ecj:jvm_options",
   //                   and this is only inteded for the ECJ frontend's JVM.
-  BOOST_FOREACH(std::string ecj_option, ecj_options)
+  for (std::string ecj_option : ecj_options)
   {
       if (SgProject::get_verbose() > 1)
       {
@@ -3817,13 +3755,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
   // verbose option
   //
-  // DQ (4/20/2006): This can already be set (to none zero value) if the SgProject was previously build already (see tutorial/selectedFileTranslation.C)
-  // ROSE_ASSERT (get_verbose() == 0);
-  // if ( CommandlineProcessing::isOption(argv,"-rose:","(v|verbose)",true) )
      int integerOptionForVerbose = 0;
      if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(v|verbose)",integerOptionForVerbose,true) == true )
         {
-       // set_verbose(true);
           set_verbose(integerOptionForVerbose);
 
        // DQ (8/12/2004): The semantics is to set the global concept of a value
@@ -3835,9 +3769,21 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("verbose mode ON (for SgFile)\n");
         }
 
+  //
+  // Remove classpath option(s). The Java classpath will have already been processed and stripped
+  // from argv during earlier processing. It is problematic that this needs to be done twice, but
+  // the original command line may be reprocessed here so strip again.
+  //
+     int integerOptionForClasspath = 0;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:java:","(cp|classpath)",integerOptionForClasspath,true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 ) {
+            mlog[INFO] << "Stripped -rose:classpath from command line\n";
+          }
+        }
 
   //
-  // Turn on warnings (turns on warnings in fronend, for Fortran support this turns on detection of
+  // Turn on warnings (turns on warnings in frontend, for Fortran support this turns on detection of
   // warnings in initial syntax checking using gfortran before passing control to Open Fortran Parser).
   //
      set_output_warnings(false);
@@ -3850,7 +3796,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
-  // Turn on warnings (turns on warnings in fronend, for Fortran support this turns on detection of
+  // Turn on warnings (turns on warnings in frontend, for Fortran support this turns on detection of
   // warnings in initial syntax checking using gfortran before passing control to Open Fortran Parser).
   //
      set_cray_pointer_support(false);
@@ -4228,11 +4174,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
             printf (" ---  get_Cxx_only()                          = %s \n",get_Cxx_only() ? "true" : "false");
             printf ("####################################### \n");
 #endif
-#if 0
-            printf ("Exiting as a test! \n");
-            ROSE_ASSERT(false);
-#endif
-
           } else if ( argv[i] == "-std=gnu++" ) {
             set_Cxx_only(true);
             set_gnu_standard();
@@ -4532,19 +4473,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           Rose::is_UPC_dynamic_threads = true;
         }
 
-#if 0
-     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-  // DQ (2/5/2009): We now have one at the SgProject and the SgFile levels.
-  // DQ (2/4/2009): Moved to SgProject.
-  // DQ (12/27/2007): Allow defaults to be set based on filename extension.
      if ( CommandlineProcessing::isOption(argv,"-rose:","(binary|binary_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -4664,13 +4592,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // GNU gfortran also supports -fno-fixed-form (we could use this to turn off all fixed form
   // formatting independent of the input source).
 
-  // DQ (12/10/2007): Set the defaul value depending on the version of fortran being used.
      if (get_F77_only() == true)
         {
-       // For F77 and older versions of Fortran assume fixed format.
-       // set_fixedFormat(true);
-       // set_freeFormat (false);
-
        // Use the setting get_F77_only() == true as a default means to set this value
           set_inputFormat(SgFile::e_fixed_form_output_format);
           set_outputFormat(SgFile::e_fixed_form_output_format);
@@ -4678,60 +4601,37 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
        else
         {
-       // For F90 and later versions of Fortran assume free format.
-       // set_fixedFormat(false);
-       // set_freeFormat (true);
-
        // Use the setting get_F77_only() == true as a default means to set this value
           set_inputFormat(SgFile::e_free_form_output_format);
           set_outputFormat(SgFile::e_free_form_output_format);
           set_backendCompileFormat(SgFile::e_free_form_output_format);
         }
 
-  // Make sure that only one is true
-  // ROSE_ASSERT (get_freeFormat() == false || get_fixedFormat() == false);
-  // ROSE_ASSERT (get_freeFormat() == true  || get_fixedFormat() == true);
-
-  // set_fixedFormat(false);
-  // ROSE_ASSERT (get_fixedFormat() == false);
      if ( CommandlineProcessing::isOption(argv,"-","(ffixed-form|fixed|Mfixed|qfixed)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Fortran fixed format mode explicitly set: ON \n");
-       // set_fixedFormat(true);
           set_inputFormat(SgFile::e_fixed_form_output_format);
           if (get_sourceFileUsesFortranFileExtension() == false)
              {
                printf ("Error, Non Fortran source file name specificed with explicit fixed format code generation (unparser) option! \n");
-            // set_fixedFormat(false);
                ROSE_ABORT();
              }
         }
 
-  // set_freeFormat(false);
-  // ROSE_ASSERT (get_freeFormat() == false);
      if ( CommandlineProcessing::isOption(argv,"-","(ffree-form|free|Mfree|qfree)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get_verbose() >= 1 ) {
                printf ("Fortran free format mode explicitly set: ON \n");
-       // set_freeFormat(true);
+          }
           set_inputFormat(SgFile::e_free_form_output_format);
           if (get_sourceFileUsesFortranFileExtension() == false)
              {
                printf ("Error, Non Fortran source file name specificed with explicit free format code generation (unparser) option! \n");
-            // set_freeFormat(false);
                ROSE_ABORT();
              }
         }
 
-  // DQ (8/19/2007): This option only controls the output format (unparsing) of Fortran code (free or fixed format).
-  // It has no effect on C/C++ code generation (unparsing).
-  // printf ("########################### Setting the outputFormat ########################### \n");
-
-  // DQ (12/27/2007) These have been assigned default values based on the filename suffix, we only want to override
-  // them if the commandline options are explicitly specified.
-  // set_outputFormat(SgFile::e_unknown_output_format);
-  // ROSE_ASSERT (get_outputFormat() == SgFile::e_unknown_output_format);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(fixedOutput|fixedFormatOutput)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -4755,14 +4655,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
-  // DQ (8/19/2007): This option only controls the output format (unparsing) of Fortran code (free or fixed format).
-  // It has no effect on C/C++ code generation (unparsing).
-  // printf ("########################### Setting the backendCompileFormat ########################### \n");
-
-  // DQ (12/27/2007) These have been assigned default values based on the filename suffix, we only want to override
-  // them if the commandline options are explicitly specified.
-  // set_backendCompileFormat(SgFile::e_unknown_output_format);
-  // ROSE_ASSERT (get_backendCompileFormat() == SgFile::e_unknown_output_format);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(compileFixed|backendCompileFixedFormat)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -4806,7 +4698,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
   // to be linked in. (Not implemented yet).
      set_openacc(false);
-     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
      string ompacc_macro="-D_OPENACC="+ StringUtility::numberToString(3);
      ROSE_ASSERT (get_openacc() == false);
      ROSE_ASSERT (get_openacc_parse_only() == false);
@@ -4865,14 +4756,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        }
      }
 
-
   // Liao 10/28/2008: I changed it to a more generic flag to indicate support for either Fortran or C/C++
   // DQ (8/19/2007): I have added the option here so that we can start to support OpenMP for Fortran.
   // Allows handling of OpenMP "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
   // to be linked in. (Not implemented yet).
      set_openmp(false);
-     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
      string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION);
      ROSE_ASSERT (get_openmp() == false);
      // We parse OpenMP and then stop now since Building OpenMP AST nodes is a work in progress.
@@ -6158,8 +6047,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
 //   printf ("In SgFile::build_EDG_CommandLine(): TURNED OFF MACRO LIE_ABOUT_GNU_VERSION_TO_EDG \n");
 #endif
-
-  // const char* boostPath[] = ROSE_BOOST_PATH;
 
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)

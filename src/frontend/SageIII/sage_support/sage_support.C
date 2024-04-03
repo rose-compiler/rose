@@ -715,22 +715,10 @@ SgSourceFile::initializeGlobalScope()
    }
 
 SgFile*
-determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project )
+determineFileType(vector<string> argv, int &nextErrorCode, SgProject* project)
    {
      SgFile* file = nullptr;
 
-#if 0
-     printf("In determineFileType():\n");
-     size_t cnt = 0;
-     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++)
-        {
-          printf("  argv[%zd] = %s\n", cnt++, i->c_str());
-        }
-#endif
-
-  // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
-  // differently if they are object files or libary archive files.
-  // DQ (4/21/2006): New version of source file name handling (set the source file name early)
      ASSERT_not_null(project);
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
@@ -827,58 +815,41 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
             // Now set the specific types of Fortran file extensions
                if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
                   {
-                 // printf ("Calling file->set_sourceFileUsesFortran77FileExtension(true) \n");
                     file->set_sourceFileUsesFortran77FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_fixed_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_fixed_form_output_format);
-
                     file->set_F77_only();
                   }
 
                if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
                   {
                     file->set_sourceFileUsesFortran90FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
                     file->set_F90_only();
                   }
 
                if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
                   {
                     file->set_sourceFileUsesFortran95FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
                     file->set_F95_only();
                   }
 
                if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
                   {
                     file->set_sourceFileUsesFortran2003FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
                     file->set_F2003_only();
                   }
 
                if (CommandlineProcessing::isCoArrayFortranFileNameSuffix(filenameExtension) == true)
                   {
                     file->set_sourceFileUsesCoArrayFortranFileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                 // DQ (1/23/2009): I think that since CAF is an extension of F2003, we want to mark this as F2003 as well.
                     file->set_F2003_only();
                     file->set_CoArrayFortran_only(true);
                   }
@@ -886,11 +857,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
                   {
                     file->set_sourceFileUsesFortran2008FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
-
                     file->set_F2008_only();
                   }
              }
@@ -908,53 +876,34 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                     file = sourceFile;
 
                     file->set_sourceFileUsesPHPFileExtension(true);
-
                     file->set_outputLanguage(SgFile::e_PHP_language);
-
-                 // DQ (29/8/2017): Set the input language as well.
                     file->set_inputLanguage(SgFile::e_PHP_language);
-
                     file->set_PHP_only(true);
 
-                 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                     Rose::is_PHP_language = true;
 
-                 // DQ (12/23/2008): We don't handle CPP directives and comments for PHP yet.
-                 // file->get_skip_commentsAndDirectives(true);
-
-                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                 // Note that file->get_requires_C_preprocessor() should be false.
+                 // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                     ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                     sourceFile->initializeGlobalScope();
                   }
                  else
                   {
-                 // printf ("Calling file->set_sourceFileUsesFortranFileExtension(false) \n");
-
-                 // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
                     if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
                        {
-                      // file = new SgSourceFile ( argv,  project );
                          SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                          file = sourceFile;
 
                       // This is a C++ file (so define __cplusplus, just like GNU gcc would)
-                      // file->set_requires_cplusplus_macro(true);
                          file->set_sourceFileUsesCppFileExtension(true);
 
                       // Use the filename suffix as a default means to set this value
                          file->set_outputLanguage(SgFile::e_Cxx_language);
-
-                      // DQ (29/8/2017): Set the input language as well.
                          file->set_inputLanguage(SgFile::e_Cxx_language);
-
                          file->set_Cxx_only(true);
 
-                      // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                          Rose::is_Cxx_language = true;
 
-                      // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                      // Note that file->get_requires_C_preprocessor() should be false.
+                      // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                          ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                          sourceFile->initializeGlobalScope();
                        }
@@ -964,7 +913,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                          if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
                               ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
                             {
-                           // file = new SgSourceFile ( argv,  project );
                               SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                               file = sourceFile;
 
@@ -986,20 +934,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {
                                    file->set_UPC_only();
-
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_UPC_language = true;
                                  }
                                 else
                                  {
                                    file->set_C99_gnu_only();
-#if 0
-                                   printf ("In determineFileType(): Setting the default mode for detected C cile to C99 (specifically generated code will use: -std=gnu99 option) \n");
-#endif
                                  }
 
-                           // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                           // Note that file->get_requires_C_preprocessor() should be false.
+                           // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                               ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                               sourceFile->initializeGlobalScope();
                             }
@@ -1011,13 +953,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file = sourceFile;
 
                                    file->set_outputLanguage(SgFile::e_Cxx_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_Cxx_language);
-
                                    file->set_Cuda_only(true);
-
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_Cuda_language = true;
 
                                 // DQ (12/23/2008): This is the earliest point where the global scope can be set.
@@ -1029,97 +966,59 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
                                    file->set_OpenCL_only(true);
-
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_OpenCL_language = true;
 
                                 // DQ (12/23/2008): This is the earliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                  }
                                 else if (CommandlineProcessing::isJavaFile(sourceFilename))
                                  {
-                                // DQ (10/11/2010): Adding support for Java.
-                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile(argv, project);
                                    file = sourceFile;
-
-                                // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                                    file->set_sourceFileUsesCppFileExtension(false);
-
-                                // Note that we can use the C++ unparser to provide output that will support inspection of
-                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
-                                // the ongoing support within the Java specific unparser.
-                                   file->set_outputLanguage(SgFile::e_Java_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_Java_language);
-
+                                   file->set_outputLanguage(SgFile::e_Java_language);
                                    file->set_Java_only(true);
 
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_Java_language = true;
 
-                                // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
                                    file->set_compileOnly(true);
-
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                  }
                                 else if (CommandlineProcessing::isX10FileNameSuffix(filenameExtension) == true)
                                 {
-                                   SgSourceFile* sourceFile = new SgSourceFile (argv,  project);
+                                   SgSourceFile* sourceFile = new SgSourceFile (argv, project);
                                    file = sourceFile;
-
-                                  // This a not a C++ file so don't define the __cplusplus macro, just like GNU gcc would
                                    file->set_sourceFileUsesCppFileExtension(false);
-
-                                // Note that we can use the C++ unparser to provide output that will support inspection of
-                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
-                                // the ongoing support within the Java specific unparser.
-                                // file->set_outputLanguage(SgFile::e_C_output_language);
                                    file->set_outputLanguage(SgFile::e_X10_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_X10_language);
                                    file->set_X10_only(true);
-
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
-                                   Rose::is_X10_language = true;
-
-                                // TOO1 (2/20/2013): X10 code is only compiled, not linked as is C/C++ and Fortran.
                                    file->set_compileOnly(true);
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   Rose::is_X10_language = true;
+
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
                                else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
                                 {
-                                // file = new SgSourceFile ( argv,  project );
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
 
                                    file->set_sourceFileUsesPythonFileExtension(true);
                                    file->set_outputLanguage(SgFile::e_Python_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_Python_language);
-
                                    file->set_Python_only(true);
 
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_Python_language = true;
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
-                            // DQ (28/8/2017): Adding language support.
                                else if (CommandlineProcessing::isCsharpFileNameSuffix(filenameExtension) == true)
                                 {
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
@@ -1127,18 +1026,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    file->set_sourceFileUsesCsharpFileExtension(true);
                                    file->set_outputLanguage(SgFile::e_Csharp_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_Csharp_language);
-
                                    file->set_Csharp_only(true);
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
-                            // DQ (28/8/2017): Adding language support.
                                else if (CommandlineProcessing::isAdaFileNameSuffix(filenameExtension) == true)
                                 {
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
@@ -1146,27 +1040,22 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    file->set_sourceFileUsesAdaFileExtension(true);
                                    file->set_outputLanguage(SgFile::e_Ada_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_Ada_language);
-
                                    file->set_Ada_only(true);
 
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_Ada_language = true;
 
                                    // PP (04/24/2020)
                                    SageBuilder::symbol_table_case_insensitive_semantics = true;
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
 
                                else if (CommandlineProcessing::isJovialFileNameSuffix(filenameExtension) == true)
                                 {
-                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile(argv, project);
                                    file = sourceFile;
 
                                    file->set_sourceFileUsesJovialFileExtension(true);
@@ -1189,16 +1078,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                else if (CommandlineProcessing::isJavaJvmFile(sourceFilename))
                                 {
                                    file = new SgJvmComposite(argv, project);
-                                   file->set_inputLanguage(SgFile::e_Jvm_language);
-                                   file->set_outputLanguage(SgFile::e_Jvm_language);
-
-                                   file->set_Jvm_only(true);
                                    Rose::is_Jvm_language = true;
-
-                                // Don't do C++ stuff
-                                   file->set_requires_C_preprocessor(false);
-                                   file->set_disable_edg_backend(true);
-                                   file->set_skip_commentsAndDirectives(true);
                                 }
                                else if (true)
                                 {
@@ -1217,7 +1097,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    // Build a SgBinaryComposite to represent either the binary executable or the library
                                    // archive.
-                                   SgBinaryComposite *binary = new SgBinaryComposite(argv,  project);
+                                   SgBinaryComposite *binary = new SgBinaryComposite(argv, project);
                                    file = binary;
                                    file->set_sourceFileUsesBinaryFileExtension(true);
                                    file->set_outputLanguage(SgFile::e_Binary_language);
@@ -1226,18 +1106,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    // If this is an object file being processed for binary analysis then mark it as an object
                                    // file so that we can trigger analysis to mark the sections that will be disassembled.
                                    string binaryFileName = file->get_sourceFileNameWithPath();
-                                   if (CommandlineProcessing::isObjectFilename(binaryFileName))
+                                   if (CommandlineProcessing::isObjectFilename(binaryFileName)) {
                                        file->set_isObjectFile(true);
+                                   }
 
-                                   // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
-                                   // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
                                    file->set_binary_only(true);
-
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_binary_executable = true;
 
-                                   // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C
-                                   // preprocessor.
                                    file->set_requires_C_preprocessor(false);
                                    ASSERT_not_null(file->get_file_info());
 
@@ -1281,10 +1156,11 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                            binary->get_libraryArchiveObjectFileNameList().push_back(memberName.string());
                                    }
                                 }
-#endif
+#endif //ROSE_ENABLE_BINARY_ANALYSIS
+
                                else
                                 {
-                                   file = new SgUnknownFile ( argv,  project );
+                                   file = new SgUnknownFile(argv, project);
 
                                    ASSERT_not_null(file->get_parent());
                                    ROSE_ASSERT(file->get_parent() == project);
@@ -1301,66 +1177,18 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                             }
                        }
                   }
-
-                 file->set_sourceFileUsesFortranFileExtension(false);
              }
         }
-       else
-        {
-       // DQ (2/6/2009): This case is used by the build function SageBuilder::buildFile().
-
-       // DQ (12/22/2008): Make any error message from this branch more clear for debugging!
-       // AS Is this option possible?
-          printf ("Is this branch reachable? \n");
-          ROSE_ABORT();
-       // abort();
-
-       // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
-          ROSE_ASSERT (file->get_sourceFileNameWithPath().empty() == true);
-
-       // If no source code file name was found then likely this is:
-       //   1) a link command, or
-       //   2) called as part of the SageBuilder::buildFile()
-       // using the C++ compiler.  In this case skip the EDG processing.
-          file->set_disable_edg_backend(true);
-        }
-
-#if 0
-  // DQ (6/12/2013): I think this is required to support having all of the SgSourceFile
-  // IR nodes pre-built as part of the new Java support required to be better performance
-  // in the Java frontend AST translation.
-     printf ("***************************************************************************************************************************************************************************** \n");
-     printf ("***************************************************************************************************************************************************************************** \n");
-     printf ("Disabling the call to the frontend so that we can setup the SgSourceFile IR nodes once at the start and then call the frontend on each of them as we process all of the files \n");
-     printf ("***************************************************************************************************************************************************************************** \n");
-     printf ("***************************************************************************************************************************************************************************** \n");
-#endif
 
   // Keep the filename stored in the Sg_File_Info consistent.  Later we will want to remove this redundency
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
   // the integer values instead of string comparisons.  Required for the handling of CPP directives and comments.
 
-#if 0
-     if (file != nullptr)
-        {
-          printf ("Calling file->display() \n");
-          file->display("SgFile* determineFileType()");
-        }
-#endif
-
      ASSERT_not_null(file);
-
-#if 0
-     printf ("Leaving determineFileType() = %d \n",file->get_outputLanguage());
-     printf ("Leaving determineFileType() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
-#endif
-
-  // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
      ASSERT_not_null(file->get_parent());
      ASSERT_not_null(isSgProject(file->get_parent()));
      ROSE_ASSERT(file->get_parent() == project);
 
-  // DQ (7/2/2020): Added assertion (fails for snippet tests).
      if (file->get_preprocessorDirectivesAndCommentsList() == nullptr)
         {
           file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
@@ -1703,24 +1531,19 @@ SgProject::parse(const vector<string>& argv)
 
      int errorCode = 0;
 
-            // Normal case without AST Merge: Compiling ...
-            // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %" PRIuPTR " \n",get_sourceFileNameList().size());
-               if (get_sourceFileNameList().size() > 0)
-                  {
-
-// DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
-// current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
-// So use the explicit macros defined in rose_config header file for this level of control.
-#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+  // Normal case without AST Merge: Compiling ...
+     if (get_sourceFileNameList().size() > 0)
+       {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-                    Rose::Frontend::Java::Ecj::jserver_init();
+         // Start the Java Native Interface (JNI) server for either Fortran or Java
+         Rose::Frontend::Java::Ecj::jserver_init();
 #endif
-#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-                    Rose::Frontend::X10::X10c::jserver_init();
-#endif
-#endif
-                    errorCode = parse();
-                  }
+         //---------------------------------------------------------------------------
+         // Project::parse() is the primary entry point for calling the frontend
+         // and generating the AST for all files found on the command line.
+         //---------------------------------------------------------------------------
+         errorCode = parse();
+       }
 
   // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
   // so we need to make sure that it is set.
@@ -1733,10 +1556,9 @@ SgProject::parse(const vector<string>& argv)
             else
                functionTypeTable->set_parent(this);
         }
-     ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
-
-     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
-     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
+     ASSERT_not_null(functionTypeTable->get_parent());
+     ASSERT_not_null(SgNode::get_globalFunctionTypeTable());
+     ASSERT_not_null(SgNode::get_globalFunctionTypeTable()->get_parent());
 
   // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
   // so we need to make sure that it is set.
@@ -1835,48 +1657,39 @@ SgProject::parse()
      ModuleBuilderFactory::get_compool_builder().setInputDirs(this);
 #endif
 
-  // Simplify multi-file handling so that a single file is just the trivial
-  // case and not a special separate case.
-     Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
-
   // The goal in this version of the code is to separate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
   // the compilation to reference the other SgFile objects on an as needed basis as part of running
   // the frontend.  This is important for the optimization of Java.
      std::vector<SgFile*> vectorOfFiles;
-     while (nameIterator != p_sourceFileNameList.end())
+     for (string currentFileName : p_sourceFileNameList)
         {
           int nextErrorCode = 0;
 
        // Exclude other files from list in argc and argv
           vector<string> argv = get_originalCommandLineArgumentList();
-          string currentFileName = *nameIterator;
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
 
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ASSERT_not_null(newFile);
           ASSERT_not_null(newFile->get_startOfConstruct());
-          ASSERT_not_null(newFile->get_parent());
 
-       // DQ (6/13/2013): Added to support error checking (separation of construction of SgFile IR nodes from calling the fronend on each one).
           ASSERT_not_null(isSgProject(newFile->get_parent()));
           ROSE_ASSERT(newFile->get_parent() == this);
 
        // This just adds the new file to the list of files stored internally (note: this sets the parent of the newFile).
-          set_file ( *newFile );
+          set_file(*newFile);
           ASSERT_not_null(newFile->get_parent());
 
-       // This list of files will be iterated over to call the frontend in the next loop.
+       // This list of files will be iterated over in call to the frontend in the next loop.
           vectorOfFiles.push_back(newFile);
-
-          nameIterator++;
-        } // end while
-
-     errorCode = this->RunFrontend();
-     if (errorCode > 3)
-        {
-          return errorCode;
         }
+
+  // Run the frontend on each file in this project
+     errorCode = this->RunFrontend();
+     if (errorCode > 3) {
+       return errorCode;
+     }
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
   // This is a simple consistency test for that new function.
@@ -2129,31 +1942,21 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-#if 0
-     printf ("!!!!!!!!!!!!!!!!!! Inside of SgFile::doSetupForConstructor() !!!!!!!!!!!!!!! \n");
-#endif
-
   // Set the project early in the construction phase so that we can access data in
   // the parent if needed (useful for template handling but also makes sure the parent is
   // set (and avoids fixup (currently done, but too late in the construction process for
   // the template support).
-     if (project != nullptr)
-          set_parent(project);
-
      ASSERT_not_null(project);
-     ASSERT_not_null(get_parent());
+     set_parent(project);
 
-  // initalize all local variables to default values
+  // initialize all local variables to default values
      initialization();
-
-     ASSERT_not_null(get_parent());
 
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
   // DQ (4/21/2006): Setup the source filename as early as possible
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
-  // DQ (12/23/2008): Use of this assertion will simplify the code below!
      ROSE_ASSERT (fileList.empty() == false);
      string sourceFilename = *(fileList.begin());
 
@@ -2164,6 +1967,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
      initializeSourcePosition(sourceFilename);
      ASSERT_not_null(get_file_info());
+     ASSERT_not_null(get_startOfConstruct());
 
   // DQ (5/9/2007): Moved this call from above to where the file name is available so that we could include
   // the filename in the label.  This helps to identify the performance data with individual files where
@@ -2182,17 +1986,6 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
   // used elsewhere in Sage III.  Not clear if we really need this!
   // error checking
      ROSE_ASSERT (argv.size() > 1);
-
-     ASSERT_not_null(get_file_info());
-     ASSERT_not_null(get_startOfConstruct());
-
-  // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-     ASSERT_not_null(get_parent());
-     ROSE_ASSERT(get_parent() == project);
-
-#if 0
-     printf ("Leaving  SgFile::doSetupForConstructor() \n");
-#endif
    }
 
 
@@ -3818,21 +3611,18 @@ Rose::Frontend::Run(SgProject* project)
   ASSERT_not_null(project);
 
   int status = 0;
-  {
-      if (project->get_Java_only())
-      {
-          status = Rose::Frontend::Java::Run(project);
-      }
-      else
-      {
-          status = Rose::Frontend::RunSerial(project);
-      }
+  if (project->get_Java_only())
+    {
+      status = Rose::Frontend::Java::Run(project);
+    }
+  else
+    {
+      status = Rose::Frontend::RunSerial(project);
+    }
 
-      project->set_frontendErrorCode(status);
-  }
-
+  project->set_frontendErrorCode(status);
   return status;
-} // Rose::Frontend::Run
+}
 
 int
 Rose::Frontend::RunSerial(SgProject* project)
