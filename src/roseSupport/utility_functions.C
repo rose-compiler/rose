@@ -729,7 +729,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
         }
 
   // We parse plugin related command line options before calling project();
-     std::vector<std::string> argv2= argv;  // workaround const argv
+     std::vector<std::string> argv2 = argv; // workaround const argv
 #ifdef _MSC_VER
     if ( SgProject::get_verbose() >= 1 )
         printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::processPluginCommandLine () ...\n");
@@ -737,9 +737,17 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      Rose::processPluginCommandLine(argv2);
 #endif
 
-  // Error code checks and reporting are done in SgProject constructor
-     SgProject* project = new SgProject (argv2,frontendConstantFolding);
+  // Separate the creation of a new project with building the AST. The default constructor
+  // initializes the object and then parse is used to build the AST (in a separate step).
+  // The current constructors that conflate object creation with parsing should be deprecated.
+  // [Rasmussen, 2024.04.03]
+     SgProject* project = new SgProject;
+
      ASSERT_not_null(project);
+     project->set_frontendConstantFolding(frontendConstantFolding);
+
+  // Create the AST by setting command-line options and then parsing all files from the command line
+     project->parse(argv);
 
   // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
@@ -755,9 +763,9 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      }
 
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
-  // Removed semicolon at end of if conditional to allow it to have a body [Rasmussen 2019.01.29]
-     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)
+     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction) {
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
+     }
 
      Rose::AST::cmdline::graphviz.frontend.exec(project);
      Rose::AST::cmdline::checker.frontend.exec(project);

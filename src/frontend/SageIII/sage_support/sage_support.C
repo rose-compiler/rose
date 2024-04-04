@@ -1543,6 +1543,7 @@ SgProject::parse(const vector<string>& argv)
          // and generating the AST for all files found on the command line.
          //---------------------------------------------------------------------------
          errorCode = parse();
+         set_frontendErrorCode(errorCode);
        }
 
   // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
