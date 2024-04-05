@@ -4499,6 +4499,19 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> /*inputCommandL
                  << std::endl;
 
      return frontendErrorLevel;
+#elif ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
+     // Function prototype declaration.
+     int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file);
+
+     mlog[TRACE] << "In build_Ada_AST(): Before calling libadalang_main()"
+                 << std::endl;
+
+     const int frontendErrorLevel = libadalang_main(argv, this);
+     mlog[TRACE] << "In build_Ada_AST(): After calling libadalang_main()"
+                 << std::endl;
+
+     return frontendErrorLevel;
+
 #else
      mlog[ERROR] << "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined."
                  << std::endl;

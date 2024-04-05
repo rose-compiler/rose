@@ -699,6 +699,10 @@ endif
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
   librose_la_LIBADD += -L${DOT_ASIS_LIB_DIR_} -lasis_adapter
 endif
+
+if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
+  librose_la_LIBADD += -L${GNAT_HOME}/lib -ladalang
+endif
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)
 

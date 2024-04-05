@@ -36,6 +36,10 @@ if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
    SUBDIRS += Experimental_Ada_ROSE_Connection
 endif
 
+if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
+   SUBDIRS += Experimental_Libadalang_ROSE_Connection
+endif
+
 if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
    SUBDIRS += Experimental_Jovial_ROSE_Connection
 endif

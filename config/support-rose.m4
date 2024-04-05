@@ -331,6 +331,15 @@ if test "x$enable_experimental_ada_frontend" = "xyes"; then
   AC_DEFINE([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION], [], [Enables development of experimental ada frontend])
 fi
 
+AC_ARG_ENABLE(experimental_libadalang_frontend,
+    AS_HELP_STRING([--enable-experimental_libadalang_frontend], [Enable experimental ada frontend development using libadalang]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION, [test "x$enable_experimental_libadalang_frontend" = xyes])
+if test "x$enable_experimental_libadalang_frontend" = "xyes"; then
+  AC_MSG_WARN([using this mode enables experimental ada front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION], [], [Enables development of experimental ada frontend using libadalang])
+fi
+
+
 # DQ (6/7/2013): Added support for debugging new ada front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_ada_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_ada_frontend], [Enable debugging output (spew) of new ADA/ROSE connection]))
@@ -350,6 +359,13 @@ if test "x$enable_experimental_ada_frontend" = "xyes"; then
   gnat_home=$with_gnat
   AC_MSG_NOTICE([GNAT home = "$gnat_home"])
   AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME], ["$with_gnat"], [Path to GNAT Ada compiler used in development of experimental ada frontend])
+  AC_SUBST(gnat_home)
+fi
+
+if test "x$enable_experimental_libadalang_frontend" = "xyes"; then
+  gnat_home=$with_gnat
+  AC_MSG_NOTICE([GNAT home = "$gnat_home"])
+  AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME], ["$with_gnat"], [Path to GNAT Ada compiler used in development of experimental ada frontend])
   AC_SUBST(gnat_home)
 fi
 

@@ -562,7 +562,7 @@ std::string version_message() {
     // ROSE library source code and tests!
     //-----------------------------------------------------------------------
 
-#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+#if defined ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION || defined ROSE_EXPERIMENTAL_LIBADALANG_CONNECTION
     ss <<"  --- Ada analysis:               enabled\n";
 #else
     ss <<"  --- Ada analysis:               disabled\n";
