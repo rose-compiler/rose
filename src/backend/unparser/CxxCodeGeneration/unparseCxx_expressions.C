@@ -6630,7 +6630,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (3/12/2018): Could this be what should drive the introduction of the class name?
           if (info.inAggregateInitializer() == true)
              {
+#if DEBUG_AGGREGATE_INITIALIZER
                curprint("/* Need explicit braces: is this where we insert the class name? */ ");
+#endif
              }
 
           curprint("{");
