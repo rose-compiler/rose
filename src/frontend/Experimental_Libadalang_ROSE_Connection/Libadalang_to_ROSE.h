@@ -1,4 +1,7 @@
 
+#ifndef _LIBADALANG_TO_ROSE_H
+#define _LIBADALANG_TO_ROSE_H 1
+
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -8,18 +11,24 @@
 #include <boost/algorithm/string/case_conv.hpp>
 
 #include "Rose/Diagnostics.h"
+#include "sage3basic.h"
 #include "sageGeneric.h"
 #include "libadalang.h"
 
-namespace Libadalang_ROSE_translation {
-
+namespace Libadalang_ROSE_Translation {
 
 
 static constexpr bool LOG_FLAW_AS_ERROR = false;
 
+std::string dot_ada_text_type_to_string(ada_text_type input_text);
+
+std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array input_text);
+
+std::string dot_ada_full_sloc(ada_base_entity *node);
+
 //Function to hash a unique int from a node using the node's kind and location.
 //The kind and location can be provided, but if not they will be determined in the function
-int hash_node(ada_base_entity *node, int kind = -1, std::string full_sloc = "");
+int hash_node(ada_base_entity *node, int kind, std::string full_sloc);
 
 struct ExtendedPragmaID : std::tuple<int, SgStatement*>
 {
@@ -148,51 +157,71 @@ struct AstContext
 extern Sawyer::Message::Facility mlog;
 
 
-/// converts all nodes reachable through the units in \ref head_nodes to ROSE
-/// \param head_nodes  entry point to ASIS
-/// \param file        the ROSE root for the translation unit
-void convertLibadalangToROSE(ada_analysis_unit analysis_unit, SgSourceFile* file);
+/// converts all nodes reachable through the units in \ref analysis_unit to ROSE
+/// \param root    entry point to the Libadalang tree
+/// \param file    the ROSE root for the translation unit
+void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file);
+
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
 /// \note If an expression has decayed to a located node, the operator position will not be set.
 /// @{
-void attachSourceLocation(SgLocatedNode& n, _Element_Struct& elem, AstContext ctx);
-void attachSourceLocation(SgExpression& n, _Element_Struct& elem, AstContext ctx);
-void attachSourceLocation(SgPragma& n, _Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgLocatedNode& n, ada_base_entity* lal_element, AstContext ctx);
+void attachSourceLocation(SgExpression& n, ada_base_entity* lal_element, AstContext ctx);
+void attachSourceLocation(SgPragma& n, ada_base_entity* lal_element, AstContext ctx);
 /// @}
 
+
+/// tests if \ref s starts with \ref sub
+/// \param  s    a string
+/// \param  sub  a potential substring of s
+/// \return true if \ref s starts with \ref sub
+bool startsWith(const std::string& s, const std::string& sub);
+
+void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);
 
 }
 
 namespace{
   inline
-  auto logTrace() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE])
+  auto logTrace() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::TRACE])
   {
-    return Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE];
+    return Libadalang_ROSE_Translation::mlog[Sawyer::Message::TRACE];
   }
 
   inline
-  auto logInfo() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::INFO])
+  auto logInfo() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::INFO])
   {
-    return Ada_ROSE_Translation::mlog[Sawyer::Message::INFO];
+    return Libadalang_ROSE_Translation::mlog[Sawyer::Message::INFO];
   }
 
   inline
-  auto logWarn() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::WARN])
+  auto logWarn() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::WARN])
   {
-    return Ada_ROSE_Translation::mlog[Sawyer::Message::WARN];
+    return Libadalang_ROSE_Translation::mlog[Sawyer::Message::WARN];
   }
 
   inline
-  auto logError() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR])
+  auto logError() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::ERROR])
   {
-    return Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR];
+    return Libadalang_ROSE_Translation::mlog[Sawyer::Message::ERROR];
   }
 
   inline
-  auto logFatal() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL])
+  auto logFatal() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::FATAL])
   {
-    return Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL];
+    return Libadalang_ROSE_Translation::mlog[Sawyer::Message::FATAL];
+  }
+
+  inline
+  auto logFlaw() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::ERROR])
+  {
+    decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::ERROR]) res = (Libadalang_ROSE_Translation::LOG_FLAW_AS_ERROR ? logError() : logWarn());
+
+    res << " *FLAW* ";
+    return res;
   }
 }
+
+#endif //_LIBADALANG_TO_ROSE_H

@@ -21,11 +21,27 @@ namespace si = SageInterface;
 
 
 
-namespace Ada_ROSE_Translation
+namespace Libadalang_ROSE_Translation
 {
 
-namespace
-{
+  /// gets the body of a function declaration \ref defdcl
+  /// \pre defdcl is the defining declaration
+  SgBasicBlock& functionBody(SgFunctionDeclaration& defdcl)
+  {
+    SgFunctionDefinition* def = isSgFunctionDefinition(defdcl.get_definition());
+
+    return SG_DEREF(SG_DEREF(def).get_body());
+  }
+
+  /// if \ref isPrivate \ref dcl's accessibility is set to private;
+  /// otherwise nothing.
+  void
+  privatize(SgDeclarationStatement& dcl, bool isPrivate)
+  {
+    if (!isPrivate) return;
+
+    dcl.get_declarationModifier().get_accessModifier().setPrivate();
+  }
 
   /// completes statements by setting source locations, parent node,
   /// adding labels (if needed)...
@@ -40,22 +56,6 @@ namespace
 
     //We are handling labels differently
     //SgStatement&      sgn  = labelIfNeeded(sgnode, lal_stmt, ctx);
-
-    //ctx.appendStatement(sgn);
-  }
-
-  template <class SageScopeStmt>
-  void
-  completeStmt(SageScopeStmt& sgnode, ada_base_entity* lal_stmt, AstContext ctx, Defining_Name_ID lblid)
-  {
-    //ADA_ASSERT (elem.Element_Kind == A_Statement);
-
-    attachSourceLocation(sgnode, lal_stmt, ctx);
-    sgnode.set_parent(&ctx.scope());
-
-    //SgStatement&      sgn0 = labelIfNeeded(sgnode, lblid, ctx);
-    //Statement_Struct& stmt = elem.The_Union.Statement;
-    //SgStatement&      sgn  = labelIfNeeded(sgn0, lal_stmt, ctx);
 
     //ctx.appendStatement(sgn);
   }
@@ -108,7 +108,7 @@ namespace
     for(int i = 0; i < range; i++){
         ada_base_entity* lal_stmt;
         ada_node_child(lal_stmt_list, i, lal_stmt);
-        handleStmt(lal_stmt, pragmaCtx.scope(dominantBlock));
+        handleStmt(lal_stmt, ctx.scope(blk));
     }
   }
 
@@ -116,9 +116,9 @@ namespace
   //   end of a routine through the use of the LoopAndLabelManager.
   void routineBlockHandler(ada_base_entity* lal_stmt_list, SgScopeStatement& blk, AstContext ctx)
   {
-    LabelAndLoopManager lblmgr;
+    //LabelAndLoopManager lblmgr;
 
-    simpleBlockHandler(lal_stmt_list, blk, ctx.labelsAndLoops(lblmgr));
+    simpleBlockHandler(lal_stmt_list, blk, ctx/*.labelsAndLoops(lblmgr)*/);
   }
 
   void simpleExceptionBlockHandler(ada_base_entity* lal_handlers, SgScopeStatement& blk, SgTryStmt& trystmt, AstContext ctx)
@@ -136,9 +136,9 @@ namespace
   //   end of a routine through the use of the LoopAndLabelManager
   void routineExceptionBlockHandler(ada_base_entity* lal_handlers, SgScopeStatement& blk, SgTryStmt& trystmt, AstContext ctx)
   {
-    LabelAndLoopManager lblmgr;
+    //LabelAndLoopManager lblmgr;
 
-    simpleExceptionBlockHandler(lal_handlers, blk, trystmt, ctx.labelsAndLoops(lblmgr));
+    simpleExceptionBlockHandler(lal_handlers, blk, trystmt, ctx/*.labelsAndLoops(lblmgr)*/);
   }
 
 
@@ -169,18 +169,18 @@ namespace
     if (&dominantBlock != &stmtblk)
       activeScopes.push_back(&stmtblk);
 
-    blockHandler(bodyStatements, stmtblk, pragmaCtx);
+    blockHandler(lal_stmts, stmtblk, pragmaCtx);
 
     if (trystmt)
     {
-      exhandlerHandler(hndlrs, dominantBlock, *trystmt, pragmaCtx);
+      exhandlerHandler(lal_exceptions, dominantBlock, *trystmt, pragmaCtx);
 
-      computeSourceRangeFromChildren(SG_DEREF(trystmt->get_body()));
-      computeSourceRangeFromChildren(SG_DEREF(trystmt->get_catch_statement_seq_root()));
-      computeSourceRangeFromChildren(*trystmt);
+      //computeSourceRangeFromChildren(SG_DEREF(trystmt->get_body()));
+      //computeSourceRangeFromChildren(SG_DEREF(trystmt->get_catch_statement_seq_root()));
+      //computeSourceRangeFromChildren(*trystmt);
     }
 
-    processAndPlacePragmas(pragmas, std::move(activeScopes), pragmaCtx.scope(dominantBlock));
+    //processAndPlacePragmas(lal_pragmas, std::move(activeScopes), pragmaCtx.scope(dominantBlock));
   }
 
   // completes any block with declarative items and exception handlers and pragmas attached
@@ -225,18 +225,18 @@ namespace
   void completeRoutineBody(ada_base_entity* lal_decl, SgBasicBlock& declblk, AstContext ctx)
   {
     //Get the decls, stmts, exceptions, & pragmas of this routine body
-    ada_base_entity* lal_decls, lal_stmts, lal_exceptions, lal_pragmas = nullptr;
+    ada_base_entity* lal_decls, *lal_stmts, *lal_exceptions, *lal_pragmas = nullptr;
 
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_decl);
 
     if(kind == ada_subp_body){
         ada_subp_body_f_decls(lal_decl, lal_decls); //lal_decls should now be an ada_declarative_part
-        ada_declarative_part_f_decls(lal_decls, lal_decls): //lal_decls should now be the list of decls
+        ada_declarative_part_f_decls(lal_decls, lal_decls); //lal_decls should now be the list of decls
         ada_base_entity* lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
         ada_subp_body_f_stmts(lal_decl, lal_handled_stmts);
         ada_handled_stmts_f_stmts(lal_handled_stmts, lal_stmts);
-        ada_handled_stmts_f_exceptions(lal_handled_stmts, lal_expections);
+        ada_handled_stmts_f_exceptions(lal_handled_stmts, lal_exceptions);
         lal_pragmas = nullptr; //TODO Figure out pragmas
     } else {
         //TODO
@@ -255,6 +255,21 @@ namespace
                                         );
   }
 
+  SgFunctionDeclaration&
+  createFunDef( SgFunctionDeclaration* nondef,
+                const std::string& name,
+                SgScopeStatement& scope,
+                SgType& rettype,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+              )
+  {
+    // PP (20/1/23): why do we use the nondefining function's scope?
+    //               for one, ROSE scope fixup currently unifies the scopes.
+    //               see also SCOPE_COMMENT_1 .
+    return nondef ? mkProcedureDecl(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
+                  : mkProcedureDecl(name,    scope, rettype, std::move(complete));
+  }
+
 void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
   {
     //TODO Add more nodes
@@ -262,7 +277,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
     
     //Get the kind of this node
     ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_element);
+    kind = ada_node_kind(lal_stmt);
 
     logTrace() << "a statement/decl/clause " << kind << std::endl;
 
@@ -290,7 +305,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
     SgStatement*            assocstmt = nullptr;
     //Statement_Struct&       stmt = elem.The_Union.Statement; //Same as lal_stmt now
     //ElemIdRange             pragmaRange  = idRange(stmt.Corresponding_Pragmas);
-    std::vector<Element_ID> pragmaVector;
+    //std::vector<Element_ID> pragmaVector;
 
     //std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
 
@@ -342,7 +357,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
         //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
     }
 
-    recordPragmasID(std::move(pragmaVector), assocstmt, ctx);
+    //recordPragmasID(std::move(pragmaVector), assocstmt, ctx);
   }
 
 //TODO Convert this
@@ -437,9 +452,13 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         //Determine if this is a function or procedure
         ada_base_entity* subp_kind;
-        ada_subp_spec_f_subp_kind(&subp_spec, subp_kind);
+        ada_subp_spec_f_subp_kind(subp_spec, subp_kind);
         ada_node_kind_enum subp_kind_kind;
         subp_kind_kind = ada_node_kind(subp_kind);
+
+        //Get the params for if this is a function
+        ada_base_entity* subp_params = nullptr;
+        ada_subp_spec_f_subp_params(subp_spec, subp_params);
 
         const bool              isFunc  = (subp_kind_kind == ada_subp_kind_function);
         //NameData                adaname = singleName(decl, ctx); Only use ident and parent_scope from this
@@ -447,8 +466,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_basic_decl_p_fully_qualified_name(lal_element, &p_fully_qualified_name);
         std::string ident = dot_ada_text_type_to_string(p_fully_qualified_name);
         SgScopeStatement*       parent_scope = &ctx.scope();
-        ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx));
-        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx) //TODO Make this get the return type for functions
+        //ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx)); 
+        SgType&                 rettype = isFunc ? mkTypeVoid()/*getDeclTypeID(decl.Result_Profile, ctx)*/ //TODO Make this get the return type for functions
                                                  : mkTypeVoid();
 
         //SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
@@ -460,8 +479,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         // SCOPE_COMMENT_1: the logical scope is only used, if nondef is nullptr
         //   createFunDef chooses the scope as needed.
-        SgScopeStatement&       logicalScope = parent_scope;
-        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+        SgScopeStatement&       logicalScope = SG_DEREF(parent_scope);
+        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, ident, logicalScope, rettype, ParameterCompletion{subp_params, ctx});
         SgBasicBlock&           declblk = functionBody(sgnode);
 
         //recordNode(asisDecls(), elem.ID, sgnode);
@@ -497,9 +516,14 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
   }
 
-  processAspects(elem, decl, assocdecl, ctx);
-  recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
+  //processAspects(lal_element, decl, assocdecl, ctx);
+  //recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
 }
 
-}  //end unnamed namespace 
+void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
+{
+  //TODO Check if range is nullptr, if not assume a list and add each child
+  //traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
+}
+ 
 } //end Ada_ROSE_Translation

@@ -24,7 +24,54 @@
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
 
-namespace Libadalang_ROSE_translation {
+namespace sb = SageBuilder;
+namespace si = SageInterface;
+
+namespace Libadalang_ROSE_Translation {
+
+//Function to turn an ada_text_type into a string
+std::string dot_ada_text_type_to_string(ada_text_type input_text){
+    ada_text value_text;
+    value_text.length = input_text->n;
+    value_text.chars = input_text->items;
+    std::string return_string = ada_text_to_locale_string(&value_text);
+    ada_destroy_text(&value_text);
+    return return_string;
+}
+
+//Function to turn an ada_unbounded_text_type_array into a string
+std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array input_text){
+    ada_text value_text;
+    std::string return_string = "";
+    for(int i = 0; i < input_text->n; i++){
+        ada_symbol_type current_symbol = input_text->items[i];
+        ada_symbol_text(&current_symbol, &value_text);
+        return_string += ada_text_to_locale_string(&value_text);
+        ada_destroy_text(&value_text);
+    }
+    return return_string;
+}
+
+//Function to get the source location of an ada node as a string
+std::string dot_ada_full_sloc(ada_base_entity *node){
+    ada_text_type file_name;
+    ada_source_location_range line_numbers;
+
+    //Get the location of the text corresponding to this node
+    ada_node_sloc_range(node, &line_numbers);
+    //Get the file name this node is from
+    ada_ada_node_full_sloc_image(node, &file_name);
+    std::string file_name_string = dot_ada_text_type_to_string(file_name);
+    std::string::size_type pos = file_name_string.find(':');
+    if(pos != std::string::npos){
+        file_name_string = file_name_string.substr(0, pos);
+    }
+
+    std::string full_sloc = file_name_string + " - ";
+    full_sloc += std::to_string(line_numbers.start.line) + ":" + std::to_string(line_numbers.start.column) + " .. ";
+    full_sloc += std::to_string(line_numbers.end.line) + ":" + std::to_string(line_numbers.end.column);
+    return full_sloc;
+}
 
 //Function to hash a unique int from a node using the node's kind and location.
 //The kind and location can be provided, but if not they will be determined in the function
@@ -141,7 +188,7 @@ AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
 AstContext
 AstContext::scope(SgScopeStatement& s) const
 {
-  ADA_ASSERT(s.get_parent());
+  //ADA_ASSERT(s.get_parent());
 
   AstContext tmp{*this};
 
@@ -188,78 +235,7 @@ AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
 
 ///
 
-
-void convertLibadalangToROSE(ada_analysis_unit analysis_unit, SgSourceFile* file)
-{
-  //ADA_ASSERT(file);
-
-  logInfo() << "Building ROSE AST .." << std::endl;
-
-  // the SageBuilder should not mess with source location information
-  //   the mode is not well supported in ROSE
-  auto defaultSourcePositionClassificationMode = sb::getSourcePositionClassificationMode();
-
-  sb::setSourcePositionClassificationMode(sb::e_sourcePositionFrontendConstruction);
-
-  //Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
-  SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
-
-  setSymbolTableCaseSensitivity(astScope);
-
-  // sort all units topologically, so that all references can be resolved
-  //   by a single translation pass.
-  //std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
-
-  //Get the root node of the libadalang tree (should be ada_compilation_unit)
-  ada_base_entity root;
-  ada_unit_root(analysis_unit, &root);
-
-  // define the package standard
-  //   as we are not able to read it out from Asis
-  //initializePkgStandard(astScope);
-
-  // translate all units
-  //std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
-  
-  //This function justcalls handleunit
-  //translate_libadalang(AstContext{}.scope(astScope), &root);
-  handleUnit(&root, AstContext{}.scope(astScope);
-
-  // post processing
-  replaceNullptrWithNullExpr();
-  resolveInheritedFunctionOverloads(astScope);
-
-  // free space that was allocated to store all translation mappings
-  clearMappings();
-
-  logInfo() << "Checking AST post-production" << std::endl;
-  genFileInfo(file);
-  //~ astSanityCheck(file);
-
-
-  file->set_processedToIncludeCppDirectivesAndComments(false);
-
-  // si::Ada::convertToOperatorRepresentation(&astScope);
-
-  // undo changes to SageBuilder setup
-  sb::setSourcePositionClassificationMode(defaultSourcePositionClassificationMode);
-  logInfo() << "Building ROSE AST done" << std::endl;
-}
-
-//Function to turn an ada_unbounded_text_type_array into a string
-inline std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array input_text){
-    ada_text value_text;
-    std::string return_string = "";
-    for(int i = 0; i < input_text->n; i++){
-        ada_symbol_type current_symbol = input_text->items[i];
-        ada_symbol_text(&current_symbol, &value_text);
-        return_string += ada_text_to_locale_string(&value_text);
-        ada_destroy_text(&value_text);
-    }
-    return return_string;
-}
-
-void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false)
+void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
   {
     //Get the kind of this node
     ada_node_kind_enum Element_Kind;
@@ -371,29 +347,29 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
       bool        privateDecl = false;
 
       //Get the body node
-      ada_base_entity unit_body;
-      ada_compilation_unit_f_body(lal_unit, &unit_body);
+      ada_base_entity* unit_body;
+      ada_compilation_unit_f_body(lal_unit, unit_body);
 
       //This body node can be either ada_library_item or ada_subunit
       kind = ada_node_kind(unit_body);
 
-      ada_base_entity unit_declaration;
+      ada_base_entity* unit_declaration;
       //Fetch the unit declaration based on which kind we got
       if(kind == ada_library_item){
-          ada_library_item_f_item(&unit_body, &unit_declaration);
+          ada_library_item_f_item(unit_body, unit_declaration);
           //Update the privateDecl field
-          ada_base_entity ada_private_node;
+          ada_base_entity* ada_private_node;
           ada_bool p_as_bool;
-          ada_library_item_f_has_private(&unit_body, &ada_private_node);
-          ada_with_private_p_as_bool(&ada_private_node, &p_as_bool);
+          ada_library_item_f_has_private(unit_body, ada_private_node);
+          ada_with_private_p_as_bool(ada_private_node, &p_as_bool);
           privateDecl=(p_as_bool != 0);
       } else {
-          ada_subunit_f_body(&unit_body, &unit_declaration);
+          ada_subunit_f_body(unit_body, unit_declaration);
       }
       
 
       //traverseIDs(range, elemMap(), ElemCreator{ctx}); handle the pragmas/prelude/with
-      handleElement(&unit_declaration, ctx, privateDecl);
+      handleElement(unit_declaration, ctx, privateDecl);
 
       //processAndPlacePragmas(adaUnit.Compilation_Pragmas, { &ctx.scope() }, ctx);
 
@@ -403,6 +379,37 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
 
 
 namespace{
+  template <class SageNode>
+  void setFileInfo( SageNode& n,
+                    void (SageNode::*setter)(Sg_File_Info*),
+                    Sg_File_Info* (SageNode::*getter)() const,
+                    const std::string& filename,
+                    int line,
+                    int col
+                  )
+  {
+    Sg_File_Info* info = (n.*getter)();
+
+    if (info == nullptr)
+    {
+      info = &mkFileInfo(filename, line, col);
+      (n.*setter)(info);
+    }
+
+    info->set_parent(&n);
+
+    info->unsetCompilerGenerated();
+    info->unsetTransformation();
+    info->unsetShared();
+    info->set_physical_filename(filename);
+    info->set_filenameString(filename);
+    info->set_line(line);
+    info->set_physical_line(line);
+    info->set_col(col);
+
+    info->setOutputInCodeGeneration();
+  }
+
   /// \private
   template <class SageNode>
   void attachSourceLocation_internal(SageNode& n, ada_base_entity* lal_element, AstContext ctx)
@@ -411,7 +418,7 @@ namespace{
     ada_source_location_range line_numbers;
 
     //Get the location of the text corresponding to this node
-    ada_node_sloc_range(node, &line_numbers);
+    ada_node_sloc_range(lal_element, &line_numbers);
 
     setFileInfo( n,
                  &SageNode::set_startOfConstruct, &SageNode::get_startOfConstruct,
@@ -441,7 +448,7 @@ void attachSourceLocation(SgExpression& n, ada_base_entity* lal_element, AstCont
   ada_source_location_range line_numbers;
 
   //Get the location of the text corresponding to this node
-  ada_node_sloc_range(node, &line_numbers);
+  ada_node_sloc_range(lal_element, &line_numbers);
 
   setFileInfo( n,
                &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
@@ -456,11 +463,196 @@ void attachSourceLocation(SgPragma& n, ada_base_entity* lal_element, AstContext 
 }
 /// \}
 
+namespace{
+  bool _hasLocationInfo(SgLocatedNode* n)
+  {
+    if (!n) return false;
+
+    // this only asks for get_startOfConstruct assuming that
+    // get_endOfConstruct is consistent.
+    Sg_File_Info* info = n->get_startOfConstruct();
+
+    return info && !info->isCompilerGenerated();
+  }
+
+  bool hasLocationInfo(SgNode* n)
+  {
+    return _hasLocationInfo(isSgLocatedNode(n));
+  }
+
+  void cpyFileInfo( SgLocatedNode& n,
+                    void (SgLocatedNode::*setter)(Sg_File_Info*),
+                    Sg_File_Info* (SgLocatedNode::*getter)() const,
+                    const SgLocatedNode& src
+                  )
+  {
+    const Sg_File_Info& info  = SG_DEREF((src.*getter)());
+
+    setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+  }
+}
+
 /// initialize translation settins
 void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings)
 {
   // settings.failhardAdb and fail_on_error are obsolete
   if (settings.failhardAdb) fail_on_error = true;
+}
+
+void computeSourceRangeFromChildren(SgLocatedNode& n)
+{
+  std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
+  auto beg    = successors.begin();
+  auto lim    = successors.end();
+  auto first  = std::find_if(beg, lim, hasLocationInfo);
+  auto rbeg   = successors.rbegin();
+  auto rlim   = std::make_reverse_iterator(first);
+  auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
+
+  if ((first == lim) || (last == rlim))
+    return;
+
+  cpyFileInfo( n,
+               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+               SG_DEREF(isSgLocatedNode(*first)) );
+
+  cpyFileInfo( n,
+               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+               SG_DEREF(isSgLocatedNode(*last)) );
+}
+
+struct GenFileInfo : AstSimpleProcessing
+{
+    void visit(SgNode* sageNode) override
+    {
+      SgLocatedNode* n = isSgLocatedNode(sageNode);
+
+      if (n == nullptr || !n->isTransformation()) return;
+
+      logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation();
+
+      computeSourceRangeFromChildren(*n);
+
+      if (n->isTransformation())
+      {
+        logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
+                   << "  c=" << n->get_startOfConstruct()
+                   << " " << isSgVarRefExp(n)->get_symbol()->get_name()
+                   << std::endl;
+      }
+
+      //ADA_ASSERT(!n->isTransformation());
+    }
+};
+
+/// sets the file info to the parents file info if not set otherwise
+void genFileInfo(SgSourceFile* file)
+{
+    logTrace() << "check and generate missing file info" << std::endl;
+
+    GenFileInfo fixer;
+
+    fixer.traverse(file, postorder);
+    //~ fixer.traverse(file, preorder);
+}
+
+template <class SageParent>
+void setChildIfNull( std::size_t& ctr,
+                       SageParent& parent,
+                       SgExpression* (SageParent::*getter)() const,
+                       void (SageParent::*setter)(SgExpression*)
+                     )
+  {
+    if ((parent.*getter)()) return;
+
+    (parent.*setter)(&mkNullExpression());
+    ++ctr;
+}
+
+void replaceNullptrWithNullExpr()
+{
+    std::size_t ctr = 0;
+
+    auto nullrepl = [&ctr](SgExpression* e)->void
+                    {
+                      if (SgBinaryOp* binop = isSgBinaryOp(e))
+                      {
+                        setChildIfNull(ctr, *binop, &SgBinaryOp::get_lhs_operand, &SgBinaryOp::set_lhs_operand);
+                        setChildIfNull(ctr, *binop, &SgBinaryOp::get_rhs_operand, &SgBinaryOp::set_rhs_operand);
+                        return;
+                      }
+
+                      if (SgUnaryOp* unop = isSgUnaryOp(e))
+                      {
+                        setChildIfNull(ctr, *unop, &SgUnaryOp::get_operand, &SgUnaryOp::set_operand);
+                        return;
+                      }
+                    };
+
+
+    /*std::for_each( operatorExprs().begin(), operatorExprs().end(),
+                   nullrepl
+                 );*/
+
+    logInfo() << "Replaced " << ctr << " nullptr with SgNullExpression." << std::endl;
+}
+
+void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file)
+{
+  //ADA_ASSERT(file);
+
+  logInfo() << "Building ROSE AST .." << std::endl;
+
+  // the SageBuilder should not mess with source location information
+  //   the mode is not well supported in ROSE
+  auto defaultSourcePositionClassificationMode = sb::getSourcePositionClassificationMode();
+
+  sb::setSourcePositionClassificationMode(sb::e_sourcePositionFrontendConstruction);
+
+  //Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
+  SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
+
+  setSymbolTableCaseSensitivity(astScope);
+
+  // sort all units topologically, so that all references can be resolved
+  //   by a single translation pass.
+  //std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
+
+  // define the package standard
+  //   as we are not able to read it out from Asis
+  //initializePkgStandard(astScope);
+
+  // translate all units
+  //std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
+  
+  //This function just calls handleUnit
+  //translate_libadalang(AstContext{}.scope(astScope), &root);
+  handleUnit(root, AstContext{}.scope(astScope));
+
+  // post processing
+  replaceNullptrWithNullExpr();
+  //resolveInheritedFunctionOverloads(astScope); //TODO enable
+
+  // free space that was allocated to store all translation mappings
+  //clearMappings();
+
+  logInfo() << "Checking AST post-production" << std::endl;
+  genFileInfo(file);
+  //~ astSanityCheck(file);
+
+
+  file->set_processedToIncludeCppDirectivesAndComments(false);
+
+  // si::Ada::convertToOperatorRepresentation(&astScope);
+
+  // undo changes to SageBuilder setup
+  sb::setSourcePositionClassificationMode(defaultSourcePositionClassificationMode);
+  logInfo() << "Building ROSE AST done" << std::endl;
+}
+
+bool startsWith(const std::string& s, const std::string& sub)
+{
+  return (s.rfind(sub, 0) == 0);
 }
 
 } //end Libadalang_ROSE_translation namespace

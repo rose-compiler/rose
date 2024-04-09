@@ -644,6 +644,7 @@ endif
 
 if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
 ROSE_RPATHS += -R $(GNAT_HOME)/lib
+ROSE_RPATHS += -R $(GNAT_HOME)/lib/gcc/x86_64-pc-linux-gnu/10.3.1/adalib
 endif
 
 show-rpaths:

@@ -96,6 +96,7 @@ endif
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
    libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
 
+
 # DQ (31/8/2017): This library needs to be provided at configure time.
 #   DOT_ASIS_LIB_DIR_ ?= /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
 #   DOT_ASIS_LIB_DIR_ = $(abs_top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/lib
@@ -115,6 +116,13 @@ else
 # Ada is not enabled
    libroseAdalibraries =
 endif
+
+if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
+   libroseLibadalanglibraries = frontend/Experimental_Libadalang_ROSE_Connection/libexperimentalRoseAda.la
+else
+   libroseLibadalanglibraries =
+endif
+
 
 # DQ (28/8/2017): Adding more general language support.
 if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
@@ -201,6 +209,7 @@ libroseLibraries = \
    $(libroseBinaryLibraries) \
    $(libroseCsharplibraries) \
    $(libroseAdalibraries) \
+   $(libroseLibadalanglibraries) \
    $(libroseJoviallibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \

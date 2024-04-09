@@ -2018,6 +2018,7 @@ src/frontend/Experimental_Ada_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main/Makefile
+src/frontend/Experimental_Libadalang_ROSE_Connection/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile

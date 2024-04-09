@@ -8,16 +8,13 @@ noinst_LTLIBRARIES := libexperimentalRoseAda.la
 
 # DQ (8/23/2017): I'm not clear if we need makefile conditionals, since the directory is already conditionally processed in the parent directory.
 
-if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-SUBDIRS := parser
+if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
 
   libexperimentalRoseAda_la_SOURCES := \
     ada_support.C \
     Libadalang_to_ROSE.C \
-#    AdaExpression.C \
     AdaMaker.C \
-    LibadalangStatement.C \
-#    AdaType.C
+    LibadalangStatement.C
 else
 # Compile using a function that represents the API of the Ada support.
   libexperimentalRoseAda_la_SOURCES = dummy_ada_main.C

@@ -10,9 +10,30 @@
 namespace Libadalang_ROSE_Translation
 {
 
+  /// call-back to complete a function/procedure/entry declarations
+  ///   by adding parameters to the scopes (after they have been created)
+  struct ParameterCompletion
+  {
+      ParameterCompletion(ada_base_entity* paramrange, AstContext astctx)
+      : range(paramrange), ctx(astctx)
+      {}
 
-  /// converts an Asis declaration and adds the new node to the current scope
-  void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);
+      void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope);
+
+    private:
+      ada_base_entity* range;
+      AstContext  ctx;
+      ParameterCompletion() = delete;
+  };
+
+  /// converts a Libadalang declaration and adds the new node to the current scope
+  void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate);
+
+  /// converts a Libadalang statement
+  void handleStmt(ada_base_entity* lal_stmt, AstContext ctx);
+
+  /// converts a Libadalang exception
+  void handleExceptionHandler(ada_base_entity* lal_exception, SgTryStmt& tryStmt, AstContext ctx);
 
 }
 

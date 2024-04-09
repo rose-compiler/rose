@@ -10,18 +10,19 @@
 
 #include <boost/filesystem.hpp>
 
-#include "Ada_to_ROSE_translation.h"
-
-#include "adapter_wrapper.h"
 #include "FileUtility.h"
+
+#include "Libadalang_to_ROSE.h"
+
+#include "libadalang.h"
 
 namespace boostfs = boost::filesystem;
 namespace scl     = Sawyer::CommandLine;
 namespace sas     = Sawyer::Assert;
 
 
-// minimal declarations from Ada_to_ROSE.h
-namespace Ada_ROSE_Translation
+// minimal declarations from Libadalang_to_ROSE.h
+namespace Libadalang_ROSE_Translation
 {
   Sawyer::Message::Facility mlog;
 
@@ -32,7 +33,7 @@ namespace Ada_ROSE_Translation
 
 int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
 {
-     using Ada_ROSE_Translation::mlog;
+     using Libadalang_ROSE_Translation::mlog;
 
      ROSE_INITIALIZE;
 
@@ -197,10 +198,13 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
 
      mlog[Sawyer::Message::TRACE] << "END." << std::endl;
 
+     ada_base_entity root;
+     ada_unit_root(analysis_unit, &root);
+
      try
      {
        Libadalang_ROSE_Translation::initialize(settings);
-       Libadalang_ROSE_Translation::convertLibadalangToROSE(analysis_unit, file);
+       Libadalang_ROSE_Translation::convertLibadalangToROSE(&root, file);
      }
      catch (const std::runtime_error& e)
      {
@@ -218,13 +222,12 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
        status = 1;
      }
 
-     asis_adapterfinal();
+     //asis_adapterfinal();
 
      // restore ROSE assertion behavior
      Rose::failedAssertionBehavior(roseFailureHandler);
      mlog[Sawyer::Message::TRACE] << "Leaving ada_main(): status = " << status << std::endl;
      return status;
-   }
-
+}
 
 
