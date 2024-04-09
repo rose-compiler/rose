@@ -2220,46 +2220,31 @@ ValidateQuote(const std::string &input) {
     if (input.size() == 0)
         return true;
 
-    char token = 0;
-    size_t searchPos = 0;
+    const char quote_token = input[0];
+    size_t searchPos = 1;
+
     if (input[0] == '\"' || input[0] == '\'') {
         if (input.size() == 1)
             return false;
-        token = input[0];
-        searchPos = 1;
+    } else {
+        return true;
     }
 
-    while (searchPos != std::string::npos && searchPos < input.size() - 1) {
-        searchPos = input.find_first_of("\"'", searchPos + 1);
-        if (searchPos == std::string::npos)
-            break;
+    const char escape_token = quote_token == '\"' ? '\\' : '\'';
 
-        const char foundToken = input[searchPos];
-        if (input[searchPos] == '\"' || input[searchPos] == '\'') {
-            if (token == 0 && input[searchPos-1] != '\\')
-                return false;
-#if 0
-            if (foundToken == token) {
-                if (foundToken == token && searchPos == input.size() - 1 && input[searchPos-1] != '\\') {
-                    return true;
-                    if (searchPos == input.size() - 1)
-                        return true;
-                    return false;
-                } else
-#else
-                    if (foundToken == token && input[searchPos-1] != '\\') {
-                        if (searchPos == input.size() - 1)
-                            return true;
-                        return false;
-                    }
-#endif
-#if 0
-            }
-#endif
+    while (searchPos != std::string::npos && searchPos < input.size() - 1) {
+        searchPos = input.find_first_of(quote_token, searchPos + 1);
+        if (searchPos == std::string::npos)
+            return false;
+
+        if (input[searchPos - 1] != escape_token) {
+            if (searchPos == input.size() - 1)
+                return true;
+            return false;
         }
     }
 
-    return token == 0;
+    return true;
 }
 
 void
