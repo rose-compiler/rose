@@ -86,7 +86,7 @@ static std::string ExceptionMessage(const std::string &message, const size_t err
 static bool FindQuote(const std::string &input, size_t &start, size_t &end, size_t searchPos = 0);
 static size_t FindNotCited(const std::string &input, char token, size_t &preQuoteCount);
 static size_t FindNotCited(const std::string &input, char token);
-static bool ValidateQuote(const std::string &input);
+static bool ValidateQuote(std::string &input);
 static void CopyNode(const Node &from, Node &to);
 static std::string escapeQuoted(const std::string &key);
 static void AddEscapeTokens(std::string &input, const std::string &tokens);
@@ -2215,8 +2215,10 @@ FindNotCited(const std::string &input, char token) {
     return FindNotCited(input, token, dummy);
 }
 
+
+// Check an input for quote validity and also remove quote escape sequences.
 bool
-ValidateQuote(const std::string &input) {
+ValidateQuote(std::string &input) {
     if (input.size() == 0)
         return true;
 
@@ -2234,13 +2236,38 @@ ValidateQuote(const std::string &input) {
 
     while (searchPos != std::string::npos && searchPos < input.size() - 1) {
         searchPos = input.find_first_of(quote_token, searchPos + 1);
+
+        // The string is unbalanced if there is no terminating quote.
         if (searchPos == std::string::npos)
             return false;
 
-        if (input[searchPos - 1] != escape_token) {
-            if (searchPos == input.size() - 1)
-                return true;
-            return false;
+        // The overall string is balanced if the next quote is at the end.
+        if (searchPos == input.size() - 1)
+            return true;
+
+        /**
+         * There is an interior quote, which is OK as long as it is escaped properly:
+         *      - " is escaped by \, e.g. "foo \" bar";
+         *      - ' is escaped by ', e.g. 'foo '' bar'.
+         *
+         * Notice that the escape character for single quotes is also a single quote.
+         * As a result find_first_of will find the escape character for escaped single quotes.
+         *
+         * */
+
+        if (quote_token == '\"') {
+            if (input[searchPos - 1] != escape_token)
+                return false;
+
+            input.erase(searchPos - 1, 1);
+        }
+
+        if (quote_token == '\'') {
+            if (input[searchPos + 1] != quote_token)
+                return false;
+
+            searchPos++; // skip the escaped quote
+            input.erase(searchPos - 1, 1);
         }
     }
 
