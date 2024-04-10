@@ -755,7 +755,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      std::list<std::string> const & astfiles = project->get_astfiles_in();
      if (astfiles.size() > 0) {
        Rose::AST::IO::load(project, astfiles);
-       ROSE_ASSERT(project->get_ast_merge());
+       ASSERT_require(project->get_ast_merge());
      }
 
      if (project->get_ast_merge()) {
@@ -801,7 +801,7 @@ frontendShell (int argc, char** argv)
    }
 
 SgProject*
-frontendShell (const std::vector<std::string>& argv)
+frontendShell (const std::vector<std::string> &argv)
    {
   // Convert this to a list of strings to simplify editing (adding new option)
      Rose_STL_Container<string> commandLineList = argv;
@@ -813,43 +813,30 @@ frontendShell (const std::vector<std::string>& argv)
 
   // Build the SgProject, but if the above option was used this will only build empty SgFile nodes
      SgProject* project = frontend(commandLineList);
-     ROSE_ASSERT(project != NULL);
+     ASSERT_not_null(project);
 
      project->display("In frontendShell(), after frontend()");
 
-     SgFilePtrList::const_iterator i = project->get_fileList().begin();
-     while (i != project->get_fileList().end())
+     for (auto file : project->get_fileList())
         {
        // Get the local command line so that we can remove the "-rose:skip_rose" option
-          vector<string> local_argv = (*i)->get_originalCommandLineArgumentList();
+          vector<string> local_argv = file->get_originalCommandLineArgumentList();
 
        // Note that we have to remove the "-rose:skip_rose" option that was saved
-          CommandlineProcessing::removeArgs (local_argv,"-rose:skip_rose");
-       // printf ("Remove -rose:skip_rose: argv = \n%s \n",StringUtility::listToString(CommandlineProcessing::generateArgListFromArgcArgv (local_argc,local_argv)).c_str());
-
-          printf ("frontendShell (after): argv = \n%s \n",StringUtility::listToString(commandLineList).c_str());
+          CommandlineProcessing::removeArgs(local_argv, "-rose:skip_rose");
 
        // Set the new commandline (without the "-rose:skip_rose" option)
-          (*i)->set_originalCommandLineArgumentList(local_argv);
+          file->set_originalCommandLineArgumentList(local_argv);
 
        // Things set by "-rose:skip_rose" option, which must be unset (reset to default valees)!
-          (*i)->set_skip_transformation(false);
-          (*i)->set_disable_edg_backend(false);
+          file->set_skip_transformation(false);
+          file->set_disable_edg_backend(false);
 
-       // Leave this set to true so that the frontend can set it if the frontend is called for this SgFile
-       // (*i)->set_skip_unparse(false);
-
-          (*i)->set_useBackendOnly(false);
-          (*i)->set_skipfinalCompileStep(false);
+          file->set_useBackendOnly(false);
+          file->set_skipfinalCompileStep(false);
 
        // Skip all processing of comments
-          (*i)->set_skip_commentsAndDirectives(false);
-       // (*i)->set_collectAllCommentsAndDirectives(false);
-
-       // file->display("After Remove -rose:skip_rose");
-
-       // increment the file list iterator
-          i++;
+          file->set_skip_commentsAndDirectives(false);
         }
 
      return project;
@@ -1893,7 +1880,6 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                  // Usually a global scope or class declaration scope
                     SgDeclarationStatementPtrList& declarationList = scope->getDeclarationList();
                     Rose_STL_Container<SgDeclarationStatement*>::iterator i;
-                 // for (i = declarationList.begin(); (*i) != currentStatement; i++) {}
                     for (i = declarationList.begin(); (i != declarationList.end() && (*i) != currentStatement); i++) {}
                  // now i == currentStatement
 
@@ -1921,7 +1907,6 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                     Rose_STL_Container<SgStatement*>::iterator i;
                  // Liao, 11/18/2009, Handle the rare case that current statement is not found
                  // in its scope's statement list
-                 // for (i = statementList.begin();(*i)!=currentStatement;i++)
                     for (i = statementList.begin(); (*i) != currentStatement && i != statementList.end(); i++)
                        {
                       //  SgStatement* cur_stmt = *i;

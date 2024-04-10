@@ -491,24 +491,24 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
 // PC (4/27/2006): Support for custom source file suffixes
 bool
-CommandlineProcessing::isSourceFilename ( string name )
+CommandlineProcessing::isSourceFilename(string name)
    {
      initSourceFileSuffixList();
 
      int length = name.size();
-     for ( Rose_STL_Container<string>::iterator j = validSourceFileSuffixes.begin(); j != validSourceFileSuffixes.end(); j++ )
+     for (string &suffix : validSourceFileSuffixes)
         {
-          int jlength = (*j).size();
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+          int jlength = suffix.size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
              {
                return true;
              }
         }
 
-     for ( Rose_STL_Container<string>::iterator j = extraCppSourceFileSuffixes.begin(); j != extraCppSourceFileSuffixes.end(); j++ )
+     for (string &suffix : extraCppSourceFileSuffixes)
         {
-          int jlength = (*j).size();
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+          int jlength = suffix.size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
              {
                return true;
              }
@@ -523,10 +523,10 @@ CommandlineProcessing::isObjectFilename ( string name )
      initObjectFileSuffixList();
 
      int length = name.size();
-     for ( Rose_STL_Container<string>::iterator j = validObjectFileSuffixes.begin(); j != validObjectFileSuffixes.end(); j++ )
+     for (string &suffix : validObjectFileSuffixes)
         {
-          int jlength = (*j).size();
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+          int jlength = suffix.size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
              {
                return true;
              }

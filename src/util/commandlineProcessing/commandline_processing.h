@@ -85,8 +85,8 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isObjectFilename ( std::string name );
           ROSE_DLL_API bool isExecutableFilename ( std::string name );
 
-       // DQ (8/20/2008): Added test that will allow bogus exececutable files (marked as .exe but not executable) to pass
-          ROSE_DLL_API bool isValidFileWithExecutableFileSuffixes ( std::string name );
+       // DQ (8/20/2008): Added test that will allow bogus executable files (marked as .exe but not executable) to pass
+          ROSE_DLL_API bool isValidFileWithExecutableFileSuffix ( std::string name );
 
           ROSE_UTIL_API bool isCFileNameSuffix ( const std::string & suffix );
 

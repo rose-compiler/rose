@@ -1459,21 +1459,8 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
                 .skipping(SKIP_STRONG)                  // appears in documentation and is parsed, but treated as skipped
                 .doc("Show the non-Sawyer switch documentation."));
 
-#if 0
-  // DQ (4/10/2017): This is tool specific and should not be a part of the more general ROSE infrastructure support.
-  // Copy this tool's switches into the parser.
-     p.with(tool);
-#endif
-
-  // Parse the command-line, stopping at the first "--" or positional arugment. Return the unparsed stuff so it can be passed
-  // to the next stage.  ROSE's frontend expects arg[0] to be the name of the command, which Sawyer has already processed, so
-  // we need to add it back again.
-
-  // DQ (4/10/2017): Note that we do NOT call the apply function to define an non-destructive first use of Saywer in ROSE command line handling.
-  // std::vector<std::string> remainingArgs = p.parse(argc, argv).apply().unparsedArgs(true);
+  // Note that the apply function is not called
      std::vector<std::string> remainingArgs = p.parse(argv).unparsedArgs(true);
-
-  // remainingArgs.insert(remainingArgs.begin(), argv[0]);
 
 #if ROSE_SAWYER_COMMENT_LINE_DEBUG
   // DEBUGGING [Robb P Matzke 2016-09-27]

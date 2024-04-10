@@ -164,7 +164,7 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
    {
      static bool first_call = true;
 
-     if ( first_call == true )
+     if (first_call == true)
         {
        // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
           validExecutableFileSuffixes.push_back("");
@@ -196,40 +196,31 @@ CommandlineProcessing::isExecutableFilename(string name)
           printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
         }
 
-     ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
-
      int length = name.size();
-     for ( Rose_STL_Container<string>::iterator j = validExecutableFileSuffixes.begin(); j != validExecutableFileSuffixes.end(); j++ )
+     for (string &suffix : validExecutableFileSuffixes)
         {
-          int jlength = (*j).size();
+          int jlength = suffix.size();
 
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
              {
-               bool returnValue = false;
-
             // Open file for reading
-               bool firstBase = isValidFileWithExecutableFileSuffixes(name);
-               if (firstBase == true)
-                  {
+               if (isValidFileWithExecutableFileSuffix(name))
+                 {
                     FILE* f = fopen(name.c_str(), "rb");
                     ASSERT_not_null(f);
 
                  // Check if this is a binary executable file!
-                    int character0 = fgetc(f);
-                    int character1 = fgetc(f);
+                    int char0 = fgetc(f);
+                    int char1 = fgetc(f);
+                    fclose(f);
 
                  // Note that there may be more executable formats that this simple test will not catch.
                  // The first character of an ELF binary is '\177' and for a PE binary it is 'M'
-                    bool secondBase = ( (character0 == 0x7F && character1 == 0x45) || (character0 == 0x4D && character1 == 0x5A) );
-                    if (secondBase == true)
-                       {
-                         returnValue = true;
-                       }
-
-                    fclose(f);
-                  }
-
-               if (returnValue) return true;
+                    bool isExe = (char0 == 0x7F && char1 == 0x45) || (char0 == 0x4D && char1 == 0x5A);
+                    if (isExe) {
+                       return true;
+                    }
+                 }
              }
         }
 
@@ -238,7 +229,7 @@ CommandlineProcessing::isExecutableFilename(string name)
 
 
 bool
-CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
+CommandlineProcessing::isValidFileWithExecutableFileSuffix(string name)
    {
   // DQ (8/20/2008):
   // There may be files that are marked as appearing as an executable but are not
@@ -247,36 +238,18 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
   // counts as source for binary analysis in ROSE).
 
      initExecutableFileSuffixList();
-     ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
-     for ( Rose_STL_Container<string>::iterator j = validExecutableFileSuffixes.begin(); j != validExecutableFileSuffixes.end(); j++ )
+     for (std::string &suffix : validExecutableFileSuffixes)
         {
-          int jlength = (*j).size();
+          int jlength = suffix.size();
 
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
              {
-               bool returnValue = false;
-
-            // Open file for reading
-               if ( boost::filesystem::exists(name.c_str()) )
-                  {
-                    returnValue = true;
-
-                  }
-                 else
-                  {
-                    printf ("Could not open specified input file: %s \n\n",name.c_str());
-
-                 // DQ (8/20/2008): We need to allow this to pass, since Qing's command line processing
-                 // mistakenly treats all the arguments as filenames (and most do not exist as valid files).
-                 // If we can't open the file then I think we should end in an error!
-
-                 // DQ (1/21/2009): This fails for ./binaryReader /home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests//home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel
-                    ROSE_ABORT();
-                  }
-
-               if (returnValue) return true;
+               if (boost::filesystem::exists(name.c_str())) {
+                 // File may be opened file for reading
+                    return true;
+               }
              }
         }
 
@@ -469,10 +442,9 @@ CommandlineProcessing::isOptionTakingThirdParameter( string argument )
      return result;
    }
 
-// DQ (1/16/2008): This function was moved from the commandline_processing.C file to support the debugging specific to binary analysis
 // Build the list of isolated file names from the command line
 Rose_STL_Container<string>
-CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argList, bool binaryMode )
+CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argList, bool binaryMode)
    {
      Rose_STL_Container<string> sourceFileList;
 
@@ -481,49 +453,35 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
   // This was the cause of a bug that contaminated the backend compiler command line for an installation
   // or ROSE for a specific sponsor.
 
-      { // Expand Javac's @argfile since it may contain filenames
-          argList = Rose::Cmdline::Java::ExpandArglist(argList);
-      }
+  // Expand Javac's @argfile since it may contain filenames
+     argList = Rose::Cmdline::Java::ExpandArglist(argList);
 #endif
 
+  // Find out if the command line is a source code compile line
      bool isSourceCodeCompiler = false;
 
-     { //Find out if the command line is a source code compile line
-       Rose_STL_Container<string>::iterator j = argList.begin();
-       // skip the 0th entry since this is just the name of the program (e.g. rose)
-       ROSE_ASSERT(argList.size() > 0);
-       j++;
+  // skip the 0th entry since this is just the name of the program
+     Rose_STL_Container<string>::iterator j = argList.begin();
+     ASSERT_require(argList.size() > 0);
+     j++;
 
-       while ( j != argList.end() )
+     while (j != argList.end())
        {
-
-         if ( (*j).size() ==2 && (((*j)[0] == '-') && ( ((*j)[1] == 'o')  ) ) )
+         string &arg = *j;
+         if (arg.size() == 2 && arg[0] == '-' && arg[1] == 'o')
          {
            isSourceCodeCompiler = true;
-           //std::cout << "Set isSourceCodeCompiler " << *j << std::endl;
            break;
          }
          j++;
-
        }
 
-
-     }
-
-
+  // skip the 0th entry since this is just the name of the program
      Rose_STL_Container<string>::iterator i = argList.begin();
-
-
-     if (SgProject::get_verbose() > 1)
-        {
-          printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
-        }
-
-  // skip the 0th entry since this is just the name of the program (e.g. rose)
-     ROSE_ASSERT(argList.size() > 0);
+     ASSERT_require(argList.size() > 0);
      i++;
 
-     while ( i != argList.end() )
+     while (i != argList.end())
         {
        // Count up the number of filenames (if it is ZERO then this is likely a
        // link line called using the compiler (required for template processing
@@ -534,44 +492,47 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // most options appear as -<option>
        // have to process +w2 (warnings option) on some compilers so include +<option>
 
-       // DQ (1/5/2008): Ignore things that would be obvious options using a "-" or "+" prefix.
-          if ( (*i).empty() || (((*i)[0] != '-') && ((*i)[0] != '+')) )
-             {
-                 if (!isSourceFilename(*i) &&
-                     (binaryMode || !isObjectFilename(*i)) &&
-                     (binaryMode || isExecutableFilename(*i))) {
-                     if(isSourceCodeCompiler == false || binaryMode == true)
-                         sourceFileList.push_back(*i);
-                     goto incrementPosition;
-                  }
+          const string &arg = *i;
 
-            // PC (4/27/2006): Support for custom source file suffixes
-               if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )
-                  {
-                    sourceFileList.push_back(*i);
+       // Ignore things that would be obvious options using a "-" or "+" prefix.
+          if ( arg.empty() || ((arg[0] != '-') && (arg[0] != '+')) )
+            {
+               if (!isSourceFilename(arg) &&
+                       (binaryMode || !isObjectFilename(arg)) &&
+                       (binaryMode || isExecutableFilename(arg)))
+                 {
+                    if (isSourceCodeCompiler == false || binaryMode == true) {
+                       sourceFileList.push_back(arg);
+                    }
                     goto incrementPosition;
-                  }
-               if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
-                  {
-                    if(isSourceCodeCompiler == false || binaryMode == true)
-                      sourceFileList.push_back(*i);
+                 }
+
+            // Support custom source file suffixes
+               if (!isObjectFilename(arg) && isSourceFilename(arg))
+                 {
+                    sourceFileList.push_back(arg);
                     goto incrementPosition;
+                 }
+               if (!isObjectFilename(arg) && !isSourceFilename(arg) && isValidFileWithExecutableFileSuffix(arg))
+                 {
+                    if (isSourceCodeCompiler == false || binaryMode == true) {
+                      sourceFileList.push_back(arg);
+                    }
+                    goto incrementPosition;
+                 }
+            }
 
-                  }
-             }
-
-       // DQ (12/8/2007): Looking for rose options that take filenames that would accidentally be considered as source files.
-          if (isOptionTakingSecondParameter(*i) == true)
-             {
-               if (isOptionTakingThirdParameter(*i) == true)
-                  {
+       // Look for rose options that take filenames that would accidentally be considered as source files.
+          if (isOptionTakingSecondParameter(arg))
+            {
+               if (isOptionTakingThirdParameter(arg))
+                 {
                  // Jump over the next argument when such options are identified.
                     i++;
-                  }
-
+                 }
             // Jump over the next argument when such options are identified.
                i++;
-             }
+            }
 
 incrementPosition:
 
@@ -1417,7 +1378,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
   // DQ (1/30/2014): Added support to supress constant folding post-processing step (a performance problem on specific file of large applications).
      set_suppressConstantFoldingPostProcessing(false);
-     ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == false);
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(suppressConstantFoldingPostProcessing)",true) == true )
         {
           printf ("Using -rose:suppressConstantFoldingPostProcessing \n");
@@ -1559,12 +1519,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 //------------------------------------------------------------------------------
 std::vector<std::string>
 Rose::Cmdline::
-NormalizeIncludePathOptions (std::vector<std::string>& argv)
+NormalizeIncludePathOptions (std::vector<std::string> &argv)
 {
   std::vector<std::string> r_argv;
 
   bool looking_for_include_path_arg = false;
-  for (std::string arg : argv)
+  for (string &arg : argv)
   {
       // Must be first since there could be, for example, "-I -I",
       // in which case, the else if branch checking for -I would
@@ -2207,12 +2167,10 @@ void
 Rose::Cmdline::Java::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
-  if (SgProject::get_verbose() > 1)
-  {
-      std::cout
-          << "[INFO] Processing Java commandline options: "
-          << CommandlineProcessing::generateStringFromArgList(argv, true, false)
-          << std::endl;
+  if (SgProject::get_verbose() > 1) {
+      mlog[INFO] << "Processing Java commandline options: "
+                 << CommandlineProcessing::generateStringFromArgList(argv, true, false)
+                 << "\n";
   }
 
   Cmdline::Java::ProcessJavaOnly(project, argv);

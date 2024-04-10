@@ -12950,7 +12950,6 @@ Sg_File_Info::get_physical_file_id() const
    }
 
 
-#if 1
 // DQ (5/20/2021): Added to support debugging.
 int*
 Sg_File_Info::get_physical_file_id_reference()
@@ -12959,7 +12958,6 @@ Sg_File_Info::get_physical_file_id_reference()
 
      return &p_physical_file_id;
    }
-#endif
 
 
 int
@@ -14435,13 +14433,6 @@ SgFile::initialization()
      p_exit_after_parser = false;
 
      p_skip_parser = false;
-
-  // DQ (1/4/2008): gFortran versions greater than 4.1 have bugs that prevent it from
-  // being used to to syntax checking on Fortran 2003 applications.  To allow Fortran
-  // 2003 applications to be processed the syntax checking step done in ROSE using
-  // that backend compiler (typically gfortran) needs to be skipped.  ROSE it self can
-  // handle the Fortran 2003 code, but can not yet do sufficent syntax checking to
-  // report errors in illegal Fortran 2003 code.
      p_skip_syntax_check = false;
 
   // After higher level ASTs are build optionally apply transformations
@@ -16147,16 +16138,13 @@ SgProject::SgProject( const SgProject & project )
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(this != NULL);
-
+     ASSERT_not_null(this);
      initialization();
 
-  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
-  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // DQ (9/18/2011): Added support to use frontend specific constant folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in their frontends.  We use to support
   // the original expression tree in the AST, and this provided both the constant folded value and
-  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
-  // mprintf ("In SgProject(int argc,char** argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+  // the original expression tree, but this was a problem for analysis (which tended to mix them together).
      p_frontendConstantFolding = frontendConstantFolding;
 
      std::vector<std::string> argvList(argv, argv + argc);
@@ -16167,16 +16155,13 @@ SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(this != NULL);
-
+     ASSERT_not_null(this);
      initialization();
 
-  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
-  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // DQ (9/18/2011): Added support to use frontend specific constant folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in their frontends.  We use to support
   // the original expression tree in the AST, and this provided both the constant folded value and
-  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
-  // mprintf ("In SgProject(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+  // the original expression tree, but this was a problem for analysis (which tended to mix them together).
      p_frontendConstantFolding = frontendConstantFolding;
 
      int errorCode = parse(argv);
@@ -16460,10 +16445,8 @@ SgProject::get_file ( int i ) const
    }
 
 void
-SgProject::set_file ( SgFile & file )
+SgProject::set_file(SgFile &file)
    {
-  // assert (p_fileList != NULL);
-
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.push_back(&file);
 #else
@@ -16473,9 +16456,6 @@ SgProject::set_file ( SgFile & file )
   // DQ (1/25/2010): Set the parent of the file to point to the list (this is a change and may break some code).
   // But it is consistant within ROSE for how we handle list objects in the IR.
      file.set_parent(p_fileList_ptr);
-
-  // mprintf ("Exiting since this is not finished. \n");
-  // assert(false);
 #endif
 
      assert (numberOfFiles() > 0);
