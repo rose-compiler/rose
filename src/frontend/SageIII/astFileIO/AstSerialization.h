@@ -3,6 +3,7 @@
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
+#include <SgNode.h>
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
 #include <Rose/AST/Utils.h>
 

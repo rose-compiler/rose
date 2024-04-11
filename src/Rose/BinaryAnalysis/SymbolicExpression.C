@@ -1,18 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#define __STDC_LIMIT_MACROS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Rose/CommandLine.h>
+#include <Combinatorics.h>                              // rose
+#include <integerOps.h>                                 // rose
+#include <stringify.h>                                  // rose
+
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
-#include <Combinatorics.h>
-#include <Rose/CommandLine.h>
-#include <integerOps.h>
-#include <stringify.h>
+
 #include <sstream>
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB

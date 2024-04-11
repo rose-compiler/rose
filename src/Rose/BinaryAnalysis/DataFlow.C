@@ -1,10 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-
-#include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/DataFlow.h>
+
+#include <Rose/AST/Traversal.h>
 #include <Rose/Diagnostics.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmInstruction.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -37,7 +39,7 @@ DataFlow::init(const BaseSemantics::Dispatcher::Ptr &userDispatcher) {
 
 std::vector<SgAsmInstruction*>
 DataFlow::DefaultVertexUnpacker::operator()(SgAsmBlock *blk) {
-    return SageInterface::querySubTree<SgAsmInstruction>(blk);
+    return AST::Traversal::findDescendantsTyped<SgAsmInstruction>(blk);
 }
 
 DataFlow::Graph

@@ -41,7 +41,7 @@ public:
 private:
     Architecture::BaseConstPtr architecture_;           // required architecture
     Disassembler::BasePtr disassembler_;                // disassembler_ is non-null iff memMap_ is non-null
-    MemoryMap::Ptr memMap_;                             // optional map from which instructions are decoded if disassembler_
+    MemoryMapPtr memMap_;                               // optional map from which instructions are decoded if disassembler_
     mutable InsnMap insnMap_;                           // this is a cache
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -94,7 +94,7 @@ private:
 private:
     InstructionProvider();                              // used only by boost::serialization
 protected:
-    InstructionProvider(const Architecture::BaseConstPtr&, const MemoryMap::Ptr &map);
+    InstructionProvider(const Architecture::BaseConstPtr&, const MemoryMapPtr &map);
 
 public:
     ~InstructionProvider();
@@ -108,7 +108,7 @@ public:
      *  execute permission.  Any readable/nonwritable segments will be considered to be constant for the life of the specimen.  For
      *  instance, if a linking step has initialized the dynamic linking tables then those tables can be marked as readable and
      *  non-writable so that indirect jumps through the table will result in concrete execution addresses. */
-    static Ptr instance(const Architecture::BaseConstPtr&, const MemoryMap::Ptr&);
+    static Ptr instance(const Architecture::BaseConstPtr&, const MemoryMapPtr&);
 
     /** Enable or disable the disassembler.
      *

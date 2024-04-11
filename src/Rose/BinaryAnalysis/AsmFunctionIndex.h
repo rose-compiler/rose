@@ -4,12 +4,14 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <RoseFirst.h>
 
+#include <Rose/Diagnostics.h>
+#include <callbacks.h>                                  // rose
+
+#include <SgAsmFunction.h>
+
 #include <algorithm>
 #include <ostream>
 #include <vector>
-
-#include "callbacks.h"
-#include <Rose/Diagnostics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -159,9 +161,7 @@ public:
         bool unique(SgAsmFunction *a, SgAsmFunction *b) {
             return val(a) != val(b);
         }
-        size_t val(SgAsmFunction *x) {
-            return SageInterface::querySubTree<SgAsmInstruction>(x).size();
-        }
+        size_t val(SgAsmFunction*);
     };
 
     /** Functor for sorting by number of bytes in function. Bytes are counted only once no matter in how many overlapping

@@ -1,7 +1,8 @@
 #include <featureTests.h>
-#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionCache.h>
+
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 namespace Rose {

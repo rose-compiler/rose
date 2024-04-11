@@ -1,23 +1,27 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 
-#include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Sawyer/BitVector.h>
-#include <Sawyer/Map.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
-#include <integerOps.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
 #include <rose_strtoull.h>
-#include <sstream>
 #include <ROSE_ASSERT.h>
+#include <integerOps.h>                                 // rose
+
+#include <Sawyer/BitVector.h>
+#include <Sawyer/Map.h>
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+
+#include <sstream>
 
 using namespace Sawyer::Message::Common;
 

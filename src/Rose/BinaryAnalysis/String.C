@@ -1,7 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/String.h>
+
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
 
 #include <Sawyer/ProgressBar.h>
 

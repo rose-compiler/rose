@@ -1,7 +1,9 @@
-#include <sage3basic.h>
 #include <Rose/Yaml.h>
 
+#include <Sawyer/Assert.h>
+#include <boost/filesystem.hpp>
 #include <nlohmann/json.h>
+#include <fstream>
 
 namespace Rose {
 namespace Yaml {

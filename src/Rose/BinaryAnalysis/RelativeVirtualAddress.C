@@ -1,7 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericSection.h>
+#include <SgAsmGenericString.h>
+
+#include <Sawyer/Assert.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

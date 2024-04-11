@@ -1,17 +1,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-
-#include <rose_isnan.h>
-
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
-#include <Combinatorics.h>
+
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <EditDistance/LinearEditDistance.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <ROSE_UNUSED.h>
+#include <rose_isnan.h>
+#include <Combinatorics.h>                              // rose
+#include <EditDistance/LinearEditDistance.h>            // rose
 
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>

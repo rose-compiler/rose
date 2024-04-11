@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -11,7 +10,7 @@
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
-#include <AsmUnparser_compat.h>
+#include <SgAsmInstruction.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

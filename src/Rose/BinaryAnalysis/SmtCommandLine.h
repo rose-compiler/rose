@@ -4,6 +4,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Sawyer/CommandLine.h>
+
 #include <iostream>
 #include <string>
 

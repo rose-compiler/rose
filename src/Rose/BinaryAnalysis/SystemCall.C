@@ -4,10 +4,12 @@
 #include <Rose/BinaryAnalysis/SystemCall.h>
 
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
-#include <boost/lexical_cast.hpp>
-#include <fstream>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <fstream>
 #include <string>
 
 namespace Rose {

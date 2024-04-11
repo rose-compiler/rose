@@ -14,6 +14,8 @@ std::string escapeString(const std::string & s) {
 // need to process '\n' to "\n" and this behavior is still preserved.
 // Test codes demonstrating this are in test2014_83-87.c.
 
+// See also, Rose::StringUtility::cEscape.
+
   std::string result;
   for (size_t i = 0; i < s.length(); ++i) 
   {
@@ -84,6 +86,7 @@ std::string escapeString(const std::string & s) {
   return result;
 }
 
+// See also, Rose::StringUtility::cUnescape
 std::string unescapeString(const std::string& s) {
   std::string result;
   for (size_t i = 0; i < s.length(); ++i) {

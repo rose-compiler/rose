@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-#include "ByteOrder.h"
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BitOps.h>
 

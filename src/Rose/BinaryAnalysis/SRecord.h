@@ -3,6 +3,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Address.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+
+#include <Sawyer/Optional.h>
+
+#include <ostream>
+#include <string>
+#include <vector>
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -113,7 +123,7 @@ public:
      *  exist if referenced by the specified @p map.
      *
      *  The return value is the set of addresses that were added to the @p map. */
-    static AddressIntervalSet createSegments(const std::vector<SRecord>&, const MemoryMap::Ptr &map, rose_addr_t alignment,
+    static AddressIntervalSet createSegments(const std::vector<SRecord>&, const MemoryMapPtr &map, rose_addr_t alignment,
                                              unsigned accessPermissions, const std::string &segmentName,
                                              MemoryMap::Clobber clobber);
 
@@ -122,18 +132,18 @@ public:
      *  The data from the specified S-Records are loaded into the specified memory map. The map must contains segments at all
      *  S-Record addresses or else a @ref MemoryMap::NotMapped exception is thrown. The return value is the execution starting
      *  address contained in the S-Records, if any. */
-    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMap::Ptr&);
+    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMapPtr&);
 
     /** Load S-Records into a memory map, creating segments if necessary.
      *
      *  This is a convenience function that calls @ref createSegments in order to create any necessary segments in the memory
      *  map, and then calls the two-argument version of @ref load in order to load the S-Record data into those segments. Therefore,
      *  the arguments are the union of the arguments for those two functions. */
-    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMap::Ptr&, rose_addr_t alignment,
+    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMapPtr&, rose_addr_t alignment,
                                                unsigned accessPerms, const std::string &name, MemoryMap::Clobber);
 
     /** Create S-Records from a memory map. */
-    static std::vector<SRecord> create(const MemoryMap::Ptr&, Syntax, size_t bytesPerRecord=28, size_t preferredAddrSize=4);
+    static std::vector<SRecord> create(const MemoryMapPtr&, Syntax, size_t bytesPerRecord=28, size_t preferredAddrSize=4);
 
     /** Convert an S-Record to a string. */
     std::string toString() const;

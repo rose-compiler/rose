@@ -1,9 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 
-#include "stringify.h"
+#include <stringify.h>                                  // rose
+
 #include <sstream>
 
 namespace Rose {

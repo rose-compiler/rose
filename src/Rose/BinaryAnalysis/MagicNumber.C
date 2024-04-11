@@ -1,12 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/MagicNumber.h>
+
+#include <Rose/Diagnostics.h>
+#include <Rose/FileSystem.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
-#include <Rose/Diagnostics.h>
-#include <Rose/FileSystem.h>
 
 #ifdef ROSE_HAVE_LIBMAGIC
 #include <magic.h>                                      // part of libmagic

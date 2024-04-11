@@ -1,7 +1,6 @@
 /* Functions that produce output reminiscent of the Unix "hexdump" command. */
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Hexdump.h>
 
 #include <boost/format.hpp>

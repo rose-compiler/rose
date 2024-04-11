@@ -1,13 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-
-#include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
+
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
-#include <Combinatorics.h>
-#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
@@ -19,10 +16,13 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
-#include <Sawyer/GraphAlgorithm.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/CommandLine.h>
+#include <Combinatorics.h>                              // rose
+
+#include <Sawyer/GraphAlgorithm.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>

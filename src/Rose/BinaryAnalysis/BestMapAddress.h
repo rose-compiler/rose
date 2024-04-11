@@ -193,9 +193,9 @@ public:
      *
      *  Runs the BestMapAddress repeatedly on the specified memory map in order to create a new map with the executable regions
      *  of the input map moved to better addresses. */
-    static MemoryMap::Ptr align(const MemoryMap::Ptr&,
-                                const Partitioner2::Engine::Settings &settings = Partitioner2::Engine::Settings(),
-                                const Progress::Ptr &progress = Progress::Ptr());
+    static MemoryMapPtr align(const MemoryMapPtr&,
+                              const Partitioner2::Engine::Settings &settings = Partitioner2::Engine::Settings(),
+                              const Progress::Ptr &progress = Progress::Ptr());
 };
 
 } // namespace

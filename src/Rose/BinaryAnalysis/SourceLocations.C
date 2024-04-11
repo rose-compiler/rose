@@ -1,7 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // needed for Sg_File_Info constructor
 #include <Rose/BinaryAnalysis/SourceLocations.h>
+
+#include <Rose/AST/Traversal.h>
+#include <Rose/SourceLocation.h>
+#include <Rose/StringUtility/NumberToString.h>
+
+#include <SgAsmDwarfLine.h>
+#include <SgAsmDwarfLineList.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -139,19 +146,12 @@ SourceLocations::clear() {
 void
 SourceLocations::insertFromDebug(SgNode *ast) {
     // No lock necessary since we call synchronized insert.
-    struct T: AstSimpleProcessing {
-        SourceLocations *self;
-        T(SourceLocations *self): self(self) {}
-        void visit(SgNode *node) override {
-            if (SgAsmDwarfLineList *ll = isSgAsmDwarfLineList(node)) {
-                for (SgAsmDwarfLine *line: ll->get_line_list()) {
-                    SourceLocation src(Sg_File_Info::getFilenameFromID(line->get_file_id()), line->get_line());
-                    self->insert(src, line->get_address());
-                }
-            }
+    AST::Traversal::forwardPre<SgAsmDwarfLineList>(ast, [this](SgAsmDwarfLineList *ll) {
+        for (SgAsmDwarfLine *line: ll->get_line_list()) {
+            SourceLocation src(Sg_File_Info::getFilenameFromID(line->get_file_id()), line->get_line());
+            insert(src, line->get_address());
         }
-    } visitor(this);
-    visitor.traverse(ast, preorder);
+    });
 }
 
 void

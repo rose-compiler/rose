@@ -4,14 +4,17 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/DataFlowSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/Exception.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/StringUtility/Convert.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/NumberToString.h>
 
-#include <boost/lexical_cast.hpp>
-#include <list>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/DistinctList.h>
+#include <boost/lexical_cast.hpp>
+#include <list>
 #include <sstream>
 #include <string>
 #include <vector>

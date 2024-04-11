@@ -1,15 +1,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <Rose/BinaryAnalysis/Hexdump.h>
+#include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FileSystem.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/SRecord.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -21,6 +24,7 @@
 #ifndef BOOST_WINDOWS
 # include <fcntl.h>                                     // for open()
 # include <sys/ptrace.h>                                // for ptrace()
+# include <sys/stat.h>                                  // for stat()
 # include <sys/wait.h>                                  // for waitpid()
 # include <unistd.h>                                    // for access()
 #endif
@@ -131,7 +135,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
 
     if (!segment.name().empty()) {
         static const size_t limit = 100;
-        std::string name = escapeString(segment.name());
+        std::string name = StringUtility::cEscape(segment.name());
         if (name.size()>limit)
             name = name.substr(0, limit-3) + "...";
         s += " " + name;

@@ -3,6 +3,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Sawyer/Map.h>
+#include <boost/filesystem.hpp>
+#include <string>
+#include <vector>
+
 namespace Rose {
 namespace BinaryAnalysis {
 

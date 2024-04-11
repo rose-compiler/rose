@@ -1,5 +1,6 @@
 #ifndef ROSE_Callbacks_H
 #define ROSE_Callbacks_H
+#include <Rose/Constants.h>
 
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>

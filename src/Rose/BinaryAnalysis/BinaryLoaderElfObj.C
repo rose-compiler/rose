@@ -1,9 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
+
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+
+#include <SgAsmElfFileHeader.h>
+#include <SgAsmElfSection.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericString.h>
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -69,7 +75,7 @@ BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::P
                                             resolve_p);
 
     if (section->get_containsCode() && section->get_size() > 0) {
-        SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(section);
+        SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(section);
         rose_addr_t baseVa = header ? header->get_baseVa() : 0;
 
         /* We don't need to worry about file alignment because the Unix loader isn't going to ever be mapping this object file

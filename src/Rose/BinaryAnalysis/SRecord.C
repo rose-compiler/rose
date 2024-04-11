@@ -1,14 +1,17 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/SRecord.h>
 
 #include <Rose/Diagnostics.h>
-#include <Rose/StringUtility.h>
-#include "integerOps.h"
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
+#include <Rose/StringUtility/StringToNumber.h>
+#include <rose_getline.h>
+#include <integerOps.h>                                 // rose
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
-#include <rose_getline.h>
 
 using namespace Rose::Diagnostics;
 

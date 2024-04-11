@@ -61,40 +61,27 @@ public:
         /** @} */
 
         /** Returns the symbol section (.dynsym) where this symbol was defined. */
-        SgAsmElfSymbolSection* getSection() const {
-            SgAsmElfSymbolSection *retval = SageInterface::getEnclosingNode<SgAsmElfSymbolSection>(symbol_);
-            ASSERT_not_null(retval);
-            return retval;
-        }
+        SgAsmElfSymbolSection* getSection() const;
 
         /** Returns the version string of this symbol. The empty string is returned if the symbol has no associated version. */
         std::string getVersion() const;
 
         /** Returns the name of this symbol. */
-        std::string getName() const {
-            return symbol_->get_name()->get_string();
-        }
+        std::string getName() const;
 
         /** Returns the full, versionioned name of this symbol. Used for debugging. */
         std::string getVersionedName() const;
 
         /** Property: Version pointer for this symbol. */
-        void versionEntry(SgAsmElfSymverEntry *entry) {
-            versionEntry_ = entry;
-        }
+        void versionEntry(SgAsmElfSymverEntry*);
 
         /** Property: Version definition of this symbol.
          *
          *  The definition flags must be zero or VER_FLG_BASE.
          *
          * @{ */
-        SgAsmElfSymverDefinedEntry* versionDef() const {
-            return versionDef_;
-        }
-        void versionDef(SgAsmElfSymverDefinedEntry* def) {
-            ROSE_ASSERT(def->get_flags() == 0 || def->get_flags() == VER_FLG_BASE);
-            versionDef_ = def;
-        }
+        SgAsmElfSymverDefinedEntry* versionDef() const;
+        void versionDef(SgAsmElfSymverDefinedEntry*);
         /** @} */
 
         /** Property: The version requirement of this symbol.
@@ -102,13 +89,8 @@ public:
          *  The requirement flags must be zero or VER_FLG_WEAK.
          *
          * @{ */
-        SgAsmElfSymverNeededAux* versionNeed() const {
-            return versionNeed_;
-        }
-        void versionNeed(SgAsmElfSymverNeededAux* need) {
-            ROSE_ASSERT(need->get_flags() == 0 || need->get_flags() == VER_FLG_WEAK);
-            versionNeed_ = need;
-        }
+        SgAsmElfSymverNeededAux* versionNeed() const;
+        void versionNeed(SgAsmElfSymverNeededAux*);
         /** @} */
 
         /** Print used by operator<<. */
@@ -126,14 +108,10 @@ public:
         std::vector<VersionedSymbol> versions_;
     public:
         /** Returns the base version. */
-        const VersionedSymbol &getVSymbol() const {
-            return getBaseVersion();
-        }
+        const VersionedSymbol &getVSymbol() const;
 
         /** Returns the ELF symbol from the base version. */
-        SgAsmElfSymbol *getSymbol() const {
-            return getVSymbol().symbol();
-        }
+        SgAsmElfSymbol *getSymbol() const;
 
         /** Find definition of symbol. The specified versioned symbol is probably a symbol referenced by a relocation. This
          *  method will scan the list of definitions in this SymbolEntryMap and return the first (only) symbol that has the
@@ -141,9 +119,7 @@ public:
         VersionedSymbol getVSymbol(const VersionedSymbol &version) const;
 
         /** Returns the section where the base version symbol was defined. */
-        SgAsmElfSymbolSection *getSection() const {
-            return getVSymbol().getSection();
-        }
+        SgAsmElfSymbolSection *getSection() const;
 
         /** Add an additional versioned symbol to this entry.  An entry can have only one base definition and an assertion
          *  will if an attempt is made to add a second base definition. */
@@ -156,10 +132,7 @@ public:
         void dump(FILE*, const char *prefix) const ;
 
     private:
-        const VersionedSymbol& getBaseVersion() const {
-            ASSERT_forbid(versions_.empty());
-            return versions_.front();
-        }
+        const VersionedSymbol& getBaseVersion() const;
     };
 
     /** A mapping from symbol name (with optional version in parentheses) to SymbolMapEntry. */

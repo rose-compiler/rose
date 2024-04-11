@@ -827,7 +827,7 @@ SgAsmGenericSection::dumpContainingSections(FILE *f, const std::string &prefix, 
         if (s->isMapped() && rva>=s->get_mappedPreferredRva() && rva<s->get_mappedPreferredRva()+s->get_mappedSize()) {
             rose_addr_t offset = rva - s->get_mappedPreferredRva();
             fprintf(f, "%-*s   is 0x%08" PRIx64 " (%" PRIu64 ") bytes into section [%d] \"%s\"\n",
-                    DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->get_string(true).c_str());
+                    (int)DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->get_string(true).c_str());
         }
     }
 }

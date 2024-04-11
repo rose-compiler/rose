@@ -1,9 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <sage3basic.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
@@ -11,6 +11,13 @@
 #include <Rose/BinaryAnalysis/Dwarf/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
+
+#include <SgAsmGenericDLL.h>
+#include <SgAsmGenericFile.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmInterpretation.h>
 
 using namespace Rose::Diagnostics;
 

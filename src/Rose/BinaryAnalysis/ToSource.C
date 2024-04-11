@@ -11,7 +11,8 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
-#include <AsmUnparser_compat.h>
+#include <SgAsmInstruction.h>
+#include <Cxx_GrammarDowncast.h>
 
 #include <boost/algorithm/string/replace.hpp>
 
@@ -248,7 +249,7 @@ BinaryToSource::emitEffects(std::ostream &out) {
 void
 BinaryToSource::emitInstruction(SgAsmInstruction *insn, std::ostream &out) {
     ASSERT_not_null(insn);
-    out <<"                /* "<<unparseInstruction(insn) <<" */\n";
+    out <<"                /* "<<insn->toString() <<" */\n";
     if (settings_.traceInsnExecution)
         out <<"                fputs("
             <<"\"" <<StringUtility::cEscape(insn->toString()) <<"\\n\""

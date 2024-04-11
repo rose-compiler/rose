@@ -5,6 +5,9 @@
 
 #include <Rose/BinaryAnalysis/Address.h>
 
+#include <sageContainer.h>
+
+#include <map>
 #include <ostream>
 #include <string>
 #include <stdio.h>

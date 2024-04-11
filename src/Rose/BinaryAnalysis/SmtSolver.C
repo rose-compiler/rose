@@ -1,12 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 
-#include "rose_getline.h"
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
+#include <rose_getline.h>
+#include <Combinatorics.h>                              // rose
+
+#include <Sawyer/FileSystem.h>
+#include <Sawyer/LineVector.h>
+#include <Sawyer/Stopwatch.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
@@ -14,10 +21,9 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/tuple/tuple.hpp>
-#include <fcntl.h> /*for O_RDWR, etc.*/
-#include <Sawyer/FileSystem.h>
-#include <Sawyer/LineVector.h>
-#include <Sawyer/Stopwatch.h>
+
+#include <fcntl.h>                                      // for O_RDWR, etc.
+#include <sys/stat.h>                                   // for stat
 
 // Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
 #define NO_SOLVER SmtSolverPtr()
@@ -700,7 +706,7 @@ SmtSolver::checkExe() {
         generateFile(tmpfile.stream(), exprs, &defns);
         tmpfile.stream().close();
         struct stat sb;
-        int status __attribute__((unused)) = stat(tmpfile.name().string().c_str(), &sb);
+        int status __attribute__((unused)) = ::stat(tmpfile.name().string().c_str(), &sb);
         ASSERT_require(status>=0);
         stats.input_size += sb.st_size;
         stats.prepareTime += prepareTimer.stop();

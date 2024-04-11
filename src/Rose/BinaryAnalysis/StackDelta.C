@@ -10,9 +10,9 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
+#include <integerOps.h>                                 // rose
 
 #include <Sawyer/ProgressBar.h>
-#include <integerOps.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -1,16 +1,51 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
-#include <Rose/Diagnostics.h>
-#include "integerOps.h"                 /* needed for signExtend() */
+
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
+#include "integerOps.h"                 /* needed for signExtend() */
 
-#include <fstream>
+#include <SgAsmElfDynamicEntry.h>
+#include <SgAsmElfDynamicEntryList.h>
+#include <SgAsmElfDynamicSection.h>
+#include <SgAsmElfFileHeader.h>
+#include <SgAsmElfRelocEntry.h>
+#include <SgAsmElfRelocEntryList.h>
+#include <SgAsmElfRelocSection.h>
+#include <SgAsmElfSectionTableEntry.h>
+#include <SgAsmElfSymbol.h>
+#include <SgAsmElfSymbolList.h>
+#include <SgAsmElfSymbolSection.h>
+#include <SgAsmElfSymverDefinedAux.h>
+#include <SgAsmElfSymverDefinedAuxList.h>
+#include <SgAsmElfSymverDefinedEntry.h>
+#include <SgAsmElfSymverDefinedEntryList.h>
+#include <SgAsmElfSymverDefinedSection.h>
+#include <SgAsmElfSymverEntry.h>
+#include <SgAsmElfSymverEntryList.h>
+#include <SgAsmElfSymverNeededAux.h>
+#include <SgAsmElfSymverNeededAuxList.h>
+#include <SgAsmElfSymverNeededEntry.h>
+#include <SgAsmElfSymverNeededEntryList.h>
+#include <SgAsmElfSymverNeededSection.h>
+#include <SgAsmElfSymverSection.h>
+#include <SgAsmGenericFile.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmInterpretation.h>
+#include <Cxx_GrammarDowncast.h>
+
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
+
+#include <fstream>
 
 using namespace Sawyer::Message;
 
@@ -485,6 +520,45 @@ BinaryLoaderElf::VersionedSymbol::getVersionedName() const {
     return name;
 }
 
+SgAsmElfSymbolSection*
+BinaryLoaderElf::VersionedSymbol::getSection() const {
+    auto retval = AST::Traversal::findParentTyped<SgAsmElfSymbolSection>(symbol_);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+std::string
+BinaryLoaderElf::VersionedSymbol::getName() const {
+    return symbol_->get_name()->get_string();
+}
+
+void
+BinaryLoaderElf::VersionedSymbol::versionEntry(SgAsmElfSymverEntry *entry) {
+    versionEntry_ = entry;
+}
+
+SgAsmElfSymverDefinedEntry*
+BinaryLoaderElf::VersionedSymbol::versionDef() const {
+    return versionDef_;
+}
+
+void
+BinaryLoaderElf::VersionedSymbol::versionDef(SgAsmElfSymverDefinedEntry* def) {
+    ASSERT_require(def->get_flags() == 0 || def->get_flags() == VER_FLG_BASE);
+    versionDef_ = def;
+}
+
+SgAsmElfSymverNeededAux*
+BinaryLoaderElf::VersionedSymbol::versionNeed() const {
+    return versionNeed_;
+}
+
+void
+BinaryLoaderElf::VersionedSymbol::versionNeed(SgAsmElfSymverNeededAux* need) {
+    ASSERT_require(need->get_flags() == 0 || need->get_flags() == VER_FLG_WEAK);
+    versionNeed_ = need;
+}
+
 void
 BinaryLoaderElf::VersionedSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const {
     char p[4096];
@@ -610,6 +684,27 @@ BinaryLoaderElf::SymbolMapEntry::merge(const SymbolMapEntry& newEntry) {
             versions_.push_back(newSymbol);
         }
     }
+}
+
+const BinaryLoaderElf::VersionedSymbol&
+BinaryLoaderElf::SymbolMapEntry::getVSymbol() const {
+    return getBaseVersion();
+}
+
+SgAsmElfSymbol*
+BinaryLoaderElf::SymbolMapEntry::getSymbol() const {
+    return getVSymbol().symbol();
+}
+
+SgAsmElfSymbolSection*
+BinaryLoaderElf::SymbolMapEntry::getSection() const {
+    return getVSymbol().getSection();
+}
+
+const BinaryLoaderElf::VersionedSymbol&
+BinaryLoaderElf::SymbolMapEntry::getBaseVersion() const {
+    ASSERT_forbid(versions_.empty());
+    return versions_.front();
 }
 
 void
@@ -821,7 +916,7 @@ BinaryLoaderElf::fixupInfoRelocSymbol(SgAsmElfRelocEntry *reloc, const SymverRes
     }
 
     /* Look up symbol referenced by the relocation entry */
-    SgAsmElfSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
+    SgAsmElfSection *reloc_section = AST::Traversal::findParentTyped<SgAsmElfSection>(reloc);
     ASSERT_not_null(reloc_section);
     SgAsmElfSymbolSection* symbol_section = isSgAsmElfSymbolSection(reloc_section->get_linkedSection());
     ASSERT_not_null(symbol_section);
@@ -865,7 +960,7 @@ BinaryLoaderElf::fixupInfoRelocSymbol(SgAsmElfRelocEntry *reloc, const SymverRes
 rose_addr_t
 BinaryLoaderElf::fixupInfoTargetVa(SgAsmElfRelocEntry *reloc, SgAsmGenericSection **section_p, rose_addr_t *adj_p) {
     Stream trace(mlog[TRACE]);
-    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(reloc);
     SgAsmGenericSection *section = findSectionByPreferredVa(header, reloc->get_r_offset());
     if (!section) {
         trace <<"    target: no suitable section at preferred va " <<StringUtility::addrToString(reloc->get_r_offset()) <<"\n";
@@ -904,7 +999,7 @@ BinaryLoaderElf::fixupInfoSymbolVa(SgAsmElfSymbol *symbol, SgAsmGenericSection *
         return 0;
     }
 
-    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(symbol);
+    SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(symbol);
     SgAsmGenericSection *section = findSectionByPreferredVa(header, symbol->get_value());
     if (!section) {
         trace <<"    symbol: no suitable section at preferred va " <<StringUtility::addrToString(symbol->get_value()) <<"\n";
@@ -935,7 +1030,7 @@ BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_v
                                  size_t nbytes) {
     Stream trace(mlog[TRACE]);
 
-    SgAsmElfRelocSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
+    SgAsmElfRelocSection *reloc_section = AST::Traversal::findParentTyped<SgAsmElfRelocSection>(reloc);
     ASSERT_not_null(reloc_section);
     if (0==nbytes)
         nbytes = reloc_section->get_header()->get_wordSize();
@@ -1043,7 +1138,7 @@ BinaryLoaderElf::fixupApply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const 
                             rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/) {
     Stream trace(mlog[TRACE]);
 
-    SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(reloc);
     ASSERT_not_null(header);
     ByteOrder::Endianness sex = header->get_sex();
 
@@ -1183,7 +1278,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                                    const MemoryMap::Ptr &memmap) {
     Stream trace(mlog[TRACE]);
     ASSERT_not_null2(reloc, "ELF relocation entry");
-    SgAsmElfRelocSection *parentSection = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
+    SgAsmElfRelocSection *parentSection = AST::Traversal::findParentTyped<SgAsmElfRelocSection>(reloc);
     ASSERT_not_null2(parentSection, "section containing ELF relocation entry");
     ASSERT_not_null2(memmap, "memory map");
     SgAsmGenericHeader* header = parentSection->get_header();

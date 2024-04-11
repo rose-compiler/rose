@@ -1,10 +1,27 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-
+#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
-#include <Rose/Diagnostics.h>
+
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/Diagnostics.h>
+
+#include <SgAsmGenericFile.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmPEExportDirectory.h>
+#include <SgAsmPEExportEntry.h>
+#include <SgAsmPEExportEntryList.h>
+#include <SgAsmPEExportSection.h>
+#include <SgAsmPEFileHeader.h>
+#include <SgAsmPEImportDirectory.h>
+#include <SgAsmPEImportDirectoryList.h>
+#include <SgAsmPEImportItem.h>
+#include <SgAsmPEImportItemList.h>
+#include <SgAsmPEImportSection.h>
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Sawyer::Message;
 using namespace std;

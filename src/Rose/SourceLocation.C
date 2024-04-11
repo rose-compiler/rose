@@ -1,7 +1,7 @@
-#include <sage3basic.h>
 #include <Rose/SourceLocation.h>
 
-#include <Combinatorics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Combinatorics.h>                              // rose
 
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>

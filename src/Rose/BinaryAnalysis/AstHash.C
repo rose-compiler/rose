@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/AstHash.h>
 
+#include <SgNode.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
     /**  HashAST::visit

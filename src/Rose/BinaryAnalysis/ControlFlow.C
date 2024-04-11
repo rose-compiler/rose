@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 
 #include <boost/graph/depth_first_search.hpp>

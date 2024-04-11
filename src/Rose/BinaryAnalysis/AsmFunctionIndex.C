@@ -1,21 +1,32 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-
-#define __STD_FORMAT_MACROS
-#include <inttypes.h>
-
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
-#include "stringify.h"
-#include <Rose/Diagnostics.h>
+
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Convert.h>
+#include <Rose/StringUtility/NumberToString.h>
+#include <Rose/StringUtility/Predicate.h>
+#include "stringify.h"                                  // rose
+
+#include <SgAsmInstruction.h>
 
 #include <boost/shared_ptr.hpp>
+
+#include <inttypes.h>
 
 using namespace Rose::Diagnostics;
 
 namespace Rose {
 namespace BinaryAnalysis {
+
+size_t
+AsmFunctionIndex::SortByInsnsSize::val(SgAsmFunction *x) {
+    size_t n = 0;
+    AST::Traversal::forwardPre<SgAsmInstruction>(x, [&n](SgAsmInstruction*) {++n;});
+    return n;
+}
 
 void
 AsmFunctionIndex::OutputCallback::set_prefix(const std::string &header, const std::string &separator, const std::string &data)
@@ -61,12 +72,9 @@ AsmFunctionIndex::add_function(SgAsmFunction *func)
 void
 AsmFunctionIndex::add_functions(SgNode *ast)
 {
-    struct T1: public AstSimpleProcessing {
-        AsmFunctionIndex *index;
-        T1(AsmFunctionIndex *index): index(index) {}
-        void visit(SgNode *node) { index->add_function(isSgAsmFunction(node)); }
-    };
-    T1(this).traverse(ast, preorder);
+    AST::Traversal::forwardPre<SgAsmFunction>(ast, [this](SgAsmFunction *node) {
+        add_function(node);
+    });
 }
 #ifdef _MSC_VER
 #define UNUSED_VAR
@@ -229,7 +237,7 @@ bool
 AsmFunctionIndex::BeginAddrCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(args.func);
+        std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(args.func);
         if (!insns.empty()) {
             rose_addr_t addr = insns.front()->get_address();
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
@@ -246,7 +254,7 @@ bool
 AsmFunctionIndex::EndAddrCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(args.func);
+        std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(args.func);
         if (!insns.empty()) {
             rose_addr_t addr = insns.front()->get_address() + insns.front()->get_size();
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
@@ -263,7 +271,7 @@ bool
 AsmFunctionIndex::SizeInsnsCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(args.func);
+        std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(args.func);
         args.output <<data_prefix <<std::setw(width) <<insns.size();
     }
     return enabled;
@@ -272,7 +280,7 @@ bool
 AsmFunctionIndex::SizeBytesCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(args.func);
+        std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(args.func);
         size_t nbytes=0;
         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
             nbytes += (*ii)->get_size();

@@ -3,7 +3,6 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 
-#include <AsmUnparser_compat.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>

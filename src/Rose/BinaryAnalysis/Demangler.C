@@ -1,8 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Demangler.h>
 
+#include <Rose/StringUtility/Escape.h>
 #include <rose_getline.h>
 
 #include <cctype>

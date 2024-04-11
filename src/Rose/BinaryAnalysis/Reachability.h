@@ -3,13 +3,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Address.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BitFlags.h>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/split_member.hpp>
-#include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
+
 #include <Sawyer/Map.h>
 #include <Sawyer/Tracker.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
+
 #include <set>
+#include <string>
 #include <vector>
 
 namespace Rose {

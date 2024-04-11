@@ -3,16 +3,16 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
-#include <Rose/CommandLine/Parser.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/CommandLine/Parser.h>
 
-#include <integerOps.h>
-#include <stringify.h>
+#include <integerOps.h>                                 // rose
+#include <stringify.h>                                  // rose
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -22,6 +22,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>
 #include <boost/integer_traits.hpp>
+
 #include <regex>
 
 using namespace Sawyer::Message::Common;

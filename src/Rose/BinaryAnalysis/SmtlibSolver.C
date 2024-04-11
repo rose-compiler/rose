@@ -1,13 +1,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
+
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Convert.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
+#include <stringify.h>                                  // rose
+
+#include <Sawyer/Stopwatch.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
-#include <Rose/Diagnostics.h>
-#include <Sawyer/Stopwatch.h>
-#include <stringify.h>
 
 using namespace Sawyer::Message::Common;
 
