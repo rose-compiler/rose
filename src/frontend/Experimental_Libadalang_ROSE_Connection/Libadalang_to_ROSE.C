@@ -14,7 +14,7 @@
 #include "AdaMaker.h"
 //#include "AdaExpression.h"
 #include "LibadalangStatement.h"
-//#include "AdaType.h"
+#include "LibadalangType.h"
 #include "cmdline.h"
 
 #include "sageInterfaceAda.h"
@@ -238,10 +238,14 @@ AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
   {
     //Get the kind of this node
-    ada_node_kind_enum Element_Kind;
-    Element_Kind = ada_node_kind(lal_element);
+    ada_node_kind_enum element_kind = ada_node_kind(lal_element);
 
-    switch (Element_Kind)
+    ada_text kind_name;
+    ada_kind_name(element_kind, &kind_name);
+    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    logTrace()   << "handleElement called on a " << kind_name_string << std::endl;
+
+    switch (element_kind)
     {
         case ada_subp_body:             // Asis.Declarations
         {
@@ -295,7 +299,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case A_Path:                    // Asis.Statements
       case An_Association:            // Asis.Expressions */ //TODO Figure out the rest of these mappings
       default:
-        logWarn() << "Unhandled element " << Element_Kind << std::endl;
+        logWarn() << "Unhandled element " << kind_name_string << std::endl;
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
   }
@@ -318,7 +322,7 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
 
     ada_text kind_name;
     ada_kind_name(kind, &kind_name);
-    std::string kindName = ada_text_to_locale_string(&kind_name);
+    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
 
     if (processUnit)
     {
@@ -333,7 +337,7 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
                                                            .pragmas(pragmalist)
                                                            .deferredUnitCompletionContainer(compls);
 
-      logTrace()   << "A " << kindName << std::endl;
+      logTrace()   << "handleUnit called on a " << kind_name_string << std::endl;
                    //<< PrnUnitHeader(adaUnit);
       /*if (logParentUnit)
         logTrace() << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)";
@@ -347,29 +351,28 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
       bool        privateDecl = false;
 
       //Get the body node
-      ada_base_entity* unit_body;
-      ada_compilation_unit_f_body(lal_unit, unit_body);
+      ada_base_entity unit_body;
+      ada_compilation_unit_f_body(lal_unit, &unit_body);
 
       //This body node can be either ada_library_item or ada_subunit
-      kind = ada_node_kind(unit_body);
+      kind = ada_node_kind(&unit_body);
 
-      ada_base_entity* unit_declaration;
+      ada_base_entity unit_declaration;
       //Fetch the unit declaration based on which kind we got
       if(kind == ada_library_item){
-          ada_library_item_f_item(unit_body, unit_declaration);
+          ada_library_item_f_item(&unit_body, &unit_declaration);
           //Update the privateDecl field
-          ada_base_entity* ada_private_node;
+          ada_base_entity ada_private_node;
           ada_bool p_as_bool;
-          ada_library_item_f_has_private(unit_body, ada_private_node);
-          ada_with_private_p_as_bool(ada_private_node, &p_as_bool);
+          ada_library_item_f_has_private(&unit_body, &ada_private_node);
+          ada_with_private_p_as_bool(&ada_private_node, &p_as_bool);
           privateDecl=(p_as_bool != 0);
       } else {
-          ada_subunit_f_body(unit_body, unit_declaration);
+          ada_subunit_f_body(&unit_body, &unit_declaration);
       }
       
-
       //traverseIDs(range, elemMap(), ElemCreator{ctx}); handle the pragmas/prelude/with
-      handleElement(unit_declaration, ctx, privateDecl);
+      handleElement(&unit_declaration, ctx, privateDecl);
 
       //processAndPlacePragmas(adaUnit.Compilation_Pragmas, { &ctx.scope() }, ctx);
 
@@ -620,7 +623,7 @@ void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file)
 
   // define the package standard
   //   as we are not able to read it out from Asis
-  //initializePkgStandard(astScope);
+  initializePkgStandard(astScope);
 
   // translate all units
   //std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});

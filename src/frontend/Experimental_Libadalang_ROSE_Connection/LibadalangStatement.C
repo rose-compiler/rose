@@ -10,7 +10,7 @@
 #include "Libadalang_to_ROSE.h"
 //#include "AdaExpression.h"
 #include "AdaMaker.h"
-//#include "AdaType.h"
+#include "LibadalangType.h"
 
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
@@ -106,9 +106,9 @@ namespace Libadalang_ROSE_Translation
     int                 range = ada_node_children_count(lal_stmt_list);
 
     for(int i = 0; i < range; i++){
-        ada_base_entity* lal_stmt;
-        ada_node_child(lal_stmt_list, i, lal_stmt);
-        handleStmt(lal_stmt, ctx.scope(blk));
+        ada_base_entity lal_stmt;
+        ada_node_child(lal_stmt_list, i, &lal_stmt);
+        handleStmt(&lal_stmt, ctx.scope(blk));
     }
   }
 
@@ -126,9 +126,9 @@ namespace Libadalang_ROSE_Translation
     int                 range = ada_node_children_count(lal_handlers);
 
     for(int i = 0; i < range; i++){
-        ada_base_entity* lal_handler;
-        ada_node_child(lal_handlers, i, lal_handler);
-        handleExceptionHandler(lal_handler, trystmt, ctx.scope(blk));
+        ada_base_entity lal_handler;
+        ada_node_child(lal_handlers, i, &lal_handler);
+        handleExceptionHandler(&lal_handler, trystmt, ctx.scope(blk));
     }
   }
 
@@ -205,9 +205,9 @@ namespace Libadalang_ROSE_Translation
     int             range = ada_node_children_count(lal_decls);
 
     for(int i =0; i < range; i++){
-         ada_base_entity* lal_decl_child;
-         ada_node_child(lal_decls, i, lal_decl_child);
-         handleElement(lal_decl_child, pragmaCtx.scope(dominantBlock));
+         ada_base_entity lal_decl_child;
+         ada_node_child(lal_decls, i, &lal_decl_child);
+         handleElement(&lal_decl_child, pragmaCtx.scope(dominantBlock));
     }
 
     completeHandledBlock( lal_stmts,
@@ -225,28 +225,28 @@ namespace Libadalang_ROSE_Translation
   void completeRoutineBody(ada_base_entity* lal_decl, SgBasicBlock& declblk, AstContext ctx)
   {
     //Get the decls, stmts, exceptions, & pragmas of this routine body
-    ada_base_entity* lal_decls, *lal_stmts, *lal_exceptions, *lal_pragmas = nullptr;
+    ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
 
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_decl);
 
     if(kind == ada_subp_body){
-        ada_subp_body_f_decls(lal_decl, lal_decls); //lal_decls should now be an ada_declarative_part
-        ada_declarative_part_f_decls(lal_decls, lal_decls); //lal_decls should now be the list of decls
-        ada_base_entity* lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
-        ada_subp_body_f_stmts(lal_decl, lal_handled_stmts);
-        ada_handled_stmts_f_stmts(lal_handled_stmts, lal_stmts);
-        ada_handled_stmts_f_exceptions(lal_handled_stmts, lal_exceptions);
-        lal_pragmas = nullptr; //TODO Figure out pragmas
+        ada_subp_body_f_decls(lal_decl, &lal_decls); //lal_decls should now be an ada_declarative_part
+        ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
+        ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+        ada_subp_body_f_stmts(lal_decl, &lal_handled_stmts);
+        ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+        ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+        //lal_pragmas = ???; //TODO Figure out pragmas
     } else {
         //TODO
     }
     
 
-    completeDeclarationsWithHandledBlock( lal_decls,
-                                          lal_stmts,
-                                          lal_exceptions,
-                                          lal_pragmas,
+    completeDeclarationsWithHandledBlock( &lal_decls,
+                                          &lal_stmts,
+                                          &lal_exceptions,
+                                          &lal_pragmas,
                                           routineBlockHandler,
                                           routineExceptionBlockHandler,
                                           declblk,
@@ -279,7 +279,10 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_stmt);
 
-    logTrace() << "a statement/decl/clause " << kind << std::endl;
+    ada_text kind_name;
+    ada_kind_name(kind, &kind_name);
+    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    logTrace()   << "handleStmt called on a " << kind_name_string << std::endl;
 
     /*if (elem.Element_Kind == A_Declaration)
     {
@@ -332,13 +335,13 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           completeStmt(sgnode, lal_stmt, ctx);
 
           //Add the label
-          ada_base_entity* lal_ident;
-          ada_label_f_decl(lal_stmt, lal_ident);
-          ada_label_decl_f_name(lal_ident, lal_ident);
-          ada_defining_name_f_name(lal_ident, lal_ident);
+          ada_base_entity lal_ident;
+          ada_label_f_decl(lal_stmt, &lal_ident);
+          ada_label_decl_f_name(&lal_ident, &lal_ident);
+          ada_defining_name_f_name(&lal_ident, &lal_ident);
           ada_symbol_type p_canonical_text;
           ada_text ada_canonical_text;
-          ada_single_tok_node_p_canonical_text(lal_ident, &p_canonical_text);
+          ada_single_tok_node_p_canonical_text(&lal_ident, &p_canonical_text);
           ada_symbol_text(&p_canonical_text, &ada_canonical_text);
           std::string label_name = ada_text_to_locale_string(&ada_canonical_text);
           ada_destroy_text(&ada_canonical_text);
@@ -422,6 +425,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
   //Get the kind of this node
   ada_node_kind_enum kind;
   kind = ada_node_kind(lal_element);
+
+  ada_text kind_name;
+  ada_kind_name(kind, &kind_name);
+  std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+  logTrace()   << "handleDeclaration called on a " << kind_name_string << std::endl;
   
   //Declaration_Struct&     decl = elem.The_Union.Declaration; //decl is equivalent to lal_element
   //ElemIdRange             pragmaRange  = idRange(decl.Corresponding_Pragmas);
@@ -443,22 +451,21 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           logKind("A_Null_Procedure_Declaration", elem.ID);*/
 
         //Get the subp spec node
-        ada_base_entity* subp_spec;
+        ada_base_entity subp_spec;
         if(kind == ada_subp_body){
-            ada_base_subp_body_f_subp_spec(lal_element, subp_spec);
+            ada_base_subp_body_f_subp_spec(lal_element, &subp_spec);
         } else {
             //TODO
         }
 
         //Determine if this is a function or procedure
-        ada_base_entity* subp_kind;
-        ada_subp_spec_f_subp_kind(subp_spec, subp_kind);
-        ada_node_kind_enum subp_kind_kind;
-        subp_kind_kind = ada_node_kind(subp_kind);
+        ada_base_entity subp_kind;
+        ada_subp_spec_f_subp_kind(&subp_spec, &subp_kind);
+        ada_node_kind_enum subp_kind_kind = ada_node_kind(&subp_kind);
 
         //Get the params for if this is a function
-        ada_base_entity* subp_params = nullptr;
-        ada_subp_spec_f_subp_params(subp_spec, subp_params);
+        ada_base_entity subp_params;
+        ada_subp_spec_f_subp_params(&subp_spec, &subp_params);
 
         const bool              isFunc  = (subp_kind_kind == ada_subp_kind_function);
         //NameData                adaname = singleName(decl, ctx); Only use ident and parent_scope from this
@@ -480,7 +487,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         // SCOPE_COMMENT_1: the logical scope is only used, if nondef is nullptr
         //   createFunDef chooses the scope as needed.
         SgScopeStatement&       logicalScope = SG_DEREF(parent_scope);
-        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, ident, logicalScope, rettype, ParameterCompletion{subp_params, ctx});
+        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, ident, logicalScope, rettype, ParameterCompletion{&subp_params, ctx});
         SgBasicBlock&           declblk = functionBody(sgnode);
 
         //recordNode(asisDecls(), elem.ID, sgnode);

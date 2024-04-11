@@ -7668,7 +7668,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              {
 
             // Rasmussen (11/14/2017): Added check to ensure that Ada is configured
-#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+#if defined(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION)
                //~ printf ("Todo: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
                compilerNameString[0] = BACKEND_ADA_COMPILER_NAME_WITH_PATH;
 

@@ -89,7 +89,7 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
 
      logctrl.control(warninglevels);
 
-     mlog[Sawyer::Message::TRACE] << "In ada_support.C: In ada_main(): calling ada support for file = "
+     mlog[Sawyer::Message::TRACE] << "In ada_support.C: In libadalang_main(): calling ada support for file = "
                                   << file->getFileName()
                                   << std::endl;
 
@@ -226,7 +226,7 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
 
      // restore ROSE assertion behavior
      Rose::failedAssertionBehavior(roseFailureHandler);
-     mlog[Sawyer::Message::TRACE] << "Leaving ada_main(): status = " << status << std::endl;
+     mlog[Sawyer::Message::TRACE] << "Leaving libadalang_main(): status = " << status << std::endl;
      return status;
 }
 

@@ -162,6 +162,32 @@ extern Sawyer::Message::Facility mlog;
 /// \param file    the ROSE root for the translation unit
 void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file);
 
+/// Ada identifier that can be used in maps/lookup tables
+/// \brief
+///   converts each identifier to a common representation (i.e., upper case)
+struct AdaIdentifier : std::string
+{
+  using base = std::string;
+
+  AdaIdentifier()                                = default;
+  AdaIdentifier(const AdaIdentifier&)            = default;
+  AdaIdentifier(AdaIdentifier&&)                 = default;
+  AdaIdentifier& operator=(const AdaIdentifier&) = default;
+  AdaIdentifier& operator=(AdaIdentifier&&)      = default;
+
+  AdaIdentifier(const std::string& rep)
+  : std::string(boost::to_upper_copy(rep))
+  {}
+
+  AdaIdentifier(const char* rep)
+  : AdaIdentifier(std::string(rep))
+  {}
+
+  AdaIdentifier(const char* rep, int n)
+  : AdaIdentifier(std::string(rep, n))
+  {}
+};
+
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
