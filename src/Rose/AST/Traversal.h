@@ -1,6 +1,9 @@
 #ifndef ROSE_AST_Traversal_H
 #define ROSE_AST_Traversal_H
 
+#include <RoseFirst.h>
+#include <vector>
+
 // A version of AST traversal that doesn't require huge header files to be included into the compilation unit that's calling the
 // traversal.
 
@@ -255,6 +258,20 @@ findParentTyped(SgNode *ast) {
     detail::Finder<T, decltype(yes)> finder(yes);
     detail::findReverseHelper(ast, finder /*in,out*/);
     return dynamic_cast<T*>(finder.found);
+}
+
+/** Find all descendants of specified type.
+ *
+ *  Traverses the specified AST in depth-first pre-order and builds a vector that points to all the nodes of the tree that are of
+ *  the specified type. All returned pointers are non-null. The specified root of the AST might be one of the pointers returned. */
+template<class T>
+std::vector<T*>
+findDescendantsTyped(SgNode *ast) {
+    std::vector<T*> retval;
+    forwardPre<T>(ast, [&retval](T *node) {
+        retval.push_back(node);
+    });
+    return retval;
 }
 
 } // namespace
