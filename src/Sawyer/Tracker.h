@@ -11,6 +11,8 @@
 #include <Sawyer/Set.h>
 #include <Sawyer/Synchronization.h>
 
+#include <boost/unordered/unordered_set.hpp>
+
 namespace Sawyer {
 namespace Container {
 
