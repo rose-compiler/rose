@@ -1,5 +1,6 @@
 #ifndef ROSE_AST_IO_H
 #define ROSE_AST_IO_H
+#include <RoseFirst.h>
 
 #include <list>
 #include <string>

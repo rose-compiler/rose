@@ -1,6 +1,6 @@
 #ifndef ROSE_StringUtility_Diagnostics_H
 #define ROSE_StringUtility_Diagnostics_H
-
+#include <RoseFirst.h>
 #include <rosedll.h>
 
 #include <boost/algorithm/string/erase.hpp>

@@ -1,6 +1,6 @@
-
 #ifndef ROSE_AST_NodeId_H
 #define ROSE_AST_NodeId_H
+#include <RoseFirst.h>
 
 #include <string>
 #include <limits>

@@ -1,5 +1,6 @@
 #ifndef ROSE_AST_Utils_H
 #define ROSE_AST_Utils_H
+#include <RoseFirst.h>
 
 #include <iostream>
 #include <map>

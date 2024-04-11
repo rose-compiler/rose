@@ -1,5 +1,6 @@
 #ifndef ROSE_BitOps_H
 #define ROSE_BitOps_H
+#include <RoseFirst.h>
 
 #include <Sawyer/Assert.h>
 #include <Sawyer/Optional.h>

@@ -1,5 +1,6 @@
 #ifndef ROSE_Color_H
 #define ROSE_Color_H
+#include <RoseFirst.h>
 
 #include <algorithm>
 #include <Sawyer/CommandLine.h>

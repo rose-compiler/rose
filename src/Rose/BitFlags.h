@@ -1,5 +1,6 @@
 #ifndef ROSE_BitFlags_H
 #define ROSE_BitFlags_H
+#include <RoseFirst.h>
 
 #include <rosePublicConfig.h>
 #include <boost/format.hpp>

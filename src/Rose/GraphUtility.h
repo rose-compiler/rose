@@ -1,6 +1,6 @@
 #ifndef ROSE_GraphUtility_H
 #define ROSE_GraphUtility_H
-
+#include <RoseFirst.h>
 #include <boost/cstdint.hpp>
 #include <Sawyer/Graph.h>
 

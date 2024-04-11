@@ -1,5 +1,6 @@
 #ifndef ROSE_CodeGen_Object_H
 #define ROSE_CodeGen_Object_H
+#include <RoseFirst.h>
 
 // FIXME it is a problem with MSVC ("cannot access protected member")
 //#include "Rose/Traits/Describe.h"

@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Alignment_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
+#include <RoseFirst.h>
 #include <Sawyer/Optional.h>
 
 namespace Rose {

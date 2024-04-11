@@ -1,6 +1,6 @@
 #ifndef ROSE_Yaml_H
 #define ROSE_Yaml_H
-
+#include <RoseFirst.h>
 #include <Sawyer/Yaml.h>
 
 namespace Rose {

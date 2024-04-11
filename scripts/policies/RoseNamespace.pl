@@ -225,6 +225,21 @@ my @policies = (
         included with their directory, as in "#include <Rose/...>".'
     },
 
+    #------------------------------------------------------------------------
+    {
+        name => 'first_include',
+
+	policy =>
+	'The first #include must be either RoseFirst.h or some other Rose/*.h
+	header file.',
+
+	reason =>
+	'Not all system header files are deterministic, and RoseFirst.h defines
+	some CPP symbols that affect the behavior of including those headers. If
+	we allowed those non-deterministic headers to be included both with and
+	without the proper configuration into various translation units, then we
+ 	run the risk of violating the C++ one definition rule (ODR).'
+    },
 );
 
 # Policies indexed by name
@@ -356,6 +371,21 @@ sub multiInclusionProtectionSymbols {
             close HEADER;
             return ($ifndef, undef);
         }
+    }
+    close HEADER;
+    return ();
+}
+
+###############################################################################################################################
+# Read a file and find the name of the first #include file, if any.
+sub findFirstInclude {
+    my($filename) = @_;
+    open HEADER, "<$filename" or return;
+    while (<HEADER>) {
+	if (/^\s*#\s*include\s*["<]([^">]+)[">]/) {
+	    close HEADER;
+	    return $1;
+	}
     }
     close HEADER;
     return ();
@@ -661,6 +691,18 @@ while (my $filename = $files->next_file) {
                     "${w}file \"$parentHeader\" includes <$nsFile> more than once${u}";
             }
         }
+
+	# The header file must #include featureTests.h, RoseFirst.h, or some other Rose/*.h header before including any other
+	# headers (ROSE headers or system headers). This is because RoseFirst.h defines some macros that affect the behavior of some
+	# non-deterministic system header files.
+	my($firstInclude) = findFirstInclude($filename);
+	if ($firstInclude ne "" && $firstInclude ne "featureTests.h" && $firstInclude ne "RoseFirst.h" &&
+	    $firstInclude !~ /^Rose\/.*\.h$/) {
+	    my($w,$u) = severity($filename, "first_include");
+	    push @{$violations{first_include}},
+		"${w}file \"$filename\" first #include must be <RoseFirst.h> or some other Rose/*.h header file" .
+		" (not $firstInclude)${u}";
+	}
     }
 }
 

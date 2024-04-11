@@ -9,6 +9,7 @@
 
 #ifndef ROSE_FeatureTests_H
 #define ROSE_FeatureTests_H
+#include <RoseFirst.h>
 
 // DO NOT INCLUDE LARGE HEADERS HERE! These headers should generally be only C preprocessor directives, not any substantial
 // amount of C++ code. This means no sage3basic.h or rose.h, among others. This <featureTests.h> file is meant to be as small

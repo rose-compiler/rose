@@ -1,6 +1,6 @@
 #ifndef ROSE_StringUtility_Escape_H
 #define ROSE_StringUtility_Escape_H
-
+#include <RoseFirst.h>
 #include <rosedll.h>
 
 #include <string>

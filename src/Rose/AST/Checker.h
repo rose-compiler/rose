@@ -1,4 +1,3 @@
-
 #ifndef ROSE_AST_Checker_H
 #define ROSE_AST_Checker_H
 

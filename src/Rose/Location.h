@@ -1,6 +1,6 @@
 #ifndef ROSE_Location_H
 #define ROSE_Location_H
-
+#include <RoseFirst.h>
 #include <ostream>
 #include <string>
 

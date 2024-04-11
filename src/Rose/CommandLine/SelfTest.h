@@ -1,5 +1,6 @@
 #ifndef ROSE_CommandLine_SelfTest_H
 #define ROSE_CommandLine_SelfTest_H
+#include <RoseFirst.h>
 
 #include <rosedll.h>
 

@@ -1,5 +1,6 @@
 #ifndef ROSE_CodeGen_Driver_H
 #define ROSE_CodeGen_Driver_H
+#include <RoseFirst.h>
 
 #include <set>
 #include <map>

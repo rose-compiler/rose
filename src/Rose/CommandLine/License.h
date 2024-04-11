@@ -1,5 +1,6 @@
 #ifndef ROSE_CommandLine_License_H
 #define ROSE_CommandLine_License_H
+#include <RoseFirst.h>
 
 #include <Sawyer/CommandLine.h>
 

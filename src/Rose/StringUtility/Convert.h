@@ -1,6 +1,6 @@
 #ifndef ROSE_StringUtility_Convert_H
 #define ROSE_StringUtility_Convert_H
-
+#include <RoseFirst.h>
 #include <rosedll.h>
 
 #include <cstdint>

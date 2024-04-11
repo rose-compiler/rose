@@ -1,5 +1,6 @@
 #ifndef ROSE_FormatRestorer_H
 #define ROSE_FormatRestorer_H
+#include <RoseFirst.h>
 
 #include <iostream>
 
