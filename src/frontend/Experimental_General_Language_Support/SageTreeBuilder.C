@@ -244,6 +244,33 @@ SageTreeBuilder::popScopeStack(bool attach_comments) {
   return scope;
 }
 
+/** Call SageInterface::setBaseTypeDefiningDeclaration but first move comments from @baseDecl to @varDecl */
+void
+SageTreeBuilder::setBaseTypeDefiningDeclaration(SgVariableDeclaration* varDecl, SgDeclarationStatement* baseDecl)
+{
+  // There is a bug (see gitlab-issue-349.jov) that arises when baseDecl has a comment and it is the
+  // first statement, because baseDecl will be removed (causing comments to be moved, where? good question!).
+  // Move comments to varDecl first to circumvent (by artfulness or deception) potential problems.
+  //
+  if (auto comments = baseDecl->getAttachedPreprocessingInfo()) {
+    unsigned index{0};
+    std::vector<int> indexList{};
+    for (auto comment : *comments) {
+      // So far, testing has only found a problem with comments located before, proceed conservatively
+      if (comment->getRelativePosition() == PreprocessingInfo::before) {
+        indexList.push_back(index);
+      }
+      index++;
+    }
+    if (indexList.size() > 0) {
+      bool surroundingStatementPreceedsTargetStatement = false; // this keeps before comments remaining before
+      SI::moveCommentsToNewStatement(baseDecl, indexList, varDecl, surroundingStatementPreceedsTargetStatement);
+    }
+  }
+
+  SI::setBaseTypeDefiningDeclaration(varDecl, baseDecl);
+}
+
 void
 SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end)
 {

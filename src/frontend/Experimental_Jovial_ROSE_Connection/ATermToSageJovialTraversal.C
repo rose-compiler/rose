@@ -662,7 +662,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
       ASSERT_not_null(decl);
       SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
       ASSERT_not_null(def_decl);
-      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+      sage_tree_builder.setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
 // End SageTreeBuilder
@@ -1492,7 +1492,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    SgJovialTableStatement* def_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
    ASSERT_not_null(def_decl);
    if (dim_info) {
-     SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+     sage_tree_builder.setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
    SgClassDefinition* def = def_decl->get_definition();
@@ -2086,7 +2086,7 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
       ASSERT_not_null(decl);
       SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
       ASSERT_not_null(def_decl);
-      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+      sage_tree_builder.setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
 // End SageTreeBuilder for variable
@@ -2389,7 +2389,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
    if (is_anon) {
       SgEnumDeclaration* def_decl = isSgEnumDeclaration(enum_decl->get_definingDeclaration());
       ASSERT_not_null(def_decl);
-      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+      sage_tree_builder.setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
 // Jovial block and table members are visible in parent scope so create an alias
@@ -2616,7 +2616,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
    if (is_anon) {
       SgJovialTableStatement* def_decl = isSgJovialTableStatement(block_decl->get_definingDeclaration());
       ASSERT_not_null(def_decl);
-      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+      sage_tree_builder.setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
 // Jovial block and table members are visible in parent scope so create an alias

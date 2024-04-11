@@ -787,37 +787,37 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
      SgDeclarationStatement* parentDeclaration = nullptr;
 
      SgScopeStatement* defn = memberFunctionInstantiation->get_class_scope();
-     ROSE_ASSERT(defn != NULL);
+     ASSERT_not_null(defn);
 
   // SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
      SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
-     ROSE_ASSERT(templateDeclaration != NULL);
+     ASSERT_not_null(templateDeclaration);
 
   // If it is a template instatiation, then we have to find the temple declaration (not the template instantiation declaration), else we want the class declaration.
      SgClassDefinition* cdefn = isSgClassDefinition(defn);
      SgDeclarationScope* nrscope = isSgDeclarationScope(defn);
      SgTemplateInstantiationDefn* templateInstatiationClassDefinition = isSgTemplateInstantiationDefn(defn);
-     if (templateInstatiationClassDefinition != NULL)
+     if (templateInstatiationClassDefinition != nullptr)
         {
        // This is the case of a template member function in a templated class (see test2005_172.C).
           SgTemplateInstantiationDefn* parentTemplateInstantiationDefinition = isSgTemplateInstantiationDefn(templateDeclaration->get_scope());
-          ROSE_ASSERT(parentTemplateInstantiationDefinition != NULL);
+          ASSERT_not_null(parentTemplateInstantiationDefinition);
           SgTemplateInstantiationDecl* parentTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(parentTemplateInstantiationDefinition->get_declaration());
-          ROSE_ASSERT(parentTemplateInstantiationDeclaration != NULL);
+          ASSERT_not_null(parentTemplateInstantiationDeclaration);
 
           parentDeclaration = parentTemplateInstantiationDeclaration->get_templateDeclaration();
-          ROSE_ASSERT(parentDeclaration != NULL);
+          ASSERT_not_null(parentDeclaration);
         }
        else if (cdefn != nullptr)
         {
        // This is the case of a template member function in a class definition (see test2005_168.C).
           parentDeclaration = cdefn->get_declaration();
-          ROSE_ASSERT(parentDeclaration != NULL);
+          ASSERT_not_null(parentDeclaration);
         }
        else if (nrscope != nullptr)
         {
           parentDeclaration = isSgDeclarationStatement(nrscope->get_parent());
-          ROSE_ASSERT(parentDeclaration != NULL);
+          ASSERT_not_null(parentDeclaration);
         }
        else
         {
@@ -831,9 +831,15 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
   //! A better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
   //! Used to have a struct declaration embedded into a variable declaration
 void
-SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl)
+SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement* base_decl)
 {
-  ROSE_ASSERT (var_decl && base_decl);
+  ASSERT_not_null(var_decl);
+  ASSERT_not_null(base_decl);
+
+  // There is a bug (see gitlab-issue-349.jov) that arises when base_decl has a comment and it is the
+  // first statement, because base_decl will be removed (causing comments to be moved, where? good question!).
+  // Consider moving comments to var_decl first to circumvent (by artfulness or deception) potential problems.
+  // [Rasmussen 2024.04.10]
 
   // try to remove it from the scope's declaration list
   // If the struct decl was previously inserted into its scope
@@ -10262,16 +10268,10 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   }
                  else
                   {
-#if 0
-                    printf ("Mark comments that were after the removed statement to be before the following statement \n");
-#endif
                  // If is is not before, I hope it can only be after.
-                    ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
+                    ASSERT_require((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
-                    ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before);
                   }
-            // printf (" This case (surroundingStatementPreceedsTargetStatement == false) is not handled yet. \n");
-            // ROSE_ASSERT(false);
                AttachedPreprocessingInfoType* targetInfoList = targetStatement->getAttachedPreprocessingInfo();
                // source stmt has a list of comments c1, c2, c3
                // we want to keep their order and prepend to target stmt's existing comments
@@ -10291,7 +10291,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   if( prevTargetAnchorComment==NULL)
                   {
                      PreprocessingInfo * origFirstTargetComment  = *(targetInfoList->begin());
-                     // inssert before this original first one
+                     // insert before this original first one
                      targetStatement->insertToAttachedPreprocessingInfo((*comments)[*j],origFirstTargetComment,false);
                   }
                   else

@@ -279,6 +279,10 @@ public:
    void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 
+   // Call SageInterface::setBaseTypeDefiningDeclaration, but, fix bug in comment handling by moving
+   // comments from the base to the variable declaration before the call.
+   void setBaseTypeDefiningDeclaration(SgVariableDeclaration* varDecl, SgDeclarationStatement* baseDecl);
+
    SgScopeStatement* popScopeStack(bool attach_comments=false);
 
 // Helper function
