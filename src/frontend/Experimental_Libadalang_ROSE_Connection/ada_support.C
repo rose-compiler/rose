@@ -183,6 +183,8 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
        if (ctx == NULL){
            mlog[Sawyer::Message::FATAL] << "ada_create_analysis_context returned NULL." << std::endl;
        }
+       mlog[Sawyer::Message::INFO] << "Calling ada_get_analysis_unit_from_file on " << srcFile
+                                   << std::endl;
        analysis_unit = ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, NULL, 0, ada_default_grammar_rule);
 
        if (analysis_unit == nullptr) {

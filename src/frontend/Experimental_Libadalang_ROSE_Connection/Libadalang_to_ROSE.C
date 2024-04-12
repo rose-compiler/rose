@@ -304,7 +304,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
     }
   }
 
-void handleUnit(ada_base_entity* lal_unit, AstContext context)
+void handleUnit(ada_base_entity* lal_unit, AstContext context, const std::string& src_file_name)
   {
 
     //First, make sure this is a unit node
@@ -326,11 +326,28 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
 
     if (processUnit)
     {
+      //Get the body node
+      ada_base_entity unit_body;
+      ada_compilation_unit_f_body(lal_unit, &unit_body);
+
+     /*//Get the name of the file this unit comes from
+     ada_text_type file_name;
+     ada_ada_node_full_sloc_image(&unit_body, &file_name);
+     std::string file_name_string = dot_ada_text_type_to_string(file_name);
+     std::string::size_type pos = file_name_string.find(':');
+     if(pos != std::string::npos){
+         file_name_string = file_name_string.substr(0, pos);
+     }
       
       ada_unbounded_text_type_array p_syntactic_fully_qualified_name;
       int result = ada_compilation_unit_p_syntactic_fully_qualified_name(lal_unit, &p_syntactic_fully_qualified_name);
 
-      std::string                             unitFile = dot_ada_unbounded_text_type_to_string(p_syntactic_fully_qualified_name);
+      std::string                             unitFile = dot_ada_unbounded_text_type_to_string(p_syntactic_fully_qualified_name);*/
+      //TODO Find a way to get the full file path for the unit from the root node
+
+      std::string                             unitFile = src_file_name;
+      unitFile = unitFile;
+      logInfo() << "Unit name is " << unitFile << std::endl;
       AstContext::PragmaContainer             pragmalist;
       AstContext::DeferredCompletionContainer compls;
       AstContext                              ctx = context.sourceFileName(unitFile)
@@ -338,7 +355,7 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
                                                            .deferredUnitCompletionContainer(compls);
 
       logTrace()   << "handleUnit called on a " << kind_name_string << std::endl;
-                   //<< PrnUnitHeader(adaUnit);
+
       /*if (logParentUnit)
         logTrace() << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)";
 
@@ -350,11 +367,8 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context)
       //ElemIdRange range = idRange(adaUnit.Context_Clause_Elements); //TODO ???
       bool        privateDecl = false;
 
-      //Get the body node
-      ada_base_entity unit_body;
-      ada_compilation_unit_f_body(lal_unit, &unit_body);
 
-      //This body node can be either ada_library_item or ada_subunit
+      //The body node can be either ada_library_item or ada_subunit
       kind = ada_node_kind(&unit_body);
 
       ada_base_entity unit_declaration;
@@ -627,10 +641,13 @@ void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file)
 
   // translate all units
   //std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
+
+  //Get the name of the file
+  std::string src_file_name = file->getFileName();
   
   //This function just calls handleUnit
   //translate_libadalang(AstContext{}.scope(astScope), &root);
-  handleUnit(root, AstContext{}.scope(astScope));
+  handleUnit(root, AstContext{}.scope(astScope), src_file_name);
 
   // post processing
   replaceNullptrWithNullExpr();

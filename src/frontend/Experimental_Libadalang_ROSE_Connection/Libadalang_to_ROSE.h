@@ -158,8 +158,8 @@ extern Sawyer::Message::Facility mlog;
 
 
 /// converts all nodes reachable through the units in \ref analysis_unit to ROSE
-/// \param root    entry point to the Libadalang tree
-/// \param file    the ROSE root for the translation unit
+/// \param root           entry point to the Libadalang tree
+/// \param file           the ROSE root for the translation unit
 void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file);
 
 /// Ada identifier that can be used in maps/lookup tables
