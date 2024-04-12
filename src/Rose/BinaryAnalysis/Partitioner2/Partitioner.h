@@ -30,22 +30,14 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/move/utility_core.hpp>
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/split_member.hpp>
-#include <boost/serialization/version.hpp>
+#endif
 
 #include <ostream>
 #include <set>
 #include <string>
 #include <vector>
-
-// Derived classes needed for serialization
-#include <Rose/BinaryAnalysis/Z3Solver.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 
 // [Robb Matzke 2022-06-22]: deprecated. Needed because some user code doesn't include the old InstructionSemantics2 header
 // files where this same thing is defined, yet they use InstructionSemantics2 because such things were once declared by this
@@ -363,87 +355,9 @@ private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serializeCommon(S &s, const unsigned version) {
-        s.template register_type<InstructionSemantics::SymbolicSemantics::SValue>();
-        s.template register_type<InstructionSemantics::SymbolicSemantics::RiscOperators>();
-#ifdef ROSE_ENABLE_ASM_AARCH64
-        s.template register_type<InstructionSemantics::DispatcherAarch64>();
-#endif
-#ifdef ROSE_ENABLE_ASM_AARCH32
-        s.template register_type<InstructionSemantics::DispatcherAarch32>();
-#endif
-        s.template register_type<InstructionSemantics::DispatcherX86>();
-        s.template register_type<InstructionSemantics::DispatcherM68k>();
-        s.template register_type<InstructionSemantics::DispatcherPowerpc>();
-        s.template register_type<SymbolicExpression::Interior>();
-        s.template register_type<SymbolicExpression::Leaf>();
-        s.template register_type<Z3Solver>();
-        s.template register_type<Semantics::SValue>();
-        s.template register_type<Semantics::MemoryListState>();
-        s.template register_type<Semantics::MemoryMapState>();
-        s.template register_type<Semantics::RegisterState>();
-        s.template register_type<Semantics::State>();
-        s.template register_type<Semantics::RiscOperators>();
-        s & BOOST_SERIALIZATION_NVP(settings_);
-        // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
-        s & BOOST_SERIALIZATION_NVP(instructionProvider_);
-        s & BOOST_SERIALIZATION_NVP(memoryMap_);
-        s & BOOST_SERIALIZATION_NVP(cfg_);
-        // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
-        s & BOOST_SERIALIZATION_NVP(aum_);
-        // s & BOOST_SERIALIZATION_NVP(solver_); -- not saved/restored in order to override from command-line
-        s & BOOST_SERIALIZATION_NVP(functions_);
-        s & BOOST_SERIALIZATION_NVP(autoAddCallReturnEdges_);
-        s & BOOST_SERIALIZATION_NVP(assumeFunctionsReturn_);
-        s & BOOST_SERIALIZATION_NVP(stackDeltaInterproceduralLimit_);
-        s & BOOST_SERIALIZATION_NVP(addressNames_);
-        if (version >= 1)
-            s & BOOST_SERIALIZATION_NVP(sourceLocations_);
-        s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm_);
-        // s & unparser_;                       -- not saved; restored from disassembler
-        // s & cfgAdjustmentCallbacks_;         -- not saved/restored
-        // s & basicBlockCallbacks_;            -- not saved/restored
-        // s & functionPrologueMatchers_;       -- not saved/restored
-        // s & functionPaddingMatchers_;        -- not saved/restored
-        // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
-        // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
-        // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
-        if (version >= 2)
-            s & BOOST_SERIALIZATION_NVP(elfGotVa_);
-        // s & progress_;                       -- not saved/restored
-        // s & cfgProgressTotal_;               -- not saved/restored
-    }
-
-    template<class S>
-    void save(S &s, const unsigned version) const {
-        const_cast<Partitioner*>(this)->serializeCommon(s, version);
-        if (version >= 3)
-            saveAst(s, interpretation_);
-        if (version >= 4) {
-            ASSERT_not_null(architecture_);
-            std::string architecture = architecture_->name();
-            s & BOOST_SERIALIZATION_NVP(architecture);
-        }
-    }
-
-    template<class S>
-    void load(S &s, const unsigned version) {
-        serializeCommon(s, version);
-        if (version >= 3) {
-            SgNode *node = restoreAst(s);
-            interpretation_ = isSgAsmInterpretation(node);
-            ASSERT_require(!node || interpretation_);
-        }
-        if (version >= 4) {
-            std::string architecture;
-            s & BOOST_SERIALIZATION_NVP(architecture);
-            architecture_ = Architecture::findByName(architecture).orThrow();
-        }
-        rebuildVertexIndices();
-    }
-
+    template<class Archive> void serializeCommon(Archive&, unsigned);
+    template<class Archive> void save(Archive&, unsigned) const;
+    template<class Archive> void load(Archive&, unsigned);
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
@@ -2609,9 +2523,6 @@ private:
 } // namespace
 } // namespace
 } // namespace
-
-// Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 4);
 
 #endif
 #endif

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Exception.h>

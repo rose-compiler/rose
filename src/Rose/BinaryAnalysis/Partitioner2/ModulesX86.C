@@ -1,8 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -11,7 +11,18 @@
 #include <Rose/BitOps.h>
 #include <Rose/Diagnostics.h>
 
-#include "AsmUnparser_compat.h"
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFunction.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmType.h>
+#include <SgAsmVectorType.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <boost/format.hpp>
 #include <stringify.h>

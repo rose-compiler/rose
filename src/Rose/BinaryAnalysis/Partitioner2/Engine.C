@@ -1,12 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 // Concrete engine pre-registered as factories
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
@@ -18,6 +18,16 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
+#include <Rose/Initialize.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmFunction.h>
+#include <SgAsmGenericFile.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <Sawyer/FileSystem.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -437,17 +447,12 @@ Engine::CodeConstants::nextConstant(const Partitioner::ConstPtr &partitioner) {
         toBeExamined_.erase(inProgress_);
         if (SgAsmInstruction *insn = partitioner->instructionExists(inProgress_).insn()) {
 
-            struct T1: AstSimpleProcessing {
-                std::set<rose_addr_t> constants;
-                virtual void visit(SgNode *node) override {
-                    if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
-                        if (ival->get_significantBits() <= 64)
-                            constants.insert(ival->get_absoluteValue());
-                    }
-                }
-            } t1;
-            t1.traverse(insn, preorder);
-            constants_ = std::vector<rose_addr_t>(t1.constants.begin(), t1.constants.end());
+            std::set<rose_addr_t> constants;
+            AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(insn, [&constants](SgAsmIntegerValueExpression *ival) {
+                if (ival->get_significantBits() <= 64)
+                    constants.insert(ival->get_absoluteValue());
+            });
+            constants_ = std::vector<rose_addr_t>(constants.begin(), constants.end());
         }
 
         if (!constants_.empty()) {

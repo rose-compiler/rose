@@ -4,12 +4,16 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/SourceLocation.h>
 #include <SageBuilderAsm.h>
 
-#include <boost/serialization/access.hpp>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/SharedPointer.h>
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#include <boost/serialization/access.hpp>
+#endif
 
 #include <string>
 
@@ -46,29 +50,7 @@ private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned version) {
-        // s & boost::serialization::base_object<Sawyer::Attribute::Storage>(*this); -- not serialized
-        s & BOOST_SERIALIZATION_NVP(isFrozen_);
-        s & BOOST_SERIALIZATION_NVP(startVa_);
-        if (version >= 1) {
-            s & BOOST_SERIALIZATION_NVP(type_);
-            s & BOOST_SERIALIZATION_NVP(comment_);
-        } else if (S::is_loading::value) {
-            size_t nBytes = 0;
-            s & boost::serialization::make_nvp("size_", nBytes);
-            type_ = SageBuilderAsm::buildTypeVector(nBytes, SageBuilderAsm::buildTypeU8());
-        }
-        if (version < 2) {
-            ASSERT_not_reachable("Rose::BinaryAnalysis::Partitioner2::DataBlock version 2 is no longer supported");
-        } else {
-            s & BOOST_SERIALIZATION_NVP(attachedBasicBlockOwners_);
-            s & BOOST_SERIALIZATION_NVP(attachedFunctionOwners_);
-        }
-        if (version >= 3)
-            s & BOOST_SERIALIZATION_NVP(sourceLocation_);
-    }
+    template<class S> void serialize(S&, unsigned version);
 #endif
     
 protected:

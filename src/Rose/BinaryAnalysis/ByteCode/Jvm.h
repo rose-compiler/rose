@@ -5,6 +5,12 @@
 
 #include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
 
+class SgAsmJvmConstantPool;
+class SgAsmJvmField;
+class SgAsmJvmFileHeader;
+class SgAsmJvmMethod;
+class SgAsmInstructionList;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
@@ -126,9 +132,8 @@ public:
     return attributes_;
   }
 
-  SgAsmJvmConstantPool* constant_pool() {
-    return jfh_->get_constant_pool();
-  }
+  SgAsmJvmConstantPool* constant_pool();
+
   virtual void dump();
 
   static std::string name(uint16_t, const SgAsmJvmConstantPool*);

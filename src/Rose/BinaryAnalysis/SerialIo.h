@@ -39,12 +39,14 @@
 
 #include <Rose/Progress.h>
 #include <Rose/Exception.h>
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
+
 #include <Sawyer/Message.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Synchronization.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/thread.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {

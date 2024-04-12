@@ -1,12 +1,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
@@ -15,7 +14,7 @@
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/Color.h>
 
-#include <AsmUnparser_compat.h>
+#include <SgAsmInstruction.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <Sawyer/GraphTraversal.h>
@@ -310,7 +309,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
                 switch (vertex.value().type()) {
                     case DfCfgVertex::BBLOCK:
                         for (SgAsmInstruction *insn: vertex.value().bblock()->instructions())
-                            out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(unparseInstructionWithAddress(insn));
+                            out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toString());
                         out <<"<br align=\"left\"/>> shape=box fontname=Courier";
                         break;
                     case DfCfgVertex::FAKED_CALL:

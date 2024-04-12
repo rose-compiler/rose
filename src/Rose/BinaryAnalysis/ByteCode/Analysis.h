@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
+class SgAsmInstructionList;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {

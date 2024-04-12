@@ -1,8 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 
-#include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/CommandLine.h>

@@ -14,7 +14,10 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/access.hpp>
+#endif
+
 #include <list>
 #include <ostream>
 
@@ -32,14 +35,7 @@ class CfgVertex {
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(type_);
-        s & BOOST_SERIALIZATION_NVP(startVa_);
-        s & BOOST_SERIALIZATION_NVP(bblock_);
-        s & BOOST_SERIALIZATION_NVP(owningFunctions_);
-    }
+    template<class S> void serialize(S&, unsigned version);
 #endif
 
 public:
@@ -152,12 +148,7 @@ private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(type_);
-        s & BOOST_SERIALIZATION_NVP(confidence_);
-    }
+    template<class S> void serialize(S&, unsigned version);
 #endif
 
 public:

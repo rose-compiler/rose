@@ -261,6 +261,10 @@ const std::vector<std::string> &JvmClass::strings()
   return strings_;
 }
 
+SgAsmJvmConstantPool* JvmClass::constant_pool() {
+    return jfh_->get_constant_pool();
+}
+
 void JvmClass::dump()
 {
   using std::cout;

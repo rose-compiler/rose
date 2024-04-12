@@ -173,13 +173,11 @@ public:
         EngineSettings engine;                          /**< Settings that control engine behavior. */
         AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, unsigned version) {
-            s & loader & disassembler & partitioner & engine & astConstruction;
-        }
+        template<class S> void serialize(S&, unsigned version);
+#endif
 
     public:
         ~Settings();

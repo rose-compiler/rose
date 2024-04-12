@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionCache.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -56,6 +57,17 @@ LockedInstruction::LockedInstruction(const LockedInstruction &other)
         insn->adjustCacheLockCount(+1);
 }
 
+LockedInstruction::LockedInstruction(SgAsmInstruction *insn)
+    : insn(insn) {
+    if (insn)
+        insn->adjustCacheLockCount(+1);                 // ROSETTA generated, thus cannot be inlined
+}
+
+LockedInstruction::~LockedInstruction() {
+  if (insn)
+      insn->adjustCacheLockCount(-1);
+}
+
 LockedInstruction&
 LockedInstruction::operator=(const LockedInstruction &other) {
     SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
@@ -95,6 +107,7 @@ LockedInstruction::operator bool() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return insn != nullptr;
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // InstructionPtr
@@ -177,6 +190,24 @@ bool InstructionPtr::operator==(const std::nullptr_t) const {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // InstructionCache
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+InstructionCache::~InstructionCache() {}
+
+InstructionCache::InstructionCache(const MemoryMap::Ptr &memory, const Disassembler::Base::Ptr &decoder)
+    : memory_(memory), decoder_(decoder) {
+    ASSERT_not_null(memory);
+    ASSERT_not_null(decoder);
+}
+
+MemoryMap::Ptr
+InstructionCache::memoryMap() const {
+    return memory_;
+}
+
+Disassembler::Base::Ptr
+InstructionCache::decoder() const {
+    return decoder_; // no lock necessary since decoder_ can never change.
+}
 
 InstructionPtr
 InstructionCache::get(rose_addr_t va) {

@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // needed for `::SageInterface` and `::AsmUnparser`
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
@@ -14,7 +14,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
-#include <AsmUnparser_compat.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -24,6 +24,7 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <AsmUnparser.h>                                // rose
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>
@@ -41,12 +42,6 @@
     #include <fstream>
     #include <string.h>
     #include <unistd.h>
-    #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-        #include <boost/archive/binary_iarchive.hpp>
-        #include <boost/archive/binary_oarchive.hpp>
-        #include <boost/iostreams/device/file_descriptor.hpp>
-        #include <boost/iostreams/stream.hpp>
-    #endif
 #endif
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;

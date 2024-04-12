@@ -1,12 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFunction.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Sawyer::Message::Common;
 

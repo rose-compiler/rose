@@ -3,17 +3,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include "AstSerialization.h"
 
-#include <boost/serialization/access.hpp>
-#include <Sawyer/Assert.h>
 #include <Sawyer/HashMap.h>
 #include <Sawyer/SharedPointer.h>
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#include <boost/serialization/access.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -48,45 +46,11 @@ private:
 private:
     friend class boost::serialization::access;
 
-    template<class S>
-    void save(S &s, const unsigned /*version*/) const {
-        roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
-        s <<BOOST_SERIALIZATION_NVP(memMap_);
+    template<class Archive>
+    void save(Archive&, const unsigned version) const;
 
-        const size_t mapSize = insnMap_.size();
-        s <<BOOST_SERIALIZATION_NVP(mapSize);
-        for (const auto &insn: insnMap_.values())
-            saveAst(s, insn);
-
-        ASSERT_not_null(architecture_);
-        const std::string architecture = architecture_->name();
-        s <<BOOST_SERIALIZATION_NVP(architecture);
-    }
-
-    template<class S>
-    void load(S &s, const unsigned version) {
-        ASSERT_always_require(version >= 2);
-        roseAstSerializationRegistration(s);
-        s >>BOOST_SERIALIZATION_NVP(memMap_);
-
-        size_t mapSize;
-        s >>BOOST_SERIALIZATION_NVP(mapSize);
-        for (size_t i = 0; i < mapSize; ++i) {
-            SgNode *node = restoreAst(s);
-            auto insn = isSgAsmInstruction(node);
-            ASSERT_require(!node || insn);
-            insnMap_.insert(insn->get_address(), insn);
-        }
-
-        std::string architecture;
-        s >>BOOST_SERIALIZATION_NVP(architecture);
-        architecture_ = Architecture::findByName(architecture).orThrow();
-
-        if (memMap_) {
-            disassembler_ = architecture_->newInstructionDecoder();
-            ASSERT_not_null(disassembler_);
-        }
-    }
+    template<class Archive>
+    void load(Archive&, const unsigned version);
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif

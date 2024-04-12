@@ -3,7 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Address.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/Exception.h>
 
 #include <memory>
 #include <unordered_map>
@@ -14,6 +17,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 class InstructionCache;
+class InstructionPtr;
+class LockedInstruction;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ManagedInstruction
@@ -367,7 +372,7 @@ public:
     };
 
 private:
-    MemoryMap::Ptr memory_;                             // not null, constant for life of object
+    MemoryMapPtr memory_;                               // not null, constant for life of object
     Disassembler::BasePtr decoder_;                     // not null, constant for life of object
 
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
@@ -377,33 +382,27 @@ private:
     InstructionCache& operator=(const InstructionCache&) = delete;
 
 public:
+    ~InstructionCache();
+
     /** Construct a new instruction cache.
      *
      *  Each instruction cache is for a specific virtual memory and instruction decoder.  The memory mapping and content should
      *  not change under the cache since doing so could cause reconstructed evicted instructions to be different than the
      *  original instruction. */
-    InstructionCache(const MemoryMap::Ptr &memory, const Disassembler::BasePtr &decoder)
-        : memory_(memory), decoder_(decoder) {
-        ASSERT_not_null(memory);
-        ASSERT_not_null(decoder);
-    }
+    InstructionCache(const MemoryMapPtr&, const Disassembler::BasePtr &decoder);
 
     /** Property: memory map providing the opcodes for the instructions.
      *
      *  The memory map is provided at construction time and neither the mapping nor the data should change (see constructor).
      *
      *  Thread safety: This function is thread safe. */
-    MemoryMap::Ptr memoryMap() const {
-        return memory_; // mo lock necessary since memory_ can never change
-    }
+    MemoryMapPtr memoryMap() const;
 
     /** Property: the decoder used to construct the instruction ASTs from data in memory.
      *
      *  Thread safety: This function is thread safe. */
-    Disassembler::BasePtr decoder() const {
-        return decoder_; // no lock necessary since decoder_ can never change.
-    }
-    
+    Disassembler::BasePtr decoder() const;
+
     /** Obtain the instruction at a specified address.
      *
      *  Returns a smart pointer for the instruction at the specified address.  If the byte at the adress is not executable then
@@ -496,19 +495,6 @@ ManagedInstruction::makePresentNS() const {
         u.ast = decoded; // no-throw
     }
     return LockedInstruction{u.ast};
-}
-
-inline
-LockedInstruction::LockedInstruction(SgAsmInstruction *insn)
-    : insn(insn) {
-    if (insn)
-        insn->adjustCacheLockCount(+1);                 // ROSETTA generated, thus cannot be inlined
-}
-
-inline
-LockedInstruction::~LockedInstruction() {
-  if (insn)
-      insn->adjustCacheLockCount(-1);
 }
 
 inline SgAsmInstruction*

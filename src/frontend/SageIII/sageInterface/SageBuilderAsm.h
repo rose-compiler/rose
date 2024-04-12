@@ -8,6 +8,8 @@
 #include <SgAsmRiscOperation.h>
 #include <SgAsmOperandList.h>
 
+#include <Sawyer/BitVector.h>
+
 namespace Rose {
 
 /** Functions to build binary analysis ASTs. */

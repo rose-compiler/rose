@@ -1,8 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // needed for `::SgProject`
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 
-#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/AST/Traversal.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/ByteCode/Cil.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
@@ -16,7 +18,6 @@
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
@@ -38,7 +39,6 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/Progress.h>
 
-#include <AsmUnparser_compat.h>
 #include <BinaryVxcoreParser.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -1072,7 +1072,7 @@ EngineBinary::parseContainers(const std::vector<std::string> &fileNames) {
             SgProject *project = roseFrontendReplacement(containerFiles);
             ASSERT_not_null(project);                       // an exception should have been thrown
 
-            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
+            std::vector<SgAsmInterpretation*> interps = AST::Traversal::findDescendantsTyped<SgAsmInterpretation>(project);
             if (interps.empty())
                 throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
             interpretation(interps.back());    // windows PE is always after DOS
@@ -1462,11 +1462,11 @@ EngineBinary::createPartitionerFromAst(SgAsmInterpretation *interp) {
     Partitioner::Ptr partitioner = createTunedPartitioner();
 
     // Cache all the instructions so they're available by address in O(log N) time in the future.
-    for (SgAsmInstruction *insn: SageInterface::querySubTree<SgAsmInstruction>(interp))
+    for (SgAsmInstruction *insn: AST::Traversal::findDescendantsTyped<SgAsmInstruction>(interp))
         partitioner->instructionProvider().insert(insn);
 
     // Create and attach basic blocks
-    for (SgAsmNode *node: SageInterface::querySubTree<SgAsmNode>(interp)) {
+    for (SgAsmNode *node: AST::Traversal::findDescendantsTyped<SgAsmNode>(interp)) {
         SgAsmBlock *blockAst = isSgAsmBlock(node);
         if (!blockAst || !blockAst->hasInstructions())
             continue;
@@ -1493,7 +1493,7 @@ EngineBinary::createPartitionerFromAst(SgAsmInterpretation *interp) {
     }
 
     // Create and attach functions
-    for (SgAsmFunction *funcAst: SageInterface::querySubTree<SgAsmFunction>(interp)) {
+    for (SgAsmFunction *funcAst: AST::Traversal::findDescendantsTyped<SgAsmFunction>(interp)) {
         if (0!=(funcAst->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
             continue;                                   // this isn't really a true function
         Function::Ptr function = Function::instance(funcAst->get_entryVa(), funcAst->get_name());
@@ -1501,12 +1501,12 @@ EngineBinary::createPartitionerFromAst(SgAsmInterpretation *interp) {
         function->reasons(funcAst->get_reason());
         function->reasonComment(funcAst->get_reasonComment());
 
-        for (SgAsmBlock *blockAst: SageInterface::querySubTree<SgAsmBlock>(funcAst)) {
+        for (SgAsmBlock *blockAst: AST::Traversal::findDescendantsTyped<SgAsmBlock>(funcAst)) {
             if (blockAst->hasInstructions())
                 function->insertBasicBlock(blockAst->get_address());
         }
 
-        for (SgAsmStaticData *dataAst: SageInterface::querySubTree<SgAsmStaticData>(funcAst)) {
+        for (SgAsmStaticData *dataAst: AST::Traversal::findDescendantsTyped<SgAsmStaticData>(funcAst)) {
             DataBlock::Ptr dblock = DataBlock::instanceBytes(dataAst->get_address(), dataAst->get_size());
             partitioner->attachDataBlock(dblock);
             function->insertDataBlock(dblock);

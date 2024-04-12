@@ -3,14 +3,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/vector.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -59,21 +59,14 @@ public:
     typedef boost::shared_ptr<MemoryState> Ptr;
 
 private:
-    MemoryMap::Ptr map_;
+    MemoryMapPtr map_;
     std::vector<SValuePtr> addressesRead_;
     bool enabled_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
-        s & BOOST_SERIALIZATION_NVP(map_);
-        s & BOOST_SERIALIZATION_NVP(addressesRead_);
-        s & BOOST_SERIALIZATION_NVP(enabled_);
-    }
+    template<class S> void serialize(S&, unsigned version);
 #endif
 
 protected:
@@ -152,8 +145,8 @@ public:
      *  warnings and no operation to be performed.
      *
      *  @{ */
-    MemoryMap::Ptr memoryMap() const { return map_; }
-    void memoryMap(const MemoryMap::Ptr &map) { map_ = map; }
+    MemoryMapPtr memoryMap() const { return map_; }
+    void memoryMap(const MemoryMapPtr &map) { map_ = map; }
     /** @} */
 
     /** Property: concrete virtual addresses that were read.
@@ -230,11 +223,7 @@ private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
-    }
+    template<class S> void serialize(S&, unsigned version);
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -391,12 +380,6 @@ MemoryState<Super>::print(std::ostream &out, InstructionSemantics::BaseSemantics
 } // namespace
 } // namespace
 } // namespace
-
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
-#endif
 
 #endif
 #endif

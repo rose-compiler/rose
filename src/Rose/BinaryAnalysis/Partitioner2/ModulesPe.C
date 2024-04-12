@@ -1,13 +1,35 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
+
+#include <SgAsmFunction.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericSection.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmPEExportEntry.h>
+#include <SgAsmPEExportEntryList.h>
+#include <SgAsmPEExportSection.h>
+#include <SgAsmPEFileHeader.h>
+#include <SgAsmPEImportDirectory.h>
+#include <SgAsmPEImportDirectoryList.h>
+#include <SgAsmPEImportItem.h>
+#include <SgAsmPEImportItemList.h>
+#include <SgAsmPEImportSection.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <Sawyer/StaticBuffer.h>
 
@@ -117,7 +139,7 @@ findImportFunctions(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, c
     if (peHeader) {
         for (const ImportIndex::Node &import: imports.nodes()) {
             std::string name = import.value()->get_name()->get_string();
-            SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(import.value());
+            SgAsmPEImportDirectory *importDir = AST::Traversal::findParentTyped<SgAsmPEImportDirectory>(import.value());
             if (importDir && !importDir->get_dllName()->get_string().empty())
                 name += "@" + importDir->get_dllName()->get_string();
             Function::Ptr function = Function::instance(import.key(), name, SgAsmFunction::FUNC_IMPORT);
@@ -290,7 +312,7 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
         
         // Merge the new name into the function
         std::string importName = importItem->get_name()->get_string();
-        SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(importItem);
+        SgAsmPEImportDirectory *importDir = AST::Traversal::findParentTyped<SgAsmPEImportDirectory>(importItem);
         if (importDir && !importDir->get_dllName()->get_string().empty())
             importName += "@" + importDir->get_dllName()->get_string();
         function->name(importName);

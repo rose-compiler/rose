@@ -1,8 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 
+#include <Rose/AST/Traversal.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
@@ -10,6 +11,32 @@
 #include <Sawyer/FileSystem.h>
 #include <x86InstructionProperties.h>
 #include <ROSE_UNUSED.h>
+
+#include <SgAsmAarch32Instruction.h>
+#include <SgAsmAarch64Instruction.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmBinaryRor.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmElfEHFrameEntryFD.h>
+#include <SgAsmElfFileHeader.h>
+#include <SgAsmElfRelocEntry.h>
+#include <SgAsmElfRelocEntryList.h>
+#include <SgAsmElfRelocSection.h>
+#include <SgAsmElfSymbol.h>
+#include <SgAsmElfSymbolList.h>
+#include <SgAsmElfSymbolSection.h>
+#include <SgAsmFunction.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericSectionList.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmType.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -20,22 +47,16 @@ using namespace Rose::Diagnostics;
 
 size_t
 findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
-    struct T1: AstSimpleProcessing {
-        size_t nInserted;
-        std::vector<Function::Ptr> &functions;
-        T1(std::vector<Function::Ptr> &functions): nInserted(0), functions(functions) {}
-        void visit(SgNode *node) {
-            if (SgAsmElfEHFrameEntryFD *fde = isSgAsmElfEHFrameEntryFD(node)) {
-                Function::Ptr function = Function::instance(fde->get_begin_rva().rva(), SgAsmFunction::FUNC_EH_FRAME);
-                function->reasonComment("from EhFrameEntry " + fde->get_begin_rva().toString());
-                if (insertUnique(functions, function, sortFunctionsByAddress))
-                    ++nInserted;
-            }
-        }
-    } t1(functions);
-    if (elfHeader!=NULL)
-        t1.traverse(elfHeader, preorder);
-    return t1.nInserted;
+    size_t nInserted = 0;
+    if (elfHeader) {
+        AST::Traversal::forwardPre<SgAsmElfEHFrameEntryFD>(elfHeader, [&nInserted, &functions](SgAsmElfEHFrameEntryFD *fde) {
+            Function::Ptr function = Function::instance(fde->get_begin_rva().rva(), SgAsmFunction::FUNC_EH_FRAME);
+            function->reasonComment("from EhFrameEntry " + fde->get_begin_rva().toString());
+            if (insertUnique(functions, function, sortFunctionsByAddress))
+                ++nInserted;
+        });
+    }
+    return nInserted;
 }
 
 std::vector<Function::Ptr>

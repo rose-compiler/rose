@@ -1,8 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
@@ -11,7 +11,7 @@
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
-#include <AsmUnparser_compat.h>
+#include <SgAsmInstruction.h>
 
 #include <Sawyer/GraphTraversal.h>
 
@@ -717,13 +717,13 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
             if (isPartOfNoopSequence[i]) {
                 if (versionDate_ >= 20130915) {
                     // Strike out each insn of the no-op sequence
-                    s += "<s>" + htmlEscape(unparseInstruction(insn)) + "</s><br align=\"left\"/>";
+                    s += "<s>" + htmlEscape(insn->toStringNoAddr()) + "</s><br align=\"left\"/>";
                 } else {
                     // Put the no-op in parentheses because we graphViz doesn't have strike-through capability
-                    s += "no-op (" + htmlEscape(unparseInstruction(insn)) + ")<br align=\"left\"/>"; 
+                    s += "no-op (" + htmlEscape(insn->toStringNoAddr()) + ")<br align=\"left\"/>";
                 }
             } else {
-                s += htmlEscape(unparseInstruction(insn)) + "<br align=\"left\"/>";
+                s += htmlEscape(insn->toStringNoAddr()) + "<br align=\"left\"/>";
             }
         }
 

@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/SharedObject.h>
 
+class SgAsmInstruction;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {

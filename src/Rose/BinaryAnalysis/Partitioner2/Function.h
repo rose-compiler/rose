@@ -15,10 +15,9 @@
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/set.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -77,27 +76,7 @@ private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned version) {
-        //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
-        s & BOOST_SERIALIZATION_NVP(entryVa_);
-        s & BOOST_SERIALIZATION_NVP(name_);
-        s & BOOST_SERIALIZATION_NVP(demangledName_);
-        s & BOOST_SERIALIZATION_NVP(comment_);
-        s & BOOST_SERIALIZATION_NVP(reasons_);
-        s & BOOST_SERIALIZATION_NVP(bblockVas_);
-        s & BOOST_SERIALIZATION_NVP(dblocks_);
-        s & BOOST_SERIALIZATION_NVP(isFrozen_);
-        s & BOOST_SERIALIZATION_NVP(ccAnalysis_);
-        s & BOOST_SERIALIZATION_NVP(ccDefinition_);
-        s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
-        s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
-        if (version >= 1)
-            s & BOOST_SERIALIZATION_NVP(reasonComment_);
-        if (version >= 2)
-            s & BOOST_SERIALIZATION_NVP(sourceLocation_);
-    }
+    template<class S> void serialize(S&, unsigned version);
 #endif
     
 public:
@@ -360,9 +339,6 @@ private:
 } // namespace
 } // namespace
 } // namespace
-
-// Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 2);
 
 #endif
 #endif

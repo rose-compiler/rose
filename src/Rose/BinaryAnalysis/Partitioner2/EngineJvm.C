@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // needed for `::CommandlineProcessing`
 #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -10,6 +10,24 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmGenericFile.h>
+#include <SgAsmGenericFileList.h>
+#include <SgAsmGenericFormat.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmInstructionList.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmInterpretationList.h>
+#include <SgAsmJvmConstantPool.h>
+#include <SgAsmJvmConstantPoolEntry.h>
+#include <SgAsmJvmFileHeader.h>
+#include <SgAsmJvmInstruction.h>
+#include <SgAsmJvmMethod.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <Sawyer/FileSystem.h>
 #include <boost/filesystem.hpp>

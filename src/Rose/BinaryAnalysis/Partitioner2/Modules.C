@@ -1,18 +1,31 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
-#include "AsmUnparser_compat.h"
-
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Demangler.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/String.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmFunction.h>
+#include <SgAsmGenericFile.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericSection.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmGenericSymbol.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmStaticData.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -602,112 +615,95 @@ labelSymbolAddresses(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fi
     ASSERT_not_null(partitioner);
     ASSERT_not_null(fileHeader);
 
-    struct T1: AstSimpleProcessing {
-        Partitioner::Ptr partitioner;
-        SgAsmGenericHeader *fileHeader;
-        T1(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fileHeader)
-            : partitioner(partitioner), fileHeader(fileHeader) {}
-        void visit(SgNode *node) {
-            if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
-                std::string name = symbol->get_name()->get_string();
-                if (!name.empty()) {
-                    if (symbol->get_type() != SgAsmGenericSymbol::SYM_NO_TYPE) {
-                        std::string typeName = stringifySgAsmGenericSymbolSymbolType(symbol->get_type(), "SYM_");
-                        name = "(" + boost::to_lower_copy(typeName) + ")" + name;
-                    }
+    AST::Traversal::forwardPre<SgAsmGenericSymbol>(fileHeader, [&partitioner, &fileHeader](SgAsmGenericSymbol *symbol) {
+        std::string name = symbol->get_name()->get_string();
+        if (!name.empty()) {
+            if (symbol->get_type() != SgAsmGenericSymbol::SYM_NO_TYPE) {
+                std::string typeName = stringifySgAsmGenericSymbolSymbolType(symbol->get_type(), "SYM_");
+                name = "(" + boost::to_lower_copy(typeName) + ")" + name;
+            }
 
-                    rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
-                    SgAsmGenericSection *section = symbol->get_bound();
+            rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
+            SgAsmGenericSection *section = symbol->get_bound();
 
-                    // Assume symbol's value is a virtual address, but make adjustments if its section is relocated
-                    rose_addr_t va = value;
-                    if (section && section->isMapped() &&
-                        section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
-                        va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
-                    }
-                    if (partitioner->memoryMap()->at(va).exists())
-                        partitioner->addressName(va, name);
+            // Assume symbol's value is a virtual address, but make adjustments if its section is relocated
+            rose_addr_t va = value;
+            if (section && section->isMapped() &&
+                section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
+                va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
+            }
+            if (partitioner->memoryMap()->at(va).exists())
+                partitioner->addressName(va, name);
 
-                    // Sometimes weak symbol values are offsets w.r.t. their linked section.
-                    if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
-                        va = value + section->get_mappedActualVa();
-                        if (partitioner->memoryMap()->at(va).exists())
-                            partitioner->addressName(va, name);
-                    }
-                }
+            // Sometimes weak symbol values are offsets w.r.t. their linked section.
+            if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
+                va = value + section->get_mappedActualVa();
+                if (partitioner->memoryMap()->at(va).exists())
+                    partitioner->addressName(va, name);
             }
         }
-    } t1(partitioner, fileHeader);
-    t1.traverse(fileHeader, preorder);
+    });
 }
 
 void
 nameStrings(const Partitioner::ConstPtr &partitioner, const AddressInterval &where) {
     ASSERT_not_null(partitioner);
+    Sawyer::Container::Map<rose_addr_t, std::string> seen;
 
-    struct T1: AstSimpleProcessing {
-        Sawyer::Container::Map<rose_addr_t, std::string> seen;
-        Partitioner::ConstPtr partitioner;
-        Strings::StringFinder stringFinder;
-        const AddressInterval &where;
+    Strings::StringFinder stringFinder;
+    stringFinder.settings().minLength = 1;
+    stringFinder.settings().maxLength = 65536;
+    stringFinder.settings().keepingOnlyLongest = true;
+    ByteOrder::Endianness sex = partitioner->instructionProvider().defaultByteOrder();
+    if (sex == ByteOrder::ORDER_UNSPECIFIED)
+        sex = ByteOrder::ORDER_LSB;
+    stringFinder.insertCommonEncoders(sex);
 
-        T1(const Partitioner::ConstPtr &partitioner, const AddressInterval &where)
-            : partitioner(partitioner), where(where) {
-            ASSERT_not_null(partitioner);
-            stringFinder.settings().minLength = 1;
-            stringFinder.settings().maxLength = 65536;
-            stringFinder.settings().keepingOnlyLongest = true;
-            ByteOrder::Endianness sex = partitioner->instructionProvider().defaultByteOrder();
-            if (sex == ByteOrder::ORDER_UNSPECIFIED)
-                sex = ByteOrder::ORDER_LSB;
-            stringFinder.insertCommonEncoders(sex);
-        }
-        void visit(SgNode *node) {
-            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node);
-            if (ival && ival->get_comment().empty()) {
-                rose_addr_t va = ival->get_absoluteValue();
-                std::string label;
-                if (seen.getOptional(va).assignTo(label)) {
-                    // We cached it earlier, even if the label might be empty.
-                    ival->set_comment(label);
-
-                } else {
-                    // Try to find a label and cache it.
-                    if (!where.contains(va)) {
-                        // Constant is outside the area that might be the start of a string.
-
-                    } else if (!partitioner->instructionsOverlapping(va).empty()) {
-                        // Constant is inside a known instruction, so it's not the start of a string.
+    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole())) {
+        AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(insn,
+            [&partitioner, &stringFinder, &seen, &where](SgAsmIntegerValueExpression *ival) {
+                if (ival && ival->get_comment().empty()) {
+                    rose_addr_t va = ival->get_absoluteValue();
+                    std::string label;
+                    if (seen.getOptional(va).assignTo(label)) {
+                        // We cached it earlier, even if the label might be empty.
+                        ival->set_comment(label);
 
                     } else {
-                        // Constant is possibly the start of a string, so look for a string.
-                        stringFinder.reset();
-                        stringFinder.find(partitioner->memoryMap()->at(va));
-                        if (!stringFinder.strings().empty()) {
-                            ASSERT_require(stringFinder.strings().front().address() == va);
-                            std::string str = stringFinder.strings().front().narrow(); // front is the longest string
-                            static const size_t displayLength = 25;     // arbitrary
-                            static const size_t maxLength = displayLength + 7; // strlen("+N more")
-                            size_t nTruncated = 0;
-                            if (str.size() > maxLength) {
-                                nTruncated = str.size() - displayLength;
-                                str = str.substr(0, displayLength);
-                            }
-                            label = "\"" + StringUtility::cEscape(str) + "\"";
-                            if (nTruncated)
-                                label += "+" + StringUtility::numberToString(nTruncated) + " more";
-                            ival->set_comment(label);
-                        }
-                    }
+                        // Try to find a label and cache it.
+                        if (!where.contains(va)) {
+                            // Constant is outside the area that might be the start of a string.
 
-                    // Cache the label for this constant even if there is no label.
-                    seen.insert(va, label);
+                        } else if (!partitioner->instructionsOverlapping(va).empty()) {
+                            // Constant is inside a known instruction, so it's not the start of a string.
+
+                        } else {
+                            // Constant is possibly the start of a string, so look for a string.
+                            stringFinder.reset();
+                            stringFinder.find(partitioner->memoryMap()->at(va));
+                            if (!stringFinder.strings().empty()) {
+                                ASSERT_require(stringFinder.strings().front().address() == va);
+                                std::string str = stringFinder.strings().front().narrow(); // front is the longest string
+                                static const size_t displayLength = 25;     // arbitrary
+                                static const size_t maxLength = displayLength + 7; // strlen("+N more")
+                                size_t nTruncated = 0;
+                                if (str.size() > maxLength) {
+                                    nTruncated = str.size() - displayLength;
+                                    str = str.substr(0, displayLength);
+                                }
+                                label = "\"" + StringUtility::cEscape(str) + "\"";
+                                if (nTruncated)
+                                    label += "+" + StringUtility::numberToString(nTruncated) + " more";
+                                ival->set_comment(label);
+                            }
+                        }
+
+                        // Cache the label for this constant even if there is no label.
+                        seen.insert(va, label);
+                    }
                 }
-            }
-        }
-    } t1(partitioner, where);
-    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole()))
-        t1.traverse(insn, preorder);
+            });
+    }
 }
 
 void
@@ -725,59 +721,46 @@ findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader
     ASSERT_not_null(fileHeader);
 
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrNames;
+    AddrNames addrNames;
 
     // This traversal only finds the addresses for the new functions, it does not modify the AST since that's a dangerous thing
     // to do while we're traversing it.  It shouldn't make any difference though because we're traversing a different part of
     // the AST (the ELF/PE container) than we're modifying (instructions).
-    struct T1: AstSimpleProcessing {
-        Partitioner::ConstPtr partitioner;
-        SgAsmGenericHeader *fileHeader;
-        AddrNames addrNames;
+    AST::Traversal::forwardPre<SgAsmGenericSymbol>(fileHeader, [&partitioner, &fileHeader, &addrNames](SgAsmGenericSymbol *symbol) {
+        if (symbol->get_definitionState() == SgAsmGenericSymbol::SYM_DEFINED &&
+            symbol->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
+            symbol->get_value()     != 0) {
+            rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
+            SgAsmGenericSection *section = symbol->get_bound();
 
-        T1(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader *h)
-            : partitioner(partitioner), fileHeader(h) {
-            ASSERT_not_null(partitioner);
-        }
+            // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
+            // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
+            // only the first non-empty name we find for each address.
+            rose_addr_t va = value;
+            if (section!=NULL && section->isMapped() &&
+                section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
+                va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
+            }
+            if (partitioner->discoverInstruction(va)) {
+                std::string &s = addrNames.insertMaybeDefault(va);
+                if (s.empty())
+                    s = symbol->get_name()->get_string();
+            }
 
-        void visit(SgNode *node) {
-            if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
-                if (symbol->get_definitionState() == SgAsmGenericSymbol::SYM_DEFINED &&
-                    symbol->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
-                    symbol->get_value()     != 0) {
-                    rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
-                    SgAsmGenericSection *section = symbol->get_bound();
-
-                    // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
-                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
-                    // only the first non-empty name we find for each address.
-                    rose_addr_t va = value;
-                    if (section!=NULL && section->isMapped() &&
-                        section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
-                        va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
-                    }
-                    if (partitioner->discoverInstruction(va)) {
-                        std::string &s = addrNames.insertMaybeDefault(va);
-                        if (s.empty())
-                            s = symbol->get_name()->get_string();
-                    }
-
-                    // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
-                    // they're the value is used directly (the above code handled that case). */
-                    if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
-                        value += section->get_mappedActualVa();
-                    if (partitioner->discoverInstruction(value)) {
-                        std::string &s = addrNames.insertMaybeDefault(value);
-                        if (s.empty())
-                            s = symbol->get_name()->get_string();
-                    }
-                }
+            // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
+            // they're the value is used directly (the above code handled that case). */
+            if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
+                value += section->get_mappedActualVa();
+            if (partitioner->discoverInstruction(value)) {
+                std::string &s = addrNames.insertMaybeDefault(value);
+                if (s.empty())
+                    s = symbol->get_name()->get_string();
             }
         }
-    } t1(partitioner, fileHeader);
+    });
 
     size_t nInserted = 0;
-    t1.traverse(fileHeader, preorder);
-    for (const AddrNames::Node &node: t1.addrNames.nodes()) {
+    for (const AddrNames::Node &node: addrNames.nodes()) {
         Function::Ptr function = Function::instance(node.key(), node.value(), SgAsmFunction::FUNC_SYMBOL);
         if (insertUnique(functions, function, sortFunctionsByAddress))
             ++nInserted;
@@ -807,26 +790,13 @@ void
 nameConstants(const Partitioner::ConstPtr &partitioner, const AddressInterval &where) {
     ASSERT_not_null(partitioner);
 
-    struct ConstantNamer: AstSimpleProcessing {
-        Partitioner::ConstPtr partitioner;
-        const AddressInterval &where;
-
-        ConstantNamer(const Partitioner::ConstPtr &partitioner, const AddressInterval &where)
-            : partitioner(partitioner), where(where) {
-            ASSERT_not_null(partitioner);
-        }
-
-        void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
-                const auto va = ival->get_absoluteValue();
-                if (ival->get_comment().empty() && where.contains(va))
-                    ival->set_comment(partitioner->addressName(va));
-            }
-        }
-    } constantRenamer(partitioner, where);
-
-    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole()))
-        constantRenamer.traverse(insn, preorder);
+    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole())) {
+        AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(insn, [&partitioner, &where](SgAsmIntegerValueExpression *ival) {
+            const auto va = ival->get_absoluteValue();
+            if (ival->get_comment().empty() && where.contains(va))
+                ival->set_comment(partitioner->addressName(va));
+        });
+    }
 }
 
 boost::logic::tribool
@@ -1141,20 +1111,17 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
 
     // Build various indexes since ASTs have inherently linear search time.  We store just the starting address for all these
     // things because that's all we ever want to point to.
-    struct Indexer: AstSimpleProcessing {
-        Index insnIndex, bblockIndex, funcIndex;
-        void visit(SgNode *node) {
-            if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
-                insnIndex.insert(insn->get_address(), insn);
-            } else if (SgAsmBlock *block = isSgAsmBlock(node)) {
-                if (!block->get_statementList().empty() && isSgAsmInstruction(block->get_statementList().front()))
-                    bblockIndex.insert(block->get_address(), block);
-            } else if (SgAsmFunction *func = isSgAsmFunction(node)) {
-                funcIndex.insert(func->get_entryVa(), func);
-            }
+    Index insnIndex, bblockIndex, funcIndex;
+    AST::Traversal::forwardPre<SgNode>(ast, [&insnIndex, &bblockIndex, &funcIndex](SgNode *node) {
+        if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
+            insnIndex.insert(insn->get_address(), insn);
+        } else if (SgAsmBlock *block = isSgAsmBlock(node)) {
+            if (!block->get_statementList().empty() && isSgAsmInstruction(block->get_statementList().front()))
+                bblockIndex.insert(block->get_address(), block);
+        } else if (SgAsmFunction *func = isSgAsmFunction(node)) {
+            funcIndex.insert(func->get_entryVa(), func);
         }
-    } indexer;
-    indexer.traverse(ast, preorder);
+    });
 
     // Build a list of memory-mapped sections in the interpretation.  We'll use this list to select the best-matching section
     // for a particular address via SgAsmGenericFile::best_section_by_va()
@@ -1171,36 +1138,28 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
         }
     }
 
-    struct FixerUpper: AstSimpleProcessing {
-        const Index &insnIndex, &bblockIndex, &funcIndex;
-        const SgAsmGenericSectionPtrList &mappedSections;
-        FixerUpper(const Index &insnIndex, const Index &bblockIndex, const Index &funcIndex,
-                   const SgAsmGenericSectionPtrList &mappedSections)
-            : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
-        void visit(SgNode *node) {
-            std::vector<SgAsmIntegerValueExpression*> ivals;
-            if (SgAsmBlock *blk = isSgAsmBlock(node)) {
-                // SgAsmBlock::p_successors is not traversed due to limitations of ROSETTA, so traverse explicitly.
-                ivals = blk->get_successors();
-            } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
-                ivals.push_back(ival);
-            }
+    AST::Traversal::forwardPre<SgNode>(ast, [&insnIndex, &bblockIndex, &funcIndex, &mappedSections](SgNode *node) {
+        std::vector<SgAsmIntegerValueExpression*> ivals;
+        if (SgAsmBlock *blk = isSgAsmBlock(node)) {
+            // SgAsmBlock::p_successors is not traversed due to limitations of ROSETTA, so traverse explicitly.
+            ivals = blk->get_successors();
+        } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+            ivals.push_back(ival);
+        }
 
-            for (SgAsmIntegerValueExpression *ival: ivals) {
-                if (ival->get_baseNode()==NULL) {
-                    rose_addr_t va = ival->get_absoluteValue();
-                    SgAsmNode *base = NULL;
-                    if (funcIndex.getOptional(va).assignTo(base) || bblockIndex.getOptional(va).assignTo(base) ||
-                        insnIndex.getOptional(va).assignTo(base)) {
-                        ival->makeRelativeTo(base);
-                    } else if (SgAsmGenericSection *section = SgAsmGenericFile::bestSectionByVa(mappedSections, va)) {
-                        ival->makeRelativeTo(section);
-                    }
+        for (SgAsmIntegerValueExpression *ival: ivals) {
+            if (ival->get_baseNode()==NULL) {
+                rose_addr_t va = ival->get_absoluteValue();
+                SgAsmNode *base = NULL;
+                if (funcIndex.getOptional(va).assignTo(base) || bblockIndex.getOptional(va).assignTo(base) ||
+                    insnIndex.getOptional(va).assignTo(base)) {
+                    ival->makeRelativeTo(base);
+                } else if (SgAsmGenericSection *section = SgAsmGenericFile::bestSectionByVa(mappedSections, va)) {
+                    ival->makeRelativeTo(section);
                 }
             }
         }
-    } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
-    fixerUpper.traverse(ast, preorder);
+    });
 }
 
 void
@@ -1221,7 +1180,7 @@ fixupAstCallingConventions(const Partitioner::ConstPtr &partitioner, SgNode *ast
     // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
     // the first one from the function's definition list since this list is presumably sorted by how frequently the convention
     // is used by the whole world.
-    for (SgAsmFunction *astFunction: SageInterface::querySubTree<SgAsmFunction>(ast)) {
+    for (SgAsmFunction *astFunction: AST::Traversal::findDescendantsTyped<SgAsmFunction>(ast)) {
         if (Function::Ptr function = partitioner->functionExists(astFunction->get_address())) {
             const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
             if (!ccAnalysis.hasResults())

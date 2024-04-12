@@ -3,19 +3,21 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Sawyer/ProgressBar.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <ROSE_UNUSED.h>
+
+#include <Sawyer/ProgressBar.h>
 
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;

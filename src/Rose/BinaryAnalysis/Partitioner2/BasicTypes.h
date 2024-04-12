@@ -5,14 +5,17 @@
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 
-#include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/nvp.hpp>
-#include <boost/serialization/version.hpp>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Set.h>
+#include <Sawyer/SharedPointer.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#include <boost/serialization/access.hpp>
+#endif
+
 #include <set>
 #include <string>
 #include <vector>
@@ -129,16 +132,11 @@ struct AstConstructionSettings {
      *  parent pointer will always return the same basic block. */
     bool copyAllInstructions = true;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(allowEmptyGlobalBlock);
-        s & BOOST_SERIALIZATION_NVP(allowFunctionWithNoBasicBlocks);
-        s & BOOST_SERIALIZATION_NVP(allowEmptyBasicBlocks);
-        s & BOOST_SERIALIZATION_NVP(copyAllInstructions);
-    }
+    template<class S> void serialize(S&, unsigned version);
+#endif
 
 public:
     /** Default strict settings.
@@ -279,31 +277,11 @@ struct LoaderSettings {
      *  contain at least one equal sign ("="), the first of which separates the variable name from its value. */
     std::vector<std::string> envInsert;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(deExecuteZerosThreshold);
-        s & BOOST_SERIALIZATION_NVP(deExecuteZerosLeaveAtFront);
-        s & BOOST_SERIALIZATION_NVP(deExecuteZerosLeaveAtBack);
-        s & BOOST_SERIALIZATION_NVP(memoryDataAdjustment);
-        s & BOOST_SERIALIZATION_NVP(memoryIsExecutable);
-        if (version >= 1) {
-            s & BOOST_SERIALIZATION_NVP(envEraseNames);
-            s & BOOST_SERIALIZATION_NVP(envInsert);
-
-            // There's no serialization for boost::regex, so we do it ourselves.
-            std::vector<std::string> reStrings;
-            for (const boost::regex &re: envErasePatterns)
-                reStrings.push_back(re.str());
-            s & BOOST_SERIALIZATION_NVP(reStrings);
-            if (envErasePatterns.empty()) {
-                for (const std::string &reStr: reStrings)
-                    envErasePatterns.push_back(boost::regex(reStr));
-            }
-        }
-    }
+    template<class S> void serialize(S&, unsigned version);
+#endif
 };
 
 /** Settings that control the disassembler.
@@ -323,15 +301,11 @@ struct DisassemblerSettings {
      *  that's chosen from the binary container(s) such as ELF or PE. */
     std::string isaName;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, unsigned version) {
-        if (version >= 1)
-            s & BOOST_SERIALIZATION_NVP(doDisassemble);
-        s & BOOST_SERIALIZATION_NVP(isaName);
-    }
+    template<class S> void serialize(S&, unsigned version);
+#endif
 };
 
 /** Controls whether the function may-return analysis runs. */
@@ -380,17 +354,11 @@ struct BasePartitionerSettings {
      *  with additional undocumented co-processor instructions. */
     bool ignoringUnknownInsns = false;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(usingSemantics);
-        s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
-        s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);
-        if (version >= 1)
-            s & BOOST_SERIALIZATION_NVP(ignoringUnknownInsns);
-    }
+    template<class S> void serialize(S&, unsigned version);
+#endif
 };
 
 /** Settings that control the engine partitioning.
@@ -650,92 +618,11 @@ struct PartitionerSettings {
      *  format to a source language format. */
     bool demangleNames = true;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(base);
-        s & BOOST_SERIALIZATION_NVP(functionStartingVas);
-        s & BOOST_SERIALIZATION_NVP(followingGhostEdges);
-        s & BOOST_SERIALIZATION_NVP(discontiguousBlocks);
-        s & BOOST_SERIALIZATION_NVP(maxBasicBlockSize);
-        if (version >= 6)
-            s & BOOST_SERIALIZATION_NVP(ipRewrites);
-        s & BOOST_SERIALIZATION_NVP(findingFunctionPadding);
-        s & BOOST_SERIALIZATION_NVP(findingDeadCode);
-        s & BOOST_SERIALIZATION_NVP(peScramblerDispatcherVa);
-        if (version >= 2) {
-            s & BOOST_SERIALIZATION_NVP(findingIntraFunctionCode);
-        } else {
-            bool temp = false;
-            if (S::is_saving::value)
-                temp = findingIntraFunctionCode > 0;
-            s & boost::serialization::make_nvp("findingIntraFunctionCode", temp);
-            if (S::is_loading::value)
-                findingIntraFunctionCode = temp ? 10 : 0; // arbitrary number of passes
-        }
-        s & BOOST_SERIALIZATION_NVP(findingIntraFunctionData);
-        s & BOOST_SERIALIZATION_NVP(findingInterFunctionCalls);
-        if (version >= 4)
-            s & BOOST_SERIALIZATION_NVP(findingFunctionCallFunctions);
-        if (version >= 5) {
-            s & BOOST_SERIALIZATION_NVP(findingEntryFunctions);
-            s & BOOST_SERIALIZATION_NVP(findingErrorFunctions);
-            s & BOOST_SERIALIZATION_NVP(findingImportFunctions);
-            s & BOOST_SERIALIZATION_NVP(findingExportFunctions);
-            s & BOOST_SERIALIZATION_NVP(findingSymbolFunctions);
-        }
-        s & BOOST_SERIALIZATION_NVP(interruptVector);
-        s & BOOST_SERIALIZATION_NVP(doingPostAnalysis);
-        s & BOOST_SERIALIZATION_NVP(doingPostFunctionMayReturn);
-        s & BOOST_SERIALIZATION_NVP(doingPostFunctionStackDelta);
-        s & BOOST_SERIALIZATION_NVP(doingPostCallingConvention);
-        s & BOOST_SERIALIZATION_NVP(doingPostFunctionNoop);
-        s & BOOST_SERIALIZATION_NVP(functionReturnAnalysis);
-        if (version >= 3)
-            s & BOOST_SERIALIZATION_NVP(functionReturnAnalysisMaxSorts);
-        s & BOOST_SERIALIZATION_NVP(findingDataFunctionPointers);
-        s & BOOST_SERIALIZATION_NVP(findingCodeFunctionPointers);
-        s & BOOST_SERIALIZATION_NVP(findingThunks);
-        s & BOOST_SERIALIZATION_NVP(splittingThunks);
-        s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm);
-        if (version >= 8) {
-            s & BOOST_SERIALIZATION_NVP(namingConstants);
-        } else if (S::is_loading()) {
-            bool b;
-            s & boost::serialization::make_nvp("namingConstants", b);
-            if (b) {
-                namingConstants = AddressInterval::whole();
-            } else {
-                namingConstants = AddressInterval();
-            }
-        }
-        if (version >= 7) {
-            s & BOOST_SERIALIZATION_NVP(namingStrings);
-        } else if (S::is_loading()) {
-            bool b;
-            s & boost::serialization::make_nvp("namingStrings", b);
-            if (b) {
-                namingStrings = AddressInterval::whole();
-            } else {
-                namingStrings = AddressInterval();
-            }
-        }
-        s & BOOST_SERIALIZATION_NVP(demangleNames);
-        if (version >= 1) {
-            s & BOOST_SERIALIZATION_NVP(namingSyscalls);
-
-            // There is no support for boost::filesystem serialization due to arguments by the maintainers over who has
-            // responsibility, so we do it the hard way.
-            std::string temp;
-            if (S::is_saving::value)
-                temp = syscallHeader.string();
-            s & boost::serialization::make_nvp("syscallHeader", temp);
-            if (S::is_loading::value)
-                syscallHeader = temp;
-        }
-    }
+    template<class S> void serialize(S&, unsigned version);
+#endif
 };
 
 /** Settings for controling the engine behavior.
@@ -756,14 +643,11 @@ struct EngineSettings {
      *  that exceptions are caught.  If a tool needs to perform its own error handling, then it should clear this property. */
     bool exitOnError = true;
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(configurationNames);
-        s & BOOST_SERIALIZATION_NVP(exitOnError);
-    }
+    template<class S> void serialize(S&, unsigned version);
+#endif
 };
 
 // Additional declarations incomplete definitions.
@@ -841,12 +725,6 @@ using ThunkPredicatesPtr = Sawyer::SharedPointer<ThunkPredicates>; /**< Shared-o
 } // namespace
 } // namespace
 } // namespace
-
-// Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 8);
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasePartitionerSettings, 1);
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::LoaderSettings, 1);
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DisassemblerSettings, 1);
 
 #endif
 #endif

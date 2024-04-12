@@ -4,18 +4,21 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
-#include <AstSerialization.h>                           // rose
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Optional.h>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/vector.hpp>
+#endif
 
 #include <algorithm>
 #include <ostream>
 #include <string>
+
+class SgAsmInstruction;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -38,18 +41,7 @@ class AddressUser {
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned version) {
-        transferAst(s, insn_);
-        s & BOOST_SERIALIZATION_NVP(bblocks_);
-        if (version < 1) {
-            ASSERT_not_reachable("Rose::BinaryAnalysis::Partitioner2::AddressUser version 0 no longer supported");
-        } else {
-            s & BOOST_SERIALIZATION_NVP(dblock_);
-        }
-    }
-
+    template<class S> void serialize(S&, const unsigned version);
 #endif
 
 public:
@@ -168,11 +160,7 @@ class AddressUsers {
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(users_);
-    }
+    template<class S> void serialize(S&, const unsigned version);
 #endif
 
 public:
@@ -387,11 +375,7 @@ class AddressUsageMap {
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(map_);
-    }
+    template<class S> void serialize(S&, const unsigned version);
 #endif
 
 public:
@@ -632,9 +616,6 @@ public:
 } // namespace
 } // namespace
 } // namespace
-
-// Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::AddressUser, 1);
 
 #endif
 #endif

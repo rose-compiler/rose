@@ -6,6 +6,8 @@
 
 #include <set>
 
+class SgAsmInstruction;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
