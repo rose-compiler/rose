@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
@@ -132,7 +132,6 @@ Partitioner::saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format
     info <<"; took " <<timer <<"\n";
 }
 
-#ifdef ROSE_PARTITIONER_MOVE
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Copy construction, assignment, destructor when move semantics are present
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,71 +224,6 @@ Partitioner::~Partitioner() {
     for (const Function::Ptr &function: list)
         detachFunction(function);
 }
-
-#else
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Copy construction, assignment, destructor when move semantics are absent
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Partitioner::Partitioner(const Partitioner &other)
-    : architecture_(other.architecture_), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
-    // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
-    // The only safe thing to do with the other partitioner is to delete it.
-    *this = other;
-}
-
-Partitioner&
-Partitioner::operator=(const Partitioner &other) {
-    // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
-    // The only safe thing to do with the other partitioner is to delete it.
-    Sawyer::Attribute::Storage<>::operator=(other);
-    settings_ = other.settings_;
-    config_ = other.config_;
-    architecture_ = other.architecture_;
-    cfg_ = other.cfg_;
-    aum_ = other.aum_;
-    vertexIndex_.clear();                               // initialized by init(other)
-    functions_ = other.functions_;
-    addressNames_ = other.addressNames_;
-    sourceLocations_ = other.sourceLocations_;
-
-    cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
-    basicBlockCallbacks_ = other.basicBlockCallbacks_;
-    functionPrologueMatchers_ = other.functionPrologueMatchers_;
-    functionPaddingMatchers_ = other.functionPaddingMatchers_;
-
-    instructionProvider_ = other.instructionProvider_;
-    memoryMap_ = other.memoryMap_;
-    interpretation_ = other.interpretation_;
-    solver_ = other.solver_;
-    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
-    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
-    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
-    semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
-    unparser_ = other.unparser_;
-    insnUnparser_ = other.insnUnparser_;
-    insnPlainUnparser_ = other.insnPlainUnparser_;
-
-    {
-        SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
-        cfgProgressTotal_ = other.cfgProgressTotal_;
-        progress_ = other.progress_;
-    }
-
-    init(other);
-    return *this;
-}
-
-Partitioner::~Partitioner() {
-    // WARNING: Possible memory leaks here, but unsafe to clean up because we don't have move semantics.  The leaks are due to
-    // cycles in the reference counting between attached data blocks, which point to their basic block and function owners, and
-    // the attached owners that point back to the data blocks. We cannot safely break these references because they might be
-    // used by a *copied* partitioner since we don't have move semantics.
-}
-
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Initializations

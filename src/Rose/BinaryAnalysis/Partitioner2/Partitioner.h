@@ -52,28 +52,6 @@
 // header file due to it originally including InstructionSemantics2 headers (which it no longer does).
 namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics2 = InstructionSemantics; }}
 
-// Define ROSE_PARTITIONER_MOVE if boost::move works. Mainly this is to work around a GCC bug that reports this error:
-//
-//   prototype for
-//   'Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)'
-//   does not match any in class 'Rose::BinaryAnalysis::Partitioner2::Partitioner'
-//
-// followed by saying that the exact same signature is one of the candidates:
-//
-//   candidates are:
-//   Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)
-//
-// This is apparently GCC issue 49377 [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49377] fixed in GCC-6.1.0.
-#if __cplusplus >= 201103L
-    #define ROSE_PARTITIONER_MOVE
-#elif defined(__GNUC__)
-    #if __GNUC__ > 5
-       #define ROSE_PARTITIONER_MOVE
-    #elif BOOST_VERSION >= 106900 // 1.68.0 might be okay too, but ROSE blacklists it for other reasons
-       #define ROSE_PARTITIONER_MOVE
-    #endif
-#endif
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -292,9 +270,7 @@ namespace Partitioner2 {
  *    attached to a partitioner via attributes (see @ref Sawyer::Attribute). */
 class ROSE_DLL_API Partitioner /*final*/
     : public Sawyer::SharedObject, public Sawyer::SharedFromThis<Partitioner>, public Sawyer::Attribute::Storage<> {
-#ifdef ROSE_PARTITIONER_MOVE
     BOOST_MOVABLE_BUT_NOT_COPYABLE(Partitioner)
-#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -511,17 +487,11 @@ public:
     /** Save this partitioner as an RBA file. */
     void saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) const;
 
-#ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
     Partitioner(BOOST_RV_REF(Partitioner));
 
     /** Move assignment. */
     Partitioner& operator=(BOOST_RV_REF(Partitioner));
-#else
-    // These are unsafe
-    Partitioner(const Partitioner&);
-    Partitioner& operator=(const Partitioner&);
-#endif
 
     /** Return true if this is a default constructed partitioner.
      *
