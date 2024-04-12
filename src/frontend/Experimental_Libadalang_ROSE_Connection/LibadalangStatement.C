@@ -57,7 +57,7 @@ namespace Libadalang_ROSE_Translation
     //We are handling labels differently
     //SgStatement&      sgn  = labelIfNeeded(sgnode, lal_stmt, ctx);
 
-    //ctx.appendStatement(sgn);
+    ctx.appendStatement(sgnode);
   }
 
   /// @}
@@ -320,6 +320,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgNullStatement& sgnode = mkNullStatement();
 
           completeStmt(sgnode, lal_stmt, ctx);
+
           /* unused fields:
           */
           assocstmt = &sgnode;
