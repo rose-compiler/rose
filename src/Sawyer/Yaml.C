@@ -48,6 +48,8 @@
 #include <list>
 #include <cstdio>
 #include <stdarg.h>
+#include <locale>
+#include <codecvt>
 
 // Implementation access definitions.
 #define NODE_IMP static_cast<NodeImp*>(m_pImp)
@@ -82,15 +84,16 @@ static std::string ExceptionMessage(const std::string &message, ReaderLine &line
 static std::string ExceptionMessage(const std::string &message, ReaderLine &line, const size_t errorPos);
 static std::string ExceptionMessage(const std::string &message, const size_t errorLine, const size_t errorPos);
 static std::string ExceptionMessage(const std::string &message, const size_t errorLine, const std::string &data);
-
-static bool FindQuote(const std::string &input, size_t &start, size_t &end, size_t searchPos = 0);
-static size_t FindNotCited(const std::string &input, char token, size_t &preQuoteCount);
-static size_t FindNotCited(const std::string &input, char token);
-static bool ValidateQuote(std::string &input);
-static void CopyNode(const Node &from, Node &to);
+static bool        FindQuote(const std::string &input, size_t &start, size_t &end, size_t searchPos = 0);
+static size_t      FindNotCited(const std::string &input, char token, size_t &preQuoteCount);
+static size_t      FindNotCited(const std::string &input, char token);
+static bool        ValidateQuote(std::string &input);
+static void        CopyNode(const Node &from, Node &to);
 static std::string escapeQuoted(const std::string &key);
-static void AddEscapeTokens(std::string &input, const std::string &tokens);
-static void RemoveAllEscapeTokens(std::string &input);
+static void        AddEscapeTokens(std::string &input, const std::string &tokens);
+static void        RemoveAllEscapeTokens(std::string &input);
+static size_t      utf8_chars(const std::string &str);
+static size_t      find_unprintable(const std::string &str);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Exception implementations
@@ -1297,6 +1300,7 @@ private:
     void ReadLines(std::istream &stream) {
         std::string     line = "";
         size_t          lineNo = 0;
+        size_t          first_unprintable = 0;
         bool            documentStartFound = false;
         bool            foundFirstNotEmpty = false;
         std::streampos  streamPos = 0;
@@ -1335,11 +1339,11 @@ private:
                     line.resize(line.size() - 1);
             }
 
-            // Validate characters.
-            for (size_t i = 0; i < line.size(); i++) {
-                if (line[i] != '\t' && (line[i] < 32 || line[i] > 126))
-                    throw ParsingException(ExceptionMessage(g_ErrorInvalidCharacter, lineNo, i + 1));
-            }
+            
+            first_unprintable = find_unprintable(line);
+
+            if (first_unprintable < utf8_chars(line))
+                throw ParsingException(ExceptionMessage(g_ErrorInvalidCharacter, lineNo, first_unprintable));
 
             // Validate tabs
             const size_t firstTabPos    = line.find_first_of('\t');
@@ -2414,5 +2418,58 @@ RemoveAllEscapeTokens(std::string &input) {
     }
 }
 
+// Returns the number of UTF8 characters in a char buffer.
+size_t
+utf8_chars(const std::string &str) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_converter;
+
+    const auto str_utf8 = utf8_converter.from_bytes(str);
+    return str_utf8.size();
+}
+
+// Validate characters as UTF-8 printable (see https://yaml.org/spec/1.2.2/#character-set).
+bool
+unprintable_wc(const wchar_t &c) {
+    const std::wstring ws_chars = L"\t\n\r\x85";
+    const auto         asc_lo   = L'\x20';
+    const auto         asc_hi   = L'\x7E';
+    const auto         bmp_lo   = L'\xA0';
+    const auto         bmp_hi   = L'\xD7FF';
+    const auto         extra_lo = L'\xE000';
+    const auto         extra_hi = L'\xFFFD';
+
+    const bool is_whitespace = ws_chars.find_first_of(c) != ws_chars.npos;
+    const bool is_ascii      = asc_lo <= c && c <= asc_hi;
+    const bool is_bmp        = bmp_lo <= c && c <= bmp_hi;
+    const bool is_extra      = extra_lo <= c && c <= extra_hi;
+
+    return !(is_whitespace || is_ascii || is_bmp || is_extra);
+}
+
+// Search a char string for unprintable UTF-8 characters. 
+// Returns the location of the first unprintable character (relative to UTF-8 chars).
+size_t
+find_unprintable(const std::string &input) {
+
+    try {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_converter;
+
+        const auto input_wide      = utf8_converter.from_bytes(input);
+        const auto unprintable_loc = std::find_if(input_wide.begin(), input_wide.end(), unprintable_wc);
+
+        return std::distance(input_wide.begin(), unprintable_loc);
+
+    } catch (const std::range_error &e) {
+        std::codecvt_utf8<wchar_t> utf8_cvt;
+        std::mbstate_t             mb{};
+        const char                *buf_begin = input.data();
+
+        return utf8_cvt.length(mb, buf_begin, buf_begin + input.size(), input.size());
+    }
+
+    ASSERT_not_reachable("find_unprintable either returns or throws an exception in all cases.");
+}
+
 } // namespace
 } // namespace
+
