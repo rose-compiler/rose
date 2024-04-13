@@ -3,7 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 
-#include <Rose/BinaryAnalysis/AstHash.h>
+#include <Rose/BinaryAnalysis/AstHasher.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine/Parser.h>
@@ -525,11 +526,11 @@ LibraryIdentification::hash(const Partitioner2::Partitioner::ConstPtr &partition
     ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
 
-    auto hasher = Combinatorics::Hasher::HasherFactory::Instance().createHasher("SHA256");
-    AstHash astHash(hasher);
+    auto hasher = std::make_shared<Combinatorics::HasherSha256Builtin>();
+    AstHasher astHash(hasher);
     for (rose_addr_t va: function->basicBlockAddresses()) {
         if (Partitioner2::BasicBlock::Ptr bb = partitioner->basicBlockExists(va))
-            astHash.appendBasicBlock(bb);
+            astHash.hash(bb);
     }
     return hasher->toString();
 }

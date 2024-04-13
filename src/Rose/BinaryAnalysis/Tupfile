@@ -6,7 +6,7 @@ run $(librose_compile)				\
     AddressIntervalSet.C			\
     Alignment.C					\
     AsmFunctionIndex.C				\
-    AstHash.C					\
+    AstHasher.C					\
     BestMapAddress.C				\
     BinaryLoader.C				\
     BinaryLoaderElf.C				\
@@ -62,7 +62,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AddressSet.h						\
     Alignment.h							\
     AsmFunctionIndex.h						\
-    AstHash.h							\
+    AstHasher.h							\
     BasicTypes.h						\
     BestMapAddress.h						\
     BinaryLoader.h						\

@@ -16,7 +16,7 @@ add_library(roseBinaryAnalysis OBJECT
   AddressIntervalSet.C
   Alignment.C
   AsmFunctionIndex.C
-  AstHash.C
+  AstHasher.C
   BestMapAddress.C
   BinaryLoader.C
   BinaryLoaderElf.C
@@ -74,7 +74,7 @@ install(FILES
   AddressSet.h
   Alignment.h
   AsmFunctionIndex.h
-  AstHash.h
+  AstHasher.h
   BasicTypes.h
   BestMapAddress.h
   BinaryLoader.h

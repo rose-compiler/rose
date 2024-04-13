@@ -68,7 +68,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Architecture/Powerpc64.C						\
 	BinaryAnalysis/Architecture/X86.C						\
 	BinaryAnalysis/AsmFunctionIndex.C						\
-	BinaryAnalysis/AstHash.C							\
+	BinaryAnalysis/AstHasher.C							\
 	BinaryAnalysis/BestMapAddress.C							\
 	BinaryAnalysis/BinaryLoader.C							\
 	BinaryAnalysis/BinaryLoaderElf.C						\

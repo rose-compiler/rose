@@ -9,7 +9,7 @@
 #include <Rose/BinaryAnalysis/Alignment.h>
 #include <Rose/BinaryAnalysis/Architecture.h>
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
-#include <Rose/BinaryAnalysis/AstHash.h>
+#include <Rose/BinaryAnalysis/AstHasher.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>

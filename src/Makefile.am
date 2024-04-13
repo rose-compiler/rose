@@ -304,7 +304,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Architecture/Powerpc64.h					\
 	Rose/BinaryAnalysis/Architecture/X86.h						\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
-	Rose/BinaryAnalysis/AstHash.h							\
+	Rose/BinaryAnalysis/AstHasher.h							\
 	Rose/BinaryAnalysis/BasicTypes.h						\
 	Rose/BinaryAnalysis/BestMapAddress.h						\
 	Rose/BinaryAnalysis/BinaryLoader.h						\

@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
 
-#include <Rose/BinaryAnalysis/AstHash.h>
+#include <Rose/BinaryAnalysis/AstHasher.h>
 #include <time.h>
 #include "Combinatorics.h"
 

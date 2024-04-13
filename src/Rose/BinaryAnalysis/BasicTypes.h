@@ -16,7 +16,7 @@ namespace BinaryAnalysis {
 
 class AbstractLocation;
 class AsmFunctionIndex;
-class AstHash;
+class AstHasher;
 class BestMapAddress;
 class BinaryLoader;
 using BinaryLoaderPtr = Sawyer::SharedPointer<BinaryLoader>; /**< Reference counting pointer. */
