@@ -1,7 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingResult.h>
+
+#include <boost/serialization/export.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {

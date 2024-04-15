@@ -121,7 +121,7 @@ class Simplifier;
 class Type;
 class Visitor;
 } // namespace
-using SymbolicExpresssionPtr = SymbolicExpression::Ptr;
+using SymbolicExpressionPtr = SymbolicExpression::Ptr;
 
 namespace Variables {
 class BaseVariable;

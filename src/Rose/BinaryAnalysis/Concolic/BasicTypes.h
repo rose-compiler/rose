@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 // Subdirectory/subnamespace #include's are at the *end* of this file.
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/StringUtility/Escape.h>
 
 #include <Rose/Exception.h>
@@ -93,8 +94,8 @@ bool isRunningInContainer();
  *  For example, a one-byte constant would print the numeric value and a character value.
  *
  * @{ */
-std::string toString(const SymbolicExpression::Ptr&, SymbolicExpression::Formatter&);
-std::string toString(const SymbolicExpression::Ptr&);
+std::string toString(const SymbolicExpressionPtr&, SymbolicExpression::Formatter&);
+std::string toString(const SymbolicExpressionPtr&);
 std::string toString(uint64_t value, size_t nBits);
 /** @} */
 

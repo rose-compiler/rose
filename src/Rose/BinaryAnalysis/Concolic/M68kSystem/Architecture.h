@@ -59,7 +59,7 @@ public:
     virtual void load(const boost::filesystem::path&) override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;
-    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t insnVa) override;
+    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMapPtr&, rose_addr_t insnVa) override;
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() override;
     virtual void mapMemory(const AddressInterval&, unsigned permissions) override;
     virtual void unmapMemory(const AddressInterval&) override;

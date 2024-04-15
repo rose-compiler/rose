@@ -1,14 +1,17 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/NumberToString.h>
+#include <Rose/StringUtility/SplitJoin.h>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

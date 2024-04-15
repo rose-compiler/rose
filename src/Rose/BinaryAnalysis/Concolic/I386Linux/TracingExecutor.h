@@ -4,9 +4,13 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/AddressSet.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
+
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
+
+#include <string>
 
 namespace Rose {
 namespace BinaryAnalysis {

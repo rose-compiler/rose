@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
@@ -18,6 +17,10 @@
 // Temporary during testing
 #include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>
 #include <Rose/BinaryAnalysis/Concolic/Callback/MemoryInput.h>
+
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmInterpretation.h>
 
 #include <boost/process/search_path.hpp>
 

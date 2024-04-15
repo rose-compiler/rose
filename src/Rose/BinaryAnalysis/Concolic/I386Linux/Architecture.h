@@ -7,10 +7,12 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/Yaml.h>
 
-#include <boost/filesystem.hpp>
 #include <Sawyer/Callbacks.h>
+
+#include <boost/filesystem.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {

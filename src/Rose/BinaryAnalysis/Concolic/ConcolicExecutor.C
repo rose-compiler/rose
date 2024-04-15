@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 
 #include <Rose/CommandLine.h>
@@ -19,6 +18,8 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
+
+#include <SgAsmInstruction.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>

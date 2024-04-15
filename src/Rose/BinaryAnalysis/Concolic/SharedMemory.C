@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
@@ -11,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/StringUtility/Diagnostics.h>
 
 using namespace Sawyer::Message::Common;
 

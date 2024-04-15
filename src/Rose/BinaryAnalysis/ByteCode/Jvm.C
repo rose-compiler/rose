@@ -1,10 +1,26 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+
+#include <SgAsmJvmAttribute.h>
+#include <SgAsmJvmAttributeTable.h>
+#include <SgAsmJvmCodeAttribute.h>
+#include <SgAsmJvmConstantPool.h>
+#include <SgAsmJvmConstantPoolEntry.h>
+#include <SgAsmJvmField.h>
+#include <SgAsmJvmFieldTable.h>
+#include <SgAsmJvmFileHeader.h>
+#include <SgAsmJvmInstruction.h>
+#include <SgAsmJvmMethod.h>
+#include <SgAsmJvmMethodTable.h>
+#include <SgAsmInstructionList.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmOperandList.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;

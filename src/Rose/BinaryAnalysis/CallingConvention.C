@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -17,6 +16,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
 
 #include <Sawyer/ProgressBar.h>
 

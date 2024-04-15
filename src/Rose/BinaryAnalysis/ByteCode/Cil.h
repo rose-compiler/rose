@@ -5,6 +5,12 @@
 
 #include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
 
+class SgAsmCilMetadata;
+class SgAsmCilMetadataRoot;
+class SgAsmCilMethodDef;
+class SgAsmInstructionList;
+class SgAsmIntegerValueExpression;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {

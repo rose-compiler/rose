@@ -1,11 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+#include <SgAsmInstruction.h>
+#include <SgAsmInstructionList.h>
+#include <Cxx_GrammarDowncast.h>
 
 #include <iostream>
 

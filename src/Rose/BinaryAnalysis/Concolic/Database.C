@@ -7,7 +7,6 @@
 #include <boost/archive/xml_iarchive.hpp>               // included before ROSE headers
 #include <boost/archive/xml_oarchive.hpp>               // included bofore ROSE headers
 
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
@@ -22,6 +21,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/StringUtility/SplitJoin.h>
 #include <ROSE_UNUSED.h>
 
 #include <boost/algorithm/string/predicate.hpp>

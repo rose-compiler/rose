@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // for SgBinaryComposite
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>

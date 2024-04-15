@@ -1,8 +1,31 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ByteCode/Cil.h>
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmCilAssembly.h>
+#include <SgAsmCilAssemblyTable.h>
+#include <SgAsmCilField.h>
+#include <SgAsmCilInstruction.h>
+#include <SgAsmCilMemberRef.h>
+#include <SgAsmCilMetadata.h>
+#include <SgAsmCilMetadataHeap.h>
+#include <SgAsmCilMetadataRoot.h>
+#include <SgAsmCilMethodDef.h>
+#include <SgAsmCilMethodDefTable.h>
+#include <SgAsmCilMethodSpec.h>
+#include <SgAsmCilModule.h>
+#include <SgAsmCilModuleRef.h>
+#include <SgAsmCilModuleTable.h>
+#include <SgAsmCilTypeDef.h>
+#include <SgAsmCilTypeDefTable.h>
+#include <SgAsmCilTypeRef.h>
+#include <SgAsmInstructionList.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmOperandList.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Rose::Diagnostics;
 

@@ -4,13 +4,17 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <boost/numeric/conversion/cast.hpp>
-#include <ctype.h>
-#include <rose_strtoull.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/Constants.h>
+#include <rose_strtoull.h>
+
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Optional.h>
+
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <ctype.h>
 #include <string>
 
 namespace Rose {

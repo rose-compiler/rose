@@ -3,8 +3,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+
 #include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
+
+class SgAsmInstruction;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -128,8 +133,7 @@ public:
         rose_addr_t originalVa;                         /**< Original address of instruction. */
         Sawyer::Optional<rose_addr_t> newVaOffset;      /**< Offset of instruction from front of encoded insn vector. */
 
-        explicit InstructionInfo(SgAsmInstruction *insn)
-            : originalVa(insn->get_address()) {}
+        explicit InstructionInfo(SgAsmInstruction*);
     };
 
     /** Information about instructions within the basic block being modified.
@@ -153,7 +157,7 @@ protected:
 
 public:
     /** Facility for emitting diagnostics. */
-    static Diagnostics::Facility mlog;
+    static Sawyer::Message::Facility mlog;
 
 public:
     explicit CodeInserter(const Partitioner2::PartitionerConstPtr&);

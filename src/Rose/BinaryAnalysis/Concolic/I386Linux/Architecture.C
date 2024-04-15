@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>

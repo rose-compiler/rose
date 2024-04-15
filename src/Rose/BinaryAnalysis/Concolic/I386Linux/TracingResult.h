@@ -4,7 +4,11 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/AddressSet.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {

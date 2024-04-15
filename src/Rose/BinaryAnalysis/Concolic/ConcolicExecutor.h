@@ -7,7 +7,12 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/Yaml.h>
 
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/FileSystem.h>
+
+#include <ostream>
+#include <string>
+#include <vector>
 
 namespace Rose {
 namespace BinaryAnalysis {

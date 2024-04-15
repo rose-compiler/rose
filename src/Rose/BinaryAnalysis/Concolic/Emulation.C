@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Emulation.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
@@ -9,8 +8,11 @@
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+#include <SgAsmInstruction.h>
 
 #include <boost/scope_exit.hpp>
 

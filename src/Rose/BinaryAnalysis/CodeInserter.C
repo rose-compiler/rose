@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
@@ -9,9 +8,11 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/StringUtility.h>
-
-#include <AsmUnparser_compat.h>
 #include <integerOps.h>
+
+#include <SgAsmInstruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -20,6 +21,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility CodeInserter::mlog;
+
+CodeInserter::InstructionInfo::InstructionInfo(SgAsmInstruction *insn)
+    : originalVa(insn->get_address()) {}
 
 // class method
 void

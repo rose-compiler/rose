@@ -5,6 +5,10 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+
 #include <string>
 
 namespace Rose {

@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Constants.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
