@@ -1,8 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
@@ -11,9 +11,23 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine/Parser.h>
+#include <Rose/StringUtility/Escape.h>
 
 #include <integerOps.h>                                 // rose
 #include <stringify.h>                                  // rose
+
+#include <SgAsmAarch32Instruction.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmM68kInstruction.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmPowerpcInstruction.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -960,44 +974,32 @@ VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner:
     }
 #endif
 
-    struct T: AstSimpleProcessing {
-        std::set<int64_t> offsets;
-        const StackFrame &frame;
-
-        T(const StackFrame &frame)
-            : frame(frame) {}
-
-        void visit(SgNode *node) {
-            if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
-                // Look for (add reg ival)
-                SgAsmDirectRegisterExpression *reg = isSgAsmDirectRegisterExpression(add->get_lhs());
-                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(add->get_rhs());
-                if (reg && ival &&
-                    (reg->get_descriptor() == frame.framePointerRegister || frame.framePointerRegister.isEmpty()) &&
-                    SageInterface::getEnclosingNode<SgAsmMemoryReferenceExpression>(node)) {
-                    offsets.insert(ival->get_signedValue());
-                    return;
-                }
-
-                // Look for (add (add2 reg (mult reg2 ival2)) ival)
-                SgAsmBinaryAdd *add2 = isSgAsmBinaryAdd(add->get_lhs());
-                reg = add2 ? isSgAsmDirectRegisterExpression(add2->get_lhs()) : NULL;
-                SgAsmBinaryMultiply *mult = add2 ? isSgAsmBinaryMultiply(add2->get_rhs()) : NULL;
-                SgAsmDirectRegisterExpression *reg2 = mult ? isSgAsmDirectRegisterExpression(mult->get_lhs()) : NULL;
-                SgAsmIntegerValueExpression *ival2 = mult ? isSgAsmIntegerValueExpression(mult->get_rhs()) : NULL;
-                if (reg && ival && reg2 && ival2 &&
-                    (reg->get_descriptor() == frame.framePointerRegister || frame.framePointerRegister.isEmpty()) &&
-                    SageInterface::getEnclosingNode<SgAsmMemoryReferenceExpression>(node)) {
-                    offsets.insert(ival->get_signedValue());
-                    return;
-                }
-            }
+    std::set<int64_t> offsets;
+    AST::Traversal::forwardPre<SgAsmBinaryAdd>(insn, [&frame, &offsets](SgAsmBinaryAdd *add) {
+        // Look for (add reg ival)
+        SgAsmDirectRegisterExpression *reg = isSgAsmDirectRegisterExpression(add->get_lhs());
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(add->get_rhs());
+        if (reg && ival &&
+            (reg->get_descriptor() == frame.framePointerRegister || frame.framePointerRegister.isEmpty()) &&
+            AST::Traversal::findParentTyped<SgAsmMemoryReferenceExpression>(add)) {
+            offsets.insert(ival->get_signedValue());
+            return;
         }
-    } visitor(frame);
 
-    ASSERT_not_null(insn);
-    visitor.traverse(insn, preorder);
-    return visitor.offsets;
+        // Look for (add (add2 reg (mult reg2 ival2)) ival)
+        SgAsmBinaryAdd *add2 = isSgAsmBinaryAdd(add->get_lhs());
+        reg = add2 ? isSgAsmDirectRegisterExpression(add2->get_lhs()) : NULL;
+        SgAsmBinaryMultiply *mult = add2 ? isSgAsmBinaryMultiply(add2->get_rhs()) : NULL;
+        SgAsmDirectRegisterExpression *reg2 = mult ? isSgAsmDirectRegisterExpression(mult->get_lhs()) : NULL;
+        SgAsmIntegerValueExpression *ival2 = mult ? isSgAsmIntegerValueExpression(mult->get_rhs()) : NULL;
+        if (reg && ival && reg2 && ival2 &&
+            (reg->get_descriptor() == frame.framePointerRegister || frame.framePointerRegister.isEmpty()) &&
+            AST::Traversal::findParentTyped<SgAsmMemoryReferenceExpression>(add)) {
+            offsets.insert(ival->get_signedValue());
+            return;
+        }
+    });
+    return offsets;
 }
 
 static bool
@@ -1269,18 +1271,11 @@ VariableFinder::findConstants(const SymbolicExpression::Ptr &expr) {
 
 std::set<rose_addr_t>
 VariableFinder::findConstants(SgAsmInstruction *insn) {
-    struct: AstSimpleProcessing {
-        std::set<rose_addr_t> constants;
-
-        void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node))
-                constants.insert(ival->get_absoluteValue());
-        }
-    } visitor;
-
-    ASSERT_not_null(insn);
-    visitor.traverse(insn, preorder);
-    return visitor.constants;
+    std::set<rose_addr_t> constants;
+    AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(insn, [&constants](SgAsmIntegerValueExpression *ival) {
+        constants.insert(ival->get_absoluteValue());
+    });
+    return constants;
 }
 
 std::set<rose_addr_t>

@@ -1,17 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
+#include <stringify.h>                                  // rose
+
+#include <SgAsmFunction.h>
+#include <SgAsmInstruction.h>
 
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 #include <Sawyer/Tracker.h>
-#include <stringify.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

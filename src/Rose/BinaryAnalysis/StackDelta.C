@@ -1,8 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/StackDelta.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
@@ -12,6 +12,12 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 #include <integerOps.h>                                 // rose
+
+#include <SgAsmBlock.h>
+#include <SgAsmFunction.h>
+#include <SgAsmInstruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <Sawyer/ProgressBar.h>
 
@@ -351,11 +357,11 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
             BaseSemantics::RiscOperators::Ptr ops = cpu_ ? cpu_->operators() : BaseSemantics::RiscOperators::Ptr();
             BaseSemantics::SValue::Ptr sp0 = functionStackPtrs_.first;
             if (sp0 && ops) {
-                for (SgAsmBlock *block: SageInterface::querySubTree<SgAsmBlock>(function)) {
+                for (SgAsmBlock *block: AST::Traversal::findDescendantsTyped<SgAsmBlock>(function)) {
                     if (BaseSemantics::SValue::Ptr blkAbs = basicBlockStackPointers(block->get_address()).second) {
                         block->set_stackDeltaOut(toInt(ops->subtract(blkAbs, sp0)));
 
-                        for (SgAsmInstruction *insn: SageInterface::querySubTree<SgAsmInstruction>(block)) {
+                        for (SgAsmInstruction *insn: AST::Traversal::findDescendantsTyped<SgAsmInstruction>(block)) {
                             if (BaseSemantics::SValue::Ptr insnAbs = instructionStackPointers(insn).first)
                                 insn->set_stackDeltaIn(toInt(ops->subtract(insnAbs, sp0)));
                         }
@@ -457,18 +463,15 @@ Analysis::toInt(const BaseSemantics::SValue::Ptr &v) {
 // class method
 void
 Analysis::clearAstStackDeltas(SgNode *ast) {
-    struct T1: AstSimpleProcessing {
-        void visit(SgNode *node) {
-            if (SgAsmFunction *func = isSgAsmFunction(node)) {
-                func->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
-            } else if (SgAsmBlock *blk = isSgAsmBlock(node)) {
-                blk->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-            } else if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
-                insn->set_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA);
-            }
+    AST::Traversal::forwardPre<SgNode>(ast, [](SgNode *node) {
+        if (SgAsmFunction *func = isSgAsmFunction(node)) {
+            func->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
+        } else if (SgAsmBlock *blk = isSgAsmBlock(node)) {
+            blk->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
+        } else if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
+            insn->set_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA);
         }
-    };
-    T1().traverse(ast, preorder);
+    });
 }
 
 // internal

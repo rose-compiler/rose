@@ -1,11 +1,37 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmAarch32Coprocessor.h>
+#include <SgAsmAarch32Instruction.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryAsr.h>
+#include <SgAsmBinaryConcat.h>
+#include <SgAsmBinaryLsl.h>
+#include <SgAsmBinaryLsr.h>
+#include <SgAsmBinaryMsl.h>
+#include <SgAsmBinaryPostupdate.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmBinaryRor.h>
+#include <SgAsmBinarySubtract.h>
+#include <SgAsmByteOrder.h>
+#include <SgAsmFloatValueExpression.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmRegisterNames.h>
+#include <SgAsmRegisterReferenceExpression.h>
+#include <SgAsmUnarySignedExtend.h>
+#include <SgAsmUnaryTruncate.h>
+#include <SgAsmUnaryUnsignedExtend.h>
+
+#include <Cxx_GrammarDowncast.h>
+
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {

@@ -1,10 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmMipsInstruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -86,7 +95,7 @@ unparseMipsExpression(SgAsmExpression *expr, const LabelMap *labels, const Regis
         }
 
         case V_SgAsmDirectRegisterExpression: {
-            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmInstruction *insn = AST::Traversal::findParentTyped<SgAsmInstruction>(expr);
             SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparseMipsRegister(insn, rr->get_descriptor(), registers);
             break;

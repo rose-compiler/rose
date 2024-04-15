@@ -1,11 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <integerOps.h>
+#include <Rose/BitOps.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmPowerpcInstruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -41,12 +49,9 @@ unparsePowerpcExpression(SgAsmExpression* expr, const LabelMap *labels, const Re
                 case V_SgAsmBinaryAdd: {
                     SgAsmBinaryAdd* a = isSgAsmBinaryAdd(addr);
                     std::string lhs = unparsePowerpcExpression(a->get_lhs(), labels, registers, false);
-                    if (isSgAsmValueExpression(a->get_rhs())) {
+                    if (auto ve = isSgAsmIntegerValueExpression(a->get_rhs())) {
                         // Sign-extend from 16 bits
-                        SgAsmValueExpression *ve = isSgAsmValueExpression(a->get_rhs());
-                        ASSERT_not_null(ve);
-                        result = boost::lexical_cast<std::string>(
-                                   (int64_t)IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(ve)));
+                        result = boost::lexical_cast<std::string>(BitOps::signExtend(ve->get_absoluteValue(), 16));
                         result += "(" + lhs + ")";
                     } else {
                         result = lhs + ", " + unparsePowerpcExpression(a->get_rhs(), labels, registers, false);
@@ -60,7 +65,7 @@ unparsePowerpcExpression(SgAsmExpression* expr, const LabelMap *labels, const Re
             break;
         }
         case V_SgAsmDirectRegisterExpression: {
-            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmInstruction *insn = AST::Traversal::findParentTyped<SgAsmInstruction>(expr);
             SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparsePowerpcRegister(insn, rr->get_descriptor(), registers);
             break;

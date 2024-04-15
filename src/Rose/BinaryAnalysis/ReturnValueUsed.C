@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 
 #include <Rose/CommandLine.h>
@@ -11,10 +10,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
-
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
-#include <AsmUnparser_compat.h>
-#endif
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics;

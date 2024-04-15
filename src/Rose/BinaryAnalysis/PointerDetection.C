@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -16,6 +15,8 @@
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <ROSE_UNUSED.h>
+
+#include <SgAsmInstruction.h>
 
 #include <Sawyer/ProgressBar.h>
 

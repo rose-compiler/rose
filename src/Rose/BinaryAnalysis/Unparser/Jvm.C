@@ -1,9 +1,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmJvmInstruction.h>
+#include <SgAsmMemoryReferenceExpression.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

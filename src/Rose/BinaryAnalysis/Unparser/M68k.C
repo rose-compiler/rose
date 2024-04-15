@@ -1,10 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmM68kInstruction.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmRegisterNames.h>
+#include <SgAsmRegisterReferenceExpression.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

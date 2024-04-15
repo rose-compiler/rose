@@ -1,10 +1,24 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmBinarySubtract.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmIndirectRegisterExpression.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmVectorType.h>
+#include <SgAsmX86Instruction.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -129,14 +143,14 @@ unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const Regist
         }
 
         case V_SgAsmDirectRegisterExpression: {
-            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmInstruction *insn = AST::Traversal::findParentTyped<SgAsmInstruction>(expr);
             SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparseX86Register(insn, rr->get_descriptor(), registers);
             break;
         }
 
         case V_SgAsmIndirectRegisterExpression: {
-            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmInstruction *insn = AST::Traversal::findParentTyped<SgAsmInstruction>(expr);
             SgAsmIndirectRegisterExpression* rr = isSgAsmIndirectRegisterExpression(expr);
             result = unparseX86Register(insn, rr->get_descriptor(), registers);
             if (!result.empty() && '0'==result[result.size()-1])
@@ -273,7 +287,7 @@ X86::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         outputExpr(out, bin->get_rhs(), state);
 
     } else if (SgAsmMemoryReferenceExpression *mr = isSgAsmMemoryReferenceExpression(expr)) {
-        SgAsmX86Instruction *insn = SageInterface::getEnclosingNode<SgAsmX86Instruction>(expr);
+        SgAsmX86Instruction *insn = AST::Traversal::findParentTyped<SgAsmX86Instruction>(expr);
         bool isLea = insn != nullptr && insn->get_kind() == x86_lea;
         if (!isLea) {
             state.frontUnparser().emitTypeName(out, mr->get_type(), state);

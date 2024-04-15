@@ -4,10 +4,14 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Address.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BitFlags.h>
 
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
 #include <Sawyer/Tracker.h>
 
 #include <boost/serialization/access.hpp>
@@ -95,7 +99,7 @@ public:
 
 public:
     /** Facility for emitting diagnostics. */
-    static Diagnostics::Facility mlog;
+    static Sawyer::Message::Facility mlog;
 
 private:
     Settings settings_;                                   // settings that affect behavior

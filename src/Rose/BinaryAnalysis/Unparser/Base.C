@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
@@ -12,20 +12,47 @@
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/SourceLocation.h>
+#include <integerOps.h>                                 // rose
+#include <stringify.h>                                  // rose
+
+#include <SgAsmAarch32Coprocessor.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryAsr.h>
+#include <SgAsmBinaryConcat.h>
+#include <SgAsmBinaryLsl.h>
+#include <SgAsmBinaryLsr.h>
+#include <SgAsmBinaryMsl.h>
+#include <SgAsmBinaryPostupdate.h>
+#include <SgAsmBinaryPreupdate.h>
+#include <SgAsmBinaryRor.h>
+#include <SgAsmBinarySubtract.h>
+#include <SgAsmByteOrder.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmFloatType.h>
+#include <SgAsmFloatValueExpression.h>
+#include <SgAsmFunction.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmRegisterNames.h>
+#include <SgAsmUnarySignedExtend.h>
+#include <SgAsmUnaryTruncate.h>
+#include <SgAsmUnaryUnsignedExtend.h>
+#include <SgAsmVectorType.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <Sawyer/ProgressBar.h>
-
-#include <integerOps.h>
-#include <stringify.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/variant.hpp>
+
 #include <ctype.h>
 #include <sstream>
 
@@ -602,7 +629,6 @@ Settings::minimal() {
 Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
-    using namespace CommandlineProcessing;
     using namespace Rose::CommandLine;
 
     SwitchGroup sg("Unparsing switches");
