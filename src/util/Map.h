@@ -1,9 +1,12 @@
 #ifndef ROSE_Map_H
 #define ROSE_Map_H
 
+#include <boost/optional.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+
 #include <stdexcept>
 #include <map>
-#include <boost/optional.hpp>
 
 /** Extends std::map with methods that return optional values. */
 template<class Key, class T, class Compare=std::less<Key>, class Alloc=std::allocator<std::pair<const Key, T> > >

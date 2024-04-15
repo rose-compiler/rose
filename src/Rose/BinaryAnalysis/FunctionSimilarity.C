@@ -1,12 +1,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <sage3basic.h>                                 // needed by LinearEditDistance.h
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
 
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/StringUtility/Escape.h>
 #include <ROSE_UNUSED.h>
 #include <rose_isnan.h>
 #include <Combinatorics.h>                              // rose

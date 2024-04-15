@@ -7,10 +7,8 @@
 // only AST for binary executable files (the ROSE Binary AST).
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#include <sage3basic.h>                                 // must be first
-
 #include <Rose/BinaryAnalysis/Dwarf.h>
+
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
 #include <ROSE_UNUSED.h>

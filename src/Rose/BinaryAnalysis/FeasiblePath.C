@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -26,7 +25,10 @@
 #include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/CommandLine.h>
+#include <Rose/StringUtility/Escape.h>
 #include <Combinatorics.h>                              // rose
+
+#include <SgAsmInstruction.h>
 
 #include <Sawyer/GraphAlgorithm.h>
 
@@ -661,7 +663,8 @@ FeasiblePath::Expression::print(std::ostream &out) const {
     }
 }
 
-FeasiblePath::FunctionSummary::FunctionSummary() {}
+FeasiblePath::FunctionSummary::FunctionSummary()
+    : stackDelta(SgAsmInstruction::INVALID_STACK_DELTA) {}
 
 FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex,
                                                uint64_t stackDelta)

@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 
 #include <Rose/BinaryAnalysis/AstHasher.h>

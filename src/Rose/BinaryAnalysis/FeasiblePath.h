@@ -291,8 +291,8 @@ public:
      *  This is information for summarized functions. */
     struct FunctionSummary {
         rose_addr_t address = 0;                            /**< Address of summarized function. */
-        int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA; /**< Stack delta for summarized function. */
-        std::string name;                               /**< Name of summarized function. */
+        int64_t stackDelta;                                 /**< Stack delta for summarized function. */
+        std::string name;                                   /**< Name of summarized function. */
 
         /** Construct empty function summary. */
         FunctionSummary();

@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>                                 // FIXME[Robb Matzke 2024-03-18] Rose::BinaryAnalysis::Partitioner2
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>

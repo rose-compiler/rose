@@ -4,9 +4,13 @@
 #define ROSE_WorkLists_H
 
 #include <boost/logic/tribool.hpp>
+
+#include <algorithm>
 #include <cassert>
 #include <list>
 #include <map>
+#include <set>
+#include <vector>
 
 /** List of things to work on.  A WorkList is an ordered list of items of user-defined type.  Items are inserted (and copied)
  *  onto either the front or back of the list and are removed from either the front or back, allowing the WorkList to be used

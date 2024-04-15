@@ -5,9 +5,12 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Database.h>
+#include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
+
 #include <ctime>
 #include <regex>
 #include <string>
