@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -24,7 +23,10 @@
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
 #include <Rose/CommandLine.h>
+#include <Rose/StringUtility/Escape.h>
 #include <Combinatorics.h>                              // ROSE
+
+#include <SgAsmInstruction.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <chrono>

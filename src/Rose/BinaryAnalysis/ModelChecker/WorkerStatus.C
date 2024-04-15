@@ -1,12 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>
 
 #include <Rose/BinaryAnalysis/ModelChecker/Exception.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
+
 #include <fcntl.h>
 #include <iomanip>
 #include <sstream>

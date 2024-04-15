@@ -4,6 +4,8 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
+#include <Rose/Constants.h>
+
 #include <Sawyer/CommandLine.h>
 
 namespace Rose {

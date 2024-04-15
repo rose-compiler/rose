@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -17,10 +16,13 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/NumberToString.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scope_exit.hpp>
+
 #ifdef __linux
 #include <sys/syscall.h>                                // SYS_* constants
 #include <sys/types.h>                                  // pid_t

@@ -1,10 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
+#include <Rose/StringUtility/Escape.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

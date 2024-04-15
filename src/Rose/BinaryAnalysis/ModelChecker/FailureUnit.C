@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
@@ -10,6 +9,8 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/Sarif/Location.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/NumberToString.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>

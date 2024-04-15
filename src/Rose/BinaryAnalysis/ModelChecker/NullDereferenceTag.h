@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
+class SgAsmInstruction;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {

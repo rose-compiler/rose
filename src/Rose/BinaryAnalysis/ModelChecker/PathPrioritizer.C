@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathPrioritizer.h>
 
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>

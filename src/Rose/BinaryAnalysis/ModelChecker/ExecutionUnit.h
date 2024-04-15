@@ -3,10 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
-#include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
-
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
 #include <Rose/SourceLocation.h>
+
+class SgAsmInstruction;
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
@@ -8,7 +7,9 @@
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/BitOps.h>
 #include <Rose/Sarif/Location.h>
+#include <Rose/StringUtility/Diagnostics.h>
 
 #include <rose_isnan.h>
 

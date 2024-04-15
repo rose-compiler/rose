@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -12,6 +11,9 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Sarif/Location.h>
+#include <Rose/StringUtility/Escape.h>
+
+#include <SgAsmInstruction.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>

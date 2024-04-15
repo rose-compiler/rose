@@ -1,11 +1,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
+#include <Rose/StringUtility/Escape.h>
+
+#include <SgAsmInstruction.h>
 
 #include <boost/lexical_cast.hpp>
 

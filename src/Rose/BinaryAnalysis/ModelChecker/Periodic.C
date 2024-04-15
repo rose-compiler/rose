@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Periodic.h>
 
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>

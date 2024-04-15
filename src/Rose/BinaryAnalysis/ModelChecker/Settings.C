@@ -1,9 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 
 #include <Rose/CommandLine.h>
+#include <Rose/StringUtility/Diagnostics.h>
 #include <rose_isnan.h>
 
 namespace Rose {

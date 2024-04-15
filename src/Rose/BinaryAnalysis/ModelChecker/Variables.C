@@ -1,10 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
-#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Variables.h>
+#include <Rose/StringUtility/NumberToString.h>
 
 #include <sstream>
 
