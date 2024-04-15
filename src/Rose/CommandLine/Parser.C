@@ -1,4 +1,4 @@
-#include <sage3basic.h>                                 // must be first ROSE include
+#include <sage3basic.h>                                 // needed by utility_functions.h
 #include <Rose/CommandLine/Parser.h>
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>

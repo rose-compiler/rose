@@ -1,15 +1,18 @@
-#include <sage3basic.h>
+#include <Rose/Initialize.h>
+
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/SplitJoin.h>
 #include <rosePublicConfig.h>
 #include <rose_config.h>                                // needed for VERSION with cmake
-#include <Rose/Initialize.h>
+
+#include <Sawyer/Synchronization.h>
+
+#include <boost/lexical_cast.hpp>
 
 #ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
-#include <Sawyer/Synchronization.h>
-#include <boost/lexical_cast.hpp>
 
 namespace Rose {
 

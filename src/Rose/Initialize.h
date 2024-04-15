@@ -1,5 +1,10 @@
 #ifndef ROSE_Initialize_H
 #define ROSE_Initialize_H
+#include <RoseFirst.h>
+
+#include <rosedll.h>
+
+#include <string>
 
 /** The ROSE library.
  *

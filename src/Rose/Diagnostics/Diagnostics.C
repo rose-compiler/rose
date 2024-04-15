@@ -4,7 +4,6 @@
 #include <Sawyer/ProgressBar.h>
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
