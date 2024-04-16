@@ -956,24 +956,28 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         if ((capreg & ARM_SYSREG_SPSR_X) != 0) {
             reg = dict->find("spsr_extension");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         if ((capreg & ARM_SYSREG_SPSR_S) != 0) {
             reg = dict->find("spsr_status");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         if ((capreg & ARM_SYSREG_SPSR_F) != 0) {
             reg = dict->find("spsr_flags");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         retval = regList;
     } else if ((capreg & (ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F)) != 0 &&
@@ -984,24 +988,28 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         if ((capreg & ARM_SYSREG_CPSR_X) != 0) {
             reg = dict->find("cpsr_extension");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         if ((capreg & ARM_SYSREG_CPSR_S) != 0) {
             reg = dict->find("cpsr_status");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         if ((capreg & ARM_SYSREG_CPSR_F) != 0) {
             reg = dict->find("cpsr_flags");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
+            regExpr->set_parent(regList);
         }
         retval = regList;
     } else {
@@ -1059,7 +1067,9 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
 
                 auto regList = new SgAsmRegisterNames;
                 regList->get_registers().push_back(nzcvq);
+                nzcvq->set_parent(regList);
                 regList->get_registers().push_back(ge);
+                ge->set_parent(regList);
                 retval = regList;
                 break;
             }
