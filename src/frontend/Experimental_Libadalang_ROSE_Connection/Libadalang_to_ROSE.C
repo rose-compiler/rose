@@ -29,6 +29,17 @@ namespace si = SageInterface;
 
 namespace Libadalang_ROSE_Translation {
 
+namespace{
+  /// stores a mapping from Element_ID to SgInitializedName
+  map_t<int, SgInitializedName*> libadalangVarsMap;
+
+  /// stores a mapping from hash to builtin type nodes
+  map_t<int, SgType*> adaTypesMap;
+} //end unnamed namespace
+
+map_t<int, SgInitializedName*>&                     libadalangVars()         { return libadalangVarsMap;  }
+map_t<int, SgType*>&                                      adaTypes()         { return adaTypesMap;        }
+
 //Function to turn an ada_text_type into a string
 std::string dot_ada_text_type_to_string(ada_text_type input_text){
     ada_text value_text;
@@ -52,6 +63,7 @@ std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array 
     return return_string;
 }
 
+
 //Function to get the source location of an ada node as a string
 std::string dot_ada_full_sloc(ada_base_entity *node){
     ada_text_type file_name;
@@ -71,28 +83,6 @@ std::string dot_ada_full_sloc(ada_base_entity *node){
     full_sloc += std::to_string(line_numbers.start.line) + ":" + std::to_string(line_numbers.start.column) + " .. ";
     full_sloc += std::to_string(line_numbers.end.line) + ":" + std::to_string(line_numbers.end.column);
     return full_sloc;
-}
-
-//Function to hash a unique int from a node using the node's kind and location.
-//The kind and location can be provided, but if not they will be determined in the function
-int hash_node(ada_base_entity *node, int kind = -1, std::string full_sloc = ""){
-    //Get the kind/sloc if they weren't provided
-    if(kind == -1){
-        kind = ada_node_kind(node);
-    }
-    if(full_sloc == ""){
-        full_sloc = dot_ada_full_sloc(node);
-    }
-
-    std::string word_to_hash = full_sloc + std::to_string(kind);
-
-    //Generate the hash
-    int seed = 131; 
-    unsigned int hash = 0;
-    for(int i = 0; i < word_to_hash.length(); i++){
-        hash = (hash * seed) + word_to_hash[i];
-    }
-    return hash;
 }
 
 //
@@ -637,7 +627,7 @@ void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file)
 
   // define the package standard
   //   as we are not able to read it out from Asis
-  initializePkgStandard(astScope);
+  initializePkgStandard(astScope, root);
 
   // translate all units
   //std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});

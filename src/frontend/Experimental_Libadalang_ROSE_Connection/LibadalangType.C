@@ -15,7 +15,6 @@
 #include "LibadalangStatement.h"
 #include "AdaMaker.h"
 
-
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
@@ -40,6 +39,59 @@ namespace Libadalang_ROSE_Translation
 
 namespace
 {
+  struct MakeTyperef : sg::DispatchHandler<SgType*>
+  {
+      using base = sg::DispatchHandler<SgType*>;
+
+      MakeTyperef(ada_base_entity* lal_elem, AstContext astctx)
+      : base(), el(lal_elem), ctx(astctx)
+      {}
+
+      // checks whether this is a discriminated declaration and sets the type accordingly
+      void handleDiscrDecl(SgDeclarationStatement& n, SgType* declaredType)
+      {
+        if (SgAdaDiscriminatedTypeDecl* discrDcl = si::Ada::getAdaDiscriminatedTypeDecl(n))
+          declaredType = discrDcl->get_type();
+
+        set(declaredType);
+      }
+
+      void set(SgType* ty)                       { res = ty; }
+
+      // error handler
+      void handle(SgNode& n)                     { SG_UNEXPECTED_NODE(n); }
+
+      // just use the type
+      void handle(SgType& n)                     { set(&n); }
+      void handle(SgAdaDiscriminatedTypeDecl& n) { set(n.get_type()); }
+
+      // undecorated declarations
+
+      // possibly decorated with an SgAdaDiscriminatedTypeDecl
+      // \{
+      void handle(SgAdaFormalTypeDecl& n)        { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgClassDeclaration& n)         { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)          { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)     { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgEnumDeclaration& n)          { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgTypedefDeclaration& n)       { handleDiscrDecl(n, n.get_type()); }
+      // \}
+
+      // others
+      void handle(SgInitializedName& n)          { set(&mkExprAsType(SG_DEREF(sb::buildVarRefExp(&n)))); }
+
+      void handle(SgAdaAttributeExp& n)
+      {
+        attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
+        set(&mkExprAsType(n));
+      }
+
+
+    private:
+      ada_base_entity* el;
+      AstContext      ctx;
+  };
+
   SgTypedefDeclaration&
   declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
   {
@@ -280,6 +332,98 @@ namespace
 
 } //end unnamed namespace
 
+//Function to hash a unique int from a node using the node's kind and location.
+//The kind and location can be provided, but if not they will be determined in the function
+int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
+    //Get the kind/sloc if they weren't provided
+    if(kind == -1){
+        kind = ada_node_kind(node);
+    }
+    if(full_sloc == ""){
+        full_sloc = dot_ada_full_sloc(node);
+    }
+
+    std::string word_to_hash = full_sloc + std::to_string(kind);
+
+    //Generate the hash
+    int seed = 131; 
+    unsigned int hash = 0;
+    for(int i = 0; i < word_to_hash.length(); i++){
+        hash = (hash * seed) + word_to_hash[i];
+    }
+    return hash;
+}
+
+  SgNode&
+  getExprType(ada_base_entity* lal_expr, AstContext ctx)
+  {
+    //Get the kind of this node
+    ada_node_kind_enum kind;
+    kind = ada_node_kind(lal_expr);
+
+    static constexpr bool findFirstOf = false;
+
+    SgNode* res = nullptr;
+
+    switch(kind)
+    {
+      case ada_type_decl:
+        {
+          //logKind("An_Identifier");
+
+          int hash = hash_node(lal_expr);
+          logInfo() << "Searching for hash: " << hash;
+
+          // is it a type?
+          findFirstOf
+          || (res = findFirst(adaTypes(),  hash))
+          ;
+
+          if(res != nullptr){
+              logInfo() << ", found.\n";
+          } else {
+              logInfo() << ", couldn't find.\n";
+          }
+
+          break;
+        }
+      default:
+        logWarn() << "Unknown type expression: " << kind << std::endl;
+        //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+        res = &mkTypeUnknown();
+    }
+
+    return SG_DEREF(res);
+  }
+
+  SgType&
+  getDeclType(ada_base_entity* lal_id, AstContext ctx)
+  {
+    //Get the kind of this node
+    ada_node_kind_enum kind;
+    kind = ada_node_kind(lal_id);
+
+    if(kind == ada_subtype_indication){
+        //Get the type this references
+        ada_base_entity lal_declaration;
+        ada_type_expr_p_designated_type_decl(lal_id, &lal_declaration);
+        SgNode& basenode = getExprType(&lal_declaration, ctx);
+        SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
+
+        return SG_DEREF(res);
+    }
+
+    /*ADA_ASSERT(elem.Element_Kind == A_Definition);
+    Definition_Struct& def = elem.The_Union.Definition;
+
+    if (def.Definition_Kind == An_Access_Definition)
+      return getAnonymousAccessType(def, ctx);*/
+
+    logError() << "getDeclType: unhandled definition kind: " << kind
+               << std::endl;
+    return mkTypeUnknown();
+  }
+
 void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int repval)
 {
   SgEnumType&         enumty = SG_DEREF(enumdcl.get_type());
@@ -293,7 +437,7 @@ void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int re
   //ADA_ASSERT(sgnode.get_parent() == &enumdcl);
 }
 
-void initializePkgStandard(SgGlobal& global)
+void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 {
   // make available declarations from the package standard
   // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
@@ -313,10 +457,12 @@ void initializePkgStandard(SgGlobal& global)
   // boolean enum type
   //AdaIdentifier         boolname{"BOOLEAN"};
 
-  //~ SgType& adaBoolType               = SG_DEREF(sb::buildBoolType());
+  ada_base_entity ada_bool;
+  ada_ada_node_p_bool_type(lal_root, &ada_bool);
+  int hash = hash_node(&ada_bool);
   SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
   SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
-  //adaTypes()[boolname]              = &adaBoolType;
+  adaTypes()[hash]              = &adaBoolType;
 
   declareEnumItem(boolDecl, "False", 0);
   declareEnumItem(boolDecl, "True",  1);
@@ -330,9 +476,13 @@ void initializePkgStandard(SgGlobal& global)
   // integral types
   SgType&               adaIntType  = mkIntegralType(); // the root integer type in ROSE
 
+  ada_base_entity ada_integer;
+  ada_ada_node_p_int_type(lal_root, &ada_integer);
+  hash = hash_node(&ada_integer);
+
   declareIntSubtype<std::int8_t> ("Short_Short_Integer", stdspec);
   declareIntSubtype<std::int16_t>("Short_Integer",       stdspec);
-  declareIntSubtype<std::int32_t>("Integer",             stdspec);
+  adaTypes()[hash] = declareIntSubtype<std::int32_t>("Integer",             stdspec).get_type();
   declareIntSubtype<std::int64_t>("Long_Integer",        stdspec);
   declareIntSubtype<std::int64_t>("Long_Long_Integer",   stdspec);
 
@@ -368,9 +518,13 @@ void initializePkgStandard(SgGlobal& global)
   static constexpr int         EXP_LL_FLOAT = 4932;
   static constexpr int         DIG_LL_FLOAT = 18;
 
+  ada_base_entity ada_real;
+  ada_ada_node_p_universal_real_type(lal_root, &ada_real);
+  hash = hash_node(&ada_real);
+
   SgType& adaRealType               = mkRealType();
   declareRealSubtype("Short_Float",     DIG_S_FLOAT,  VAL_S_FLOAT,  EXP_S_FLOAT,  stdspec);
-  declareRealSubtype("Float",           DIG_FLOAT,    VAL_FLOAT,    EXP_FLOAT,    stdspec);
+  adaTypes()[hash] = declareRealSubtype("Float",           DIG_FLOAT,    VAL_FLOAT,    EXP_FLOAT,    stdspec).get_type();
   declareRealSubtype("Long_Float",      DIG_L_FLOAT,  VAL_L_FLOAT,  EXP_L_FLOAT,  stdspec);
   declareRealSubtype("Long_Long_Float", DIG_LL_FLOAT, VAL_LL_FLOAT, EXP_LL_FLOAT, stdspec);
 

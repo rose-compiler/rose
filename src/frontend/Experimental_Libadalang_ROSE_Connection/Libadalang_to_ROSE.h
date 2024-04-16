@@ -26,10 +26,6 @@ std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array 
 
 std::string dot_ada_full_sloc(ada_base_entity *node);
 
-//Function to hash a unique int from a node using the node's kind and location.
-//The kind and location can be provided, but if not they will be determined in the function
-int hash_node(ada_base_entity *node, int kind, std::string full_sloc);
-
 struct ExtendedPragmaID : std::tuple<int, SgStatement*>
 {
   using base = std::tuple<int, SgStatement*>;
@@ -42,10 +38,22 @@ struct ExtendedPragmaID : std::tuple<int, SgStatement*>
   SgStatement* stmt() const { return std::get<1>(*this); }
 };
 
+
+// default map used in the translation
+template <class KeyType, class SageNode>
+using map_t = std::unordered_map<KeyType, SageNode>;
+
+/// returns a mapping from hash to SgInitializedName
+map_t<int, SgInitializedName*>& libadalangVars();
+
+/// returns a mapping from string to standard type nodes
+map_t<int, SgType*>& adaTypes();
+
 /// The context class for translation from Asis to ROSE
 ///   containts context that is passed top-down
 struct AstContext
 {
+
     using StatementHandler            = std::function<void(AstContext, SgStatement&)>;
     using PragmaContainer             = std::vector<ExtendedPragmaID>;
     using DeferredCompletion          = std::function<void()>;
@@ -205,6 +213,8 @@ void attachSourceLocation(SgPragma& n, ada_base_entity* lal_element, AstContext 
 /// \return true if \ref s starts with \ref sub
 bool startsWith(const std::string& s, const std::string& sub);
 
+void logKind(const char* kind, int elemID);
+
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);
 
 }
@@ -248,6 +258,70 @@ namespace{
     res << " *FLAW* ";
     return res;
   }
+
+  /// records a node (value) \ref val with key \ref key in map \ref m.
+  /// \param m       the map
+  /// \param key     the recorded key
+  /// \param val     the new value
+  /// \param replace true, if the key is already in the map, false otherwise
+  ///        (this is used for consistency checks).
+  /// \pre key is not in the map yet
+  template <class MapT, class ValT>
+  inline
+  void
+  recordNode(MapT& m, typename MapT::key_type key, ValT& val, bool replace = false)
+  {
+    //~ ADA_ASSERT(replace || m.find(key) == m.end());
+    if (!(replace || m.find(key) == m.end()))
+    {
+      logFlaw() << "replace node " << typeid(*m[key]).name()
+                << " with " << typeid(val).name()
+                << std::endl;
+    }
+
+    m[key] = &val;
+  }
+
+
+  /// records the first mapping that appears in the translation
+  /// secondary mappings are ignored, but do not trigger an error.
+  /// \note use for non-defining/defining decls and
+  ///       other nodes that do not have a single defining mapping.
+  template <class MapT, class ValT>
+  inline
+  void
+  recordNonUniqueNode(MapT& m, typename MapT::key_type key, ValT& val, bool replace = false)
+  {
+    const bool nodeExists = (m.find(key) != m.end());
+
+    if (nodeExists && !replace)
+      return;
+
+    recordNode(m, key, val, nodeExists);
+  }
+
+  /// \private
+  /// base case when a declaration is not in the map
+  template <class MapT>
+  inline
+  typename MapT::mapped_type
+  findFirst(const MapT&)
+  {
+    return {};
+  }
+
+  /// tries one or more keys to find a declaration from map \ref m
+  /// returns the default value (e.g., nullptr) if none of the keys exist.
+  template <class MapT, class Key0T, class... KeysT>
+  inline
+  typename MapT::mapped_type
+  findFirst(const MapT& m, Key0T key0, KeysT... keys)
+  {
+    typename MapT::const_iterator pos = m.find(key0);
+
+    return pos != m.end() ? pos->second : findFirst(m, keys...);
+  }
+
 }
 
 #endif //_LIBADALANG_TO_ROSE_H
