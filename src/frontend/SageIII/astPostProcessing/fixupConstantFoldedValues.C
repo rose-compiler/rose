@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "Rose/AST/Utils.h"
+#include "Rose/AST/Utility.h"
 
 #if !defined(ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING)
 #  define ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING 0
@@ -286,7 +286,7 @@ void removeConstantFoldedValue(SgProject * project) {
     }
   }
 
-  Rose::AST::Utils::edgePointerReplacement(replace_map);
+  Rose::AST::Utility::edgePointerReplacement(replace_map);
 
   for (auto expr: delete_set) {
     deleteExpressionAndOriginalExpressionTree(expr);

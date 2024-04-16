@@ -7,7 +7,7 @@
 
 #include <SgNode.h>
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
-#include <Rose/AST/Utils.h>
+#include <Rose/AST/Utility.h>
 
 namespace Rose {
 
@@ -63,7 +63,7 @@ void saveAst(Archive &archive, SgNode *ast) {
         }
     } saveRestoreRootParent(ast);
 
-    ASSERT_always_require(AST::Utils::checkParentPointers(ast, Diagnostics::mlog[Sawyer::Message::FATAL]));
+    ASSERT_always_require(AST::Utility::checkParentPointers(ast, Diagnostics::mlog[Sawyer::Message::FATAL]));
 
     // Serialize the AST
     roseAstSerializationRegistration(archive);
@@ -80,7 +80,7 @@ SgNode* restoreAst(Archive &archive) {
     roseAstSerializationRegistration(archive);
     SgNode *ast = NULL;
     archive >>BOOST_SERIALIZATION_NVP(ast);
-    AST::Utils::repairParentPointers(ast);
+    AST::Utility::repairParentPointers(ast);
     return ast;
 }
 

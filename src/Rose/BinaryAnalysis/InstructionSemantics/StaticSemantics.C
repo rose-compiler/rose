@@ -3,7 +3,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 
 #include <Rose/AST/Traversal.h>
-#include <Rose/AST/Utils.h>
+#include <Rose/AST/Utility.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -194,7 +194,7 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
         }
 
         // We're about to make a copy of the a->ast(), so we need to ensure all the parent pointers are correct.
-        AST::Utils::checkParentPointers(a->ast());
+        AST::Utility::checkParentPointers(a->ast());
 
         // Deep-copy the SValue's AST because we're about to link it into the real AST.
         SgTreeCopy deep;

@@ -1,8 +1,8 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/Utils.h"
+#include "Rose/AST/Utility.h"
 
-namespace Rose { namespace AST { namespace Utils {
+namespace Rose { namespace AST { namespace Utility {
 
 template <typename HandlerT, typename TraveralT>
 struct EdgeTraversal : public TraveralT {

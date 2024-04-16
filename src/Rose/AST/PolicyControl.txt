@@ -2,4 +2,3 @@
 
 responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
 cmdline.h: disable namespace_capitalization namespace_header_includes_all english_words
-Utils.h:   disable english_words

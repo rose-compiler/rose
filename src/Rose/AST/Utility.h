@@ -1,5 +1,5 @@
-#ifndef ROSE_AST_Utils_H
-#define ROSE_AST_Utils_H
+#ifndef ROSE_AST_Utility_H
+#define ROSE_AST_Utility_H
 #include <RoseFirst.h>
 
 #include <iostream>
@@ -11,11 +11,8 @@ class SgNode;
 namespace Rose {
 namespace AST {
 
-/** Collection of utility functions to operate on the AST.
- *
- *  @attention The name of this class violates the ROSE naming convention (not an English word). Users should not use this class
- *  until this is fixed since the change will be API breaking. */
-namespace Utils {
+/** Collection of utility functions to operate on the AST. */
+namespace Utility {
 
 using replacement_map_t = std::map<SgNode *, SgNode *>;
 

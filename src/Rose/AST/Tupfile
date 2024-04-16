@@ -15,7 +15,7 @@ run $(librose_compile)				\
     io/share.C					\
     NodeId.C					\
     Traversal.C					\
-    Utils.C					\
+    Utility.C					\
     utils/edge_ptr_repl.C
 
 run $(public_header) -o include/rose/Rose/AST	\
@@ -25,4 +25,4 @@ run $(public_header) -o include/rose/Rose/AST	\
     IO.h					\
     NodeId.h					\
     Traversal.h					\
-    Utils.h
+    Utility.h

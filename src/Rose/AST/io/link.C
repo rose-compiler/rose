@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/Utils.h"
+#include "Rose/AST/Utility.h"
 
 #define DEBUG_LinkAcrossFiles 0
 
@@ -318,7 +318,7 @@ class LinkAcrossFiles {
         delete t;
       }
 
-      Rose::AST::Utils::edgePointerReplacement(node_repl_map); // FIXME before or after delete?
+      Rose::AST::Utility::edgePointerReplacement(node_repl_map); // FIXME before or after delete?
     }
 };
 

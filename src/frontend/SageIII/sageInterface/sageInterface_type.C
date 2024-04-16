@@ -4,7 +4,7 @@
 #include "sageInterface.h"
 #include <map>
 #include <boost/foreach.hpp>
-#include "Rose/AST/Utils.h" 
+#include "Rose/AST/Utility.h"
 #include <unordered_map>
 #include "RoseAst.h"
 

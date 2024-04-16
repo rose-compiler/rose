@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/Utils.h"
+#include "Rose/AST/Utility.h"
 
 namespace Rose { namespace AST { namespace IO {
 
@@ -180,7 +180,7 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
       }
     }
 
-    Rose::AST::Utils::edgePointerReplacement(replacements);
+    Rose::AST::Utility::edgePointerReplacement(replacements);
   }
 };
 

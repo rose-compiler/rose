@@ -1,4 +1,4 @@
-#include <Rose/AST/Utils.h>
+#include <Rose/AST/Utility.h>
 
 #include <Rose/AST/Traversal.h>
 
@@ -12,7 +12,7 @@
 
 namespace Rose {
 namespace AST {
-namespace Utils {
+namespace Utility {
 
 // Show an error message about the specified path in a subtree.
 static void

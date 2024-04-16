@@ -36,7 +36,7 @@ librose_partial_la_SOURCES =								\
 	AST/io/share.C									\
 	AST/NodeId.C									\
 	AST/Traversal.C									\
-	AST/Utils.C									\
+	AST/Utility.C									\
 	AST/utils/edge_ptr_repl.C							\
 	BinaryAnalysis/AbstractLocation.C						\
 	BinaryAnalysis/AddressInterval.C						\

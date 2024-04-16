@@ -9,7 +9,7 @@
 
 #include "SgNodeHelper.h" //Markus's helper functions
 
-#include "Rose/AST/Utils.h"
+#include "Rose/AST/Utility.h"
 
 #include "sageInterface.h"
 
@@ -5160,7 +5160,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      printf ("fixupReferencesToSymbols(this_scope = %p copy_scope = %p = %s = %s): calling Utils::edgePointerReplacement() \n",this_scope,copy_scope,copy_scope->class_name().c_str(),get_name(copy_scope).c_str());
 #endif
 
-     Rose::AST::Utils::edgePointerReplacement(copy_scope,replacementMap);
+     Rose::AST::Utility::edgePointerReplacement(copy_scope,replacementMap);
 
 #if 0
      printf ("fixupReferencesToSymbols(): calling Utils::edgePointerReplacement(): DONE \n");
@@ -20254,7 +20254,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      printf ("Calling Utils::edgePointerReplacement() \n");
 #endif
 
-     Rose::AST::Utils::edgePointerReplacement(outlinedFile,replacementMap);
+     Rose::AST::Utility::edgePointerReplacement(outlinedFile,replacementMap);
 
 #if 0
      printf ("Calling Utils::edgePointerReplacement(): DONE \n");
