@@ -34,7 +34,7 @@ class OperatorAnnotCollection
                        Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) const
   {
     AstInterface::AstNodeList args;
-    std::string sig = OperatorDeclaration::operator_signature(fa, exp, &args);
+    std::string sig = OperatorDeclaration::operator_signature( exp, &args);
     if (this->known_type( sig, desc) && desc->get_param_decl().get_params().size() == args.size()) {
        if (argp != 0)
           *argp = args;

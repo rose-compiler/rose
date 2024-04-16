@@ -278,7 +278,7 @@ public:
                    std::string* varname = 0, AstNodePtr* scope = 0, 
                     bool *isglobal = 0, bool use_global_unique_name=false) ;
 
-  std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
+  static std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
 
   bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
 

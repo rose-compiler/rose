@@ -60,24 +60,23 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
 
 bool OperatorDeclaration::unique = false;
 
-std::string OperatorDeclaration::operator_signature(AstInterface& fa, 
-                                 const AstNodePtr& exp, 
+std::string OperatorDeclaration::operator_signature( const AstNodePtr& exp, 
                                  AstInterface::AstNodeList* argp,
                                  AstInterface::AstTypeList* paramp) {
     if (DebugAnnot()) {
-      std::cerr << "Creating operator signature:" << fa.AstToString(exp) << "\n";
+      std::cerr << "Creating operator signature:" << AstInterface::AstToString(exp) << "\n";
     }
     std::string fname;
     AstNodePtr f;
     AstNodeType t;
     AstTypeList params;
-    if ((fa.IsVarRef(exp,&t,&fname, 0, 0, /*use_globl_name=*/true) && fa.IsFunctionType(t, &params)) || 
-        (fa.IsFunctionCall(exp, &f, argp, 0, &params) && fa.IsVarRef(f,0,&fname, 0, 0, /*use_globl_name=*/true)) || 
-         fa.IsFunctionDefinition(exp,&fname,argp,0,0, &params, 0, /*use_globl_name=*/true)) { 
+    if ((AstInterface::IsVarRef(exp,&t,&fname, 0, 0, /*use_globl_name=*/true) && AstInterface::IsFunctionType(t, &params)) || 
+        (AstInterface::IsFunctionCall(exp, &f, argp, 0, &params) && AstInterface::IsVarRef(f,0,&fname, 0, 0, /*use_globl_name=*/true)) || 
+         AstInterface::IsFunctionDefinition(exp,&fname,argp,0,0, &params, 0, /*use_globl_name=*/true)) { 
        if (paramp != 0) *paramp = params;
     }
     if (DebugAnnot()) {
-      std::cerr << "Unexpected operator: not recognized:" << fa.AstToString(exp) << "\n";
+      std::cerr << "Unexpected operator: not recognized:" << AstInterface::AstToString(exp) << "\n";
     }
     return fname;
   }
@@ -85,12 +84,12 @@ std::string OperatorDeclaration::operator_signature(AstInterface& fa,
 OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast) {
     AstInterface::AstTypeList params;
     AstInterface::AstNodeList args;
-    signiture = operator_signature(fa, op_ast, &args, &params);
+    signiture = operator_signature(op_ast, &args, &params);
     assert(params.size() == args.size());
     AstInterface::AstNodeList::const_iterator p1 = args.begin();
     AstInterface::AstTypeList::const_iterator p2 = params.begin(); 
     while (p2 != params.end() && p1 != args.end()) {
-       pars.add_param(fa.GetTypeName(*p2), fa.GetVarName(*p1));
+       pars.add_param(fa.GetTypeName(*p2), AstInterface::GetVarName(*p1));
        ++p1; ++p2;
     }
 }

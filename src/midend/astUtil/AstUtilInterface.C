@@ -67,7 +67,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
   OperatorDeclaration op_decl(fa, op_ast);
   OperatorSideEffectDescriptor desc;
   std::string varname = (relation == OperatorSideEffect::Call)? 
-    OperatorDeclaration::operator_signature(fa, var) : fa.GetVarName(var, /*use_global_unique_name=*/true);
+    OperatorDeclaration::operator_signature(var) : GetVariableSignature(var);
   if (DebugAnnot()) {
     std::cerr << "Variable name is :" << varname << "\n";
   }
@@ -92,9 +92,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
   return std::pair<std::string, std::string>(op_decl.get_signiture(), varname);
 } 
 
-std::string AstUtilInterface:: GetVariableSignature(SgNode* variable, SgNode* scope) {
-     AstInterfaceImpl astImpl(scope);
-     AstInterface fa(&astImpl);
+std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     switch (variable->variantT()) {
      case V_SgNamespaceDeclarationStatement:
           return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
@@ -102,14 +100,35 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable, SgNode* sc
           return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
      case V_SgTypedefDeclaration:
      case V_SgTemplateTypedefDeclaration:
-          return "typedef_" + fa.GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString());
+          return "typedef_" + AstInterface::GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString());
      case V_SgStaticAssertionDeclaration:
-          return OperatorDeclaration::operator_signature(fa, variable);
+          return OperatorDeclaration::operator_signature(variable);
      default: break;
     }
     if (AstInterface::IsFunctionDefinition(variable)) {
-        return OperatorDeclaration::operator_signature(fa, variable);
+        return OperatorDeclaration::operator_signature(variable);
     } 
-    return fa.GetVarName(variable, /*use_global_unique_name=*/true);
+    AstNodePtr f;
+    if (AstInterface::IsFunctionCall(variable, &f)) {
+       variable = AstNodePtrImpl(f).get_ptr(); 
+    }
+    return AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);
 }
 
+bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
+   AstNodePtr _cur_scope;
+   if (!AstInterface::IsVarRef(ref, 0, 0, &_cur_scope)) {
+      return false;
+   }  
+   std::cerr << "scope is " << scope->class_name() << "\n";
+   SgNode* cur_scope = AstNodePtrImpl(_cur_scope).get_ptr(); 
+   while (cur_scope != 0 && cur_scope != scope) {
+    std::cerr << "current scope:" << cur_scope->class_name() << "\n";
+         SgNode* n = AstInterfaceImpl::GetScope(cur_scope);
+         if (n == cur_scope) {
+            break;
+         }
+         cur_scope = n;
+   }   
+   return cur_scope == scope;
+}

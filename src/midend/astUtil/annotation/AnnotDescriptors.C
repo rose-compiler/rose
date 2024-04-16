@@ -164,7 +164,7 @@ bool NameDescriptor::write(std::ostream& out, const std::string& content)
   auto output_char = [&out, &content] (const char c) {
        if (std::isalnum(c) || c == ':') {
          out << c;
-       } else if (c == '<' || c == '>' || c == '_' || c == ',' || c == '(' || c == ')') {
+       } else if (c == '_' || c == ',' || c == '(' || c == ')') {
          out << '_';
        } else if (c == '&') {
          out << "_ref_";

@@ -113,6 +113,7 @@ std::string GetFunctionSignature( const std::string& fname, const AstInterface::
       AstInterface::GetTypeInfo( t, &name);
       fname_stream << "_" << name;
   }
+  std::cerr << "Function signature:" << fname << " =>" << fname_stream.str() << "\n";
   return fname_stream.str();
 }
 
@@ -285,57 +286,6 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
        std::cerr << "unexpected class declaration type: " << decl->sage_class_name() << std::endl;
        ROSE_ABORT();
     }
-}
-
-SgScopeStatement* GetScope( SgNode* loc)
-{
-  // DQ (3/23/2006): It is particularly dangerous in C++ to
-  // interperate the scope from the structure.  Places where this
-  // could be a problem now carry the scope explicitly (this step
-  // was introduced after Qing's work on the AstInterface).
-  // I have fixed up this code to report the correct scope
-  // using the virtual get_scope() function for SgStatements.
-
-      
-     if (loc == NULL) return NULL;
-     {
-      const SgClassDefinition* classdef = isSgClassDefinition(loc);
-      if (classdef != NULL) {
-          return GetScope(classdef->get_declaration()->get_parent());
-      }
-     }
-
-        
-    {
-     const SgStatement* stmt = isSgStatement(loc);
-     if (stmt != NULL) { return stmt->get_scope(); }
-    }
-
-    {
-     const SgInitializedName* initializedName = isSgInitializedName(loc);
-     if (initializedName != NULL) {
-        return initializedName->get_scope();
-     }
-    }
-
-    {
-     const SgExpression* expression = isSgExpression(loc);
-     if (expression != NULL) {
-            SgStatement* statement = TransformationSupport::getStatement(expression);
-            ROSE_ASSERT(statement != NULL);
-            return GetScope(statement);
-     }
-    }
-     const SgLocatedNodeSupport* located = isSgLocatedNodeSupport(loc);
-     if (located != 0 && located->get_parent() != 0) {
-        return GetScope(loc->get_parent());
-     }
-     if (isSgSourceFile(loc)) {
-         return 0;
-     }
-     std::cerr << "Error: Unprepared for this case in GetScope: " << ((loc != NULL) ? loc->class_name() : "NULL") << "\n";
-     ROSE_ABORT();
-     return 0;
 }
 
 // Strip leading "const" and tailing '&'
@@ -1011,9 +961,21 @@ GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
   while (scope != 0 && scope->variantT() != V_SgGlobal) {
        std::string scopename;
        if (IsBlock(scope, &scopename) && scopename != "" && result.find(scopename+"::") >= result.size()) {
-            result = (result == "" || scopename.find(result)==0)? scopename : (scopename + "::" + result);
-       }
-       scope = GetScope(scope);
+            if (result == "") result = scopename;
+            else {
+            auto result_in_scopename_index = scopename.find(result);
+            bool result_in_scopename = result_in_scopename_index < scopename.size(); 
+            // Check that result is indeed part of the scope name on both ends (b0 and b1).
+            bool b0_is_good = result_in_scopename_index == 0 ||
+                              (result_in_scopename && scopename[result_in_scopename_index-1] == ':');
+            bool b1_is_good = result_in_scopename && 
+                (result_in_scopename_index + result.size() == scopename.size() || 
+                  scopename[result_in_scopename_index + result.size()] == '_');
+            if (b0_is_good && b1_is_good) result = scopename;
+            else result = scopename + "::" + result;
+            }
+       } 
+       scope = AstInterfaceImpl::GetScope(scope);
   }
   return result;
 }
@@ -1492,9 +1454,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
         *name =  std::string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
-      if (def == 0) {
-        def = decl->get_definition();
-      }
+      def = decl->get_definition();
       break;
     }
   case V_SgNonrealDecl: 
@@ -1545,9 +1505,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
-      if (def == 0) {
-        def = decl->get_definition();
-      }
+      def = decl->get_definition();
       break;
     }
   // Liao, 11/18/2008: add support for instantiated template (member) function declarations  
@@ -1563,9 +1521,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
-      if (def == 0) {
-        def = decl->get_definition();
-      }
+      def = decl->get_definition();
       break;
   }  
   case V_SgTemplateInstantiationFunctionDecl: 
@@ -1580,9 +1536,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
-      if (def == 0) {
-        def = decl->get_definition();
-      }
+      def = decl->get_definition();
       break;
   }  
   case V_SgInitializedName:
@@ -1892,45 +1846,27 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
       }
       break;
     case V_SgMemberFunctionRefExp: 
-      {
-        SgMemberFunctionSymbol *sb = isSgMemberFunctionRefExp(exp)->get_symbol();
-        assert(sb != 0);
-        if (vartype != 0) *vartype = sb->get_type();
-        if (varname != 0) {
-           SgScopeStatement *cdef = sb->get_scope();
-           assert(cdef != 0);
-           *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
-         }
-      }
-      break;
     case V_SgTemplateMemberFunctionRefExp: 
       {
-         SgTemplateMemberFunctionSymbol *sb = isSgTemplateMemberFunctionRefExp(exp)->get_symbol();
-         assert(sb != 0);
-         if (varname != 0) { //Getting the scope returned null, not sure if this gives complete info -Jim Leek
-           *varname = sb->get_name().getString();
-         }
-         if (vartype != 0) *vartype = sb->get_type();
+        const SgMemberFunctionRefExp *var = isSgMemberFunctionRefExp( exp );
+        assert(var != 0);
+        SgFunctionSymbol *sb = var->get_symbol();
+        assert(sb != 0);
+        decl = sb->get_declaration();
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0)  *varname = sb->get_name().str();
       }
       break;
     case V_SgFunctionRefExp:
+    case V_SgTemplateFunctionRefExp:
       {
         const SgFunctionRefExp *var = isSgFunctionRefExp( exp );
         assert(var != 0);
         SgFunctionSymbol *sb = var->get_symbol();
         assert(sb != 0);
+        decl = sb->get_declaration();
         if (vartype != 0) *vartype = sb->get_type();
         if (varname != 0)  *varname = sb->get_name().str();
-        decl = sb->get_declaration();
-      }
-      break;
-    case V_SgTemplateFunctionRefExp:
-      {
-        const SgTemplateFunctionRefExp *var = isSgTemplateFunctionRefExp( exp );
-        SgTemplateFunctionSymbol *sb = var->get_symbol();
-        if (vartype != 0) *vartype = sb->get_type();
-        if (varname != 0)  *varname = sb->get_name().str();
-        decl = sb->get_declaration();
       }
       break;
     case V_SgVarRefExp:
@@ -2007,7 +1943,7 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
        scope = decl;
     }
     if (_scope != 0 && scope != 0) {
-        *_scope =  (isSgScopeStatement(scope)? scope : GetScope(scope));
+        *_scope =  (isSgScopeStatement(scope)? scope : AstInterfaceImpl::GetScope(scope));
     }
     bool var_is_global = scope == 0 || (scope->variantT() == V_SgGlobal);
     if (isglobal != 0)
@@ -2032,10 +1968,12 @@ IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, std::string* varname,
 std::string AstInterface::GetVarName( const AstNodePtr& _exp, bool use_global_unique_name)
 {
   AstNodePtrImpl exp(_exp);
+  SgAddressOfOp* addr = isSgAddressOfOp(exp.get_ptr());
+  if (addr != 0) {
+     return GetVarName(addr->get_operand(), use_global_unique_name) + "_addr_";
+  }
   std::string name;
-  AstNodePtr scope; 
-  bool is_global = false;
-  if (!IsVarRef(exp, 0, &name, &scope, &is_global, use_global_unique_name)) {
+  if (!IsVarRef(exp, 0, &name, 0, 0, use_global_unique_name)) {
     std::cerr << "Error: expecting a variable reference but getting:" << AstToString(exp) << "\n";
     ROSE_ABORT();
   }
@@ -2062,7 +2000,7 @@ NewVar( const AstNodeType& _type, const std::string& name, bool makeunique,
   if (DebugNewVar()) std::cerr << "declLoc=" << declLoc << "\n";
 
   SgScopeStatement *scope = (declLoc == 0)? 0 : isSgScopeStatement(declLoc);
-  if (scope == 0 && declLoc != 0) scope = GetScope(declLoc);
+  if (scope == 0 && declLoc != 0) scope = AstInterfaceImpl::GetScope(declLoc);
   if (DebugNewVar()) std::cerr << "scope=" << scope << "\n";
 
   SgExpression* e = 0;
@@ -2182,7 +2120,7 @@ SgVarRefExp* AstInterfaceImpl::
 CreateVarRef(std::string varname, SgNode* loc) 
    {
     SgScopeStatement *loc1 = (loc == 0)? scope : isSgScopeStatement(loc);
-    if (loc1 == 0 && loc != 0) loc1 = GetScope(loc);
+    if (loc1 == 0 && loc != 0) loc1 = AstInterfaceImpl::GetScope(loc);
     assert(loc1 != 0);
     SgVariableSymbol *sym = LookupVar(varname, loc1);
     if (sym == 0) {
@@ -2504,7 +2442,7 @@ bool AstInterface::IsBlock( const AstNodePtr& _n, std::string* blockname, AstNod
     AstNodePtr body;
     AstTypeList param_types;
     if (IsFunctionDefinition(_n, blockname, 0, 0, &body, &param_types)) {
-      if (_stmts != 0) {
+      if (_stmts != 0 && body != 0) {
          _stmts->push_back(AstNodePtrImpl(body).get_ptr());
       } 
       if (blockname != 0) {
@@ -2537,20 +2475,20 @@ bool AstInterface::IsBlock( const AstNodePtr& _n, std::string* blockname, AstNod
          l2 = isSgGlobal(n.get_ptr())->get_declarations();
      }
      break;
-  case V_SgNamespaceDeclarationStatement:
-     if (blockname != 0) {
-         *blockname = isSgNamespaceDeclarationStatement(n.get_ptr())->get_name().str();
-     }
-    if (_stmts != 0) {
-        l2 = isSgNamespaceDeclarationStatement(n.get_ptr())->get_definition()->getDeclarationList();
-    }
-    break;
   case V_SgNamespaceDefinitionStatement:
      if (blockname != 0) {
          *blockname = isSgNamespaceDefinitionStatement(n.get_ptr())->get_namespaceDeclaration()->get_name().str();
      }
     if (_stmts != 0) {
         l2 = isSgNamespaceDefinitionStatement(n.get_ptr())->getDeclarationList();
+    }
+    break;
+  case V_SgNamespaceDeclarationStatement:
+     if (blockname != 0) {
+         *blockname = isSgNamespaceDeclarationStatement(n.get_ptr())->get_name().str();
+     }
+    if (_stmts != 0) {
+        l2 = isSgNamespaceDeclarationStatement(n.get_ptr())->get_definition()->getDeclarationList();
     }
     break;
   case V_SgClassDeclaration:
@@ -4163,7 +4101,7 @@ class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
      case V_SgVarRefExp:
         {
          SgVarRefExp *var = isSgVarRefExp(ast);
-         SgScopeStatement *scope = GetScope(ast);
+         SgScopeStatement *scope = AstInterfaceImpl::GetScope(ast);
          std::string name = var->get_symbol()->get_name().str();
          SgVariableSymbol *r =  isSgVariableSymbol(LookupVar(name, scope));
          if (r == 0) {
@@ -4199,5 +4137,46 @@ ROSE_DLL_API void FixSgProject( SgProject &sageProject)
      SgFile &sageFile = sageProject.get_file(i);
      FixSgTree(&sageFile);
    }
+}
+
+SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
+{
+     if (loc == NULL) return NULL;
+     {
+      const SgClassDefinition* classdef = isSgClassDefinition(loc);
+      if (classdef != NULL) {
+          return GetScope(classdef->get_declaration()->get_parent());
+      }
+     }
+    {
+     const SgStatement* stmt = isSgStatement(loc);
+     if (stmt != NULL) { return stmt->get_scope(); }
+    }
+
+    {
+     const SgInitializedName* initializedName = isSgInitializedName(loc);
+     if (initializedName != NULL) {
+        return initializedName->get_scope();
+     }
+    }
+
+    {
+     const SgExpression* expression = isSgExpression(loc);
+     if (expression != NULL) {
+            SgStatement* statement = TransformationSupport::getStatement(expression);
+            ROSE_ASSERT(statement != NULL);
+            return GetScope(statement);
+     }
+    }
+     const SgLocatedNodeSupport* located = isSgLocatedNodeSupport(loc);
+     if (located != 0 && located->get_parent() != 0) {
+        return GetScope(loc->get_parent());
+     }
+     if (isSgSourceFile(loc)) {
+         return 0;
+     }
+     std::cerr << "Error: Unprepared for this case in GetScope: " << ((loc != NULL) ? loc->class_name() : "NULL") << "\n";
+     ROSE_ABORT();
+     return 0;
 }
 

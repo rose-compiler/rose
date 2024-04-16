@@ -37,6 +37,10 @@ namespace AstUtilInterface{
     std::pair<std::string, std::string>  AddOperatorSideEffectAnnotation(SgNode* op_ast, SgNode* var, OperatorSideEffect relation);
 
     //! Returns a string that uniquely identifies the given variable.
-    std::string GetVariableSignature(SgNode* variable, SgNode* scope);
+    std::string GetVariableSignature(SgNode* variable);
+
+    //! Returns whether the given ref reaches only local data within scope. 
+    bool IsLocalRef(SgNode* ref, SgNode* scope);
+
 };
 #endif

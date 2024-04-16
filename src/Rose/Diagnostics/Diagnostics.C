@@ -51,6 +51,7 @@ namespace BinaryAnalysis {
 
 #include <Rose/Diagnostics.h>
 #include <EditDistance/EditDistance.h>                  // Rose::EditDistance
+#include <midend/astUtil/astInterface/AstInterface.h>
 
 // DQ (3/24/2016): Adding support for EDG/ROSE frontend message logging.
 #ifndef ROSE_USE_CLANG_FRONTEND
@@ -182,6 +183,7 @@ void initialize() {
         NameQualificationTraversal::initDiagnostics();
         UnparseLanguageIndependentConstructs::initDiagnostics();
         SageBuilder::initDiagnostics();
+        AstInterface::initDiagnostics();
 
 #if 1
      // DQ (3/5/2017): Adding message stream to support diagnostic message from the ROSE IR nodes.
