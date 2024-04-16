@@ -84,7 +84,6 @@ CerealSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class:
 }
 
 void
-CerealSerializer::genEpilogue(std::ostream &header, std::ostream&, const Ast::Class::Ptr&, const Hierarchy&,
-                              const Generator&r) const {}
+CerealSerializer::genEpilogue(std::ostream&, std::ostream&, const Ast::Class::Ptr&, const Hierarchy&, const Generator&) const {}
 
 } // namespace
