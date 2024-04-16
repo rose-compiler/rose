@@ -1,6 +1,10 @@
-#include <sage3basic.h>
 #include <Rose/AST/Utils.h>
-#include <ROSE_UNUSED.h>
+
+#include <Rose/AST/Traversal.h>
+
+#include <SgNode.h>
+
+#include <Sawyer/Assert.h>
 
 #include <ostream>
 #include <string>
@@ -10,81 +14,81 @@ namespace Rose {
 namespace AST {
 namespace Utils {
 
+// Show an error message about the specified path in a subtree.
+static void
+showFailure(const std::vector<SgNode*> &path, std::ostream &out) {
+    out <<"child/parent consistency failure in AST:\n";
+
+    for (size_t position = path.size(); position > 0; --position) {
+        // Current node: the child
+        SgNode *child = path[position-1];
+        ASSERT_not_null(child);
+        out <<"  node #" <<(position - 1) <<" = (" <<child->class_name() <<"*)" <<child;
+
+        // The child's parent according to the child
+        SgNode *actualParent = child->get_parent();
+        if (actualParent) {
+            auto inPath = std::find(path.begin(), path.end(), actualParent);
+            if (inPath != path.end()) {
+                out <<", parent = node #" <<(inPath - path.begin()) <<"\n";
+            } else {
+                out <<", parent = (" <<actualParent->class_name() <<"*)" <<actualParent;
+            }
+        } else {
+            out <<", parent = nullptr";
+        }
+
+        // The child's parent according to the parent-to-child pointers defining the tree.
+        if (position >= 2) {
+            SgNode *expectedParent = path[position-2];
+            if (actualParent != expectedParent)
+                out <<", expected parent is node #" <<(position-2);
+        }
+        out <<"\n";
+    }
+}
+
 bool
 checkParentPointers(SgNode *root, std::ostream &out) {
-    struct Test: AstPrePostProcessing {
-        std::vector<SgNode*> stack;
-        bool isConsistent = true;
-        std::ostream &out;
+    bool isConsistent = true;
+    std::vector<SgNode*> path;
 
-        Test(std::ostream &out)
-            : out(out) {}
-
-        void failure() {
-            isConsistent = false;
-            out <<"child/parent consistency failure in AST:\n";
-            for (size_t i = 0; i < stack.size(); ++i) {
-                ASSERT_not_null(stack[i]);
-                SgNode *node = stack[i];
-                SgNode *expectedParent = i > 0 ? stack[i-1] : nullptr;
-                SgNode *actualParent = node->get_parent();
-                out <<"  #" <<i <<": node (" <<node->class_name() <<"*)" <<node <<" parent = ";
-                if (actualParent) {
-                    out <<"(" <<actualParent->class_name() <<"*)" <<actualParent;
-                } else {
-                    out <<"nullptr";
-                }
-                if (expectedParent != actualParent) {
-                    if (expectedParent) {
-                        out <<", should be (" <<expectedParent->class_name() <<"*)" <<expectedParent <<" #" <<(i-1);
-                    } else {
-                        out <<", should be nullptr";
-                    }
-                }
-                out <<"\n";
-            }
-        }
-
-        void preOrderVisit(SgNode *node) override {
-            if (!stack.empty() && node->get_parent() != stack.back()) {
-                stack.push_back(node);
-                failure();
+    Traversal::forward<SgNode>(root, [&isConsistent, &path, &out](SgNode *node, const Traversal::Order order) {
+        if (Traversal::Order::PRE == order) {
+            if (!path.empty() && node->get_parent() != path.back()) {
+                path.push_back(node);
+                showFailure(path, out);
+                isConsistent = false;
             } else {
-                stack.push_back(node);
+                path.push_back(node);
             }
+        } else {
+            ASSERT_always_forbid(path.empty());
+            ASSERT_always_require(node == path.back());
+            path.pop_back();
         }
+    });
+    ASSERT_require(path.empty());
 
-        void postOrderVisit(SgNode *node) override {
-            ASSERT_always_forbid(stack.empty());
-            ASSERT_always_require(node == stack.back());
-            stack.pop_back();
-        }
-    } t(out);
-    t.traverse(root);
-    ASSERT_require(t.stack.empty());
-    return t.isConsistent;
+    return isConsistent;
 }
 
 void
 repairParentPointers(SgNode *root) {
-    struct: AstPrePostProcessing {
-        std::vector<SgNode*> stack;
+    std::vector<SgNode*> path;
 
-        void preOrderVisit(SgNode *node) override {
-            if (!stack.empty())
-                node->set_parent(stack.back());
-            stack.push_back(node);
+    Traversal::forward<SgNode>(root, [&path](SgNode *node, const Traversal::Order order) {
+        if (Traversal::Order::PRE == order) {
+            if (!path.empty())
+                node->set_parent(path.back());
+            path.push_back(node);
+        } else {
+            ASSERT_forbid(path.empty());
+            ASSERT_require(path.back() == node);
+            path.pop_back();
         }
-
-        void postOrderVisit(SgNode *node) override {
-            ROSE_UNUSED(node);
-            ASSERT_forbid(stack.empty());
-            ASSERT_require(stack.back() == node);
-            stack.pop_back();
-        }
-    } t;
-    t.traverse(root);
-    ASSERT_require(t.stack.empty());
+    });
+    ASSERT_require(path.empty());
 }
 
 } // namespace

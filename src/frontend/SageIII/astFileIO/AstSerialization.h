@@ -3,6 +3,8 @@
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
+#include <Rose/Diagnostics.h>
+
 #include <SgNode.h>
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
 #include <Rose/AST/Utils.h>
@@ -61,7 +63,7 @@ void saveAst(Archive &archive, SgNode *ast) {
         }
     } saveRestoreRootParent(ast);
 
-    ASSERT_always_require(AST::Utils::checkParentPointers(ast));
+    ASSERT_always_require(AST::Utils::checkParentPointers(ast, Diagnostics::mlog[Sawyer::Message::FATAL]));
 
     // Serialize the AST
     roseAstSerializationRegistration(archive);
