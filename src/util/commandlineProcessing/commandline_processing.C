@@ -1081,6 +1081,14 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
        // validSourceFileSuffixes.push_back("");
 
+       // Jovial - Note that Jovial file names were processed as executable
+       // because of validSourceFileSuffixes.push_back(""), probably now ".JOV" also [Rasmussen 2024.04.16]
+          validSourceFileSuffixes.push_back(".jov");
+          validSourceFileSuffixes.push_back(".cpl");
+          validSourceFileSuffixes.push_back(".rcmp");
+
+       // Ada - What about Ada file names? [Rasmussen 2024.04.16]
+
 #if(CASE_SENSITIVE_SYSTEM == 1)
           validSourceFileSuffixes.push_back(".c");
           validSourceFileSuffixes.push_back(".cc");
@@ -1096,13 +1104,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".f03");
           validSourceFileSuffixes.push_back(".f08");
           validSourceFileSuffixes.push_back(".caf");
-     /*
-          validSourceFileSuffixes.push_back(".CC");
-          validSourceFileSuffixes.push_back(".CP");
-          validSourceFileSuffixes.push_back(".C++");
-          validSourceFileSuffixes.push_back(".CXX");
-          validSourceFileSuffixes.push_back(".CPP");
-     */
+
           validSourceFileSuffixes.push_back(".F");
           validSourceFileSuffixes.push_back(".F77");
           validSourceFileSuffixes.push_back(".F90");
@@ -1178,8 +1180,11 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");
 #endif
+
+       // Deprecate X10
           validSourceFileSuffixes.push_back(".x10");
           validSourceFileSuffixes.push_back(".X10");
+
           first_call = false;
         }
    }
