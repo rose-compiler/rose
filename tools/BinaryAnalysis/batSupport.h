@@ -1,6 +1,5 @@
 #ifndef ROSE_BatSupport_H
 #define ROSE_BatSupport_H
-#include <rose.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
