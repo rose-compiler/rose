@@ -82,8 +82,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.with(generic);
     parser.with(output);
+    parser.with(generic);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
 
     std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();

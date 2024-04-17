@@ -53,16 +53,6 @@ parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, Se
 {
     using namespace Sawyer::CommandLine;
 
-    // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
-    // switches since this tool doesn't disassemble or partition.
-    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description)
-                    .doc("Synopsis",
-                         "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
-                    .with(Rose::CommandLine::genericSwitches())
-                    .doc(engine->specimenNameDocumentation())
-                    .with(engine->engineSwitches(engine->settings().engine))
-                    .with(engine->loaderSwitches(engine->settings().loader));
-
     SwitchGroup tool("Tool specific switches");
     tool.name("tool");
     tool.insert(Switch("map")
@@ -123,7 +113,19 @@ parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, Se
                 .intrinsicValue(false, settings.showUnmapped)
                 .hidden(true));
 
-    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
+    // switches since this tool doesn't disassemble or partition.
+    return Rose::CommandLine::createEmptyParser(purpose, description)
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
+        .with(tool)
+        .with(Rose::CommandLine::genericSwitches())
+        .doc(engine->specimenNameDocumentation())
+        .with(engine->engineSwitches(engine->settings().engine))
+        .with(engine->loaderSwitches(engine->settings().loader))
+        .parse(argc, argv)
+        .apply()
+        .unreachedArgs();
 }
 
 // File has one address per line

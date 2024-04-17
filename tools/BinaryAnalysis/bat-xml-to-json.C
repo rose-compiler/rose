@@ -42,10 +42,6 @@ parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
     Settings retval;
 
-    Parser p = Rose::CommandLine::createEmptyParser(purpose, description);
-    p.with(Rose::CommandLine::genericSwitches());
-    p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{xml_input_file} @v{json_output_file}");
-    p.errorStream(mlog[FATAL]);
     SwitchGroup tool("Tool-specific switches");
     tool.name("tool");
 
@@ -73,7 +69,7 @@ parseCommandLine(int argc, char *argv[]) {
                      "new names, a warning is reported and the first rename is used. See Path Specification for "
                      "details."));
 
-    p.with(tool);
+    Parser p = Rose::CommandLine::createEmptyParser(purpose, description);
     p.doc("Path Specifications",
           "Operations such as echo, delete, and rename are triggered by matching a path specification against an actual "
           "tree path in the XML input. The path specification is written as one or more dot-separated components with "
@@ -93,6 +89,10 @@ parseCommandLine(int argc, char *argv[]) {
           "@named{Example 3:}{The spec \"*.foo.*.bar\" matches \"bar\" anywhere as long as it's a descendant (possibly "
           "an immediate child) of \"foo\" and \"foo\" can appear at any level of the tree.}");
 
+    p.with(tool);
+    p.with(Rose::CommandLine::genericSwitches());
+    p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{xml_input_file} @v{json_output_file}");
+    p.errorStream(mlog[FATAL]);
 
     std::vector<std::string> args = p.parse(argc, argv).apply().unreachedArgs();
     if (args.size() != 2) {

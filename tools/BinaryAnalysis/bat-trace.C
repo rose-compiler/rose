@@ -84,7 +84,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{command} [@v{args...}]");
-    parser.with(gen).with(op).with(out);
+    parser.with(op).with(out).with(gen);
     std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
     if (args.empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";

@@ -82,9 +82,9 @@ buildSwitchParser(Settings &settings) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
     parser.errorStream(mlog[FATAL]);
-    parser.with(Rose::CommandLine::genericSwitches());
     parser.with(tool);
     parser.with(output);
+    parser.with(Rose::CommandLine::genericSwitches());
 
     return parser;
 }

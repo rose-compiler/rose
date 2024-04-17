@@ -71,7 +71,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
-    parser.with(gen).with(tool);
+    parser.with(tool).with(gen);
     std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
     settings.alignment = std::max(settings.alignment, rose_addr_t(1));
     if (args.size() > 1) {

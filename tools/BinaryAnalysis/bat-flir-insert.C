@@ -89,9 +89,9 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     // Parsing
     Parser parser = Rose::CommandLine::createEmptyParser(gPurpose, gDescription);
     parser.errorStream(mlog[FATAL]);
-    parser.with(generic);
-    parser.with(Flir::commandLineSwitches(settings.flir));
     parser.with(tool);
+    parser.with(Flir::commandLineSwitches(settings.flir));
+    parser.with(generic);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}|@v{source_datbase}]");
     parser.doc("Databases", Sawyer::Database::Connection::uriDocString());
 

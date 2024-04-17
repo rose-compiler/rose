@@ -70,8 +70,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.doc("synopsis",
                "@prop{programName} [@v{switches}] @v{setA} @v{setB}\n\n"
                "@prop{programName} [@v{switches}] @v{function_list}");
-    parser.with(gen);
     parser.with(tool);
+    parser.with(gen);
     std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
 
     if (args.size() != 1 && args.size() != 2) {

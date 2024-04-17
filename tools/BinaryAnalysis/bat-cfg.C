@@ -136,8 +136,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.with(generic);
     parser.with(cfg);
+    parser.with(generic);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
     parser.doc("Output",
                "If only a single graph is created, it can be sent to standard output by specifying \"@s{prefix} -\". Otherwise "

@@ -105,7 +105,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     //---------- Parsing -----------
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.with(generic).with(output);
+    parser.with(output).with(generic);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
 
     std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();

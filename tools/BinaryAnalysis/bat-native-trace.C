@@ -86,8 +86,8 @@ makeSwitchParser(Settings &settings) {
 
     return Rose::CommandLine::createEmptyParser(purpose, description)
         .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} [@v{args}...]")
-        .with(Rose::CommandLine::genericSwitches())
-        .with(out);
+        .with(out)
+        .with(Rose::CommandLine::genericSwitches());
 }
 
 static std::vector<std::string>

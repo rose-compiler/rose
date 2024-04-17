@@ -112,9 +112,9 @@ makeSwitchParser(Settings &settings) {
                                            "analysis results from a state file.");
 
     return parser
-        .with(gen)
         .with(sel)
-        .with(cc);
+        .with(cc)
+        .with(gen);
 }
 
 // Parses the command-line and returns the name of the input file, if any.

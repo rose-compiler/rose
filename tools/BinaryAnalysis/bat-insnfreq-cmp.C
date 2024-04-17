@@ -41,7 +41,7 @@ parseCommandLine(int argc, char *argv[]) {
                      ".  Sensitivity is limited by the number of unique instruction mnemonics present in the training data, and "
                      "specifying a value larger than this will not further increase sensitivity."));
 
-    std::vector<std::string> input = parser.with(generic).with(tool).parse(argc, argv).apply().unreachedArgs();
+    std::vector<std::string> input = parser.with(tool).with(generic).parse(argc, argv).apply().unreachedArgs();
     if (input.size() < 2) {
         mlog[FATAL] <<"at least two frequency files must be specified\n";
         exit(1);

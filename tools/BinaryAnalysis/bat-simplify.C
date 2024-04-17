@@ -56,8 +56,8 @@ parseCommandLine(int argc, char *argv[]) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}]");
-    parser.with(Rose::CommandLine::genericSwitches());
     parser.with(tool);
+    parser.with(Rose::CommandLine::genericSwitches());
     if (!parser.parse(argc, argv).apply().unreachedArgs().empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
