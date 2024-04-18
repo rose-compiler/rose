@@ -1053,3 +1053,5 @@ SgAsmJvmLocalVariableTypeTable
 SgAsmUserInstruction
 SgAsmJvmMethodParameters
 SgAsmJvmMethodParametersEntry
+SgAsmVoidType
+SgAsmPointerType

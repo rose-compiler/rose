@@ -323,6 +323,64 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmVoidType           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmVoidType);
+IS_SERIALIZABLE(AsmVoidType);
+
+#ifndef DOCUMENTATION
+AsmVoidType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** A type that doesn't represent any data. */
+class SgAsmVoidType: public SgAsmType {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmVoidType);
+#if defined(SgAsmVoidType_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmVoidType -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmVoidType");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
+        debugSerializationEnd("SgAsmVoidType");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    static SgAsmVoidType* instance();
+
+    virtual std::string toString() const override;
+    virtual size_t get_nBits() const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmVoidType();
+
+public:
+    /** Default constructor. */
+    SgAsmVoidType();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmVoidType_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmVectorType           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1894,6 +1952,79 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmPowerpcInstruction_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmPointerType           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmPointerType);
+IS_SERIALIZABLE(AsmPointerType);
+
+#ifndef DOCUMENTATION
+AsmPointerType.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** Pointer type. */
+class SgAsmPointerType: public SgAsmScalarType {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmPointerType.setDataPrototype(
+        "SgAsmType *", "subtype", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmPointerType);
+#if defined(SgAsmPointerType_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmPointerType -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPointerType");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
+        s & BOOST_SERIALIZATION_NVP(p_subtype);
+        debugSerializationEnd("SgAsmPointerType");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+public:
+    SgAsmType * const& get_subtype() const;
+    void set_subtype(SgAsmType * const&);
+public:
+    /** Construct new pointer type. */
+    SgAsmPointerType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits, SgAsmType *subtype);
+
+    /** Make instance wrapped around a subtype. */
+    static SgAsmPointerType* instance(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits, SgAsmType *subtype);
+
+    virtual void check() const override;
+    virtual std::string toString() const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmPointerType();
+
+public:
+    /** Default constructor. */
+    SgAsmPointerType();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmPointerType_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -16820,6 +16951,7 @@ AstNodeClass& AsmScalarType = nonTerminalConstructor(
     SubclassListBuilder()
         | AsmFloatType
         | AsmIntegerType
+        | AsmPointerType
     , false);
 assert(AsmScalarType.associatedGrammar != nullptr);
 AsmScalarType.setCppCondition("!defined(DOCUMENTATION)");
@@ -16963,6 +17095,7 @@ AstNodeClass& AsmType = nonTerminalConstructor(
     SubclassListBuilder()
         | AsmScalarType
         | AsmVectorType
+        | AsmVoidType
     , false);
 assert(AsmType.associatedGrammar != nullptr);
 AsmType.setCppCondition("!defined(DOCUMENTATION)");

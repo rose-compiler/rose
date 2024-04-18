@@ -360,6 +360,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmPESectionTableEntry.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmPESectionTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmPEStringSection.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmPointerType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmPowerpcInstruction.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmRegisterNames.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmRegisterReferenceExpression.h
@@ -384,6 +385,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmUserInstruction.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmValueExpression.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmVectorType.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmVoidType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmX86Instruction.h
    )
 

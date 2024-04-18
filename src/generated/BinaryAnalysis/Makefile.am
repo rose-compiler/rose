@@ -349,6 +349,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmPESectionTable.C \
         SgAsmPESectionTableEntry.C \
         SgAsmPEStringSection.C \
+        SgAsmPointerType.C \
         SgAsmPowerpcInstruction.C \
         SgAsmRegisterNames.C \
         SgAsmRegisterReferenceExpression.C \
@@ -373,4 +374,5 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmUserInstruction.C \
         SgAsmValueExpression.C \
         SgAsmVectorType.C \
+        SgAsmVoidType.C \
         SgAsmX86Instruction.C

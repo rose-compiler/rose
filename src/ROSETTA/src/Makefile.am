@@ -428,6 +428,7 @@ rosetta_generated_definitions =				\
 	  SgAsmPESectionTableEntry.h			\
 	  SgAsmPESectionTable.h				\
 	  SgAsmPEStringSection.h			\
+	  SgAsmPointerType.h				\
 	  SgAsmPowerpcInstruction.h			\
 	  SgAsmRegisterNames.h				\
 	  SgAsmRegisterReferenceExpression.h		\
@@ -452,6 +453,7 @@ rosetta_generated_definitions =				\
 	  SgAsmUserInstruction.h			\
 	  SgAsmValueExpression.h			\
 	  SgAsmVectorType.h				\
+	  SgAsmVoidType.h				\
 	  SgAsmX86Instruction.h
 
 # Build the grammar for generating the C++ preprocessor.
