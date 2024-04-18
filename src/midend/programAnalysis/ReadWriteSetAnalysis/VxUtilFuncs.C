@@ -385,6 +385,22 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
    return cast->get_operand();
  }
 
+/**
+ * extractParentFromPossibleCast
+ *
+ * Sometimes the you want a node's parent, but if the parent is a cast
+ * you need to step up again. 
+ * Rather than writing the code to manually check every time, this function will
+ * check if the parent is a cast, and if it is, return it's the cast's
+ * parent..
+ **/
+ SgNode* VxUtilFuncs::extractParentFromPossibleCast(SgNode* obj) {
+   while(obj->variantT() == V_SgCastExp) {
+     obj = obj->get_parent();
+   }
+   return obj;   
+ }
+
  /** 
   * getUniqueDeclaration
   *

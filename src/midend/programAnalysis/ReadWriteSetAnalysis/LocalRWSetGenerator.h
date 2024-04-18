@@ -185,6 +185,32 @@ private:
   bool isFunctionPointer(SgVarRefExp* inVarRef);
 
 
+  /** Check if parent is a Dot or Arrow type
+   * 
+   * Dot and arrow types can be a pain when they are repeated.  (Like,
+   * a.b.c.d();)  The original idea to recurse in d and then step back
+   * out setting each accessType to FIELD_ACCESS or ARROW on the way
+   * out doesn't work if there are more than one because I (kind of)
+   * end up reversing the tree.  Rose parses like this:
+   *            .
+   *           / \
+   *         .    d()
+   *        / \
+   8       .   c
+   *      / \
+   *     a   b
+   * But my form of this is a[b[c[d()]]]
+   * We recurse down to a.b, and set a as a field access, but we don't
+   * know about b.  We don't know that b is a Dot expression as well
+   * until we return out of recursion a bit.  But we've already
+   * created b at that point with the wrong access type.  
+   *
+   * So this function checks if the parent SgNode is a dot or arrow,
+   * so when we're on a.b we can check b.c and create b as a FIELD_ACCESS
+   **/
+  ReadWriteSets::AccessType checkParentAccessTypeForBinaryOps(SgNode* current);
+  
+
   /** 
    * This is a cache functions -> variables read (fully qualified
    * names).  It is not recursive
