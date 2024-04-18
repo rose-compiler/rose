@@ -414,7 +414,7 @@ outputTypeOfFileAndExit( const string & name )
 
      printf ("In outputTypeOfFileAndExit(): name = %s \n",name.c_str());
      printf ("\n\nExiting: Unknown file Error \n\n");
-     ROSE_ABORT();
+     //~ ROSE_ABORT();
    }
 
 

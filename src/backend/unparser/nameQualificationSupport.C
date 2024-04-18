@@ -86,7 +86,7 @@ namespace
 
     std::string const& name()        const { return std::get<0>(*this); }
     bool               qualBarrier() const { return std::get<1>(*this); }
-    // \todo rename qualBarrier to compilerGenerated and set for all nodes
+    // \todo consider renaming qualBarrier to compilerGenerated and set for all nodes
   };
 
 

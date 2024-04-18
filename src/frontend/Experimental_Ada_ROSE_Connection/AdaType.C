@@ -1675,6 +1675,7 @@ void initializePkgStandard(SgGlobal& global)
   //~ SgType& adaBoolType               = SG_DEREF(sb::buildBoolType());
   SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
   SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
+
   adaTypes()[boolname]              = &adaBoolType;
 
   declareEnumItem(boolDecl, "False", 0);
@@ -1722,7 +1723,6 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["WIDE_WIDE_CHARACTER"] = &adaWideWideCharType;
 
   // from https://en.wikibooks.org/wiki/Ada_Programming/Libraries/Standard/GNAT
-  // \todo consider using C++ min/max limits
   static constexpr long double VAL_S_FLOAT  = 3.40282;
   static constexpr int         EXP_S_FLOAT  = 38;
   static constexpr int         DIG_S_FLOAT  = 6;
@@ -1765,7 +1765,6 @@ void initializePkgStandard(SgGlobal& global)
 
   //
   // build standard functions
-  //~ map_t<OperatorKey, std::vector<OperatorDesc> >& opsMap = operatorSupport();
   auto& opsMap = operatorSupport();
 
   // bool

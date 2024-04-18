@@ -1126,18 +1126,18 @@ namespace
 
       if (n->isTransformation())
       {
-        logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation()
-                   << std::endl;
+        //~ logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation()
+                   //~ << std::endl;
 
         computeSourceRangeFromChildren(*n);
 
-        if (n->isTransformation())
-        {
-          logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
-                     << "  c=" << n->get_startOfConstruct()
-                     << " " << isSgVarRefExp(n)->get_symbol()->get_name()
-                     << std::endl;
-        }
+        //~ if (n->isTransformation())
+        //~ {
+          //~ logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
+                     //~ << "  c=" << n->get_startOfConstruct()
+                     //~ << " " << isSgVarRefExp(n)->get_symbol()->get_name()
+                     //~ << std::endl;
+        //~ }
 
         ADA_ASSERT(!n->isTransformation());
       }

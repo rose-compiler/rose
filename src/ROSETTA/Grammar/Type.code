@@ -8868,7 +8868,9 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
              }
 #endif
         }
-       else
+       // PP (04/19/24): Ada adds new types that need to be stripped (i.e., AdaAccessType, AdaSubtype)
+       //                disable the error checking temporarily..
+       else if (!SageInterface::is_Ada_language())
         {
        // TV (07/13/2018): At the very least they should have the same stripped type... (it would happen if the base types have colliding mangled name)
        // ROSE_ASSERT(t->stripType() == result->stripType());

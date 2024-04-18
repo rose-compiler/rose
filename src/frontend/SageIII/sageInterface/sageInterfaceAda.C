@@ -1520,10 +1520,18 @@ namespace Ada
     {
       ASSERT_not_null(pkgStandardScope());
 
-      SgTypedefSymbol&      tysy  = SG_DEREF(pkgStandardScope()->lookup_typedef_symbol(name));
-      SgTypedefDeclaration& tydcl = SG_DEREF(tysy.get_declaration());
+      if (SgTypedefSymbol* tysy = pkgStandardScope()->lookup_typedef_symbol(name))
+      {
+        SgTypedefDeclaration& tydcl = SG_DEREF(tysy->get_declaration());
+        return SG_DEREF(tydcl.get_type());
+      }
 
-      return SG_DEREF(tydcl.get_type());
+      SgEnumSymbol&           ensy   = SG_DEREF(pkgStandardScope()->lookup_enum_symbol(name));
+      SgDeclarationStatement& nondef = SG_DEREF(ensy.get_declaration());
+      SgEnumDeclaration&      defdcl = SG_DEREF(isSgEnumDeclaration(nondef.get_definingDeclaration()));
+
+      //~ std::cerr << "e" << &endcl << " " << endcl.get_firstNondefiningDeclaration() << std::endl;
+      return SG_DEREF(defdcl.get_type());
     }
 
     bool denotesRange(const SgExpression* exp)
@@ -1631,10 +1639,17 @@ namespace Ada
       if (lhs == nullptr) return rhs;
       if (rhs == nullptr) return lhs;
 
+      // no type available
+      if (isSgTypeDefault(lhs)) return rhs;
+      if (isSgTypeDefault(rhs)) return lhs;
+
       // \todo check that the elementary value can be converted
       //       to the other type.
       if (isElementaryType(lhs)) return rhs;
       if (isElementaryType(rhs)) return lhs;
+
+      // this should be a deep test..
+      if (lhs == rhs) return lhs;
 
       return nullptr;
     }
@@ -1653,8 +1668,13 @@ namespace Ada
 
       {
         using namespace Rose::Diagnostics;
+        SgNamedType* lhsty = isSgNamedType(lhs);
+        SgNamedType* rhsty = isSgNamedType(rhs);
 
-        mlog[WARN] << "*FLAW* commonDenominator: type mismatch"
+        mlog[WARN] << "*FLAW* commonDenominator: type mismatch "
+                   << lhs << " " << typeid(*lhs).name() << " " << (lhsty ? lhsty->get_name() : SgName{})
+                   << " :: "
+                   << rhs << " " << typeid(*rhs).name() << " " << (rhsty ? rhsty->get_name() : SgName{})
                    << std::endl;
       }
 
@@ -1776,6 +1796,11 @@ namespace Ada
       {
         res = typeOfExpr(n.get_expression());
       }
+
+      void handle(const SgOrOp&)            { res = TypeDescription{ &standardType("BOOLEAN") }; }
+      void handle(const SgAndOp&)           { res = TypeDescription{ &standardType("BOOLEAN") }; }
+      void handle(const SgMembershipOp&)    { res = TypeDescription{ &standardType("BOOLEAN") }; }
+      void handle(const SgNonMembershipOp&) { res = TypeDescription{ &standardType("BOOLEAN") }; }
     };
 
     bool fromRootType(SgAdaSubtype* ty)
