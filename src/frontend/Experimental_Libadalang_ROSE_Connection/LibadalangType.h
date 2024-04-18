@@ -23,6 +23,13 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root);
 SgType&
 getDeclType(ada_base_entity* lal_id, AstContext ctx);
 
+/// returns the ROSE type for an Asis definition \ref defid
+/// \param defid        the Asis element ID
+/// \param ctx          the translation context
+/// \param forceSubtype true, iff a subtype without constraint should be represented as such
+SgType&
+getDefinitionType(ada_base_entity* lal_def, AstContext ctx, bool forceSubtype = false);
+
 } //end Libadlang_ROSE_Translation namespace
 
 

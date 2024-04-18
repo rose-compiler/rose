@@ -12,7 +12,7 @@
 #include "sageBuilder.h"
 #include "Libadalang_to_ROSE.h"
 #include "AdaMaker.h"
-//#include "AdaExpression.h"
+#include "LibadalangExpression.h"
 #include "LibadalangStatement.h"
 #include "LibadalangType.h"
 #include "cmdline.h"
@@ -33,12 +33,24 @@ namespace{
   /// stores a mapping from Element_ID to SgInitializedName
   map_t<int, SgInitializedName*> libadalangVarsMap;
 
+  /// stores a mapping from Element_ID to SgInitializedName
+  map_t<int, SgDeclarationStatement*> libadalangDeclsMap;
+
   /// stores a mapping from hash to builtin type nodes
   map_t<int, SgType*> adaTypesMap;
+
+  /// maps generated operators
+  map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
+
+  std::vector<SgExpression*> operatorExprsVector;
+
 } //end unnamed namespace
 
-map_t<int, SgInitializedName*>&                     libadalangVars()         { return libadalangVarsMap;  }
-map_t<int, SgType*>&                                      adaTypes()         { return adaTypesMap;        }
+map_t<int, SgInitializedName*>&                     libadalangVars()         { return libadalangVarsMap;   }
+map_t<int, SgDeclarationStatement*>&               libadalangDecls()         { return libadalangDeclsMap;  }
+map_t<int, SgType*>&                                      adaTypes()         { return adaTypesMap;         }
+std::vector<SgExpression*>&                          operatorExprs()         { return operatorExprsVector; }
+map_t<OperatorKey, std::vector<OperatorDesc> >&    operatorSupport()         { return operatorSupportMap;  }
 
 //Function to turn an ada_text_type into a string
 std::string dot_ada_text_type_to_string(ada_text_type input_text){
@@ -213,6 +225,14 @@ AstContext::pragmaAspectAnchor(SgDeclarationStatement& dcl) const
   return tmp;
 }
 
+AstContext AstContext::unit_root(ada_base_entity* unit_root_lal) const
+{
+  AstContext tmp{*this};
+
+  tmp.lal_unit_root = unit_root_lal;
+  return tmp;
+}
+
 // static
 void
 AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
@@ -238,6 +258,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
     switch (element_kind)
     {
         case ada_subp_body:             // Asis.Declarations
+        case ada_object_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;

@@ -8,7 +8,7 @@
 #include "LibadalangStatement.h"
 
 #include "Libadalang_to_ROSE.h"
-//#include "AdaExpression.h"
+#include "LibadalangExpression.h"
 #include "AdaMaker.h"
 #include "LibadalangType.h"
 
@@ -270,6 +270,303 @@ namespace Libadalang_ROSE_Translation
                   : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }
 
+  using TypeModifierFn = std::function<SgType&(SgType&)>;
+
+  SgType& tyIdentity(SgType& ty) { return ty; }
+
+/// creates an initializer for a variable/parameter declaration if needed
+/// \param lst the subset of completed variable declarations
+/// \param exp the original initializing expression
+/// \param ctx the context
+/// \details
+///    consider a variable or parameter declaration of the form.
+///      a,b : Integer := InitExpr
+///    The ROSE AST looks like:
+///      int a = InitExpr, int b = InitExpr
+SgExpression*
+createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext ctx)
+{
+  // the first variable declarations gets the original initializer
+  if ((exp == nullptr) || lst.empty()) return exp;
+
+  // \todo consider rebuilding from the ASIS expression
+  exp = si::deepCopy(exp);
+
+  // \todo use a traversal to set all children nodes to compiler generated
+  markCompilerGenerated(SG_DEREF(exp));
+  return exp;
+}
+
+/// creates a sequence of initialized names for all names \ref names.
+/// \param m        a map that maintains mappings between Asis IDs and variables/parameters
+/// \param names    the list of Asis names
+/// \param dcltype  the type of all initialized name
+/// \param initexpr the initializer (if it exists) that will be cloned for each
+///                 of the initialized names.
+SgInitializedNamePtrList
+constructInitializedNamePtrList( AstContext ctx,
+                                 map_t<int, SgInitializedName*>& m,
+                                 ada_base_entity* lal_name_list,
+                                 SgType& dcltype,
+                                 SgExpression* initexpr,
+                                 std::vector<int>& secondaries
+                               )
+{
+  SgInitializedNamePtrList lst;
+
+  int count = ada_node_children_count(lal_name_list);
+  for(int i = 0; i < count; ++i)
+  {
+    ada_base_entity obj;
+
+    if (ada_node_child(lal_name_list, i, &obj) == 0){
+      logError() << "Error while getting a child in constructInitializedNamePtrList.\n";
+      return lst;
+    }
+    if(!ada_node_is_null(&obj)){
+      //Get the name of this decl
+      ada_base_entity    identifier;
+      ada_defining_name_f_name(&obj, &identifier);
+      ada_symbol_type    p_canonical_text;
+      ada_text           ada_canonical_text;
+      ada_single_tok_node_p_canonical_text(&identifier, &p_canonical_text);
+      ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+      const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+      SgExpression*      init = createInit(lst, initexpr, ctx);
+      SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
+
+      attachSourceLocation(dcl, &obj, ctx);
+
+      lst.push_back(&dcl);
+      int hash = hash_node(&obj);
+      recordNonUniqueNode(m, hash, dcl, true /* overwrite existing entries if needed */);
+
+      //~ logError() << name << " = " << id << std::endl;
+
+      if (!secondaries.empty())
+      {
+        //~ logError() << name << "' = " << secondaries.back() << std::endl;
+        recordNonUniqueNode(m, secondaries.back(), dcl, true /* overwrite existing entries if needed */);
+        secondaries.pop_back();
+      }
+    }
+  }
+
+  return lst;
+}
+
+SgInitializedNamePtrList
+constructInitializedNamePtrList( AstContext ctx,
+                                 map_t<int, SgInitializedName*>& m,
+                                 ada_base_entity* lal_name_list,
+                                 SgType& dcltype,
+                                 SgExpression* initexpr
+                               )
+{
+  std::vector<int> dummy;
+
+  return constructInitializedNamePtrList(ctx, m, lal_name_list, dcltype, initexpr, dummy);
+}
+
+/// converts a parameter mode to its ROSE representation
+SgTypeModifier
+getMode(ada_base_entity* lal_mode)
+{
+  //Get the kind of this node
+  ada_node_kind_enum kind;
+  kind = ada_node_kind(lal_mode);
+
+  SgTypeModifier res;
+
+  switch(kind)
+  {
+    case ada_mode_default:
+      Libadalang_ROSE_Translation::logKind("ada_mode_default", kind);
+      res.setDefault();
+      break;
+
+    case ada_mode_in:
+      Libadalang_ROSE_Translation::logKind("ada_mode_in", kind);
+      res.setIntent_in();
+      break;
+
+    case ada_mode_out:
+      Libadalang_ROSE_Translation::logKind("ada_mode_out", kind);
+      res.setIntent_out();
+      break;
+
+    case ada_mode_in_out:
+      Libadalang_ROSE_Translation::logKind("ada_mode_in_out", kind);
+      res.setIntent_inout();
+      break;
+
+    default:
+      //ADA_ASSERT(false);
+      break;
+  }
+
+  return res;
+}
+
+/// creates a ROSE expression for an Asis declaration's initializer expression
+/// returns null, if no declaration exists.
+/// \param expectedType a type that is carried over from a lhs constant declaration
+SgExpression*
+getVarInit(ada_base_entity* lal_decl, SgType* /*expectedType*/, AstContext ctx)
+{
+  //Check the kind
+  ada_node_kind_enum kind;
+  kind = ada_node_kind(lal_decl);
+
+  ada_base_entity default_expr;
+  if(kind == ada_object_decl){
+    ada_object_decl_f_default_expr(lal_decl, &default_expr);
+  } else {
+    return nullptr;
+  }
+
+  return &getExpr(&default_expr, ctx);
+}
+
+SgType&
+getVarType(ada_base_entity* lal_decl, AstContext ctx)
+{
+  /*ADA_ASSERT (  decl.Declaration_Kind == A_Variable_Declaration
+             || decl.Declaration_Kind == A_Constant_Declaration
+             || decl.Declaration_Kind == A_Component_Declaration
+             || decl.Declaration_Kind == A_Deferred_Constant_Declaration
+             );*/
+  ada_base_entity subtype_indication;
+  ada_object_decl_f_type_expr(lal_decl, &subtype_indication);
+
+  return getDefinitionType(&subtype_indication, ctx);
+}
+
+  //
+  // helper function for combined handling of variables and constant declarations
+
+
+  SgDeclarationStatement&
+  handleNumVarCstDecl( ada_base_entity* lal_element,
+                       AstContext ctx,
+                       bool isPrivate,
+                       SgType& dclType,
+                       SgType* expectedType = nullptr
+                     )
+  {
+    ada_base_entity          ids;
+    ada_object_decl_f_ids(lal_element, &ids);
+    SgScopeStatement&        scope    = ctx.scope();
+    //
+    // https://www.adaic.com/resources/add_content/standards/05rm/html/RM-3-3-1.html#S0032
+    // $7: Any declaration that includes a defining_identifier_list with more than one defining_identifier
+    //     is equivalent to a series of declarations each containing one defining_identifier from the list,
+    //     with the rest of the text of the declaration copied for each declaration in the series, in the
+    //     same order as the list. The remainder of this International Standard relies on this equivalence;
+    //     explanations are given for declarations with a single defining_identifier.
+    // => clone the initializing expression instead of creating references to the first one..
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         libadalangVars(),
+                                                                         &ids,
+                                                                         dclType,
+                                                                         getVarInit(lal_element, expectedType, ctx)
+                                                                       );
+    SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, scope);
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+    privatize(sgnode, isPrivate);
+    ctx.appendStatement(sgnode);
+    return sgnode;
+  }
+
+  SgDeclarationStatement&
+  handleNumberDecl(ada_base_entity* lal_element, AstContext ctx, bool isPrivate, SgType& numty, SgType& expctty)
+  {
+    SgType& cstty = SG_DEREF( sb::buildConstType(&numty) );
+
+    return handleNumVarCstDecl(lal_element, ctx, isPrivate, cstty, &expctty);
+  }
+
+  SgDeclarationStatement&
+  handleVarCstDecl( ada_base_entity* lal_element,
+                    AstContext ctx,
+                    bool isPrivate,
+                    TypeModifierFn constMaker
+                  )
+  {
+    SgType& basety = constMaker(getVarType(lal_element, ctx)); //TODO constMaker
+
+    ada_base_entity has_aliased;
+    ada_object_decl_f_has_aliased(lal_element, &has_aliased);
+    ada_node_kind_enum aliased_status = ada_node_kind(&has_aliased);
+    const bool               aliased  = (aliased_status == ada_aliased_present);
+    SgType& varty  = aliased ? mkAliasedType(basety) : basety;
+
+    return handleNumVarCstDecl(lal_element, ctx, isPrivate, varty);
+  }
+
+/// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
+///   declaration.
+SgVariableDeclaration&
+getParm(ada_base_entity* lal_param_spec, AstContext ctx)
+{
+
+  ada_base_entity defining_name_list;
+  ada_param_spec_f_ids(lal_param_spec, &defining_name_list);
+
+  ada_base_entity has_aliased;
+  ada_param_spec_f_has_aliased(lal_param_spec, &has_aliased);
+  ada_node_kind_enum aliased_status = ada_node_kind(&has_aliased);
+  const bool               aliased  = (aliased_status == ada_aliased_present);
+
+  ada_base_entity subtype_indication;
+  ada_param_spec_f_type_expr(lal_param_spec, &subtype_indication);
+  SgType&                  basety   = getDeclType(&subtype_indication, ctx);
+
+  SgType&                  parmtype = aliased ? mkAliasedType(basety) : basety;
+
+  SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                       libadalangVars(),
+                                                                       &defining_name_list,
+                                                                       parmtype,
+                                                                       getVarInit(lal_param_spec, &parmtype, ctx)
+                                                                     );
+
+  ada_base_entity mode;
+  ada_param_spec_f_mode(lal_param_spec, &mode);
+  SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(&mode), ctx.scope());
+
+  attachSourceLocation(sgnode, lal_param_spec, ctx);
+  /* unused fields:
+  */
+  return sgnode;
+}
+
+void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
+{
+  if(!ada_node_is_null(range)){
+    ada_base_entity param_list;
+    ada_params_f_params(range, &param_list);
+    int count = ada_node_children_count(&param_list);
+    for (int i = 0; i < count; ++i)
+    {
+      ada_base_entity child;
+
+      if (ada_node_child(&param_list, i, &child) == 0){
+        logError() << "Error while getting a child in ParameterCompletion.\n";
+        return;
+      }
+      if(!ada_node_is_null(&child)){
+        SgVariableDeclaration& decl = getParm(&child, ctx.scope(parmscope));
+        // in Ada multiple parameters can be declared
+        //   within a single declaration.
+        for (SgInitializedName* parm : decl.get_variables())
+          lst.append_arg(parm);
+      }
+    }
+  }
+}
+
 void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
   {
     //TODO Add more nodes
@@ -522,6 +819,15 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_object_decl:
+      {
+        logKind("ada_object_decl", kind);
+
+        assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
+        /* unused fields:
+        */
+        break;
+      }
     default:
       logWarn() << "unhandled declaration kind: " << kind << std::endl;
       //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
@@ -529,230 +835,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
   //processAspects(lal_element, decl, assocdecl, ctx);
   //recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
-}
-
-/// creates an initializer for a variable/parameter declaration if needed
-/// \param lst the subset of completed variable declarations
-/// \param exp the original initializing expression
-/// \param ctx the context
-/// \details
-///    consider a variable or parameter declaration of the form.
-///      a,b : Integer := InitExpr
-///    The ROSE AST looks like:
-///      int a = InitExpr, int b = InitExpr
-SgExpression*
-createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext ctx)
-{
-  // the first variable declarations gets the original initializer
-  if ((exp == nullptr) || lst.empty()) return exp;
-
-  // \todo consider rebuilding from the ASIS expression
-  exp = si::deepCopy(exp);
-
-  // \todo use a traversal to set all children nodes to compiler generated
-  markCompilerGenerated(SG_DEREF(exp));
-  return exp;
-}
-
-/// creates a sequence of initialized names for all names \ref names.
-/// \param m        a map that maintains mappings between Asis IDs and variables/parameters
-/// \param names    the list of Asis names
-/// \param dcltype  the type of all initialized name
-/// \param initexpr the initializer (if it exists) that will be cloned for each
-///                 of the initialized names.
-SgInitializedNamePtrList
-constructInitializedNamePtrList( AstContext ctx,
-                                 map_t<int, SgInitializedName*>& m,
-                                 ada_base_entity* lal_name_list,
-                                 SgType& dcltype,
-                                 SgExpression* initexpr,
-                                 std::vector<int>& secondaries
-                               )
-{
-  SgInitializedNamePtrList lst;
-
-  int count = ada_node_children_count(lal_name_list);
-  for(int i = 0; i < count; ++i)
-  {
-    ada_base_entity obj;
-
-    if (ada_node_child(lal_name_list, i, &obj) == 0){
-      logError() << "Error while getting a child in constructInitializedNamePtrList.\n";
-      return lst;
-    }
-    if(!ada_node_is_null(&obj)){
-      //Get the name of this decl
-      ada_base_entity    identifier;
-      ada_defining_name_f_name(&obj, &identifier);
-      ada_symbol_type    p_canonical_text;
-      ada_text           ada_canonical_text;
-      ada_single_tok_node_p_canonical_text(&identifier, &p_canonical_text);
-      ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-      const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
-      SgExpression*      init = createInit(lst, initexpr, ctx);
-      SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
-
-      attachSourceLocation(dcl, &obj, ctx);
-
-      lst.push_back(&dcl);
-      int hash = hash_node(&obj);
-      recordNonUniqueNode(m, hash, dcl, true /* overwrite existing entries if needed */);
-
-      //~ logError() << name << " = " << id << std::endl;
-
-      if (!secondaries.empty())
-      {
-        //~ logError() << name << "' = " << secondaries.back() << std::endl;
-        recordNonUniqueNode(m, secondaries.back(), dcl, true /* overwrite existing entries if needed */);
-        secondaries.pop_back();
-      }
-    }
-  }
-
-  return lst;
-}
-
-SgInitializedNamePtrList
-constructInitializedNamePtrList( AstContext ctx,
-                                 map_t<int, SgInitializedName*>& m,
-                                 ada_base_entity* lal_name_list,
-                                 SgType& dcltype,
-                                 SgExpression* initexpr
-                               )
-{
-  std::vector<int> dummy;
-
-  return constructInitializedNamePtrList(ctx, m, lal_name_list, dcltype, initexpr, dummy);
-}
-
-/// converts a parameter mode to its ROSE representation
-SgTypeModifier
-getMode(ada_base_entity* lal_mode)
-{
-  //Get the kind of this node
-  ada_node_kind_enum kind;
-  kind = ada_node_kind(lal_mode);
-
-  SgTypeModifier res;
-
-  switch(kind)
-  {
-    case ada_mode_default:
-      Libadalang_ROSE_Translation::logKind("ada_mode_default", kind);
-      res.setDefault();
-      break;
-
-    case ada_mode_in:
-      Libadalang_ROSE_Translation::logKind("ada_mode_in", kind);
-      res.setIntent_in();
-      break;
-
-    case ada_mode_out:
-      Libadalang_ROSE_Translation::logKind("ada_mode_out", kind);
-      res.setIntent_out();
-      break;
-
-    case ada_mode_in_out:
-      Libadalang_ROSE_Translation::logKind("ada_mode_in_out", kind);
-      res.setIntent_inout();
-      break;
-
-    default:
-      //ADA_ASSERT(false);
-      break;
-  }
-
-  return res;
-}
-
-/// creates a ROSE expression for an Asis declaration's initializer expression
-/// returns null, if no declaration exists.
-/// \param expectedType a type that is carried over from a lhs constant declaration
-SgExpression*
-getVarInit(ada_base_entity* lal_decl, SgType* /*expectedType*/, AstContext ctx)
-{
-  return nullptr;
-  //TODO What is this supposed to do? Is it related to the default expr?
-  /*if (decl.Declaration_Kind == A_Deferred_Constant_Declaration)
-    return nullptr;
-
-  ADA_ASSERT (  decl.Declaration_Kind == A_Variable_Declaration
-             || decl.Declaration_Kind == A_Constant_Declaration
-             || decl.Declaration_Kind == A_Parameter_Specification
-             || decl.Declaration_Kind == A_Real_Number_Declaration
-             || decl.Declaration_Kind == An_Integer_Number_Declaration
-             || decl.Declaration_Kind == A_Component_Declaration
-             || decl.Declaration_Kind == A_Discriminant_Specification
-             || decl.Declaration_Kind == A_Formal_Object_Declaration
-             );
-
-  //~ logWarn() << "decl.Initialization_Expression = " << decl.Initialization_Expression << std::endl;
-  if (decl.Initialization_Expression == 0)
-    return nullptr;
-
-  return &getExprID(decl.Initialization_Expression, ctx);*/
-}
-
-/// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
-///   declaration.
-SgVariableDeclaration&
-getParm(ada_base_entity* lal_param_spec, AstContext ctx)
-{
-
-  ada_base_entity defining_name_list;
-  ada_param_spec_f_ids(lal_param_spec, &defining_name_list);
-
-  ada_base_entity has_aliased;
-  ada_param_spec_f_has_aliased(lal_param_spec, &has_aliased);
-  ada_node_kind_enum aliased_status = ada_node_kind(&has_aliased);
-  const bool               aliased  = (aliased_status == ada_aliased_present);
-
-  ada_base_entity subtype_indication;
-  ada_param_spec_f_type_expr(lal_param_spec, &subtype_indication);
-  SgType&                  basety   = getDeclType(&subtype_indication, ctx);
-
-  SgType&                  parmtype = aliased ? mkAliasedType(basety) : basety;
-
-  SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
-                                                                       libadalangVars(),
-                                                                       &defining_name_list,
-                                                                       parmtype,
-                                                                       getVarInit(lal_param_spec, &parmtype, ctx)
-                                                                     );
-
-  ada_base_entity mode;
-  ada_param_spec_f_mode(lal_param_spec, &mode);
-  SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(&mode), ctx.scope());
-
-  attachSourceLocation(sgnode, lal_param_spec, ctx);
-  /* unused fields:
-  */
-  return sgnode;
-}
-
-void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
-{
-  if(!ada_node_is_null(range)){
-    ada_base_entity param_list;
-    ada_params_f_params(range, &param_list);
-    int count = ada_node_children_count(&param_list);
-    for (int i = 0; i < count; ++i)
-    {
-      ada_base_entity child;
-
-      if (ada_node_child(&param_list, i, &child) == 0){
-        logError() << "Error while getting a child in ParameterCompletion.\n";
-        return;
-      }
-      if(!ada_node_is_null(&child)){
-        SgVariableDeclaration& decl = getParm(&child, ctx.scope(parmscope));
-        // in Ada multiple parameters can be declared
-        //   within a single declaration.
-        for (SgInitializedName* parm : decl.get_variables())
-          lst.append_arg(parm);
-      }
-    }
-  }
 }
  
 } //end Libadalang_ROSE_Translation

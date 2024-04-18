@@ -11,7 +11,7 @@
 #include "sageInterfaceAda.h"
 
 #include "Libadalang_to_ROSE.h"
-//#include "AdaExpression.h"
+#include "LibadalangExpression.h"
 #include "LibadalangStatement.h"
 #include "AdaMaker.h"
 
@@ -332,6 +332,59 @@ namespace
 
 } //end unnamed namespace
 
+  SgType&
+  excludeNullIf(SgType& ty, bool exclNull, AstContext)
+  {
+    return exclNull ? mkNotNullType(ty) : ty;
+  }
+
+  SgType&
+  getDefinitionType(ada_base_entity* lal_def, AstContext ctx, bool forceSubtype)
+  {
+    //ADA_ASSERT(elem.Element_Kind == A_Definition);
+
+    //Get the kind of this node
+    ada_node_kind_enum kind;
+    kind = ada_node_kind(lal_def);
+
+    SgType*            res = nullptr;
+
+    switch(kind)
+    {
+      case ada_subtype_indication:
+        {
+          logKind("ada_subtype_indication", kind);
+
+          res = &getDeclType(lal_def, ctx);
+
+          // \todo if there is no subtype constraint, shall we produce
+          //       a subtype w/ NoConstraint, or leave the original type?
+          /*if(forceSubtype || subtype.Subtype_Constraint)
+          {
+            //~ SgAdaTypeConstraint& range = getConstraintID_opt(subtype.Subtype_Constraint, ctx);
+            SgAdaTypeConstraint& range = getConstraintID(subtype.Subtype_Constraint, ctx);
+
+            res = &mkAdaSubtype(SG_DEREF(res), range);
+          }*/ //TODO How do we get the contraint status here? 
+
+          ada_base_entity has_not_null;
+          ada_subtype_indication_f_has_not_null(lal_def, &has_not_null);
+
+          ada_node_kind_enum null_kind = ada_node_kind(&has_not_null);
+          bool not_null_present = (null_kind == ada_not_null_present);
+
+          res = &excludeNullIf(SG_DEREF(res), not_null_present, ctx);
+          break;
+        }
+      default:
+        logWarn() << "Unhandled type definition: " << kind << std::endl;
+        res = &mkTypeUnknown();
+        //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+    }
+
+    return SG_DEREF(res);
+  }
+
 //Function to hash a unique int from a node using the node's kind and location.
 //The kind and location can be provided, but if not they will be determined in the function
 int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
@@ -487,6 +540,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   declareIntSubtype<std::int64_t>("Long_Long_Integer",   stdspec);
 
   SgType& adaPositiveType           = SG_DEREF(declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type());
+  adaTypes()[-5]                    = &adaPositiveType; //TODO Make this an actual hash (How?)
   SgType& adaNaturalType            = SG_DEREF(declareIntSubtype("Natural",  0, ADAMAXINT, stdspec).get_type());
 
   /*adaTypes()["POSITIVE"]            = &adaPositiveType;

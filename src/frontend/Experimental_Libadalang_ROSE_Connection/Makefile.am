@@ -15,7 +15,8 @@ if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
     Libadalang_to_ROSE.C \
     AdaMaker.C \
     LibadalangStatement.C \
-    LibadalangType.C
+    LibadalangType.C \
+    LibadalangExpression.C
 else
 # Compile using a function that represents the API of the Ada support.
   libexperimentalRoseAda_la_SOURCES = dummy_ada_main.C

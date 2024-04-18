@@ -1,0 +1,1013 @@
+#include "sage3basic.h"
+
+#include <vector>
+#include <boost/algorithm/string.hpp>
+
+#include "sageGeneric.h"
+#include "sageBuilder.h"
+#include "sageInterfaceAda.h"
+
+#include "LibadalangExpression.h"
+
+#include "Libadalang_to_ROSE.h"
+#include "AdaMaker.h"
+#include "LibadalangStatement.h"
+#include "LibadalangType.h"
+
+// turn on all GCC warnings after include files have been processed
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+
+namespace sb = SageBuilder;
+namespace si = SageInterface;
+
+namespace Libadalang_ROSE_Translation
+{
+
+namespace
+{
+  SgExpression&
+  getArg(ada_base_entity* lal_element, AstContext ctx)
+  {    
+    //Get the kind
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+    ada_text kind_name;
+    ada_kind_name(kind, &kind_name);
+    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    logKind(kind_name_string.c_str(), kind);
+
+    //Get the name of this node
+    ada_symbol_type p_canonical_text;
+    ada_text ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    std::string element_name = ada_text_to_locale_string(&ada_canonical_text);
+    ada_destroy_text(&ada_canonical_text);
+
+    SgExpression&       arg        = getExpr(lal_element, ctx);
+    int*                formalParm = nullptr; //retrieveElemOpt(elemMap(), assoc.Formal_Parameter);
+    //TODO What is a formal parm? right=x, left=y?
+
+    /* unused fields (A_Parameter_Association)
+       bool                   Is_Normalized
+       bool                   Is_Defaulted_Association
+    */
+
+    if (!formalParm) return arg;
+
+    /*ADA_ASSERT(formalParm->Element_Kind == An_Expression);
+
+    ADA_ASSERT(  formalName.Expression_Kind == An_Identifier
+              || formalName.Expression_Kind == An_Operator_Symbol
+              );*/
+
+    //logKind("An_Identifier", formalParm->ID);
+    SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
+
+    attachSourceLocation(namedArg, lal_element, ctx);
+    return namedArg;
+  }
+} //End unnamed namespace
+
+namespace
+{
+  struct AdaCallBuilder : sg::DispatchHandler<SgExpression*>
+  {
+      using base = sg::DispatchHandler<SgExpression*>;
+
+      AdaCallBuilder( ada_base_entity* targetid,
+                      std::vector<SgExpression*> arglist,
+                      bool usePrefixCallSyntax,
+                      bool useObjectCallSyntax,
+                      AstContext astctx
+                    )
+      : base(nullptr),
+        tgtid(targetid),
+        args(std::move(arglist)),
+        prefixCallSyntax(usePrefixCallSyntax),
+        objectCallSyntax(useObjectCallSyntax),
+        ctx(astctx)
+      {}
+
+      void mkCall(SgExpression& n)
+      {
+        SgExprListExp& arglst = mkExprListExp(args);
+
+        res = &mkFunctionCallExp(n, arglst, !prefixCallSyntax, objectCallSyntax);
+      }
+
+      void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
+
+      // default
+      void handle(SgExpression& n) { mkCall(n); }
+
+      // same as mkCall
+      // void handle(SgFunctionRefExp& n)
+      // {
+      //   SgExprListExp& arglst = mkExprListExp(args);
+      //   res = &mkFunctionCallExp(n, arglst, !prefixCallSyntax, objectCallSyntax);
+      // }
+
+      void handle(SgUnaryOp& n)
+      {
+        // computed target ?
+        if (n.get_operand() != nullptr)
+        {
+          mkCall(n);
+          return;
+        }
+
+        //ADA_ASSERT(args.size() == 1);
+        n.set_operand(args[0]);
+        res = &n;
+      }
+
+      void handle(SgBinaryOp& n)
+      {
+        // lhs and rhs must both be null or not-null
+        //ADA_ASSERT((n.get_lhs_operand() == nullptr) == (n.get_rhs_operand() == nullptr));
+
+        // computed target ?
+        if (n.get_lhs_operand() != nullptr)
+        {
+          mkCall(n);
+          return;
+        }
+
+        //ADA_ASSERT(args.size() == 2);
+        n.set_lhs_operand(args[0]);
+        n.set_rhs_operand(args[1]);
+        res = &n;
+      }
+
+    private:
+      ada_base_entity*           tgtid;
+      std::vector<SgExpression*> args;
+      bool                       prefixCallSyntax;
+      bool                       objectCallSyntax;
+      AstContext                 ctx;
+  };
+
+  struct ExprRefMaker : sg::DispatchHandler<SgExpression*>
+  {
+      using base = sg::DispatchHandler<SgExpression*>;
+
+      explicit
+      ExprRefMaker(AstContext astctx)
+      : base(), ctx(astctx)
+      {}
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgDeclarationStatement& n)
+      {
+        logError() << "ExprRefMaker: " << typeid(n).name() << std::endl;
+
+        res = sb::buildIntVal_nfi();
+        //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      }
+
+      // void handle(SgImportStatement& n)
+
+      void handle(SgFunctionDeclaration& n)    { res = &mkFunctionRefExp(n); }
+      void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
+      void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
+      void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
+      void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
+      void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+
+      // \todo should we reference the underlying declaration instead of the generic??
+      void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
+
+    private:
+      AstContext ctx;
+  };
+
+  // wrapper uses homogeneous return types instead of covariant ones
+  template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
+  SgExpression* mk2_wrapper()
+  {
+    return mkexp(nullptr, nullptr);
+  }
+
+  // wrapper uses homogeneous return types instead of covariant ones
+  template <class R, R* (*mkexp) (SgExpression*)>
+  SgExpression* mk1_wrapper()
+  {
+    return mkexp(nullptr);
+  }
+
+  /// old operator call, currently serves as fallback
+  /// \todo remove from code base
+  /// \note surviving use cases:
+  ///       * pragma inline("+")
+  ///       * generic instantiations is instance(integer, "+")
+  ///       * ??
+  SgExpression&
+  getOperator_fallback(ada_base_entity* lal_expr, AstContext ctx)
+  {
+    using MkWrapperFn = std::function<SgExpression*()>;
+    using OperatorMakerMap = std::map<ada_node_kind_enum, std::pair<const char*, MkWrapperFn> >;
+
+    //Get the kind of this node
+    ada_node_kind_enum kind = ada_node_kind(lal_expr);
+
+    logTrace() << "In getOperator_fallback for node of kind " << kind << std::endl;
+
+    //Get the name of this node
+    ada_symbol_type p_canonical_text;
+    ada_text ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(lal_expr, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    std::string expr_name = ada_text_to_locale_string(&ada_canonical_text);
+    ada_destroy_text(&ada_canonical_text);
+
+    static const OperatorMakerMap makerMap =
+    { { ada_op_and,     {"ada_op_and",     mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
+      { ada_op_or,      {"ada_op_or",      mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
+      { ada_op_xor,     {"ada_op_xor",     mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
+      { ada_op_eq,      {"ada_op_eq",      mk2_wrapper<SgEqualityOp,       sb::buildEqualityOp> }},
+      { ada_op_neq,     {"ada_op_neq",     mk2_wrapper<SgNotEqualOp,       sb::buildNotEqualOp> }},
+      { ada_op_lt,      {"ada_op_lt",      mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp> }},
+      { ada_op_lte,     {"ada_op_lte",     mk2_wrapper<SgLessOrEqualOp,    sb::buildLessOrEqualOp> }},
+      { ada_op_gt,      {"ada_op_gt",      mk2_wrapper<SgGreaterThanOp,    sb::buildGreaterThanOp> }},
+      { ada_op_gte,     {"ada_op_gte",     mk2_wrapper<SgGreaterOrEqualOp, sb::buildGreaterOrEqualOp> }},
+      { ada_op_plus,    {"ada_op_plus",    mk2_wrapper<SgAddOp,            sb::buildAddOp> }},
+      { ada_op_minus,   {"ada_op_minus",   mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp> }},
+      { ada_op_concat,  {"ada_op_concat",  mk2_wrapper<SgConcatenationOp,  sb::buildConcatenationOp> }},
+      /*{ A_Unary_Plus_Operator,            {"A_Unary_Plus_Operator",            mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp> }},
+      { A_Unary_Minus_Operator,           {"A_Unary_Minus_Operator",           mk1_wrapper<SgMinusOp,          sb::buildMinusOp> }},*/
+      { ada_op_mult,    {"ada_op_mult",    mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp> }},
+      { ada_op_div,     {"ada_op_div",     mk2_wrapper<SgDivideOp,         sb::buildDivideOp> }},
+      { ada_op_mod,     {"ada_op_mod",     mk2_wrapper<SgModOp,            sb::buildModOp> }},
+      { ada_op_rem,     {"ada_op_rem",     mk2_wrapper<SgRemOp,            sb::buildRemOp> }},
+      { ada_op_pow,     {"ada_op_pow",     mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> }},
+      { ada_op_abs,     {"ada_op_abs",     mk1_wrapper<SgAbsOp,            sb::buildAbsOp> }},
+      { ada_op_not,     {"ada_op_not",     mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
+    };
+
+    //TODO What about ada_op_and_then: ada_op_double_dot: ada_op_in: ada_op_not_in: ada_op_or_else:
+
+    //ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
+
+    OperatorMakerMap::const_iterator pos = makerMap.find(kind);
+
+    if (pos != makerMap.end())
+    {
+      logKind(pos->second.first, kind);
+
+      SgExpression* res = pos->second.second();
+
+      operatorExprs().push_back(res);
+      return SG_DEREF(res);
+    }
+
+    //ADA_ASSERT(expr.Operator_Kind != Not_An_Operator);
+
+    /* unused fields:
+         Defining_Name_ID      Corresponding_Name_Definition;
+         Defining_Name_List    Corresponding_Name_Definition_List; // Only >1 if the expression in a pragma is ambiguous
+         Element_ID            Corresponding_Name_Declaration; // Decl or stmt
+         Defining_Name_ID      Corresponding_Generic_Element;
+    */
+    return SG_DEREF(sb::buildOpaqueVarRefExp(expr_name, &ctx.scope()));
+  }
+
+  bool anonAccessType(const OperatorCallSupplement& suppl, const AstContext&)
+  {
+    const OperatorCallSupplement::ArgDescList& argtypes = suppl.args();
+    SgAdaAccessType*                           argty    = isSgAdaAccessType(argtypes.front().type());
+
+    return argty && argty->get_is_anonymous();
+  }
+
+
+  SgType& boolType(AstContext ctx)
+  {
+    ada_base_entity* lal_root = ctx.unit_root();
+    ada_base_entity ada_bool;
+    ada_ada_node_p_bool_type(lal_root, &ada_bool);
+    int hash = hash_node(&ada_bool);
+    return SG_DEREF(adaTypes().at(hash));
+  }
+
+  OperatorCallSupplement
+  createSupplement(SgTypePtrList types, SgType* result)
+  {
+    static constexpr int MAX_PARAMS = 2;
+    static const std::string parmNames[MAX_PARAMS] = { "Left", "Right" };
+
+    OperatorCallSupplement::ArgDescList args;
+    std::size_t                         parmNameIdx = MAX_PARAMS - types.size() - 1;
+
+    for (SgType* ty : types)
+    {
+      args.emplace_back(parmNames[++parmNameIdx], ty);
+    }
+
+    return { std::move(args), result };
+  }
+
+
+  /// Takes available operator information that was computed from argument types and computes the signature of
+  /// a generatable operator.
+  /// \param  name operator name (w/o si::Ada::roseOperatorPrefix)
+  /// \param  suppl the available argument type information
+  /// \param  domArgPos the dominant argument position
+  /// \param  ctx the translator context
+  /// \return an adjusted operator call supplement
+  /// \note
+  ///   since we rely on a solid frontend, we may not need to check all the requirements
+  OperatorCallSupplement
+  operatorSignature(AdaIdentifier name, const OperatorCallSupplement& suppl, std::size_t domArgPos, AstContext ctx)
+  {
+    // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-5-2.html
+    // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-4.html
+
+    if (name == "&")
+    {
+      SgType* resTy = nullptr;
+      SgType& lhsTy = SG_DEREF( suppl.args().front().type() );
+
+      if (SgArrayType* lhsArrTy = si::Ada::getArrayTypeInfo(lhsTy).type())
+        resTy = lhsArrTy;
+      else if (SgArrayType* rhsArrTy = si::Ada::getArrayTypeInfo(suppl.args().back().type()).type())
+        resTy = rhsArrTy;
+      else
+      {
+        SgType&        positive = SG_DEREF(adaTypes().at(-5)); //TODO
+        SgExprListExp& idx = mkExprListExp({&mkTypeExpression(positive)});
+
+        resTy = &mkArrayType(lhsTy, idx, true /* unconstrained */);
+      }
+
+      //ADA_ASSERT(resTy != nullptr);
+      return { suppl.args(), resTy };
+    }
+
+    SgType* const domTy = suppl.args().at(domArgPos).type();
+
+    if (name == "=")
+    {
+      // ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
+
+      // requires (  nonLimitedArgumentType(domTy, ctx)
+      //          && equalArgumentTypes(suppl, ctx)     // will be adjusted
+      //          && resultTypeIsBool(suppl, ctx)       // will be adjusted
+      //          )
+      return createSupplement( {domTy, domTy}, &boolType(ctx) );
+    }
+
+    if (name == "/=" && !anonAccessType(suppl, ctx))
+    {
+      //ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
+
+      // requires (  ( nonLimitedArgumentType(suppl, ctx) || hasEqualityOperator(suppl, ctx) )
+      //          && equalArgumentTypes(suppl, ctx) // will be adjusted
+      //          && resultTypeIsBool(suppl, ctx)   // will be adjusted
+      //          );
+      return createSupplement( {domTy, domTy}, &boolType(ctx) );
+    }
+
+
+    if ((name == "<") || (name == "<=") || (name == ">") || (name == ">="))
+    {
+      bool req = (  (si::Ada::isScalarType(domTy) || si::Ada::isDiscreteArrayType(domTy))
+                 //~ && equalArgumentTypes(suppl, ctx) // will be adjusted
+                 //~ && resultTypeIsBool(suppl, ctx)   // will be adjusted
+                 );
+
+      if (!req)
+      {
+        if (true)
+          logWarn() << "(sca: " << si::Ada::isScalarType(domTy)
+                    << " | dsc: " << si::Ada::isDiscreteArrayType(domTy)
+                    << " -> : " << req
+                    << std::endl;
+
+        return OperatorCallSupplement{};
+      }
+
+      return createSupplement( {domTy, domTy}, &boolType(ctx) );
+    }
+
+    if (name == "AND" || name == "OR" || name == "XOR")
+    {
+      // requires (  equalArgumentTypes(suppl, ctx) // will be adjusted
+      //          && (si::Ada::isBooleanType(domTy) || si::Ada::isModularType(domTy) || (isBoolArray(domTy)))
+      //          )
+      return createSupplement( {domTy, domTy}, domTy );
+    }
+
+    if ( (  name == "+"   || name == "-"   || name == "*"
+         || name == "/"   || name == "MOD" || name == "REM"
+         || name == "ABS" || name == "NOT" || name == "**"
+         )
+       )
+    {
+      if (suppl.args().size() == 1)
+         return createSupplement( { domTy }, domTy );
+
+      return createSupplement( {domTy,domTy}, domTy );
+    }
+
+    return OperatorCallSupplement{};
+  }
+
+
+  bool equalParameterTypes(const SgTypePtrList& lhs, const OperatorCallSupplement::ArgDescList& rhs)
+  {
+    auto typeEquality = [](const SgType* lty, const ArgDesc& rty) -> bool
+                        {
+                          return lty == rty.type();
+                        };
+
+    return (  (lhs.size() == rhs.size())
+           && std::equal(lhs.begin(), lhs.end(), rhs.begin(), typeEquality)
+           );
+  }
+
+  SgFunctionDeclaration*
+  findExistingOperator(AdaIdentifier name, SgScopeStatement& scope, const OperatorCallSupplement& suppl)
+  {
+    /*using OpMap = map_t<OperatorKey, std::vector<OperatorDesc> >;
+
+    OpMap const&          opMap = operatorSupport();
+    OpMap::const_iterator pos = opMap.find({&scope, name});
+
+    if (pos == opMap.end()) return nullptr;
+
+    auto sameSignature =
+            [&suppl](const OperatorDesc& desc) -> bool
+            {
+              const SgFunctionDeclaration& cand   = SG_DEREF( desc.function() );
+              const SgFunctionType&        candTy = SG_DEREF( cand.get_type() );
+
+              return (  (candTy.get_return_type() == suppl.result())
+                     && equalParameterTypes(candTy.get_arguments(), suppl.args())
+                     );
+            };
+
+    const std::vector<OperatorDesc>& opers = pos->second;
+    auto  veclim = opers.end();
+    auto  vecpos = std::find_if(pos->second.begin(), veclim, sameSignature);
+
+    if (vecpos == veclim) return nullptr;
+
+    return vecpos->function();*/ //TODO Convert this
+    return nullptr;
+  }
+
+  void sortByArgumentName(OperatorCallSupplement::ArgDescList& lst)
+  {
+    // assumes arguments are named Left and Right
+    // i.e., sorts Left before Right
+    // \todo what if the call is written as
+    //       "+"(Left => 2, 3) ?
+
+    if (lst.size() < 2) return;
+    //ADA_ASSERT(lst.size() == 2);
+
+    if (lst.at(1).name() < lst.at(0).name())
+      std::swap(lst.at(0), lst.at(1));
+  }
+
+  SgTypePtrList extractTypes(const OperatorCallSupplement::ArgDescList& lst)
+  {
+    SgTypePtrList res;
+    auto          typeExtractor = [](const ArgDesc& desc) { return desc.type(); };
+
+    std::transform(lst.begin(), lst.end(), std::back_inserter(res), typeExtractor);
+    return res;
+  }
+
+  // if \ref id is valid, lookup scope from translation context
+  //   otherwise use si::Ada::operatorScope to find an appropriate scope
+  si::Ada::OperatorScopeInfo
+  operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, int id, AstContext ctx)
+  {
+    /*if (id < 1)*/ return si::Ada::operatorScope(name, std::move(argTypes));
+
+    /*SgScopeStatement&        scope = queryScopeOf(id, ctx);
+    si::Ada::DominantArgInfo dom = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
+
+    return { &scope, dom.pos() };*/ //TODO How does id work????
+  }
+
+  bool pragmaProcessing(const AstContext& ctx)
+  {
+    return isSgPragmaDeclaration(ctx.pragmaAspectAnchor());
+  }
+
+  SgExpression*
+  generateOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
+  {
+    if (!suppl.args_valid())
+    {
+      if (!pragmaProcessing(ctx))
+        logWarn() << "suppl.args() is null" << std::endl;
+
+      return nullptr;
+    }
+
+    sortByArgumentName(suppl.args());
+
+    si::Ada::OperatorScopeInfo scopeinfo = operatorScope(name, extractTypes(suppl.args()), suppl.scopeId(), ctx);
+    SgScopeStatement&          scope     = SG_DEREF(scopeinfo.scope());
+
+    suppl = operatorSignature(name, std::move(suppl), scopeinfo.argpos(), ctx);
+
+    // \todo add support for other operators
+    if (!suppl.valid())
+    {
+      logWarn() << "oper " << name << " not generatable" << std::endl;
+      return nullptr;
+    }
+
+    if (SgFunctionDeclaration* fndcl = findExistingOperator(name, scope, suppl))
+      return &mkFunctionRefExp(*fndcl);
+
+    std::string            opname   = si::Ada::roseOperatorPrefix + name;
+
+    auto                   complete =
+       [&suppl](SgFunctionParameterList& fnParmList, SgScopeStatement& scope)->void
+       {
+         SgTypeModifier defaultInMode;
+
+         defaultInMode.setDefault();
+
+         for (const ArgDesc& parmDesc : suppl.args())
+         {
+           // \todo use parmDesc.name() instead of parmNames
+           SgType&                  parmType = SG_DEREF(parmDesc.type());
+           const std::string&       parmName = parmDesc.name();
+           SgInitializedName&       parmDecl = mkInitializedName(parmName, parmType, nullptr);
+           SgInitializedNamePtrList parmList = {&parmDecl};
+           /* SgVariableDeclaration&   pvDecl   =*/ mkParameter(parmList, defaultInMode, scope);
+
+           parmDecl.set_parent(&fnParmList);
+           fnParmList.get_args().push_back(&parmDecl);
+         }
+       };
+
+    SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, scope, *suppl.result(), complete);
+
+    operatorSupport()[{&scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
+    return &mkFunctionRefExp(opdcl);
+  }
+
+  SgExpression&
+  getOperator(ada_base_entity* lal_expr, OperatorCallSupplement suppl, AstContext ctx)
+  {
+    // FYI https://en.wikibooks.org/wiki/Ada_Programming/All_Operators
+    //ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
+
+    ada_node_kind_enum kind = ada_node_kind(lal_expr);
+
+    //Get the hash of the first corresponding declaration
+    ada_base_entity corresponding_decl; 
+    ada_expr_p_first_corresponding_decl(lal_expr, &corresponding_decl);
+    bool decl_exists = true;
+    int decl_hash = 0;
+    if(ada_node_is_null(&corresponding_decl)){
+      //If we don't have a p_first_corresponding_decl, set a flag
+      decl_exists = false;
+    } else {
+      decl_hash = hash_node(&corresponding_decl);
+    }
+
+    //Get the name of this expr
+    ada_symbol_type p_canonical_text;
+    ada_text ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(lal_expr, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    std::string expr_name = ada_text_to_locale_string(&ada_canonical_text);
+    logInfo() << "In getOperator, expr_name is " << expr_name << std::endl;
+    ada_destroy_text(&ada_canonical_text);
+
+    // PP 11/18/22
+    // UNCLEAR_LINK_1
+    // under some unclear circumstances a provided = operator and a generated /= may have the
+    //   same Corresponding_Name_Declaration, but different Corresponding_Name_Definition.
+    //   => just use the Corresponding_Name_Definition
+    // ROSE regression tests: dbase.ads, dbase.adb, dbase_test.adb
+    // was: if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    /*if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), expr.Corresponding_Name_Definition))
+    {
+      SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+
+      return SG_DEREF(res);
+    }*/ //TODO Does Libadlang do def pointers?
+
+    // PP 08/03/23
+    // UNCLEAR_LINK_2
+    // under some unclear circumstances ASIS does not link a callee (i.e., A_PLUS_OPERATOR representing a unary call)
+    // to its available definition, but only to its declaration (A_UNARY_PLUS_OPERATOR).
+    // ACATS test: c87b04b
+    // => to resolve the issue, look up the declaration by expr.Corresponding_Name_Declaration;
+    //    to avoid the case described by UNCLEAR_LINK_1, test if the operator declaration has
+    //    the same name as used for the call.
+    if(decl_exists){
+      if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash))
+      {
+        const std::string dclname = si::Ada::convertRoseOperatorNameToAdaName(si::get_name(dcl));
+        const bool        sameOperatorName = boost::iequals(dclname, expr_name);
+        logInfo() << "dclname is " << dclname <<", lal_expr name is " << expr_name << std::endl;
+
+        if (sameOperatorName)
+        {
+          SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+
+          return SG_DEREF(res);
+        }
+      }
+    }
+
+    const char*                         expr_name_c = expr_name.c_str();
+    const std::size_t                   len = strlen(expr_name_c);
+    if((len > 2) && (expr_name_c[0] == '"') && (expr_name_c[len-1] == '"')){
+      // do not use leading and trailing '"'
+      AdaIdentifier                       fnname{expr_name_c+1, int(len)-2};
+
+      // try to generate the operator
+      if (SgExpression* res = generateOperator(fnname, std::move(suppl), ctx))
+        return *res;
+    }
+
+    if (!pragmaProcessing(ctx))
+      logWarn() << "Using first version generator as fallback to model operator " << expr_name
+                << std::endl;
+
+    /* unused fields:
+       Defining_Name_List    Corresponding_Name_Definition_List;
+       Defining_Name_ID      Corresponding_Generic_Element;
+    */
+    return getOperator_fallback(lal_expr, ctx);
+  }
+
+} //end unnamed namespace
+
+namespace{
+  SgScopeStatement& scopeForUnresolvedNames(AstContext ctx)
+  {
+    SgDeclarationStatement* dcl = ctx.pragmaAspectAnchor();
+
+    // if there is no anchor, then just return the scope
+    if (dcl == nullptr) return ctx.scope();
+
+    // create a SgDeclarationScope for the anchor node if needed
+    if (dcl->get_declarationScope() == nullptr)
+    {
+      SgDeclarationScope& dclscope = mkDeclarationScope(ctx.scope());
+
+      sg::linkParentChild(*dcl, dclscope, &SgDeclarationStatement::set_declarationScope);
+    }
+
+    // return the declaration scope of the anchor
+    return SG_DEREF(dcl->get_declarationScope());
+  }
+
+  /// creates expressions from elements, but does not decorate
+  ///   aggregates with SgAggregateInitializers
+  SgExpression&
+  getExpr_undecorated(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl = {})
+  {
+    //Get the kind
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+    ada_text kind_name;
+    ada_kind_name(kind, &kind_name);
+    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+
+    SgExpression*      res       = NULL;
+
+    switch (kind)
+    {
+      case ada_identifier:                             // 4.1
+        {
+          // \todo use the queryCorrespondingAstNode function and the
+          //       generate the expression based on that result.
+          logKind("ada_identifier", kind);
+
+          //Get the text of this identifier
+          ada_symbol_type    p_canonical_text;
+          ada_text           ada_canonical_text;
+          ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
+          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+          const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+
+          //Find the definition of this identifier and get its hash
+          int hash;
+
+          ada_base_entity corresponding_decl; //lal doesn't give definition directly, so go from the decl
+          ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
+          ada_ada_node_array defining_name_list;
+          ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
+          
+          //Find the correct decl in the defining name list
+          for(int i = 0; i < defining_name_list->n; i++){
+            ada_base_entity defining_name = defining_name_list->items[i];
+            ada_base_entity name_identifier;
+            ada_defining_name_f_name(&defining_name, &name_identifier);
+            ada_single_tok_node_p_canonical_text(&name_identifier, &p_canonical_text);
+            ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+            const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
+            if(name == test_name){
+              logInfo() << "Found definition for ada_identifier " << name << std::endl;
+              hash = hash_node(&defining_name);
+              break;
+            }
+          }
+
+          ada_destroy_text(&ada_canonical_text);
+
+          if(SgInitializedName* var = findFirst(libadalangVars(), hash))
+          {
+            res = sb::buildVarRefExp(var, &ctx.scope());
+          }
+          /*else if(SgDeclarationStatement* dcl = queryDecl(expr, ctx))
+          {
+            res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+          }
+          else if(SgInitializedName* exc = findFirst(asisExcps(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+          {
+            res = &mkExceptionRef(*exc, ctx.scope());
+          }
+          else if(SgDeclarationStatement* tydcl = findFirst(asisTypes(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+          {
+            res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
+          }
+          else
+          {
+            AdaIdentifier adaIdent{expr.Name_Image};
+
+            // after there was no matching declaration, try to look up declarations in the standard package by name
+            if (SgType* ty = findFirst(adaTypes(), adaIdent))
+            {
+              res = &mkTypeExpression(*ty);
+            }
+            else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
+            {
+              res = sb::buildVarRefExp(fld, &ctx.scope());
+            }
+            else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
+            {
+              res = sb::buildVarRefExp(var, &ctx.scope());
+            }
+            else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
+            {
+              res = &mkExceptionRef(*exc, ctx.scope());
+            }*/ //TODO
+/*
+            else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
+            {
+              res = sb::buildVarRefExp(dsc, &ctx.scope());
+            }
+*/
+            else
+            {
+              SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
+
+              if (&scope == &ctx.scope())
+              {
+                // issue warning for unresolved names outside pragmas and aspects
+                logWarn() << "ADDING unresolved name: " << name
+                          << std::endl;
+              }
+
+              res = &mkUnresolvedName(name, scope);
+            }
+          //}
+
+          /* unused fields: (Expression_Struct)
+               ** depends on the branch
+               Defining_Name_ID      Corresponding_Generic_Element;
+          */
+          break;
+        }
+
+      case ada_bin_op:
+      case ada_un_op:
+      case ada_expr_function:                           // 4.1 TODO Is this the right kind?
+        {
+          logKind("A_Function_Call", kind);
+
+          std::vector<ada_base_entity*>  params;
+          ada_base_entity                prefix;
+          ada_base_entity                temp_param;
+          ada_base_entity                temp_param2; //TODO WHY is this necessary????
+          bool                           operatorCallSyntax;
+          bool                           objectCallSyntax;
+
+          //Based on the kind, fill in the prefix & params
+          if(kind == ada_bin_op){
+            ada_bin_op_f_op(lal_element, &prefix);
+            ada_bin_op_f_left(lal_element, &temp_param);
+            params.push_back(&temp_param);
+            ada_bin_op_f_right(lal_element, &temp_param2);
+            params.push_back(&temp_param2);
+            operatorCallSyntax = false;
+            objectCallSyntax = false;
+          } else if(kind == ada_un_op){
+            ada_un_op_f_op(lal_element, &prefix);
+            ada_un_op_f_expr(lal_element, &temp_param);
+            params.push_back(&temp_param);
+            operatorCallSyntax = false;
+            objectCallSyntax = false;
+          } else {
+            //TODO
+          }
+
+          // PP (04/22/22) if the callee is an Ada Attribute then integrate
+          //               the arguments into the Ada attribute expression directly.
+          //               Note sure if it is good to deviate from the Asis representation
+          //               but some arguments have no underlying functiom declaration.
+          // \todo Consider adding an optional function reference to the SgAdaAttribute rep.
+          if(false /*queryExprKindID(expr.Prefix) == An_Attribute_Reference TODO How to convert this?*/){
+            //res = &getAttributeExprID(expr.Prefix, ctx, range);
+          } else {
+            res = &createCall(&prefix, params, operatorCallSyntax, objectCallSyntax, ctx);
+          }
+
+          /* unused fields:
+             Expression_Struct
+               bool                  Is_Generalized_Reference;
+               bool                  Is_Dispatching_Call;
+               bool                  Is_Call_On_Dispatching_Operation;
+          */
+          break;
+        }
+
+      case ada_op_plus:                        // 4.1 TODO Add more ops
+        {
+          logKind("An_Operator_Symbol", kind);
+
+          res = &getOperator(lal_element, suppl, ctx);
+          /* unused fields:
+             Defining_Name_ID      Corresponding_Name_Definition;
+             Defining_Name_List    Corresponding_Name_Definition_List;
+             Element_ID            Corresponding_Name_Declaration;
+             Defining_Name_ID      Corresponding_Generic_Element;
+          */
+          break;
+        }
+
+      default:
+        logFlaw() << "unhandled expression: " << kind_name_string << std::endl;
+        res = sb::buildIntVal();
+        //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+    }
+
+    attachSourceLocation(SG_DEREF(res), lal_element, ctx);
+    return *res;
+  }
+} //End unnamed namespace
+
+SgExpression&
+getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl)
+{
+  SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl));
+  
+  //Check the kind
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+  switch(kind)
+  {
+    case ada_aggregate:              // 4.3
+    /*case A_Named_Array_Aggregate:                   // 4.3 TODO: Are there more aggregate nodes to worry about?
+    case A_Record_Aggregate:                        // 4.3
+    case An_Extension_Aggregate:                    // 4.3*/
+      {
+        SgExprListExp* explst = isSgExprListExp(res);
+
+        res = &mkAggregateInitializer(SG_DEREF(explst));
+        attachSourceLocation(SG_DEREF(res), lal_element, ctx);
+        break;
+      }
+
+    default:;
+  }
+
+  return SG_DEREF(res);
+}
+
+OperatorCallSupplement::ArgDescList
+createArgDescList(const SgExpressionPtrList& args)
+{
+  OperatorCallSupplement::ArgDescList res;
+  auto argDescExtractor = [](SgExpression* exp) -> ArgDesc
+                          {
+                            std::string optArgName;
+
+                            if (SgActualArgumentExpression* act = isSgActualArgumentExpression(exp))
+                              optArgName = act->get_argument_name();
+
+                            if (false)
+                            {
+                              SgType* ty = si::Ada::typeOfExpr(exp).typerep();
+
+                              logTrace() << "argDescExtractor: " << exp->unparseToString() << " " << si::Ada::typeOfExpr(exp).typerep()
+                                         << " " << (ty ? typeid(*ty).name() : std::string{"!"})
+                                         << std::endl;
+                            }
+
+                            return { optArgName, si::Ada::typeOfExpr(exp).typerep() };
+                          };
+
+  res.reserve(args.size());
+  std::transform(args.begin(), args.end(), std::back_inserter(res), argDescExtractor);
+
+  return res;
+}
+
+SgExpression& createCall(ada_base_entity* lal_prefix, std::vector<ada_base_entity*> lal_params, bool operatorCallSyntax, bool objectCallSyntax, AstContext ctx)
+{
+  // Create the arguments first. They may be needed to disambiguate operator calls
+  std::vector<SgExpression*> arglist;
+  for(ada_base_entity* param : lal_params){
+    arglist.push_back(&getArg(param, ctx));
+  }
+
+  SgExpression& tgt = getExpr(lal_prefix, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */));
+  SgExpression* res = sg::dispatch(AdaCallBuilder{lal_prefix, std::move(arglist), operatorCallSyntax, objectCallSyntax, ctx}, &tgt);
+
+  return SG_DEREF(res);
+}
+
+SgNode*
+queryBuiltIn(int hash)
+{
+  static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
+
+  SgNode* res = nullptr;
+
+  findFirstMatch
+  || (res = findFirst(adaTypes(), hash))
+  /*|| (res = findFirst(adaPkgs(),  hash))
+  || (res = findFirst(adaVars(),  hash))
+  || (res = findFirst(adaExcps(), hash))*/
+  ;
+
+  return res;
+}
+
+SgNode*
+queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
+{
+  static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
+
+  //Check the kind
+  ada_node_kind_enum kind = ada_node_kind(lal_identifier);
+  if(kind != ada_identifier){
+    logError() << "queryCorrespondingAstNode called on non-ada_identifier " << kind << std::endl;
+    return nullptr;
+  }
+
+  //Get the text of this identifier
+  ada_symbol_type    p_canonical_text;
+  ada_text           ada_canonical_text;
+  ada_single_tok_node_p_canonical_text(lal_identifier, &p_canonical_text);
+  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+  const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+
+  //Find the definition of this identifier and get its hash
+  int hash;
+
+  ada_base_entity corresponding_decl; //lal doesn't give definition directly, so go from the decl
+  ada_expr_p_first_corresponding_decl(lal_identifier, &corresponding_decl);
+  ada_ada_node_array defining_name_list;
+  ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
+          
+  //Find the correct decl in the defining name list
+  for(int i = 0; i < defining_name_list->n; i++){
+    ada_base_entity defining_name = defining_name_list->items[i];
+    ada_base_entity name_identifier;
+    ada_defining_name_f_name(&defining_name, &name_identifier);
+    ada_single_tok_node_p_canonical_text(&name_identifier, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
+    if(name == test_name){
+      logInfo() << "Found definition for ada_identifier " << name << std::endl;
+      hash = hash_node(&defining_name);
+      break;
+    }
+  }
+
+  SgNode* res = nullptr;
+
+  findFirstMatch
+  || (res = findFirst(libadalangVars(),   hash))
+  || (res = findFirst(libadalangDecls(),  hash))
+  /*|| (res = findFirst(asisExcps(),  hash))
+  || (res = findFirst(asisTypes(),  hash))
+  || (res = findFirst(asisBlocks(), hash))*/
+  || (res = queryBuiltIn(hash))
+  ;
+
+  return res;
+}
+
+} //end Libadalang_ROSE_Translation

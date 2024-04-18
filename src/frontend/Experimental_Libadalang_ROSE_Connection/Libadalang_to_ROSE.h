@@ -38,6 +38,108 @@ struct ExtendedPragmaID : std::tuple<int, SgStatement*>
   SgStatement* stmt() const { return std::get<1>(*this); }
 };
 
+/// Ada identifier that can be used in maps/lookup tables
+/// \brief
+///   converts each identifier to a common representation (i.e., upper case)
+struct AdaIdentifier : std::string
+{
+  using base = std::string;
+
+  AdaIdentifier()                                = default;
+  AdaIdentifier(const AdaIdentifier&)            = default;
+  AdaIdentifier(AdaIdentifier&&)                 = default;
+  AdaIdentifier& operator=(const AdaIdentifier&) = default;
+  AdaIdentifier& operator=(AdaIdentifier&&)      = default;
+
+  AdaIdentifier(const std::string& rep)
+  : std::string(boost::to_upper_copy(rep))
+  {}
+
+  AdaIdentifier(const char* rep)
+  : AdaIdentifier(std::string(rep))
+  {}
+
+  AdaIdentifier(const char* rep, int n)
+  : AdaIdentifier(std::string(rep, n))
+  {}
+};
+
+struct OperatorKey : std::tuple<const SgScopeStatement*, AdaIdentifier>
+{
+  using base = std::tuple<const SgScopeStatement*, AdaIdentifier>;
+  using base::base;
+
+        std::tuple_element<0, base>::type  scope() const { return std::get<0>(*this); }
+  const std::tuple_element<1, base>::type& name()  const { return std::get<1>(*this); }
+};
+
+} //End Libadalang_ROSE_Translation
+
+// define specializations of std::hash for user defined types
+//   as recommended by the C++11 standard.
+// needed if std::unordered_map is used instead of std::map to define map_t.
+namespace std
+{
+  template <>
+  struct hash<::Libadalang_ROSE_Translation::AdaIdentifier>
+  {
+    std::size_t operator()(const ::Libadalang_ROSE_Translation::AdaIdentifier& el) const
+    {
+      return std::hash<::Libadalang_ROSE_Translation::AdaIdentifier::base>()(el);
+    }
+  };
+
+/*
+  template <>
+  struct hash<::Libadalang_ROSE_Translation::InheritedSymbolKey>
+  {
+    std::size_t operator()(const ::Libadalang_ROSE_Translation::InheritedSymbolKey& el) const
+    {
+      static constexpr std::uint8_t lshift = 7;
+      static constexpr std::uint8_t rshift = (sizeof(std::size_t) * CHAR_BIT) - lshift;
+
+      std::size_t val = std::hash<const void*>()(el.function());
+
+      return ( ((val << lshift) + (val >> rshift))
+             ^ std::hash<const void*>()(el.associatedType())
+             );
+    }
+  };
+*/
+
+  template <>
+  struct hash<::Libadalang_ROSE_Translation::OperatorKey>
+  {
+    std::size_t operator()(const ::Libadalang_ROSE_Translation::OperatorKey& el) const
+    {
+      static constexpr std::uint8_t lshift = 7;
+      static constexpr std::uint8_t rshift = (sizeof(std::size_t) * CHAR_BIT) - lshift;
+
+      std::size_t val = std::hash<const void*>()(el.scope());
+
+      return ( ((val << lshift) + (val >> rshift))
+             ^ std::hash<::Libadalang_ROSE_Translation::AdaIdentifier>()(el.name())
+             );
+    }
+  };
+}
+
+namespace Libadalang_ROSE_Translation {
+
+struct OperatorDesc : std::tuple<SgFunctionDeclaration*, std::uint8_t>
+{
+  enum { COMPILER_GENERATED = 1, DECLARED_IN_STANDARD = 2, USER_DEFINED = 3 };
+
+  using base = std::tuple<SgFunctionDeclaration*, std::uint8_t>;
+  using base::base;
+
+  std::tuple_element<0, base>::type function() const { return std::get<0>(*this); }
+
+  std::tuple_element<1, base>::type flags()    const { return std::get<1>(*this); }
+  bool isCompilerGenerated()  const { return flags() == COMPILER_GENERATED; }
+  bool isDeclaredInStandard() const { return flags() == DECLARED_IN_STANDARD; }
+  bool isUserDefined()        const { return flags() == USER_DEFINED; }
+};
 
 // default map used in the translation
 template <class KeyType, class SageNode>
@@ -46,8 +148,20 @@ using map_t = std::unordered_map<KeyType, SageNode>;
 /// returns a mapping from hash to SgInitializedName
 map_t<int, SgInitializedName*>& libadalangVars();
 
+/// returns a mapping from hash to SgDeclarationStatement
+map_t<int, SgDeclarationStatement*>& libadalangDecls();
+
 /// returns a mapping from string to standard type nodes
 map_t<int, SgType*>& adaTypes();
+
+/// stores all expressions that were generated where operator declarations were expected
+std::vector<SgExpression*>& operatorExprs();
+
+/// returns a map with all functions that a type supports
+/// \details
+///   maps stores information about explicitly or implicitly defined operators on a principal type.
+///     a type may have multiple operators with the same name (e.g., "&"(string, char), "&"(string, string))
+map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
 
 /// The context class for translation from Asis to ROSE
 ///   containts context that is passed top-down
@@ -136,6 +250,12 @@ struct AstContext
 
     void appendStatement(SgStatement& s) const { stmtHandler(*this, s); }
 
+
+    /// Handles the lal_unit_root node
+    ada_base_entity* unit_root() const { return lal_unit_root; }
+    AstContext       unit_root(ada_base_entity* unit_root_lal) const;
+    /// \}
+
     //
     // policies for building the AST depending on context
 
@@ -151,6 +271,7 @@ struct AstContext
     PragmaContainer*             all_pragmas             = nullptr;
     DeferredCompletionContainer* unit_completions        = nullptr;
     StatementHandler             stmtHandler             = defaultStatementHandler;
+    ada_base_entity*             lal_unit_root           = nullptr;
     //~ Element_Struct*      elem;
 };
 
@@ -169,33 +290,6 @@ extern Sawyer::Message::Facility mlog;
 /// \param root           entry point to the Libadalang tree
 /// \param file           the ROSE root for the translation unit
 void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file);
-
-/// Ada identifier that can be used in maps/lookup tables
-/// \brief
-///   converts each identifier to a common representation (i.e., upper case)
-struct AdaIdentifier : std::string
-{
-  using base = std::string;
-
-  AdaIdentifier()                                = default;
-  AdaIdentifier(const AdaIdentifier&)            = default;
-  AdaIdentifier(AdaIdentifier&&)                 = default;
-  AdaIdentifier& operator=(const AdaIdentifier&) = default;
-  AdaIdentifier& operator=(AdaIdentifier&&)      = default;
-
-  AdaIdentifier(const std::string& rep)
-  : std::string(boost::to_upper_copy(rep))
-  {}
-
-  AdaIdentifier(const char* rep)
-  : AdaIdentifier(std::string(rep))
-  {}
-
-  AdaIdentifier(const char* rep, int n)
-  : AdaIdentifier(std::string(rep, n))
-  {}
-};
-
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
@@ -217,7 +311,7 @@ void logKind(const char* kind, int elemID);
 
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);
 
-}
+} //End Libadalang_ROSE_Translation
 
 namespace{
   inline
