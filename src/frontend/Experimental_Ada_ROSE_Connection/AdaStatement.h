@@ -56,15 +56,20 @@ namespace Ada_ROSE_Translation
   ///   by adding parameters to the scopes (after they have been created)
   struct ParameterCompletion
   {
+      ParameterCompletion(ElemIdRange paramrange, std::vector<Element_ID> secondaryIDs, AstContext astctx)
+      : range(paramrange), secondaries(std::move(secondaryIDs)), ctx(astctx)
+      {}
+
       ParameterCompletion(ElemIdRange paramrange, AstContext astctx)
-      : range(paramrange), ctx(astctx)
+      : ParameterCompletion(paramrange, {}, astctx)
       {}
 
       void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope);
 
     private:
-      ElemIdRange range;
-      AstContext  ctx;
+      ElemIdRange             range;
+      std::vector<Element_ID> secondaries;
+      AstContext              ctx;
       ParameterCompletion() = delete;
   };
 

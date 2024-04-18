@@ -766,7 +766,7 @@ namespace
   /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
   ///   declaration.
   SgVariableDeclaration&
-  getParm(Element_Struct& elem, AstContext ctx)
+  getParm(Element_Struct& elem, std::vector<Element_ID>& secondaries, AstContext ctx)
   {
     using name_container = NameCreator::result_container;
 
@@ -786,7 +786,8 @@ namespace
                                                                          asisVars(),
                                                                          names,
                                                                          parmtype,
-                                                                         getVarInit(asisDecl, &parmtype, ctx)
+                                                                         getVarInit(asisDecl, &parmtype, ctx),
+                                                                         secondaries
                                                                        );
     SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
 
@@ -801,20 +802,13 @@ namespace
   ///   parameter list (either function, procedure, or accept)
   struct ParmlistCreator
   {
-      ParmlistCreator(SgFunctionParameterList& parms, AstContext astctx)
-      : parmlist(parms), ctx(astctx)
-      {}
-
-      // CallableDeclaration is either derived from function declaration,
-      // or an accept statement.
-      template <class CallableDeclaration>
-      ParmlistCreator(CallableDeclaration& callable, AstContext astctx)
-      : ParmlistCreator(SG_DEREF(callable.get_parameterList()), astctx)
+      ParmlistCreator(SgFunctionParameterList& parms, std::vector<Element_ID> secondaryIDs, AstContext astctx)
+      : parmlist(parms), secondaries(std::move(secondaryIDs)), ctx(astctx)
       {}
 
       void operator()(Element_Struct& elem)
       {
-        SgVariableDeclaration& decl = getParm(elem, ctx);
+        SgVariableDeclaration& decl = getParm(elem, secondaries, ctx);
 
         // in Ada multiple parameters can be declared
         //   within a single declaration.
@@ -824,6 +818,7 @@ namespace
 
     private:
       SgFunctionParameterList& parmlist;
+      std::vector<Element_ID>  secondaries;
       AstContext               ctx;
   };
 
@@ -2074,28 +2069,29 @@ namespace
       case An_Accept_Statement:                 // 9.5.2
         {
           logKind("An_Accept_Statement", elem.ID);
-          SgExpression&           entryref = getExprID(stmt.Accept_Entry_Direct_Name, ctx);
-          SgExpression&           idx      = getExprID_opt(stmt.Accept_Entry_Index, ctx);
-          SgAdaAcceptStmt&        sgnode   = mkAdaAcceptStmt(entryref, idx);
+          SgExpression&            entryref = getExprID(stmt.Accept_Entry_Direct_Name, ctx);
+          SgExpression&            idx      = getExprID_opt(stmt.Accept_Entry_Index, ctx);
+          SgAdaAcceptStmt&         sgnode   = mkAdaAcceptStmt(entryref, idx);
 
           completeStmt(sgnode, elem, ctx);
 
-          ElemIdRange             params   = idRange(stmt.Accept_Parameters);
-          AstContext              parmctx  = ctx.scope(SG_DEREF(sgnode.get_parameterScope()));
+          ElemIdRange              params   = idRange(stmt.Accept_Parameters);
+          SgFunctionParameterList& paramlst = SG_DEREF(sgnode.get_parameterList());
+          AstContext               parmctx  = ctx.scope(SG_DEREF(sgnode.get_parameterScope()));
 
-          traverseIDs(params, elemMap(), ParmlistCreator{sgnode, parmctx});
+          traverseIDs(params, elemMap(), ParmlistCreator{paramlst, {}, parmctx});
 
-          ElemIdRange             stmts   = idRange(stmt.Accept_Body_Statements);
+          ElemIdRange              stmts   = idRange(stmt.Accept_Body_Statements);
 
           if (stmts.empty())
           {
-            SgStatement&          noblock = mkNullStatement();
+            SgStatement&           noblock = mkNullStatement();
 
             sg::linkParentChild(sgnode, noblock, &SgAdaAcceptStmt::set_body);
           }
           else
           {
-            SgBasicBlock&         block   = mkBasicBlock();
+            SgBasicBlock&          block   = mkBasicBlock();
 
             sg::linkParentChild(sgnode, as<SgStatement>(block), &SgAdaAcceptStmt::set_body);
 
@@ -3223,7 +3219,9 @@ namespace
                    ADA_ASSERT (elem.Element_Kind == A_Declaration);
 
                    Declaration_Struct& asisDecl = elem.The_Union.Declaration;
-                   ADA_ASSERT (asisDecl.Declaration_Kind == A_Discriminant_Specification);
+                   ADA_ASSERT (  (asisDecl.Declaration_Kind == A_Discriminant_Specification)
+                              || (asisDecl.Declaration_Kind == A_Parameter_Specification)
+                              );
 
                    ElemIdRange         range    = idRange(asisDecl.Names);
 
@@ -3757,7 +3755,8 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 
 namespace
 {
-  Declaration_Struct& firstDeclaration(Declaration_Struct& dcl)
+  ElemIdRange
+  fromFirstRoutineDeclaration(Declaration_Struct& dcl)
   {
     // PP (11/14/22): RC-1418 (Asis only?)
     // Since Corresponding_Declaration is not set on routines with body stubs,
@@ -3769,7 +3768,7 @@ namespace
       if (Element_Struct* res = retrieveElemOpt(elemMap(), dcl.Corresponding_Declaration))
       {
         ADA_ASSERT (res->Element_Kind == A_Declaration);
-        return res->The_Union.Declaration;
+        return idRange(res->The_Union.Declaration.Parameter_Profile);
       }
     }
 
@@ -3778,16 +3777,16 @@ namespace
       if (Element_Struct* stub = retrieveElemOpt(elemMap(), dcl.Corresponding_Body_Stub))
       {
         ADA_ASSERT(stub && (stub->Element_Kind == A_Declaration));
-        return firstDeclaration(stub->The_Union.Declaration);
+        return fromFirstRoutineDeclaration(stub->The_Union.Declaration);
       }
     }
 
-    return dcl;
+    return idRange(dcl.Parameter_Profile);
   }
 
-
-  Parameter_Specification_List
-  usableParameterProfile(Declaration_Struct& decl, AstContext)
+  //~ Parameter_Specification_List
+  ElemIdRange
+  secondaryParameters(Declaration_Struct& decl, AstContext)
   {
     // PP (7/29/22): RC-1372 (Asis only?)
     // In the Asis rep. parameter references inside of routine bodies
@@ -3801,14 +3800,14 @@ namespace
     //   VariableDeclaration in the declaration, while having separate
     //   VariableDeclarations in the definition (and vice versa).
 
-    // if the @decl is not a body, return the original parameter list
+    // if the @decl is not a body, use the original parameter list
     if (  (decl.Declaration_Kind != A_Procedure_Body_Declaration)
        && (decl.Declaration_Kind != A_Function_Body_Declaration)
        && (decl.Declaration_Kind != An_Entry_Body_Declaration)
        )
-      return decl.Parameter_Profile;
+      return { nullptr, nullptr };
 
-    return firstDeclaration(decl).Parameter_Profile;
+    return fromFirstRoutineDeclaration(decl);
   }
 
   Element_ID
@@ -4074,7 +4073,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
-        attachSourceLocation(pkgspec, elem, ctx);
+        //~ attachSourceLocation(pkgspec, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
 
@@ -4146,7 +4145,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
         sgnode.set_scope(specdcl->get_scope());
-        attachSourceLocation(pkgbody, elem, ctx);
+        //~ attachSourceLocation(pkgbody, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
 
@@ -4200,9 +4199,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // should private be set on the generic or on the package?
         //~ privatize(pkgnode, isPrivate);
         privatize(sgnode, isPrivate);
-        attachSourceLocation(pkgspec, elem, ctx);
-        attachSourceLocation(pkgnode, elem, ctx);
-        attachSourceLocation(gen_defn, elem, ctx);
+        //~ attachSourceLocation(pkgspec, elem, ctx);
+        //~ attachSourceLocation(pkgnode, elem, ctx);
+        //~ attachSourceLocation(gen_defn, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
 
         ctx.appendStatement(sgnode);
@@ -4304,9 +4303,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ privatize(fundec, isPrivate);
         privatize(sgnode, isPrivate);
 
-        attachSourceLocation(fundec, elem, ctx);
+        //~ attachSourceLocation(fundec, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
-        attachSourceLocation(gen_defn, elem, ctx);
+        //~ attachSourceLocation(gen_defn, elem, ctx);
 
         ADA_ASSERT (fundec.get_parent() == &gen_defn);
 
@@ -4381,7 +4380,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
         NameData                adaname = singleName(decl, ctx);
-        ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx));
+
+        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        ElemIdRange             secondaryIDs = secondaryParameters(decl, ctx);
+        std::vector<Element_ID> secondaries  = reverseElems(flattenNameLists(secondaryIDs, ctx));
+
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                  : mkTypeVoid();
 
@@ -4394,14 +4397,19 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // SCOPE_COMMENT_1: the logical scope is only used, if nondef is nullptr
         //   createFunDef chooses the scope as needed.
         SgScopeStatement&       logicalScope = adaname.parent_scope();
-        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration&  sgnode  = createFunDef( nondef,
+                                                        adaname.ident,
+                                                        logicalScope,
+                                                        rettype,
+                                                        ParameterCompletion{params, std::move(secondaries), ctx}
+                                                      );
         SgBasicBlock&           declblk = functionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        attachSourceLocation(declblk, elem, ctx); // experimental
+        //~ attachSourceLocation(declblk, elem, ctx); // experimental
         ctx.appendStatement(sgnode);
 
         // PP 2/6/22: Since a null procedure does not have any body,
@@ -4556,7 +4564,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Formal_Object_Declaration:              // 12.4(2)  -> Mode_Kinds
       {
-        SgVariableDeclaration& sgnode = getParm(elem, ctx);
+        std::vector<Element_ID> dummy;
+        SgVariableDeclaration&  sgnode = getParm(elem, dummy, ctx);
 
         // \todo is the call to append statement required?
         //       getParm -> mkParameter: which calls fixVariableDeclaration
@@ -4728,7 +4737,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
 
-        attachSourceLocation(loopvar, elem, ctx);
+        attachSourceLocation(loopvar, elem, ctx); // correct ?
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
 
@@ -5065,7 +5074,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         //~ SgScopeStatement&       logicalScope = adaname.parent_scope();
         //~ SgAdaEntryDecl&         sgnode  = mkAdaEntryDef(entrydcl, logicalScope, ParameterCompletion{range, ctx});
-        ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx));
+        ElemIdRange             params       = idRange(decl.Parameter_Profile);
+        ElemIdRange             secondaryIDs = secondaryParameters(decl, ctx);
+        std::vector<Element_ID> secondaries  = reverseElems(flattenNameLists(secondaryIDs, ctx));
 
         // PP (1/20/23): *SCOPE_COMMENT_1
         //               replace outer with entrydcl.get_scope()
@@ -5077,7 +5088,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //                     for lookup.
         SgAdaEntryDecl&         sgnode  = mkAdaEntryDefn( entrydcl,
                                                           SG_DEREF(entrydcl.get_scope()), // was: ctx.scope(),
-                                                          ParameterCompletion{params, ctx},
+                                                          ParameterCompletion{params, std::move(secondaries), ctx},
                                                           EntryIndexCompletion{decl.Entry_Index_Specification, ctx}
                                                         );
 
@@ -5606,7 +5617,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
 {
-  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, std::move(secondaries), ctx.scope(parmscope)});
 }
 
 void StmtCreator::operator()(Element_Struct& elem)

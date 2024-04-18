@@ -106,6 +106,7 @@ namespace
     return &mkUnresolvedType(typeEx.Name_Image);
   }
 
+/*
   // stop gap function
   // \todo remove after instantiations can be fully represented
   SgAdaGenericInstanceDecl*
@@ -122,6 +123,7 @@ namespace
 
     return isSgAdaGenericInstanceDecl(findFirst(asisDecls(), ex.Corresponding_Name_Definition));
   }
+*/
 
   template <class AsisDefinition>
   SgArrayType&

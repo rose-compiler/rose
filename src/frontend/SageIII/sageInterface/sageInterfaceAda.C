@@ -3942,6 +3942,73 @@ namespace
       res = filterReturnType(handlesyms(n, n));
     }
   };
+
+  template <class SageNode>
+  Sg_File_Info& ensureFileInfo( SageNode& n,
+                                void (SageNode::*setter)(Sg_File_Info*),
+                                Sg_File_Info* (SageNode::*getter)() const,
+                                const std::string& filename,
+                                int line,
+                                int col
+                              )
+  {
+    Sg_File_Info* info = (n.*getter)();
+
+    if (info == nullptr)
+    {
+      info = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+      ASSERT_not_null(info);
+
+      info->set_filenameString(filename);
+      info->set_line(line);
+      info->set_col(col);
+
+      (n.*setter)(info);
+    }
+
+    return SG_DEREF(info);
+  }
+
+  template <class SageNode>
+  void setFileInfo( SageNode& n,
+                    void (SageNode::*setter)(Sg_File_Info*),
+                    Sg_File_Info* (SageNode::*getter)() const,
+                    const std::string& filename,
+                    int line,
+                    int col
+                  )
+  {
+    Sg_File_Info& info = ensureFileInfo(n, setter, getter, filename, line, col);
+
+    info.set_parent(&n);
+    info.unsetCompilerGenerated();
+    info.unsetTransformation();
+    info.unsetShared();
+    info.set_physical_filename(filename);
+    info.set_filenameString(filename);
+    info.set_line(line);
+    info.set_physical_line(line);
+    info.set_col(col);
+
+    info.setOutputInCodeGeneration();
+  }
+
+  template <class SageLocatedNode>
+  void cpyFileInfo( SageLocatedNode& n,
+                    void (SageLocatedNode::*setter)(Sg_File_Info*),
+                    Sg_File_Info* (SageLocatedNode::*getter)() const,
+                    const SageLocatedNode& src
+                  )
+  {
+    const Sg_File_Info* infox = (src.*getter)();
+
+    if (infox == nullptr)
+      throw std::runtime_error("copied file location from node where Sg_File_Info == nullptr");
+
+    const Sg_File_Info& info  = *infox;
+
+    setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+  }
 }
 
 SgScopeStatement*
@@ -3999,6 +4066,28 @@ isPragma(const SgPragmaDeclaration& prgdcl, const std::string& prgname)
   return res;
 }
 
+void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src)
+{
+  cpyFileInfo( tgt,
+               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+               src
+             );
+
+  cpyFileInfo( tgt,
+               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+               src
+             );
+}
+
+void copyFileInfo(SgExpression& tgt, const SgExpression& src)
+{
+  copyFileInfo(static_cast<SgLocatedNode&>(tgt), src);
+
+  cpyFileInfo( tgt,
+               &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
+               src
+             );
+}
 
 
 } // ada

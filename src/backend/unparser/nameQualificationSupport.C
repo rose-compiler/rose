@@ -227,6 +227,11 @@ namespace
   };
 
 
+  // PP (04/05/24): just keep track of mappings that are actually used in Ada.
+  // \note from the namequalification mappings in ROSE
+  //       the Ada name-qualifier only uses two:
+  //       * SgNode::get_globalQualifiedNameMapForNames()
+  //       * SgNode::get_globalQualifiedNameMapForMapsOfTypes()
   struct NameQualificationTraversalAda :
             AstTopDownBottomUpProcessing< NameQualificationInheritedAttributeAda,
                                           NameQualificationSynthesizedAttribute
@@ -241,22 +246,13 @@ namespace
       using UsePkgContainer        = NameQualificationTraversalState::UsePkgContainer;
       using ScopeRenamingContainer = NameQualificationTraversalState::ScopeRenamingContainer;
 
-
       /// constructor for primary traversal
       NameQualificationTraversalAda( std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
-                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
-                                     std::map<SgNode*,std::string> & /*input_qualifiedNameMapForTemplateHeaders*/,
-                                     std::map<SgNode*,std::string> & input_typeNameMap,
                                      std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
-                                     std::set<SgNode*> & input_referencedNameSet,
                                      NameQualificationTraversalState& traversalState
                                    )
       : base(),
-        referencedNameSet(input_referencedNameSet),
         qualifiedNameMapForNames(input_qualifiedNameMapForNames),
-        qualifiedNameMapForTypes(input_qualifiedNameMapForTypes),
-        //~ qualifiedNameMapForTemplateHeaders(input_qualifiedNameMapForTemplateHeaders),
-        typeNameMap(input_typeNameMap),
         qualifiedNameMapForMapsOfTypes(input_qualifiedNameMapForMapsOfTypes),
         state(traversalState)
       {}
@@ -268,11 +264,7 @@ namespace
                                      std::map<SgNode*,std::string>& input_qualifiedNameMapForNames
                                    )
       : base(orig),
-        referencedNameSet(orig.referencedNameSet),
         qualifiedNameMapForNames(input_qualifiedNameMapForNames),
-        qualifiedNameMapForTypes(orig.qualifiedNameMapForTypes),
-        //~ qualifiedNameMapForTemplateHeaders(orig.qualifiedNameMapForTemplateHeaders),
-        typeNameMap(orig.typeNameMap),
         qualifiedNameMapForMapsOfTypes(orig.qualifiedNameMapForMapsOfTypes),
         state(orig.state)
       {}
@@ -332,8 +324,9 @@ namespace
       ///   the current mapping is returned.
       std::map<SgNode*,std::string>& createQualMapForTypeSubtreeIfNeeded(const SgNode& n);
 
-      /// returns referencedNameSet
-      std::set<SgNode*>& get_referencedNameSet() { return referencedNameSet; }
+      // PP (04/05/24): referencedNameSet currently not in use by Ada
+      //~ /// returns referencedNameSet
+      //~ std::set<SgNode*>& get_referencedNameSet() { return referencedNameSet; }
 
       /// returns current qualifiedNameMapForNames
       std::map<SgNode*,std::string>& get_qualifiedNameMapForNames() { return qualifiedNameMapForNames; }
@@ -358,11 +351,12 @@ namespace
 
       // references to ROSE wide maps
       // \{
-      std::set<SgNode*>&                                referencedNameSet;
+      // PP (04/05/24): referencedNameSet currently not in use by Ada
+      //~ std::set<SgNode*>&                                referencedNameSet;
       std::map<SgNode*,std::string>&                    qualifiedNameMapForNames;
-      std::map<SgNode*,std::string>&                    qualifiedNameMapForTypes;
+      // std::map<SgNode*,std::string>&                    qualifiedNameMapForTypes;
       //~ std::map<SgNode*,std::string> & qualifiedNameMapForTemplateHeaders;
-      std::map<SgNode*,std::string>&                    typeNameMap;
+      //~ std::map<SgNode*,std::string>&                    typeNameMap;
       std::map<SgNode*,std::map<SgNode*,std::string> >& qualifiedNameMapForMapsOfTypes;
       // \}
 
@@ -1954,7 +1948,7 @@ namespace
     using NameQualMap = std::map<SgNode*, std::string>;
 
     NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
-    NameQualificationTraversalAda sub{ traversal, localQualMapForTypes };
+    NameQualificationTraversalAda sub{traversal, localQualMapForTypes};
     InheritedAttribute            attr{res};
 
     // fix the reference node for the type subtree traversal
@@ -1963,6 +1957,8 @@ namespace
     sub.traverse(const_cast<SgNode*>(n), attr);
   }
 
+
+  // SgNode::get_globalQualifiedNameMapForNames
 
   void
   AdaPreNameQualifier::computeNameQualForNonshared(const SgNode* n, bool inTypeSubtree)
@@ -2044,14 +2040,10 @@ namespace
    generateNameQualificationSupportAda(SgNode* node, std::set<SgNode*>& referencedNameSet)
    {
      NameQualificationTraversalState nqState;
-     NameQualificationTraversalAda nqual{ SgNode::get_globalQualifiedNameMapForNames(),
-                                          SgNode::get_globalQualifiedNameMapForTypes(),
-                                          SgNode::get_globalQualifiedNameMapForTemplateHeaders(),
-                                          SgNode::get_globalTypeNameMap(),
-                                          SgNode::get_globalQualifiedNameMapForMapsOfTypes(),
-                                          referencedNameSet,
-                                          nqState
-                                        };
+     NameQualificationTraversalAda   nqual{ SgNode::get_globalQualifiedNameMapForNames(),
+                                            SgNode::get_globalQualifiedNameMapForMapsOfTypes(),
+                                            nqState
+                                          };
 
      nqual.traverse(node, NameQualificationInheritedAttributeAda{});
    }
@@ -20396,4 +20388,11 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
 #endif
 
      return ambiguityDetected;
+   }
+
+void
+clearNameQualificationAda()
+   {
+      SgNode::get_globalQualifiedNameMapForNames().clear();
+      SgNode::get_globalQualifiedNameMapForMapsOfTypes().clear();
    }

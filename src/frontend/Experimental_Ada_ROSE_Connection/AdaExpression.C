@@ -582,7 +582,7 @@ namespace
     using OpMap = map_t<OperatorKey, std::vector<OperatorDesc> >;
 
     OpMap const&          opMap = operatorSupport();
-    OpMap::const_iterator pos = opMap.find({&scope, name});
+    OpMap::const_iterator pos   = opMap.find({&scope, name});
 
     if (pos == opMap.end()) return nullptr;
 

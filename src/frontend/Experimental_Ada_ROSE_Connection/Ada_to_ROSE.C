@@ -394,28 +394,58 @@ namespace
   {
     return _hasLocationInfo(isSgLocatedNode(n));
   }
+
+  void computeSourceRangeFromChildren_internal(std::vector<SgNode*> successors, SgLocatedNode& n)
+  {
+    auto beg    = successors.begin();
+    auto lim    = successors.end();
+    auto first  = std::find_if(beg, lim, hasLocationInfo);
+    auto rbeg   = successors.rbegin();
+    auto rlim   = std::make_reverse_iterator(first);
+    auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
+
+    if ((first == lim) || (last == rlim))
+      return;
+
+    //~ logTrace() << "set srcloc for " << typeid(n).name() << std::endl;
+
+    cpyFileInfo( n,
+                 &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+                 SG_DEREF(isSgLocatedNode(*first)) );
+
+    cpyFileInfo( n,
+                 &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+                 SG_DEREF(isSgLocatedNode(*last)) );
+  }
+
+  void computeSourceRangeFromChildren_internal(SgLocatedNode& n)
+  {
+    computeSourceRangeFromChildren_internal(n.get_traversalSuccessorContainer(), n);
+  }
+
+  struct SourceLocationCalc
+  {
+    void handle(SgNode& n)        { SG_UNEXPECTED_NODE(n); }
+    void handle(SgLocatedNode& n) { computeSourceRangeFromChildren_internal(n); }
+
+    void handle(SgFunctionParameterList& n)
+    {
+      const SgInitializedNamePtrList& args = n.get_args();
+
+      if (args.size())
+      {
+        SgLocatedNode* first = args.front()->get_declptr();
+        SgLocatedNode* last  = args.back()->get_declptr();
+
+        computeSourceRangeFromChildren_internal({first, last}, n);
+      }
+    }
+  };
 }
 
 void computeSourceRangeFromChildren(SgLocatedNode& n)
 {
-  std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
-  auto beg    = successors.begin();
-  auto lim    = successors.end();
-  auto first  = std::find_if(beg, lim, hasLocationInfo);
-  auto rbeg   = successors.rbegin();
-  auto rlim   = std::make_reverse_iterator(first);
-  auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
-
-  if ((first == lim) || (last == rlim))
-    return;
-
-  cpyFileInfo( n,
-               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
-               SG_DEREF(isSgLocatedNode(*first)) );
-
-  cpyFileInfo( n,
-               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
-               SG_DEREF(isSgLocatedNode(*last)) );
+  sg::dispatch(SourceLocationCalc{}, &n);
 }
 
 
@@ -1092,21 +1122,40 @@ namespace
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
 
-      if (n == nullptr || !n->isTransformation()) return;
-
-      logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation();
-
-      computeSourceRangeFromChildren(*n);
+      if (n == nullptr) return;
 
       if (n->isTransformation())
       {
-        logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
-                   << "  c=" << n->get_startOfConstruct()
-                   << " " << isSgVarRefExp(n)->get_symbol()->get_name()
+        logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation()
                    << std::endl;
+
+        computeSourceRangeFromChildren(*n);
+
+        if (n->isTransformation())
+        {
+          logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
+                     << "  c=" << n->get_startOfConstruct()
+                     << " " << isSgVarRefExp(n)->get_symbol()->get_name()
+                     << std::endl;
+        }
+
+        ADA_ASSERT(!n->isTransformation());
       }
 
-      ADA_ASSERT(!n->isTransformation());
+      if (n->isCompilerGenerated())
+      {
+        //~ logTrace() << n << " " << typeid(*n).name() << "has isCompilerGenerated " << n->isCompilerGenerated()
+                   //~ << " [computed from children]"
+                   //~ << std::endl;
+
+        computeSourceRangeFromChildren(*n);
+
+        //~ logTrace() << "    " << n << ": " << n->get_startOfConstruct()->get_line()
+                   //~ << "." << n->get_startOfConstruct()->get_col()
+                   //~ << " => " << n->get_endOfConstruct()->get_line() << "." << n->get_endOfConstruct()->get_col()
+                   //~ << std::endl;
+
+      }
     }
   };
 

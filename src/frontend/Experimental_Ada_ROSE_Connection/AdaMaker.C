@@ -115,69 +115,6 @@ void setSymbolTableCaseSensitivity(SgScopeStatement& n)
 }
 
 
-template <class SageNode>
-Sg_File_Info& ensureFileInfo( SageNode& n,
-                              void (SageNode::*setter)(Sg_File_Info*),
-                              Sg_File_Info* (SageNode::*getter)() const,
-                              const std::string& filename,
-                              int line,
-                              int col
-                            )
-{
-  Sg_File_Info* info = (n.*getter)();
-
-  if (info == nullptr)
-  {
-    info = &mkFileInfo(filename, line, col);
-    (n.*setter)(info);
-  }
-
-  return SG_DEREF(info);
-}
-
-template <class SageNode>
-void setFileInfo( SageNode& n,
-                  void (SageNode::*setter)(Sg_File_Info*),
-                  Sg_File_Info* (SageNode::*getter)() const,
-                  const std::string& filename,
-                  int line,
-                  int col
-                )
-{
-  Sg_File_Info& info = ensureFileInfo(n, setter, getter, filename, line, col);
-
-  info.set_parent(&n);
-  info.unsetCompilerGenerated();
-  info.unsetTransformation();
-  info.unsetShared();
-  info.set_physical_filename(filename);
-  info.set_filenameString(filename);
-  info.set_line(line);
-  info.set_physical_line(line);
-  info.set_col(col);
-
-  info.setOutputInCodeGeneration();
-}
-
-template <class SageLocatedNode>
-void cpyFileInfo( SageLocatedNode& n,
-                  void (SageLocatedNode::*setter)(Sg_File_Info*),
-                  Sg_File_Info* (SageLocatedNode::*getter)() const,
-                  const SageLocatedNode& src
-                )
-{
-  const Sg_File_Info* infox = (src.*getter)();
-
-  if (infox == nullptr)
-    logError() << typeid(src).name() << " w/o fileinfo" << std::endl;
-
-  const Sg_File_Info& info  = *infox;
-
-  setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
-}
-
-
-
 //
 // types
 
@@ -1582,30 +1519,6 @@ mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body, SgTryStmt& trySt
 
 namespace
 {
-  void cpFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src)
-  {
-    cpyFileInfo( tgt,
-                 &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
-                 src
-               );
-
-    cpyFileInfo( tgt,
-                 &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
-                 src
-               );
-  }
-
-
-  void cpFileInfo(SgExpression& tgt, const SgExpression& src)
-  {
-    cpFileInfo(static_cast<SgLocatedNode&>(tgt), src);
-
-    cpyFileInfo( tgt,
-                 &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
-                 src
-               );
-  }
-
   struct InitMaker : sg::DispatchHandler<SgInitializer*>
   {
       using base = sg::DispatchHandler<SgInitializer*>;
@@ -1620,7 +1533,7 @@ namespace
       {
         SgAssignInitializer& sgnode = mkAssignInitializer(n, *vartype);
 
-        cpFileInfo(sgnode, n);
+        si::Ada::copyFileInfo(sgnode, n);
         res = &sgnode;
       }
 
@@ -1628,7 +1541,7 @@ namespace
       {
         SgAggregateInitializer& sgnode = mkAggregateInitializer(n, *vartype);
 
-        cpFileInfo(sgnode, n);
+        si::Ada::copyFileInfo(sgnode, n);
         res = &sgnode;
       }
 

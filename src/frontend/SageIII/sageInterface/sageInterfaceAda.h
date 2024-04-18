@@ -1088,14 +1088,16 @@ namespace
       using base::const_reverse_iterator;
       using base::reverse_iterator;
       using base::const_iterator;
-      using base::rend;
-      using base::rbegin;
       using base::value_type;
       using base::reference;
-      using base::size;
 
       using base::end;
       using base::begin;
+      using base::rend;
+      using base::rbegin;
+
+      using base::size;
+      using base::back;
 
       /// overload vector's push_back to check element validity
       void push_back(base::value_type ptr)
@@ -1114,6 +1116,11 @@ namespace
   ///       (the namequalification already adds pkgStandard...)
   ScopePath pathToGlobal(const SgScopeStatement& n);
 
+  /// copies the source code location from \ref src to \ref tgt.
+  /// \{
+  void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src);
+  void copyFileInfo(SgExpression&  tgt, const SgExpression& src);
+  /// \}
 
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter
