@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser.h>
@@ -21,6 +22,16 @@ Base::Base(const std::string &name, size_t bytesPerWord, ByteOrder::Endianness b
     : name_(name), bytesPerWord_(bytesPerWord), byteOrder_(byteOrder) {}
 
 Base::~Base() {}
+
+Base::Ptr
+Base::ptr() {
+    return shared_from_this();
+}
+
+Base::ConstPtr
+Base::constPtr() const {
+    return shared_from_this();
+}
 
 const std::string&
 Base::name() const {
@@ -151,6 +162,11 @@ AddressSet
 Base::getSuccessors(SgAsmInstruction*, bool &complete) const {
     complete = false;
     return AddressSet();
+}
+
+AddressSet
+Base::getSuccessors(const std::vector<SgAsmInstruction*> &insns, bool &complete) const {
+    return getSuccessors(insns, complete, MemoryMap::Ptr());
 }
 
 AddressSet

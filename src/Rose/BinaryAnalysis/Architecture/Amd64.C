@@ -169,7 +169,7 @@ Amd64::callingConventions() const {
 CallingConvention::Definition::Ptr
 Amd64::cc_sysv() const {
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance(64, "sysv", "x86-64 sysv", regdict);
+    auto cc = CallingConvention::Definition::instance("sysv", "x86-64 sysv", constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
@@ -177,7 +177,6 @@ Amd64::cc_sysv() const {
     cc->returnAddressLocation(ConcreteLocation(SP, 0));
 
     //==== Stack characteristics ====
-    cc->stackPointerRegister(SP);
     cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(bytesPerWord());          // return address
 

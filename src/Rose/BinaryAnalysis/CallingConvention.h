@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Alignment.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
@@ -10,14 +11,18 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
 #include <Rose/BinaryAnalysis/Variables.h>
+#include <Rose/Exception.h>
+
+#include <Sawyer/Optional.h>
+#include <Sawyer/Result.h>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/version.hpp>
-#include <Sawyer/SharedObject.h>
-#include <Sawyer/SharedPointer.h>
 
 // Clean up global namespace pollution
 #undef ABSOLUTE
@@ -77,6 +82,28 @@ enum class StackCleanup {
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Exceptions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Error related to calling convention problems. */
+class Exception: public Rose::Exception {
+public:
+    /** Construct error with specified message. */
+    Exception(const std::string &mesg)
+        : Rose::Exception(mesg) {}
+    virtual ~Exception() throw() {}
+};
+
+/** Error occuring when parsing a declaration. */
+class ParseError: public Exception {
+public:
+    /** Construct error with specified message. */
+    ParseError(const std::string &mesg)
+        : Exception(mesg) {}
+    virtual ~ParseError() throw() {}
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -91,15 +118,14 @@ public:
 private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
-    size_t wordWidth_ = 0;                              // Natural width word size in bits
-    RegisterDictionaryPtr regDict_;                     // Register dictionary used when this definition was created
+    Sawyer::Optional<size_t> bitsPerWord_;              // Optionally override the word width from the architecture
     std::vector<ConcreteLocation> nonParameterInputs_;  // Inputs that are not considered normal function parameters
     std::vector<ConcreteLocation> inputParameters_;     // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ConcreteLocation> outputParameters_;    // Return values and output parameters.
     StackParameterOrder stackParameterOrder_ = StackParameterOrder::UNSPECIFIED; // Order of arguments on the stack
-    RegisterDescriptor stackPointerRegister_;           // Base pointer for implied stack parameters
+    RegisterDescriptor stackPointerRegister_;           // Optionally override the stack pointerregister from the architecture
     size_t nonParameterStackSize_ = 0;                  // Size in bytes of non-parameter stack area
-    size_t stackAlignment_ = 0;                         // Stack alignment in bytes (zero means unknown)
+    Alignment stackAlignment_;                          // Stack alignment in bytes
     StackDirection stackDirection_ = StackDirection::GROWS_DOWN; // Direction that stack grows from a PUSH operation
     StackCleanup stackCleanup_ = StackCleanup::UNSPECIFIED;      // Who cleans up stack parameters?
     ConcreteLocation thisParameter_;                    // Object pointer for calling conventions that are object methods
@@ -107,6 +133,11 @@ private:
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
     ConcreteLocation returnAddressLocation_;            // Where is the function return address stored at function entry?
     RegisterDescriptor instructionPointerRegister_;     // Where is the next instruction address stored?
+
+    // The architecture with which this calling convention definition is associated. It is referenced via weak pointer because the
+    // architecture typically contains a list of calling convention definitions, so if we had referred here to the architecture with
+    // a shared pointer we'd have a cycle. Architecture objects are typically not deleted since they're registered with the library.
+    std::weak_ptr<const Architecture::Base> architecture_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -116,14 +147,12 @@ private:
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(comment_);
-        s & BOOST_SERIALIZATION_NVP(wordWidth_);
-        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(bitsPerWord_);
         s & BOOST_SERIALIZATION_NVP(inputParameters_);
         s & BOOST_SERIALIZATION_NVP(outputParameters_);
         s & BOOST_SERIALIZATION_NVP(stackParameterOrder_);
         s & BOOST_SERIALIZATION_NVP(stackPointerRegister_);
         s & BOOST_SERIALIZATION_NVP(nonParameterStackSize_);
-        s & BOOST_SERIALIZATION_NVP(stackAlignment_);
         s & BOOST_SERIALIZATION_NVP(stackDirection_);
         s & BOOST_SERIALIZATION_NVP(stackCleanup_);
         s & BOOST_SERIALIZATION_NVP(thisParameter_);
@@ -147,26 +176,27 @@ protected:
      *  The name of the calling convention usually comes from the documentation (see @name) and is a single word. The comment
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
-    Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionaryPtr&);
+    Definition(const std::string &name, const std::string &comment, const Architecture::BaseConstPtr&);
 
 public:
     ~Definition();
 
 public:
     /** Allocating constructor. */
-    static Ptr instance(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionaryPtr &regs) {
-        return Ptr(new Definition(wordWidth, name, comment, regs));
-    }
+    static Ptr instance(const std::string &name, const std::string &comment, const Architecture::BaseConstPtr&);
 
 public:
-    /** Property: Register dictionary.
+    /** Property: Architecture with which this definition is associated.
      *
-     *  The register dictionary imparts names to the various register descriptors.
+     *  Returns a non-null architecture from a weak pointer, aborting if the architecture has been deleted. Since Architecture
+     *  objects contain a dictionary of all their calling conventions, the architecture's lifetime normally exceeds the lifetime
+     *  of a calling convention definition and the weak pointer will be valid. */
+    Architecture::BaseConstPtr architecture() const;
+
+    /** Property: Register dictionary for the architecture.
      *
-     * @{ */
+     *  This property is read-only, set by the constructor. The register dictionary is not null. */
     RegisterDictionaryPtr registerDictionary() const;
-    void registerDictionary(const RegisterDictionaryPtr &d);
-    /** @} */
 
     /** Property: Short name of calling convention.
      *
@@ -193,18 +223,13 @@ public:
 
     /** Property: Word size in bits.
      *
-     *  This is the natural width of a word measured in bits. When searching for a matching calling convention only those
-     *  calling conventions having the desired word width are considered.
+     *  This is the natural width of a word measured in bits. The value is positive and usually a multiple of eight.
      *
-     *  This is named "width" instead of "size" because the binary analysis API generally uses "width" to measure in units of
-     *  bits, while "size" measures in units of bytes.
+     *  If this property has no value, then it defaults to the word size of the architecture.
      *
      * @{ */
-    size_t wordWidth() const { return wordWidth_; }
-    void wordWidth(size_t nBits) {
-        ASSERT_require2(nBits > 0 && 0 == (nBits & 7), "word size must be a positive multiple of eight");
-        wordWidth_ = nBits;
-    }
+    size_t bitsPerWord() const;
+    void bitsPerWord(const Sawyer::Optional<size_t>&);
     /** @} */
 
     /** Non-parameter inputs.
@@ -316,12 +341,14 @@ public:
     /** Property: Register for implied stack parameters.
      *
      *  This property holds the register that should be used for implied stack parameters. For instance, on 32-bit x86 this is
-     *  probably ESP, where the base address is the ESP value immediately after the @c call instruction.  This property need
-     *  not be defined if implied stack parameters are not possible.
+     *  probably ESP, where the base address is the ESP value immediately after the @c call instruction.
      *
-     * @{ */
-    const RegisterDescriptor stackPointerRegister() const { return stackPointerRegister_; }
-    void stackPointerRegister(RegisterDescriptor r) { stackPointerRegister_ = r; }
+     *  The value of this property defaults to the stack pointer register for the architecture. Setting the property to an empty
+     *  register descriptor causes the default value from the architecture to be used instead.
+     *
+     *  @{ */
+    RegisterDescriptor stackPointerRegister() const;
+    void stackPointerRegister(RegisterDescriptor);
     /** @} */
 
     /** Property: Size of non-parameter stack area.
@@ -350,6 +377,11 @@ public:
     void stackDirection(StackDirection x) { stackDirection_ = x; }
     /** @} */
 
+    /** Property: Order of bytes for multi-byte values in memory.
+     *
+     *  This property is read only. It's value comes from the architecture set by the constructor. */
+    ByteOrder::Endianness byteOrder() const;
+
     /** Property: Who pops stack parameters.
      *
      *  This property indicates whether the caller is responsible for popping stack parameters, or whether the called function
@@ -364,11 +396,11 @@ public:
     /** Property: Stack alignment.
      *
      *  This is the stack alignment measured in bytes for the stack pointer before the caller pushes any non-parameters (e.g.,
-     *  return address) or parameters.  A value of zero means the alignment is unknown or unspecified.
+     *  return address) or parameters.
      *
      * @{ */
-    size_t stackAlignment() const { return stackAlignment_; }
-    void stackAlignment(size_t nBytes) { stackAlignment_ = nBytes; }
+    const Alignment& stackAlignment() const;
+    void stackAlignment(const Alignment&);
     /** @} */
 
     /** Property: Object pointer parameter.
@@ -476,6 +508,127 @@ public:
 
 /** A ordered collection of calling convention definitions. */
 typedef std::vector<Definition::Ptr> Dictionary;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Declaration
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Function declaration.
+ *
+ *  A function declaration consists of a return type, a list of argument types, and a calling convention. The declaration can
+ *  be built directly from those pieces, or parsed from a C-like function declaration. */
+class Declaration: public Sawyer::SharedObject {
+public:
+    /** Shared-ownership pointer. */
+    using Ptr = DeclarationPtr;
+
+private:
+    std::string name_;                                  // optional declaration name
+    std::string comment_;                               // optional declaration comment
+    std::string sourceCode_;                            // string from which this declaration was parsed
+    DefinitionPtr callingConvention_;                   // required calling convention definition
+    SgAsmType *returnType_ = nullptr;                   // type of the function return value
+    std::vector<std::pair<SgAsmType*, std::string>> arguments_; // types (and names) of the arguments
+
+public:
+    ~Declaration();
+protected:
+    explicit Declaration(const DefinitionPtr&);
+public:
+    /** Create a function declaration by parsing a C-like declaration.
+     *
+     *  The string is of the form "RETURN_TYPE(ARG_TYPE_1, ...)".
+     *
+     *  The following types are recognized:
+     *
+     *  @li `uN` indicates an unsigned integral type whose width is `N` bits, where `N` must be 8, 16, 32, or 64.
+     *  @li `iN` indicates a signed integral type whose width is `N` bits, where `N` must be 8, 16, 32, or 64.
+     *  @li `fN` indicates a floating-point type whose width is `N` bits, where `N` must be 32 or 64.
+     *  @li `T*` indicates a pointer to type `T`.
+     *  @li `void` as a return type indicates that the function does not return a value. The type `void*` can be used as an argument
+     *  type to indicate that the argument is a pointer to something that is unknown. The pointer width is equal to the default
+     *  word width defined in the calling convention.
+     *
+     *  An argument type may be followed by an argument name, in which case the name must be unique for this declaration. The return
+     *  type may be followed by a function name.
+     *
+     *  This intentionally small list of types might be extended in the future.
+     *
+     *  Examples:
+     *
+     *  @code
+     *   auto decl1 = Declaration::instance(cdecl, "f32(f32, f32)");
+     *   auto decl2 = Declaration::instance(cdecl, "u32 strlen(u8* str)");
+     *  @endcode */
+    static Ptr instance(const DefinitionPtr&, const std::string&);
+
+public:
+    /** Property: Name.
+     *
+     *  Optional name for this declaration.
+     *
+     *  @{ */
+    const std::string& name() const;
+    void name(const std::string&);
+    /** @} */
+
+    /** Property: Comment.
+     *
+     *  Optional comment for this declaration.
+     *
+     *  @{ */
+    const std::string& comment() const;
+    void comment(const std::string&);
+    /** @} */
+
+    /** Source code from which declaration was parsed. */
+    const std::string& toString() const;
+
+    /** Property: Calling convention.
+     *
+     *  The calling convention is never null. */
+    DefinitionPtr callingConvention() const;
+
+    /** Property: Return type.
+     *
+     *  The return type is never null. If the function doesn't return a value then the return type is an instance of
+     *  @ref SgAsmVoidType. The return type is read-only, set by the constructor. */
+    SgAsmType* returnType() const;
+
+    /** Property: Number of arguments.
+     *
+     *  The number of arguments is read-only, set by the constructor. */
+    size_t nArguments() const;
+
+    /** Property: Argument type.
+     *
+     *  Returns the type for the specified argument. The type is never null, nor can it be an instance of @ref SgAsmVoidType. The
+     *  zero-origin index must be valid for the number of arguments (see @ref nArguments). This property is read-only, set by the
+     *  constructor. */
+    SgAsmType* argumentType(size_t index) const;
+
+    /** Property: Optional argument name.
+     *
+     *  Returns an optional name for the argument. If an argument has a name, then it is guaranteed to be unique among all the
+     *  argument names in this declaration. The zero-origin index must be valid for the number of arguments (see @ref
+     *  nArguments). This property is read-only, set by the constructor. */
+    const std::string& argumentName(size_t index) const;
+
+    /** Property: The type and name for each argument. */
+    const std::vector<std::pair<SgAsmType*, std::string>>& arguments() const;
+
+public:
+    /** Return the concrete location for a function argument, or an error string.
+     *
+     *  Locations that are relative to the stack pointer assume that instruction pointer is at the first instruction of the called
+     *  function and the instruction has not yet been executed.
+     *
+     *  @{ */
+    Sawyer::Result<ConcreteLocation, std::string> argumentLocation(size_t index) const;
+    Sawyer::Result<ConcreteLocation, std::string> argumentLocation(const std::string &argName) const;
+    /** @} */
+
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis

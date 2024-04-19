@@ -258,9 +258,13 @@ public:
      *  this to do something more sophisticated. However, if the basic block is empty then this function instead returns an empty
      *  set and sets @p complete to true.
      *
-     *  Thread safety: Thread safe. */
+     *  Thread safety: Thread safe.
+     *
+     *  @{ */
+    AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock, bool &complete) const;
     virtual AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock, bool &complete,
-                                     const MemoryMapPtr &initial_memory = MemoryMapPtr()) const;
+                                     const MemoryMapPtr &initial_memory) const;
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Architecture-specific stuff for a partitioning engine.
@@ -282,6 +286,13 @@ public:
      *  The default implementation returns an empty list. */
     virtual std::vector<Partitioner2::BasicBlockCallbackPtr>
     basicBlockCreationHooks(const Partitioner2::EnginePtr&) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Miscellaneous
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
+    Ptr ptr();
+    ConstPtr constPtr() const;
 };
 
 } // namespace

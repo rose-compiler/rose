@@ -68,6 +68,8 @@ class Z3Solver;
 
 namespace CallingConvention {
 class Analysis;
+class Declaration;
+using DeclarationPtr = Sawyer::SharedPointer<Declaration>; /**< Reference counting pointer. */
 class Definition;
 using DefinitionPtr = Sawyer::SharedPointer<Definition>; /**< Reference counting pointer. */
 } // namespace

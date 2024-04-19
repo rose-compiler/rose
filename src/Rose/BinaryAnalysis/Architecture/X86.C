@@ -496,12 +496,12 @@ X86::cc_cdecl(size_t bitsPerWord) const {
     // Register prefix letter for things like "ax", "eax", "rax"
     const std::string prefix = registerPrefix(bitsPerWord);
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance(bitsPerWord, "cdecl",
-                                                      "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " cdecl",
-                                                      regdict);
+    auto cc = CallingConvention::Definition::instance("cdecl", "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " cdecl",
+                                                      constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
+    cc->bitsPerWord(bitsPerWord);
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
     cc->returnAddressLocation(ConcreteLocation(SP, 0));
 
@@ -553,12 +553,13 @@ CallingConvention::Definition::Ptr
 X86::cc_stdcall(size_t bitsPerWord) const {
     const std::string prefix = registerPrefix(bitsPerWord);
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance(bitsPerWord, "stdcall",
+    auto cc = CallingConvention::Definition::instance("stdcall",
                                                       "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " stdcall",
-                                                      regdict);
+                                                      constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
+    cc->bitsPerWord(bitsPerWord);
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
     cc->returnAddressLocation(ConcreteLocation(SP, 0));
 
@@ -610,12 +611,13 @@ CallingConvention::Definition::Ptr
 X86::cc_fastcall(size_t bitsPerWord) const {
     const std::string prefix = registerPrefix(bitsPerWord);
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance(bitsPerWord, "fastcall",
+    auto cc = CallingConvention::Definition::instance("fastcall",
                                                       "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " fastcall",
-                                                      regdict);
+                                                      constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
+    cc->bitsPerWord(bitsPerWord);
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
     cc->returnAddressLocation(ConcreteLocation(SP, 0));
 

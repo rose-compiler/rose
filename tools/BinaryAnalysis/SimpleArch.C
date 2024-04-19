@@ -113,7 +113,7 @@ makeCallingConventions(const Architecture::Base::ConstPtr &arch) {
     ASSERT_not_null(arch);
 
     RegisterDictionary::Ptr regdict = arch->registerDictionary();
-    auto cc = CallingConvention::Definition::instance(arch->bitsPerWord(), "simple", "simple", regdict);
+    auto cc = CallingConvention::Definition::instance("simple", "simple", arch);
 
     // Address locations
     cc->instructionPointerRegister(regdict->instructionPointerRegister());

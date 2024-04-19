@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 
+#include <Rose/Affirm.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
@@ -18,7 +19,23 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Escape.h>
 
+#include <SgAsmFloatType.h>
+#include <SgAsmIntegerType.h>
+#include <SgAsmPointerType.h>
+#include <SgAsmVoidType.h>
+
+#include <Cxx_GrammarDowncast.h>
+
+#include <Sawyer/Clexer.h>
 #include <Sawyer/ProgressBar.h>
+#include <Sawyer/Result.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <fstream>
+#include <ostream>
+#include <sstream>
+#include <string>
 
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
@@ -47,23 +64,38 @@ initDiagnostics() {
 
 Definition::Definition() {}
 
-Definition::Definition(size_t wordWidth, const std::string &name, const std::string &comment,
-                       const RegisterDictionary::Ptr &regDict)
-    : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict) {
-    ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
-    ASSERT_not_null(regDict);
+Definition::Definition(const std::string &name, const std::string &comment, const Architecture::Base::ConstPtr &arch)
+    : name_(name), comment_(comment), architecture_(arch) {
+    ASSERT_not_null(arch);
 }
 
 Definition::~Definition() {}
 
+Definition::Ptr
+Definition::instance(const std::string &name, const std::string &comment, const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Definition(name, comment, arch));
+}
+
+Architecture::Base::ConstPtr
+Definition::architecture() const {
+    Architecture::Base::ConstPtr arch = architecture_.lock();
+    ASSERT_not_null(arch);
+    return arch;
+}
+
 RegisterDictionary::Ptr
 Definition::registerDictionary() const {
-    return regDict_;
+    return notnull(architecture()->registerDictionary());
+}
+
+size_t
+Definition::bitsPerWord() const {
+    return bitsPerWord_.orElse(architecture()->bitsPerWord());
 }
 
 void
-Definition::registerDictionary(const RegisterDictionary::Ptr &dict) {
-    regDict_ = dict;
+Definition::bitsPerWord(const Sawyer::Optional<size_t> &x) {
+    bitsPerWord_ = x;
 }
 
 void
@@ -82,6 +114,31 @@ Definition::appendOutputParameter(const ConcreteLocation &newLocation) {
         ASSERT_forbid(newLocation == existingLocation);
 #endif
     outputParameters_.push_back(newLocation);
+}
+
+RegisterDescriptor
+Definition::stackPointerRegister() const {
+    return stackPointerRegister_ ? stackPointerRegister_ : architecture()->registerDictionary()->stackPointerRegister();
+}
+
+void
+Definition::stackPointerRegister(const RegisterDescriptor x) {
+    stackPointerRegister_ = x;
+}
+
+ByteOrder::Endianness
+Definition::byteOrder() const {
+    return architecture()->byteOrder();
+}
+
+const Alignment&
+Definition::stackAlignment() const {
+    return stackAlignment_;
+}
+
+void
+Definition::stackAlignment(const Alignment &x) {
+    stackAlignment_ = x;
 }
 
 RegisterParts
@@ -128,8 +185,7 @@ RegisterParts
 Definition::getUsedRegisterParts() const {
     RegisterParts retval = inputRegisterParts();
     retval |= outputRegisterParts();
-    if (!stackPointerRegister_.isEmpty())
-        retval.insert(stackPointerRegister_);
+    retval.insert(stackPointerRegister());
     if (thisParameter_.type() == ConcreteLocation::REGISTER)
         retval.insert(thisParameter_.reg());
     retval |= calleeSavedRegisterParts();
@@ -145,21 +201,21 @@ Definition::print(std::ostream &out) const {
 void
 Definition::print(std::ostream &out, const RegisterDictionary::Ptr &regDictOverride/*=NULL*/) const {
     using namespace StringUtility;
-    ASSERT_require(regDictOverride || regDict_);
-    RegisterDictionary::Ptr regDict = regDictOverride ? regDictOverride : regDict_;
+    ASSERT_require(regDictOverride || registerDictionary());
+    RegisterDictionary::Ptr regDict = regDictOverride ? regDictOverride : registerDictionary();
     RegisterNames regNames(regDict);
 
     out <<cEscape(name_);
     if (!comment_.empty())
         out <<" (" <<cEscape(comment_) <<")";
-    out <<" = {" <<wordWidth_ <<"-bit words";
+    out <<" = {" <<bitsPerWord() <<"-bit words";
 
     if (instructionPointerRegister_)
         out <<", instructionAddressLocation=" <<regNames(instructionPointerRegister_);
 
     if (returnAddressLocation_.isValid()) {
         out <<", returnAddress=";
-        returnAddressLocation_.print(out, regDict_);
+        returnAddressLocation_.print(out, regDict);
     }
 
     if (!inputParameters_.empty()) {
@@ -188,11 +244,7 @@ Definition::print(std::ostream &out, const RegisterDictionary::Ptr &regDictOverr
             case StackParameterOrder::UNSPECIFIED: ASSERT_not_reachable("invalid stack parameter order");
         }
 
-        if (!stackPointerRegister_.isEmpty()) {
-            out <<" " <<regNames(stackPointerRegister_) <<"-based stack";
-        } else {
-            out <<" NO-STACK-REGISTER";
-        }
+        out <<" " <<regNames(stackPointerRegister()) <<"-based stack";
 
         switch (stackCleanup_) {
             case StackCleanup::BY_CALLER: out <<" cleaned up by caller"; break;
@@ -245,6 +297,249 @@ std::ostream&
 operator<<(std::ostream &out, const Definition &x) {
     x.print(out);
     return out;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Declaration
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Token stream for the parse language
+using TokenStream = Sawyer::Language::Clexer::TokenStream;
+
+// A non-null type with optional name
+using TypeNamePair = std::pair<SgAsmType*, std::string>;
+
+// Parse a type and return the type or an error message.
+static Sawyer::Result<SgAsmType*, std::string>
+parseType(TokenStream &tokens, const Definition::Ptr &cc) {
+    ASSERT_not_null(cc);
+    using namespace Sawyer::Language::Clexer;
+    SgAsmType *type = nullptr;
+
+    // Required type name, like 'void', 'u8', 'i32', etc.
+    if (tokens[0].type() != TOK_WORD)
+        return Sawyer::makeError("type name expected");
+    if (tokens.matches(tokens[0], "void")) {
+        type = SgAsmVoidType::instance();
+    } else if (tokens.matches(tokens[0], "u8")) {
+        type = SgAsmIntegerType::instanceUnsigned(cc->byteOrder(), 8);
+    } else if (tokens.matches(tokens[0], "u16")) {
+        type = SgAsmIntegerType::instanceUnsigned(cc->byteOrder(), 16);
+    } else if (tokens.matches(tokens[0], "u32")) {
+        type = SgAsmIntegerType::instanceUnsigned(cc->byteOrder(), 32);
+    } else if (tokens.matches(tokens[0], "u64")) {
+        type = SgAsmIntegerType::instanceUnsigned(cc->byteOrder(), 64);
+    } else if (tokens.matches(tokens[0], "i8")) {
+        type = SgAsmIntegerType::instanceSigned(cc->byteOrder(), 8);
+    } else if (tokens.matches(tokens[0], "i16")) {
+        type = SgAsmIntegerType::instanceSigned(cc->byteOrder(), 16);
+    } else if (tokens.matches(tokens[0], "i32")) {
+        type = SgAsmIntegerType::instanceSigned(cc->byteOrder(), 32);
+    } else if (tokens.matches(tokens[0], "i64")) {
+        type = SgAsmIntegerType::instanceSigned(cc->byteOrder(), 64);
+    } else if (tokens.matches(tokens[0], "f32")) {
+        type = SgAsmFloatType::instanceIeee32(cc->byteOrder());
+    } else if (tokens.matches(tokens[0], "f64")) {
+        type = SgAsmFloatType::instanceIeee64(cc->byteOrder());
+    } else {
+        return Sawyer::makeError("unrecognized type \"" + tokens.lexeme(tokens[0]) + "\"");
+    }
+    tokens.consume();
+
+    // Optional '*' to indicate pointer
+    while (tokens.matches(tokens[0], "*")) {
+        type = SgAsmPointerType::instance(cc->byteOrder(), cc->bitsPerWord(), type);
+        tokens.consume();
+    }
+
+    return Sawyer::makeOk(type);
+}
+
+// Parse a type followed by an optional name, or return an error string.
+static Sawyer::Result<TypeNamePair, std::string>
+parseTypeNamePair(TokenStream &tokens, const Definition::Ptr &cc) {
+    ASSERT_not_null(cc);
+    using namespace Sawyer::Language::Clexer;
+    if (const auto type = parseType(tokens, cc)) {
+        if (tokens[0].type() == TOK_WORD) {
+            const std::string name = tokens.lexeme(tokens[0]);
+            tokens.consume();
+            return Sawyer::makeOk(std::make_pair(*type, name));
+        } else {
+            return Sawyer::makeOk(std::make_pair(*type, ""));
+        }
+    } else {
+        return Sawyer::makeError(type.unwrapError());
+    }
+}
+
+// Parse a type followed by an optional argument name, or return an error string.
+static Sawyer::Result<TypeNamePair, std::string>
+parseArgTypeNamePair(TokenStream &tokens, const Definition::Ptr &cc) {
+    ASSERT_not_null(cc);
+    const auto pair = parseTypeNamePair(tokens, cc);
+    if (pair && isSgAsmVoidType(pair->first))
+        return Sawyer::makeError("type cannot be \"void\"");
+    return pair;
+}
+
+static ParseError
+parseError(const std::string &mesg, TokenStream &tokens) {
+    std::ostringstream ss;
+    tokens.emit(ss, tokens.fileName(), tokens[0], mesg);
+    return ParseError(ss.str());
+}
+
+Declaration::~Declaration() {}
+
+Declaration::Declaration(const Definition::Ptr &cc)
+    : callingConvention_(cc) {
+    ASSERT_not_null(cc);
+}
+
+Declaration::Ptr
+Declaration::instance(const Definition::Ptr &cc, const std::string &sourceCode) {
+    Ptr decl = Ptr(new Declaration(cc));
+    using namespace Sawyer::Language::Clexer;
+    decl->sourceCode_ = sourceCode;
+
+    auto buffer = Sawyer::Container::StaticBuffer<size_t, char>::instance(sourceCode.data(), sourceCode.size());
+    TokenStream tokens("declaration", buffer);
+
+    // Return type and optional function name
+    const auto retType = parseTypeNamePair(tokens, cc);
+    if (!retType)
+        throw parseError(retType.unwrapError(), tokens);
+    decl->returnType_ = retType->first;
+    decl->name(retType->second);
+
+    // Start of argument list
+    if (!tokens.matches(tokens[0], "("))
+        throw parseError("\"(\" expected before argument list", tokens);
+    tokens.consume();
+
+    // Argument list
+    if (!tokens.matches(tokens[0], ")")) {
+        while (true) {
+            const auto argType = parseArgTypeNamePair(tokens, cc);
+            if (!argType) {
+                throw parseError(argType.unwrapError() + " for argument #" +
+                                 boost::lexical_cast<std::string>(decl->arguments().size()), tokens);
+            }
+
+            // Check that argument name is unique
+            if (!argType->second.empty()) {
+                for (const auto &otherArg: decl->arguments()) {
+                    if (otherArg.second == argType->second)
+                        throw parseError("duplicate argument name", tokens);
+                }
+            }
+
+            decl->arguments_.push_back(*argType);
+            if (!tokens.matches(tokens[0], ","))
+                break;
+            tokens.consume();                           // the comma
+        }
+    }
+
+    // End of argument list
+    if (!tokens.matches(tokens[0], ")"))
+        throw parseError("\")\" expected at end of argument list", tokens);
+    tokens.consume();
+    if (!tokens[0].type() == TOK_EOF)
+        throw parseError("extra text after end of argument list", tokens);
+
+    return decl;
+}
+
+const std::string&
+Declaration::name() const {
+    return name_;
+}
+
+void
+Declaration::name(const std::string &s) {
+    name_ = s;
+}
+
+const std::string&
+Declaration::comment() const {
+    return comment_;
+}
+
+void
+Declaration::comment(const std::string &s) {
+    comment_ = s;
+}
+
+const std::string&
+Declaration::toString() const {
+    return sourceCode_;
+}
+
+Definition::Ptr
+Declaration::callingConvention() const {
+    return notnull(callingConvention_);
+}
+
+SgAsmType*
+Declaration::returnType() const {
+    return notnull(returnType_);
+}
+
+size_t
+Declaration::nArguments() const {
+    return arguments_.size();
+}
+
+SgAsmType*
+Declaration::argumentType(size_t index) const {
+    ASSERT_require(index < nArguments());
+    return notnull(arguments_[index].first);
+}
+
+const std::string&
+Declaration::argumentName(size_t index) const {
+    ASSERT_require(index < nArguments());
+    return arguments_[index].second;
+}
+
+const std::vector<TypeNamePair>&
+Declaration::arguments() const {
+    return arguments_;
+}
+
+Sawyer::Result<ConcreteLocation, std::string>
+Declaration::argumentLocation(const size_t index) const {
+    const Definition::Ptr &cc = callingConvention_;
+    if (index > arguments_.size()) {
+        return Sawyer::makeError("argument #" + boost::lexical_cast<std::string>(index) + " is out of range"
+                                 " for \"" + toString() + "\"");
+    } else if (index < cc->inputParameters().size()) {
+        ConcreteLocation loc = cc->inputParameters()[index];
+        loc.registerDictionary(callingConvention()->registerDictionary());
+        return Sawyer::makeOk(loc);
+    } else if (cc->stackParameterOrder() != StackParameterOrder::UNSPECIFIED) {
+        // Argument is at an implied stack location
+        const uint64_t stackDirection = cc->stackDirection() == StackDirection::GROWS_UP ? 1 : -1;
+        int64_t stackOffset = stackDirection * cc->nonParameterStackSize();
+        for (size_t argno = cc->inputParameters().size(); argno < index; ++argno)
+            stackOffset += stackDirection * arguments_[argno].first->get_nBytes();
+        ConcreteLocation loc(cc->stackPointerRegister(), stackOffset);
+        loc.registerDictionary(callingConvention()->registerDictionary());
+        return Sawyer::makeOk(loc);
+    } else {
+        return Sawyer::makeError("declaration has too many arguments for calling convention");
+    }
+}
+
+Sawyer::Result<ConcreteLocation, std::string>
+Declaration::argumentLocation(const std::string &name) const {
+    for (size_t i = 0; i < arguments_.size(); ++i) {
+        if (arguments_[i].second == name)
+            return argumentLocation(i);
+    }
+    return Sawyer::makeError("argument \"" + StringUtility::cEscape(name) + "\" not found in declaration \"" + toString() + "\"");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -645,8 +940,8 @@ Analysis::match(const Definition::Ptr &cc) const {
         return false;
     }
 
-    if (cc->wordWidth() != cpu_->stackPointerRegister().nBits()) {
-        SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc->wordWidth() <<") != analysis word size ("
+    if (cc->bitsPerWord() != cpu_->stackPointerRegister().nBits()) {
+        SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc->bitsPerWord() <<") != analysis word size ("
                            <<cpu_->stackPointerRegister().nBits() <<")\n";
         return false;
     }
@@ -803,7 +1098,7 @@ readArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_t
     ASSERT_not_null(ccDef);
     ops->comment("reading function argument #" + boost::lexical_cast<std::string>(argNumber) +
                  " using calling convention " + ccDef->name());
-    const size_t nBits = ccDef->wordWidth();
+    const size_t nBits = ccDef->bitsPerWord();
     SValue::Ptr retval;
     if (argNumber < ccDef->inputParameters().size()) {
         // Argument is explicit in the definition
@@ -873,7 +1168,7 @@ writeArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_
     ASSERT_not_null(ccDef);
     ops->comment("writing function argument #" + boost::lexical_cast<std::string>(argNumber) +
                  " using calling convention " + ccDef->name());
-    const size_t nBits = ccDef->wordWidth();
+    const size_t nBits = ccDef->bitsPerWord();
     if (argNumber < ccDef->inputParameters().size()) {
         // Argument is explicit in the definition
         const ConcreteLocation &loc = ccDef->inputParameters()[argNumber];
@@ -1035,7 +1330,7 @@ simulateFunctionReturn(const RiscOperators::Ptr &ops, const Definition::Ptr &ccD
     if (StackCleanup::BY_CALLEE == ccDef->stackCleanup()) {
         for (const ConcreteLocation &loc: ccDef->inputParameters()) {
             if (ConcreteLocation::RELATIVE == loc.type())
-                nArgBytes += ccDef->wordWidth() / 8;
+                nArgBytes += ccDef->bitsPerWord() / 8;
         }
     }
 
@@ -1054,14 +1349,14 @@ simulateFunctionReturn(const RiscOperators::Ptr &ops, const Definition::Ptr &ccD
             const auto base = ops->readRegister(retVaLoc.reg());
             const auto offset = ops->signExtend(ops->number_(64, retVaLoc.offset()), base->nBits());
             const auto address = ops->add(base, offset);
-            const auto dflt = ops->undefined_(ccDef->wordWidth());
+            const auto dflt = ops->undefined_(ccDef->bitsPerWord());
             retVa = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
             break;
         }
 
         case ConcreteLocation::ABSOLUTE: {
             auto address = ops->number_(64, retVaLoc.address());
-            const auto dflt = ops->undefined_(ccDef->wordWidth());
+            const auto dflt = ops->undefined_(ccDef->bitsPerWord());
             retVa = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
             break;
         }

@@ -41,7 +41,7 @@ Motorola::callingConventions() const {
         const RegisterDictionary::Ptr regdict = registerDictionary();
         const RegisterDescriptor SP = regdict->stackPointerRegister();
 
-        auto cc = CallingConvention::Definition::instance(bitsPerWord(), "sysv", "m68k-sysv", regdict);
+        auto cc = CallingConvention::Definition::instance("sysv", "m68k-sysv", constPtr());
 
         //==== Address locations ====
         cc->instructionPointerRegister(regdict->instructionPointerRegister());

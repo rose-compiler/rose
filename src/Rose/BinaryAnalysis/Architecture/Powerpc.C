@@ -679,9 +679,9 @@ CallingConvention::Definition::Ptr
 Powerpc::cc_ibm(size_t bitsPerWord) const {
     // See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.alangref/idalangref_reg_use_conv.htm
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance(bitsPerWord, "IBM",
-                                                      "powerpc-" + boost::lexical_cast<std::string>(bitsPerWord) + " ibm",
-                                                      regdict);
+    auto cc = CallingConvention::Definition::instance("IBM", "powerpc-" + boost::lexical_cast<std::string>(bitsPerWord) + " ibm",
+                                                      constPtr());
+    cc->bitsPerWord(bitsPerWord);
 
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
