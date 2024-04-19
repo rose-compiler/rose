@@ -1846,7 +1846,6 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
       }
       break;
     case V_SgMemberFunctionRefExp: 
-    case V_SgTemplateMemberFunctionRefExp: 
       {
         const SgMemberFunctionRefExp *var = isSgMemberFunctionRefExp( exp );
         assert(var != 0);
@@ -1857,8 +1856,29 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
         if (varname != 0)  *varname = sb->get_name().str();
       }
       break;
-    case V_SgFunctionRefExp:
+    case V_SgTemplateMemberFunctionRefExp: 
+      {
+        const SgTemplateMemberFunctionRefExp *var = isSgTemplateMemberFunctionRefExp( exp );
+        assert(var != 0);
+        SgFunctionSymbol *sb = var->get_symbol();
+        assert(sb != 0);
+        decl = sb->get_declaration();
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0)  *varname = sb->get_name().str();
+      }
+      break;
     case V_SgTemplateFunctionRefExp:
+      {
+        const SgTemplateFunctionRefExp *var = isSgTemplateFunctionRefExp( exp );
+        assert(var != 0);
+        SgFunctionSymbol *sb = var->get_symbol();
+        assert(sb != 0);
+        decl = sb->get_declaration();
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0)  *varname = sb->get_name().str();
+      }
+      break;
+    case V_SgFunctionRefExp:
       {
         const SgFunctionRefExp *var = isSgFunctionRefExp( exp );
         assert(var != 0);
@@ -1913,6 +1933,20 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
           break;
        }
        return false; 
+    case V_SgDotStarOp:
+      {
+       const SgBinaryOp *exp1 = isSgBinaryOp(exp);
+       SgNode* lhs = exp1->get_lhs_operand();
+       SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
+       if (var2 == 0)
+          return false;
+       SgVariableSymbol *sb2 = var2->get_symbol();
+       if (vartype != 0) *vartype = sb2->get_type();
+       if (varname != 0) {
+          *varname = StripQualifier(std::string(sb2->get_name().str()));
+       }
+     }
+     break;
     case V_SgArrowExp:
     case V_SgDotExp:
      {
@@ -2749,7 +2783,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
        mlog[ERROR] << "Could not get function information from " << f->class_name() << std::endl;
        mlog[ERROR] <<"Expression is " << f->unparseToString() << std::endl;
        mlog[ERROR] << " at " << f->get_file_info()->get_filenameString() << ":" << f->get_file_info()->get_line() << std::endl;
-       ROSE_ABORT();
+       return false;
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
      if (t != 0 && t->variantT() == V_SgPointerType)
@@ -2757,12 +2791,12 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
      if (!IsFunctionType(_ftype, paramtypes, returntype)) {// not a function type
         AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
         if (fdecl == 0) {
-            std::cerr << "func has no decl: " << AstToString(s) << "\n";
-           ROSE_ABORT();
+           mlog[ERROR] << "func has no decl: " << AstToString(s) << "\n";
+           return false;
         }
         if (!IsFunctionDefinition(fdecl, 0,0,0,0,paramtypes,returntype)) {
-           std::cerr << "expecting function definition but has :" << AstToString(fdecl) << "\n";
-            ROSE_ABORT();
+           mlog[ERROR] << "expecting function definition but has :" << AstToString(fdecl) << "\n";
+           return false;
         }
      }
      // Store arguments of reference types into outargs
