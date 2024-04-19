@@ -36,10 +36,6 @@ SgAsmScalarType::SgAsmScalarType(Rose::BinaryAnalysis::ByteOrder::Endianness sex
     p_nBits = nBits;
 
     check();
-    if (p_nBits<=8)
-        p_minorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
-    if (p_majorNBytes==0 || p_majorNBytes<=get_nBytes())
-        p_majorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
 }
 
 // see super class
