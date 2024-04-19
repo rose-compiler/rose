@@ -652,10 +652,25 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           assocstmt = &sgnode;
           break;
         }
+    case ada_return_stmt:
+        {
+          logKind("ada_return_stmt", kind);
+          ada_base_entity return_expr;
+          ada_return_stmt_f_return_expr(lal_stmt, &return_expr);
+          SgExpression*   retval = ada_node_is_null(&return_expr) ? nullptr : &getExpr(&return_expr, ctx);
+          SgReturnStmt&   sgnode = mkReturnStmt(retval);
 
+          completeStmt(sgnode, lal_stmt, ctx);
+          /* unused fields:
+          */
+          assocstmt = &sgnode;
+          break;
+        }
     default:
-        logWarn() << "Unhandled statement " << kind << std::endl;
-        //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
+        {
+          logWarn() << "Unhandled statement " << kind << std::endl;
+          //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
+        }
     }
 
     //recordPragmasID(std::move(pragmaVector), assocstmt, ctx);
