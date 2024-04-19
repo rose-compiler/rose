@@ -121,6 +121,16 @@ SgAsmIntegerType::SgAsmIntegerType(Rose::BinaryAnalysis::ByteOrder::Endianness s
         isSigned = false;
 }
 
+SgAsmIntegerType*
+SgAsmIntegerType::instanceUnsigned(Rose::BinaryAnalysis::ByteOrder::Endianness order, size_t nBits) {
+    return new SgAsmIntegerType(order, nBits, false);
+}
+
+SgAsmIntegerType*
+SgAsmIntegerType::instanceSigned(Rose::BinaryAnalysis::ByteOrder::Endianness order, size_t nBits) {
+    return new SgAsmIntegerType(order, nBits, true);
+}
+
 // see super class
 void
 SgAsmIntegerType::check() const {
@@ -162,6 +172,26 @@ SgAsmFloatType::SgAsmFloatType(Rose::BinaryAnalysis::ByteOrder::Endianness sex, 
     p_exponentOffset = exponentBits.least();
     p_exponentNBits = exponentBits.size();
     check();
+}
+
+SgAsmFloatType*
+SgAsmFloatType::instanceIeee32(Rose::BinaryAnalysis::ByteOrder::Endianness sex) {
+    return new SgAsmFloatType(sex, 32,
+                              SgAsmFloatType::BitRange::baseSize(0, 23), // significand
+                              SgAsmFloatType::BitRange::baseSize(23, 8), // exponent
+                              31,                                        // sign bit
+                              127,                                       // exponent bias
+                              SgAsmFloatType::ieeeFlags());
+}
+
+SgAsmFloatType*
+SgAsmFloatType::instanceIeee64(Rose::BinaryAnalysis::ByteOrder::Endianness sex) {
+    return new SgAsmFloatType(sex, 64,
+                              SgAsmFloatType::BitRange::baseSize(0, 52),  // significand
+                              SgAsmFloatType::BitRange::baseSize(52, 11), // exponent
+                              63,                                         // sign bit
+                              1023,                                       // exponent bias
+                              SgAsmFloatType::ieeeFlags());
 }
 
 // see super class

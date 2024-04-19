@@ -14518,6 +14518,12 @@ public:
      *  Constructs a new integer type and initializes its properties according to the arguments. */
     SgAsmIntegerType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits, bool isSigned);
 
+    /** Make an instance for an unsigned type. */
+    static SgAsmIntegerType* instanceUnsigned(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits);
+
+    /** Make an instance for a signed type. */
+    static SgAsmIntegerType* instanceSigned(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits);
+
     // Overrides documented in base class
     virtual void check() const override;
     virtual std::string toString() const override;
@@ -16877,6 +16883,13 @@ public:
     SgAsmFloatType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits,
                    const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                    uint64_t exponentBias, Flags flags);
+
+    /** Construct an IEEE 754 floating point type of the specified width.
+     *
+     * @{ */
+    static SgAsmFloatType* instanceIeee32(Rose::BinaryAnalysis::ByteOrder::Endianness);
+    static SgAsmFloatType* instanceIeee64(Rose::BinaryAnalysis::ByteOrder::Endianness);
+    /** @} */
 
     /** Property: Offset to significand least significant bit. */
     BitRange significandBits() const;

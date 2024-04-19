@@ -45,6 +45,13 @@ public:
                    const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                    uint64_t exponentBias, Flags flags);
 
+    /** Construct an IEEE 754 floating point type of the specified width.
+     *
+     * @{ */
+    static SgAsmFloatType* instanceIeee32(Rose::BinaryAnalysis::ByteOrder::Endianness);
+    static SgAsmFloatType* instanceIeee64(Rose::BinaryAnalysis::ByteOrder::Endianness);
+    /** @} */
+
     /** Property: Offset to significand least significant bit. */
     BitRange significandBits() const;
 
