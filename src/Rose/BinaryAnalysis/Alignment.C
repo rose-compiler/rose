@@ -3,11 +3,15 @@
 #include <Rose/BinaryAnalysis/Alignment.h>
 
 #include <Rose/BitOps.h>
+#include <Rose/Exception.h>
 
 #include <Sawyer/Assert.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
+
+Alignment::Alignment()
+    : value_(1), nBits_(0) {}
 
 Alignment::Alignment(const uint64_t alignment, size_t nBits)
     : value_(std::max(uint64_t{1}, alignment)), nBits_(nBits) {
@@ -46,13 +50,17 @@ Alignment::nBits(size_t n) {
 }
 
 uint64_t
-Alignment::alignDown(const uint64_t x) {
+Alignment::alignDown(const uint64_t x) const {
+    if (nBits() == 0)
+        throw Exception("default-constructed alignment cannot align values");
     const uint64_t maxValue = BitOps::lowMask<uint64_t>(nBits_);
     return (std::min(x, maxValue) / value_) * value_;
 }
 
 Sawyer::Optional<uint64_t>
-Alignment::alignUp(const uint64_t x) {
+Alignment::alignUp(const uint64_t x) const {
+    if (nBits() == 0)
+        throw Exception("default-constructed alignment cannot align values");
     const uint64_t retval = ((x + value_ - 1) / value_) * value_;
     const uint64_t maxValue = BitOps::lowMask<uint64_t>(nBits_);
     if (retval >= x && retval <= maxValue) {
@@ -60,6 +68,11 @@ Alignment::alignUp(const uint64_t x) {
     } else {
         return Sawyer::Nothing();
     }
+}
+
+bool
+Alignment::isAligned(const uint64_t x) const {
+    return alignDown(x) == x;
 }
 
 } // namespace

@@ -15,6 +15,11 @@ private:
     size_t nBits_ = 64;
 
 public:
+    /** Default constructor.
+     *
+     *  The resulting object is not usable until the @ref nBits property is set. */
+    Alignment();
+
     /** Constructor with specific alignment.
      *
      *  The first argument is the alignment, and the second argument is the width in bits of the values to be aligned. An alignment
@@ -39,20 +44,31 @@ public:
 
     /** Property: Number of bits in the values being aligned.
      *
+     *  This property is zero for default-constructed alignments. It can only be set to positive values between 8 and 64, inclusive.
+     *
      * @{ */
     size_t nBits() const;
     void nBits(size_t);
     /** @} */
 
-    /** Round value down to closest multiple of the alignment. */
-    uint64_t alignDown(uint64_t);
+    /** Round value down to closest multiple of the alignment.
+     *
+     *  An exception is thrown if this alignment has zero width, such as when it is default constructed. */
+    uint64_t alignDown(uint64_t) const;
 
     /** Round value up to the closest multiple of the alignment.
      *
      *  If the value is equal to a multiple of the alignment then the value is returned unchanged, otherwise the value is
      *  incremented until it is a multiple of the alignment. If the next multiple of the alignment is too large to represent in the
-     *  specified number of bits, then nothing is returned. */
-    Sawyer::Optional<uint64_t> alignUp(uint64_t);
+     *  specified number of bits, then nothing is returned.
+     *
+     *  An exception is thrown if this alignment has zero width, such as when it is default constructed. */
+    Sawyer::Optional<uint64_t> alignUp(uint64_t) const;
+
+    /** Test whether a value is aligned.
+     *
+     *  An exception is thrown if this alignment has zero width, such as when it is default constructed. */
+    bool isAligned(uint64_t) const;
 };
 
 } // namespace
