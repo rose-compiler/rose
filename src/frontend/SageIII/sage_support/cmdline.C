@@ -514,7 +514,7 @@ CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argLis
                     goto incrementPosition;
                  }
 // Testing to see what this breaks. Goal is to force source files to be distinguished by suffix
-#define FORCE_SRC_SUFFIX 1
+#define FORCE_SRC_SUFFIX 0
 #if FORCE_SRC_SUFFIX
                if (!isObjectFilename(arg) && !isSourceFilename(arg) && isValidFileWithExecutableFileSuffix(arg))
                  {
