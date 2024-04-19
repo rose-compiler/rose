@@ -513,6 +513,9 @@ CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argLis
                     sourceFileList.push_back(arg);
                     goto incrementPosition;
                  }
+// Testing to see what this breaks. Goal is to force source files to be distinguished by suffix
+#define FORCE_SRC_SUFFIX 1
+#if FORCE_SRC_SUFFIX
                if (!isObjectFilename(arg) && !isSourceFilename(arg) && isValidFileWithExecutableFileSuffix(arg))
                  {
                     if (isSourceCodeCompiler == false || binaryMode == true) {
@@ -520,6 +523,7 @@ CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argLis
                     }
                     goto incrementPosition;
                  }
+#endif
             }
 
        // Look for rose options that take filenames that would accidentally be considered as source files.
