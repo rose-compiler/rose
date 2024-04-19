@@ -15,8 +15,6 @@
 #   define ROSE_DEPRECATED(WHY) /*deprecated*/
 #endif
 
-#include <ROSE_DEPRECATED.h>
-
 // The ROSE_DEPRECATED_FUNCTION and ROSE_DEPRECATED_VARIABLE conditionally mark a function or variable as deprecated.  At this
 // time, ROSE itself contains hundreds of uses of deprecated functions and variables because the people that marked those
 // functions and variables as deprecated did not also fix ROSE to avoid calling them.  The warnings can be suppressed by

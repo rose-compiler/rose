@@ -1,6 +1,7 @@
 // -*- c++ -*-
 HEADER_NODE_PREDECLARATION_START
 
+#include <ROSE_DEPRECATED.h>
 #include <semaphore.h>
 #include <rosePublicConfig.h>
 #include "setup.h"
