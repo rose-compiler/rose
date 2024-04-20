@@ -749,6 +749,10 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // Create the AST by setting command-line options and then parsing all files from the command line
      project->parse(argv);
 
+     if (project->numberOfFiles() == 0) {
+       mlog[WARN] << "SgProject::frontend: no source files were processed from the command line\n";
+     }
+
   // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
 

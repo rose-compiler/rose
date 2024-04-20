@@ -489,33 +489,46 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    }
 #endif
 
-// PC (4/27/2006): Support for custom source file suffixes
 bool
 CommandlineProcessing::isSourceFilename(string name)
-   {
-     initSourceFileSuffixList();
+{
+    initSourceFileSuffixList();
 
-     int length = name.size();
-     for (string &suffix : validSourceFileSuffixes)
-        {
-          int jlength = suffix.size();
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
-             {
-               return true;
-             }
-        }
+ // Move to using a consistent mechanism for determining source file names
+ // using CommandlineProcessing [Rasmussen 2024.04.19]
 
-     for (string &suffix : extraCppSourceFileSuffixes)
-        {
-          int jlength = suffix.size();
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
-             {
-               return true;
-             }
-        }
+ // Replace boost::filesystem with std::filesystem in C++17
+    string suffix = boost::filesystem::path(name).extension().string();
+    if (suffix.size() && suffix[0] == '.') {
+      // Remove '.' from filename extension
+      suffix = suffix.substr(1, suffix.size()-1);
+    }
 
-     return false;
-   }
+    if (CommandlineProcessing::isAdaFileNameSuffix(suffix)) return true;
+    if (CommandlineProcessing::isFortranFileNameSuffix(suffix)) return true;
+    if (CommandlineProcessing::isJovialFileNameSuffix(suffix)) return true;
+    if (CommandlineProcessing::isJavaFile(name)) return true;
+
+    int length = name.size();
+    for (string &suffix : validSourceFileSuffixes)
+       {
+         int jlength = suffix.size();
+         if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
+            {
+              return true;
+            }
+       }
+
+    for (string &suffix : extraCppSourceFileSuffixes)
+       {
+         int jlength = suffix.size();
+         if ( (length > jlength) && (name.compare(length - jlength, jlength, suffix) == 0) )
+            {
+              return true;
+            }
+       }
+    return false;
+}
 
 bool
 CommandlineProcessing::isObjectFilename ( string name )
@@ -533,14 +546,6 @@ CommandlineProcessing::isObjectFilename ( string name )
         }
 
      return false;
-   }
-
-void
-CommandlineProcessing::addSourceFileSuffix ( const string &suffix )
-   {
-  // DQ (8/7/2007): This function appears to be used only in the projects/DocumentationGenerator project.
-     initSourceFileSuffixList();
-     validSourceFileSuffixes.push_back(suffix);
    }
 
 void
@@ -932,7 +937,6 @@ CommandlineProcessing::isCsharpFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
-// DQ (28/8/2017): Adding language support.
 bool
 CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
    {
@@ -957,27 +961,16 @@ CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
-// DQ (28/8/2017): Adding language support.
 bool
 CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
-   {
-     bool returnValue = false;
-
-  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
-
-  // Rasmussen (11/08/2017): Changed Jovial file extension to reflect usage found on web
-  // Rasmussen (11/11/2018): Added Jovial COMPOOL file extension "cpl"
-#if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "jov" || suffix == "cpl" || suffix == "j73" || suffix == "jovial" || suffix == "rcmp" )
-#else //It is a case insensitive system
-     if ( suffix == "jov" || suffix == "cpl" || suffix == "j73" || suffix == "jovial" || suffix == "rcmp" )
-#endif
-        {
-          returnValue = true;
-        }
-
-     return returnValue;
-   }
+{
+   // Jovial file extension reflects usage found on web and uses only lower case (for now).
+   if (suffix == "jov" || suffix == "cpl" || suffix == "j73" || suffix == "jovial" || suffix == "rcmp")
+     {
+        return true;
+     }
+   return false;
+}
 
 // TV (05/17/2010) Support for CUDA
 bool
@@ -1078,17 +1071,6 @@ CommandlineProcessing::initSourceFileSuffixList ( )
 
      if ( first_call == true )
         {
-       // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
-       // validSourceFileSuffixes.push_back("");
-
-       // Jovial - Note that Jovial file names were processed as executable
-       // because of validSourceFileSuffixes.push_back(""), probably now ".JOV" also [Rasmussen 2024.04.16]
-          validSourceFileSuffixes.push_back(".jov");
-          validSourceFileSuffixes.push_back(".cpl");
-          validSourceFileSuffixes.push_back(".rcmp");
-
-       // Ada - What about Ada file names? [Rasmussen 2024.04.16]
-
 #if(CASE_SENSITIVE_SYSTEM == 1)
           validSourceFileSuffixes.push_back(".c");
           validSourceFileSuffixes.push_back(".cc");
@@ -1097,24 +1079,6 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".cpp");
           validSourceFileSuffixes.push_back(".cxx");
           validSourceFileSuffixes.push_back(".C");
-          validSourceFileSuffixes.push_back(".f");
-          validSourceFileSuffixes.push_back(".f77");
-          validSourceFileSuffixes.push_back(".f90");
-          validSourceFileSuffixes.push_back(".f95");
-          validSourceFileSuffixes.push_back(".f03");
-          validSourceFileSuffixes.push_back(".f08");
-          validSourceFileSuffixes.push_back(".caf");
-
-          validSourceFileSuffixes.push_back(".F");
-          validSourceFileSuffixes.push_back(".F77");
-          validSourceFileSuffixes.push_back(".F90");
-          validSourceFileSuffixes.push_back(".F95");
-          validSourceFileSuffixes.push_back(".F03");
-          validSourceFileSuffixes.push_back(".F08");
-          validSourceFileSuffixes.push_back(".CAF");
-
-       // FMZ 5/28/2008
-          validSourceFileSuffixes.push_back(".rmod");
 
        // Liao (6/6/2008)  Support for UPC
           validSourceFileSuffixes.push_back(".upc");
@@ -1129,9 +1093,6 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");
-
-       // DQ (10/11/2010): Adding support for java.
-          validSourceFileSuffixes.push_back(".java");
 #else
        // it is a case insensitive system
           validSourceFileSuffixes.push_back(".c");
@@ -1146,23 +1107,6 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".C++");
           validSourceFileSuffixes.push_back(".CPP");
           validSourceFileSuffixes.push_back(".CXX");
-          validSourceFileSuffixes.push_back(".f");
-          validSourceFileSuffixes.push_back(".f77");
-          validSourceFileSuffixes.push_back(".f90");
-          validSourceFileSuffixes.push_back(".f95");
-          validSourceFileSuffixes.push_back(".f03");
-          validSourceFileSuffixes.push_back(".f08");
-          validSourceFileSuffixes.push_back(".caf");
-          validSourceFileSuffixes.push_back(".F");
-          validSourceFileSuffixes.push_back(".F77");
-          validSourceFileSuffixes.push_back(".F90");
-          validSourceFileSuffixes.push_back(".F95");
-          validSourceFileSuffixes.push_back(".F03");
-          validSourceFileSuffixes.push_back(".F08");
-          validSourceFileSuffixes.push_back(".CAF");
-
-       // FMZ 5/28/2008
-          validSourceFileSuffixes.push_back(".rmod");
 
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
@@ -1176,9 +1120,6 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");
-
-       // DQ (10/11/2010): Adding support for java.
-          validSourceFileSuffixes.push_back(".java");
 #endif
 
        // Deprecate X10
