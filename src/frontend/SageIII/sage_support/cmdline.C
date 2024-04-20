@@ -514,11 +514,16 @@ CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argLis
                     goto incrementPosition;
                  }
 // Testing to see what this breaks. Goal is to force source files to be distinguished by suffix
-#define TAKE_BACKDOOR 0
+#define TAKE_BACKDOOR 1
 #if TAKE_BACKDOOR
                if (!isObjectFilename(arg) && !isSourceFilename(arg) && isValidFileWithExecutableFileSuffix(arg))
                  {
                     if (isSourceCodeCompiler == false || binaryMode == true) {
+                      if (!isExecutableFilename(arg)) {
+                        std::cerr << "----------------------------------------------- WARNING Backdoor for nonexe file " << arg << "\n";
+                        mlog[ERROR] << "Executable backdoor taken by !isExecutableFilename()\n\n";
+                        ROSE_ABORT();
+                      }
                       sourceFileList.push_back(arg);
                     }
                     goto incrementPosition;
