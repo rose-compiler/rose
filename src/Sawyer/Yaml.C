@@ -1225,14 +1225,14 @@ public:
                const unsigned char flags = 0)
         : Data(data), No(no), Offset(offset), Type(type), Flags(flags), NextLine(nullptr) {}
 
-    enum eFlag {
-        LiteralScalarFlag,                              // Literal scalar type, defined as "|".
-        FoldedScalarFlag,                               // Folded scalar type, defined as "<".
-        ScalarNewlineFlag                               // Scalar ends with a newline.
+    enum eFlag : size_t {
+        LiteralScalarFlag = 0, // Literal scalar type, defined as "|".
+        FoldedScalarFlag  = 1, // Folded scalar type, defined as "<".
+        ScalarNewlineFlag = 2  // Scalar ends with a newline.
     };
 
     void SetFlag(const eFlag flag) {
-        Flags |= FlagMask[static_cast<size_t>(flag)];
+        Flags |= FlagMask[flag];
     }
 
     // Set flags by mask value.
@@ -1241,7 +1241,7 @@ public:
     }
 
     void UnsetFlag(const eFlag flag) {
-        Flags &= ~FlagMask[static_cast<size_t>(flag)];
+        Flags &= ~FlagMask[flag];
     }
 
     // Unset flags by mask value.
@@ -1250,7 +1250,7 @@ public:
     }
 
     bool GetFlag(const eFlag flag) const {
-        return Flags &FlagMask[static_cast<size_t>(flag)];
+        return Flags &FlagMask[flag];
     }
 
     // Copy and replace scalar flags from another ReaderLine.
@@ -1370,6 +1370,10 @@ private:
                 }
             }
 
+            // Count line start character towards line offset to handle compact sequences.
+            if (IsSequenceStart(line))
+                ++startOffset;
+
             ReaderLine *pLine = new ReaderLine(line, lineNo, startOffset);
             m_Lines.push_back(pLine);
         }
@@ -1410,7 +1414,7 @@ private:
 
     // Run post-processing and check for sequence. Split line into two lines if sequence token is not on it's own line.  Return
     // true if line is sequence, else false.
-    bool PostProcessSequenceLine(std::list<ReaderLine*>::iterator &it) {
+    bool PostProcessSequenceLine(std::list<ReaderLine *>::iterator &it) {
         ReaderLine *pLine = *it;
 
         // Sequence split
@@ -1427,7 +1431,8 @@ private:
 
         // Create new line and insert
         std::string newLine = pLine->Data.substr(valueStart);
-        it = m_Lines.insert(it, new ReaderLine(newLine, pLine->No, pLine->Offset + valueStart));
+
+        it          = m_Lines.insert(it, new ReaderLine(newLine, pLine->No, pLine->Offset + valueStart));
         pLine->Data = "";
 
         return false;
@@ -1574,7 +1579,7 @@ private:
             if (it == m_Lines.end())
                 throw InternalException(ExceptionMessage(g_ErrorUnexpectedDocumentEnd, *pLine));
 
-            // Handle value of map
+            // Handle value of sequence
             Node::eType valueType = (*it)->Type;
             switch (valueType) {
                 case Node::SequenceType:
@@ -1590,7 +1595,8 @@ private:
                     break;
             }
 
-            // Check next line. if sequence and correct level, go on, else exit.  If same level but but of type map = error.
+            // Check next line. if sequence and correct level, go on, else exit.  If same level but of incorrect type, error out.
+
             if (it == m_Lines.end() || ((pNextLine = *it)->Offset < pLine->Offset))
                 break;
             if (pNextLine->Offset > pLine->Offset)
@@ -1628,7 +1634,7 @@ private:
                     break;
             }
 
-            // Check next line. if map and correct level, go on, else exit.  if same level but but of type map = error.
+            // Check next line. if map and correct level, go on, else exit.  if same level but of type map = error.
             if (it == m_Lines.end() || ((pNextLine = *it)->Offset < pLine->Offset))
                 break;
             if (pNextLine->Offset > pLine->Offset)
@@ -1639,18 +1645,18 @@ private:
     }
 
     // Process scalar node.
-    void ParseScalar(Node &node, std::list<ReaderLine*>::iterator &it) {
-        std::string data = "";
+    void ParseScalar(Node &node, std::list<ReaderLine *>::iterator &it) {
+        std::string data       = "";
         ReaderLine *pFirstLine = *it;
-        ReaderLine *pLine = *it;
+        ReaderLine *pLine      = *it;
 
         // Check if current line is a block scalar.
-        unsigned char blockFlags = 0;
-        bool isBlockScalar = IsBlockScalar(pLine->Data, pLine->No, blockFlags);
-        const bool newLineFlag = static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::ScalarNewlineFlag)]);
-        const bool foldedFlag = static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::FoldedScalarFlag)]);
-        const bool literalFlag = static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::LiteralScalarFlag)]);
-        size_t parentOffset = 0;
+        unsigned char blockFlags    = 0;
+        bool          isBlockScalar = IsBlockScalar(pLine->Data, pLine->No, blockFlags);
+        const bool    newLineFlag   = blockFlags & ReaderLine::FlagMask[ReaderLine::ScalarNewlineFlag];
+        const bool    foldedFlag    = blockFlags & ReaderLine::FlagMask[ReaderLine::FoldedScalarFlag];
+        const bool    literalFlag   = blockFlags & ReaderLine::FlagMask[ReaderLine::LiteralScalarFlag];
+        size_t        parentOffset  = 0;
 
         // Find parent offset
         if (it != m_Lines.begin()) {
@@ -1666,7 +1672,7 @@ private:
                 return;
         }
 
-        if (isBlockScalar == false) {
+        if (!isBlockScalar) {
             // Not a block scalar, cut end spaces/tabs
             while (true) {
                 pLine = *it;
@@ -1847,9 +1853,9 @@ private:
                 if (data[1] != '-' && data[1] != ' ' && data[1] != '\t')
                     throw ParsingException(ExceptionMessage(g_ErrorInvalidBlockScalar, line, data));
             } else {
-                flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::ScalarNewlineFlag)];
+                flags |= ReaderLine::FlagMask[ReaderLine::ScalarNewlineFlag];
             }
-            flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::LiteralScalarFlag)];
+            flags |= ReaderLine::FlagMask[ReaderLine::LiteralScalarFlag];
             return true;
         }
 
@@ -1858,9 +1864,9 @@ private:
                 if (data[1] != '-' && data[1] != ' ' && data[1] != '\t')
                     throw ParsingException(ExceptionMessage(g_ErrorInvalidBlockScalar, line, data));
             } else {
-                flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::ScalarNewlineFlag)];
+                flags |= ReaderLine::FlagMask[ReaderLine::ScalarNewlineFlag];
             }
-            flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::FoldedScalarFlag)];
+            flags |= ReaderLine::FlagMask[ReaderLine::FoldedScalarFlag];
             return true;
         }
         return false;
