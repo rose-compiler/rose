@@ -41,6 +41,9 @@ namespace
     static constexpr bool directly  = true;
 
     ct::ObjectLayout          res;
+
+    res.abstractClass(clazz.second.abstractClass());
+
     PrimarySubobjectFinder    aPrimarySubobj{&all};
     const Vec&                parents = clazz.second.ancestors();
     const Vec::const_iterator aa      = parents.begin();
@@ -256,7 +259,7 @@ namespace
     std::vector<std::vector<ct::VTableLayoutElement> > candidates;
 
     candidates.reserve(numFn);
-    
+
     ROSE_ASSERT(candBaseSects.size());
     for (size_t slot = 0; slot < numFn; ++slot)
     {
@@ -391,7 +394,7 @@ namespace
                     {
                       constexpr bool noPtrAdj = false;
                       constexpr bool noCompGen = false;
-                      
+
                       return ct::VirtualFunctionEntry{el.first, clazz.first, noPtrAdj, el.second, noCompGen };
                     }
                   );
@@ -502,14 +505,14 @@ namespace
                    {
                      ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
                      ASSERT_not_null(vfn.getClass());
-                     
-                     const bool willGen = (  (clazz.first != vfn.getClass()) 
+
+                     const bool willGen = (  (clazz.first != vfn.getClass())
                                           && rcb.isAutoGeneratable(clazz.first, vfn.function())
-                                          ); 
-                     
+                                          );
+
                      if (!isAbstract && vfn.isPureVirtual() && !willGen)
                        isAbstract = true;
-                       
+
                      if (willGen)
                      {
                        vfn.setClass(clazz.first);
@@ -517,7 +520,7 @@ namespace
                      }
                    }
                  );
-                 
+
     res.isAbstractClass(isAbstract);
     return res;
   }

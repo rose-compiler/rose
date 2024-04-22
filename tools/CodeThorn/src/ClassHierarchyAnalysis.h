@@ -226,6 +226,14 @@ class ClassData
     /// returns true, iff the class \ref clazz or any of its base classes contain virtual functions.
     bool hasVirtualFunctions() const;
 
+    /// returns true, iff this is an abstract class
+    /// \note this information is taken from the frontend (AST)
+    ///       and not computed by the vtable generator.
+    /// \{
+    bool abstractClass()          const { return hasAbstractMethods; }
+    void abstractClass(bool bval)       { hasAbstractMethods = bval; }
+    /// \}
+
   private:
     AncestorContainer         allAncestors;
     DescendantContainer       allDescendants;
@@ -234,6 +242,7 @@ class ClassData
     VirtualBaseOrderContainer virtualBaseOrder;
 
     bool                      hasInheritedVirtualMethods = false;
+    bool                      hasAbstractMethods = false;
 };
 
 /// holds data about all classes in a program

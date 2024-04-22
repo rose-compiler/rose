@@ -35,9 +35,11 @@ struct VTable
 // using ObjectLayoutElement = std::variant<Subobject, Field>;
 using ObjectLayoutElement = boost::variant<Subobject, Field, VTable>;
 
-struct ObjectLayoutEntry : std::tuple<size_t, ObjectLayoutElement>
+using ObjectLayoutEntryBase = std::tuple<size_t, ObjectLayoutElement>;
+
+struct ObjectLayoutEntry : ObjectLayoutEntryBase
 {
-  using base = std::tuple<size_t, ObjectLayoutElement>;
+  using base = ObjectLayoutEntryBase;
   using base::base;
 
   size_t                     offset()  const { return std::get<0>(*this); }
@@ -57,8 +59,15 @@ class ObjectLayout : private std::vector<ObjectLayoutEntry>
     using base::begin;
     using base::end;
     using base::emplace_back;
-  //~ size_t object_size()    const;
-  //~ size_t number_entries() const;
+
+    /// returns true, iff this is an abstract class
+    /// \note this information is carried over from ClassData
+    /// \{
+    bool abstractClass()          const { return hasAbstractMethods; }
+    void abstractClass(bool bval)       { hasAbstractMethods = bval; }
+    /// \}
+    private:
+      bool hasAbstractMethods = false;
 };
 
 using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;

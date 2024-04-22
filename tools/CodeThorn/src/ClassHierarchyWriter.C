@@ -344,7 +344,7 @@ namespace
 
       void elem_begin(const void* elem) ;
       void elem_end() ;
-      void class_begin(const void* elem) ;
+      void class_begin(const void* elem, bool abstractClass) ;
       void class_end() ;
 
       template <class ClassElem>
@@ -370,7 +370,8 @@ namespace
       {
         currentClass = el.first;
 
-        class_begin(currentClass);
+        class_begin(currentClass, el.second.abstractClass());
+
         out() << "=";
         base::printClassHeader(el);
         out() << "=";
@@ -424,9 +425,11 @@ namespace
 
   void ObjectLayoutElementPrinterDot::elem_end() {}
 
-  void ObjectLayoutElementPrinterDot::class_begin(const void* elem)
+  void ObjectLayoutElementPrinterDot::class_begin(const void* elem, bool abstractClass)
   {
-    out() << "p" << std::hex << (elem) << "[label=\"<0>";
+    out() << "p" << std::hex << (elem) << "["
+          << (abstractClass ? "fontcolor=red " : "")
+          << "label=\"<0>";
   }
 
   void ObjectLayoutElementPrinterDot::class_end()
@@ -450,6 +453,7 @@ namespace
       void printClassHeader(const ct::ObjectLayoutContainer::value_type& el) override
       {
         base::printClassHeader(el);
+        if (el.second.abstractClass()) out() << " [abstract]";
         out() << std::endl;
       }
   };

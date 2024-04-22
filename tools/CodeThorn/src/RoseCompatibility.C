@@ -99,7 +99,9 @@ namespace
 
         auto emplaced = allClasses->emplace(&n, ct::ClassData{});
 
-        ROSE_ASSERT(emplaced.second);
+        ASSERT_require(emplaced.second);
+        emplaced.first->second.abstractClass(n.get_isAbstract());
+
         descend(n, &*emplaced.first);
       }
 
@@ -501,9 +503,9 @@ namespace
 
       if (!bsdcl)
       {
-        logWarn() << "base class declaration is not available "
-                  << typeid(*bscls).name()
-                  << std::endl;
+        logError() << "base class declaration is not available "
+                   << typeid(*bscls).name()
+                   << std::endl;
 
         continue;
       }
