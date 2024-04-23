@@ -1370,10 +1370,6 @@ private:
                 }
             }
 
-            // Count line start character towards line offset to handle compact sequences.
-            if (IsSequenceStart(line))
-                ++startOffset;
-
             ReaderLine *pLine = new ReaderLine(line, lineNo, startOffset);
             m_Lines.push_back(pLine);
         }
@@ -1413,12 +1409,12 @@ private:
     }
 
     // Run post-processing and check for sequence. Split line into two lines if sequence token is not on it's own line.  Return
-    // true if line is sequence, else false.
+    // true if line is a sequence and does not need more postprocessing, otherwise return false.
     bool PostProcessSequenceLine(std::list<ReaderLine *>::iterator &it) {
         ReaderLine *pLine = *it;
 
         // Sequence split
-        if (IsSequenceStart(pLine->Data) == false)
+        if (!IsSequenceStart(pLine->Data))
             return false;
 
         pLine->Type = Node::SequenceType;
@@ -1426,14 +1422,21 @@ private:
         ClearTrailingEmptyLines(++it);
 
         const size_t valueStart = pLine->Data.find_first_not_of(" \t", 1);
-        if (valueStart == std::string::npos)
+        if (valueStart == std::string::npos) {
+            pLine->Data = "";
             return true;
+        }
 
         // Create new line and insert
         std::string newLine = pLine->Data.substr(valueStart);
+        size_t child_offset = pLine->Offset + valueStart;
 
-        it          = m_Lines.insert(it, new ReaderLine(newLine, pLine->No, pLine->Offset + valueStart));
+        it          = m_Lines.insert(it, new ReaderLine(newLine, pLine->No, child_offset));
         pLine->Data = "";
+
+        // Recursively handle nested sequences
+        if (IsSequenceStart(newLine))
+            return PostProcessSequenceLine(it);
 
         return false;
     }
@@ -1489,8 +1492,22 @@ private:
         // Add new empty line?
         size_t newLineOffset = valueStart;
         if (newLineOffset == std::string::npos) {
-            if (it != m_Lines.end() && (*it)->Offset > pLine->Offset)
-                return true;
+            // There are three options:
+            // 1. The value is present at a deeper level than the map key.
+            // 2. The value is empty.
+            // 3. The next line is a compact sequence at the same level as the map key.
+
+            if (it != m_Lines.end()) {
+                // Case 1
+                if ((*it)->Offset > pLine->Offset)
+                    return true;
+
+                // Case 3, compact sequence
+                if ((*it)->Offset == pLine->Offset && IsSequenceStart((*it)->Data))
+                    return true;
+            }
+
+            // Must be Case 2 otherwise
             newLineOffset = tokenPos + 2;
         } else {
             newLineOffset += pLine->Offset;
