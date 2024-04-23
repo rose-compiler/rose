@@ -13,7 +13,6 @@ run $(librose_compile)				\
     BinaryLoaderElfObj.C			\
     BinaryLoaderPe.C				\
     ByteOrder.C					\
-    CallingConvention.C				\
     CodeInserter.C				\
     ConcreteLocation.C				\
     ControlFlow.C				\

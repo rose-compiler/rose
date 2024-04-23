@@ -5,6 +5,10 @@
 #include <RoseFirst.h>
 #include <Sawyer/Optional.h>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#include <boost/serialization/access.hpp>
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -13,6 +17,17 @@ class Alignment {
 private:
     uint64_t value_ = 1;
     size_t nBits_ = 64;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(value_);
+        s & BOOST_SERIALIZATION_NVP(nBits_);
+    }
+#endif
 
 public:
     /** Default constructor.

@@ -3,7 +3,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Exception.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/CallingConvention/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>

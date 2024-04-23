@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/CallingConvention/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>

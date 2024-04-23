@@ -3,8 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
+#include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 namespace Rose {

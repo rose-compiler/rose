@@ -3,7 +3,8 @@ static const char *description =
     "To be written.";
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/CallingConvention/Analysis.h>
+#include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>

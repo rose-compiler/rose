@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/CallingConvention/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
@@ -138,7 +138,7 @@ public:
      *
      * @{ */
     CallingConvention::Definition::Ptr defaultCallingConvention() const;
-    void defaultCallingConvention(const CallingConvention::Definition::Ptr&);
+    void defaultCallingConvention(const CallingConvention::DefinitionPtr&);
     /** @} */
 
     /** Property: Assume caller returns value(s).

@@ -4,7 +4,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#include <Rose/BinaryAnalysis/CallingConvention/BasicTypes.h>
 
 #include <Sawyer/HashMap.h>
 #include <Sawyer/SharedPointer.h>

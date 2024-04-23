@@ -66,14 +66,6 @@ class SystemCall;
 class TaintedFlow;
 class Z3Solver;
 
-namespace CallingConvention {
-class Analysis;
-class Declaration;
-using DeclarationPtr = Sawyer::SharedPointer<Declaration>; /**< Reference counting pointer. */
-class Definition;
-using DefinitionPtr = Sawyer::SharedPointer<Definition>; /**< Reference counting pointer. */
-} // namespace
-
 namespace PointerDetection {
 class Analysis;
 class PointerDescriptor;
@@ -141,6 +133,7 @@ using VariableFinderPtr = Sawyer::SharedPointer<VariableFinder>; /**< Reference 
 
 // #include's for sub-namespaces and sub-directories
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/CallingConvention/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>

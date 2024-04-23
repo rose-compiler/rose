@@ -2,7 +2,7 @@
 #include <rose.h>                                       // must be first
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>

@@ -1,5 +1,6 @@
 add_subdirectory(Architecture)
 add_subdirectory(ByteCode)
+add_subdirectory(CallingConvention)
 add_subdirectory(Concolic)
 add_subdirectory(Debugger)
 add_subdirectory(Disassembler)
@@ -23,7 +24,6 @@ add_library(roseBinaryAnalysis OBJECT
   BinaryLoaderElfObj.C
   BinaryLoaderPe.C
   ByteOrder.C
-  CallingConvention.C
   CodeInserter.C
   ConcreteLocation.C
   ControlFlow.C

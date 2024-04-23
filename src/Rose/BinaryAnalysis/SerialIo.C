@@ -3,7 +3,80 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 
+// This file implements the top-level serial I/O API in ROSE, but also serves as a place to put serialization functions that have
+// more dependencies than we want to include into header files. For instance, if class `T` has a data member that's a smart pointer
+// to type `P` then header file "T.h" only needs a forward delcaraton for `P`, but `T::serialize` needs the definition of `P`.
+// Declarations are cheap (`class P;`) but definitions are expensive (`#include <P.h>`). And since these are occuring in a header
+// file ("T.h") they get multiplied by the number of translation units that directly or indirectly include the header. Therefore,
+// when it's possible to eliminate P's definition from T.h by moving `T::serialize` to this file (SerialIo.C) we do so.
+//
+// In other words, here's what we're trying to accomplish. The old code:
+//
+//    +-------------------------------------------------------------------------------------------
+//    |// T.h
+//    |#include <Rose/BasicTypes.h>                     // forward decls for most common things
+//    |#include <P.h>                                   // expensive definition for `P`
+//    |#include <boost/serialization/access.hpp>
+//    |#include <boost/serialization/nvp.hpp>
+//    |
+//    |class T {
+//    |    PPtr p_;                                     // smart pointer to `P`
+//    |
+//    |#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+//    |private:
+//    |    friend class boost::serialization::access;
+//    |
+//    |    template<class S>
+//    |    void serialize(S &s, const unsigned /*version*/) {
+//    |        s & BOOST_SERIALIZATION_NVP(p_);         // needs definition of `P`
+//    |    }
+//    |#endif
+//    |
+//    |    ....
+//    |};
+//    +-------------------------------------------------------------------------------------------
+//
+// We'd rather do this in order to elimiate the `#include <P.h>` from "T.h":
+//
+//    +-------------------------------------------------------------------------------------------
+//    |// T.h
+//    |#include <Rose/BasicTypes.h>                     // forward decls for most common things
+//    |#include <boost/serialization/access.hpp>
+//    |
+//    |class P;                                         // cheap declaration of `P`
+//    |
+//    |class T {
+//    |    PPtr p_;                                     // smart pointer to `P`
+//    |
+//    |#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+//    |private:
+//    |    friend class boost::serialization::access;
+//    |
+//    |    template<class S>
+//    |    void serialize(S &s, const unsigned /*version*/);
+//    |#endif
+//    |
+//    |    T();                                         // move implementation to T.C
+//    |    ~T();                                        // move implementation to T.C
+//    |    ....
+//    |};
+//    +-------------------------------------------------------------------------------------------
+//
+//    +-------------------------------------------------------------------------------------------
+//    |// SerialIo.C
+//    |
+//    |#include <P.h>                                   // expensive definition for `P`
+//    |
+//    |template<class S>
+//    |void T::serialize(S &s, const unsigned /*version*/) {
+//    |    s & BOOST_SERIALIZATION_NVP(p_);             // needs definition of `P`
+//    |}
+//    |
+//    |ROSE_SERIALIZATION_INSTANTIATE(T);
+//    +-------------------------------------------------------------------------------------------
+
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
@@ -463,6 +536,59 @@ SerialInput::checkCompatibility(const std::string &fileVersion) {
     ROSE_SERIALIZATION_INSTANTIATE_LOAD(CLASS)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Rose::BinaryAnalysis::CallingConvention::Definition
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+namespace CallingConvention {
+
+template<class S>
+void Definition::serialize(S &s, const unsigned /*version*/) {
+    s & BOOST_SERIALIZATION_NVP(name_);
+    s & BOOST_SERIALIZATION_NVP(comment_);
+    s & BOOST_SERIALIZATION_NVP(bitsPerWord_);
+    s & BOOST_SERIALIZATION_NVP(nonParameterInputs_);
+    s & BOOST_SERIALIZATION_NVP(inputParameters_);
+    s & BOOST_SERIALIZATION_NVP(outputParameters_);
+    s & BOOST_SERIALIZATION_NVP(stackParameterOrder_);
+    s & BOOST_SERIALIZATION_NVP(stackPointerRegister_);
+    s & BOOST_SERIALIZATION_NVP(nonParameterStackSize_);
+    s & BOOST_SERIALIZATION_NVP(stackAlignment_);
+    s & BOOST_SERIALIZATION_NVP(stackDirection_);
+    s & BOOST_SERIALIZATION_NVP(stackCleanup_);
+    s & BOOST_SERIALIZATION_NVP(thisParameter_);
+    s & BOOST_SERIALIZATION_NVP(calleeSavedRegisters_);
+    s & BOOST_SERIALIZATION_NVP(scratchRegisters_);
+    s & BOOST_SERIALIZATION_NVP(returnAddressLocation_);
+    s & BOOST_SERIALIZATION_NVP(instructionPointerRegister_);
+
+    if (auto arch = architecture_.lock()) {
+        std::string archName = arch->name();
+        s & BOOST_SERIALIZATION_NVP(archName);
+    } else {
+        std::string archName;
+        s & BOOST_SERIALIZATION_NVP(archName);
+        architecture_ = Architecture::findByName(archName).orThrow();
+    }
+}
+
+ROSE_SERIALIZATION_INSTANTIATE(Definition);
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Rose::BinaryAnalysis::ConcreteLocation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<class S>
+void
+ConcreteLocation::serialize(S &s, const unsigned /*version*/) {
+    s & BOOST_SERIALIZATION_NVP(reg_);
+    s & BOOST_SERIALIZATION_NVP(va_);
+    s & BOOST_SERIALIZATION_NVP(regdict_);
+}
+
+ROSE_SERIALIZATION_INSTANTIATE(ConcreteLocation);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Rose::BinaryAnalysis::InstructionProvider
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -565,7 +691,7 @@ namespace Partitioner2 {
 
 template<class S>
 void
-AstConstructionSettings::serialize(S &s, unsigned version) {
+AstConstructionSettings::serialize(S &s, unsigned /*version*/) {
     s & BOOST_SERIALIZATION_NVP(allowEmptyGlobalBlock);
     s & BOOST_SERIALIZATION_NVP(allowFunctionWithNoBasicBlocks);
     s & BOOST_SERIALIZATION_NVP(allowEmptyBasicBlocks);
@@ -770,7 +896,7 @@ namespace Partitioner2 {
 
 template<class S>
 void
-Engine::Settings::serialize(S &s, unsigned version) {
+Engine::Settings::serialize(S &s, unsigned /*version*/) {
     s & BOOST_SERIALIZATION_NVP(loader);
     s & BOOST_SERIALIZATION_NVP(disassembler);
     s & BOOST_SERIALIZATION_NVP(partitioner);
@@ -788,7 +914,7 @@ namespace Partitioner2 {
 
 template<class S>
 void
-EngineSettings::serialize(S &s, unsigned version) {
+EngineSettings::serialize(S &s, unsigned /*version*/) {
     s & BOOST_SERIALIZATION_NVP(configurationNames);
     s & BOOST_SERIALIZATION_NVP(exitOnError);
 }

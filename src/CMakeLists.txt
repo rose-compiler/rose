@@ -626,6 +626,7 @@ set(rose_LIB_OBJS
   roseBinaryAnalysis
   roseBinaryAnalysisArchitecture
   roseBinaryAnalysisByteCode
+  roseBinaryAnalysisCallingConvention
   roseBinaryAnalysisConcolic
   roseBinaryAnalysisConcolicCallback
   roseBinaryAnalysisConcolicI386Linux

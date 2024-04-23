@@ -39,15 +39,8 @@ private:
     RegisterDictionaryPtr regdict_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
     friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(reg_);
-        s & BOOST_SERIALIZATION_NVP(va_);
-        s & BOOST_SERIALIZATION_NVP(regdict_);
-    }
+    template<class S> void serialize(S&, unsigned);
 #endif
 
 public:
