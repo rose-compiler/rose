@@ -1524,8 +1524,7 @@ private:
         return false;
     }
 
-    // Run post-processing and check for scalar. Checking for multi-line scalars.  Return true if scalar search should
-    // continue, else false.
+    // Run post-processing, skip forward over empty lines, and delete trailing empty lines.
     void PostProcessScalarLine(std::list<ReaderLine*>::iterator &it) {
         ReaderLine *pLine = *it;
         pLine->Type = Node::ScalarType;
@@ -1539,7 +1538,7 @@ private:
 
         std::list<ReaderLine *>::iterator lastNotEmpty = it++;
 
-        // Find last empty lines
+        // Find last nonempty lines
         while (it != m_Lines.end()) {
             pLine = *it;
             pLine->Type = Node::ScalarType;
@@ -1651,7 +1650,7 @@ private:
                     break;
             }
 
-            // Check next line. if map and correct level, go on, else exit.  if same level but of type map = error.
+            // Check next line. If map and correct (same) level, go on, else exit.  If same level but not of type map, error out.
             if (it == m_Lines.end() || ((pNextLine = *it)->Offset < pLine->Offset))
                 break;
             if (pNextLine->Offset > pLine->Offset)
