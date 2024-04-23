@@ -138,6 +138,30 @@ namespace
   }
 
   SgTypedefDeclaration&
+  declareRealSubtype(const std::string& name, int ndigits, int int_base, int int_exp, SgAdaPackageSpec& scope)
+  {
+    long double base = 0;
+    int exp = 0;
+
+    //TODO Is there a fast way to convert?
+    // from https://en.wikibooks.org/wiki/Ada_Programming/Libraries/Standard/GNAT
+    if(int_base == 16 && int_exp == 32){
+      base = 3.40282;
+      exp = 38;
+    } else if(int_base == 16 && int_exp == 256){
+      base = 1.79769313486232;
+      exp = 308;
+    } else if(int_base == 16 && int_exp == 4096){
+      base = 1.18973149535723177;
+      exp = 4932;
+    } else {
+      logError() << "Unknown base and exp in declareRealSubtype: " << base << ", " << exp << ".\n";
+    }
+
+    return declareRealSubtype(name, ndigits, base, exp, scope);
+  }
+
+  SgTypedefDeclaration&
   declareStringType(const std::string& name, SgType& positive, SgType& comp, SgAdaPackageSpec& scope)
   {
     SgExprListExp&        idx     = mkExprListExp({&mkTypeExpression(positive)});
@@ -178,7 +202,7 @@ namespace
   //   (all arguments are called left, right and right respectively)
   // see https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
   void declareOp(
-                  //map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
+                  map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
                   //~ map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& fns,
                   const std::string& name,
                   SgType& retty,
@@ -215,7 +239,7 @@ namespace
 
     SgFunctionDeclaration& fndcl  = mkProcedureDecl_nondef(fnname, scope, retty, complete);
 
-    //fns[OperatorKey{&scope, name}].emplace_back(&fndcl, OperatorDesc::DECLARED_IN_STANDARD);
+    fns[OperatorKey{&scope, name}].emplace_back(&fndcl, OperatorDesc::DECLARED_IN_STANDARD);
     //~ fns[].emplace_back(&fndcl);
   }
 
@@ -490,8 +514,205 @@ void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int re
   //ADA_ASSERT(sgnode.get_parent() == &enumdcl);
 }
 
+//Struct that holds some hash keys for a few types that we will need to access multiple times
+struct ada_type_hashes{
+  int bool_hash;
+  int char_hash;
+  int wide_char_hash;
+  int wide_wide_char_hash;
+  int positive_hash;
+  int natural_hash;
+  int string_hash;
+  int wide_string_hash;
+  int wide_wide_string_hash;
+};
+
+template<class MapT>
+void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, ada_type_hashes& type_hashes)
+{
+  //Get the name of the type for logging purposes
+  ada_text_type fully_qualified_name;
+  ada_basic_decl_p_canonical_fully_qualified_name(lal_decl, &fully_qualified_name);
+  AdaIdentifier canonical_fully_qualified_name (dot_ada_text_type_to_string(fully_qualified_name));
+  //Get the name of this type without the "STANDARD."
+  std::string type_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
+
+  //Get the hash of this decl
+  int hash = hash_node(lal_decl);
+
+  //logInfo() << "handleStdDecl called for " << canonical_fully_qualified_name << std::endl;
+
+  if(canonical_fully_qualified_name.find("BOOLEAN") != std::string::npos){
+    // boolean enum type
+    SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
+    SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
+    m[hash]               = &adaBoolType;
+
+    declareEnumItem(boolDecl, "False", 0);
+    declareEnumItem(boolDecl, "True",  1);
+    //Add this hash to the type_hashes struct
+    type_hashes.bool_hash = hash;
+  } else if(canonical_fully_qualified_name.find("INTEGER") != std::string::npos){
+    //All Ada int types have a range of -(2**<exp>)..(2**<exp>)-1, so find the exp
+    ada_base_entity lal_exponent;
+    ada_type_decl_f_type_def(lal_decl, &lal_exponent);
+    ada_signed_int_type_def_f_range(&lal_exponent, &lal_exponent);
+    ada_range_spec_f_range(&lal_exponent, &lal_exponent);
+    ada_bin_op_f_left(&lal_exponent, &lal_exponent);
+    ada_un_op_f_expr(&lal_exponent, &lal_exponent);
+    ada_paren_expr_f_expr(&lal_exponent, &lal_exponent);
+    ada_bin_op_f_right(&lal_exponent, &lal_exponent);
+
+    ada_symbol_type    p_canonical_text;
+    ada_text           ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(&lal_exponent, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+    int exponent = std::stoi(name);
+    int lower_bound = -std::pow(2, exponent);
+    int upper_bound = std::pow(2, exponent) - 1;
+    //Call declareIntSubtype
+    SgType& adaIntType = SG_DEREF(declareIntSubtype(type_name, lower_bound, upper_bound, stdspec).get_type());
+    m[hash] = &adaIntType;
+  } else if(canonical_fully_qualified_name.find("FLOAT") != std::string::npos){
+    //For floats, we need to get the number of digits, and then the value and exponent for the range
+    ada_base_entity float_def;
+    ada_type_decl_f_type_def(lal_decl, &float_def);
+    ada_base_entity lal_num_digits, lal_range;
+    ada_floating_point_def_f_num_digits(&float_def, &lal_num_digits);
+    ada_symbol_type    p_canonical_text;
+    ada_text           ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(&lal_num_digits, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    std::string name = ada_text_to_locale_string(&ada_canonical_text);
+    int num_digits = std::stoi(name);
+    
+    ada_floating_point_def_f_range(&float_def, &lal_range);
+    ada_range_spec_f_range(&lal_range, &lal_range);
+    ada_bin_op_f_right(&lal_range, &lal_range);
+    ada_single_tok_node_p_canonical_text(&lal_range, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    name = ada_text_to_locale_string(&ada_canonical_text);
+    int base = stoi(name.substr(0, name.find("#")));
+    int exponent = stoi(name.substr(name.find("#e+")+3, name.length()-1));
+    //Call declareRealSubtype
+    m[hash] = declareRealSubtype(type_name, num_digits, base, exponent, stdspec).get_type();
+  } else if(canonical_fully_qualified_name.find("CHARACTER") != std::string::npos){
+    //   in Ada character is of enum type.
+    //   Currently, the enum is not filled with members, but they are rather logically
+    //   injected via the adaParent_Type set to char char16 or char32.
+    //TODO Is there a way to make this more general?
+    SgEnumDeclaration& adaCharDecl = mkEnumDecl(type_name, stdspec);
+    if(type_name == "CHARACTER"){
+      adaCharDecl.set_adaParentType(sb::buildCharType());
+      type_hashes.char_hash = hash;
+    } else if(type_name == "WIDE_CHARACTER"){
+      adaCharDecl.set_adaParentType(sb::buildChar16Type());
+      type_hashes.wide_char_hash = hash;
+    } else if(type_name == "WIDE_WIDE_CHARACTER"){
+      adaCharDecl.set_adaParentType(sb::buildChar32Type());
+      type_hashes.wide_wide_char_hash = hash;
+    } else {
+      logError() << "No plan for char type " << type_name << std::endl;
+      return;
+    }
+    SgType& adaCharType = SG_DEREF(adaCharDecl.get_type());
+    m[hash] = &adaCharType;
+  } else if(canonical_fully_qualified_name.find("STRING") != std::string::npos){
+    SgType* adaCharTypePtr;
+    SgType& adaPositiveType = SG_DEREF(m.at(type_hashes.positive_hash));
+    if(type_name == "STRING"){
+      adaCharTypePtr = m.at(type_hashes.char_hash);
+      type_hashes.string_hash = hash;
+    } else if(type_name == "WIDE_STRING"){
+      adaCharTypePtr = m.at(type_hashes.wide_char_hash);
+      type_hashes.wide_string_hash = hash;
+    } else if(type_name == "WIDE_WIDE_STRING"){
+      adaCharTypePtr = m.at(type_hashes.wide_wide_char_hash);
+      type_hashes.wide_wide_string_hash = hash;
+    } else {
+      logError() << "No plan for string type " << type_name << std::endl;
+      return;
+    }
+    SgType& adaCharType = SG_DEREF(adaCharTypePtr);
+    SgType& adaStringType = SG_DEREF(declareStringType(type_name, adaPositiveType, adaCharType, stdspec).get_type());
+    m[hash] = &adaStringType;
+  } else if(canonical_fully_qualified_name.find("DURATION") != std::string::npos){
+    // \todo reconsider adding a true Ada Duration type
+    SgType& adaDuration = SG_DEREF(sb::buildOpaqueType(type_name, &stdspec));
+    m[hash]             = &adaDuration;
+  } else {
+    //TODO Universal int/real?
+  }
+}
+
+template<class MapT>
+void handleStdSubType(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, ada_type_hashes& type_hashes)
+{
+  //Get the name of the type for logging purposes
+  ada_text_type fully_qualified_name;
+  ada_basic_decl_p_canonical_fully_qualified_name(lal_decl, &fully_qualified_name);
+  AdaIdentifier canonical_fully_qualified_name (dot_ada_text_type_to_string(fully_qualified_name));
+  //Get the name of this type without the "STANDARD."
+  std::string type_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
+
+  //Get the hash of this decl
+  int hash = hash_node(lal_decl);
+
+  //logInfo() << "handleStdSubType called for " << canonical_fully_qualified_name << std::endl;
+
+  //Get the Standard type this is a subtype of
+  ada_base_entity subtype_indication, subtype_identifier;
+  ada_subtype_decl_f_subtype(lal_decl, &subtype_indication);
+  ada_subtype_indication_f_name(&subtype_indication, &subtype_identifier);
+  ada_symbol_type    p_canonical_text;
+  ada_text           ada_canonical_text;
+  ada_single_tok_node_p_canonical_text(&subtype_identifier, &p_canonical_text);
+  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+  AdaIdentifier supertype_name(ada_text_to_locale_string(&ada_canonical_text));
+
+  if(supertype_name.find("INTEGER") != std::string::npos){
+    //Determine the range of the subtype
+    //For now, we only have to worry about positive & natural
+    //We can assume that they will always start from 1 & 0, respectively, so we just need to find the upper bound
+    int lower_bound = -1;
+    if(type_name == "NATURAL"){
+      lower_bound = 0;
+      type_hashes.natural_hash = hash;
+    } else if(type_name == "POSITIVE"){
+      lower_bound = 1;
+      type_hashes.positive_hash = hash;
+    }
+    //The upper bound will be in the format (2**<exp>)-1, so find exp
+    ada_base_entity lal_exponent;
+    ada_subtype_indication_f_constraint(&subtype_indication, &lal_exponent);
+    ada_range_constraint_f_range(&lal_exponent, &lal_exponent);
+    ada_range_spec_f_range(&lal_exponent, &lal_exponent);
+    ada_bin_op_f_right(&lal_exponent, &lal_exponent);
+    ada_un_op_f_expr(&lal_exponent, &lal_exponent);
+    ada_paren_expr_f_expr(&lal_exponent, &lal_exponent);
+    ada_bin_op_f_left(&lal_exponent, &lal_exponent);
+    ada_bin_op_f_right(&lal_exponent, &lal_exponent);
+
+    ada_symbol_type    p_canonical_text;
+    ada_text           ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(&lal_exponent, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+    int exponent = std::stoi(name);
+    int upper_bound = std::pow(2, exponent)-1;
+    //Now make the type
+    SgType& adaIntegerSubType         = SG_DEREF(declareIntSubtype(type_name, lower_bound, upper_bound, stdspec).get_type());
+    m[hash]                           = &adaIntegerSubType;
+  } else {
+    logError() << "The Standard Package has a non-integer subtype.\n";
+  }
+
+}
+
 void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 {
+  logInfo() << "In initializePkgStandard.\n";
   // make available declarations from the package standard
   // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
 
@@ -502,94 +723,84 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 
   stdpkg.set_scope(&global);
 
+  //Get the lal representation of the standard package
+  ada_analysis_unit std_unit;
+  ada_ada_node_p_standard_unit(lal_root, &std_unit);
+
+  ada_base_entity std_root;
+  ada_unit_root(std_unit, &std_root);
+
+  //Go to the list of declarations
+  ada_base_entity decl_list;
+  ada_compilation_unit_f_body(&std_root, &decl_list);
+  ada_library_item_f_item(&decl_list, &decl_list);
+  ada_base_package_decl_f_public_part(&decl_list, &decl_list);
+  ada_declarative_part_f_decls(&decl_list, &decl_list);
+
+  //This struct will hold a few useful keys for the adaTypes map
+  ada_type_hashes type_hashes;
+
+  //For each decl, call a function to add it to std based on its type
+  //Get the children
+  int count = ada_node_children_count(&decl_list);
+  for (int i = 0; i < count; ++i)
+  {
+    ada_base_entity lal_decl;
+
+    if (ada_node_child(&decl_list, i, &lal_decl) == 0){
+      logError() << "Error while getting a decl in initializePkgStandard.\n";
+    }
+
+    if(!ada_node_is_null(&lal_decl)){
+      ada_node_kind_enum decl_kind = ada_node_kind(&lal_decl);
+      switch(decl_kind)
+      {
+        case ada_type_decl:
+        {
+          handleStdDecl(adaTypes(), &lal_decl, stdspec, type_hashes);
+          break;
+        }
+        case ada_subtype_decl:
+        {
+          handleStdSubType(adaTypes(), &lal_decl, stdspec, type_hashes);
+          break;
+        }
+        case ada_exception_decl: //TODO
+        case ada_attribute_def_clause: //TODO This is about duration?
+        case ada_package_decl: //TODO ascii
+        case ada_pragma_node:
+          break;
+        default:
+          logInfo() << "Unhandled decl kind " << decl_kind << " in initializePkgStandard.\n";
+      }
+    }
+  }
+
   // \todo reconsider using a true Ada exception representation
   SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::Ada::exceptionName, &stdspec));
 
   //adaTypes()["EXCEPTION"]           = &exceptionType;
 
-  // boolean enum type
-  //AdaIdentifier         boolname{"BOOLEAN"};
-
-  ada_base_entity ada_bool;
-  ada_ada_node_p_bool_type(lal_root, &ada_bool);
-  int hash = hash_node(&ada_bool);
-  SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
-  SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
-  adaTypes()[hash]              = &adaBoolType;
-
-  declareEnumItem(boolDecl, "False", 0);
-  declareEnumItem(boolDecl, "True",  1);
-
-  // \todo reconsider adding a true Ada Duration type
-  AdaIdentifier         durationName{si::Ada::durationTypeName};
-  SgType&               adaDuration = SG_DEREF(sb::buildOpaqueType(durationName, &stdspec));
-
-  //adaTypes()[durationName]          = &adaDuration;
+  SgType&               adaBoolType = SG_DEREF(adaTypes().at(type_hashes.bool_hash));
 
   // integral types
   SgType&               adaIntType  = mkIntegralType(); // the root integer type in ROSE
 
-  ada_base_entity ada_integer;
-  ada_ada_node_p_int_type(lal_root, &ada_integer);
-  hash = hash_node(&ada_integer);
-
-  declareIntSubtype<std::int8_t> ("Short_Short_Integer", stdspec);
-  declareIntSubtype<std::int16_t>("Short_Integer",       stdspec);
-  adaTypes()[hash] = declareIntSubtype<std::int32_t>("Integer",             stdspec).get_type();
-  declareIntSubtype<std::int64_t>("Long_Integer",        stdspec);
-  declareIntSubtype<std::int64_t>("Long_Long_Integer",   stdspec);
-
-  SgType& adaPositiveType           = SG_DEREF(declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type());
-  adaTypes()[-5]                    = &adaPositiveType; //TODO Make this an actual hash (How?)
-  SgType& adaNaturalType            = SG_DEREF(declareIntSubtype("Natural",  0, ADAMAXINT, stdspec).get_type());
-
-  /*adaTypes()["POSITIVE"]            = &adaPositiveType;
-  adaTypes()["NATURAL"]             = &adaNaturalType;*/
-
-  // characters
-  // \todo in Ada char, wide_char, and wide_wide_char are enums.
-  //       Consider revising the ROSE representation.
-  SgType& adaCharType               = SG_DEREF(sb::buildCharType());
-  SgType& adaWideCharType           = SG_DEREF(sb::buildChar16Type());
-  SgType& adaWideWideCharType       = SG_DEREF(sb::buildChar32Type());
-
-  /*adaTypes()["CHARACTER"]           = &adaCharType;
-  adaTypes()["WIDE_CHARACTER"]      = &adaWideCharType;
-  adaTypes()["WIDE_WIDE_CHARACTER"] = &adaWideWideCharType;*/
-
-  // from https://en.wikibooks.org/wiki/Ada_Programming/Libraries/Standard/GNAT
-  // \todo consider using C++ min/max limits
-  static constexpr long double VAL_S_FLOAT  = 3.40282;
-  static constexpr int         EXP_S_FLOAT  = 38;
-  static constexpr int         DIG_S_FLOAT  = 6;
-  static constexpr long double VAL_FLOAT    = 3.40282;
-  static constexpr int         EXP_FLOAT    = 38;
-  static constexpr int         DIG_FLOAT    = 6;
-  static constexpr long double VAL_L_FLOAT  = 1.79769313486232;
-  static constexpr int         EXP_L_FLOAT  = 308;
-  static constexpr int         DIG_L_FLOAT  = 15;
-  static constexpr long double VAL_LL_FLOAT = 1.18973149535723177;
-  static constexpr int         EXP_LL_FLOAT = 4932;
-  static constexpr int         DIG_LL_FLOAT = 18;
-
-  ada_base_entity ada_real;
-  ada_ada_node_p_universal_real_type(lal_root, &ada_real);
-  hash = hash_node(&ada_real);
+  SgType& adaPositiveType           = SG_DEREF(adaTypes().at(type_hashes.natural_hash));
+  adaTypes()[-5]                    = &adaPositiveType; //TODO This is here so other functions can get positive. Find a better way?
+  SgType& adaNaturalType            = SG_DEREF(adaTypes().at(type_hashes.natural_hash));
 
   SgType& adaRealType               = mkRealType();
-  declareRealSubtype("Short_Float",     DIG_S_FLOAT,  VAL_S_FLOAT,  EXP_S_FLOAT,  stdspec);
-  adaTypes()[hash] = declareRealSubtype("Float",           DIG_FLOAT,    VAL_FLOAT,    EXP_FLOAT,    stdspec).get_type();
-  declareRealSubtype("Long_Float",      DIG_L_FLOAT,  VAL_L_FLOAT,  EXP_L_FLOAT,  stdspec);
-  declareRealSubtype("Long_Long_Float", DIG_LL_FLOAT, VAL_LL_FLOAT, EXP_LL_FLOAT, stdspec);
+  
+  //characters
+  SgType& adaCharType               = SG_DEREF(adaTypes().at(type_hashes.char_hash));
+  SgType& adaWideCharType           = SG_DEREF(adaTypes().at(type_hashes.wide_char_hash));
+  SgType& adaWideWideCharType       = SG_DEREF(adaTypes().at(type_hashes.wide_wide_char_hash));
 
   // String types
-  SgType& adaStringType             = SG_DEREF(declareStringType("String",           adaPositiveType, adaCharType,         stdspec).get_type());
-  SgType& adaWideStringType         = SG_DEREF(declareStringType("Wide_String",      adaPositiveType, adaWideCharType,     stdspec).get_type());
-  SgType& adaWideWideStringType     = SG_DEREF(declareStringType("Wide_Wide_String", adaPositiveType, adaWideWideCharType, stdspec).get_type());
-
-  /*adaTypes()["STRING"]              = &adaStringType;
-  adaTypes()["WIDE_STRING"]         = &adaWideStringType;
-  adaTypes()["WIDE_WIDE_STRING"]    = &adaWideWideStringType;*/
+  SgType& adaStringType             = SG_DEREF(adaTypes().at(type_hashes.string_hash));
+  SgType& adaWideStringType         = SG_DEREF(adaTypes().at(type_hashes.wide_string_hash));
+  SgType& adaWideWideStringType     = SG_DEREF(adaTypes().at(type_hashes.wide_wide_string_hash));
 
   // Ada standard exceptions
   SgInitializedName& adaConstraintError    = declareException("Constraint_Error", exceptionType, stdspec);
@@ -606,107 +817,107 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   //
   // build standard functions
   //~ map_t<OperatorKey, std::vector<OperatorDesc> >& opsMap = operatorSupport();
-  //auto& opsMap = operatorSupport();
+  auto& opsMap = operatorSupport();
 
   // bool
-  declareOp("=",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("/=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("<",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("<=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(">",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(">=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("and", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("or",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("xor", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp("not", adaBoolType, { &adaBoolType }, /* unary */      stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "<",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "<=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, ">",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, ">=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "and", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "or",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "xor", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "not", adaBoolType, { &adaBoolType }, /* unary */      stdspec);
 
   // integer
-  declareOp("=",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("/=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("<",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("<=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(">",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(">=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "<",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "<=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, ">",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, ">=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
 
-  declareOp("+",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("-",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("*",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("/",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("rem", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("mod", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp("**",  adaIntType,  { &adaIntType,  &adaNaturalType }, stdspec);
+  declareOp(opsMap, "+",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "-",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "*",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "/",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "rem", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "mod", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "**",  adaIntType,  { &adaIntType,  &adaNaturalType }, stdspec);
 
-  declareOp("+",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
-  declareOp("-",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
-  declareOp("abs", adaIntType,  { &adaIntType }, /* unary */       stdspec);
+  declareOp(opsMap, "+",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
+  declareOp(opsMap, "-",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
+  declareOp(opsMap, "abs", adaIntType,  { &adaIntType }, /* unary */       stdspec);
 
   // float
-  declareOp("=",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("/=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("<",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("<=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(">",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(">=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "<",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "<=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, ">",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, ">=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
 
-  declareOp("+",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("-",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("*",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("/",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp("**",  adaRealType, { &adaRealType, &adaIntType },     stdspec);
+  declareOp(opsMap, "+",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "-",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "*",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "/",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "**",  adaRealType, { &adaRealType, &adaIntType },     stdspec);
 
-  declareOp("+",   adaRealType, { &adaRealType }, /* unary */      stdspec);
-  declareOp("-",   adaRealType, { &adaRealType }, /* unary */      stdspec);
-  declareOp("abs", adaRealType, { &adaRealType }, /* unary */      stdspec);
+  declareOp(opsMap, "+",   adaRealType, { &adaRealType }, /* unary */      stdspec);
+  declareOp(opsMap, "-",   adaRealType, { &adaRealType }, /* unary */      stdspec);
+  declareOp(opsMap, "abs", adaRealType, { &adaRealType }, /* unary */      stdspec);
 
   // mixed float and int
-  declareOp("*",   adaRealType, { &adaIntType,  &adaRealType },    stdspec);
-  declareOp("*",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
-  declareOp("/",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
+  declareOp(opsMap, "*",   adaRealType, { &adaIntType,  &adaRealType },    stdspec);
+  declareOp(opsMap, "*",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
+  declareOp(opsMap, "/",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
 
   // \todo what are built in fixed type operations??
 
 
   // operations on strings
-  declareOp("=",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp("/=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp("<",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp("<=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(">",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(">=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp("&",   adaStringType,         { &adaStringType,         &adaStringType },         stdspec);
-  declareOp("&",   adaStringType,         { &adaCharType,           &adaStringType },         stdspec);
-  declareOp("&",   adaStringType,         { &adaStringType,         &adaCharType   },         stdspec);
-  declareOp("&",   adaStringType,         { &adaCharType,           &adaCharType   },         stdspec);
+  declareOp(opsMap, "=",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "/=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "<",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "<=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, ">",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, ">=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaCharType,           &adaStringType },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaStringType,         &adaCharType   },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaCharType,           &adaCharType   },         stdspec);
 
-  declareOp("=",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp("/=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp("<",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp("<=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(">",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(">=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp("&",   adaWideStringType,     { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp("&",   adaWideStringType,     { &adaWideCharType,       &adaWideStringType },     stdspec);
-  declareOp("&",   adaWideStringType,     { &adaWideStringType,     &adaWideCharType   },     stdspec);
-  declareOp("&",   adaWideStringType,     { &adaWideCharType,       &adaWideCharType   },     stdspec);
+  declareOp(opsMap, "=",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "/=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "<",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "<=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, ">",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, ">=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideCharType,       &adaWideStringType },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideStringType,     &adaWideCharType   },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideCharType,       &adaWideCharType   },     stdspec);
 
-  declareOp("=",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp("/=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp("<",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp("<=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(">",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(">=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp("&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp("&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideStringType }, stdspec);
-  declareOp("&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideCharType   }, stdspec);
-  declareOp("&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideCharType   }, stdspec);
+  declareOp(opsMap, "=",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "/=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "<",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "<=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, ">",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, ">=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideCharType   }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideCharType   }, stdspec);
 
   // \todo operations on Duration
 
   // access types
   SgType& adaAccessType = SG_DEREF(sb::buildNullptrType());
 
-  declareOp("=",   adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
-  declareOp("/=",  adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
 
   // set the standard package in the SageInterface::ada namespace
   // \todo this should go away for a cleaner interface
