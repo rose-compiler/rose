@@ -3325,6 +3325,8 @@ SgFile::usage ( int status )
 "                             Causes the whole AST and check results to be saved as filename.ast and filename.json.\n"
 "                             *iff* any defect is found.\n"
 "                             Comma separated if when=both.\n"
+"     -rose:mangled:noshortname\n"
+"                             Turn off short name mangling optimization read and process input file but skip generation of\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -4880,6 +4882,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse(true);
         }
 
+  // mangled:noshortname option: Turns off the optimization that
+  // shortens mangled names.  
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(mangled:noshortname)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:mangled:noshortname found \n");
+          SgProject::set_mangled_noshortname(true);
+        }
 
   // unparser language option
   // DQ (8/27/2007): This option controls the output language (which language unparser is to be used).
@@ -5510,6 +5520,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(markGeneratedFiles)",1);
      optionCount = sla(argv, "-rose:", "($)", "(wave)",1);
      optionCount = sla(argv, "-rose:", "($)", "(negative_test)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(mangled:noshortname)",1);
      integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(embedColorCodesInGeneratedCode)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(generateSourcePositionCodes)", &integerOption, 1);

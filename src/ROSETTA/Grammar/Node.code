@@ -187,7 +187,8 @@ HEADER_START
           This mangle name caching is implemented to shorter strings used in the globalMangledNameMap
           mechanism.
        */
-          static std::map<std::string, int> & get_shortMangledNameCache();
+          static std::map<std::string, uint64_t> & get_shortMangledNameCache();
+
 
       /*! \brief Access function for name qualification support (for names).
 
@@ -747,7 +748,7 @@ SgTypeTable*         SgNode::p_globalTypeTable         = nullptr;
 
 // DQ (3/12/2007): Added mangled name map to improve performance of generating mangled names
 std::map<SgNode*,std::string> SgNode::p_globalMangledNameMap;
-std::map<std::string,int> SgNode::p_shortMangledNameCache;
+std::map<std::string,uint64_t> SgNode::p_shortMangledNameCache;
 
 // DQ (5/28/2011): Added central location for qualified name maps (for names and types).
 // these maps store the required qualified name for where an IR node is referenced (not
@@ -847,7 +848,7 @@ SgNode::get_globalMangledNameMap()
      return p_globalMangledNameMap;
    }
 
-std::map<std::string, int> &
+std::map<std::string, uint64_t> &
 SgNode:: get_shortMangledNameCache()
    {
      return p_shortMangledNameCache;

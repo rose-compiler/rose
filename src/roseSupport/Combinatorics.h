@@ -121,6 +121,22 @@ reorder(std::vector<T> &values, const std::vector<size_t> &remap) {
         values[i] = old[remap[i]];
 }
 
+/**
+ *  Converts a 64 bit in to base 62 (All letters and numbers).  
+ *  This is the most compressed format that can be used for a C++ identifier.  
+ *  (Although C++ identifiers can not start with a digit, so to use it for one
+ *  you need to prepend a letter or "_")
+ **/
+ROSE_DLL_API std::string toBase62String(uint64_t num);
+
+/** Converts a base-62 (All letters and numbers) number to a 64 bit int.  
+ *  
+ *  Base-62 is used to store hashes in the most efficient was that can also 
+ *  be a C++ identifier.  Converting back to a uint64 is not generally 
+ *  required, but here's a function to do so. 
+ **/
+ROSE_DLL_API uint64_t fromBase62String(const std::string& base62);
+
 /** Hash interface.
  *
  *  This class defines the API for hash functions. A hash function takes an arbitrary size message as input and returns a
@@ -219,6 +235,17 @@ public:
      *  This works by first calling @ref digest, which finalizes the hasher and thus later calls to @ref insert will not be
      *  permitted unless the hasher is first reset. */
     std::string toString();
+
+    /** Returns the hash as a 64 bit int.
+     *
+     * The return value is computed by a sequence of shift and xor
+     * operations across all bytes of the digest. If the digest is
+     * eight or fewer bytes, then this degenerates to the uint64_t
+     * interpretation of the big-endian digest
+     * @{ */
+    uint64_t make64Bits();
+    uint64_t make64Bits(const Digest&);
+    /** @} */
 
     /** Print a hash to a stream.
      *

@@ -295,7 +295,7 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalMangledNameMap","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // DQ (6/26/2007): Added support from Jeremiah for shortened mangle names
-     Node.setDataPrototype("static std::map<std::string, int>", "shortMangledNameCache", "",
+     Node.setDataPrototype("static std::map<std::string, uint64_t>", "shortMangledNameCache", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (5/28/2011): Added central location for qualified name maps (for names and types).

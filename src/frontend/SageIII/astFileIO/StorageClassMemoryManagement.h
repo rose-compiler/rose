@@ -967,6 +967,41 @@ class EasyStorage < std::map<int,SgGraphEdge*> >
 #endif
 
 
+// EasyStorageMapEntry concerning an SgName and a Type T
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+template < >
+class EasyStorageMapEntry <std::string,uint64_t> 
+   {
+    private:
+     EasyStorage <std::string> nameString; 
+     uint64_t hash; 
+    public: 
+     EasyStorageMapEntry () { hash = 0 ; }
+     void storeDataInEasyStorageClass(const std::pair<std::string, const uint64_t >& iter);
+     std::pair<std::string, uint64_t >  rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
+template <>
+class EasyStorage < std::map<std::string, uint64_t> > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<std::string, uint64_t> >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<std::string, uint64_t> > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<std::string, uint64_t>& data_);
+     std::map<std::string, uint64_t> rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
+
 // EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
 template <>

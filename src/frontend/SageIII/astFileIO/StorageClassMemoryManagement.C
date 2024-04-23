@@ -2785,6 +2785,50 @@ void EasyStorageMapEntry <std::string,int> :: readFromFile (std::istream& inputF
      EasyStorage <std::string> :: readFromFile (inputFileStream);
    }
 
+/*
+   ****************************************************************************************
+   **      Implementations for <EasyStorageMapEntry <std::string,uint64_t>                    **
+   ****************************************************************************************
+*/
+// Is not inherited from StorageClassMemoryManagement
+void EasyStorageMapEntry <std::string,uint64_t> :: storeDataInEasyStorageClass(const std::pair<std::string, const uint64_t >& iter)
+   {
+     nameString.storeDataInEasyStorageClass(iter.first);
+     hash = iter.second;
+   }
+
+std::pair<std::string, uint64_t > EasyStorageMapEntry <std::string,uint64_t> :: rebuildDataStoredInEasyStorageClass() const
+   {
+     std::pair<std::string,uint64_t> returnPair(nameString.rebuildDataStoredInEasyStorageClass(),hash);
+     return returnPair;
+   }
+
+void EasyStorageMapEntry <std::string,uint64_t> :: arrangeMemoryPoolInOneBlock() 
+   {
+     EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
+   }
+  
+void EasyStorageMapEntry <std::string,uint64_t> :: deleteMemoryPool() 
+   {
+     EasyStorage <std::string> :: deleteMemoryPool();
+   }
+
+
+void EasyStorageMapEntry <std::string,uint64_t> :: writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|37|",outputFileStream);
+#endif
+     EasyStorage <std::string> :: writeToFile(outputFileStream);
+   }
+  
+void EasyStorageMapEntry <std::string,uint64_t> :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|37|",inputFileStream);
+#endif
+     EasyStorage <std::string> :: readFromFile (inputFileStream);
+   }
 
 
 /*
@@ -3075,6 +3119,107 @@ void EasyStorage < std::map<std::string,int> > :: readFromFile (std::istream& in
      StorageClassMemoryManagement< EasyStorageMapEntry<std::string, int> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry<std::string,int> :: readFromFile (inputFileStream);
    }
+
+/*
+   ****************************************************************************************
+   **      Implementations for EasyStorage < std::map<std::string, uint64_t> >                 **
+   ****************************************************************************************
+*/
+void EasyStorage < std::map<std::string,uint64_t> > :: storeDataInEasyStorageClass(const std::map<std::string,uint64_t>& data_) 
+   {
+     std::map<std::string,uint64_t>::const_iterator dat = data_.begin();
+     long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
+  // if the new data does not fit in the actual block
+     if (0 < offset)
+        {
+       // if there is still space in the actual block
+          if (offset < Base::getSizeOfData())
+             {
+               if (Base::actual != NULL)
+                  {
+                    for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                       {
+                         Base::actual->storeDataInEasyStorageClass(*dat);
+                       }
+                  }
+             }
+       // the data does not fit in one block
+          while (Base::blockSize < (unsigned long)(offset))
+             {
+               Base::actual = Base::getNewMemoryBlock();
+               for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                  {
+                    Base::actual->storeDataInEasyStorageClass(*dat);
+                  }
+               offset -= Base::blockSize;
+             };
+          Base::actual = Base::getNewMemoryBlock();
+        }
+     for (; dat != data_.end(); ++dat, ++Base::actual)
+        {
+          Base::actual->storeDataInEasyStorageClass(*dat);
+        }
+   }
+
+std::map<std::string,uint64_t> EasyStorage < std::map<std::string,uint64_t> > :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+#endif
+      std::map<std::string,uint64_t> data_;
+   // if the memory pool is valid
+      if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
+         {
+           std::pair<std::string,uint64_t> tempPair;
+           EasyStorageMapEntry<std::string,uint64_t>* pointer = Base::getBeginningOfDataBlock();
+           for ( long i=0; i < Base::getSizeOfData(); ++i )
+              {
+                assert (Base::actualBlock == 1);
+                tempPair = (pointer+i)->rebuildDataStoredInEasyStorageClass();
+                data_[tempPair.first] = tempPair.second;
+              }
+         }
+      return data_;
+
+   }
+
+void EasyStorage < std::map<std::string,uint64_t> > :: arrangeMemoryPoolInOneBlock()
+   {
+     StorageClassMemoryManagement< EasyStorageMapEntry<std::string, uint64_t> >:: arrangeMemoryPoolInOneBlock();
+     EasyStorageMapEntry<std::string,uint64_t> :: arrangeMemoryPoolInOneBlock();
+   }
+
+void EasyStorage < std::map<std::string,uint64_t> > :: deleteMemoryPool()
+   {
+     StorageClassMemoryManagement< EasyStorageMapEntry<std::string, uint64_t> > :: deleteMemoryPool();
+     EasyStorageMapEntry<std::string,uint64_t> :: deleteMemoryPool();
+   }
+
+void EasyStorage < std::map<std::string,uint64_t> > :: writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|38|",outputFileStream);
+#endif
+     StorageClassMemoryManagement< EasyStorageMapEntry<std::string, uint64_t> >:: writeToFile(outputFileStream);
+     EasyStorageMapEntry<std::string,uint64_t> :: writeToFile(outputFileStream);
+   }
+
+void EasyStorage < std::map<std::string,uint64_t> > :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|38|",inputFileStream);
+#endif
+     StorageClassMemoryManagement< EasyStorageMapEntry<std::string, uint64_t> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry<std::string,uint64_t> :: readFromFile (inputFileStream);
+   }
+/*
+   ****************************************************************************************
+   **      END Implementations for EasyStorage < std::map<std::string, uint64_t> >                 **
+   ****************************************************************************************
+*/
+
+
 
 /*
    ****************************************************************************************

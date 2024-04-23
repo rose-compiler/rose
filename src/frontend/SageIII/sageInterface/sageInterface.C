@@ -12,6 +12,8 @@
 #include "Rose/AST/Utility.h"
 
 #include "sageInterface.h"
+#include "Combinatorics.h"
+
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "replaceExpressionWithStatement.h"
@@ -5973,6 +5975,11 @@ SageInterface::getMangledNameFromCache( SgNode* astNode )
    }
 
 #define DEBUG_SAGE_INTERFACE_ADD_MANGLED_TO_CACHE 0
+#define DEBUG_MANGLED_SHORTNAME 1
+
+//#ifdef DEBUG_MANGLED_SHORTNAME
+//std::unordered_map<uint64_t, std::string> SageInterface::mangledNameHashCollisionCheckMap;
+//#endif
 
 std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
@@ -5980,6 +5987,12 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
 #if DEBUG_SAGE_INTERFACE_ADD_MANGLED_TO_CACHE
      printf ("In SageInterface::addMangledNameToCache(): TOP: astNode = %p = %s oldMangledName = %s \n",astNode,astNode->class_name().c_str(),oldMangledName.c_str());
 #endif
+
+//#define DEBUG_MANGLED_SHORTNAME 1
+#ifdef DEBUG_MANGLED_SHORTNAME
+     static std::unordered_map<uint64_t, std::string> mangledNameHashCollisionCheckMap;
+#endif
+
 
 #if 0
      SgGlobal* globalScope = isSgGlobal(astNode);
@@ -6007,36 +6020,53 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
      ROSE_ASSERT(globalScope != NULL);
 #endif
 
-  // std::map<SgNode*,std::string> & mangledNameCache = globalScope->get_mangledNameCache();
-  // std::map<std::string, int> & shortMangledNameCache = globalScope->get_shortMangledNameCache();
      std::map<SgNode*,std::string> & mangledNameCache   = SgNode::get_globalMangledNameMap();
 
      std::string mangledName;
 
-#define USE_SHORT_MANGLED_NAMES 1
-#if USE_SHORT_MANGLED_NAMES
-     std::map<std::string, int> & shortMangledNameCache = SgNode::get_shortMangledNameCache();
+     if (SgProject::get_mangled_noshortname() == false) {
+         std::map<std::string, uint64_t> & shortMangledNameCache = SgNode::get_shortMangledNameCache();
 
-  // This bound was 40 previously!
-     if (oldMangledName.size() > 40) {
-       std::map<std::string, int>::const_iterator shortMNIter = shortMangledNameCache.find(oldMangledName);
-       int idNumber = (int)shortMangledNameCache.size();
-       if (shortMNIter != shortMangledNameCache.end())
-          {
-            idNumber = shortMNIter->second;
-          }
-         else
-          {
-            shortMangledNameCache.insert(std::pair<std::string, int>(oldMangledName, idNumber));
-          }
+         if (oldMangledName.size() > 40) {
+             std::map<std::string, uint64_t>::const_iterator shortMNIter = shortMangledNameCache.find(oldMangledName);
+             uint64_t idNumber = 0;
+             if (shortMNIter != shortMangledNameCache.end())
+                 {
+                     idNumber = shortMNIter->second;
 
-       std::ostringstream mn;
-       mn << 'L' << idNumber << 'R';
-       mangledName = mn.str();
-     } else {
-       mangledName = oldMangledName;
-     }
-#else
+#ifdef DEBUG_MANGLED_SHORTNAME
+                   //Check for hash colisions, if we found an idNumber, but the long mangled name is different, we have a problem
+                   auto collisionIt = mangledNameHashCollisionCheckMap.find(idNumber);
+                   if(collisionIt != mangledNameHashCollisionCheckMap.end() && 
+                     oldMangledName != shortMNIter->first)
+                   {
+                     mlog[Sawyer::Message::Common::ERROR] <<" Got a short mangled name collision.  \n "<<
+                       oldMangledName << " and \n " << shortMNIter->first << " \n" <<
+                       "have the same idNumber of: " << Combinatorics::toBase62String(idNumber) << " " << shortMNIter->second << endl;
+                     exit(12);
+                   } else {
+                     mangledNameHashCollisionCheckMap[idNumber] = oldMangledName;
+                   }
+#endif //DEBUG_MANGLED_SHORTNAME
+
+                 }
+             else
+                 {
+                   Combinatorics::HasherSha256Builtin hasher;
+                   hasher.insert(oldMangledName);
+                   hasher.digest();
+                   idNumber = hasher.make64Bits();
+                   shortMangledNameCache.insert(std::pair<std::string, uint64_t>(oldMangledName, idNumber));
+                 }
+ 
+             std::ostringstream mn;
+             mn << 'L' << Combinatorics::toBase62String(idNumber) << 'R';
+             mangledName = mn.str();
+         } else {
+             mangledName = oldMangledName;
+         }
+      } else {
+
   // DQ (7/24/2012): Note that using this option can cause some test codes using operators that have
   // difficult names (conversion operators to user-defined types) to fail.  See test2004_141.C for example.
   // The conversion operator "operator T&() const;" will fail because the character "&" will remain in
@@ -6053,7 +6083,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
           printf ("WARNING: In SageInterface::addMangledNameToCache(): Using longer forms of mangled names (can cause some function names with embedded special characters to fail; test2004_141.C) \n");
         }
      mangledName = oldMangledName;
-#endif
+}
 
   // DQ (6/26/2007): Output information useful for understanding Jeremiah's shortended name merge caching.
   // std::cerr << "Changed MN " << oldMangledName << " to " << mangledName << std::endl;

@@ -969,7 +969,7 @@ HEADER_GLOBAL_START
 
        // DQ (10/6/2006): Support for mangle name caching (for better performance)
        // std::map<SgNode*,std::string> & get_mangledNameCache();
-       // std::map<std::string, int> & get_shortMangledNameCache();
+       // std::map<std::string, uint64_t> & get_shortMangledNameCache();
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
@@ -8413,7 +8413,7 @@ SgGlobal:: get_mangledNameCache()
      return p_mangledNameCache;
    }
 
-std::map<std::string, int> &
+std::map<std::string, uint64_t> &
 SgGlobal:: get_shortMangledNameCache()
    {
      return p_shortMangledNameCache;

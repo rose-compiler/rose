@@ -4509,8 +4509,8 @@ TestMangledNames::visit ( SgNode* node )
      SgGlobal* global = isSgGlobal(node);
      if (global != NULL)
         {
-          const std::map<std::string, int>& shortMangledNameCache = global->get_shortMangledNameCache();
-          for (std::map<std::string, int>::const_iterator i = shortMangledNameCache.begin(); i != shortMangledNameCache.end(); ++i) {
+          const std::map<std::string, uint64_t>& shortMangledNameCache = global->get_shortMangledNameCache();
+          for (std::map<std::string, uint64_t>::const_iterator i = shortMangledNameCache.begin(); i != shortMangledNameCache.end(); ++i) {
             this->totalLongMangledNameSize += i->first.size();
             ++this->totalNumberOfLongMangledNames;
           }
@@ -4722,8 +4722,8 @@ TestMangledNames::test()
      TestMangledNames t;
 
   // DQ (6/26/2007): Added code by Jeremiah for shorter mangled names
-     const std::map<std::string, int>& shortMangledNameCache = SgNode::get_shortMangledNameCache();
-     for (std::map<std::string, int>::const_iterator i = shortMangledNameCache.begin(); i != shortMangledNameCache.end(); ++i)
+     const std::map<std::string, uint64_t>& shortMangledNameCache = SgNode::get_shortMangledNameCache();
+     for (std::map<std::string, uint64_t>::const_iterator i = shortMangledNameCache.begin(); i != shortMangledNameCache.end(); ++i)
         {
           t.totalLongMangledNameSize += i->first.size();
           ++(t.totalNumberOfLongMangledNames);

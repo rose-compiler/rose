@@ -11,6 +11,53 @@ flip_coin()
     return Sawyer::fastRandomIndex(2) == 0;
 }
 
+/**
+ *  Converts a 64 bit in to base 62 (All letters and numbers).  
+ *  This is the most compressed format that can be used for a C++ identifier.  
+ *  (Although C++ identifiers can not start with a digit, so to use it for one
+ *  you need to prepend a letter or "_")
+ **/
+ROSE_DLL_API std::string 
+toBase62String(uint64_t num) {
+    const std::string base62_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::string result;
+
+    do {
+        result.push_back(base62_chars[num % 62]);
+        num /= 62;
+    } while (num);
+
+    std::reverse(result.begin(), result.end());
+
+    return result;
+}
+
+
+/**
+ *  Converts a base 62 (All letters and numbers) number to a 64 bit int.  
+ *  This is the most compressed format that can be used for a C++ identifier.  
+ **/
+ROSE_DLL_API uint64_t 
+fromBase62String(const std::string& base62) {
+    const std::string base62_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    uint64_t result = 0;
+
+    for (char c : base62) {
+        result *= 62;
+        if ('0' <= c && c <= '9')
+            result += c - '0';
+        else if ('A' <= c && c <= 'Z')
+            result += c - 'A' + 10;
+        else if ('a' <= c && c <= 'z')
+            result += c - 'a' + 36;
+        else
+            throw std::invalid_argument("Invalid character in base62 string.");
+    }
+
+    return result;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Hasher base class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +81,32 @@ void
 Hasher::print(std::ostream &out) {
     out <<toString(digest());
 }
+
+uint64_t 
+Hasher::make64Bits() 
+{
+  return make64Bits(digest());
+}
+  
+uint64_t
+Hasher::make64Bits(const Digest &digest) {
+  uint64_t outHash64 = 0;
+  if(digest.size() <= 8) {
+    //If hash <= 64bits, just copy it into the 64 bit data.
+    //If the length of the hash was known statically, a cast would be sufficient  
+    for (auto it = digest.begin(); it != digest.end(); ++it) {
+      outHash64 = (outHash64 << 8) ^ uint64_t{*it};
+    }
+    return outHash64;
+  }
+  //Otherwise, compress to 64 bits using XOR.  This is Robb's algorithm.
+  for (uint8_t byte: digest) {
+    outHash64 = BitOps::rotateLeft(outHash64, 8) ^ uint64_t{byte};
+  }
+  return outHash64;
+}
+
+
 
 Hasher::HasherFactory& Hasher::HasherFactory::Instance()
 {
