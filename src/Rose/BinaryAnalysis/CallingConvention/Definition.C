@@ -4,6 +4,7 @@
 
 #include <Rose/Affirm.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -12,7 +13,8 @@ namespace CallingConvention {
 Definition::Definition() {}
 
 Definition::Definition(const std::string &name, const std::string &comment, const Architecture::Base::ConstPtr &arch)
-    : name_(name), comment_(comment), architecture_(arch) {
+    : name_(name), comment_(comment), architecture_(arch), returnValueAllocator_(Allocator::instance()),
+      argumentValueAllocator_(Allocator::instance()) {
     ASSERT_not_null(arch);
 }
 
@@ -138,6 +140,28 @@ Definition::getUsedRegisterParts() const {
     retval |= calleeSavedRegisterParts();
     retval |= scratchRegisterParts();
     return retval;
+}
+
+Allocator::Ptr
+Definition::returnValueAllocator() const {
+    return notnull(returnValueAllocator_);
+}
+
+void
+Definition::returnValueAllocator(const Allocator::Ptr &allocator) {
+    ASSERT_not_null(allocator);
+    returnValueAllocator_ = allocator;
+}
+
+Allocator::Ptr
+Definition::argumentValueAllocator() const {
+    return notnull(argumentValueAllocator_);
+}
+
+void
+Definition::argumentValueAllocator(const Allocator::Ptr &allocator) {
+    ASSERT_not_null(allocator);
+    argumentValueAllocator_ = allocator;
 }
 
 void

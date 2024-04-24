@@ -5,6 +5,7 @@
 #include <Rose/Affirm.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Exception.h>
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/StringUtility/Escape.h>
 
@@ -17,6 +18,8 @@
 
 #include <Sawyer/Clexer.h>
 #include <Sawyer/StaticBuffer.h>
+
+#include <boost/lexical_cast.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -168,6 +171,8 @@ Declaration::instance(const Definition::Ptr &cc, const std::string &sourceCode) 
     if (!tokens[0].type() == TOK_EOF)
         throw parseError("extra text after end of argument list", tokens);
 
+    decl->computeArgumentLocations();
+    decl->computeReturnLocations();
     return decl;
 }
 
@@ -228,48 +233,77 @@ Declaration::arguments() const {
     return arguments_;
 }
 
-Sawyer::Result<ConcreteLocation, std::string>
-Declaration::argumentLocation(const size_t index) const {
-    const Definition::Ptr &cc = callingConvention_;
-    std::vector<ConcreteLocation> inputParameters = cc->inputParameters();
+void
+Declaration::computeArgumentLocations() {
+    Definition::Ptr cc = notnull(callingConvention_);
+    Allocator::Ptr allocator = notnull(cc->argumentValueAllocator());
+    allocator->reset();
+    argumentLocations_.clear();
 
+    for (size_t argIndex = 0; argIndex < arguments_.size(); ++argIndex) {
+        SgAsmType *argType = arguments_[argIndex].first;
+        const std::string &argName = arguments_[argIndex].second;
+        const std::vector<ConcreteLocation> locations = allocator->allocate(argType);
 
+        // Check for errors
+        if (locations.empty())
+            throw AllocationError::cannotAllocateArgument(argIndex, argName, argType, toString());
+#ifndef NDEBUG
+        if (cc->stackParameterOrder() != StackParameterOrder::RIGHT_TO_LEFT) {
+            for (const ConcreteLocation &loc: locations) {
+                if (loc.type() == ConcreteLocation::RELATIVE)
+                    ASSERT_not_implemented("stack-based locations are only handled for right-to-left (C-style) arguments");
+            }
+        }
+#endif
 
-    if (index > arguments_.size()) {
-        return Sawyer::makeError("argument #" + boost::lexical_cast<std::string>(index) + " is out of range"
-                                 " for \"" + toString() + "\"");
-    } else if (index < cc->inputParameters().size()) {
-
-        ConcreteLocation loc = cc->inputParameters()[index];
-        loc.registerDictionary(callingConvention()->registerDictionary());
-        return Sawyer::makeOk(loc);
-
-    } else if (cc->stackParameterOrder() == StackParameterOrder::UNSPECIFIED) {
-        return Sawyer::makeError("declaration has too many arguments for calling convention");
-
-    } else if (cc->stackParameterOrder() == StackParameterOrder::RIGHT_TO_LEFT /*C order*/) {
-        const uint64_t stackOlderDirection = cc->stackDirection() == StackDirection::GROWS_DOWN ? 1 : -1;
-        int64_t stackOffset = stackOlderDirection * cc->nonParameterStackSize();
-        for (size_t argno = cc->inputParameters().size(); argno < index; ++argno)
-            stackOffset += stackOlderDirection * arguments_[argno].first->get_nBytes();
-        ConcreteLocation loc(cc->stackPointerRegister(), stackOffset);
-        loc.registerDictionary(callingConvention()->registerDictionary());
-        return Sawyer::makeOk(loc);
-
-    } else {
-        ASSERT_require(cc->stackParameterOrder() == StackParameterOrder::LEFT_TO_RIGHT /*Pascal order*/);
-        ASSERT_not_implemented("Pascal-order stack-based argument passing");
-
+        argumentLocations_.push_back(locations);
     }
 }
 
-Sawyer::Result<ConcreteLocation, std::string>
+void
+Declaration::computeReturnLocations() {
+    if (returnType_ && !isSgAsmVoidType(returnType_)) {
+        Definition::Ptr cc = notnull(callingConvention_);
+        Allocator::Ptr allocator = notnull(cc->returnValueAllocator());
+        allocator->reset();
+        const std::vector<ConcreteLocation> locations = allocator->allocate(returnType_);
+        if (locations.empty())
+            throw AllocationError::cannotAllocateReturn(returnType_, toString());
+        returnLocations_ = locations;
+    }
+}
+
+Sawyer::Result<std::vector<ConcreteLocation>, std::string>
+Declaration::argumentLocation(const size_t index) const {
+    if (index > arguments_.size())
+        return Sawyer::makeError("argument #" + boost::lexical_cast<std::string>(index) + " is out-of-bounds"
+                                 " in declaration \"" + toString() + "\"");
+    if (index >= argumentLocations_.size())
+        return Sawyer::makeError("argument #" + boost::lexical_cast<std::string>(index) + " is not allocated"
+                                 " in declaration \"" + toString() + "\"");
+    return Sawyer::makeOk(argumentLocations_[index]);
+}
+
+Sawyer::Result<std::vector<ConcreteLocation>, std::string>
 Declaration::argumentLocation(const std::string &name) const {
     for (size_t i = 0; i < arguments_.size(); ++i) {
         if (arguments_[i].second == name)
             return argumentLocation(i);
     }
     return Sawyer::makeError("argument \"" + StringUtility::cEscape(name) + "\" not found in declaration \"" + toString() + "\"");
+}
+
+Sawyer::Result<std::vector<ConcreteLocation>, std::string>
+Declaration::returnLocation() const {
+    ASSERT_not_null(returnType_);
+    if (isSgAsmVoidType(returnType_)) {
+        return Sawyer::makeOk(std::vector<ConcreteLocation>());
+    } else if (returnLocations_.empty()) {
+        return Sawyer::makeError("return value is not allocated in declaration \"" + toString() + "\"");
+    } else {
+        return Sawyer::makeOk(returnLocations_);
+    }
 }
 
 } // namespace

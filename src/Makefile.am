@@ -317,6 +317,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/CallingConvention/Declaration.h				\
 	Rose/BinaryAnalysis/CallingConvention/Definition.h				\
 	Rose/BinaryAnalysis/CallingConvention/Exception.h				\
+	Rose/BinaryAnalysis/CallingConvention/StoragePool.h				\
 	Rose/BinaryAnalysis/CodeInserter.h						\
 	Rose/BinaryAnalysis/Concolic.h							\
 	Rose/BinaryAnalysis/ConcreteLocation.h						\

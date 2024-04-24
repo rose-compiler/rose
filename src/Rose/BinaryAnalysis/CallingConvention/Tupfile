@@ -5,11 +5,13 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/CallingConvention	\
     BasicTypes.h								\
     Declaration.h								\
     Definition.h								\
-    Exception.h
+    Exception.h									\
+    StoragePool.h
 
 run $(librose_compile)								\
     Analysis.C									\
     BasicTypes.C								\
     Declaration.C								\
     Definition.C								\
-    Exception.C
+    Exception.C									\
+    StoragePool.C

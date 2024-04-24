@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/CallingConvention/Declaration.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Exception.h>
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

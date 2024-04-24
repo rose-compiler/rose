@@ -83,6 +83,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/CallingConvention/Declaration.C					\
 	BinaryAnalysis/CallingConvention/Definition.C					\
 	BinaryAnalysis/CallingConvention/Exception.C					\
+	BinaryAnalysis/CallingConvention/StoragePool.C					\
 	BinaryAnalysis/CodeInserter.C							\
 	BinaryAnalysis/Concolic/Architecture.C						\
 	BinaryAnalysis/Concolic/Callback/MemoryExit.C					\

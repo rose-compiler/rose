@@ -4,6 +4,7 @@ add_library(roseBinaryAnalysisCallingConvention OBJECT
   Declaration.C
   Definition.C
   Exception.C
+  StoragePool.C
 )
 
 add_dependencies(roseBinaryAnalysisCallingConvention rosetta_generated)
@@ -14,5 +15,6 @@ install(FILES
   Declaration.h
   Definition.h
   Exception.h
+  StoragePool.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/CallingConvention)

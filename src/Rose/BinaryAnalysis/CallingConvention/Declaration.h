@@ -39,6 +39,8 @@ private:
     DefinitionPtr callingConvention_;                   // required calling convention definition
     SgAsmType *returnType_ = nullptr;                   // type of the function return value
     std::vector<std::pair<SgAsmType*, std::string>> arguments_; // types (and names) of the arguments
+    std::vector<std::vector<ConcreteLocation>> argumentLocations_; // computed argument locations based on calling convention
+    std::vector<ConcreteLocation> returnLocations_;     // location of return value(s)
 
 public:
     ~Declaration();
@@ -128,16 +130,36 @@ public:
     const std::vector<std::pair<SgAsmType*, std::string>>& arguments() const;
 
 public:
-    /** Return the concrete location for a function argument, or an error string.
+    /** Return the concrete location(s) for a function argument, or an error string.
      *
      *  Locations that are relative to the stack pointer assume that instruction pointer is at the first instruction of the called
      *  function and the instruction has not yet been executed.
      *
+     *  A successful return value always has at least one concrete location, and most arguments are allocated at only one location.
+     *  In a few rare cases, an argument might have more than one location, such as when a 64-bit integer is split across  two
+     *  32-bit registers on a 32-bit system.
+     *
      *  @{ */
-    Sawyer::Result<ConcreteLocation, std::string> argumentLocation(size_t index) const;
-    Sawyer::Result<ConcreteLocation, std::string> argumentLocation(const std::string &argName) const;
+    Sawyer::Result<std::vector<ConcreteLocation>, std::string> argumentLocation(size_t index) const;
+    Sawyer::Result<std::vector<ConcreteLocation>, std::string> argumentLocation(const std::string &argName) const;
     /** @} */
 
+    /** Return concrete location for the function return value, if any, or an error string.
+     *
+     *  Locations that are relative to the stack pointer assume that instruction pointer is at the first instruction of the called
+     *  function and the instruction has not yet been executed.
+     *
+     *  If the function returns `void` then a successful result contains no locations, otherwise it contains at least one location.
+     *  In a few rare cases, an return value might have more than one location, such as when a 64-bit integer is split across  two
+     *  32-bit registers on a 32-bit system.
+     *
+     *  If the return value cannot be located, then an error string is returned. */
+    Sawyer::Result<std::vector<ConcreteLocation>, std::string> returnLocation() const;
+
+private:
+    // Compute locations for all arguments or throw an exception
+    void computeArgumentLocations();
+    void computeReturnLocations();
 };
 
 } // namespace

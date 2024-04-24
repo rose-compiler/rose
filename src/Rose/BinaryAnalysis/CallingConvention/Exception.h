@@ -7,6 +7,8 @@
 
 #include <string>
 
+class SgAsmType;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace CallingConvention {
@@ -27,6 +29,22 @@ public:
     ParseError(const std::string &mesg)
         : Exception(mesg) {}
     virtual ~ParseError() throw() {}
+};
+
+/** Error allocating argument or return value storage. */
+class AllocationError: public Exception {
+public:
+    /** Construct error about allocating storage for something. */
+    AllocationError(const std::string &mesg)
+        : Exception(mesg) {}
+
+    /** Construct error about allocating an argument. */
+    static AllocationError cannotAllocateArgument(int argIndex, const std::string &argName, SgAsmType*, const std::string &decl);
+
+    /** Construct error about allocating return value. */
+    static AllocationError cannotAllocateReturn(SgAsmType*, const std::string &decl);
+
+    virtual ~AllocationError() throw() {}
 };
 
 } // namespace

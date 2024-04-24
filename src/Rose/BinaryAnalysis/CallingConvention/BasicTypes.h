@@ -43,20 +43,68 @@ enum class StackCleanup {
     UNSPECIFIED,                                        /**< Stack parameter cleanup is unknown or unspecified. */
 };
 
+class Allocator;
+
+/** Shared-ownership pointer to @ref Allocator.
+ *
+ * @{ */
+using AllocatorPtr = std::shared_ptr<Allocator>;
+using AllocatorConstPtr = std::shared_ptr<const Allocator>;
+/** @} */
+
 class Analysis;
+
 /** Shared-ownership pointer to @ref Analysis. */
 using AnalysisPtr = Sawyer::SharedPointer<Analysis>;
 
 class Declaration;
+
 /** Shared-ownership pointer to @ref Declaration. */
 using DeclarationPtr = Sawyer::SharedPointer<Declaration>;
 
 class Definition;
+
 /** Shared-ownership pointer for @ref Definition. */
 using DefinitionPtr = Sawyer::SharedPointer<Definition>;
 
 /** An ordered collection of calling convention definitions. */
 using Dictionary = std::vector<DefinitionPtr>;
+
+class StoragePoolBase;
+
+/** Shared-ownership pointer to @ref StoragePoolBase.
+ *
+ *  @{ */
+using StoragePoolBasePtr = std::shared_ptr<StoragePoolBase>;
+using StoragePoolBaseConstPtr = std::shared_ptr<const StoragePoolBase>;
+/** @} */
+
+class StoragePoolEnumerated;
+
+/** Shared-ownership pointer to @ref StoragePoolEnumerated.
+ *
+ *  @{ */
+using StoragePoolEnumeratedPtr = std::shared_ptr<StoragePoolEnumerated>;
+using StoragePoolEnumeratedConstPtr = std::shared_ptr<const StoragePoolEnumerated>;
+/** @} */
+
+class StoragePoolStack;
+
+/** Shared-ownership pointer to @ref StoragePoolStack.
+ *
+ *  @{ */
+using StoragePoolStackPtr = std::shared_ptr<StoragePoolStack>;
+using StoragePoolStackConstPtr = std::shared_ptr<const StoragePoolStack>;
+/** @} */
+
+class TypePredicate;
+
+/** Shared-ownership pointer to @ref TypePredicate.
+ *
+ * @{ */
+using TypePredicatePtr = std::shared_ptr<TypePredicate>;
+using TypePredicateConstPtr = std::shared_ptr<const TypePredicate>;
+/** @} */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Free functions

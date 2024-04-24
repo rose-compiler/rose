@@ -33,9 +33,17 @@ public:
     using Ptr = DefinitionPtr;
 
 private:
+    // General information
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     Sawyer::Optional<size_t> bitsPerWord_;              // Optionally override the word width from the architecture
+
+    // The architecture with which this calling convention definition is associated. It is referenced via weak pointer because the
+    // architecture typically contains a list of calling convention definitions, so if we had referred here to the architecture with
+    // a shared pointer we'd have a cycle. Architecture objects are typically not deleted since they're registered with the library.
+    std::weak_ptr<const Architecture::Base> architecture_;
+
+    // Used mostly during analysis
     std::vector<ConcreteLocation> nonParameterInputs_;  // Inputs that are not considered normal function parameters
     std::vector<ConcreteLocation> inputParameters_;     // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ConcreteLocation> outputParameters_;    // Return values and output parameters.
@@ -51,10 +59,11 @@ private:
     ConcreteLocation returnAddressLocation_;            // Where is the function return address stored at function entry?
     RegisterDescriptor instructionPointerRegister_;     // Where is the next instruction address stored?
 
-    // The architecture with which this calling convention definition is associated. It is referenced via weak pointer because the
-    // architecture typically contains a list of calling convention definitions, so if we had referred here to the architecture with
-    // a shared pointer we'd have a cycle. Architecture objects are typically not deleted since they're registered with the library.
-    std::weak_ptr<const Architecture::Base> architecture_;
+    // These are used to figure out where function arguments and return values are stored given a function declaration. For
+    // instance, the first two arguments that are 32 bits wide get stored in register 1 and register 2, and other arguments are
+    // stored on the stack.
+    AllocatorPtr returnValueAllocator_;
+    AllocatorPtr argumentValueAllocator_;
 
 protected:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -385,6 +394,24 @@ public:
      *  pointer register is not included in this list unless its listed as a return register, callee-saved register, or scratch
      *  register. */
     RegisterParts getUsedRegisterParts() const;
+
+    /** Property: Allocator for return values.
+     *
+     *  Describes where/how return the value(s) are stored.
+     *
+     *  @{ */
+    AllocatorPtr returnValueAllocator() const;
+    void returnValueAllocator(const AllocatorPtr&);
+    /** @} */
+
+    /** Property: Allocator for argument values.
+     *
+     *  Describe where/how function arguments are stored.
+     *
+     *  @{ */
+    AllocatorPtr argumentValueAllocator() const;
+    void argumentValueAllocator(const AllocatorPtr&);
+    /** @} */
 
     /** Print detailed information about this calling convention.
      *
