@@ -388,3 +388,4 @@ ACATS:
                 - 2
     script:
         - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME $VERSION
+    timeout: 12h
