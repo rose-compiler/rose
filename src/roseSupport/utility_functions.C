@@ -216,7 +216,6 @@ bool Rose::is_PHP_language        = false;
 bool Rose::is_Python_language     = false;
 bool Rose::is_Cuda_language       = false;
 bool Rose::is_OpenCL_language     = false;
-bool Rose::is_X10_language        = false;
 bool Rose::is_binary_executable   = false;
 
 

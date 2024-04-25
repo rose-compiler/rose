@@ -3955,7 +3955,6 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
             // if we need to add asociated symbols to the current function definition scope.
                SgExpression* indexExpression = arrayType->get_index();
 
-            // DQ (2/15/2016): This fails for X10 support.
                if (indexExpression != nullptr)
                   {
                  // DQ (2/14/2016): Handle the case of an expression tree with any number of variable references.
@@ -3985,10 +3984,6 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
                            // This is not a reference to a variable from the current function's paramter lists, so we can ignore processing it within the VLA handling.
                             }
                        }
-                  }
-                 else
-                  {
-                 // In X10 the array index can be more general (fixed to avoid failing X10 tests).
                   }
              }
         }

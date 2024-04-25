@@ -987,22 +987,6 @@ determineFileType(vector<string> argv, int &nextErrorCode, SgProject* project)
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                  }
-                                else if (CommandlineProcessing::isX10FileNameSuffix(filenameExtension) == true)
-                                {
-                                   SgSourceFile* sourceFile = new SgSourceFile (argv, project);
-                                   file = sourceFile;
-                                   file->set_sourceFileUsesCppFileExtension(false);
-                                   file->set_outputLanguage(SgFile::e_X10_language);
-                                   file->set_inputLanguage(SgFile::e_X10_language);
-                                   file->set_X10_only(true);
-                                   file->set_compileOnly(true);
-
-                                   Rose::is_X10_language = true;
-
-                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
-                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                   sourceFile->initializeGlobalScope();
-                                }
                                else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
                                 {
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
@@ -1247,19 +1231,6 @@ namespace Ecj {
 }// Rose::Frontend
 }// Rose
 #endif
-
-#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-namespace Rose {
-namespace Frontend {
-namespace X10 {
-namespace X10c {
-  extern void jserver_init();
-}// Rose::Frontend::X10::X10c
-}// Rose::Frontend::X10
-}// Rose::Frontend
-}// Rose
-#endif
-
 
 
 // *****************************************************************************************
@@ -2032,9 +2003,6 @@ int openFortranParser_main(int argc, char **argv );
 // DQ (10/11/2010): Added the Java support.
 int openJavaParser_main(int argc, char **argv );
 #endif
-
-// See $ROSE/src/frontend/X10_ROSE_Connection
-extern int x10_main(int argc, char** argv);
 
 int
 SgFile::callFrontEnd()
@@ -4177,61 +4145,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 #endif
    }
 
-int
-SgSourceFile::build_X10_AST(const vector<string>& p_argv)
-{
-  #ifndef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-  // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
-      ROSE_ASSERT (!
-          "[FATAL] [ROSE] [frontend] [X10] "
-          "error: ROSE was not configured to support the X10 frontend, see --help.");
-  #else
-      if (SgProject::get_verbose() >= 1)
-          std::cout << "[INFO] Building the X10 AST" << std::endl;
-  #endif
-    if (this -> get_package() != nullptr || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
-        return 0;
-    }
-
-    // SG (7/9/2015) In case of a mixed language project, force case
-    // sensitivity here.
-    SageBuilder::symbol_table_case_insensitive_semantics = false;
-
-    ROSE_ASSERT(get_requires_C_preprocessor() == false);
-
-    vector<string> frontEndCommandLine;
-    frontEndCommandLine.push_back(p_argv[0]);
-
-    // Java does not use include files, so we can enforce this.
-    ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
-
-  // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
-    // MH-20140424
-    // Add all of the specified source files
-    Rose_STL_Container<string> sourceFilenames = get_project()->get_sourceFileNameList();
-    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
-        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-        frontEndCommandLine.push_back(targetSourceFileToRemove);
-    }
-
-  int argc = p_argv.size();
-  char** argv = nullptr;
-
-        CommandlineProcessing::
-        generateArgcArgvFromList(frontEndCommandLine, argc, argv);
-
-#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-        Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
-    ASSERT_not_null(Rose::Frontend::X10::X10c::X10c_globalFilePointer);
-#endif
-        int status = x10_main(argc, argv);
-#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-    Rose::Frontend::X10::X10c::X10c_globalFilePointer = nullptr;
-#endif
-
-  return status;
-}
-
 namespace SgSourceFile_processCppLinemarkers
    {
   // This class (AST traversal) supports the traversal of the AST required
@@ -4708,52 +4621,38 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                        }
                       else
                        {
-                         if (get_X10_only() == true)
+                      // DQ (8/25/2017): Added new langauge support.
+                         if (get_Csharp_only() == true)
                             {
-#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-                                   frontendErrorLevel = build_X10_AST(argv);
-                                   frontend_failed = (frontendErrorLevel > 0);
-#else
-                                // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
-                                   ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [X10] error: ROSE was not configured to support the X10 frontend.");
-#endif
+                              frontendErrorLevel = build_Csharp_AST(argv,inputCommandLine);
+                              frontend_failed = (frontendErrorLevel > 0);
                             }
-                           else
+                         else
                             {
                            // DQ (8/25/2017): Added new langauge support.
-                              if (get_Csharp_only() == true)
+                              if (get_Ada_only() == true)
                                  {
-                                   frontendErrorLevel = build_Csharp_AST(argv,inputCommandLine);
+                                   frontendErrorLevel = build_Ada_AST(argv,inputCommandLine);
                                    frontend_failed = (frontendErrorLevel > 0);
                                  }
-                                else
+                              else
                                  {
                                 // DQ (8/25/2017): Added new langauge support.
-                                   if (get_Ada_only() == true)
+                                   if (get_Jovial_only() == true)
                                       {
-                                        frontendErrorLevel = build_Ada_AST(argv,inputCommandLine);
+                                        frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
                                         frontend_failed = (frontendErrorLevel > 0);
+                                        generateJovialCompoolFile(this);
+                                     // Rasmussen (11/21/2017): No Jovial compiler for now
+                                        set_skipfinalCompileStep(true);
                                       }
-                                     else
+                                   else
                                       {
-                                     // DQ (8/25/2017): Added new langauge support.
-                                        if (get_Jovial_only() == true)
-                                           {
-                                             frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
-                                             frontend_failed = (frontendErrorLevel > 0);
-                                             generateJovialCompoolFile(this);
-                                          // Rasmussen (11/21/2017): No Jovial compiler for now
-                                             set_skipfinalCompileStep(true);
-                                           }
-                                          else
-                                           {
-                                          // This is the C/C++ case (default).
-                                             frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
-
-                                          // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-                                          // Any non-zero value indicates an error.
-                                             frontend_failed = (frontendErrorLevel != 0);
-                                           }
+                                     // This is the C/C++ case (default).
+                                        frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+                                      // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
+                                     // Any non-zero value indicates an error.
+                                        frontend_failed = (frontendErrorLevel != 0);
                                       }
                                  }
                             }
@@ -4876,11 +4775,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // printf ("Fortran language support in SgFile::compileOutput() not implemented \n");
        // ROSE_ASSERT(false);
           compilerNameOrig = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
-        }
-
-    if (get_X10_only() == true)
-        {
-          compilerNameOrig = BACKEND_X10_COMPILER_NAME_WITH_PATH;
         }
 
   // BP : 11/13/2001, checking to see that the compiler name is set
@@ -5697,7 +5591,7 @@ SgProject::compileOutput()
 
        // DQ (1/9/2017): Only proceed with linking step if the compilation step finished without error.
        // DQ (30/8/2017): Note that Csharp does not use linking the same way that C/C++ does (as I understand it).
-          if ( (errorCode == 0) && (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) ) )
+          if ( (errorCode == 0) && (! (get_Java_only() || get_Python_only() || get_Csharp_only() ) ) )
              {
 
             // ROSE_ASSERT(get_compileOnly() == true);

@@ -708,7 +708,6 @@ ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physica
   ROSE_DLL_API inline bool is_Python_language()     { return Rose::is_Python_language; }
   ROSE_DLL_API inline bool is_Cuda_language()       { return Rose::is_Cuda_language; }
   ROSE_DLL_API inline bool is_OpenCL_language()     { return Rose::is_OpenCL_language; }
-  ROSE_DLL_API inline bool is_X10_language()        { return Rose::is_X10_language; }
   ROSE_DLL_API inline bool is_binary_executable()   { return Rose::is_binary_executable; }
 #else
   ROSE_DLL_API bool is_Ada_language ();
@@ -728,7 +727,6 @@ ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physica
   ROSE_DLL_API bool is_Python_language();
   ROSE_DLL_API bool is_Cuda_language();
   ROSE_DLL_API bool is_OpenCL_language();
-  ROSE_DLL_API bool is_X10_language();
   ROSE_DLL_API bool is_binary_executable();
 #endif
 

@@ -1094,7 +1094,6 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/AdaCodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JovialCodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser

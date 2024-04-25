@@ -762,15 +762,10 @@ endif()
 
 # If POET is enabled in ROSE, we need to link in some additional dependencies.
 if(enable-poet)
-  set(LINK_FILES
-    poet
-    ${CMAKE_DL_LIBS}
-    libX10Traversal)
+  set(LINK_FILES poet ${CMAKE_DL_LIBS})
   add_dependencies(ROSE_DLL poet)
 else()
-  set(LINK_FILES
-    ${CMAKE_DL_LIBS}
-    libX10Traversal)
+  set(LINK_FILES ${CMAKE_DL_LIBS})
 endif()
 
 # ???

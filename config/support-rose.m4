@@ -112,13 +112,8 @@ fi
 
 AC_MSG_NOTICE([GFORTRAN_PATH = "$GFORTRAN_PATH"])
 
-# Call supporting macro for X10 language compiler path
-
 #########################################################################################
 ##
-
-  ROSE_SUPPORT_X10()
-
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
 
   ROSE_CONFIGURE_SECTION([])
@@ -2025,7 +2020,6 @@ src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/SageIII/sage.docs
 src/frontend/SageIII/sageInterface/Makefile
 src/frontend/SageIII/virtualCFG/Makefile
-src/frontend/X10_ROSE_Connection/Makefile
 src/midend/Makefile
 src/midend/BinaryAnalysis/Makefile
 src/midend/programAnalysis/Makefile
@@ -2213,7 +2207,6 @@ tests/nonsmoke/functional/CompileTests/vxworks_tests/Makefile
 tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile
-tests/nonsmoke/functional/CompileTests/x10_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparse_template_from_ast/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
@@ -2337,7 +2330,6 @@ tests/smoke/unit/Utility/Makefile
 # DQ (3/8/2017): Removed these directories from testing (pre-smoke and pre-nonsmoke test directories.
 # tests/CompileTests/Makefile
 # tests/CompileTests/OpenMP_tests/Makefile
-# tests/CompileTests/x10_tests/Makefile
 
 # DQ (11/14/2017): Removed GNAT test directory since it is redundant with the ADA test directory.
 # tests/nonsmoke/functional/CompileTests/gnat_tests/Makefile

@@ -395,33 +395,6 @@ namespace Cmdline {
     }
   } // namespace Rose::Cmdline::Java
 
-  namespace X10 {
-    static std::string option_prefix = "-rose:x10:";
-
-    void
-    Process (SgProject* project, std::vector<std::string>& argv);
-
-    // -rose:x10
-    void
-    ProcessX10Only (SgProject* project, std::vector<std::string>& argv);
-
-    namespace X10c {
-
-    extern std::list<std::string> jvm_options;
-
-    std::string
-    GetRoseClasspath();
-
-    void
-    Process (SgProject* project, std::vector<std::string>& argv);
-
-    /** -rose:java:ecj:jvm_options
-     */
-    void
-    ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
-    } // namespace Rose::Cmdline::X10::X10c
-  } // namespace Rose::Cmdline::X10
-
 } // namespace Rose::Cmdline
 } // namespace Rose
 #endif // ROSE_SAGESUPPORT_CMDLINE_H

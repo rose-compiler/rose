@@ -11,7 +11,6 @@ else()
   # the headers are still included from unparser.h and so need to still be installed.
   add_subdirectory(FortranCodeGeneration)
   add_subdirectory(JavaCodeGeneration)
-  add_subdirectory(X10CodeGeneration)
   add_subdirectory(AdaCodeGeneration)
   add_subdirectory(JovialCodeGeneration)
   add_subdirectory(PHPCodeGeneration)
@@ -48,9 +47,6 @@ add_library (unparser OBJECT
   languageIndependenceSupport/name_qualification_support.C
   languageIndependenceSupport/unparse_debug.C
   languageIndependenceSupport/unparseLanguageIndependentConstructs.C
-  X10CodeGeneration/unparseX10_expressions.C
-  X10CodeGeneration/unparseX10_statements.C
-  X10CodeGeneration/unparseX10_types.C
   AdaCodeGeneration/unparseAda_expressions.C
   AdaCodeGeneration/unparseAda_statements.C
   AdaCodeGeneration/unparseAda_types.C

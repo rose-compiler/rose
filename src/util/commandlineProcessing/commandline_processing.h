@@ -132,8 +132,6 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isJavaJarFile(const std::string &fileName);
           ROSE_UTIL_API bool isJavaJvmFile(const std::string &fileName);
 
-          ROSE_UTIL_API bool isX10FileNameSuffix  ( const std::string & suffix );
-
           ROSE_UTIL_API void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;
           

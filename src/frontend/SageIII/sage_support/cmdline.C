@@ -32,7 +32,6 @@ ROSE_DLL_API int Rose::Cmdline::verbose = 0;
 ROSE_DLL_API bool Rose::Cmdline::Java::Ecj::batch_mode = false;
 ROSE_DLL_API std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
 ROSE_DLL_API std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
-std::list<std::string> Rose::Cmdline::X10::X10c::jvm_options;
 
 /*-----------------------------------------------------------------------------
  *  namespace Rose::Cmdline {
@@ -932,7 +931,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
       Rose::Cmdline::Ada::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Java::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Gnu::Process(this, local_commandLineArgumentList);
-      Rose::Cmdline::X10::Process(this, local_commandLineArgumentList);
 
   // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
   // This is now demonstrated to be important in the case of ffmpeg-1.2 for the file "file.c" where it is specified as
@@ -2967,115 +2965,6 @@ ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv
   }// has_java_remote_debug
 }// Cmdline::Java::Ecj::ProcessEnableRemoteDebugging
 
-//------------------------------------------------------------------------------
-//                                  X10
-//------------------------------------------------------------------------------
-
-void
-Rose::Cmdline::X10::
-Process (SgProject* project, std::vector<std::string>& argv)
-{
-  if (SgProject::get_verbose() > 1)
-      std::cout << "[INFO] Processing X10 commandline options" << std::endl;
-
-  ProcessX10Only(project, argv);
-}
-
-void
-Rose::Cmdline::X10::
-ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
-{
-  bool is_x10_only =
-      CommandlineProcessing::isOption(
-          argv,
-          X10::option_prefix,
-          "",
-          true);
-
-  if (is_x10_only)
-  {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Turning on X10 only mode" << std::endl;
-
-      // X10 code is only compiled, not linked as is C/C++ and Fortran.
-      project->set_compileOnly(true);
-      project->set_X10_only(true);
-  }
-}
-
-void
-Rose::Cmdline::X10::X10c::
-Process (SgProject* project, std::vector<std::string>& argv)
-{
-  if (SgProject::get_verbose() > 1)
-      std::cout << "[INFO] Processing X10 compiler frontend commandline options" << std::endl;
-
-  ProcessJvmOptions(project, argv);
-}
-
-void
-Rose::Cmdline::X10::X10c::
-ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
-{
-  if (SgProject::get_verbose() > 1)
-      std::cout << "[INFO] Processing X10 compiler frontend JVM commandline options" << std::endl;
-
-  std::string x10c_jvm_options = "";
-
-  bool has_x10c_jvm_options =
-      CommandlineProcessing::isOptionWithParameter(
-          argv,
-          X10::option_prefix,
-          "x10c:jvm_options",
-          x10c_jvm_options,
-          Cmdline::REMOVE_OPTION_FROM_ARGV);
-
-  if (has_x10c_jvm_options)
-  {
-      if (SgProject::get_verbose() > 1)
-      {
-          std::cout
-              << "[INFO] Processing X10 compiler options: "
-              << "'" << x10c_jvm_options << "'"
-              << std::endl;
-      }
-
-      std::list<std::string> x10c_jvm_options_list =
-          StringUtility::tokenize(x10c_jvm_options, ' ');
-
-      Cmdline::X10::X10c::jvm_options.insert(
-          Cmdline::X10::X10c::jvm_options.begin(),
-          x10c_jvm_options_list.begin(),
-          x10c_jvm_options_list.end());
-  }// has_x10c_jvm_options
-}// Cmdline::X10::ProcessJvmOptions
-
-std::string
-Rose::Cmdline::X10::X10c::
-GetRoseClasspath ()
-{
-  std::string classpath = "-Djava.class.path=";
-
-#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-  classpath +=
-      std::string(X10_INSTALL_PATH) + "/lib/x10c.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/lpg.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast.java_1.0.0.201101071300.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast_1.0.0.201101071300.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.core_1.1.3.201101071300.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.shrike_1.3.1.201101071300.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/x10wala.jar" + ":" +
-      std::string(X10_INSTALL_PATH) + "/lib/org.eclipse.equinox.common_3.6.0.v20100503.jar";
-#endif // ROSE_BUILD_X10_LANGUAGE_SUPPORT
-
-  classpath += ":";
-
-  // Everything else?
-  classpath += ".";
-
-  return classpath;
-}
-
 /*-----------------------------------------------------------------------------
  *  namespace SgFile {
  *---------------------------------------------------------------------------*/
@@ -3206,8 +3095,6 @@ SgFile::usage ( int status )
 "                             compile Fortran I code (not implemented yet)\n"
 "     -rose:fortran:ofp:jvm_options\n"
 "                             Specifies the JVM startup options\n"
-"     -rose:x10\n"
-"                             compile X10 code (work in progress)\n"
 "     -rose:strict            strict enforcement of ANSI/ISO standards\n"
 "     -rose:binary, -rose:binary_only\n"
 "                             assume input file is for binary analysis (this avoids\n"
@@ -7743,13 +7630,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
                break;
              }
-          case SgFile::e_X10_language:
-             {
-               printf ("Error: SgFile::e_X10_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-
-               compilerNameString[0] = BACKEND_X10_COMPILER_NAME_WITH_PATH;
-               break;
-             }
 
           case SgFile::e_Promela_language:
              {
@@ -8551,16 +8431,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           printf ("Build -w option for some backend language compilers \n");
 #endif
        // DQ (9/7/2017): Avoid use of "-w" on other language compilers as well.
-       // DQ (3/7/2017): Avoid use of "-w" on X10 compiler.
-       // if (get_X10_only() == false)
-          if (get_X10_only() == false && get_Csharp_only() == false && get_Ada_only() == false && get_Jovial_only() == false)
+          if (get_Csharp_only() == false && get_Ada_only() == false && get_Jovial_only() == false)
              {
             // This is a portable way to turn off warnings in the backend compilers (GNU, Intel, Clang).
                argcArgvList.push_back("-w");
-             }
-            else
-             {
-            // X10 command line generation using "-w" will cause X10 compiler to fail.
              }
         }
 // Pei-Hung (05/08/2020) Fortran output might not fulfill standard requirement.-

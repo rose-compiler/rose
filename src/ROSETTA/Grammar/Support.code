@@ -5668,7 +5668,6 @@ public:
                e_Fortran_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser) */
                e_Java_language,    /*!< value used to specify output of Java (for testing Java unparser) */
                e_Jvm_language,     /*!< value used to specify Java binary JVM language */
-               e_X10_language,     /*!< value used to specify output of X10 (for testing X10 unparser) */
                e_Promela_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_language,     /*!< value used to specify output of PHP    */
                e_Python_language,  /*!< value used to specify output of Python */
@@ -6051,7 +6050,6 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           int build_Python_AST();
-          int build_X10_AST(const std::vector<std::string>& p_argv);
 
        // DQ (8/25/2017): Adding multiple language support (function definitions in src/frontend/SageIII/sage_support/sage_support.C).
           int build_Csharp_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
@@ -6457,9 +6455,6 @@ HEADER_APPLICATION_PROJECT_START
           void set_Java_destdir (std::string param);
           std::string get_Java_source_destdir (void) const;
           void set_Java_source_destdir (std::string param);
-
-          bool get_X10_only (void) const;
-          void set_X10_only (bool value);
 
        // DQ (8/25/2017): Added more language support.
           bool get_Csharp_only (void) const;
@@ -14295,7 +14290,6 @@ SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
           case SgFile::e_Fortran_language: s = "Fortran"; break;
           case SgFile::e_Java_language:    s = "Java";    break;
           case SgFile::e_Jvm_language:     s = "JVM";     break;
-          case SgFile::e_X10_language:     s = "X10";     break;
           case SgFile::e_PHP_language:     s = "PHP";     break;
           case SgFile::e_Python_language:  s = "Python";  break;
           case SgFile::e_Csharp_language:  s = "Csharp";  break;
@@ -14572,7 +14566,6 @@ SgFile::initialization()
      p_sourceFileTypeIsUnknown = false;
 
   // DQ (9/17/2020): Adding missing data member initialization.
-     p_sourceFileUsesX10FileExtension    = false;
      p_sourceFileUsesCsharpFileExtension = false;
      p_sourceFileUsesAdaFileExtension    = false;
      p_sourceFileUsesJovialFileExtension = false;
@@ -16271,7 +16264,6 @@ SgProject::initialization()
      p_Ada_only              = false;
 
   // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     p_X10_only              = false;
      p_Java_batch_mode       = false;
      p_Java_nowarn             = false;
      p_Java_verbose            = false;
@@ -17204,28 +17196,6 @@ SgProject::get_Java_destdir (void) const
     }
     return p_Java_destdir;
    }
-
-void
-SgProject::set_X10_only (bool value)
-{
-  ROSE_ASSERT(this != NULL);
-  p_X10_only = value;
-}
-
-
-bool
-SgProject::get_X10_only (void) const
-{
-  // look at how the files are set.
-  bool result = p_X10_only;
-  for (int i = 0; i < numberOfFiles(); i++)
-  {
-      SgFile & file = get_file(i);
-      result = result || (bool) file.get_X10_only();
-  }
-  return result;
-}
-
 
 void
 SgProject::set_Java_source_destdir (std::string param)

@@ -307,7 +307,6 @@ namespace Rose
      extern bool is_Python_language;
      extern bool is_Cuda_language;
      extern bool is_OpenCL_language;
-     extern bool is_X10_language;
      extern bool is_binary_executable;
    };
 

@@ -998,10 +998,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Jovial_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // X10 support
-     File.setDataPrototype         ( "bool", "X10_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // PHP support
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1327,8 +1323,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesBinaryFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "sourceFileUsesX10FileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (28/8/2017): Adding language support.
@@ -1964,9 +1958,6 @@ Grammar::setUpSupport ()
 
   // Rasmussen (4/16/2020): Jovial_only had been left out of initial Jovial support.
      Project.setDataPrototype ( "bool", "Jovial_only", "= false",
-            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     Project.setDataPrototype ( "bool", "X10_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ( "bool", "Ada_only", "= false",

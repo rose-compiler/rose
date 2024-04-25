@@ -1,7 +1,6 @@
 add_subdirectory(SageIII)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)
-add_subdirectory(X10_ROSE_Connection)
 add_subdirectory(CxxFrontend)
 add_subdirectory(OpenFortranParser_SAGE_Connection)
 add_subdirectory(ECJ_ROSE_Connection)

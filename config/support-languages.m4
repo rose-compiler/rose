@@ -684,7 +684,6 @@ AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_frontend" = xye
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_frontend" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [false])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries_frontend" = xyes])

@@ -142,8 +142,6 @@ else
 	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
-libroseX10Libraries = frontend/X10_ROSE_Connection/libroseX10.la
-
 if ROSE_USE_MYSQL
   OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
 else
@@ -201,7 +199,6 @@ libroseLibraries = \
    $(librosePHPlibraries) \
    $(librosePythonlibraries) \
    $(libroseBinaryLibraries) \
-   $(libroseX10Libraries) \
    $(libroseCsharplibraries) \
    $(libroseAdalibraries) \
    $(libroseJoviallibraries) \

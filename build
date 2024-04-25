@@ -395,7 +395,6 @@ if [[ ! -d tests ]] ; then
         tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile.in \
         tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile.in \
         tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile.in \
-        tests/nonsmoke/functional/CompileTests/x10_tests/Makefile.in \
         tests/nonsmoke/functional/CompileTests/unparse_template_from_ast/Makefile.in \
         tests/nonsmoke/functional/CompilerOptionsTests/Makefile.in \
         tests/nonsmoke/functional/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile.in \

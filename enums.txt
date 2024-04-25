@@ -7327,7 +7327,6 @@ SgFile::languageOption_enum::e_Jovial_language	13
 SgFile::languageOption_enum::e_PHP_language	9
 SgFile::languageOption_enum::e_Promela_language	8
 SgFile::languageOption_enum::e_Python_language	10
-SgFile::languageOption_enum::e_X10_language	7
 SgFile::languageOption_enum::e_default_language	1
 SgFile::languageOption_enum::e_error_language	0
 SgFile::languageOption_enum::e_last_language	15

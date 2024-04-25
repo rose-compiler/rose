@@ -5720,27 +5720,6 @@ SageInterface::is_OpenCL_language()
 #endif
    }
 
-bool
-SageInterface::is_X10_language()
-   {
-#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
-  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
-     return Rose::is_X10_language;
-#else
-     bool returnValue = false;
-
-     vector<SgFile*> fileList = generateFileList();
-
-     int size = (int)fileList.size();
-     for (int i = 0; i < size; i++)
-       {
-         if (fileList[i]->get_X10_only() == true)
-              returnValue = true;
-       }
-
-     return returnValue;
-#endif
-}
 // for if (INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS == 0)
 #endif
 

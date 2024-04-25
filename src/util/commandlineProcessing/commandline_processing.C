@@ -1047,20 +1047,6 @@ CommandlineProcessing::isJavaJvmFile(const std::string &fileName) {
     return false;
 }
 
-bool
-CommandlineProcessing::isX10FileNameSuffix (const std::string & suffix)
-{
-  bool returnValue = false;
-
-  if (suffix == "x10" ||
-      suffix == "X10")
-  {
-      returnValue = true;
-  }
-
-  return returnValue;
-}
-
 void
 CommandlineProcessing::initSourceFileSuffixList ( )
    {
@@ -1121,10 +1107,6 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");
 #endif
-
-       // Deprecate X10
-          validSourceFileSuffixes.push_back(".x10");
-          validSourceFileSuffixes.push_back(".X10");
 
           first_call = false;
         }

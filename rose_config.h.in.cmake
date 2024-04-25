@@ -294,9 +294,6 @@
 /* Name of backend Python interpreter including path */
 #define BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH "${BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH}"
 
-/* Name of backend X10 compiler, including path */
-#define BACKEND_X10_COMPILER_NAME_WITH_PATH "${BACKEND_X10_COMPILER_NAME_WITH_PATH}"
-
 /* Internal EDG specific consistency tests. */
 //AS FIXME
 #define CHECKING 1

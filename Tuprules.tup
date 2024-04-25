@@ -610,7 +610,6 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/languageIndependenceSupport \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/PHPCodeGeneration \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/PythonCodeGeneration \
- @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/X10CodeGeneration \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/BinaryFormats \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/BinaryLoader \
