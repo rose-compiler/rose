@@ -151,6 +151,9 @@ map_t<int, SgInitializedName*>& libadalangVars();
 /// returns a mapping from hash to SgDeclarationStatement
 map_t<int, SgDeclarationStatement*>& libadalangDecls();
 
+/// returns a mapping from hash to ROSE type declaration
+map_t<int, SgDeclarationStatement*>& libadalangTypes();
+
 /// returns a mapping from string to standard type nodes
 map_t<int, SgType*>& adaTypes();
 

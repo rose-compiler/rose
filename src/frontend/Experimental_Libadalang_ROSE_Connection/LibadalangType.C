@@ -383,13 +383,15 @@ namespace
 
           // \todo if there is no subtype constraint, shall we produce
           //       a subtype w/ NoConstraint, or leave the original type?
-          /*if(forceSubtype || subtype.Subtype_Constraint)
+          ada_base_entity subtype_constraint;
+          ada_subtype_indication_f_constraint(lal_def, &subtype_constraint);
+          if(forceSubtype || !ada_node_is_null(&subtype_constraint))
           {
             //~ SgAdaTypeConstraint& range = getConstraintID_opt(subtype.Subtype_Constraint, ctx);
-            SgAdaTypeConstraint& range = getConstraintID(subtype.Subtype_Constraint, ctx);
+            SgAdaTypeConstraint& range = getConstraint(&subtype_constraint, ctx);
 
             res = &mkAdaSubtype(SG_DEREF(res), range);
-          }*/ //TODO How do we get the contraint status here? 
+          } //TODO How do we get the constraint status here? 
 
           ada_base_entity has_not_null;
           ada_subtype_indication_f_has_not_null(lal_def, &has_not_null);
@@ -453,7 +455,8 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
 
           // is it a type?
           findFirstOf
-          || (res = findFirst(adaTypes(),  hash))
+          || (res = findFirst(adaTypes(),         hash))
+          || (res = findFirst(libadalangTypes(),  hash))
           ;
 
           if(res != nullptr){
@@ -499,6 +502,52 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
     logError() << "getDeclType: unhandled definition kind: " << kind
                << std::endl;
     return mkTypeUnknown();
+  }
+
+  TypeData
+  getTypeFoundation(const std::string& name, ada_base_entity* lal_def, AstContext ctx)
+  {
+    //Get the kind of this node
+    ada_node_kind_enum kind = ada_node_kind(lal_def);
+
+    logKind("A_Type_Definition", kind);
+
+    TypeData                res{lal_def, nullptr, false, false, false};
+
+    /* unused fields:
+       Definition_Struct
+         bool                           Has_Null_Exclusion;
+    */
+
+    switch(kind)
+    {
+      case ada_derived_type_def:              // 3.4(2)     -> Trait_Kinds
+        {
+          logKind("ada_derived_type_def", kind);
+          /*
+             unused fields: (derivedTypeDef)
+                Declaration_List     Implicit_Inherited_Declarations;
+          */
+          ada_base_entity subtype_indication;
+          ada_derived_type_def_f_subtype_indication(lal_def, &subtype_indication);
+
+          SgType& basetype = getDefinitionType(&subtype_indication, ctx);
+
+          //~ if (isSgEnumType(si::Ada::base)
+          res.sageNode(mkAdaDerivedType(basetype));
+          break;
+        }
+
+      default:
+        {
+          logWarn() << "unhandled type kind " << kind << std::endl;
+          //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+          res.sageNode(mkTypeUnknown());
+        }
+    }
+
+    //ADA_ASSERT(&res.sageNode());
+    return res;
   }
 
 void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int repval)
@@ -922,6 +971,47 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   // set the standard package in the SageInterface::ada namespace
   // \todo this should go away for a cleaner interface
   si::Ada::stdpkg = &stdpkg;
+}
+
+SgAdaTypeConstraint&
+getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
+{
+  if(lal_constraint == nullptr || ada_node_is_null(lal_constraint)){
+    return mkAdaNullConstraint();
+  }
+
+  SgAdaTypeConstraint*  res = nullptr;
+
+  ada_node_kind_enum kind = ada_node_kind(lal_constraint);
+  logKind("A_Constraint", kind);
+
+  switch(kind)
+  {
+    case ada_range_constraint:             // 3.2.2: 3.5(3)
+      {
+        logKind("ada_range_constraint", kind);
+
+        //Get the lower/upper bounds of the range
+        ada_base_entity lal_range_op, lal_lower, lal_upper;
+        ada_range_constraint_f_range(lal_constraint, &lal_range_op);
+        ada_range_spec_f_range(&lal_range_op, &lal_range_op);
+        ada_bin_op_f_left(&lal_range_op, &lal_lower);
+        ada_bin_op_f_right(&lal_range_op, &lal_upper);
+        SgExpression& lb       = getExpr(&lal_lower, ctx);
+        SgExpression& ub       = getExpr(&lal_upper, ctx);
+        SgRangeExp&   rangeExp = mkRangeExp(lb, ub);
+
+        res = &mkAdaRangeConstraint(rangeExp);
+        break;
+      }
+
+    default:
+      logError() << "Unhandled constraint: " << kind << std::endl;
+      ROSE_ABORT();
+  }
+
+  attachSourceLocation(SG_DEREF(res), lal_constraint, ctx);
+  return *res;
 }
 
 } //End Libadalang_ROSE_Translation namepsace

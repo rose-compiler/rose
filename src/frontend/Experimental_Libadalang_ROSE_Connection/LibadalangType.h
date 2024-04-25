@@ -11,6 +11,39 @@
 
 namespace Libadalang_ROSE_Translation {
 
+/// represents a (partially) converted type
+template <class libadalang_entity, class SageNode>
+struct TypeDataT : std::tuple<libadalang_entity*, SageNode*, bool, bool, bool, bool>
+{
+  using base = std::tuple<libadalang_entity*, SageNode*, bool, bool, bool, bool>;
+  // using base::base;
+
+  TypeDataT( libadalang_entity* def = nullptr,
+             SageNode* sgn = nullptr,
+             bool abs = false,
+             bool ltd = false,
+             bool tag = false,
+             bool inh = false
+           )
+  : base(def, sgn, abs, ltd, tag, inh)
+  {}
+
+  libadalang_entity*        definitionStruct()  const { return std::get<0>(*this); }
+  SageNode&                 sageNode()          const { return SG_DEREF(std::get<1>(*this)); }
+  bool                      isAbstract()        const { return std::get<2>(*this); }
+  bool                      isLimited()         const { return std::get<3>(*this); }
+  bool                      isTagged()          const { return std::get<4>(*this); }
+  bool                      inheritsRoutines()  const { return std::get<5>(*this); }
+
+  void                      sageNode(SageNode& n)     { std::get<1>(*this) = &n; }
+  void                      setAbstract(bool b)       { std::get<2>(*this) = b; }
+  void                      setLimited(bool b)        { std::get<3>(*this) = b; }
+  void                      setTagged(bool b)         { std::get<4>(*this) = b; }
+  void                      inheritsRoutines(bool b)  { std::get<5>(*this) = b; }
+};
+
+using TypeData       = TypeDataT<ada_base_entity, SgNode>;
+
 //Function to hash a unique int from a node using the node's kind and location.
 //The kind and location can be provided, but if not they will be determined in the function
 int hash_node(ada_base_entity *node, int kind = -1, std::string full_sloc = "");
@@ -29,6 +62,15 @@ getDeclType(ada_base_entity* lal_id, AstContext ctx);
 /// \param forceSubtype true, iff a subtype without constraint should be represented as such
 SgType&
 getDefinitionType(ada_base_entity* lal_def, AstContext ctx, bool forceSubtype = false);
+
+/// returns a ROSE representation of the type represented by \ref lal_def
+/// \post res.n is not NULL
+TypeData
+getTypeFoundation(const std::string& name, ada_base_entity* lal_def, AstContext ctx);
+
+/// creates a constraint node for \ref el
+SgAdaTypeConstraint&
+getConstraint(ada_base_entity* lal_constraint, AstContext ctx);
 
 } //end Libadlang_ROSE_Translation namespace
 

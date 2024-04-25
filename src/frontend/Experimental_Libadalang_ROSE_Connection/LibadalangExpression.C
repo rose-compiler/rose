@@ -207,7 +207,7 @@ namespace
   ///       * generic instantiations is instance(integer, "+")
   ///       * ??
   SgExpression&
-  getOperator_fallback(ada_base_entity* lal_expr, AstContext ctx)
+  getOperator_fallback(ada_base_entity* lal_expr, bool unary, AstContext ctx)
   {
     using MkWrapperFn = std::function<SgExpression*()>;
     using OperatorMakerMap = std::map<ada_node_kind_enum, std::pair<const char*, MkWrapperFn> >;
@@ -238,8 +238,6 @@ namespace
       { ada_op_plus,    {"ada_op_plus",    mk2_wrapper<SgAddOp,            sb::buildAddOp> }},
       { ada_op_minus,   {"ada_op_minus",   mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp> }},
       { ada_op_concat,  {"ada_op_concat",  mk2_wrapper<SgConcatenationOp,  sb::buildConcatenationOp> }},
-      /*{ A_Unary_Plus_Operator,            {"A_Unary_Plus_Operator",            mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp> }},
-      { A_Unary_Minus_Operator,           {"A_Unary_Minus_Operator",           mk1_wrapper<SgMinusOp,          sb::buildMinusOp> }},*/
       { ada_op_mult,    {"ada_op_mult",    mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp> }},
       { ada_op_div,     {"ada_op_div",     mk2_wrapper<SgDivideOp,         sb::buildDivideOp> }},
       { ada_op_mod,     {"ada_op_mod",     mk2_wrapper<SgModOp,            sb::buildModOp> }},
@@ -249,9 +247,30 @@ namespace
       { ada_op_not,     {"ada_op_not",     mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
     };
 
+    //Libadalang doesn't inherently treat unary +/- different from binary +/-, so we need a different map for them
+    static const OperatorMakerMap unaryMakerMap =
+    {
+      { ada_op_plus,    {"ada_op_plus",    mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp> }},
+      { ada_op_minus,   {"ada_op_minus",   mk1_wrapper<SgMinusOp,          sb::buildMinusOp> }},
+    };
+
     //TODO What about ada_op_and_then: ada_op_double_dot: ada_op_in: ada_op_not_in: ada_op_or_else:
 
     //ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
+
+    if(unary){
+      OperatorMakerMap::const_iterator pos = unaryMakerMap.find(kind);
+
+      if (pos != unaryMakerMap.end())
+      {
+        logKind(pos->second.first, kind);
+
+        SgExpression* res = pos->second.second();
+
+        operatorExprs().push_back(res);
+        return SG_DEREF(res);
+      }
+    }
 
     OperatorMakerMap::const_iterator pos = makerMap.find(kind);
 
@@ -560,7 +579,7 @@ namespace
   }
 
   SgExpression&
-  getOperator(ada_base_entity* lal_expr, OperatorCallSupplement suppl, AstContext ctx)
+  getOperator(ada_base_entity* lal_expr, OperatorCallSupplement suppl, bool unary, AstContext ctx)
   {
     // FYI https://en.wikibooks.org/wiki/Ada_Programming/All_Operators
     //ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
@@ -645,7 +664,7 @@ namespace
        Defining_Name_List    Corresponding_Name_Definition_List;
        Defining_Name_ID      Corresponding_Generic_Element;
     */
-    return getOperator_fallback(lal_expr, ctx);
+    return getOperator_fallback(lal_expr, unary, ctx);
   }
 
 } //end unnamed namespace
@@ -673,7 +692,7 @@ namespace{
   /// creates expressions from elements, but does not decorate
   ///   aggregates with SgAggregateInitializers
   SgExpression&
-  getExpr_undecorated(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl = {})
+  getExpr_undecorated(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl = {}, bool unary = false)
   {
     //Get the kind
     ada_node_kind_enum kind = ada_node_kind(lal_element);
@@ -842,15 +861,34 @@ namespace{
         }
 
       case ada_op_plus:                        // 4.1 TODO Add more ops
+      case ada_op_minus:
         {
           logKind("An_Operator_Symbol", kind);
 
-          res = &getOperator(lal_element, suppl, ctx);
+          res = &getOperator(lal_element, suppl, unary, ctx);
           /* unused fields:
              Defining_Name_ID      Corresponding_Name_Definition;
              Defining_Name_List    Corresponding_Name_Definition_List;
              Element_ID            Corresponding_Name_Declaration;
              Defining_Name_ID      Corresponding_Generic_Element;
+          */
+          break;
+        }
+      case ada_int_literal:                        // 2.4
+        {
+          logKind("ada_int_literal", kind);
+
+          ada_big_integer denoted_value;
+          ada_text value_text;
+
+          //Get the value of this node
+          ada_int_literal_p_denoted_value(lal_element, &denoted_value);
+          ada_big_integer_text(denoted_value, &value_text);
+          std::string denoted_text = ada_text_to_locale_string(&value_text);
+
+          res = &mkAdaIntegerLiteral(denoted_text.c_str());
+          /* unused fields: (Expression_Struct)
+               enum Attribute_Kinds  Attribute_Kind
           */
           break;
         }
@@ -867,9 +905,9 @@ namespace{
 } //End unnamed namespace
 
 SgExpression&
-getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl)
+getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl, bool unary)
 {
-  SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl));
+  SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
   
   //Check the kind
   ada_node_kind_enum kind = ada_node_kind(lal_element);
@@ -931,7 +969,9 @@ SgExpression& createCall(ada_base_entity* lal_prefix, std::vector<ada_base_entit
     arglist.push_back(&getArg(param, ctx));
   }
 
-  SgExpression& tgt = getExpr(lal_prefix, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */));
+  bool unary = (lal_params.size() == 1);
+
+  SgExpression& tgt = getExpr(lal_prefix, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */), unary);
   SgExpression* res = sg::dispatch(AdaCallBuilder{lal_prefix, std::move(arglist), operatorCallSyntax, objectCallSyntax, ctx}, &tgt);
 
   return SG_DEREF(res);
@@ -1001,8 +1041,8 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
   findFirstMatch
   || (res = findFirst(libadalangVars(),   hash))
   || (res = findFirst(libadalangDecls(),  hash))
+  || (res = findFirst(libadalangTypes(),  hash))
   /*|| (res = findFirst(asisExcps(),  hash))
-  || (res = findFirst(asisTypes(),  hash))
   || (res = findFirst(asisBlocks(), hash))*/
   || (res = queryBuiltIn(hash))
   ;

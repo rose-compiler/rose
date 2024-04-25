@@ -30,11 +30,14 @@ namespace si = SageInterface;
 namespace Libadalang_ROSE_Translation {
 
 namespace{
-  /// stores a mapping from Element_ID to SgInitializedName
+  /// stores a mapping from hash to SgInitializedName
   map_t<int, SgInitializedName*> libadalangVarsMap;
 
-  /// stores a mapping from Element_ID to SgInitializedName
+  /// stores a mapping from hash to SgInitializedName
   map_t<int, SgDeclarationStatement*> libadalangDeclsMap;
+
+  /// stores a mapping from hash to ROSE type declaration
+  map_t<int, SgDeclarationStatement*> libadalangTypesMap;
 
   /// stores a mapping from hash to builtin type nodes
   map_t<int, SgType*> adaTypesMap;
@@ -48,6 +51,7 @@ namespace{
 
 map_t<int, SgInitializedName*>&                     libadalangVars()         { return libadalangVarsMap;   }
 map_t<int, SgDeclarationStatement*>&               libadalangDecls()         { return libadalangDeclsMap;  }
+map_t<int, SgDeclarationStatement*>&               libadalangTypes()         { return libadalangTypesMap;  }
 map_t<int, SgType*>&                                      adaTypes()         { return adaTypesMap;         }
 std::vector<SgExpression*>&                          operatorExprs()         { return operatorExprsVector; }
 map_t<OperatorKey, std::vector<OperatorDesc> >&    operatorSupport()         { return operatorSupportMap;  }
@@ -259,6 +263,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
     {
         case ada_subp_body:             // Asis.Declarations
         case ada_object_decl:
+        case ada_type_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
