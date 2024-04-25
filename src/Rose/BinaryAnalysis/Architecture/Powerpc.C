@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Architecture/Powerpc.h>
 
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
@@ -12,6 +13,8 @@
 #include <sageInterface.h>
 
 #include <boost/lexical_cast.hpp>
+
+namespace CC = Rose::BinaryAnalysis::CallingConvention;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -30,7 +33,7 @@ Powerpc::callingConventions() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
     if (!callingConventions_.isCached()) {
-        CallingConvention::Dictionary dict;
+        CC::Dictionary dict;
         dict.push_back(cc_ibm(bitsPerWord()));
         callingConventions_ = dict;
     }
@@ -676,11 +679,10 @@ Powerpc::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
 }
 
 CallingConvention::Definition::Ptr
-Powerpc::cc_ibm(size_t bitsPerWord) const {
+Powerpc::cc_ibm(const size_t bitsPerWord) const {
     // See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.alangref/idalangref_reg_use_conv.htm
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance("IBM", "powerpc-" + boost::lexical_cast<std::string>(bitsPerWord) + " ibm",
-                                                      constPtr());
+    auto cc = CC::Definition::instance("IBM", "powerpc-" + boost::lexical_cast<std::string>(bitsPerWord) + " ibm", constPtr());
     cc->bitsPerWord(bitsPerWord);
 
     const RegisterDescriptor SP = regdict->stackPointerRegister();
@@ -691,45 +693,88 @@ Powerpc::cc_ibm(size_t bitsPerWord) const {
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
-    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->stackDirection(CC::StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(0);                       // return address is in link register
 
     //==== Function parameters ====
-    cc->appendInputParameter(regdict->findOrThrow("r3"));
-    cc->appendInputParameter(regdict->findOrThrow("r4"));
-    cc->appendInputParameter(regdict->findOrThrow("r5"));
-    cc->appendInputParameter(regdict->findOrThrow("r6"));
-    cc->appendInputParameter(regdict->findOrThrow("r7"));
-    cc->appendInputParameter(regdict->findOrThrow("r8"));
-    cc->appendInputParameter(regdict->findOrThrow("r9"));
-    cc->appendInputParameter(regdict->findOrThrow("r10"));
 
-    cc->appendInputParameter(regdict->findOrThrow("f1"));
-    cc->appendInputParameter(regdict->findOrThrow("f2"));
-    cc->appendInputParameter(regdict->findOrThrow("f3"));
-    cc->appendInputParameter(regdict->findOrThrow("f4"));
-    cc->appendInputParameter(regdict->findOrThrow("f5"));
-    cc->appendInputParameter(regdict->findOrThrow("f6"));
-    cc->appendInputParameter(regdict->findOrThrow("f7"));
-    cc->appendInputParameter(regdict->findOrThrow("f8"));
-    cc->appendInputParameter(regdict->findOrThrow("f9"));
-    cc->appendInputParameter(regdict->findOrThrow("f10"));
-    cc->appendInputParameter(regdict->findOrThrow("f11"));
-    cc->appendInputParameter(regdict->findOrThrow("f12"));
-    cc->appendInputParameter(regdict->findOrThrow("f13"));
+    // Non-FP parameters
+    {
+        auto pool = CC::StoragePoolEnumerated::instance("non-fp arguments", CC::isNonFpNotWiderThan(bitsPerWord));
+        auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
+            const RegisterDescriptor reg = regdict->findOrThrow(registerName);
+            cc->appendInputParameter(reg);
+            pool->append(ConcreteLocation(reg));
+        };
+
+        insert("r3");
+        insert("r4");
+        insert("r5");
+        insert("r6");
+        insert("r7");
+        insert("r8");
+        insert("r9");
+        insert("r10");
+        cc->argumentValueAllocator()->append(pool);
+    }
+
+    // FP parameters
+    {
+        auto pool = CC::StoragePoolEnumerated::instance("fp arguments", CC::isFpNotWiderThan(bitsPerWord));
+        auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
+            const RegisterDescriptor reg = regdict->findOrThrow(registerName);
+            cc->appendInputParameter(reg);
+            pool->append(ConcreteLocation(reg));
+        };
+
+        insert("f1");
+        insert("f2");
+        insert("f3");
+        insert("f4");
+        insert("f5");
+        insert("f6");
+        insert("f7");
+        insert("f8");
+        insert("f9");
+        insert("f10");
+        insert("f11");
+        insert("f12");
+        insert("f13");
+    }
 
     // Stack is generally not used for passing arguments
-    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
-    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLER);
+    cc->stackParameterOrder(CC::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CC::StackCleanup::BY_CALLER);
 
     //==== Return values ====
-    cc->appendOutputParameter(regdict->findOrThrow("r3")); // primary return
-    cc->appendOutputParameter(regdict->findOrThrow("r4")); // secondary return
 
-    cc->appendOutputParameter(regdict->findOrThrow("f1"));
-    cc->appendOutputParameter(regdict->findOrThrow("f2"));
-    cc->appendOutputParameter(regdict->findOrThrow("f3"));
-    cc->appendOutputParameter(regdict->findOrThrow("f4"));
+    // Non-FP return values
+    {
+        auto pool = CC::StoragePoolEnumerated::instance("non-fp returns", CC::isNonFpNotWiderThan(bitsPerWord));
+        auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
+            const RegisterDescriptor reg = regdict->findOrThrow(registerName);
+            cc->appendOutputParameter(reg);
+            pool->append(ConcreteLocation(reg));
+        };
+
+        insert("r3");
+        insert("r4");
+    }
+
+    // FP return values
+    {
+        auto pool = CC::StoragePoolEnumerated::instance("non-fp returns", CC::isFpNotWiderThan(bitsPerWord));
+        auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
+            const RegisterDescriptor reg = regdict->findOrThrow(registerName);
+            cc->appendOutputParameter(reg);
+            pool->append(ConcreteLocation(reg));
+        };
+
+        insert("f1");
+        insert("f2");
+        insert("f3");
+        insert("f4");
+    }
 
     //==== Scratch registers ====
     // function arguments that are not return values, plus others.

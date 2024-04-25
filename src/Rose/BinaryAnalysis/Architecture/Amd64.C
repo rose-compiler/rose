@@ -2,12 +2,15 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Architecture/Amd64.h>
 
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 #include <SgAsmExecutableFileFormat.h>
 #include <SgAsmGenericHeader.h>
+
+namespace CC = Rose::BinaryAnalysis::CallingConvention;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -102,7 +105,7 @@ Amd64::callingConventions() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
     if (!callingConventions_.isCached()) {
-        CallingConvention::Dictionary dict;
+        CC::Dictionary dict;
 
         //--------
         // 64-bit
@@ -169,7 +172,7 @@ Amd64::callingConventions() const {
 CallingConvention::Definition::Ptr
 Amd64::cc_sysv() const {
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance("sysv", "x86-64 sysv", constPtr());
+    auto cc = CC::Definition::instance("sysv", "x86-64 sysv", constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
@@ -177,37 +180,59 @@ Amd64::cc_sysv() const {
     cc->returnAddressLocation(ConcreteLocation(SP, 0));
 
     //==== Stack characteristics ====
-    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->stackDirection(CC::StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(bytesPerWord());          // return address
 
     //==== Function parameters ====
 
     // The first six integer or pointer arguments are passed in registers RDI, RSI, RDX, RCX, R8, and R9.
     // These registers are also not preserved across the call.
-    cc->appendInputParameter(regdict->findOrThrow("rdi"));
-    cc->appendInputParameter(regdict->findOrThrow("rsi"));
-    cc->appendInputParameter(regdict->findOrThrow("rdx"));
-    cc->appendInputParameter(regdict->findOrThrow("rcx"));
-    cc->appendInputParameter(regdict->findOrThrow("r8"));
-    cc->appendInputParameter(regdict->findOrThrow("r9"));
+    {
+        auto pool = CC::StoragePoolEnumerated::instance("non-fp arguments", CC::isNonFpNotWiderThan(bitsPerWord()));
+        auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
+            const RegisterDescriptor reg = regdict->findOrThrow(registerName);
+            cc->appendInputParameter(reg);
+            pool->append(ConcreteLocation(reg));
+        };
+        insert("rdi");
+        insert("rsi");
+        insert("rdx");
+        insert("rcx");
+        insert("r8");
+        insert("r9");
+    }
 
     // The first eight SSE arguments are passed in registers xmm0 through xmm7
-    cc->appendInputParameter(regdict->findOrThrow("xmm0"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm1"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm2"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm3"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm4"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm5"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm6"));
-    cc->appendInputParameter(regdict->findOrThrow("xmm7"));
+    if (const RegisterDescriptor XMM0 = regdict->findOrThrow("xmm0")) {
+        auto pool = CC::StoragePoolEnumerated::instance("fp arguments", CC::isFpNotWiderThan(XMM0.nBits()));
+        auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
+            const RegisterDescriptor reg = regdict->findOrThrow(registerName);
+            cc->appendInputParameter(reg);
+            pool->append(ConcreteLocation(reg));
+        };
+        insert("xmm0");
+        insert("xmm1");
+        insert("xmm2");
+        insert("xmm3");
+        insert("xmm4");
+        insert("xmm5");
+        insert("xmm6");
+        insert("xmm7");
+    }
 
     // The AL register is an input register that stores the number of SSE registers used for variable argument calls. (It
     // is also part of the first return value).
     cc->appendInputParameter(regdict->findOrThrow("al")); // for varargs calls
 
     // Arguments that don't fit in the input registers are passed on the stack
-    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
-    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLER);
+    cc->stackParameterOrder(CC::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CC::StackCleanup::BY_CALLER);
+    {
+        auto pool = CC::StoragePoolStack::instance("args-on-stack", CC::isAnyType(), constPtr());
+        pool->initialOffset(bytesPerWord());            // return address
+        cc->argumentValueAllocator()->append(pool);
+    }
+
 
     //==== Other inputs ====
 
@@ -221,11 +246,37 @@ Amd64::cc_sysv() const {
     cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
 
     //==== Return values ====
-    cc->appendOutputParameter(regdict->findOrThrow("rax"));
-    cc->appendOutputParameter(regdict->findOrThrow("rdx")); // second integer return
-    cc->appendOutputParameter(SP);                          // final value is usually 8 greater than initial value
-    cc->appendOutputParameter(regdict->findOrThrow("xmm0"));
-    cc->appendOutputParameter(regdict->findOrThrow("xmm1"));
+
+    // Integer return values
+    if (const RegisterDescriptor AX = regdict->findOrThrow("rax")) {
+        auto pool = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord()));
+        cc->returnValueAllocator()->append(pool);
+
+        pool->append(ConcreteLocation(AX));
+        cc->appendOutputParameter(AX);
+
+        const RegisterDescriptor DX = regdict->findOrThrow("rdx");
+        pool->append(ConcreteLocation(DX));
+        cc->appendOutputParameter(DX);
+    }
+
+    // FP return values
+    if (const RegisterDescriptor XMM0 = regdict->findOrThrow("xmm0")) {
+        auto pool = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(XMM0.nBits()));
+        cc->returnValueAllocator()->append(pool);
+
+        pool->append(ConcreteLocation(XMM0));
+        cc->appendOutputParameter(XMM0);
+
+        const RegisterDescriptor XMM1 = regdict->findOrThrow("xmm1");
+        pool->append(ConcreteLocation(XMM1));
+        cc->appendOutputParameter(XMM1);
+    }
+
+    // The stack pointer is an output because it is changed by the callee (incremented when the function returns). It does not hold
+    // a return value in the normal sense of the word, and thus isn't added to the return value allocator functions.
+    cc->appendOutputParameter(SP);
+
     //cc->scratchRegisters().insert(regdict->findLargestRegister(x86_regclass_st, 0)); // dynamic st(0), overlaps mm<i>
     //cc->scratchRegisters().insert(regdict->findLargestRegister(x86_regclass_st, 1)); // dynamic st(1), overlaps mm<i+1>
 

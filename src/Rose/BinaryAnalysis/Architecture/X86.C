@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Architecture/X86.h>
 
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -20,6 +21,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
+namespace CC = Rose::BinaryAnalysis::CallingConvention;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -492,12 +494,11 @@ X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr&) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CallingConvention::Definition::Ptr
-X86::cc_cdecl(size_t bitsPerWord) const {
+X86::cc_cdecl(const size_t bitsPerWord) const {
     // Register prefix letter for things like "ax", "eax", "rax"
     const std::string prefix = registerPrefix(bitsPerWord);
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance("cdecl", "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " cdecl",
-                                                      constPtr());
+    auto cc = CC::Definition::instance("cdecl", "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " cdecl", constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
@@ -507,13 +508,18 @@ X86::cc_cdecl(size_t bitsPerWord) const {
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
-    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->stackDirection(CC::StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(bitsPerWord >> 3);        // return address
 
     //==== Function parameters ====
     // All parameters are passed on the stack.
-    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
-    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLER);
+    cc->stackParameterOrder(CC::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CC::StackCleanup::BY_CALLER);
+    {
+        auto pool = CC::StoragePoolStack::instance("args-on-stack", CC::isAnyType(), constPtr());
+        pool->initialOffset(bitsPerWord >> 3);          // return address
+        cc->argumentValueAllocator()->append(pool);
+    }
 
     //==== Other inputs ====
     // direction flag is always assumed to be valid
@@ -526,10 +532,23 @@ X86::cc_cdecl(size_t bitsPerWord) const {
     cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
 
     //==== Return values ====
-    cc->appendOutputParameter(regdict->findOrThrow(prefix + "ax"));
-    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0))
+    if (const RegisterDescriptor AX = regdict->findOrThrow(prefix + "ax")) {
+        auto nonFpReturns = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord));
+        nonFpReturns->append(ConcreteLocation(AX));
+        cc->returnValueAllocator()->append(nonFpReturns);
+        cc->appendOutputParameter(AX);
+    }
+
+    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0)) {
+        auto fpReturns = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(ST0.nBits()));
+        fpReturns->append(ConcreteLocation(ST0));
+        cc->returnValueAllocator()->append(fpReturns);
         cc->appendOutputParameter(ST0);
-    cc->appendOutputParameter(SP);                      // final value is usually one word greater than initial value
+    }
+
+    // The stack pointer is an output because it is changed by the callee (incremented by four when the function returns). It does
+    // not hold a return value in the normal sense of the word, and thus isn't added to the return value allocator functions.
+    cc->appendOutputParameter(SP);
 
     //==== Scratch registers ====
     // (i.e., modified, not callee-saved, not return registers)
@@ -550,12 +569,10 @@ X86::cc_cdecl(size_t bitsPerWord) const {
 }
 
 CallingConvention::Definition::Ptr
-X86::cc_stdcall(size_t bitsPerWord) const {
+X86::cc_stdcall(const size_t bitsPerWord) const {
     const std::string prefix = registerPrefix(bitsPerWord);
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance("stdcall",
-                                                      "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " stdcall",
-                                                      constPtr());
+    auto cc = CC::Definition::instance("stdcall", "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " stdcall", constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
@@ -565,13 +582,18 @@ X86::cc_stdcall(size_t bitsPerWord) const {
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
-    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->stackDirection(CC::StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(bitsPerWord >> 3);        // return address
 
     //==== Function parameters ====
     // All parameters are passed on the stack
-    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
-    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLEE);
+    cc->stackParameterOrder(CC::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CC::StackCleanup::BY_CALLEE);
+    {
+        auto pool = CC::StoragePoolStack::instance("args-on-stack", CC::isAnyType(), constPtr());
+        pool->initialOffset(bitsPerWord >> 3);          // return address
+        cc->argumentValueAllocator()->append(pool);
+    }
 
     //==== Other inputs ====
     // direction flag is always assumed to be valid
@@ -584,9 +606,22 @@ X86::cc_stdcall(size_t bitsPerWord) const {
     cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
 
     //==== Return values ====
-    cc->appendOutputParameter(regdict->findOrThrow(prefix + "ax"));
-    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0))
+    if (const RegisterDescriptor AX = regdict->findOrThrow(prefix + "ax")) {
+        auto nonFpReturns = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord));
+        nonFpReturns->append(ConcreteLocation(AX));
+        cc->returnValueAllocator()->append(nonFpReturns);
+        cc->appendOutputParameter(AX);
+    }
+
+    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0)) {
+        auto fpReturns = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(ST0.nBits()));
+        fpReturns->append(ConcreteLocation(ST0));
+        cc->returnValueAllocator()->append(fpReturns);
         cc->appendOutputParameter(ST0);
+    }
+
+    // The stack pointer is an output because it is changed by the callee (incremented by four when the function returns). It does
+    // not hold a return value in the normal sense of the word, and thus isn't added to the return value allocator functions.
     cc->appendOutputParameter(SP);
 
     //==== Scratch registers ====
@@ -608,12 +643,11 @@ X86::cc_stdcall(size_t bitsPerWord) const {
 }
 
 CallingConvention::Definition::Ptr
-X86::cc_fastcall(size_t bitsPerWord) const {
+X86::cc_fastcall(const size_t bitsPerWord) const {
     const std::string prefix = registerPrefix(bitsPerWord);
     RegisterDictionary::Ptr regdict = registerDictionary();
-    auto cc = CallingConvention::Definition::instance("fastcall",
-                                                      "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " fastcall",
-                                                      constPtr());
+    auto cc = CC::Definition::instance("fastcall", "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " fastcall",
+                                       constPtr());
     const RegisterDescriptor SP = regdict->stackPointerRegister();
 
     //==== Address locations ====
@@ -623,15 +657,30 @@ X86::cc_fastcall(size_t bitsPerWord) const {
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
-    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->stackDirection(CC::StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(bitsPerWord >> 3);        // return address
 
     //==== Function parameters ====
-    // Uses ECX and EDX for first args that fit; all other parameters are passed on the stack.
-    cc->appendInputParameter(regdict->findOrThrow(prefix + "cx"));
-    cc->appendInputParameter(regdict->findOrThrow(prefix + "dx"));
-    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
-    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLEE);
+    // Uses ECX and EDX for first args that fit
+    cc->stackParameterOrder(CC::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CC::StackCleanup::BY_CALLEE);
+
+    if (const RegisterDescriptor CX = regdict->findOrThrow(prefix + "cx")) {
+        const RegisterDescriptor DX = regdict->findOrThrow(prefix + "dx");
+        auto nonFpArgs = CC::StoragePoolEnumerated::instance("non-fp args", CC::isNonFpNotWiderThan(bitsPerWord));
+        nonFpArgs->append(ConcreteLocation(CX));
+        nonFpArgs->append(ConcreteLocation(DX));
+        cc->argumentValueAllocator()->append(nonFpArgs);
+        cc->appendInputParameter(CX);
+        cc->appendInputParameter(DX);
+    }
+
+    // All other arguments go on the stack
+    {
+        auto pool = CC::StoragePoolStack::instance("args-on-stack", CC::isAnyType(), constPtr());
+        pool->initialOffset(bitsPerWord >> 3);          // return address
+        cc->argumentValueAllocator()->append(pool);
+    }
 
     //==== Other inputs ====
     // direction flag is always assumed to be valid
@@ -644,9 +693,22 @@ X86::cc_fastcall(size_t bitsPerWord) const {
     cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
 
     //==== Return values ====
-    cc->appendOutputParameter(regdict->findOrThrow(prefix + "ax"));
-    if (const auto ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0))
+    if (const RegisterDescriptor AX = regdict->findOrThrow(prefix + "ax")) {
+        auto nonFpReturns = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord));
+        nonFpReturns->append(ConcreteLocation(AX));
+        cc->returnValueAllocator()->append(nonFpReturns);
+        cc->appendOutputParameter(AX);
+    }
+
+    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0)) {
+        auto fpReturns = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(ST0.nBits()));
+        fpReturns->append(ConcreteLocation(ST0));
+        cc->returnValueAllocator()->append(fpReturns);
         cc->appendOutputParameter(ST0);
+    }
+
+    // The stack pointer is an output because it is changed by the callee (incremented by four when the function returns). It does
+    // not hold a return value in the normal sense of the word, and thus isn't added to the return value allocator functions.
     cc->appendOutputParameter(SP);
 
     //==== Scratch registers ====
@@ -673,7 +735,7 @@ X86::callingConventions() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
     if (!callingConventions_.isCached()) {
-        CallingConvention::Dictionary dict;
+        CC::Dictionary dict;
 
 #if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
         // cdecl: gcc < 4.5 uses 4-byte stack alignment

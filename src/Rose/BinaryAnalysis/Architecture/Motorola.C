@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Architecture/Motorola.h>
 
+#include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
@@ -19,6 +20,7 @@
 #include <Sawyer/Message.h>
 
 using namespace Sawyer::Message::Common;
+namespace CC = Rose::BinaryAnalysis::CallingConvention;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -35,13 +37,13 @@ Motorola::callingConventions() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
     if (!callingConventions_.isCached()) {
-        CallingConvention::Dictionary dict;
+        CC::Dictionary dict;
 
         // https://m680x0.github.io/doc/abi.html
         const RegisterDictionary::Ptr regdict = registerDictionary();
         const RegisterDescriptor SP = regdict->stackPointerRegister();
 
-        auto cc = CallingConvention::Definition::instance("sysv", "m68k-sysv", constPtr());
+        auto cc = CC::Definition::instance("sysv", "m68k-sysv", constPtr());
 
         //==== Address locations ====
         cc->instructionPointerRegister(regdict->instructionPointerRegister());
@@ -49,21 +51,52 @@ Motorola::callingConventions() const {
 
         //==== Stack characteristics ====
         cc->stackPointerRegister(SP);
-        cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
-        cc->nonParameterStackSize(bytesPerWord()); // return address
+        cc->stackDirection(CC::StackDirection::GROWS_DOWN);
+        cc->nonParameterStackSize(bytesPerWord());      // return address
+
+        // Arguments are all stored on the stack
+        {
+            auto pool = CC::StoragePoolStack::instance("args-on-stack", CC::isAnyType(), constPtr());
+            pool->initialOffset(bytesPerWord());        // return address
+            cc->argumentValueAllocator()->append(pool);
+        }
 
         //====  Function parameters ====
         // All parameters are passed on the stack.
-        cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
-        cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLER);
+        cc->stackParameterOrder(CC::StackParameterOrder::RIGHT_TO_LEFT);
+        cc->stackCleanup(CC::StackCleanup::BY_CALLER);
 
         //==== Other inputs ====
 
-
         //==== Return values ====
-        cc->appendOutputParameter(regdict->findOrThrow("d0"));
-        cc->appendOutputParameter(regdict->findOrThrow("a0"));
-        cc->appendOutputParameter(regdict->findOrThrow("fp0"));
+
+        // Integral return values
+        if (const RegisterDescriptor d0 = regdict->findOrThrow("d0")) {
+            cc->appendOutputParameter(d0);
+            auto pool = CC::StoragePoolEnumerated::instance("integral return value", CC::isIntegerNotWiderThan(bitsPerWord()));
+            pool->append(ConcreteLocation(d0));
+            cc->returnValueAllocator()->append(pool);
+        }
+
+        // Address return values
+        if (const RegisterDescriptor a0 = regdict->findOrThrow("a0")) {
+            cc->appendOutputParameter(a0);
+            auto pool = CC::StoragePoolEnumerated::instance("addr return value", CC::isPointerNotWiderThan(bitsPerWord()));
+            pool->append(ConcreteLocation(a0));
+            cc->returnValueAllocator()->append(pool);
+        }
+
+        // Floating-point return values
+        if (const RegisterDescriptor fp0 = regdict->findOrThrow("fp0")) {
+            cc->appendOutputParameter(fp0);
+            auto pool = CC::StoragePoolEnumerated::instance("fp return value", CC::isFpNotWiderThan(bitsPerWord()));
+            pool->append(ConcreteLocation(fp0));
+            cc->returnValueAllocator()->append(pool);
+        }
+
+        // The stack pointer is an output because it is changed by the callee (incremented by four when the function returns). It
+        // does not hold a return value in the normal sense of the word, and thus isn't added to the return value allocator
+        // functions.
         cc->appendOutputParameter(SP);                  // final value is usually one word greater than initial value
 
         //====  Scratch registers ====
