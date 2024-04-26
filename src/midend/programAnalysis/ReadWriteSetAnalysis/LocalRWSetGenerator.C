@@ -940,4 +940,19 @@ void LocalRWSetGenerator::outputCache(std::string& outFilename)
   outFile.close();
 }
 
-
+/**
+ * Calls the function to convert the cache to json. Writes out.
+ *
+ * param[in] os: the output stream written to and returned
+ * param[in] rwset: the LocalRWSetGenerator to write out
+*/
+std::ostream& operator<< (std::ostream& os, const LocalRWSetGenerator& rwset) {
+  if(rwset.rwSetCache.size() == 0) {
+    //nolhmann json hates empty files, so output an empty set in
+    //that case
+    os << "{}" << std::endl;
+  } else {
+    os << std::setw(4) << ReadWriteSets::convertCacheToJson(rwset.rwSetCache) << std::endl;
+  }
+  return os;
+}

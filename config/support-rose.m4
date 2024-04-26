@@ -2309,6 +2309,7 @@ tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/Makefile
 tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile
 tests/nonsmoke/functional/roseTests/roseCodeGen/Makefile
 tests/nonsmoke/functional/roseTests/roseTraits/Makefile
+tests/nonsmoke/functional/RWSetTests/Makefile
 tests/nonsmoke/functional/testSupport/Makefile
 tests/nonsmoke/functional/testSupport/gtest/Makefile
 tests/nonsmoke/functional/translatorTests/Makefile

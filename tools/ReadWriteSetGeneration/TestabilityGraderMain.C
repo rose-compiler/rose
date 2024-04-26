@@ -34,9 +34,11 @@ using namespace Sawyer::Message;
 // Settings that can be adjusted from the command line and their default values.
 // Had to use ints because Sawyer doesn't seem to know what to with enums
 struct Settings {
-  std::string outputFilename      = "TestGraded.json";
+  std::string outputFilename;
+  bool force_stdout = false;
 
-  Settings(): outputFilename("TestGraded.json")
+  Settings(): outputFilename(""),
+              force_stdout(false)
   {
   }
 };
@@ -60,8 +62,10 @@ int main(int argc, char** argv) {
 
   testabilityGraderSwitches.insert(Switch("output-filename", 'o')
                                    .argument("filename", anyParser(settings.outputFilename))
-                                   .doc("Filename to output the merged json file to. \"TestGraded.json\""));
-
+                                   .doc("Filename to output the merged json file to.  If not present, output is written to stdout"));
+  testabilityGraderSwitches.insert(Switch("force-stdout")
+                                   .intrinsicValue(true, settings.force_stdout)
+                                   .doc("Forces the output to be written to stdout regardless of whether -o is used."));
   // Parse the command-line and get the non-switch, positional arguments at the end
   std::vector<std::string> files = p.with(testabilityGraderSwitches).parse(argc, argv).apply().unreachedArgs();
 
@@ -102,12 +106,17 @@ int main(int argc, char** argv) {
   }
 
   
-     
   nlohmann::json outDocument = convertCacheToJson(testabilityGrader.completedCache); 
-  std::ofstream outFile;
-  outFile.open(settings.outputFilename, std::ofstream::out);
-  outFile << std::setw(4) << outDocument << std::endl;
 
+  if (settings.outputFilename == "" || settings.force_stdout) {
+    std::cout << std::setw(4) << outDocument << std::endl;
+  }
+  if (settings.outputFilename != "") {
+    std::ofstream outFile;
+    outFile.open(settings.outputFilename, std::ofstream::out);
+    outFile << std::setw(4) << outDocument << std::endl;
+    outFile.close();
+  }
 
   return 0;
 }

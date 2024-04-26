@@ -44,12 +44,14 @@ struct Settings {
     //Optional, if no output given, output goes to terminal
     std::string outputFilename      = "";
     std::string applicationRootDir  = "";
+    bool force_stdout = false;
   
   
     Settings(): yamlConfigFilename(""), 
                 rwSetsFilename(""),
                 outputFilename(""),
-                applicationRootDir("")
+                applicationRootDir(""),
+                force_stdout(false)
         {
         }
 };
@@ -73,13 +75,14 @@ void readConfigFile(Settings& settings)
             }
         catch (const Yaml::Exception& e)
             {
-                std::cout << "Exception " << e.Type() << ": " << e.what() << " configuration file not found: " << settings.yamlConfigFilename << std::endl;
+                Sawyer::Message::mlog[ERROR] << "Exception " << e.Type() << ": " << e.what() << " configuration file not found: " << settings.yamlConfigFilename << std::endl;
                 exit(12);
             }
 
         settings.outputFilename = config["output-filename"].As<std::string>(settings.outputFilename);
         settings.rwSetsFilename = config["rwSets-filename"].As<std::string>(settings.rwSetsFilename);
         settings.applicationRootDir = config["app-root"].As<std::string>(settings.applicationRootDir);
+        settings.force_stdout = config["force-stdout"].As<bool>(settings.force_stdout);
     }
 }
 
@@ -115,10 +118,13 @@ main(int argc, char *argv[]) {
                              .doc("Filename to output the list of read/write sets to. Required"));
     name2NodeSwitches.insert(Switch("output-filename")
                              .argument("filename", anyParser(settings.outputFilename))
-                             .doc("Filename to output the list of read/write sets to.  Default terminal"));
+                             .doc("Filename to output the list of read/write sets to.  Defaults to terminal"));
     name2NodeSwitches.insert(Switch("app-root")
                              .argument("filename", anyParser(settings.applicationRootDir))
                              .doc("The root of the application we're processing.  Used to filter external functions.  Duplicate of the rose option -rose:applicationRootDirectory"));
+    name2NodeSwitches.insert(Switch("force-stdout")
+                             .intrinsicValue(true, settings.force_stdout)
+                             .doc("Forces the output to be written to stdout regardless of whether --filename is used."));
     // Parse the command-line and get the non-switch, positional arguments at the end
     std::vector<std::string> files = p.with(name2NodeSwitches).parse(argc, argv).apply().unreachedArgs();
     
@@ -134,7 +140,6 @@ main(int argc, char *argv[]) {
     //Command line processing done, now do ROSE work
     SgProject *root = frontend(argc, argv);
 
-    //Try to come up with some reasonable default output filename if one wasn't given by the user
     if(settings.applicationRootDir != "") {
         root->set_applicationRootDirectory(settings.applicationRootDir);
     }
@@ -169,7 +174,6 @@ main(int argc, char *argv[]) {
     if(settings.outputFilename == "") {
         outBuffer = std::cout.rdbuf();
     } else {
-        std::cout << settings.outputFilename << std::endl;
         tmpOutFile.open(settings.outputFilename);
         outBuffer = tmpOutFile.rdbuf();
     }
@@ -238,6 +242,15 @@ main(int argc, char *argv[]) {
     //Well, this is kludgier than I expected maybe Herb Sutter has a better idea: http://www.gotw.ca/gotw/048.htm
     if(settings.outputFilename != "") {
         tmpOutFile.close();
+        if (settings.force_stdout) {
+            //this is the kludgiest
+            std::ifstream infile;
+            infile.open(settings.outputFilename);
+            std::string line;
+            while(std::getline(infile, line)) {
+                std::cout << line << std::endl;
+            }
+        }
     }
     return 0;
 }

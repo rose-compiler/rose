@@ -480,6 +480,7 @@ if [[ ! -d tests ]] ; then
         tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile.in \
         tests/nonsmoke/functional/roseTests/roseCodeGen/Makefile.in \
         tests/nonsmoke/functional/roseTests/roseTraits/Makefile.in \
+        tests/nonsmoke/functional/RWSetTests/Makefile.in \
         tests/nonsmoke/functional/testSupport/Makefile.in \
         tests/nonsmoke/functional/testSupport/gtest/Makefile.in \
         tests/nonsmoke/functional/translatorTests/Makefile.in \

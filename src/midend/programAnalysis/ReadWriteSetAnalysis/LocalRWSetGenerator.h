@@ -202,7 +202,11 @@ private:
   //! \brief command line used to generate all this.  Needs to match for NodeIds to be valid.
   std::string commandLine;
 
+  friend std::ostream& operator<< (std::ostream& os, const LocalRWSetGenerator& rwset);
+
 };
+
+std::ostream& operator<< (std::ostream& os, const LocalRWSetGenerator& rwset);
 
 
 #endif  //LOCALRWSETGENERATOR

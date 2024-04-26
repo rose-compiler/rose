@@ -39,12 +39,14 @@ struct Settings {
     
     std::string rwSetsFilename      = "";
     std::string applicationRootDir  = "";
+    bool force_stdout = false;
 
 
     Settings(): yamlConfigFilename(""), 
                 include_empties(false),
                 rwSetsFilename(""),
-                applicationRootDir("")
+                applicationRootDir(""),
+                force_stdout(false)
     {
     }
 };
@@ -75,6 +77,7 @@ void readConfigFile(Settings& settings)
         settings.include_empties = config["include-empties"].As<bool>(settings.include_empties);  //How global reads are allowed to be
         settings.rwSetsFilename = config["rwSets-filename"].As<std::string>(settings.rwSetsFilename);  //How global reads are allowed to be
         settings.applicationRootDir = config["app-root"].As<std::string>(settings.applicationRootDir);  //How global reads are allowed to be
+        settings.force_stdout = config["force-stdout"].As<bool>(settings.force_stdout);
     }
 }
 
@@ -121,7 +124,7 @@ main(size_t argc, char *argv[]) {
                                   .doc("Filename of yaml configuration file, used as alternate to command line arguments"));
     localRWSetGeneratorSwitches.insert(Switch("rwSets-filename")
                                   .argument("filename", anyParser(settings.rwSetsFilename))
-                                  .doc("Filename to output the list of read/write sets to.  Default is based on the first input filename"));
+                                  .doc("Filename to output the list of read/write sets to.  If not present, writes to stdout."));
     localRWSetGeneratorSwitches.insert(Switch("include-empties", 'e')
                                   .shortName('e')
                                   .intrinsicValue(true, settings.include_empties)
@@ -129,6 +132,9 @@ main(size_t argc, char *argv[]) {
     localRWSetGeneratorSwitches.insert(Switch("app-root")
                                   .argument("filename", anyParser(settings.applicationRootDir))
                                   .doc("The root of the application we're processing.  Used to filter external functions.  Duplicate of the rose option -rose:applicationRootDirectory"));
+    localRWSetGeneratorSwitches.insert(Switch("force-stdout")
+                                  .intrinsicValue(true, settings.force_stdout)
+                                  .doc("Forces the output to be written to stdout regardless of whether --rwSets-filename is used."));
     // Parse the command-line and get the non-switch, positional arguments at the end
     std::vector<std::string> files = p.with(localRWSetGeneratorSwitches).parse(argc, argv).apply().unreachedArgs();
     
@@ -141,18 +147,6 @@ main(size_t argc, char *argv[]) {
     //----------------------------------------------------------
     //Command line processing done, now do ROSE work
     SgProject *root = frontend(argc, argv);
-
-    //Try to come up with some reasonable default output filename if one wasn't given by the user
-    if(settings.rwSetsFilename == "") {
-      std::string outputFileName = root->get_outputFileName();
-      if(outputFileName == "a.out") {
-        outputFileName = root->get_file(0).getFileName();
-      }
-      boost::filesystem::path filename_boostPath(outputFileName);
-      std::string filename_boostPath_basename  = boost::filesystem::basename(filename_boostPath);
-      outputFileName = filename_boostPath_basename;
-      settings.rwSetsFilename = outputFileName + ".json";
-    }
     
     if(settings.applicationRootDir != "") {
         root->set_applicationRootDirectory(settings.applicationRootDir);
@@ -160,9 +154,15 @@ main(size_t argc, char *argv[]) {
 
     LocalRWSetGenerator rwSetGen(combinedCommandLine);
     rwSetGen.collectReadWriteSets(root);
-    rwSetGen.outputCache(settings.rwSetsFilename);
+
+    if(settings.rwSetsFilename == "" || settings.force_stdout) {
+      std::cout << rwSetGen;
+    }
+    if (settings.rwSetsFilename != "");
+    {
+      rwSetGen.outputCache(settings.rwSetsFilename);
+    }
   
-    Sawyer::Message::mlog[INFO] << "LocalRWSetGenerator Completed Successfully" <<    std::endl;
 
    return 0;
 }
