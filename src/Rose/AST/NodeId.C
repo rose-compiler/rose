@@ -50,7 +50,6 @@ namespace Rose {
         fnv.insert(std::to_string(ROSE_VERSION));
         auto fileList = root->get_fileList_ptr()->get_listOfFiles();
         for(auto file : fileList) {
-          std::cout << file->getFileName() <<std::endl;
           fnv.insert(file->getFileName());
         }
         run_hash = fnv.toString();
