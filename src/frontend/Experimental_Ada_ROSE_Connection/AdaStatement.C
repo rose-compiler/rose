@@ -181,15 +181,40 @@ namespace
     }
   };
 
+  bool hasSufficientLocationInfo(const Sg_File_Info& fi)
+  {
+    return fi.get_physical_file_id() >= 0;
+  }
+
+  bool hasSufficientLocationInfo(const SgLocatedNode& n)
+  {
+    return (  hasSufficientLocationInfo(SG_DEREF(n.get_startOfConstruct()))
+           && hasSufficientLocationInfo(SG_DEREF(n.get_endOfConstruct()))
+           );
+  }
+
+
 
   struct PragmaPlacer
   {
       // \pre scopes.size() > 0
-      PragmaPlacer(std::vector<SgScopeStatement*> scopes)
-      : all(), last(SG_DEREF(scopes.back()))
+      PragmaPlacer(std::vector<SgScopeStatement*> scopes, AstContext astctx)
+      : all(), last(SG_DEREF(scopes.back())), ctx(astctx)
       {
         for (SgScopeStatement* pscope : scopes)
           copyToAll(SG_DEREF(pscope));
+
+        if (false)
+        {
+          bool sorted = all.end() == std::adjacent_find( all.begin(), all.end(),
+                                                         [](const SgLocatedNode* lhs, const SgLocatedNode* rhs)
+                                                         {
+                                                           return SourceLocationLessThan{}(rhs, lhs);
+                                                         }
+                                                       );
+
+          ADA_ASSERT(sorted);
+        }
       }
 
       template <class Iterator>
@@ -197,7 +222,15 @@ namespace
       {
         using SageStmtPtr = decltype(*begin);
 
-        auto  hasSourceLocation = [](SageStmtPtr p) -> bool { return !p->isCompilerGenerated(); };
+        auto  hasSourceLocation = [](SageStmtPtr p) -> bool
+        {
+          ASSERT_not_null(p);
+
+          if (!hasSufficientLocationInfo(*p))
+            computeSourceRangeForSubtree(*p);
+
+          return hasSufficientLocationInfo(*p) && !p->isCompilerGenerated();
+        };
 
         std::copy_if( begin, limit,
                       std::back_inserter(all),
@@ -211,9 +244,16 @@ namespace
         copyToAll(seq.begin(), seq.end());
       }
 
+      void copyToAll(si::Ada::StatementRange seq)
+      {
+        copyToAll(seq.first, seq.second);
+      }
+
       void copyToAll(SgScopeStatement& lst)
       {
-        if (lst.containsOnlyDeclarations())
+        if (SgGlobal* glob = isSgGlobal(&lst))
+          copyToAll(si::Ada::declsInPackage(*glob, ctx.sourceFileName()));
+        else if (lst.containsOnlyDeclarations())
           copyToAll(lst.getDeclarationList());
         else
           copyToAll(lst.getStatementList());
@@ -273,6 +313,7 @@ namespace
     private:
       std::vector<SgStatement*> all;  ///< combined list of pragmas
       SgScopeStatement&         last;
+      AstContext                ctx;
   };
 
 
@@ -334,7 +375,7 @@ namespace
     std::sort(pragmadcls.begin(), pragmadcls.end(), SourceLocationLessThan{});
 
     // retroactively place pragmas according to their source position information
-    std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{std::move(scopes)});
+    std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{std::move(scopes), ctx});
   }
 
 
@@ -1699,13 +1740,7 @@ namespace
     blockHandler(bodyStatements, stmtblk, pragmaCtx);
 
     if (trystmt)
-    {
       exhandlerHandler(hndlrs, dominantBlock, *trystmt, pragmaCtx);
-
-      computeSourceRangeFromChildren(SG_DEREF(trystmt->get_body()));
-      computeSourceRangeFromChildren(SG_DEREF(trystmt->get_catch_statement_seq_root()));
-      computeSourceRangeFromChildren(*trystmt);
-    }
 
     processAndPlacePragmas(pragmas, std::move(activeScopes), pragmaCtx.scope(dominantBlock));
   }
@@ -4106,6 +4141,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // generateBuiltinFunctionsOnTypes(ctx.scope(pkgspec));
 
         processAndPlacePragmas(decl.Pragmas, { &pkgspec }, pragmaCtx.scope(pkgspec));
+        //~ computeSourceRangeFromChildren(pkgspec);
 
         /* unused nodes:
                Element_ID                     Corresponding_End_Name;

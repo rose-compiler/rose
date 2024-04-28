@@ -700,6 +700,7 @@ namespace
 
     SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, scope, *suppl.result(), complete);
 
+    markCompilerGenerated(opdcl);
     operatorSupport()[{&scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
     return &mkFunctionRefExp(opdcl);
   }

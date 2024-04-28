@@ -28,15 +28,22 @@ namespace Ada_ROSE_Translation
   /// creates a default file info object for compiler generated nodes
   // \todo currently generateDefaultCompilerGenerated is used
   //       -> replace with info object that indicates compiler generated.
+  /*
   Sg_File_Info& mkFileInfo();
 
   /// creates a file info object for file location given by \ref file,
   /// \ref line, and \ref col
   Sg_File_Info& mkFileInfo(const std::string& file, int line, int col);
+  */
 
   /// sets three file info objects, file_info, startOfConstruct, and
   ///   endOfConstruct to compiler generated.
   void markCompilerGenerated(SgLocatedNode& n);
+  void markCompilerGenerated(SgExpression& n);
+
+  void setDefaultFileInfo(SgPragma& n);
+  void setDefaultFileInfo(SgLocatedNode& n);
+  void setDefaultFileInfo(SgExpression& n);
 
   /// sets the symbol table associated with \ref n to case insensitive
   void setSymbolTableCaseSensitivity(SgScopeStatement& n);
@@ -59,7 +66,7 @@ namespace Ada_ROSE_Translation
   {
     SageNode& sgnode = mkBareNode<SageNode>(args...);
 
-    markCompilerGenerated(sgnode);
+    setDefaultFileInfo(sgnode);
     return sgnode;
   }
 

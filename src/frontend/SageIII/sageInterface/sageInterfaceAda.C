@@ -3186,6 +3186,9 @@ namespace Ada
                                     || isSgAdaLoopStmt(par)
                                     || isSgAdaAcceptStmt(par)
                                     || isSgCatchOptionStmt(par)
+                                    || isSgAdaGenericInstanceDecl(par)
+                                    || isSgAdaFormalPackageDecl(par)
+                                    || isSgAdaRepresentationClause(par)
                                     // \todo AdaSelectStmt, AdaGenericInstance, ..
                                     );
 
@@ -3971,10 +3974,7 @@ namespace
   template <class SageNode>
   Sg_File_Info& ensureFileInfo( SageNode& n,
                                 void (SageNode::*setter)(Sg_File_Info*),
-                                Sg_File_Info* (SageNode::*getter)() const,
-                                const std::string& filename,
-                                int line,
-                                int col
+                                Sg_File_Info* (SageNode::*getter)() const
                               )
   {
     Sg_File_Info* info = (n.*getter)();
@@ -3983,10 +3983,6 @@ namespace
     {
       info = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
       ASSERT_not_null(info);
-
-      info->set_filenameString(filename);
-      info->set_line(line);
-      info->set_col(col);
 
       (n.*setter)(info);
     }
@@ -3998,24 +3994,22 @@ namespace
   void setFileInfo( SageNode& n,
                     void (SageNode::*setter)(Sg_File_Info*),
                     Sg_File_Info* (SageNode::*getter)() const,
-                    const std::string& filename,
-                    int line,
-                    int col
+                    const Sg_File_Info& orig
                   )
   {
-    Sg_File_Info& info = ensureFileInfo(n, setter, getter, filename, line, col);
+    ensureFileInfo(n, setter, getter) = orig;
 
-    info.set_parent(&n);
-    info.unsetCompilerGenerated();
-    info.unsetTransformation();
-    info.unsetShared();
-    info.set_physical_filename(filename);
-    info.set_filenameString(filename);
-    info.set_line(line);
-    info.set_physical_line(line);
-    info.set_col(col);
+    //~ info.set_parent(&n);
+    //~ info.unsetCompilerGenerated();
+    //~ info.unsetTransformation();
+    //~ info.unsetShared();
+    //~ info.set_physical_filename(filename);
+    //~ info.set_filenameString(filename);
+    //~ info.set_line(line);
+    //~ info.set_physical_line(line);
+    //~ info.set_col(col);
 
-    info.setOutputInCodeGeneration();
+    //~ info.setOutputInCodeGeneration();
   }
 
   template <class SageLocatedNode>
@@ -4032,7 +4026,7 @@ namespace
 
     const Sg_File_Info& info  = *infox;
 
-    setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+    setFileInfo(n, setter, getter, info);
   }
 }
 
@@ -4102,18 +4096,44 @@ void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src)
                &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
                src
              );
+
+  if (SgExpression* tgtexp = isSgExpression(&tgt))
+  {
+    if (const SgExpression* srcexp = isSgExpression(&src))
+    {
+      cpyFileInfo( *tgtexp,
+                   &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
+                   *srcexp
+                 );
+    }
+    else
+    {
+      throw std::runtime_error{"cannot assign set_operatorPosition from non-SgExpression."};
+    }
+  }
+
+  std::cerr << typeid(src).name() << std::endl;
+
+  ASSERT_require(tgt.isCompilerGenerated() == src.isCompilerGenerated());
 }
 
-void copyFileInfo(SgExpression& tgt, const SgExpression& src)
+
+void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n)
 {
-  copyFileInfo(static_cast<SgLocatedNode&>(tgt), src);
+  auto locSetter =
+     [](SgNode* sgn) -> void
+     {
+       if (SgLocatedNode* l = isSgLocatedNode(sgn))
+         l->setCompilerGenerated();
+     };
 
-  cpyFileInfo( tgt,
-               &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
-               src
-             );
+  conversionTraversal(locSetter, &n);
 }
 
+void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode* n)
+{
+  if (!n) setSourcePositionInSubtreeToCompilerGenerated(*n);
+}
 
 } // ada
 } // SageInterface

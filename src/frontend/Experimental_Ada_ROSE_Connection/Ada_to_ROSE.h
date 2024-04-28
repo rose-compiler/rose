@@ -411,7 +411,17 @@ void attachSourceLocation(SgPragma& n, _Element_Struct& elem, AstContext ctx);
 ///   e.g., a try stmt includes try block and handlers
 ///         a try block ranges from first to last statement
 ///         a handler list ranges from first handler to last handler
+/// \{
 void computeSourceRangeFromChildren(SgLocatedNode&);
+void computeSourceRangeFromChildren(SgLocatedNode*);
+/// \}
+
+/// computes a source location for the entire subtree
+void computeSourceRangeForSubtree(SgNode&);
+
+/// tests if node \ref n has a valid source location
+bool hasValidSourceLocation(const SgLocatedNode&);
+
 
 /// logs that an asis element kind \ref kind has been explored
 /// \param kind a C-string naming the Asis kind

@@ -1015,7 +1015,7 @@ namespace
   /// @}
 
   /// checks if the block \ref blk is present in the Ada source code.
-  /// \param  blk a reference ot pointer to a ROSE basic block object.
+  /// \param  blk a reference or pointer to a ROSE basic block object.
   /// \return true  of the block is in the source code.
   ///         false if the block is ROSE artifact (or nullptr).
   /// @{
@@ -1059,7 +1059,6 @@ namespace
   ///   A second pass, triggered by fn's destructor carries out the
   ///   actual transformations.
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root);
-
 
   /// converts text to constant values
   /// \{
@@ -1119,8 +1118,20 @@ namespace
   /// copies the source code location from \ref src to \ref tgt.
   /// \{
   void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src);
-  void copyFileInfo(SgExpression&  tgt, const SgExpression& src);
+  // void copyFileInfo(SgExpression&  tgt, const SgExpression& src);
   /// \}
+
+  /// \brief sets source position in subtree according to compiler generated
+  /// \note
+  ///    compare with SageInterface::setSourcePositionAtRootAndAllChildren
+  ///    the SageInterface does not implement setting the source position to
+  ///    compiler generated.
+  /// \todo
+  ///    Consider unifying the two functions.
+  /// \{
+  void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode* n);
+  void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n);
+  /// /}
 
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter

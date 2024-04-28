@@ -512,7 +512,7 @@ namespace
          Record_Component_List Implicit_Components
     */
 
-    markCompilerGenerated(sgnode);
+    //~ markCompilerGenerated(sgnode);
     return sgnode;
   }
 

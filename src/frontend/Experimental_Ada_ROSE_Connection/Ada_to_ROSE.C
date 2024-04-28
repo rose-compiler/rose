@@ -274,8 +274,8 @@ namespace
 
     if (info == nullptr)
     {
-      info = &mkFileInfo(filename, line, col);
-      (n.*setter)(info);
+      logFlaw() << "Missing file info: " << typeid(n).name() << std::endl;
+      setDefaultFileInfo(n);
     }
 
     info->set_parent(&n);
@@ -405,7 +405,14 @@ namespace
     auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
 
     if ((first == lim) || (last == rlim))
+    {
+      if (SgExpression* ex = isSgExpression(&n))
+        markCompilerGenerated(*ex);
+      else
+        markCompilerGenerated(n);
+
       return;
+    }
 
     //~ logTrace() << "set srcloc for " << typeid(n).name() << std::endl;
 
@@ -416,6 +423,14 @@ namespace
     cpyFileInfo( n,
                  &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
                  SG_DEREF(isSgLocatedNode(*last)) );
+
+    if (SgExpression* ex = isSgExpression(&n))
+    {
+      Sg_File_Info* oppos = ex->get_operatorPosition();
+
+      ASSERT_require(oppos);
+      (*oppos) = *ex->get_startOfConstruct();
+    }
   }
 
   void computeSourceRangeFromChildren_internal(SgLocatedNode& n)
@@ -439,6 +454,8 @@ namespace
 
         computeSourceRangeFromChildren_internal({first, last}, n);
       }
+      else
+        computeSourceRangeFromChildren_internal({}, n);
     }
   };
 }
@@ -447,6 +464,15 @@ void computeSourceRangeFromChildren(SgLocatedNode& n)
 {
   sg::dispatch(SourceLocationCalc{}, &n);
 }
+
+void computeSourceRangeFromChildren(SgLocatedNode* n)
+{
+  if (n == nullptr) return;
+
+  computeSourceRangeFromChildren(*n);
+}
+
+
 
 
 void storeUnitCompletion(std::function<void()> completion)
@@ -1124,51 +1150,30 @@ namespace
 
       if (n == nullptr) return;
 
-      if (n->isTransformation())
+      if (n->get_startOfConstruct() == nullptr)
       {
-        //~ logError() << n << " " << typeid(*n).name() << "has isTransformation" << n->isTransformation()
-                   //~ << std::endl;
-
-        computeSourceRangeFromChildren(*n);
-
-        //~ if (n->isTransformation())
-        //~ {
-          //~ logError() << n << " " << typeid(*n).name() << "STILL has isTransformation" << n->isTransformation()
-                     //~ << "  c=" << n->get_startOfConstruct()
-                     //~ << " " << isSgVarRefExp(n)->get_symbol()->get_name()
-                     //~ << std::endl;
-        //~ }
-
-        ADA_ASSERT(!n->isTransformation());
+        logError() << n << typeid(*n).name() << " is null " << n->unparseToString() << std::endl;
+        ADA_ASSERT(false);
       }
 
-      if (n->isCompilerGenerated())
+      if (n->isTransformation())
       {
-        //~ logTrace() << n << " " << typeid(*n).name() << "has isCompilerGenerated " << n->isCompilerGenerated()
-                   //~ << " [computed from children]"
-                   //~ << std::endl;
+        logError() << n << typeid(*n).name() << " is tf " << n->unparseToString() << std::endl;
+        ADA_ASSERT(false);
+      }
 
+      if (!hasValidSourceLocation(*n))
+      {
         computeSourceRangeFromChildren(*n);
 
-        //~ logTrace() << "    " << n << ": " << n->get_startOfConstruct()->get_line()
-                   //~ << "." << n->get_startOfConstruct()->get_col()
-                   //~ << " => " << n->get_endOfConstruct()->get_line() << "." << n->get_endOfConstruct()->get_col()
-                   //~ << std::endl;
-
+        if (!hasValidSourceLocation(*n))
+          logWarn() << n << " " << typeid(*n).name() << " has invalid file info "
+                    << n->unparseToString()
+                    << " [computed from children] = " << hasValidSourceLocation(*n)
+                    << std::endl;
       }
     }
   };
-
-  /// sets the file info to the parents file info if not set otherwise
-  void genFileInfo(SgSourceFile* file)
-  {
-    logTrace() << "check and generate missing file info" << std::endl;
-
-    GenFileInfo fixer;
-
-    fixer.traverse(file, postorder);
-    //~ fixer.traverse(file, preorder);
-  }
 
 
   struct AstSanityCheck : AstSimpleProcessing
@@ -1530,6 +1535,13 @@ namespace
                     << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
                     << std::endl;
         }
+
+        if (SgTypedefType* tydef = isSgTypedefType(argRoot.typerep()))
+        {
+          logFlaw() << "argtydef: " << tydef->get_name() << " -> "
+                    << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
+                    << std::endl;
+        }
       }
 
       return res;
@@ -1743,10 +1755,10 @@ namespace
     ADA_ASSERT(fnref != nullptr);
     const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
 
-    // do not trust arguments of compiler generated functions
     if (fndcl == nullptr)
       return {};
 
+    // do not trust arguments of compiler generated functions
     const bool compilerGenerated     = testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated);
     const bool compilerGenComparison = compilerGenerated && isComparisonOperator(*fndcl);
 
@@ -2104,6 +2116,8 @@ namespace
 
       if (numcands != 1)
         logInfo() << "resolve: " << fnref.get_parent()->unparseToString() << " " << numcands
+                  //~ << "\n   in: " << fnref.get_parent()->get_parent()->unparseToString()
+                  //~ << " : " << typeid(*fnref.get_parent()->get_parent()).name()
                   //~ << " - " << args.size()
                   << std::endl;
 
@@ -2217,7 +2231,47 @@ namespace
 
     typecastLiteralEquivalentFunctionsIfNeeded(allrefs);
   }
+
+  bool hasValidFileInfo(const Sg_File_Info& fi)
+  {
+    bool basicValidity = (  fi.isCompilerGenerated()
+                         || fi.isFrontendSpecific()
+                         || fi.isTransformation()
+                         || fi.isShared()
+                         || fi.isSourcePositionUnavailableInFrontend()
+                         );
+
+    //~ logError() << "  " << basicValidity
+               //~ << "  " << fi.get_filenameString().empty()
+               //~ << "  " << fi.get_physical_file_id()
+               //~ << std::endl;
+
+    return ( basicValidity
+           || ((!fi.get_filenameString().empty()) && (fi.get_physical_file_id() >= 0))
+           );
+  }
+
+  bool hasValidFileInfo(const SgExpression* n)
+  {
+    return (n == nullptr) || hasValidFileInfo(SG_DEREF(n->get_operatorPosition()));
+  }
 } // anonymous
+
+
+bool hasValidSourceLocation(const SgLocatedNode& n)
+{
+  return (  hasValidFileInfo(SG_DEREF(n.get_startOfConstruct()))
+         && hasValidFileInfo(SG_DEREF(n.get_endOfConstruct()))
+         && hasValidFileInfo(isSgExpression(&n))
+         );
+}
+
+void computeSourceRangeForSubtree(SgNode& n)
+{
+  GenFileInfo fixer;
+
+  fixer.traverse(&n, postorder);
+}
 
 
 void ElemCreator::operator()(Element_Struct& elem)
@@ -2261,7 +2315,8 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   clearMappings();
 
   logInfo() << "Checking AST post-production" << std::endl;
-  genFileInfo(file);
+  logTrace() << "Compute missing source position information" << std::endl;
+  computeSourceRangeForSubtree(*file);
   //~ astSanityCheck(file);
 
 

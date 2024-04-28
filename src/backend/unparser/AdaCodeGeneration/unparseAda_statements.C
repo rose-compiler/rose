@@ -2293,7 +2293,6 @@ namespace
     return tmp;
   }
 
-
   void AdaStatementUnparser::stmt(SgStatement* s, SgAdaDiscriminatedTypeDecl* n)
   {
     startPrivateIfNeeded(isSgDeclarationStatement(s));

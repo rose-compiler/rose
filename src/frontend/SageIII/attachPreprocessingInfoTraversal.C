@@ -1076,10 +1076,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                printf ("tokenVector.size() = %zu \n",tokenVector.size());
 #endif
 
-#if 0
-#if 0
+#if 0 /* 1079 */
+#if 0 /* 1080 */
                printf ("Convert the LexTokenStreamType to a SgTokenPtrList \n");
-#endif
+#endif /* 1080 */
             // DQ (10/27/2013): Build the SgToken IR nodes and the vector of them into the SgSourceFile IR node.
                SgTokenPtrList & roseTokenList = sourceFile->get_token_list();
 
@@ -1101,7 +1101,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
 #error "DEAD CODE!"
 
-#if 1
+#if 1 /* 1104 */
             // LexTokenStreamType & tokenVector = *(returnListOfAttributes->get_rawTokenStream());
             // LexTokenStreamType & tokenVector = *(returnListOfAttributes->get_rawTokenStream());
 
@@ -1113,11 +1113,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
                   {
                     ROSE_ASSERT((*i)->p_tok_elem != NULL);
-#if 1
+#if 1 /* 1116 */
                     printf ("   --- token #%d token id = %d position range (%d,%d) - (%d,%d): token = -->|%s|<-- \n",
                          counter_B,(*i)->p_tok_elem->token_id,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num,
                          (*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num,(*i)->p_tok_elem->token_lexeme.c_str());
-#endif
+#endif /* 1116 */
 
                     SgToken* roseToken = new SgToken( (*i)->p_tok_elem->token_lexeme,(*i)->p_tok_elem->token_id);
                     ROSE_ASSERT(roseToken != NULL);
@@ -1130,8 +1130,8 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                     roseTokenList.push_back(roseToken);
                     counter_B++;
                   }
-#endif
-#endif
+#endif /* 1104 */
+#endif /* 1079 */
             // typedef std::list<stream_element*> LexTokenStreamType;
 
             // TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = token_list_pointer;
@@ -1903,10 +1903,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
        // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
        // if (SageInterface::is_Fortran_language() == false)
-          if (SageInterface::is_C_language() == true || SageInterface::is_Cxx_language() == true)
-             {
+          //~ if (SageInterface::is_C_language() == true || SageInterface::is_Cxx_language() == true)
+             //~ {
             // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
-             }
+             //~ }
 
 #if 0
           int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ?
@@ -1989,7 +1989,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           ROSE_ABORT();
 #endif
 
-#if 0
+#if 0 /* LEGACY_1992 */
        // DQ (11/2/2019): Force processing to exist afer a selected header file is processed.
              {
             // SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
@@ -2010,7 +2010,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                        }
                   }
              }
-#endif
+#endif /* LEGACY_1992 */
         }
 
   // Move attributes from the list of attributes into the collection of the current AST nodes,
