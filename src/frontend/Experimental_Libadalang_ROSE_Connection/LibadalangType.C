@@ -483,25 +483,30 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_id);
 
-    if(kind == ada_subtype_indication){
-        //Get the type this references
-        ada_base_entity lal_declaration;
-        ada_type_expr_p_designated_type_decl(lal_id, &lal_declaration);
-        SgNode& basenode = getExprType(&lal_declaration, ctx);
-        SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
+    ada_base_entity lal_declaration;
 
-        return SG_DEREF(res);
+    if(kind == ada_subtype_indication){
+      //Get the type this references
+      ada_type_expr_p_designated_type_decl(lal_id, &lal_declaration);
+    } else if(kind == ada_identifier){
+      //Get the type this references
+      ada_expr_p_first_corresponding_decl(lal_id, &lal_declaration);
+    } else {
+      logError() << "getDeclType: unhandled definition kind: " << kind
+                 << std::endl;
+      return mkTypeUnknown();
     }
+
+    SgNode& basenode = getExprType(&lal_declaration, ctx);
+    SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
+
+    return SG_DEREF(res);
 
     /*ADA_ASSERT(elem.Element_Kind == A_Definition);
     Definition_Struct& def = elem.The_Union.Definition;
 
     if (def.Definition_Kind == An_Access_Definition)
       return getAnonymousAccessType(def, ctx);*/
-
-    logError() << "getDeclType: unhandled definition kind: " << kind
-               << std::endl;
-    return mkTypeUnknown();
   }
 
   TypeData
