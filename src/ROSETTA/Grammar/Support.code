@@ -5433,23 +5433,13 @@ HEADER_FILE_INFORMATION_START
        // this function abstracts that query process.
           bool hasPositionInSource() const;
 
-       // DQ (6/21/2005): check if this file info object is from the same file
-
-       // DQ (9/5/2008): Switched back to using SgFile instead of SgSourceFile.
-       // bool isSameFile(SgFile* file) const;
-       // bool isSameFile(SgSourceFile* file) const;
           bool isSameFile(SgFile* file) const;
 
-       // DQ (1/18/2006): Added new function with more useful interface.
           bool isSameFile(Sg_File_Info* fileInfo) const;
-       // DQ (11/1/2006): Alternative use case.
           bool isSameFile(const Sg_File_Info & fileInfo) const;
 
       //! Access function for classification bit field
-       // bool isOriginal() const;
           bool isTransformation() const;
-       // bool isDeclaration() const ROSE_DEPRECATED_FUNCTION;
-       // bool isInitialization() const ROSE_DEPRECATED_FUNCTION;
 
        // DQ (2/21/2005): Added support for specification of compiler generated code (done in front-end translation)
           bool isCompilerGenerated() const;
@@ -5457,7 +5447,6 @@ HEADER_FILE_INFORMATION_START
           bool isOutputInCodeGeneration() const;
           bool isShared() const;
           bool isFrontendSpecific() const;
-       // bool isUnused1() const;
 
           bool isSourcePositionUnavailableInFrontend() const;
           void unsetSourcePositionUnavailableInFrontend();
@@ -5549,17 +5538,8 @@ HEADER_FILE_INFORMATION_START
           void register_node(SgLocatedNode* node) ROSE_DEPRECATED_FUNCTION; /* register interest */
           void deregister_node(SgLocatedNode* node) ROSE_DEPRECATED_FUNCTION;
 
-       // functions added by Dan Quinlan (suggested by Gary Lee)
-       // int   getCurrentLine () const ROSE_DEPRECATED_FUNCTION;
-       // std::string getCurrentFilename () const ROSE_DEPRECATED_FUNCTION;
-
-       // int   getReferenceCount() ROSE_DEPRECATED_FUNCTION;
-       // void  incrementReferenceCount() ROSE_DEPRECATED_FUNCTION;
-       // void  decrementReferenceCount() ROSE_DEPRECATED_FUNCTION;
-
        // DQ (7/4/2005): Added to test internal consistancy
           bool ok() const;
-       // bool consistancyCheck() const;
 
        // MK (8/2/05) : Added functions to interface with fileid maps, in order to eventually
        //               restrict access to the maps themselves
@@ -5610,13 +5590,6 @@ HEADER_FILE_INFORMATION_START
                BAD_FILE_ID = -6   /*!< value returned if there is no file id mapped to given filename */
              };
 
-
-
-       // DQ (2/27/2019): Adding support for access function to list of fileIds and line numbers associated with
-       // support for multi-file sharing of IR nodes and the support to know there source position information
-       // from each file.
-       // const SgFileIdList & get_fileIDsToUnparse () const;
-       // SgFileIdList & get_fileIDsToUnparse ();
 
 HEADER_FILE_INFORMATION_END
 
@@ -5820,41 +5793,13 @@ public:
           SgFile ( int & argc, char** & argv,  SgProject* project = NULL );
           SgFile(std::vector<std::string>& argv,  SgProject* project = NULL);
 
-       // SgFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex, SgProject* project );
-       //   virtual void doSetupForConstructor(const std::vector<std::string>& argv, int& errorCode, int fileNameIndex, SgProject* project);
-       //AS(10/04/08) Changed semantics of doSetupForConstructor to not call frontend
+          SgFile(const SgFile &) = delete;
+
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
-      //! Default constructor (not meant to be used)
-      //  SgFile() ROSE_DEPRECATED_FUNCTION;
-
-      //! Destructor
-      // ~SgFile();
-
       //! Initialization support for constructors
-          void initialization ();
+          void initialization() ROSE_DEPRECATED_FUNCTION;
 
-      //! Unparsing support for generating C++ code from the internal Abstract Syntax Tree (AST)
-      //  void unparsestdout();
-
-      //! Unparsing support for generating C++ code from the internal Abstract Syntax Tree (AST)
-      //  void unparse ( std::ostream & os );
-
-       // Root of the Abstract Syntax Tree (AST) representing this file
-       // (a Sg global declaration scope statement).
-       // SgGlobal & root() ROSE_DEPRECATED_FUNCTION;
-
-      //! Root of the Abstract Syntax Tree (AST) representing this file
-       // DQ (7/19/2005): Added to support future name change from "root"
-       // SgGlobal* get_globalScope() const;
-
-       // DQ (9/5/2008): Support for older name of the SgGlobal in SgSourceFile
-       // SgGlobal* get_root() const;
-
-       // DQ (3/18/2006): Modified the unparse function interface to permit specification of default
-       // arguments to control code generation formatting and use of alternative code generation
-       // approaches (copy based code generation).
-       // void unparse ();
       //! Generate the C++ file representing the AST
           void unparse ( UnparseFormatHelp *unparseHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
 
@@ -5866,8 +5811,6 @@ public:
           void resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp = NULL );
 
       //! Member function to compile the resulting output file from unparsing
-      //  BP : 11/13/2001, modified to include compiler name
-      //  int compileOutput ( int fileNameIndex, const std::string& compilerName );
          int compileOutput ( int fileNameIndex );
 
        // function to generate PDF output file for AST
@@ -5876,24 +5819,16 @@ public:
       //! associated filename
           std::string getFileName() const;
 
-      //! Move this function from ROSE into the AST restructuring tool
-       // friend void roseDisplayMechanism( SgFile *file );
-
 // #ifndef ROSE_USE_SWIG_SUPPORT
 #ifndef SWIG
        // DQ (3/10/2013): This function is left undefined in the final link step for SWIG support, so remove it from SWIG processing for now.
           friend void alternativeSageEdgInterfaceConstruction( SgFile *file );
 #endif
 
-      //! Move this function from ROSE into the AST restructuring tool
-       // int callFrontEnd ( int & argc, char** & argv , SgFile & file, int fileNameIndex );
-       // int callFrontEnd ( int & argc, char** & argv );
-
        // Get the commandline from where it is stored internally
           virtual int callFrontEnd();
 
       //! Fixups to be run when the whole project has been created (this attaches preprocessing information).
-       // GB (9/4/2009)
           void secondaryPassOverSourceFile();
 
        // DQ (9/2/2008): Added to factor out detail fo building the AST in callFrontEnd().
@@ -5956,7 +5891,6 @@ public:
        // BP : 11/13/2001, modified to include compiler name
           std::vector<std::string> buildCompilerCommandLineOptions ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
        // BP : 11/13/2001, modified to include compiler name
-       // int compileOutput ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
           int compileOutput ( std::vector<std::string> & argv, int fileNameIndex );
 
           void display ( const std::string & label ) const;
@@ -5969,17 +5903,6 @@ public:
       //! Get the SgProject IR node if available (template instantiation information is stored there)
           SgProject* get_project();
 
-       // DQ (1/17/2006): Build an explicit copy constructor that returns an error internally
-          SgFile ( const SgFile & X );
-
-       // DQ (1/18/2006): Added function to be match virtual function on SgNode
-       // (so that the SgFile's Sg_File_Info object could be accessed).
-       // Sg_File_Info* get_file_info(void) const;
-
-      //! Sets up the source file name (there should only be one source file in the
-      //! commandline to a SgFile, there can be multiple ones to a SgProject).
-      //    void setupSourceFilename ( const std::vector<std::string>& argv );
-
       //! Access function calling get_startOfConstruct(), provided to support older interface.
           Sg_File_Info* get_file_info() const override;
 
@@ -5990,16 +5913,10 @@ public:
        // This function is called at several locations to build SgSourceFiles of different types (languages).
           void initializeSourcePosition( const std::string & sourceFilename );
 
-       // DQ (2/5/2009): This is now a data member at SgProject and SgFile.
-       // DQ (2/4/2009): Added the data member to the SgProject and tha access function to the SgFile,
-       // it was previously reversed.
-       // bool get_binary_only (void) const;
-
        // DQ (6/13/2013): Added to support to call the frontend after all SgFiles are built up.
           void runFrontend(int & nextErrorCode);
 
        // DQ (9/24/2013): Added function to output the name of the language for the generated code.
-       // static std::string get_outputLanguageOptionName ( outputLanguageOption_enum lang );
           static std::string get_outputLanguageOptionName ( languageOption_enum lang );
 
        // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
@@ -6112,13 +6029,6 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
           void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
           std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
-
-#if 0
-       // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
-       // typedef std::vector<SgNode*> NumberToStatementType;
-       // void buildStatementNumbering( NumberToStatementType & numberToStatementContainer );
-          void buildStatementNumbering();
-#endif
 
        // DQ (3/2/2022): Added a function to support initialization of all data members.
           void initialization();
@@ -6280,11 +6190,10 @@ HEADER_APPLICATION_PROJECT_START
 
      public:
 
-      //! default constructor (not meant to be used)
+      //! default constructor (not meant to be used, WARNING, but is!)
           SgProject();
 
-      //! Copy constructor (shallow copy, does not do deep copy of the AST)
-          SgProject( const SgProject & project );
+          SgProject(const SgProject &) = delete;
 
       //! Destructor
       // ~SgProject();
@@ -6295,13 +6204,13 @@ HEADER_APPLICATION_PROJECT_START
       //! Total number of directories in the project.
           int numberOfDirectories() const;
 
-      //! Access function for retriving a SgFile object from the list stored internally
+      //! Access function for retrieving a SgFile object from the list stored internally
       //! This function is depricated and "operator[unsigned int]" should be used instead.
-          SgFile & get_file ( int i ) const ROSE_DEPRECATED_FUNCTION;
+          SgFile & get_file(int) const ROSE_DEPRECATED_FUNCTION;
 
       //! Access function for putting a new SgFile object into the list stored internally
       //! This function is depricated and "get_fileList->push_back(SgFile*)" should be used instead.
-          void set_file ( SgFile & file ) ROSE_DEPRECATED_FUNCTION;
+          void set_file(SgFile &) ROSE_DEPRECATED_FUNCTION;
 
       //! Intended for use with the -rose:keep_going commandline option.
       //! \returns A list of files that encountered an error within either
@@ -8138,7 +8047,6 @@ SgSymbolTable::find( const SgFunctionType* functionType)
      SgName name = functionType->get_mangled();
 
      p_iterator = p_table->find(name);
-  // while (p_iterator != p_table->end() && (*p_iterator).first == name)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
        // DQ (3/19/2016): This is an issue for Klocworks.
@@ -12710,7 +12618,7 @@ Sg_File_Info::Sg_File_Info()
      p_fileIDsToUnparse(),
      p_fileLineNumbersToUnparse()
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      post_construction_initialization();
    }
 
@@ -12769,7 +12677,7 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
 void
 Sg_File_Info::post_construction_initialization()
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -12943,10 +12851,6 @@ Sg_File_Info::get_physical_file_id() const
              }
         }
 
-#if 0
-     printf ("Leaving Sg_File_Info::get_physical_file_id(): return_physical_file_id = %d \n",return_physical_file_id);
-#endif
-
      return return_physical_file_id;
    }
 
@@ -12964,8 +12868,7 @@ Sg_File_Info::get_physical_file_id_reference()
 int
 Sg_File_Info::get_physical_file_id(int input_file_id) const
    {
-  // DQ (12/18/2012): Added support for physical file position information.
-     assert (this != NULL);
+     ASSERT_not_null(this);
 
   // Initialize to error value.
      int return_physical_file_id = NULL_FILE_ID;
@@ -13799,47 +13702,16 @@ Sg_File_Info::setTransformation()
                printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
                printf ("In Sg_File_Info::setTransformation(): Found SgCastExp %p counter = %d \n",castExpression,counter);
                printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
-
-#if 0
-               if (counter > 20)
-                  {
-#if 1
-                    printf ("Exiting as a test: counter = %d \n",counter);
-                    ROSE_ASSERT(false);
-#endif
-                  }
-
-            // counter++;
-#endif
-
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
              }
             else
              {
                printf ("In Sg_File_Info::setTransformation(): !SgCastExp: parent = %p = %s counter = %d \n",parent,parent->class_name().c_str(),counter);
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
              }
         }
        else
         {
           printf ("In Sg_File_Info::setTransformation(): parent == NULL: counter = %d \n",counter);
         }
-
-#if 0
-     if (counter > 250)
-        {
-#if 0
-          printf ("Exiting as a test: counter = %d \n",counter);
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
 
      counter++;
 #endif
@@ -14365,20 +14237,14 @@ SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
    }
 
 
-// DQ (1/17/2006): Added this (copy constructor) to be explicit
-// and avoid difficult bugs where it is compiler generated.
-SgFile::SgFile ( const SgFile & X )
-   {
-     mprintf ("Error: calling private copy constructor! \n");
-     ROSE_ASSERT(false);
-   }
-
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
+// The constructor should be used for initialization. Duplication leads to
+// inconsistent settings (e.g., p_openmp_parse_only), deprecate, then delete [Rasmussen 2024.04.28]
 void
-SgFile::initialization()
+SgFile::initialization() ROSE_DEPRECATED_FUNCTION
    {
-     assert(this != NULL);
+     ASSERT_not_null(this);
 
      p_verbose                 = 0;
 
@@ -14646,44 +14512,7 @@ SgFile::initialization()
   // DQ (9/17/2020): Added these missing variable initializations.
      p_standard     = e_default_standard;
      p_gnu_standard = false;
-
-  // DQ (5/20/2021): Support for token-based unparsing (computation of first and last statement in source file.
-  // p_firstStatement = NULL;
-  // p_lastStatement  = NULL;
    }
-
-#if 0
-// DQ (9/4/2008): This is now in SgSourceFile (and built using ROSETTA with a different name)
-SgGlobal &
-SgFile::root() ROSE_DEPRECATED_FUNCTION
-   {
-     assert(p_root != NULL);
-     return *p_root;
-   }
-#endif
-
-#if 0
-// DQ (7/19/2005): Added to support better naming of global scope (root is not very clear)
-// get_root() set_root() and root() will be depricated.
-SgGlobal*
-SgFile::get_globalScope() const
-   {
-  // This variable name will be changed in the future (to globalScope)
-     assert(p_root != NULL);
-     return p_root;
-   }
-#endif
-
-#if 0
-// DQ (5/9/2008): Added to support for previous variable name for some backward compatability.
-SgGlobal*
-SgSourceFile::get_root() const
-   {
-  // This variable name will be changed in the future (to globalScope)
-     assert(p_globalScope != NULL);
-     return p_globalScope;
-   }
-#endif
 
 enum SgFile::standard_enum SgFile::get_standard(void) const { return p_standard; }
 void SgFile::set_standard(enum standard_enum e_std) { p_standard = e_std; }
@@ -14986,11 +14815,6 @@ SgFile::generateOutputFileName() const
                mprintf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
                mprintf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
                mprintf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
-#if 0
-               set_objectFileNameWithPath(get_objectFileNameWithoutPath());
-               printf (" --- after reset: get_objectFileNameWithPath() = %s \n",get_objectFileNameWithPath().c_str());
-#endif
-            // ROSE_ASSERT(false);
              }
         }
        else
@@ -15000,11 +14824,6 @@ SgFile::generateOutputFileName() const
                mprintf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
                mprintf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
                mprintf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
-#if 0
-               set_objectFileNameWithoutPath(get_objectFileNameWithPath());
-               printf (" --- after reset: get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
-#endif
-            // ROSE_ASSERT(false);
              }
         }
 
@@ -15288,95 +15107,12 @@ SOURCE_APPLICATION_FILE_END
 
 SOURCE_APPLICATION_SOURCE_FILE_START
 
-#if 0
-// DQ (3/2/2022): This default constructor is automatically generated by ROSETTA, so we don't need
-// it to be explicit. Note that all of the data members are automatically initialized, as can be
-// seen by looking at the Cxx_Grammar.C (generated code).
-SgSourceFile::SgSourceFile ()
-   {
-  // Default constructor
-
-#if 1
-     printf ("Inside of Default constructor SgSourceFile::SgSourceFile() \n");
-#endif
-
-     SgGlobal* p_root = NULL;
-
-     assert (p_root == NULL);
-
-     initialization();
-
-  // DQ (9/4/2008): Setup of global scope moved from SgFile to SgSourceFile
-  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can
-  // enforce that the filename is always an absolute path (starting with "/").
-  // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
-     Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
-     assert (globalScopeFileInfo != NULL);
-
-     p_root = new SgGlobal( globalScopeFileInfo );
-     assert (p_root != NULL);
-
-  // DQ (2/15/2006): Set the parent of the SgGlobal IR node
-     p_root->set_parent(this);
-
-  // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
-  // mprintf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
-     assert(p_root->get_endOfConstruct() == NULL);
-     p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
-     assert(p_root->get_endOfConstruct() != NULL);
-   }
-#endif
-
-
-
-
-#if 1
 void
 SgSourceFile::initialization()
    {
   // DQ (3/2/2022): The SgSourceFile node has a number of new data members that were not previously initialized.
 
   // Initialization
-
-#if 0
-     SourceFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "SgModuleStatementPtrList", "module_list", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "SgTokenPtrList", "token_list", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "SgGlobal*", "temp_holding_scope", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "SgJavaPackageStatement *", "package", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
-     SourceFile.setDataPrototype   ( "SgJavaImportStatementList*", "import_list", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
-     SourceFile.setDataPrototype   ( "SgJavaClassDeclarationList*", "class_list", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
-     SourceFile.setDataPrototype   ( "bool", "isHeaderFile", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "bool", "isHeaderFileIncludedMoreThanOnce", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "SgHeaderFileReport*", "headerFileReport", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-     SourceFile.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierBeforeList", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierAfterList", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "SgIncludeFile*", "associated_include_file", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-     SourceFile.setDataPrototype   ( "bool", "processedToIncludeCppDirectivesAndComments", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SourceFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     SourceFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-#endif
-
      p_globalScope                                = NULL;
      p_temp_holding_scope                         = NULL;
      p_package                                    = NULL;
@@ -15391,7 +15127,7 @@ SgSourceFile::initialization()
      p_firstStatement                             = NULL;
      p_lastStatement                              = NULL;
    }
-#endif
+
 
 // DQ (1/20/2021): Changed the API to use a pointer to a std::map<SgNode*,TokenStreamSequenceToNodeMapping*> instead of a reference.
 void
@@ -15483,7 +15219,7 @@ SgSourceFile::get_token_unparse_frontier()
   // DQ (9/28/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
   // multiple files (or header files in addition to the source file).
 
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15564,7 +15300,7 @@ SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndN
 std::map<SgNode*,PreviousAndNextNodeData*> &
 SgSourceFile::get_token_unparse_frontier_adjacency()
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15652,7 +15388,7 @@ SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,S
 std::multimap<int,SgStatement*> &
 SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15728,7 +15464,7 @@ SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
 std::set<int> &
 SgSourceFile::get_redundantTokenEndingsSet()
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15814,7 +15550,7 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
   // DQ (11/20/2015): Not sure I want this to be copy by value, but OK for now.
 
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15894,7 +15630,7 @@ SgSourceFile::get_macroExpansionMap()
    {
   // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
 
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15951,7 +15687,7 @@ SgHeaderFileReport::display( const string & label) const
   // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
      printf ("\nIn HeaderFileReport::display(): label = %s \n",label.c_str());
 
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
      printf ("In HeaderFileReport::display(): p_source_file = %p \n",p_source_file);
      ROSE_ASSERT(p_source_file != NULL);
@@ -16119,27 +15855,8 @@ SgProject::SgProject()
      initialization();
    }
 
-SgProject::SgProject( const SgProject & project )
-   {
-  // This copy constructor is not supported, it is implemented with to return an error message!
-
-     initialization();
-
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-  // DQ (1/20/2010): This is no longer a list and is now a pointer to a SgFileList IR node.
-
-  // Build the empty STL lists
-     p_fileList.clear();
-#endif
-
-  // print error message and quit
-     mprintf ("ERROR: this SgProject copy constructor is not supposed to be used \n");
-     mprintf ("    use SgProject ( int & argc, char** & argv , int & errorCode ) OR copy member function instead \n");
-     ROSE_ABORT();
-   }
-
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
+SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
    {
      ASSERT_not_null(this);
      initialization();
@@ -16599,13 +16316,7 @@ SgProject::get_applicationRootDirectory () const
 void
 SgProject::set_applicationRootDirectory ( std::string applicationRootDirectory )
   {
-    ROSE_ASSERT (this != NULL);
-
-#if 0
-    // DQ (6/12/2015): Added debugging support to trace setting of isModified flag
-    // used to trigger marking transformations for the token-based unparsing.
-    printf ("SgProject::set_applicationRootDirectory = %p = %s \n",this,this->class_name().c_str());
-#endif
+    ASSERT_not_null(this);
 
     p_applicationRootDirectory = applicationRootDirectory;
 
@@ -16732,14 +16443,14 @@ SgProject::get_skipfinalCompileStep (void) const
 void
 SgProject::set_C_only       (bool value)
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      p_C_only = value;
    }
 
 void
 SgProject::set_Cxx_only     (bool value)
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      p_Cxx_only = value;
    }
 
@@ -17141,7 +16852,7 @@ SgProject::get_Python_only (void) const
 void
 SgProject::set_Java_only (bool value)
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      p_Java_only = value;
    }
 
@@ -17245,14 +16956,14 @@ SgProject::get_Ada_only (void) const
 void
 SgProject::set_Ada_only (bool value)
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      p_Ada_only = value;
    }
 
 void
 SgProject::set_Jovial_only (bool value)
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      p_Jovial_only = value;
    }
 
@@ -19101,7 +18812,7 @@ SgTemplateParameter::is_matching_kind (const SgTemplateParameter & X, const SgTe
 SgName
 SgTemplateParameter::get_mangled_name (void) const
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
 #if 0
   // mprintf ("In SgTemplateParameter::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
@@ -19260,7 +18971,7 @@ SgTemplateArgument::SgTemplateArgument ( bool explicitlySpecified )
 SgName
 SgTemplateArgument::get_mangled_name (void) const
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
 #if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
   // mprintf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
@@ -19780,7 +19491,7 @@ SgTemplateArgument::display( const std::string & label) const
    {
   // DQ (5/22/2016): Adding display function for debugging.
 
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
      switch (get_argumentType())
         {
@@ -19865,7 +19576,7 @@ std::string
 SgTemplateArgument::unparseToStringSupport()
    {
   // DQ (3/10/2018): This is a function mostly used for debugging.
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
      SgUnparse_Info *info = new SgUnparse_Info();
      ROSE_ASSERT(info != NULL);
