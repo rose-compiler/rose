@@ -50,6 +50,9 @@ public:
     Disassembler::BasePtr newInstructionDecoder() const override;
     Unparser::BasePtr newUnparser() const override;
 
+    InstructionSemantics::BaseSemantics::DispatcherPtr
+    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
+
     std::vector<Partitioner2::FunctionPrologueMatcherPtr>
     functionPrologueMatchers(const Partitioner2::EnginePtr&) const override;
 };

@@ -97,11 +97,14 @@ public:
                                           SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL) const;
 
+    /** Create a ROSE type form a MIPS data format. */
+    SgAsmType* makeType(MipsDataFormat) const;
+
     /** Create a new general purpose register reference expression. */
     SgAsmRegisterReferenceExpression *makeRegister(rose_addr_t insn_va, unsigned regnum) const;
 
     /** Create a new floating point register reference expression. */
-    SgAsmRegisterReferenceExpression *makeFpRegister(rose_addr_t insn_va, unsigned regnum) const;
+    SgAsmRegisterReferenceExpression *makeFpRegister(rose_addr_t insn_va, unsigned regnum, MipsDataFormat) const;
 
     /** Create a new register reference for Coprocessor 0. */
     SgAsmRegisterReferenceExpression *makeCp0Register(rose_addr_t insn_va, unsigned regnum, unsigned sel) const;

@@ -7,6 +7,7 @@ add_library(roseBinaryAnalysisInstructionSemantics OBJECT
   DispatcherAarch64.C
   DispatcherCil.C
   DispatcherM68k.C
+  DispatcherMips.C
   DispatcherPowerpc.C
   DispatcherX86.C
   IntervalSemantics.C
@@ -32,6 +33,7 @@ install(FILES
   DispatcherAarch64.h
   DispatcherCil.h
   DispatcherM68k.h
+  DispatcherMips.h
   DispatcherPowerpc.h
   DispatcherX86.h
   IntervalSemantics.h

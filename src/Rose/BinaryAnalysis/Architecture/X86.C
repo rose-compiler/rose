@@ -457,8 +457,8 @@ X86::newUnparser() const {
     return Unparser::X86::instance(shared_from_this());
 }
 
-InstructionSemantics::BaseSemantics::DispatcherPtr
-X86::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
+InstructionSemantics::BaseSemantics::Dispatcher::Ptr
+X86::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
     return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 

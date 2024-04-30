@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherMips.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>

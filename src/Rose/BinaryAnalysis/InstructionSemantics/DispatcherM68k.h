@@ -7,10 +7,13 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/split_member.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -19,6 +22,9 @@ namespace InstructionSemantics {
 /** Shared-ownership pointer to an M68k instruction dispatcher. */
 typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
+/** Dispatches Motorola 68k instructions through the semantics layer.
+ *
+ *  The instruction is lowered to a set of a few dozen operations that operate on values and states in a semantic domain. */
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 public:
     /** Base type. */

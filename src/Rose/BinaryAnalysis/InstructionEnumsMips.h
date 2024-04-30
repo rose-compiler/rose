@@ -37,6 +37,26 @@ enum MipsSpecialPurposeRegister {
     mips_spr_fcsr               // Floating point control/status register (used to be known as FCR31)
 };
 
+// Major numbers for MIPS for RiscOperators::interrupt
+enum MipsInterruptMajor {
+    SIGNAL_EXCEPTION            // The "SignalException" function from the MIPS ISA manual
+};
+
+// Minor interrupt numbers for RiscOperators::interrupt
+enum MipsInterruptMinor {
+    INTEGER_OVERFLOW,
+    BREAKPOINT
+};
+
+// MIPS data formats
+enum MipsDataFormat {
+    mips_fmt_w,                 // "word", 16 bit integral type
+    mips_fmt_l,                 // "long" (a.k.a., "double word"), 32 bit integral type
+    mips_fmt_s,                 // "single-precision", 32-bit floating-point type
+    mips_fmt_d,                 // "double-precision", 64-bit floating-point type
+    mips_fmt_ps                 // "paired-single", pair of 32-bit floating point types
+};
+
 // Kinds of MIPS instructions.
 enum MipsInstructionKind {
     mips_unknown_instruction,

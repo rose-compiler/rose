@@ -166,6 +166,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/DispatcherAarch64.C				\
 	BinaryAnalysis/InstructionSemantics/DispatcherCil.C				\
 	BinaryAnalysis/InstructionSemantics/DispatcherM68k.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherMips.C				\
 	BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.C				\
 	BinaryAnalysis/InstructionSemantics/DispatcherX86.C				\
 	BinaryAnalysis/InstructionSemantics/IntervalSemantics.C				\

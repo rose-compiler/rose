@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherMips.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
@@ -82,9 +83,14 @@ Mips32::registerDictionary() const {
         regs->insert("lo", mips_regclass_spr, mips_spr_lo, 0, 32);
         regs->insert("pc", mips_regclass_spr, mips_spr_pc, 0, 32);              // program counter
 
-        // 32 floating point registers
+        // 32 floating point registers, each 32 bits
         for (size_t i=0; i<32; ++i)
             regs->insert("f"+StringUtility::numberToString(i), mips_regclass_fpr, i, 0, 32);
+
+        // 16 floating point registers, each 64 bits. 64-bit FP are stored in pairs of 32-bit FP registers using the
+        // even register name. But since a register name in ROSE must be unique, we append the letter "d" (for "double").
+        for (size_t i=0; i<16; ++i)
+            regs->insert("f"+StringUtility::numberToString(i)+"d", mips_regclass_fpr, i*2, 0, 64);
 
         // Five FPU control registers are used to identify and control the FPU. The FCCR, FEXR, and FENR are portions
         // (not necessarily contiguous) of the FCSR extended to 32 bits, and therefore all share a major number.
@@ -669,6 +675,11 @@ Mips32::newInstructionDecoder() const {
 Unparser::Base::Ptr
 Mips32::newUnparser() const {
     return Unparser::Mips::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::Dispatcher::Ptr
+Mips32::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
+    return InstructionSemantics::DispatcherMips::instance(shared_from_this(), ops);
 }
 
 std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
