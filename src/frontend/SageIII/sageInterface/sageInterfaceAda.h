@@ -783,6 +783,7 @@ namespace
   ///   Other online sources tie the notion of primitive arguments to tagged types.
   ///   e.g., https://en.wikibooks.org/wiki/Ada_Programming/Object_Orientation#Primitive_operations .
   ///         accessed on 04/01/26.
+  /// \todo also return the result type if it is primitive
   /// @{
   std::vector<PrimitiveParameterDesc>
   primitiveParameterPositions(const SgFunctionDeclaration&);

@@ -3583,6 +3583,7 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
     // PP: note to self: BaseTypeDecl::find does NOT skip the initial typedef decl
     const SgDeclarationStatement* tydcl = associatedDeclaration_internal(parm->get_type(), 1);
 
+    // \todo should this be sameCanonicalScope or just same scope?
     if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))
       res.emplace_back(parmpos, parm, tydcl);
 
@@ -4111,10 +4112,6 @@ void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src)
       throw std::runtime_error{"cannot assign set_operatorPosition from non-SgExpression."};
     }
   }
-
-  std::cerr << typeid(src).name() << std::endl;
-
-  ASSERT_require(tgt.isCompilerGenerated() == src.isCompilerGenerated());
 }
 
 

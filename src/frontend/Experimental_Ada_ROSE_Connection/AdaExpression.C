@@ -102,6 +102,8 @@ namespace
       {
         SgExprListExp& arglst = mkExprListExp(args);
 
+        computeSourceRangeFromChildren(arglst);
+
         res = &mkFunctionCallExp(n, arglst, !prefixCallSyntax, objectCallSyntax);
       }
 
