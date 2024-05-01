@@ -470,6 +470,7 @@ GENERATED_SOURCE =						\
         SgAsmPESectionTableEntry.h				\
         SgAsmPESectionTable.h					\
         SgAsmPEStringSection.h					\
+	SgAsmPointerType.h					\
         SgAsmPowerpcInstruction.h				\
         SgAsmRegisterNames.h					\
         SgAsmRegisterReferenceExpression.h			\
@@ -494,6 +495,7 @@ GENERATED_SOURCE =						\
         SgAsmUserInstruction.h					\
         SgAsmValueExpression.h					\
         SgAsmVectorType.h					\
+	SgAsmVoidType.h						\
         SgAsmX86Instruction.h
 else
 GENERATED_SOURCE =						\
@@ -873,6 +875,7 @@ GENERATED_SOURCE =						\
 	SgAsmPESectionTableEntry.h				\
 	SgAsmPESectionTable.h					\
 	SgAsmPEStringSection.h					\
+	SgAsmPointerType.h					\
 	SgAsmPowerpcInstruction.h				\
 	SgAsmRegisterNames.h					\
 	SgAsmRegisterReferenceExpression.h			\
@@ -897,6 +900,7 @@ GENERATED_SOURCE =						\
 	SgAsmUserInstruction.h					\
 	SgAsmValueExpression.h					\
 	SgAsmVectorType.h					\
+	SgAsmVoidType.h						\
 	SgAsmX86Instruction.h
 endif
 
