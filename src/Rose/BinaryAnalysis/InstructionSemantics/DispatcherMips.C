@@ -72,19 +72,26 @@ struct IP_addi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         const size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr rs = ops->signExtend(d->read(args[1]), nBits);
+
+        // Compute sum
+        SValue::Ptr rs = d->read(args[1], nBits);       // 2-args version does unsigned extend or truncate
         SValue::Ptr imm = ops->signExtend(d->read(args[2]), nBits);
-        SValue::Ptr carry, overflow;
-        SValue::Ptr result = ops->addCarry(rs, imm, carry /*out*/, overflow /*out*/);
-        SValue::Ptr signBit = ops->extract(result, result->nBits()-1, result->nBits());
-        SValue::Ptr overflowed = ops->isNotEqual(carry, signBit);
+        SValue::Ptr sum = ops->add(rs, imm);
 
-        // If there's an overflow, use the destination's original value (i.e., no change to destination)
-        result = ops->ite(overflowed, d->read(args[0]), result);
+        // Calculate overflow
+        SValue::Ptr wideRs = ops->signExtend(d->read(args[1]), nBits + 1);
+        SValue::Ptr wideImm = ops->signExtend(d->read(args[2]), nBits + 1);
+        SValue::Ptr wideSum = ops->add(wideRs, wideImm);
+        SValue::Ptr wideSum32 = ops->extract(wideSum, 32, 33); // bit #32
+        SValue::Ptr wideSum31 = ops->extract(wideSum, 31, 32); // bit #31
+        SValue::Ptr overflow = ops->isNotEqual(wideSum31, wideSum32);
+        SValue::Ptr oldRt = d->read(args[0], nBits);
+        SValue::Ptr result = ops->ite(overflow, oldRt, sum);
+
+        // Craig: always do side effects after everything else.
+        // Side effects
         d->write(args[0], result);
-
-        // If there's an overflow, cause an exception
-        ops->raiseInterrupt(mips_signal_exception, mips_integer_overflow, overflowed);
+        ops->raiseInterrupt(mips_signal_exception, mips_integer_overflow, overflow);
     }
 };
 
@@ -92,8 +99,9 @@ struct IP_addi: P {
 struct IP_addiu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
         SValue::Ptr rs = d->read(args[1]);
-        SValue::Ptr imm = d->read(args[2], rs->nBits());
+        SValue::Ptr imm = ops->signExtend(d->read(args[2]), nBits);
         SValue::Ptr result = ops->add(rs, imm);
         d->write(args[0], result);
     }
@@ -106,6 +114,11 @@ struct IP_addu: P {
         SValue::Ptr rs = d->read(args[1]);
         SValue::Ptr rt = d->read(args[2]);
         SValue::Ptr result = ops->add(rs, rt);
+#if 0 // [Robb Matzke 2024-05-01] don't do this
+        //                            side-effect-1     side-effect-2     (GCC)
+        //                            side-effect-2     side-effect-1     (clang)
+        SValue::Ptr result = ops->add(d->read(args[1]), d->read(args[2]));
+#endif
         d->write(args[0], result);
     }
 };
