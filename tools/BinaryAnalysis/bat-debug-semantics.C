@@ -8,6 +8,7 @@ static const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
@@ -292,12 +293,14 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &par
         exit(0);
     }
 
+    Architecture::Base::ConstPtr arch = partitioner->architecture();
     SmtSolver::Ptr solver = makeSolver(settings);
-    RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = arch->registerDictionary();
     BaseSemantics::SValue::Ptr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterState::Ptr rstate = makeRegisterState(settings, protoval, regdict);
     BaseSemantics::MemoryState::Ptr mstate = makeMemoryState(settings, partitioner, protoval, protoval, regdict);
-    BaseSemantics::State::Ptr state = BaseSemantics::State::instance(rstate, mstate);
+    BaseSemantics::RegisterState::Ptr istate = makeRegisterState(settings, protoval, arch->interruptDictionary());
+    BaseSemantics::State::Ptr state = BaseSemantics::State::instance(rstate, mstate, istate);
 
     if (className == "concrete") {
         return ConcreteSemantics::RiscOperators::instanceFromState(state, solver);

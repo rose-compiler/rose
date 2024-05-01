@@ -631,20 +631,37 @@ public:
     //                                  Interrupt and system calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** Invoked for instructions that cause an interrupt.
+    /** Unconditionally raise an interrupt.
      *
      *  The major and minor numbers are architecture specific.  For instance, an x86 INT instruction uses major number zero and
      *  the minor number is the interrupt number (e.g., 0x80 for Linux system calls), while an x86 SYSENTER instruction uses
-     *  major number one. The minr operand for INT3 is -3 to distinguish it from the one-argument "INT 3" instruction which has
-     *  slightly different semantics. */
-    virtual void interrupt(int /*majr*/, int /*minr*/) {}
+     *  major number one.
+     *
+     *  The base implementation does one of two things. If the current state has an interrupt sub-state then the specified interrupt
+     *  is raised in that state by setting that interrupt to true. Otherwise, the base implementation does nothing. */
+    virtual void interrupt(int majorNumber, int minorNumber);
 
     /** Invoked for instructions that cause an interrupt.
      *
      *  This overload is for cases when the major and minor numbers are not integers, and/or when the interrupt is
-     *  conditionally executed. The default implementation just calls the concrete overload, throwing an exception if that's
-     *  not possible. */
-    virtual void interrupt(const SValuePtr &majr, const SValuePtr &minr, const SValuePtr &enabled);
+     *  conditionally executed.
+     *
+     *  The default implementation calls @ref raiseInterrupt if both `majorNumber` and `minorNumber` are concrete values,
+     *  otherwise it throws an exception. */
+    virtual void interrupt(const SValuePtr &majr, const SValuePtr &minr, const SValuePtr &raise);
+
+    /** Conditionally raise an interrupt.
+     *
+     *  The base implementation does one of these things:
+     *
+     *  @li If the current state has an interrupt sub-state then the interrupt's Boolean value in that state is OR'd with the
+     *  specified `raise` value. In other words, the interrupt is raised if it wasn't already raised before.
+     *
+     *  @li Otherwise if `raise` is a concrete value, then the @ref interrupt function is called if `raise` is true, or nothing is
+     *  done if `raise` is false.
+     *
+     *  @li Otherwise an exception is thrown. */
+    virtual void raiseInterrupt(unsigned majorNumber, unsigned minorNumber, const SValuePtr &raise);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

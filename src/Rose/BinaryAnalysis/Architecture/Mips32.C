@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherMips.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
@@ -122,6 +123,21 @@ Mips32::registerDictionary() const {
     }
 
     return registerDictionary_.get();
+}
+
+RegisterDictionary::Ptr
+Mips32::interruptDictionary() const {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!interruptDictionary_.isCached()) {
+        auto interrupts = RegisterDictionary::instance(name());
+        interrupts->insert("signal_exception.integer_overflow", mips_signal_exception, mips_integer_overflow,   0, 1);
+        interrupts->insert("signal_exception.breakpoint",       mips_signal_exception, mips_breakpoint,         0, 1);
+        interruptDictionary_ = interrupts;
+    }
+
+    return interruptDictionary_.get();
 }
 
 bool

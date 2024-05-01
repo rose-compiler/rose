@@ -30,6 +30,7 @@ private:
 
 protected:
     Sawyer::Cached<RegisterDictionaryPtr> registerDictionary_;
+    Sawyer::Cached<RegisterDictionaryPtr> interruptDictionary_;
     Sawyer::Cached<CallingConvention::Dictionary> callingConventions_;
     Sawyer::Cached<Unparser::Base::Ptr> insnToString_, insnToStringNoAddr_;
 
@@ -85,6 +86,19 @@ public:
      *
      *  Thread safety: Thread safe. */
     virtual RegisterDictionaryPtr registerDictionary() const = 0;
+
+    /** Property: Interrupt dictionary.
+     *
+     *  The interrupt dictionary (a kind of register dictionary) defines a mapping between interrupt names and descriptors (@ref
+     *  RegisterDescriptor), and thus how the interrupt names map to hardware.  Interrupts are normally single-bit values that
+     *  indicate whether the interrupt is in a raised or cleared state. Interrupts in ROSE have a major and minor number since they
+     *  use the same addressing mechanism as registers.
+     *
+     *  Since dictionaries are generally not modified, it is permissible for this funtion to return the same dictionary every time
+     *  it's called. The dictionary can be constructed on the first call.
+     *
+     *  Thread safety: Thread safe. */
+    virtual RegisterDictionaryPtr interruptDictionary() const;
 
     /** Property: Calling convention definitions.
      *

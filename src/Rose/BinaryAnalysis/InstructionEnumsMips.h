@@ -39,13 +39,13 @@ enum MipsSpecialPurposeRegister {
 
 // Major numbers for MIPS for RiscOperators::interrupt
 enum MipsInterruptMajor {
-    SIGNAL_EXCEPTION            // The "SignalException" function from the MIPS ISA manual
+    mips_signal_exception       // The "SignalException" function from the MIPS ISA manual
 };
 
 // Minor interrupt numbers for RiscOperators::interrupt
 enum MipsInterruptMinor {
-    INTEGER_OVERFLOW,
-    BREAKPOINT
+    mips_integer_overflow,
+    mips_breakpoint
 };
 
 // MIPS data formats

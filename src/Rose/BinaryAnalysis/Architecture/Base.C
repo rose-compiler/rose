@@ -53,6 +53,17 @@ Base::byteOrder() const {
     return byteOrder_;
 }
 
+RegisterDictionary::Ptr
+Base::interruptDictionary() const {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!interruptDictionary_.isCached())
+        interruptDictionary_ = RegisterDictionary::instance("empty");
+
+    return interruptDictionary_.get();
+}
+
 bool
 Base::matchesName(const std::string &name) const {
     return name_ == name;

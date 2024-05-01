@@ -255,23 +255,46 @@ RiscOperators::unsignedExtend(const SValue::Ptr &a, size_t new_width) {
 }
 
 void
-RiscOperators::interrupt(const SValue::Ptr &majr, const SValue::Ptr &minr, const SValue::Ptr &enabled) {
-    ASSERT_not_null(majr);
-    ASSERT_not_null(minr);
-    ASSERT_not_null(enabled);
-    ASSERT_require(enabled->nBits() == 1);
-
-    // Default implementation requires concrete values.
-    if (!majr->isConcrete() || !minr->isConcrete() || !enabled->isConcrete())
-        throw Exception("interrupt operands must be concrete", currentInstruction());
-    if (majr->nBits() > sizeof(int) || minr->nBits() > sizeof(int))
-        throw Exception("interrupt operands are too wide", currentInstruction());
-
-    if (enabled->isTrue()) {
-        int majrN = majr->toUnsigned().get();
-        int minrN = minr->toUnsigned().get();
-        interrupt(majrN, minrN);
+RiscOperators::interrupt(const int major, const int minor) {
+    if (currentState()->hasInterruptState()) {
+        ASSERT_require(major >= 0);
+        ASSERT_require(minor >= 0);
+        currentState()->raiseInterrupt(major, minor, this);
+    } else {
+        // old behavior was to do nothing
     }
+}
+
+void
+RiscOperators::raiseInterrupt(const unsigned majorNumber, const unsigned minorNumber, const SValue::Ptr &raise) {
+    ASSERT_not_null(raise);
+    ASSERT_require(raise->nBits() == 1);
+    ASSERT_not_null(currentState());
+
+    if (SValue::Ptr oldValue = currentState()->readInterrupt(majorNumber, minorNumber, boolean_(false), this)) {
+        SValue::Ptr newValue = or_(oldValue, raise);
+        currentState()->writeInterrupt(majorNumber, minorNumber, newValue, this);
+    } else if (raise->isTrue()) {
+        interrupt(majorNumber, minorNumber);
+    } else if (raise->isFalse()) {
+        // don't raise an interrupt
+    } else {
+        throw Exception("interrupt enabled value must be concrete for default implementation", currentInstruction());
+    }
+}
+
+void
+RiscOperators::interrupt(const SValue::Ptr &majorNumber, const SValue::Ptr &minorNumber, const SValue::Ptr &raise) {
+    ASSERT_not_null(majorNumber);
+    ASSERT_not_null(minorNumber);
+    ASSERT_not_null(raise);
+    ASSERT_require(raise->nBits() == 1);
+
+    if (!majorNumber->isConcrete())
+        throw Exception("interrupt major number must be concrete for default implementation", currentInstruction());
+    if (!minorNumber->isConcrete())
+        throw Exception("interrupt minor number must be concrete for default implementation", currentInstruction());
+    raiseInterrupt(majorNumber->toUnsigned().get(), minorNumber->toUnsigned().get(), raise);
 }
 
 SValue::Ptr

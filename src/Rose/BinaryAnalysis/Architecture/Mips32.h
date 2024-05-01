@@ -36,7 +36,8 @@ public:
     static Ptr instance(ByteOrder::Endianness);
 
 public:
-    RegisterDictionary::Ptr registerDictionary() const override;
+    RegisterDictionaryPtr registerDictionary() const override;
+    RegisterDictionaryPtr interruptDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
 
     std::string instructionDescription(const SgAsmInstruction*) const override;

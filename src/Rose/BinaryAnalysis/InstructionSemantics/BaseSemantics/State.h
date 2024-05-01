@@ -47,6 +47,7 @@ private:
     SValuePtr protoval_;                                // Initial value used to create additional values as needed.
     RegisterStatePtr registers_;                        // All machine register values for this semantic state.
     MemoryStatePtr memory_;                             // All memory for this semantic state.
+    RegisterStatePtr interrupts_;                       // Whether interrupts occurred.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -55,10 +56,12 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(registers_);
         s & BOOST_SERIALIZATION_NVP(memory_);
+        if (version > 0)
+            s & BOOST_SERIALIZATION_NVP(interrupts_);
     }
 #endif
 
@@ -68,6 +71,8 @@ private:
 protected:
     // needed for serialization
     State();
+
+    State(const RegisterStatePtr &registers, const MemoryStatePtr &memory, const RegisterStatePtr &interrupts);
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory);
 
     // deep-copy the registers and memory
@@ -79,39 +84,32 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
+    /** Instantiate a new state object with specified register, memory, and interrupt states. */
+    static StatePtr instance(const RegisterStatePtr &registers, const MemoryStatePtr &memory, const RegisterStatePtr &interrupts);
+
     /** Instantiate a new state object with specified register and memory states. */
-    static StatePtr instance(const RegisterStatePtr &registers, const MemoryStatePtr &memory) {
-        return StatePtr(new State(registers, memory));
-    }
+    static StatePtr instance(const RegisterStatePtr &registers, const MemoryStatePtr &memory);
 
     /** Instantiate a new copy of an existing state. */
-    static StatePtr instance(const StatePtr &other) {
-        return StatePtr(new State(*other));
-    }
+    static StatePtr instance(const StatePtr &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    /** Virtual constructor. */
-    virtual StatePtr create(const RegisterStatePtr &registers, const MemoryStatePtr &memory) const {
-        return instance(registers, memory);
-    }
+    /** Virtual constructor.
+     *
+     *  The @ref interruptState property will always be null. */
+    virtual StatePtr create(const RegisterStatePtr &registers, const MemoryStatePtr &memory) const;
 
     /** Virtual copy constructor. Allocates a new state object which is a deep copy of this state. States must be copyable
      *  objects because many analyses depend on being able to make a copy of the entire semantic state at each machine
      *  instruction, at each CFG vertex, etc. */
-    virtual StatePtr clone() const {
-        StatePtr self = boost::const_pointer_cast<State>(shared_from_this());
-        return instance(self);
-    }
+    virtual StatePtr clone() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
-    static StatePtr promote(const StatePtr &x) {
-        ASSERT_not_null(x);
-        return x;
-    }
+    static StatePtr promote(const StatePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
@@ -135,16 +133,30 @@ public:
     /** Property: Register state.
      *
      *  This read-only property is the register substate of this whole state. */
-    RegisterStatePtr registerState() const {
-        return registers_;
-    }
+    RegisterStatePtr registerState() const;
 
     /** Property: Memory state.
      *
      *  This read-only property is the memory substate of this whole state. */
-    MemoryStatePtr memoryState() const {
-        return memory_;
-    }
+    MemoryStatePtr memoryState() const;
+
+    /** Property: Interrupt state.
+     *
+     *  The interrupt state is modeled as bit flags specifying whether the interrupt has been raised. Interrupts have concrete major
+     *  and minor numbers that correspond to the @ref RegisterDescriptor major and minor properties. It is permissible for this
+     *  state to have a null interrupt state, in which case the @ref RiscOperators do something else (such as throw an
+     *  exception).
+     *
+     * @{ */
+    RegisterStatePtr interruptState() const;
+    void interruptState(const RegisterStatePtr&);
+    /** @} */
+
+    /** Tests whether an interrupt state is present.
+     *
+     *  A state may have an interrupt state (similar to the register and memory states). This function returns true if and only if
+     *  the interrupt state is present. */
+    bool hasInterruptState() const;
 
     /** Read a value from a register.
      *
@@ -184,9 +196,62 @@ public:
      *  BaseSemantics::RiscOperators::writeMemory() for details. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps);
 
+    /** Read an interrupt state.
+     *
+     *  The @ref BaseSemantics::State::readInterrupt implementation delegates to the interrupt state member of this state if
+     *  interrupts are present, otherwise it returns a null pointer. The default value `dflt` value will be written to the interrupt
+     *  state if that interrupt has no previous value. The default value and the return value (when non-null) are always Boolean
+     *  values (single bits) to indicate whether that interrupt is raised. */
+    virtual SValuePtr readInterrupt(unsigned major, unsigned minor, const SValuePtr &dflt, RiscOperators *valOps);
+
+    /** Read an interrupt state without side effects.
+     *
+     *  The @ref BaseSemantics::State::peekInterrupt implementation delegates to the interrupt state member of this state if
+     *  interrupts are present, otherwise it returns a null pointer. The default value `dflt` value will be written to the interrupt
+     *  state if that interrupt has no previous value. The default value and the return value (when non-null) are always Boolean
+     *  values (single bits) to indicate whether that interrupt is raised. */
+    virtual SValuePtr peekInterrupt(unsigned major, unsigned minor, const SValuePtr &dflt, RiscOperators *valOps);
+
+    /** Write an interrupt state.
+     *
+     *  The @ref BaseSemantics::State::writeInterrupt implementation delegates to the interrupt state member of this state if
+     *  interrupts are present and then returns true; otherwise it returns false. The `value` argument is Boolean (single bit)
+     *  to indicate whether the interrupt has been raised. */
+    virtual bool writeInterrupt(unsigned major, unsigned minor, const SValuePtr &value, RiscOperators *valOps);
+
+    /** Raise an interrupt.
+     *
+     *  Raises an interrupt by writing a concrete true value to the interrupt state.  If this state has an interrupt sub-state then
+     *  the return value is the old Boolean value for that interrupt; otherwise this function returns a null pointer. */
+    SValuePtr raiseInterrupt(unsigned major, unsigned minor, RiscOperators *valOps);
+
+    /** Clear an interrupt.
+     *
+     *  Clears an interrupt by writing a concrete false value to the interrupt state.  If this state has an interrupt sub-state then
+     *  the return value is the old Boolean value for that interrupt; otherwise this function returns a null pointer. */
+    SValuePtr clearInterrupt(unsigned major, unsigned minor, RiscOperators *valOps);
+
+    /** Test an interrupt.
+     *
+     *  Returns true if this state has an interrupt sub-state and the specified interrupt in that substate has a concrete true
+     *  value. Returns false in all other cases.
+     *
+     *  If the caller needs to handle values other than concrete true and false (such as unknown states) then use @ref readInterrupt
+     *  or @ref peekInterrupt instead. */
+    bool isInterruptDefinitelyRaised(unsigned major, unsigned minor, RiscOperators *valOps);
+
+    /** Test an interrupt.
+     *
+     *  Returns true if this state has an interrupt sub-state and the specified interrupt in that substate has a concrete false
+     *  value. Returns false in all other cases.
+     *
+     *  If the caller needs to handle values other than concrete true and false (such as unknown states) then use @ref readInterrupt
+     *  or @ref peekInterrupt instead. */
+    bool isInterruptDefinitelyClear(unsigned major, unsigned minor, RiscOperators *valOps);
+
     /** Compute a hash of the state.
      *
-     *  The state hash is computed by combining the memory hash with the register hash. */
+     *  The state hash is computed by combining the memory hash, register hash, and interrupt hash. */
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const;
 
     /** Print the register contents.
@@ -205,6 +270,16 @@ public:
      * @{ */
     void printMemory(std::ostream &stream, const std::string &prefix = "") const;
     virtual void printMemory(std::ostream &stream, Formatter &fmt) const;
+    /** @} */
+
+    /** Print interrupt states.
+     *
+     *  This method emits one line per interrupt and contains the interrupt major and minor numbers and a Boolean expression
+     *  indicating whether the interrupt is currently raised.
+     *
+     * @{ */
+    void printInterrupts(std::ostream&, const std::string &prefix = "");
+    virtual void printInterrupts(std::ostream &stream, Formatter &fmt) const;
     /** @} */
 
     /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
@@ -263,7 +338,10 @@ std::ostream& operator<<(std::ostream&, const State::WithFormatter&);
 } // namespace
 } // namespace
 
+#ifdef BOOST_HAVE_SERIALIZATION_LIB
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State, 1);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State);
+#endif
 
 #endif
 #endif

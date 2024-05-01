@@ -84,9 +84,7 @@ struct IP_addi: P {
         d->write(args[0], result);
 
         // If there's an overflow, cause an exception
-        SValue::Ptr major = ops->number_(8*sizeof(SIGNAL_EXCEPTION), SIGNAL_EXCEPTION);
-        SValue::Ptr minor = ops->number_(8*sizeof(INTEGER_OVERFLOW), INTEGER_OVERFLOW);
-        ops->interrupt(major, minor, overflowed);
+        ops->raiseInterrupt(mips_signal_exception, mips_integer_overflow, overflowed);
     }
 };
 
@@ -116,7 +114,7 @@ struct IP_addu: P {
 struct IP_break: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->interrupt(SIGNAL_EXCEPTION, BREAKPOINT);
+        ops->raiseInterrupt(mips_signal_exception, mips_breakpoint, ops->boolean_(true));
     }
 };
 
