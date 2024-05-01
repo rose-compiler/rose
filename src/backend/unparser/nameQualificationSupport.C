@@ -2037,7 +2037,7 @@ namespace
 
 
    void
-   generateNameQualificationSupportAda(SgNode* node, std::set<SgNode*>& referencedNameSet)
+   generateNameQualificationSupportAda(SgNode* node, std::set<SgNode*>&)
    {
      NameQualificationTraversalState nqState;
      NameQualificationTraversalAda   nqual{ SgNode::get_globalQualifiedNameMapForNames(),

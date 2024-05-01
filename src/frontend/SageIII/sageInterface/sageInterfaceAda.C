@@ -1751,9 +1751,9 @@ namespace Ada
         res = TypeDescription{n.get_type()};
       }
 
-      void handle(const SgIntVal& n)         { res = TypeDescription{ integralType() }; }
-      void handle(const SgLongIntVal& n)     { res = TypeDescription{ integralType() }; }
-      void handle(const SgLongLongIntVal& n) { res = TypeDescription{ integralType() }; }
+      void handle(const SgIntVal&)           { res = TypeDescription{ integralType() }; }
+      void handle(const SgLongIntVal&)       { res = TypeDescription{ integralType() }; }
+      void handle(const SgLongLongIntVal&)   { res = TypeDescription{ integralType() }; }
 
       // SgTypeString does not preserve the 'wideness', so let's just get
       //   this info from the literal.

@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <frontend/SageIII/sageInterface/SageBuilderAsm.h>
+#include <ROSE_UNUSED.h>
 
 
 namespace sb = Rose::SageBuilderAsm;
@@ -22,7 +23,9 @@ using namespace Rose::Diagnostics; // mlog WARN, ...
 `for_each cl = .metadata`
 
 void SgAsmCil`cl.Name`::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
-{ `for_each fl = cl.Fields`
+{ 
+  ROSE_UNUSED(uses4byteIndexing);
+  `for_each fl = cl.Fields`
   p_`fl.Name` = `fl.Init !`;
   `end_for`
 
@@ -34,7 +37,9 @@ void SgAsmCil`cl.Name`::parse(const std::vector<uint8_t>& buf, size_t& index, ui
 }
 
 void SgAsmCil`cl.Name`::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
-{ `for_each fl = cl.Fields`
+{ 
+  ROSE_UNUSED(uses4byteIndexing);
+  `for_each fl = cl.Fields`
   `fl.Serial !`;
   `end_for`
 }
@@ -359,8 +364,8 @@ void SgAsmCilMetadataRoot::unparse(std::ostream& os) const
   uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
   rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   // size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
-  rose_addr_t base_va = clih->get_baseVa();
-  rose_addr_t rva_offset = clih->get_rvaOffset(rva);
+  //~rose_addr_t base_va = clih->get_baseVa();
+  //~rose_addr_t rva_offset = clih->get_rvaOffset(rva);
   
   // assuming no modification, then the rva location must be past the code section
 

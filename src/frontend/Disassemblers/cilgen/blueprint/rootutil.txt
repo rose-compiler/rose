@@ -98,7 +98,7 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
   using Rose::BinaryAnalysis::MemoryMap;
 
   MemoryMap::Ptr map = MemoryMap::instance();
-  map->insert(AddressInterval::baseSize(base_va, sz),
+  map->insert(Rose::BinaryAnalysis::AddressInterval::baseSize(base_va, sz),
               MemoryMap::Segment::staticInstance(buf.data(), sz,
                                                  MemoryMap::READABLE|MemoryMap::EXECUTABLE, "CIL code segment"));
 

@@ -252,7 +252,7 @@ unparseMetadataTable( SageAsmCilMetadataTable* sgnode,
                       size_t& index,
                       uint64_t sizeFlags,
                       size_t rows,
-                      const char* tblName
+                      const char* /*tblName*/
                     )
 {
   using CilMetadataType = typename SageAsmCilMetadataTable::CilMetadataType;
