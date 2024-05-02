@@ -302,10 +302,16 @@ int clang_to_dot_main(int argc, char ** argv)
     compiler_instance->createFileManager();
     compiler_instance->createSourceManager(compiler_instance->getFileManager());
 
+#if (__clang__)  && (__clang_major__ >= 18)
+    llvm::Expected<clang::FileEntryRef> ret  = compiler_instance->getFileManager().getFileRef(input_file);
+    const clang::FileEntryRef input_file_entryRef = ret.get(); 
+    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entryRef, clang::SourceLocation(), clang::SrcMgr::C_User);
+#else
     llvm::ErrorOr<const clang::FileEntry *> ret  = compiler_instance->getFileManager().getFile(input_file);
     const clang::FileEntry * input_file_entry = ret.get(); 
     //clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
     clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), clang::SrcMgr::C_User);
+#endif
 
     compiler_instance->getSourceManager().setMainFileID(mainFileID);
 

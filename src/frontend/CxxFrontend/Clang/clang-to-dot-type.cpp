@@ -219,7 +219,29 @@ bool ClangToDotTranslator::VisitType(clang::Type * type, NodeDescriptor & node_d
 #endif
 
      node_desc.kind_hierarchy.push_back("Type");
-
+#if (__clang__)  && (__clang_major__ >= 18)
+     switch (type->getLinkage())
+        {
+          case clang::Linkage::Invalid:
+          case clang::Linkage::None:
+               break;
+          case clang::Linkage::Internal:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "internal"));
+               break;
+          case clang::Linkage::UniqueExternal:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "unique external"));
+               break;
+          case clang::Linkage::VisibleNone:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "VisibleNone"));
+               break;
+          case clang::Linkage::External:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "external"));
+               break;
+          case clang::Linkage::Module:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "module"));
+               break;
+        }
+#else
      switch (type->getLinkage())
         {
           case clang::NoLinkage:
@@ -234,6 +256,7 @@ bool ClangToDotTranslator::VisitType(clang::Type * type, NodeDescriptor & node_d
                node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "external"));
                break;
         }
+#endif
 
      switch (type->getVisibility()) 
         {
@@ -1981,6 +2004,30 @@ bool ClangToDotTranslator::VisitTypeWithKeyword(clang::TypeWithKeyword * type_wi
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
+#if (__clang__)  && (__clang_major__ >= 18)
+    switch (type_with_keyword->getKeyword()) {
+        case clang::ElaboratedTypeKeyword::Struct:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "struct"));
+            break;
+        case clang::ElaboratedTypeKeyword::Union:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "union"));
+            break;
+        case clang::ElaboratedTypeKeyword::Class:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "class"));
+            break;
+        case clang::ElaboratedTypeKeyword::Enum:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "enum"));
+            break;
+        case clang::ElaboratedTypeKeyword::Typename:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "typename"));
+            break;
+        case clang::ElaboratedTypeKeyword::Interface:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "interface"));
+            break;
+        case clang::ElaboratedTypeKeyword::None:
+            break;
+    }
+#else
     switch (type_with_keyword->getKeyword()) {
         case clang::ETK_Struct:
             node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "struct"));
@@ -2000,6 +2047,7 @@ bool ClangToDotTranslator::VisitTypeWithKeyword(clang::TypeWithKeyword * type_wi
         case clang::ETK_None:
             break;
     }
+#endif
 
     return VisitType(type_with_keyword, node_desc) && res;
 }

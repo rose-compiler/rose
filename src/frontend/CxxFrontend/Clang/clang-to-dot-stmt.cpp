@@ -3978,6 +3978,22 @@ bool ClangToDotTranslator::VisitCharacterLiteral(clang::CharacterLiteral * chara
 
      node_desc.kind_hierarchy.push_back("CharacterLiteral");
 
+#if (__clang__)  && (__clang_major__ >= 18)
+    switch (character_literal->getKind()) {
+        case clang::CharacterLiteralKind::Ascii:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Ascii"));
+            break;
+        case clang::CharacterLiteralKind::Wide:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Wide"));
+            break;
+        case clang::CharacterLiteralKind::UTF16:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF16"));
+            break;
+        case clang::CharacterLiteralKind::UTF32:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF32"));
+            break;
+    }
+#else
     switch (character_literal->getKind()) {
         case clang::CharacterLiteral::Ascii:
             node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Ascii"));
@@ -3992,7 +4008,7 @@ bool ClangToDotTranslator::VisitCharacterLiteral(clang::CharacterLiteral * chara
             node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF32"));
             break;
     }
-
+#endif
     std::ostringstream oss;
     oss << std::hex << character_literal->getValue();
     node_desc.attributes.push_back(std::pair<std::string, std::string>("hex_value", oss.str()));
@@ -5102,7 +5118,11 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
           if (it->isFieldDesignator()) 
              {
                oss << " field";
+#if (__clang__)  && (__clang_major__ >= 18)
+               node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it->getFieldDecl())));
+#else
                node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it->getField())));
+#endif
              }
             else 
              {
@@ -6316,6 +6336,23 @@ bool ClangToDotTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefine
 
   // DQ (11/28/2020): Change of function name in Clang 10.
   // switch (predefined_expr->getIdentType()) 
+#if (__clang__)  && (__clang_major__ >= 18)
+     switch (predefined_expr->getIdentKind()) 
+        {
+          case clang::PredefinedIdentKind::Func:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "func"));
+               break;
+          case clang::PredefinedIdentKind::Function:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "function"));
+               break;
+          case clang::PredefinedIdentKind::PrettyFunction:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function"));
+               break;
+          case clang::PredefinedIdentKind::PrettyFunctionNoVirtual:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function_no_virtual"));
+               break;
+        }
+#else
      switch (predefined_expr->getIdentKind()) 
         {
           case clang::PredefinedExpr::Func:
@@ -6331,7 +6368,7 @@ bool ClangToDotTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefine
                node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function_no_virtual"));
                break;
         }
-
+#endif
     return VisitExpr(predefined_expr, node_desc);
 }
 #endif

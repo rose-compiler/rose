@@ -367,6 +367,24 @@ bool ClangToSageTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType 
 
     // TODO clang::ArrayType::ArraySizeModifier
 
+#if (__clang__)  && (__clang_major__ >= 18)
+    clang::ArraySizeModifier sizeModifier = incomplete_array_type->getSizeModifier();
+
+    if(sizeModifier == clang::ArraySizeModifier::Star)
+    {
+      SgExprListExp* exprListExp = SageBuilder::buildExprListExp(SageBuilder::buildNullExpression());
+      *node = SageBuilder::buildArrayType(type, exprListExp);
+    }
+    else if(sizeModifier == clang::ArraySizeModifier::Static)
+    {
+      // TODO check how to handle Static 
+      *node = SageBuilder::buildArrayType(type);
+    }
+    else  // clang::ArrayType::ArraySizeModifier::Normal
+    {
+      *node = SageBuilder::buildArrayType(type);
+    }
+#else
     clang::ArrayType::ArraySizeModifier sizeModifier = incomplete_array_type->getSizeModifier();
 
     if(sizeModifier == clang::ArrayType::ArraySizeModifier::Star)
@@ -383,7 +401,7 @@ bool ClangToSageTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType 
     {
       *node = SageBuilder::buildArrayType(type);
     }
-
+#endif
 
 
  // DQ (11/28/2020): Added assertion.

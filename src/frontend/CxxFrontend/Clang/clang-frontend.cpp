@@ -302,9 +302,25 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     compiler_instance->createFileManager();
     compiler_instance->createSourceManager(compiler_instance->getFileManager());
 
+#if (__clang__)  && (__clang_major__ >= 18)
+    llvm::Expected<clang::FileEntryRef> ret  = compiler_instance->getFileManager().getFileRef(input_file);
+    if (!ret) { // Check if there was an error
+      llvm::Error err = ret.takeError();
+      // Handle the error, e.g., log it, print it, etc.
+      llvm::errs() << "Failed to get file: " << err << "\n";
+      // Ensure proper error handling, e.g., return from function
+      return diag_printer->getNumErrors();
+    }
+    const clang::FileEntryRef input_file_entryRef = *ret; 
+    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entryRef, clang::SourceLocation(), clang::SrcMgr::C_User);
+    if (!mainFileID.isValid()) { // Check if the FileID is valid
+      llvm::errs() << "Failed to create FileID for the input file.\n";
+    }
+#else
     llvm::ErrorOr<const clang::FileEntry *> ret  = compiler_instance->getFileManager().getFile(input_file);
     const clang::FileEntry * input_file_entry = ret.get(); 
     clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), clang::SrcMgr::C_User);
+#endif
 
     compiler_instance->getSourceManager().setMainFileID(mainFileID);
 

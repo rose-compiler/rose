@@ -64,7 +64,11 @@
 
 #include "llvm/Config/llvm-config.h"
 
+#if (__clang__)  && (__clang_major__ >= 18)
+#include "llvm/TargetParser/Host.h"
+#else
 #include "llvm/Support/Host.h"
+#endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/raw_os_ostream.h"
 

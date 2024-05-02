@@ -3065,7 +3065,11 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
         SgExpression * expr = NULL;
         clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it-1);
         if (D->isFieldDesignator()) {
+#if (__clang__)  && (__clang_major__ >= 18)
+            SgSymbol * symbol = GetSymbolFromSymbolTable(D->getFieldDecl());
+#else
             SgSymbol * symbol = GetSymbolFromSymbolTable(D->getField());
+#endif
             SgVariableSymbol * var_sym = isSgVariableSymbol(symbol);
             ROSE_ASSERT(var_sym != NULL);
             expr = SageBuilder::buildVarRefExp_nfi(var_sym);
@@ -3726,6 +3730,21 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
     SgName name;
 
  // (01/29/2020) Pei-Hung: change to getIndentKind.  And this list is incomplete for Clang 9   
+#if (__clang__)  && (__clang_major__ >= 18)
+    switch (predefined_expr->getIdentKind()) {
+        case clang::PredefinedIdentKind::Func:
+            name = "__func__";
+            break;
+        case clang::PredefinedIdentKind::Function:
+            name = "__FUNCTION__";
+            break;
+        case clang::PredefinedIdentKind::PrettyFunction:
+            name = "__PRETTY_FUNCTION__";
+            break;
+        case clang::PredefinedIdentKind::PrettyFunctionNoVirtual:
+            ROSE_ABORT();
+    }
+#else
     switch (predefined_expr->getIdentKind()) {
         case clang::PredefinedExpr::Func:
             name = "__func__";
@@ -3739,6 +3758,7 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
         case clang::PredefinedExpr::PrettyFunctionNoVirtual:
             ROSE_ABORT();
     }
+#endif
 
   // Retrieve the associate symbol if it exists
 

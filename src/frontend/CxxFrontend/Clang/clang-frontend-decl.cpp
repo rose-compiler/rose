@@ -719,6 +719,23 @@ bool ClangToSageTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, SgN
              }
 
              // get type of class
+#if (__clang__)  && (__clang_major__ >= 18)
+             SgClassDeclaration::class_types type_of_class;
+             switch (recordDecl->getTagKind()) {
+                 case clang::TagTypeKind::Struct:
+                     type_of_class = SgClassDeclaration::e_struct;
+                     break;
+                 case clang::TagTypeKind::Class:
+                     type_of_class = SgClassDeclaration::e_class;
+                     break;
+                 case clang::TagTypeKind::Union:
+                     type_of_class = SgClassDeclaration::e_union;
+                     break;
+                 default:
+                     logger[WARN] << "Runtime error: RecordDecl can only be a struct/class/union." << "\n";
+                     res = false;
+             }
+#else
              SgClassDeclaration::class_types type_of_class;
              switch (recordDecl->getTagKind()) {
                  case clang::TTK_Struct:
@@ -734,6 +751,7 @@ bool ClangToSageTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, SgN
                      logger[WARN] << "Runtime error: RecordDecl can only be a struct/class/union." << "\n";
                      res = false;
              }
+#endif
 
              SgSymbol * sym = GetSymbolFromSymbolTable(recordDecl);
              SgClassSymbol * class_sym = isSgClassSymbol(sym);
@@ -1195,6 +1213,23 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
   // Type of class
 
+#if (__clang__)  && (__clang_major__ >= 18)
+    SgClassDeclaration::class_types type_of_class;
+    switch (record_decl->getTagKind()) {
+        case clang::TagTypeKind::Struct:
+            type_of_class = SgClassDeclaration::e_struct;
+            break;
+        case clang::TagTypeKind::Class:
+            type_of_class = SgClassDeclaration::e_class;
+            break;
+        case clang::TagTypeKind::Union:
+            type_of_class = SgClassDeclaration::e_union;
+            break;
+        default:
+            logger[WARN] << "Runtime error: RecordDecl can only be a struct/class/union." << "\n";
+            res = false;
+    }
+#else
     SgClassDeclaration::class_types type_of_class;
     switch (record_decl->getTagKind()) {
         case clang::TTK_Struct:
@@ -1210,6 +1245,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
             logger[WARN] << "Runtime error: RecordDecl can only be a struct/class/union." << "\n";
             res = false;
     }
+#endif
 
   // Build declaration(s)
 
@@ -3029,7 +3065,15 @@ bool ClangToSageTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * prag
         logger[WARN] << "Runtime error: tmp_condition != NULL && condition == NULL" << "\n";
         res = false;
     } else {
+#if (__clang__)  && (__clang_major__ >= 18)
+      clang::Expr* Message = pragma_static_assert_decl->getMessage();
+      if (const auto *SL = dyn_cast<clang::StringLiteral>(Message)) {
+         assert(SL->isUnevaluated() && "expected an unevaluated string");
+         *node = SageBuilder::buildStaticAssertionDeclaration(condition, SL->getString().str());
+      }
+#else
       *node = SageBuilder::buildStaticAssertionDeclaration(condition, pragma_static_assert_decl->getMessage()->getString().str());
+#endif
     }
 
     return VisitDecl(pragma_static_assert_decl, node) && res;
