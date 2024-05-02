@@ -376,13 +376,22 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
       //so it has a different NodeId.  So we use the symbol table to
       //get the declaration's SgInitializedName, used as canonical
       if(isSgCtorInitializerList(curName->get_parent())) 
-        {
-          curName = isSgInitializedName(funcDef->get_scope()->lookup_variable_symbol(curName->get_name())->get_declaration());
+      {
+        SgVariableSymbol* varSym = funcDef->get_scope()->lookup_variable_symbol(curName->get_name());
+        //If varSym is found, the rest should be true, but may as
+        //well check everything before proceeding.
+        if(varSym && isSgInitializedName(varSym->get_declaration())) {
+          SgInitializedName* testCurName = isSgInitializedName(varSym->get_declaration());
           ROSE_ASSERT(curName); 
+          curName = testCurName;
           current = curName;
-        }
-
-
+        } else {
+          mlog[Sawyer::Message::Common::WARN] << "Function/Consturctor call in CtorInitializationList.  Currently Unhandled " << funcDef->get_qualified_name().getString() << std::endl;
+          return std::set<ReadWriteSets::AccessSetRecord>();
+        } 
+      }
+      
+      
       std::string noteStr;
       Globality globality = ReadWriteSets::determineGlobality(funcDef, current, accessOrigin, noteStr);
       VarType varType = determineType(curName->get_type());
@@ -399,7 +408,7 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
 
       if(curName->get_definition() && curName->get_definition()->get_file_info()) {        
         filename = curName->get_definition()->get_file_info()->get_filename();
-      } else if(funcDef->get_file_info()) {        
+      } else if(funcDef->get_file_info()) {
         mlog[Sawyer::Message::Common::WARN] << "Could not get definition for variable " << name << std::endl;
         filename = funcDef->get_file_info()->get_filename();
       } else {

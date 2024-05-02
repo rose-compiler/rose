@@ -617,7 +617,9 @@ string get_type_name(SgType* t)
                ASSERT_not_null(rref_type);
                return get_type_name(rref_type->get_base_type()) + "&&";
              }
-
+          case T_DECLTYPE:
+            return "decltype";
+            
           default:
              {
                printf("Error: unparse_type.C get_type_name(): Default case reached in switch: %s\n", t->class_name().c_str());
