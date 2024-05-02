@@ -184,57 +184,57 @@ main(int argc, char *argv[]) {
         SgFunctionDefinition* funcDef = name2Node.getFunction(funcRecord.internalFunctionName);
         SgFunctionDeclaration* funcDecl =  VxUtilFuncs::getUniqueDeclaration(funcDef);
         if(funcDef) {
-            outFile << "Function: " << funcRecord.internalFunctionName << " : " << funcDecl->get_qualified_name() << std::endl;
+            outFile << "Function:;" << funcRecord.internalFunctionName << ";" << funcDecl->get_qualified_name() << std::endl;
         } else {
-            outFile << "Function: " << funcRecord.internalFunctionName << " : NOT FOUND" << std::endl;
+            outFile << "Function:;" << funcRecord.internalFunctionName << ";NOT FOUND" << std::endl;
             continue;
         }
 
         //If we found the function, continue with the variables
         for(const auto& readRecord : funcRecord.readSet) {
             SgNode* varSgNode = NULL;
-            outFile << "ReadVar : " << readRecord.getVariableName();
+            outFile << "ReadVar:;" << readRecord.getVariableName();
             try {
                 varSgNode = name2Node.getVariable(readRecord.getVariableName());
             } 
-            catch (const AnonymousNameException& e) { outFile << " Error: " << e.what() << std::endl; continue;}
-            catch (const AddressReferenceException& e) { outFile << " Error: " << e.what() << std::endl; continue;}
+            catch (const AnonymousNameException& e) { outFile << ";Error: " << e.what() << std::endl; continue;}
+            catch (const AddressReferenceException& e) { outFile << ";Error: " << e.what() << std::endl; continue;}
 
             SgInitializedName* varSgName = isSgInitializedName(varSgNode);
             SgFunctionDefinition* readFuncDef = isSgFunctionDefinition(varSgNode); 
             SgThisExp* thisRefExp = isSgThisExp(varSgNode);
 
             if(varSgName) {
-                outFile << " : " << Rose::AST::NodeId(varSgName).toString()  << std::endl;
+                outFile << ';' << Rose::AST::NodeId(varSgName).toString()  << std::endl;
             } else if (thisRefExp) {
-                outFile << " : " << Rose::AST::NodeId(thisRefExp).toString()  << std::endl;
+                outFile << ';' << Rose::AST::NodeId(thisRefExp).toString()  << std::endl;
             } else if (readFuncDef) {
-                outFile << " : " << funcDecl->get_qualified_name() << std::endl;
+                outFile << ';' << funcDecl->get_qualified_name() << std::endl;
             } else {
-                outFile << " : NOT FOUND" << std::endl;
+                outFile << ";NOT FOUND" << std::endl;
             }
         }
         for(const auto& writeRecord : funcRecord.writeSet) {
             SgNode* varSgNode = NULL;
-            outFile << "WriteVar : " << writeRecord.getVariableName();
+            outFile << "WriteVar:;" << writeRecord.getVariableName();
             try {
                 varSgNode = name2Node.getVariable(writeRecord.getVariableName());
             } 
-            catch (const AnonymousNameException& e) { outFile << " Error: " << e.what() << std::endl; continue;}
-            catch (const AddressReferenceException& e) { outFile << " Error: " << e.what() << std::endl; continue;}
+            catch (const AnonymousNameException& e) { outFile << ";Error: " << e.what() << std::endl; continue;}
+            catch (const AddressReferenceException& e) { outFile << ";Error: " << e.what() << std::endl; continue;}
             
             SgInitializedName* varSgName = isSgInitializedName(varSgNode);
             SgFunctionDefinition* writtenFuncDef = isSgFunctionDefinition(varSgNode); 
             SgThisExp* thisRefExp = isSgThisExp(varSgNode);
 
             if(varSgName) {
-                outFile << " : " << Rose::AST::NodeId(varSgName).toString()  << std::endl; 
+                outFile << ';' << Rose::AST::NodeId(varSgName).toString()  << std::endl;
             } else if (thisRefExp) {
-                outFile << " : " << Rose::AST::NodeId(thisRefExp).toString()  << std::endl;
+                outFile << ';' << Rose::AST::NodeId(thisRefExp).toString()  << std::endl;
             } else if (writtenFuncDef) {
-                outFile << " : " << funcDecl->get_qualified_name() << std::endl;
+                outFile << ';' << funcDecl->get_qualified_name() << std::endl;
             } else {
-                outFile << " : NOT FOUND" << std::endl;
+                outFile << ";NOT FOUND" << std::endl;
             }
         }
     }
