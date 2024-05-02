@@ -372,6 +372,12 @@ SAPOH-Autoconf:
 
 SAPOH-CMake:
     extends: .release-base 
+
+SAPOH-Post-Processing:
+    extends: .release-base 
+    needs:
+      - job: SAPOH-Autoconf
+      - job: SAPOH-CMake
     
 Doxygen:
     extends: .release-base 
@@ -389,3 +395,15 @@ ACATS:
     script:
         - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME $VERSION
     timeout: 12h
+
+RHEL7-Status:
+    extends: .release-base 
+
+RHEL8-Status:
+    extends: .release-base 
+
+Status-Post-Processing:
+    extends: .release-base 
+    needs:
+      - job: RHEL7-Status
+      - job: RHEL8-Status
