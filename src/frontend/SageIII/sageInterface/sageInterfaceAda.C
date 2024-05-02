@@ -1155,7 +1155,10 @@ namespace Ada
   {
     bool definedInStandard(const SgDeclarationStatement& n)
     {
-      const SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(n.get_scope());
+      return pkgStandardScope() == n.get_scope();
+/*
+      const SgAdaPackageSpec* pkgspec = isSgAdaPackageSpec(n.get_scope());
+
       if (pkgspec == nullptr) return false;
 
       const SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
@@ -1167,12 +1170,13 @@ namespace Ada
              && (pkgdecl->get_name() == packageStandardName)
              && (isSgGlobal(pkgdecl->get_scope()))
              );
+*/
     }
 
     bool isExceptionType(const SgType& n)
     {
       const SgTypedefType* ty = isSgTypedefType(&n);
-      if (ty == nullptr || (ty->get_name() == exceptionName)) // \todo should be !=
+      if (ty == nullptr || (!boost::iequals(ty->get_name().getString(), exceptionName)))
         return false;
 
       SgTypedefDeclaration* dcl = isSgTypedefDeclaration(ty->get_declaration());
@@ -1274,7 +1278,7 @@ namespace Ada
     const SgEnumDeclaration* boolDcl = isSgEnumDeclaration(boolTy->get_declaration());
 
     return (  (boolDcl != nullptr)
-           && (boolDcl->get_name() == "BOOLEAN")
+           && (boost::iequals(boolDcl->get_name().getString(), "BOOLEAN"))
            && definedInStandard(*boolDcl)
            );
   }
@@ -2697,7 +2701,7 @@ namespace Ada
 
       const SgTypedefType*            ty = isSgTypedefType(first->get_type());
 
-      return ty && (ty->get_name() == si::Ada::exceptionName);
+      return ty && (boost::iequals(ty->get_name().getString(), si::Ada::exceptionName));
     }
   }
 
@@ -3865,7 +3869,7 @@ booleanConstant(const SgExpression* e)
 
   if (const SgEnumVal* enumval = isSgEnumVal(e))
     if (isBooleanType(enumval->get_type()))
-      return ResultType{enumval->get_name() == "True"}; // spelling in AdaType.C
+      return ResultType{boost::iequals(enumval->get_name().getString(), "True")}; // spelling in AdaType.C
 
   return ResultType{};
 }
