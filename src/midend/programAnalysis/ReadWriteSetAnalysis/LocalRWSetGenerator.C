@@ -370,6 +370,19 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
     if (isSgInitializedName(current))
     {
       SgInitializedName* curName = isSgInitializedName(current);
+      //Kludge to get around a problem with processing constructor
+      //initilaizer lists.  Qing's code gives me an SgInitializedName,
+      //but it's a different name than you get from the symbol table,
+      //so it has a different NodeId.  So we use the symbol table to
+      //get the declaration's SgInitializedName, used as canonical
+      if(isSgCtorInitializerList(curName->get_parent())) 
+        {
+          curName = isSgInitializedName(funcDef->get_scope()->lookup_variable_symbol(curName->get_name())->get_declaration());
+          ROSE_ASSERT(curName); 
+          current = curName;
+        }
+
+
       std::string noteStr;
       Globality globality = ReadWriteSets::determineGlobality(funcDef, current, accessOrigin, noteStr);
       VarType varType = determineType(curName->get_type());
