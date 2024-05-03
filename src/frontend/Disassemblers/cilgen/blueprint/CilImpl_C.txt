@@ -228,6 +228,11 @@ void SgAsmCilMetadataHeap::unparse(std::vector<uint8_t>& buf, size_t startOfMeta
         break;
     }
   }
+  
+  if (index < startOfMetaData + ofs + get_Size())
+    writeStringPadding(0, buf, index, index, startOfMetaData + ofs + get_Size());
+
+  ASSERT_require(index == startOfMetaData + ofs + get_Size());
 }
 
 namespace
@@ -326,6 +331,36 @@ void SgAsmCilMetadataRoot::parse()
 
   this->parse(buf, 0);
   decodeMetadata(base_va, get_MetadataHeap(), this, base_va + rva, base_va + rva + size);
+  
+  if (false)
+  {
+    // unparse and compare with original..
+    std::vector<uint8_t> bytes;
+
+    SgAsmCliHeader* clih = isSgAsmCliHeader(get_parent());
+    ASSERT_not_null(clih);
+
+    SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+    ASSERT_not_null(fhdr);
+
+    uint64_t    metaData = clih->get_metaData();
+    uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
+    rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+
+    ensureSize(bytes, rva);
+  
+    //   write out the code
+    //     ( normally, this would also recompute some of the metadata
+    //       such as rvas to the code, codesize, ..
+    //       assuming no change => no metadata update ).
+    encodeMetadata(bytes, 0, rva, get_MetadataHeap(), this);
+  
+    //   write out the metadata
+    unparse(bytes, rva);
+    
+    // compare with buf
+  }    
+
 }
 
 

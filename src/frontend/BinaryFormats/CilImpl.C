@@ -117,7 +117,6 @@ namespace // anonymous namespace for auxiliary functions
   }
   
 
-  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
   std::string
   readString(const std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
   {
@@ -139,14 +138,14 @@ namespace // anonymous namespace for auxiliary functions
   void
   writeString(const std::string& s, std::vector<uint8_t>& buf, size_t& index, size_t maxLen)
   {
-    ASSERT_require(s.size() < maxLen);
+    ASSERT_require(s.size() <= maxLen);
     
     ensureSize(buf, index+maxLen);  
     auto beg = buf.begin();
     auto pos = std::copy(s.begin(), s.end(), beg + index);
     
-    *pos = 0;
-    index = std::distance(beg, pos) + 1 /* incl. 0 terminating char */;
+    // the 0 character should be written by the subsequent padding (?)
+    index = std::distance(beg, pos);
   }
 
   std::string
@@ -166,7 +165,7 @@ namespace // anonymous namespace for auxiliary functions
   uint32_t
   readStringPadding(const std::vector<uint8_t>& buf, size_t& index, size_t strLen, size_t reservedLen)
   {
-    ROSE_ASSERT(strLen <= reservedLen);
+    ASSERT_require(strLen <= reservedLen);
 
     uint32_t res = 0;
 
@@ -178,7 +177,6 @@ namespace // anonymous namespace for auxiliary functions
     {
       res = (res<<8) + buf.at(index);
 
-      ROSE_ASSERT(index + 1 <= buf.size());
       ++index; ++strLen;
     }
 
@@ -188,7 +186,7 @@ namespace // anonymous namespace for auxiliary functions
   void
   writeStringPadding(uint32_t padding, std::vector<uint8_t>& buf, size_t& index, size_t strLen, size_t reservedLen)
   {
-    ROSE_ASSERT(strLen <= reservedLen);
+    ASSERT_require(strLen <= reservedLen);
 
     uint32_t numBytes = reservedLen - strLen;
     ROSE_ASSERT(numBytes <= 4);
@@ -325,12 +323,16 @@ namespace // anonymous namespace for auxiliary functions
   
   void StreamHeader::unparse(std::vector<uint8_t>& buf, size_t& index) const
   {
-    const uint32_t namelen = name().size() + 1;
+    const size_t   oldindex = index;
+    ROSE_UNUSED(oldindex);
+    const uint32_t namelen = name().size();
   
     write32bitValue(offset(),buf,index);
     write32bitValue(size(),buf,index);
     writeString(name(), buf, index, namelen);
-    writeStringPadding(namePadding(),buf,index,namelen,length()); 
+    writeStringPadding(namePadding(),buf,index,namelen+8/* ofs+size */,length()); 
+
+    ASSERT_require(index == oldindex + length());    
   }
 
   StreamHeader
@@ -401,11 +403,6 @@ namespace // anonymous namespace for auxiliary functions
                   uint16_t numberOfStreams
                 )
   {
-    if (buf.size() != index)
-    {
-      std::cerr << buf.size() << " != " << index << std::endl;
-    }
-  
     ASSERT_require(buf.size() == index);
     ASSERT_not_null(parent);
     
@@ -430,10 +427,11 @@ namespace // anonymous namespace for auxiliary functions
       // write header
       StreamHeader header{index, dataStream->get_Size(), dataStream->get_Name(), dataStream->get_NamePadding()};
       
-      ASSERT_require(index == dataStream->get_Offset());
+      ASSERT_require(index == start_of_MetadataRoot +dataStream->get_Offset());
       
       header.unparse(buf, headerIndex);
       dataStream->unparse(buf, start_of_MetadataRoot);
+      index = buf.size();      
     }
   }
     
@@ -480,15 +478,17 @@ namespace // anonymous namespace for auxiliary functions
   void
   unparseIntStream(std::vector<uint8_t>& buf, size_t start, size_t ofs, size_t len, const std::vector<IntT>& data)
   {
-    ROSE_ASSERT(data.size() == (len / sizeof(IntT)));
+    ASSERT_require(data.size() == (len / sizeof(IntT)));
     
     const size_t pos = start + ofs;
     ROSE_ASSERT(buf.size() == pos);
     
     const uint8_t* beg = reinterpret_cast<const uint8_t*>(data.data());
-    const uint8_t* lim = beg + len * sizeof(IntT);
+    const uint8_t* lim = beg + len;
     
     buf.insert(buf.end(), beg, lim);
+    
+    ASSERT_require(start + ofs + len == buf.size());
   }
   
   inline
@@ -3203,6 +3203,11 @@ void SgAsmCilMetadataHeap::unparse(std::vector<uint8_t>& buf, size_t startOfMeta
         break;
     }
   }
+  
+  if (index < startOfMetaData + ofs + get_Size())
+    writeStringPadding(0, buf, index, index, startOfMetaData + ofs + get_Size());
+
+  ASSERT_require(index == startOfMetaData + ofs + get_Size());
 }
 
 namespace
@@ -3619,16 +3624,19 @@ enum struct code_type
   mask           = cil | native | optil_reserved | runtime,
 };
 
+inline
 code_type operator&(int lhs, code_type rhs)
 {
   return static_cast<code_type>(lhs & int(rhs));
 }
 
+inline
 code_type operator&(code_type lhs, int rhs)
 {
   return static_cast<code_type>(int(lhs) & rhs);
 }
 
+inline
 code_type operator&(code_type lhs, code_type rhs)
 {
   return static_cast<code_type>(int(lhs) & int(rhs));
@@ -3895,6 +3903,36 @@ void SgAsmCilMetadataRoot::parse()
 
   this->parse(buf, 0);
   decodeMetadata(base_va, get_MetadataHeap(), this, base_va + rva, base_va + rva + size);
+  
+  if (false)
+  {
+    // unparse and compare with original..
+    std::vector<uint8_t> bytes;
+
+    SgAsmCliHeader* clih = isSgAsmCliHeader(get_parent());
+    ASSERT_not_null(clih);
+
+    SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+    ASSERT_not_null(fhdr);
+
+    uint64_t    metaData = clih->get_metaData();
+    uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
+    rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+
+    ensureSize(bytes, rva);
+  
+    //   write out the code
+    //     ( normally, this would also recompute some of the metadata
+    //       such as rvas to the code, codesize, ..
+    //       assuming no change => no metadata update ).
+    encodeMetadata(bytes, 0, rva, get_MetadataHeap(), this);
+  
+    //   write out the metadata
+    unparse(bytes, rva);
+    
+    // compare with buf
+  }    
+
 }
 
 

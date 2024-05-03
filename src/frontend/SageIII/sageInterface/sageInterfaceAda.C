@@ -3588,6 +3588,7 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
     const SgDeclarationStatement* tydcl = associatedDeclaration_internal(parm->get_type(), 1);
 
     // \todo should this be sameCanonicalScope or just same scope?
+    //       same scope
     if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))
       res.emplace_back(parmpos, parm, tydcl);
 

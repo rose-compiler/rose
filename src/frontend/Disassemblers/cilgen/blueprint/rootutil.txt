@@ -159,16 +159,19 @@ enum struct code_type
   mask           = cil | native | optil_reserved | runtime,
 };
 
+inline
 code_type operator&(int lhs, code_type rhs)
 {
   return static_cast<code_type>(lhs & int(rhs));
 }
 
+inline
 code_type operator&(code_type lhs, int rhs)
 {
   return static_cast<code_type>(int(lhs) & rhs);
 }
 
+inline
 code_type operator&(code_type lhs, code_type rhs)
 {
   return static_cast<code_type>(int(lhs) & int(rhs));
