@@ -142,8 +142,9 @@ namespace ReadWriteSets {
       varType(VarType::VARTYPE_UNKNOWN),
       accessType(AccessType::ACCESSTYPE_UNKNOWN),
       //nodeId default constructor used.
-      noteStr("") 
+      noteStr(""),
       //fields is empty
+      nodePtr(nullptr)
     { };
     
       
@@ -163,7 +164,8 @@ namespace ReadWriteSets {
       nodeId(Rose::AST::NodeId(node).toString()),
       type(in_type),
       filename(in_filename),
-      noteStr(inNote) {};
+      noteStr(inNote),
+      nodePtr(node) {};
       
       /**
        * \brief "this" special case AccessSet constructor
@@ -185,7 +187,8 @@ namespace ReadWriteSets {
                                             nodeId(Rose::AST::NodeId(thisExp).toString()),
                                             type(""), 
                                             filename(""),
-                                            noteStr("") {};
+                                            noteStr(""),
+                                            nodePtr(isSgNode(thisExp)) {};
 
     //! \brief copy constructor
     AccessSetRecord(const AccessSetRecord &rhs) : 
@@ -198,7 +201,8 @@ namespace ReadWriteSets {
       fields(rhs.fields),
       //indexes(rhs.indexes),
       type(rhs.type),
-      filename(rhs.filename) {}
+      filename(rhs.filename),
+      nodePtr(rhs.nodePtr) {}
 
     //! \brief assignment operator
     AccessSetRecord& operator=(const AccessSetRecord& rhs) {
@@ -212,6 +216,7 @@ namespace ReadWriteSets {
       //indexes = rhs.indexes;
       type = rhs.type;
       filename = rhs.filename;
+      nodePtr = rhs.nodePtr;
       return *this;
     }
 
@@ -253,6 +258,7 @@ namespace ReadWriteSets {
       
           
     std::string getNoteStr() const { return noteStr; };
+    SgNode* getNode() const { return nodePtr; }
 
     void setGlobality(Globality in_globalit) { globality = in_globalit; };
     void setVarType(VarType in_varType) { varType = in_varType; };
@@ -260,6 +266,7 @@ namespace ReadWriteSets {
     void setType(std::string& in_str) { type = in_str; };
     void setFilename(std::string& in_str) { filename = in_str; };
     void setNoteStr(std::string& in_str) { noteStr = in_str; };
+    void setNode(SgNode* node) { nodePtr = node; };
 
     //! brief Variable name, purely for human use
     std::string variableName;
@@ -343,6 +350,10 @@ namespace ReadWriteSets {
      **/
 //    mutable std::set<AccessSetRecord> indexes;
 
+    /**
+     *  \brief SgNode* for the variable (not consistent across runs)
+     **/
+    SgNode *nodePtr;
       
   };
 

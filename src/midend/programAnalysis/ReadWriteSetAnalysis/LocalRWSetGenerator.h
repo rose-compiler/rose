@@ -125,9 +125,7 @@ public:
    *
    **/
   void collectRWSetsNoRecursion(SgFunctionDefinition* funcDef, 
-                                std::set<ReadWriteSets::AccessSetRecord>& readSet, 
-                                std::set<ReadWriteSets::AccessSetRecord>& writeSet);
-    
+                                ReadWriteSets::FunctionReadWriteRecord& record);    
 
   /**
    * This function fills in the read and write set caches for a particular function.

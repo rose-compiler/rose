@@ -178,6 +178,39 @@ void filterPlainFunctions(std::set<ReadWriteSets::AccessSetRecord>& thisSet)
   }
 }
 
+/**
+ * Qing has started conservatively returning a->foo() as a part of the
+ * write set, on the idea that foo might modify a.  But I take care of
+ * that case in TestabilityGrader, so I don't want a->foo() in the
+ * write set.  (It should be in the read set though.)
+ *
+ * So the algorithm is, recursively enter the AccessSetRecord.
+ * Delete any nodes that 
+ **/
+void filterOutThisNodeDueToMemberFunction(std::set<ReadWriteSets::AccessSetRecord>& thisSet, ReadWriteSets::FunctionReadWriteRecord& record) 
+{
+  for (auto curNode = thisSet.begin(); curNode != thisSet.end(); ) {
+    std::set<ReadWriteSets::AccessSetRecord>& childSet = curNode->fields;
+    filterOutThisNodeDueToMemberFunction(childSet, record);
+    
+    //This filter deletes items as it recurses back out.  So it deleted the Member function, and deletes the parents if they didn't
+    //also point at anything else.
+    if(childSet.size() == 0 && 
+       (curNode->varType == MEMBER_FUNCTIONS || curNode->accessType == POINTER_ARROW || curNode->accessType == FIELD_ACCESS)) {
+      //We should make sure the function declaration is in the called
+      //functions set, so if it's a member function,
+      if(curNode->varType == MEMBER_FUNCTIONS) {
+        SgFunctionDeclaration* calledFuncDecl = isSgFunctionDeclaration(curNode->nodePtr);
+        record.calledFunctions.insert(VxUtilFuncs::compileInternalFunctionName(calledFuncDecl, VxUtilFuncs::getNodeRelativePath(calledFuncDecl)));
+      }
+      curNode = thisSet.erase(curNode);
+    } else {
+      ++curNode;
+    } 
+  }
+}
+
+
 
 
 /**
@@ -385,13 +418,41 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
           ROSE_ASSERT(curName); 
           curName = testCurName;
           current = curName;
+
+          //We can get function calls and constructor calls inside of a CtroInitialzierList, handling that here.  (Maybe should be broken out)
         } else {
-          mlog[Sawyer::Message::Common::WARN] << "Function/Consturctor call in CtorInitializationList.  Currently Unhandled " << funcDef->get_qualified_name().getString() << std::endl;
-          return std::set<ReadWriteSets::AccessSetRecord>();
-        } 
+          SgConstructorInitializer* initptr = isSgConstructorInitializer(curName->get_initptr());
+          if(initptr) {
+            SgMemberFunctionDeclaration* calledFuncDecl = initptr->get_declaration();
+            //if(funcSym && isSgFunctionDeclaration(funcSym->get_declaration())) {
+            //SgFunctionDeclaration* calledFuncDecl = isSgFunctionDeclaration(funcSym->get_declaration());
+            if(calledFuncDecl == NULL) {
+              std::stringstream ss;  //I don't think this can happen
+              ss << "recursivelyMakeAccessRecord: Got call expression in a CtorInitilaizer," << std::endl;
+              ss << "but was unable to resolve the function." << std::endl;
+              ss << "Relevent file info: " << current->get_file_info()->get_filename() << ":" <<
+                current->get_file_info()->get_line() << "-" << current->get_file_info()->get_col()<< std::endl;
+              mlog[Sawyer::Message::Common::WARN] << ss.str();
+              mlog[Sawyer::Message::Common::WARN] << "------Relevent Code-------------------------------" << std::endl;
+              mlog[Sawyer::Message::Common::WARN] << current->unparseToString() << std::endl;
+              return std::set<ReadWriteSets::AccessSetRecord> {
+                AccessSetRecord(current, "UNKNOWN", GLOBALITY_UNKNOWN, VARTYPE_UNKNOWN, ACCESSTYPE_UNKNOWN, "", "", ss.str()) }; 
+            }
+            std::string name = VxUtilFuncs::compileInternalFunctionName(calledFuncDecl, VxUtilFuncs::getNodeRelativePath(calledFuncDecl));
+            std::string noteStr;
+            Globality globality = MEMBERS;
+            VarType varType = MEMBER_FUNCTIONS;
+            return std::set<ReadWriteSets::AccessSetRecord> {
+              AccessSetRecord(calledFuncDecl, name, globality, varType, NORMAL, "", "", noteStr) };
+          } else {          
+            mlog[Sawyer::Message::Common::WARN] << "Unknown symbol CtorInitializationList.  Currently Unhandled " << funcDef->get_qualified_name().getString() << std::endl;
+            return std::set<ReadWriteSets::AccessSetRecord>();
+          } 
+        }
       }
       
       
+      //Continuing with a variable
       std::string noteStr;
       Globality globality = ReadWriteSets::determineGlobality(funcDef, current, accessOrigin, noteStr);
       VarType varType = determineType(curName->get_type());
@@ -717,8 +778,7 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
  **/
 //! Collects the read and write sets for just one function, no recursion
 void LocalRWSetGenerator::collectRWSetsNoRecursion(SgFunctionDefinition* funcDef, 
-                                                   std::set<ReadWriteSets::AccessSetRecord>& readSet, 
-                                                   std::set<ReadWriteSets::AccessSetRecord>& writeSet) 
+                                                   ReadWriteSets::FunctionReadWriteRecord& record) 
 {
   std::vector <SgNode* > readRefs, writeRefs;
 
@@ -742,7 +802,7 @@ void LocalRWSetGenerator::collectRWSetsNoRecursion(SgFunctionDefinition* funcDef
       //If the access record is just a function call, skip it.
       filterPlainFunctions(thisSet);
       
-      recursiveMerge(readSet, thisSet);
+      recursiveMerge(record.readSet, thisSet);
     }
 
   std::vector<SgNode*>::iterator iterw = writeRefs.begin();
@@ -756,8 +816,12 @@ void LocalRWSetGenerator::collectRWSetsNoRecursion(SgFunctionDefinition* funcDef
       
       //If the access record is just a function call, skip it.      
       filterPlainFunctions(thisSet);
+
+      //Special case for write sets
+      filterOutThisNodeDueToMemberFunction(thisSet, record);
       
-      recursiveMerge(writeSet, thisSet);
+      
+      recursiveMerge(record.writeSet, thisSet);
       
     }
   return;
@@ -855,7 +919,7 @@ void LocalRWSetGenerator::collectFunctionReadWriteSets(SgFunctionDefinition* fun
   Rose_STL_Container<SgNode*> functionCallList = NodeQuery::querySubTree (funcDef, V_SgFunctionCallExp);
 
   //Call to get the read/write sets for JUST this function
-  collectRWSetsNoRecursion(funcDef, record.readSet, record.writeSet);
+  collectRWSetsNoRecursion(funcDef, record);
 
   mlog[INFO] << "Processing function " << namestr << std::endl;
   //Put all functions into the calledFunctions list 
@@ -900,7 +964,7 @@ void LocalRWSetGenerator::collectFunctionReadWriteSets(SgFunctionDefinition* fun
         record.calledFunctions.insert(*nameIt);
       }     
       continue;
-    }    
+    }
     record.calledFunctions.insert(VxUtilFuncs::compileInternalFunctionName(calledFuncDecl, VxUtilFuncs::getNodeRelativePath(calledFuncDecl)));
     
   }

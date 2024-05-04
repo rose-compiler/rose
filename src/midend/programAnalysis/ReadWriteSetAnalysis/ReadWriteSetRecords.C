@@ -471,6 +471,10 @@ void ReadWriteSets::from_json(const nlohmann::json& recordJson, ReadWriteSets::A
   recordJson.at("filename").get_to(record.filename);
   recordJson.at("note").get_to(record.noteStr);
 
+  //get the SgNode* from the variableName/NodeId
+  record.nodePtr = nullptr;
+
+
   nlohmann::json fieldArray(recordJson.at("fields"));
   for (auto& field : fieldArray) {
     ReadWriteSets::AccessSetRecord fieldRecord(field);
