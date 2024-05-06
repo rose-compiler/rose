@@ -371,7 +371,7 @@ Grammar::setUpStatements ()
   // DQ (9/23/2007): Added elsewhere IR node to handle cascading elsewhere in where statement
      NEW_TERMINAL_MACRO (ElseWhereStatement,       "ElseWhereStatement",        "TEMP_Else_Where_Statement" );
 
-  // Required for F77 support (but depricated in F90)
+  // Required for F77 support (but deprecated in F90)
      NEW_TERMINAL_MACRO (ArithmeticIfStatement,     "ArithmeticIfStatement",      "TEMP_Arithmetic_If_Statement" );
      NEW_TERMINAL_MACRO (AssignStatement,           "AssignStatement",            "TEMP_Assign_Statement" );
      NEW_TERMINAL_MACRO (ComputedGotoStatement,     "ComputedGotoStatement",      "TEMP_Computed_Goto_Statement" );
@@ -657,7 +657,7 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "SgTypeTable*","type_table","= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
-  // DQ (5/11/2011): This should be depricated since we now have a newer name qualification implementation going into place.
+  // DQ (5/11/2011): This should be deprecated since we now have a newer name qualification implementation going into place.
   // DQ (6/5/2007): Specify no access functions so that we can build special ones that return by reference.
   // DQ (5/8/2007): Added type elaboration list. If a symbol is in this list then it requires type elaboration ("typically "class" keyword).
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","type_elaboration_list","",
@@ -1654,12 +1654,12 @@ Grammar::setUpStatements ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/28/2007): Support for Fortran sequence statement (when used in type it is used as a type attribute).
-  // This feature is considered depricated in F2003.
+  // This feature is considered deprecated in F2003.
      ClassDefinition.setDataPrototype("bool", "isSequence", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/28/2007): Support for Fortran private statement (when used in type it is used as a type attribute).
-  // This feature is considered depricated in F2003.
+  // This feature is considered deprecated in F2003.
      ClassDefinition.setDataPrototype("bool", "isPrivate", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -3575,7 +3575,7 @@ Grammar::setUpStatements ()
      ContainsStatement.setFunctionPrototype          ("HEADER_CONTAINS_STATEMENT",           "../Grammar/Statement.code" );
      SequenceStatement.setFunctionPrototype          ("HEADER_SEQUENCE_STATEMENT",           "../Grammar/Statement.code" );
 
-  // Required for F77 support (but depricated in F90)
+  // Required for F77 support (but deprecated in F90)
      ArithmeticIfStatement.setFunctionPrototype      ("HEADER_ARITHMETIC_IF_STATEMENT", "../Grammar/Statement.code" );
      AssignStatement.setFunctionPrototype            ("HEADER_ASSIGN_STATEMENT",        "../Grammar/Statement.code" );
      ComputedGotoStatement.setFunctionPrototype      ("HEADER_COMPUTED_GOTO_STATEMENT", "../Grammar/Statement.code" );
@@ -3706,7 +3706,7 @@ Grammar::setUpStatements ()
   // SequenceStatement.setDataPrototype    ( "SgStringList", "name_list", "",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Required for F77 support (but depricated in F90)
+  // Required for F77 support (but deprecated in F90)
      ArithmeticIfStatement.setDataPrototype    ( "SgExpression*", "conditional", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ArithmeticIfStatement.setDataPrototype    ( "SgLabelRefExp*", "less_label", "= NULL",
@@ -4306,7 +4306,7 @@ Grammar::setUpStatements ()
      ContainsStatement.setFunctionSource          ("SOURCE_CONTAINS_STATEMENT",   "../Grammar/Statement.code" );
      SequenceStatement.setFunctionSource          ("SOURCE_SEQUENCE_STATEMENT",   "../Grammar/Statement.code" );
 
-  // Required for F77 support (but depricated in F90)
+  // Required for F77 support (but deprecated in F90)
      ArithmeticIfStatement.setFunctionSource      ("SOURCE_ARITHMETIC_IF_STATEMENT", "../Grammar/Statement.code" );
      AssignStatement.setFunctionSource            ("SOURCE_ASSIGN_STATEMENT", "../Grammar/Statement.code" );
      ComputedGotoStatement.setFunctionSource      ("SOURCE_COMPUTED_GOTO_STATEMENT", "../Grammar/Statement.code" );

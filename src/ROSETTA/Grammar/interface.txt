@@ -12,10 +12,10 @@
        // General function used to build AST
           void insert ( const SgName &, SgSymbol *sp );
 
-       // DQ (1/31/2007): Depricated (is not well named and should return bool)
+       // DQ (1/31/2007): Deprecated (is not well named and should return bool)
           int  find   ( const SgName &, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
 
-       // DQ (1/31/2007): New functions that will replace the depricated find() member function
+       // DQ (1/31/2007): New functions that will replace the deprecated find() member function
           bool exists ( const SgName &, SgSymbol *sp );
           bool exists ( const SgName & );
           bool exists ( SgSymbol *sp );

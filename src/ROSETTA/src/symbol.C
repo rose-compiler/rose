@@ -244,16 +244,6 @@ Grammar::setUpSymbols ()
      AdaInheritedFunctionSymbol.setDataPrototype ( "SgFunctionSymbol*", "publiclyVisibleFunctionSymbol", "= nullptr",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
-  // DQ (2/29/2004): Header file support code for template declaration support
-  // TemplateInstantiationSymbol.setFunctionPrototype( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );
-  // TemplateInstantiationSymbol.setDataPrototype ( "SgTemplateInstantiationDecl*","declaration", "= NULL");
-
-  // DQ (2/29/2004): Removed in favor of putting name in declaration instead of symbol
-  // DQ (2/29/2004): Support for templates (save the original name of the template not just the mangled class name)
-  // TemplateInstantiationSymbol.setDataPrototype ( "SgName","templateName", "= \"\"",
-  //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      EnumSymbol.setDataPrototype     ( "SgEnumDeclaration*",    "declaration", "= NULL",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      EnumFieldSymbol.setDataPrototype( "SgInitializedName*",    "declaration", "= NULL",
@@ -262,9 +252,8 @@ Grammar::setUpSymbols ()
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      MemberFunctionSymbol.setFunctionPrototype ( "HEADER_DECLARATION", "../Grammar/Symbol.code" );
-  // TemplateMemberFunctionSymbol.setFunctionPrototype ( "HEADER_DECLARATION", "../Grammar/Symbol.code" );
 
-  // This is depricated (it is not used in Fortran, but still used in C/C++).
+  // This is deprecated (it is not used in Fortran, but still used in C/C++).
      LabelSymbol.setFunctionPrototype     ( "HEADER_LABEL_SYMBOL", "../Grammar/Symbol.code" );
      LabelSymbol.setDataPrototype         ( "SgLabelStatement*", "declaration", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -276,27 +265,14 @@ Grammar::setUpSymbols ()
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "SgLabelSymbol::label_type_enum", "label_type", "= SgLabelSymbol::e_unknown_label_type",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // LabelSymbol.setDataPrototype         ( "bool", "elseLabel", "= false",
-  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // LabelSymbol.setDataPrototype         ( "bool", "endLabel", "= false",
-  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // LabelSymbol.excludeFunctionPrototype ( "HEADER_GET_TYPE",       "../Grammar/Symbol.code" );
-  // LabelSymbol.setFunctionPrototype     ( "HEADER_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
-  // LabelSymbol.setDataPrototype         ( "SgLabelStatement*", "declaration", "= NULL");
-
 
   // DQ (9/9/2011): Added support for JavaLabelStatement (which has a different type of support for labels than C/C++ or Fortran).
      JavaLabelSymbol.setFunctionPrototype     ( "HEADER_JAVA_LABEL_SYMBOL", "../Grammar/Symbol.code" );
      JavaLabelSymbol.setDataPrototype         ( "SgJavaLabelStatement*", "declaration", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DefaultSymbol.excludeFunctionPrototype ( "HEADER_GET_NAME", "../Grammar/Symbol.code" );
      DefaultSymbol.excludeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Symbol.code" );
 
-  // We do not traverse the following data member for the moment!
-  // DQ (12/23/2005): Removed this SgName since it does not appear to be used or required!
-  // DefaultSymbol.setDataPrototype       ( "SgName", "name", "= SgdefaultName",
-  //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefaultSymbol.setDataPrototype       ( "SgType*", "type", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

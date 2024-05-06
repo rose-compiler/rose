@@ -53,7 +53,7 @@ HEADER_GET_NAME_END
 HEADER_DECLARATION_START
           SgMemberFunctionDeclaration* get_declaration() const;
 
-       // DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
+       // DQ (6/10/2007): This is now deprecated in favor of a more uniform implementation for all symbols.
           SgClassDefinition *get_scope() const override ROSE_DEPRECATED_FUNCTION;
 
        // SgNode* get_symbol_basis() const; // from DECLARATION
@@ -860,7 +860,7 @@ SgMemberFunctionSymbol::get_declaration() const
    }
 
 #if 1
-// DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
+// DQ (6/10/2007): This is now deprecated in favor of a more uniform implementation for all symbols.
 // This is used in the hidden list intersection code:
 //      astHiddenTypeAndDeclarationLists/HiddenList_Intersection.C
 // and maybe else where as well.

@@ -10,8 +10,8 @@ $CLASSNAME::$CLASSNAME ( $CONSTRUCTOR_PARAMETER_LIST )
 $CONSTRUCTOR_BODY
 
   // Test the variant virtual function
-     assert($CLASSTAG == this->variant());
-     ROSE_ASSERT($CLASSTAG == (int)(this->variantT()));
+     ASSERT_require($CLASSTAG == this->variant());
+     ASSERT_require($CLASSTAG == (int)(this->variantT()));
      post_construction_initialization();
 
   // Test the is$CLASSNAME() function since it has been problematic

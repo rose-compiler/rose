@@ -2966,7 +2966,7 @@ SgPointerMemberType::get_class_declaration_of() const
      return result;
    }
 
-// DQ (4/11/2019): This is a depricated function, because it can not always return a valid SgClassDefinition.
+// DQ (4/11/2019): This is a deprecated function, because it can not always return a valid SgClassDefinition.
 SgClassDefinition*
 SgPointerMemberType::get_class_definition_of() const
    {

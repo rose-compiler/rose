@@ -311,7 +311,7 @@ Grammar::setUpSupport ()
      Pragma.setFunctionPrototype              ( "HEADER_PRAGMA", "../Grammar/Support.code");
      BitAttribute.setFunctionPrototype        ( "HEADER_BIT_ATTRIBUTE", "../Grammar/Support.code");
 
-  // DQ (4/6/2004): Depricated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
+  // DQ (4/6/2004): Deprecated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
   // DQ (4/19/2004): New modifiers (C++ grammar calls them specifiers)
   //    ConstVolatileModifier, StorageModifier, AccessModifier, FunctionModifier,
   //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier,
@@ -376,9 +376,8 @@ Grammar::setUpSupport ()
 
      Project.setFunctionPrototype             ( "HEADER_APPLICATION_PROJECT", "../Grammar/Support.code");
   // DQ (4/7/2001) Build our own constructor and destructor so that we can handle the fileList (an STL list)
-     Project.setAutomaticGenerationOfConstructor(false);
-  // DQ (12/4/2004): Now we automate the generation of the destructors
-  // Project.setAutomaticGenerationOfDestructor (false);
+  // Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 10.05.06]
+  // Project.setAutomaticGenerationOfConstructor(false);
 
      Options.setFunctionPrototype             ( "HEADER_OPTIONS", "../Grammar/Support.code");
      Unparse_Info.setFunctionPrototype          ( "HEADER_UNPARSE_INFO", "../Grammar/Support.code");
@@ -386,13 +385,6 @@ Grammar::setUpSupport ()
   // MK: I have moved the following data member declarations from ../Grammar/Support.code to this place
   // Space for unparse_type_num tag
 
-  // DQ (11/4/2003): Previous type was "unsigned int" added support
-  // for longer unparse_type_num but had to specify type of
-  // p_unparse_attribute as "long long int" instead of unparse_type_num
-  // since it seems that all enum types are considered in compatable with
-  // long long int within bitwise operations (using g++ 2.96).
-  // Unparse_Info.setDataPrototype("long long int", "unparse_attribute", "= b_enum_defaultValue",
-  //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Unparse_Info.setDataPrototype("SgBitVector", "unparse_attribute", "",
                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Space for access_attr_enum tag
@@ -447,7 +439,7 @@ Grammar::setUpSupport ()
   // Unparse_Info.setDataPrototype("SgSymbolPtrList","listOfScopeSymbols","",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 
-  // DQ (5/11/2011): This is depricated because this is older support for name qualification.
+  // DQ (5/11/2011): This is deprecated because this is older support for name qualification.
   // DQ (9/8/2004): Added support for output of name qualification for namespaces, needed a different
   // variable specific for namespaces because "current_context" is a SgNamedType.
      Unparse_Info.setDataPrototype("SgNamespaceDeclarationStatement*","current_namespace","= nullptr",
@@ -463,7 +455,7 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","outputCodeGenerationFormatDelimiters","= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
-  // DQ (5/11/2011): This is depricated because this is older support for name qualification.
+  // DQ (5/11/2011): This is deprecated because this is older support for name qualification.
   // DQ (10/10/2006): Support for reference to a list that would be used for qualified name generation for any type.
      Unparse_Info.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= SgQualifiedNamePtrList()",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -475,7 +467,7 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgFunctionCallExp*","current_function_call","= nullptr",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (5/11/2011): This is depricated because this is older support for name qualification.
+  // DQ (5/11/2011): This is deprecated because this is older support for name qualification.
   // DQ (5/22/2007): Added scope information so that we could lookup hidden list to get qualified names correct.
      Unparse_Info.setDataPrototype("SgScopeStatement*","current_scope","= nullptr",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1243,7 +1235,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "new_frontend", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Older options (will be depricated)
+  // Older options (will be deprecated)
      File.setDataPrototype         ( "bool", "disable_edg_backend", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "disable_sage_backend", "= false",
@@ -1737,8 +1729,9 @@ Grammar::setUpSupport ()
   // This avoids was was previously references that we returned and allows the ROSETTA rules to be
   // followed that avoid having more than one list or mixing lists with data members.
   // SgFileList is an IR node and this is a data member pointer of that type.
+  // Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 10.05.06]
      Project.setDataPrototype ( "SgFileList*"  , "fileList_ptr", "= nullptr" ,
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (9/28/2022): Modified to use the BUILD_LIST_ACCESS_FUNCTIONS macro.
@@ -2641,7 +2634,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Pragma.setFunctionSource          ( "SOURCE_PRAGMA", "../Grammar/Support.code");
      BitAttribute.setFunctionSource    ( "SOURCE_BIT_ATTRIBUTE", "../Grammar/Support.code");
 
-  // DQ (4/6/2004): Depricated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
+  // DQ (4/6/2004): Deprecated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
   // DQ (4/19/2004): New modifiers (C++ grammar calls them specifiers)
   //    ConstVolatileModifier, StorageModifier, AccessModifier, FunctionModifier,
   //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier,

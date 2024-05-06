@@ -412,7 +412,7 @@ $CLASSNAME::getVariant() const
 // though after variant() has been removed for a while we will
 // want to change the name of variantT() back to variant()
 // (since the "T" was ment to stand for temporary).
-// When this happens the variantT() will be depricated.
+// When this happens the variantT() will be deprecated.
 VariantT
 $CLASSNAME::variantT() const 
    {

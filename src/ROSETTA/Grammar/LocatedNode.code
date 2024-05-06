@@ -1,7 +1,7 @@
 HEADER_START
      public:
 
-       // DQ (8/20/2004): Make this depricated since we should remove this (or should we?)
+       // DQ (8/20/2004): Make this deprecated since we should remove this (or should we?)
        // If we want to preserve it we should make it a member function of SgNode?
        // Function added by DQ (7/22/2001)
           const std::string & getFilenameString() const;
@@ -682,7 +682,7 @@ SOURCE_START
 const std::string &
 SgLocatedNode::getFilenameString() const
    {
-  // Function added by DQ (2/2/2007) to replace depricated function const char* SgLocatedNode::getFileName()
+  // Function added by DQ (2/2/2007) to replace deprecated function const char* SgLocatedNode::getFileName()
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      return get_startOfConstruct()->get_filenameString();
    }

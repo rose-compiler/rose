@@ -4416,11 +4416,11 @@ HEADER_SYMBOL_TABLE_START
           void insert ( const SgName & name, SgSymbol *sp );
 
        // DQ (11/27/2010): Changing the return type to "bool"
-       // DQ (1/31/2007): Depricated (is not well named and should return bool)
+       // DQ (1/31/2007): Deprecated (is not well named and should return bool)
        // int  find   ( const SgName & name, SgSymbol *sp, bool case_insensitive = false ) ROSE_DEPRECATED_FUNCTION;
           bool find   ( const SgName & name, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
 
-       // DQ (1/31/2007): New functions that will replace the depricated find() member function
+       // DQ (1/31/2007): New functions that will replace the deprecated find() member function
        // Note that this is log n in complexity
           bool exists ( const SgName &, SgSymbol *sp ) const; //! Complexity O(log n), checks for existence of symbol before matching against names.
 
@@ -6188,15 +6188,13 @@ HEADER_APPLICATION_PROJECT_START
           int parse (const std::vector<std::string>& argv);
           int parse (int argc, char** argv) { return parse(std::vector<std::string>(argv, argv + argc)); }
 
+     private:
+          void post_construction_initialization() override;
+
      public:
 
-      //! default constructor (not meant to be used, WARNING, but is!)
-          SgProject();
-
           SgProject(const SgProject &) = delete;
-
-      //! Destructor
-      // ~SgProject();
+          SgProject & operator= (const SgProject &) = delete;
 
       //! The total number of files in this project (equal to the number of source files specified on the command line)
           int numberOfFiles() const;
@@ -6205,11 +6203,11 @@ HEADER_APPLICATION_PROJECT_START
           int numberOfDirectories() const;
 
       //! Access function for retrieving a SgFile object from the list stored internally
-      //! This function is depricated and "operator[unsigned int]" should be used instead.
+      //! This function is deprecated and "operator[unsigned int]" should be used instead.
           SgFile & get_file(int) const ROSE_DEPRECATED_FUNCTION;
 
       //! Access function for putting a new SgFile object into the list stored internally
-      //! This function is depricated and "get_fileList->push_back(SgFile*)" should be used instead.
+      //! This function is deprecated and "get_fileList->push_back(SgFile*)" should be used instead.
           void set_file(SgFile &) ROSE_DEPRECATED_FUNCTION;
 
       //! Intended for use with the -rose:keep_going commandline option.
@@ -8255,7 +8253,7 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
    }
 
 
-// DQ (1/31/2007): New functions that will replace the depricated find() member function
+// DQ (1/31/2007): New functions that will replace the deprecated find() member function
 bool
 SgSymbolTable::exists ( const SgName & nm ) const
    {
@@ -8263,7 +8261,7 @@ SgSymbolTable::exists ( const SgName & nm ) const
      return p_table->find(nm) != p_table->end();
    }
 
-// DQ (1/31/2007): New functions that will replace the depricated find() member function
+// DQ (1/31/2007): New functions that will replace the deprecated find() member function
 bool
 SgSymbolTable::exists ( const SgSymbol *sp ) const
    {
@@ -8272,7 +8270,7 @@ SgSymbolTable::exists ( const SgSymbol *sp ) const
      return p_symbolSet.find(const_cast<SgSymbol*>(sp)) != p_symbolSet.end();
    }
 
-// DQ (1/31/2007): New functions that will replace the depricated find() member function
+// DQ (1/31/2007): New functions that will replace the deprecated find() member function
 bool
 SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
    {
@@ -13167,7 +13165,7 @@ Sg_File_Info::get_filename() const
      check_file_id("Sg_File_Info::get_filename");
 
   // DQ (10/15/2005): This function is the C string version of the get_filename()
-  // function which has been depricated. At some point the get_filename() function
+  // function which has been deprecated. At some point the get_filename() function
   // will be eliminated and later reinfroduced as get_filename() (finally building
   // a C++ string implementation instead of a char* (C style string) based implementation).
      return get_filenameString().c_str();
@@ -15836,7 +15834,6 @@ SOURCE_JAVA_CLASS_DECLARATION_LIST_START
 SOURCE_JAVA_CLASS_DECLARATION_LIST_END
 
 
-
 SOURCE_APPLICATION_PROJECT_START
 
 //! (static data) global concept of verbose level which controls useful output from the compiler
@@ -15845,13 +15842,14 @@ int SgProject::p_verbose = 0;
 //! global to tell mangler to turn off short mangled name optimization. Default is false. (ie, by default short name mangling is enabled)
 bool SgProject::p_mangled_noshortname = false;
 
-
 // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
 int SgProject::p_unparseHeaderFilesDebug = 0;
 
-//! this can constructor can be used but parse(int argc, char** argv) needs to be called
-SgProject::SgProject()
+void
+SgProject::post_construction_initialization()
    {
+// Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 10.05.06]
+// This should keep everything the same, hopefully
      initialization();
    }
 
@@ -16033,7 +16031,7 @@ SgProject::initialization()
 
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of
-// SgFile& in get_file() member function.  The get_file() member function is now depricated.
+// SgFile& in get_file() member function.  The get_file() member function is now deprecated.
 SgFile*
 SgProject::operator[]( unsigned int i )
    {
