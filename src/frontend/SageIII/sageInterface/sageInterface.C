@@ -27717,7 +27717,6 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 {
     int retVal=0;
     ROSE_ASSERT(lnode);
-    int pcounter =0; 
 
 // algorithm: using a queue (vector to simulate it)
 // queue <PreProcessingInfo* >  q; 
