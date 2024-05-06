@@ -1890,10 +1890,6 @@ Grammar::setUpSupport ()
   // code there are not meaningful since they cannot be changed by the user). These
   // are ment to be used by ROSE translators and as a result have unspecificed semantics
   // in ROSE, it is just a common requirement of many uses of ROSE.
-  // Project.setDataPrototype("bool","lookForIncludePaths", "= false",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Project.setDataPrototype("bool","lookForExcludePaths", "= false",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","includePathList", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","excludePathList", "",
@@ -1997,11 +1993,11 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::string", "Java_g", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype ("bool", "Java_nowarn", "",
+     Project.setDataPrototype ("bool", "Java_nowarn", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype ("bool", "Java_verbose", "",
+     Project.setDataPrototype ("bool", "Java_verbose", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype ("bool", "Java_deprecation", "",
+     Project.setDataPrototype ("bool", "Java_deprecation", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::list<std::string>", "Java_bootclasspath", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
