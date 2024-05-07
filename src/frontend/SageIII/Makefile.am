@@ -1428,6 +1428,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmPESectionTable.h			\
    SgAsmPEStringSection.h			\
    SgAsmPowerpcInstruction.h			\
+   SgAsmPointerType.h				\
    SgAsmRegisterNames.h				\
    SgAsmRegisterReferenceExpression.h		\
    SgAsmRiscOperation.h				\
@@ -1451,6 +1452,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmUserInstruction.h			\
    SgAsmValueExpression.h			\
    SgAsmVectorType.h				\
+   SgAsmVoidType.h				\
    SgAsmX86Instruction.h
 
 libRoseTraits_includedir = $(prefix)/include/rose/Rose/Traits
