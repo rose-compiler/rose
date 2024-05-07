@@ -257,11 +257,15 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
     ada_text kind_name;
     ada_kind_name(element_kind, &kind_name);
     std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-    logTrace()   << "handleElement called on a " << kind_name_string << std::endl;
+    logTrace() << "handleElement called on a " << kind_name_string << std::endl;
 
     switch (element_kind)
     {
         case ada_subp_body:             // Asis.Declarations
+        case ada_subp_decl:
+        case ada_subp_body_stub:
+        case ada_package_body:
+        case ada_package_decl:
         case ada_object_decl:
         case ada_type_decl:
         {
@@ -396,7 +400,7 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context, const std::string
           ada_bool p_as_bool;
           ada_library_item_f_has_private(&unit_body, &ada_private_node);
           ada_with_private_p_as_bool(&ada_private_node, &p_as_bool);
-          privateDecl=(p_as_bool != 0);
+          privateDecl = (p_as_bool != 0);
       } else {
           ada_subunit_f_body(&unit_body, &unit_declaration);
       }
@@ -630,11 +634,13 @@ void replaceNullptrWithNullExpr()
     logInfo() << "Replaced " << ctr << " nullptr with SgNullExpression." << std::endl;
 }
 
-void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file)
+void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file, std::vector<std::string> file_paths)
 {
   //ADA_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
+
+  ada_base_entity* root = roots.at(0);
 
   // the SageBuilder should not mess with source location information
   //   the mode is not well supported in ROSE
@@ -653,18 +659,12 @@ void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file)
 
   // define the package standard
   //   as we are not able to read it out from Asis
-  initializePkgStandard(astScope, root);
+  initializePkgStandard(astScope, roots.at(0));
 
   // translate all units
-  //std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
-
-  //Get the name of the file
-  std::string src_file_name = file->getFileName();
-  
-  //This function just calls handleUnit
-  //translate_libadalang(AstContext{}.scope(astScope), &root);
-  handleUnit(root, AstContext{}.scope(astScope), src_file_name);
-
+  for(int i = 0; i < roots.size(); i++){
+    handleUnit(roots.at(i), AstContext{}.scope(astScope), file_paths.at(i));
+  }
   // post processing
   replaceNullptrWithNullExpr();
   //resolveInheritedFunctionOverloads(astScope); //TODO enable

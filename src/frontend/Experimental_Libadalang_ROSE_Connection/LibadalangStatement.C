@@ -62,6 +62,13 @@ namespace Libadalang_ROSE_Translation
 
   /// @}
 
+  /// sets the override flag in \ref dcl
+  void setOverride(SgDeclarationStatement& dcl, bool isOverride)
+  {
+    SgDeclarationModifier& sgmod = dcl.get_declarationModifier();
+
+    if (isOverride) sgmod.setOverride(); else sgmod.unsetOverride();
+  }
 
   //~ using TryBlockNodes = std::pair<SgTryStmt*, std::reference_wrapper<SgBasicBlock> >;
   using TryBlockNodes = std::pair<SgTryStmt*, std::reference_wrapper<SgScopeStatement> >;
@@ -270,6 +277,20 @@ namespace Libadalang_ROSE_Translation
                   : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }
 
+  SgFunctionDeclaration&
+  createFunDcl( SgFunctionDeclaration* nondef,
+                const std::string& name,
+                SgScopeStatement& scope,
+                SgType& rettype,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+              )
+  {
+    // we use the nondefining function's scope if available
+    // see SCOPE_COMMENT_1
+    return nondef ? mkProcedureDecl_nondef(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
+                  : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
+  }
+
   using TypeModifierFn = std::function<SgType&(SgType&)>;
 
   SgType& tyIdentity(SgType& ty) { return ty; }
@@ -391,6 +412,15 @@ namespace {
 
     return sgnode;
   }
+
+  /// sets the separate flag in \ref dcl
+  void setAdaSeparate(SgDeclarationStatement& dcl, bool isSeparate)
+  {
+    SgDeclarationModifier& sgmod = dcl.get_declarationModifier();
+
+    if (isSeparate) sgmod.setAdaSeparate(); else sgmod.unsetAdaSeparate();
+  }
+
 } //end anonymous namespace
 
 SgAdaDiscriminatedTypeDecl*
@@ -612,12 +642,45 @@ namespace {
     setModifiers(dcl, info.Has_Abstract, info.Has_Limited, false);
   }
 
-
-  template <class libadalangStruct>
   void
-  setAbstractModifier(SgDeclarationStatement& dcl, const libadalangStruct& info)
+  setAbstractModifier(SgDeclarationStatement& dcl, ada_base_entity* info)
   {
-    setModifiers(dcl, info.Has_Abstract, false, false);
+    bool has_abstract = false;
+    ada_node_kind_enum kind = ada_node_kind(info);
+    ada_base_entity lal_abstract;
+    switch(kind){
+      case ada_incomplete_tagged_type_decl:
+        {
+          ada_incomplete_tagged_type_decl_f_has_abstract(info, &lal_abstract);
+          ada_node_kind_enum abstract_kind = ada_node_kind(&lal_abstract);
+          has_abstract = (abstract_kind == ada_abstract_present);
+          break;
+        }
+      case ada_derived_type_def:
+        {
+          ada_derived_type_def_f_has_abstract(info, &lal_abstract);
+          ada_node_kind_enum abstract_kind = ada_node_kind(&lal_abstract);
+          has_abstract = (abstract_kind == ada_abstract_present);
+          break;
+        }
+      case ada_private_type_def:
+        {
+          ada_private_type_def_f_has_abstract(info, &lal_abstract);
+          ada_node_kind_enum abstract_kind = ada_node_kind(&lal_abstract);
+          has_abstract = (abstract_kind == ada_abstract_present);
+          break;
+        }
+      case ada_record_type_def:
+        {
+          ada_record_type_def_f_has_abstract(info, &lal_abstract);
+          ada_node_kind_enum abstract_kind = ada_node_kind(&lal_abstract);
+          has_abstract = (abstract_kind == ada_abstract_present);
+          break;
+        }
+      default:
+        logWarn() << "Node kind " << kind << " in setAbstractModifier has no abstract.\n";
+    }
+    setModifiers(dcl, has_abstract, false, false);
   }
 
   SgClassDeclaration&
@@ -637,6 +700,18 @@ namespace {
 
     //ADA_ASSERT (!nondefdcl);
     return mkRecordDecl(name, def, scope);
+  }
+
+  // retrieves package spec declarations, similar to getFunctionDeclaration
+  SgAdaPackageSpecDecl* getAdaPackageSpecDecl(SgDeclarationStatement* dcl)
+  {
+    if (SgAdaPackageSpecDecl* spcdcl  = isSgAdaPackageSpecDecl(dcl))
+      return spcdcl;
+
+    if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(dcl))
+      return isSgAdaPackageSpecDecl(generic->get_declaration());
+
+    return nullptr;
   }
 
   /// creates a ROSE declaration depending on the provided type/definition
@@ -885,7 +960,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
     //std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
 
     switch(kind){
-    case ada_null_stmt:                    // 5.1
+      case ada_null_stmt:                    // 5.1
         {
           //logKind("ada_null_stmt", kind);
 
@@ -893,12 +968,28 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
 
           completeStmt(sgnode, lal_stmt, ctx);
 
-          /* unused fields:
-          */
           assocstmt = &sgnode;
           break;
         }
-    case ada_label:
+      case ada_assign_stmt:             // 5.2
+        {
+          logKind("ada_assign_stmt", kind);
+
+          ada_base_entity lal_dest, lal_expr;
+          ada_assign_stmt_f_dest(lal_stmt, &lal_dest);
+          ada_assign_stmt_f_expr(lal_stmt, &lal_expr);
+
+          SgExpression&    lhs    = getExpr(&lal_dest, ctx);
+          SgExpression&    rhs    = getExpr(&lal_expr, ctx);
+          SgExprStatement& sgnode = mkAssignStmt(lhs, rhs);
+          SgExpression&    assign = SG_DEREF(sgnode.get_expression());
+
+          attachSourceLocation(assign, lal_stmt, ctx);
+          completeStmt(sgnode, lal_stmt, ctx);
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_label:
         {
           //logKind("ada_label", kind);
 
@@ -927,7 +1018,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           assocstmt = &sgnode;
           break;
         }
-    case ada_return_stmt:
+      case ada_return_stmt:
         {
           logKind("ada_return_stmt", kind);
           ada_base_entity return_expr;
@@ -936,12 +1027,10 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgReturnStmt&   sgnode = mkReturnStmt(retval);
 
           completeStmt(sgnode, lal_stmt, ctx);
-          /* unused fields:
-          */
           assocstmt = &sgnode;
           break;
         }
-    default:
+      default:
         {
           logWarn() << "Unhandled statement " << kind << std::endl;
           //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
@@ -1027,6 +1116,222 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
   switch (kind)
   {
+
+    case ada_package_decl:                    // 7.1(2)
+      {
+        logKind("ada_package_decl", kind);
+
+        //Get the name for this package
+        ada_base_entity lal_identifier;
+        ada_base_package_decl_f_package_name(lal_element, &lal_identifier);
+        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+
+        SgScopeStatement*       parent_scope = &ctx.scope();
+
+        SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
+        SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
+
+        logTrace() << "package decl " << ident
+                   << std::endl;
+
+        int hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        privatize(sgnode, isPrivate);
+        //~ attachSourceLocation(pkgspec, lal_element, ctx);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        PragmaContainer pendingPragmas;
+        AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
+
+        // visible items
+        {
+          ada_base_entity public_part;
+          ada_base_package_decl_f_public_part(lal_element, &public_part);
+          ada_declarative_part_f_decls(&public_part, &public_part);
+
+          if(!ada_node_is_null(&public_part)){
+            int range = ada_node_children_count(&public_part);
+            for(int i = 0; i < range; i++){
+              ada_base_entity lal_child;
+              ada_node_child(&public_part, i, &lal_child);
+              handleElement(&lal_child, pragmaCtx.scope(pkgspec));
+            }
+          }
+        }
+
+        // private items
+        {
+          ada_base_entity private_part;
+          ada_base_package_decl_f_private_part(lal_element, &private_part);
+          ada_declarative_part_f_decls(&private_part, &private_part);
+
+          if(!ada_node_is_null(&private_part)){
+            int range = ada_node_children_count(&private_part);
+            for(int i = 0; i < range; i++){
+              ada_base_entity lal_child;
+              ada_node_child(&private_part, i, &lal_child);
+              handleElement(&lal_child, pragmaCtx.scope(pkgspec), true /* private items */);
+            }
+
+            // a package may contain an empty private section
+            pkgspec.set_hasPrivate(true);
+          }
+        }
+
+        // \todo consider:
+        // currently, missing built-in function declarations are generated when needed
+        //   a more principled implementation could generate them here, but they still would
+        //   need to be identified when needed.
+        // generateBuiltinFunctionsOnTypes(ctx.scope(pkgspec));
+
+        //processAndPlacePragmas(decl.Pragmas, { &pkgspec }, pragmaCtx.scope(pkgspec));
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_package_body:               // 7.2(2)
+      {
+        logKind("ada_package_body", kind);
+
+        //Get the name for this package
+        ada_base_entity lal_identifier;
+        ada_package_body_f_package_name(lal_element, &lal_identifier);
+        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+
+        SgScopeStatement*       parent_scope = &ctx.scope();
+
+        ada_base_entity previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &previous_decl); //TODO imprecise fallback
+        int decl_hash = hash_node(&previous_decl);
+        SgDeclarationStatement& declnode = lookupNode(libadalangDecls(), decl_hash);
+        SgAdaPackageSpecDecl*   specdcl  = getAdaPackageSpecDecl(&declnode);
+        //SgAdaPackageSpecDecl*   specdcl  = &mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
+
+        //SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
+        //SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
+        SgAdaPackageBodyDecl*   nondef = nullptr; //For now, just assume that this is the first declaration
+
+        // when this is an implementation of a stub, use the scope of the stub, instead of the global scope
+        SgScopeStatement&       logicalScope = nondef ? SG_DEREF(nondef->get_scope())
+                                                      : SG_DEREF(parent_scope);
+
+        SgAdaPackageBodyDecl&   sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl), nondef, logicalScope);
+        SgAdaPackageBody&       pkgbody = SG_DEREF(sgnode.get_definition());
+
+        int hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        sgnode.set_scope(specdcl->get_scope());
+        //~ attachSourceLocation(pkgbody, elem, ctx);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        //Get the stmts, decls, exceptions, and pragmas for this package
+        ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+
+        ada_package_body_f_decls(lal_element, &lal_decls); //lal_decls should now be an ada_declarative_part
+        ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
+        ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+        ada_package_body_f_stmts(lal_element, &lal_handled_stmts);
+        ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+        ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+        //TODO lal_pragmas
+
+        const bool hasBodyStatements = !ada_node_is_null(&lal_handled_stmts);
+
+        completeDeclarationsWithHandledBlock( &lal_decls,
+                                              &lal_stmts,
+                                              &lal_exceptions,
+                                              &lal_pragmas,
+                                              routineBlockHandler,
+                                              routineExceptionBlockHandler,
+                                              pkgbody,
+                                              hasBodyStatements /* create new block for statements if needed */,
+                                              ctx
+                                            );
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_subp_decl:                   // 6.1(4)   -> Trait_Kinds
+    //case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
+      {
+        //Get the subp spec node
+        ada_base_entity subp_spec;
+        ada_base_entity lal_overriding;
+        if(kind == ada_subp_decl){
+          ada_classic_subp_decl_f_subp_spec(lal_element, &subp_spec);
+          ada_classic_subp_decl_f_overriding(lal_element, &lal_overriding);
+        } else {
+          //TODO
+        }
+
+        //Determine if this is a function or procedure
+        ada_base_entity subp_kind;
+        ada_subp_spec_f_subp_kind(&subp_spec, &subp_kind);
+        ada_node_kind_enum subp_kind_kind = ada_node_kind(&subp_kind);
+
+        //Get the params for if this is a function
+        ada_base_entity subp_params;
+        ada_subp_spec_f_subp_params(&subp_spec, &subp_params);
+
+        //Get the return type for if this is a function
+        ada_base_entity subp_returns;
+        ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
+
+        //Get the name
+        ada_base_entity lal_identifier;
+        ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
+        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+
+        ada_node_kind_enum lal_overriding_kind = ada_node_kind(&lal_overriding);
+
+        const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
+        const bool          overriding = lal_overriding_kind == ada_overriding_overriding; //TODO ada_overriding_unspecified might count?
+        SgScopeStatement* parent_scope = &ctx.scope();
+        std::string              ident = ada_text_to_locale_string(&ada_canonical_text);
+        //ElemIdRange             params = idRange(decl.Parameter_Profile);
+        SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
+                                                : mkTypeVoid();
+
+        logKind(isFunc ? "A_Function_Declaration" : "A_Procedure_Declaration", kind);
+
+        SgScopeStatement&      logicalScope = SG_DEREF(parent_scope);
+        const bool             renamingAsBody = false; //definedByRenamingID(decl.Corresponding_Body, ctx); //TODO Can lal do this?
+        ParameterCompletion    complete{&subp_params, ctx};
+        SgFunctionDeclaration& sgnode  = renamingAsBody
+                                            ? mkAdaFunctionRenamingDecl(ident, logicalScope, rettype, std::move(complete))
+                                            : mkProcedureDecl_nondef(ident, logicalScope, rettype, std::move(complete))
+                                            ;
+
+        setAbstractModifier(sgnode, lal_element);
+        setOverride(sgnode, overriding);
+        int hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
     //case ada_null_subp_decl (maybe):             // 6.7
     case ada_subp_body:              // 6.3(2)
     //case A_Procedure_Body_Declaration:             // 6.3(2)
@@ -1088,8 +1393,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, ident, logicalScope, rettype, ParameterCompletion{&subp_params, ctx});
         SgBasicBlock&           declblk = functionBody(sgnode);
 
-        //recordNode(asisDecls(), elem.ID, sgnode);
-        //recordNode(asisDecls(), adaname.id(), sgnode);
+        int hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
         attachSourceLocation(declblk, lal_element, ctx); // experimental
@@ -1103,16 +1408,64 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           completeRoutineBody(lal_element, declblk, ctx);
         }
 
-        /* unhandled field
-           Declaration_ID                 Body_Block_Statement;
-           bool                           Is_Overriding_Declaration;
-           bool                           Is_Not_Overriding_Declaration;
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_subp_body_stub:                     // 10.1.3(3)
+      {
+        //Get the subp spec node
+        ada_base_entity subp_spec;
+        if(kind == ada_subp_body_stub){
+            ada_subp_body_stub_f_subp_spec(lal_element, &subp_spec);
+        } else {
+            //TODO
+        }
 
-         +func:
-           bool                           Is_Not_Null_Return
+        //Determine if this is a function or procedure
+        ada_base_entity subp_kind;
+        ada_subp_spec_f_subp_kind(&subp_spec, &subp_kind);
+        ada_node_kind_enum subp_kind_kind = ada_node_kind(&subp_kind);
+        const bool isFunc  = (subp_kind_kind == ada_subp_kind_function);
 
-           break;
-        */
+        //Get the params for if this is a function
+        ada_base_entity subp_params;
+        ada_subp_spec_f_subp_params(&subp_spec, &subp_params);
+
+        //Get the return type for if this is a function
+        ada_base_entity subp_returns;
+        ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
+
+        logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub", kind);
+
+        //Get the name
+        ada_base_entity lal_identifier;
+        ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
+        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+
+        std::string             ident        = ada_text_to_locale_string(&ada_canonical_text);
+        SgScopeStatement*       parent_scope = &ctx.scope();
+        SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
+                                                      : mkTypeVoid();
+
+        /*SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);*/
+        SgFunctionDeclaration*  nondef = nullptr; //For now, just assume that this is the first declaration
+
+        SgScopeStatement&       logicalScope = SG_DEREF(parent_scope);
+        SgFunctionDeclaration&  sgnode  = createFunDcl(nondef, ident, logicalScope, rettype, ParameterCompletion{&subp_params, ctx});
+
+        setAdaSeparate(sgnode, true /* separate */);
+
+         int hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
         assocdecl = &sgnode;
         break;
       }
@@ -1132,21 +1485,27 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_type_def;
         ada_type_decl_f_type_def(lal_element, &lal_type_def);
 
-        //Get abstract & limited from the type def  
-        ada_base_entity lal_has_abstract;
-        ada_derived_type_def_f_has_abstract(&lal_type_def, &lal_has_abstract);
-        ada_node_kind_enum abstract_status = ada_node_kind(&lal_has_abstract);
-        const bool            has_abstract = (abstract_status == ada_abstract_present);
+        ada_node_kind_enum type_def_kind = ada_node_kind(&lal_type_def);
 
-        ada_base_entity lal_has_limited;
-        ada_derived_type_def_f_has_limited(&lal_type_def, &lal_has_limited);
-        ada_node_kind_enum limited_status = ada_node_kind(&lal_has_limited);
-        const bool            has_limited = (limited_status == ada_limited_present);
+        logTrace() << "Ordinary Type ";
 
-        logTrace() << "Ordinary Type "
-                   << "\n  abstract: " << has_abstract
-                   << "\n  limited: " << has_limited
-                   << std::endl;
+        if(type_def_kind == ada_derived_type_def){
+          //Get abstract & limited from the type def
+          ada_base_entity lal_has_abstract;
+          ada_derived_type_def_f_has_abstract(&lal_type_def, &lal_has_abstract);
+          ada_node_kind_enum abstract_status = ada_node_kind(&lal_has_abstract);
+          const bool            has_abstract = (abstract_status == ada_abstract_present);
+
+          ada_base_entity lal_has_limited;
+          ada_derived_type_def_f_has_limited(&lal_type_def, &lal_has_limited);
+          ada_node_kind_enum limited_status = ada_node_kind(&lal_has_limited);
+          const bool            has_limited = (limited_status == ada_limited_present);
+
+          logTrace() << "\n  abstract: " << has_abstract
+                     << "\n  limited: " << has_limited
+                     << std::endl;
+        }
+
         //Get the name of the type
         ada_base_entity lal_identifier;
         ada_base_type_decl_f_name(lal_element, &lal_identifier);
@@ -1194,15 +1553,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         processInheritedElementsOfDerivedTypes(ty, discr ? *discr : sgdecl, ctx);
 
-        /* unused fields
-            bool                           Has_Abstract;
-            bool                           Has_Limited;
-            Declaration_ID                 Corresponding_Type_Declaration;
-            Declaration_ID                 Corresponding_Type_Partial_View;
-            Declaration_ID                 Corresponding_First_Subtype;
-            Declaration_ID                 Corresponding_Last_Constraint;
-            Declaration_ID                 Corresponding_Last_Subtype;
-        */
         break;
       }
     default:

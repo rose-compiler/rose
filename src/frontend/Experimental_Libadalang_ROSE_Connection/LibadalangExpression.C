@@ -868,9 +868,6 @@ namespace{
           std::string denoted_text = ada_text_to_locale_string(&value_text);
 
           res = &mkAdaIntegerLiteral(denoted_text.c_str());
-          /* unused fields: (Expression_Struct)
-               enum Attribute_Kinds  Attribute_Kind
-          */
           break;
         }
 
@@ -881,7 +878,7 @@ namespace{
           ada_text_type denoted_value;
           ada_string_literal_p_denoted_value(lal_element, &denoted_value);
           std::string denoted_text = dot_ada_text_type_to_string(denoted_value);
-          if(denoted_text == "+" || denoted_text == "-"){ //If the string is for an op, call getOperator
+          if(denoted_text == "+" || denoted_text == "-" || denoted_text == "*"){ //If the string is for an op, call getOperator
             res = &getOperator(lal_element, suppl, unary, ctx);
             break;
           }
@@ -1092,6 +1089,7 @@ namespace{
 
       case ada_op_plus:                        // 4.1 TODO Add more ops
       case ada_op_minus:
+      case ada_op_mult:
         {
           logKind("An_Operator_Symbol", kind);
 

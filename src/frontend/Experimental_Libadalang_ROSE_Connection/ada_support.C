@@ -113,7 +113,9 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
      mlog[Sawyer::Message::TRACE] << "BEGIN." << std::endl;
 
      ada_analysis_context ctx;
-     ada_analysis_unit analysis_unit;
+     std::vector<boostfs::path::string_type> source_files;
+     std::vector<ada_analysis_unit> analysis_units;
+     int num_source_files = 0;
 
      {
        typedef boostfs::path::string_type string_type;
@@ -156,27 +158,33 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
        boostfs::create_directory(gnatOutputDir);
        boostfs::current_path(gnatOutputDir);
 
-       char* cstring_SrcFile = const_cast<char*>(srcFile.c_str());
+       //Check if this is a .adb file
+       size_t suffix_pos = srcFile.find(".adb");
+       if(suffix_pos != string_type::npos){
+         mlog[Sawyer::Message::INFO] << "  file is a .adb\n";
+         string_type srcFile_ads = srcFile.substr(0, suffix_pos) + ".ads";
+         mlog[Sawyer::Message::INFO] << "  searching for " << srcFile_ads << std::endl;
+         if(boostfs::exists(srcFile_ads)){
+           mlog[Sawyer::Message::INFO] << "  found it\n";
+           source_files.push_back(srcFile_ads);
+         }
+       }
+
+       //Add the srcFile to the list of files to analyze
+       source_files.push_back(srcFile);
+       num_source_files = source_files.size();
+
        char* cstring_Args = const_cast<char*>(ASISArgs.c_str());
        char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
 
     // PP (11/5/20): Use Charles' new adapter_wrapper_with_flags function
-       mlog[Sawyer::Message::TRACE] << "calling Asis: src: " << cstring_SrcFile
+       mlog[Sawyer::Message::TRACE] << "calling libadalang: src: " << srcFile
                                     << " gnat: " << gnat_home
                                     << " outdir: " << cstring_GnatOutputDir
                                     << " pdunit: " << settings.processPredefinedUnits
                                     << " implunit: " << settings.processImplementationUnits
                                     << " dbg: " << settings.asisDebug
                                     << std::endl;
-
-       /*analysis_unit = adapter_wrapper_with_flags( cstring_SrcFile,
-                                                const_cast<char*>(gnat_home),
-                                                cstring_Args,
-                                                cstring_GnatOutputDir,
-                                                settings.processPredefinedUnits,
-                                                settings.processImplementationUnits,
-                                                settings.asisDebug
-                                              );*/
 
        //TODO Figure out what all these settings mean
        ctx = ada_create_analysis_context(NULL, NULL, NULL, 1, 8);
@@ -185,14 +193,18 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
        }
        mlog[Sawyer::Message::INFO] << "Calling ada_get_analysis_unit_from_file on " << srcFile
                                    << std::endl;
-       analysis_unit = ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, NULL, 0, ada_default_grammar_rule);
+       analysis_units.resize(num_source_files);
+       for(int i = 0 ; i < num_source_files; i++){
+         char* cstring_SrcFile = const_cast<char*>(source_files.at(i).c_str());
+         analysis_units.at(i) = ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, NULL, 0, ada_default_grammar_rule);
 
-       if (analysis_unit == nullptr) {
-          mlog[Sawyer::Message::FATAL] << "ada_get_analysis_unit_from_file returned NULL." << std::endl;
-          status = 1;
-       } else {
-          mlog[Sawyer::Message::INFO] << "ada_get_analysis_unit_from_file returned a value"
-                                      << std::endl;
+         if (analysis_units.at(i) == nullptr) {
+            mlog[Sawyer::Message::FATAL] << "ada_get_analysis_unit_from_file returned NULL." << std::endl;
+            status = 1;
+         } else {
+            mlog[Sawyer::Message::INFO] << "ada_get_analysis_unit_from_file returned a value"
+                                        << std::endl;
+         }
        }
 
        boostfs::current_path(currentDir);
@@ -200,13 +212,20 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
 
      mlog[Sawyer::Message::TRACE] << "END." << std::endl;
 
-     ada_base_entity root;
-     ada_unit_root(analysis_unit, &root);
+     std::vector<ada_base_entity> root_storage(num_source_files);
+     std::vector<ada_base_entity*> roots(num_source_files);
+     std::vector<std::string> source_file_strings (num_source_files);
+     for(int i = 0; i < num_source_files; i++){
+       ada_unit_root(analysis_units.at(i), &root_storage.at(i));
+       roots.at(i) = &root_storage.at(i);
+       source_file_strings.at(i) = source_files.at(i);
+     }
+
 
      try
      {
        Libadalang_ROSE_Translation::initialize(settings);
-       Libadalang_ROSE_Translation::convertLibadalangToROSE(&root, file);
+       Libadalang_ROSE_Translation::convertLibadalangToROSE(roots, file, source_file_strings);
      }
      catch (const std::runtime_error& e)
      {

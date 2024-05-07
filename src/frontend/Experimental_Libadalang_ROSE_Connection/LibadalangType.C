@@ -497,6 +497,10 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
       return mkTypeUnknown();
     }
 
+    if(ada_node_is_null(&lal_declaration)){
+      logError() << "getDeclType cannot find definition.\n";
+    }
+
     SgNode& basenode = getExprType(&lal_declaration, ctx);
     SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
 
@@ -529,10 +533,7 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
       case ada_derived_type_def:              // 3.4(2)     -> Trait_Kinds
         {
           logKind("ada_derived_type_def", kind);
-          /*
-             unused fields: (derivedTypeDef)
-                Declaration_List     Implicit_Inherited_Declarations;
-          */
+
           ada_base_entity subtype_indication;
           ada_derived_type_def_f_subtype_indication(lal_def, &subtype_indication);
 
@@ -540,6 +541,22 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
 
           //~ if (isSgEnumType(si::Ada::base)
           res.sageNode(mkAdaDerivedType(basetype));
+          break;
+        }
+
+      case ada_signed_int_type_def:           // 3.5.4(3)
+        {
+          logKind("ada_signed_int_type_def", kind);
+
+          //Get the constraint
+          ada_base_entity int_constraint;
+          ada_signed_int_type_def_f_range(lal_def, &int_constraint);
+
+          SgAdaTypeConstraint& constraint = getConstraint(&int_constraint, ctx);
+          SgType&              superty    = mkIntegralType();
+
+          res.sageNode(mkAdaSubtype(superty, constraint, true /* from root */));
+
           break;
         }
 
@@ -593,6 +610,7 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
 
   //Get the hash of this decl
   int hash = hash_node(lal_decl);
+  SgType* generatedType;
 
   //logInfo() << "handleStdDecl called for " << canonical_fully_qualified_name << std::endl;
 
@@ -600,7 +618,7 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
     // boolean enum type
     SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
     SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
-    m[hash]               = &adaBoolType;
+    generatedType                     = boolDecl.get_type();
 
     declareEnumItem(boolDecl, "False", 0);
     declareEnumItem(boolDecl, "True",  1);
@@ -626,8 +644,7 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
     int lower_bound = -std::pow(2, exponent);
     int upper_bound = std::pow(2, exponent) - 1;
     //Call declareIntSubtype
-    SgType& adaIntType = SG_DEREF(declareIntSubtype(type_name, lower_bound, upper_bound, stdspec).get_type());
-    m[hash] = &adaIntType;
+    generatedType = declareIntSubtype(type_name, lower_bound, upper_bound, stdspec).get_type();
   } else if(canonical_fully_qualified_name.find("FLOAT") != std::string::npos){
     //For floats, we need to get the number of digits, and then the value and exponent for the range
     ada_base_entity float_def;
@@ -650,7 +667,7 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
     int base = stoi(name.substr(0, name.find("#")));
     int exponent = stoi(name.substr(name.find("#e+")+3, name.length()-1));
     //Call declareRealSubtype
-    m[hash] = declareRealSubtype(type_name, num_digits, base, exponent, stdspec).get_type();
+    generatedType = declareRealSubtype(type_name, num_digits, base, exponent, stdspec).get_type();
   } else if(canonical_fully_qualified_name.find("CHARACTER") != std::string::npos){
     //   in Ada character is of enum type.
     //   Currently, the enum is not filled with members, but they are rather logically
@@ -670,8 +687,7 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
       logError() << "No plan for char type " << type_name << std::endl;
       return;
     }
-    SgType& adaCharType = SG_DEREF(adaCharDecl.get_type());
-    m[hash] = &adaCharType;
+    generatedType = adaCharDecl.get_type();
   } else if(canonical_fully_qualified_name.find("STRING") != std::string::npos){
     SgType* adaCharTypePtr;
     SgType& adaPositiveType = SG_DEREF(m.at(type_hashes.positive_hash));
@@ -689,15 +705,15 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
       return;
     }
     SgType& adaCharType = SG_DEREF(adaCharTypePtr);
-    SgType& adaStringType = SG_DEREF(declareStringType(type_name, adaPositiveType, adaCharType, stdspec).get_type());
-    m[hash] = &adaStringType;
+    generatedType = declareStringType(type_name, adaPositiveType, adaCharType, stdspec).get_type();
   } else if(canonical_fully_qualified_name.find("DURATION") != std::string::npos){
     // \todo reconsider adding a true Ada Duration type
-    SgType& adaDuration = SG_DEREF(sb::buildOpaqueType(type_name, &stdspec));
-    m[hash]             = &adaDuration;
+    generatedType = sb::buildOpaqueType(type_name, &stdspec);
   } else {
     //TODO Universal int/real?
   }
+  m[hash] = generatedType;
+
 }
 
 template<class MapT>
@@ -993,13 +1009,18 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
   switch(kind)
   {
     case ada_range_constraint:             // 3.2.2: 3.5(3)
+    case ada_range_spec:
       {
         logKind("ada_range_constraint", kind);
 
         //Get the lower/upper bounds of the range
         ada_base_entity lal_range_op, lal_lower, lal_upper;
-        ada_range_constraint_f_range(lal_constraint, &lal_range_op);
-        ada_range_spec_f_range(&lal_range_op, &lal_range_op);
+        if(kind == ada_range_constraint){
+          ada_range_constraint_f_range(lal_constraint, &lal_range_op);
+          ada_range_spec_f_range(&lal_range_op, &lal_range_op);
+        } else {
+          ada_range_spec_f_range(lal_constraint, &lal_range_op);
+        }
         ada_bin_op_f_left(&lal_range_op, &lal_lower);
         ada_bin_op_f_right(&lal_range_op, &lal_upper);
         SgExpression& lb       = getExpr(&lal_lower, ctx);

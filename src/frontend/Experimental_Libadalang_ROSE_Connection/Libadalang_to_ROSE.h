@@ -290,9 +290,10 @@ extern Sawyer::Message::Facility mlog;
 
 
 /// converts all nodes reachable through the units in \ref analysis_unit to ROSE
-/// \param root           entry point to the Libadalang tree
+/// \param roots          entry points to the Libadalang tree
 /// \param file           the ROSE root for the translation unit
-void convertLibadalangToROSE(ada_base_entity* root, SgSourceFile* file);
+/// \param file_paths     path to reach each of the files for the translation units
+void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file, std::vector<std::string> file_paths);
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
@@ -379,6 +380,14 @@ namespace{
     m[key] = &val;
   }
 
+  /// retrieves a node from map \ref m with key \ref key.
+  template <class MapT>
+  inline
+  auto
+  lookupNode(const MapT& m, typename MapT::key_type key) -> decltype(*m.at(key))
+  {
+    return *m.at(key);
+  }
 
   /// records the first mapping that appears in the translation
   /// secondary mappings are ignored, but do not trigger an error.
@@ -419,6 +428,6 @@ namespace{
     return pos != m.end() ? pos->second : findFirst(m, keys...);
   }
 
-}
+} //end anonymous namespace
 
 #endif //_LIBADALANG_TO_ROSE_H
