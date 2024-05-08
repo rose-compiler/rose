@@ -295,6 +295,11 @@ set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
 # Compiler toolchain features
 ########################################################################################################################
 
+# Define and initialize cache variables for optimization flags
+set(WITH_C_OPTIMIZE "-O2" CACHE STRING "Custom C optimization flags")
+set(WITH_CXX_OPTIMIZE "-O2" CACHE STRING "Custom C++ optimization flags")
+set(WITH_OPTIMIZE "-O2" CACHE STRING "Global optimization flags")
+
 if(WIN32)
   set(CMAKE_BUILD_TYPE Release)
   # Compiler flags
@@ -325,8 +330,31 @@ if(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
 
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC -O2")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC -O2")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
+
+  # Extract and set C optimization flags
+  if(CMAKE_C_COMPILER_ID STREQUAL "KCC")
+    set(C_OPTIMIZE " -g +K0 --no_exceptions --no_rtti --keep_gen_c ")
+  else()
+    set(C_OPTIMIZE "${WITH_C_OPTIMIZE}")
+  endif()
+
+  # Extract and set CXX optimization flags
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "KCC")
+    set(CXX_OPTIMIZE " -g +K0 --no_exceptions --no_rtti --keep_gen_c ")
+  else()
+    set(CXX_OPTIMIZE "${WITH_CXX_OPTIMIZE}")
+  endif()
+
+  # Set global optimization flags, if specified
+  if(WITH_OPTIMIZE)
+    set(C_OPTIMIZE "${WITH_OPTIMIZE}")
+    set(CXX_OPTIMIZE "${WITH_OPTIMIZE}")
+  endif()
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_OPTIMIZE} ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPTIMIZE} ")
 
   # Ensure C++11 ABI compatibility
   if(CMAKE_COMPILER_IS_GNUCXX)
@@ -1364,3 +1392,7 @@ if(NOT UNIX)
   # This include file defines how CPack should create our installers.
   include(cmake/ROSECPack.cmake)
 endif()
+
+message(STATUS "WITH_C_OPTIMIZE: ${WITH_C_OPTIMIZE}")
+message(STATUS "WITH_CXX_OPTIMIZE: ${WITH_CXX_OPTIMIZE}")
+message(STATUS "WITH_OPTIMIZE: ${WITH_OPTIMIZE} ")
