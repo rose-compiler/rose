@@ -30,6 +30,7 @@ const char* ReadWriteSets::varTypeStrings[] = {
 
 const char* ReadWriteSets::accessTypeStrings[] = {
   "NORMAL",
+  "FIELD_ACCESS",
   "ARRAY_INDEX",
   "ADDRESS_OF",
   "POINTER_DEREFERENCE",
@@ -120,6 +121,7 @@ void ReadWriteSets::initStringToVarTypeMap() {
 
 void ReadWriteSets::initStringToAccessTypeMap() {
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("NORMAL", NORMAL));
+  stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("FIELD_ACCESS", FIELD_ACCESS));
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("ARRAY_INDEX", ARRAY_INDEX));
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("ADDRESS_OF",ADDRESS_OF));
   stringToAccessTypeMap.insert(std::make_pair<std::string, ReadWriteSets::AccessType>("POINTER_DEREFERENCE",POINTER_DEREFERENCE));
@@ -143,6 +145,25 @@ void ReadWriteSets::leafFieldInsert(std::set<AccessSetRecord>& targetSet, std::s
     leafFieldInsert(target.fields, records);
   }
 }
+
+/**
+ * \brief Iterate down to bottom field and insert record.
+ * Used to insert field AccessSetRecords when recursing down an a.b.c type access.
+ **/
+/*void ReadWriteSets::leafFieldInsert2(AccessSetRecord& target, std::set<AccessSetRecord>& records) {
+  if(target.fields.size() == 0) {
+    target.accessType = FIELD_ACCESS;
+    for(auto &record : records) {
+      target.fields.insert(record);
+    }
+    return;
+  } 
+//auto &targetChild : target.fields) {
+  for(std::set<AccessSetRecord>::iterator targetChild = target.fields.begin(); targetChild != target.fields.end(); ++targetChild) {
+    leafFieldInsert2(*targetChild, records);
+  }
+}
+*/
 
 /**
  * \brief Insert index into indexes of record in targetSet 

@@ -104,7 +104,9 @@ bool isJustALocalStructDecl(SgInitializedName* initName)
  * contained in an SgFunctionCallExp or not.  We walk up the parents
  * until either:
  * A) We find an SgBasicBlock, in which case we return null.
- * B) We find an SgFunctionCallExp, in which case we need to do some
+ * B) Find an SgAssignInitializer, in which case we return null
+ * (constructor initlaizer list)
+ * C) We find an SgFunctionCallExp, in which case we need to do some
  * more checking.
  *
  * The problem is that any member function call (s.foo()), or function
@@ -129,7 +131,8 @@ bool LocalRWSetGenerator::isFunctionPointer(SgVarRefExp* inVarRef)
   SgNode* previous = inVarRef;
   //SgBasicBlock shows this is not a function call exp, so not a
   //function pointer call.
-  while(current->variantT() != V_SgBasicBlock) {
+      
+  while(current != nullptr && current->variantT() != V_SgBasicBlock && current->variantT() != V_SgAssignInitializer) {
 
     if(current->variantT() == V_SgFunctionCallExp) {
       //We found a function call, now check if it references an actual
@@ -165,7 +168,12 @@ bool LocalRWSetGenerator::isFunctionPointer(SgVarRefExp* inVarRef)
 }
 
 /**
- * TODOD DOCUMENT THIS
+ * In the read/write sets a plain function call like "foo()" is
+ * basically never useful.  So we take plain functions out. 
+ * However, member functions and functions involved in expressions are
+ * useful.  For example "a->foo()" should be in the read set.
+ * As should "a->foo().b"
+ *
  **/
 void filterPlainFunctions(std::set<ReadWriteSets::AccessSetRecord>& thisSet) 
 {
@@ -334,7 +342,7 @@ VarType LocalRWSetGenerator::determineType(SgType* curType) {
   }
   else if(isSgPointerType(curType)) {
     //Saw a pointer in class, but it wasn't dereferenced, so it's a primative?
-    return PRIMITIVES;
+    return POINTERS;
   }
   else if(curType->isPrimativeType()) {
     return PRIMITIVES;
@@ -626,6 +634,13 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
         //Left hand side goes in first, then RHS is a sub to that.
         std::set<ReadWriteSets::AccessSetRecord> lhs = recursivelyMakeAccessRecord(funcDef, isSgDotExp(current)->get_lhs_operand(), accessOrigin, thisFuncThis);
         std::set<ReadWriteSets::AccessSetRecord> rhs = recursivelyMakeAccessRecord(funcDef, isSgDotExp(current)->get_rhs_operand(), accessOrigin, thisFuncThis);
+        lhs = updateAccessTypes(lhs, FIELD_ACCESS);
+        //Updates the access type only if the parent is a dot or
+        //arrow, which will affect rhs
+        AccessType rhsAT = checkParentAccessTypeForBinaryOps(current);
+        if(rhsAT != ACCESSTYPE_UNKNOWN) {
+          rhs = updateAccessTypes(rhs, rhsAT);
+        }
         
         leafFieldInsert(lhs, rhs);
         return lhs;
@@ -647,8 +662,14 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
           //Arrow is the same as a dot, but the lhs access type has to be upgraded to POINTERS
           //Left hand side goes in first, then RHS is a sub to that.
           std::set<ReadWriteSets::AccessSetRecord> lhs = recursivelyMakeAccessRecord(funcDef, isSgArrowExp(current)->get_lhs_operand(), accessOrigin, thisFuncThis);
-          lhs = updateAccessTypesIfNotThis(lhs, POINTER_ARROW);
           std::set<ReadWriteSets::AccessSetRecord> rhs = recursivelyMakeAccessRecord(funcDef, isSgArrowExp(current)->get_rhs_operand(), accessOrigin, thisFuncThis);
+          lhs = updateAccessTypesIfNotThis(lhs, POINTER_ARROW);
+          //Updates the access type only if the parent is a dot or
+          //arrow, which will affect rhs
+          AccessType rhsAT = checkParentAccessTypeForBinaryOps(current);
+          if(rhsAT != ACCESSTYPE_UNKNOWN) {
+            rhs = updateAccessTypes(rhs, rhsAT);
+          }
           leafFieldInsert(lhs, rhs);
           return lhs;
      
@@ -769,7 +790,7 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
  
 
 /**
- * Collect the Read/Write sets of a single function, without recusion.
+ * Collect the Read/Write sets of a single function, without recursion.
  *
  * \param[in] funcDef: The function definition to process
  * \param[out] readSet: All the variables read
@@ -1004,6 +1025,20 @@ void LocalRWSetGenerator::collectReadWriteSets(SgProject *root)
   }
   
 }
+
+AccessType LocalRWSetGenerator::checkParentAccessTypeForBinaryOps(SgNode* current) 
+{
+  SgNode* parentNode = VxUtilFuncs::extractParentFromPossibleCast(current->get_parent());
+  
+  if(isSgDotExp(parentNode)) {
+    return FIELD_ACCESS;
+  } else if(isSgArrowExp(parentNode)) {
+    return POINTER_ARROW;
+  }
+  return ACCESSTYPE_UNKNOWN;
+}
+
+
 
 /**
  * Opens the output file, calls the function to convert the cache to json.

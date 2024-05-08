@@ -58,12 +58,13 @@ namespace ReadWriteSets {
    **/ 
   enum AccessType {
     NORMAL = 0,
-    ARRAY_INDEX = 1,
-    ADDRESS_OF = 2,
-    POINTER_DEREFERENCE = 3,
-    POINTER_ARROW = 4,
-    FUNCTION_POINTER_DEREF = 5, 
-    ACCESSTYPE_UNKNOWN = 6
+    FIELD_ACCESS = 1,
+    ARRAY_INDEX = 2,
+    ADDRESS_OF = 3,
+    POINTER_DEREFERENCE = 4,
+    POINTER_ARROW = 5,
+    FUNCTION_POINTER_DEREF = 6, 
+    ACCESSTYPE_UNKNOWN = 7
   };
   //! String names for Globality
   extern const char* globalityStrings[8];
@@ -72,7 +73,7 @@ namespace ReadWriteSets {
   extern const char* varTypeStrings[9];
 
   //! String names for AccessType
-  extern const char* accessTypeStrings[7];
+  extern const char* accessTypeStrings[8];
 
   //! Map to convert strings to globality
   extern std::unordered_map<std::string, Globality> stringToGlobalityMap; 

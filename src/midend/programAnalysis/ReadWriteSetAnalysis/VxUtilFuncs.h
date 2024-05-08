@@ -181,6 +181,18 @@ namespace VxUtilFuncs
  **/
   SgNode* extractFromPossibleCast(SgNode* obj);
 
+/**
+ * extractParentFromPossibleCast
+ *
+ * Sometimes the you want a node's parent, but if the parent is a cast
+ * you need to step up again. 
+ * Rather than writing the code to manually check every time, this function will
+ * check if the parent is a cast, and if it is, return it's the cast's
+ * parent..
+ **/
+  SgNode* extractParentFromPossibleCast(SgNode* obj);
+  
+
  /** 
   * getUniqueDeclaration
   *
