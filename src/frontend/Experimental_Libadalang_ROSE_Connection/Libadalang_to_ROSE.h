@@ -11,7 +11,6 @@
 #include <boost/algorithm/string/case_conv.hpp>
 
 #include "Rose/Diagnostics.h"
-#include "sage3basic.h"
 #include "sageGeneric.h"
 #include "libadalang.h"
 
