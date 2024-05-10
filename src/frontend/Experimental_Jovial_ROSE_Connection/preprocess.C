@@ -50,6 +50,7 @@ const char* const to_string(State s) { return enum_str[to_int(s)]; }
 int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &token_stream)
 {
    int c;
+   int cLineCount{0};      // comment line counter
    int line{1}, col{0};    // line and column counter
    int bLine{1}, eLine{1}; // token beginning and ending line
    int bCol{0}, eCol{0};   // token beginning and ending column
@@ -86,10 +87,12 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
             }
           }
           else if (c == '"') {
+            cLineCount = 0;
             lexeme.push_back('"');
             state = State::end_comment_quote1; // beginning of a '"' comment
           }
           else if (c == '%') {
+            cLineCount = 0;
             lexeme.push_back('%');
             state = State::end_comment_quote2; // beginning of a '%' comment
           }
@@ -174,6 +177,14 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
            break;
         case State::end_comment_quote1:
           eLine = line; eCol = col;
+
+          // break up "large" comment into two comments
+          if (c == '\n') cLineCount += 1;
+          if (cLineCount > 96) {  // has been tested by breaking at 100 count
+            out_stream.put('"'); out_stream.put('"');
+            cLineCount = 0;
+          }
+
           lexeme.push_back(c);
           if (c == '"') {
             token_stream << comment_type << "," << bLine << "," << bCol << "," << eLine << "," << eCol << ",";
@@ -185,6 +196,14 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
           break;
         case State::end_comment_quote2:
           eLine = line; eCol = col;
+
+          // break up "large" comment into two comments
+          if (c == '\n') cLineCount += 1;
+          if (cLineCount > 96) {  // tested by breaking at 100 count
+            out_stream.put('%'); out_stream.put('%');
+            cLineCount = 0;
+          }
+
           lexeme.push_back(c);
           if (c == '%') {
             token_stream << comment_type << "," << bLine << "," << bCol << "," << eLine << "," << eCol << ",";
