@@ -217,6 +217,13 @@ UnparseJovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
               curprint_indented("!ORDER;\n", info);
               break;
            }
+        case SgJovialDirectiveStatement::e_align:
+           {
+              curprint_indented("!ALIGN ", info);
+              curprint(content);
+              curprint(";\n");
+              break;
+           }
         case SgJovialDirectiveStatement::e_always:
            {
               curprint_indented("!ALWAYS'STORE ", info);
@@ -1048,6 +1055,13 @@ UnparseJovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint(" ");
         }
      }
+
+   // Like option
+      if (table_decl->get_has_like_option()) {
+         curprint("LIKE ");
+         curprint(table_decl->get_like_table_name());
+         curprint(" ");
+      }
 
   // WordsPerEntry
      using WordsPerEntry = SgJovialTableStatement::WordsPerEntry;

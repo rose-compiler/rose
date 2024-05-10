@@ -4451,6 +4451,7 @@ HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
                e_initialize,           /*!< 9.10 INITIALIZATION DIRECTIVES */
                e_order,                /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
 
+               e_align,                /*!< ALIGN DIRECTIVE, non-standard */
                e_always                /*!< ALWAYS'STORE DIRECTIVE, non-standard */
              };
 

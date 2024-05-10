@@ -76,7 +76,7 @@ exports
 %% 2.4 DEFINE DECLARATIONS
 %%%%%%%%%%
 
-  [\?] (Mark | Digit | Letter | [\n\r])*  [\?]  -> DefString
+  [\?] (Mark | Digit | Letter | [\t\n\r])*  [\?]  -> DefString
 
 %%%%%%%%%%
 %% 4.0 STATEMENTS
@@ -279,7 +279,7 @@ exports
 %% 8.3.2 BIT LITERALS
 %%
   [1-5]                     -> BeadSize
-  [A-V]                     -> Bead
+  [A-Za-z0-9]               -> Bead
 
 %% 8.4 COMMENTS
 %%

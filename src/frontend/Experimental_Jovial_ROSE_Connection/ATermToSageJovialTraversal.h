@@ -417,6 +417,7 @@ ATbool traverse_InitializeDirective(ATerm term);
 ATbool traverse_OrderDirective     (ATerm term);
 
 // ALWAYS'STORE Directive: non-standard, must be for odd compiler
+ATbool traverse_AlignDirective     (ATerm term);
 ATbool traverse_AlwaysDirective    (ATerm term);
 
 }; // class ATermToSageJovialTraversal

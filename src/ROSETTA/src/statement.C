@@ -3653,6 +3653,11 @@ Grammar::setUpStatements ()
      JovialTableStatement.setDataPrototype ("SgJovialTableStatement::WordsPerEntry",
                                             "words_per_entry", "= SgJovialTableStatement::WordsPerEntry::e_default",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Like TableTypeName option
+     JovialTableStatement.setDataPrototype ("std::string", "like_table_name", "= \"\"",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JovialTableStatement.setDataPrototype ("bool", "has_like_option", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/11/2007): Added support for new IR nodes, but have not added the correct data members yet!
   // AttributeSpecificationStatement.setDataPrototype    ( "SgInitializedNamePtrList", "pointer_list", "",

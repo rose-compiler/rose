@@ -54,6 +54,7 @@ EndDirective
 BeginDirective
 SkipDirective
 CopyDirective
+AlignDirective
 AlwaysDirective
 Directive
 CompoolDirective
@@ -443,6 +444,11 @@ context-free syntax
   'DEF' SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutineDEF")}
         SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutine")}
 
+%% Odd construction not apparently in the grammar, see gitlab-issue-372.jov
+  'BEGIN'
+  'DEF' SubroutineDefinition
+  'END'                      -> NonNestedSubroutine   {cons("NonNestedSubroutineDEF")}
+
   Declaration*               -> DeclarationList          {cons("DeclarationList")}
   NonNestedSubroutine*       -> NonNestedSubroutineList  {cons("NonNestedSubroutineList")}
 
@@ -644,7 +650,8 @@ context-free syntax
   RoundOrTruncate             -> OptRoundOrTruncate
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
 
-  CompileTimeNumericFormula   -> Precision
+%%CompileTimeNumericFormula   -> Precision
+  IntegerLiteral              -> Precision
 
   Precision                   -> OptPrecision
   % empty %                   -> OptPrecision            {cons("no-precision")}
@@ -1033,6 +1040,11 @@ context-free syntax
   'TYPE'  BlockTypeName
   'BLOCK' BlockBodyPart           -> BlockTypeDeclaration  {cons("BlockTypeDeclaration")}
 
+%% Following because of !ORDER before BEGIN of BlockBodyPart
+  'TYPE'  BlockTypeName
+  'BLOCK' OrderDirective
+          BlockBodyPart           -> BlockTypeDeclaration  {cons("BlockOrderedTypeDeclaration")}
+
   Name                            -> BlockTypeName         {cons("Name")}
 
 %% 2.3 STATEMENT NAME DECLARATIONS
@@ -1278,6 +1290,7 @@ context-free syntax
   LabelList SimpleStatement   -> Statement             {cons("SimpleStatement")}
   LabeledSimpleStatement      -> Statement             {cons("SimpleStatement")}
   LabeledCompoundStatement    -> Statement
+  EjectDirective              -> Statement
 
   AssignmentStatement         -> SimpleStatement
   LoopStatement               -> LabeledSimpleStatement
@@ -2124,8 +2137,6 @@ context-free syntax
 %%
   BeadSize 'B' "'" Bead+ "'"  -> BitLiteral              {cons("BitLiteral")}
 
-  Digit                       -> Bead
-
 %% 8.3.3 BOOLEAN LITERALS
 %%
   'TRUE'                   -> BooleanLiteral          {cons("True")}
@@ -2170,7 +2181,8 @@ context-free syntax
   InitializeDirective      -> Directive
   OrderDirective           -> Directive
 
-  AlwaysDirective          -> Directive  %% nonstandard, probably some odd compiler
+  AlignDirective           -> Directive  %% nonstandard, probably some odd compiler
+  AlwaysDirective          -> Directive  %% nonstandard
 
   LinkageDirective         -> PostProcDirective  %% only after ProcedureHeading
   ReducibleDirective       -> PostProcDirective  %% only after FunctionHeading (but SEA compiler is flexible)
@@ -2279,6 +2291,7 @@ context-free syntax
 %%
   '!ORDER' ';'                    -> OrderDirective         {cons("OrderDirective")}
 
-%% Nonstandard, must be some odd compiler
+%% Nonstandard directives, must be some odd compiler
 %%
-  "!ALWAYS'STORE" DataName ';'    -> AlwaysDirective        {cons("AlwaysDirective")}
+  "!ALIGN" Name ';'               -> AlignDirective    {cons("AlignDirective")}
+  "!ALWAYS'STORE" {Name ','}+ ';' -> AlwaysDirective   {cons("AlwaysDirective")}

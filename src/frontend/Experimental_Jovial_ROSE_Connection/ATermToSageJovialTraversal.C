@@ -3156,9 +3156,6 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
    std::string table_type_name;
    TableSpecifier table_spec;
 
-   bool hasLikeOption{false};
-   bool hasTableTypeName{false};
-
    SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
    ASSERT_not_null(table_type);
 
@@ -3177,7 +3174,6 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
       if (traverse_Name(t_type_name, table_type_name)) {
          // MATCHED TableTypeName
-         hasTableTypeName = true;
       } else return ATfalse;
 
    // This type should have already been created by a type declaration statement, find it
@@ -3230,13 +3226,8 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       }
       else if (ATmatch(t_like_option, "LikeOption(<term>)", &t_type_name)) {
          if (traverse_Name(t_type_name, table_type_name)) {
-            // MATCHED Like option TableTypeName
-            hasLikeOption = true;
-            hasTableTypeName = true;
-
-         // TODO: like-option (apparently not needed at the moment)
-            mlog[ERROR] << "UNIMPLEMENTED: LikeOption: " << hasLikeOption << ": hasTableTypeName:" << hasTableTypeName << "\n";
-            ROSE_ABORT();
+            table_decl->set_has_like_option(true);
+            table_decl->set_like_table_name(table_type_name);
          } else return ATfalse;
       }
       else return ATfalse;
@@ -3294,32 +3285,43 @@ ATbool ATermToSageJovialTraversal::traverse_BlockTypeDeclaration(ATerm term)
    printf("... traverse_BlockTypeDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_name, t_type_desc;
+   ATerm t_name, t_type_desc, t_order;
    std::string type_name;
 
    SgJovialTableStatement* block_decl = nullptr;
+   bool hasBlockDirective = false;
 
    if (ATmatch(term, "BlockTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
-      if (traverse_Name(t_name, type_name)) {
-         // MATCHED BlockTypeName
+      hasBlockDirective = false;
+   }
+   else if (ATmatch(term, "BlockOrderedTypeDeclaration(<term>,<term>,<term>)", &t_name, &t_order, &t_type_desc)) {
+      hasBlockDirective = true;
+   }
+   else return ATfalse;
+
+   if (traverse_Name(t_name, type_name)) {
+      // MATCHED BlockTypeName
+   } else return ATfalse;
+
+   // Begin SageTreeBuilder
+   RB::SourcePositionPair sources;
+   sage_tree_builder.Enter(block_decl, type_name, sources, /*is_block*/ true);
+   setSourcePosition(block_decl, term);
+
+   if (hasBlockDirective) {
+      if (traverse_Directive(t_order)) {
+         // MATCHED OrderDirective
       } else return ATfalse;
+   }
 
-      // Begin SageTreeBuilder
-      RB::SourcePositionPair sources;
-      sage_tree_builder.Enter(block_decl, type_name, sources, /*is_block*/ true);
-      setSourcePosition(block_decl, term);
-
-      if (traverse_BlockBodyPart(t_type_desc, block_decl)) {
-         // MATCHED BlockBodyPart
-      }
-      else if (traverse_DataDeclaration(t_type_desc)) {
-         // MATCHED DataDeclaration -> BlockBodyPart
-      }
-      else if (traverse_NullDeclaration(t_type_desc)) {
-         // MATCHED NullDeclaration -> BlockBodyPart
-      }
-      else return ATfalse;
-
+   if (traverse_BlockBodyPart(t_type_desc, block_decl)) {
+      // MATCHED BlockBodyPart
+   }
+   else if (traverse_DataDeclaration(t_type_desc)) {
+      // MATCHED DataDeclaration -> BlockBodyPart
+   }
+   else if (traverse_NullDeclaration(t_type_desc)) {
+      // MATCHED NullDeclaration -> BlockBodyPart
    }
    else return ATfalse;
 
@@ -4534,6 +4536,8 @@ ATbool ATermToSageJovialTraversal::traverse_Statement(ATerm term)
       // MATCHED SimpleStatement
    } else if (traverse_CompoundStatement(term)) {
       // MATCHED CompoundStatement
+   } else if (traverse_EjectDirective(term)) {
+      // MATCHED EjectDirective
    } else return ATfalse;
 
    return ATtrue;
@@ -8251,6 +8255,9 @@ ATbool ATermToSageJovialTraversal::traverse_Directive(ATerm term)
    else if (traverse_OrderDirective(term)) {
       // MATCHED OrderDirective
    }
+   else if (traverse_AlignDirective(term)) {
+      // MATCHED AlignDirective
+   }
    else if (traverse_AlwaysDirective(term)) {
       // MATCHED AlwaysDirective
    }
@@ -8604,6 +8611,37 @@ ATbool ATermToSageJovialTraversal::traverse_OrderDirective(ATerm term)
 }
 
 //========================================================================================
+// ALIGN Directive: Non-standard, must be for odd compiler
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_AlignDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AlignDirective: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name;
+   char* str;
+   std::string name;
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "AlignDirective(<term>)", &t_name)) {
+      // MATCHED AlignDirective
+   }
+   else return ATfalse;
+
+   if (ATmatch(t_name, "<str>", &str)) {
+      name = str;
+   } else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, name);
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_align);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
 // ALWAYS'STORE Directive: Non-standard, must be for odd compiler
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::traverse_AlwaysDirective(ATerm term)
@@ -8612,20 +8650,34 @@ ATbool ATermToSageJovialTraversal::traverse_AlwaysDirective(ATerm term)
    printf("... traverse_AlwaysDirective: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_name;
-   std::string name;
+   ATerm t_names;
+   char* str;
+   bool first{true};
+   std::string name, content;
    SgJovialDirectiveStatement* directive_stmt = nullptr;
 
-   if (ATmatch(term, "AlwaysDirective(<term>)", &t_name)) {
+   if (ATmatch(term, "AlwaysDirective(<term>)", &t_names)) {
       // MATCHED AlwaysDirective
    }
    else return ATfalse;
 
-   if (traverse_Name(t_name, name)) {
-      // MATCHED Name
-   } else return ATfalse;
+   ATermList tail = (ATermList) ATmake("<term>", t_names);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (ATmatch(head, "<str>", &str)) {
+         name = str;
+      } else return ATfalse;
+      if (first) {
+         first = false;
+         content = name;
+      }
+      else {
+         content = content + std::string{","} + name;
+      }
+   }
 
-   sage_tree_builder.Enter(directive_stmt, name);
+   sage_tree_builder.Enter(directive_stmt, content);
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_always);
 
    sage_tree_builder.Leave(directive_stmt);
