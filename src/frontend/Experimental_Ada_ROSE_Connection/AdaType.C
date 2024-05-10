@@ -1490,6 +1490,7 @@ namespace
 
     SgFunctionDeclaration& fndcl  = mkProcedureDecl_nondef(fnname, scope, retty, complete);
 
+    markCompilerGenerated(fndcl);
     fns[OperatorKey{&scope, name}].emplace_back(&fndcl, OperatorDesc::DECLARED_IN_STANDARD);
     //~ fns[].emplace_back(&fndcl);
   }

@@ -780,17 +780,49 @@ namespace
   ///     https://learn.adacore.com/courses/intro-to-ada/chapters/object_oriented_programming.html
   ///   Thus, primitive parameters can also be of derived type.
   ///
-  ///   Other online sources tie the notion of primitive arguments to tagged types.
+  ///   Other sources tie the notion of primitive arguments to tagged types.
   ///   e.g., https://en.wikibooks.org/wiki/Ada_Programming/Object_Orientation#Primitive_operations .
   ///         accessed on 04/01/26.
-  /// \todo also return the result type if it is primitive
+  ///
+  /// \deprecated
+  ///   use primitiveSignatureElements below
   /// @{
   std::vector<PrimitiveParameterDesc>
-  primitiveParameterPositions(const SgFunctionDeclaration&);
+  primitiveParameterPositions(const SgFunctionDeclaration& fn);
 
   std::vector<PrimitiveParameterDesc>
-  primitiveParameterPositions(const SgFunctionDeclaration*);
+  primitiveParameterPositions(const SgFunctionDeclaration* fn);
   /// @}
+
+  using PrimitiveSignatureElementsDescBase = std::tuple< const SgDeclarationStatement*
+                                                       , std::vector<PrimitiveParameterDesc>
+                                                       >;
+
+  struct PrimitiveSignatureElementsDesc : PrimitiveSignatureElementsDescBase
+  {
+    using base = PrimitiveSignatureElementsDescBase;
+    using base::base;
+
+    const SgDeclarationStatement*
+    result() const { return std::get<0>(*this); }
+
+    const std::vector<PrimitiveParameterDesc>&
+    parameters() const & { return std::get<1>(*this); }
+
+    std::vector<PrimitiveParameterDesc>
+    parameters() && { return std::move(std::get<1>(*this)); }
+  };
+
+  /// returns the descriptions for result type and parameters that make an operation primitive.
+  ///   (e.g., derived types, tagged types, and anonymous access types of those.)
+  /// \{
+  PrimitiveSignatureElementsDesc
+  primitiveSignatureElements(const SgFunctionDeclaration&);
+
+  PrimitiveSignatureElementsDesc
+  primitiveSignatureElements(const SgFunctionDeclaration*);
+  /// \}
+
 
   /// returns \ref n or a pointer to \ref n if \ref n declares an exception type.
   /// \param  n an exception declaration candidate
@@ -813,23 +845,26 @@ namespace
   ///   account the supplied argument list.
   /// \param n       the call expression
   /// \param arglist a argument list
+  /// \param withDefaultArguments true if defaulted arguments should get filled in.
+  ///                             if false, defaulted arguments are represented by a nullptr
   /// \throws std::logic_error when named arguments cannot be identified.
   /// \note
-  ///    * defaulted arguments are not represented and the list may contain holes (nullptr)
   ///    * use this function during AST construction
   SgExpressionPtrList
-  normalizedCallArguments2(const SgFunctionCallExp& n, const SgFunctionParameterList& arglist);
+  normalizedCallArguments2(const SgFunctionCallExp& n, const SgFunctionParameterList& arglist, bool withDefaultArguments = false);
 
   /// attempts to identify the argument list automatically and uses it to invoke the preceding
   ///   normalizedCallArguments2 function.
-  /// \param n       the call expression
-  /// \throws std::logic_error when there is no function associated with the call,
+  /// \param n                    the call expression
+  /// \param withDefaultArguments true if defaulted arguments should get filled in.
+  ///                             if false, defaulted arguments are represented by a nullptr
+  /// \throws std::logic_error when there is no function associated with the call.
   ///         or when normalizedCallArguments2 throws.
   /// \note
   ///   calling this function is preferred in the general case.
   /// \{
   SgExpressionPtrList
-  normalizedCallArguments(const SgFunctionCallExp& n);
+  normalizedCallArguments(const SgFunctionCallExp& n, bool withDefaultArguments = false);
   /// \}
 
   /// returns the function parameter list of the associated callee (if available).

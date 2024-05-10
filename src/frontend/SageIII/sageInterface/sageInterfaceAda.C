@@ -2603,7 +2603,7 @@ namespace Ada
   }
 
   SgExpressionPtrList
-  simpleArgumentExtractor(const SgFunctionCallExp& n)
+  simpleArgumentExtractor(const SgFunctionCallExp& n, bool /* dummy */)
   {
     return SG_DEREF(n.get_args()).get_expressions();
   }
@@ -2680,8 +2680,8 @@ namespace Ada
       const int          numargs = arity(orig);
       ROSE_ASSERT(numargs == 1 || numargs == 2);
       std::string const  key   = boost::to_lower_copy(std::get<1>(r));
-      SgExpression&      repl  = numargs == 1 ? tfFn1.at(key)(operandExtractor(orig))
-                                              : tfFn2.at(key)(operandExtractor(orig));
+      SgExpression&      repl  = numargs == 1 ? tfFn1.at(key)(operandExtractor(orig, false))
+                                              : tfFn2.at(key)(operandExtractor(orig, false));
 
       //~ if (orig.get_parent() == nullptr)
         //~ std::cerr << "parent is null: " << orig->unparseToString() << std::endl;
@@ -3060,6 +3060,20 @@ namespace Ada
     {
       return sg::dispatch(AccessibleArgumentListFinder{call}, n);
     }
+
+    SgExpression&
+    getInitializerExpr(const SgInitializedName* var)
+    {
+      ASSERT_require(var);
+
+      SgExpression* res = var->get_initializer();
+
+      if (SgAssignInitializer* init = isSgAssignInitializer(res))
+        res = init->get_operand();
+
+      ASSERT_require(res);
+      return *res;
+    }
   }
 
   SgFunctionSymbol*
@@ -3098,8 +3112,10 @@ namespace Ada
     return res ? res : &fnsym;
   }
 
+
+
   SgExpressionPtrList
-  normalizedCallArguments2(const SgFunctionCallExp& n, const SgFunctionParameterList& arglist)
+  normalizedCallArguments2(const SgFunctionCallExp& n, const SgFunctionParameterList& arglist, bool withDefaultArguments)
   {
     SgExpressionPtrList           res;
     SgExpressionPtrList&          orig = SG_DEREF(n.get_args()).get_expressions();
@@ -3127,17 +3143,35 @@ namespace Ada
                    }
                  );
 
+    if (!withDefaultArguments)
+      return res;
+
+    std::cerr << "x" << std::endl;
+
+    const auto resbeg = res.begin();
+    const auto reslim = res.end();
+    auto       respos = std::find(resbeg, reslim, nullptr);
+
+    while (respos != reslim)
+    {
+      *respos = &getInitializerExpr(parmList.at(std::distance(resbeg, respos)));
+
+      std::cerr << "y " << (*respos)->unparseToString() << std::endl;
+
+      respos = std::find(resbeg, reslim, nullptr);
+    }
+
     return res;
   }
 
   SgExpressionPtrList
-  normalizedCallArguments(const SgFunctionCallExp& n)
+  normalizedCallArguments(const SgFunctionCallExp& n, bool withDefaultArguments)
   {
-    SgFunctionParameterList*      fnparms  = AccessibleArgumentListFinder::find(n.get_function(), n);
+    SgFunctionParameterList* fnparms  = AccessibleArgumentListFinder::find(n.get_function(), n);
     if (fnparms == nullptr)
       throw std::logic_error("unable to retrieve associated function parameter list");
 
-    return normalizedCallArguments2(n, *fnparms);
+    return normalizedCallArguments2(n, *fnparms, withDefaultArguments);
   }
 
   std::size_t
@@ -3573,6 +3607,26 @@ char convertCharLiteral(const char* img)
   return res;
 }
 
+namespace
+{
+  const SgDeclarationStatement*
+  primitiveInScope(const SgType* ty, const SgScopeStatement* scope)
+  {
+    // PP: note to self: BaseTypeDecl::find does NOT skip the initial typedef decl
+    const SgDeclarationStatement* tydcl = associatedDeclaration_internal(ty, 1);
+
+    // currently the primitive test only tests if the two scopes match
+    //   the test whether the function is declared in a package scope is missing,
+    //   b/c if the function is implicitly or explicitly overriding, the
+    //   test would need to be performed on the first function declaration
+    //   in the hierarchy.
+    if (tydcl && (tydcl->get_scope() == scope))
+      return tydcl;
+
+    return nullptr;
+  }
+}
+
 
 std::vector<PrimitiveParameterDesc>
 primitiveParameterPositions(const SgFunctionDeclaration& dcl)
@@ -3584,12 +3638,8 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
   for (const SgInitializedName* parm : SG_DEREF(dcl.get_parameterList()).get_args())
   {
     ASSERT_not_null(parm);
-    // PP: note to self: BaseTypeDecl::find does NOT skip the initial typedef decl
-    const SgDeclarationStatement* tydcl = associatedDeclaration_internal(parm->get_type(), 1);
 
-    // \todo should this be sameCanonicalScope or just same scope?
-    //       same scope
-    if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))
+    if (const SgDeclarationStatement* tydcl = primitiveInScope(parm->get_type(), scope))
       res.emplace_back(parmpos, parm, tydcl);
 
     ++parmpos;
@@ -3605,6 +3655,27 @@ primitiveParameterPositions(const SgFunctionDeclaration* dcl)
 
   return primitiveParameterPositions(*dcl);
 }
+
+PrimitiveSignatureElementsDesc
+primitiveSignatureElements(const SgFunctionDeclaration& dcl)
+{
+  const SgFunctionType* fnty = dcl.get_type();
+  ASSERT_not_null(fnty);
+
+  return { primitiveInScope(fnty->get_return_type(), dcl.get_scope())
+         , primitiveParameterPositions(dcl)
+         };
+}
+
+PrimitiveSignatureElementsDesc
+primitiveSignatureElements(const SgFunctionDeclaration* dcl)
+{
+  ASSERT_not_null(dcl);
+
+  return primitiveSignatureElements(*dcl);
+}
+
+
 
 size_t
 positionalArgumentLimit(const SgExpressionPtrList& arglst)
