@@ -15855,9 +15855,9 @@ SgProject::post_construction_initialization()
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
+   : SgProject()
    {
      ASSERT_not_null(this);
-     initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constant folding (applies to C/C++ using EDG).
   // All other languges have no specific constant folding options in their frontends.  We use to support
@@ -15872,9 +15872,9 @@ SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
+   : SgProject()
    {
      ASSERT_not_null(this);
-     initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constant folding (applies to C/C++ using EDG).
   // All other languges have no specific constant folding options in their frontends.  We use to support
@@ -15896,14 +15896,14 @@ SgProject::initialization()
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
 
   // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
-     p_javacErrorCode = 0;
-     p_ecjErrorCode = 0;
-     p_midendErrorCode = 0;
-     p_openmp_linking = false;
+     ASSERT_require(p_javacErrorCode == 0);
+     ASSERT_require(p_ecjErrorCode == 0);
+     ASSERT_require(p_midendErrorCode == 0);
+     ASSERT_require(p_openmp_linking == false);
 
   // DQ (11/10/2016): Added initialization for keep_going data member and otehr data members that appear to be missing.
-     p_keep_going                   = false;
-     p_unparser__clobber_input_file = false;
+     ASSERT_require(p_keep_going                   == false);
+     ASSERT_require(p_unparser__clobber_input_file == false);
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
@@ -15915,26 +15915,26 @@ SgProject::initialization()
      p_fileList_ptr->set_parent(this);
 #endif
 
-     p_frontendErrorCode                   = 0;
-     p_backendErrorCode                    = 0;
-     p_outputFileName                      = "";
-     p_compileOnly                         = false;
+     ASSERT_require(p_frontendErrorCode                   == 0);
+     ASSERT_require(p_backendErrorCode                    == 0);
+     ASSERT_require(p_outputFileName                      == "");
+     ASSERT_require(p_compileOnly                         == false);
 
   // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     p_wave                         = false;
+     ASSERT_require(p_wave                         == false);
 
-     p_prelink                             = false;
-     p_template_instantiation_mode         = e_unknown;
-     p_ast_merge                            = false;
-     p_projectSpecificDatabaseFile         = "";
-     p_compilationPerformanceFile          = "";
-     p_C_PreprocessorOnly                  = false;
+     ASSERT_require(p_prelink                             == false);
+     ASSERT_require(p_template_instantiation_mode         == e_unknown);
+     ASSERT_require(p_ast_merge                            == false);
+     ASSERT_require(p_projectSpecificDatabaseFile         == "");
+     ASSERT_require(p_compilationPerformanceFile          == "");
+     ASSERT_require(p_C_PreprocessorOnly                  == false);
 
   // DQ (5/2/2006): Added initialization to prevent valgrind warning.
-     p_attributeMechanism                  = NULL;
+     ASSERT_require(p_attributeMechanism                  == NULL);
 
   // DQ (1/23/2010): Added support for the project to have directory structure
-     p_directoryList                       = NULL;
+     ASSERT_require(p_directoryList                       == NULL);
 
   // DQ (3/9/2009): Allow the verbose level to be set before we even call the SgProject constructor (helps debug Intel Pin usage).
      if (p_verbose > 0)
@@ -15948,7 +15948,7 @@ SgProject::initialization()
         }
 
   // DQ (2/4/2009): This was moved to the SgProject from the SgFile
-     p_binary_only                         = false;
+     ASSERT_require(p_binary_only                         == false);
 
   // DQ (1/20/2010): Added support for the project to have directory structure
   // (usefult for large scale code generation).
@@ -15960,33 +15960,33 @@ SgProject::initialization()
      p_directoryList->set_parent(this);
 
   // DQ (10/3/2010): Added entries that had not be properly set previously.
-     p_C_only                = false;
-     p_Cxx_only              = false;
+     ASSERT_require(p_C_only                == false);
+     ASSERT_require(p_Cxx_only              == false);
 
   // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     p_C11_only              = false;
-     p_Cxx0x_only            = false;
-     p_Cxx11_only            = false;
-     p_C14_only              = false;
-     p_Cxx14_only            = false;
+     ASSERT_require(p_C11_only              == false);
+     ASSERT_require(p_Cxx0x_only            == false);
+     ASSERT_require(p_Cxx11_only            == false);
+     ASSERT_require(p_C14_only              == false);
+     ASSERT_require(p_Cxx14_only            == false);
 
-     p_Fortran_only          = false;
-     p_addCppDirectivesToAST = false;
-     p_Java_only             = false;
-     p_Jvm_only              = false;
-     p_Jovial_only           = false;
+     ASSERT_require(p_Fortran_only          == false);
+     ASSERT_require(p_addCppDirectivesToAST == false);
+     ASSERT_require(p_Java_only             == false);
+     ASSERT_require(p_Jvm_only              == false);
+     ASSERT_require(p_Jovial_only           == false);
   // PP (10/13/2020) plus Ada
-     p_Ada_only              = false;
+     ASSERT_require(p_Ada_only              == false);
 
   // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     p_Java_batch_mode       = false;
-     p_Java_nowarn             = false;
-     p_Java_verbose            = false;
-     p_Java_deprecation        = false;
-     p_addCppDirectivesToAST   = false;
+     ASSERT_require(p_Java_batch_mode       == false);
+     ASSERT_require(p_Java_nowarn             == false);
+     ASSERT_require(p_Java_verbose            == false);
+     ASSERT_require(p_Java_deprecation        == false);
+     ASSERT_require(p_addCppDirectivesToAST   == false);
 
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
-     p_frontendConstantFolding = false;
+     ASSERT_require(p_frontendConstantFolding == false);
 
   // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
      Sg_File_Info * fi_gsaf = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
@@ -15997,36 +15997,36 @@ SgProject::initialization()
   // DQ (9/15/2013): Adding support to handle output of files into the same directory as the source file.
   // This avoids some subtle issues in how header files are resolved by the backend compiler.
   // See documentation in src/ROSETTA/src/support.C.
-     p_unparse_in_same_directory_as_input_file = false;
+     ASSERT_require(p_unparse_in_same_directory_as_input_file == false);
 
   // DQ (1/19/2014): This option "-S" is required for some build systems (e.g. valgrind).
-     p_stop_after_compilation_do_not_assemble_file = false;
+     ASSERT_require(p_stop_after_compilation_do_not_assemble_file == false);
 
   // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
-     p_mode_32_bit = false;
+     ASSERT_require(p_mode_32_bit == false);
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
-     p_noclobber_output_file              = false;
+     ASSERT_require(p_noclobber_output_file              == false);
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
-     p_noclobber_if_different_output_file = false;
+     ASSERT_require(p_noclobber_if_different_output_file == false);
 
   // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
   // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
-     p_suppressConstantFoldingPostProcessing = false;
+     ASSERT_require(p_suppressConstantFoldingPostProcessing == false);
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation.
-     p_appendPID = false;
+     ASSERT_require(p_appendPID == false);
 
   // DQ (9/15/2018): Added support for a report on the internal use of header file unparsing.
   // This is to support the header file unparsing when used with and without the token based unparsing.
-     p_reportOnHeaderFileUnparsing = false;
+     ASSERT_require(p_reportOnHeaderFileUnparsing == false);
 
   // DQ (11/16/2019): this was not added previously.
-     p_usingApplicationRootDirectory = false;
+     ASSERT_require(p_usingApplicationRootDirectory == false);
 
   // DQ (11/16/2019): this is a new data member just added.
-     p_usingDeferredTransformations = false;
+     ASSERT_require(p_usingDeferredTransformations == false);
    }
 
 
