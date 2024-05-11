@@ -905,11 +905,45 @@ endforeach()
    #     $(ROSE_CAPSTONE_LIBS_WITH_PATH) -lm $(am__append_18) \
    #     $(am__append_19)
 
+# Function for rose-config    
+function(resolve_compiler_names)
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        set(cc_name "gcc" PARENT_SCOPE)
+        set(cxx_name "g++" PARENT_SCOPE)
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set(cc_name "clang" PARENT_SCOPE)
+        set(cxx_name "clang++" PARENT_SCOPE)
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+        set(cc_name "icc" PARENT_SCOPE)
+        set(cxx_name "icpc" PARENT_SCOPE)
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "XL")
+        set(cc_name "xlc" PARENT_SCOPE)
+        set(cxx_name "xlC" PARENT_SCOPE)
+    endif()
+endfunction()
+
+# Usage example
+resolve_compiler_names()
+
+# Use cc_name if set, otherwise default to BACKEND_C_COMPILER_NAME_WITHOUT_PATH
+if(cc_name)
+    set(ACTUAL_CC ${cc_name})
+else()
+    set(ACTUAL_CC ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH})
+endif()
+
+# Use cxx_name if set, otherwise default to BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH
+if(cxx_name)
+    set(ACTUAL_CXX ${cxx_name})
+else()
+    set(ACTUAL_CXX ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
+endif()
+
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${ACTUAL_CC}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CCPATH       = ${CMAKE_C_COMPILER}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX          = ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX          = ${ACTUAL_CXX}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX_PATH     = ${CMAKE_CXX_COMPILER}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${rose_config_installed_cppflags}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
@@ -918,7 +952,7 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${ro
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = ${CMAKE_INSTALL_RPATH}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = ${CMAKE_BUILD_RPATH}\n")  
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIR_DEBUG}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
