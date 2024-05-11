@@ -15769,23 +15769,15 @@ SOURCE_APPLICATION_DIRECTORY_START
 int
 SgDirectory::numberOfFiles() const
    {
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     return -1;
-#else
      assert(p_fileList != NULL);
      return p_fileList->get_listOfFiles().size();
-#endif
    }
 
 SgFile*
 SgDirectory::get_file(int i) const
    {
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     return NULL;
-#else
      assert(p_fileList != NULL);
      return p_fileList->get_listOfFiles()[i];
-#endif
    }
 
 int
@@ -15905,15 +15897,11 @@ SgProject::initialization()
      ASSERT_require(p_keep_going                   == false);
      ASSERT_require(p_unparser__clobber_input_file == false);
 
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     p_fileList.clear();
-#else
   // Initialize to IR node
      p_fileList_ptr = new SgFileList();
      assert(p_fileList_ptr != NULL);
 
      p_fileList_ptr->set_parent(this);
-#endif
 
      ASSERT_require(p_frontendErrorCode                   == 0);
      ASSERT_require(p_backendErrorCode                    == 0);
@@ -16037,14 +16025,9 @@ SgProject::operator[]( unsigned int i )
    {
 
   // Since we use an STL vector internally we can use the vector::operator[] directly.
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     assert(i < get_fileList().size());
-     return p_fileList[i];
-#else
      assert(p_fileList_ptr != NULL);
      assert(i < (unsigned)numberOfFiles());
      return p_fileList_ptr->get_listOfFiles()[i];
-#endif
    }
 
 // DQ (6/13/2013): Access function for retriving a SgFile object from the list stored internally,
@@ -16054,29 +16037,16 @@ SgProject::operator[]( unsigned int i )
 SgFile* SgProject::operator[]( std::string filename )
    {
   // Since we use an STL vector internally we can use the vector::operator[] directly.
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-#error "ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT should be FALSE"
-#else
      ROSE_ASSERT(p_fileList_ptr != NULL);
      ROSE_ASSERT(numberOfFiles() > 0);
-
-#if 0
-     mprintf ("In SgProject::operator[]( std::string filename ): Searching for the SgFile matching filename: filename = %s \n",filename.c_str());
-#endif
 
      SgFilePtrList::iterator i = p_fileList_ptr->get_listOfFiles().begin();
      while (i != p_fileList_ptr->get_listOfFiles().end())
         {
           ROSE_ASSERT(*i != NULL);
-#if 0
-          mprintf ("Searching for the matching filename: filename = %s *i = %p  \n",filename.c_str(),*i);
-#endif
        // Find the matching SgFile object using the get_sourceFileNameWithPath()
           if (filename == (*i)->get_sourceFileNameWithPath())
              {
-#if 0
-               mprintf ("Found the matching filename: filename = %s *i = %p  \n",filename.c_str(),*i);
-#endif
                return *i;
              }
 
@@ -16084,17 +16054,12 @@ SgFile* SgProject::operator[]( std::string filename )
         }
 
      return NULL;
-#endif
    }
 
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> & l )
    {
      return os;
    }
-
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-#else
-// DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
 
 SgFilePtrList &
 SgProject::get_fileList() const
@@ -16112,24 +16077,12 @@ SgProject::set_fileList( SgFilePtrList & fileList )
      p_fileList_ptr->get_listOfFiles() = fileList;
    }
 
-#endif
-
 int
 SgProject::numberOfFiles() const
    {
   // This function does not return a meaningful result until all the files have been processed
-  // assert (p_fileList != NULL);
-
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     int returnValue = p_fileList.size();
-#else
      assert (p_fileList_ptr != NULL);
      int returnValue = p_fileList_ptr->get_listOfFiles().size();
-#endif
-  // assert ( returnValue > 0 );
-
-  // Seems like a good upper bound for now!
-  // assert ( returnValue < 100 );
 
      return returnValue;
    }
@@ -16150,12 +16103,8 @@ SgProject::get_file ( int i ) const
      assert (i >= 0);
      assert (i < numberOfFiles());
 
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     SgFile* targetFile = p_fileList[i];
-#else
      assert (p_fileList_ptr != NULL);
      SgFile* targetFile = p_fileList_ptr->get_listOfFiles()[i];
-#endif
      assert (targetFile != NULL);
 
      return *targetFile;
@@ -16164,16 +16113,12 @@ SgProject::get_file ( int i ) const
 void
 SgProject::set_file(SgFile &file)
    {
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     p_fileList.push_back(&file);
-#else
      assert (p_fileList_ptr != NULL);
      p_fileList_ptr->get_listOfFiles().push_back(&file);
 
   // DQ (1/25/2010): Set the parent of the file to point to the list (this is a change and may break some code).
   // But it is consistant within ROSE for how we handle list objects in the IR.
      file.set_parent(p_fileList_ptr);
-#endif
 
      assert (numberOfFiles() > 0);
    }

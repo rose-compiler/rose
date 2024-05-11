@@ -1719,12 +1719,6 @@ Grammar::setUpSupport ()
   // ************************* Project IR Node ************************
   // ******************************************************************
 
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-  // Old functionality
-  // DQ (4/7/2001) Added support for multiple files (changed SgFile* to SgFilePtrListPtr*)
-     Project.setDataPrototype ( "SgFilePtrList"  , "fileList", "= SgFilePtrList()" ,
-                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#else
   // DQ (1/20/2010): Change to provide uniformity in ROSE for how SgFile is handled (just like any other IR node).
   // This avoids was was previously references that we returned and allows the ROSETTA rules to be
   // followed that avoid having more than one list or mixing lists with data members.
@@ -1732,7 +1726,6 @@ Grammar::setUpSupport ()
   // Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 10.05.06]
      Project.setDataPrototype ( "SgFileList*"  , "fileList_ptr", "= nullptr" ,
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (9/28/2022): Modified to use the BUILD_LIST_ACCESS_FUNCTIONS macro.
 #if 1
