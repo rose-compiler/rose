@@ -1436,14 +1436,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
-  // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.
-  // DQ (4/28/2014): Added support for shared keyword as extension to C (implemented as embedded DSL
-  // within UPC base language, this serves as an example of what is required to support a simple DSL
-  // in ROSE).  In general we would need a more flexible mechanism than adding a flag to ROSE.
-  // File.setDataPrototype ("bool", "shared_memory_dsl", "= false",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      File.setDataPrototype ("bool", "multifile_support", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

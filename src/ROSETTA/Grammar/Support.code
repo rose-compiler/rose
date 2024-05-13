@@ -15885,44 +15885,11 @@ SgProject::initialization()
   // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
      ROSE_INITIALIZE;
 
-  // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
-
-  // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
-     ASSERT_require(p_javacErrorCode == 0);
-     ASSERT_require(p_ecjErrorCode == 0);
-     ASSERT_require(p_midendErrorCode == 0);
-     ASSERT_require(p_openmp_linking == false);
-
-  // DQ (11/10/2016): Added initialization for keep_going data member and otehr data members that appear to be missing.
-     ASSERT_require(p_keep_going                   == false);
-     ASSERT_require(p_unparser__clobber_input_file == false);
-
   // Initialize to IR node
      p_fileList_ptr = new SgFileList();
      assert(p_fileList_ptr != NULL);
 
      p_fileList_ptr->set_parent(this);
-
-     ASSERT_require(p_frontendErrorCode                   == 0);
-     ASSERT_require(p_backendErrorCode                    == 0);
-     ASSERT_require(p_outputFileName                      == "");
-     ASSERT_require(p_compileOnly                         == false);
-
-  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     ASSERT_require(p_wave                         == false);
-
-     ASSERT_require(p_prelink                             == false);
-     ASSERT_require(p_template_instantiation_mode         == e_unknown);
-     ASSERT_require(p_ast_merge                            == false);
-     ASSERT_require(p_projectSpecificDatabaseFile         == "");
-     ASSERT_require(p_compilationPerformanceFile          == "");
-     ASSERT_require(p_C_PreprocessorOnly                  == false);
-
-  // DQ (5/2/2006): Added initialization to prevent valgrind warning.
-     ASSERT_require(p_attributeMechanism                  == NULL);
-
-  // DQ (1/23/2010): Added support for the project to have directory structure
-     ASSERT_require(p_directoryList                       == NULL);
 
   // DQ (3/9/2009): Allow the verbose level to be set before we even call the SgProject constructor (helps debug Intel Pin usage).
      if (p_verbose > 0)
@@ -15947,74 +15914,11 @@ SgProject::initialization()
      assert(p_directoryList != NULL);
      p_directoryList->set_parent(this);
 
-  // DQ (10/3/2010): Added entries that had not be properly set previously.
-     ASSERT_require(p_C_only                == false);
-     ASSERT_require(p_Cxx_only              == false);
-
-  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     ASSERT_require(p_C11_only              == false);
-     ASSERT_require(p_Cxx0x_only            == false);
-     ASSERT_require(p_Cxx11_only            == false);
-     ASSERT_require(p_C14_only              == false);
-     ASSERT_require(p_Cxx14_only            == false);
-
-     ASSERT_require(p_Fortran_only          == false);
-     ASSERT_require(p_addCppDirectivesToAST == false);
-     ASSERT_require(p_Java_only             == false);
-     ASSERT_require(p_Jvm_only              == false);
-     ASSERT_require(p_Jovial_only           == false);
-  // PP (10/13/2020) plus Ada
-     ASSERT_require(p_Ada_only              == false);
-
-  // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
-     ASSERT_require(p_Java_batch_mode       == false);
-     ASSERT_require(p_Java_nowarn             == false);
-     ASSERT_require(p_Java_verbose            == false);
-     ASSERT_require(p_Java_deprecation        == false);
-     ASSERT_require(p_addCppDirectivesToAST   == false);
-
-  // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
-     ASSERT_require(p_frontendConstantFolding == false);
-
   // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
      Sg_File_Info * fi_gsaf = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
      p_globalScopeAcrossFiles = new SgGlobal(fi_gsaf);
      fi_gsaf->set_parent(p_globalScopeAcrossFiles);
      p_globalScopeAcrossFiles->set_parent(this);
-
-  // DQ (9/15/2013): Adding support to handle output of files into the same directory as the source file.
-  // This avoids some subtle issues in how header files are resolved by the backend compiler.
-  // See documentation in src/ROSETTA/src/support.C.
-     ASSERT_require(p_unparse_in_same_directory_as_input_file == false);
-
-  // DQ (1/19/2014): This option "-S" is required for some build systems (e.g. valgrind).
-     ASSERT_require(p_stop_after_compilation_do_not_assemble_file == false);
-
-  // DQ (1/20/2014): This option "-m32" over-rides the 64-bit mode on 64-bit environments and is required for some build systems (e.g. valgrind).
-     ASSERT_require(p_mode_32_bit == false);
-
-  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
-     ASSERT_require(p_noclobber_output_file              == false);
-
-  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
-     ASSERT_require(p_noclobber_if_different_output_file == false);
-
-  // DQ (1/31/2014): Option to skip AST post-processing constant folding support. Currently required for OpenMP and C++, but not for C.
-  // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
-     ASSERT_require(p_suppressConstantFoldingPostProcessing == false);
-
-  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation.
-     ASSERT_require(p_appendPID == false);
-
-  // DQ (9/15/2018): Added support for a report on the internal use of header file unparsing.
-  // This is to support the header file unparsing when used with and without the token based unparsing.
-     ASSERT_require(p_reportOnHeaderFileUnparsing == false);
-
-  // DQ (11/16/2019): this was not added previously.
-     ASSERT_require(p_usingApplicationRootDirectory == false);
-
-  // DQ (11/16/2019): this is a new data member just added.
-     ASSERT_require(p_usingDeferredTransformations == false);
    }
 
 
