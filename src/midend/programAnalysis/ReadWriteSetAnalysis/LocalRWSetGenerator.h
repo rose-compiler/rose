@@ -174,6 +174,26 @@ public:
 
 
 
+  /**
+   * Return a const reference to the entire cache of read/write sets
+   * for the all functions analyzed.  Useful for iterating over.
+   *
+   **/
+  const std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>& getRWSetCache() {
+    return rwSetCache;
+  };
+
+  /**
+   * Return a const reference to the readSet of a single function
+   * \param[in]: sgFunctionDeclaration: The function to get a read set of
+   **/
+  const std::set<ReadWriteSets::AccessSetRecord>& getReadSet(SgFunctionDeclaration* sgFunctionDeclaration);
+  /**
+   * Return a const reference to the writeSet of a single function
+   * \param[in]: sgFunctionDeclaration: The function to get a write set of
+   **/
+  const std::set<ReadWriteSets::AccessSetRecord>& getWriteSet(SgFunctionDeclaration* sgFunctionDeclaration);
+
 
 
 

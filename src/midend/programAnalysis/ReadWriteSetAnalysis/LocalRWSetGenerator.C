@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include "LocalRWSetGenerator.h"
 #include "SageUtils.h"
 #include "VxUtilFuncs.h"
@@ -921,7 +922,7 @@ void LocalRWSetGenerator::collectFunctionReadWriteSets(SgFunctionDefinition* fun
 
   //Quick safety check, if we have the result cached just skip it.
   //Note, we will end up repeating the rare function that has an empty Read set
-  if(record.readSet.size() != 0) {
+  if(record.readSet.size() != 0 || record.writeSet.size() != 0) {
     return;  //Nothing to do.        
   }
 
@@ -1077,3 +1078,33 @@ std::ostream& operator<< (std::ostream& os, const LocalRWSetGenerator& rwset) {
   }
   return os;
 }
+
+const std::set<AccessSetRecord>& LocalRWSetGenerator::getReadSet(SgFunctionDeclaration* sgFunctionDeclaration) 
+{
+  //Make a fake record to find the real record
+  ReadWriteSets::FunctionReadWriteRecord record(sgFunctionDeclaration, commandLine);
+  std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>::iterator funcCacheIt = rwSetCache.find(record);
+  if(funcCacheIt != rwSetCache.end()) {
+    return funcCacheIt->readSet;
+  } 
+  std::stringstream ss;
+  ss << "getReadSet, unknown function requested " << record.internalFunctionName;
+  mlog[WARN] << ss.str() << std::endl;
+  throw new std::invalid_argument(ss.str());
+}
+
+const std::set<AccessSetRecord>& LocalRWSetGenerator::getWriteSet(SgFunctionDeclaration* sgFunctionDeclaration) 
+{
+  //Make a fake record to find the real record
+  ReadWriteSets::FunctionReadWriteRecord record(sgFunctionDeclaration, commandLine);
+  std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>::iterator funcCacheIt = rwSetCache.find(record);
+  if(funcCacheIt != rwSetCache.end()) {
+    return funcCacheIt->writeSet;
+  } 
+  std::stringstream ss;
+  ss << "getWriteSet, unknown function requested " << record.internalFunctionName;
+  mlog[WARN] << ss.str() << std::endl;
+  throw new std::invalid_argument(ss.str());  
+
+}
+

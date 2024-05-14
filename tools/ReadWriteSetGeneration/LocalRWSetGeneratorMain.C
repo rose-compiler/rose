@@ -38,6 +38,7 @@ struct Settings {
     bool include_empties= false; // Include empty functions in output
     
     std::string rwSetsFilename      = "";
+    std::string rwSetsTestFilename      = "";
     std::string applicationRootDir  = "";
     bool force_stdout = false;
 
@@ -45,6 +46,7 @@ struct Settings {
     Settings(): yamlConfigFilename(""), 
                 include_empties(false),
                 rwSetsFilename(""),
+                rwSetsTestFilename(""),
                 applicationRootDir(""),
                 force_stdout(false)
     {
@@ -97,7 +99,7 @@ std::string combineCommandLine(size_t argc, char *argv[]) {
 
 
 int
-main(size_t argc, char *argv[]) {
+main(int argc, char *argv[]) {
     // Initialization
     ROSE_INITIALIZE;
     Rose::CommandLine::versionString =
@@ -125,6 +127,9 @@ main(size_t argc, char *argv[]) {
     localRWSetGeneratorSwitches.insert(Switch("rwSets-filename")
                                   .argument("filename", anyParser(settings.rwSetsFilename))
                                   .doc("Filename to output the list of read/write sets to.  If not present, writes to stdout."));
+    localRWSetGeneratorSwitches.insert(Switch("rwSets-test-filename")
+                                  .argument("filename", anyParser(settings.rwSetsTestFilename))
+                                  .doc("Filename to output a second test the list of read/write sets to.  If not present, writes to stdout."));
     localRWSetGeneratorSwitches.insert(Switch("include-empties", 'e')
                                   .shortName('e')
                                   .intrinsicValue(true, settings.include_empties)
@@ -162,7 +167,46 @@ main(size_t argc, char *argv[]) {
     {
       rwSetGen.outputCache(settings.rwSetsFilename);
     }
-  
+
+    //First cut at this file just writes out the sizes of things so I
+    //can check them by hand.
+    //Also useful as a demonstration of the API for Dan
+    if(settings.rwSetsTestFilename != "") {
+        std::ofstream rwSetsTestFile;
+        rwSetsTestFile.open(settings.rwSetsTestFilename.c_str(), std::ofstream::out);
+        
+        size_t numFuncs = rwSetGen.getRWSetCache().size();
+        rwSetsTestFile << "Number of functions in cache: " << numFuncs << std::endl;
+
+        Rose_STL_Container<SgNode*> functionDefList = NodeQuery::querySubTree (root,V_SgFunctionDefinition);
+        if(functionDefList.size() != numFuncs) {
+          rwSetsTestFile << "NOTE: Number of function in AST ("<<functionDefList.size() << ") is different from the cache ("<<numFuncs<<")" << std::endl;
+          rwSetsTestFile << "      This isn't unexpected, there are a number of reasons we filter functions." << std::endl;
+        }
+        
+        for (Rose_STL_Container<SgNode*>::iterator it = functionDefList.begin(); it != functionDefList.end(); it++) {
+          SgFunctionDefinition* funcDef = isSgFunctionDefinition(*it);
+          SgFunctionDeclaration* funcDecl = VxUtilFuncs::getUniqueDeclaration(funcDef);
+          size_t readSetSize = 0;
+          size_t writeSetSize = 0;
+          
+          try {
+            readSetSize = rwSetGen.getReadSet(funcDecl).size();
+            writeSetSize = rwSetGen.getWriteSet(funcDecl).size();
+          } catch (std::invalid_argument* e) {
+            //This function was filtered out of the cache
+            continue;
+          }
+
+          rwSetsTestFile << VxUtilFuncs::compileInternalFunctionName(funcDecl, VxUtilFuncs::getNodeRelativePath(funcDecl)) << 
+            " readSet size: " << readSetSize << " writeSet size: " <<  writeSetSize << std::endl;
+
+        }
+        
+        rwSetsTestFile.close();
+
+    }
+    
 
    return 0;
 }
