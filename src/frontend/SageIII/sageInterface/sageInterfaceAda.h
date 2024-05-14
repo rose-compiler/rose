@@ -16,10 +16,8 @@ namespace SageInterface
 /// Contains Ada-specific functionality
 namespace Ada
 {
-
-namespace
-{
   template <class SageRefExp>
+  static inline
   auto symOf(const SageRefExp& n) -> decltype( *n.get_symbol() )
   {
     auto* symp = n.get_symbol();
@@ -29,6 +27,7 @@ namespace
   }
 
   template <class SageSymbol>
+  static inline
   auto declOf(const SageSymbol& n) -> decltype( *n.get_declaration() )
   {
     auto* dclp = n.get_declaration();
@@ -37,13 +36,13 @@ namespace
     return *dclp;
   }
 
-  inline
+  static inline
   SgFunctionDeclaration& declOf(const SgFunctionRefExp& n)
   {
     return declOf(symOf(n));
   }
 
-  inline
+  static inline
   SgInitializedName& declOf(const SgVarRefExp& n)
   {
     return declOf(symOf(n));
@@ -54,6 +53,7 @@ namespace
   //       and make them go through symbols, like any other
   //       ref exp.
   template <class SageAdaRefExp>
+  static inline
   auto declOfRef(const SageAdaRefExp& n) -> decltype( *n.get_decl() )
   {
     auto* dclp = n.get_decl();
@@ -62,19 +62,19 @@ namespace
     return *dclp;
   }
 
-  inline
+  static inline
   SgAdaRenamingDecl& declOf(const SgAdaRenamingRefExp& n)
   {
     return declOfRef(n);
   }
 
-  inline
+  static inline
   SgDeclarationStatement& declOf(const SgAdaUnitRefExp& n)
   {
     return declOfRef(n);
   }
 
-  inline
+  static inline
   SgAdaTaskSpecDecl& declOf(const SgAdaTaskRefExp& n)
   {
     SgAdaTaskSpecDecl* res = isSgAdaTaskSpecDecl(&declOfRef(n));
@@ -83,7 +83,7 @@ namespace
     return *res;
   }
 
-  inline
+  static inline
   SgAdaProtectedSpecDecl& declOf(const SgAdaProtectedRefExp& n)
   {
     SgAdaProtectedSpecDecl* res = isSgAdaProtectedSpecDecl(&declOfRef(n));
@@ -92,7 +92,7 @@ namespace
     return *res;
   }
 
-  inline
+  static inline
   SgLabelStatement& declOf(const SgLabelRefExp& n)
   {
     return declOf(symOf(n));
@@ -115,7 +115,7 @@ namespace
   }
 */
 
-  inline
+  static inline
   SgName nameOf(const SgSymbol& sy)
   {
     return sy.get_name();
@@ -123,19 +123,19 @@ namespace
 
 
   template <class SageRefExp>
-  inline
+  static inline
   auto nameOf(const SageRefExp& n) -> decltype( nameOf(symOf(n)) )
   {
     return nameOf(symOf(n));
   }
 
-  inline
+  static inline
   SgName nameOf(const SgEnumVal& n)
   {
     return n.get_name();
   }
 
-  inline
+  static inline
   SgName nameOf(const SgAdaUnitRefExp& n)
   {
     return SageInterface::get_name(n.get_decl());
@@ -163,7 +163,8 @@ namespace
   }
 */
 
-} // anononymous namespace for convenience functions
+  /// returns the declaration of the enum value
+  SgInitializedName& declOf(const SgEnumVal&);
 
 
   extern const std::string roseOperatorPrefix;
@@ -322,11 +323,18 @@ namespace
   SgRangeExp* range(const SgAdaAttributeExp& rangeAttribute);
   /// @}
 
+  /// returns true if the expression \ref e denotes a range
+  /// @{
+  bool denotesRange(const SgExpression& e);
+  bool denotesRange(const SgExpression* e);
+  /// @}
+
   /// returns the declaration node for the package specification
   /// @{
   SgAdaPackageSpecDecl& getSpecificationDeclaration(const SgAdaPackageBodyDecl& bodyDecl);
   SgAdaPackageSpecDecl* getSpecificationDeclaration(const SgAdaPackageBodyDecl* bodyDecl);
   /// @}
+
 
   /// returns the declaration node for the package body, if available
   /// @{
@@ -394,6 +402,13 @@ namespace
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n);
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
   /// @}
+
+  /// returns true if arg is a used as l-value in the call
+  /// @{
+  bool isOutInoutArgument(const SgFunctionCallExp& call, const SgExpression& arg);
+  bool isOutInoutArgument(const SgFunctionCallExp* call, const SgExpression* arg);
+  /// @}
+
 
 
   /// return if the type @ref ty is the corresponding universal type representation in ROSE
@@ -1168,6 +1183,12 @@ namespace
   void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode* n);
   void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n);
   /// /}
+
+  /// marks the subtree rooted in \ref n as compiler generated
+  /// \{
+  void markSubtreeCompilerGenerated(SgLocatedNode* n);
+  void markSubtreeCompilerGenerated(SgLocatedNode& n);
+  /// \}
 
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter

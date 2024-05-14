@@ -30,6 +30,11 @@ namespace Ada
 
 namespace
 {
+  bool stringeq(const std::string& lhs, const std::string& rhs)
+  {
+    return boost::iequals(lhs, rhs);
+  }
+
   //
   // convenience functions to identify Ada attributes
   bool isClassAttribute(const SgAdaAttributeExp& attr)
@@ -39,11 +44,22 @@ namespace
     return ::si::Ada::isAttribute(attr, attrname);
   }
 
+  inline
+  bool isClassAttribute(const SgAdaAttributeExp* attr)
+  {
+    return attr && isClassAttribute(*attr);
+  }
+
   bool isRangeAttribute(const SgAdaAttributeExp& attr)
   {
     const std::string attrname = "range";
 
     return ::si::Ada::isAttribute(attr, attrname);
+  }
+
+  bool isRangeAttribute(const SgAdaAttributeExp* attr)
+  {
+    return attr && isRangeAttribute(*attr);
   }
 
 
@@ -446,6 +462,23 @@ namespace Ada
   const std::string durationTypeName    = "Duration";
   const std::string exceptionName       = "Exception";
 
+  SgInitializedName& declOf(const SgEnumVal& n)
+  {
+    SgEnumDeclaration&        dcl = SG_DEREF(n.get_declaration());
+    SgInitializedNamePtrList& lst = dcl.get_enumerators();
+
+    const auto lim = lst.end();
+    const auto pos = std::find_if( lst.begin(), lim,
+                                   [&n](sg::NotNull<SgInitializedName> nm)->bool
+                                   {
+                                     return stringeq(nm->get_name(), n.get_name());
+                                   }
+                                 );
+
+    ASSERT_require(pos != lim);
+    return SG_DEREF(*pos);
+  }
+
   const SgScopeStatement* canonicalScope(const SgScopeStatement* scope)
   {
     return CanonicalScope::find(scope);
@@ -700,6 +733,20 @@ namespace Ada
   {
     return range(SG_DEREF(n));
   }
+
+  bool denotesRange(const SgExpression* e)
+  {
+    return (  isRangeAttribute(isSgAdaAttributeExp(e))
+           || isSgTypeExpression(e)
+           || isSgRangeExp(e)
+           );
+  }
+
+  bool denotesRange(const SgExpression& e)
+  {
+    return denotesRange(&e);
+  }
+
 
   bool unconstrained(const SgArrayType& ty)
   {
@@ -1176,7 +1223,7 @@ namespace Ada
     bool isExceptionType(const SgType& n)
     {
       const SgTypedefType* ty = isSgTypedefType(&n);
-      if (ty == nullptr || (!boost::iequals(ty->get_name().getString(), exceptionName)))
+      if (ty == nullptr || (!stringeq(ty->get_name().getString(), exceptionName)))
         return false;
 
       SgTypedefDeclaration* dcl = isSgTypedefDeclaration(ty->get_declaration());
@@ -1278,7 +1325,7 @@ namespace Ada
     const SgEnumDeclaration* boolDcl = isSgEnumDeclaration(boolTy->get_declaration());
 
     return (  (boolDcl != nullptr)
-           && (boost::iequals(boolDcl->get_name().getString(), "BOOLEAN"))
+           && (stringeq(boolDcl->get_name().getString(), "BOOLEAN"))
            && definedInStandard(*boolDcl)
            );
   }
@@ -2617,7 +2664,7 @@ namespace Ada
                                                                  [&name](const SgInitializedName* n) -> bool
                                                                  {
                                                                    ASSERT_not_null(n);
-                                                                   return boost::iequals(name, n->get_name().getString());
+                                                                   return stringeq(name, n->get_name().getString());
                                                                  }
                                                                );
 
@@ -2701,7 +2748,7 @@ namespace Ada
 
       const SgTypedefType*            ty = isSgTypedefType(first->get_type());
 
-      return ty && (boost::iequals(ty->get_name().getString(), si::Ada::exceptionName));
+      return ty && (stringeq(ty->get_name().getString(), si::Ada::exceptionName));
     }
   }
 
@@ -3174,20 +3221,54 @@ namespace Ada
     return normalizedCallArguments2(n, *fnparms, withDefaultArguments);
   }
 
+  namespace
+  {
+    SgExpression const&
+    unwrapActualArgumentExpression(const SgExpression& arg)
+    {
+      if (SgActualArgumentExpression const* namedarg = isSgActualArgumentExpression(&arg))
+        return SG_DEREF(namedarg->get_expression());
+
+      return arg;
+    }
+  }
+
   std::size_t
   normalizedArgumentPosition(const SgFunctionCallExp& call, const SgExpression& arg)
   {
-    ROSE_ASSERT(isSgActualArgumentExpression(&arg) == nullptr);
-
-    SgExpressionPtrList                 normargs = si::Ada::normalizedCallArguments(call);
-    SgExpressionPtrList::iterator const beg = normargs.begin();
-    SgExpressionPtrList::iterator const lim = normargs.end();
-    SgExpressionPtrList::iterator const pos = std::find(beg, lim, &arg);
+    SgExpression const&                       actarg   = unwrapActualArgumentExpression(arg);
+    SgExpressionPtrList const                 normargs = si::Ada::normalizedCallArguments(call);
+    SgExpressionPtrList::const_iterator const beg      = normargs.begin();
+    SgExpressionPtrList::const_iterator const lim      = normargs.end();
+    SgExpressionPtrList::const_iterator const pos      = std::find(beg, lim, &actarg);
 
     if (pos == lim) throw std::logic_error{"si::Ada::normalizedArgumentPosition: unable to find argument position"};
 
     return std::distance(beg, pos);
   }
+
+  bool isOutInoutArgument(const SgFunctionCallExp& call, const SgExpression& arg)
+  {
+    const SgFunctionParameterList* fnparms = AccessibleArgumentListFinder::find(call.get_function(), call);
+    if (fnparms == nullptr)
+      throw std::logic_error("unable to retrieve associated function parameter list");
+
+    std::size_t const              pos = normalizedArgumentPosition(call, arg);
+    SgInitializedName const&       parm = SG_DEREF(fnparms->get_args().at(pos));
+    SgDeclarationStatement const&  parmdcl = SG_DEREF(parm.get_declptr());
+    SgTypeModifier const&          tymod = parmdcl.get_declarationModifier().get_typeModifier();
+
+    return tymod.isIntent_out() || tymod.isIntent_inout();
+  }
+
+  bool isOutInoutArgument(const SgFunctionCallExp* call, const SgExpression* arg)
+  {
+    return (  (call != nullptr)
+           && (arg != nullptr)
+           && isOutInoutArgument(*call, *arg)
+           );
+  }
+
 
   namespace
   {
@@ -3262,6 +3343,25 @@ namespace Ada
     ConversionTraversal converter(std::move(fn));
 
     converter.traverse(root, preorder);
+  }
+
+  void markSubtreeCompilerGenerated(SgLocatedNode& n)
+  {
+    auto setCompilerGenerated =
+          [](SgNode* n)->void
+          {
+            if (SgLocatedNode* loc = isSgLocatedNode(n))
+              loc->setCompilerGenerated();
+          };
+
+    conversionTraversal(setCompilerGenerated, &n);
+  }
+
+  void markSubtreeCompilerGenerated(SgLocatedNode* n)
+  {
+    if (n == nullptr) return;
+
+    markSubtreeCompilerGenerated(*n);
   }
 
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
@@ -3941,7 +4041,7 @@ booleanConstant(const SgExpression* e)
 
   if (const SgEnumVal* enumval = isSgEnumVal(e))
     if (isBooleanType(enumval->get_type()))
-      return ResultType{boost::iequals(enumval->get_name().getString(), "True")}; // spelling in AdaType.C
+      return ResultType{stringeq(enumval->get_name().getString(), "True")}; // spelling in AdaType.C
 
   return ResultType{};
 }
@@ -4146,7 +4246,7 @@ SgDeclarationStatement* associatedDeclaration(const SgSymbol& n)
 
 bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
 {
-  return boost::iequals(attr.get_attribute().getString(), attrname);
+  return stringeq(attr.get_attribute().getString(), attrname);
 }
 
 
@@ -4154,7 +4254,7 @@ SgExprListExp*
 isPragma(const SgPragmaDeclaration& prgdcl, const std::string& prgname)
 {
   SgPragma* pragma = prgdcl.get_pragma();
-  if ((pragma == nullptr) || !boost::iequals(pragma->get_pragma(), prgname))
+  if ((pragma == nullptr) || !stringeq(pragma->get_pragma(), prgname))
     return nullptr;
 
   SgExprListExp* res = pragma->get_args();

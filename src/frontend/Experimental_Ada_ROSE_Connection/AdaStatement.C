@@ -5559,6 +5559,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         handleDeclaration( retrieveElem(elemMap(), decl.Corresponding_Declaration),
                            ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
                          );
+
+        si::Ada::markSubtreeCompilerGenerated(sgnode.get_instantiatedScope());
         // \todo mark whole subtree under sgnode.get_instantiatedScope() as instantiated
 
         /* unused field

@@ -1,6 +1,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "sageInterface.h" // for isConstType
+#include "sageInterfaceAda.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "CallGraph.h"
@@ -6245,6 +6246,15 @@ bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
 {
         ROSE_ASSERT(child);
 
+        if (SageInterface::is_Ada_language())
+        {
+          if (const SgFunctionCallExp* fncall = isSgFunctionCallExp(get_parent()))
+            return SageInterface::Ada::isOutInoutArgument(*fncall, *child);
+
+          if (/*const SgPntrArrRefExp* arrref =*/ isSgPntrArrRefExp(get_parent()))
+            return false;
+        }
+
         // King84 (2010.10.05) This is very context-dependant, depending even on the parent expression.  Note that it does not depend on if the parent is used as an lvalue.
         int idx = 0;
         for (SgExpressionPtrList::const_iterator i = get_expressions().begin(); i != get_expressions().end(); ++i)
@@ -6315,7 +6325,9 @@ bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
                         }
                 }
         }
-        std::cerr << unparseToString() << " <parent   child> " << child->unparseToString();
+        std::cerr << unparseToString() << " <this   child> " << child->unparseToString()
+                  << '\n' << typeid(*get_parent()).name() << " <parent child> " << typeid(*child).name()
+                  << std::endl;
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgExprListExp");
         return false;
 }
