@@ -6148,7 +6148,6 @@ HEADER_JAVA_CLASS_DECLARATION_LIST_END
 
 HEADER_APPLICATION_PROJECT_START
 
-
       /*! Template Instantiation Options */
           enum template_instantiation_enum
              {
@@ -6160,6 +6159,8 @@ HEADER_APPLICATION_PROJECT_START
                e_local    = 5, /*!< instantiate only used templates and instantiate them as local entities */
                e_last          /*!< last value (used for error checking) */
              };
+
+          void initialization() ROSE_DEPRECATED_FUNCTION;
 
       //! The only useful constructors (constant folding in the frontend is false by default).
           SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding = false);
@@ -6224,7 +6225,6 @@ HEADER_APPLICATION_PROJECT_START
           SgFile* operator[]( std::string filename );
 
       //! function to generate output for all files in the project (arguments control code generation)
-       // void unparse();
           void unparse ( UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL );
 
        // DQ (5/8/2010): Added support for resetting the source position information.
@@ -6242,19 +6242,12 @@ HEADER_APPLICATION_PROJECT_START
       // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
       // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to preform linking!
-       // int link ( std::string linkerName = CXX_COMPILER_NAME );
-       // int link ( std::string linkerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
-          int link ( std::string linkerName );
+          int link(std::string linkerName);
 
       // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
       // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to preform linking!
-       // int link ( int argc, char** argv, std::string linkerName = CXX_COMPILER_NAME );
-       // int link ( const std::vector<std::string>& argv, std::string linkerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
-          int link ( const std::vector<std::string>& argv, std::string linkerName );
-
-       // function to generate PDF output file for AST
-       // void outputPDF();
+          int link(const std::vector<std::string>& argv, std::string linkerName);
 
       //! global concept of verbose level which controls useful output from the compiler (values greater than zero increase output level)
           static int p_verbose;
@@ -6265,15 +6258,6 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
       //! global concept of verbose level which controls useful output from the unparse headers feature (values greater than zero increase output level)
           static int p_unparseHeaderFilesDebug;
-
-      //! Save the command line arguments (argc and argv) for the project (these are needed to process transformations)
-       // static int project_argc;
-       // static char** project_argv;
-
-       // DQ (9/2/2008): Removed this redundant function
-       // DQ: Get list of file names in project (generated from the list of SgFile nodes)
-       // I think this is redundant with the other lists of filenames!
-       // Rose_STL_Container<std::string> getFileNames() const;
 
       //! This function generates a list of files resolved to absolute paths (symbolic links should not be resolved).
           Rose_STL_Container<std::string> getAbsolutePathFileNames() const;
@@ -6347,7 +6331,6 @@ HEADER_APPLICATION_PROJECT_START
           bool get_F2018_only   (void) const;
           bool get_CoArrayFortran_only (void) const;
 
-
           bool get_PHP_only(void) const;
 
           bool get_Python_only(void) const;
@@ -6365,19 +6348,14 @@ HEADER_APPLICATION_PROJECT_START
 
        // DQ (8/25/2017): Added more language support.
           bool get_Csharp_only (void) const;
-       // void set_Csharp_only (bool value);
 
-       // DQ (8/25/2017): Added more language support.
           bool get_Ada_only (void) const;
           void set_Ada_only (bool value);
 
-       // DQ (8/25/2017): Added more language support.
           bool get_Jovial_only (void) const;
           void set_Jovial_only (bool value);
 
           void display ( const std::string & label ) const;
-
-          void initialization();
 
           friend std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::string> & l );
 
@@ -15839,13 +15817,53 @@ int SgProject::p_unparseHeaderFilesDebug = 0;
 
 void
 SgProject::post_construction_initialization()
-   {
-// Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 10.05.06]
-// This should keep everything the same, hopefully
-     initialization();
-   }
+{
+ // DQ (4/11/2017): Some implementations of ROSE tools are just calling the SgProject constructor directly, these
+ // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
+    ROSE_INITIALIZE;
 
-//! constructor invokes EDG front end and creates AST. Use frontend() instead.
+ // Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 2024.05.06]
+ // This should keep everything the same, hopefully
+ // initialization in now a noop (impl moved here), TODO:delete entirely [Rasmussen 2024.05.13]
+    initialization();
+
+ // Initialize the file list
+    if (p_fileList_ptr == nullptr)
+    {
+       p_fileList_ptr = new SgFileList();
+       ASSERT_not_null(p_fileList_ptr);
+       p_fileList_ptr->set_parent(this);
+    }
+
+ // Initialize the directory list
+    if (p_directoryList == nullptr)
+    {
+       p_directoryList = new SgDirectoryList();
+       ASSERT_not_null(p_directoryList);
+       p_directoryList->set_parent(this);
+    }
+
+ // Initialise the global scope for multiple file handling
+    if (p_globalScopeAcrossFiles == nullptr)
+    {
+       Sg_File_Info* fi_gsaf = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+       p_globalScopeAcrossFiles = new SgGlobal(fi_gsaf);
+       fi_gsaf->set_parent(p_globalScopeAcrossFiles);
+       p_globalScopeAcrossFiles->set_parent(this);
+    }
+
+ // Set the verbose level during SgProject construction (helps debug Intel Pin usage).
+ // Note, this is the static global version, not SgFile::p_verbose, not clear why we need two [Rasmussen 2024.05.13]
+    if (p_verbose > 0) {
+       mprintf ("Note: Verbose was already set to non-zero value = %d (valid range is 0...10) \n",p_verbose);
+       ASSERT_require(p_verbose <= 10);
+    }
+    else {
+       p_verbose = 0;
+    }
+}
+
+//! WARNING: this constructor invokes EDG front end (parse) and creates AST. Use frontend() instead.
 SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
    : SgProject()
    {
@@ -15862,7 +15880,7 @@ SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
      set_frontendErrorCode(errorCode);
    }
 
-//! constructor invokes EDG front end and creates AST. Use frontend() instead.
+//! WARNING: this constructor invokes EDG front end (parse) and creates AST. Use frontend() instead.
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    : SgProject()
    {
@@ -15881,44 +15899,6 @@ SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConsta
 void
 SgProject::initialization()
    {
-  // DQ (4/11/2017): Some implementations of ROSE tools are just calling the SgProject constructor directly, these
-  // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
-     ROSE_INITIALIZE;
-
-  // Initialize to IR node
-     p_fileList_ptr = new SgFileList();
-     assert(p_fileList_ptr != NULL);
-
-     p_fileList_ptr->set_parent(this);
-
-  // DQ (3/9/2009): Allow the verbose level to be set before we even call the SgProject constructor (helps debug Intel Pin usage).
-     if (p_verbose > 0)
-        {
-          mprintf ("Note: Verbose was already set to non-zero value = %d (valid range is 0...10) \n",p_verbose);
-          assert(p_verbose <= 10);
-        }
-       else
-        {
-          p_verbose                        = 0;
-        }
-
-  // DQ (2/4/2009): This was moved to the SgProject from the SgFile
-     ASSERT_require(p_binary_only                         == false);
-
-  // DQ (1/20/2010): Added support for the project to have directory structure
-  // (usefult for large scale code generation).
-     assert(p_directoryList == NULL);
-
-  // Initialize pointers to valid opjects with empty lists.
-     p_directoryList = new SgDirectoryList();
-     assert(p_directoryList != NULL);
-     p_directoryList->set_parent(this);
-
-  // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
-     Sg_File_Info * fi_gsaf = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-     p_globalScopeAcrossFiles = new SgGlobal(fi_gsaf);
-     fi_gsaf->set_parent(p_globalScopeAcrossFiles);
-     p_globalScopeAcrossFiles->set_parent(this);
    }
 
 
