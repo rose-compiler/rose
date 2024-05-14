@@ -14,6 +14,13 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   : SgAsmGenericHeader{f} {
   initializeProperties();
 
+  // This is a bug/feature. A member of superclass SgAsmGenericSection, local_data_pool,
+  // may not be initialized because it is not a "property." If it is not NULL, it could
+  // be deleted with bad consequences. Why not a property so can be initialized?
+#if 0
+  local_data_pool = nullptr;
+#endif
+
   ASSERT_not_null(f);
   set_parent(f);
 
@@ -62,6 +69,15 @@ SgAsmJvmFileHeader::destructorHelper()
     delete p_constant_pool;
     p_constant_pool = nullptr;
   }
+
+#if 0
+  // local_data_pool also a problem, need to research
+  if (local_data_pool != nullptr) {
+    // A similar problem as with p_constant_pool?
+    mlog[WARN] << "SgAsmJvmFileHeader::destructorHelper: local_data_pool !NULL, setting NULL\n";
+    local_data_pool = nullptr;
+  }
+#endif
 
   // TODO: delete p_interfaces, p_field_table, p_method_table, p_attribute_table
 }

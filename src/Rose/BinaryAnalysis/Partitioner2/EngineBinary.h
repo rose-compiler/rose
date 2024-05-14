@@ -78,13 +78,13 @@ public:
     virtual ~EngineBinary();
 
     /** Allocating constructor. */
-    static EngineBinaryPtr instance();
+    static Ptr instance();
 
     /** Allocating constructor with settings. */
-    static EngineBinaryPtr instance(const Settings&);
+    static Ptr instance(const Settings&);
 
     /** Allocate a factory. */
-    static EngineBinaryPtr factory();
+    static Ptr factory();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing

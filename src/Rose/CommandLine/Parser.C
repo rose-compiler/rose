@@ -170,7 +170,7 @@ genericSwitches() {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
     // Global SMT solver name. This is used by any analysis that needs a solver and for which the user hasn't told that
     // specific analysis which solver to use. Specific analyses may override this global solver with other command-line
-    // switches. The value "list" means generate a list of available solvers. So far this is only impelemented for the SMT
+    // switches. The value "list" means generate a list of available solvers. So far this is only implemented for the SMT
     // solvers used by binary analysis, but the intention is that it would be available for all parts of ROSE.
     gen.insert(Switch("smt-solver")
                .argument("name", anyParser(genericSwitchArgs.smtSolver))

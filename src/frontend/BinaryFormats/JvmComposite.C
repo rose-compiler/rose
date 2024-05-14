@@ -8,6 +8,16 @@ using std::string;
 using std::vector;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
+// Data structures to facilitate jar file processing and class lookup
+// WARNING: HACK_ATTACH: Data structures need to go SOMEWHERE!
+// Orthogonal to implementation, so they go here, blame me!
+// Also: see ROSE/BinaryAnalysis/Partitioner2/ModulesJvm.h
+
+std::map<string, SgAsmGenericFile*> jarMap; // probably a class member because ...
+std::map<string, rose_addr_t> classMap; // maps to local class offset
+bool compressed{false};
+bool isJarFile{false};
+
 #if 0
 static
 vector<string> getFilesInDir(string &path, string &extension) {
@@ -73,22 +83,25 @@ SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
   set_inputLanguage(SgFile::e_Jvm_language);
   set_outputLanguage(SgFile::e_Jvm_language);
 
-  // Java JVM files are not compilable
+  // Do JVM stuff only.  This perhaps should be left as a command line option.
   set_Jvm_only(true);
+
+  // Java JVM files are not compilable
   set_skip_syntax_check(true);
   set_skipfinalCompileStep(true);
-  set_disable_edg_backend(true);
   set_skip_translation_from_edg_ast_to_rose_ast(true);
 
-  // Try setting binary_only, not sure if we should for a JVM file, but we shall try
-  set_binary_only(true);
+  // Don't do C++ stuff
+  set_requires_C_preprocessor(false);
+  set_disable_edg_backend(true);
+  set_skip_commentsAndDirectives(true);
 }
 
 int
 SgJvmComposite::callFrontEnd()
 {
-  // Process command line options specific to ROSE. This leaves
-  // all filenames and non-rose specific options in the argv list.
+  // Process command line options specific to ROSE. This leaves THE filename
+  // (files processed one at a time) and non-rose specific options in the argv list.
   vector<string> argv{get_originalCommandLineArgumentList()};
   processRoseCommandLineOptions(argv);
 
@@ -99,36 +112,71 @@ SgJvmComposite::callFrontEnd()
 int
 SgJvmComposite::buildAST(vector<string> argv, vector<string> /*inputCommandLine*/)
 {
-  int result{1};
-  vector<string> classes{};
+  // Note, files are processed one at a time from the command line (argv[0] is the executable)
+  // and argv[1] is the file. Note, there may be (non rose) options passed in argv?
+  // For now assert argc == 2 and process argv[1]. For now, just save jar files in the SgAsmGenericFile list.
+  // Since jar files are processed further here, jars must be a member (or other data structure, map, created later).
 
-  // argv is expected to contain executable and file name (for now, TODO: multiple files)
   ASSERT_require(argv.size() == 2);
-  string fileName{argv[1]};
+  string path{argv[1]};
+  boost::filesystem::path fsPath{path};
+  string filename{fsPath.filename().string()};
 
-  // Obtain/extract class file(s)
-  if (CommandlineProcessing::isJavaJvmFile(fileName)) {
-    classes.push_back(fileName);
+  if (!CommandlineProcessing::isJavaJarFile(filename) && !CommandlineProcessing::isJavaClassFile(filename)) {
+    // argv contains paths and non-rose command-line options
+    mlog[WARN] << "In SgJvmComposite::buildAST(): expected path to be "
+               << "to a class or jar file: is " << path << std::endl;
+    return 1; // error status
   }
-  else {
-    mlog[WARN] << "In SgJvmComposite::buildAST(): expected fileName to be path "
-               << "to class or jar file: is " << fileName << std::endl;
-    return result;
-  }
 
-  // Parse the class files
-  for (auto className : classes) {
-    auto gf = new SgAsmGenericFile{};
-    gf->parse(className); /* this loads file into memory, does no reading of file */
-
-    auto header = new SgAsmJvmFileHeader(gf);
-    if (header->parse()) {
-      p_genericFileList->get_files().push_back(gf);
-      result = 0;
+  // If path to file does not exists, search for class file in classpaths
+  if (!boost::filesystem::exists(fsPath)) {
+    SgProject* project{isSgProject(get_parent()->get_parent())};
+    if (project) {
+      std::list<std::string> classpath{project->get_Java_classpath()};
+      for (auto &cp : classpath) {
+        std::cerr << "classpath path: " << cp << "\n";
+      }
     }
   }
 
-  return result;
+  auto gf = new SgAsmGenericFile{};
+  gf->parse(path); /* this loads file into memory, does no reading of file */
+  p_genericFileList->get_files().push_back(gf);
+
+  // Look for a class file
+  if (CommandlineProcessing::isJavaClassFile(filename)) {
+    auto header = new SgAsmJvmFileHeader(gf);
+    header->parse();
+    compressed = false; // This is true
+    isJarFile = false; // This is also true
+    classMap[filename] = 0; // MAKE SURE OF THIS
+  }
+
+  // Look elsewhere for a jar file (EngineJvm)
+#if 0
+  else if (CommandlineProcessing::isJavaJarFile(filename)) {
+    // Go for broke
+    Rose::BinaryAnalysis::Partitioner2::ModulesJvm::Zipper zip{gf->content(), /*classpath*/nullptr};
+
+    // Really broke!
+    for (auto &entry: zip.offsetMap_) {
+      if (boost::filesystem::path{entry.first}.extension() == ".class") {
+        classMap[filename] = entry.second;
+        std::cerr << "  found class " << entry.first << " at offset : " << entry.second << std::endl;
+      } else {
+        std::cerr << "  found file  " << entry.first << " at offset : " << entry.second << std::endl;
+      }
+    }
+    // TODO: replace with parse()?
+    isJarFile = true;
+  }
+#endif
+
+  // Sanity checks to see if logic of callFrontEnd and buildAST is correct
+  ASSERT_require(p_genericFileList->get_files().size() == 1);
+
+  return 0;
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

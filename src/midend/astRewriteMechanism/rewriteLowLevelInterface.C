@@ -1548,14 +1548,14 @@ isRemovableStatement ( SgStatement* s )
   // bool AstTests::isProblematic(SgNode* node)
   //      { return numSuccContainers(node)>1 || (numSuccContainers(node)>0 && numSingleSuccs(node)>0); }
 
-     ROSE_ASSERT(s != NULL);
+     ASSERT_not_null(s);
      SgStatement* parentNode = isSgStatement(s->get_parent());
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
 
      bool isContainer    = (AstTests::numSuccContainers(parentNode) == 1);
-     bool isNonContainer = ( (AstTests::numSuccContainers(parentNode) == 0) && (AstTests::numSingleSuccs(parentNode) > 0) );
+     bool isNonContainer = ((AstTests::numSuccContainers(parentNode) == 0) && (AstTests::numSingleSuccs(parentNode) > 0) );
 
-     ROSE_ASSERT (isContainer == !isNonContainer);
+     ASSERT_require(isContainer == !isNonContainer);
 
      return isContainer;
    }

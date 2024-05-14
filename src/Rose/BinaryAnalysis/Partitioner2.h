@@ -18,6 +18,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>

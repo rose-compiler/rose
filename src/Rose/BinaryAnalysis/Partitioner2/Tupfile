@@ -19,6 +19,7 @@ run $(librose_compile)				\
     MayReturnAnalysis.C				\
     Modules.C					\
     ModulesElf.C				\
+    ModulesJvm.C				\
     ModulesLinux.C				\
     ModulesM68k.C				\
     ModulesMips.C				\
@@ -51,6 +52,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     GraphViz.h								\
     Modules.h								\
     ModulesElf.h							\
+    ModulesJvm.h							\
     ModulesLinux.h							\
     ModulesM68k.h							\
     ModulesMips.h							\

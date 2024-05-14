@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
@@ -47,6 +48,11 @@ EngineJvm::EngineJvm(const Settings &settings)
 }
 
 EngineJvm::~EngineJvm() {}
+
+EngineJvm::Ptr
+EngineJvm::instance() {
+  return instance(Settings{});
+}
 
 EngineJvm::Ptr
 EngineJvm::instance(const Settings &settings) {
@@ -96,10 +102,22 @@ EngineJvm::instanceFromFactory(const Settings &settings) {
 SgAsmBlock*
 EngineJvm::frontend(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
     try {
-        std::vector<std::string> specimenNames = parseCommandLine(args, purpose, description).unreachedArgs();
-        if (specimenNames.empty())
+        std::vector<std::string> specimen = parseCommandLine(args, purpose, description).unreachedArgs();
+        if (specimen.empty()) {
             throw std::runtime_error("no binary specimen specified; see --help");
-        return buildAst(specimenNames);
+        }
+
+        // Parse specimen files to ultimately obtain a project
+        if (!areContainersParsed()) {
+            parseContainers(specimen);
+        }
+
+        auto interp = interpretation();
+
+        // TODO: This will probably fail, remove this method (used to call buildAst which should be deprecated)
+        ASSERT_not_null(interp->get_globalBlock());
+        return interp->get_globalBlock();
+
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
             mlog[FATAL] <<e.what() <<"\n";
@@ -157,23 +175,28 @@ EngineJvm::parseContainers(const std::vector<std::string> &fileNames) {
         checkSettings();
 
         // Prune away things we recognize as not being Java files.
-        std::vector<boost::filesystem::path> javaFiles;
+        std::vector<boost::filesystem::path> classFiles;
         for (const std::string &fileName: fileNames) {
-          //TODO: jar files
-            if (ModulesJvm::isJavaClassFile(fileName)) {
-                javaFiles.push_back(fileName);
+            // File must be present
+            if (ModulesJvm::isJavaJarFile(fileName)) {
+                loadJarFile(fileName);
+            }
+            // File need not be in file system (but somewhere in classpath)
+            else if (CommandlineProcessing::isJavaClassFile(fileName)) {
+                classFiles.push_back(fileName);
             }
         }
 
         // Process through ROSE's frontend()
-        if (!javaFiles.empty()) {
-            SgProject *project = roseFrontendReplacement(javaFiles);
-            ASSERT_not_null(project);                       // an exception should have been thrown
+        if (!classFiles.empty()) {
+            SgProject *project = roseFrontendReplacement(classFiles);
+            ASSERT_not_null(project); // an exception should have been thrown
 
             std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-            if (interps.empty())
-                throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-            interpretation(interps.back());    // windows PE is always after DOS
+            if (interps.size() != 1) {
+                throw std::runtime_error("a Jvm specimen container must have one (and only one) SgAsmInterpretation");
+            }
+            interpretation(interps.back());
             ASSERT_require(areContainersParsed());
         }
         else {
@@ -203,6 +226,24 @@ EngineJvm::pathToClass(const std::string &className) {
     return classPath;
 }
 
+// Load jar file by opening its contents
+bool
+EngineJvm::loadJarFile(const std::string &filename) {
+  if (!CommandlineProcessing::isJavaJarFile(filename)) {
+    return false;
+  }
+  SAWYER_MESG(mlog[TRACE]) << "loading jar file " << filename <<"\n";
+
+  auto gf = new SgAsmGenericFile{};
+  gf->parse(filename); /* this loads jar file into memory, does no reading of file */
+
+  // Unzip jar file but do not decompress contents
+  auto zip = new ModulesJvm::Zipper(gf);
+  jars_.push_back(zip);
+
+  return true;
+}
+
 // Load class and super classes
 rose_addr_t
 EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
@@ -224,13 +265,17 @@ EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGener
 
 rose_addr_t
 EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
-    if (!boost::filesystem::exists(path)) {
+    // Check to see if class has already been processed
+    // TODO: make sure stem is appropriate, must use fully qualified class name
+    if (classes_.find(path.stem().string()) != classes_.end()) {
         return baseVa;
     }
 
-    // Make sure the class has not already been processed
-    if (classes_.find(path.stem().string()) != classes_.end()) {
+    if (!boost::filesystem::exists(path)) {
+        // Is it in a jar file
+      if (!ModulesJvm::loadClassFile(path.string(), jars_, baseVa)) {
         return baseVa;
+      }
     }
 
     std::string fileName = path.string();
@@ -383,6 +428,18 @@ EngineJvm::discoverFunctionCalls(SgAsmJvmMethod* sgMethod, SgAsmJvmConstantPool*
     }
 }
 
+// Replacement for ::frontend for Jvm files only
+SgProject*
+EngineJvm::roseFrontendReplacement(const std::vector<std::string> &fileNames) {
+    std::vector<boost::filesystem::path> paths{};
+    for (auto name : fileNames) {
+      paths.push_back(boost::filesystem::path{name});
+    }
+
+    return roseFrontendReplacement(paths);
+}
+
+
 // Replacement for ::frontend, which is a complete mess, in order create a project containing multiple files. Nothing
 // special happens to any of the input file names--that should have already been done by this point. All the fileNames
 // are expected to be names of existing Java class or jar files.
@@ -390,10 +447,32 @@ SgProject*
 EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &paths) {
     ASSERT_forbid(paths.empty());
 
+    // Create an SgJvmComposite isa SgBinaryComposite isa SgFile
+    auto jvmComposite = new SgJvmComposite;
+
+    auto fileList = jvmComposite->get_genericFileList();
+
+    // The SgBinaryComposite (type of SgFile) points to the list of SgAsmGenericFile nodes created above.
+    // FIXME[Robb Matzke 2019-01-29]: The defaults set here should be set in the SgBinaryComposite constructor instead.
+    // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
+    //                                don't make much sense.
+
+// TODO: try to remove this initialization
+//
+    jvmComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(paths[0]).string()); // best we can do
+    jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string());                // best we can do
+    jvmComposite->initializeSourcePosition(paths[0].string());                                // best we can do
+    jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, paths[0].string())); // best we can do
+    ASSERT_not_null(jvmComposite->get_file_info());
+
+//TODO:: Is this needed, should it be here (SgJvmComposite isa SgBinaryComposite isa SgFile)
+#if 0
+    jvmComposite->set_requires_C_preprocessor(false);
+    jvmComposite->set_isObjectFile(false);
+#endif
+
     // Load class files starting at this virtual address
     rose_addr_t baseVa = 0;
-
-    auto fileList = new SgAsmGenericFileList;
 
     // Load classes
     for (auto path: paths) {
@@ -403,78 +482,39 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
     // Scan instructions for classes
     baseVa = loadDiscoverableClasses(fileList, baseVa);
 
-    SAWYER_MESG(mlog[DEBUG]) <<"parsed " <<StringUtility::plural(fileList->get_files().size(), "container files") <<"\n";
+    // Finally, create the _one_ interpretation
+    auto interp = new SgAsmInterpretation;
+    auto interpList = new SgAsmInterpretationList;
 
-    // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
-    Rose::is_binary_executable = true;
+    // Add the interpretation to the list
+    interpList->get_interpretations().push_back(interp);
+    interp->set_parent(interpList);
 
-    // The SgBinaryComposite (type of SgFile) points to the list of SgAsmGenericFile nodes created above.
-    // FIXME[Robb Matzke 2019-01-29]: The defaults set here should be set in the SgBinaryComposite constructor instead.
-    // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
-    //                                don't make much sense.
-    auto jvmComposite = new SgJvmComposite;
-    jvmComposite->initialization(); // SgFile::initialization
-    jvmComposite->set_skipfinalCompileStep(true);
-    jvmComposite->set_genericFileList(fileList); fileList->set_parent(jvmComposite);
-    jvmComposite->set_sourceFileUsesBinaryFileExtension(true);
-    jvmComposite->set_outputLanguage(SgFile::e_Binary_language);
-    jvmComposite->set_inputLanguage(SgFile::e_Binary_language);
-    jvmComposite->set_binary_only(true);
-    jvmComposite->set_requires_C_preprocessor(false);
-    jvmComposite->set_isObjectFile(false);
-    jvmComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(paths[0]).string()); // best we can do
-    jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string());                // best we can do
-    jvmComposite->initializeSourcePosition(paths[0].string());                                // best we can do
-    jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, paths[0].string())); // best we can do
-    ASSERT_not_null(jvmComposite->get_file_info());
-
-    // Create one or more SgAsmInterpretation nodes. If all the SgAsmGenericFile objects are ELF files, then there's one
-    // SgAsmInterpretation that points to them all. If all the SgAsmGenericFile objects are PE files, then there's two
-    // SgAsmInterpretation nodes: one for all the DOS parts of the files, and one for all the PE parts of the files.
-    std::vector<std::pair<SgAsmExecutableFileFormat::ExecFamily, SgAsmInterpretation*>> interpretations;
-    for (SgAsmGenericFile *file: fileList->get_files()) {
-        SgAsmGenericHeaderList *headerList = file->get_headers();
+    // Add files to the interpretation
+    auto interpHeaders = interp->get_headers();
+    for (SgAsmGenericFile* file: fileList->get_files()) {
+        SgAsmGenericHeaderList* headerList = file->get_headers();
         ASSERT_not_null(headerList);
         for (SgAsmGenericHeader *header: headerList->get_headers()) {
-            SgAsmGenericFormat *format = header->get_executableFormat();
-            ASSERT_not_null(format);
-
-            // Find or create the interpretation that holds this family of headers.
-            SgAsmInterpretation *interpretation = nullptr;
-            for (size_t i = 0; i < interpretations.size() && !interpretation; ++i) {
-                if (interpretations[i].first == format->get_family())
-                    interpretation = interpretations[i].second;
-            }
-            if (!interpretation) {
-                interpretation = new SgAsmInterpretation;
-                interpretations.push_back(std::make_pair(format->get_family(), interpretation));
-            }
-
             // Add the header to the interpretation. This isn't an AST parent/child link, so don't set the parent ptr.
-            SgAsmGenericHeaderList *interpHeaders = interpretation->get_headers();
-            ASSERT_not_null(interpHeaders);
             interpHeaders->get_headers().push_back(header);
         }
     }
-    SAWYER_MESG(mlog[DEBUG]) <<"created " <<StringUtility::plural(interpretations.size(), "interpretation nodes") <<"\n";
 
-    // Put all the interpretations in a list
-    SgAsmInterpretationList *interpList = new SgAsmInterpretationList;
-    for (size_t i=0; i<interpretations.size(); ++i) {
-        SgAsmInterpretation *interpretation = interpretations[i].second;
-        interpList->get_interpretations().push_back(interpretation);
-        interpretation->set_parent(interpList);
-    }
-    ASSERT_require(interpList->get_interpretations().size() == interpretations.size());
-
-    // Add the interpretation list to the SgBinaryComposite node
+    // Add the interpretation list to the SgJvmComposite node
     jvmComposite->set_interpretations(interpList);
     interpList->set_parent(jvmComposite);
 
     // The project
-    SgProject *project = new SgProject;
+    SgProject* project = new SgProject;
     project->get_fileList().push_back(jvmComposite);
     jvmComposite->set_parent(project);
+
+    // Project is binary "like" and should not be compiled
+    project->set_binary_only(true);
+    project->skipfinalCompileStep(true);
+    //TODO:: track Jvm_only down
+    //ASSERT_require(!project->get_Jvm_only());
 
     return project;
 }
@@ -714,32 +754,32 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
 // Build AST
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//TODO:: remove this method
 SgAsmBlock*
 EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
 #ifdef IMPLEMENT_BUILD_AST
   using std::cout;
   using namespace ModulesJvm;
 //TODO: More ...
-  std::string fileName{fileNames[0]};
+  std::string filename{fileNames[0]};
 
-  if (isJavaClassFile(fileName)) {
-#ifdef DEBUG_ON
-    // assumes args[0] is the file name for now
-    cout << "EngineJvm::parseCommandLine for file " << fileName << endl;
-    cout << "  Purpose: " << purpose << ": Description: " << description << "\n";
-#endif
+//TODO::jar files
+  if (isJavaClassFile(filename)) {
   }
   else {
     return nullptr;
   }
 
+  auto specimen = fileNames;
+  MemoryMap::Ptr map = loadSpecimens(specimen);
+
   auto gf = new SgAsmGenericFile{};
-  gf->parse(fileName); /* this loads file into memory, does no reading of file */
+  gf->parse(filename); /* this loads file into memory, does no reading of file */
   auto header = new SgAsmJvmFileHeader(gf);
 
   // Check AST
   ASSERT_require(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
-  ASSERT_requirea(header->get_parent() == gf);
+  ASSERT_require(header->get_parent() == gf);
 
   header->parse();
 #ifdef DEBUG_ON
@@ -749,7 +789,9 @@ EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
   cout << "\n---------- JVM Analysis -----------------\n\n";
 #endif
 
-  Rose::BinaryAnalysis::ByteCode::JvmClass* jvmClass = new ByteCode::JvmClass(header);
+  // explicit JvmClass(std::shared_ptr<Namespace> ns, SgAsmJvmFileHeader* jfh);
+  Rose::BinaryAnalysis::ByteCode::JvmClass* jvmClass = new ByteCode::JvmClass(/*namespace:TODO*/nullptr,header);
+
 #ifdef DEBUG_ON
   cout << "class '" << jvmClass->name() << "'" << endl;
   cout << "----------------\n";
@@ -794,10 +836,14 @@ EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
     cout << "-----------\n";
 #endif
 
+//TODO:: delete?
+#if 0
     Disassembler::Base::Ptr disassembler = obtainDisassembler();
     ASSERT_not_null(disassembler);
 
     method->decode(disassembler);
+#endif
+
 #ifdef DEBUG_ON
     for (auto insn : method->instructions()->get_instructions()) {
       cout << "   : " << insn->get_anyKind() << ": " << insn->get_mnemonic() << ": '"
@@ -819,8 +865,8 @@ EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
   cout << "-----------\n\n";
 #endif
 
-  // Run the partitioner
-  jvmClass->partition();
+//TODO:: Run the partitioner?
+  //jvmClass->partition();
 
   // Dump diagnostics from the partition
 #ifdef DEBUG_ON
@@ -857,7 +903,7 @@ EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
 
   // Create graphviz DOT file
   jvmClass->digraph();
-#endif // IMPLEMENT...
+#endif // IMPLEMENT... (maybe not)
 
   return nullptr;
 }
@@ -883,10 +929,7 @@ EngineJvm::isaName(const std::string &s) {
 /** Disassembly and partitioning utility functions for JVM. */
 namespace ModulesJvm {
 
-/** True if named file is a Java class file.
- *
- *  Class files usually have names with a ".class" extension, although this function actually tries to open the file and parse
- *  the file header to make that determination. */
+// Returns true if named file is a Java class file
 bool isJavaClassFile(const boost::filesystem::path &file) {
   if (!boost::filesystem::exists(file)) {
     return false; // file doesn't exist
@@ -905,7 +948,36 @@ bool isJavaClassFile(const boost::filesystem::path &file) {
     }
   }
   return false;
+}
+
+// Returns true if named file is a Java jar file
+bool isJavaJarFile(const boost::filesystem::path &file) {
+  if (!boost::filesystem::exists(file)) {
+    return false; // file doesn't exist
+  }
+
+  MemoryMap::Ptr map = MemoryMap::instance();
+  if (0 == map->insertFile(file.string(), 0)) {
+    return false; // file cannot be mmap'd
+  }
+
+  uint8_t magic[4];
+  if (4 == map->at(0).limit(4).read(magic).size()) {
+    if (magic[0] == 'P' && magic[1] == 'K' && magic[2] == 0x03 && magic[3] == 0x04) {
+      return true;
+    }
+  }
+  return false;
 }  
+
+/** Load class file from jars, if present. */
+bool loadClassFile(const std::string &file, const std::vector<ModulesJvm::Zipper*> &jars, rose_addr_t baseVa) {
+  for (auto zip : jars) {
+    size_t size = zip->fileSize(file);
+    if (size > 0) return true;
+  }
+  return false;
+}
 
 } // namespace
 

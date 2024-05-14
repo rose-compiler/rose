@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -49,6 +50,10 @@ private:
     // Mapping of unresolved (added to partitioner) function names to virtual address
     std::map<std::string, rose_addr_t> unresolvedFunctions_;
 
+    // Listing of open jar files (maybe should be Zippers with
+    std::vector<ModulesJvm::Zipper*> jars_; // Zipper owns SgAsmGenericFile*, ie, Zipper{gf}, yeah, will have buffer
+                                            // Zipper.find(className)
+
     static constexpr rose_addr_t vaDefaultIncrement{4*1024};
     rose_addr_t nextFunctionVa_;
 
@@ -62,10 +67,13 @@ public:
     EngineJvm& operator=(const EngineJvm&) = delete;
 
 protected:
-    explicit EngineJvm(const Settings &settings);
+    explicit EngineJvm(const Settings&);
 
 public:
     ~EngineJvm();
+
+    /** Allocating constructor. */
+    static Ptr instance();
 
     /** Allocating constructor with settings. */
     static Ptr instance(const Settings&);
@@ -170,6 +178,15 @@ public:
     virtual bool areSpecimensLoaded() const override;
 
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
+
+    /** Load a jar file by opening its contents
+     *
+     *  Stores the location of class files found as offsets into the jar file
+     *
+     *  Returns true if jar file is loaded
+     *
+     * @{ */
+    bool loadJarFile(const std::string &);
 
     /** Load a class file by parsing its contents at the given address.
      *
@@ -335,6 +352,9 @@ public:
     std::vector<rose_addr_t>& functionStartingVas() /*final*/;
     /** @} */
 
+    /** Replacement for ::frontend for Jvm files only */
+    SgProject* roseFrontendReplacement(const std::vector<std::string> &fileNames);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,6 +375,15 @@ namespace ModulesJvm {
  *  Class files usually have names with a ".class" extension, although this function actually tries to open the file and parse
  *  the file header to make that determination. */
 bool isJavaClassFile(const boost::filesystem::path&);
+
+/** True if named file is a Java jar file.
+ *
+ *  Jar files usually have names with a ".jar" extension, although this function actually tries to open the file and parse
+ *  the file header to make that determination. */
+bool isJavaJarFile(const boost::filesystem::path&);
+
+/** Load class file from jars, if present. */
+bool loadClassFile(const std::string &, const std::vector<ModulesJvm::Zipper*> &, rose_addr_t);
 
 } // namespace
 

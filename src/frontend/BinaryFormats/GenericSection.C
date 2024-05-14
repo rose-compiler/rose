@@ -124,8 +124,9 @@ SgAsmGenericSection::writable_content(size_t nbytes)
 unsigned char *
 SgAsmGenericSection::writableContent(size_t nbytes)
 {
-    if (local_data_pool!=NULL)
+    if (local_data_pool != nullptr) {
         free(local_data_pool);
+    }
     local_data_pool = (unsigned char*)calloc(nbytes, 1);
     memset(local_data_pool, 0, nbytes);
     p_data = SgSharedVector<unsigned char>(local_data_pool, nbytes);
@@ -137,7 +138,7 @@ SgAsmGenericSection::set_name(SgAsmGenericString *s)
 {
     if (s!=p_name) {
         if (p_name) {
-            p_name->set_parent(NULL);
+            p_name->set_parent(nullptr);
             SageInterface::deleteAST(p_name);
         }
         p_name = s;
@@ -737,7 +738,7 @@ SgAsmGenericSection::isFileHeader()
         SgAsmGenericHeader *retval = dynamic_cast<SgAsmGenericHeader*>(this);
         return retval;
     } catch(...) {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -756,7 +757,7 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
         assert(e.first()+e.size() <= get_size());
         const unsigned char *extent_data;
         if (e.first() >= p_data.size()) {
-            extent_data = NULL;
+            extent_data = nullptr;
         } else if (e.first() + e.size() > p_data.size()) {
             extent_data = &p_data[e.first()];
         } else {

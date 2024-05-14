@@ -319,6 +319,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/BinaryLoaderPe.h						\
 	Rose/BinaryAnalysis/ByteCode.h							\
 	Rose/BinaryAnalysis/ByteCode/Analysis.h						\
+	Rose/BinaryAnalysis/ByteCode/Cil.h						\
+	Rose/BinaryAnalysis/ByteCode/Jvm.h						\
 	Rose/BinaryAnalysis/ByteOrder.h							\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CallingConvention/Analysis.h				\
@@ -533,6 +535,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/GraphViz.h					\
 	Rose/BinaryAnalysis/Partitioner2/Modules.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesElf.h					\
+	Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesMips.h					\

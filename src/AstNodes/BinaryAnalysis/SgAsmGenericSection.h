@@ -191,6 +191,8 @@ public:
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+protected: // Allows local_data_pool to be initialized by subclasses. Note, destruction is problematic, freeing non-allocated ptr.
+           // Set breakpoint in malloc_error_break to debug [Rasmussen, 2024.03.02]
     /* This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
      * for its SgAsmGenericFile which is memory-mapped (read-only) from the actual file being parsed. The default
      * unparsing action is to write the original data back to the file. By allowing a section to allocate its own

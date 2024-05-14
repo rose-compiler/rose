@@ -227,6 +227,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/MayReturnAnalysis.C					\
 	BinaryAnalysis/Partitioner2/Modules.C						\
 	BinaryAnalysis/Partitioner2/ModulesElf.C					\
+	BinaryAnalysis/Partitioner2/ModulesJvm.C					\
 	BinaryAnalysis/Partitioner2/ModulesLinux.C					\
 	BinaryAnalysis/Partitioner2/ModulesM68k.C					\
 	BinaryAnalysis/Partitioner2/ModulesMips.C					\
