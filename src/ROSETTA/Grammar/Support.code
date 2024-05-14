@@ -6160,11 +6160,9 @@ HEADER_APPLICATION_PROJECT_START
                e_last          /*!< last value (used for error checking) */
              };
 
-          void initialization() ROSE_DEPRECATED_FUNCTION;
-
       //! The only useful constructors (constant folding in the frontend is false by default).
-          SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding = false);
-          SgProject ( int argc, char** argv, bool frontendConstantFolding = false);
+          SgProject(const std::vector<std::string>& argv, bool frontendConstantFolding = false);
+          SgProject(int argc, char** argv, bool frontendConstantFolding = false);
 
        // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
       //! Use of Saywer support for command line handling (work in progress).
@@ -6230,22 +6228,13 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (5/8/2010): Added support for resetting the source position information.
           void resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp = NULL );
 
-      // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
-      // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to compile the output from unparsing the project
-       // BP : 11/13/2001, modified to take compiler name
-       // int compileOutput( char *compilerName = CXX_COMPILER_NAME );
-       // int compileOutput( const std::string& compilerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
           int compileOutput();
           int RunFrontend();
 
-      // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
-      // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to preform linking!
           int link(std::string linkerName);
 
-      // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
-      // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to preform linking!
           int link(const std::vector<std::string>& argv, std::string linkerName);
 
@@ -6292,33 +6281,33 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (12/28/2010): Added to support skipping compilation in backendCompilesUsingOriginalInputFile()
           bool get_skipfinalCompileStep (void) const;
 
-          void set_C_only       (bool value);
-          bool get_C_only   (void) const;
+          void set_C_only(bool value);
+          bool get_C_only(void) const;
 
-          bool get_C89_only (void) const;
-          bool get_C89_gnu_only (void) const;
-          bool get_C90_only (void) const;
-          bool get_C90_gnu_only (void) const;
-          bool get_C99_only (void) const;
-          bool get_C99_gnu_only (void) const;
-          bool get_C11_only (void) const;
-          bool get_C11_gnu_only (void) const;
-          bool get_C14_only (void) const;
-          bool get_C14_gnu_only (void) const;
+          bool get_C89_only(void) const;
+          bool get_C89_gnu_only(void) const;
+          bool get_C90_only(void) const;
+          bool get_C90_gnu_only(void) const;
+          bool get_C99_only(void) const;
+          bool get_C99_gnu_only(void) const;
+          bool get_C11_only(void) const;
+          bool get_C11_gnu_only(void) const;
+          bool get_C14_only(void) const;
+          bool get_C14_gnu_only(void) const;
 
-          void set_Cxx_only     (bool value);
-          bool get_Cxx_only (void) const;
+          void set_Cxx_only(bool value);
+          bool get_Cxx_only(void) const;
 
-          bool get_Cxx98_only (void) const;
-          bool get_Cxx98_gnu_only (void) const;
-          bool get_Cxx03_only (void) const;
-          bool get_Cxx03_gnu_only (void) const;
-          bool get_Cxx11_only (void) const;
-          bool get_Cxx11_gnu_only (void) const;
-          bool get_Cxx14_only (void) const;
-          bool get_Cxx14_gnu_only (void) const;
-          bool get_Cxx17_only (void) const;
-          bool get_Cxx17_gnu_only (void) const;
+          bool get_Cxx98_only(void) const;
+          bool get_Cxx98_gnu_only(void) const;
+          bool get_Cxx03_only(void) const;
+          bool get_Cxx03_gnu_only(void) const;
+          bool get_Cxx11_only(void) const;
+          bool get_Cxx11_gnu_only(void) const;
+          bool get_Cxx14_only(void) const;
+          bool get_Cxx14_gnu_only(void) const;
+          bool get_Cxx17_only(void) const;
+          bool get_Cxx17_gnu_only(void) const;
 
           void set_Fortran_only (bool value);
           bool get_Fortran_only (void) const;
@@ -6392,13 +6381,11 @@ HEADER_APPLICATION_PROJECT_START
 
           int get_detect_dangling_pointers(void) const;
 
-       // DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
           SgFilePtrList & get_fileList() const;
           void set_fileList(SgFilePtrList & fileList);
 
        // DQ (8/3/2018): Added support for evaluation of options at the project level (which are normally associated with files).
           bool get_unparse_tokens (void) const;
-
 
 HEADER_APPLICATION_PROJECT_END
 
@@ -10363,23 +10350,12 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 
      printf ("Internal static data: p_no_name: %s p_name = %s \n",(p_no_name == true) ? "true" : "false",p_name.str());
 
-  // These are just static data used internally for some of the symbol lookup functions (symbol tables are not given names).
-  // printf ("SymbolTable has a name: %s \n",(p_no_name == true) ? "NO: it has no name" : "YES: it does have a name");
-  // if (p_no_name == false)
-  //      printf ("SymbolTable name = %s \n",p_name.str());
-
-  // DQ (2/16/2006): This is a SgScopeStatement except for the SgSymbolTable used in the global function type symbol table
-  // SgScopeStatement* parentNode = isSgScopeStatement(get_parent());
      SgNode* parentNode = get_parent();
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
      printf ("Symbol table has parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
 
-  // DQ (6/23/2005): It is not a problem for the global function table to not have a name!
-  //   else
-  //      assert (p_name.str() == NULL);
-
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
+     ASSERT_not_null(p_table);
+     if (p_table != nullptr)
         {
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
        // SgSymbolHashBase::iterator i = p_table->begin();
@@ -10393,35 +10369,25 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
             // cout << "[" << idx << "] " << (*i).first.str();
                ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
 
-            // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
-            //      idx,(*i).first.str(),(*i).second->sage_class_name());
-
                SgSymbol* symbol = isSgSymbol((*i).second);
                ROSE_ASSERT ( symbol != NULL );
                SgType* type = symbol->get_type();
-
-            // DQ (5/7/2004): modified to allow for get_type() to return NULL
-            // ROSE_ASSERT ( type != NULL );
 
                SgNamedType* namedType = isSgNamedType(type);
                SgName nameOfType;
                if (namedType != NULL)
                   {
                     nameOfType = namedType->get_name();
-                 // char* nameString = namedType->get_name().str();
-                 // printf ("Type is: (named type) = %s \n",nameString);
                   }
                  else
                   {
                  // DQ (5/7/2004): modified to allow for get_type() to return NULL
-                    if (type != NULL)
+                    if (type != nullptr)
                        {
-                      // printf ("Type is: type->sage_class_name() = %s \n",type->sage_class_name());
                          nameOfType = type->sage_class_name();
                        }
                       else
                        {
-                      // printf ("Type is: No type found in symbol (likely a possible error!) \n");
                          switch(symbol->variantT())
                             {
                               case V_SgNamespaceSymbol:
@@ -12529,11 +12495,6 @@ Sg_File_Info::display( const std::string label ) const
 
   // DQ (1/23/2013): Added support for source sequence numbering information.
      printf ("     source_sequence_number         = %d \n",p_source_sequence_number);
-
-  // DQ (5/16/2005): output these values, but I think they might be removed
-  // later since I don't see the point of storing this information!
-  // printf ("     isDeclaration    = %s \n",isDeclaration()    == true ? "true" : "false");
-  // printf ("     isInitialization = %s \n",isInitialization() == true ? "true" : "false");
    }
 
 string
@@ -15035,11 +14996,6 @@ SgFile::display ( const std::string & label ) const
 
   // DQ (12/23/2015): Suppress variable declaration normalizations
      printf ("     p_suppress_variable_declaration_normalization = %s \n",(p_suppress_variable_declaration_normalization == true) ? "true" : "false");
-
-  // DQ (5/20/2021): Support for token-based unparsing (computation of first and last statement in source file.
-  // printf ("     p_firstStatement                            = %p \n",p_firstStatement);
-  // printf ("     p_lastStatement                             = %p \n",p_lastStatement);
-
    }
 
 
@@ -15822,11 +15778,6 @@ SgProject::post_construction_initialization()
  // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
     ROSE_INITIALIZE;
 
- // Allow Project constructor to be automatically generated, see gitlab #126 [Rasmussen 2024.05.06]
- // This should keep everything the same, hopefully
- // initialization in now a noop (impl moved here), TODO:delete entirely [Rasmussen 2024.05.13]
-    initialization();
-
  // Initialize the file list
     if (p_fileList_ptr == nullptr)
     {
@@ -15896,18 +15847,11 @@ SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConsta
      set_frontendErrorCode(errorCode);
    }
 
-void
-SgProject::initialization()
-   {
-   }
-
-
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of
 // SgFile& in get_file() member function.  The get_file() member function is now deprecated.
 SgFile*
-SgProject::operator[]( unsigned int i )
+SgProject::operator[](unsigned int i)
    {
-
   // Since we use an STL vector internally we can use the vector::operator[] directly.
      assert(p_fileList_ptr != NULL);
      assert(i < (unsigned)numberOfFiles());
@@ -15918,11 +15862,11 @@ SgProject::operator[]( unsigned int i )
 // but using the filename with full path.  This is part of the new Java performance support and
 // a design change that first builds all of the SgFile IR nodes and then calls the frontend for
 // each of them.  This permits a more sophisticated level of command line multiple file support.
-SgFile* SgProject::operator[]( std::string filename )
+SgFile* SgProject::operator[](std::string filename)
    {
   // Since we use an STL vector internally we can use the vector::operator[] directly.
-     ROSE_ASSERT(p_fileList_ptr != NULL);
-     ROSE_ASSERT(numberOfFiles() > 0);
+     ASSERT_not_null(p_fileList_ptr);
+     ASSERT_require(numberOfFiles() > 0);
 
      SgFilePtrList::iterator i = p_fileList_ptr->get_listOfFiles().begin();
      while (i != p_fileList_ptr->get_listOfFiles().end())
@@ -15936,8 +15880,7 @@ SgFile* SgProject::operator[]( std::string filename )
 
           i++;
         }
-
-     return NULL;
+     return nullptr;
    }
 
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> & l )
@@ -15948,14 +15891,14 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> 
 SgFilePtrList &
 SgProject::get_fileList() const
    {
-     assert (this != NULL);
+     ASSERT_not_null(this);
      return p_fileList_ptr->get_listOfFiles();
    }
 
 void
 SgProject::set_fileList( SgFilePtrList & fileList )
    {
-     assert (this != NULL);
+     ASSERT_not_null(this);
      set_isModified(true);
 
      p_fileList_ptr->get_listOfFiles() = fileList;
@@ -15965,31 +15908,27 @@ int
 SgProject::numberOfFiles() const
    {
   // This function does not return a meaningful result until all the files have been processed
-     assert (p_fileList_ptr != NULL);
-     int returnValue = p_fileList_ptr->get_listOfFiles().size();
-
-     return returnValue;
+     ASSERT_not_null(p_fileList_ptr);
+     return p_fileList_ptr->get_listOfFiles().size();
    }
 
 int
 SgProject::numberOfDirectories() const
    {
-     assert (p_directoryList != NULL);
-     int returnValue = p_directoryList->get_listOfDirectories().size();
-
-     return returnValue;
+     ASSERT_not_null(p_directoryList);
+     return p_directoryList->get_listOfDirectories().size();
    }
 
 SgFile &
-SgProject::get_file ( int i ) const
+SgProject::get_file(int i) const
    {
   // error checking
-     assert (i >= 0);
-     assert (i < numberOfFiles());
+     ASSERT_require(i >= 0);
+     ASSERT_require(i < numberOfFiles());
+     ASSERT_not_null(p_fileList_ptr);
 
-     assert (p_fileList_ptr != NULL);
      SgFile* targetFile = p_fileList_ptr->get_listOfFiles()[i];
-     assert (targetFile != NULL);
+     ASSERT_not_null(targetFile);
 
      return *targetFile;
    }
@@ -15997,14 +15936,14 @@ SgProject::get_file ( int i ) const
 void
 SgProject::set_file(SgFile &file)
    {
-     assert (p_fileList_ptr != NULL);
+     ASSERT_not_null(p_fileList_ptr);
      p_fileList_ptr->get_listOfFiles().push_back(&file);
 
   // DQ (1/25/2010): Set the parent of the file to point to the list (this is a change and may break some code).
   // But it is consistant within ROSE for how we handle list objects in the IR.
      file.set_parent(p_fileList_ptr);
 
-     assert (numberOfFiles() > 0);
+     ASSERT_require(numberOfFiles() > 0);
    }
 
 SgFilePtrList
@@ -16018,11 +15957,8 @@ SgProject::get_files_with_errors() const
 {
   SgFilePtrList files_with_errors;
 
-  SgFilePtrList files = p_fileList_ptr->get_listOfFiles();
-  SgFilePtrList::iterator it;
-  for (it = files.begin(); it != files.end(); ++it)
+  for (SgFile* file : p_fileList_ptr->get_listOfFiles())
   {
-      SgFile* file = *it;
       bool has_errors =
           file->get_javacErrorCode()            != 0 ||
           file->get_frontendErrorCode()         != 0 ||
@@ -16043,11 +15979,8 @@ SgProject::get_files_without_errors() const
 {
   SgFilePtrList files_without_errors;
 
-  SgFilePtrList files = p_fileList_ptr->get_listOfFiles();
-  SgFilePtrList::iterator it;
-  for (it = files.begin(); it != files.end(); ++it)
+  for (SgFile* file : p_fileList_ptr->get_listOfFiles())
   {
-      SgFile* file = *it;
       bool has_no_errors =
           file->get_javacErrorCode()            == 0 &&
           file->get_frontendErrorCode()         == 0 &&
@@ -16080,8 +16013,6 @@ SgProject::resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormat
         }
    }
 
-// DQ (9/2/2008): Readded this function with a clearer name, since it is different from the
-// list of filenames that appear on the command line; these are resolved to be absolute paths.
 Rose_STL_Container<string>
 SgProject::getAbsolutePathFileNames() const
    {
@@ -16095,18 +16026,14 @@ SgProject::getAbsolutePathFileNames() const
      return nameList;
    }
 
-// DQ (1/5/2008): I think this could be an automatically generated function!
-// Unless the point is that it should not trigger a transformation to be recorded on the AST.
 int
-SgProject::get_verbose (void)
+SgProject::get_verbose(void)
    {
      return p_verbose;
    }
 
-// DQ (1/5/2008): I think this could be an automatically generated function!
-// Unless the point is that it should not trigger a transformation to be recorded on the AST.
 void
-SgProject::set_verbose ( int x )
+SgProject::set_verbose(int x)
    {
      p_verbose = x;
    }
@@ -16127,14 +16054,7 @@ SgProject::set_mangled_noshortname ( bool x )
 std::string
 SgProject::get_applicationRootDirectory () const
    {
-     ROSE_ASSERT (this != NULL);
-
-#if 0
-  // DQ (6/12/2015): Added debugging support to trace setting of isModified flag
-  // used to trigger marking transformations for the token-based unparsing.
-     printf ("SgProject::get_applicationRootDirectory = %p = %s \n",this,this->class_name().c_str());
-#endif
-
+     ASSERT_not_null(this);
      return p_applicationRootDirectory;
    }
 
@@ -16867,19 +16787,9 @@ SgProject::display ( const std::string & label ) const
 
      printf ("   p_template_instantiation_mode             = %d \n",p_template_instantiation_mode);
 
-  // DQ (7/3/2020): I think these data members have been removed by Tristan, not a problem.
-  // printf ("   p_astMerge                                = %s \n",(p_astMerge == true) ? "true" : "false");
-  // printf ("   p_astMergeCommandFile                     = %s \n",p_astMergeCommandFile.c_str());
-
      printf ("   p_ast_merge                               = %s \n",(p_ast_merge == true) ? "true" : "false");
      printf ("   p_projectSpecificDatabaseFile             = %s \n",p_projectSpecificDatabaseFile.c_str());
      printf ("   p_compilationPerformanceFile              = %s \n",p_compilationPerformanceFile.c_str());
-
-  // DQ (1/16/2008): This is part of a ROSE supported mechanism for the
-  // specification of exclude/include paths/files for interpretation by
-  // the ROSE translator.
-  // printf ("   p_lookForIncludePaths                     = %s \n",(p_lookForIncludePaths == true) ? "true" : "false");
-  // printf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
 
      printf ("   p_includePathList.size()                  = %" PRIuPTR " \n", p_includePathList.size());
      printf ("   p_includePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_includePathList).c_str());

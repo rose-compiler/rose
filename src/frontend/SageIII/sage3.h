@@ -10,11 +10,6 @@
 #ifndef SAGE3_CLASSES_H
 #define SAGE3_CLASSES_H
 
-// DQ (1/20/2010): This allows compatability with the older STL list of SgFile pointers.
-// The newer approach uses a pointer to a SgFileList IR node and this design permits
-// the use of directory structure support as required for scalable code generation.
-#define ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT 0
-
 //#include "sage3basic.h"
 
 // DQ (12/9/2004): The name of this file has been changed to be the new location
@@ -29,12 +24,7 @@
 
 // Lingxiao's work to add comments from all header files to the AST.
 #include "attach_all_info.h"
-
-// DQ (8/20/2005): Changed name to make sure that we don't use the old 
-// header file (which has been removed).
-// #include "AstFixes.h"
 #include "astPostProcessing.h"
-
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //Liao, 10/9/2008, support for abstract handles for language constructs

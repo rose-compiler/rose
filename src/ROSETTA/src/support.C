@@ -931,17 +931,9 @@ Grammar::setUpSupport ()
 
      HeaderFileReport.setDataPrototype ( "SgSourceFile*", "source_file", " = nullptr",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-
-#if 1
-  // DQ (9/15/2018): Comment this out while we get the rest of the new IR nodes implementation into place.
      HeaderFileReport.setDataPrototype ( "SgSourceFilePtrList", "include_file_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-#endif
 
-
-
-  // DQ (10/16/2005): Added to support C++ style argument handling in SgFile
-  // File.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",
   // DQ (9/28/2022): Modified to use the BUILD_LIST_ACCESS_FUNCTIONS macro.
 #if 1
      File.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",

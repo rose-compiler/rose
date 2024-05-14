@@ -616,13 +616,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
 
-  // Build the empty STL lists
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     p_fileList.clear();
-#else
      ASSERT_not_null(p_fileList_ptr);
      p_fileList_ptr->get_listOfFiles().clear();
-#endif
 
   // return value for calls to SLA
      int optionCount = 0;
