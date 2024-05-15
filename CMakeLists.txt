@@ -212,7 +212,7 @@ if(DEFINED ENV{BOOST_HOME})
   set(BOOST_ROOT "$ENV{BOOST_HOME}")
 endif()
 
-option(Boost_USE_MULTITHREADED "Should Boost multithreaded libraries be used?" OFF)
+option(BOOST_USE_MULTITHREADED "Should Boost multithreaded libraries be used?" OFF)
 
 if(WIN32)
   find_package(Boost REQUIRED)
@@ -397,37 +397,38 @@ endif()
 ########################################################################################################################
 
 # Binary analysis
-option(enable-binary-analysis "Enable binary analysis" ON)
-if(enable-binary-analysis)
+option(ENABLE-BINARY-ANALYSIS "Enable binary analysis" ON)
+if(ENABLE-BINARY-ANALYSIS)
   set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
 
 # C/C++
-option(enable-c "Enable C/C++ analysis" ON)
-if(enable-c)
+option(ENABLE-C "Enable C/C++ analysis" ON)
+if(ENABLE-C)
   set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
   set(ROSE_BUILD_C_LANGUAGE_SUPPORT 1)
 endif()
 
 # CUDA
-option(enable-cuda "Enable CUDA analysis" OFF) # OFF because lack of CUDA is not handled properly
-if(enable-cuda)
+option(ENABLE-CUDA "Enable CUDA analysis" OFF) # OFF because lack of CUDA is not handled properly
+if(ENABLE-CUDA)
   if(APPLE)
-    message(FATAL_ERROR "CUDA analysis (enable-cuda) is not supported on macOS")
+    message(FATAL_ERROR "CUDA analysis (ENABLE-CUDA) is not supported on macOS")
   endif()
   find_package(CUDA REQUIRED)
   set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
 endif()
 
 # Java
-option(enable-java "Enable Java analysis" OFF)
-if(enable-java)
+option(ENABLE-JAVA "Enable Java analysis" OFF)
+if(ENABLE-JAVA)
   message(STATUS "Looking for JAVA ...")
   # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the only
   # value of JAVA_ROOT that we can support is the empty string.
   if("${JAVA_ROOT}" STREQUAL "")
   elseif("${JAVA_ROOT}" STREQUAL "no")
-    message(FATAL_ERROR "Java cannot be both disabled (-DJAVA_ROOT=FALSE) and enabled (-Denable-java=TRUE)")
+    message(FATAL_ERROR "Java cannot be both disabled (-DJAVA_ROOT=FALSE) and
+    enabled (-DENABLE-JAVA=TRUE)")
   else()
     message(FATAL_ERROR "Java location cannot be explicit (-DJAVA_ROOT=...)")
   endif()
@@ -443,8 +444,8 @@ if(enable-java)
 endif()
 
 # OpenCL
-option(enable-opencl "Enable OpenCL analysis" OFF)
-if(enable-opencl)
+option(ENABLE-OPENCL "Enable OpenCL analysis" OFF)
+if(ENABLE-OPENCL)
   find_package(OpenCL)
   set(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT 1)
   find_path(with-opencl-inc NAMES cl.h DOC "For OpenCL runtime library")
@@ -452,10 +453,11 @@ if(enable-opencl)
 endif()
 
 # Fortran
-option(enable-fortran "Enable Fortran analysis." OFF) # OFF because lack of OFP is not handled properly
-if(enable-fortran)
-  if(NOT enable-java)
-    message(FATAL_ERROR "Fortran analysis also requires Java analysis.  Either turn on enable-java, or turn off enable-fortran")
+option(ENABLE-FORTRAN "Enable Fortran analysis." OFF) # OFF because lack of OFP is not handled properly
+if(ENABLE-FORTRAN)
+  if(NOT ENABLE-JAVA)
+    message(FATAL_ERROR "Fortran analysis also requires Java analysis.  Either
+    turn on ENABLE-JAVA, or turn off ENABLE-FORTRAN")
   endif()
   set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
   enable_language(Fortran)
@@ -474,38 +476,38 @@ if(enable-fortran)
 endif()
 
 # PHP
-option(enable-php "Enable PHP analysis" OFF)
-if(enable-php)
+option(ENABLE-PHP "Enable PHP analysis" OFF)
+if(ENABLE-PHP)
   set(ROSE_BUILD_PHP_LANGUAGE_SUPPORT 1)
   find_path(with-php php DOC "Specify the prefix where PHP (and phc) is installed")
 endif()
 
 # Python
-option(enable-python "Enable Python analysis" OFF)
-if(enable-python)
+option(ENABLE-PYTHON "Enable Python analysis" OFF)
+if(ENABLE-PYTHON)
   set(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT 1)
   find_package(PythonLibs REQUIRED)
-  option(with-python "Build code that requires a Python interpreter" ON)
-  if(with-python)
+  option(WITH-PYTHON "Build code that requires a Python interpreter" ON)
+  if(WITH-PYTHON)
     find_package(PythonInterp)
   endif()
 endif()
 
 # Ada
-option(enable-ada "Enable Ada analysis" OFF)
-if(enable-ada)
+option(ENABLE-ADA "Enable Ada analysis" OFF)
+if(ENABLE-ADA)
   set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
 endif()
 
 # Jovial
-option(enable-jovial "Enable Jovial analysis" OFF)
-if(enable-jovial)
+option(ENABLE-JOVIAL "Enable Jovial analysis" OFF)
+if(ENABLE-JOVIAL)
   set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
 endif()
 
 # The C preprocessor is enabled automatically if C, C++, or Fortran is enabled
-if(enable-c OR enable-fortran)
-  set(enable-cpp ON)
+if(ENABLE-C OR ENABLE-FORTRAN)
+  set(ENABLE-CPP ON)
   set(ROSE_BUILD_CPP_LANGUAGE_SUPPORT 1)
 endif()
 
@@ -553,7 +555,7 @@ endif()
 # EDG source code and ROSE is configured to analyze C (and C++).
 if(NOT have_EDG_source)
   set(BINARY_EDG 0)
-  if(enable-c)
+  if(ENABLE-C)
     set(BINARY_EDG 1)
     if(NOT WIN32)
       message(STATUS "EDG - downloading EDG-${EDG_VERSION} binary tar file")
@@ -607,71 +609,72 @@ find_package(Perl REQUIRED)
 ########################################################################################################################
 
 # FIXME: All options should be in the affirmative (i.e., enable-whatever instead of disable-whatever)
-option(disable-binary-analysis-tests "Disable tests of ROSE binary analysis code" ON)
-option(disable-example-translators-directory "Disable compilation and testing of exampleTranslators directory" ON)
+option(DISABLE-BINARY-ANALYSIS-TESTS "Disable tests of ROSE binary analysis code" ON)
+option(DISABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Disable compilation and testing of exampleTranslators directory" ON)
 if(EXISTS "${PROJECT_SOURCE_DIR}/tests/Readme.md")
-  option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" OFF)
+  option(DISABLE-TESTS-DIRECTORY "Disable compilation and testing of the ROSE/tests directory" OFF)
 else()
-  option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" ON)
+  option(DISABLE-TESTS-DIRECTORY "Disable compilation and testing of the ROSE/tests directory" ON)
 endif()
-option(disable-tutorial-directory "Disable compilation and testing of the ROSE/tutorial directory" OFF)
+option(DISABLE-TUTORIAL-DIRECTORY "Disable compilation and testing of the ROSE/tutorial directory" OFF)
 
-option(enable-advanced-warnings "Support for an advanced uniform warning level for ROSE development" OFF)
-if(enable-advanced-warnings)
+option(ENABLE-ADVANCED-WARNINGS "Support for an advanced uniform warning level for ROSE development" OFF)
+if(ENABLE-ADVANCED-WARNINGS)
   message(WARNING "Using an advanced uniform warning level for ROSE development")
   set(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT 1)
 endif()
 
-option(enable-assembly-semantics "Enable semantics-based analysis of assembly code" OFF)
+option(ENABLE-ASSEMBLY-SEMANTICS "Enable semantics-based analysis of assembly code" OFF)
 
-option(enable-candl "Support for ScopLib" OFF)
-if(enable-candl)
+option(ENABLE-CANDL "Support for ScopLib" OFF)
+if(ENABLE-CANDL)
   find_path(with-candl "include/candl.h"
     DOC "Path to a valid Candl installation")
 endif()
 
-option(enable-cloog "Support for Cloog" OFF)
-if(enable-cloog)
+option(ENABLE-CLOOG "Support for Cloog" OFF)
+if(ENABLE-CLOOG)
   find_path(with-cloog "include/cloog.h"
     DOC "Path to a valid Cloog installation")
 endif()
 
-option(enable-compass2 "build the Compass2 static analysis tool" OFF)
-option(enable-edg-cuda "Build EDG 4.0 with CUDA support" OFF)
-option(enable-edg-opencl "Build EDG 4.0 with OpenCL support" OFF)
+option(ENABLE-COMPASS2 "build the Compass2 static analysis tool" OFF)
+option(ENABLE-EDG-CUDA "Build EDG 4.0 with CUDA support" OFF)
+option(ENABLE-EDG-OPENCL "Build EDG 4.0 with OpenCL support" OFF)
 
-option(enable-edg_union_struct_debugging "Should EDG Union/Struct debugging support be used?" OFF)
-if(enable-edg_union_struct_debugging)
+option(ENABLE-EDG_UNION_STRUCT_DEBUGGING "Should EDG Union/Struct debugging support be used?" OFF)
+if(ENABLE-EDG_UNION_STRUCT_DEBUGGING)
   set(USE_ROSE_EDG_DEBUGGING_SUPPORT 1)
 endif()
 
-option(enable-FLTK "Enable FLTK")
-if(enable-FLTK)
+option(ENABLE-FLTK "Enable FLTK")
+if(ENABLE-FLTK)
   find_package(FLTK REQUIRED)
 endif()
 
-option(enable-gnu-extensions "Enable internal support in ROSE for GNU language extensions" OFF)
-if(enable-gnu-extensions)
+option(ENABLE-GNU-EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
+if(ENABLE-GNU-EXTENSIONS)
   set(ROSE_SUPPORT_GNU_EXTENSIONS TRUE)
 endif()
 
-option(enable-internalFrontendDevelopment "Enable development mode to reduce files required to support work on
+option(ENABLE-INTERNALFRONTENDDEVELOPMENT "Enable development mode to reduce files required to support work on
   language frontends" OFF)
-if(enable-internalFrontendDevelopment)
+if(ENABLE-INTERNALFRONTENDDEVELOPMENT)
   set(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT 1)
 endif()
 
-option(enable-microsoft-extensions "Enable internal support in ROSE for GNU language extensions" OFF)
-if(enable-microsoft-extensions)
+option(ENABLE-MICROSOFT-EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
+if(ENABLE-MICROSOFT-EXTENSIONS)
   set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
 endif()
 
-if(enable-fortran)
+if(ENABLE-FORTRAN)
+  # TODO: Make this internal if we never expect to fetch from user  
   set(enable-ofp-version "20200819-JDK8" CACHE STRING "version number for OFP")
   set($ENV{CLASSPATH} ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar::${CMAKE_SOURCE_DIR}/rc/3rdPartyLibraries/fortran-parser/OpenFortranParser-${enable-ofp-version}.jar)
 endif()
 
-if(enable-jovial)
+if(ENABLE-JOVIAL)
   include(FindAterm)
   find_aterm()
   if(NOT USE_ROSE_ATERM_SUPPORT)
@@ -684,37 +687,37 @@ if(enable-jovial)
   endif()
 endif()
 
-option(enable-ppl "Support for Parma Polyhedral Library" OFF)
-if(enable-ppl)
+option(ENABLE-PPL "Support for Parma Polyhedral Library" OFF)
+if(ENABLE-PPL)
   find_path(with-ppl "include/ppl.h" DOC "Path to Parma Polyhedral Library installation")
   find_library(libppl ppl)
 endif()
 
-option(enable-purify-api "Enable purify API in code" OFF)
-if(enable-purify-api)
+option(ENABLE-PURIFY-API "Enable purify API in code" OFF)
+if(ENABLE-PURIFY-API)
   set(USE_PURIFY_API 1)
 endif()
 
-option(enable-purify-linker "Augment the linker with purify" OFF)
-if(enable-purify-linker)
+option(ENABLE-PURIFY-LINKER "Augment the linker with purify" OFF)
+if(ENABLE-PURIFY-LINKER)
   set(USE_PURIFY 1)
   set(USE_PURIFY_LINKER 1)
 endif()
 
-option(enable-rosehpct "enable build of the ROSE-HPCT module" OFF)
+option(ENABLE-ROSEHPCT "enable build of the ROSE-HPCT module" OFF)
 
-option(enable-rose-openGL "enable openGL" OFF)
-if(enable-rose-openGL)
+option(ENABLE-ROSE-OPENGL "enable openGL" OFF)
+if(ENABLE-ROSE-OPENGL)
   find_package(OpenGL)
   find_package(GLUT)
 endif()
 
-option(enable-scoplib "Support for ScopLib" OFF)
-if(enable-scoplib)
+option(ENABLE-SCOPLIB "Support for ScopLib" OFF)
+if(ENABLE-SCOPLIB)
   find_path(with-scoplib "include/scolib.h" DOC "Path to a valid ScopLib installation")
 endif()
 
-option(enable-poet "Enable POET support" OFF)
+option(ENABLE-POET "Enable POET support" OFF)
 
 # To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=no
 include(FindBison)
@@ -763,7 +766,7 @@ include(FindPqxx)
 find_pqxx()
 
 # To use Qt, set QT_ROOT to the Qt installation prefix. To avoid Qt set QT_ROOT=no
-if(with-roseQt)
+if(WITH-ROSEQT)
   include(FindQt)
   find_qt()
 endif()
@@ -773,7 +776,7 @@ include(FindReadline)
 find_readline()
 
 # To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
-if(enable-c)
+if(ENABLE-C)
   include(FindSpot)
   find_spot()
 endif()
@@ -823,7 +826,7 @@ endif()
 
 find_path(with-QRose QRose DOC "prefix of QRose installation")
 
-if(with-roseQt)
+if(WITH-ROSEQT)
   find_package(Qt4 REQUIRED)
   include(${QT_USE_FILE})
 endif()
@@ -836,14 +839,14 @@ if(with-wine)
   set(ROSE_WINE_INCLUDES -I${with-wine}/include)
 endif()
 
-if((NOT WIN32) AND (enable-binary-analysis))
+if((NOT WIN32) AND (ENABLE-BINARY-ANALYSIS))
   include(FindOpenSSL)
   include(FindSqlite3)
   find_sqlite3()
 endif()
 
 find_package(FLEX)
-if((NOT FLEX_FOUND) AND (enable-c))
+if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
@@ -870,40 +873,40 @@ endif()
 # Back-end compilers
 ########################################################################################################################
 
-set(with-alternate_backend_Cxx_compiler "" CACHE STRING "Specify an alternative C++ back-end compiler")
-if(with-alternate_backend_Cxx_compiler)
-  if(EXISTS ${with-alternate_backend_Cxx_compiler})
-    set(BACKEND_CXX_COMPILER ${with-alternate_backend_Cxx_compiler})
+set(WITH-ALT-BACKEND-CXX-COMPILER "" CACHE STRING "Specify an alternative C++ back-end compiler")
+if(WITH-ALT-BACKEND-CXX-COMPILER)
+  if(EXISTS ${WITH-ALT-BACKEND-CXX-COMPILER})
+    set(BACKEND_CXX_COMPILER ${WITH-ALT-BACKEND-CXX-COMPILER})
   else()
-    message(WARNING "${with-alternate_backend_Cxx_compiler} does not exist; pecify an absolute path to the compiler")
+    message(WARNING "${WITH-ALT-BACKEND-CXX-COMPILER} does not exist; pecify an absolute path to the compiler")
   endif()
 endif()
 
-set(with-alternate_backend_C_compiler "" CACHE STRING "Specify an alternative C back-end compiler")
-if(with-alternate_backend_C_compiler)
-  if(EXISTS ${with-alternate_backend_C_compiler})
-    set(BACKEND_C_COMPILER ${with-alternate_backend_C_compiler})
+set(WITH-ALT-BACKEND-C-COMPILER "" CACHE STRING "Specify an alternative C back-end compiler")
+if(WITH-ALT-BACKEND-C-COMPILER)
+  if(EXISTS ${WITH-ALT-BACKEND-C-COMPILER})
+    set(BACKEND_C_COMPILER ${WITH-ALT-BACKEND-C-COMPILER})
     message(STATUS "just set backend C compiler to ${BACKEND_C_COMPILER}")
   else()
-    message(WARNING "${with-alternate_backend_C_compiler} does not exist; specify an absolute path to the compiler")
+    message(WARNING "${WITH-ALT-BACKEND-C-COMPILER} does not exist; specify an absolute path to the compiler")
   endif()
 endif()
 
-set(with-alternate_backend_fortran_compiler "" CACHE STRING "Specify an alternative fortran back-end compiler")
-if(with-alternate_backend_fortran_compiler)
-  if(EXISTS ${with-alternate_backend_fortran_compiler})
-    set(BACKEND_FORTRAN_COMPILER ${with-alternate_backend_fortran_compiler})
+set(WITH-ALT-BACKEND-FORTRAN-COMPILER "" CACHE STRING "Specify an alternative fortran back-end compiler")
+if(WITH-ALT-BACKEND-FORTRAN-COMPILER)
+  if(EXISTS ${WITH-ALT-BACKEND-FORTRAN-COMPILER})
+    set(BACKEND_FORTRAN_COMPILER ${WITH-ALT-BACKEND-FORTRAN-COMPILER})
   else()
-    message(WARNING "${with-alternate_backend_fortran_compiler} does not exist; specify an absolute path to the compiler")
+    message(WARNING "${WITH-ALT-BACKEND-FORTRAN-COMPILER} does not exist; specify an absolute path to the compiler")
   endif()
 endif()
 
-set(with-alternate_backend_java_compiler "" CACHE STRING "Specify an alternative java back-end compiler")
-if(with-alternate_backend_java_compiler)
-  if(EXISTS ${with-alternate_backend_java_compiler})
-    set(BACKEND_JAVA_COMPILER ${with-alternate_backend_java_compiler})
+set(WITH-ALT-BACKEND-JAVA-COMPILER "" CACHE STRING "Specify an alternative java back-end compiler")
+if(WITH-ALT-BACKEND-JAVA-COMPILER)
+  if(EXISTS ${WITH-ALT-BACKEND-JAVA-COMPILER})
+    set(BACKEND_JAVA_COMPILER ${WITH-ALT-BACKEND-JAVA-COMPILER})
   else()
-    message(WARNING "${with-alternate_backend_java_compiler} does not exist; specify an absolute path to the compiler")
+    message(WARNING "${WITH-ALT-BACKEND-JAVA-COMPILER} does not exist; specify an absolute path to the compiler")
   endif()
 endif()
 
@@ -919,7 +922,7 @@ else()
 endif()
 
 # Check compilers and version numbers. The module is located in src/cmake/modules.
-if(enable-c)
+if(ENABLE-C)
   include(roseChooseBackendCompiler)
   include(roseGenerateBackendCompilerSpecificHeaders)
   install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include/edg)
@@ -1188,7 +1191,7 @@ if(SQLITE3_FOUND_LIB)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/roseExtensions/sqlite3x)
 endif()
 
-if(enable-poet)
+if(ENABLE-POET)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
 endif()
 
@@ -1198,7 +1201,7 @@ endif()
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES})
 
-if(with-roseQt)
+if(WITH-ROSEQT)
   list(APPEND ROSE_INCLUDES
     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/Common
     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/QueryBox
@@ -1279,7 +1282,7 @@ add_subdirectory(scripts)
 configure_file(cmake/CTestCustom.cmake.in ${CMAKE_BINARY_DIR}/CTestCustom.cmake @ONLY)
 
 #TODO: better support for other compilers & operating systems
-if(enable-c)
+if(ENABLE-C)
   set(C_INCLUDE_STRING "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
 
   set(CXX_INCLUDE_STRING "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
@@ -1374,7 +1377,7 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 ########################################################################################################################
 
 add_subdirectory(tools)
-if(NOT disable-tests-directory)
+if(NOT DISABLE-TESTS-DIRECTORY)
   enable_testing()
   add_subdirectory(tests)
   add_subdirectory(tutorial)

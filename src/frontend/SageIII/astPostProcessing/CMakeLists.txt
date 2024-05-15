@@ -43,7 +43,7 @@ set(astPostProcessingSources
   markSharedDeclarationsForOutputInCodeGeneration.C
   fixupInitializers.C)
 
-if(NOT enable-c)
+if(NOT ENABLE-C)
   set(astPostProcessingSources ${astPostProcessingSources} dummy.C)
 endif()
 

@@ -9,7 +9,7 @@ add_subdirectory(astRewriteMechanism)
 add_subdirectory(astUtil)
 add_subdirectory(BinaryAnalysis)
 add_subdirectory(programTransformation)
-if(NOT enable-internalFrontendDevelopment)
+if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
   add_subdirectory(programAnalysis)
 endif()
 

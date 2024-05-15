@@ -1,4 +1,4 @@
-if(enable-binary-analysis)
+if(ENABLE-BINARY-ANALYSIS)
   include_directories(. ${ROSE_INCLUDES})
 
   add_library(bat SHARED batSupport.C)

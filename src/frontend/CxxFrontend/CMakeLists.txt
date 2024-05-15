@@ -2,7 +2,7 @@
 #   If C/C++ analysis is not configured in ROSE, we can use a mostly empty dummy library.
 #   If we have EDG source code ("EDG" subdirectory) we can compile it.
 #   Otherwise we can download a precompiled version from the ROSE team.
-if(enable-c)
+if(ENABLE-C)
   if(have_EDG_source)
     add_subdirectory(EDG)
   endif()

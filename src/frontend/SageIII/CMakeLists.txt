@@ -5,7 +5,7 @@ add_subdirectory(sageInterface)
 add_subdirectory(virtualCFG)
 add_subdirectory(astVisualization)
 
-if(NOT enable-internalFrontendDevelopment)
+if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
   ##AS Commented out for simpler build
   ###add_subdirectory(astFileIO)
   add_subdirectory(astFromString)
@@ -32,7 +32,7 @@ set(SAGE3_SOURCES
   Utf8.C)
 
 ########################################################################################################################
-if(enable-cpp)
+if(ENABLE-CPP)
   # GENERATING THE ROSE PREPROCESSOR
   add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C

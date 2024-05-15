@@ -1,4 +1,4 @@
- if(enable-fortran)
+ if(ENABLE-FORTRAN)
 #  set(enable-ofp-version "20200819-JDK8" CACHE STRING "version number for OFP")
 
   ########### install files ###############

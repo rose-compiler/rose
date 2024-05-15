@@ -1,4 +1,4 @@
-if(enable-java)
+if(ENABLE-JAVA)
   remove_definitions(-DROSE_DLL_EXPORTS)
 
   include_directories(

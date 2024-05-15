@@ -1,5 +1,5 @@
-option(enable-rwset-analysis "Enable rwset analysis" OFF)
-if(enable-rwset-analysis)
+option(ENABLE-RWSET-ANALYSIS "Enable rwset analysis" OFF)
+if(ENABLE-RWSET-ANALYSIS)
   include_directories(${ROSE_INCLUDES} ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/ReadWriteSetAnalysis)
 
   add_executable(LocalRWSetGenerator LocalRWSetGeneratorMain.C)

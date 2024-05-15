@@ -1,4 +1,4 @@
-if(enable-ada)
+if(ENABLE-ADA)
   add_subdirectory(parser)
 
   set(ADA_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})

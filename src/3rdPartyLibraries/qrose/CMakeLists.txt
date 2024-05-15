@@ -1,5 +1,5 @@
-if(NOT enable-internalFrontendDevelopment)
-  if(with-roseQt)
+if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+  if(WITH-ROSEQT)
     add_definitions(-DQT3_SUPPORT)
     include_directories(${QT_QT3SUPPORT_INCLUDE_DIR})
 

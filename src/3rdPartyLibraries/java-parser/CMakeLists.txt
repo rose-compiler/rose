@@ -1,4 +1,4 @@
-if(enable-java)
+if(ENABLE-JAVA)
   # This file also needs to be in the binary dir for related
   # tests to pass
   configure_file(

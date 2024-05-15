@@ -1,4 +1,4 @@
-if(with-roseQt)
+if(WITH-ROSEQT)
   include_directories(BEFORE ${qtWidgets_INCLUDE_DIRS})
 
   add_subdirectory(AsmInstructionBar)

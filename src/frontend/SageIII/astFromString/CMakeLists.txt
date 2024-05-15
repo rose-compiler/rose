@@ -1,4 +1,4 @@
-if(NOT enable-internalFrontendDevelopment)
+if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
   add_library(astFromString OBJECT AstFromString.cpp ParserBuilder.cpp)
   add_dependencies(astFromString rosetta_generated)
 endif()

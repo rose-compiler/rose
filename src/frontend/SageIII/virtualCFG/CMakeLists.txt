@@ -1,6 +1,6 @@
 set(virtualCFG_SRC memberFunctions.C)
 
-if(NOT enable-internalFrontendDevelopment)
+if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
   list(APPEND virtualCFG_SRC
     virtualCFG.C cfgToDot.C memberFunctions.C staticCFG.C customFilteredCFG.C
     interproceduralCFG.C virtualBinCFG.C)

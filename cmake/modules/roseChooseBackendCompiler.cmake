@@ -170,7 +170,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
 endif()
 
-if(enable-fortran)
+if(ENABLE-FORTRAN)
   # --------check Fortran compiler -----------------------
   # CMakeDetermineFortranCompiler does not recognize gfortran first
   # we use a slightly modified CMakeDetermineFortranCompiler.cmake to put gfortran to the highest priority

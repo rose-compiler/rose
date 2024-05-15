@@ -656,26 +656,26 @@ set(rose_LIB_SRCS
   dummyCppFileForLibrose.C
   ${ROSETTA_SRC})
 
-if(enable-java)
+if(ENABLE-JAVA)
   list(APPEND rose_LIB_OBJS roseJava)
 endif()
 
-if (enable-php)
+if (ENABLE-PHP)
   list(APPEND rose_LIB_OBJS phpFrontend)
 endif()
 
-if(NOT enable-internalFrontendDevelopment)
+if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
   list(APPEND rose_LIB_OBJS
     midend_pa
     midend_loopproc)
 endif()
 
-if(enable-rosehpct)
+if(ENABLE-ROSEHPCT)
   list(APPEND rose_LIB_OBJS roseExtensions)
 endif()
 
 # TODO Conditional either EDG or CLang or nothing
-if(enable-cpp)
+if(ENABLE-CPP)
   list(APPEND rose_LIB_OBJS edg_internal newsage)
 endif()
 
@@ -764,7 +764,7 @@ if(ZLIB_FOUND)
 endif()
 
 # If POET is enabled in ROSE, we need to link in some additional dependencies.
-if(enable-poet)
+if(ENABLE-POET)
   set(LINK_FILES poet ${CMAKE_DL_LIBS})
   add_dependencies(ROSE_DLL poet)
 else()
@@ -777,23 +777,23 @@ if(NOT BINARY_EDG)
 endif()
 
 # Depending on which language analysis (frontend) features are enabled in ROSE, we may need some additional libraries.
-if(enable-fortran)
+if(ENABLE-FORTRAN)
   list(APPEND LINK_FILES roseFortran)
 endif()
 
-if (enable-java)
+if (ENABLE-JAVA)
   list(APPEND LINK_FILES ${JAVA_JVM_LIBRARY})
 endif()
 
-if(enable-python)
+if(ENABLE-PYTHON)
   list(APPEND LINK_FILES unparsePython rosePythonFrontend)
 endif()
 
-if(enable-rosehpct)
+if(ENABLE-ROSEHPCT)
   list(APPEND LINK_FILES ${LIBXML2_LIBRARIES})
 endif()
 
-if(enable-ada)
+if(ENABLE-ADA)
   list(APPEND LINK_FILES experimentalRoseAda)
 endif()
 
@@ -805,7 +805,7 @@ else ()
 endif ()
 
 # If the C preprocessor is enabled, ROSE has some additional depenendencies
-if(enable-cpp)
+if(ENABLE-CPP)
   add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR generate_rosePublicConfig)
 endif()
 

@@ -1,7 +1,7 @@
-if(NOT disable-tutorial-directory)
+if(NOT DISABLE-TUTORIAL-DIRECTORY)
   include_directories(${ROSE_INCLUDES})
 
-  if(enable-rosehpct)
+  if(ENABLE-ROSEHPCT)
     add_subdirectory(roseHPCT)
   endif()
   add_subdirectory(outliner)
@@ -43,7 +43,7 @@ if(NOT disable-tutorial-directory)
     sprintf_to_snprintf seedBugsExample_arrayIndexing volatileTypeModifier
     findVariableDeclarations)
 
-  if(enable-binary-analysis)
+  if(ENABLE-BINARY-ANALYSIS)
     list(APPEND tutorials
       binaryAttribute binaryCallGraph binaryFileRead
       binaryFileWrite binaryHelloWorld binaryStrings binaryAnalysis_symbolTable)

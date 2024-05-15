@@ -1,4 +1,4 @@
-if(enable-fortran)
+if(ENABLE-FORTRAN)
   include_directories(${CMAKE_SOURCE_DIR}/src/frontend/OpenFortranParser_SAGE_Connection ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 
@@ -29,7 +29,7 @@ if(enable-fortran)
   set_target_properties(fortran_ofp_parser_c_jni_FortranParserActionJNI PROPERTIES VERSION 1.0.0 SOVERSION 1)
   install(TARGETS fortran_ofp_parser_c_jni_FortranParserActionJNI DESTINATION ${ROSE_LIB_DIR_NAME})
 
-  if(enable-fortran)
+  if(ENABLE-FORTRAN)
     # Using FLEX_TARGET() would be cleaner, but the autoconf buildsystem
     # requires outfile="lex.yy.c" in the .ll files.
     #
