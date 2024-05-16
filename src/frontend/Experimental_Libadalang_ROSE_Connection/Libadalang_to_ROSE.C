@@ -264,10 +264,14 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_subp_body:             // Asis.Declarations
         case ada_subp_decl:
         case ada_subp_body_stub:
+        case ada_abstract_subp_decl:
         case ada_package_body:
         case ada_package_decl:
         case ada_object_decl:
         case ada_type_decl:
+        case ada_task_type_decl:
+        case ada_task_body:
+        case ada_entry_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;

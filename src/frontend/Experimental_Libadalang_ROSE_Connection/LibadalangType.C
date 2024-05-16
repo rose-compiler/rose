@@ -411,6 +411,25 @@ namespace
     return SG_DEREF(res);
   }
 
+/// returns the ROSE type for an Asis definition \ref lal_element
+/// iff lal_element is NULL, an SgTypeVoid is returned.
+SgType&
+getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
+{
+  // defid is null for example for an entry that does not specify a family type
+  if(ada_node_is_null(lal_element)){
+    return mkTypeVoid();
+  }
+
+  if(lal_element == nullptr)
+  {
+    logError() << "undefined type id: " << lal_element << std::endl;
+    return mkTypeUnknown();
+  }
+
+  return getDefinitionType(lal_element, ctx);
+}
+
 //Function to hash a unique int from a node using the node's kind and location.
 //The kind and location can be provided, but if not they will be determined in the function
 int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
@@ -513,6 +532,41 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
       return getAnonymousAccessType(def, ctx);*/
   }
 
+  SgClassDefinition&
+  getRecordBody(ada_base_entity* lal_record, AstContext ctx)
+  {
+    SgClassDefinition&        sgnode     = mkRecordBody();
+
+    //Get the kind
+    ada_node_kind_enum kind = ada_node_kind(lal_record);
+
+    if(kind == ada_null_record_def)
+    {
+      logKind("ada_null_record_def", kind);
+      SgClassDefinition&      sgdef = mkRecordBody();
+
+      attachSourceLocation(sgdef, lal_record, ctx);
+      return sgdef;
+    }
+
+    sgnode.set_parent(&ctx.scope());
+
+    /*ElemIdRange               components = idRange(rec.Record_Components);
+    //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
+
+    // NOTE: the true parent is when the record is created; this is set to enable
+    //       traversal from the record body to global scope.
+    traverseIDs(components, elemMap(), ElemCreator{ctx.scope(sgnode)});
+    //~ was: traverseIDs(components, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
+
+    // how to represent implicit components
+    //~ traverseIDs(implicits, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
+
+    //~ markCompilerGenerated(sgnode);*/ //TODO
+    logWarn() << "Component traversal unimplemented!\n";
+    return sgnode;
+  }
+
   TypeData
   getTypeFoundation(const std::string& name, ada_base_entity* lal_def, AstContext ctx)
   {
@@ -559,10 +613,36 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
 
           break;
         }
+      case ada_record_type_def:               // 3.8(2)     -> Trait_Kinds
+        {
+          logKind("ada_record_type_def", kind);
+
+          //Get the definition
+          ada_base_entity record_def;
+          ada_record_type_def_f_record_def(lal_def, &record_def);
+
+          SgClassDefinition& def = getRecordBody(&record_def, ctx);
+
+          //Get the abstract, limited, & tagged status
+          ada_base_entity has_abstract, has_limited, has_tagged;
+          ada_record_type_def_f_has_abstract(lal_def, &has_abstract);
+          ada_record_type_def_f_has_limited(lal_def, &has_limited);
+          ada_record_type_def_f_has_tagged(lal_def, &has_tagged);
+          ada_node_kind_enum abstract_kind = ada_node_kind(&has_abstract);
+          ada_node_kind_enum limited_kind = ada_node_kind(&has_limited);
+          ada_node_kind_enum tagged_kind = ada_node_kind(&has_tagged);
+          bool abstract = (abstract_kind == ada_abstract_present);
+          bool limited = (limited_kind == ada_limited_present);
+          bool tagged = (tagged_kind == ada_tagged_present);
+
+          res = TypeData{lal_def, &def, abstract, limited, tagged};
+
+          break;
+        }
 
       default:
         {
-          logWarn() << "unhandled type kind " << kind << std::endl;
+          logWarn() << "unhandled type kind " << kind << " in getTypeFoundation" << std::endl;
           //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
           res.sageNode(mkTypeUnknown());
         }

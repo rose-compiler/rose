@@ -312,6 +312,9 @@ namespace Libadalang_ROSE_Translation
 
 namespace {
 
+  // may need special processing for pragmas in body
+  using DeferredPragmaBodyCompletion = std::function<void(AstContext::PragmaContainer)>;
+
   void
   processInheritedSubroutines( SgNamedType* derivedTy,
                                ada_base_entity* tydef,
@@ -677,6 +680,11 @@ namespace {
           has_abstract = (abstract_kind == ada_abstract_present);
           break;
         }
+      case ada_abstract_subp_decl:
+        {
+          has_abstract = true;
+          break;
+        }
       default:
         logWarn() << "Node kind " << kind << " in setAbstractModifier has no abstract.\n";
     }
@@ -794,7 +802,6 @@ namespace {
       TypeData                foundation;
       SgDeclarationStatement* incomplDecl;
   };
-} //End unnamed namespace
 
   SgDeclarationStatement&
   handleNumVarCstDecl( ada_base_entity* lal_element,
@@ -854,6 +861,112 @@ namespace {
 
     return handleNumVarCstDecl(lal_element, ctx, isPrivate, varty);
   }
+
+  void nothingToComplete(AstContext::PragmaContainer pragmas)
+  {
+     //ADA_ASSERT(pragmas.empty());
+  }
+
+  std::pair<SgAdaTaskSpec*, DeferredPragmaBodyCompletion>
+  getTaskSpec(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    logKind("A_Task_Definition", kind);
+
+    //Task_Definition_Struct* tasknode = &def.The_Union.The_Task_Definition;
+    SgAdaTaskSpec&          sgnode   = mkAdaTaskSpec();
+    SgAdaTaskSpec*          nodePtr  = &sgnode;
+
+    // sgnode.set_hasMembers(true);
+
+    //Check if this task has private members
+    ada_base_entity task_def;
+    ada_task_type_decl_f_definition(lal_element, &task_def);
+    ada_base_entity private_part;
+    ada_task_def_f_private_part(&task_def, &private_part);
+    sgnode.set_hasPrivate(!ada_node_is_null(&private_part));
+
+    //Get the public_part
+    ada_base_entity public_part;
+    ada_task_def_f_public_part(&task_def, &public_part);
+    ada_declarative_part_f_decls(&public_part, &public_part);
+
+    if(!ada_node_is_null(&public_part)){
+      int range = ada_node_children_count(&public_part);
+      for(int i =0; i < range; i++){
+        ada_base_entity lal_entry;
+        ada_node_child(&public_part, i, &lal_entry);
+        handleElement(&lal_entry, ctx.scope(*nodePtr));
+      }
+    }
+
+    //Get the private part
+    if(!ada_node_is_null(&private_part)){
+      ada_declarative_part_f_decls(&private_part, &private_part);
+
+      int range = ada_node_children_count(&private_part);
+      for(int i =0; i < range; i++){
+        ada_base_entity lal_entry;
+        ada_node_child(&private_part, i, &lal_entry);
+        handleElement(&lal_entry, ctx.scope(*nodePtr), true /* private items */);
+      }
+    }
+
+    /*auto deferred = [ctx,nodePtr,&task_def](AstContext::PragmaContainer pragmas) -> void
+                    {
+                      AstContext pragmaCtx = ctx.pragmas(pragmas);
+
+                      // visible items
+                      {
+                        //Get the public_part
+                        ada_base_entity public_part;
+                        ada_task_def_f_public_part(&task_def, &public_part);
+                        ada_declarative_part_f_decls(&public_part, &public_part);
+
+                        if(!ada_node_is_null(&public_part)){
+                          int range = ada_node_children_count(&public_part);
+                          for(int i =0; i < range; i++){
+                             ada_base_entity lal_entry;
+                             ada_node_child(&public_part, i, &lal_entry);
+                             handleElement(&lal_entry, pragmaCtx.scope(*nodePtr));
+                          }
+                        }
+                      }
+
+                      // private items
+                      {
+                        //Get the private_part
+                        ada_base_entity private_part;
+                        ada_task_def_f_private_part(&task_def, &private_part);
+                        ada_declarative_part_f_decls(&private_part, &private_part);
+
+                        if(!ada_node_is_null(&private_part)){
+                          int range = ada_node_children_count(&private_part);
+                          for(int i =0; i < range; i++){
+                             ada_base_entity lal_entry;
+                             ada_node_child(&private_part, i, &lal_entry);
+                             handleElement(&lal_entry, pragmaCtx.scope(*nodePtr), true /* private items *//*);
+                          }
+                        }
+                      }
+
+                      //placePragmas({ nodePtr }, pragmaCtx.scope(*nodePtr)); //TODO pragmas
+                    };*/
+
+    //return std::make_pair(&sgnode, deferred);
+    return std::make_pair(&sgnode, nothingToComplete);
+  }
+
+  std::pair<SgAdaTaskSpec*, DeferredPragmaBodyCompletion>
+  getTaskSpec_opt(ada_base_entity* lal_element, AstContext ctx)
+  {
+    if(lal_element == nullptr || ada_node_is_null(lal_element)){
+      return std::make_pair(&mkAdaTaskSpec(), nothingToComplete);
+    }
+
+    return getTaskSpec(lal_element, ctx);
+  }
+} //End unnamed namespace
 
 /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
 ///   declaration.
@@ -915,6 +1028,25 @@ void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatem
       }
     }
   }
+}
+
+SgDeclarationStatement*
+queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
+{
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+  ada_base_entity corresponding_decl;
+  ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
+  int decl_hash = hash_node(&corresponding_decl);
+
+  SgDeclarationStatement* res = findFirst(libadalangDecls(), decl_hash); //, expr.Corresponding_Name_Definition);
+
+  if((res == nullptr) && (kind == ada_identifier))
+  {
+    //res = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}); //TODO adaPkgs
+  }
+
+  return res;
 }
 
 void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
@@ -1027,6 +1159,68 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgReturnStmt&   sgnode = mkReturnStmt(retval);
 
           completeStmt(sgnode, lal_stmt, ctx);
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_accept_stmt:                 // 9.5.2
+      case ada_accept_stmt_with_stmts:
+        {
+          logKind("ada_accept_stmt", kind);
+          ada_base_entity lal_identifier;
+          ada_accept_stmt_f_name(lal_stmt, &lal_identifier);
+          SgExpression&            entryref = getExpr(&lal_identifier, ctx);
+          SgExpression&            idx      = getExpr_opt(nullptr, ctx); //TODO What is Accept_Entry_Index?
+          SgAdaAcceptStmt&         sgnode   = mkAdaAcceptStmt(entryref, idx);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          ada_base_entity params;
+          ada_accept_stmt_f_params(lal_stmt, &params);
+          ada_entry_completion_formal_params_f_params(&params, &params);
+          SgFunctionParameterList& paramlst = SG_DEREF(sgnode.get_parameterList());
+          AstContext               parmctx  = ctx.scope(SG_DEREF(sgnode.get_parameterScope()));
+
+          int param_count = ada_node_is_null(&params) ? 0 : ada_node_children_count(&params);
+          for(int i = 0; i < param_count; i++){
+            ada_base_entity param;
+            ada_node_child(&params, i, &param);
+            SgVariableDeclaration& decl = getParm(&param, parmctx);
+            for(SgInitializedName* parm : decl.get_variables())
+              paramlst.append_arg(parm);
+          }
+
+          ada_base_entity handled_stmts;
+          ada_accept_stmt_with_stmts_f_stmts(lal_stmt, &handled_stmts);
+
+          if(kind == ada_accept_stmt || ada_node_is_null(&handled_stmts))
+          {
+            SgStatement&           noblock = mkNullStatement();
+
+            sg::linkParentChild(sgnode, noblock, &SgAdaAcceptStmt::set_body);
+          }
+          else
+          {
+            SgBasicBlock&          block   = mkBasicBlock();
+
+            sg::linkParentChild(sgnode, as<SgStatement>(block), &SgAdaAcceptStmt::set_body);
+
+           //Get the stmts, exceptions, and pragmas for this package
+            ada_base_entity lal_stmts, lal_exceptions, lal_pragmas;
+            ada_handled_stmts_f_stmts(&handled_stmts, &lal_stmts);
+            ada_handled_stmts_f_exceptions(&handled_stmts, &lal_exceptions);
+            //TODO lal_pragmas
+
+            completeHandledBlock( &lal_stmts,
+                                  &lal_exceptions,
+                                  &lal_pragmas,
+                                  simpleBlockHandler,
+                                  simpleExceptionBlockHandler,
+                                  block,
+                                  false /* no separate block is needed */,
+                                  ctx
+                                );
+          }
+
           assocstmt = &sgnode;
           break;
         }
@@ -1266,12 +1460,13 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         break;
       }
     case ada_subp_decl:                   // 6.1(4)   -> Trait_Kinds
+    case ada_abstract_subp_decl:
     //case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
       {
         //Get the subp spec node
         ada_base_entity subp_spec;
         ada_base_entity lal_overriding;
-        if(kind == ada_subp_decl){
+        if(kind == ada_subp_decl || kind == ada_abstract_subp_decl){
           ada_classic_subp_decl_f_subp_spec(lal_element, &subp_spec);
           ada_classic_subp_decl_f_overriding(lal_element, &lal_overriding);
         } else {
@@ -1303,13 +1498,14 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_node_kind_enum lal_overriding_kind = ada_node_kind(&lal_overriding);
 
         const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
-        const bool          overriding = lal_overriding_kind == ada_overriding_overriding; //TODO ada_overriding_unspecified might count?
+        const bool          overriding = (lal_overriding_kind == ada_overriding_overriding); //TODO ada_overriding_unspecified might count?
         SgScopeStatement* parent_scope = &ctx.scope();
         std::string              ident = ada_text_to_locale_string(&ada_canonical_text);
         //ElemIdRange             params = idRange(decl.Parameter_Profile);
         SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                 : mkTypeVoid();
 
+        ada_destroy_text(&ada_canonical_text);
         logKind(isFunc ? "A_Function_Declaration" : "A_Procedure_Declaration", kind);
 
         SgScopeStatement&      logicalScope = SG_DEREF(parent_scope);
@@ -1411,6 +1607,67 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_task_body:                  // 9.1(6)
+      {
+        logKind("ada_task_body", kind);
+
+        //Get the name
+        ada_base_entity lal_identifier;
+        ada_task_body_f_name(lal_element, &lal_identifier);
+        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+
+        //Get the hash for the decl
+        ada_base_entity p_decl_part;
+        ada_body_node_p_decl_part(lal_element, 1, &p_decl_part);
+
+        int                          hash = hash_node(lal_element);
+        int                     decl_hash = hash_node(&p_decl_part);
+        std::string             ident     = ada_text_to_locale_string(&ada_canonical_text);
+        SgAdaTaskBody&          tskbody   = mkAdaTaskBody();
+        SgDeclarationStatement* ndef      = findFirst(libadalangDecls(), decl_hash);
+        SgAdaTaskBodyDecl*      nondef    = isSgAdaTaskBodyDecl(ndef);
+
+        //Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Task_Body_Stub, ctx);
+        SgDeclarationStatement& tskdecl = lookupNode(libadalangDecls(), decl_hash); //TODO What is specID?
+
+        SgScopeStatement&       logicalScope = SG_DEREF(&ctx.scope());
+        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, nondef, tskbody, logicalScope);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        //Get the stmts, decls, exceptions, and pragmas for this package
+        ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+
+        ada_task_body_f_decls(lal_element, &lal_decls); //lal_decls should now be an ada_declarative_part
+        ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
+        ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+        ada_task_body_f_stmts(lal_element, &lal_handled_stmts);
+        ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+        ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+        //TODO lal_pragmas
+
+        completeDeclarationsWithHandledBlock( &lal_decls,
+                                              &lal_stmts,
+                                              &lal_exceptions,
+                                              &lal_pragmas,
+                                              routineBlockHandler,
+                                              routineExceptionBlockHandler,
+                                              tskbody,
+                                              false /* same block for declarations and statements */,
+                                              ctx
+                                            );
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_subp_body_stub:                     // 10.1.3(3)
       {
         //Get the subp spec node
@@ -1466,6 +1723,107 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         attachSourceLocation(sgnode, lal_element, ctx);
         ctx.appendStatement(sgnode);
 
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_task_type_decl:                  // 9.1(2)
+      {
+        logKind("ada_task_type_decl", kind);
+
+        auto                        spec    = getTaskSpec_opt(lal_element, ctx); //TODO
+
+        //Get the name
+        ada_base_entity defining_name;
+        ada_base_type_decl_f_name(lal_element, &defining_name);
+        ada_base_entity lal_identifier;
+        ada_defining_name_f_name(&defining_name, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+
+        //Get the discriminants
+        ada_base_entity lal_discr;
+        ada_task_type_decl_f_discriminants(lal_element, &lal_discr);
+
+        std::string                 ident  = ada_text_to_locale_string(&ada_canonical_text);
+
+        int                         hash   = hash_node(lal_element);
+        /*SgDeclarationStatement*     ndef   = findFirst(libadalangTypes(), hash);
+        SgAdaTaskTypeDecl*          nondef = isSgAdaTaskTypeDecl(ndef);*/
+        SgAdaTaskTypeDecl*          nondef = nullptr; //For now, just assume that this is the first declaration
+
+        SgScopeStatement*           parentScope = &ctx.scope();
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(&lal_discr, 0, ctx);
+
+        if (discr)
+        {
+          parentScope = discr->get_discriminantScope();
+        }
+
+        SgAdaTaskTypeDecl& sgdecl  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), *parentScope)
+                                            : mkAdaTaskTypeDecl(ident, spec.first,  *parentScope);
+
+        attachSourceLocation(sgdecl, lal_element, ctx);
+        privatize(sgdecl, isPrivate);
+
+        recordNode(libadalangTypes(), hash, sgdecl, nondef != nullptr);
+        recordNode(libadalangDecls(), hash, sgdecl);
+
+        if (!discr)
+        {
+          ctx.appendStatement(sgdecl);
+          assocdecl = &sgdecl;
+        }
+        else
+        {
+          completeDiscriminatedDecl(hash, lal_element, *discr, sgdecl, isPrivate, ctx);
+          assocdecl = discr;
+        }
+
+        //AstContext::PragmaContainer taskPragmas = splitOfPragmas(pragmaVector, taskDeclPragmas, ctx);
+
+        //spec.second(std::move(taskPragmas)); // complete the body
+
+         break;
+      }
+    case ada_entry_decl:                     // 9.5.2(2)
+      {
+        logKind("ada_entry_decl", kind);
+
+        //Get the name
+        ada_base_entity entry_spec;
+        ada_entry_decl_f_spec(lal_element, &entry_spec);
+        ada_base_entity defining_name;
+        ada_entry_spec_f_entry_name(&entry_spec, &defining_name);
+        ada_base_entity lal_identifier;
+        ada_defining_name_f_name(&defining_name, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+
+        std::string     ident   = ada_text_to_locale_string(&ada_canonical_text);
+        int              hash   = hash_node(lal_element);
+
+        //Get the params
+        ada_base_entity entry_params;
+        ada_entry_spec_f_entry_params(&entry_spec, &entry_params);
+
+        //Get the family type
+        ada_base_entity family_type;
+        ada_entry_spec_f_family_type(&entry_spec, &family_type);
+
+        SgType&         idxTy  = getDefinitionType_opt(&family_type, ctx);
+        SgAdaEntryDecl& sgnode = mkAdaEntryDecl(ident, ctx.scope(), ParameterCompletion{&entry_params, ctx}, idxTy);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        // the entry call links back to the declaration ID
+        recordNode(libadalangDecls(), hash, sgnode);
+        
         assocdecl = &sgnode;
         break;
       }

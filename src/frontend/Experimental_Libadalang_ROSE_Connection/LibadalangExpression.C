@@ -904,22 +904,31 @@ namespace{
 
           ada_base_entity corresponding_decl; //lal doesn't give definition directly, so go from the decl
           ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
-          ada_ada_node_array defining_name_list;
-          ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
+
+          //Get the kind of the decl
+          ada_node_kind_enum decl_kind = ada_node_kind(&corresponding_decl);
+          if(decl_kind == ada_param_spec){
+            ada_ada_node_array defining_name_list;
+            ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
           
-          //Find the correct decl in the defining name list
-          for(int i = 0; i < defining_name_list->n; i++){
-            ada_base_entity defining_name = defining_name_list->items[i];
-            ada_base_entity name_identifier;
-            ada_defining_name_f_name(&defining_name, &name_identifier);
-            ada_single_tok_node_p_canonical_text(&name_identifier, &p_canonical_text);
-            ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-            const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
-            if(name == test_name){
-              logInfo() << "Found definition for ada_identifier " << name << std::endl;
-              hash = hash_node(&defining_name);
-              break;
+            //Find the correct decl in the defining name list
+            for(int i = 0; i < defining_name_list->n; i++){
+              ada_base_entity defining_name = defining_name_list->items[i];
+              ada_base_entity name_identifier;
+              ada_defining_name_f_name(&defining_name, &name_identifier);
+              ada_single_tok_node_p_canonical_text(&name_identifier, &p_canonical_text);
+              ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+              const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
+              if(name == test_name){
+                logInfo() << "Found definition for ada_identifier " << name << std::endl;
+                hash = hash_node(&defining_name);
+                break;
+              }
             }
+          } else if(decl_kind == ada_entry_decl){
+                hash = hash_node(&corresponding_decl);
+          } else {
+            logError() << "Could not get corresponding decl for identifier!\n";
           }
 
           ada_destroy_text(&ada_canonical_text);
@@ -928,11 +937,11 @@ namespace{
           {
             res = sb::buildVarRefExp(var, &ctx.scope());
           }
-          /*else if(SgDeclarationStatement* dcl = queryDecl(expr, ctx))
+          else if(SgDeclarationStatement* dcl = queryDecl(lal_element, ctx))
           {
             res = sg::dispatch(ExprRefMaker{ctx}, dcl);
           }
-          else if(SgInitializedName* exc = findFirst(asisExcps(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+          /*else if(SgInitializedName* exc = findFirst(asisExcps(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
           {
             res = &mkExceptionRef(*exc, ctx.scope());
           }
@@ -1164,6 +1173,20 @@ getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement sup
   }
 
   return SG_DEREF(res);
+}
+
+SgExpression&
+getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement suppl)
+{
+  if(lal_expr == nullptr)
+  {
+    logFlaw() << "uninitialized expression id " << lal_expr << std::endl;
+    return mkNullExpression();
+  }
+
+  return ada_node_is_null(lal_expr) ? mkNullExpression()
+                                    : getExpr(lal_expr, ctx, std::move(suppl))
+                                    ;
 }
 
 OperatorCallSupplement::ArgDescList

@@ -317,6 +317,17 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate 
 } //End Libadalang_ROSE_Translation
 
 namespace{
+  /// upcasts an object of type Derived to an object of type Base
+  /// \note useful mainly in the context of overloaded functions
+  template <class Base, class Derived>
+  inline
+  Base& as(Derived& obj)
+  {
+    Base& res = obj;
+
+    return res;
+  }
+
   inline
   auto logTrace() -> decltype(Libadalang_ROSE_Translation::mlog[Sawyer::Message::TRACE])
   {

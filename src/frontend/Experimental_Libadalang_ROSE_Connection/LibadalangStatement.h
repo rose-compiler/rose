@@ -26,6 +26,12 @@ namespace Libadalang_ROSE_Translation
       ParameterCompletion() = delete;
   };
 
+  /// returns the declaration identified by \ref lal_element
+  ///   if no record was found, nullptr is returned
+  /// \note the function does not look up variables and exceptions, and built-in operators.
+  SgDeclarationStatement*
+  queryDecl(ada_base_entity* lal_element, AstContext ctx);
+
   /// converts a Libadalang declaration and adds the new node to the current scope
   void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate);
 
