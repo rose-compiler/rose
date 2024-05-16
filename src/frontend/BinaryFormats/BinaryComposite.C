@@ -13,19 +13,23 @@ using namespace Rose;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 SgBinaryComposite::SgBinaryComposite(vector<string> &argv, SgProject* project)
-    : p_genericFileList(nullptr), p_interpretations(nullptr) {
-    p_interpretations = new SgAsmInterpretationList();
-    p_interpretations->set_parent(this);
-
-    p_genericFileList = new SgAsmGenericFileList();
-    p_genericFileList->set_parent(this);
-
-    doSetupForConstructor(argv,  project);
+  : SgBinaryComposite()
+{
+    SgFile::doSetupForConstructor(argv, project);
 }
 
 void
-SgBinaryComposite::doSetupForConstructor(const vector<string>& argv, SgProject* project) {
-    SgFile::doSetupForConstructor(argv, project);
+SgBinaryComposite::post_construction_initialization() {
+    // Don't initialize twice (even if called twice)!
+    if (p_genericFileList == nullptr) {
+        p_genericFileList = new SgAsmGenericFileList();
+        p_genericFileList->set_parent(this);
+    }
+
+    if (p_interpretations == nullptr) {
+        p_interpretations = new SgAsmInterpretationList();
+        p_interpretations->set_parent(this);
+    }
 }
 
 int SgBinaryComposite::callFrontEnd() {

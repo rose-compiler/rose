@@ -294,14 +294,12 @@ HEADER_GRAPH_POSTDECLARATION_END
 
 HEADER_GRAPHNODE_START
      void append_properties( int addr, const std::string & prop );
-
      void post_construction_initialization() override;
 HEADER_GRAPHNODE_END
 
 
 HEADER_GRAPHEDGE_START
      void append_properties( int addr, const std::string & prop );
-
      void post_construction_initialization() override;
 HEADER_GRAPHEDGE_END
 
@@ -5478,14 +5476,8 @@ HEADER_FILE_INFORMATION_START
           void setImplicitCast();
 
       //! Set/unset functions for classification bit field
-       // void unsetOriginal();
-       // void setOriginal();
           void unsetTransformation();
           void setTransformation();
-       // void unsetDeclaration();
-       // void setDeclaration();
-       // void unsetInitialization();
-       // void setInitialization();
 
       //! Mark as compiler generated but as required to be output by unparser (e.g. required template instatiations)
           void unsetCompilerGeneratedNodeToBeUnparsed() ROSE_DEPRECATED_FUNCTION;
@@ -5594,8 +5586,6 @@ HEADER_FILE_INFORMATION_START
 HEADER_FILE_INFORMATION_END
 
 HEADER_APPLICATION_FILE_PREDECLARATION_START
-// DQ (4/23/2006): Declaration of friend functions outside of class required by g++ 4.1.0!
-// void alternativeSageEdgInterfaceConstruction( SgFile *file );
 HEADER_APPLICATION_FILE_PREDECLARATION_END
 
 HEADER_APPLICATION_FILE_START
@@ -5630,7 +5620,6 @@ public:
                      This is also a way to play with some language translation ideas, but most useful one
                      will require a specialized tranlator to be built.
         */
-       // enum outputLanguageOption_enum
           enum languageOption_enum
              {
                e_error_language,   /*!< error value (uses filename extension to determine the output format, f77: fixed, F90 and later: free) */
@@ -5681,7 +5670,7 @@ public:
           void set_standard(enum standard_enum e_std);
           void set_default_standard(void);
 
-       // DQ (1/10/2019): Add way to output a string to report standard in debug messages.
+          /** A string to report standard in debug messages (for example). */
           std::string display_standard(enum standard_enum e_std);
 
           bool is_gnu_standard(void) const;
@@ -5790,18 +5779,19 @@ public:
       //! errorCode is the return value assembled from the multiple error codes associated with the
       //! different phases of the compilation.  The fileNameIndex is the index into the list of
       //! file names input on the user's command line.  We need a way to process them individually!
-          SgFile ( int & argc, char** & argv,  SgProject* project = NULL );
-          SgFile(std::vector<std::string>& argv,  SgProject* project = NULL);
+          SgFile(int &argc, char** &argv, SgProject* project = nullptr);
+          SgFile(std::vector<std::string>& argv, SgProject* project = nullptr);
 
           SgFile(const SgFile &) = delete;
+          SgFile & operator= (const SgFile &) = delete;
 
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+          void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
       //! Initialization support for constructors
           void initialization() ROSE_DEPRECATED_FUNCTION;
 
       //! Generate the C++ file representing the AST
-          void unparse ( UnparseFormatHelp *unparseHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
+          void unparse(UnparseFormatHelp *unparseHelp = nullptr, UnparseDelegate* unparseDelagate = nullptr);
 
        // DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information)
        // to be relative to the generated code instead of the original input code.  This is useful when
@@ -5812,9 +5802,6 @@ public:
 
       //! Member function to compile the resulting output file from unparsing
          int compileOutput ( int fileNameIndex );
-
-       // function to generate PDF output file for AST
-       // void outputPDF();
 
       //! associated filename
           std::string getFileName() const;
@@ -5831,12 +5818,12 @@ public:
       //! Fixups to be run when the whole project has been created (this attaches preprocessing information).
           void secondaryPassOverSourceFile();
 
-       // DQ (9/2/2008): Added to factor out detail fo building the AST in callFrontEnd().
+       // DQ (9/2/2008): Added to factor out detail for building the AST in callFrontEnd().
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 
        // DQ (6/17/2005): I think that this should be a static function and perhaps moved to SgProject instead of in SgFile
       //! Move this function from ROSE into the AST restructuring tool
-          void processRoseCommandLineOptions ( std::vector<std::string>& argv );
+          void processRoseCommandLineOptions(std::vector<std::string>& argv);
 
        // DQ (6/21/2005): Added support for backend specific command-line options to be recognized in ROSE
        // (required to control template instantiation).  Does not modify input parameters.
@@ -5864,11 +5851,6 @@ public:
        // TV: 02/15/12, CLANG also need a command line builder
           void build_CLANG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
-      //! Move this function from ROSE into the AST restructuring tool
-      //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file, bool writeOutHeaderFiles = false );
-      //  friend void pdfPrintAbstractSyntaxTreeEDG  ( SgFile *file );
-      //  friend void pdfPrintAbstractSyntaxTreeSage ( SgFile *file, bool writeOutHeaderFiles = false );
-
        // Move this function from ROSE into the AST restructuring tool (placed here os it can be called)
           static void usage ( int status );
 
@@ -5881,16 +5863,11 @@ public:
 
        // DQ (9/24/2013): I think this is more useful as a static function (and I need it this way in the unparser).
       //! Support for C preprocessed files (Fortran only).
-       // std::string generate_C_preprocessor_intermediate_filename( std::string filename );
           static std::string generate_C_preprocessor_intermediate_filename( std::string filename );
 
        // The unparser and vendor compiler needs access to many variables
        // that are protected (Later this should be a member function).
-       // friend void unparseFile ( SgFile & file );
-       // friend int compileOutput ( int & argc, char** & argv, SgFile & file );
-       // BP : 11/13/2001, modified to include compiler name
           std::vector<std::string> buildCompilerCommandLineOptions ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
-       // BP : 11/13/2001, modified to include compiler name
           int compileOutput ( std::vector<std::string> & argv, int fileNameIndex );
 
           void display ( const std::string & label ) const;
@@ -5911,24 +5888,24 @@ public:
 
        // DQ (12/23/2008): This sets up the Sg_File_Info in the SgFile and initializes it with the correct name etc.
        // This function is called at several locations to build SgSourceFiles of different types (languages).
-          void initializeSourcePosition( const std::string & sourceFilename );
+          void initializeSourcePosition(const std::string & sourceFilename);
 
        // DQ (6/13/2013): Added to support to call the frontend after all SgFiles are built up.
-          void runFrontend(int & nextErrorCode);
+          void runFrontend(int &nextErrorCode);
 
        // DQ (9/24/2013): Added function to output the name of the language for the generated code.
-          static std::string get_outputLanguageOptionName ( languageOption_enum lang );
+          static std::string get_outputLanguageOptionName(languageOption_enum);
 
        // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
        // as a static member variable instead of non-static member variable.  See test2015_141.c
        // for where this is required.
-          static void set_skip_unparse_asm_commands( bool b );
+          static void set_skip_unparse_asm_commands(bool);
           static bool get_skip_unparse_asm_commands();
 
        // DQ (4/24/2021): Added support for p_header_file_unparsing_optimization to be implemented
        // as a static member variable instead of non-static member variable.  Part of header file
        // optimization support.
-          static void set_header_file_unparsing_optimization( bool b );
+          static void set_header_file_unparsing_optimization(bool);
           static bool get_header_file_unparsing_optimization();
 
 HEADER_APPLICATION_FILE_END
@@ -5947,13 +5924,11 @@ HEADER_APPLICATION_SOURCE_FILE_START
      public:
 #endif
 
-       // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
-          SgSourceFile(std::vector<std::string>& argv, SgProject* project = NULL);
+          SgSourceFile(std::vector<std::string>& argv, SgProject* project = nullptr);
           virtual int callFrontEnd() override;
-       // SgSourceFile ( const SgSourceFile & X );
 
-      //! Default constructor (not meant to be used)
-       // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
+          SgSourceFile(const SgSourceFile &) = delete;
+          SgSourceFile & operator= (const SgSourceFile &) = delete;
 
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) override;
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
@@ -5972,8 +5947,6 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_Csharp_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Ada_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Jovial_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers (this is specific to Fortran).
           void processCppLinemarkers();
@@ -6062,12 +6035,14 @@ HEADER_APPLICATION_BINARY_COMPOSITE_START
                 }
 
      public:
-          SgBinaryComposite(std::vector<std::string>& argv,  SgProject* project = NULL);
+          SgBinaryComposite(std::vector<std::string>& argv, SgProject* project = nullptr);
+
+          SgBinaryComposite(const SgBinaryComposite &) = delete;
+          SgBinaryComposite & operator= (const SgBinaryComposite &) = delete;
+
+          void post_construction_initialization() override;
 
           virtual int callFrontEnd() override;
-
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
-
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) override;
 
       //! However, now we have a list of them to support library archives which contain multiple object files (*.o's).
@@ -6090,20 +6065,24 @@ HEADER_APPLICATION_JVM_COMPOSITE_START
                 }
 
      public:
-          SgJvmComposite(std::vector<std::string>& argv,  SgProject* project = nullptr);
+          SgJvmComposite(std::vector<std::string>& argv, SgProject* project = nullptr);
+
+          SgJvmComposite(const SgJvmComposite &) = delete;
+          SgJvmComposite & operator= (const SgJvmComposite &) = delete;
+
+          void post_construction_initialization() override;
 
           virtual int callFrontEnd() override;
-          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) override;
+          virtual int buildAST(std::vector<std::string> argv, std::vector<std::string> inputCommandLine) override;
 
 HEADER_APPLICATION_JVM_COMPOSITE_END
 
 
 HEADER_APPLICATION_UNKNOWN_FILE_START
      public:
-          SgUnknownFile(std::vector<std::string>& argv, SgProject* project = NULL);
+          SgUnknownFile(std::vector<std::string> &argv, SgProject* project = nullptr);
 
           virtual int callFrontEnd() override;
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
 HEADER_APPLICATION_UNKNOWN_FILE_END
 
@@ -6343,6 +6322,9 @@ HEADER_APPLICATION_PROJECT_START
 
           bool get_Jovial_only (void) const;
           void set_Jovial_only (bool value);
+
+          bool get_Jvm_only (void) const;
+          void set_Jvm_only (bool value);
 
           void display ( const std::string & label ) const;
 
@@ -13497,23 +13479,15 @@ Sg_File_Info::set_col( int n )
 bool
 Sg_File_Info::hasPositionInSource() const
    {
-     assert(this != NULL);
-  // DQ (1/11/2006): Modified to not use the output function which mixed
-  // concepts of compiler generated with output (deprecated function).
-  // bool result = ( ! ( isTransformation() || isCompilerGenerated() || isCompilerGeneratedNodeToBeUnparsed() ) );
+     ASSERT_not_null(this);
      bool result = ( ! ( isTransformation() || isCompilerGenerated() || isOutputInCodeGeneration() ) );
 
      return result;
    }
 
-// DQ (9/5/2008): Switched back to using SgFile instead of SgSourceFile.
-// bool Sg_File_Info::isSameFile(SgFile* file) const
-// bool Sg_File_Info::isSameFile(SgSourceFile* file) const
 bool
 Sg_File_Info::isSameFile(SgFile* file) const
    {
-  // DQ (6/21/2005): check if this file info object is from the same file
-
   // This function abstracts the mechanism of comparing if a file info object is associated with a specific SgFile.
   // this function will be made more efficient later when we can abstract out the string comparision from the test.
   // Later we will implement a map from filename to unique "file number identifiers", this will permit significant
@@ -13521,39 +13495,20 @@ Sg_File_Info::isSameFile(SgFile* file) const
   // testing if two file info objects represent the same file (an integer equality test instead of string comparision).
   // File names are particularly long (since they include full path), so this will allow us to save a lot of space.
 
-     assert(this != NULL);
+     ASSERT_not_null(this);
+     ASSERT_not_null(file);
 
-     assert(file != NULL);
-
-  // MK (7/22/05) : removing use of p_filename in favor of p_file_id
-  // Generate names of the files
-     /*
-     string inputFilename = file->getFileName();
-     string currentFilename = get_filename();
-
-     bool result = (currentFilename == inputFilename);
-     */
   // DQ (9/5/2008): Use the local Sg_File_Info instead of the one on the root (which is only available for a SgSourceFile)
      Sg_File_Info* fileInfo = file->get_startOfConstruct();
-     assert(fileInfo != NULL);
+     ASSERT_not_null(fileInfo);
 
   // DQ (9/17/2013): This function should always refer to physical file data.
-  // DQ (10/27/2007): Make this consistant with new semantics of get_file_id()
-  // bool result = (p_file_id == fileInfo->get_file_id());
-  // bool result = (this->get_file_id() == fileInfo->get_file_id());
      bool result = (this->get_physical_file_id() == fileInfo->get_physical_file_id());
-
-#if 0
-     mprintf ("In Sg_File_Info::isSameFile(): \n");
-     mprintf ("   --- this->get_physical_file_id()     = %d physical_filename = %s \n",this->get_physical_file_id(),this->get_physical_filename().c_str());
-     mprintf ("   --- fileInfo->get_physical_file_id() = %d physical_filename = %s \n",fileInfo->get_physical_file_id(),fileInfo->get_physical_filename().c_str());
-#endif
 
   // DQ (2/27/2019): Adding support for shared IR nodes, so that they can be traversed from AST for each of multiple files.
      if (result == false)
         {
        // Check is this could be a shared file info.
-       // if (this->get_fileIDsToUnparse().empty() == false)
           if (p_fileIDsToUnparse.empty() == false)
              {
 #if 0
@@ -14142,13 +14097,13 @@ SgFile::set_file_info( Sg_File_Info* fileinfo )
    }
 
 std::string
-SgFile::getFileName () const
+SgFile::getFileName() const
    {
   // Get the filename from the Sage III file object
-     assert(this != NULL);
+     ASSERT_not_null(this);
 
      Sg_File_Info* fileInfo = p_startOfConstruct;
-     assert (fileInfo != NULL);
+     ASSERT_not_null(fileInfo);
 
   // DQ (8/16/2018): I think we want to original filename as constructed and reported by the
   // get_raw_filename() function, since if the statement is transformed as a file we don't what
@@ -14158,19 +14113,19 @@ SgFile::getFileName () const
      return fileName;
    }
 
-SgFile::SgFile ( int & argc, char** & argv , SgProject* project )
+SgFile::SgFile(int &argc, char** &argv, SgProject* project)
+   : SgFile()
    {
-  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
      assert (argv && argc >= 0);
 
   // Note use of pointer arithmetic in the computation of "argv + argc", this is standard STL fair.
      doSetupForConstructor(vector<string>(argv, argv + argc),  project);
    }
 
-SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
+SgFile::SgFile(vector<string> &argv, SgProject* project)
+   : SgFile()
    {
-  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-     doSetupForConstructor(argv,  project);
+     doSetupForConstructor(argv, project);
    }
 
 
@@ -14181,6 +14136,9 @@ SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
 void
 SgFile::initialization() ROSE_DEPRECATED_FUNCTION
    {
+  // Deprecate, then delete [Rasmussen 2024.04.28]
+     ROSE_ABORT();
+
      ASSERT_not_null(this);
 
      p_verbose                 = 0;
@@ -14692,7 +14650,7 @@ SgFile::getWorkingDirectory ()
      return returnString;
    }
 
- //! get the source directory
+//! get the source directory
 string
 SgFile::getSourceDirectory ()
    {
@@ -15042,6 +15000,9 @@ SOURCE_APPLICATION_SOURCE_FILE_START
 void
 SgSourceFile::initialization()
    {
+  // Deprecate, then delete [Rasmussen 2024.04.28]
+     ROSE_ABORT();
+
   // DQ (3/2/2022): The SgSourceFile node has a number of new data members that were not previously initialized.
 
   // Initialization
@@ -15662,21 +15623,21 @@ SOURCE_APPLICATION_BINARY_COMPOSITE_START
 const SgAsmGenericFile*
 SgBinaryComposite::get_binaryFile() const
    {
-     assert(p_genericFileList->get_files().size() == 1);
+     ASSERT_require(p_genericFileList->get_files().size() == 1);
      return p_genericFileList->get_files()[0];
    }
 
 SgAsmGenericFile*
 SgBinaryComposite::get_binaryFile()
    {
-     assert(p_genericFileList->get_files().size() == 1);
+     ASSERT_require(p_genericFileList->get_files().size() == 1);
      return p_genericFileList->get_files()[0];
    }
 
 void
-SgBinaryComposite::set_binaryFile( SgAsmGenericFile* file )
+SgBinaryComposite::set_binaryFile(SgAsmGenericFile* file)
    {
-     assert(p_genericFileList->get_files().empty() == true);
+     ASSERT_require(p_genericFileList->get_files().empty() == true);
      p_genericFileList->get_files().push_back(file);
    }
 
@@ -15688,9 +15649,10 @@ SOURCE_APPLICATION_JVM_COMPOSITE_END
 
 
 SOURCE_APPLICATION_UNKNOWN_FILE_START
-SgUnknownFile::SgUnknownFile ( vector<string> & argv ,  SgProject* project )
-   : SgFile(argv, project)
+SgUnknownFile::SgUnknownFile(vector<string> &argv, SgProject* project)
+   : SgUnknownFile()
    {
+      doSetupForConstructor(argv, project);
    }
 
 SOURCE_APPLICATION_UNKNOWN_FILE_END
@@ -16597,20 +16559,20 @@ SgProject::get_Python_only (void) const
    }
 
 void
-SgProject::set_Java_only (bool value)
+SgProject::set_Java_only(bool value)
    {
      ASSERT_not_null(this);
      p_Java_only = value;
    }
 
 bool
-SgProject::get_Java_only (void) const
+SgProject::get_Java_only(void) const
    {
   // look at how the files are set.
      bool result = p_Java_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
-          SgFile & file = get_file(i);
+          SgFile &file = get_file(i);
           result = result || (bool) file.get_Java_only();
         }
      return result;
@@ -16673,8 +16635,6 @@ SgProject::get_Java_source_destdir (void) const
 bool
 SgProject::get_Csharp_only (void) const
    {
-  // DQ (8/25/2017): Added more language support.
-
   // look at how the files are set
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
@@ -16688,8 +16648,6 @@ SgProject::get_Csharp_only (void) const
 bool
 SgProject::get_Ada_only (void) const
    {
-  // DQ (8/25/2017): Added more language support.
-
   // look at how the files are set
      bool result = p_Ada_only;
      for (int i = 0; i < numberOfFiles(); i++)
@@ -16708,20 +16666,39 @@ SgProject::set_Ada_only (bool value)
    }
 
 void
-SgProject::set_Jovial_only (bool value)
+SgProject::set_Jovial_only(bool value)
    {
      ASSERT_not_null(this);
      p_Jovial_only = value;
    }
 
 bool
-SgProject::get_Jovial_only (void) const
+SgProject::get_Jovial_only(void) const
    {
      bool result = p_Jovial_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
-          SgFile & file = get_file(i);
+          SgFile &file = get_file(i);
           result = result || (bool) file.get_Jovial_only();
+        }
+     return result;
+   }
+
+void
+SgProject::set_Jvm_only(bool value)
+   {
+     ASSERT_not_null(this);
+     p_Jvm_only = value;
+   }
+
+bool
+SgProject::get_Jvm_only (void) const
+   {
+     bool result = p_Jvm_only;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile &file = get_file(i);
+          result = result || (bool) file.get_Jvm_only();
         }
      return result;
    }

@@ -76,15 +76,26 @@ static vector<string> extractClassFiles(string &jar)
 }
 #endif
 
-SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
-  : SgBinaryComposite(argv, project)
+SgJvmComposite::SgJvmComposite(vector<string> &argv, SgProject* project)
+  : SgJvmComposite()
 {
+  SgFile::doSetupForConstructor(argv, project);
+}
+
+void
+SgJvmComposite::post_construction_initialization() {
+  // Don't call parent initialization or allow it to be called twice (this function is virtual!)
+
+  // Do JVM stuff only. This perhaps should be left as a command line option.
+  set_Jvm_only(true);
+
+  // Binary is different than JVM
+  set_binary_only(false);
+  set_unparse_binary_file_format(false);
+
   set_sourceFileUsesJvmFileExtension(true);
   set_inputLanguage(SgFile::e_Jvm_language);
   set_outputLanguage(SgFile::e_Jvm_language);
-
-  // Do JVM stuff only.  This perhaps should be left as a command line option.
-  set_Jvm_only(true);
 
   // Java JVM files are not compilable
   set_skip_syntax_check(true);
@@ -94,7 +105,12 @@ SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
   // Don't do C++ stuff
   set_requires_C_preprocessor(false);
   set_disable_edg_backend(true);
+  set_disable_sage_backend(true);
+  set_skip_transformation(true);
   set_skip_commentsAndDirectives(true);
+
+  // Don't want linking either
+  set_isObjectFile(false);
 }
 
 int

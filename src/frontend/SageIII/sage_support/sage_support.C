@@ -652,12 +652,9 @@ SgFile::initializeSourcePosition( const std::string & sourceFilename )
    {
      ASSERT_not_null(this);
 
-  // printf ("Inside of SgFile::initializeSourcePosition() \n");
-
      Sg_File_Info* fileInfo = new Sg_File_Info(sourceFilename,1,1);
      ASSERT_not_null(fileInfo);
 
-  // set_file_info(fileInfo);
      set_startOfConstruct(fileInfo);
      fileInfo->set_parent(this);
      ASSERT_not_null(get_startOfConstruct());
@@ -1539,7 +1536,8 @@ SgProject::parse(const vector<string>& argv)
    }
 
 
-SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
+SgSourceFile::SgSourceFile(vector<string> & argv, SgProject* project)
+   : SgSourceFile()
    {
      this->p_package = nullptr;
      this->p_import_list = nullptr;
@@ -1883,20 +1881,7 @@ string SgProject::findIncludedFile(PreprocessingInfo* preprocessingInfo) {
 }
 
 void
-SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
-   {
-  // Call the base class implementation!
-     SgFile::doSetupForConstructor(argv, project);
-   }
-
-void
-SgUnknownFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
-   {
-     SgFile::doSetupForConstructor(argv, project);
-   }
-
-void
-SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
+SgFile::doSetupForConstructor(const vector<string> &argv, SgProject* project)
    {
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
@@ -5674,29 +5659,15 @@ SgFile::isPrelinkPhase() const
 
 // DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
 //! Preprocessing command line and pass it to generate the final linking command line
-// int SgProject::link ()
-int SgProject::link ( std::string linkerName )
+int SgProject::link(std::string linkerName)
    {
   // DQ (30/8/2017): Csharp does not include a concept of linking, as I understand it presently.
-     if (get_Csharp_only() == true || get_Ada_only() == true)
+     if (get_Csharp_only() || get_Ada_only() || get_Jovial_only() || get_Jvm_only())
         {
-          mlog[WARN] << "In SgProject::link(): New language support is skipping the linking step (for now)"
-                     << std::endl;
-          return 0;
-        }
-     else if (get_Jovial_only() == true)
-        {
-          if (get_verbose() > 0)
-             cout << "WARNING: In SgProject::link(): Language support for Jovial is skipping the linking step (for now) \n";
+          mlog[WARN] << "In SgProject::link(): language doesn't support linking, skipping the linking step\n";
           return 0;
         }
 
-  // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
-  // or perhaps define a more simple function to use more directly.
-  // Liao, 11/20/2009
-  // translator test1.o will have ZERO SgFile attached with SgProject
-  // Special handling for this case
-  // if (numberOfFiles() == 0)
      if (numberOfFiles() == 0 && numberOfDirectories() == 0)
         {
           if (get_verbose() > 0)

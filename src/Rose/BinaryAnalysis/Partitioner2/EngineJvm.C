@@ -449,27 +449,15 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
 
     // Create an SgJvmComposite isa SgBinaryComposite isa SgFile
     auto jvmComposite = new SgJvmComposite;
-
     auto fileList = jvmComposite->get_genericFileList();
 
-    // The SgBinaryComposite (type of SgFile) points to the list of SgAsmGenericFile nodes created above.
-    // FIXME[Robb Matzke 2019-01-29]: The defaults set here should be set in the SgBinaryComposite constructor instead.
-    // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
-    //                                don't make much sense.
-
 // TODO: try to remove this initialization
-//
+//       Perhaps SgFile::doSetupForConstructor(argv, project); // (but we are post constructor!)
     jvmComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(paths[0]).string()); // best we can do
     jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string());                // best we can do
     jvmComposite->initializeSourcePosition(paths[0].string());                                // best we can do
     jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, paths[0].string())); // best we can do
     ASSERT_not_null(jvmComposite->get_file_info());
-
-//TODO:: Is this needed, should it be here (SgJvmComposite isa SgBinaryComposite isa SgFile)
-#if 0
-    jvmComposite->set_requires_C_preprocessor(false);
-    jvmComposite->set_isObjectFile(false);
-#endif
 
     // Load class files starting at this virtual address
     rose_addr_t baseVa = 0;
@@ -484,7 +472,7 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
 
     // Finally, create the _one_ interpretation
     auto interp = new SgAsmInterpretation;
-    auto interpList = new SgAsmInterpretationList;
+    auto interpList = jvmComposite->get_interpretations();
 
     // Add the interpretation to the list
     interpList->get_interpretations().push_back(interp);
@@ -501,20 +489,14 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
         }
     }
 
-    // Add the interpretation list to the SgJvmComposite node
-    jvmComposite->set_interpretations(interpList);
-    interpList->set_parent(jvmComposite);
-
     // The project
     SgProject* project = new SgProject;
     project->get_fileList().push_back(jvmComposite);
     jvmComposite->set_parent(project);
 
-    // Project is binary "like" and should not be compiled
-    project->set_binary_only(true);
+    // Project is JVM only (for now at least) and should not be compiled
+    project->set_Jvm_only(true);
     project->skipfinalCompileStep(true);
-    //TODO:: track Jvm_only down
-    //ASSERT_require(!project->get_Jvm_only());
 
     return project;
 }

@@ -906,24 +906,10 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        AST_FILE_IO::resetValidAstAfterWriting();
      }
 
-#if 0
-  // DQ (9/8/2017): Debugging ROSE_ASSERT.
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-     if (project->get_binary_only() == true)
-        {
-          ROSE_ASSERT(project != NULL);
-
-       // DQ (8/21/2008): Only output a message when we we use verbose option.
-          if ( SgProject::get_verbose() >= 1 )
-               printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
-
+     if (project->get_binary_only()) {
           project->skipfinalCompileStep(true);
-        }
+     }
 
-  // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
         {
        // Add forward references for instantiated template functions and member functions
@@ -933,8 +919,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // the file.  Note that this fixup is required since we have skipped the class template
        // definitions which would contain the declarations that we are generating.  We might
        // need that as a solution at some point if this fails to be sufficently robust.
-       // if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL-2 )
-       //      printf ("Calling fixupInstantiatedTemplates() \n");
 
        // generate C++ source code
           if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
@@ -948,83 +932,63 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           }
         }
 
-     if (project->numberOfFiles() > 0 || project->numberOfDirectories() > 0)
+     if (!project->get_skipfinalCompileStep() && (project->numberOfFiles() > 0 || project->numberOfDirectories() > 0))
         {
        // Compile generated C++ source code with vendor compiler.
-       // Generate object file (required for further template processing
-       // if templates exist).
+       // Generate object file (required for further template processing if templates exist).
           if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
               cout << "Calling project->compileOutput()\n";
           }
-
           finalCombinedExitStatus = project->compileOutput();
         }
        else
         {
-          if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-               printf ("   project->get_compileOnly() = %s \n",project->get_compileOnly() ? "true" : "false");
+          if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
+              printf ("   project->get_compileOnly() = %s \n",project->get_compileOnly() ? "true" : "false");
+          }
 
        // DQ (5/20/2005): If we have not permitted templates to be instantiated during initial
        // compilation then we have to do the prelink step (this is however still new and somewhat
        // problematic (buggy?)).  It relies upon the EDG mechansisms which are not well understood.
-          bool callTemplateInstantation = (project->get_template_instantiation_mode() == SgProject::e_none);
+          bool callTemplateInstantiation = (project->get_template_instantiation_mode() == SgProject::e_none);
+          ASSERT_require(!callTemplateInstantiation);
 
-          if (callTemplateInstantation == true)
-             {
-            // DQ (9/6/2005): I think that this is no longer needed
-               printf ("I don't think we need to call instantiateTemplates() any more! \n");
-               ROSE_ABORT();
-
-            // The instantiation of templates can cause new projects (sets of source files)
-            // to be generated, but since the object files are already processed this is
-            // not an issue here.  A project might, additionally, keep track of the ASTs
-            // associated with the different phases of instantions of templates.
-               if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-                    printf ("Calling instantiateTemplates() \n");
-
-               printf ("Skipping template support in backend(SgProject*) \n");
-            // instantiateTemplates (project);
-             }
-
-          if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-               printf ("Calling project->link() \n");
+          if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
+              printf ("Calling project->link() \n");
+          }
 
        // DQ (10/15/2005): Trap out case of C programs where we want to make sure that we don't use the C++ compiler to do our linking!
        // This could be done in the
           if (project->get_C_only() == true)
              {
                printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
-            // finalCombinedExitStatus = project->link("gcc");
                finalCombinedExitStatus = project->link(BACKEND_C_COMPILER_NAME_WITH_PATH);
              }
-            else if (project->get_Fortran_only() == true)
+          else if (project->get_Fortran_only() == true)
              {
                printf ("Link using the Fortran language linker (when handling Fortran programs) = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
                finalCombinedExitStatus = project->link(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
              }
-            else
+          else if (project->get_Jovial_only() || project->get_Jvm_only())
+             {
+            // Skip linking (this could apply to other language families also [Rasmussen 2024.05.16]
+               finalCombinedExitStatus = 0;
+             }
+          else
              {
             // Use the default name for C++ compiler (defined at configure time)
                if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                     printf ("Link using the default linker (when handling non-C programs) = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                finalCombinedExitStatus = project->link(BACKEND_CXX_COMPILER_NAME_WITH_PATH);
              }
-
-       // printf ("DONE with link! \n");
         }
 
-  // Message from backend to user.
-  // Avoid all I/O to stdout if useBackendOnly == true.
-  // if (project->get_useBackendOnly() == false)
-     if ( SgProject::get_verbose() >= 1 )
-          cout << "source file(s) compiled with vendor compiler. (exit status = " << finalCombinedExitStatus << ").\n" << endl;
+     if ( SgProject::get_verbose() >= 1 ) {
+        cout << "source file(s) compiled with vendor compiler. (exit status = " << finalCombinedExitStatus << ").\n" << endl;
+     }
 
   // Set the final error code to be returned to the user.
      project->set_backendErrorCode(finalCombinedExitStatus);
-
-#if 0
-     printf ("Leaving backend(SgProject*) (from utility_functions.C) \n");
-#endif
 
      return project->get_backendErrorCode();
    }
