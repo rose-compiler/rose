@@ -3,6 +3,8 @@
 
 #include <functional>
 #include <fstream>
+#include <iostream>
+#include <assert.h>
 
 class SgNode;
 class SgFunctionDeclaration;
@@ -11,6 +13,18 @@ namespace AstUtilInterface{
    enum OperatorSideEffect {
      Modify, Read, Kill, Call
    };
+   inline std::string OperatorSideEffectName(OperatorSideEffect what) {
+     switch (what) {
+      case OperatorSideEffect::Modify: return "modify";
+      case OperatorSideEffect::Read: return "read";
+      case OperatorSideEffect::Kill: return "kill";
+      case OperatorSideEffect::Call: return "call";
+      default:
+          std::cerr << "Error: Unexpected enum value:" << what << "\n";
+          assert(false);
+          return "";
+     }
+   }
    //! Returns the collection of memory references modified, read, and invoked (as 
    //! function calls) as potential side effects of running the given ast, inside the
    //! given scope. The functtion returns true if the collection is known to be

@@ -147,28 +147,27 @@ class MapDescriptor : public std::map< Key,Member>
 //! A descriptor for an identifier
 class StringDescriptor
 {
-  std::string name;
+  std::string name_;
  protected:
-  //Return the identifier
-  std::string get_name() const { return name; }
-  std::string& get_name() { return name; }
+  void set_name(const std::string& n) { name_ = n; }
  public:
-  StringDescriptor() : name("") {}
-  StringDescriptor( const std::string& n ) : name(n) {}
+  StringDescriptor() : name_("") {}
+  StringDescriptor( const std::string& n ) : name_(n) {}
 
-  operator std::string() const { return name; }
-  std::string get_string() const { return name; }
-  bool operator < ( const StringDescriptor& that) const { return name < that.name; }
-  bool operator == ( const StringDescriptor& that) const { return name == that.name; }
+  operator std::string() const { return name_; }
+  const std::string& get_string() const { return name_; }
+  std::string& get_string() { return name_; }
+  bool operator < ( const StringDescriptor& that) const { return name_ < that.name_; }
+  bool operator == ( const StringDescriptor& that) const { return name_ == that.name_; }
   //! Set the descriptor with the next identifier read from an input stream
   bool read( std::istream& in) 
       { 
-         name = read_id(in); 
-         return name != ""; 
+         name_ = read_id(in); 
+         return name_ != ""; 
       }
-  void write(std::ostream& out) const { out << name; }
+  void write(std::ostream& out) const { out << name_; }
   void Dump() const  { write(std::cerr); }
-  std::string ToString() const { return name; }
+  std::string ToString() const { return name_; }
 };
 
 class AstInterface;
@@ -177,21 +176,19 @@ class NameDescriptor : public StringDescriptor
 {
  public: 
   NameDescriptor()  {}
-  NameDescriptor( int i) { char buf[10]; snprintf(buf,sizeof(buf),"%d", i); get_name() =  "par__"+ std::string(buf); }
+  NameDescriptor( int i) { char buf[10]; snprintf(buf,sizeof(buf),"%d", i); set_name("par__"+ std::string(buf)); }
   NameDescriptor( const std::string& n ) : StringDescriptor(n) {}
-  NameDescriptor(AstInterface& fa, const AstNodePtr& exp) : StringDescriptor(get_signature(fa, exp)) {}
   bool read(std::istream& in);
-  bool write(std::ostream& out) const { return write(out, get_name()); }
-  static bool write(std::ostream& out, const std::string& content);
-  static std::string get_signature(AstInterface& fa, const AstNodePtr& exp); 
-  static std::string get_signature(const std::string& name);
+  bool write(std::ostream& out) const;
+  const std::string& get_name() const { return get_string(); }
+  std::string& get_name() { return get_string(); }
 };
 
-class TypeDescriptor : public StringDescriptor
+class TypeDescriptor : public NameDescriptor
 {
  public:
   TypeDescriptor() {}
-  TypeDescriptor( const std::string& n ) : StringDescriptor(n) {}
+  TypeDescriptor( const std::string& n ) : NameDescriptor(n) {}
   bool read(std::istream& in);
 };
 

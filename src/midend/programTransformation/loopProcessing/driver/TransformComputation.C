@@ -16,7 +16,6 @@
 #include <GraphIO.h>
 #include <ROSE_ASSERT.h>
 
-//#define DEBUG
 using namespace std;
 
 void LoopTransformation( LoopTreeDepComp& comp,
@@ -24,40 +23,6 @@ void LoopTransformation( LoopTreeDepComp& comp,
                          LoopTreeLocalityAnal &anal,
                          int optlevel);
 
-bool OutputDep()
-{
-  static int r = 0;
-  if (r == 0) {
-      if (CmdOptions::GetInstance()->HasOption("-outputdep"))
-           r = 1;
-      else
-           r = -1;
-  }
-  return r == 1;
-}
-
-bool DebugDep()
-{
-  static int r = 0;
-  if (r == 0) {
-      if (CmdOptions::GetInstance()->HasOption("-debugdep"))
-           r = 1;
-      else
-           r = -1;
-  }
-  return r == 1;
-}
-bool DebugLoop()
-{
-  static int r = 0;
-  if (r == 0) {
-      if (CmdOptions::GetInstance()->HasOption("-debugloop"))
-           r = 1;
-      else
-           r = -1;
-  }
-  return r == 1;
-}
 bool ReportTiming()
 {
   return CmdOptions::GetInstance()->HasOption("-tmloop") != 0;
@@ -94,13 +59,13 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
    AstNodePtr loop, top;
    int succ;
    int optType;
+   DebugLog DebugOpt;
 
    bool ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
                                       const AstNodePtr& body,
                                       AstInterface::TraversalVisitType t)
    {
-        if (DebugLoop())
-              std::cerr << "if fun definition ";
+        DebugOpt("Seeing function definition inside, setting optimizability to falses");
         succ = -1;
         return false;
    }
@@ -108,8 +73,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
    bool ProcessDecls(AstInterface &fa, const AstNodePtr& s)
      {
         if (fa.IsVariableDecl(s) && fa.GetParent(s) != top) {
-           if (DebugLoop())
-              std::cerr << "has declaration " << AstInterface::AstToString(s) << "\n";
+           DebugOpt("Not optimizable b/c local variable declaration " + AstInterface::AstToString(s) );
             succ = -1;
             return false;
         }
@@ -122,9 +86,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
            return false;
 
         if (!fa.IsFortranLoop(s)) {
-           if (DebugLoop()) {
-              std::cerr << "not fortran loop " << AstInterface::AstToString(s) << std::endl;
-           }
+           DebugOpt("Not Optimizable due to non-fortran loop: " + AstInterface::AstToString(s));
            succ = -1;
            return false;
         }
@@ -132,8 +94,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
            if (loop == 0)
               loop = s;
            else if (loop != 0 && !(optType & LoopTransformOptions::LOOP_DATA_OPT)) {
-              if (DebugLoop())
-                  std::cerr << "no optimization specified \n";
+              DebugOpt("Not optimizable b/c no optimization is specified");
               succ = -1;
               return false;
            }
@@ -168,7 +129,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
 
  public:
    AstTreeOptimizable( LoopTransformOptions::OptType t )
-     : loop(AST_NULL), succ(0), optType(t) { }
+     : loop(AST_NULL), succ(0), optType(t), DebugOpt("-debugopt") { }
    bool operator()( const AstNodePtr& head)
     {
        loop = AST_NULL; succ = 0;
@@ -238,15 +199,15 @@ extern double GetWallTime();
 
 bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
 {
-#ifdef DEBUG
-std::cerr << "LoopTransformation1\n";
-#endif
+   DebugLog DebugOpt("-debugopt");
+
+  DebugOpt("LoopTransformation1");
 
  /*CmdOptions *opt =*/ CmdOptions::GetInstance();
  bool reportPhaseTiming = ReportTiming();
- bool debugloop = DebugLoop(), debugdep = DebugDep(), outputdep=OutputDep();
+ bool outputdep = CmdOptions::GetInstance()->HasOption("-outputdep");
 
- bool depOnly = debugdep || outputdep; // opt->HasOption("-depAnalOnly");
+ bool depOnly = outputdep || CmdOptions::GetInstance()->HasOption("-depAnalOnly");
  LoopTransformOptions *lopt = LoopTransformOptions::GetInstance();
  AstTreeOptimizable sel(lopt->GetOptimizationType());
  if (!depOnly && !sel(head)) {
@@ -256,24 +217,11 @@ std::cerr << "LoopTransformation1\n";
   AstInterface &fa = LoopTransformInterface::getAstInterface();
 
 
-  if (debugloop) {
-    std::cerr <<"----------------------------------------------"<<endl;
-    std::cerr << "try applying loop transformation to \n";
-    std::cerr << AstInterface::AstToString(head) << std::endl;
-  }
+  DebugOpt("Try applying loop transformation to " + AstInterface::AstToString(head));
   if (reportPhaseTiming) GetWallTime();
   LoopTreeDepCompCreate comp(head);
   if (reportPhaseTiming) std::cerr << "dependence analysis time: " <<  GetWallTime() << "\n";
-  if (debugloop) {
-     std::cerr <<"----------------------------------------------"<<endl;
-    std::cerr << "original LoopTree : \n";
-     comp.DumpTree();
-  }
-  if (debugdep) {
-     std::cerr <<"----------------------------------------------"<<endl;
-     std::cerr << "LoopTree dependence graph: \n";
-     comp.DumpDep();
-  }
+  DebugOpt("original LoopTree :" + comp.TreeToString());
   if (outputdep) {
      std::cerr <<"----------------------------------------------"<<endl;
      std::cerr << "dependence graph: \n";
@@ -282,11 +230,7 @@ std::cerr << "LoopTransformation1\n";
 
   if (!depOnly && sel.PerformTransformation()) {
       LoopTreeLocalityAnal loopAnal(comp);
-      if (debugdep)
-      {
-          std::cerr <<"----------------------------------------------"<<endl;
-          std::cerr << "LoopTree input dep graph: \n" << GraphToString(*loopAnal.GetInputGraph()) << std::endl;
-      }
+      DebugOpt("LoopTree input dep graph: " + GraphToString(*loopAnal.GetInputGraph()));
       if (lopt->DoDynamicTuning()) {
            DynamicSlicing op;
            LoopTransformation( comp, op, loopAnal, ApplyOptLevel());
@@ -295,27 +239,14 @@ std::cerr << "LoopTransformation1\n";
            DependenceHoisting op;
            LoopTransformation( comp, op, loopAnal, ApplyOptLevel());
       }
-      if (debugloop) {
-            std::cerr << "\n final LoopTree : \n";
-            comp.DumpTree();
-        std::cerr <<"----------------------------------------------"<<endl;
-      }
-     if (debugdep) {
-        std::cerr << "final dependence graph: \n";
-        comp.DumpDep();
-        std::cerr <<"=============================================="<<endl;
-     }
+      DebugOpt("Final LoopTree : " + comp.TreeToString());
   }
 
   comp.DetachDepGraph();
   if (ApplyLoopSplitting())
     ApplyLoopSplitting(comp.GetLoopTreeRoot());
 
-  if (debugloop) {
-            std::cerr << "\n Before CodeGen : \n";
-            comp.DumpTree();
-        std::cerr <<"----------------------------------------------"<<endl;
-   }
+  DebugOpt("Before CodeGen : " + comp.TreeToString());
 
   AstNodePtr r = comp.CodeGen();
   assert (r != 0);
@@ -376,15 +307,15 @@ void LoopTransformation( LoopTreeDepComp& comp,
                          LoopTreeLocalityAnal &loopAnal,
                          int optlevel)
 {
-#ifdef DEBUG
-std::cerr << "LoopTransformation2\n";
-#endif
   LoopTransformOptions *lopt = LoopTransformOptions::GetInstance();
   bool reportPhaseTimings = ReportTiming();
+  DebugLog DebugOpt("-debugopt");
+
 
   CopyArrayOperator *cp = lopt->GetCopyArraySel();
   if (!(lopt->GetOptimizationType() & LoopTransformOptions::LOOP_OPT))
   {
+     DebugOpt("Configured to skip optimization");
      if (cp != 0) (*cp)(loopAnal, comp.GetLoopTreeRoot());
      return;
   }
@@ -399,28 +330,18 @@ std::cerr << "LoopTransformation2\n";
   CompSliceDepGraphCreate sliceGraph(comp, op, &tc);
   if (reportPhaseTimings) std::cerr <<  "slicing analysis timing:" << GetWallTime() << "\n";
 
-  if (DebugDep()) {
-     std::cerr << "Transitive dependence graph:\n";
-     tc.Dump();
-  }
   CompSliceLocalityRegistry sliceAnal(loopAnal, lopt->GetCacheLineSize(), lopt->GetReuseDistance());
   RearrangeCompSliceGraph(comp, sliceGraph, sliceAnal);
   if (reportPhaseTimings)  std::cerr << "transformation analysis timing:" << GetWallTime() << "\n";
 
   sliceGraph.TopoSort();
-  if (DebugLoop()) {
-     std::cerr << "*******before xform*****";
-     comp.DumpTree();
-   }
-   if (DebugDep()) {
-     std::cerr << "*******before xform*****";
-     comp.DumpDep();
-   }
+  DebugOpt("*******before xform*****" + comp.TreeToString());
   LoopTreeNode* top = comp.GetLoopTreeRoot();
   top = LoopTreeTransform().InsertHandle(top,1);
   for (CompSliceDepGraphCreate::NodeIterator iter = sliceGraph.GetNodeIterator();
        !iter.ReachEnd(); ++iter) {
       CompSliceDepGraphNode *n = iter.Current();
+      DebugOpt("Slice Graph Node:" + n->toString());
       CompSliceDepGraphNode::NestInfo& nest = n->GetInfo();
 
       assert(top != 0);
@@ -437,14 +358,8 @@ std::cerr << "LoopTransformation2\n";
       loopTree_handle = blocking->apply(*info,comp,op,loopTree_handle);
       if (par != 0)
           loopTree_handle=par->apply(*info,comp,op,loopTree_handle);
-      if (DebugLoop()) {
-         std::cerr << "*******after xform*****";
-         comp.DumpTree();
-      }
-      if (DebugDep()) {
-         std::cerr << "*******after xform*****";
-         comp.DumpDep();
-      }
+      DebugOpt("*******after xform*****" + comp.TreeToString());
+      DebugOpt("*******after xform*****" + comp.DepToString());
       if (optlevel-- > 0) {
          for (CompSlice::ConstLoopIterator p = slice->GetConstLoopIterator();
               !p.ReachEnd(); ++p) {
@@ -459,8 +374,7 @@ std::cerr << "LoopTransformation2\n";
       }
       if (cp != 0) {
           LoopTreeTransform().InsertHandle(loopTree_handle,-1);
-          if (DebugLoop())
-             std::cerr << "applying array copy to " << loopTree_handle->TreeToString() << std::endl;
+          DebugOpt("Applying array copy to " + loopTree_handle->TreeToString());
           (*cp)(loopAnal, loopTree_handle->Parent());
       }
    }

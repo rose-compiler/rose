@@ -619,7 +619,7 @@ class SplitFraction : public SymbolicVisitor
   virtual void VisitFunction( const SymbolicFunction &v)
    {
      bool _hasfrac = hasfrac;
-     std::string op = v.GetOp();
+     std::string op = v.GetOp().toString();
      if (op == "pow" && v.last_arg() < 0) {
          _hasfrac = true;
          if (frp != 0) *frp = v;

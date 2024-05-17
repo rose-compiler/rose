@@ -1,16 +1,16 @@
 
 #include "OperatorAnnotation.h"
 #include <ROSE_ASSERT.h>
+#include "CommandOptions.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
+DebugLog DebugOperatorAnnotation("-debugopa");
 
 OperatorInlineAnnotation* OperatorInlineAnnotation::inst = 0;
 OperatorSideEffectAnnotation* OperatorSideEffectAnnotation::inst = 0;
 OperatorAliasAnnotation* OperatorAliasAnnotation::inst = 0;
 
 bool OperatorInlineAnnotation::
-known_operator( AstInterface& fa, const AstNodePtr& arrayExp, SymbolicVal* val) const
+known_operator( AstInterface& fa, const AstNodePtr& arrayExp, SymbolicVal* val) 
 {
   typedef OperatorAnnotCollection<OperatorInlineDescriptor> BaseClass;
   if (val == 0)
@@ -33,19 +33,17 @@ static bool
 AliasAnnotAnal(AstInterface& fa,
                OperatorAnnotCollection <OperatorAliasDescriptor>& aliasInfo,
                const AstNodePtr& fc, const AstNodePtr& result,
-               CollectObject< pair<AstNodePtr, int> >& collectalias)
+               CollectObject< std::pair<AstNodePtr, int> >& collectalias)
 {
   AstInterface::AstNodeList args;
   OperatorAliasDescriptor desc;
   if (!aliasInfo.known_operator( fa, fc, &args, &desc, false) )
     return false;
   if (desc.get_param_decl().get_params().size() != args.size()) {
-    if (DebugAnnot()) {
-       std::cerr << "Parameter and argument sizes are different. \n";
-    }
+    DebugOperatorAnnotation("AliasAnnotationAnalysis: Parameter and argument sizes are different. Return false.");
     return false;
   }
-  ReplaceParams paramMap( desc.get_param_decl().get_params(), args);
+  ReplaceParams paramMap( desc.get_param_decl(), args);
   paramMap.add("result", result);
   int index = 0;
   for (OperatorAliasDescriptor::const_iterator p1 = desc.begin();
@@ -53,14 +51,14 @@ AliasAnnotAnal(AstInterface& fa,
     const NameGroup& cur = *p1;
     for (NameGroup::const_iterator p2 = cur.begin();
          p2 != cur.end(); ++p2) {
-      string varname = *p2;
+      std::string varname = *p2;
       AstNodePtr arg = paramMap.find(varname).get_ast();
       if (arg != AST_NULL) {
-        collectalias( pair<AstNodePtr, int>(arg, index));
+        collectalias( std::pair<AstNodePtr, int>(arg, index));
       }
       else {
         AstNodePtr var = fa.CreateVarRef(varname);
-        collectalias( pair<AstNodePtr, int>(var, index));
+        collectalias( std::pair<AstNodePtr, int>(var, index));
       }
     }
   }
@@ -69,14 +67,14 @@ AliasAnnotAnal(AstInterface& fa,
 
 bool OperatorAliasAnnotation::
 may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-               CollectObject< pair<AstNodePtr, int> >& collectalias)
+               CollectObject< std::pair<AstNodePtr, int> >& collectalias)
 {
   return AliasAnnotAnal( fa, aliasInfo, fc, result, collectalias);
 }
 
 bool OperatorAliasAnnotation::
 allow_alias(AstInterface& fa, const AstNodePtr& fc,
-            CollectObject< pair<AstNodePtr, int> >& collectalias)
+            CollectObject< std::pair<AstNodePtr, int> >& collectalias)
 {
   return AliasAnnotAnal( fa, allowaliasInfo, fc, AST_NULL, collectalias);
 }
@@ -84,12 +82,6 @@ allow_alias(AstInterface& fa, const AstNodePtr& fc,
 #define TEMPLATE_ONLY
 #include <TypeAnnotation.C>
 template class ReadAnnotCollection<OperatorDeclaration, '{', ';','}'>;
-#if 0
-// DQ (1/8/2006): This needs to be placed AFTER AnnotDescriptors.C is included (fix appears specific to g++ 4.0.2)
-template class ReadContainer<ParameterDeclaration,
-                             CollectPair<TypeDescriptor, NameDescriptor,0>,
-                             ',', '(', ')'>;
-#endif
 template class TypeCollection<BoolDescriptor>;
 template class TypeAnnotCollection<BoolDescriptor>;
 template class TypeCollection<OperatorInlineDescriptor>;
@@ -105,12 +97,6 @@ template class WriteContainer<set<NameDescriptor>, ',', '(', ')'>;
 template class WriteContainer<vector<NameDescriptor>, ',', '(', ')'>;
 template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>,
                              NameDescriptor, ',','{','}'>;
-#if 0
-// DQ (1/8/2006): This does not appear to be required (unless it is type equivalant to the one using ParameterDeclaration
-template class ReadContainer<vector<CollectPair<TypeDescriptor, NameDescriptor, 0> >,
-                              CollectPair<TypeDescriptor, NameDescriptor, 0>,
-                              ',', '(', ')'>;
-#endif
 template class WriteContainer<vector<CollectPair<TypeDescriptor, NameDescriptor, 0> >, ',', '(', ')'>;
 
 // DQ (1/8/2006): force instantiation of this template so that the "read" member function will be available (required for g++ 4.0.2)

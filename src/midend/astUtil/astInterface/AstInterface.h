@@ -10,52 +10,59 @@
 #include <rosedll.h>
 #include <Rose/Diagnostics.h>
 
-class AstNodePtr;
+class AstNodePtr {
+ protected:
+  void* repr_;
+  std::string string_content_;
+ public:
+  enum class SpecialAstTypes {UNKNOWN_AST}; 
+  AstNodePtr(void* _repr=0, std::string string_content = "") : repr_(_repr), string_content_(string_content) {}
+  AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), string_content_(that.string_content_) {}
+  AstNodePtr(SpecialAstTypes t) {
+      switch (t) {
+       case SpecialAstTypes::UNKNOWN_AST : 
+           repr_ = 0; string_content_ = "_UNKNOWN_";
+           break;
+       default:
+          std::cerr << "Error: UNKNOWN Special AST type!";
+          assert(0);
+      }
+   }
+  ~AstNodePtr() {}
+  AstNodePtr& operator = (const AstNodePtr &that) 
+      { repr_ = that.repr_; string_content_ = that.string_content_; return *this; }
+  bool operator != (const AstNodePtr &that) const
+    { return repr_ != that.repr_ || string_content_ != that.string_content_; }
+  bool operator == (const AstNodePtr &that) const
+    { return repr_ == that.repr_ && string_content_ == that.string_content_; }
+  bool operator == (void *p) const
+    { return repr_ == p; }
+  bool operator != (void *p) const
+    { return repr_ != p; }
+  bool operator < (const AstNodePtr &that) const
+    { return repr_ < that.repr_; }
+  void * get_ptr() const { return repr_; }
+  void *& get_ptr() { return repr_; }
+  std::string get_string_content() const { return string_content_; }
+  std::string& string_content() { return string_content_; }
+};
+#define AST_NULL AstNodePtr()
+#define AST_UNKNOWN AstNodePtr(AstNodePtr::SpecialAstTypes::UNKNOWN_AST)
 
-class AST_Error { 
-   std::string msg;
-  public:
-   AST_Error(const std::string& _msg) : msg(_msg) {}
-   std::string get_msg() { return msg; }
+class AstNodeType : private AstNodePtr {
+ protected:
+  AstNodeType(void* _repr, std::string string_content = "") : AstNodePtr(_repr, string_content) {}
+ public:
+  AstNodeType() : AstNodePtr(0) {}
+  AstNodeType(AstNodePtr::SpecialAstTypes t) : AstNodePtr(t) {}
+  AstNodeType( const AstNodeType& that) : AstNodePtr(that) {}
+  AstNodeType& operator = (const AstNodeType &that) 
+      { AstNodePtr::operator = (that); return *this; }
+  ~AstNodeType() {}
+  using AstNodePtr::get_ptr;
 };
 
 class AstInterfaceImpl;
-class AstNodePtr {
- protected:
-  void* repr;
- public:
-  AstNodePtr(void* _repr=0) : repr(_repr) {}
-  AstNodePtr( const AstNodePtr& that) : repr(that.repr) {}
-  ~AstNodePtr() {}
-  AstNodePtr& operator = (const AstNodePtr &that) 
-      { repr = that.repr; return *this; }
-  bool operator != (const AstNodePtr &that) const
-    { return repr != that.repr; }
-  bool operator == (const AstNodePtr &that) const
-    { return repr == that.repr; }
-  bool operator == (void *p) const
-    { return repr == p; }
-  bool operator != (void *p) const
-    { return repr != p; }
-  bool operator < (const AstNodePtr &that) const
-    { return repr < that.repr; }
-  void * get_ptr() const { return repr; }
-  void *& get_ptr() { return repr; }
-};
-#define AST_NULL AstNodePtr()
-
-class AstNodeType {
- protected:
-  void* repr;
- public:
-  AstNodeType() : repr(0) {}
-  AstNodeType( const AstNodeType& that) : repr(that.repr) {}
-  AstNodeType& operator = (const AstNodeType &that) 
-      { repr = that.repr; return *this; }
-  ~AstNodeType() {}
-  void * get_ptr() const { return repr; }
-  void *& get_ptr() { return repr; }
-};
 
 //! This is the base class for anyone who wants to be notified when AST nodes are being copied.
 class AstObserver {
@@ -104,8 +111,8 @@ public:
   // convert the enum type to a string
   static std::string toString (OperatorEnum op);
   typedef void* Ast;
-  typedef std::vector<Ast>  AstList;
-  typedef std::vector<Ast>  AstNodeList;
+  typedef std::vector<AstNodePtr>  AstList;
+  typedef std::vector<AstNodePtr>  AstNodeList;
   typedef std::vector<AstNodeType> AstTypeList;
 
   AstInterface(AstInterfaceImpl* __impl) : impl(__impl) {}
@@ -141,7 +148,7 @@ public:
   AstNodePtr GetParent( const AstNodePtr &n);
   AstNodePtr GetPrevStmt( const AstNodePtr& s);
   AstNodePtr GetNextStmt( const AstNodePtr& s);
-  static AstList GetChildrenList( const AstNodePtr &n);
+  static AstNodeList GetChildrenList( const AstNodePtr &n);
 
   bool IsDecls( const AstNodePtr& s) ;
   bool IsVariableDecl( const AstNodePtr& exp, AstList* vars = 0,
@@ -255,6 +262,7 @@ public:
   static bool IsAssignment( const AstNodePtr& s, AstNodePtr* lhs = 0, 
                                AstNodePtr* rhs = 0, bool* readlhs = 0); 
   AstNodePtr CreateAssignment( const AstNodePtr& lhs, const AstNodePtr& rhs);
+  AstNodePtr CreateFieldRef(std::string name1, std::string name2);
 
   bool IsIOInputStmt( const AstNodePtr& s, AstList* varlist = 0);
   bool IsIOOutputStmt( const AstNodePtr& s, AstList* explist = 0);
@@ -262,7 +270,7 @@ public:
   bool IsAddressOfOp( const AstNodePtr& _s);
   bool IsMemoryAccess( const AstNodePtr& s);
   static AstNodePtr IsExpression( const AstNodePtr& s, AstNodeType* exptype =0);
-  AstNodeType GetExpressionType( const AstNodePtr& s);
+  static AstNodeType GetExpressionType( const AstNodePtr& s);
 
   bool IsConstInt( const AstNodePtr& exp, int* value = 0) ;
   AstNodePtr CreateConstInt( int val)  ;

@@ -11,8 +11,6 @@
 #include <LoopTransformInterface.h>
 #include <SymbolicBound.h>
 
-extern bool DebugDep();
-
 class DependenceTesting;
 class DepInfoAnal 
 {
@@ -113,19 +111,13 @@ class SetDepEntry
        int dim1 = domain1.NumOfLoops();
        if (l1 >= dim1) {
          SetDomainRel(domain2, e, l1-dim1, l2-dim1);
-         if (DebugDep())
-            std::cerr << "setting domain2 entry(" << l1-dim1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
        }
        else if ( l2 >= dim1) {
          assert(dep != 0);
          SetDepRel( *dep, e, l1, l2-dim1);
-         if (DebugDep())
-            std::cerr << "setting dep entry(" << l1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
        }
        else  {
          SetDomainRel( domain1, e, l1, l2);
-         if (DebugDep())
-            std::cerr << "setting domain1 entry(" << l1 << ", " << l2 << ") = " << e.toString() << "\n";
        }
      }
   }
@@ -160,8 +152,6 @@ class SetDep
   operator bool() { return succ; }
   void finalize()
    { 
-     if (DebugDep())
-        std::cerr << "finalizing: domain1 = " << domain1.toString() << std::endl << "domain2 = " << domain2.toString() << std::endl;
      domain1.RestrictDepInfo( *dep, DEP_SRC);
      domain2.RestrictDepInfo( *dep, DEP_SINK);
    }
@@ -188,8 +178,6 @@ private:
         if (varmodInfo.Modify(curloop,name)) {
             res = new SymbolicVar(name + postfix, v.GetVarScope());
             reverse[name+postfix] = ReverseRec(name,curref);
-            if (DebugDep())
-                std::cerr << "replacing var " << v.toString() << " => " << res.toString() << "postfix = " << postfix << std::endl;
         }
         else
            reverse[name] = ReverseRec(name,curref);
@@ -253,8 +241,6 @@ class MakeUniqueVarGetBound
       node = entry.second;
       assert(node != AST_NULL);
       SymbolicBound r = SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>::GetConstBound(SymbolicVar(entry.first,var.GetVarScope()));
-      if (DebugDep())
-         std::cerr << "bound of " << var.toString() << " is " << r.toString() << std::endl;
       return r;
    }
 };

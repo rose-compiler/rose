@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <strstream>
 #include <LoopTreeDepComp.h>
 #include <LoopTreeBuild.h>
 
@@ -67,9 +68,7 @@ bool LoopTreeDepGraphCreate::DeleteNode( LoopTreeDepGraphNode *n)
 DepInfoEdge* LoopTreeDepGraphCreate::
 CreateEdge( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, const DepInfo& info)
    {
-     //assert(info.GetDepType() != DEPTYPE_NONE);
-  if (DebugDep())
- std::cerr << "Creating dep edge from " << n1->toString() << " to " << n2->toString() << ":" << info.toString() << "\n";
+     assert(info.GetDepType() != DEPTYPE_NONE);
      return DepInfoGraphCreate<LoopTreeDepGraphNode>::CreateEdge(n1,n2,info);
    }
 
@@ -86,8 +85,8 @@ CreateEdgeFromOrigAst( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2,
     }
 
 
-void LoopTreeDepComp :: DumpTree() const
-  { GetLoopTreeRoot()->DumpTree(); }
+std::string LoopTreeDepComp :: TreeToString() const
+  { return GetLoopTreeRoot()->TreeToString(); }
 
 void LoopTreeDepComp :: OutputDep() const
 {
@@ -117,12 +116,14 @@ void LoopTreeDepComp :: OutputDep() const
    }
 }
 
-void LoopTreeDepComp :: DumpDep() const
+std::string LoopTreeDepComp :: DepToString() const
 {
    GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
              = GetDepGraph()->GetNodeIterator();
    assert(!nodes.ReachEnd());
-   write_graph(*GetDepGraph(), std::cerr, std::string("dep"));
+   std::strstream out;
+   write_graph(*GetDepGraph(), out, std::string("dep"));
+   return out.str();
 }
 void LoopTreeDepComp :: DumpNode( LoopTreeNode *s) const
    { std::cerr << GraphNodeToString(*GetDepGraph(),  GetDepNode(s) ) << std::endl; }
@@ -246,8 +247,6 @@ class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
                   return;
              }
           }
-  if (DebugDep())
- std::cerr << "Trying to create dep edge:" << info.toString() << "\n";
           graph.CreateEdgeFromOrigAst(n1,n2,info);
         }
   virtual DepInfoConstIterator
@@ -290,11 +289,6 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
   {
     LoopTreeNode *cur = iter.Current();
     for ( ; (cur != NULL && !cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0); iter.Advance(), cur = iter.Current());
-    if (DebugDep())  {
-      std::cerr << "Trying to create : " << AstInterface::AstToString(start) << "\n";
-      assert(cur!=NULL);
-      std::cerr << "current loop tree node:" << cur->toString() << "\n";
-     }
     assert(cur!=NULL);
     LoopTreeDepGraphNode *d = graph.CreateNode(cur, c);
     iter.Advance();

@@ -1,7 +1,10 @@
 #include <BlockingAnal.h>
 #include <LoopTreeTransform.h>
 #include <AutoTuningInterface.h>
+#include <CommandOptions.h>
 #include <ROSE_ASSERT.h>
+
+DebugLog DebugBlocking("-debugblocking");
 
 static int SliceNestReuseLevel(CompSliceLocalityRegistry *anal, const CompSliceNest& n)
      {
@@ -126,7 +129,6 @@ int LoopBlocking:: SetIndex( int num)
         return num;
       }
 
-extern bool DebugLoop();
 LoopTreeNode* LoopBlocking::
 apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
        LoopTreeDepComp& comp, DependenceHoisting &op, LoopTreeNode *top)
@@ -135,7 +137,7 @@ apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   if (nestInfo.GetNest()->NumberOfEntries() <= 0)
           return top;
 
-  bool debugloop = DebugLoop();
+  bool debugloop = DebugBlocking();
 
   if (debugloop) {
         std::cerr << "\n Apply Loop blocking: from\n";
@@ -158,7 +160,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
               LoopTreeDepComp& comp, DependenceHoisting &op, LoopTreeNode *&top)
 {
   const CompSliceNest& slices = *nestInfo.GetNest();
-  if (DebugLoop()) {
+  if (DebugBlocking()) {
      std::cerr << "\n Blocking slices: " << slices.toString() << "\n";
   }
   LoopTreeNode *head = 0;
@@ -166,9 +168,8 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   for (int j = FirstIndex(); j >= 0; j = NextIndex(j))  {
      top = op.Transform( comp, slices[j], top);
      SymbolicVal b = BlockSize(j);
-     if (DebugLoop()) {
+     if (DebugBlocking()) {
         std::cerr << "\n after slice " << j << " : \n";
-        //top->DumpTree();
         comp.DumpTree();
         comp.DumpDep();
         std::cerr << "\n blocking size for this loop is " << b.toString() << "\n";
@@ -176,9 +177,8 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
 
      if (!(b == 1)) {
          LoopTreeNode *n = LoopTreeBlockLoop()( top, SymbolicVar(fa.NewVar(fa.GetType("int")), AST_NULL), b);
-         if (DebugLoop()) {
+         if (DebugBlocking()) {
             std::cerr << "\n after tiling loop with size " << b.toString() << " : \n";
-            //top->DumpTree();
             comp.DumpTree();
             comp.DumpDep();
          }

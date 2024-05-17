@@ -64,6 +64,9 @@ std::string SymbolicVar :: toString() const
 
 AstNodePtr  SymbolicVar :: CodeGen( AstInterface &fa) const
 {
+  if (exp_ != 0) {
+     return fa.CopyAstTree(exp_);
+  }
   return fa.CreateVarRef(varname, scope);
 }
 
@@ -102,7 +105,7 @@ std::string SymbolicFunction :: toString() const
       r = r + (*i).toString() + ",";
    }
    r[r.size()-1] = ')';
-   return op + r;
+   return op.toString() + r;
 }
 
 bool SymbolicFunction:: operator == (const SymbolicFunction& that) const
@@ -128,7 +131,7 @@ AstNodePtr SymbolicFunction :: CodeGen( AstInterface &_fa) const
      l.push_back(curast.get_ptr());
   }
   if (t == AstInterface::OP_NONE) {
-     return _fa.CreateFunctionCall( op, l.begin(), l.end());
+     return _fa.CreateFunctionCall( op.CodeGen(_fa), l.begin(), l.end());
   }
   else if (t == AstInterface::OP_ARRAY_ACCESS) {
         AstNodeList::const_iterator b = l.begin();
@@ -275,7 +278,7 @@ IsFortranLoop(AstInterface& fa, const AstNodePtr& s, SymbolicVar* ivar ,
          return false;
   }
   if (ivar != 0)
-     *ivar = SymbolicVar(varname, ivarscope);
+     *ivar = SymbolicVar(varname, ivarscope, ivarast);
   if (lb != 0)
      *lb = SymbolicValGenerator::GetSymbolicVal(fa,lbast);
   if (ub != 0)
@@ -298,11 +301,11 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   AstNodePtr s1, s2;
   AstInterface::AstNodeList l;
   AstInterface::OperatorEnum opr = (AstInterface::OperatorEnum)0;
-  if (fa.IsVarRef(exp, 0, &name, &scope)) {
-     return new SymbolicVar( name, scope );
-  }
-  else if (fa.IsConstInt(exp, &val)) {
+  if (fa.IsConstInt(exp, &val)) {
      return new SymbolicConst( val );
+  }
+  else if (fa.IsVarRef(exp, 0, &name, &scope)) {
+     return new SymbolicVar( name, scope, exp );
   }
   else if (fa.IsBinaryOp(exp, &opr, &s1, &s2)) {
      SymbolicVal v1 = GetSymbolicVal( fa, s1 ), v2 = GetSymbolicVal(fa, s2);
@@ -388,7 +391,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
            SymbolicVal cur = GetSymbolicVal(fa, *p);
            args.push_back( cur );
         }
-        return new SymbolicFunction( AstInterface::OP_NONE, name, args);
+        return new SymbolicFunction( AstInterface::OP_NONE, new SymbolicAstWrap(s1), args);
      }
   }
   return new SymbolicAstWrap(exp);

@@ -2,27 +2,31 @@
 #include <cctype>
 #include <string>
 #include "OperatorDescriptors.h"
+#include "CommandOptions.h"
+#include "AstInterface.h"
 
 using namespace std;
 
-extern bool DebugAnnot();
+DebugLog DebugOperatorDescriptor("-debugopd");
 ReplaceParams::
-ReplaceParams ( const ParamDescriptor& decl, AstInterface::AstNodeList& args,
+ReplaceParams ( const ParameterDeclaration& decl, const AstInterface::AstNodeList& args,
                 Map2Object<AstInterface*,AstNodePtr,AstNodePtr>* codegen)
 {
-  if (decl.size() != args.size()) {
+  if (decl.get_params().size() != args.size()) {
     std::cerr << "Error: mismatching numbers of parameters and arguments in annotation." 
-            << decl.size() << " vs " << args.size() << "\n";
+            << decl.get_params().size() << " vs " << args.size() << "\n";
     assert(false);
     throw MisMatchError();
   }
   int index = 0;
-  for (AstInterface::AstNodeList::iterator p1 = args.begin();
+  for (AstInterface::AstNodeList::const_iterator p1 = args.begin();
        p1 != args.end(); ++p1, ++index) {
     AstNodePtr curAst = *p1;
-    string curpar = decl[index];
+    string curpar = decl.get_params()[index];
     SymbolicAstWrap curarg(curAst, codegen);
     parmap[curpar] = curarg;
+    partypemap[curpar] = decl.get_param_types()[index];
+    DebugOperatorDescriptor("Operator parameter " + curpar + "->" + curarg.toString());
   }
 }
 
@@ -39,9 +43,7 @@ SymbolicAstWrap ReplaceParams:: find( const string& varname)
   if (p != parmap.end()) {
     return (*p).second;
   }
-  if (DebugAnnot()) {
-    std::cerr << "Error: Cannot find argument for parameter: " << varname << "\n";
-  }
+  DebugOperatorDescriptor("Cannot find argument for parameter: " + varname + ". Returning empty!");
   return SymbolicAstWrap();
 }
 
@@ -58,37 +60,42 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
   v.replace_val( *this);
 }
 
-bool OperatorDeclaration::unique = false;
-
 std::string OperatorDeclaration::operator_signature( const AstNodePtr& exp, 
                                  AstInterface::AstNodeList* argp,
                                  AstInterface::AstTypeList* paramp) {
-    if (DebugAnnot()) {
-      std::cerr << "Creating operator signature:" << AstInterface::AstToString(exp) << "\n";
-    }
+    DebugOperatorDescriptor("Creating operator signature:" + AstInterface::AstToString(exp));
     std::string fname;
     AstNodePtr f;
     AstNodeType t;
     AstTypeList params;
-    if ((AstInterface::IsVarRef(exp,&t,&fname, 0, 0, /*use_globl_name=*/true) && AstInterface::IsFunctionType(t, &params)) || 
-        (AstInterface::IsFunctionCall(exp, &f, argp, 0, &params) && AstInterface::IsVarRef(f,0,&fname, 0, 0, /*use_globl_name=*/true)) || 
-         AstInterface::IsFunctionDefinition(exp,&fname,argp,0,0, &params, 0, /*use_globl_name=*/true)) { 
-       if (paramp != 0) *paramp = params;
+    if (paramp == 0) paramp = &params;
+    if (AstInterface::IsVarRef(exp,&t,&fname, 0, 0, /*use_globl_name=*/true) && AstInterface::IsFunctionType(t, paramp)) {
+       if (argp != 0 && paramp->size() == 1) {
+          argp->push_back(exp.get_ptr());
+       }  
     }
-    if (DebugAnnot()) {
-      std::cerr << "Unexpected operator: not recognized:" << AstInterface::AstToString(exp) << "\n";
+    else if ((AstInterface::IsFunctionCall(exp, &f, argp, 0, paramp) && AstInterface::IsVarRef(f,0,&fname, 0, 0, /*use_globl_name=*/true)) || 
+         AstInterface::IsFunctionDefinition(exp,&fname,argp,0,0, paramp, 0, /*use_globl_name=*/true)) { 
+    } else {
+      DebugOperatorDescriptor("Unexpected operator: not recognized:" + AstInterface::AstToString(exp) + ". Return empty name.");
     }
     return fname;
   }
 
-OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast) {
+OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast,
+                                  AstInterface::AstNodeList* argp) {
     AstInterface::AstTypeList params;
     AstInterface::AstNodeList args;
-    signiture = operator_signature(op_ast, &args, &params);
-    assert(params.size() == args.size());
-    AstInterface::AstNodeList::const_iterator p1 = args.begin();
+    if (argp == 0) { argp = &args; }
+    TypeDescriptor::get_name() = operator_signature(op_ast, argp, &params);
+    if (TypeDescriptor::get_name() == "" || params.size() != argp->size()) {
+        DebugOperatorDescriptor("Error: Unknown operation: " + AstInterface::AstToString(op_ast) + ". Generatign empty declaration.");
+        return;
+    } 
+    AstInterface::AstNodeList::const_iterator p1 = argp->begin();
     AstInterface::AstTypeList::const_iterator p2 = params.begin(); 
-    while (p2 != params.end() && p1 != args.end()) {
+    while (p2 != params.end() && p1 != argp->end()) {
+       DebugOperatorDescriptor("Adding operator parameter:" + fa.GetVarName(*p1));
        pars.add_param(fa.GetTypeName(*p2), AstInterface::GetVarName(*p1));
        ++p1; ++p2;
     }
@@ -98,7 +105,7 @@ OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast) {
 OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
    {
       // Signature is the full function name, possibly with several qualifiers
-      signiture = read_id(in);
+      std::string signiture = read_id(in);
 
       string classname, funcname;
 
@@ -136,15 +143,9 @@ OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
 
       for (unsigned i = index; i < pars.num_of_params(); ++i) {
          string partype = pars.get_param_type(i);
-         if (!unique)
-            signiture = signiture + "_" + partype;
+         signiture = signiture + "_" + partype;
       }
+      TypeDescriptor::get_name() = signiture;
       return *this;
-   }
-
-void OperatorDeclaration:: write( ostream& out) const
-   {
-      out << get_signiture();
-      pars.write(out);
    }
 

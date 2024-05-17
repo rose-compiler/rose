@@ -19,20 +19,20 @@ class AstNodePtrImpl : public AstNodePtr {
  public:
   AstNodePtrImpl( SgNode* n = 0) : AstNodePtr(n) {}
   AstNodePtrImpl( const AstNodePtr& that) : AstNodePtr(that) {}
-  SgNode* get_ptr() const { return static_cast<SgNode*>(repr); }
-  SgNode* operator -> () const { return static_cast<SgNode*>(repr); }
+  SgNode* get_ptr() const { return static_cast<SgNode*>(repr_); }
+  SgNode* operator -> () const { return static_cast<SgNode*>(repr_); }
 };
 
 
 class AstNodeTypeImpl : public AstNodeType {
  public:
-  AstNodeTypeImpl( SgType* n = 0) { AstNodeType::repr = n; }
+  AstNodeTypeImpl( SgType* n = 0) : AstNodeType(n) {}
   AstNodeTypeImpl( const AstNodeType& that) : AstNodeType(that) {}
   AstNodeType& operator = (const AstNodeType &that) 
       { AstNodeType::operator = (that); return *this; }
   ~AstNodeTypeImpl() {}
-  SgType* get_ptr() const { return static_cast<SgType*>(repr); }
-  SgType* operator -> () const { return static_cast<SgType*>(repr); }
+  SgType* get_ptr() const { return static_cast<SgType*>(AstNodeType::get_ptr()); }
+  SgType* operator -> () const { return static_cast<SgType*>(AstNodeType::get_ptr()); }
 };
 
 #define AstNodePtr2Sage(a)  AstNodePtrImpl(a).get_ptr()
@@ -89,7 +89,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
 
   SgNode* CreateFunction( std::string name, int numOfPars);
   SgNode* CreateFunctionCall( SgNode* func, AstNodeList::const_iterator, AstNodeList::const_iterator e);
-  static bool IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args);
+  static bool IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstInterfaceImpl::AstTypeList*, AstNodeType*);
 
   /*QY: if yes, set ivar,lb,ub,step, and body accordingly */
   static bool IsFortranLoop( const SgNode* s, SgNode** ivar = 0,

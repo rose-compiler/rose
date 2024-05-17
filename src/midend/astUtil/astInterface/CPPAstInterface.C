@@ -67,7 +67,7 @@ IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj,
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   SgNode* f;
   AstInterface::AstNodeList args;
-  if (!impl->IsFunctionCall(s, &f, &args)) {
+  if (!impl->IsFunctionCall(s, &f, &args, 0, 0)) {
     return false;
   }
   //Excluding member function reference expressions.
@@ -91,7 +91,7 @@ IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj,
   //Store object from the first argument
   if (obj != 0) {
      assert(args.size() > 0);
-     *obj = AstNodePtrImpl((SgNode*)args.front());
+     *obj = AstNodePtrImpl(args.front());
   }
   //Store function call arguments, excluding the firt one
   if (_args != 0) {
@@ -139,7 +139,7 @@ bool CPPAstInterface :: IsPlusPlus( const AstNodePtr& _s, AstNodePtr* opd)
   AstNodeList args;
   if ( IsFunctionCall(s, &op, &args) && IsVarRef(op,0,&fname) 
        && strstr(fname.c_str(),"operator++") != 0) {
-      if (opd != 0) *opd = AstNodePtrImpl((SgNode*)args.front());
+      if (opd != 0) *opd = AstNodePtrImpl(args.front());
       return true;
   }
   if ( s->variantT() == V_SgPlusPlusOp)  {

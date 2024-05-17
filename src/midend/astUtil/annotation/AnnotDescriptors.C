@@ -159,8 +159,9 @@ bool NameDescriptor:: read(istream& in)
 }
 
 //! Read in a variable name, supporting qualified names
-bool NameDescriptor::write(std::ostream& out, const std::string& content) 
+bool NameDescriptor::write(std::ostream& out) const
 {
+  std::string content = get_name(); 
   auto output_char = [&out, &content] (const char c) {
        if (std::isalnum(c) || c == ':') {
          out << c;
@@ -171,7 +172,6 @@ bool NameDescriptor::write(std::ostream& out, const std::string& content)
        } else if (c == ' ' || c == '\t' || c == '\n') {
          /* skip empty space */
        } else {
-          std::cerr << "Output special character " << c << " in name:" << content << "\n";
           out << c;
        }
   };
@@ -179,22 +179,6 @@ bool NameDescriptor::write(std::ostream& out, const std::string& content)
      output_char(c);
   }
   return true;
-}
-
-std::string NameDescriptor:: get_signature(const std::string& name) {
-  std::stringstream output;
-  write(output, name);
-  return output.str();
-}
-
-std::string NameDescriptor::
-get_signature(AstInterface& fa, const AstNodePtr& exp) {
-  std::string name;
-  if (fa.IsVarRef(exp,0,&name, 0, 0, true)) {
-      std::cerr << "Error: expecting a variable but get: " << fa.AstToString(exp) << "\n";
-      assert(0);
-  }
-  return get_signature(name);
 }
 
 #endif

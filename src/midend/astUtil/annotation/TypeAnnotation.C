@@ -90,40 +90,35 @@ void TypeCollection<Descriptor>:: Dump() const {
 }
 
 template <class Descriptor>
-bool TypeCollection<Descriptor>::
-   known_type( const TypeDescriptor &name, Descriptor* desc)  const
-     {
-       const_iterator p = typemap.find(name);
+Descriptor* TypeCollection<Descriptor>::
+   known_type( const TypeDescriptor &name) {
+       typename std::map<std::string,Descriptor>::iterator p = typemap.find(name);
        if (p != typemap.end()) {
-         if (desc != 0)
-            *desc = (*p).second;
          if (DebugAnnot())
             cerr << "recognized type: " << name.get_string() << endl;
-         return true;
+         return &(*p).second;
        }
        if (DebugAnnot())
             cerr << "not recognize type: " << name.get_string() << endl;
-       return false;
+       return 0;
      }
 template <class Descriptor>
-bool TypeCollection<Descriptor>::
-  known_type( AstInterface& fa, const AstNodePtr& exp, Descriptor* desc) const
-    {
+Descriptor* TypeCollection<Descriptor>::
+  known_type( AstInterface& fa, const AstNodePtr& exp) {
       AstNodeType type;
       if (fa.IsExpression(exp, &type)==AST_NULL)
-         return false;
+         return 0;
       std::string tname;
       fa.GetTypeInfo(type, 0, &tname);
-      return known_type( tname, desc);
+      return known_type( tname);
 
     }
 template <class Descriptor>
-bool TypeCollection<Descriptor>::
-  known_type( AstInterface& fa, const AstNodeType& type, Descriptor* desc) const
-    {
+Descriptor* TypeCollection<Descriptor>::
+  known_type( AstInterface& fa, const AstNodeType& type) {
       std::string tname;
       fa.GetTypeInfo(type, 0, &tname);
-      return known_type( tname, desc);
+      return known_type( tname);
     }
 
 template <class Descriptor>

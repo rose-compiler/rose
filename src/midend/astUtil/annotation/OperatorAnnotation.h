@@ -9,13 +9,14 @@
 #include <list>
 
 template <class Descriptor>
-class OperatorAnnotCollection
-: public AnnotCollectionBase<OperatorDeclaration>,
-  public TypeCollection<Descriptor>
+class OperatorAnnotCollection : 
+    public AnnotCollectionBase<OperatorDeclaration>,
+    public TypeCollection<Descriptor>
 {
- protected:
-  using TypeCollection<Descriptor>::typemap;
  public:
+  using TypeCollection<Descriptor>::known_type;
+  using TypeCollection<Descriptor>::add_annot;
+  using TypeCollection<Descriptor>::Dump;
   void read_descriptor( const OperatorDeclaration& target,
                         const std::string&/*annot*/, std::istream& in)
   {
@@ -23,43 +24,61 @@ class OperatorAnnotCollection
      d.read(in, target);
      add_annot( target, d);
   }
-  void add_annot( const OperatorDeclaration& op, const Descriptor& d)
-    {
-      std::string sig = op.get_signiture();
-      this->typemap[ sig ] = d;
-    }
-  bool known_operator( AstInterface& fa, 
-                       const AstNodePtr& exp, AstInterface::AstNodeList* argp=0, 
-                       Descriptor* desc= 0, bool replpar = false,
-                       Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) const
-  {
+  Descriptor* get_annot_descriptor(const OperatorDeclaration& op, bool insert_if_false = false) {
+      auto* result = known_type(op);
+      if (result == 0 && insert_if_false) {
+         Descriptor new_annot;
+         new_annot.set_param_decl(op.get_param_info());
+         result = add_annot(op, new_annot);
+         assert(result != 0);
+      }
+      if (result != 0 && result->get_param_decl().num_of_params() == op.get_param_info().num_of_params()) {
+         return result;
+      } 
+      // QY: This is not supposed to happen, but ignore it for now.
+      return 0;
+  }
+  template <class CollectObject>
+  bool CollectAnnotation(AstInterface& fa, const AstNodePtr& fc,
+                CollectObject* collect_f,
+                Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen = 0) {
     AstInterface::AstNodeList args;
-    std::string sig = OperatorDeclaration::operator_signature( exp, &args);
-    if (this->known_type( sig, desc) && desc->get_param_decl().get_params().size() == args.size()) {
-       if (argp != 0)
-          *argp = args;
-       if (desc != 0 && replpar) {
-         ParamDescriptor params = desc->get_param_decl().get_params();
-         ReplaceParams repl( params, args, astcodegen);
-         repl.add( "result", exp, astcodegen);
-         desc->replace_val( repl);
+    OperatorDeclaration op(fa, fc, &args);
+    // QY: This is not supposed to happen, but skip this case for now.
+    if (op.get_param_info().num_of_params() != args.size()) 
+      return false;
+    Descriptor *annot = get_annot_descriptor(op);
+    if (annot != 0) {
+       if (collect_f != 0) {
+          annot->collect(fa, args, *collect_f, astcodegen);
        }
        return true;
     }
     return false;
   }
-  bool get_annot(AstInterface& fa, const AstNodePtr& fc,
-                CollectObject< AstNodePtr >* collect_f) {
-  AstInterface::AstNodeList args;
-  Descriptor annot;
-  if  (known_operator( fa, fc, &args, &annot)) {
-       if (collect_f != 0)
-         annot.collect(fa, args, *collect_f);
-       return true;
+  bool known_operator( AstInterface& fa, 
+                       const AstNodePtr& exp, AstInterface::AstNodeList* argp=0, 
+                       Descriptor* desc= 0, bool replpar = false,
+                       Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) 
+  {
+     AstInterface::AstNodeList args;
+     OperatorDeclaration op( fa, exp, &args);
+     Descriptor *original_descriptor = get_annot_descriptor(op);
+     if (original_descriptor == 0) {
+       return false;
+     }
+     if (argp != 0)
+         *argp = args;
+     if (desc != 0) {
+         *desc = *original_descriptor;
+         if (replpar) {
+           ReplaceParams repl = desc->GenReplaceParams( args, astcodegen);
+           desc->replace_val( repl);
+         }
+        return true;
+     }
+     return false;
    }
-  return false;
-}
-
 };
 
 class OperatorInlineAnnotation
@@ -78,7 +97,7 @@ class OperatorInlineAnnotation
       std::cerr << "inline: \n";
       OperatorAnnotCollection<OperatorInlineDescriptor>::Dump();
     }
-  bool known_operator( AstInterface& fa, const AstNodePtr& exp, SymbolicVal* val = 0) const;
+  bool known_operator( AstInterface& fa, const AstNodePtr& exp, SymbolicVal* val = 0); 
   void register_annot()
     { ReadAnnotation::get_inst()->add_OperatorCollection(this); }
   //Check if an operator has a 'inline {this.operator_2(dim)' record. 
@@ -125,11 +144,26 @@ class OperatorCallInfoCollection
     }
 };
 
+class OperatorKillInfoCollection
+  : public OperatorAnnotCollection<OperatorSideEffectDescriptor>
+{
+  virtual bool read_annot_name( const std::string& annotname) const
+   { return annotname == "kill"; }
+ public:
+  void Dump() const
+    {
+      std::cerr << "kill: \n";
+      OperatorAnnotCollection<OperatorSideEffectDescriptor>::Dump();
+    }
+};
+
+
 class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
 {
   OperatorModInfoCollection modInfo;
   OperatorReadInfoCollection readInfo;
   OperatorCallInfoCollection callInfo;
+  OperatorKillInfoCollection killInfo;
   static OperatorSideEffectAnnotation* inst;
   OperatorSideEffectAnnotation() {}
  public:
@@ -144,13 +178,29 @@ class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
       op->add_OperatorCollection(&modInfo);
       op->add_OperatorCollection(&readInfo);
       op->add_OperatorCollection(&callInfo);
+      op->add_OperatorCollection(&killInfo);
     }
+  OperatorSideEffectDescriptor* get_modify_descriptor( AstInterface& fa, const AstNodePtr& fc, bool insert_if_missing = false) { 
+      return modInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); 
+   }
   bool get_modify( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) override
-  { return modInfo.get_annot(fa, fc, collect); }
+  { return modInfo.CollectAnnotation(fa, fc, collect); }
+
+  OperatorSideEffectDescriptor* get_read_descriptor( AstInterface& fa, const AstNodePtr& fc, bool insert_if_missing = false)
+  { return readInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); }
   bool get_read( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) override
-  { return readInfo.get_annot(fa, fc, collect); }
+  { return readInfo.CollectAnnotation(fa, fc, collect); }
+
+  OperatorSideEffectDescriptor* get_call_descriptor( AstInterface& fa, const AstNodePtr& fc, bool insert_if_missing = false)
+  { return callInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); }
   bool get_call( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) override
-  { return callInfo.get_annot(fa, fc, collect); }
+  { return callInfo.CollectAnnotation(fa, fc, collect); }
+
+  OperatorSideEffectDescriptor* get_kill_descriptor( AstInterface& fa, const AstNodePtr& fc, bool insert_if_missing = false)
+  { return killInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); }
+  virtual bool get_kill( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) 
+  { return killInfo.CollectAnnotation(fa, fc, collect); }
+
   void add_modify(const OperatorDeclaration& op, OperatorSideEffectDescriptor& d) {
     modInfo.add_annot( op, d); 
   }
@@ -160,11 +210,15 @@ class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
   void add_call(const OperatorDeclaration& op, OperatorSideEffectDescriptor& d) {
     callInfo.add_annot( op, d); 
   }
+  void add_kill(const OperatorDeclaration& op, OperatorSideEffectDescriptor& d) {
+    killInfo.add_annot( op, d); 
+  }
   void write(std::ostream& out) const {
       modInfo.write(out); readInfo.write(out);
+      callInfo.write(out); killInfo.write(out);
   }
   void Dump() const
-    { modInfo.Dump(); readInfo.Dump(); }
+    { write(std::cerr); }
 };
 
 class OperatorAliasCollection 

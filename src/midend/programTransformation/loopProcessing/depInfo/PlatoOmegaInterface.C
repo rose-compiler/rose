@@ -28,7 +28,7 @@
 #include <MathUtils.h>
 #include <DDTypes.h>
 
-extern bool DebugDep();
+DebugLog DebugOmegaDep("-debugomegadep");
 extern DepTestStatistics DepStats;
  
 // DQ (3/8/2006): Since this is not used in a heade file it is OK here!
@@ -1268,7 +1268,7 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
         }
         else /** Finished constructing, now test **/
         {
-                if (DebugDep() || debug_doHierarchy)
+                if (DebugOmegaDep() || debug_doHierarchy)
                         std::cerr << "entering doHierarchy Testing Direction Vector " << str_dir_vec (dv, sharedLevel) << " level " << level <<std::endl;
                 Relation  copy_rel = copy(*_omega_relation);
                 Relation  dv_rel   = GetNewRelationFromDV(dv); //set relation to use new dv
@@ -1284,12 +1284,12 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                         j = i+tempDim;
                         OMEGA_STD_VAR input_var = dv_omega_relation.input_var(i+1);
                         OMEGA_STD_VAR output_var = dv_omega_relation.output_var(i+1);
-                        /*if (DebugDep() || debug_doHierarchy)
+                        /*if (DebugOmegaDep() || debug_doHierarchy)
                                 std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " looping " << std::endl;
                         */
                         if (dv_omega_relation.is_upper_bound_satisfiable())
                         {
-                                /*if (DebugDep() || debug_doHierarchy)
+                                /*if (DebugOmegaDep() || debug_doHierarchy)
                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " is upper bound sat " << std::endl;
                                 */
                                 //dv_omega_relation.print();
@@ -1302,7 +1302,7 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                                         //rel.UnionUpdate(rel,DepRel(DEPDIR_EQ,0));
                                         setdep[i][j] = rel;
                                         precise = true;
-                                        /*if (DebugDep() || debug_doHierarchy)
+                                        /*if (DebugOmegaDep() || debug_doHierarchy)
                                                 std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " assigned DEPDIR_EQ " << std::endl;
                                         */
                                 }
@@ -1314,20 +1314,20 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                                                 rel |= DepRel(DEPDIR_EQ,lower_bound,upper_bound);
                                                 //rel.UnionUpdate(rel,DepRel(DEPDIR_EQ,lower_bound,upper_bound));
                                                 setdep[i][j] = rel;
-                                                if (DebugDep() || debug_doHierarchy)
+                                                if (DebugOmegaDep() || debug_doHierarchy)
                                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " assigned DEPDIR_EQ " << lower_bound << " " << upper_bound << std::endl;                                                
                                                 precise = true;
                                         }
                                         else
                                         {
-                                                if (DebugDep() || debug_doHierarchy)
+                                                if (DebugOmegaDep() || debug_doHierarchy)
                                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " assigned DEPDIR_GE " << std::endl;
                                                 rel |= DepRel(DEPDIR_GE,0);
                                                 //rel.UnionUpdate(rel,DepRel(DEPDIR_GE,0));
                                                 setdep[i][j] = rel;
                                                 precise = false;
                                         }
-                                        /*if (DebugDep() || debug_doHierarchy)
+                                        /*if (DebugOmegaDep() || debug_doHierarchy)
                                                 std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " DDGRT loop " << std::endl;
                                         */
                                 }
@@ -1338,20 +1338,20 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                                                 rel |= DepRel(DEPDIR_EQ,lower_bound,upper_bound);
                                                 //rel.UnionUpdate(rel,DepRel(DEPDIR_EQ,lower_bound,upper_bound));
                                                 setdep[i][j] = rel;
-                                                if (DebugDep() || debug_doHierarchy)
+                                                if (DebugOmegaDep() || debug_doHierarchy)
                                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " assigned DEPDIR_EQ " << lower_bound << " " << upper_bound << std::endl;                                                
                                                 precise = true;
                                         }
                                         else
                                         {
-                                                if (DebugDep() || debug_doHierarchy)
+                                                if (DebugOmegaDep() || debug_doHierarchy)
                                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " assigned DEPDIR_LE " << std::endl;
                                                 rel |= DepRel(DEPDIR_LE,0);
                                                 //rel.UnionUpdate(rel,DepRel(DEPDIR_LE,0));
                                                 setdep[i][j] = rel;
                                                 precise = false;
                                         }
-                                        /*if (DebugDep() || debug_doHierarchy)
+                                        /*if (DebugOmegaDep() || debug_doHierarchy)
                                                 std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " DDLES loop " << std::endl;
                                         */
                                 }
@@ -1359,23 +1359,23 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                                 {
                                         dddirset(_saved_dv,DDALL,i+1);
                                         
-                                        if (DebugDep() || debug_doHierarchy)
+                                        if (DebugOmegaDep() || debug_doHierarchy)
                                                 std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " assigned DEPDIR_ALL "<< std::endl;
                                         rel |= DepRel(DEPDIR_ALL);
                                         //rel.UnionUpdate(rel,DepRel(DEPDIR_ALL));
                                         setdep[i][j] = rel;
                                         precise = false;
-                                        /*if (DebugDep() || debug_doHierarchy)
+                                        /*if (DebugOmegaDep() || debug_doHierarchy)
                                                 std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " DDALL loop " << std::endl;
                                         */
                                         //PrintResults((std::string)_omega_relation->print_with_subs_to_string(false));
                                 }
-                                if (DebugDep() || debug_doHierarchy)
+                                if (DebugOmegaDep() || debug_doHierarchy)
                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " has DV of " << str_dir_vec (_saved_dv, sharedLevel) << std::endl;
                         }
                         else
                         {
-                                if (DebugDep() || debug_doHierarchy)
+                                if (DebugOmegaDep() || debug_doHierarchy)
                                         std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " assigned DEPDIR_NONE " << std::endl;
                                 dddirset(_saved_dv,0,i+1);
                                 rel |= DepRel(DEPDIR_NONE);
@@ -1466,7 +1466,7 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
                 //left2 = varop(_ref->commLoop, _ref->r2.ref, left2, varpostfix2.str());
                 //SymbolicVal leftVal = -left2 - left1;
                 //cur.push_back(leftVal);
-                //if (DebugDep())
+                //if (DebugOmegaDep())
                 {
                         //assert(dim+1 == cur.size());
                         //std::cerr << "coefficients for induction variables (" << _dim1 << " + " << _dim2 << "+ 1)\n";
@@ -1499,12 +1499,12 @@ DepInfo PlatoOmegaDepTesting::
 ComputeArrayDep(DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype)
 {        
-   if ((DebugDep() || debug_ComputeArrayDep) && UseOmega())
+   if ((DebugOmegaDep() || debug_ComputeArrayDep) && UseOmega())
         {
       std::cerr << "OmegaDependenceTesting compute array dep between " << AstToString(ref.r1.ref) << " and " << \
          AstToString(ref.r2.ref) << std::endl;
         }
-        else if ((DebugDep() || debug_ComputeArrayDep) && !UseOmega())
+        else if ((DebugOmegaDep() || debug_ComputeArrayDep) && !UseOmega())
         {
       std::cerr << "PlatoDependenceTesting compute array dep between " << AstToString(ref.r1.ref) << " and " << \
          AstToString(ref.r2.ref) << std::endl;
@@ -1576,8 +1576,8 @@ ComputeArrayDep(DepInfoAnal& anal,
                 }
                 else
                 {
-                        _plato_relation = new PlatoRelation(_commLevel,DebugDep());
-                        _plato_driver = new PlatoDriver(*_plato_relation,DebugDep());
+                        _plato_relation = new PlatoRelation(_commLevel,DebugOmegaDep());
+                        _plato_driver = new PlatoDriver(*_plato_relation,DebugOmegaDep());
                         _plato_input_vars = new STD_VAR_MAP;
                         _plato_output_vars = new STD_VAR_MAP;
                         assert( _plato_relation && _plato_driver && _plato_input_vars && _plato_input_vars &&  _free_vars );
@@ -1608,7 +1608,7 @@ ComputeArrayDep(DepInfoAnal& anal,
                 }
 
 /*
-                if (DebugDep() && !_nonLinear) {
+                if (DebugOmegaDep() && !_nonLinear) {
                         _omega_relation->print();
                         _omega_relation->print_with_subs(stdout);
                         _omega_relation->prefix_print();
@@ -1703,9 +1703,9 @@ ComputeArrayDep(DepInfoAnal& anal,
                         }
                 }
 
-                if ((DebugDep() || debug_ComputeArrayDep) && UseOmega())
+                if ((DebugOmegaDep() || debug_ComputeArrayDep) && UseOmega())
                         std::cerr << "Omega Returned Direction Vector " << str_dir_vec (_saved_dv, ref.commLevel) << std::endl;
-                else if ((DebugDep() || debug_ComputeArrayDep) && !UseOmega())
+                else if ((DebugOmegaDep() || debug_ComputeArrayDep) && !UseOmega())
                         std::cerr << "Plato Returned Direction Vector " << str_dir_vec (_saved_dv, ref.commLevel) << std::endl;
 
                 CleanUp();
@@ -1721,7 +1721,7 @@ ComputeArrayDep(DepInfoAnal& anal,
    **/
    setdep.finalize();
    
-   if (DebugDep() || debug_ComputeArrayDep)
+   if (DebugOmegaDep() || debug_ComputeArrayDep)
            std::cerr << "after restrictions from stmt domain, result =: \n" << result.toString() << std::endl;
 
    return result;

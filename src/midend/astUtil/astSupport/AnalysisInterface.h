@@ -4,6 +4,7 @@
 #include "FunctionObject.h"
 #include "SymbolicVal.h"
 
+class AstNodePtr;
 class FunctionSideEffectInterface
 {
  public:
@@ -13,9 +14,9 @@ class FunctionSideEffectInterface
                                CollectObject<AstNodePtr>* collect = 0) = 0 ;
 
   //! traverses a function call to collect data being read. Returns the callee if requested.
-  virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
+  virtual bool get_read(AstInterface& fa, const AstNodePtr& fc, 
                                CollectObject<AstNodePtr>* collect = 0) = 0;
-  virtual bool get_call( AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr)  {
+  virtual bool get_call( AstInterface&, const AstNodePtr& fc, CollectObject<AstNodePtr>* = nullptr)  {
      return false;
   }
   virtual ~FunctionSideEffectInterface() {}
@@ -24,13 +25,13 @@ class FunctionSideEffectInterface
 class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
 {
  public:
-  virtual bool get_modify(AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) {
+  virtual bool get_modify(AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) override {
       return false;
   }
-  virtual bool get_read(AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr, AstNodePtr* = nullptr) {
+  virtual bool get_read(AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) override {
       return false;
   }
-  virtual bool get_call( AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) {
+  virtual bool get_call( AstInterface&, const AstNodePtr&, CollectObject<AstNodePtr>* = nullptr) override {
       return false;
   }
   virtual ~NoFunctionSideEffectAnalysis() {}

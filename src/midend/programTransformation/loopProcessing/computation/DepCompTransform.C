@@ -84,8 +84,8 @@ operator()( LoopTreeDepComp& tc, LoopTreeNode *l, LoopTreeNodeIterator stmts)
   LoopTreeDepCompSubtree loopComp( tc, l);
 if (DebugLoopDist()) {
 std::cerr << "***************Loop Distribution: From sub tree *******\n";
-loopComp.DumpTree();
-loopComp.DumpDep();
+std::cerr << loopComp.TreeToString() << "\n";
+std::cerr << loopComp.DepToString() << "\n";
 std::cerr << "***************end sub tree *******\n";
 }
   DepLinkedNodes( loopComp, stmts, GraphAccess::EdgeIn, stmts1);

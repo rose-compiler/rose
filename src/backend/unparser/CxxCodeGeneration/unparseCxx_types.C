@@ -133,6 +133,8 @@ string get_type_name(SgType* t)
           case T_VOID:                    return "void";
           case T_GLOBAL_VOID:             return "global void";
           case T_WCHAR:                   return "wchar_t";
+          case T_AUTO:                    return "auto";
+          case T_NULLPTR:                 return "null";
 
        // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
           case T_CHAR16:                  return "char16_t";
@@ -148,6 +150,7 @@ string get_type_name(SgType* t)
           case T_FLOAT128:                return "__float128";
 
         case T_MATRIX:                    return "Matrix<" + get_type_name(isSgTypeMatrix(t)->get_base_type()) + ">";
+        case T_DECLTYPE:                 return get_type_name(isSgDeclType(t)->get_base_type()) + "<" + isSgDeclType(t)->get_base_expression()->unparseToString() + ">";
 
         case T_TUPLE:
           {
@@ -617,10 +620,7 @@ string get_type_name(SgType* t)
                ASSERT_not_null(rref_type);
                return get_type_name(rref_type->get_base_type()) + "&&";
              }
-          case T_DECLTYPE:
-            return "decltype";
-            
-          default:
+         default:
              {
                printf("Error: unparse_type.C get_type_name(): Default case reached in switch: %s\n", t->class_name().c_str());
                ROSE_ABORT();

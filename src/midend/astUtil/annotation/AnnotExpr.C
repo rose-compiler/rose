@@ -28,6 +28,7 @@ void SymbolicValDescriptor :: set_val( const SymbolicVal& v)
     val = get_bottom();
   else
     val = v;
+  varname_ = v.toString();
 }
 
 void SymbolicValDescriptor::write(ostream& out) const
@@ -395,7 +396,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 
   void VisitFunction( const SymbolicFunction& u)
   {
-    string buf = u.GetOp();
+    string buf = u.GetOp().toString();
     if (buf == "$" && u.first_arg().toString() == basename) {
         assert(u.NumOfArgs() == 2);
         string curext = u.last_arg().toString();

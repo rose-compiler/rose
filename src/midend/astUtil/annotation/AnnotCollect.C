@@ -26,7 +26,7 @@ void ReadAnnotation::read()
            if (!is.is_open())
            {
              cerr<<"Error! Cannot find and open the annotation file "<<p1.c_str()<<endl;
-             exit(1);
+             assert(0);
            }
            read(is);
          }

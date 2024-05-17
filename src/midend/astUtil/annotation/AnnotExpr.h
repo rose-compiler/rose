@@ -10,10 +10,12 @@
 class SymbolicValDescriptor
 {
   SymbolicVal val;
+  std::string varname_;
   void set_val( const SymbolicVal &v);
  public:
   SymbolicValDescriptor( int i) : val(i) {}
   SymbolicValDescriptor( const SymbolicVal& that) { set_val(that); }
+  SymbolicValDescriptor( const SymbolicVal& that, std::string varname) { set_val(that); varname_ = varname; }
   SymbolicValDescriptor() { set_val( SymbolicVal()); }
   void operator = (const SymbolicVal& that)  { set_val(that); }
 

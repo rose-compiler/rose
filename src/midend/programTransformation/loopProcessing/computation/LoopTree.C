@@ -266,7 +266,7 @@ LoopInfo:: LoopInfo( SymbolicVar ivar,SymbolicVal lb, SymbolicVal ub,
 }
 
 std::string LoopTreeLoopNode :: toString() const
-{ return preAnnot + info.toString() + postAnnot;
+{ return preAnnot + "LoopNode: " + info.toString() + postAnnot;
 
 }
 

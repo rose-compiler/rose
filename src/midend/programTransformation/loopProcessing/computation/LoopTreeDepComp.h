@@ -184,9 +184,13 @@ class LoopTreeDepComp
   const DomainCond& GetDomain(LoopTreeNode* s)
        { return GetDepNode(s)->GetDomain(); }
 
-  void Dump() const;
-  void DumpTree() const;
-  void DumpDep() const;
+  std::string ToString() const {
+     return TreeToString() + "\n" + DepToString();
+   }
+  void DumpTree() const { std::cerr << TreeToString(); }
+  void DumpDep() const { std::cerr << DepToString(); }
+  std::string TreeToString() const;
+  std::string DepToString() const;
   void OutputDep() const;
   void DumpNode( LoopTreeNode *s) const;
 };

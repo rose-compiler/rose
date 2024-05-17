@@ -5555,11 +5555,11 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  // DQ (7/31/2013): This appears to happen for at least one test in projects/arrayOptimization.
                  // I can't fix that project presently, so make this an error message for the moment.
                  // ROSE_ASSERT(cast_op->get_endOfConstruct()->isCompilerGenerated() == false);
+#if 0
                     if (cast_op->get_endOfConstruct() == NULL || cast_op->get_endOfConstruct()->isCompilerGenerated() == true)
                        {
                          printf ("Error: In unparseCastOp(): cast_op->get_endOfConstruct() is inconsistant with cast_op->get_file_info() \n");
                        }
-#if 0
                     curprint ("\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->class_name() + " */ \n");
 #endif
                     if (cast_op->get_operand_i()->variant() != STRING_VAL)

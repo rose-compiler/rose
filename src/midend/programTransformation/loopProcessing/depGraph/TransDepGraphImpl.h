@@ -3,7 +3,6 @@
 
 #include <TransDepGraph.h>
 
-extern bool DebugDep();
 
 template <class Node> 
 class TransDepAnalImpl  : public TransInfoOP<DepInfoSet>
@@ -67,9 +66,7 @@ void TransDepGraphCreate<Node>::
 SetTransInfo( GraphAccessInterface::Node *src1, GraphAccessInterface::Node *snk1, DepInfoSet info) 
    {
  
-      Node* src = static_cast<Node*>(src1), *snk =  static_cast<Node*>(snk1);
-     if (DebugDep())
-    std::cerr << "setting transitive dep between " << src->toString() << " .and. " << snk->toString() << ":" << info.toString() << "\n";
+     Node* src = static_cast<Node*>(src1), *snk =  static_cast<Node*>(snk1);
      GraphCrossEdgeIterator<TransDepGraphCreate<Node> > cross(this, src, snk);
      DepInfoSetEdge *edge = 0;
      if (!cross.ReachEnd()) {

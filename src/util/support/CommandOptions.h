@@ -22,4 +22,28 @@ class ROSE_UTIL_API CmdOptions
   static CmdOptions* GetInstance();
 };
 
+class DebugLog {
+  int r = 0;
+  std::string what_to_debug_;
+ public:
+   DebugLog(const std::string& what_to_debug) : what_to_debug_(what_to_debug) {}
+
+   bool operator()() {
+    if (r == 0) {
+      if (CmdOptions::GetInstance()->HasOption(what_to_debug_))
+         r = 1;
+      else
+         r = -1;
+    }
+    return r ==1;
+   }
+   bool operator()(const std::string& to_print) {
+    if (operator()()) {
+      std::cerr << to_print << "\n";
+      return true;
+    }
+    return false;
+   }
+};
+
 #endif

@@ -8,7 +8,12 @@
 
 using namespace std;
 
-extern bool DebugAliasAnal ();
+inline bool DebugPtrAnal (const std::string& to_print)
+{
+  static DebugLog debug_ptr("-debugptranal");
+  return debug_ptr(to_print);
+}
+
 
 inline void stmts_pushback(std::vector<PtrAnal::Stmt>& stmts, PtrAnal::Stmt s)
 {
@@ -25,20 +30,6 @@ inline PtrAnal::Stmt stmts_back(std::vector<PtrAnal::Stmt>& stmts)
 
 static std::string func_return_name(const std::string fname)
    { return InterProcVariableUniqueRepr::get_unique_name(fname,0); }
-
-#if 0
-static bool is_constant(const std::string& name)
-{
-  if ( name != "" && name[0] == 'c') {
-     if (DebugAliasAnal())
-        std::cerr << " constant : " << name << "\n";
-     return true;
-  }
-  if (DebugAliasAnal())
-     std::cerr << " not constant : " << name << "\n";
-  return false;
-}
-#endif
 
 static std::string
 Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
@@ -435,8 +426,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
     AstNodePtr lhs, rhs;
     AstInterface::AstNodeList vars, args;
     if (fa.IsStatement(s)) {
-       if (DebugAliasAnal())
-           std::cerr << "pre visiting " << AstInterface::AstToString(s) << "\n";
+      DebugAliasAnal("pre visiting " + AstInterface::AstToString(s));
       stmt_active.push_back(stmts.size());
     }
 
@@ -474,19 +464,16 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
    }
  }
  else {
-   if (DebugAliasAnal())
-      std::cerr << "post visiting " << AstInterface::AstToString(s) << "\n";
+   DebugPtrAnal("post visiting " + AstInterface::AstToString(s));
    if (fa.IsStatement(s)) {
        size_t stmt_firstIndex = stmt_active.back();
        stmt_active.pop_back();
        if (stmt_firstIndex < stmts.size()) {
-          if (DebugAliasAnal())
-              std::cerr << "setting stmt mapping \n";
+          DebugPtrAnal("setting stmt mapping");
           stmtmap[s.get_ptr()] = pair<size_t,size_t>(stmt_firstIndex, stmts.size()-1);
        }
        else
-          if (DebugAliasAnal())
-             std::cerr << "no translation: " << AstInterface::AstToString(s) << "\n";
+          DebugAliasAnal("no translation: " + AstInterface::AstToString(s));
   }
  }
  return true;

@@ -7,9 +7,8 @@
 #include <DomainInfo.h>
 
 #include <LoopTransformInterface.h>
+#include <CommandOptions.h>
 #include <ROSE_ASSERT.h>
-
-extern bool DebugDep();
 
 // 2*i+1 input exp,  loop variable i, size 1 loop nest
 // the decomposed coeffecient vector is 2
@@ -45,6 +44,7 @@ bool SplitEquation( CoeffVec& cur,
                       const SymbolicVal& cut, const BoundVec& bounds,
                       BoundOp& boundop, CoeffVec& split)
  {
+     DebugLog DebugDep("-debugdep");
      int dim = cur.size()-1;
      SymbolicVal leftval = cur[dim]; // obtain the last coefficient, which is right side terms without using loop index variable
      if (leftval != 0) {
@@ -52,8 +52,7 @@ bool SplitEquation( CoeffVec& cur,
        CompareRel r2 = CompareVal(leftval,cut, &boundop);
        bool lt = ((r1 & REL_GT) && (r2 & REL_LT)) || ((r1 & REL_LT) && (r2 & REL_GT));
        if (!lt) { // relation of r1 and r2 must be reversed pair, or error
-         if (DebugDep())
-           std::cerr << "unable to split because " << leftval.toString() << " ? " << cut.toString() << std::endl;
+         DebugDep("unable to split because " + leftval.toString() + " ? " + cut.toString());
          return false;
        }
      }
@@ -91,12 +90,10 @@ bool SplitEquation( CoeffVec& cur,
 
           return true;
         }
-        else if (DebugDep()) {
-            if (j == dim)
-               std::cerr << "unable to decide left " << left.toString() << " ? " << cut.toString() << std::endl;
-            else
-               std::cerr << "unable to decide cur[" << j << "] ? 0\n";
-        }
+        else if (j == dim)
+               DebugDep("unable to decide left " + left.toString() + " ? " + cut.toString());
+        else
+               DebugDep("unable to decide cur[" + std::to_string(j) + "] ? 0");
      }
      split.clear();
      return false;
@@ -159,15 +156,14 @@ bool NormalizeMatrix( Mat& analMatrix, int rows, int cols)
 template <class Collect>
 int SetDepDirection( DepInfo &edd, int commLevel, Collect &result)
     {
+     DebugLog DebugDep("-debugdep");
       if (commLevel < 0)
           return commLevel;
       DepRel eq(DEPDIR_EQ, 0), lt(DEPDIR_LE, -1);
       int i;
       for ( i = 0; i < commLevel; i++) {
         DepRel e1 = edd.Entry(i,i) & lt;
-        if (DebugDep()) {
-           std::cerr << "at common loop level " << i << ":" << e1.toString() << "\n";
-        }
+        DebugDep("at common loop level " + std::to_string(i) + ":" + e1.toString());
         if (!e1.IsTop()) {
           DepInfo edd1( edd);
           edd1.Entry( i,i) = e1;
@@ -189,6 +185,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
                         BoundOp& boundop,
                         Dep& result, const DepRel& rel)
 {
+  DebugLog DebugDep("-debugdep");
   int dim = vec.size()- 1;
   std::vector<int> signs;
   for (int index = 0; index < dim; ++index) {
@@ -206,9 +203,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
        else if (cb.ub <= 0)
           signs.push_back(-1);
        else {
-         if (DebugDep())
-           std::cerr << "unable to decide sign of coeff when lb >=0 for ivar[" << index << "]\n";
-         //return false;
+         DebugDep("unable to decide sign of coeff when lb >=0 for ivar[" + std::to_string(index));
          signs.push_back(2);
        }
     }
@@ -220,14 +215,11 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
       else {
          if (DebugDep())
            std::cerr << "unable to decide sign of coeff when ub <=0 for ivar[" << index << "]\n";
-        //return false;
         signs.push_back(2);
       }
     }
     else {
-         if (DebugDep())
-           std::cerr << "unable to decide sign of ivar[" << index << "]\n";
-        //return false;
+        DebugDep("unable to decide sign of ivar[" + std::to_string(index));
         signs.push_back(2);
     }
   }
@@ -236,8 +228,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
   else {
      SymbolicVal leftval = vec[dim];
      if (leftval.IsNIL()) {
-        if (DebugDep())
-           std::cerr << "unable to decide sign of leftval\n";
+        DebugDep("unable to decide sign of leftval: " + leftval.toString());
         return false;
      }
      SymbolicBound lb = GetValBound(vec[dim], boundop);
@@ -246,10 +237,8 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
      else if (lb.lb >= 0)
         signs.push_back(1);
      else {
-        if (DebugDep())
-           std::cerr << "unable to decide sign of leftval\n";
+        DebugDep("unable to decide sign of leftval: " + leftval.toString());
         return false;
-        //signs.push_back(2);
      }
   }
   for (int i = 0; i < dim ; ++i) {
