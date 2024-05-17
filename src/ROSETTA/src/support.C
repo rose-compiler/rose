@@ -975,7 +975,8 @@ Grammar::setUpSupport ()
   // DQ (9/7/2018): By default for C/C++ I now think this should be false (and it is set this way for source files.
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
-     File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
+  // Set "requires_C_preprocessor = false" to be consistent with SgFile::initialization (deprecated) [Rasmussen 2024.05.16]
+     File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/5/2009): I think we need to make each file as binary or not and also record the setting on the command line.
