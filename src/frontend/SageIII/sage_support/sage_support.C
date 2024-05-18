@@ -1893,15 +1893,11 @@ SgFile::doSetupForConstructor(const vector<string> &argv, SgProject* project)
      ASSERT_not_null(project);
      set_parent(project);
 
-  // initialize all local variables to default values
-     initialization();
-
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
-  // DQ (4/21/2006): Setup the source filename as early as possible
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
-     ROSE_ASSERT (fileList.empty() == false);
+     ASSERT_require(!fileList.empty());
      string sourceFilename = *(fileList.begin());
 
      sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
@@ -1923,13 +1919,9 @@ SgFile::doSetupForConstructor(const vector<string> &argv, SgProject* project)
      vector<string> local_commandLineArgumentList = argv;
 
   // Save the commandline as a list of strings (we made a deep copy because the "callFrontEnd()" function might change it!
-     set_originalCommandLineArgumentList( local_commandLineArgumentList );
+     set_originalCommandLineArgumentList(local_commandLineArgumentList);
 
-  // DQ (5/22/2005): Store the file name index in the SgFile object so that it can figure out
-  // which file name applies to it.  This helps support functions such as "get_filename()"
-  // used elsewhere in Sage III.  Not clear if we really need this!
-  // error checking
-     ROSE_ASSERT (argv.size() > 1);
+     ASSERT_require(argv.size() > 1);
    }
 
 
@@ -2090,7 +2082,6 @@ SgFile::callFrontEnd()
       // should be "disable_edg" instead of "disable_edg_backend".
           get_disable_edg_backend() == false && get_new_frontend() == true)
         {
-       // Rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3).
@@ -2102,16 +2093,7 @@ SgFile::callFrontEnd()
        //      unparsing of the AST to rebuilt the C++ source code (with transformations if any
        //      were done).
 
-       // DQ (10/15/2005): This is now a C++ string (and not char* C style string)
-       // Make sure that we have generated a proper file name (or move filename
-       // processing to processRoseCommandLineOptions()).
-       // printf ("Print out the file name to make sure it is processed \n");
-       // printf ("     filename = %s \n",get_unparse_output_filename());
-       // ROSE_ASSERT (get_unparse_output_filename() != NULL);
-       // ROSE_ASSERT (get_unparse_output_filename().empty() == false);
-
       // Use the current version of the EDG frontend from EDG (or any other version)
-      // abort();
          printf ("Rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
          std::string frontEndCommandLineString;
@@ -4702,23 +4684,14 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
      return frontendErrorLevel;
    }
 
-// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
-// int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 int
-SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
+SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (compile output):");
 
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(this != NULL);
-
-  // DQ (4/21/2006): I think we can now assert this!
-     ROSE_ASSERT(fileNameIndex == 0);
-
-#if 0
-     printf ("Inside of SgFile::compileOutput() \n");
-#endif
+     ASSERT_not_null(this);
+     ASSERT_require(fileNameIndex == 0);
 
 #define DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS 0
 
@@ -4728,18 +4701,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
      printf ("***************************************************** \n\n\n");
 #endif
-#if 0
-     printf ("In SgFile::compileOutput(): calling display() \n");
-     display("In SgFile::compileOutput()");
-#endif
 
   // This function does the final compilation of the unparsed file
   // Remaining arguments from the original compile time are used as well
   // as additional arguments added by the buildCompilerCommandLineOptions() function
-
-  // DQ NOTE: This function has to be modified to compile more than
-  //       just one file (as part of the multi-file support)
-  // ROSE_ASSERT (sageProject.numberOfFiles() == 1);
 
   // ******************************************************************************
   // At this point in the control flow (for ROSE) we have returned from the processing
@@ -4757,11 +4722,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // the generated output file (unparsed and transformed application code).
      int returnValueForRose = 0;
 
-  // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
-
-  // DQ (4/2/2011): Added language specific support.
-  // const string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
      string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
      if (get_Java_only() == true)
         {
@@ -4778,31 +4738,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // BP : 11/13/2001, checking to see that the compiler name is set
      string compilerName = compilerNameOrig + " ";
 
-  // DQ (4/21/2006): Setup the output file name.
-  // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
-  // ROSE_ASSERT (fileList.size() == 1);
-  // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = Rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
-
 #if 1
-  // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
-
-  // DQ (4/21/2006): If we have not set the unparse_output_filename then we could not have called
-  // unparse and we want to compile the original source file as a backup mechanism to generate an
-  // object file.
-  // printf ("In SgFile::compileOutput(): get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
-
     bool use_original_input_file = Rose::KeepGoing::Backend::UseOriginalInputFile(this);
-
-#if 0
-    printf ("In SgFile::compileOutput(): use_original_input_file = %s \n",use_original_input_file ? "true" : "false");
-#endif
 
   // TOO1 (05/14/2013): Handling for -rose:keep_going
   // Replace the unparsed file with the original input file.
      if (use_original_input_file)
         {
-       // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
        // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
@@ -4828,26 +4770,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("WARNING: In SgFile::compileOutput(): file = %p has no associated project \n",this);
              }
 
-          if (get_unparse_output_filename().empty())
-             {
-               if (get_skipfinalCompileStep())
-                  {
-                  // nothing to do...
-                  }
-                 else
-                    if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
-                       {
-                 // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the
-                 // header file list, and is required to be supported in ROSE as part of some application
-                 // specific configuration testing (when configure tests ROSE translators)).
-
-                 // TOO1 (9/23/2013): There was never an else branch (or assertion) here before.
-                 //                   Commenting out for now to allow $ROSE/tests/CompilerOptionTests to pass
-                 //                   in order to expedite the transition from ROSE-EDG3 to ROSE-EDG4.
-                 //   ROSE_ASSERT(! "Not implemented yet");
-                       }
-             }
-            else
+          if (!get_unparse_output_filename().empty())
              {
                boost::filesystem::path original_file = outputFilename;
                boost::filesystem::path unparsed_file = get_unparse_output_filename();
@@ -4883,17 +4806,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        {
                          boost::filesystem::remove(unparsed_file);
                        }
-#if 0
-                    printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
-#endif
                     Rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
-
-#if 0
-       // DQ (11/8/2015): Commented out to avoid output spew.
-          printf ("In SgFile::compileOutput(): outputFilename = %s \n",outputFilename.c_str());
-#endif
           set_unparse_output_filename(outputFilename);
         }
 #endif
@@ -4901,7 +4816,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      ROSE_ASSERT (get_unparse_output_filename().empty() == false); // TODO: may need to add condition:  "&& (! get_Java_only())"  here
 
   // Now call the compiler that rose is replacing
-  // if (get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
         {
           printf ("Now call the backend (vendor's) compiler compilerNameOrig = %s for file = %s \n",compilerNameOrig.c_str(),get_unparse_output_filename().c_str());

@@ -921,7 +921,6 @@ Grammar::setUpSupport ()
 
      File.setDataPrototype         ( "int", "verbose", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      File.setDataPrototype         ( "bool", "output_warnings", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1042,10 +1041,6 @@ Grammar::setUpSupport ()
   // to relax this to "-std=gnu" or skip the option altogether.
      File.setDataPrototype         ( "bool", "relax_syntax_check", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Operational options
-  // File.setDataPrototype         ( "bool", "skip_rose", "= false",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/1/2011): Added support to just run the EDG front-end without translation of the EDG AST to the ROSE AST.
   // This is helpful in evaluating the EDG frontend within the move to EDG 4.3 and later versions (update for C++ robustness).
@@ -1266,7 +1261,7 @@ Grammar::setUpSupport ()
   // This is not an expensive test, but it fails for isolated parts of ROSE currently
   // so it should be made optional at this early stage (before it is made a default
   // test in the AST consistency tests).
-     File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
+     File.setDataPrototype("int", "detect_dangling_pointers", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Rasmussen (8/30/2020): Added experimental support for using the Flang parser for Fortran

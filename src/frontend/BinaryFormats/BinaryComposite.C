@@ -20,7 +20,7 @@ SgBinaryComposite::SgBinaryComposite(vector<string> &argv, SgProject* project)
 
 void
 SgBinaryComposite::post_construction_initialization() {
-    // Don't initialize twice (even if called twice)!
+    // Don't call parent initialization or allow it to be called twice (this function is virtual!)
     if (p_genericFileList == nullptr) {
         p_genericFileList = new SgAsmGenericFileList();
         p_genericFileList->set_parent(this);
@@ -30,6 +30,20 @@ SgBinaryComposite::post_construction_initialization() {
         p_interpretations = new SgAsmInterpretationList();
         p_interpretations->set_parent(this);
     }
+
+    Rose::is_binary_executable = true;
+    set_binary_only(true);
+
+    set_outputLanguage(SgFile::e_Binary_language);
+    set_inputLanguage(SgFile::e_Binary_language);
+    set_sourceFileUsesBinaryFileExtension(true);
+
+    // Don't do C++ stuff
+    set_requires_C_preprocessor(false);
+    set_disable_edg_backend(true);
+    set_disable_sage_backend(true);
+    set_skip_transformation(true);
+    set_skip_commentsAndDirectives(true);
 }
 
 int SgBinaryComposite::callFrontEnd() {

@@ -1095,16 +1095,22 @@ EngineBinary::parseContainers(const std::vector<std::string> &fileNames) {
 // special happens to any of the input file names--that should have already been done by this point. All the fileNames
 // are expected to be names of existing container (ELF, PE, etc) files that will result in an AST (non-container files
 // typically are loaded into virtual memory and have no AST since they have very little structure).
-SgProject *
+SgProject*
 EngineBinary::roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames) {
     ASSERT_forbid(fileNames.empty());
 
+    // We want to move all binary file processing to the Rose:: namespace (do we?) [Rasmussen 2024.05.17].
+    // Called by testPartitioner2_x86-elf-exe
+
+    SgBinaryComposite* binaryComposite = new SgBinaryComposite;
+    SgAsmGenericFileList* fileList = binaryComposite->get_genericFileList();
+    SgAsmInterpretationList* interpList = binaryComposite->get_interpretations();
+
     // Create the SgAsmGenericFiles (not a type of SgFile), one per fileName, and add them to a SgAsmGenericFileList node. Each
     // SgAsmGenericFile has one or more file headers (e.g., ELF files have one, PE files have two).
-    SgAsmGenericFileList *fileList = new SgAsmGenericFileList;
     for (const boost::filesystem::path &fileName: fileNames) {
         SAWYER_MESG(mlog[TRACE]) <<"parsing " <<fileName <<"\n";
-        SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(fileName.string().c_str());
+        SgAsmGenericFile* file = SgAsmExecutableFileFormat::parseBinaryFormat(fileName.string().c_str());
         ASSERT_not_null(file);
 #ifdef ROSE_HAVE_LIBDWARF
         try {
@@ -1118,24 +1124,8 @@ EngineBinary::roseFrontendReplacement(const std::vector<boost::filesystem::path>
     }
     SAWYER_MESG(mlog[DEBUG]) <<"parsed " <<StringUtility::plural(fileList->get_files().size(), "container files") <<"\n";
 
-
-    // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
-    Rose::is_binary_executable = true;
-
-    // The SgBinaryComposite (type of SgFile) points to the list of SgAsmGenericFile nodes created above.
-    // FIXME[Robb Matzke 2019-01-29]: The defaults set here should be set in the SgBinaryComposite constructor instead.
     // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
     //                                don't make much sense.
-    SgBinaryComposite *binaryComposite = new SgBinaryComposite;
-    binaryComposite->initialization(); // SgFile::initialization
-    binaryComposite->set_skipfinalCompileStep(true);
-    binaryComposite->set_genericFileList(fileList); fileList->set_parent(binaryComposite);
-    binaryComposite->set_sourceFileUsesBinaryFileExtension(true);
-    binaryComposite->set_outputLanguage(SgFile::e_Binary_language);
-    binaryComposite->set_inputLanguage(SgFile::e_Binary_language);
-    binaryComposite->set_binary_only(true);
-    binaryComposite->set_requires_C_preprocessor(false);
-    //binaryComposite->set_isObjectFile(???) -- makes no sense since the composite can be multiple files of different types
     binaryComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(fileNames[0]).string()); // best we can do
     binaryComposite->set_sourceFileNameWithoutPath(fileNames[0].filename().string());                // best we can do
     binaryComposite->initializeSourcePosition(fileNames[0].string());                                // best we can do
@@ -1172,18 +1162,13 @@ EngineBinary::roseFrontendReplacement(const std::vector<boost::filesystem::path>
     }
     SAWYER_MESG(mlog[DEBUG]) <<"created " <<StringUtility::plural(interpretations.size(), "interpretation nodes") <<"\n";
 
-    // Put all the interpretations in a list
-    SgAsmInterpretationList *interpList = new SgAsmInterpretationList;
+    // Put all the interpretations in the interp list
     for (size_t i=0; i<interpretations.size(); ++i) {
         SgAsmInterpretation *interpretation = interpretations[i].second;
         interpList->get_interpretations().push_back(interpretation);
         interpretation->set_parent(interpList);
     }
     ASSERT_require(interpList->get_interpretations().size() == interpretations.size());
-
-    // Add the interpretation list to the SgBinaryComposite node
-    binaryComposite->set_interpretations(interpList);
-    interpList->set_parent(binaryComposite);
 
     // The project
     SgProject *project = new SgProject;
