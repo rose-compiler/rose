@@ -153,8 +153,11 @@ map_t<int, SgDeclarationStatement*>& libadalangDecls();
 /// returns a mapping from hash to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& libadalangTypes();
 
-/// returns a mapping from string to standard type nodes
+/// returns a mapping from hash to standard type nodes
 map_t<int, SgType*>& adaTypes();
+
+/// returns a mapping from string to standard type nodes
+map_t<AdaIdentifier, SgType*>& adaTypesByName();
 
 /// stores all expressions that were generated where operator declarations were expected
 std::vector<SgExpression*>& operatorExprs();

@@ -2406,30 +2406,30 @@ namespace
     return mkTypeVoid();
   }
 
-/*  SgType& boolTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& boolTypeAttr(SgExpression&, SgExprListExp&)
   {
-    return lookupNode(adaTypes(), AdaIdentifier{"BOOLEAN"});
-  }*/
+    return lookupNode(adaTypesByName(), AdaIdentifier{"BOOLEAN"});
+  }
 /*
   SgType& fixedTypeAttr(SgExpression&, SgExprListExp&)
   {
     return mkFixedType();
   }
 */
-/*  SgType& stringTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& stringTypeAttr(SgExpression&, SgExprListExp&)
   {
-    return lookupNode(adaTypes(), AdaIdentifier{"STRING"});
+    return lookupNode(adaTypesByName(), AdaIdentifier{"STRING"});
   }
 
   SgType& wideStringTypeAttr(SgExpression&, SgExprListExp&)
   {
-    return lookupNode(adaTypes(), AdaIdentifier{"WIDE_STRING"});
+    return lookupNode(adaTypesByName(), AdaIdentifier{"WIDE_STRING"});
   }
 
   SgType& wideWideStringTypeAttr(SgExpression&, SgExprListExp&)
   {
-    return lookupNode(adaTypes(), AdaIdentifier{"WIDE_WIDE_STRING"});
-  }*/
+    return lookupNode(adaTypesByName(), AdaIdentifier{"WIDE_WIDE_STRING"});
+  }
 
   SgType& firstLastTypeAttr(SgExpression& obj, SgExprListExp& args)
   {
@@ -2489,7 +2489,7 @@ namespace
   attributeType(SgExpression& expr, const std::string& ident, SgExprListExp& args)
   {
     using TypeMaker = SgType& (*) (SgExpression& expr, SgExprListExp& args);
-    /*using TypeCalc  = std::map<std::string, TypeMaker>;
+    using TypeCalc  = std::map<std::string, TypeMaker>;
 
     static const TypeCalc typecalc = { { "access",               &accessTypeAttr }
                                      , { "address",              &integralTypeAttr }
@@ -2600,13 +2600,12 @@ namespace
                                      , { "wide_width",           &integralTypeAttr }
                                      , { "wide_wide_width",      &integralTypeAttr }
                                      , { "word_size",            &integralTypeAttr }
-                                     };*/
+                                     };
 
 
     SgExpression& obj  = insertAccessDerefIfNeeded(expr, ident);
-    //auto          pos  = typecalc.find(ident);
-    //TypeMaker     bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
-    TypeMaker bldr = nullptr;
+    auto          pos  = typecalc.find(ident);
+    TypeMaker     bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
 
     if ((bldr == &argTypeAttr) && (args.get_expressions().size() == 0))
     {

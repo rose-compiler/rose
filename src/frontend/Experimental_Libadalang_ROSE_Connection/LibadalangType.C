@@ -363,6 +363,88 @@ namespace
   }
 
   SgType&
+  getAnonymousAccessType(ada_base_entity* lal_element, AstContext ctx)
+  {
+    SgType*                   underty = nullptr;
+    bool has_null_exclusion = false;
+
+    ada_base_entity lal_type_access;
+    ada_anonymous_type_f_type_decl(lal_element, &lal_type_access);
+    ada_type_decl_f_type_def(&lal_type_access, &lal_type_access);
+
+    ada_node_kind_enum lal_type_access_kind = ada_node_kind(&lal_type_access);
+
+    switch(lal_type_access_kind)
+    {
+      //case An_Anonymous_Access_To_Constant:            // [...] access constant subtype_mark
+      case ada_type_access_def:            // [...] access subtype_mark
+      {
+        //Get the constant state
+        ada_base_entity lal_has_constant;
+        ada_type_access_def_f_has_constant(&lal_type_access, &lal_has_constant);
+        ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
+        const bool isConstant = (lal_has_constant_kind == ada_constant_present);
+
+        logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable", lal_type_access_kind);
+
+        //Get the not null state
+        ada_base_entity lal_has_not_null;
+        ada_access_def_f_has_not_null(&lal_type_access, &lal_has_not_null);
+        ada_node_kind_enum lal_has_not_null_kind = ada_node_kind(&lal_has_not_null);
+        has_null_exclusion = (lal_has_not_null_kind == ada_not_null_present);
+
+        //Get the subtype indication
+        ada_base_entity lal_subtype_indication;
+        ada_type_access_def_f_subtype_indication(&lal_type_access, &lal_subtype_indication);
+        underty = &getDeclType(&lal_subtype_indication, ctx);
+
+        if(isConstant){
+          underty = &mkConstType(*underty);
+        }
+        break;
+      }
+
+      /*case An_Anonymous_Access_To_Procedure:           // access procedure
+      case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
+      case An_Anonymous_Access_To_Function:            // access function
+      case An_Anonymous_Access_To_Protected_Function:  // access protected function
+      {
+        if (access_type_kind == An_Anonymous_Access_To_Procedure)
+          logKind("An_Anonymous_Access_To_Procedure");
+        else if (access_type_kind == An_Anonymous_Access_To_Protected_Procedure)
+          logKind("An_Anonymous_Access_To_Protected_Procedure");
+        else if (access_type_kind == An_Anonymous_Access_To_Function)
+          logKind("An_Anonymous_Access_To_Function");
+        else
+          logKind("An_Anonymous_Access_To_Protected_Function");
+
+        // these are functions, so we need to worry about return types
+        const bool  isFuncAccess = (  (access_type_kind == An_Anonymous_Access_To_Function)
+                                   || (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                   );
+        const bool  isProtected  = (  (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                   || (access_type_kind == An_Anonymous_Access_To_Protected_Procedure)
+                                   );
+
+        ElemIdRange params  = idRange(access.Access_To_Subprogram_Parameter_Profile);
+        SgType&     rettype = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
+                                           : mkTypeVoid();
+        underty = &mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), isProtected);
+        break;
+      }*/
+
+      // An unexpected element
+      default:
+        logError() << "Unhandled anonymous access type kind: " << lal_type_access_kind << std::endl;
+        underty = &mkTypeUnknown();
+    }
+
+    SgType& res = mkAdaAccessType(SG_DEREF(underty), false /* general access */, true /* anonymous */);
+
+    return excludeNullIf(res, has_null_exclusion, ctx);
+  }
+
+  SgType&
   getDefinitionType(ada_base_entity* lal_def, AstContext ctx, bool forceSubtype)
   {
     //ADA_ASSERT(elem.Element_Kind == A_Definition);
@@ -402,6 +484,13 @@ namespace
           res = &excludeNullIf(SG_DEREF(res), not_null_present, ctx);
           break;
         }
+      case ada_anonymous_type: //TODO Does this node match multiple asis nodes?
+        {
+          logKind("ada_anonymous_type", kind);
+          res = &getAnonymousAccessType(lal_def, ctx);
+
+          break;
+        }
       default:
         logWarn() << "Unhandled type definition: " << kind << std::endl;
         res = &mkTypeUnknown();
@@ -430,15 +519,15 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
   return getDefinitionType(lal_element, ctx);
 }
 
-//Function to hash a unique int from a node using the node's kind and location.
-//The kind and location can be provided, but if not they will be determined in the function
-int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
+  //Function to hash a unique int from a node using the node's kind and location.
+  //The kind and location can be provided, but if not they will be determined in the function
+  int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
     //Get the kind/sloc if they weren't provided
     if(kind == -1){
-        kind = ada_node_kind(node);
+      kind = ada_node_kind(node);
     }
     if(full_sloc == ""){
-        full_sloc = dot_ada_full_sloc(node);
+      full_sloc = dot_ada_full_sloc(node);
     }
 
     std::string word_to_hash = full_sloc + std::to_string(kind);
@@ -447,10 +536,10 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
     int seed = 131; 
     unsigned int hash = 0;
     for(int i = 0; i < word_to_hash.length(); i++){
-        hash = (hash * seed) + word_to_hash[i];
+      hash = (hash * seed) + word_to_hash[i];
     }
     return hash;
-}
+  }
 
   SgNode&
   getExprType(ada_base_entity* lal_expr, AstContext ctx)
@@ -493,6 +582,88 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
     }
 
     return SG_DEREF(res);
+  }
+
+  SgType&
+  getAccessType(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    SgAdaAccessType* access_t = nullptr;
+
+    ada_base_entity lal_not_null;
+    ada_access_def_f_has_not_null(lal_element, &lal_not_null);
+    ada_node_kind_enum lal_not_null_kind = ada_node_kind(&lal_not_null);
+    bool has_not_null = (lal_not_null_kind == ada_not_null_present);
+
+    switch(kind) {
+      // variable access kinds
+    case ada_type_access_def:
+      {
+        //Get the constant status
+        ada_base_entity lal_has_constant;
+        ada_type_access_def_f_has_constant(lal_element, &lal_has_constant);
+        ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
+        const bool isConstant = (lal_has_constant_kind == ada_constant_present);
+
+        //Get the variable status
+        ada_base_entity lal_has_all;
+        ada_type_access_def_f_has_all(lal_element, &lal_has_all);
+        ada_node_kind_enum lal_has_all_kind = ada_node_kind(&lal_has_all);
+        const bool isVariable = (lal_has_all_kind == ada_all_present);
+
+        //Get the subtype indication
+        ada_base_entity lal_subtype_indication;
+        ada_type_access_def_f_subtype_indication(lal_element, &lal_subtype_indication);
+        SgType* ato = &getDefinitionType(&lal_subtype_indication, ctx);
+
+        if (isConstant) ato = &mkConstType(*ato);
+        access_t = &mkAdaAccessType(SG_DEREF(ato), isVariable /* general access */);
+
+        break;
+      }
+
+      // subprogram access kinds
+    case ada_access_to_subp_def:
+      {
+        //Get the subp kind
+        ada_base_entity subp_spec;
+        ada_access_to_subp_def_f_subp_spec(lal_element, &subp_spec);
+        ada_base_entity subp_kind;
+        ada_subp_spec_f_subp_kind(&subp_spec, &subp_kind);
+        ada_node_kind_enum subp_kind_kind = ada_node_kind(&subp_kind);
+
+        const bool isFuncAccess = ( subp_kind_kind == ada_subp_kind_function);
+
+        //Get has_protected
+        ada_base_entity has_protected;
+        ada_access_to_subp_def_f_has_protected(lal_element, &has_protected);
+        ada_node_kind_enum has_protected_kind = ada_node_kind(&has_protected);
+
+        const bool isProtected  = (has_protected_kind == ada_protected_present);
+
+        //Get the params
+        ada_base_entity subp_params;
+        ada_subp_spec_f_subp_params(&subp_spec, &subp_params);
+
+        //Get the return for if this is a func
+        ada_base_entity subp_returns;
+        ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
+
+        SgType&              rettype = isFuncAccess ? getDeclType(&subp_returns, ctx)
+                                                    : mkTypeVoid();
+        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{&subp_params, ctx}, ctx.scope(), isProtected);
+
+        access_t = &mkAdaAccessType(funty);
+
+        break;
+      }
+
+    default:
+      logError() << "Unhandled access type kind: " << kind << std::endl;
+      access_t = &mkAdaAccessType(mkTypeUnknown());
+    }
+
+    return excludeNullIf(SG_DEREF(access_t), has_not_null, ctx);
   }
 
   SgType&
@@ -639,6 +810,20 @@ int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
 
           break;
         }
+      case ada_access_to_subp_def:              // 3.10(2)    -> Access_Type_Kinds
+        {
+          logKind("ada_access_to_subp_def", kind);
+          SgType& access_t = getAccessType(lal_def, ctx);
+          res.sageNode(access_t);
+          break;
+        }
+      case ada_type_access_def:              // 3.10(2)    -> Access_Type_Kinds
+        {
+          logKind("ada_type_access_def", kind);
+          SgType& access_t = getAccessType(lal_def, ctx);
+          res.sageNode(access_t);
+          break;
+        }
 
       default:
         {
@@ -665,21 +850,8 @@ void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int re
   //ADA_ASSERT(sgnode.get_parent() == &enumdcl);
 }
 
-//Struct that holds some hash keys for a few types that we will need to access multiple times
-struct ada_type_hashes{
-  int bool_hash;
-  int char_hash;
-  int wide_char_hash;
-  int wide_wide_char_hash;
-  int positive_hash;
-  int natural_hash;
-  int string_hash;
-  int wide_string_hash;
-  int wide_wide_string_hash;
-};
-
-template<class MapT>
-void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, ada_type_hashes& type_hashes)
+template<class MapT, class StringMap>
+void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec)
 {
   //Get the name of the type for logging purposes
   ada_text_type fully_qualified_name;
@@ -690,7 +862,7 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
 
   //Get the hash of this decl
   int hash = hash_node(lal_decl);
-  SgType* generatedType;
+  SgType* generatedType = nullptr;
 
   //logInfo() << "handleStdDecl called for " << canonical_fully_qualified_name << std::endl;
 
@@ -702,8 +874,6 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
 
     declareEnumItem(boolDecl, "False", 0);
     declareEnumItem(boolDecl, "True",  1);
-    //Add this hash to the type_hashes struct
-    type_hashes.bool_hash = hash;
   } else if(canonical_fully_qualified_name.find("INTEGER") != std::string::npos){
     //All Ada int types have a range of -(2**<exp>)..(2**<exp>)-1, so find the exp
     ada_base_entity lal_exponent;
@@ -756,13 +926,10 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
     SgEnumDeclaration& adaCharDecl = mkEnumDecl(type_name, stdspec);
     if(type_name == "CHARACTER"){
       adaCharDecl.set_adaParentType(sb::buildCharType());
-      type_hashes.char_hash = hash;
     } else if(type_name == "WIDE_CHARACTER"){
       adaCharDecl.set_adaParentType(sb::buildChar16Type());
-      type_hashes.wide_char_hash = hash;
     } else if(type_name == "WIDE_WIDE_CHARACTER"){
       adaCharDecl.set_adaParentType(sb::buildChar32Type());
-      type_hashes.wide_wide_char_hash = hash;
     } else {
       logError() << "No plan for char type " << type_name << std::endl;
       return;
@@ -770,16 +937,13 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
     generatedType = adaCharDecl.get_type();
   } else if(canonical_fully_qualified_name.find("STRING") != std::string::npos){
     SgType* adaCharTypePtr;
-    SgType& adaPositiveType = SG_DEREF(m.at(type_hashes.positive_hash));
+    SgType& adaPositiveType = SG_DEREF(map2.at(AdaIdentifier{"POSITIVE"}));
     if(type_name == "STRING"){
-      adaCharTypePtr = m.at(type_hashes.char_hash);
-      type_hashes.string_hash = hash;
+      adaCharTypePtr = map2.at(AdaIdentifier{"CHARACTER"});
     } else if(type_name == "WIDE_STRING"){
-      adaCharTypePtr = m.at(type_hashes.wide_char_hash);
-      type_hashes.wide_string_hash = hash;
+      adaCharTypePtr = map2.at(AdaIdentifier{"WIDE_CHARACTER"});
     } else if(type_name == "WIDE_WIDE_STRING"){
-      adaCharTypePtr = m.at(type_hashes.wide_wide_char_hash);
-      type_hashes.wide_wide_string_hash = hash;
+      adaCharTypePtr = map2.at(AdaIdentifier{"WIDE_WIDE_CHARACTER"});
     } else {
       logError() << "No plan for string type " << type_name << std::endl;
       return;
@@ -792,12 +956,12 @@ void handleStdDecl(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec
   } else {
     //TODO Universal int/real?
   }
-  m[hash] = generatedType;
-
+  map1[hash] = generatedType;
+  map2[AdaIdentifier{type_name}] = generatedType;
 }
 
-template<class MapT>
-void handleStdSubType(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, ada_type_hashes& type_hashes)
+template<class MapT, class StringMap>
+void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec)
 {
   //Get the name of the type for logging purposes
   ada_text_type fully_qualified_name;
@@ -821,6 +985,8 @@ void handleStdSubType(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stds
   ada_symbol_text(&p_canonical_text, &ada_canonical_text);
   AdaIdentifier supertype_name(ada_text_to_locale_string(&ada_canonical_text));
 
+  SgType* adaIntegerSubType = nullptr;
+
   if(supertype_name.find("INTEGER") != std::string::npos){
     //Determine the range of the subtype
     //For now, we only have to worry about positive & natural
@@ -828,10 +994,8 @@ void handleStdSubType(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stds
     int lower_bound = -1;
     if(type_name == "NATURAL"){
       lower_bound = 0;
-      type_hashes.natural_hash = hash;
     } else if(type_name == "POSITIVE"){
       lower_bound = 1;
-      type_hashes.positive_hash = hash;
     }
     //The upper bound will be in the format (2**<exp>)-1, so find exp
     ada_base_entity lal_exponent;
@@ -852,11 +1016,14 @@ void handleStdSubType(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stds
     int exponent = std::stoi(name);
     int upper_bound = std::pow(2, exponent)-1;
     //Now make the type
-    SgType& adaIntegerSubType         = SG_DEREF(declareIntSubtype(type_name, lower_bound, upper_bound, stdspec).get_type());
-    m[hash]                           = &adaIntegerSubType;
+    adaIntegerSubType            = declareIntSubtype(type_name, lower_bound, upper_bound, stdspec).get_type();
+
   } else {
     logError() << "The Standard Package has a non-integer subtype.\n";
   }
+
+  map1[hash]                     = adaIntegerSubType;
+  map2[AdaIdentifier{type_name}] = adaIntegerSubType;
 
 }
 
@@ -887,9 +1054,6 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   ada_base_package_decl_f_public_part(&decl_list, &decl_list);
   ada_declarative_part_f_decls(&decl_list, &decl_list);
 
-  //This struct will hold a few useful keys for the adaTypes map
-  ada_type_hashes type_hashes;
-
   //For each decl, call a function to add it to std based on its type
   //Get the children
   int count = ada_node_children_count(&decl_list);
@@ -907,12 +1071,12 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
       {
         case ada_type_decl:
         {
-          handleStdDecl(adaTypes(), &lal_decl, stdspec, type_hashes);
+          handleStdDecl(adaTypes(), adaTypesByName(), &lal_decl, stdspec);
           break;
         }
         case ada_subtype_decl:
         {
-          handleStdSubType(adaTypes(), &lal_decl, stdspec, type_hashes);
+          handleStdSubType(adaTypes(), adaTypesByName(), &lal_decl, stdspec);
           break;
         }
         case ada_exception_decl: //TODO
@@ -931,26 +1095,29 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 
   //adaTypes()["EXCEPTION"]           = &exceptionType;
 
-  SgType&               adaBoolType = SG_DEREF(adaTypes().at(type_hashes.bool_hash));
+  for (auto const& element : adaTypesByName()) {
+    logInfo() << element.first << std::endl;
+  }
 
+  SgType&               adaBoolType = SG_DEREF(adaTypesByName().at(AdaIdentifier{"BOOLEAN"}));
   // integral types
   SgType&               adaIntType  = mkIntegralType(); // the root integer type in ROSE
 
-  SgType& adaPositiveType           = SG_DEREF(adaTypes().at(type_hashes.natural_hash));
+  SgType& adaPositiveType           = SG_DEREF(adaTypesByName().at(AdaIdentifier{"POSITIVE"}));
   adaTypes()[-5]                    = &adaPositiveType; //TODO This is here so other functions can get positive. Find a better way?
-  SgType& adaNaturalType            = SG_DEREF(adaTypes().at(type_hashes.natural_hash));
+  SgType& adaNaturalType            = SG_DEREF(adaTypesByName().at(AdaIdentifier{"NATURAL"}));
 
   SgType& adaRealType               = mkRealType();
   
   //characters
-  SgType& adaCharType               = SG_DEREF(adaTypes().at(type_hashes.char_hash));
-  SgType& adaWideCharType           = SG_DEREF(adaTypes().at(type_hashes.wide_char_hash));
-  SgType& adaWideWideCharType       = SG_DEREF(adaTypes().at(type_hashes.wide_wide_char_hash));
+  SgType& adaCharType               = SG_DEREF(adaTypesByName().at(AdaIdentifier{"CHARACTER"}));
+  SgType& adaWideCharType           = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_CHARACTER"}));
+  SgType& adaWideWideCharType       = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_WIDE_CHARACTER"}));
 
   // String types
-  SgType& adaStringType             = SG_DEREF(adaTypes().at(type_hashes.string_hash));
-  SgType& adaWideStringType         = SG_DEREF(adaTypes().at(type_hashes.wide_string_hash));
-  SgType& adaWideWideStringType     = SG_DEREF(adaTypes().at(type_hashes.wide_wide_string_hash));
+  SgType& adaStringType             = SG_DEREF(adaTypesByName().at(AdaIdentifier{"STRING"}));
+  SgType& adaWideStringType         = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_STRING"}));
+  SgType& adaWideWideStringType     = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_WIDE_STRING"}));
 
   // Ada standard exceptions
   SgInitializedName& adaConstraintError    = declareException("Constraint_Error", exceptionType, stdspec);

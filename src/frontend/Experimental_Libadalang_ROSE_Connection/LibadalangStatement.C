@@ -973,6 +973,7 @@ namespace {
 SgVariableDeclaration&
 getParm(ada_base_entity* lal_param_spec, AstContext ctx)
 {
+  logTrace() << "getParm called\n";
 
   ada_base_entity defining_name_list;
   ada_param_spec_f_ids(lal_param_spec, &defining_name_list);
@@ -1000,8 +1001,7 @@ getParm(ada_base_entity* lal_param_spec, AstContext ctx)
   SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(&mode), ctx.scope());
 
   attachSourceLocation(sgnode, lal_param_spec, ctx);
-  /* unused fields:
-  */
+
   return sgnode;
 }
 
@@ -1884,7 +1884,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         {
           parentScope = discr->get_discriminantScope();
         }
-        logInfo() << "After discr\n";
         SgScopeStatement&       scope     = SG_DEREF(parentScope);
         TypeData                ty        = getTypeFoundation(type_name, &lal_type_def, ctx.scope(scope));
         int                     type_hash = hash_node(lal_element);
