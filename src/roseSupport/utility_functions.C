@@ -162,7 +162,7 @@ std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenS
 // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
 std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMapsBySourceFile;
 
-// DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to 
+// DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to
 // unparse the trailing whitespace at the end of the last statement in a scope to the end of the scope.
 std::map<SgSourceFile*,std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > > Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile;
 
@@ -1936,9 +1936,9 @@ getPreviousStatement_support_for_declaration_list ( SgScopeStatement* parent_sco
 
      ROSE_ASSERT(parent_scope    != NULL);
      ROSE_ASSERT(targetStatement != NULL);
-     
+
      ROSE_ASSERT(parent_scope->containsOnlyDeclarations() == true);
-     
+
      SgStatement* previousStatement = NULL;
 
 #if DEBUG_PREVIOUS_STATEMENT
@@ -1951,7 +1951,7 @@ getPreviousStatement_support_for_declaration_list ( SgScopeStatement* parent_sco
      Rose_STL_Container<SgDeclarationStatement*>::iterator targetIterator = find(declarationList.begin(),declarationList.end(),targetStatement);
 
      ROSE_ASSERT(targetStatement == *targetIterator);
-                    
+
      ROSE_ASSERT(targetIterator != declarationList.end());
 
      if (targetIterator == declarationList.begin())
@@ -1995,9 +1995,9 @@ getPreviousStatement_support_for_statement_list ( SgScopeStatement* parent_scope
 
      ROSE_ASSERT(parent_scope    != NULL);
      ROSE_ASSERT(targetStatement != NULL);
-     
+
      ROSE_ASSERT(parent_scope->containsOnlyDeclarations() == false);
-     
+
      SgStatement* previousStatement = NULL;
 
 #if DEBUG_PREVIOUS_STATEMENT
@@ -2010,7 +2010,7 @@ getPreviousStatement_support_for_statement_list ( SgScopeStatement* parent_scope
      Rose_STL_Container<SgStatement*>::iterator targetIterator = find(statementList.begin(),statementList.end(),targetStatement);
 
      ROSE_ASSERT(targetStatement == *targetIterator);
-                    
+
      ROSE_ASSERT(targetIterator != statementList.end());
 
      if (targetIterator == statementList.begin())
@@ -2056,7 +2056,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      ROSE_ASSERT (targetStatement  != NULL);
 
      SgStatement      *previousStatement = NULL;
-     
+
   // DQ (3/15/2024): We don't need this variable now.
   // SgScopeStatement *scope             = targetStatement->get_scope();
   // ROSE_ASSERT (scope != NULL);
@@ -2085,13 +2085,12 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
   // printf ("@@@@@ In Rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
-#if 1
+#if 1 /* NEW_PREVIOUS_STATEMENT_IMPL */
   // DQ (3/15/2024): This is the new version of this function.
 
-     SgStatement* parentStatement = isSgStatement(targetStatement->get_parent());
+     SgStatement* const parentStatement = isSgStatement(targetStatement->get_parent());
      ROSE_ASSERT (parentStatement != NULL);
 
-     SgScopeStatement* parent_scope = isSgScopeStatement(parentStatement);
 #if 0
      if (parent_scope == NULL)
        {
@@ -2101,7 +2100,31 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
   // ROSE_ASSERT (parent_scope != NULL);
 #endif
 
-     if (parent_scope != NULL)
+    // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
+    // since getStatementList() is not defined for a if statement.
+    // We define the previous statement of the true/false body to be the if statement
+    // This is consistent with the later handling that when a statement is the first in a parent,
+    // treat the parent as the previous statement
+    // PP 5/22/2024, generalize for a number of scope statements with similar property
+
+     const bool isSpecialScopeStatement = (  isSgIfStmt(parentStatement)
+                                          || isSgWhileStmt(parentStatement)
+                                          || isSgForStatement(parentStatement)
+                                          || isSgDoWhileStmt(parentStatement)
+                                          || isSgSwitchStatement(parentStatement)
+                                          );
+
+     if (isSpecialScopeStatement)
+        {
+          // the target statement is a child of a special statement
+          //   => previousStatement = parentStatement
+          //   unless climbOutScope is provided, in which case there is none.
+          if (climbOutScope)
+            previousStatement = parentStatement;
+          else
+            ASSERT_require(previousStatement == nullptr);
+        }
+     else if (SgScopeStatement* parent_scope = isSgScopeStatement(parentStatement))
         {
           if (parent_scope->containsOnlyDeclarations() == true)
              {
@@ -2121,19 +2144,6 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
 #endif
              }
         }
-    // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
-    // since getStatementList() is not defined for a if statement.
-    // We define the previous statement of the true/false body to be the if statement
-    // This is consistent with the later handling that when a statement is the first in a parent,
-    // treat the parent as the previous statement
-       else if (isSgIfStmt(parent_scope))
-        {
-          if (climbOutScope)
-             {
-               previousStatement = isSgStatement(targetStatement->get_parent());
-               ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
-             }
-        }
        else
         {
        // Not clear what kinds of statements these should be.
@@ -2144,10 +2154,10 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
        // DQ (3/15/2024): Case of a classDefinition with a parent that is a declaration (SgJovialTableStatement, for Jovial, but could be classDeclaration for C++).
           if (climbOutScope)
              {
-               previousStatement = isSgStatement(targetStatement->get_parent());
+               previousStatement = parentStatement;
                ROSE_ASSERT (previousStatement != NULL);
              }
-          
+
 #if 0
           printf ("Error: parent_scope == NULL not handled... \n");
           flush(cout);
@@ -2169,7 +2179,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
           ROSE_ASSERT (isSgGlobal(targetStatement) != NULL || previousStatement != NULL);
         }
 
-#else
+#else /* !NEW_PREVIOUS_STATEMENT_IMPL */
   // DQ (3/15/2024): Old version of code, default case was using the scope instead of parent,
   // which was incorrect for member functions and non-member functions declared in namespaces.
 
@@ -2251,14 +2261,14 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
                if (parent_scope->containsOnlyDeclarations() == true)
                   {
                  // Examples of this case would be a SgGlobal, SgClassDefinition, and some other scopes.
-                    
+
                  // Usually a global scope or class declaration scope
                     SgDeclarationStatementPtrList & declarationList = parent_scope->getDeclarationList();
 
                     Rose_STL_Container<SgDeclarationStatement*>::iterator targetIterator = find(declarationList.begin(),declarationList.end(),targetStatement);
 
                     ROSE_ASSERT(targetStatement == *targetIterator);
-                    
+
                     ROSE_ASSERT(targetIterator != declarationList.end());
 
                     if (targetIterator == declarationList.begin())
@@ -2290,7 +2300,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
 
                break;
              }
-             
+
           default:
              {
             // DQ (3/12/2024): NOTE: This default case is likely not correct for other kinds of declarations than functions (handled above).
@@ -2382,7 +2392,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
         {
           ROSE_ASSERT (isSgGlobal(targetStatement) != NULL || previousStatement != NULL);
         }
-#endif
+#endif /* NEW_PREVIOUS_STATEMENT_IMPL */
 
      return previousStatement;
    }
