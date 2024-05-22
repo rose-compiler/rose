@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <cstdint>
 #include <limits>
 #include "CodeThornOptions.h"
 #include "CodeThornException.h"
