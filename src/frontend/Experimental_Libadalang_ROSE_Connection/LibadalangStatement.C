@@ -478,7 +478,8 @@ constructInitializedNamePtrList( AstContext ctx,
                                )
 {
   SgInitializedNamePtrList lst;
-
+  int hash = hash_node(lal_name_list);
+  logTrace() << " In constructInitializedNamePtrList with hash = " << hash << std::endl;
   int count = ada_node_children_count(lal_name_list);
   for(int i = 0; i < count; ++i)
   {
@@ -586,12 +587,20 @@ getVarInit(ada_base_entity* lal_decl, SgType* /*expectedType*/, AstContext ctx)
   ada_base_entity default_expr;
   if(kind == ada_object_decl){
     ada_object_decl_f_default_expr(lal_decl, &default_expr);
+  } else if(kind == ada_param_spec){
+    ada_param_spec_f_default_expr(lal_decl, &default_expr);
+  } else if(kind ==ada_component_decl){
+    ada_component_decl_f_default_expr(lal_decl, &default_expr);
   } else {
+    logWarn() << "getVarInit called with unhandled kind: " << kind << std::endl;
+    return nullptr;
+  }
+
+  if(ada_node_is_null(&default_expr)){
     return nullptr;
   }
 
   return &getExpr(&default_expr, ctx);
-
 }
 
 SgType&
@@ -602,8 +611,16 @@ getVarType(ada_base_entity* lal_decl, AstContext ctx)
              || decl.Declaration_Kind == A_Component_Declaration
              || decl.Declaration_Kind == A_Deferred_Constant_Declaration
              );*/
+  ada_node_kind_enum kind = ada_node_kind(lal_decl);
   ada_base_entity subtype_indication;
-  ada_object_decl_f_type_expr(lal_decl, &subtype_indication);
+  if(kind == ada_object_decl){
+    ada_object_decl_f_type_expr(lal_decl, &subtype_indication);
+  } else if(kind == ada_component_decl){
+    ada_component_decl_f_component_def(lal_decl, &subtype_indication);
+    ada_component_def_f_type_expr(&subtype_indication, &subtype_indication);
+  } else {
+    logWarn() << "Unhandled kind " << kind << " in getVarType.\n";
+  }
 
   return getDefinitionType(&subtype_indication, ctx);
 }
@@ -811,9 +828,14 @@ namespace {
                        SgType* expectedType = nullptr
                      )
   {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
     ada_base_entity          ids;
-    ada_object_decl_f_ids(lal_element, &ids);
     SgScopeStatement&        scope    = ctx.scope();
+    if(kind == ada_object_decl){
+      ada_object_decl_f_ids(lal_element, &ids);
+    } else if(kind == ada_component_decl){
+      ada_component_decl_f_ids(lal_element, &ids);
+    }
     //
     // https://www.adaic.com/resources/add_content/standards/05rm/html/RM-3-3-1.html#S0032
     // $7: Any declaration that includes a defining_identifier_list with more than one defining_identifier
@@ -828,11 +850,13 @@ namespace {
                                                                          dclType,
                                                                          getVarInit(lal_element, expectedType, ctx)
                                                                        );
+
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, scope);
 
     attachSourceLocation(sgnode, lal_element, ctx);
     privatize(sgnode, isPrivate);
     ctx.appendStatement(sgnode);
+
     return sgnode;
   }
 
@@ -851,10 +875,16 @@ namespace {
                     TypeModifierFn constMaker
                   )
   {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
     SgType& basety = constMaker(getVarType(lal_element, ctx));
 
     ada_base_entity has_aliased;
-    ada_object_decl_f_has_aliased(lal_element, &has_aliased);
+    if(kind == ada_object_decl){
+      ada_object_decl_f_has_aliased(lal_element, &has_aliased);
+    } else if(kind == ada_component_decl){
+      ada_component_decl_f_component_def(lal_element, &has_aliased);
+      ada_component_def_f_has_aliased(&has_aliased, &has_aliased);
+    }
     ada_node_kind_enum aliased_status = ada_node_kind(&has_aliased);
     const bool               aliased  = (aliased_status == ada_aliased_present);
     SgType& varty  = aliased ? mkAliasedType(basety) : basety;
@@ -1062,6 +1092,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
     ada_kind_name(kind, &kind_name);
     std::string kind_name_string = ada_text_to_locale_string(&kind_name);
     logTrace()   << "handleStmt called on a " << kind_name_string << std::endl;
+    ada_destroy_text(&kind_name);
 
     /*if (elem.Element_Kind == A_Declaration)
     {
@@ -1150,6 +1181,44 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           assocstmt = &sgnode;
           break;
         }
+      //case An_Entry_Call_Statement:             // 9.5.3
+      case ada_call_stmt:          // 6.4
+        {
+          logKind("ada_call_stmt", kind);
+
+          //Get the call_expr node
+          ada_base_entity lal_call_expr;
+          ada_call_stmt_f_call(lal_stmt, &lal_call_expr);
+
+          //Get the args
+          ada_base_entity lal_arg_list;
+          ada_call_expr_f_suffix(&lal_call_expr, &lal_arg_list);
+          int count  = ada_node_children_count(&lal_arg_list);
+          std::vector<ada_base_entity*> lal_args (count);
+          std::vector<ada_base_entity> lal_args_backend (count);
+          for(int i = 0; i < count; i++){
+              if(ada_node_child(&lal_arg_list, i, &lal_args_backend.at(i)) == 0){
+                logError() << "Error while getting a child in handleStmt.\n";
+              }
+
+              lal_args.at(i) = &lal_args_backend.at(i);
+          }
+
+          //Get the name of the call
+          ada_base_entity lal_call_name;
+          ada_call_expr_f_name(&lal_call_expr, &lal_call_name);         
+
+          // oocall indicates if code uses object-oriented syntax: x.init instead of init(x)
+          const bool       oocall = false; //(stmt.Statement_Kind == A_Procedure_Call_Statement) && stmt.Is_Prefix_Notation; TODO check prefix notation?
+          SgExpression&    call   = createCall(&lal_call_name, lal_args, true /* prefix call */, oocall, ctx);
+          SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
+
+          attachSourceLocation(call, lal_stmt, ctx);
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
       case ada_return_stmt:
         {
           logKind("ada_return_stmt", kind);
@@ -1224,6 +1293,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           assocstmt = &sgnode;
           break;
         }
+
       default:
         {
           logWarn() << "Unhandled statement " << kind << std::endl;
@@ -1726,6 +1796,15 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_component_decl:                  // 3.8(6)
+      {
+        logKind("ada_component_decl", kind);
+
+        handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
+
+        // assocdecl = &sgnode;
+        break;
+      }
     case ada_task_type_decl:                  // 9.1(2)
       {
         logKind("ada_task_type_decl", kind);
@@ -1831,9 +1910,18 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       {
         logKind("ada_object_decl", kind);
 
-        assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
-        /* unused fields:
-        */
+        //Get the constant status
+        ada_base_entity lal_has_constant;
+        ada_object_decl_f_has_constant(lal_element, &lal_has_constant);
+        ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
+
+        //If it is const, call with mkConstType
+        if(lal_has_constant_kind == ada_constant_absent){
+          assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
+        } else {
+          assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, mkConstType);
+        }
+
         break;
       }
     case ada_type_decl:

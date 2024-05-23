@@ -681,6 +681,9 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     } else if(kind == ada_identifier){
       //Get the type this references
       ada_expr_p_first_corresponding_decl(lal_id, &lal_declaration);
+    } else if(kind == ada_anonymous_type){
+      //Can ada_anonymous_type ever not be an access?
+      return getAnonymousAccessType(lal_id, ctx);
     } else {
       logError() << "getDeclType: unhandled definition kind: " << kind
                  << std::endl;
@@ -695,12 +698,6 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
 
     return SG_DEREF(res);
-
-    /*ADA_ASSERT(elem.Element_Kind == A_Definition);
-    Definition_Struct& def = elem.The_Union.Definition;
-
-    if (def.Definition_Kind == An_Access_Definition)
-      return getAnonymousAccessType(def, ctx);*/
   }
 
   SgClassDefinition&
@@ -722,20 +719,40 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
 
     sgnode.set_parent(&ctx.scope());
 
-    /*ElemIdRange               components = idRange(rec.Record_Components);
-    //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
+    if(kind == ada_record_def){
 
-    // NOTE: the true parent is when the record is created; this is set to enable
-    //       traversal from the record body to global scope.
-    traverseIDs(components, elemMap(), ElemCreator{ctx.scope(sgnode)});
-    //~ was: traverseIDs(components, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
+      //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
-    // how to represent implicit components
-    //~ traverseIDs(implicits, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
+      // NOTE: the true parent is when the record is created; this is set to enable
+      //       traversal from the record body to global scope.
+      ada_base_entity lal_component_list;
+      ada_base_record_def_f_components(lal_record, &lal_component_list);
+      ada_component_list_f_components(&lal_component_list, &lal_component_list);
 
-    //~ markCompilerGenerated(sgnode);*/ //TODO
-    logWarn() << "Component traversal unimplemented!\n";
+      int component_count = ada_node_children_count(&lal_component_list); //TODO What if no components?
+      for(int i = 0; i < component_count; i++){
+        ada_base_entity lal_component;
+        if(ada_node_child(&lal_component_list, i, &lal_component) != 0){
+          handleElement(&lal_component, ctx.scope(sgnode));
+        }
+      }
+
+      // how to represent implicit components
+      //~ traverseIDs(implicits, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
+
+      //~ markCompilerGenerated(sgnode);
+    } else {
+      logWarn() << "Component traversal unimplemented for kind " << kind << "!\n";
+    }
     return sgnode;
+  }
+
+  SgBaseClass&
+  getParentType(ada_base_entity* lal_element, AstContext ctx)
+  {
+    SgType& basety = getDefinitionType(lal_element, ctx);
+
+    return mkRecordParent(basety);
   }
 
   TypeData
@@ -748,25 +765,34 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
 
     TypeData                res{lal_def, nullptr, false, false, false};
 
-    /* unused fields:
-       Definition_Struct
-         bool                           Has_Null_Exclusion;
-    */
-
-    switch(kind)
-    {
+    switch(kind){
       case ada_derived_type_def:              // 3.4(2)     -> Trait_Kinds
         {
           logKind("ada_derived_type_def", kind);
 
+          //Get the subtype indication
           ada_base_entity subtype_indication;
           ada_derived_type_def_f_subtype_indication(lal_def, &subtype_indication);
 
-          SgType& basetype = getDefinitionType(&subtype_indication, ctx);
+          //Check if this is a record extension
+          ada_base_entity lal_record_ext;
+          ada_derived_type_def_f_record_extension(lal_def, &lal_record_ext);
 
-          //~ if (isSgEnumType(si::Ada::base)
-          res.sageNode(mkAdaDerivedType(basetype));
-          break;
+          if(ada_node_is_null(&lal_record_ext)){
+            SgType& basetype = getDefinitionType(&subtype_indication, ctx);
+
+            //~ if (isSgEnumType(si::Ada::base)
+            res.sageNode(mkAdaDerivedType(basetype));
+            break;
+          } else {
+            SgClassDefinition&  def    = getRecordBody(&lal_record_ext, ctx);
+            SgBaseClass&        parent = getParentType(&subtype_indication, ctx);
+
+            sg::linkParentChild(def, parent, &SgClassDefinition::append_inheritance);
+
+            res.sageNode(def);
+            break;
+          }
         }
 
       case ada_signed_int_type_def:           // 3.5.4(3)
@@ -1094,10 +1120,6 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::Ada::exceptionName, &stdspec));
 
   //adaTypes()["EXCEPTION"]           = &exceptionType;
-
-  for (auto const& element : adaTypesByName()) {
-    logInfo() << element.first << std::endl;
-  }
 
   SgType&               adaBoolType = SG_DEREF(adaTypesByName().at(AdaIdentifier{"BOOLEAN"}));
   // integral types

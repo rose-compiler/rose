@@ -68,6 +68,10 @@ getDefinitionType(ada_base_entity* lal_def, AstContext ctx, bool forceSubtype = 
 SgType&
 getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx);
 
+/// looks up the record declaration associated with \ref lal_element
+SgBaseClass&
+getParentType(ada_base_entity* lal_element, AstContext ctx);
+
 /// returns a ROSE representation of the type represented by \ref lal_def
 /// \post res.n is not NULL
 TypeData

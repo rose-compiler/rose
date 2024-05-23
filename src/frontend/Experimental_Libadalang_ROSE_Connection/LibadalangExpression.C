@@ -992,9 +992,64 @@ namespace
     return true;
   }
 
+  SgExprListExp&
+  getRecordAggregate(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_base_entity lal_assocs;
+    ada_base_aggregate_f_assocs(lal_element, &lal_assocs);
+    int count = ada_node_children_count(&lal_assocs);
+    std::vector<SgExpression*> components;
+
+    for(int i = 0; i < count; i++){
+      ada_base_entity lal_aggregate_assoc;
+      if(ada_node_child(&lal_assocs, i, &lal_aggregate_assoc) != 0){
+        //Process this aggregate assoc node and add it to components
+        ada_base_entity lal_r_expr;
+        ada_aggregate_assoc_f_r_expr(&lal_aggregate_assoc, &lal_r_expr);
+
+        ada_base_entity lal_designators;
+        ada_aggregate_assoc_f_designators(&lal_aggregate_assoc, &lal_designators);
+
+        SgExpression&              init = getExpr(&lal_r_expr, ctx);
+        SgExpression*              sgnode = &init;
+        int                        num_designators = ada_node_children_count(&lal_designators);
+
+        if(!ada_node_is_null(&lal_designators) && num_designators > 0)
+        {
+          std::vector<SgExpression*> exprs;
+
+          for(int j = 0; j < num_designators; j++){
+            ada_base_entity lal_designator;
+            if(ada_node_child(&lal_designators, j, &lal_designator) != 0){
+              SgExpression* res = &getExpr(&lal_designator, ctx); //TODO What if this is a definition?
+              exprs.push_back(res);
+            }
+          }
+          SgExprListExp& choicelst = mkExprListExp(exprs);
+
+          sgnode = &mkAdaNamedInitializer(choicelst, init);
+        }
+        attachSourceLocation(SG_DEREF(sgnode), &lal_aggregate_assoc, ctx);
+        components.push_back(sgnode);
+      }
+    }
+
+    SgExprListExp& sgnode = mkExprListExp(components);
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+    return sgnode;
+  }
+
 } //end unnamed namespace
 
 namespace{
+  SgExprListExp& createExprListExpIfNeeded(SgExpression& exp)
+  {
+    SgExprListExp* res = isSgExprListExp(&exp);
+
+    return (res == nullptr) ? mkExprListExp({&exp}) : *res;
+  }
+
   SgScopeStatement& scopeForUnresolvedNames(AstContext ctx)
   {
     SgDeclarationStatement* dcl = ctx.pragmaAspectAnchor();
@@ -1063,6 +1118,22 @@ namespace{
           break;
         }
 
+      case ada_real_literal:                            // 2.4.1
+        {
+          logKind("ada_real_literal", kind);
+          //Get the value
+          ada_symbol_type    p_canonical_text;
+          ada_text           ada_canonical_text;
+          ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text); //TODO this won't work after lal 2021
+          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+          std::string value_image = ada_text_to_locale_string(&ada_canonical_text);
+          const char* c_value_image = value_image.c_str();
+
+          res = &mkValue<SgLongDoubleVal>(c_value_image);
+
+          break;
+        }
+
       case ada_identifier:                             // 4.1
         {
           // \todo use the queryCorrespondingAstNode function and the
@@ -1085,9 +1156,15 @@ namespace{
           ada_base_entity corresponding_decl; //lal doesn't give definition directly, so go from the decl
           ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
 
+          if(ada_node_is_null(&corresponding_decl)){
+            logInfo() << "Identifier has no first_corresponding_decl, trying referenced_decl instead.\n";
+            //If first_corresponding_decl isn't there, try referenced_decl
+            ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+          }
+
           //Get the kind of the decl
           ada_node_kind_enum decl_kind = ada_node_kind(&corresponding_decl);
-          if(decl_kind == ada_param_spec || decl_kind == ada_object_decl){
+          if(decl_kind >= ada_abstract_state_decl && decl_kind <= ada_single_task_decl){
             ada_ada_node_array defining_name_list;
             ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
           
@@ -1108,7 +1185,7 @@ namespace{
           } else if(decl_kind == ada_entry_decl){
                 hash = hash_node(&corresponding_decl);
           } else {
-            logError() << "Could not get corresponding decl for identifier!\n";
+            logError() << "Could not get corresponding decl for identifier! decl_kind = " << decl_kind << "\n";
             found_decl = false;
           }
 
@@ -1338,6 +1415,69 @@ namespace{
           break;
         }
 
+      case ada_aggregate:                        // 4.3
+        {
+          logKind("ada_aggregate", kind);
+
+          res = &getRecordAggregate(lal_element, ctx);
+          break;
+        }
+
+      case ada_paren_expr:                // 4.4
+        {
+          logKind("ada_paren_expr", kind);
+
+          ada_base_entity lal_expr;
+          ada_paren_expr_f_expr(lal_element, &lal_expr);
+
+          res = &getExpr(&lal_expr, ctx);
+          res->set_need_paren(true);
+
+          break;
+        }
+
+      case ada_allocator:   // 4.8
+        {
+          logKind("ada_allocator", kind);
+
+          //Get the expression
+          ada_base_entity lal_expr;
+          ada_allocator_f_type_or_expr(lal_element, &lal_expr);
+          ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);
+
+          //lal_expr can either be a qual_expr or a subtype_indication
+          if(lal_expr_kind == ada_qual_expr){
+            logKind("An_Allocation_From_Qualified_Expression", lal_expr_kind);
+
+            //Get the id for the expression
+            ada_base_entity lal_prefix;
+            ada_qual_expr_f_prefix(&lal_expr, &lal_prefix);
+
+            //Get the suffix for the expression
+            ada_base_entity lal_suffix;
+            ada_qual_expr_f_suffix(&lal_expr, &lal_suffix);
+            ada_node_kind_enum lal_suffix_kind = ada_node_kind(&lal_suffix);
+            if(lal_suffix_kind == ada_paren_expr){
+              //lal sometimes (always?) has a paren expr here, but ASIS doesn't. Skip the parens if it exists.
+              ada_paren_expr_f_expr(&lal_suffix, &lal_suffix);
+            }
+
+            SgType&            ty  = getDeclType(&lal_prefix, ctx);
+            SgExpression&      arg = getExpr_undecorated(&lal_suffix, ctx);
+            SgExprListExp&     inilst = createExprListExpIfNeeded(arg);
+
+            res = &mkNewExp(ty, &inilst);
+          } else {
+            logKind("An_Allocation_From_Subtype", lal_expr_kind);
+
+            SgType& ty = getDefinitionType(&lal_expr, ctx);
+
+            res = &mkNewExp(ty);
+          }
+
+          break;
+        }
+
       default:
         logFlaw() << "unhandled expression: " << kind_name_string << std::endl;
         res = sb::buildIntVal();
@@ -1356,6 +1496,12 @@ getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement sup
   
   //Check the kind
   ada_node_kind_enum kind = ada_node_kind(lal_element);
+  
+  ada_text kind_name;
+  ada_kind_name(kind, &kind_name);
+  std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+  logTrace()   << "getExpr called on a " << kind_name_string << std::endl;
+  ada_destroy_text(&kind_name);
 
   switch(kind)
   {

@@ -276,6 +276,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_task_type_decl:
         case ada_task_body:
         case ada_entry_decl:
+        case ada_component_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
