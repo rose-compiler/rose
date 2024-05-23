@@ -16,7 +16,7 @@ macro(find_spot)
     set(SPOT_FOUND FALSE)
 
   elseif("${SPOT_ROOT}" STREQUAL "")
-    message(WARNING "Spot searching is not supported yet; assuming -DSPOT_ROOT=no")
+    message(STATUS "Spot searching is not supported yet; assuming -DSPOT_ROOT=no")
     set(SPOT_ROOT no)
     set(SPOT_FOUND FALSE)
 

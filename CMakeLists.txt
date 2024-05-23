@@ -397,12 +397,12 @@ endif()
 ########################################################################################################################
 
 # Binary analysis
-option(ENABLE-BINARY-ANALYSIS "Enable binary analysis" ON)
+option(ENABLE-BINARY-ANALYSIS "Enable binary analysis" OFF)
 if(ENABLE-BINARY-ANALYSIS)
   set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
 
-# C/C++
+# C/C++ (default)
 option(ENABLE-C "Enable C/C++ analysis" ON)
 if(ENABLE-C)
   set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
@@ -607,26 +607,25 @@ find_package(Perl REQUIRED)
 ########################################################################################################################
 # Miscellaneous user-selectable features
 ########################################################################################################################
+option(ENABLE-BINARY-ANALYSIS-TESTS "Enable tests of ROSE binary analysis code" OFF)
+option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
+option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
 
-# FIXME: All options should be in the affirmative (i.e., enable-whatever instead of disable-whatever)
-option(DISABLE-BINARY-ANALYSIS-TESTS "Disable tests of ROSE binary analysis code" ON)
-option(DISABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Disable compilation and testing of exampleTranslators directory" ON)
 if(EXISTS "${PROJECT_SOURCE_DIR}/tests/Readme.md")
-  option(DISABLE-TESTS-DIRECTORY "Disable compilation and testing of the ROSE/tests directory" OFF)
-else()
-  option(DISABLE-TESTS-DIRECTORY "Disable compilation and testing of the ROSE/tests directory" ON)
+  option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" ON)
 endif()
-option(DISABLE-TUTORIAL-DIRECTORY "Disable compilation and testing of the ROSE/tutorial directory" OFF)
 
+option(ENABLE-TUTORIAL-DIRECTORY "Enable compilation and testing of the ROSE/tutorial directory" OFF)
 option(ENABLE-ADVANCED-WARNINGS "Support for an advanced uniform warning level for ROSE development" OFF)
+
 if(ENABLE-ADVANCED-WARNINGS)
   message(WARNING "Using an advanced uniform warning level for ROSE development")
   set(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT 1)
 endif()
 
 option(ENABLE-ASSEMBLY-SEMANTICS "Enable semantics-based analysis of assembly code" OFF)
-
 option(ENABLE-CANDL "Support for ScopLib" OFF)
+
 if(ENABLE-CANDL)
   find_path(with-candl "include/candl.h"
     DOC "Path to a valid Candl installation")
@@ -1377,7 +1376,7 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 ########################################################################################################################
 
 add_subdirectory(tools)
-if(NOT DISABLE-TESTS-DIRECTORY)
+if(ENABLE-TESTS-DIRECTORY)
   enable_testing()
   add_subdirectory(tests)
   add_subdirectory(tutorial)
@@ -1395,7 +1394,3 @@ if(NOT UNIX)
   # This include file defines how CPack should create our installers.
   include(cmake/ROSECPack.cmake)
 endif()
-
-message(STATUS "WITH_C_OPTIMIZE: ${WITH_C_OPTIMIZE}")
-message(STATUS "WITH_CXX_OPTIMIZE: ${WITH_CXX_OPTIMIZE}")
-message(STATUS "WITH_OPTIMIZE: ${WITH_OPTIMIZE} ")

@@ -11,8 +11,8 @@ include(CMakeDependentOption)
 #------------------------------------------------------------------------------
 # Build Targets
 #------------------------------------------------------------------------------
-option(ENABLE_DOCS       "Enables documentation" ON)
-option(ENABLE_EXAMPLES   "Enables examples" ON)
+option(ENABLE_DOCS       "Enables documentation" OFF)
+option(ENABLE_EXAMPLES   "Enables examples" OFF)
 option(ENABLE_TESTS      "Enables tests" OFF)
 option(ENABLE_BENCHMARKS "Enables benchmarks" OFF)
 option(ENABLE_COVERAGE   "Enables code coverage support" OFF)
@@ -84,7 +84,6 @@ option(ENABLE_FRUIT        "Enable Fruit testing support (if ENABLE_TESTS=ON and
 option(ENABLE_FRUIT_MPI    "Enable Fruit MPI testing support (if ENABLE_TESTS=ON and ENABLE_FORTRAN=ON and ENABLE_FRUIT=ON and ENABLE_MPI=ON" OFF)
 option(ENABLE_GBENCHMARK   "Enable Google Benchmark support (if ENABLE_TESTS=ON)" ${ENABLE_BENCHMARKS})
 
-
 if( (NOT _CXX_enabled) AND ENABLE_GTEST )
   message( FATAL_ERROR
     "You must have CXX enabled in your project to use GTEST!" )
@@ -93,7 +92,13 @@ endif()
 #------------------------------------------------------------------------------
 # Compiler Options
 #------------------------------------------------------------------------------
-option(ENABLE_ALL_WARNINGS         "Enables all compiler warnings on all build targets" ON)
+option(ENABLE_ALL_WARNINGS         "Enables all compiler warnings on all build targets" OFF)
+
+# All warnings On by default for this build type 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  set(ENABLE_ALL_WARNINGS ON) 
+endif() 
+
 option(ENABLE_WARNINGS_AS_ERRORS   "Enables treating compiler warnings as errors on all build targets" OFF)
 cmake_dependent_option(BLT_ENABLE_MSVC_STATIC_MD_TO_MT
                                    "When linking statically with MS Visual Studio, enables changing /MD to /MT"
