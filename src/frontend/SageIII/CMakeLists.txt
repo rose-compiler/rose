@@ -51,22 +51,26 @@ if(ENABLE-CPP)
     DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/omplexer.ll)
 
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c
+    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
     COMMAND ${BISON_EXECUTABLE}
       ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy -o
       ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c
-    DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy)
-
-  #BISON generates a ompparser.c file and we need a ompparser.C file
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
     COMMAND ${CMAKE_COMMAND} -E rename
       ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
-    DEPENDS ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c)
+    DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy)
+
+  #BISON generates a ompparser.c file and we need a ompparser.C file, but Windows is case insensitive,
+  #So I'm gonna make a phony output too.
+#  add_custom_command(
+#    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.deleteme
+#    COMMAND ${CMAKE_COMMAND} -E rename
+#      ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
+#    COMMAND ${CMAKE_COMMAND} -E copy
+#      ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.deleteme
+#    DEPENDS ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c)
 
   add_custom_target(OMPPARSER ALL DEPENDS
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
-    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.c
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
     COMMENT "Generating files for the omp parser")
 
