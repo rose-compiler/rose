@@ -3,20 +3,10 @@
  * and fucntions that unparse directives.
  */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-// #include "propagateHiddenListData.h"
-// #include "HiddenList.h"
-
-// include "array_class_interface.h"
 #include "unparser.h"
 #include "keep_going.h"
-
-// DQ (10/21/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
-
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
@@ -35,9 +25,6 @@
 // #include "FileHelper.h"
 
 #include <boost/algorithm/string.hpp>
-
-// DQ (3/19/2014): Used for BOOST_CHECK_EQUAL_COLLECTIONS
-// #include <boost/test/unit_test.hpp>
 
 // DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
@@ -6137,8 +6124,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                     boost::filesystem::path newFileNamePath(newFileName);
                     if (exists(newFileNamePath) == false)
                        {
-                      // syntax: copy_file(from, to, copy_option::fail_if_exists);
-                         copy_file(originalFileNamePath, newFileNamePath, boost::filesystem::copy_option::fail_if_exists);
+                         copy_file(originalFileNamePath, newFileNamePath);
                        }
                   }
                  else
@@ -6203,7 +6189,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                             {
                            // Handle error.
                            // We might want to report this but not stop processing, since multiple files will trigger the same header files the be copied.
-#if 0
+#if 1
                               printf ("Error: this file already exists: newFileName = %s \n",newFileName.c_str());
                               ROSE_ABORT();
 #else
@@ -6212,15 +6198,8 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                             }
                            else
                             {
-                           // syntax: copy_file(from, to, copy_option::fail_if_exists);
-                              copy_file(originalFileNamePath, newFileNamePath, boost::filesystem::copy_option::fail_if_exists);
+                              copy_file(originalFileNamePath, newFileNamePath);
                             }
-                       }
-                      else
-                       {
-#if 0
-                         printf ("Note: skip copying non-application header file \n");
-#endif
                        }
 #if 1
                     printf ("Exiting as a test! \n");
@@ -6235,14 +6214,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
           printf ("DONE: In unparseIncludedFiles(): before while loop over unparseMap (files to copy): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",
                EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
 
-#if 0
-          printf ("In unparseIncludedFiles(): unparseMap.size() = %zu \n",unparseMap.size());
-#endif
 #if DEBUG_UNPARSE_INCLUDE_FILES
           printf ("In unparseIncludedFiles(): before for loop over unparseMap: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif

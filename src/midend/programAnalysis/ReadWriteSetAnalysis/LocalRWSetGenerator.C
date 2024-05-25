@@ -41,7 +41,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/convenience.hpp>
 #include "RoseAst.h"
 #include <nlohmann/json.hpp>
 #include <Sawyer/Yaml.h>

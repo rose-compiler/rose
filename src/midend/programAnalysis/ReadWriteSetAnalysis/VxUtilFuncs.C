@@ -2,7 +2,6 @@
 #include "VxUtilFuncs.h"
 #include <iostream>
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/convenience.hpp>
 #include <boost/algorithm/string.hpp>
 #include "SgNodeHelper.h"
 #include "sageInterface.h"
