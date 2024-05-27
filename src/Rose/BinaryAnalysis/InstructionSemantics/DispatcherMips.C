@@ -123,6 +123,29 @@ struct IP_addu: P {
     }
 };
 
+// Bitwise logical AND
+struct IP_and: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr result = ops->and_(rs, rt);
+        d->write(args[0], result);
+    }
+};
+
+// Bitwise logical AND immediate
+struct IP_andi: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr zeros = ops->number_(16, 0);
+        SValue::Ptr imm32 = ops->concatHiLo(zeros, d->read(args[2],16));
+        SValue::Ptr result = ops->and_(rs, imm32);
+        d->write(args[0], result);
+    }
+};
+
 // Breakpoint
 struct IP_break: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -164,6 +187,24 @@ struct IP_lb: P {
     }
 };
 
+// Load upper immediate
+struct IP_lui: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr imm = d->read(args[1], 16);
+        SValue::Ptr zeros = ops->number_(16, 0);
+        SValue::Ptr result = ops->concatHiLo(imm, zeros);
+        d->write(args[0], result);
+    }
+};
+
+// No operation
+struct IP_nop: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+    }
+};
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,10 +216,14 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_addi,  new Mips::IP_addi);
     iprocSet(mips_addiu, new Mips::IP_addiu);
     iprocSet(mips_addu,  new Mips::IP_addu);
+    iprocSet(mips_and,   new Mips::IP_and);
+    iprocSet(mips_andi,  new Mips::IP_andi);
     iprocSet(mips_break, new Mips::IP_break);
     iprocSet(mips_clo,   new Mips::IP_clo);
     iprocSet(mips_div,   new Mips::IP_div);
     iprocSet(mips_lb,    new Mips::IP_lb);
+    iprocSet(mips_lui,   new Mips::IP_lui);
+    iprocSet(mips_nop,   new Mips::IP_nop);
 }
 
 DispatcherMips::~DispatcherMips() {}
