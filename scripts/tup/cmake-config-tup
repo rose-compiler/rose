@@ -48,14 +48,22 @@ is_present() {
     return 1
 }
 
+# Convert a string to lower case
+to_lower() {
+    echo "$@" |tr A-Z z-z
+}
+
 # Given ROSE cmake command-line arguments, return the value of the specified switch.
 #   If the command-line contains "NAME=VALUE" then return VALUE
 #   else if the switch matches "-DNAME=VALUE" then return VALUE
 #   else return nothing
+#
+# The comparison is case insensitive
 config_switch() {
-    local name="$1"; shift
+    local name="$(to_lower "$1")"; shift
     local switch
     for switch in "$@"; do
+	switch="$(to_lower "$switch")"
 
 	# Look for "NAME=VAL"
 	local val="${switch#$name=}"
@@ -76,9 +84,9 @@ config_switch() {
 # Given ROSE cmake command-line arguments return success or failure depending on whether the command-line switch has a true or false
 # value. If the switch is absent then consider it to be false. Also echos "yes" when returning true.
 config_boolean() {
-    local value="$(config_switch "$@")"
+    local value="$(to_lower "$(config_switch "$@")")"
     case "$value" in
-	no|NO|No|off|OFF|Off|"")
+	no|off|"")
 	    return 1
 	    ;;
 	*)
@@ -149,34 +157,34 @@ language_vars() {
     # Get list of enabled languages
     local languages=()
 
-    config_boolean_silent -Denable-binary-analysis "$@" &&
+    config_boolean_silent -DENABLE-BINARY-ANALYSIS "$@" &&
 	languages=("${languages[@]}" "binary")
 
-    config_boolean_silent -Denable-c "$@" &&
+    config_boolean_silent -DENABLE-C "$@" &&
 	languages=("${languages[@]}" "cxx")
 
-    config_boolean_silent -Denable-cuda "$@" &&
+    config_boolean_silent -DENABLE-CUDA "$@" &&
 	languages=("${languages[@]}" "cuda")
 
-    config_boolean_silent -Denable-java "$@" &&
+    config_boolean_silent -DENABLE-JAVA "$@" &&
 	languages=("${languages[@]}" "java")
 
-    config_boolean_silent -Denable-opencl "$@" &&
+    config_boolean_silent -DENABLE-OPENCL "$@" &&
 	languages=("${languages[@]}" "opencl")
 
-    config_boolean_silent -Denable-fortran "$@" &&
+    config_boolean_silent -DENABLE-FORTRAN "$@" &&
 	languages=("${languages[@]}" "fortran")
 
-    config_boolean_silent -Denable-php "$@" &&
+    config_boolean_silent -DENABLE-PHP "$@" &&
 	languages=("${languages[@]}" "php")
 
-    config_boolean_silent -Denable-python "$@" &&
+    config_boolean_silent -DENABLE-PYTHON "$@" &&
 	languages=("${languages[@]}" "python")
 
-    config_boolean_silent -Denable-ada "$@" &&
+    config_boolean_silent -DENABLE-ADA "$@" &&
 	languages=("${languages[@]}" "ada")
 
-    config_boolean_silent -Denable-jovial "$@" &&
+    config_boolean_silent -DENABLE-JOVIAL "$@" &&
 	languages=("${languages[@]}" "jovial")
 
     for lang in "${languages[@]}"; do
