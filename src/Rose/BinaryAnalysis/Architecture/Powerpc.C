@@ -689,7 +689,7 @@ Powerpc::cc_ibm(const size_t bitsPerWord) const {
 
     //==== Address locations ====
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
-    cc->returnAddressLocation(ConcreteLocation(regdict->callReturnRegister()));
+    cc->returnAddressLocation(ConcreteLocation(regdict->callReturnRegister(), regdict));
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
@@ -704,7 +704,7 @@ Powerpc::cc_ibm(const size_t bitsPerWord) const {
         auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
             const RegisterDescriptor reg = regdict->findOrThrow(registerName);
             cc->appendInputParameter(reg);
-            pool->append(ConcreteLocation(reg));
+            pool->append(ConcreteLocation(reg, regdict));
         };
 
         insert("r3");
@@ -724,7 +724,7 @@ Powerpc::cc_ibm(const size_t bitsPerWord) const {
         auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
             const RegisterDescriptor reg = regdict->findOrThrow(registerName);
             cc->appendInputParameter(reg);
-            pool->append(ConcreteLocation(reg));
+            pool->append(ConcreteLocation(reg, regdict));
         };
 
         insert("f1");
@@ -754,7 +754,7 @@ Powerpc::cc_ibm(const size_t bitsPerWord) const {
         auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
             const RegisterDescriptor reg = regdict->findOrThrow(registerName);
             cc->appendOutputParameter(reg);
-            pool->append(ConcreteLocation(reg));
+            pool->append(ConcreteLocation(reg, regdict));
         };
 
         insert("r3");
@@ -767,7 +767,7 @@ Powerpc::cc_ibm(const size_t bitsPerWord) const {
         auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
             const RegisterDescriptor reg = regdict->findOrThrow(registerName);
             cc->appendOutputParameter(reg);
-            pool->append(ConcreteLocation(reg));
+            pool->append(ConcreteLocation(reg, regdict));
         };
 
         insert("f1");

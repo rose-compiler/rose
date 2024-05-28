@@ -47,7 +47,7 @@ Motorola::callingConventions() const {
 
         //==== Address locations ====
         cc->instructionPointerRegister(regdict->instructionPointerRegister());
-        cc->returnAddressLocation(ConcreteLocation(SP, 0));
+        cc->returnAddressLocation(ConcreteLocation(SP, 0, regdict));
 
         //==== Stack characteristics ====
         cc->stackPointerRegister(SP);
@@ -74,7 +74,7 @@ Motorola::callingConventions() const {
         if (const RegisterDescriptor d0 = regdict->findOrThrow("d0")) {
             cc->appendOutputParameter(d0);
             auto pool = CC::StoragePoolEnumerated::instance("integral return value", CC::isIntegerNotWiderThan(bitsPerWord()));
-            pool->append(ConcreteLocation(d0));
+            pool->append(ConcreteLocation(d0, regdict));
             cc->returnValueAllocator()->append(pool);
         }
 
@@ -82,7 +82,7 @@ Motorola::callingConventions() const {
         if (const RegisterDescriptor a0 = regdict->findOrThrow("a0")) {
             cc->appendOutputParameter(a0);
             auto pool = CC::StoragePoolEnumerated::instance("addr return value", CC::isPointerNotWiderThan(bitsPerWord()));
-            pool->append(ConcreteLocation(a0));
+            pool->append(ConcreteLocation(a0, regdict));
             cc->returnValueAllocator()->append(pool);
         }
 
@@ -90,7 +90,7 @@ Motorola::callingConventions() const {
         if (const RegisterDescriptor fp0 = regdict->findOrThrow("fp0")) {
             cc->appendOutputParameter(fp0);
             auto pool = CC::StoragePoolEnumerated::instance("fp return value", CC::isFpNotWiderThan(bitsPerWord()));
-            pool->append(ConcreteLocation(fp0));
+            pool->append(ConcreteLocation(fp0, regdict));
             cc->returnValueAllocator()->append(pool);
         }
 

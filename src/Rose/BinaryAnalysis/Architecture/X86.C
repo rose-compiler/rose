@@ -504,7 +504,7 @@ X86::cc_cdecl(const size_t bitsPerWord) const {
     //==== Address locations ====
     cc->bitsPerWord(bitsPerWord);
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
-    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+    cc->returnAddressLocation(ConcreteLocation(SP, 0, regdict));
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
@@ -534,14 +534,14 @@ X86::cc_cdecl(const size_t bitsPerWord) const {
     //==== Return values ====
     if (const RegisterDescriptor AX = regdict->findOrThrow(prefix + "ax")) {
         auto nonFpReturns = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord));
-        nonFpReturns->append(ConcreteLocation(AX));
+        nonFpReturns->append(ConcreteLocation(AX, regdict));
         cc->returnValueAllocator()->append(nonFpReturns);
         cc->appendOutputParameter(AX);
     }
 
     if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0)) {
         auto fpReturns = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(ST0.nBits()));
-        fpReturns->append(ConcreteLocation(ST0));
+        fpReturns->append(ConcreteLocation(ST0, regdict));
         cc->returnValueAllocator()->append(fpReturns);
         cc->appendOutputParameter(ST0);
     }
@@ -578,7 +578,7 @@ X86::cc_stdcall(const size_t bitsPerWord) const {
     //==== Address locations ====
     cc->bitsPerWord(bitsPerWord);
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
-    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+    cc->returnAddressLocation(ConcreteLocation(SP, 0, regdict));
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
@@ -608,14 +608,14 @@ X86::cc_stdcall(const size_t bitsPerWord) const {
     //==== Return values ====
     if (const RegisterDescriptor AX = regdict->findOrThrow(prefix + "ax")) {
         auto nonFpReturns = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord));
-        nonFpReturns->append(ConcreteLocation(AX));
+        nonFpReturns->append(ConcreteLocation(AX, regdict));
         cc->returnValueAllocator()->append(nonFpReturns);
         cc->appendOutputParameter(AX);
     }
 
     if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0)) {
         auto fpReturns = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(ST0.nBits()));
-        fpReturns->append(ConcreteLocation(ST0));
+        fpReturns->append(ConcreteLocation(ST0, regdict));
         cc->returnValueAllocator()->append(fpReturns);
         cc->appendOutputParameter(ST0);
     }
@@ -653,7 +653,7 @@ X86::cc_fastcall(const size_t bitsPerWord) const {
     //==== Address locations ====
     cc->bitsPerWord(bitsPerWord);
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
-    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+    cc->returnAddressLocation(ConcreteLocation(SP, 0, regdict));
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
@@ -668,8 +668,8 @@ X86::cc_fastcall(const size_t bitsPerWord) const {
     if (const RegisterDescriptor CX = regdict->findOrThrow(prefix + "cx")) {
         const RegisterDescriptor DX = regdict->findOrThrow(prefix + "dx");
         auto nonFpArgs = CC::StoragePoolEnumerated::instance("non-fp args", CC::isNonFpNotWiderThan(bitsPerWord));
-        nonFpArgs->append(ConcreteLocation(CX));
-        nonFpArgs->append(ConcreteLocation(DX));
+        nonFpArgs->append(ConcreteLocation(CX, regdict));
+        nonFpArgs->append(ConcreteLocation(DX, regdict));
         cc->argumentValueAllocator()->append(nonFpArgs);
         cc->appendInputParameter(CX);
         cc->appendInputParameter(DX);
@@ -695,14 +695,14 @@ X86::cc_fastcall(const size_t bitsPerWord) const {
     //==== Return values ====
     if (const RegisterDescriptor AX = regdict->findOrThrow(prefix + "ax")) {
         auto nonFpReturns = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord));
-        nonFpReturns->append(ConcreteLocation(AX));
+        nonFpReturns->append(ConcreteLocation(AX, regdict));
         cc->returnValueAllocator()->append(nonFpReturns);
         cc->appendOutputParameter(AX);
     }
 
     if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0)) {
         auto fpReturns = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(ST0.nBits()));
-        fpReturns->append(ConcreteLocation(ST0));
+        fpReturns->append(ConcreteLocation(ST0, regdict));
         cc->returnValueAllocator()->append(fpReturns);
         cc->appendOutputParameter(ST0);
     }

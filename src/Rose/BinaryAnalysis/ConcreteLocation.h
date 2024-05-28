@@ -60,11 +60,6 @@ public:
      *  Construct a concrete location that refers to a register.  The optional register dictionary can be associated with the
      *  location and is only used when printing the location.
      *
-     *  FIXME[Robb Matzke 2022-07-15]: The second argument is temporary and unused. It's only purpose is to disambiguate the
-     *  call to ConcreteLocation(RegisterDescriptor,int64_t) without the user having to add int64_t casts at all such calls
-     *  when the offset is zero. Doing it this way will be easier to change in the future when register dictionaries are
-     *  changed to use smart pointers since the compiler will be able to help us.
-     *
      *  @{ */
     explicit ConcreteLocation(RegisterDescriptor);
     explicit ConcreteLocation(RegisterDescriptor, const RegisterDictionaryPtr&);
@@ -77,9 +72,13 @@ public:
 
     /** Register and offset location.
      *
-     *  Construct a concrete location that refers to an address in memory calculated by adding a register's value and a signed
-     *  byte offset. */
+     *  Construct a concrete location that refers to an address in memory calculated by adding a register's value and a signed byte
+     *  offset. The optional register dictionary can be associated with the location and is only used when printing the location.
+     *
+     * @{ */
     ConcreteLocation(RegisterDescriptor, int64_t offset);
+    ConcreteLocation(RegisterDescriptor, int64_t offset, const RegisterDictionaryPtr&);
+    /** @} */
 
     /** Parse a concrete location from a string. */
     static ConcreteLocation parse(const std::string&);

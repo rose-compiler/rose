@@ -200,6 +200,7 @@ private:
     ByteOrder::Endianness valueJustification_ = ByteOrder::ORDER_LSB;
     Alignment alignment_;
     RegisterDescriptor baseRegister_;
+    RegisterDictionaryPtr registerDictionary_;
 
     // Stack offsets are signed quantities measured from the perspective of the called function immediately after the "call"
     // instruction (whatever that might be for the architecture, such as `CALL` on x86). If the stack grows down then the storage

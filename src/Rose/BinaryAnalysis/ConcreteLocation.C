@@ -44,6 +44,11 @@ ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, int64_t offset)
     ASSERT_require(reg.isValid());
 }
 
+ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, int64_t offset, const RegisterDictionary::Ptr &regdict)
+    : reg_(reg), va_(offset), regdict_(regdict) {
+    ASSERT_require(reg.isValid());
+}
+
 ConcreteLocation
 ConcreteLocation::parse(const std::string&) {
     ASSERT_not_implemented("[Robb Matzke 2022-07-14]");

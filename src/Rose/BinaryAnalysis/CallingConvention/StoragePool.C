@@ -161,7 +161,8 @@ StoragePoolStack::StoragePoolStack(const std::string &name, const TypePredicate:
                                    const Architecture::Base::ConstPtr &arch)
     : StoragePoolBase(name, canStore), valuePadding_(1, notnull(arch)->bitsPerWord()),
       alignment_(1, arch->bitsPerWord()),
-      baseRegister_(notnull(arch->registerDictionary())->stackPointerRegister()) {}
+      baseRegister_(notnull(arch->registerDictionary())->stackPointerRegister()),
+      registerDictionary_(arch->registerDictionary()) {}
 
 StoragePoolStack::Ptr
 StoragePoolStack::instance(const std::string &name, const TypePredicate::ConstPtr &canStore,
@@ -255,13 +256,13 @@ StoragePoolStack::consume(SgAsmType *type) {
             // Since the stack grows down, the arguments that are already pushed are *above* the stack pointer.
             ASSERT_require(offset_ >= *needBytes);
             offset_ = *alignment_.alignUp(offset_);
-            retval.push_back(ConcreteLocation(baseRegister_, offset_));
+            retval.push_back(ConcreteLocation(baseRegister_, offset_, registerDictionary_));
             offset_ += *needBytes;
         } else {
             // Since the stack grows down, the arguments that are already pushed are *below* the stack pointer.
             ASSERT_require(StackDirection::GROWS_UP == stackDirection_);
             offset_ = alignment_.alignDown(offset_ - *needBytes);
-            retval.push_back(ConcreteLocation(baseRegister_, offset_));
+            retval.push_back(ConcreteLocation(baseRegister_, offset_, registerDictionary_));
         }
     }
     return retval;

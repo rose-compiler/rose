@@ -177,7 +177,7 @@ Amd64::cc_sysv() const {
 
     //==== Address locations ====
     cc->instructionPointerRegister(regdict->instructionPointerRegister());
-    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+    cc->returnAddressLocation(ConcreteLocation(SP, 0, regdict));
 
     //==== Stack characteristics ====
     cc->stackDirection(CC::StackDirection::GROWS_DOWN);
@@ -189,10 +189,11 @@ Amd64::cc_sysv() const {
     // These registers are also not preserved across the call.
     {
         auto pool = CC::StoragePoolEnumerated::instance("non-fp arguments", CC::isNonFpNotWiderThan(bitsPerWord()));
+        cc->argumentValueAllocator()->append(pool);
         auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
             const RegisterDescriptor reg = regdict->findOrThrow(registerName);
             cc->appendInputParameter(reg);
-            pool->append(ConcreteLocation(reg));
+            pool->append(ConcreteLocation(reg, regdict));
         };
         insert("rdi");
         insert("rsi");
@@ -205,10 +206,11 @@ Amd64::cc_sysv() const {
     // The first eight SSE arguments are passed in registers xmm0 through xmm7
     if (const RegisterDescriptor XMM0 = regdict->findOrThrow("xmm0")) {
         auto pool = CC::StoragePoolEnumerated::instance("fp arguments", CC::isFpNotWiderThan(XMM0.nBits()));
+        cc->argumentValueAllocator()->append(pool);
         auto insert = [&cc, &regdict, &pool](const std::string &registerName) {
             const RegisterDescriptor reg = regdict->findOrThrow(registerName);
             cc->appendInputParameter(reg);
-            pool->append(ConcreteLocation(reg));
+            pool->append(ConcreteLocation(reg, regdict));
         };
         insert("xmm0");
         insert("xmm1");
@@ -252,11 +254,11 @@ Amd64::cc_sysv() const {
         auto pool = CC::StoragePoolEnumerated::instance("non-fp return values", CC::isNonFpNotWiderThan(bitsPerWord()));
         cc->returnValueAllocator()->append(pool);
 
-        pool->append(ConcreteLocation(AX));
+        pool->append(ConcreteLocation(AX, regdict));
         cc->appendOutputParameter(AX);
 
         const RegisterDescriptor DX = regdict->findOrThrow("rdx");
-        pool->append(ConcreteLocation(DX));
+        pool->append(ConcreteLocation(DX, regdict));
         cc->appendOutputParameter(DX);
     }
 
@@ -265,11 +267,11 @@ Amd64::cc_sysv() const {
         auto pool = CC::StoragePoolEnumerated::instance("fp return values", CC::isFpNotWiderThan(XMM0.nBits()));
         cc->returnValueAllocator()->append(pool);
 
-        pool->append(ConcreteLocation(XMM0));
+        pool->append(ConcreteLocation(XMM0, regdict));
         cc->appendOutputParameter(XMM0);
 
         const RegisterDescriptor XMM1 = regdict->findOrThrow("xmm1");
-        pool->append(ConcreteLocation(XMM1));
+        pool->append(ConcreteLocation(XMM1, regdict));
         cc->appendOutputParameter(XMM1);
     }
 
