@@ -268,6 +268,15 @@ struct IP_ori: P {
     }
 };
 
+// Store byte
+struct IP_sb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr byte = d->read(args[0], 8);
+        d->write(args[1], byte);
+    }
+};
+
 // Exclusive OR
 struct IP_xor: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -315,6 +324,7 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
     iprocSet(mips_ori,   new Mips::IP_ori);
+    iprocSet(mips_sb,    new Mips::IP_sb);
     iprocSet(mips_xor,   new Mips::IP_xor);
     iprocSet(mips_xori,  new Mips::IP_xori);
 }
