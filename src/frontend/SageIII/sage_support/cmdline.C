@@ -4022,6 +4022,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           } else if ( argv[i] == "-std=fortran" ) {
             set_Fortran_only(true);
 
+          } else if ( argv[i] == "-std=ada" ) {
+            set_Ada_only(true);
+
           } else if ( argv[i] == "-std=c89" ) {
             set_C89_only();
 
@@ -4765,7 +4768,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   // mangled:noshortname option: Turns off the optimization that
-  // shortens mangled names.  
+  // shortens mangled names.
      if ( CommandlineProcessing::isOption(argv,"-rose:","(mangled:noshortname)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )

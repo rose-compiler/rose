@@ -886,6 +886,9 @@ endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   bin_PROGRAMS += rose-fortran
 endif
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  bin_PROGRAMS += rose-ada
+endif
 # The -std= option in ROSE only support c, c++, fortran
 #if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -935,11 +938,17 @@ rose_fortran_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_fortran_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"fortran\""
 rose_fortran_LDADD        = $(ROSEBIN_LDADD)
 
+rose_ada_SOURCES      = rose-compiler.C
+rose_ada_LDFLAGS      = $(ROSEBIN_LDFLAGS)
+rose_ada_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_ada_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"ada\""
+rose_ada_LDADD        = $(ROSEBIN_LDADD)
+
 if OS_MACOSX
-  rose_compiler_LDFLAGS += $(ROSE_LINK_RPATHS) 
-  rose_cc_LDFLAGS += $(ROSE_LINK_RPATHS) 
-  rose_c___LDFLAGS += $(ROSE_LINK_RPATHS) 
-  rose_fortran_LDFLAGS += $(ROSE_LINK_RPATHS) 
+  rose_compiler_LDFLAGS += $(ROSE_LINK_RPATHS)
+  rose_cc_LDFLAGS += $(ROSE_LINK_RPATHS)
+  rose_c___LDFLAGS += $(ROSE_LINK_RPATHS)
+  rose_fortran_LDFLAGS += $(ROSE_LINK_RPATHS)
 endif
 ########################################################################################################################
 # Test that a simple ROSE program can run, and as a side effect, print some version numbers.
@@ -1008,6 +1017,20 @@ check-hello-fortran:
 	${AM_V_at}./hello-world-f90
 #	${AM_V_at}./rose-compiler -rose:ast:read hello-world-f90.ast
 endif
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+check-hello-ada:
+	@echo "  TEST     ROSE Ada compiler [rose-ada]"
+	${AM_V_at}echo "with Ada.Text_IO;"                        >  hello-world.adb
+	${AM_V_at}echo "procedure Hello_World is"                 >> hello-world.adb
+	${AM_V_at}echo "begin"                                    >> hello-world.adb
+	${AM_V_at}echo "  Ada.Text_IO.Put_Line("Hello World");"   >> hello-world.adb
+	${AM_V_at}echo "end Hello_World"                          >> hello-world.adb
+	${AM_V_at}./rose-ada hello-world.adb
+# just test compilation in ROSE
+#~ 	${AM_V_at}./hello-world-f90
+#	${AM_V_at}./rose-compiler -rose:ast:read hello-world-f90.ast
+endif
+
 
 check-local: $(bin_PROGRAMS)
 	${AM_V_at}$(MAKE) check-boost
@@ -1021,6 +1044,9 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	${AM_V_at}$(MAKE) check-hello-fortran
+endif
+if if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	${AM_V_at}$(MAKE) check-hello-ada
 endif
 
 ########################################################################################################################
