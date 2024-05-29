@@ -254,7 +254,7 @@ StoragePoolStack::consume(SgAsmType *type) {
     if (const auto needBytes = valuePadding_.alignUp(std::max(minimumValueSize_, typeBytes))) {
         if (StackDirection::GROWS_DOWN == stackDirection_) {
             // Since the stack grows down, the arguments that are already pushed are *above* the stack pointer.
-            ASSERT_require(offset_ >= *needBytes);
+            ASSERT_require(offset_ >= 0 && (uint64_t)offset_ >= *needBytes);
             offset_ = *alignment_.alignUp(offset_);
             retval.push_back(ConcreteLocation(baseRegister_, offset_, registerDictionary_));
             offset_ += *needBytes;
