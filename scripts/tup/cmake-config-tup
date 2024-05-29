@@ -48,11 +48,6 @@ is_present() {
     return 1
 }
 
-# Convert a string to lower case
-to_lower() {
-    echo "$@" |tr A-Z z-z
-}
-
 # Given ROSE cmake command-line arguments, return the value of the specified switch.
 #   If the command-line contains "NAME=VALUE" then return VALUE
 #   else if the switch matches "-DNAME=VALUE" then return VALUE
@@ -60,10 +55,10 @@ to_lower() {
 #
 # The comparison is case insensitive
 config_switch() {
-    local name="$(to_lower "$1")"; shift
+    local name="${1,,?}"; shift
     local switch
     for switch in "$@"; do
-	switch="$(to_lower "$switch")"
+	switch="${switch,,?}"
 
 	# Look for "NAME=VAL"
 	local val="${switch#$name=}"
@@ -84,7 +79,8 @@ config_switch() {
 # Given ROSE cmake command-line arguments return success or failure depending on whether the command-line switch has a true or false
 # value. If the switch is absent then consider it to be false. Also echos "yes" when returning true.
 config_boolean() {
-    local value="$(to_lower "$(config_switch "$@")")"
+    local value="$(config_switch "$@")"
+    value="${value,,?}"
     case "$value" in
 	no|off|"")
 	    return 1
@@ -158,34 +154,34 @@ language_vars() {
     local languages=()
 
     config_boolean_silent -DENABLE-BINARY-ANALYSIS "$@" &&
-	languages=("${languages[@]}" "binary")
+	languages=("${languages[@]}" "BINARY")
 
     config_boolean_silent -DENABLE-C "$@" &&
-	languages=("${languages[@]}" "cxx")
+	languages=("${languages[@]}" "CXX")
 
     config_boolean_silent -DENABLE-CUDA "$@" &&
-	languages=("${languages[@]}" "cuda")
+	languages=("${languages[@]}" "CUDA")
 
     config_boolean_silent -DENABLE-JAVA "$@" &&
-	languages=("${languages[@]}" "java")
+	languages=("${languages[@]}" "JAVA")
 
     config_boolean_silent -DENABLE-OPENCL "$@" &&
-	languages=("${languages[@]}" "opencl")
+	languages=("${languages[@]}" "OPENCL")
 
     config_boolean_silent -DENABLE-FORTRAN "$@" &&
-	languages=("${languages[@]}" "fortran")
+	languages=("${languages[@]}" "FORTRAN")
 
     config_boolean_silent -DENABLE-PHP "$@" &&
-	languages=("${languages[@]}" "php")
+	languages=("${languages[@]}" "PHP")
 
     config_boolean_silent -DENABLE-PYTHON "$@" &&
-	languages=("${languages[@]}" "python")
+	languages=("${languages[@]}" "PYTHON")
 
     config_boolean_silent -DENABLE-ADA "$@" &&
-	languages=("${languages[@]}" "ada")
+	languages=("${languages[@]}" "ADA")
 
     config_boolean_silent -DENABLE-JOVIAL "$@" &&
-	languages=("${languages[@]}" "jovial")
+	languages=("${languages[@]}" "JOVIAL")
 
     for lang in "${languages[@]}"; do
 	echo -n "ENABLE_${lang}_ANALYSIS" |tr a-z A-Z
