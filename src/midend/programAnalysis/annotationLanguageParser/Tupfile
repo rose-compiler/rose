@@ -7,7 +7,7 @@ include_rules
      cp language-parser.h language.tab.h \
   |> language-parser.cc language-parser.h language.tab.h
 
-: language.l \
+: language.l language.tab.h \
   |> ^ FLEX %f^ \
      flex -olex.ann.c %f && \
      mv lex.ann.c language-lexer.cc \
