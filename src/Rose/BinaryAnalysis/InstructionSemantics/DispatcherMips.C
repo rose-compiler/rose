@@ -187,6 +187,36 @@ struct IP_lb: P {
     }
 };
 
+// Load byte EVA
+struct IP_lbe: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
+// Load byte unsigned
+struct IP_lbu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr zeros = ops->number_(24, 0);
+        SValue::Ptr result = ops->concatHiLo(zeros, d->read(args[1],8));
+        d->write(args[0], result);
+    }
+};
+
+// Load halfword
+struct IP_lh: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
 // Load upper immediate
 struct IP_lui: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -202,6 +232,17 @@ struct IP_lui: P {
 struct IP_nop: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
+    }
+};
+
+// Not OR
+struct IP_nor: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr result = ops->invert(ops->or_(rs, rt));
+        d->write(args[0], result);
     }
 };
 
@@ -222,8 +263,12 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_clo,   new Mips::IP_clo);
     iprocSet(mips_div,   new Mips::IP_div);
     iprocSet(mips_lb,    new Mips::IP_lb);
+    iprocSet(mips_lbe,   new Mips::IP_lbe);
+    iprocSet(mips_lbu,   new Mips::IP_lbu);
+    iprocSet(mips_lh,    new Mips::IP_lh);
     iprocSet(mips_lui,   new Mips::IP_lui);
     iprocSet(mips_nop,   new Mips::IP_nop);
+    iprocSet(mips_nor,   new Mips::IP_nor);
 }
 
 DispatcherMips::~DispatcherMips() {}
