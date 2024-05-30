@@ -31312,6 +31312,8 @@ public:
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+protected: // Allows local_data_pool to be initialized by subclasses. Note, destruction is problematic, freeing non-allocated ptr.
+           // Set breakpoint in malloc_error_break to debug [Rasmussen, 2024.03.02]
     /* This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
      * for its SgAsmGenericFile which is memory-mapped (read-only) from the actual file being parsed. The default
      * unparsing action is to write the original data back to the file. By allowing a section to allocate its own
@@ -42444,6 +42446,88 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmAarch64PState           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+DECLARE_LEAF_CLASS(AsmAarch64PState);
+IS_SERIALIZABLE(AsmAarch64PState);
+
+#ifndef DOCUMENTATION
+AsmAarch64PState.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmAarch64PState);
+#if defined(SgAsmAarch64PState_HEADERS) || defined(DOCUMENTATION)
+#ifdef ROSE_ENABLE_ASM_AARCH64
+
+#include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
+#endif
+#endif // SgAsmAarch64PState_HEADERS
+
+#ifdef DOCUMENTATION
+/** Operand for an ARM AArch64 A64 MSR instruction. */
+class SgAsmAarch64PState: public SgAsmExpression {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmAarch64PState);
+#if defined(SgAsmAarch64PState_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmAarch64PState -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64PState");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+        s & BOOST_SERIALIZATION_NVP(pstate_);
+        debugSerializationEnd("SgAsmAarch64PState");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+private:
+    Rose::BinaryAnalysis::Aarch64PState pstate_;
+
+public:
+    /** Property: PState.
+     *
+     *  An enum representing the operand. 
+     *  
+     *  @{ */
+    Rose::BinaryAnalysis::Aarch64PState const& pstate() const;
+    void pstate(Rose::BinaryAnalysis::Aarch64PState const&);
+    /** @} */
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmAarch64PState();
+
+public:
+    /** Default constructor. */
+    SgAsmAarch64PState();
+
+public:
+    /** Constructor. */
+    explicit SgAsmAarch64PState(Rose::BinaryAnalysis::Aarch64PState const& pstate);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmAarch64PState_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmAarch64PrefetchOperand           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43849,6 +43933,9 @@ AstNodeClass& AsmExpression = nonTerminalConstructor(
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
         | AsmAarch64PrefetchOperand
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        | AsmAarch64PState
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
         | AsmAarch64SysMoveOperand

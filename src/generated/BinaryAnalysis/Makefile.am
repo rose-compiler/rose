@@ -16,6 +16,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmAarch64BarrierOperand.C \
         SgAsmAarch64CImmediateOperand.C \
         SgAsmAarch64Instruction.C \
+        SgAsmAarch64PState.C \
         SgAsmAarch64PrefetchOperand.C \
         SgAsmAarch64SysMoveOperand.C \
         SgAsmBasicString.C \

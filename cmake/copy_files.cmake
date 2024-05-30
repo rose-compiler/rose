@@ -28,6 +28,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmAarch64CImmediateOperand.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmAarch64Instruction.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmAarch64PrefetchOperand.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmAarch64PState.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmAarch64SysMoveOperand.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmBasicString.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmBinaryAdd.h

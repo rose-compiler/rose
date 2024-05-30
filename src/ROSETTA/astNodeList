@@ -1055,3 +1055,4 @@ SgAsmJvmMethodParameters
 SgAsmJvmMethodParametersEntry
 SgAsmVoidType
 SgAsmPointerType
+SgAsmAarch64PState

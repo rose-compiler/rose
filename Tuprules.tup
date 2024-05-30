@@ -721,6 +721,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmAarch64CImmediateOperand.h		\
  $(ROSE)/src/ROSETTA/src/SgAsmAarch64Instruction.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmAarch64PrefetchOperand.h			\
+ $(ROSE)/src/ROSETTA/src/SgAsmAarch64PState.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmAarch64SysMoveOperand.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmBasicString.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmBinaryAdd.h				\

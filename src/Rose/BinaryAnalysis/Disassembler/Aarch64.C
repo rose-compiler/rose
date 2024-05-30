@@ -13,6 +13,7 @@
 #include <SgAsmAarch64CImmediateOperand.h>
 #include <SgAsmAarch64Instruction.h>
 #include <SgAsmAarch64PrefetchOperand.h>
+#include <SgAsmAarch64PState.h>
 #include <SgAsmAarch64SysMoveOperand.h>
 #include <SgAsmBinaryAdd.h>
 #include <SgAsmBinaryAsr.h>
@@ -332,6 +333,8 @@ Aarch64::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
         }
 
         case ARM64_OP_PSTATE:                           // PState operand
+            retval = new SgAsmAarch64PState(op.pstate);
+            retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_SYS:                              // SYS operand for IC/DC/AT/TLBI

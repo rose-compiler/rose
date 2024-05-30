@@ -13,6 +13,7 @@
 #include <SgAsmAarch64CImmediateOperand.h>
 #include <SgAsmAarch64Instruction.h>
 #include <SgAsmAarch64PrefetchOperand.h>
+#include <SgAsmAarch64PState.h>
 #include <SgAsmAarch64SysMoveOperand.h>
 #include <SgAsmBinaryAdd.h>
 #include <SgAsmBinaryAsr.h>
@@ -396,6 +397,16 @@ Aarch64::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
             case ARM64_PRFM_PSTL3STRM:  out <<"pstl3strm"; break;
             default:
                 ASSERT_not_reachable("invalid prefetch command");
+        }
+
+    } else if (auto op = isSgAsmAarch64PState(expr)) {
+        switch (op->pstate()) {
+            case ARM64_PSTATE_INVALID: out <<"invalid"; break;
+            case ARM64_PSTATE_SPSEL:   out <<"spsel";   break;
+            case ARM64_PSTATE_DAIFSET: out <<"daifset"; break;
+            case ARM64_PSTATE_DAIFCLR: out <<"daifclr"; break;
+            default:
+                ASSERT_not_reachable("invalid pstate");
         }
 
     } else if (SgAsmAarch64SysMoveOperand *op = isSgAsmAarch64SysMoveOperand(expr)) {

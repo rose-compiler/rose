@@ -138,6 +138,7 @@ GENERATED_SOURCE =						\
         SgAsmAarch64CImmediateOperand.h				\
         SgAsmAarch64Instruction.h				\
         SgAsmAarch64PrefetchOperand.h				\
+        SgAsmAarch64PState.h					\
         SgAsmAarch64SysMoveOperand.h				\
         SgAsmBasicString.h					\
         SgAsmBinaryAdd.h					\
@@ -543,6 +544,7 @@ GENERATED_SOURCE =						\
 	SgAsmAarch64CImmediateOperand.h				\
 	SgAsmAarch64Instruction.h				\
 	SgAsmAarch64PrefetchOperand.h				\
+	SgAsmAarch64PState.h					\
 	SgAsmAarch64SysMoveOperand.h				\
 	SgAsmBasicString.h					\
 	SgAsmBinaryAdd.h					\
@@ -1095,6 +1097,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmAarch64CImmediateOperand.h		\
    SgAsmAarch64Instruction.h			\
    SgAsmAarch64PrefetchOperand.h		\
+   SgAsmAarch64PState.h				\
    SgAsmAarch64SysMoveOperand.h			\
    SgAsmBasicString.h				\
    SgAsmBinaryAdd.h				\

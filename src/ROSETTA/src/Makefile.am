@@ -96,6 +96,7 @@ rosetta_generated_definitions =				\
 	  SgAsmAarch64CImmediateOperand.h		\
 	  SgAsmAarch64Instruction.h			\
 	  SgAsmAarch64PrefetchOperand.h			\
+	  SgAsmAarch64PState.h				\
 	  SgAsmAarch64SysMoveOperand.h			\
 	  SgAsmBasicString.h				\
 	  SgAsmBinaryAdd.h				\
