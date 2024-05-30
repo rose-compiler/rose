@@ -59,6 +59,10 @@ namespace Libadalang_ROSE_Translation
   SgExpression&
   getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement suppl = {});
 
+  /// returns an expression from the libadalang definition \ref lal_element
+  SgExpression&
+  getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx);
+
   /// creates a call to subroutine expression \ref target, and passes params as arguments.
   /// \param tgtid the ASIS Id of the called target (function)
   /// \param params a list of ASIS Ids representing the arguments

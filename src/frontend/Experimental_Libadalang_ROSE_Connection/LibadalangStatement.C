@@ -996,9 +996,33 @@ namespace {
 
     return getTaskSpec(lal_element, ctx);
   }
+
+  void ifStmtCommonBranch(ada_base_entity* lal_path, SgIfStmt* ifStmt, AstContext ctx, void (SgIfStmt::*branchSetter)(SgStatement*))
+  {
+    SgBasicBlock& block     = mkBasicBlock();
+
+    sg::linkParentChild(SG_DEREF(ifStmt), static_cast<SgStatement&>(block), branchSetter);
+
+    int count = ada_node_children_count(lal_path);
+    for(int i = 0; i < count; i++){
+      ada_base_entity lal_stmt;
+      if(ada_node_child(lal_path, i, &lal_stmt) != 0){
+        handleStmt(&lal_stmt, ctx.scope(block));
+      }
+    }
+  }
+
+  void ifStmtConditionedBranch(ada_base_entity* lal_condition, ada_base_entity* lal_path, SgIfStmt* ifStmt, AstContext ctx)
+  {
+    SgExpression& condExpr = getExpr(lal_condition, ctx);
+    SgStatement&  condStmt = mkExprStatement(condExpr);
+
+    sg::linkParentChild(SG_DEREF(ifStmt), condStmt, &SgIfStmt::set_conditional);
+    ifStmtCommonBranch(lal_path, ifStmt, ctx, &SgIfStmt::set_true_body);
+  }
 } //End unnamed namespace
 
-/// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
+/// converts a libadalang parameter declaration to a ROSE parameter (i.e., variable)
 ///   declaration.
 SgVariableDeclaration&
 getParm(ada_base_entity* lal_param_spec, AstContext ctx)
@@ -1149,6 +1173,151 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
 
           attachSourceLocation(assign, lal_stmt, ctx);
           completeStmt(sgnode, lal_stmt, ctx);
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_if_stmt:                     // 5.3
+        {
+          logKind("ada_if_stmt", kind);
+
+          SgIfStmt&   sgnode = mkIfStmt();
+          SgIfStmt*   ifStmt = &sgnode;
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          //Get the first if stmt
+          ada_base_entity lal_condition;
+          ada_base_entity lal_path;
+          ada_if_stmt_f_cond_expr(lal_stmt, &lal_condition);
+          ada_if_stmt_f_then_stmts(lal_stmt, &lal_path);
+          ifStmtConditionedBranch(&lal_condition, &lal_path, ifStmt, ctx);
+
+          //Get any elsifs
+          ada_base_entity lal_elsif_list;
+          ada_if_stmt_f_alternatives(lal_stmt, &lal_elsif_list);
+          int count = ada_node_children_count(&lal_elsif_list);
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_alternative;
+            if(ada_node_child(&lal_elsif_list, i, &lal_alternative) != 0){
+              ada_elsif_stmt_part_f_cond_expr(&lal_alternative, &lal_condition);
+              ada_elsif_stmt_part_f_stmts(&lal_alternative, &lal_path);
+              SgIfStmt& cascadingIf = mkIfStmt(true /* elsif */);
+
+              sg::linkParentChild( SG_DEREF(ifStmt),
+                                   static_cast<SgStatement&>(cascadingIf),
+                                   &SgIfStmt::set_false_body
+                                 );
+              ifStmt = &cascadingIf;
+              ifStmtConditionedBranch(&lal_condition, &lal_path, ifStmt, ctx);
+            }
+          }
+
+          //Get the else
+          ada_if_stmt_f_else_stmts(lal_stmt, &lal_path);
+          ifStmtCommonBranch(&lal_path, ifStmt, ctx, &SgIfStmt::set_false_body);
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_while_loop_stmt:              // 5.5
+        {
+          logKind("ada_while_loop_stmt", kind);
+
+          //Get the spec
+          ada_base_entity lal_spec;
+          ada_base_loop_stmt_f_spec(lal_stmt, &lal_spec);
+          ada_while_loop_spec_f_expr(&lal_spec, &lal_spec);
+
+          //Get the stmts
+          ada_base_entity lal_loop_stmt_list;
+          ada_base_loop_stmt_f_stmts(lal_stmt, &lal_loop_stmt_list);
+
+          SgExpression&   cond     = getExpr(&lal_spec, ctx);
+          SgBasicBlock&   block    = mkBasicBlock();
+          SgWhileStmt&    sgnode   = mkWhileStmt(cond, block);
+          int             hash     = hash_node(lal_stmt);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+          //recordNode(ctx.labelsAndLoops().asisLoops(), hash, sgnode); //TODO loop map?
+
+          /*PragmaContainer pendingPragmas;
+          AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
+
+          traverseIDs(adaStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
+          processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/
+          int count = ada_node_children_count(&lal_loop_stmt_list);
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_loop_stmt;
+            if(ada_node_child(&lal_loop_stmt_list, i, &lal_loop_stmt) != 0){
+              handleStmt(&lal_loop_stmt, ctx.scope(block));
+            }
+          }
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_for_loop_stmt:                // 5.5
+        {
+          logKind("ada_for_loop_stmt", kind);
+
+          SgBasicBlock&          block  = mkBasicBlock();
+          SgForStatement&        sgnode = mkForStatement(block);
+
+          //Get the for loop's iter var
+          ada_base_entity lal_loop_spec, lal_for_var;
+          ada_base_loop_stmt_f_spec(lal_stmt, &lal_loop_spec);
+          ada_for_loop_spec_f_var_decl(&lal_loop_spec, &lal_for_var);
+
+          //Get the direction of this loop
+          ada_base_entity lal_has_reverse;
+          ada_for_loop_spec_f_has_reverse(&lal_loop_spec, &lal_has_reverse);
+          ada_node_kind_enum lal_has_reverse_kind = ada_node_kind(&lal_has_reverse);
+          bool isForwardLoop = (lal_has_reverse_kind == ada_reverse_absent);
+
+          //Get the stmts
+          ada_base_entity lal_loop_stmt_list;
+          ada_base_loop_stmt_f_stmts(lal_stmt, &lal_loop_stmt_list);
+
+          SgForInitStatement&    forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
+
+          attachSourceLocation(forini, &lal_for_var, ctx);
+          sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
+          completeStmt(sgnode, lal_stmt, ctx);
+          handleDeclaration(&lal_loop_spec, ctx.scope(sgnode), false);
+
+          // this swap is needed, b/c SgForInitStatement is not a scope
+          // and when the loop variable declaration is created, the declaration
+          // is pushed to the wrong statement list.
+          std::swap(forini.get_init_stmt(), block.get_statements());
+
+          SgVariableDeclaration* inductionVar = isSgVariableDeclaration(forini.get_init_stmt().front());
+          SgExpression&          direction    = mkForLoopIncrement(isForwardLoop, SG_DEREF(inductionVar));
+          sg::linkParentChild(sgnode, direction, &SgForStatement::set_increment);
+
+          // test is not strictly necessary; added for convenience
+          SgStatement&           test    = mkForLoopTest(isForwardLoop, SG_DEREF(inductionVar));
+          sg::linkParentChild(sgnode, test, &SgForStatement::set_test);
+
+          /*PragmaContainer pendingPragmas;
+          AstContext      pragmaCtx = ctx.pragmas(pendingPragmas);
+
+          // loop body
+          {
+            ElemIdRange            loopStmts = idRange(stmt.Loop_Statements);
+
+            recordNode(pragmaCtx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
+            traverseIDs(loopStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
+          }
+
+          processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO pragmas
+          int count = ada_node_children_count(&lal_loop_stmt_list);
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_loop_stmt;
+            if(ada_node_child(&lal_loop_stmt_list, i, &lal_loop_stmt) != 0){
+              handleStmt(&lal_loop_stmt, ctx.scope(block));
+            }
+          }
+
           assocstmt = &sgnode;
           break;
         }
@@ -1778,6 +1947,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
                                                       : mkTypeVoid();
 
+        ada_destroy_text(&ada_canonical_text);
         /*SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
         SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);*/
         SgFunctionDeclaration*  nondef = nullptr; //For now, just assume that this is the first declaration
@@ -1803,6 +1973,46 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
 
         // assocdecl = &sgnode;
+        break;
+      }
+    case ada_for_loop_spec:           // 5.5(4)   -> Trait_Kinds
+      {
+        logKind("ada_for_loop_spec", kind);
+
+        //Get the var decl
+        ada_base_entity lal_for_var;
+        ada_for_loop_spec_f_var_decl(lal_element, &lal_for_var);
+        ada_for_loop_var_decl_f_id(&lal_for_var, &lal_for_var); //Now a defining_name
+
+        //Get the var type
+        ada_base_entity lal_iter_expr;
+        ada_for_loop_spec_f_iter_expr(lal_element, &lal_iter_expr);
+
+        //Get the name
+        ada_base_entity lal_identifier;
+        ada_defining_name_f_name(&lal_for_var, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+
+        std::string            ident   = ada_text_to_locale_string(&ada_canonical_text);
+        SgExpression&          range   = getDefinitionExpr(&lal_iter_expr, ctx);
+        SgType&                vartype = si::Ada::typeOfExpr(range).typerep_ref();
+        SgInitializedName&     loopvar = mkInitializedName(ident, vartype, &range);
+        SgScopeStatement&      scope   = ctx.scope();
+        int                    hash    = hash_node(&lal_for_var);
+
+        ada_destroy_text(&ada_canonical_text);
+        recordNode(libadalangVars(), hash, loopvar);
+
+        SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
+
+        attachSourceLocation(loopvar, lal_element, ctx); // correct ?
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
         break;
       }
     case ada_task_type_decl:                  // 9.1(2)

@@ -860,6 +860,24 @@ namespace
     return getOperator_fallback(lal_expr, unary, ctx);
   }
 
+  SgExpression&
+  getBooleanEnumItem(AdaIdentifier boolid)
+  {
+    SgEnumType&               enty  = SG_DEREF( isSgEnumType(adaTypesByName().at(AdaIdentifier{"BOOLEAN"})) );
+    SgEnumDeclaration&        endcl = SG_DEREF( isSgEnumDeclaration(enty.get_declaration()) );
+    SgInitializedNamePtrList& enlst = endcl.get_enumerators();
+
+    auto lim = enlst.end();
+    auto pos = std::find_if( enlst.begin(), lim,
+                             [id = std::move(boolid)](const SgInitializedName* itm)->bool
+                             {
+                               return id == AdaIdentifier{itm->get_name().getString()};
+                             }
+                           );
+
+    return mkEnumeratorRef(endcl, **pos);
+  }
+
   auto
   refFromWithinFunction(const SgFunctionDeclaration& ref, const SgScopeStatement& refedFrom) -> bool
   {
@@ -1147,6 +1165,22 @@ namespace{
           ada_symbol_text(&p_canonical_text, &ada_canonical_text);
           const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
 
+          //Check if this is an enum value instead of a variable
+          //For now, we check p_is_static_expr to tell the difference
+          //TODO Test this some more
+          ada_bool lal_static_expr;
+          ada_expr_p_is_static_expr(lal_element, 1, &lal_static_expr);
+
+          if(lal_static_expr){
+            //If the name is "true" or "false", this don't try to find the def
+            if(name == "true" || name == "false"){
+              res = &getBooleanEnumItem(AdaIdentifier{name});
+              break;
+            }
+            //TODO What about other enum items?
+            logWarn() << "identifier " << name << " might be an enum value (is_static_expr = true).\n";
+          }
+
           //Find the definition of this identifier and get its hash
           int hash;
 
@@ -1164,7 +1198,7 @@ namespace{
 
           //Get the kind of the decl
           ada_node_kind_enum decl_kind = ada_node_kind(&corresponding_decl);
-          if(decl_kind >= ada_abstract_state_decl && decl_kind <= ada_single_task_decl){
+          if(decl_kind >= ada_abstract_state_decl && decl_kind <= ada_single_task_decl){ //62 - 121
             ada_ada_node_array defining_name_list;
             ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
           
@@ -1177,13 +1211,14 @@ namespace{
               ada_symbol_text(&p_canonical_text, &ada_canonical_text);
               const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
               if(name == test_name){
-                logInfo() << "Found definition for ada_identifier " << name << std::endl;
                 hash = hash_node(&defining_name);
+                ada_node_kind_enum def_kind = ada_node_kind(&defining_name);
+                logInfo() << "Found definition for ada_identifier " << name << ", kind = " << def_kind << std::endl;
                 break;
               }
             }
           } else if(decl_kind == ada_entry_decl){
-                hash = hash_node(&corresponding_decl);
+            hash = hash_node(&corresponding_decl);
           } else {
             logError() << "Could not get corresponding decl for identifier! decl_kind = " << decl_kind << "\n";
             found_decl = false;
@@ -1198,7 +1233,7 @@ namespace{
             {
               // issue warning for unresolved names outside pragmas and aspects
               logWarn() << "ADDING unresolved name: " << name
-                        << std::endl;
+                        << " (no decl found)" << std::endl;
             }
             res = &mkUnresolvedName(name, scope);
             break;
@@ -1492,8 +1527,6 @@ namespace{
 SgExpression&
 getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl, bool unary)
 {
-  SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
-  
   //Check the kind
   ada_node_kind_enum kind = ada_node_kind(lal_element);
   
@@ -1502,6 +1535,8 @@ getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement sup
   std::string kind_name_string = ada_text_to_locale_string(&kind_name);
   logTrace()   << "getExpr called on a " << kind_name_string << std::endl;
   ada_destroy_text(&kind_name);
+
+  SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
 
   switch(kind)
   {
@@ -1535,6 +1570,60 @@ getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement su
   return ada_node_is_null(lal_expr) ? mkNullExpression()
                                     : getExpr(lal_expr, ctx, std::move(suppl))
                                     ;
+}
+
+/// returns an expression from the libadalang definition \ref lal_element
+SgExpression&
+getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
+{
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  SgExpression*      res = nullptr;
+
+  switch(kind)
+  {
+    case ada_bin_op:
+    {
+      logKind("A_Discrete_Range", kind);
+
+      //Get the bounds
+      ada_base_entity lal_lower_bound, lal_upper_bound;
+      ada_bin_op_f_left(lal_element, &lal_lower_bound);
+      ada_bin_op_f_right(lal_element, &lal_upper_bound);
+
+      SgExpression& lb = getExpr(&lal_lower_bound, ctx);
+      SgExpression& ub = getExpr(&lal_upper_bound, ctx);
+
+      res = &mkRangeExp(lb, ub);
+      break;
+    }
+    case ada_identifier: //TODO Does this only correspond to A_Discrete_Subtype_Definition?
+    {
+      logKind("A_Discrete_Subtype_Definition", kind);
+
+      ada_base_entity* lal_constraint = nullptr; //TODO Where should this come from?
+      SgType& ty = getDiscreteSubtype(lal_element, lal_constraint, ctx);
+
+      res = &mkTypeExpression(ty);
+      break;
+    }
+
+    /*case An_Others_Choice:
+      logKind("An_Others_Choice", el.ID);
+      res = &mkAdaOthersExp();
+      break;
+
+    case A_Constraint:
+      logKind("A_Constraint", el.ID);
+      res = &getConstraintExpr(def, ctx);
+      break;*/
+
+    default:
+      logFlaw() << "Unhandled definition expr: " << kind << " in getDefinitionExpr" << std::endl;
+      res = &mkNullExpression();
+  }
+
+  attachSourceLocation(SG_DEREF(res), lal_element, ctx);
+  return *res;
 }
 
 OperatorCallSupplement::ArgDescList
@@ -1635,11 +1724,13 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
     ada_symbol_text(&p_canonical_text, &ada_canonical_text);
     const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
     if(name == test_name){
-      logInfo() << "Found definition for ada_identifier " << name << std::endl;
       hash = hash_node(&defining_name);
+      logInfo() << "Found definition for ada_identifier " << name << std::endl;
       break;
     }
   }
+
+  ada_destroy_text(&ada_canonical_text);
 
   SgNode* res = nullptr;
 

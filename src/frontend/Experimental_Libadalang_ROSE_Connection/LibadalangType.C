@@ -700,6 +700,15 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return SG_DEREF(res);
   }
 
+  SgAdaTypeConstraint*
+  getConstraint_opt(ada_base_entity* lal_element, AstContext ctx)
+  {
+    if(lal_element && ada_node_is_null(lal_element)){
+      return nullptr;
+    }
+    return lal_element ? &getConstraint(lal_element, ctx) : nullptr;
+  }
+
   SgClassDefinition&
   getRecordBody(ada_base_entity* lal_record, AstContext ctx)
   {
@@ -1261,6 +1270,15 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   // set the standard package in the SageInterface::ada namespace
   // \todo this should go away for a cleaner interface
   si::Ada::stdpkg = &stdpkg;
+}
+
+SgType&
+getDiscreteSubtype(ada_base_entity* lal_type, ada_base_entity* lal_constraint, AstContext ctx)
+{
+  SgType*              res = &getDeclType(lal_type, ctx);
+  SgAdaTypeConstraint* constraint = getConstraint_opt(lal_constraint, ctx);
+
+  return constraint ? mkAdaSubtype(*res, *constraint) : *res;
 }
 
 SgAdaTypeConstraint&

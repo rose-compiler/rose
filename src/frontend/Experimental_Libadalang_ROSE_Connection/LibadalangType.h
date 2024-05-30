@@ -77,6 +77,9 @@ getParentType(ada_base_entity* lal_element, AstContext ctx);
 TypeData
 getTypeFoundation(const std::string& name, ada_base_entity* lal_def, AstContext ctx);
 
+SgType&
+getDiscreteSubtype(ada_base_entity* lal_type, ada_base_entity* lal_constraint, AstContext ctx);
+
 /// creates a constraint node for \ref el
 SgAdaTypeConstraint&
 getConstraint(ada_base_entity* lal_constraint, AstContext ctx);
