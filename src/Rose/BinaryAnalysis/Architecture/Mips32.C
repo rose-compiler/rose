@@ -147,6 +147,16 @@ Mips32::matchesHeader(SgAsmGenericHeader *header) const {
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
 }
 
+Sawyer::Container::Interval<size_t>
+Mips32::bytesPerInstruction() const {
+    return 4;
+}
+
+Alignment
+Mips32::instructionAlignment() const {
+    return Alignment(4, bitsPerWord());
+}
+
 std::string
 Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
     auto insn = isSgAsmMipsInstruction(insn_);

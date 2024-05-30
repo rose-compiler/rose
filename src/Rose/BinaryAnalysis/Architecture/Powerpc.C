@@ -46,6 +46,16 @@ Powerpc::newInstructionDecoder() const {
     return Disassembler::Powerpc::instance(shared_from_this());
 }
 
+Sawyer::Container::Interval<size_t>
+Powerpc::bytesPerInstruction() const {
+    return 4;
+}
+
+Alignment
+Powerpc::instructionAlignment() const {
+    return Alignment(4, bitsPerWord());
+}
+
 std::string
 Powerpc::instructionDescription(const SgAsmInstruction *insn_) const {
     auto insn = isSgAsmPowerpcInstruction(insn_);

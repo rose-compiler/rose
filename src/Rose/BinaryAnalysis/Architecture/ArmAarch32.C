@@ -304,6 +304,28 @@ ArmAarch32::matchesHeader(SgAsmGenericHeader *header) const {
     return false;
 }
 
+Sawyer::Container::Interval<size_t>
+ArmAarch32::bytesPerInstruction() const {
+    switch (instructionSet()) {
+        case InstructionSet::A32:
+            return 2;
+        case InstructionSet::T32:
+            return 4;
+    }
+    ASSERT_not_reachable("invalid instruction set");
+}
+
+Alignment
+ArmAarch32::instructionAlignment() const {
+    switch (instructionSet()) {
+        case InstructionSet::A32:
+            return Alignment(2, bitsPerWord());
+        case InstructionSet::T32:
+            return Alignment(4, bitsPerWord());
+    }
+    ASSERT_not_reachable("invalid instruction set");
+}
+
 std::string
 ArmAarch32::instructionDescription(const SgAsmInstruction *insn_) const {
     using Kind = Aarch32InstructionKind;

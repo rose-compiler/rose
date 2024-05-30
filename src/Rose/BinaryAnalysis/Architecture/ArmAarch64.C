@@ -226,6 +226,16 @@ ArmAarch64::matchesHeader(SgAsmGenericHeader *header) const {
         header->get_executableFormat()->get_wordSize() == 8;
 }
 
+Sawyer::Container::Interval<size_t>
+ArmAarch64::bytesPerInstruction() const {
+    return 4;
+}
+
+Alignment
+ArmAarch64::instructionAlignment() const {
+    return Alignment(4, bitsPerWord());
+}
+
 std::string
 ArmAarch64::instructionDescription(const SgAsmInstruction *insn_) const {
     using Kind = Aarch64InstructionKind;

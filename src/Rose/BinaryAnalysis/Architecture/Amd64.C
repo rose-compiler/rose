@@ -26,6 +26,16 @@ Amd64::instance() {
     return Ptr(new Amd64);
 }
 
+Sawyer::Container::Interval<size_t>
+Amd64::bytesPerInstruction() const {
+    return Sawyer::Container::Interval<size_t>::hull(1, 15);
+}
+
+Alignment
+Amd64::instructionAlignment() const {
+    return Alignment(1, bitsPerWord());
+}
+
 RegisterDictionary::Ptr
 Amd64::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;

@@ -44,6 +44,16 @@ Jvm::matchesHeader(SgAsmGenericHeader *header) const {
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_JVM;
 }
 
+Sawyer::Container::Interval<size_t>
+Jvm::bytesPerInstruction() const {
+    return Sawyer::Container::Interval<size_t>::whole();
+}
+
+Alignment
+Jvm::instructionAlignment() const {
+    return Alignment(1, bitsPerWord());
+}
+
 std::string
 Jvm::instructionDescription(const SgAsmInstruction *insn_) const {
     auto insn = isSgAsmJvmInstruction(insn_);

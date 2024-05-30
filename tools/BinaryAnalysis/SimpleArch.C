@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -257,6 +258,11 @@ public:
 
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr &map, rose_addr_t addr, AddressSet *successors = nullptr) override {
         ASSERT_not_null(map);
+        if (addr % 4 != 0)
+            throw Disassembler::Exception("instruction pointer is not aligned", addr);
+        if (addr > 0xfffffffc)
+            throw Disassembler::Exception("instruction pointer is out of range", addr);
+
         std::vector<uint8_t> bytes(4, 0);
         if (map->at(addr).require(MemoryMap::EXECUTABLE).read(bytes).size() < 4)
             throw Disassembler::Exception("short read", addr);
@@ -771,6 +777,16 @@ public:
     BS::Dispatcher::Ptr newInstructionDispatcher(const BS::RiscOperators::Ptr &ops) const override {
         ASSERT_not_null(ops);
         return SimpleDispatcher::instance(shared_from_this(), ops);
+    }
+
+    // All instructions are encoded in exactly four bytes
+    Sawyer::Container::Interval<size_t> bytesPerInstruction() const override {
+        return 4;
+    }
+
+    // All instructions are aligned on 4-byte boundaries
+    Alignment instructionAlignment() const override {
+        return Alignment(4, bitsPerWord());
     }
 
     // Single-line instruction descriptions

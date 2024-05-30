@@ -57,6 +57,16 @@ X86::~X86() {}
 // Instruction characteristics
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Sawyer::Container::Interval<size_t>
+X86::bytesPerInstruction() const {
+    return Sawyer::Container::Interval<size_t>::hull(1, 15);
+}
+
+Alignment
+X86::instructionAlignment() const {
+    return Alignment(1, bitsPerWord());
+}
+
 bool
 X86::isUnknown(const SgAsmInstruction *insn_) const {
     auto insn = isSgAsmX86Instruction(insn_);

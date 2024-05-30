@@ -53,6 +53,8 @@ public:
     static Ptr instance();
 
 public:
+    Sawyer::Container::Interval<size_t> bytesPerInstruction() const override;
+    Alignment instructionAlignment() const override;
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
     const CallingConvention::Dictionary& callingConventions() const override;

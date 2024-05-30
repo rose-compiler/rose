@@ -41,6 +41,16 @@ Cil::matchesHeader(SgAsmGenericHeader *header) const {
     return header->get_sectionsByName("CLR Runtime Header").size() > 0;
 }
 
+Sawyer::Container::Interval<size_t>
+Cil::bytesPerInstruction() const {
+    return Sawyer::Container::Interval<size_t>::hull(1, 11);
+}
+
+Alignment
+Cil::instructionAlignment() const {
+    return Alignment(1, bitsPerWord());
+}
+
 std::string
 Cil::instructionDescription(const SgAsmInstruction *insn_) const {
     auto insn = isSgAsmCilInstruction(insn_);

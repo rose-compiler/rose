@@ -80,6 +80,12 @@ Base::callingConventions() const {
     return empty;
 }
 
+bool
+Base::instructionsCanOverlap() const {
+    ASSERT_require(bytesPerInstruction());
+    return *instructionAlignment() < bytesPerInstruction().greatest();
+}
+
 InstructionSemantics::BaseSemantics::Dispatcher::Ptr
 Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&) const {
     return {};

@@ -92,6 +92,8 @@ public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
 
+    Sawyer::Container::Interval<size_t> bytesPerInstruction() const override;
+    Alignment instructionAlignment() const override;
     std::string instructionDescription(const SgAsmInstruction*) const override;
     bool isUnknown(const SgAsmInstruction*) const override;
     bool terminatesBasicBlock(SgAsmInstruction*) const override;

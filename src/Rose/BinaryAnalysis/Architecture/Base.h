@@ -3,12 +3,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Alignment.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/CallingConvention/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
+
+#include <Sawyer/Interval.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -163,6 +166,21 @@ public:
     // Instruction characteristics
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Valid sizes for encoded machine instructions.
+     *
+     *  Returns the range of valid sizes for encoded machine instructions. For instance, an x86 instruction can be from one to 15
+     *  bytes in length, but a PowerPC PPC32 instruction is always exactly 4 bytes. */
+    virtual Sawyer::Container::Interval<size_t> bytesPerInstruction() const = 0;
+
+    /** Alignment for encoded machine instructions. */
+    virtual Alignment instructionAlignment() const = 0;
+
+    /** Whether instructions can overlap in memory.
+     *
+     *  Instructions cannot overlap if the alignment is greater than or equal to the maximum instruction size. Otherwise there is
+     *  potential for instructions to overlap with one another in memory. */
+    bool instructionsCanOverlap() const;
+
     /** Unparse an instruction to a string.
      *
      *  The returned string is a simple, one-line string with no leading or trailing white space and no line termination. If the

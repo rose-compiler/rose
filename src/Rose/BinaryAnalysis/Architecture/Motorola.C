@@ -125,6 +125,16 @@ Motorola::callingConventions() const {
     return callingConventions_.get();
 }
 
+Sawyer::Container::Interval<size_t>
+Motorola::bytesPerInstruction() const {
+    return Sawyer::Container::Interval<size_t>::hull(2, 22);
+}
+
+Alignment
+Motorola::instructionAlignment() const {
+    return Alignment(2, bitsPerWord());
+}
+
 std::string
 Motorola::instructionDescription(const SgAsmInstruction *insn_) const {
     auto insn = isSgAsmM68kInstruction(insn_);
