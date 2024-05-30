@@ -1,13 +1,15 @@
 #include <rose_config.h>
 #include <rosePublicConfig.h>
 #include <ROSE_ABORT.h>
-
 #include <Rose/StringUtility.h>
+
 #include <string.h>
 #include <iostream>
-#include "commandline_processing.h"
+#include <initializer_list>
 #include <vector>
 #include <algorithm>
+
+#include "commandline_processing.h"
 #include <Rose/Diagnostics.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -23,10 +25,24 @@
 #endif
 
 
+#if defined(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION)
+
+//~ #include <roseSupport/utility_functions.h>
+// PP (05/29/24)
+// roseSupport/utility_functions.h is difficult to include here => just declare the necessary variable.
+
+namespace Rose
+{
+  extern bool is_Ada_language;
+}
+
+#endif // ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION || ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
+
 // DQ (12/31/2005): This is allowed in C files where it can not
 // effect the users application (just not in header files).
 using namespace std;
 using namespace Rose;
+
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
@@ -940,25 +956,30 @@ CommandlineProcessing::isCsharpFileNameSuffix ( const std::string & suffix )
 bool
 CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
    {
-     bool returnValue = false;
-
-  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
-
   // Note that the filename extension is not defined as part of the Ada standard,
   // but GNAT (Gnu Ada) is using "ads" (for the spec) and "adb" (for the body).
   // PP (02/12/21): Other naming schemes exist (GNAT can be customized)
-  //                RC-571 support Rational Apex .ada 
+  //                RC-571 support Rational Apex .ada
+  // PP (05/31/24): .a is another extension supported on some platforms.
+  //                It often combines spec and body and may require preprocessing.
+  //                It can only be turned on selectively if is_Ada_language is
+  //                defined, in order to not conflict with .a library files
+  //                that need to be passed to the linker.
+     static std::initializer_list<std::string> adaSuffixes   = { "adb", "ads", "ada" };
+     static std::initializer_list<std::string> adaOnlySuffix = { "a" };
 
-#if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "ads" || suffix == "adb" || suffix == "ada" || suffix == "a")
-#else //It is a case insensitive system
-     if ( suffix == "ads" || suffix == "adb" || suffix == "ada" || suffix == "a")
+#if defined(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION)
+     const bool isAdaProject = Rose::is_Ada_language;
+#else
+     const bool isAdaProject = false;
 #endif
-        {
-          returnValue = true;
-        }
 
-     return returnValue;
+  // if !CASE_SENSITIVE_SYSTEM -> update isSuffix to use boost::iequals instead of ==
+     auto isSuffix = [&suffix](const std::string& cand) { return suffix == cand; };
+
+     return (  std::any_of(adaSuffixes.begin(), adaSuffixes.end(), isSuffix)
+            || (isAdaProject && std::any_of(adaOnlySuffix.begin(), adaOnlySuffix.end(), isSuffix))
+            );
    }
 
 bool

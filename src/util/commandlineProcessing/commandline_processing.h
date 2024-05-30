@@ -20,10 +20,10 @@ namespace CommandlineProcessing
 
           //! Convert an argc-argv pair into a string vector
           ROSE_UTIL_API Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, const char* argv[] );
-          
-          inline Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, char* argv[] ) 
+
+          inline Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, char* argv[] )
           {return generateArgListFromArgcArgv(argc, (const char**)argv);}
-          
+
           //! Convert a string vector back to an argc-argv pair
           ROSE_UTIL_API void generateArgcArgvFromList ( Rose_STL_Container<std::string> argList, int & argc, char** & argv );
 
@@ -43,11 +43,11 @@ namespace CommandlineProcessing
           extern Rose_STL_Container<std::string> extraCppSourceFileSuffixes;
 
        //! Search 'argv' for an option like optionPrefixOption, remove the option if 'removeOption' is true. e.g. isOption(argv,"-rose:","(C99|C99_only)",false)
-       /*! 
-        The argument 'option' adds () to the actual option, and allows the |(OR) operations.For example: 
+       /*!
+        The argument 'option' adds () to the actual option, and allows the |(OR) operations.For example:
               CommandlineProcessing::isOption(argv,"-rose:","(skip_syntax_check)",true)
-              CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",false) 
-       */       
+              CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",false)
+       */
           ROSE_UTIL_API bool isOption ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, bool removeOption );
 
        //! Search 'argv' for 'optionPrefixOption value',  store the integer value into 'optionParameter'. Remove the original option if 'removeOption' is true.
@@ -62,7 +62,7 @@ namespace CommandlineProcessing
 
       //! Add the strings in argList to the command line represented by argc and argv, prepend 'prefix' to each of the arguments
           ROSE_UTIL_API void addListToCommandLine ( std::vector<std::string> & argv , std::string prefix, Rose_STL_Container<std::string> argList );
-      //! Remove all options matching a specified prefix 'prefix' from the argument list 'argv'  
+      //! Remove all options matching a specified prefix 'prefix' from the argument list 'argv'
           ROSE_UTIL_API void removeArgs ( std::vector<std::string> & argv, std::string prefix );
       //! Remove all options matching a specified prefix 'prefix' from the argument list 'argv', as well as the option values following them
           ROSE_UTIL_API void removeArgsWithParameters ( std::vector<std::string> & argv, std::string prefix );
@@ -79,7 +79,7 @@ namespace CommandlineProcessing
       //! Add another valid source file suffix (warning deprecated as it is not consistently used)
           ROSE_UTIL_API void addCppSourceFileSuffix ( const std::string &suffix );
 
-          ROSE_UTIL_API bool isSourceFilename ( std::string name ); 
+          ROSE_UTIL_API bool isSourceFilename ( std::string name );
 
           ROSE_UTIL_API bool isObjectFilename ( std::string name );
           ROSE_DLL_API bool isExecutableFilename ( std::string name );
@@ -89,7 +89,7 @@ namespace CommandlineProcessing
 
           ROSE_UTIL_API bool isCFileNameSuffix ( const std::string & suffix );
 
-       // Liao (6/6/2008): Added support for UPC file suffix name    
+       // Liao (6/6/2008): Added support for UPC file suffix name
           ROSE_UTIL_API bool isUPCFileNameSuffix ( const std::string & suffix );
 
           ROSE_UTIL_API bool isCppFileNameSuffix ( const std::string & suffix );
@@ -97,7 +97,7 @@ namespace CommandlineProcessing
        // DQ (8/7/2007): Added support for Fortran file suffix names.
           ROSE_UTIL_API bool isFortranFileNameSuffix ( const std::string & suffix );
 
-       // DQ (5/18/2008): Support to marking when C preprocessing is required for 
+       // DQ (5/18/2008): Support to marking when C preprocessing is required for
        // Fortran files, default is true for C and C++.
           ROSE_UTIL_API bool isFortranFileNameSuffixRequiringCPP ( const std::string & suffix );
 
@@ -134,7 +134,7 @@ namespace CommandlineProcessing
 
           ROSE_UTIL_API void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;
-          
+
           ROSE_UTIL_API void initObjectFileSuffixList();
           static Rose_STL_Container<std::string> validObjectFileSuffixes;
 

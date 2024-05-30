@@ -1,5 +1,6 @@
 
 #include "sage3basic.h"
+
 #include "Rose/AST/IO.h"
 
 #include "midend/astDiagnostics/AstConsistencyTests.h"
@@ -10,15 +11,26 @@ int main( int argc, char * argv[] ) {
 
 #if defined(ROSE_COMPILER_FOR_LANGUAGE)
   std::string language(ROSE_COMPILER_FOR_LANGUAGE);
+  const bool  useXOption = language == "ada";
+  std::string option     = useXOption ? "-x" : "-std=";
+
   bool has_dialect = false;
   for (std::vector<std::string>::const_iterator arg = args.begin(); arg != args.end(); ++arg) {
-    if (arg->find("-std=") == 0) {
+    if (arg->find(option) == 0) {
       has_dialect = true;
       break;
     }
   }
   if (!has_dialect) {
-    args.insert(args.begin()+1, "-std="+language);
+    if (!useXOption) {
+      // insert as -std=language
+      args.insert(args.begin()+1, option+language);
+    } else {
+      // insert as -x language
+      std::vector<std::string> extra = {option, language};
+
+      args.insert(args.begin()+1, extra.begin(), extra.end());
+    }
   }
 #endif
 

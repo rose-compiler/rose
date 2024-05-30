@@ -713,6 +713,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                        {
                          if (tempLanguageSpecificationName == "ada" || tempLanguageSpecificationName == "Ada")
                             {
+                              Rose::is_Ada_language = true;
                               set_Ada_only(true);
                             }
                            else
@@ -4380,7 +4381,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Ada_only(true);
           if (get_sourceFileUsesAdaFileExtension() == false)
              {
-               printf ("Warning, Non Ada source file name specificed with explicit -rose:ada Ada language option! \n");
+               printf ("Warning, Non Ada source file name specified with explicit -rose:ada Ada language option! \n");
                set_Ada_only(false);
              }
 
