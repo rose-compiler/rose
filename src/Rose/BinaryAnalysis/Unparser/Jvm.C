@@ -27,18 +27,18 @@ unparseJvmMnemonic(SgAsmJvmInstruction* insn) {
 }
 
 std::string
-unparseJvmExpression(SgAsmExpression* expr, const LabelMap* labels, RegisterDictionary::Ptr registers) {
+unparseJvmExpression(SgAsmExpression* expr, const LabelMap* labels) {
     std::string result = "";
     if (expr == nullptr) return "BOGUS:NULL";
 
     if (SgAsmMemoryReferenceExpression* mre = isSgAsmMemoryReferenceExpression(expr)) {
-        result = "[" + unparseJvmExpression(mre->get_address(), labels, registers) + "]";
+        result = "[" + unparseJvmExpression(mre->get_address(), labels) + "]";
     } else if (SgAsmBinaryAdd* add = isSgAsmBinaryAdd(expr)) {
-        result = unparseJvmExpression(add->get_lhs(), labels, registers) + "+" +
-                 unparseJvmExpression(add->get_rhs(), labels, registers);
+        result = unparseJvmExpression(add->get_lhs(), labels) + "+" +
+                 unparseJvmExpression(add->get_rhs(), labels);
     } else if (SgAsmBinaryMultiply* mul = isSgAsmBinaryMultiply(expr)) {
-        result = unparseJvmExpression(mul->get_lhs(), labels, registers) + "*" +
-                 unparseJvmExpression(mul->get_rhs(), labels, registers);
+        result = unparseJvmExpression(mul->get_lhs(), labels) + "*" +
+                 unparseJvmExpression(mul->get_rhs(), labels);
     } else if (SgAsmIntegerValueExpression* ival = isSgAsmIntegerValueExpression(expr)) {
         uint64_t value = ival->get_absoluteValue(); // not sign extended
         result = StringUtility::signedToHex2(value, ival->get_significantBits());

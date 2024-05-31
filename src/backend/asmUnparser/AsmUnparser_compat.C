@@ -114,11 +114,11 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
             return unparseX86Expression(expr, labels, registers);
 #ifdef ROSE_ENABLE_ASM_AARCH64
         case V_SgAsmAarch64Instruction:
-            return unparseAarch64Expression(expr, labels, registers);
+            return unparseAarch64Expression(expr, labels);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
         case V_SgAsmAarch32Instruction:
-            return unparseAarch32Expression(expr, labels, registers);
+            return unparseAarch32Expression(expr, labels);
 #endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr, labels, registers);
@@ -127,9 +127,9 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
         case V_SgAsmM68kInstruction:
             return unparseM68kExpression(expr, labels, registers);
         case V_SgAsmCilInstruction:
-            return unparseCilExpression(expr, labels, registers);
+            return unparseCilExpression(expr, labels);
         case V_SgAsmJvmInstruction:
-            return unparseJvmExpression(expr, labels, registers);
+            return unparseJvmExpression(expr, labels);
         default:
             ASSERT_not_reachable("unhandled variant: " + insn->class_name());
     }

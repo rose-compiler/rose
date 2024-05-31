@@ -55,14 +55,12 @@ unparseAarch64Mnemonic(SgAsmAarch64Instruction *insn) {
 }
 
 std::string
-unparseAarch64Expression(SgAsmExpression *expr, const LabelMap*, RegisterDictionary::Ptr registers) {
+unparseAarch64Expression(SgAsmExpression *expr, const LabelMap*) {
     auto arch = Architecture::findByName("arm-a64").orThrow();
-    if (!registers)
-        registers = arch->registerDictionary();
     auto unparser = arch->newUnparser();
     std::ostringstream ss;
     auto p = Partitioner2::Partitioner::instance(arch);
-    State state(p, registers, unparser->settings(), *unparser);
+    State state(p, arch, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();
 }
@@ -372,7 +370,8 @@ Aarch64::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
                 out <<"s1e3w";
                 break;
             default:
-                ASSERT_not_reachable("invalid AT operand");
+                out <<"INVALID AT OPERAND " <<(unsigned)op->operation();
+                break;
         }
 
     } else if (SgAsmAarch64PrefetchOperand *op = isSgAsmAarch64PrefetchOperand(expr)) {

@@ -11,7 +11,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseCilMnemonic(SgAsmCilInstruction*);
-std::string unparseCilExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
+std::string unparseCilExpression(SgAsmExpression*, const LabelMap*);
 
 /** %Settings specific to the Cil unaprser. */
 struct CilSettings: public Settings {};

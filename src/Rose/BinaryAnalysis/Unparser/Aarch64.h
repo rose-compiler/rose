@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseAarch64Mnemonic(SgAsmAarch64Instruction*);
-std::string unparseAarch64Expression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
+std::string unparseAarch64Expression(SgAsmExpression*, const LabelMap*);
 
 /** %Settings specific to the ARM AArch64 unparser. */
 struct Aarch64Settings: public Settings {};

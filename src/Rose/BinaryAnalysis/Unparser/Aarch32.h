@@ -11,7 +11,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseAarch32Mnemonic(SgAsmAarch32Instruction*);
-std::string unparseAarch32Expression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
+std::string unparseAarch32Expression(SgAsmExpression*, const LabelMap*);
 
 /** %Settings specific to the ARM AArch32 unparser. */
 struct Aarch32Settings: public Settings {};

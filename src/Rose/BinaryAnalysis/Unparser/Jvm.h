@@ -10,7 +10,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseJvmMnemonic(SgAsmJvmInstruction*);
-std::string unparseJvmExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
+std::string unparseJvmExpression(SgAsmExpression*, const LabelMap*);
 
 /** %Settings specific to the JVM unparser. */
 struct JvmSettings: public Settings {};

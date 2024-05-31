@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
+#include <Rose/Affirm.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
@@ -199,23 +200,9 @@ StyleGuard::restore() const {
 //                                      State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-State::State(const P2::Partitioner::ConstPtr &partitioner, const Settings &settings, const Base &frontUnparser)
-    : partitioner_(partitioner), frontUnparser_(frontUnparser) {
-    if (partitioner)
-        registerNames_ = partitioner->architecture()->registerDictionary();
-    if (settings.function.cg.showing && partitioner)
-        cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
-    intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
-    intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
-    globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
-    globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
-    cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
-    styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
-}
-
-State::State(const P2::Partitioner::ConstPtr &partitioner, const RegisterDictionary::Ptr &regdict, const Settings &settings,
+State::State(const P2::Partitioner::ConstPtr &partitioner, const Architecture::Base::ConstPtr &arch, const Settings &settings,
              const Base &frontUnparser)
-    : partitioner_(partitioner), registerNames_(regdict), frontUnparser_(frontUnparser) {
+    : partitioner_(partitioner), registerNames_(notnull(arch)->registerDictionary()), frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing && partitioner)
         cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
     intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
@@ -937,7 +924,7 @@ Base::unparse(std::ostream &out, const Partitioner2::Partitioner::ConstPtr &part
     ASSERT_not_null(partitioner);
     Sawyer::ProgressBar<size_t> progressBar(partitioner->nFunctions(), mlog[MARCH], "unparse");
     progressBar.suffix(" functions");
-    State state(partitioner, settings(), *this);
+    State state(partitioner, partitioner->architecture(), settings(), *this);
     initializeState(state);
     for (P2::Function::Ptr f: partitioner->functions()) {
         ++progressBar;
@@ -949,35 +936,35 @@ Base::unparse(std::ostream &out, const Partitioner2::Partitioner::ConstPtr &part
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) const {
-    State state(partitioner, settings(), *this);
+    State state(partitioner, architecture(), settings(), *this);
     initializeState(state);
     emitInstruction(out, insn, state);
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) const {
-    State state(partitioner, settings(), *this);
+    State state(partitioner, architecture(), settings(), *this);
     initializeState(state);
     emitBasicBlock(out, bb, state);
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::DataBlock::Ptr &db) const {
-    State state(partitioner, settings(), *this);
+    State state(partitioner, architecture(), settings(), *this);
     initializeState(state);
     emitDataBlock(out, db, state);
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &f) const {
-    State state(partitioner, settings(), *this);
+    State state(partitioner, architecture(), settings(), *this);
     initializeState(state);
     emitFunction(out, f, state);
 }
 
 void
 Base::unparse(std::ostream &out, SgAsmInstruction *insn) const {
-    State state(P2::Partitioner::Ptr(), settings(), *this);
+    State state(P2::Partitioner::Ptr(), architecture(), settings(), *this);
     initializeState(state);
     emitInstruction(out, insn, state);
 }

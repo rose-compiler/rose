@@ -218,8 +218,7 @@ private:
     StyleStack styleStack_;                                           // styles
 
 public:
-    State(const Partitioner2::PartitionerConstPtr&, const Settings&, const Base &frontUnparser);
-    State(const Partitioner2::PartitionerConstPtr&, const RegisterDictionaryPtr&, const Settings&, const Base &frontUnparser);
+    State(const Partitioner2::PartitionerConstPtr&, const Architecture::BaseConstPtr&, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
     /** Property: Partitioner, which may be null. */

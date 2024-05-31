@@ -27,18 +27,18 @@ unparseCilMnemonic(SgAsmCilInstruction* insn) {
 }
 
 std::string
-unparseCilExpression(SgAsmExpression* expr, const LabelMap* labels, RegisterDictionary::Ptr registers) {
+unparseCilExpression(SgAsmExpression* expr, const LabelMap* labels) {
     std::string result = "";
     if (expr == nullptr) return "BOGUS:NULL";
 
     if (SgAsmMemoryReferenceExpression* mre = isSgAsmMemoryReferenceExpression(expr)) {
-        result = "[" + unparseCilExpression(mre->get_address(), labels, registers) + "]";
+        result = "[" + unparseCilExpression(mre->get_address(), labels) + "]";
     } else if (SgAsmBinaryAdd* add = isSgAsmBinaryAdd(expr)) {
-        result = unparseCilExpression(add->get_lhs(), labels, registers) + "+" +
-                 unparseCilExpression(add->get_rhs(), labels, registers);
+        result = unparseCilExpression(add->get_lhs(), labels) + "+" +
+                 unparseCilExpression(add->get_rhs(), labels);
     } else if (SgAsmBinaryMultiply* mul = isSgAsmBinaryMultiply(expr)) {
-        result = unparseCilExpression(mul->get_lhs(), labels, registers) + "*" +
-                 unparseCilExpression(mul->get_rhs(), labels, registers);
+        result = unparseCilExpression(mul->get_lhs(), labels) + "*" +
+                 unparseCilExpression(mul->get_rhs(), labels);
     } else if (SgAsmIntegerValueExpression* ival = isSgAsmIntegerValueExpression(expr)) {
         uint64_t value = ival->get_absoluteValue(); // not sign extended
         result = StringUtility::signedToHex2(value, ival->get_significantBits());

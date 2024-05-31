@@ -49,15 +49,12 @@ unparseAarch32Mnemonic(SgAsmAarch32Instruction *insn) {
 }
 
 std::string
-unparseAarch32Expression(SgAsmExpression *expr, const LabelMap*, RegisterDictionary::Ptr registers) {
+unparseAarch32Expression(SgAsmExpression *expr, const LabelMap*) {
     auto arch = Architecture::findByName("arm-a32").orThrow();
-
-    if (!registers)
-        registers = arch->registerDictionary();
     auto unparser = arch->newUnparser();
     std::ostringstream ss;
     auto p = Partitioner2::Partitioner::instance(arch);
-    State state(p, registers, unparser->settings(), *unparser);
+    State state(p, arch, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();
 }
