@@ -246,6 +246,50 @@ struct IP_nor: P {
     }
 };
 
+// Bitwise OR
+struct IP_or: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr result = ops->or_(rs, d->read(args[2]));
+        d->write(args[0], result);
+    }
+};
+
+// Bitwise OR immediate
+struct IP_ori: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr zeros = ops->number_(16, 0);
+        SValue::Ptr imm32 = ops->concatHiLo(zeros, d->read(args[2],16));
+        SValue::Ptr result = ops->or_(rs, imm32);
+        d->write(args[0], result);
+    }
+};
+
+// Exclusive OR
+struct IP_xor: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr result = ops->xor_(rs, d->read(args[2]));
+        d->write(args[0], result);
+    }
+};
+
+// Exclusive OR immediate
+struct IP_xori: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr zeros = ops->number_(16, 0);
+        SValue::Ptr imm32 = ops->concatHiLo(zeros, d->read(args[2],16));
+        SValue::Ptr result = ops->xor_(rs, imm32);
+        d->write(args[0], result);
+    }
+};
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,6 +313,10 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_lui,   new Mips::IP_lui);
     iprocSet(mips_nop,   new Mips::IP_nop);
     iprocSet(mips_nor,   new Mips::IP_nor);
+    iprocSet(mips_or,    new Mips::IP_or);
+    iprocSet(mips_ori,   new Mips::IP_ori);
+    iprocSet(mips_xor,   new Mips::IP_xor);
+    iprocSet(mips_xori,  new Mips::IP_xori);
 }
 
 DispatcherMips::~DispatcherMips() {}
