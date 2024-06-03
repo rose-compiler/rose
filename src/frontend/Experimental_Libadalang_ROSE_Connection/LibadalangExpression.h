@@ -72,6 +72,9 @@ namespace Libadalang_ROSE_Translation
   /// \return an expression representing the call
   SgExpression& createCall(ada_base_entity* lal_prefix, std::vector<ada_base_entity*> lal_params, bool prefixCallSyntax, bool objectCallSyntax, AstContext ctx);
 
+  SgExpression&
+  getEnumRepresentationValue(ada_base_entity* lal_element, int enum_position, AstContext ctx);
+
   /// queries the corresponding ROSE AST node for a built-in identifer
   SgNode*
   queryBuiltIn(int hash);

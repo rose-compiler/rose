@@ -338,6 +338,94 @@ namespace {
     processInheritedSubroutines(tyDecl.get_type(), tydef, ctx);
   }
 
+  std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
+  getBaseEnum(SgType* baseTy)
+  {
+
+    SgAdaRangeConstraint* constraint = nullptr;
+    SgEnumDeclaration*    basedecl   = nullptr;
+
+    if (SgAdaDerivedType* deriveTy = isSgAdaDerivedType(baseTy))
+    {
+      SgType* ty = deriveTy->get_base_type();
+
+      if (SgAdaSubtype* subTy = isSgAdaSubtype(ty))
+      {
+        ty = subTy->get_base_type();
+        constraint = isSgAdaRangeConstraint(subTy->get_constraint());
+      }
+
+      basedecl = si::Ada::baseEnumDeclaration(ty);
+    }
+
+    if (basedecl == nullptr)
+    {
+      logFlaw() << "basedecl == nullptr: " << typeid(*baseTy).name() << std::endl;
+    }
+
+    if (SgEnumDeclaration* realdecl = isSgEnumDeclaration(basedecl->get_definingDeclaration()))
+      basedecl = realdecl;
+
+    return { basedecl, constraint };
+  }
+
+  void
+  processInheritedEnumValues( ada_base_entity* tydef,
+                              SgEnumDeclaration& derivedTypeDcl,
+                              AstContext ctx
+                            )
+  {
+    //Get the base type
+    ada_base_entity lal_subtype_indication, lal_base_type;
+    ada_derived_type_def_f_subtype_indication(tydef, &lal_subtype_indication);
+    ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type);
+    /*{
+      ElemIdRange  range        = idRange(tydef.Implicit_Inherited_Subprograms);
+      SgEnumType&  derivedType  = SG_DEREF(derivedTypeDcl.get_type());
+      SgType*      baseType     = si::Ada::baseType(derivedType);
+      SgNamedType* baseRootType = isSgNamedType(si::Ada::typeRoot(baseType).typerep());
+
+      if (baseRootType == nullptr)
+      {
+        logFlaw() << "unable to find base-root for enum " << derivedType.get_name()
+                  << " / base = " << baseType
+                  << std::endl;
+        return;
+      }
+
+      traverseIDs(range, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
+    }*/ //TODO Why is this here? I don't think enums can have subprograms to inherit?
+
+    {
+      using BaseTuple = std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>;
+
+      BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
+      SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
+
+      // do not process derivations from Standard.*Char type.
+      //   the reason is that the derived enums will have its symbols
+      //   injected into the new scope as alias symbols, but for
+      //   character based enums, the symbols are not physically present.
+      if ( si::Ada::characterBaseType(origDecl.get_type()) )
+        return;
+
+      //Get the range of inherited decls
+      ada_base_entity lal_inherited_decl_list;
+      ada_type_decl_f_type_def(&lal_inherited_decl_list, &lal_inherited_decl_list);
+      ada_enum_type_def_f_enum_literals(&lal_inherited_decl_list, &lal_inherited_decl_list);
+      int count = ada_node_children_count(&lal_inherited_decl_list);
+
+      // just traverse the IDs, as the elements are not present
+      for(int i = 0; i < count ; i++){
+        ada_base_entity lal_inherited_decl;
+        if(ada_node_child(&lal_inherited_decl_list, i, &lal_inherited_decl) != 0){
+          //TODO How will this work? It isn't a unique node.
+        }
+      }
+      //std::for_each(range.first, range.second, InheritedEnumeratorCreator{derivedTypeDcl, origDecl, ctx});
+    }
+  }
+
   void
   processInheritedElementsOfDerivedTypes(TypeData& ty, SgDeclarationStatement& dcl, AstContext ctx)
   {
@@ -355,8 +443,8 @@ namespace {
       processInheritedSubroutines(tydef, *derivedTypeDcl, ctx);
     else if (SgClassDeclaration* classTypeDcl = isSgClassDeclaration(&dcl))
       processInheritedSubroutines(tydef, *classTypeDcl, ctx);
-    /*else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
-      processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);*/ //TODO
+    else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
+      processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
     else if (SgAdaDiscriminatedTypeDecl* discrTypeDcl = isSgAdaDiscriminatedTypeDecl(&dcl))
       processInheritedSubroutines(tydef, *discrTypeDcl, ctx);
     else

@@ -756,6 +756,37 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return sgnode;
   }
 
+  void addEnumLiteral(ada_base_entity* lal_element, SgEnumDeclaration& enumdef, int enum_position, AstContext ctx)
+  {
+    SgType& enumty = SG_DEREF(enumdef.get_type());
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    logKind("ada_enum_literal_decl", kind);
+
+    //Get the name
+    ada_base_entity lal_defining_name, lal_identifier;
+    ada_enum_literal_decl_f_name(lal_element, &lal_defining_name);
+    ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+    ada_symbol_type p_canonical_text;
+    ada_text ada_canonical_text;
+    ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+    std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+    ada_destroy_text(&ada_canonical_text);
+
+    // \todo name.ident could be a character literal, such as 'c'
+    //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
+    //       SgInitializedName are created with the name 'c' instead of character constants.
+    SgExpression&       repval = getEnumRepresentationValue(lal_element, enum_position, ctx);
+    SgInitializedName&  sgnode = mkEnumeratorDecl(enumdef, ident, enumty, repval);
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+    //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
+    enumdef.append_enumerator(&sgnode);
+
+    int hash = hash_node(lal_element);
+    recordNode(libadalangVars(), hash, sgnode);
+  }
+
   SgBaseClass&
   getParentType(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -802,6 +833,25 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
             res.sageNode(def);
             break;
           }
+        }
+      case ada_enum_type_def:         // 3.5.1(2)
+        {
+          logKind("ada_enum_type_def", kind);
+
+          SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
+          ada_base_entity lal_enum_literals;
+          ada_enum_type_def_f_enum_literals(lal_def, &lal_enum_literals);
+
+          int count = ada_node_children_count(&lal_enum_literals);
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_enum_literal;
+            if(ada_node_child(&lal_enum_literals, i, &lal_enum_literal) != 0){
+              addEnumLiteral(&lal_enum_literal, sgnode, i, ctx);
+            }
+          }
+
+          res.sageNode(sgnode);
+          break ;
         }
 
       case ada_signed_int_type_def:           // 3.5.4(3)
@@ -886,7 +936,7 @@ void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int re
 }
 
 template<class MapT, class StringMap>
-void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec)
+void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, SgGlobal& global)
 {
   //Get the name of the type for logging purposes
   ada_text_type fully_qualified_name;
@@ -909,6 +959,34 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
 
     declareEnumItem(boolDecl, "False", 0);
     declareEnumItem(boolDecl, "True",  1);
+
+    //Add the enum values to the libadalangVars() map
+    //They aren't technically, but this is the only standard enum
+    ada_base_entity lal_enum_decl_list;
+    ada_type_decl_f_type_def(lal_decl, &lal_enum_decl_list);
+    ada_enum_type_def_f_enum_literals(&lal_enum_decl_list, &lal_enum_decl_list);
+    int count = ada_node_children_count(&lal_enum_decl_list);
+    for(int i = 0; i < count; i++){
+      ada_base_entity lal_enum_decl;
+      if(ada_node_child(&lal_enum_decl_list, i, &lal_enum_decl) != 0){
+        //Get the name
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_enum_literal_decl_f_name(&lal_enum_decl, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+        ada_destroy_text(&ada_canonical_text);
+
+        std::string        std_name = "__standard";
+        SgExpression&      repval   = getEnumRepresentationValue(&lal_enum_decl, i, AstContext{}.scope(global).sourceFileName(std_name));
+        SgInitializedName& sgnode   = mkEnumeratorDecl(boolDecl, ident, adaBoolType, repval);
+        int hash = hash_node(&lal_enum_decl);
+        recordNode(libadalangVars(), hash, sgnode);
+      }
+    }
   } else if(canonical_fully_qualified_name.find("INTEGER") != std::string::npos){
     //All Ada int types have a range of -(2**<exp>)..(2**<exp>)-1, so find the exp
     ada_base_entity lal_exponent;
@@ -1106,7 +1184,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
       {
         case ada_type_decl:
         {
-          handleStdDecl(adaTypes(), adaTypesByName(), &lal_decl, stdspec);
+          handleStdDecl(adaTypes(), adaTypesByName(), &lal_decl, stdspec, global);
           break;
         }
         case ada_subtype_decl:

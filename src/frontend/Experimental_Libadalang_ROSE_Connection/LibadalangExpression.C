@@ -1172,13 +1172,31 @@ namespace{
           ada_expr_p_is_static_expr(lal_element, 1, &lal_static_expr);
 
           if(lal_static_expr){
-            //If the name is "true" or "false", this don't try to find the def
-            if(name == "true" || name == "false"){
-              res = &getBooleanEnumItem(AdaIdentifier{name});
-              break;
+            logInfo() << "identifier " << name << " is being treated as an enum value (is_static_expr = true).\n";
+
+            //Get the hash for the decl
+            ada_base_entity lal_first_corresponding_decl;
+            ada_expr_p_first_corresponding_decl(lal_element, &lal_first_corresponding_decl);
+            int decl_hash = hash_node(&lal_first_corresponding_decl);
+
+            if (SgInitializedName* enumitem = findFirst(libadalangVars(), decl_hash))
+            {
+              SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
+              SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
+
+              res = &mkEnumeratorRef(enumdecl, *enumitem);
             }
-            //TODO What about other enum items?
-            logWarn() << "identifier " << name << " might be an enum value (is_static_expr = true).\n";
+            else
+            {
+              logFlaw() << "unable to find definition for enum val " << name
+                        << std::endl;
+
+              SgStringVal& strval = SG_DEREF(sb::buildStringVal(name));
+
+              strval.set_stringDelimiter(' ');
+              res = &strval;
+            }
+            break;
           }
 
           //Find the definition of this identifier and get its hash
@@ -1669,6 +1687,17 @@ SgExpression& createCall(ada_base_entity* lal_prefix, std::vector<ada_base_entit
   SgExpression* res = sg::dispatch(AdaCallBuilder{lal_prefix, std::move(arglist), operatorCallSyntax, objectCallSyntax, ctx}, &tgt);
 
   return SG_DEREF(res);
+}
+
+SgExpression&
+getEnumRepresentationValue(ada_base_entity* lal_element, int enum_position, AstContext ctx)
+{
+  std::string enum_position_string = std::to_string(enum_position);
+  const char* enum_position_c_string = enum_position_string.c_str();
+  SgExpression& sgnode = mkAdaIntegerLiteral(enum_position_c_string);
+
+  attachSourceLocation(sgnode, lal_element, ctx);
+  return sgnode;
 }
 
 SgNode*
