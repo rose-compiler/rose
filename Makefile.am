@@ -143,6 +143,7 @@ check-hard:
 	$(MAKE) check-nonsmoke
 
 check-tools: tools
+	$(MAKE) check -C $(top_builddir)/tests/tools
 	$(MAKE) check -C $(top_builddir)/tools
 	$(MAKE) check -C $(top_builddir)/exampleTranslators
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT

@@ -480,7 +480,6 @@ if [[ ! -d tests ]] ; then
         tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile.in \
         tests/nonsmoke/functional/roseTests/roseCodeGen/Makefile.in \
         tests/nonsmoke/functional/roseTests/roseTraits/Makefile.in \
-        tests/nonsmoke/functional/RWSetTests/Makefile.in \
         tests/nonsmoke/functional/testSupport/Makefile.in \
         tests/nonsmoke/functional/testSupport/gtest/Makefile.in \
         tests/nonsmoke/functional/translatorTests/Makefile.in \
@@ -513,6 +512,9 @@ if [[ ! -d tests ]] ; then
         tests/smoke/unit/Makefile.in \
         tests/smoke/unit/Sawyer/Makefile.in \
         tests/smoke/unit/Utility/Makefile.in \
+        tests/tools/Makefile.in \
+        tests/tools/RWSetTests/Makefile.in \
+        tests/tools/Codethorn/Makefile.in \
         tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
     do
         mkdir -p $(dirname $file)
