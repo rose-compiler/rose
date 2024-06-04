@@ -364,8 +364,8 @@ namespace OmpSupport
       }
   }
   
-  SgExpression* replace_expression_with_macro_value( std::string define_macro, SgExpression* old_exp, 
-                                                     bool& macro_replaced, omp_construct_enum clause_type )
+  SgExpression* replace_expression_with_macro_value(std::string define_macro, SgExpression* old_exp, bool& macro_replaced,
+                                                    omp_construct_enum)
   {
       SgExpression* newExp = old_exp;
       // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE, the constant macro
