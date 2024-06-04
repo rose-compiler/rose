@@ -23,6 +23,10 @@ namespace BinaryAnalysis {
 
 Sawyer::Message::Facility Reachability::mlog;
 
+Reachability::~Reachability() {}
+
+Reachability::Reachability() {}
+
 // class method
 void
 Reachability::initDiagnostics() {

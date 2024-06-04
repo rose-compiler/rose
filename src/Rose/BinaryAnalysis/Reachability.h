@@ -131,10 +131,12 @@ private:
 #endif
 
 public:
+    ~Reachability();
+
     /** Default constructor.
      *
      *  Constructs a new analysis object with an empty control flow graph. */
-    Reachability() {}
+    Reachability();
 
     /** Initialize diagnostic streams.
      *
