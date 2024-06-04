@@ -6478,7 +6478,7 @@ SgJavaLabelStatement::cfgIndexForEnd() const
      return 1;
    }
 
-bool SgJavaLabelStatement::cfgIsIndexInteresting(unsigned int idx) const {
+bool SgJavaLabelStatement::cfgIsIndexInteresting(unsigned int) const {
   return false;
 }
 
