@@ -5596,7 +5596,7 @@ void c_action_label(Token_t * lbl)
     /**
      * @param count the number of cray pointer asscociation pairs.
      */
-    void c_action_cray_pointer_assoc_list(int count)
+    void c_action_cray_pointer_assoc_list(int /*count*/)
     {
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -7530,7 +7530,7 @@ void c_action_label(Token_t * lbl)
             bool hasSelectionSubscriptList = qualifiedNameList[lastElement - i].hasSelectionSubscriptList;
             bool hasImageSelector = qualifiedNameList[lastElement - i].hasImageSelector;
             bool hasCo_deref = qualifiedNameList[lastElement - i].hasCo_deref;
-            SgCAFCoExpression* coExpr;
+            SgCAFCoExpression* coExpr = nullptr;
             if (hasImageSelector)
             {
                 coExpr = isSgCAFCoExpression(astExpressionStack.front());
@@ -7778,6 +7778,7 @@ void c_action_label(Token_t * lbl)
             // Save the expression on the stack
             if (hasImageSelector)
             {
+                ROSE_ASSERT(coExpr != nullptr);
                 ROSE_ASSERT(!coExpr->get_referData());
                 coExpr->set_referData(variable);
                 variable->set_parent(coExpr);
