@@ -429,7 +429,7 @@ bool StaticSingleAssignment::varRequiresThisPointer(const StaticSingleAssignment
     return true;
 }
 
-bool StaticSingleAssignment::isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration* callee)
+bool StaticSingleAssignment::isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration*)
 {
     //We get the left-hand side of the call site. If it's the 'this' pointer, we should return true
     //E.g. should return true for this->bar(), but false for a.bar() because in the second case bar() acts on a different instance
