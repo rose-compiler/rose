@@ -98,6 +98,7 @@ template class WriteContainer<vector<NameDescriptor>, ',', '(', ')'>;
 template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>,
                              NameDescriptor, ',','{','}'>;
 template class WriteContainer<vector<CollectPair<TypeDescriptor, NameDescriptor, 0> >, ',', '(', ')'>;
+template class WriteContainer<set<SymbolicValDescriptor>, ',', '{', '}'>;
 
 // DQ (1/8/2006): force instantiation of this template so that the "read" member function will be available (required for g++ 4.0.2)
 // This is reported as a duplicate template instantiation directive if the previousl on before the AnnotDescriptors.C is include is not commented out.
