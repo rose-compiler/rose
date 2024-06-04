@@ -32,8 +32,7 @@ class DefUseChain
   DefUseChain( BaseGraphCreate* c) 
     : VirtualGraphCreateTemplate<Node, Edge>(c) {}
 
-  virtual Node* CreateNode( AstInterface& fa, const AstNodePtr& ref, 
-                            const AstNodePtr& stmt, bool def)
+  virtual Node* CreateNode(AstInterface&, const AstNodePtr& ref, const AstNodePtr& stmt, bool def)
     {
       Node* n = new Node(this, ref, stmt, def);
       VirtualGraphCreateTemplate<Node, Edge>::AddNode(n);
