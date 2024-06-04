@@ -176,7 +176,7 @@ class AttributeListMap {
         // King84 (2010.09.09): Added to support getting arguments for conditionals which had been skipped
         template <typename TokenT, typename ContainerT>
         void
-        update_token(TokenT const& token, ContainerT const& stream, bool expression_value)
+        update_token(TokenT const& token, ContainerT const& stream, bool /*expression_value*/)
         {
 //              typename TokenT::position_type::string_type filename(token.get_position().get_file().c_str());
                 std::string filename(token.get_position().get_file().c_str());

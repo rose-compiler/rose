@@ -483,7 +483,7 @@ public:
         //
         ///////////////////////////////////////////////////////////////////////////
         template <typename ContextT, typename TokenT>
-        TokenT const& generated_token(ContextT const& ctx, TokenT const& token)
+        TokenT const& generated_token(ContextT const&, TokenT const& token)
         {
                 if(SgProject::get_verbose() >= 1)
                         std::cout << "Generating token: ";
@@ -534,7 +534,8 @@ public:
         ///////////////////////////////////////////////////////////////////////////
         template <typename ContextT, typename TokenT, typename ContainerT>
         bool
-        evaluated_conditional_expression(ContextT const& ctx, TokenT const& directive, ContainerT const& expression, bool expression_value)
+        evaluated_conditional_expression(ContextT const&, TokenT const& directive, ContainerT const& expression,
+                                         bool expression_value)
         {
                 using namespace boost::wave;
                 token_id id = token_id(directive);
@@ -775,7 +776,7 @@ public:
  ///////////////////////////////////////////////////////////////////////////
         template <typename ContextT, typename ContainerT>
         void
-        found_line_directive(ContextT const& ctx, ContainerT const& arguments, unsigned int line, std::string const& filename)
+        found_line_directive(ContextT const&, ContainerT const& arguments, unsigned int, std::string const& filename)
         {
                 std::string filenameString(filename.c_str());
 
@@ -844,28 +845,28 @@ public:
         }
 
         template <typename ContextT, typename ExceptionT>
-        void throw_exception(ContextT const &ctx, ExceptionT const& e)
+        void throw_exception(ContextT const&, ExceptionT const&)
         {
                 if (SgProject::get_verbose() >= 1)
                         std::cout << "THROW_EXCEPTION" << std::endl;
         }
 
         template <typename ContextT>
-        void detected_include_guard(ContextT const &ctx, std::string const& filename, std::string const& include_guard)
+        void detected_include_guard(ContextT const&, std::string const& filename, std::string const& include_guard)
         {
                 if (SgProject::get_verbose() >= 1)
                         std::cout << "DETECTED_INCLUDE_GUARD" << include_guard << " in file " << filename << std::endl;
         }
 
         template <typename ContextT, typename TokenT>
-        void detected_pragma_once(ContextT const &ctx, TokenT const& pragma_token, std::string const& filename)
+        void detected_pragma_once(ContextT const&, TokenT const& pragma_token, std::string const& filename)
         {
                 if (SgProject::get_verbose() >= 1)
                         std::cout << "DETECTED_PRAGMA_ONCE " << pragma_token.get_value() << " in file " << filename << std::endl;
         }
 
         template <typename ContextT, typename ContainerT>
-        bool found_error_directive(ContextT const &ctx, ContainerT const &message)
+        bool found_error_directive(ContextT const&, ContainerT const&)
         {
                 if (SgProject::get_verbose() >= 1)
                         std::cout << "FOUND_ERROR_DIRECTIVE" << std::endl;

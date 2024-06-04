@@ -5609,7 +5609,7 @@ bool SgStatement::isChildUsedAsLValue(const SgExpression* child) const
                         return false;
         }
 
-        bool SgExpression::isChildUsedAsLValue(const SgExpression* child) const
+        bool SgExpression::isChildUsedAsLValue(const SgExpression*) const
         {
                 return false;
         }
@@ -5620,7 +5620,7 @@ bool SgStringVal::isLValue() const
         return true;
 }
 
-bool SgStringVal::isChildUsedAsLValue(const SgExpression* child) const
+bool SgStringVal::isChildUsedAsLValue(const SgExpression*) const
 {
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgStringVal");
         return false;
@@ -5838,7 +5838,7 @@ bool SgTypeIdOp::isLValue() const
 }
 
 /*! std:5.2.8 par:1 */
-bool SgTypeIdOp::isChildUsedAsLValue(const SgExpression* child) const
+bool SgTypeIdOp::isChildUsedAsLValue(const SgExpression*) const
 {
         return false;
 }
@@ -6050,7 +6050,7 @@ bool SgMemberFunctionRefExp::isLValue() const
         return true;
 }
 
-bool SgMemberFunctionRefExp::isChildUsedAsLValue(const SgExpression* child) const
+bool SgMemberFunctionRefExp::isChildUsedAsLValue(const SgExpression*) const
 {
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgMemberFunctionRefExp");
         return false;
@@ -6072,7 +6072,7 @@ bool SgVarRefExp::isLValue() const
         return true;
 }
 
-bool SgVarRefExp::isChildUsedAsLValue(const SgExpression* child) const
+bool SgVarRefExp::isChildUsedAsLValue(const SgExpression*) const
 {
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
         return false;
