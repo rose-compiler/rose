@@ -553,7 +553,7 @@ public:
      *  zeros. The result will be the specified @p new_width. */
     virtual SValuePtr unsignedExtend(const SValuePtr &a, size_t new_width);
 
-    /** Sign extends a value. The result will the the specified @p new_width, which must be at least as large as the original
+    /** Sign extends a value. The result will be the specified @p new_width, which must be at least as large as the original
      * width. */
     virtual SValuePtr signExtend(const SValuePtr &a, size_t new_width) = 0;
 

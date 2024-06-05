@@ -4025,6 +4025,7 @@ Mips::init()
     insert_idis(&mips32_div);
     insert_idis(&mips32_div_s);
     insert_idis(&mips32_div_d);
+    insert_idis(&mips32_divu);
     insert_idis(&mips32_ehb);
     insert_idis(&mips32_ei);
     insert_idis(&mips32_eret);

@@ -67,6 +67,33 @@ public:
     }
 };
 
+// Add word
+struct IP_add: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+
+        // Compute sum
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr sum = ops->add(rs, rt);
+
+        // Calculate overflow
+        SValue::Ptr wideRs = ops->signExtend(d->read(args[1]), nBits + 1);
+        SValue::Ptr wideRt = ops->signExtend(d->read(args[2]), nBits + 1);
+        SValue::Ptr wideSum = ops->add(wideRs, wideRt);
+        SValue::Ptr wideSum32 = ops->extract(wideSum, 32, 33); // bit #32
+        SValue::Ptr wideSum31 = ops->extract(wideSum, 31, 32); // bit #31
+        SValue::Ptr overflow = ops->isNotEqual(wideSum31, wideSum32);
+        SValue::Ptr oldRd = d->read(args[0], nBits);
+        SValue::Ptr result = ops->ite(overflow, oldRd, sum);
+
+        // Side effects (do after everything else)
+        d->write(args[0], result);
+        ops->raiseInterrupt(mips_signal_exception, mips_integer_overflow, overflow);
+    }
+};
+
 // Add immediate word
 struct IP_addi: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -88,8 +115,7 @@ struct IP_addi: P {
         SValue::Ptr oldRt = d->read(args[0], nBits);
         SValue::Ptr result = ops->ite(overflow, oldRt, sum);
 
-        // Craig: always do side effects after everything else.
-        // Side effects
+        // Side effects (do after everything else)
         d->write(args[0], result);
         ops->raiseInterrupt(mips_signal_exception, mips_integer_overflow, overflow);
     }
@@ -138,10 +164,10 @@ struct IP_and: P {
 struct IP_andi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
         SValue::Ptr rs = d->read(args[1]);
-        SValue::Ptr zeros = ops->number_(16, 0);
-        SValue::Ptr imm32 = ops->concatHiLo(zeros, d->read(args[2],16));
-        SValue::Ptr result = ops->and_(rs, imm32);
+        SValue::Ptr imm = ops->unsignedExtend(d->read(args[2]), nBits);
+        SValue::Ptr result = ops->and_(rs, imm);
         d->write(args[0], result);
     }
 };
@@ -164,6 +190,16 @@ struct IP_clo: P {
     }
 };
 
+// Count leading zeros in word
+struct IP_clz: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr result = ops->countLeadingZeros(rs);
+        d->write(args[0], result);
+    }
+};
+
 // Divide word
 struct IP_div: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -172,6 +208,19 @@ struct IP_div: P {
         SValue::Ptr rt = d->read(args[1]);
         SValue::Ptr quotient = ops->signedDivide(rs, rt);
         SValue::Ptr remainder = ops->signedModulo(rs, rt);
+        ops->writeRegister(d->REG_LO, quotient);
+        ops->writeRegister(d->REG_HI, remainder);
+    }
+};
+
+// Divide unsigned word
+struct IP_divu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr rt = d->read(args[1]);
+        SValue::Ptr quotient = ops->unsignedDivide(rs, rt);
+        SValue::Ptr remainder = ops->unsignedModulo(rs, rt);
         ops->writeRegister(d->REG_LO, quotient);
         ops->writeRegister(d->REG_HI, remainder);
     }
@@ -201,11 +250,23 @@ struct IP_lbe: P {
 struct IP_lbu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        SValue::Ptr zeros = ops->number_(24, 0);
-        SValue::Ptr result = ops->concatHiLo(zeros, d->read(args[1],8));
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
         d->write(args[0], result);
     }
 };
+
+// Load byte unsigned EVA (LBUE)
+//TODO: implement
+
+// Load doubleword (LD)
+//TODO: implement
+
+// Load doubleword to floating point (LDC1)
+//TODO: implement
+
+// Load doubleword to coprocessor 2 (LDC2)
+//TODO: implement
 
 // Load halfword
 struct IP_lh: P {
@@ -217,13 +278,24 @@ struct IP_lh: P {
     }
 };
 
+// Load halfword unsigned
+struct IP_lhu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
 // Load upper immediate
 struct IP_lui: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        SValue::Ptr imm = d->read(args[1], 16);
+        size_t nBits = d->architecture()->bitsPerWord();
         SValue::Ptr zeros = ops->number_(16, 0);
-        SValue::Ptr result = ops->concatHiLo(imm, zeros);
+        SValue::Ptr imm = ops->concatHiLo(d->read(args[1]), zeros);
+        SValue::Ptr result = ops->signExtend(imm, nBits);
         d->write(args[0], result);
     }
 };
@@ -260,10 +332,10 @@ struct IP_or: P {
 struct IP_ori: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
         SValue::Ptr rs = d->read(args[1]);
-        SValue::Ptr zeros = ops->number_(16, 0);
-        SValue::Ptr imm32 = ops->concatHiLo(zeros, d->read(args[2],16));
-        SValue::Ptr result = ops->or_(rs, imm32);
+        SValue::Ptr imm = ops->unsignedExtend(d->read(args[2]), nBits);
+        SValue::Ptr result = ops->or_(rs, imm);
         d->write(args[0], result);
     }
 };
@@ -291,10 +363,10 @@ struct IP_xor: P {
 struct IP_xori: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
         SValue::Ptr rs = d->read(args[1]);
-        SValue::Ptr zeros = ops->number_(16, 0);
-        SValue::Ptr imm32 = ops->concatHiLo(zeros, d->read(args[2],16));
-        SValue::Ptr result = ops->xor_(rs, imm32);
+        SValue::Ptr imm = ops->unsignedExtend(d->read(args[2]), nBits);
+        SValue::Ptr result = ops->xor_(rs, imm);
         d->write(args[0], result);
     }
 };
@@ -307,6 +379,7 @@ struct IP_xori: P {
 
 void
 DispatcherMips::initializeDispatchTable() {
+    iprocSet(mips_add,   new Mips::IP_add);
     iprocSet(mips_addi,  new Mips::IP_addi);
     iprocSet(mips_addiu, new Mips::IP_addiu);
     iprocSet(mips_addu,  new Mips::IP_addu);
@@ -314,11 +387,14 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_andi,  new Mips::IP_andi);
     iprocSet(mips_break, new Mips::IP_break);
     iprocSet(mips_clo,   new Mips::IP_clo);
+    iprocSet(mips_clz,   new Mips::IP_clz);
     iprocSet(mips_div,   new Mips::IP_div);
+    iprocSet(mips_divu,  new Mips::IP_divu);
     iprocSet(mips_lb,    new Mips::IP_lb);
     iprocSet(mips_lbe,   new Mips::IP_lbe);
     iprocSet(mips_lbu,   new Mips::IP_lbu);
     iprocSet(mips_lh,    new Mips::IP_lh);
+    iprocSet(mips_lhu,   new Mips::IP_lhu);
     iprocSet(mips_lui,   new Mips::IP_lui);
     iprocSet(mips_nop,   new Mips::IP_nop);
     iprocSet(mips_nor,   new Mips::IP_nor);
