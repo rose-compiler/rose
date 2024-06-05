@@ -22,6 +22,7 @@ SHARED_PSTATES="no"
 COMBINE_SOLVER=18
 INTERPRETER_SOLVER=5
 NORMALIZE_LEVEL=1
+CODETHORN_DIR=.
 
 function printHeader {
     echo "------------------------------------------------"
@@ -53,7 +54,7 @@ function runDomainTestsLevel3 {
             extension="${benchmarkname##*.}"
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imoutl3
-            COMMAND="./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR"
+            COMMAND="${CODETHORN_DIR}/codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR"
             eval $COMMAND > /dev/null
             if [ ! $? -eq 0 ]
             then
@@ -118,9 +119,9 @@ function runDomainTestsLevel2 {
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imoutl2
 	    if [[ $SHOW_OUTPUT == "yes" ]]; then
-		./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR
+		${CODETHORN_DIR}/codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR
 	    fi
-	    if ( ! ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR || fail ) &> /dev/null; then
+	    if ( ! ${CODETHORN_DIR}/codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR || fail ) &> /dev/null; then
 	        echo "$COLORED_FAIL"
                 ((numFail++))
 	    else
@@ -200,7 +201,7 @@ function regressionTests {
             printf "Testing %-38s: " $benchmarkname
             CT_REFERENCE_FILE=${benchmark}.txt # with path
             CT_OUTPUT_FILE=${benchmarkname}.imoutregression # without path
-            if ( ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR ); then
+            if ( ${CODETHORN_DIR}/codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR ); then
 	        if ( ! diff $CT_REFERENCE_FILE $CT_OUTPUT_FILE ); then
 	            echo "$COLORED_FAIL (output)"
                     ((numFail++))
@@ -221,6 +222,7 @@ function printHelp {
     echo
     echo "Command line options:"
     echo "--testdir    : path to directory with tests"
+    echo "--codethorn-dir : path to directory with codethorn executables"
     echo "--l3         : level3 interpreter-mode tests"
     echo "--l2basic    : level2 tests with basic combination operator"
     echo "--l2avset    : level2 tests with av-set combination operator"
@@ -272,6 +274,11 @@ while [[ $# -gt 0 ]]; do
 	KEEP_RESULTS=yes
 	shift
 	;;
+    --codethorn-dir)
+    CODETHORN_DIR=$2
+    shift
+    shift
+    ;;
     --help)
 	printHelp
 	shift

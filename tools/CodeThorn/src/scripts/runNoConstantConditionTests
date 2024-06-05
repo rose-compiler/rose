@@ -6,6 +6,7 @@ OPTIONS="--normalize-level=2 --ignore-unknown-functions --generate-reports=yes -
 # test 10:  normalization: NO
 
 TESTDIR=$1
+CODETHORN_DIR=$2
 echo "------------------------------------------------"
 echo "running No-Constant-Condition TESTS"
 echo "------------------------------------------------"
@@ -27,7 +28,7 @@ function runtests {
             rm -f test${p}_col1.csv
             benchmarkname=$(basename $benchmark)
             printf "Testing %-44s : " "$benchmarkname"
-            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark #> /dev/null
+            $CODETHORN_DIR/codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark #> /dev/null
             cclines=`grep -v gcc_HEADERS $REPORT_DIR/opaque-predicate.csv | wc -l | cut -f1 -d' '`
             if [ ! $? -eq 0 ]
             then

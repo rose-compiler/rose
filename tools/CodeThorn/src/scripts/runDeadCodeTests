@@ -28,7 +28,7 @@ TESTS_PASSED=0
             benchmarkname=$(basename $benchmark)
             printf "Testing %-44s : " "$benchmarkname"
             #echo "./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark"
-            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
+            $CODETHORN_DIR/codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
             dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | grep -v include | wc -l | cut -f1 -d' '`
             if [ ! $? -eq 0 ]
             then
@@ -57,11 +57,12 @@ TESTS_PASSED=0
 }
 
 ARG=$1
+CODETHORN_DIR=$2
 
-if [[ $# -eq 0 ]];
+if [[ $# -eq 1 ]];
 then
-    echo "runDeadCodeTests: usage: TESTDIR [--dc] [--no-dc]"
-    exit
+    echo "runDeadCodeTests: usage: TESTDIR CODETHORN_DIR [--dc] [--no-dc]"
+    exit 1
 fi
 
 for arg in "$@"

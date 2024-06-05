@@ -4,6 +4,13 @@
 trap "exit" INT
 
 TESTDIR=$1
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
+
 echo "------------------------------------------------"
 echo "running NORMALIZATION TESTS"
 echo "------------------------------------------------"
@@ -28,7 +35,7 @@ function NormalizationTests {
                 echo -n "Testing C++ $benchmarkname: "
                 g++ $benchmark
             fi
-            ./codethorn $benchmark --normalize-level=2 --unparse=yes --quiet --abstraction-mode=1 > /dev/null
+            $CODETHORN_DIR/codethorn $benchmark --normalize-level=2 --unparse=yes --quiet --abstraction-mode=1 > /dev/null
             if [ ! $? -eq 0 ]
             then
 	            echo "FAIL"

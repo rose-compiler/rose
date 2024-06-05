@@ -48,9 +48,9 @@ function runCxxTests {
             # ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR/include $benchmark > /dev/null
 
             if [ $VERBOSE_MODE -gt 0 ]; then
-              echo "./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark"
+              echo "$CODETHORN_DIR/codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark"
             fi
-            ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark > /dev/null
+            $CODETHORN_DIR/codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark > /dev/null
             CT_RESULT=$?
 
             if [ $CT_RESULT == 0 ]; then
@@ -133,6 +133,7 @@ echo "------------------------------------------------"
 # default values
 TESTPREFIX="Cxx"
 COMPILER="g++"
+CODETHORN_DIR=.
 VERBOSE_MODE=0
 
 # command line argument processing
@@ -148,6 +149,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -p|--prefix)
       TESTPREFIX="$2"
+      shift # consume argument
+      shift # consume value
+      ;;
+    --codethorn-dir)
+      CODETHORN_DIR=$2
       shift # consume argument
       shift # consume value
       ;;

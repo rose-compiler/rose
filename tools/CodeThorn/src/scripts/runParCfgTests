@@ -4,6 +4,14 @@
 # test 10:  normalization: NO
 
 TESTDIR=$1
+
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
+
 echo "------------------------------------------------"
 echo "RUNNING PARALLEL/OPENMP CFG TESTS"
 echo "------------------------------------------------"
@@ -21,7 +29,7 @@ function ParCFGTests {
             echo -n "Testing C++ $benchmarkname: "
             g++ $benchmark
         fi
-        ./codethorn $benchmark --omp-ast=yes --cfg=${benchmark}.cfg.dot > /dev/null
+        ${CODETHORN_DIR}/codethorn $benchmark --omp-ast=yes --cfg=${benchmark}.cfg.dot > /dev/null
 #        dot -Tpdf ${benchmark}.cfg.dot -o${benchmark}.cfg.pdf
         if [ $? -eq 0 ]
         then

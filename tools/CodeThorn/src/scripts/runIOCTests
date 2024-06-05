@@ -16,6 +16,14 @@ COLORED_WARN=${yel}WARN${end}
 COLORED_PASS=${grn}PASS${end}
 
 TESTDIR=$1
+
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
+
 echo "------------------------------------------------"
 echo "running IOC TESTS"
 echo "------------------------------------------------"
@@ -32,7 +40,7 @@ function IOCTests {
             benchmarkname=$(basename $benchmark)
             printf "Testing %-35s: " $benchmarkname
 #            CT_OUTPUT_FILE=$benchmarkname.imout
-            ./codethorn $benchmark --normalize-level=2 --interpreter-mode=0 --in-state-string-literals -I $TESTDIR > /dev/null
+            ${CODETHORN_DIR}/codethorn $benchmark --normalize-level=2 --interpreter-mode=0 --in-state-string-literals -I $TESTDIR > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL

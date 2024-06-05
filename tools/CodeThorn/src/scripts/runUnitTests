@@ -18,6 +18,14 @@ COLORED_PASS=${grn}PASS${end}
 unitTestName="ExprAnalyzer: evaluateExpression (with empty state)"
 
 TESTDIR=$1
+
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
+
 echo "----------------------------------------------------------------------"
 echo "running UNIT TEST: $unitTestName"
 echo "----------------------------------------------------------------------"
@@ -34,7 +42,7 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         printf "Unit test on %-35s: " $benchmarkname
         CT_OUTPUT_FILE=$benchmarkname.imout
-        ./codethorn $benchmark --unit-test-expr-analyzer=yes -I $TESTDIR  > /dev/null
+        ${CODETHORN_DIR}/codethorn $benchmark --unit-test-expr-analyzer=yes -I $TESTDIR  > /dev/null
         if [ ! $? -eq 0 ]
         then
 	        echo "$COLORED_FAIL"

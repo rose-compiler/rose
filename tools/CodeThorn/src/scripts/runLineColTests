@@ -16,6 +16,14 @@ COLORED_WARN=${yel}WARN${end}
 COLORED_PASS=${grn}PASS${end}
 
 TESTDIR=$1
+
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
+
 echo "------------------------------------------------"
 echo "running NORMALIZATION + LINE (COLUMN) REPORTING TESTS"
 echo "------------------------------------------------"
@@ -46,13 +54,13 @@ function runLineColTests {
         printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE1=${benchmarkname}_1.lcout.csv
 	    CT_OUTPUT_FILE2=${benchmarkname}_2.lcout.csv
-            ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE1 -I $TESTDIR --normalize-level=0 --run-solver=no > /dev/null
+            ${CODETHORN_DIR}/codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE1 -I $TESTDIR --normalize-level=0 --run-solver=no > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL
                 ((numFail++))
 	    fi
-	    ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE2 -I $TESTDIR --normalize-level=1 --run-solver=no > /dev/null
+	    ${CODETHORN_DIR}/codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE2 -I $TESTDIR --normalize-level=1 --run-solver=no > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL

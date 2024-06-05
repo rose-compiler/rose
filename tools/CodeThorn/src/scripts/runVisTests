@@ -1,7 +1,13 @@
 #!/bin/bash
 
 TEST_DIR=$1
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
 
-./codethorn $TEST_DIR/rers_mini14.c --vis --tg1-memory-subgraphs=0 --abstraction-mode=1 --byte-mode=0 --pointer-sets=0 --exploration-mode=topologic-sort --solver=5
+$CODETHORN_DIR/codethorn $TEST_DIR/rers_mini14.c --vis --tg1-memory-subgraphs=0 --abstraction-mode=1 --byte-mode=0 --pointer-sets=0 --exploration-mode=topologic-sort --solver=5
 
 #./codethorn $TEST_DIR/DOM089_np_join.C --vis --tg1-estate-memory-subgraphs=1 --abstraction-mode=1 --byte-mode=1 --pointer-sets=1 --exploration-mode=topologic-sort --solver=16

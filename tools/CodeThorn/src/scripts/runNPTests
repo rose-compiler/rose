@@ -6,6 +6,8 @@ OPTIONS="--normalize-level=1 --ignore-unknown-functions --generate-reports=yes -
 # test 10:  normalization: NO
 
 TESTDIR=$1
+CODETHORN_DIR=$2
+
 echo "------------------------------------------------"
 echo "running NULL POINTER DEREFERENCE TESTS"
 echo "------------------------------------------------"
@@ -28,7 +30,7 @@ function runNPTests {
         for benchmark in ${benchmarkprefix}*.c; do
             benchmarkname=$(basename $benchmark)
             printf "Testing %-44s : " "$benchmarkname"
-            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
+            $CODETHORN_DIR/codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
             nplines=`grep -v gcc_HEADERS $REPORT_DIR/null-pointer-locations.csv | wc -l | cut -f1 -d' '`
             if [ ! $? -eq 0 ]
             then
@@ -63,9 +65,9 @@ function runNPTests {
 
 ARG=$1
 
-if [[ $# -eq 0 ]];
+if [[ $# -lt 2 ]];
 then
-    echo "runNPTests: usage: TESTDIR [--np] [--no-np]"
+    echo "runNPTests: usage: TESTDIR CODETHORN_DIR [--np] [--no-np]"
     exit
 fi
 

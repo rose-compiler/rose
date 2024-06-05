@@ -4,6 +4,13 @@
 OPTIONS="--normalize-level=2 --vis=1"
 
 TESTDIR=$1
+if [ -z "$2" ] 
+then
+    CODETHORN_DIR=.
+else
+    CODETHORN_DIR=$2
+fi
+
 echo "------------------------------------------------"
 echo "running CFG TESTS"
 echo "------------------------------------------------"
@@ -19,7 +26,7 @@ for testNumber in $testNumbers; do
     for benchmark in ${benchmarkprefix}_*.C; do
         benchmarkname=$(basename $benchmark)
         printf "Testing %-35s: " $benchmarkname
-        ./codethorn ${OPTIONS} $benchmark --solver=18 --abstraction-mode=1 --exploration-mode="topologic-sort" > /dev/null
+        ${CODETHORN_DIR}/codethorn ${OPTIONS} $benchmark --solver=18 --abstraction-mode=1 --exploration-mode="topologic-sort" > /dev/null
         if [ ! $? -eq 0 ]
         then
 	    echo "FAIL"
