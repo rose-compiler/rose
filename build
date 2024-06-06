@@ -514,7 +514,7 @@ if [[ ! -d tests ]] ; then
         tests/smoke/unit/Utility/Makefile.in \
         tests/tools/Makefile.in \
         tests/tools/RWSetTests/Makefile.in \
-        tests/tools/Codethorn/Makefile.in \
+        tests/tools/codethorn/Makefile.in \
         tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
     do
         mkdir -p $(dirname $file)
