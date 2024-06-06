@@ -62,7 +62,7 @@ class CFGNodeImpl : public MultiGraphElem
         return r.str();
     }
 
-  virtual void write(std:: ostream& out) const
+  virtual void write(std::ostream& /*out*/) const
     {
       std:: cerr << "Node : " << this << "\n"; 
       for (std:: list<AstNodePtr>::const_iterator p = stmtList.begin(); 

@@ -181,13 +181,13 @@ typedef std::list<MatchOperationList*> MatchOperationListList;
 
 class MatchOpBinaryOp : public MatchOperation {
  public:
-  MatchOpBinaryOp(int op,MatchOperation* l,MatchOperation* r):_op(op) // blame schordan
+  MatchOpBinaryOp(int op, MatchOperation* /*l*/, MatchOperation* /*r*/):_op(op) // blame schordan
 #if 0 // [Robb Matzke 2021-03-17]: unused
                                                              ,_left(l),_right(r)
 #endif
         {}
   std::string toString() { return "binop()";}
-  bool performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& vb) {
+  bool performOperation(MatchStatus& /*status*/, RoseAst::iterator& /*i*/, SingleMatchResult& /*vb*/) {
     switch(_op) {
 #if 0
     case C_NEQ: return _left->performOperation(status,i,vb) != _right->performOperation(status,i,vb);
@@ -206,7 +206,7 @@ class MatchOpBinaryOp : public MatchOperation {
 
 class MatchOpUnaryOp : public MatchOperation {
  public:
-  MatchOpUnaryOp(int,MatchOperation* o) {}
+  MatchOpUnaryOp(int,MatchOperation* /*o*/) {}
   std::string toString() { return "not-implemented-yet";}  
 };
 class MatchOpConstant : public MatchOperation {

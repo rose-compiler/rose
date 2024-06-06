@@ -16,7 +16,7 @@ class FunctionSideEffectInterface
   //! traverses a function call to collect data being read. Returns the callee if requested.
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc, 
                                CollectObject<AstNodePtr>* collect = 0) = 0;
-  virtual bool get_call( AstInterface&, const AstNodePtr& fc, CollectObject<AstNodePtr>* = nullptr)  {
+  virtual bool get_call(AstInterface&, const AstNodePtr& /*fc*/, CollectObject<AstNodePtr>* = nullptr)  {
      return false;
   }
   virtual ~FunctionSideEffectInterface() {}

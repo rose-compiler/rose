@@ -171,7 +171,7 @@ void CompilerOutputParser::parseIncludedFilesSearchPathsFromCompilerOutput() {
     }
 }
 
-void CompilerOutputParser::processFile(SgFile* inputFile, bool isVerbose) 
+void CompilerOutputParser::processFile(SgFile* inputFile, bool /*isVerbose*/)
    {
   // This code duplicates parts of methods int SgFile::compileOutput ( int fileNameIndex ) from file Cxx_Grammar.C and 
   // int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex ) from file sageSupport.C

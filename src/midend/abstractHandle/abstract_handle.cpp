@@ -444,9 +444,9 @@ namespace AbstractHandle{
   }
 
   //Delegate this to users unless we provide another interface to query subtree
-  abstract_node* abstract_node::findNode(std::string construct_type_str, specifier mspecifier) const
+  abstract_node* abstract_node::findNode(std::string /*construct_type_str*/, specifier /*mspecifier*/) const
   {
-    return NULL;
+    return nullptr;
   }
 
 
@@ -497,7 +497,7 @@ namespace AbstractHandle{
     return "";
   }
 
-  size_t abstract_node::getNumbering( const abstract_node*  another_node) const
+  size_t abstract_node::getNumbering(const abstract_node* /*another_node*/) const
   {
     return 0;
   }
