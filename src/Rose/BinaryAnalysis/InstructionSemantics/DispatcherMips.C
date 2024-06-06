@@ -349,6 +349,104 @@ struct IP_sb: P {
     }
 };
 
+// Store byte EVA
+struct IP_sbe: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr byte = d->read(args[0], 8);
+        d->write(args[1], byte);
+    }
+};
+
+// Store doubleword
+//TODO: SD instruction doesn't exists in Mips.C (because 64 bit instruction?)
+
+// Sign-extend byte
+struct IP_seb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr byte = ops->signExtend(d->read(args[1],8), nBits);
+        d->write(args[0], byte);
+    }
+};
+
+// Sign-extend halfword
+struct IP_seh: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr halfWord = ops->signExtend(d->read(args[1],16), nBits);
+        d->write(args[0], halfWord);
+    }
+};
+
+// Store halfword
+struct IP_sh: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr halfWord = d->read(args[0], 16);
+        d->write(args[1], halfWord);
+    }
+};
+
+// Store halfword EVA
+struct IP_she: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr halfWord = d->read(args[0], 16);
+        d->write(args[1], halfWord);
+    }
+};
+
+// Superscalar no operation
+struct IP_ssnop: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+    }
+};
+
+// Subtract word
+//TODO
+
+// Subtract unsigned word
+struct IP_subu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr result = ops->subtract(rs, rt);
+        d->write(args[0], result);
+    }
+};
+
+// Store word
+struct IP_sw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr word = d->read(args[0], 32);
+        d->write(args[1], word);
+    }
+};
+
+// Store word from floating point
+struct IP_swc1: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr word = d->read(args[0], 32);
+        d->write(args[1], word);
+    }
+};
+
+// Store word EVA
+struct IP_swe: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr word = d->read(args[0], 32);
+        d->write(args[1], word);
+    }
+};
+
 // Exclusive OR
 struct IP_xor: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -401,6 +499,16 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_or,    new Mips::IP_or);
     iprocSet(mips_ori,   new Mips::IP_ori);
     iprocSet(mips_sb,    new Mips::IP_sb);
+    iprocSet(mips_sbe,   new Mips::IP_sbe);
+    iprocSet(mips_seb,   new Mips::IP_seb);
+    iprocSet(mips_seh,   new Mips::IP_seh);
+    iprocSet(mips_sh,    new Mips::IP_sh);
+    iprocSet(mips_she,   new Mips::IP_she);
+    iprocSet(mips_ssnop, new Mips::IP_ssnop);
+    iprocSet(mips_subu,  new Mips::IP_subu);
+    iprocSet(mips_sw,    new Mips::IP_sw);
+    iprocSet(mips_swc1,  new Mips::IP_swc1);
+    iprocSet(mips_swe,   new Mips::IP_swe);
     iprocSet(mips_xor,   new Mips::IP_xor);
     iprocSet(mips_xori,  new Mips::IP_xori);
 }
