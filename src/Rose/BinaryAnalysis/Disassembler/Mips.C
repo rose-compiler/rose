@@ -2101,8 +2101,8 @@ static struct Mips32_madd: Mips::Decoder {
                           mOP()   |mR2()   |mR3()   |mFN()) {}
     SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_madd, "madd",
-                                  d->makeFpRegister(insn_va, gR0(ib), mips_fmt_s),
-                                  d->makeFpRegister(insn_va, gR1(ib), mips_fmt_s));
+                                  d->makeRegister(insn_va, gR0(ib)),
+                                  d->makeRegister(insn_va, gR1(ib)));
     }
 } mips32_madd;
 

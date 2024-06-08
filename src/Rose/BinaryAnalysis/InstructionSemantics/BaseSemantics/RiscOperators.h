@@ -411,7 +411,7 @@ public:
     /** @} */
 
     /** Split a value into two narrower values. Returns the two parts as a pair consisting of the low-order bits of @p a and
-     *  the high-order bits of @p a. The returned low-order bits are bits zero (inclusive) to @p splitPoint (exclusvie) and
+     *  the high-order bits of @p a. The returned low-order bits are bits zero (inclusive) to @p splitPoint (exclusive) and
      *  has width @p splitPoint. The returned high-order bits are bits @p splitPoint (inclusive) to the width of @p a
      *  (exclusive) and has width which is the width of @p a minus @p splitPoint. This is not a pure virtual function because
      *  it can be implemented in terms of @ref extract. */
@@ -438,13 +438,13 @@ public:
     virtual SValuePtr countLeadingOnes(const SValuePtr &a);
 
     /** Rotate bits to the left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
-     *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
-     *  handles it naturally. */
+     *  unsigned. The behavior is modulo the width of @p a regardless of whether the implementation makes that a special case
+     *  or handles it naturally. */
     virtual SValuePtr rotateLeft(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
     /** Rotate bits to the right. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
-     *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
-     *  handles it naturally. */
+     *  unsigned. The behavior is modulo the width of @p a regardless of whether the implementation makes that a special case
+     *  or handles it naturally. */
     virtual SValuePtr rotateRight(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
     /** Returns arg shifted left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
