@@ -256,8 +256,15 @@ struct IP_lbu: P {
     }
 };
 
-// Load byte unsigned EVA (LBUE)
-//TODO: implement
+// Load byte unsigned EVA
+struct IP_lbue: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
 
 // Load doubleword (LD)
 //TODO: implement
@@ -300,6 +307,96 @@ struct IP_lui: P {
     }
 };
 
+// Load word
+struct IP_lw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
+// Load word to floating point
+struct IP_lwc1: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        // TODO: load into low word of FPR ft
+        d->write(args[0], d->read(args[1]));
+    }
+};
+
+// Load word EVA
+struct IP_lwe: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
+// Load word unsigned
+struct IP_lwu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
+// Multiply and add word to hi, lo
+// Note: removed in release 6
+struct IP_madd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+
+        // Multiply contents of rs by rt
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr rt = d->read(args[1]);
+        SValue::Ptr mult = ops->signedMultiply(rs, rt);
+
+        // Add results to (HI,LO)
+        SValue::Ptr hi = ops->readRegister(d->REG_HI);
+        SValue::Ptr lo = ops->readRegister(d->REG_LO);
+        SValue::Ptr hilo = ops->concatHiLo(hi, lo);
+        SValue::Ptr sum = ops->add(hilo, mult);
+
+        // Extract and write results
+        hi = ops->signExtend(ops->extract(sum, 32, 64), nBits);
+        lo = ops->signExtend(ops->extract(sum,  0, 32), nBits);
+        ops->writeRegister(d->REG_HI, hi);
+        ops->writeRegister(d->REG_LO, lo);
+    }
+};
+
+// Multiply and add unsigned word to hi, lo
+// Note: removed in release 6
+struct IP_maddu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+
+        // Multiply contents of rs by rt
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr rt = d->read(args[1]);
+        SValue::Ptr mult = ops->unsignedMultiply(rs, rt);
+
+        // Add results to (HI,LO)
+        SValue::Ptr hi = ops->readRegister(d->REG_HI);
+        SValue::Ptr lo = ops->readRegister(d->REG_LO);
+        SValue::Ptr hilo = ops->concatHiLo(hi, lo);
+        SValue::Ptr sum = ops->add(hilo, mult);
+
+        // Extract and write results
+        hi = ops->signExtend(ops->extract(sum, 32, 64), nBits);
+        lo = ops->signExtend(ops->extract(sum,  0, 32), nBits);
+        ops->writeRegister(d->REG_HI, hi);
+        ops->writeRegister(d->REG_LO, lo);
+    }
+};
 // No operation
 struct IP_nop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -491,9 +588,16 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_lb,    new Mips::IP_lb);
     iprocSet(mips_lbe,   new Mips::IP_lbe);
     iprocSet(mips_lbu,   new Mips::IP_lbu);
+    iprocSet(mips_lbue,  new Mips::IP_lbue);
     iprocSet(mips_lh,    new Mips::IP_lh);
     iprocSet(mips_lhu,   new Mips::IP_lhu);
     iprocSet(mips_lui,   new Mips::IP_lui);
+    iprocSet(mips_lw,    new Mips::IP_lw);
+    iprocSet(mips_lwc1,  new Mips::IP_lwc1);
+    iprocSet(mips_lwe,   new Mips::IP_lwe);
+//  iprocSet(mips_lwu,   new Mips::IP_lwu); // mips_lwu (Release 6) not implemented in Mips.C
+    iprocSet(mips_madd,  new Mips::IP_madd);
+    iprocSet(mips_maddu, new Mips::IP_maddu);
     iprocSet(mips_nop,   new Mips::IP_nop);
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
