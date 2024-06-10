@@ -420,6 +420,28 @@ namespace {
         ada_base_entity lal_inherited_decl;
         if(ada_node_child(&lal_inherited_decl_list, i, &lal_inherited_decl) != 0){
           //TODO How will this work? It isn't a unique node.
+          SgType& enumty = SG_DEREF(derivedTypeDcl.get_type());
+
+          //Get the name
+          ada_base_entity lal_defining_name, lal_identifier;
+          ada_enum_literal_decl_f_name(&lal_inherited_decl, &lal_defining_name);
+          ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+          ada_symbol_type p_canonical_text;
+          ada_text ada_canonical_text;
+          ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+          std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+          ada_destroy_text(&ada_canonical_text);
+
+          // \todo name.ident could be a character literal, such as 'c'
+          //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
+          //       SgInitializedName are created with the name 'c' instead of character constants.
+          SgExpression&       repval = getEnumRepresentationValue(&lal_inherited_decl, i, ctx);
+          SgInitializedName&  sgnode = mkEnumeratorDecl(derivedTypeDcl, ident, enumty, repval);
+
+          attachSourceLocation(sgnode, &lal_inherited_decl, ctx);
+          //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
+          derivedTypeDcl.append_enumerator(&sgnode);
         }
       }
       //std::for_each(range.first, range.second, InheritedEnumeratorCreator{derivedTypeDcl, origDecl, ctx});
@@ -1085,6 +1107,72 @@ namespace {
     return getTaskSpec(lal_element, ctx);
   }
 
+  void createCaseStmtPath(ada_base_entity* lal_element, SgSwitchStatement& caseNode, AstContext ctx)
+  {
+    //Get the choices
+    ada_base_entity lal_choices;
+    ada_case_stmt_alternative_f_choices(lal_element, &lal_choices);
+
+    //Get the stmts
+    ada_base_entity lal_stmts;
+    ada_case_stmt_alternative_f_stmts(lal_element, &lal_stmts);
+
+
+    SgStatement*  sgnode      = nullptr;
+    SgBasicBlock& block       = mkBasicBlock();
+
+    //Handle the choices
+    int num_choices = ada_node_children_count(&lal_choices);
+
+    //Check if this is a when others choice
+    bool when_others = false;
+    if(num_choices == 1){
+      ada_base_entity lal_solo_choice;
+      ada_node_child(&lal_choices, 0, &lal_solo_choice);
+      ada_node_kind_enum lal_solo_choice_kind = ada_node_kind(&lal_solo_choice);
+      when_others = (lal_solo_choice_kind == ada_others_designator);
+    }
+
+    if(when_others){
+      SgDefaultOptionStmt* whenOthersNode = &mkWhenOthersPath(block);
+
+      caseNode.append_default(whenOthersNode);
+      sgnode = whenOthersNode;
+    } else {
+      std::vector<SgExpression*> choices;
+      for(int i = 0; i < num_choices; i++){
+        ada_base_entity lal_choice;
+        if(ada_node_child(&lal_choices, i, &lal_choice) !=0){
+          ada_node_kind_enum lal_choice_kind = ada_node_kind(&lal_choice);
+          if(lal_choice_kind == ada_bin_op){ //TODO Is this right? What makes a def vs an expr?
+            choices.push_back(&getDefinitionExpr(&lal_choice, ctx));
+          } else {
+            choices.push_back(&getExpr(&lal_choice, ctx));
+          }
+        }
+      }
+
+      // \todo reconsider the "reuse" of SgCommaOp
+      //   SgCommaOp is only used to separate discrete choices in case-when
+      SgExpression&              caseCond  = mkChoiceExpIfNeeded(std::move(choices));
+      SgCaseOptionStmt*          whenNode  = &mkWhenPath(caseCond, block);
+
+      caseNode.append_case(whenNode);
+      sgnode = whenNode;
+    }
+
+    //Handle the stmts
+    int num_stmts = ada_node_children_count(&lal_stmts);
+    for(int i = 0; i < num_stmts; i++){
+      ada_base_entity lal_stmt;
+      if(ada_node_child(&lal_stmts, i, &lal_stmt) != 0){
+        handleStmt(&lal_stmt, ctx.scope(block));
+      }
+    }
+
+    attachSourceLocation(*sgnode, lal_element, ctx);
+  }
+
   void ifStmtCommonBranch(ada_base_entity* lal_path, SgIfStmt* ifStmt, AstContext ctx, void (SgIfStmt::*branchSetter)(SgStatement*))
   {
     SgBasicBlock& block     = mkBasicBlock();
@@ -1193,7 +1281,6 @@ queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
 
 void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
   {
-    //TODO Add more nodes
     using PragmaContainer = AstContext::PragmaContainer;
     
     //Get the kind of this node
@@ -1307,6 +1394,36 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           assocstmt = &sgnode;
           break;
         }
+      case ada_case_stmt:                    // 5.4
+        {
+          logKind("ada_case_stmt", kind);
+
+          //Get the case_expr
+          ada_base_entity lal_case_expr;
+          ada_case_stmt_f_expr(lal_stmt, &lal_case_expr);
+
+          //Get the alternatives
+          ada_base_entity lal_alternatives;
+          ada_case_stmt_f_alternatives(lal_stmt, &lal_alternatives);
+
+          SgExpression&      caseexpr = getExpr(&lal_case_expr, ctx);
+          SgBasicBlock&      casebody = mkBasicBlock();
+          SgSwitchStatement& sgnode   = mkAdaCaseStmt(caseexpr, casebody);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          int count = ada_node_children_count(&lal_alternatives);
+
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_case_stmt_alternative;
+            if(ada_node_child(&lal_alternatives, i, &lal_case_stmt_alternative) != 0){
+              createCaseStmtPath(&lal_case_stmt_alternative, sgnode, ctx.scope(casebody));
+            }
+          }
+
+          assocstmt = &sgnode;
+          break;
+        }
       case ada_while_loop_stmt:              // 5.5
         {
           logKind("ada_while_loop_stmt", kind);
@@ -1323,7 +1440,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgExpression&   cond     = getExpr(&lal_spec, ctx);
           SgBasicBlock&   block    = mkBasicBlock();
           SgWhileStmt&    sgnode   = mkWhileStmt(cond, block);
-          int             hash     = hash_node(lal_stmt);
+          //int             hash     = hash_node(lal_stmt);
 
           completeStmt(sgnode, lal_stmt, ctx);
           //recordNode(ctx.labelsAndLoops().asisLoops(), hash, sgnode); //TODO loop map?
