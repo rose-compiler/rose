@@ -397,6 +397,105 @@ struct IP_maddu: P {
         ops->writeRegister(d->REG_LO, lo);
     }
 };
+
+// Move word from hi register
+// Note: removed in release 6
+struct IP_mfhi: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        d->write(args[0], ops->readRegister(d->REG_HI));
+    }
+};
+
+// Move word from lo register
+// Note: removed in release 6
+struct IP_mflo: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        d->write(args[0], ops->readRegister(d->REG_LO));
+    }
+};
+
+// Floating point move (single)
+struct IP_mov_s: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr fs = d->read(args[1]);
+        d->write(args[0], fs);
+    }
+};
+
+// Floating point move (double)
+struct IP_mov_d: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr fs = d->read(args[1]);
+        d->write(args[0], fs);
+    }
+};
+
+// Floating point move (paired-single)
+// Note: removed in release 6
+struct IP_mov_ps: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr fs = d->read(args[1]);
+        d->write(args[0], fs);
+    }
+};
+
+// Move conditional on floating point false
+// Note: removed in release 6
+struct IP_movf: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr cc = d->read(args[2]);
+        SValue::Ptr oldRd = d->read(args[0]);
+        SValue::Ptr result = ops->ite(ops->equalToZero(cc), rs, oldRd);
+        d->write(args[0], result);
+    }
+};
+
+// Floating point move conditional on floating point false (single)
+// Note: removed in release 6
+struct IP_movf_s: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr fs = d->read(args[1]);
+        SValue::Ptr cc = d->read(args[2]);
+        SValue::Ptr oldFd = d->read(args[0]);
+        SValue::Ptr result = ops->ite(ops->equalToZero(cc), fs, oldFd);
+        d->write(args[0], result);
+    }
+};
+
+// Floating point move conditional on floating point false (double)
+// Note: removed in release 6
+struct IP_movf_d: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr fs = d->read(args[1]);
+        SValue::Ptr cc = d->read(args[2]);
+        SValue::Ptr oldFd = d->read(args[0]);
+        SValue::Ptr result = ops->ite(ops->equalToZero(cc), fs, oldFd);
+        d->write(args[0], result);
+    }
+};
+
+// Floating point move conditional on floating point false (paired-single)
+// Note: removed in release 6
+struct IP_movf_ps: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr fs = d->read(args[1]);
+        SValue::Ptr cc = d->read(args[2]);
+        SValue::Ptr oldFd = d->read(args[0]);
+        SValue::Ptr result = ops->ite(ops->equalToZero(cc), fs, oldFd);
+        d->write(args[0], result);
+    }
+};
+
 // No operation
 struct IP_nop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -504,7 +603,31 @@ struct IP_ssnop: P {
 };
 
 // Subtract word
-//TODO
+struct IP_sub: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+
+        // Compute subtraction
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr sub = ops->subtract(rs, rt);
+
+        // Calculate overflow
+        SValue::Ptr wideRs = ops->signExtend(d->read(args[1]), nBits + 1);
+        SValue::Ptr wideRt = ops->signExtend(d->read(args[2]), nBits + 1);
+        SValue::Ptr wideSub = ops->subtract(wideRs, wideRt);
+        SValue::Ptr wideSub32 = ops->extract(wideSub, 32, 33); // bit #32
+        SValue::Ptr wideSub31 = ops->extract(wideSub, 31, 32); // bit #31
+        SValue::Ptr overflow = ops->isNotEqual(wideSub31, wideSub32);
+        SValue::Ptr oldRd = d->read(args[0], nBits);
+        SValue::Ptr result = ops->ite(overflow, oldRd, sub);
+
+        // Side effects (do after everything else)
+        d->write(args[0], result);
+        ops->raiseInterrupt(mips_signal_exception, mips_integer_overflow, overflow);
+    }
+};
 
 // Subtract unsigned word
 struct IP_subu: P {
@@ -598,6 +721,15 @@ DispatcherMips::initializeDispatchTable() {
 //  iprocSet(mips_lwu,   new Mips::IP_lwu); // mips_lwu (Release 6) not implemented in Mips.C
     iprocSet(mips_madd,  new Mips::IP_madd);
     iprocSet(mips_maddu, new Mips::IP_maddu);
+    iprocSet(mips_mfhi,  new Mips::IP_mfhi);
+    iprocSet(mips_mflo,  new Mips::IP_mflo);
+    iprocSet(mips_mov_s, new Mips::IP_mov_s);
+    iprocSet(mips_mov_d, new Mips::IP_mov_d);
+    iprocSet(mips_mov_ps,new Mips::IP_mov_ps);
+    iprocSet(mips_movf,    new Mips::IP_movf);
+    iprocSet(mips_movf_s,  new Mips::IP_movf_s);
+    iprocSet(mips_movf_d,  new Mips::IP_movf_d);
+    iprocSet(mips_movf_ps, new Mips::IP_movf_ps);
     iprocSet(mips_nop,   new Mips::IP_nop);
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
@@ -609,6 +741,7 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_sh,    new Mips::IP_sh);
     iprocSet(mips_she,   new Mips::IP_she);
     iprocSet(mips_ssnop, new Mips::IP_ssnop);
+    iprocSet(mips_sub,   new Mips::IP_sub);
     iprocSet(mips_subu,  new Mips::IP_subu);
     iprocSet(mips_sw,    new Mips::IP_sw);
     iprocSet(mips_swc1,  new Mips::IP_swc1);
