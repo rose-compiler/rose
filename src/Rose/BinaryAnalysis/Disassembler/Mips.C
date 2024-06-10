@@ -457,10 +457,16 @@ Mips::makeCp0Register(rose_addr_t insn_va, unsigned regnum, unsigned sel) const
 SgAsmRegisterReferenceExpression *
 Mips::makeFpccRegister(const rose_addr_t insn_va, const unsigned cc) const {
     ASSERT_require(cc <= 7);
-    const RegisterDescriptor regdesc = architecture()->registerDictionary()->find("fscr");
-    if (!regdesc)
-        throw Exception("no such register: fcsr", insn_va);
-    RegisterDescriptor r(regdesc.majorNumber(), regdesc.minorNumber(), cc ? 24 + cc : 23, 1);
+
+    // Find the condition code bits of the FCSR
+    const RegisterDescriptor regdesc = architecture()->registerDictionary()->find("fccr");
+    if (!regdesc) {
+        throw Exception("no such register: fccr", insn_va);
+    }
+
+    // cc0 (offset 23) ... cc7 (offset 30)
+    RegisterDescriptor r(regdesc.majorNumber(), regdesc.minorNumber(), 23 + cc , 1);
+
     auto retval = new SgAsmDirectRegisterExpression(r);
     retval->set_type(SageBuilderAsm::buildTypeU(r.nBits()));
     return retval;

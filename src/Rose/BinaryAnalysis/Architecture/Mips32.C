@@ -101,6 +101,10 @@ Mips32::registerDictionary() const {
         regs->insert("fexr", mips_regclass_fcsr, mips_fcsr_fexr, 0, 32);        // FP exceptions
         regs->insert("fenr", mips_regclass_fcsr, mips_fcsr_fenr, 0, 32);        // FP enables
 
+        // Names for the FCCR (condition code) bits in the FCSR register (cc0...cc7)
+        for (size_t i=0; i<8; ++i)
+            regs->insert("cc"+StringUtility::numberToString(i), mips_regclass_fcsr, mips_fcsr_fccr, 23+i, 1);
+
         // parts of the FIR (only those defined for MIPS32 release 1)
         regs->insert("fir.d", mips_regclass_spr, mips_spr_fir, 17, 1);          // is double-precision implemented?
         regs->insert("fir.s", mips_regclass_spr, mips_spr_fir, 16, 1);          // is single-precision implemented?
