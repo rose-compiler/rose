@@ -41,6 +41,17 @@ ROSE_UTIL_API void add_to_reason_string(std::string &result, bool isset, bool do
  *  The variable "s" will contain "0xff<255,-1>" */
 ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::string &comment);
 
+/** Insert commas into large integers in the specified string.
+ *
+ *  Example:
+ *
+ *  @code
+ *  std::string input = "has 1234567 vertices and 345678910 edges, weight 12345.67891";
+ *  std::string result = insertCommas(input);
+ *  assert(result == "has 1,234,567 vertices and 34,567,890 edges, weight 12,345.67891");
+ *  @endcode */
+std::string insertCommas(const std::string&);
+
 /** Helpful way to print singular or plural words.
  *
  * @code
@@ -66,7 +77,7 @@ ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::stri
 template<typename T>
 std::string plural(T n, const std::string &plural_phrase, const std::string &singular_phrase="") {
     assert(!plural_phrase.empty());
-    std::string retval = boost::lexical_cast<std::string>(n) + " ";
+    std::string retval = insertCommas(boost::lexical_cast<std::string>(n)) + " ";
     if (1==n) {
         if (!singular_phrase.empty()) {
             retval += singular_phrase;

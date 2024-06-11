@@ -2,6 +2,8 @@
 
 #include <Rose/StringUtility/Convert.h>
 
+#include <regex>
+
 namespace Rose {
 namespace StringUtility {
 
@@ -61,6 +63,39 @@ appendAsmComment(const std::string &s, const std::string &comment) {
     if (s[s.size()-1] == '>')
         return s.substr(0, s.size()-1) + "," + comment + ">";
     return s + "<" + comment + ">";
+}
+
+std::string
+insertCommas(const std::string &s) {
+    std::regex numberRe("([0-9]+)(\\.[0-9+])?");
+    std::string retval;
+    size_t prevEnd = 0;                                 // end (one past last) of previous match
+    for (auto i = std::sregex_iterator(s.begin(), s.end(), numberRe); i != std::sregex_iterator(); ++i) {
+        // Stuff prior to number
+        std::smatch found = *i;
+        retval += s.substr(prevEnd, found.position() - prevEnd);
+
+        // Number, possibly expanded with commas
+        const std::string number = found.str(1);
+        if (number.size() <= 3) {
+            retval += number;
+        } else {
+            const size_t offset = number.size() % 3;
+            for (size_t i = 0; i < number.size(); ++i) {
+                if (i > 0 && i % 3 == offset)
+                    retval += ',';
+                retval += number[i];
+            }
+        }
+
+        // Fractional part
+        retval += found.str(2);
+        prevEnd = found.position() + found.length();
+    }
+
+    // stuff after last match, or the whole string
+    retval += s.substr(prevEnd);
+    return retval;
 }
 
 } // namespace
