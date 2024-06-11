@@ -1096,6 +1096,7 @@ ArmAarch64::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) co
 
     switch (last->get_kind()) {
         case Aarch64InstructionKind::ARM64_INS_RET:
+        case Aarch64InstructionKind::ARM64_INS_ERET:
         //case Aarch64InstructionKind::ARM64_INS_RETAA: -- not present in capstone
         //case Aarch64InstructionKind::ARM64_INS_RETAB: -- not present in capstone
             return true;
@@ -1144,7 +1145,7 @@ ArmAarch64::branchTarget(SgAsmInstruction *insn_) const {
         case Aarch64InstructionKind::ARM64_INS_TBNZ:
         case Aarch64InstructionKind::ARM64_INS_TBZ:
             ASSERT_require(exprs.size() == 3);
-            if (auto ival = isSgAsmIntegerValueExpression(exprs[1]))
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[2]))
                 return ival->get_absoluteValue();
             break;
         default:
@@ -1165,7 +1166,9 @@ ArmAarch64::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
 
     switch (insn->get_kind()) {
         case Aarch64InstructionKind::ARM64_INS_B:
-            if (insn->get_condition() != ARM64_CC_AL && insn->get_condition() != ARM64_CC_NV) {
+            if (insn->get_condition() != ARM64_CC_AL &&
+                insn->get_condition() != ARM64_CC_NV &&
+                insn->get_condition() != ARM64_CC_INVALID) {
                 // This is a conditional branch, so the fall through address is a possible successor.
                 retval.insert(insn->get_address() + insn->get_size());
             }
@@ -1210,7 +1213,7 @@ ArmAarch64::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case Aarch64InstructionKind::ARM64_INS_TBZ:
             ASSERT_require(exprs.size() == 3);
             retval.insert(insn->get_address() + insn->get_size());
-            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[2])) {
                 retval.insert(ival->get_absoluteValue());
             } else {
                 complete = false;
