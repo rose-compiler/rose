@@ -162,6 +162,14 @@ map_t<AdaIdentifier, SgType*>& adaTypesByName();
 /// stores all expressions that were generated where operator declarations were expected
 std::vector<SgExpression*>& operatorExprs();
 
+/// returns a mapping from hash to builtin pkgs (std, ascii)
+map_t<int, SgAdaPackageSpecDecl*>& adaPkgs();
+
+/// returns a mapping from hash to variables
+/// \note currently used to support the obsolescent ASCII package,
+///       as long as there is no proper Character Type.
+map_t<int, SgInitializedName*>& adaVars();
+
 /// returns a map with all functions that a type supports
 /// \details
 ///   maps stores information about explicitly or implicitly defined operators on a principal type.

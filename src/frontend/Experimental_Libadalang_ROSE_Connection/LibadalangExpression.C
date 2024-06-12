@@ -1119,6 +1119,21 @@ namespace{
           break;
         }
 
+      case ada_char_literal:                       // 4.1
+        {
+          logKind("ada_char_literal", kind);
+
+          //Get the value of this char
+          uint32_t lal_denoted_value;
+          ada_char_literal_p_denoted_value(lal_element, &lal_denoted_value);
+          std::string denoted_char = "\'";
+          denoted_char += char(lal_denoted_value);
+          denoted_char += '\'';
+
+          res = &mkValue<SgCharVal>(denoted_char.c_str());
+          break;
+        }
+
       case ada_string_literal:                          // 2.6
         {
           logKind("ada_string_literal", kind);
@@ -1285,12 +1300,12 @@ namespace{
             else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
             {
               res = sb::buildVarRefExp(fld, &ctx.scope());
-            }
-            else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
+            }*/
+            else if (SgInitializedName* var = findFirst(adaVars(), hash))
             {
               res = sb::buildVarRefExp(var, &ctx.scope());
             }
-            else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
+            /*else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
             {
               res = &mkExceptionRef(*exc, ctx.scope());
             }*/ //TODO
@@ -1319,6 +1334,7 @@ namespace{
 
       case ada_bin_op:
       case ada_un_op:
+      case ada_relation_op:
       case ada_call_expr:                           // 4.1
         {
           logKind("A_Function_Call", kind);
@@ -1367,7 +1383,7 @@ namespace{
           bool                           objectCallSyntax;
 
           //Based on the kind, fill in the prefix & params
-          if(kind == ada_bin_op){
+          if(kind == ada_bin_op || kind == ada_relation_op){
             param_backend.resize(2);
             ada_bin_op_f_op(lal_element, &prefix);
             ada_bin_op_f_left(lal_element, &param_backend.at(0));
@@ -1422,6 +1438,13 @@ namespace{
 
       case ada_op_plus:                        // 4.1 TODO Add more ops
       case ada_op_minus:
+      case ada_op_eq:
+      case ada_op_gt:
+      case ada_op_gte:
+      case ada_op_in:
+      case ada_op_lt:
+      case ada_op_lte:
+      case ada_op_neq:
       case ada_op_mult:
         {
           logKind("An_Operator_Symbol", kind);
@@ -1485,6 +1508,41 @@ namespace{
 
           res = &getExpr(&lal_expr, ctx);
           res->set_need_paren(true);
+
+          break;
+        }
+
+      case ada_qual_expr:                    // 4.7
+//      case A_Type_Conversion:                         // 4.6
+        {
+          const bool isConv = (kind != ada_qual_expr);
+
+          logKind(isConv ? "A_Type_Conversion" : "ada_qual_expr", kind);
+
+          //Get the id for the expression
+          ada_base_entity lal_prefix;
+          ada_qual_expr_f_prefix(lal_element, &lal_prefix);
+
+          //Get the suffix for the expression
+          ada_base_entity lal_suffix;
+          ada_qual_expr_f_suffix(lal_element, &lal_suffix);
+          ada_node_kind_enum lal_suffix_kind = ada_node_kind(&lal_suffix);
+          if(lal_suffix_kind == ada_paren_expr){
+            //lal sometimes (always?) has a paren expr here, but ASIS doesn't. Skip the parens if it exists.
+            ada_paren_expr_f_expr(&lal_suffix, &lal_suffix);
+          }
+
+          SgExpression& exp = getExpr(&lal_suffix, ctx);
+          SgType&       ty  = getDeclType(&lal_prefix, ctx);
+
+          res = isConv ? &mkCastExp(exp, ty)
+                       : &mkQualifiedExp(exp, ty);
+
+          // fix-up aggregate type
+          if (SgAggregateInitializer* aggrexp = isSgAggregateInitializer(&exp))
+          {
+            aggrexp->set_expression_type(&ty);
+          }
 
           break;
         }

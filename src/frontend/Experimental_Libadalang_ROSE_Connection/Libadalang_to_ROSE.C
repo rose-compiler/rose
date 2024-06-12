@@ -45,6 +45,12 @@ namespace{
   /// stores a mapping from string to builtin type nodes
   map_t<AdaIdentifier, SgType*> adaTypesByNameMap;
 
+  /// stores a mapping from string to builtin pkgs (std, ascii)
+  map_t<int, SgAdaPackageSpecDecl*> adaPkgsMap;
+
+  /// stores variables defined in Standard or Ascii
+  map_t<int, SgInitializedName*> adaVarsMap;
+
   /// maps generated operators
   map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
 
@@ -57,6 +63,8 @@ map_t<int, SgDeclarationStatement*>&               libadalangDecls()         { r
 map_t<int, SgDeclarationStatement*>&               libadalangTypes()         { return libadalangTypesMap;  }
 map_t<int, SgType*>&                                      adaTypes()         { return adaTypesMap;         }
 map_t<AdaIdentifier, SgType*>&                      adaTypesByName()         { return adaTypesByNameMap;   }
+map_t<int, SgAdaPackageSpecDecl*>&                         adaPkgs()         { return adaPkgsMap;          }
+map_t<int, SgInitializedName*>&                            adaVars()         { return adaVarsMap;          }
 std::vector<SgExpression*>&                          operatorExprs()         { return operatorExprsVector; }
 map_t<OperatorKey, std::vector<OperatorDesc> >&    operatorSupport()         { return operatorSupportMap;  }
 

@@ -1273,7 +1273,7 @@ queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
 
   if((res == nullptr) && (kind == ada_identifier))
   {
-    //res = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}); //TODO adaPkgs
+    res = findFirst(adaPkgs(), decl_hash);
   }
 
   return res;

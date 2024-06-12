@@ -243,117 +243,6 @@ namespace
     //~ fns[].emplace_back(&fndcl);
   }
 
-  void declareCharConstants(const std::string& name, char ch, SgType& ty, SgScopeStatement& scope)
-  {
-    SgCharVal*             val = sb::buildCharVal(ch);
-    markCompilerGenerated(SG_DEREF(val));
-
-    SgInitializedName&     var = mkInitializedName(name, ty, val);
-    SgVariableDeclaration& dcl = mkVarDecl(var, scope);
-
-    scope.append_statement(&dcl);
-  }
-
-  void declareCharConstants(SgType& adaCharType, SgScopeStatement& asciispec)
-  {
-    char cval = 0;
-    declareCharConstants("nul",   cval, adaCharType, asciispec);
-    declareCharConstants("soh", ++cval, adaCharType, asciispec);
-    declareCharConstants("stx", ++cval, adaCharType, asciispec);
-    declareCharConstants("etx", ++cval, adaCharType, asciispec);
-    declareCharConstants("eot", ++cval, adaCharType, asciispec);
-    declareCharConstants("enq", ++cval, adaCharType, asciispec);
-    declareCharConstants("ack", ++cval, adaCharType, asciispec);
-    declareCharConstants("bel", ++cval, adaCharType, asciispec);
-    declareCharConstants("bs",  ++cval, adaCharType, asciispec);
-    declareCharConstants("ht",  ++cval, adaCharType, asciispec);
-    declareCharConstants("lf",  ++cval, adaCharType, asciispec);
-    declareCharConstants("vt",  ++cval, adaCharType, asciispec);
-    declareCharConstants("ff",  ++cval, adaCharType, asciispec);
-    declareCharConstants("cr",  ++cval, adaCharType, asciispec);
-    declareCharConstants("so",  ++cval, adaCharType, asciispec);
-    declareCharConstants("si",  ++cval, adaCharType, asciispec);
-
-    declareCharConstants("dle", ++cval, adaCharType, asciispec);
-    declareCharConstants("dc1", ++cval, adaCharType, asciispec);
-    declareCharConstants("dc2", ++cval, adaCharType, asciispec);
-    declareCharConstants("dc3", ++cval, adaCharType, asciispec);
-    declareCharConstants("dc4", ++cval, adaCharType, asciispec);
-    declareCharConstants("nak", ++cval, adaCharType, asciispec);
-    declareCharConstants("syn", ++cval, adaCharType, asciispec);
-    declareCharConstants("etb", ++cval, adaCharType, asciispec);
-    declareCharConstants("can", ++cval, adaCharType, asciispec);
-    declareCharConstants("em",  ++cval, adaCharType, asciispec);
-    declareCharConstants("sub", ++cval, adaCharType, asciispec);
-    declareCharConstants("esc", ++cval, adaCharType, asciispec);
-    declareCharConstants("fs",  ++cval, adaCharType, asciispec);
-    declareCharConstants("gs",  ++cval, adaCharType, asciispec);
-    declareCharConstants("rs",  ++cval, adaCharType, asciispec);
-    declareCharConstants("us",  ++cval, adaCharType, asciispec);
-    //ADA_ASSERT(cval == 31);
-
-    declareCharConstants("del",         127, adaCharType, asciispec);
-    declareCharConstants("exclam",      '!', adaCharType, asciispec);
-    declareCharConstants("quotation",   '"', adaCharType, asciispec);
-    declareCharConstants("sharp",       '#', adaCharType, asciispec);
-    declareCharConstants("dollar",      '$', adaCharType, asciispec);
-    declareCharConstants("percent",     '%', adaCharType, asciispec);
-    declareCharConstants("ampersand",   '&', adaCharType, asciispec);
-    declareCharConstants("colon",       ',', adaCharType, asciispec);
-    declareCharConstants("semicolon",   ';', adaCharType, asciispec);
-    declareCharConstants("query",       '?', adaCharType, asciispec);
-    declareCharConstants("at_sign",     '@', adaCharType, asciispec);
-    declareCharConstants("l_bracket",   '[', adaCharType, asciispec);
-    declareCharConstants("r_bracket",   ']', adaCharType, asciispec);
-    declareCharConstants("back_slash", '\\', adaCharType, asciispec);
-    declareCharConstants("circumflex",  '^', adaCharType, asciispec);
-    declareCharConstants("underline",   '_', adaCharType, asciispec);
-    declareCharConstants("grave",       '`', adaCharType, asciispec);
-    declareCharConstants("l_brace",     '{', adaCharType, asciispec);
-    declareCharConstants("r_brace",     '}', adaCharType, asciispec);
-    declareCharConstants("bar",         '_', adaCharType, asciispec);
-    declareCharConstants("tilde",       '~', adaCharType, asciispec);
-
-    cval = 'a'-1;
-    declareCharConstants("lc_a", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_b", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_c", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_d", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_e", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_f", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_g", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_h", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_i", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_j", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_k", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_l", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_m", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_n", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_o", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_p", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_q", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_r", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_s", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_t", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_u", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_v", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_w", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_x", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_y", ++cval, adaCharType, asciispec);
-    declareCharConstants("lc_z", ++cval, adaCharType, asciispec);
-    //ADA_ASSERT(cval == 'z');
-  }
-
-  void buildAsciiPkg(SgType& adaCharType, SgAdaPackageSpec& stdspec)
-  {
-    SgAdaPackageSpecDecl& asciipkg    = declarePackage("Ascii", stdspec);
-    SgAdaPackageSpec&     asciispec   = SG_DEREF(asciipkg.get_definition());
-
-    //adaPkgs()["STANDARD.ASCII"]       = &asciipkg;
-    //adaPkgs()["ASCII"]                = &asciipkg;
-    declareCharConstants(adaCharType, asciispec);
-  }
-
 } //end unnamed namespace
 
   SgType&
@@ -1140,6 +1029,86 @@ void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, Sg
 
 }
 
+template<class MapT>
+void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec)
+{
+  //Get the name of this pkg
+  ada_text_type fully_qualified_name;
+  ada_basic_decl_p_canonical_fully_qualified_name(lal_decl, &fully_qualified_name);
+  std::string canonical_fully_qualified_name = dot_ada_text_type_to_string(fully_qualified_name);
+  //Get the name of this pkg without the "STANDARD."
+  std::string pkg_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
+  logTrace() << "Processing std pkg with name = " << pkg_name << std::endl;
+
+  //Make a new SgAdaPackageSpec using the name
+  SgAdaPackageSpecDecl& asciipkg    = declarePackage(pkg_name, stdspec);
+  SgAdaPackageSpec&     asciispec   = SG_DEREF(asciipkg.get_definition());
+
+  //Get the decls for this pkg
+  ada_base_entity lal_ascii_decls;
+  ada_base_package_decl_f_public_part(lal_decl, &lal_ascii_decls);
+  ada_declarative_part_f_decls(&lal_ascii_decls, &lal_ascii_decls);
+
+  SgType& adaCharType = SG_DEREF(adaTypesByName().at(AdaIdentifier{"CHARACTER"}));
+
+  int count = ada_node_children_count(&lal_ascii_decls);
+  logInfo() << count << " ascii chars found\n";
+  for(int i = 0; i < count; i++){
+    ada_base_entity lal_ascii_decl;
+    if(ada_node_child(&lal_ascii_decls, i, &lal_ascii_decl) != 0){
+      //Get the name of this decl
+      ada_text_type decl_full_name;
+      ada_basic_decl_p_canonical_fully_qualified_name(&lal_ascii_decl, &decl_full_name);
+      std::string decl_full_name_string = dot_ada_text_type_to_string(decl_full_name);
+      //Get the name without the "standard.ascii."
+      std::string decl_name = decl_full_name_string.substr(15, canonical_fully_qualified_name.length()-1);
+
+      //Get the char value for this decl
+      char cval = 0;
+      ada_base_entity lal_default_expr;
+      ada_object_decl_f_default_expr(&lal_ascii_decl, &lal_default_expr);
+      ada_node_kind_enum lal_default_expr_kind = ada_node_kind(&lal_default_expr);
+      if(lal_default_expr_kind == ada_char_literal){
+        uint32_t lal_denoted_value;
+        ada_char_literal_p_denoted_value(&lal_default_expr, &lal_denoted_value);
+        cval = char(lal_denoted_value);
+      } else if(lal_default_expr_kind == ada_attribute_ref){
+        ada_base_entity lal_int_literal;
+        ada_attribute_ref_f_args(&lal_default_expr, &lal_int_literal);
+        ada_node_child(&lal_int_literal, 0, &lal_int_literal);
+        ada_param_assoc_f_r_expr(&lal_int_literal, &lal_int_literal);
+        //Get the value of the int literal
+        ada_big_integer denoted_value;
+        ada_text value_text;
+        ada_int_literal_p_denoted_value(&lal_int_literal, &denoted_value);
+        ada_big_integer_text(denoted_value, &value_text);
+        std::string denoted_text = ada_text_to_locale_string(&value_text);
+        ada_destroy_text(&value_text);
+        cval = char(stoi(denoted_text));
+      } else {
+        logFlaw() << "Unhandled default expr kind in handleAsciiPkg: " << lal_default_expr_kind << std::endl;
+      }
+
+      ada_base_entity lal_defining_name;
+      ada_object_decl_f_ids(&lal_ascii_decl, &lal_defining_name);
+      ada_node_child(&lal_defining_name, 0, &lal_defining_name);
+
+      SgCharVal*             val  = sb::buildCharVal(cval);
+      markCompilerGenerated(SG_DEREF(val));
+
+      SgInitializedName&     var  = mkInitializedName(decl_name, adaCharType, val);
+      SgVariableDeclaration& dcl  = mkVarDecl(var, asciispec);
+      int                    hash = hash_node(&lal_defining_name);
+
+      asciispec.append_statement(&dcl);
+      m[hash] = &var;
+    }
+  }
+
+  int pkg_hash = hash_node(lal_decl);
+  adaPkgs()[pkg_hash] = &asciipkg;
+}
+
 void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 {
   logInfo() << "In initializePkgStandard.\n";
@@ -1164,6 +1133,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   ada_base_entity decl_list;
   ada_compilation_unit_f_body(&std_root, &decl_list);
   ada_library_item_f_item(&decl_list, &decl_list);
+  int pkg_hash = hash_node(&decl_list);
   ada_base_package_decl_f_public_part(&decl_list, &decl_list);
   ada_declarative_part_f_decls(&decl_list, &decl_list);
 
@@ -1192,9 +1162,14 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
           handleStdSubType(adaTypes(), adaTypesByName(), &lal_decl, stdspec);
           break;
         }
+        case ada_package_decl:
+        {
+          //This should only be the ascii pkg
+          handleAsciiPkg(adaVars(), &lal_decl, stdspec);
+          break;
+        }
         case ada_exception_decl: //TODO
         case ada_attribute_def_clause: //TODO This is about duration?
-        case ada_package_decl: //TODO ascii
         case ada_pragma_node:
           break;
         default:
@@ -1235,10 +1210,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   SgInitializedName& adaTaskingError       = declareException("Tasking_Error",    exceptionType, stdspec);
 
   // added packages
-  //adaPkgs()["STANDARD"]             = &stdpkg;
-
-  // build ASCII package
-  buildAsciiPkg(adaCharType, stdspec);
+  adaPkgs()[pkg_hash]             = &stdpkg;
 
   //
   // build standard functions
