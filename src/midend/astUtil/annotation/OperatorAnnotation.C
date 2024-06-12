@@ -97,6 +97,8 @@ template class WriteContainer<set<NameDescriptor>, ',', '(', ')'>;
 template class WriteContainer<vector<NameDescriptor>, ',', '(', ')'>;
 template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>,
                              NameDescriptor, ',','{','}'>;
+template class ReadContainer<SetDescriptor<SymbolicValDescriptor, ',', '{', '}'>,
+                             SymbolicValDescriptor, ',','{','}'>;
 template class WriteContainer<vector<CollectPair<TypeDescriptor, NameDescriptor, 0> >, ',', '(', ')'>;
 template class WriteContainer<set<SymbolicValDescriptor>, ',', '{', '}'>;
 
