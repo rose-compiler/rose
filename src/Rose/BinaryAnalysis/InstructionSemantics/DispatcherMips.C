@@ -496,6 +496,102 @@ struct IP_movf_ps: P {
     }
 };
 
+// Move conditional on zero
+// TODO:
+//struct IP_movz: P {
+
+// Floating point move conditional on zero
+// TODO:
+//struct IP_movz.fmt: P {
+
+// Multiply and subtract word to hi, lo (mips_msub)
+// See IP_msub_su below
+
+// Multiply and subtract unsigned word to hi, lo (mips_msubu)
+// See IP_msub_su below
+
+// Multiply and subtract word (signed and unsigned) to hi, lo
+// Note: removed in release 6
+struct IP_msub_su: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr rt = d->read(args[1]);
+
+        // Multiply (signed or unsigned) contents of rs by rt
+        SValue::Ptr mult{};
+        if (insn->get_kind() == mips_msub) {
+          mult = ops->signedMultiply(rs, rt);
+        }
+        else if (insn->get_kind() == mips_msubu) {
+          mult = ops->unsignedMultiply(rs, rt);
+        }
+
+        // Subtract results from (HI,LO)
+        SValue::Ptr hi = ops->readRegister(d->REG_HI);
+        SValue::Ptr lo = ops->readRegister(d->REG_LO);
+        SValue::Ptr hilo = ops->concatHiLo(hi, lo);
+        SValue::Ptr sub = ops->subtract(hilo, mult);
+
+        // Extract and write results
+        SValue::Ptr hiBits = ops->signExtend(ops->extract(sub, 32, 64), nBits);
+        SValue::Ptr loBits = ops->signExtend(ops->extract(sub,  0, 32), nBits);
+        ops->writeRegister(d->REG_HI, hiBits);
+        ops->writeRegister(d->REG_LO, loBits);
+    }
+};
+
+// Multiply word to GPR
+// Note: removed in release 6
+struct IP_mul: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        size_t nBits = d->architecture()->bitsPerWord();
+
+        // Multiply (signed or unsigned) contents of rs by rt
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr smul = ops->signedMultiply(rs, rt);
+
+        // Extract and write results
+        SValue::Ptr loBits = ops->signExtend(ops->extract(smul, 0, 32), nBits);
+        d->write(args[0], loBits);
+    }
+};
+
+// Multiply word (mips_mult)
+// See IP_mult_su below
+
+// Multiply unsigned word (mips_multu)
+// See IP_mult_su below
+
+// Multiply word (signed and unsigned)
+// Note: removed in release 6
+struct IP_mult_su: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr rt = d->read(args[1]);
+
+        // Multiply (signed or unsigned) contents of rs by rt
+        SValue::Ptr mult{};
+        if (insn->get_kind() == mips_mult) {
+          mult = ops->signedMultiply(rs, rt);
+        }
+        else if (insn->get_kind() == mips_multu) {
+          mult = ops->unsignedMultiply(rs, rt);
+        }
+
+        // Extract and write results
+        SValue::Ptr hiBits = ops->signExtend(ops->extract(mult, 32, 64), nBits);
+        SValue::Ptr loBits = ops->signExtend(ops->extract(mult,  0, 32), nBits);
+        ops->writeRegister(d->REG_HI, hiBits);
+        ops->writeRegister(d->REG_LO, loBits);
+    }
+};
+
 // No operation
 struct IP_nop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -595,12 +691,68 @@ struct IP_she: P {
     }
 };
 
-// Superscalar no operation
-struct IP_ssnop: P {
+// Set on less than (mips_slt)
+// See IP_slt_su below
+
+// Set on less than unsigned (mips_sltu)
+// See IP_slt_su below
+
+// Set on less than immediate (mips_slti)
+// See IP_slti_su below
+
+// Set on less than immediate unsigned (mips_sltiu)
+// See IP_slti_su below
+
+// Set on less than (signed and unsigned)
+struct IP_slt_su: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 0);
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr rt = d->read(args[2]);
+
+        // Compare (signed or unsigned) contents of rs and rt
+        SValue::Ptr compare{};
+        if (insn->get_kind() == mips_slt) {
+          compare = ops->isSignedLessThan(rs, rt);
+        }
+        else if (insn->get_kind() == mips_sltu) {
+          compare = ops->isUnsignedLessThan(rs, rt);
+        }
+
+        // Write comparison result
+        SValue::Ptr zeros = ops->number_(nBits-1, 0);
+        SValue::Ptr result = ops->concatHiLo(zeros, compare);
+        d->write(args[0], result);
     }
 };
+
+// Set on less than immediate (signed and unsigned)
+struct IP_slti_su: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr imm = ops->signExtend(d->read(args[2]), nBits);
+
+        // Compare (signed or unsigned) contents of rs and immediate
+        SValue::Ptr compare{};
+        if (insn->get_kind() == mips_slti) {
+          compare = ops->isSignedLessThan(rs, imm);
+        }
+        else if (insn->get_kind() == mips_sltiu) {
+          compare = ops->isUnsignedLessThan(rs, imm);
+        }
+
+        // Write comparison result
+        SValue::Ptr zeros = ops->number_(nBits-1, 0);
+        SValue::Ptr result = ops->concatHiLo(zeros, compare);
+        d->write(args[0], result);
+    }
+};
+
+// Superscalar no operation
+//   - implemented by IP_nop above
 
 // Subtract word
 struct IP_sub: P {
@@ -726,10 +878,17 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_mov_s, new Mips::IP_mov_s);
     iprocSet(mips_mov_d, new Mips::IP_mov_d);
     iprocSet(mips_mov_ps,new Mips::IP_mov_ps);
+
     iprocSet(mips_movf,    new Mips::IP_movf);
     iprocSet(mips_movf_s,  new Mips::IP_movf_s);
     iprocSet(mips_movf_d,  new Mips::IP_movf_d);
     iprocSet(mips_movf_ps, new Mips::IP_movf_ps);
+
+    iprocSet(mips_msub,  new Mips::IP_msub_su); // Note, both mips_msub and mips_msubu use IP_msub_su
+    iprocSet(mips_msubu, new Mips::IP_msub_su);
+    iprocSet(mips_mul,   new Mips::IP_mul);
+    iprocSet(mips_mult,  new Mips::IP_mult_su); // Note, both mips_mult and mips_multu use IP_mult_su
+    iprocSet(mips_multu, new Mips::IP_mult_su);
     iprocSet(mips_nop,   new Mips::IP_nop);
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
@@ -740,7 +899,11 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_seh,   new Mips::IP_seh);
     iprocSet(mips_sh,    new Mips::IP_sh);
     iprocSet(mips_she,   new Mips::IP_she);
-    iprocSet(mips_ssnop, new Mips::IP_ssnop);
+    iprocSet(mips_slt,   new Mips::IP_slt_su); // Note, both mips_slt and mips_sltu use IP_slt_su
+    iprocSet(mips_sltu,  new Mips::IP_slt_su);
+    iprocSet(mips_slti,  new Mips::IP_slti_su); // Note, both mips_slti and mips_sltiu use IP_slt_su
+    iprocSet(mips_sltiu, new Mips::IP_slti_su);
+    iprocSet(mips_ssnop, new Mips::IP_nop); // Note, mips_ssnop implemented by IP_nop
     iprocSet(mips_sub,   new Mips::IP_sub);
     iprocSet(mips_subu,  new Mips::IP_subu);
     iprocSet(mips_sw,    new Mips::IP_sw);

@@ -2494,7 +2494,7 @@ static struct Mips32_movz_ps: Mips::Decoder {
     }
 } mips32_movz_ps;
 
-// MSUB -- multiply and subtract word
+// MSUB -- multiply and subtract word to hi, lo
 static struct Mips32_msub: Mips::Decoder {
     Mips32_msub(): Mips::Decoder(Release1,
                           sOP(034)|sR2(000)|sR3(000)|sFN(004),
@@ -2548,7 +2548,7 @@ static struct Mips32_msub_ps: Mips::Decoder {
     }
 } mips32_msub_ps;
 
-// MSUBU -- multiply and subtract word to hi, lo
+// MSUBU -- multiply and subtract unsigned word to hi, lo
 static struct Mips32_msubu: Mips::Decoder {
     Mips32_msubu(): Mips::Decoder(Release1,
                            sOP(034)|sR2(000)|sR3(000)|sFN(005),
