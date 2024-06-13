@@ -259,7 +259,7 @@ bool isValueOne(SgExpression* valueNode) {
     }
   } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
     double value=val->get_value();
-    if(value==1.0d) {
+    if(value==1.0) {
       return true;
     }
   }
@@ -279,7 +279,7 @@ bool isValueZero(SgExpression* valueNode) {
     }
   } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
     double value=val->get_value();
-    if(value==0.0d) {
+    if(value==0.0) {
       return true;
     }
   }

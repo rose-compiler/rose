@@ -41,7 +41,12 @@
 
  */
 
+#ifdef _WIN32
+#include <windows.h> /* Timer routines need to be added to this for Windows */
+#else
 #include <sys/time.h>
+#endif
+
 #include <string>
 #include <sstream>
 

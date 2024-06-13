@@ -57,5 +57,6 @@ add_library(midend_pt OBJECT
   constantFolding/constantFolding.C
   functionCallNormalization/FunctionNormalization.C
   finiteDifferencing/finiteDifferencing.C
-  finiteDifferencing/patternRewrite.C)
+  finiteDifferencing/patternRewrite.C
+  singleStatementToBlockNormalization/SingleStatementToBlockNormalization.C)
 add_dependencies(midend_pt rosetta_generated)

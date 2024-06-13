@@ -407,6 +407,11 @@ option(ENABLE-C "Enable C/C++ analysis" ON)
 if(ENABLE-C)
   set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
   set(ROSE_BUILD_C_LANGUAGE_SUPPORT 1)
+  # For pipeline test 
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+     message(STATUS "Turning on OpenMP for pipeline test to build codethorn")
+    set(ENABLE_OPENMP ON CACHE BOOL "Enable OpenMP" FORCE) 
+  endif() 
 endif()
 
 # CUDA
