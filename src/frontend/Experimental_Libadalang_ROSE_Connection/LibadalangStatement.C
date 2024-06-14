@@ -589,7 +589,6 @@ constructInitializedNamePtrList( AstContext ctx,
 {
   SgInitializedNamePtrList lst;
   int hash = hash_node(lal_name_list);
-  logTrace() << " In constructInitializedNamePtrList with hash = " << hash << std::endl;
   int count = ada_node_children_count(lal_name_list);
   for(int i = 0; i < count; ++i)
   {

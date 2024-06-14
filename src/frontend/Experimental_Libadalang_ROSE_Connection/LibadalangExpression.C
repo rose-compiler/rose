@@ -1185,8 +1185,10 @@ namespace{
           //TODO Test this some more
           ada_bool lal_static_expr;
           ada_expr_p_is_static_expr(lal_element, 1, &lal_static_expr);
+          ada_bool lal_static_subtype;
+          ada_name_p_is_static_subtype(lal_element, 1, &lal_static_subtype);
 
-          if(lal_static_expr){
+          if(lal_static_expr && !lal_static_subtype){
             logInfo() << "identifier " << name << " is being treated as an enum value (is_static_expr = true).\n";
 
             //Get the hash for the decl
@@ -1287,48 +1289,42 @@ namespace{
           else if(SgDeclarationStatement* tydcl = findFirst(asisTypes(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
+          }*/
+          else if (SgType* ty = findFirst(adaTypes(), hash))
+          {
+            res = &mkTypeExpression(*ty);
           }
+          /*else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
+          {
+            res = sb::buildVarRefExp(fld, &ctx.scope());
+          }*/
+          else if (SgInitializedName* var = findFirst(adaVars(), hash))
+          {
+            res = sb::buildVarRefExp(var, &ctx.scope());
+          }
+          /*else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
+          {
+            res = &mkExceptionRef(*exc, ctx.scope());
+          }*/ //TODO
+/*
+          else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
+          {
+            res = sb::buildVarRefExp(dsc, &ctx.scope());
+          }
+*/
           else
           {
-            AdaIdentifier adaIdent{expr.Name_Image};
+            SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
 
-            // after there was no matching declaration, try to look up declarations in the standard package by name
-            if (SgType* ty = findFirst(adaTypes(), adaIdent))
+            if (&scope == &ctx.scope())
             {
-              res = &mkTypeExpression(*ty);
+              // issue warning for unresolved names outside pragmas and aspects
+              logWarn() << "ADDING unresolved name: " << name
+                        << std::endl;
             }
-            else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
-            {
-              res = sb::buildVarRefExp(fld, &ctx.scope());
-            }*/
-            else if (SgInitializedName* var = findFirst(adaVars(), hash))
-            {
-              res = sb::buildVarRefExp(var, &ctx.scope());
-            }
-            /*else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
-            {
-              res = &mkExceptionRef(*exc, ctx.scope());
-            }*/ //TODO
-/*
-            else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
-            {
-              res = sb::buildVarRefExp(dsc, &ctx.scope());
-            }
-*/
-            else
-            {
-              SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
 
-              if (&scope == &ctx.scope())
-              {
-                // issue warning for unresolved names outside pragmas and aspects
-                logWarn() << "ADDING unresolved name: " << name
-                          << std::endl;
-              }
-
-              res = &mkUnresolvedName(name, scope);
-            }
-          //}
+            res = &mkUnresolvedName(name, scope);
+          }
           break;
         }
 
@@ -1589,6 +1585,13 @@ namespace{
           break;
         }
 
+      case ada_others_designator:
+        {
+          logKind("ada_others_designator", kind);
+          res = &mkAdaOthersExp();
+          break;
+        }
+
       default:
         logFlaw() << "unhandled expression: " << kind_name_string << std::endl;
         res = sb::buildIntVal();
@@ -1648,6 +1651,91 @@ getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement su
                                     ;
 }
 
+  SgExpression&
+  getDiscreteRangeGeneric(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    SgExpression* res = nullptr;
+
+    switch(kind)
+    {
+      /*case A_Discrete_Subtype_Indication:         // 3.6.1(6), 3.2.2
+        {
+          logKind("A_Discrete_Subtype_Indication", el.ID);
+
+          SgType& ty = getDiscreteSubtypeID(range.Subtype_Mark, range.Subtype_Constraint, ctx);
+
+          res = &mkTypeExpression(ty);
+          break;
+        }*/
+
+      case ada_bin_op:    // 3.6.1, 3.5
+        {
+          logKind("A_Discrete_Simple_Expression_Range", kind);
+
+          //Get the bounds
+          ada_base_entity lal_lower_bound, lal_upper_bound;
+          ada_bin_op_f_left(lal_element, &lal_lower_bound);
+          ada_bin_op_f_right(lal_element, &lal_upper_bound);
+
+          SgExpression& lb = getExpr(&lal_lower_bound, ctx);
+          SgExpression& ub = getExpr(&lal_upper_bound, ctx);
+
+          res = &mkRangeExp(lb, ub);
+          break;
+        }
+
+      /*case A_Discrete_Range_Attribute_Reference:  // 3.6.1, 3.5
+        {
+          logKind("A_Discrete_Range_Attribute_Reference", el.ID);
+
+          res = &getExprID(range.Range_Attribute, ctx);
+          break;
+        }*/
+
+      default:
+        logFlaw() << "Unhandled range: " << kind << " in getDiscreteRangeGeneric" << std::endl;
+        res = &mkRangeExp();
+    }
+
+    attachSourceLocation(SG_DEREF(res), lal_element, ctx);
+    return *res;
+  }
+
+  /*/// \private
+  /// returns a range expression from the Asis definition \ref def
+  SgExpression&
+  getDiscreteRange(Element_Struct& el, Definition_Struct& def, AstContext ctx)
+  {
+    ADA_ASSERT(def.Definition_Kind == A_Discrete_Range);
+
+    return getDiscreteRangeGeneric(el, def.The_Union.The_Discrete_Range, ctx);
+  }*/
+
+  SgExpression&
+  getDiscreteRange(ada_base_entity* lal_element, AstContext ctx)
+  {
+    //Run a bunch of checks to see if this is a node that should go to getDiscreteRangeGeneric
+    bool needs_generic = false;
+
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+    if(kind == ada_bin_op){
+      ada_base_entity lal_op;
+      ada_bin_op_f_op(lal_element, &lal_op);
+      ada_node_kind_enum lal_op_kind = ada_node_kind(&lal_op);
+      if(lal_op_kind == ada_op_double_dot){
+        needs_generic = true;
+      }
+    }
+
+    if(needs_generic){
+      return getDiscreteRangeGeneric(lal_element, ctx);
+    }
+
+    return getExpr(lal_element, ctx);
+  }
+
 /// returns an expression from the libadalang definition \ref lal_element
 SgExpression&
 getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
@@ -1683,12 +1771,14 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
       break;
     }
 
-    /*case An_Others_Choice:
-      logKind("An_Others_Choice", el.ID);
+    case ada_others_designator:
+    {
+      logKind("ada_others_designator", kind);
       res = &mkAdaOthersExp();
       break;
+    }
 
-    case A_Constraint:
+    /*case A_Constraint:
       logKind("A_Constraint", el.ID);
       res = &getConstraintExpr(def, ctx);
       break;*/
@@ -1767,9 +1857,9 @@ queryBuiltIn(int hash)
 
   findFirstMatch
   || (res = findFirst(adaTypes(), hash))
-  /*|| (res = findFirst(adaPkgs(),  hash))
+  || (res = findFirst(adaPkgs(),  hash))
   || (res = findFirst(adaVars(),  hash))
-  || (res = findFirst(adaExcps(), hash))*/
+  || (res = findFirst(adaExcps(), hash))
   ;
 
   return res;

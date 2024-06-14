@@ -59,6 +59,11 @@ namespace Libadalang_ROSE_Translation
   SgExpression&
   getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement suppl = {});
 
+  /// returns a range expression for the element \ref lal_element.
+  /// \pre lal_element identifies a Discrete_Range definition
+  SgExpression&
+  getDiscreteRange(ada_base_entity* lal_element, AstContext ctx);
+
   /// returns an expression from the libadalang definition \ref lal_element
   SgExpression&
   getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx);

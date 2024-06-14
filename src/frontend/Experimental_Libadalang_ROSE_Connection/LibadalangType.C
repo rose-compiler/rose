@@ -92,6 +92,41 @@ namespace
       AstContext      ctx;
   };
 
+  
+  SgArrayType&
+  createUnconstrainedArrayType(ada_base_entity* lal_element, AstContext ctx)
+  {
+    //Get the indices
+    ada_base_entity lal_indices;
+    ada_array_type_def_f_indices(lal_element, &lal_indices);
+    ada_unconstrained_array_indices_f_types(&lal_indices, &lal_indices);
+
+    //Get the component type
+    ada_base_entity lal_component_type;
+    ada_array_type_def_f_component_type(lal_element, &lal_component_type);
+
+    std::vector<SgExpression*> indicesSeq;
+
+    int count = ada_node_children_count(&lal_indices);
+    for(int i = 0; i < count; i++){
+      ada_base_entity lal_unconstrained_array_index;
+      if(ada_node_child(&lal_indices, i, &lal_unconstrained_array_index) != 0){
+        //Call getExpr on the name
+        //TODO Can this ever need getDefinitionExpr instead?
+        ada_base_entity lal_identifier;
+        ada_unconstrained_array_index_f_subtype_indication(&lal_unconstrained_array_index, &lal_identifier);
+        ada_subtype_indication_f_name(&lal_identifier, &lal_identifier);
+        SgExpression& index = getExpr(&lal_identifier, ctx);
+        indicesSeq.push_back(&index);
+      }
+    }
+
+    SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
+    SgType&                    compType    = getDefinitionType(&lal_component_type, ctx);
+
+    return mkArrayType(compType, indicesAst, true /* unconstrained */);
+  }
+
   SgTypedefDeclaration&
   declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
   {
@@ -371,6 +406,27 @@ namespace
           bool not_null_present = (null_kind == ada_not_null_present);
 
           res = &excludeNullIf(SG_DEREF(res), not_null_present, ctx);
+          break;
+        }
+      case ada_component_def:
+        {
+          logKind("ada_component_def", kind);
+
+          //Get the type expr
+          ada_base_entity lal_type_expr;
+          ada_component_def_f_type_expr(lal_def, &lal_type_expr);
+
+          res = &getDefinitionType(&lal_type_expr, ctx);
+
+          //Determine has_aliased
+          ada_base_entity lal_has_aliased;
+          ada_component_def_f_has_aliased(lal_def, &lal_has_aliased);
+          ada_node_kind_enum lal_has_aliased_kind = ada_node_kind(&lal_has_aliased);
+
+          if(lal_has_aliased_kind == ada_aliased_present){
+            res = &mkAliasedType(*res);
+          }
+
           break;
         }
       case ada_anonymous_type: //TODO Does this node match multiple asis nodes?
@@ -758,6 +814,13 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
 
           break;
         }
+      case ada_array_type_def:      // 3.6(2) TODO This probably also matches constrained arrays
+        {
+          logKind("ada_array_type_def", kind);
+
+          res.sageNode(createUnconstrainedArrayType(lal_def, ctx));
+          break;
+        }
       case ada_record_type_def:               // 3.8(2)     -> Trait_Kinds
         {
           logKind("ada_record_type_def", kind);
@@ -834,8 +897,13 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
   //Get the name of this type without the "STANDARD."
   std::string type_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
 
+  //Get the defining name
+  ada_base_entity lal_defining_name;
+  ada_base_type_decl_f_name(lal_decl, &lal_defining_name);
+
   //Get the hash of this decl
   int hash = hash_node(lal_decl);
+  int defining_name_hash = hash_node(&lal_defining_name);
   SgType* generatedType = nullptr;
 
   //logInfo() << "handleStdDecl called for " << canonical_fully_qualified_name << std::endl;
@@ -959,6 +1027,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
     //TODO Universal int/real?
   }
   map1[hash] = generatedType;
+  map1[defining_name_hash] = generatedType;
   map2[AdaIdentifier{type_name}] = generatedType;
 }
 
@@ -1038,7 +1107,6 @@ void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspe
   std::string canonical_fully_qualified_name = dot_ada_text_type_to_string(fully_qualified_name);
   //Get the name of this pkg without the "STANDARD."
   std::string pkg_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
-  logTrace() << "Processing std pkg with name = " << pkg_name << std::endl;
 
   //Make a new SgAdaPackageSpec using the name
   SgAdaPackageSpecDecl& asciipkg    = declarePackage(pkg_name, stdspec);
@@ -1052,7 +1120,6 @@ void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspe
   SgType& adaCharType = SG_DEREF(adaTypesByName().at(AdaIdentifier{"CHARACTER"}));
 
   int count = ada_node_children_count(&lal_ascii_decls);
-  logInfo() << count << " ascii chars found\n";
   for(int i = 0; i < count; i++){
     ada_base_entity lal_ascii_decl;
     if(ada_node_child(&lal_ascii_decls, i, &lal_ascii_decl) != 0){
@@ -1365,6 +1432,28 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         SgRangeExp&   rangeExp = mkRangeExp(lb, ub);
 
         res = &mkAdaRangeConstraint(rangeExp);
+        break;
+      }
+
+    case ada_index_constraint:                   // 3.2.2: 3.6.1
+      {
+        logKind("ada_index_constraint", kind);
+
+        //Get the constraint list 
+        ada_base_entity lal_constraint_list;
+        ada_index_constraint_f_constraints(lal_constraint, &lal_constraint_list);
+        int count = ada_node_children_count(&lal_constraint_list);
+
+        SgExpressionPtrList ranges;
+        for(int i = 0; i < count; i++){
+          ada_base_entity lal_range_constraint;
+          if(ada_node_child(&lal_constraint_list, i, &lal_range_constraint) != 0){
+            SgExpression& range_constraint = getDiscreteRange(&lal_range_constraint, ctx);
+            ranges.push_back(&range_constraint);
+          }
+        }
+
+        res = &mkAdaIndexConstraint(std::move(ranges));
         break;
       }
 
