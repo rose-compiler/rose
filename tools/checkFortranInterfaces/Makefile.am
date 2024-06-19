@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #------------------------------------------------------------------------------
 # Subdirectories
 #------------------------------------------------------------------------------
@@ -24,10 +25,7 @@ librose:
 #------------------------------------------------------------------------------
 all-local: librose
 
-#check-local: $(TEST_TARGETS)
-# These tests are failing for me, so I turned them off JL 2024/06/14)
-
-check-local: 
+check-local: $(TEST_TARGETS)
 
 $(TEST_TARGETS):
 	@$(RTH_RUN) CMD="./$(@:.test=)" $(top_srcdir)/scripts/test_exit_status $@
@@ -57,4 +55,5 @@ TEST_TARGETS = ${BIN_EXECUTABLES:=.test}
 bin_PROGRAMS = \
 	$(BIN_EXECUTABLES)
 #------------------------------------------------------------------------------
+endif
 
