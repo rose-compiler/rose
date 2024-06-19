@@ -836,6 +836,25 @@ namespace {
     return mkRecordDecl(name, def, scope);
   }
 
+  // returns a function declaration statement for a declaration statement
+  //   checks if the function is an Ada generic function, where the declaration
+  //   is hidden under an SgAdaGenericDecl.
+  SgFunctionDeclaration* getFunctionDeclaration(SgDeclarationStatement* dcl)
+  {
+    // PP: 2/6/22 refactored function out of handleDeclaration
+    if (SgFunctionDeclaration* fndcl  = isSgFunctionDeclaration(dcl))
+      return fndcl;
+
+    // MS: 7/26/2021 This point may be reached for both regular and
+    // generic subprograms.  If it is a generic subprogram that was
+    // declared, then we'll need to get the declaration out of the
+    // SgAdaGenericDecl node.
+    if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(dcl))
+      return isSgFunctionDeclaration(generic->get_declaration());
+
+    return nullptr;
+  }
+
   // retrieves package spec declarations, similar to getFunctionDeclaration
   SgAdaPackageSpecDecl* getAdaPackageSpecDecl(SgDeclarationStatement* dcl)
   {
@@ -1854,11 +1873,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int decl_hash = hash_node(&previous_decl);
         SgDeclarationStatement& declnode = lookupNode(libadalangDecls(), decl_hash);
         SgAdaPackageSpecDecl*   specdcl  = getAdaPackageSpecDecl(&declnode);
-        //SgAdaPackageSpecDecl*   specdcl  = &mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
 
-        //SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
-        //SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
-        SgAdaPackageBodyDecl*   nondef = nullptr; //For now, just assume that this is the first declaration
+        SgDeclarationStatement* ndef    = findFirst(libadalangDecls(), decl_hash);
+        SgAdaPackageBodyDecl*   nondef  = isSgAdaPackageBodyDecl(ndef);
 
         // when this is an implementation of a stub, use the scope of the stub, instead of the global scope
         SgScopeStatement&       logicalScope = nondef ? SG_DEREF(nondef->get_scope())
@@ -2019,10 +2036,16 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgType&                 rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                  : mkTypeVoid();
 
-        //SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
-        //SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
-        SgFunctionDeclaration*  nondef = nullptr; //For now, just assume that this is the first declaration
-        //ADA_ASSERT(!ndef || nondef); // ndef => nondef
+        ada_base_entity lal_previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
+        SgDeclarationStatement* ndef   = nullptr;
+        SgFunctionDeclaration*  nondef = nullptr;
+
+        if(!ada_node_is_null(&lal_previous_decl)){
+          int decl_hash = hash_node(&lal_previous_decl);
+          SgDeclarationStatement* ndef    = findFirst(libadalangDecls(), decl_hash);
+          SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
+        }
 
         //~ logError() << "proc body: " << nondef << std::endl;
 
@@ -2152,16 +2175,23 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
                                                       : mkTypeVoid();
 
         ada_destroy_text(&ada_canonical_text);
-        /*SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
-        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);*/
-        SgFunctionDeclaration*  nondef = nullptr; //For now, just assume that this is the first declaration
+        ada_base_entity lal_previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
+        SgDeclarationStatement* ndef    = nullptr;
+        SgFunctionDeclaration*  nondef  = nullptr;
+
+        if(!ada_node_is_null(&lal_previous_decl)){
+          int                     decl_hash = hash_node(&lal_previous_decl);
+          SgDeclarationStatement* ndef      = findFirst(libadalangDecls(), decl_hash);
+          SgFunctionDeclaration*  nondef    = getFunctionDeclaration(ndef);
+        }
 
         SgScopeStatement&       logicalScope = SG_DEREF(parent_scope);
         SgFunctionDeclaration&  sgnode  = createFunDcl(nondef, ident, logicalScope, rettype, ParameterCompletion{&subp_params, ctx});
 
         setAdaSeparate(sgnode, true /* separate */);
 
-         int hash = hash_node(lal_element);
+        int hash = hash_node(lal_element);
         recordNode(libadalangDecls(), hash, sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -2241,10 +2271,17 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         std::string                 ident  = ada_text_to_locale_string(&ada_canonical_text);
 
-        int                         hash   = hash_node(lal_element);
-        /*SgDeclarationStatement*     ndef   = findFirst(libadalangTypes(), hash);
-        SgAdaTaskTypeDecl*          nondef = isSgAdaTaskTypeDecl(ndef);*/
-        SgAdaTaskTypeDecl*          nondef = nullptr; //For now, just assume that this is the first declaration
+        ada_base_entity lal_previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
+        int                         hash      = hash_node(lal_element);
+        SgDeclarationStatement*     ndef      = nullptr;
+        SgAdaTaskTypeDecl*          nondef    = nullptr;
+
+        if(!ada_node_is_null(&lal_previous_decl)){
+          int                         decl_hash = hash_node(&lal_previous_decl);
+          SgDeclarationStatement*     ndef      = findFirst(libadalangTypes(), decl_hash);
+          SgAdaTaskTypeDecl*          nondef    = isSgAdaTaskTypeDecl(ndef);
+        }
 
         SgScopeStatement*           parentScope = &ctx.scope();
         SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(&lal_discr, 0, ctx);

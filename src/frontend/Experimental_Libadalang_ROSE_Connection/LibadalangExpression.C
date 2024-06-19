@@ -1859,7 +1859,7 @@ queryBuiltIn(int hash)
   || (res = findFirst(adaTypes(), hash))
   || (res = findFirst(adaPkgs(),  hash))
   || (res = findFirst(adaVars(),  hash))
-  || (res = findFirst(adaExcps(), hash))
+  //|| (res = findFirst(adaExcps(), hash))
   ;
 
   return res;
