@@ -1607,6 +1607,11 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_btypeExp_" << std::hex << e << "_etypeExp_";
           break;
         }
+        case V_SgFoldExpression: {
+          const SgFoldExpression * fold = isSgFoldExpression(expr);
+          mangled_name << "_bfold_" << mangleExpression(fold->get_operands()) << "_op_" << fold->get_operator_token() << "_assoc_" << ( fold->get_is_left_associative() ? "left" : "right" ) << "_efold_";
+          break;
+        }
         default: {
           printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
           ROSE_ABORT();

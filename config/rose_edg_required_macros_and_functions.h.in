@@ -881,6 +881,10 @@ void* __builtin_coro_promise(void* _M_fr_ptr, unsigned long, bool);
 ROSE_CONSTEXPR bool __atomic_always_lock_free(unsigned long, unsigned long);
 // extern unsigned long ATOMIC_CHAR8_T_LOCK_FREE;
 const unsigned long __GCC_ATOMIC_CHAR8_T_LOCK_FREE = 2;
+
+void  __builtin_free(void*)    ROSE_GNUATTR((nothrow));
+void* __builtin_malloc(size_t) ROSE_GNUATTR((nothrow));
+
 #endif
 
 
