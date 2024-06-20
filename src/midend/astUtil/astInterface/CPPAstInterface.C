@@ -88,7 +88,8 @@ IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj,
   if (func != 0)
     *func = isSgMemberFunctionRefExp(f)->get_symbol()->get_name().str();
 
-  bool is_static = isSgMemberFunctionRefExp(f)->getAssociatedMemberFunctionDeclaration()->get_definingDeclaration()->get_declarationModifier().get_storageModifier().isStatic();
+  SgDeclarationStatement* fun_decl = isSgMemberFunctionRefExp(f)->getAssociatedMemberFunctionDeclaration()->get_definingDeclaration(); 
+  bool is_static = (fun_decl == 0)? false : fun_decl->get_declarationModifier().get_storageModifier().isStatic();
   //Store object from the first argument
   if (obj != 0) {
      if (is_static) {
