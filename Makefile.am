@@ -142,6 +142,7 @@ check-hard:
 	$(MAKE) check-smoke
 	$(MAKE) check-nonsmoke
 
+.PHONY: tools
 check-tools: tools
 	$(MAKE) check -C $(top_builddir)/tests/tools
 	$(MAKE) check -C $(top_builddir)/tools
