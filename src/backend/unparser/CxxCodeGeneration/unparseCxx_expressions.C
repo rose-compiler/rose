@@ -232,7 +232,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 
 void
-Unparse_ExprStmt::unparseVoidValue(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseVoidValue(SgExpression*, SgUnparse_Info &)
    {
   // DQ (2/14/2019): Not clear what to output here.
      curprint(" /* void value unparsed */ ");
@@ -240,7 +240,7 @@ Unparse_ExprStmt::unparseVoidValue(SgExpression* expr, SgUnparse_Info& info)
 
 
 void
-Unparse_ExprStmt::unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info &)
    {
   // DQ (11/21/2017): Adding support for GNU C extension for computed goto.
 
@@ -427,7 +427,7 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 
 // DQ (8/11/2014): Added more general support for function parameter expressions (required for C++11 support).
 void
-Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgUnparse_Info &)
    {
      ASSERT_not_null(expr);
 
@@ -444,7 +444,7 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
 
 // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support).
 void
-Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info &)
    {
      ASSERT_not_null(expr);
 
@@ -459,7 +459,7 @@ Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info& inf
 
 // DQ (7/21/2012): Added support for new template IR nodes (only used in C++11 code so far, see test2012_133.C).
 void
-Unparse_ExprStmt::unparseTemplateParameterValue(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTemplateParameterValue(SgExpression* expr, SgUnparse_Info &)
    {
      SgTemplateParameterVal* template_parameter_value = isSgTemplateParameterVal(expr);
      ASSERT_not_null(template_parameter_value);
@@ -3818,7 +3818,7 @@ Unparse_ExprStmt::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseUpcThreads(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseUpcThreads(SgExpression* expr, SgUnparse_Info &)
    {
      SgUpcThreads* upc_threads = isSgUpcThreads(expr);
      ASSERT_not_null(upc_threads);
@@ -3827,7 +3827,7 @@ Unparse_ExprStmt::unparseUpcThreads(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info &)
    {
      SgUpcMythread* upc_mythread = isSgUpcMythread(expr);
      ASSERT_not_null(upc_mythread);
@@ -4794,7 +4794,7 @@ void Unparse_ExprStmt::unparseSpaceshipOp(SgExpression* expr, SgUnparse_Info& in
 
 // DQ (7/26/2020): Adding support for C++20 await expression.
 void
-Unparse_ExprStmt::unparseAwaitExpression(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseAwaitExpression(SgExpression*, SgUnparse_Info &)
    {
      printf ("C++20 await expression unparse support not implemented \n");
      ROSE_ABORT();
@@ -4803,7 +4803,7 @@ Unparse_ExprStmt::unparseAwaitExpression(SgExpression* expr, SgUnparse_Info& inf
 
 // DQ (7/26/2020): Adding support for C++20 choose expression.
 void
-Unparse_ExprStmt::unparseChooseExpression(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseChooseExpression(SgExpression*, SgUnparse_Info &)
    {
      printf ("C++20 choose expression unparse support not implemented \n");
      ROSE_ABORT();
@@ -4823,9 +4823,6 @@ Unparse_ExprStmt::unparseFoldExpression(SgExpression* expr, SgUnparse_Info& info
 
      curprint(operator_token.c_str());
      curprint(" ... ");
-
-  // ROSE_ASSERT(false);
-  // unparseAddOp(expr,info);
    }
 
 
@@ -6082,7 +6079,7 @@ static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
 
 
 static bool
-sharesSameStatement(SgExpression* expr, SgType* expressionType)
+sharesSameStatement(SgExpression*, SgType* expressionType)
    {
   // DQ (7/29/2013): This function supports the structural analysis to determine when we have to output the type definition
   // or just the type name for a compound literal.
@@ -6381,9 +6378,6 @@ bool uses_cxx11_initialization (SgNode* n)
                if (functionCall != NULL)
                   {
                     SgExpression* functionExpression = functionCall->get_function();
-#if 0
-                    printf ("functionExpression = %p = %s \n",functionExpression,functionExpression->class_name().c_str());
-#endif
                     SgFunctionRefExp*       functionRefExp       = isSgFunctionRefExp(functionCall->get_function());
                     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionCall->get_function());
 
@@ -6869,7 +6863,7 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
 
 // DQ (1/30/2019): Add this to the Unparse_ExprStmt namespace so that we can call it from unparseCxxStatement().
 bool
-Unparse_ExprStmt::isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info )
+Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(SgConstructorInitializer* con_init, SgUnparse_Info &)
    {
   // This is a suppoting function to detect the use of the C++11 signature which will
   // trigger the unparsing of C++11 initializer list syntax.

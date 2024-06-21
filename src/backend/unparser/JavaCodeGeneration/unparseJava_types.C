@@ -65,14 +65,14 @@ Unparse_Java::unparseModifierType(SgModifierType* type, SgUnparse_Info& info) {
 }
 
 void
-Unparse_Java::unparseTypedefType(SgTypedefType *type, SgUnparse_Info& info)
+Unparse_Java::unparseTypedefType(SgTypedefType* type, SgUnparse_Info &)
    {
-     curprint(type -> get_name().getString());
+     curprint(type->get_name().getString());
    }
 
 
 void
-Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
+Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info &)
    {
      //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
      //ASSERT_not_null(decl);
@@ -88,7 +88,7 @@ Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
    }
 
 
-void Unparse_Java::unparseTypeArguments(SgTemplateParameterList *type_list, SgUnparse_Info& info) {
+void Unparse_Java::unparseTypeArguments(SgTemplateParameterList *type_list, SgUnparse_Info &info) {
     ROSE_ASSERT(type_list);
     curprint("<");
     for (size_t i = 0; i < type_list -> get_args().size(); i++) {
@@ -299,12 +299,12 @@ Unparse_Java::unparseJavaQualifiedType(SgJavaQualifiedType *qualified_type, SgUn
     }
 }
 
-void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte"); }
-void Unparse_Java::unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info)   { curprint("char"); }
-void Unparse_Java::unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info)     { curprint("void"); }
-void Unparse_Java::unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info)   { curprint("short"); }
-void Unparse_Java::unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info)       { curprint("int"); }
-void Unparse_Java::unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info)     { curprint("long"); }
-void Unparse_Java::unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info)   { curprint("float"); }
-void Unparse_Java::unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info) { curprint("double"); }
-void Unparse_Java::unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info)     { curprint("boolean"); }
+void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar*, SgUnparse_Info &) { curprint("byte"); }
+void Unparse_Java::unparseTypeWchar(SgTypeWchar*, SgUnparse_Info &)   { curprint("char"); }
+void Unparse_Java::unparseTypeVoid(SgTypeVoid*, SgUnparse_Info &)     { curprint("void"); }
+void Unparse_Java::unparseTypeShort(SgTypeShort*, SgUnparse_Info &)   { curprint("short"); }
+void Unparse_Java::unparseTypeInt(SgTypeInt*, SgUnparse_Info &)       { curprint("int"); }
+void Unparse_Java::unparseTypeLong(SgTypeLong*, SgUnparse_Info &)     { curprint("long"); }
+void Unparse_Java::unparseTypeFloat(SgTypeFloat*, SgUnparse_Info &)   { curprint("float"); }
+void Unparse_Java::unparseTypeDouble(SgTypeDouble*, SgUnparse_Info &) { curprint("double"); }
+void Unparse_Java::unparseTypeBool(SgTypeBool*, SgUnparse_Info &)     { curprint("boolean"); }

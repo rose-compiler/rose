@@ -153,7 +153,7 @@ cout.flush();
 //  the excessive printing of parenthesis). 
 //-----------------------------------------------------------------------------------
 void 
-Unparse_Java::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info)
+Unparse_Java::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info &)
    {
      ASSERT_not_null(con_init);
   /* code inserted from specification */
@@ -407,7 +407,7 @@ Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_In
    }
 
 void
-Unparse_Java::unparseName(SgName name, SgUnparse_Info& info)
+Unparse_Java::unparseName(SgName name, SgUnparse_Info &)
    {
         curprint(name.getString());
    }
@@ -486,7 +486,7 @@ Unparse_Java::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnparse
    }
 
 void
-Unparse_Java::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(stmt);
      ASSERT_not_null(namespaceAliasDeclaration);
@@ -500,14 +500,14 @@ Unparse_Java::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, SgUn
    }
 
 void
-Unparse_Java::unparseUsingDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseUsingDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgUsingDirectiveStatement* usingDirective = isSgUsingDirectiveStatement(stmt);
      ASSERT_not_null(usingDirective);
    }
 
 void
-Unparse_Java::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgUsingDeclarationStatement* usingDeclaration = isSgUsingDeclarationStatement(stmt);
      ASSERT_not_null(usingDeclaration);
@@ -518,7 +518,7 @@ Unparse_Java::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse_Inf
    }
 
 void 
-Unparse_Java::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, SgUnparse_Info &)
    {
      SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = isSgTemplateInstantiationDirectiveStatement(stmt);
      ASSERT_not_null(templateInstantiationDirective);
@@ -529,7 +529,7 @@ Unparse_Java::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, SgUn
 
 
 void
-Unparse_Java::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnparse_Info &)
    {
      SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(stmt);
      ASSERT_not_null(templateInstantiationDeclaration);
@@ -554,7 +554,7 @@ Unparse_Java::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnparse
 
 
 void
-Unparse_Java::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info &)
    {
      SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = 
           isSgTemplateInstantiationFunctionDecl(stmt);
@@ -580,7 +580,7 @@ Unparse_Java::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stmt, S
    }
 
 void
-Unparse_Java::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info &)
    {
   // Rules for output of member templates functions:
   //  1) When we unparse the template declaration as a string EDG removes the member 
@@ -916,7 +916,7 @@ Unparse_Java::unparseExceptionSpecification(const SgTypePtrList& exceptionSpecif
 
 
 void
-Unparse_Java::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseFuncDeclStmt(SgStatement*, SgUnparse_Info &)
    {
      ROSE_ASSERT(!"Unexpected function declaration. All java functions should be SgMemberFunctions");
    }
@@ -1103,13 +1103,6 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          curprint(") ");
          curprint(exception_attribute != NULL ?  ("throws " + exception_attribute -> expression + " ").c_str() : "");
          SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
-//
-// charles4 10/10/2011: For some reason, when either of the 2 entry points below are invoked,
-// the body of the function is not processed for the generated constructor... Why?
-//
-//     unparseStatement(function_definition, info);
-//     unparseFuncDefnStmt(function_definition, info);
-//
          unparseBasicBlockStmt(function_definition -> get_body(), info);
      }
 
@@ -1141,17 +1134,17 @@ Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
 
 void
-Unparse_Java::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgVariableDefinition* vardefn_stmt = isSgVariableDefinition(stmt);
      ASSERT_not_null(vardefn_stmt);
    }
 
 void
-Unparse_Java::initializeDeclarationsFromParent ( 
+Unparse_Java::initializeDeclarationsFromParent(
    SgDeclarationStatement* declarationStatement,
-   SgClassDefinition* & cdefn,
-   SgNamespaceDefinitionStatement* & namespaceDefn, int debugSupport )
+   SgClassDefinition* & /*cdefn*/,
+   SgNamespaceDefinitionStatement* & /*namespaceDefn*/, int /*debugSupport*/)
    {
      ASSERT_not_null(declarationStatement);
    }
@@ -1351,7 +1344,7 @@ cout.flush();
 
 
 void
-Unparse_Java::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgEnumDeclaration* enum_stmt = isSgEnumDeclaration(stmt);
      ASSERT_not_null(enum_stmt);
@@ -1537,7 +1530,7 @@ Unparse_Java::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info &) {
   SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
   ASSERT_not_null(break_stmt);
   curprint ("break");
@@ -1549,7 +1542,7 @@ Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
 }
 
 void
-Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info &) {
   SgContinueStmt* continue_stmt = isSgContinueStmt(stmt);
   ASSERT_not_null(continue_stmt);
 
@@ -1602,7 +1595,7 @@ Unparse_Java::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
 
 void
-Unparse_Java::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgTypedefDeclaration* typedef_stmt = isSgTypedefDeclaration(stmt);
      ASSERT_not_null(typedef_stmt);
@@ -1614,7 +1607,7 @@ Unparse_Java::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateDeclStmt(SgStatement*, SgUnparse_Info &)
    {
    }
 
@@ -1628,30 +1621,30 @@ Unparse_Java::unparseDeclarationModifier(SgDeclarationModifier& mod, SgUnparse_I
 }
 
 void
-Unparse_Java::unparseAccessModifier(SgAccessModifier& mod, SgUnparse_Info& info) {
+Unparse_Java::unparseAccessModifier(SgAccessModifier& mod, SgUnparse_Info &) {
     if      (mod.isPublic())    curprint("public ");
     else if (mod.isProtected()) curprint("protected ");
     else if (mod.isPrivate())   curprint("private ");
 }
 
 void
-Unparse_Java::unparseStorageModifier(SgStorageModifier& mod, SgUnparse_Info& info) {
+Unparse_Java::unparseStorageModifier(SgStorageModifier& mod, SgUnparse_Info &) {
     if (mod.isStatic()) curprint("static ");
 }
 
 void
-Unparse_Java::unparseConstVolatileModifier(SgConstVolatileModifier& mod, SgUnparse_Info& info) {
+Unparse_Java::unparseConstVolatileModifier(SgConstVolatileModifier& mod, SgUnparse_Info &) {
     if (mod.isVolatile()) curprint("volatile ");
     if (mod.isJavaTransient()) curprint("transient ");
 }
 
 void
-Unparse_Java::unparseTypeModifier(SgTypeModifier& mod, SgUnparse_Info& info) {
+Unparse_Java::unparseTypeModifier(SgTypeModifier &mod, SgUnparse_Info &info) {
     unparseConstVolatileModifier(mod.get_constVolatileModifier(), info);
 }
 
 void
-Unparse_Java::unparseFunctionModifier(SgFunctionModifier& mod, SgUnparse_Info& info) {
+Unparse_Java::unparseFunctionModifier(SgFunctionModifier &mod, SgUnparse_Info &) {
     if (mod.isJavaSynchronized()) curprint("synchronized ");
     if (mod.isJavaNative()) curprint("native ");
     if (mod.isJavaStrictfp()) curprint("strictfp ");

@@ -30,7 +30,7 @@ using namespace Rose;
 
 // Unparse language keywords
 void FortranCodeGeneration_locatedNode::
-curprint_keyword(const std::string &keyword, SgUnparse_Info& /*info*/)
+curprint_keyword(const std::string &keyword, SgUnparse_Info &)
 {
   if (keywordsAreUpperCase) {
     // The default construction used below
@@ -68,7 +68,7 @@ FortranCodeGeneration_locatedNode::~FortranCodeGeneration_locatedNode()
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefExp* numeric_label_exp, SgUnparse_Info& info )
+FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport(SgLabelRefExp* numeric_label_exp, SgUnparse_Info &info)
    {
   // This is a supporting function for the unparseStatementNumbers, but can be called directly for statments
   // in the IR that can have botha starting yntax and an ending syntax, both of which can be labeled.  
@@ -143,7 +143,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info )
+FortranCodeGeneration_locatedNode::unparseStatementNumbers(SgStatement* stmt, SgUnparse_Info &info)
    {
   // This is a virtual function (called by the UnparseLanguageIndependentConstructs::unparseStatement() member function).
 
@@ -181,7 +181,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbers ( SgStatement* stmt, 
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // This function unparses the language specific parse not handled by the base class unparseStatement() member function
      ASSERT_not_null(stmt);
@@ -310,7 +310,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
 
 void
-FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFortranIncludeLine(SgStatement* stmt, SgUnparse_Info &info)
    {
   // This is support for the language specific include mechanism.
      if (info.outputFortranModFile())  // rmod file expands the include file but does not contain the include statement
@@ -365,7 +365,7 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseEntryStatement   (SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseEntryStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // This is much like a function declaration inside of an existing function
 
@@ -434,7 +434,7 @@ FortranCodeGeneration_locatedNode::unparseNamelistStatement (SgStatement* stmt, 
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseFormatItemList (SgFormatItemList* formatItemList, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFormatItemList(SgFormatItemList* formatItemList, SgUnparse_Info &info)
    {
      SgFormatItemPtrList & formatList = formatItemList->get_format_item_list();
      SgFormatItemPtrList::iterator i = formatList.begin();
@@ -515,7 +515,7 @@ FortranCodeGeneration_locatedNode::unparseFormatItemList (SgFormatItemList* form
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseFormatStatement (SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFormatStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Note that we use a SgStringVal in the SgFormatItem to hold a string which is not really 
   // interpreted as a literal in the Fortram grammar (I think).
@@ -531,7 +531,7 @@ FortranCodeGeneration_locatedNode::unparseFormatStatement (SgStatement* stmt, Sg
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseImportStatement (SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseImportStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgImportStatement* importStatement = isSgImportStatement(stmt);
      SgExpressionPtrList & importList = importStatement->get_import_list();
@@ -677,7 +677,7 @@ unparseDimensionStatement(SgStatement* stmt)
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(stmt);
 
@@ -953,7 +953,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
 
 
 void
-FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgImplicitStatement* implicitStatement = isSgImplicitStatement(stmt);
 
@@ -1024,7 +1024,7 @@ FortranCodeGeneration_locatedNode::unparseStatementFunctionStmt(SgStatement*, Sg
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Currently the simple "where (a) b = 0" is unparsed as "where (a) b = 0 endwhere"
 
@@ -1096,7 +1096,7 @@ FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseElseWhereStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseElseWhereStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgElseWhereStatement* elseWhereStatement = isSgElseWhereStatement(stmt);
      ASSERT_not_null(elseWhereStatement);
@@ -1124,7 +1124,7 @@ FortranCodeGeneration_locatedNode::unparseElseWhereStmt(SgStatement* stmt, SgUnp
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseNullifyStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseNullifyStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
        curprint("NULLIFY ");
        curprint("(");
@@ -1146,7 +1146,7 @@ FortranCodeGeneration_locatedNode::unparseNullifyStmt(SgStatement* stmt, SgUnpar
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseEquivalenceStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseEquivalenceStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // This organization is as a SgExprListExp of SgExprListExp of SgExpression objects.
   // This we can represent: "equivalence (i,j), (k,l,m,n)"
@@ -1191,7 +1191,7 @@ FortranCodeGeneration_locatedNode::unparseLabel ( SgLabelRefExp* exp )
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseArithmeticIfStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseArithmeticIfStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgArithmeticIfStatement* arithmeticIf = isSgArithmeticIfStatement(stmt);
      ASSERT_not_null(arithmeticIf);
@@ -1225,7 +1225,7 @@ FortranCodeGeneration_locatedNode::unparseAssignStmt(SgStatement*, SgUnparse_Inf
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseComputedGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseComputedGotoStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgComputedGotoStatement* computedGoto = isSgComputedGotoStatement(stmt);
 
@@ -1273,7 +1273,7 @@ FortranCodeGeneration_locatedNode::unparseAssignedGotoStmt(SgStatement*, SgUnpar
 //----------------------------------------------------------------------------
 
 void 
-FortranCodeGeneration_locatedNode::unparseModuleStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseModuleStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran module
 
@@ -1296,7 +1296,7 @@ FortranCodeGeneration_locatedNode::unparseModuleStmt(SgStatement* stmt, SgUnpars
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran program
 
@@ -1361,7 +1361,7 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
 //----------------------------------------------------------------------------
 
 void
-FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran interface statement
      SgInterfaceStatement* interfaceStatement = isSgInterfaceStatement(stmt);
@@ -1432,7 +1432,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgCommonBlock* commonBlock = isSgCommonBlock(stmt);
      ASSERT_not_null(commonBlock);
@@ -1525,7 +1525,7 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran variable declaration
 
@@ -1649,7 +1649,7 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
 //----------------------------------------------------------------------------
 
 void
-FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* bb, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* bb, SgUnparse_Info &info)
 {
   SgBasicBlock* block = isSgBasicBlock(bb);
   ASSERT_not_null(block);
@@ -1733,7 +1733,7 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
 
 
 void 
-FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponding to Fortran 'if'
   //
@@ -1867,7 +1867,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
 
 
 void
-FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
      ASSERT_not_null(forAllStatement);
@@ -1924,7 +1924,7 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
 
 
 void
-FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
      ASSERT_not_null(forAllStatement);
@@ -1987,7 +1987,7 @@ FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stm
 
 
 void 
-FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran 'do'
 
@@ -2075,7 +2075,7 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran 'DO WHILE' (pre-test)
 
@@ -2138,7 +2138,7 @@ FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran 'select'
      SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt);
@@ -2177,7 +2177,7 @@ FortranCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnpars
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran 'case'
      SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
@@ -2200,7 +2200,7 @@ FortranCodeGeneration_locatedNode::unparseCaseStmt(SgStatement* stmt, SgUnparse_
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran 'case default'
      SgDefaultOptionStmt* default_stmt = isSgDefaultOptionStmt(stmt);
@@ -2237,7 +2237,7 @@ FortranCodeGeneration_locatedNode::unparseBreakStmt(SgStatement* stmt, SgUnparse
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseContinueStmt(SgContinueStmt* continueStmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseContinueStmt(SgContinueStmt* continueStmt, SgUnparse_Info &info)
 {
   // This IR node corresponds to a Fortran 'CYCLE' statement,
   // because semantically the same as a C/C++ continue statement.
@@ -2252,14 +2252,14 @@ FortranCodeGeneration_locatedNode::unparseContinueStmt(SgContinueStmt* continueS
 }
 
 void
-FortranCodeGeneration_locatedNode::unparseFortranContinueStmt(SgFortranContinueStmt* /*stmt*/, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFortranContinueStmt(SgFortranContinueStmt* /*stmt*/, SgUnparse_Info &info)
 {
   curprint_keyword("CONTINUE", info);
   unp->cur.insert_newline(1);
 }
 
 void 
-FortranCodeGeneration_locatedNode::unparseLabelStmt(SgLabelStatement* labelStmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseLabelStmt(SgLabelStatement* labelStmt, SgUnparse_Info &info)
 {
   if (flangParser) {
     // The SgLabelStatement is used for the label
@@ -2278,7 +2278,7 @@ FortranCodeGeneration_locatedNode::unparseLabelStmt(SgLabelStatement* labelStmt,
 }
 
 void
-FortranCodeGeneration_locatedNode::unparseGotoStmt(SgGotoStatement* gotoStmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseGotoStmt(SgGotoStatement* gotoStmt, SgUnparse_Info &info)
 {
    ASSERT_not_null(gotoStmt);
    curprint_keyword("GOTO", info);
@@ -2311,7 +2311,7 @@ FortranCodeGeneration_locatedNode::unparseGotoStmt(SgGotoStatement* gotoStmt, Sg
 }
 
 void
-FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgProcessControlStatement* ctrl_stmt = isSgProcessControlStatement(stmt);
      ASSERT_not_null(ctrl_stmt);
@@ -2379,7 +2379,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // This IR node is the same for C and Fortran
      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
@@ -2406,7 +2406,7 @@ FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnpars
 //----------------------------------------------------------------------------
 
 void 
-FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgPrintStatement* printStatement = isSgPrintStatement(stmt);
@@ -2434,7 +2434,7 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
    }
 
 bool
-FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool skipUnit, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool skipUnit, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran IO control info
      SgIOStatement* io_stmt = isSgIOStatement(stmt);
@@ -2478,13 +2478,13 @@ FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool sk
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparse_IO_Control_Support( string name, SgExpression* expr, bool isLeadingEntry, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparse_IO_Control_Support(string name, SgExpression* expr, bool isLeadingEntry, SgUnparse_Info &info)
    {
      if (expr != nullptr)
         {
-          if (isLeadingEntry == false)
+          if (isLeadingEntry == false) {
                curprint(", ");
-
+          }
           curprint(name);
           curprint("=");
           unparseExpression(expr, info);
@@ -2492,7 +2492,7 @@ FortranCodeGeneration_locatedNode::unparse_IO_Control_Support( string name, SgEx
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgReadStatement* readStatement = isSgReadStatement(stmt);
@@ -2545,7 +2545,7 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgWriteStatement* writeStatement = isSgWriteStatement(stmt);
@@ -2582,7 +2582,7 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseOpenStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseOpenStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgOpenStatement* openStatement = isSgOpenStatement(stmt);
@@ -2614,7 +2614,7 @@ FortranCodeGeneration_locatedNode::unparseOpenStatement(SgStatement* stmt, SgUnp
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseCloseStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseCloseStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgCloseStatement* closeStatement = isSgCloseStatement(stmt);
@@ -2632,7 +2632,7 @@ FortranCodeGeneration_locatedNode::unparseCloseStatement(SgStatement* stmt, SgUn
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgInquireStatement* inquireStatement = isSgInquireStatement(stmt);
@@ -2708,7 +2708,7 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgFlushStatement* flushStatement = isSgFlushStatement(stmt);
@@ -2729,7 +2729,7 @@ FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUn
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgRewindStatement* rewindStatement = isSgRewindStatement(stmt);
@@ -2753,7 +2753,7 @@ FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgU
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgBackspaceStatement* backspaceStatement = isSgBackspaceStatement(stmt);
@@ -2776,7 +2776,7 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgEndfileStatement* endfileStatement = isSgEndfileStatement(stmt);
@@ -2800,7 +2800,7 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgWaitStatement* waitStatement = isSgWaitStatement(stmt);
@@ -2824,7 +2824,7 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
    }
 
 void
-FortranCodeGeneration_locatedNode::unparse_Image_Ctrl_Stmt_Support(SgImageControlStatement* stmt, bool print_comma, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparse_Image_Ctrl_Stmt_Support(SgImageControlStatement* stmt, bool print_comma, SgUnparse_Info &info)
    {
       ROSE_ASSERT(stmt);
 
@@ -2843,7 +2843,7 @@ FortranCodeGeneration_locatedNode::unparse_Image_Ctrl_Stmt_Support(SgImageContro
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgSyncAllStatement* sync_stmt = isSgSyncAllStatement(stmt);
      ROSE_ASSERT(sync_stmt);
@@ -2859,7 +2859,7 @@ FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, Sg
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseSyncImagesStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseSyncImagesStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgSyncImagesStatement* sync_stmt = isSgSyncImagesStatement(stmt);
      ROSE_ASSERT(sync_stmt);
@@ -2901,7 +2901,7 @@ FortranCodeGeneration_locatedNode::unparseSyncImagesStatement(SgStatement* stmt,
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseSyncMemoryStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseSyncMemoryStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgSyncMemoryStatement* sync_stmt = isSgSyncMemoryStatement(stmt);
      ROSE_ASSERT(sync_stmt);
@@ -2929,7 +2929,7 @@ FortranCodeGeneration_locatedNode::unparseSyncMemoryStatement(SgStatement* stmt,
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseSyncTeamStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseSyncTeamStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgSyncTeamStatement* sync_stmt = isSgSyncTeamStatement(stmt);
      ROSE_ASSERT(sync_stmt);
@@ -2959,7 +2959,7 @@ FortranCodeGeneration_locatedNode::unparseSyncTeamStatement(SgStatement* stmt, S
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseLockStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseLockStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgLockStatement* lock_stmt = isSgLockStatement(stmt);
      ROSE_ASSERT(lock_stmt);
@@ -2984,7 +2984,7 @@ FortranCodeGeneration_locatedNode::unparseLockStatement(SgStatement* stmt, SgUnp
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseUnlockStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseUnlockStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgUnlockStatement* unlock_stmt = isSgUnlockStatement(stmt);
      ROSE_ASSERT(unlock_stmt);
@@ -3003,7 +3003,7 @@ FortranCodeGeneration_locatedNode::unparseUnlockStatement(SgStatement* stmt, SgU
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran input/output statement
      SgAssociateStatement* associateStatement = isSgAssociateStatement(stmt);
@@ -3046,7 +3046,7 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
 //----------------------------------------------------------------------------
 
 void 
-FortranCodeGeneration_locatedNode::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info) 
+FortranCodeGeneration_locatedNode::unparseExprStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
   // Sage node corresponds to Fortran expression
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
@@ -3099,7 +3099,7 @@ FortranCodeGeneration_locatedNode::unparsePragmaDeclStmt (SgStatement* stmt, SgU
 //----------------------------------------------------------------------------
 
 void
-FortranCodeGeneration_locatedNode::genPUAutomaticStmts(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::genPUAutomaticStmts(SgStatement* stmt, SgUnparse_Info &info)
    {
   // For formatting purposes, pretend we have a small basic block
      unp->cur.format(stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
@@ -3113,7 +3113,7 @@ FortranCodeGeneration_locatedNode::genPUAutomaticStmts(SgStatement* stmt, SgUnpa
 
 void
 FortranCodeGeneration_locatedNode::unparseFuncArgs(SgInitializedNamePtrList* args, 
-                              SgUnparse_Info& info)
+                              SgUnparse_Info &info)
 {
   unparseInitNamePtrList(args, info);
 }
@@ -3139,7 +3139,7 @@ FortranCodeGeneration_locatedNode::unparseInitNamePtrList(SgInitializedNamePtrLi
 //----------------------------------------------------------------------------
 //  Declarations helpers
 //----------------------------------------------------------------------------
-void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info, bool oneVarOnly)
+void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUnparse_Info &info, bool oneVarOnly)
 {
     if (!oneVarOnly)
     {
@@ -3150,7 +3150,7 @@ void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUn
     }
 }
 
-void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, SgUnparse_Info& info, bool oneVarOnly)
+void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, SgUnparse_Info &info, bool oneVarOnly)
 {
     if (!oneVarOnly)
     {
@@ -3161,7 +3161,7 @@ void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, Sg
     }
 }
 
-void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info, bool oneVarOnly)
+void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUnparse_Info &info, bool oneVarOnly)
 {
     if (type->get_isCoArray())
     {
@@ -3209,7 +3209,7 @@ void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUn
 
 
 void
-FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info &info)
    {
   // DQ (9/22/2007): Note that this function does not use its SgStatement* stmt parameter!
 
@@ -3500,7 +3500,7 @@ FortranCodeGeneration_locatedNode::printStorageModifier(SgDeclarationStatement*,
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnparse_Info &info)
 {
   // Sage node corresponds to Fortran procedure program unit
 
@@ -3632,7 +3632,7 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
 }
 
 void
-FortranCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgFunctionDefinition* funcdefn_stmt = isSgFunctionDefinition(stmt);
      ASSERT_not_null(funcdefn_stmt);
@@ -3695,7 +3695,7 @@ FortranCodeGeneration_locatedNode::unparseFunctionParameterDeclaration(
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info &info)
    {
      ASSERT_not_null(funcdecl_stmt);
 
@@ -3723,7 +3723,7 @@ FortranCodeGeneration_locatedNode::unparseFunctionArgs(SgFunctionDeclaration* fu
 //  file information for each parameter.
 //-----------------------------------------------------------------------------------
 void
-FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info &info)
    {
      ASSERT_not_null(funcdecl_stmt);
 
@@ -3746,7 +3746,7 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgDerivedTypeStatement* classdecl_stmt = isSgDerivedTypeStatement(stmt);
      ASSERT_not_null(classdecl_stmt);
@@ -3863,7 +3863,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseClassDeclStmt_module(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseClassDeclStmt_module(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgModuleStatement* classdecl_stmt = isSgModuleStatement(stmt);
      ASSERT_not_null(classdecl_stmt);
@@ -3913,7 +3913,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_module(SgStatement* stmt
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
      ASSERT_not_null(classdefn_stmt);
@@ -4002,7 +4002,7 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgAllocateStatement* s = isSgAllocateStatement(stmt);
      SgExprListExp* exprList = s->get_expr_list();
@@ -4034,7 +4034,7 @@ FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, S
    }
  
 void
-FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgDeallocateStatement* s = isSgDeallocateStatement(stmt);
      SgExprListExp* exprList = s->get_expr_list();
@@ -4062,7 +4062,7 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
 
 
 void
-FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgCAFWithTeamStatement* withTeamStmt = isSgCAFWithTeamStatement(stmt);
      ASSERT_not_null(withTeamStmt);
@@ -4177,17 +4177,17 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
        }
      }
      
-#endif  // USE_RICE_FORTRAN_WRAPPING
+#endif // USE_RICE_FORTRAN_WRAPPING
 }
 
-void FortranCodeGeneration_locatedNode::unparseOmpPrefix     (SgUnparse_Info& info)
+void FortranCodeGeneration_locatedNode::unparseOmpPrefix(SgUnparse_Info &)
 {
   curprint(string ("!$omp "));
 }
 
 // Just skip nowait and copyprivate clauses for Fortran 
 void
-FortranCodeGeneration_locatedNode::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseOmpBeginDirectiveClauses (SgStatement* stmt, SgUnparse_Info &info)
 {
   ASSERT_not_null(stmt);
   // optional clauses
@@ -4208,7 +4208,7 @@ FortranCodeGeneration_locatedNode::unparseOmpBeginDirectiveClauses (SgStatement*
 
 // Only unparse nowait or copyprivate clauses here
 void
-FortranCodeGeneration_locatedNode::unparseOmpEndDirectiveClauses(SgStatement* stmt,     SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseOmpEndDirectiveClauses(SgStatement* stmt, SgUnparse_Info &info)
 {
   ASSERT_not_null(stmt);
   // optional clauses
@@ -4226,7 +4226,7 @@ FortranCodeGeneration_locatedNode::unparseOmpEndDirectiveClauses(SgStatement* st
   unp->u_sage->curprint_newline();
 }
 
-void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
+void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info &info)
 {
   ASSERT_not_null(stmt);
   unp->u_sage->curprint_newline();
@@ -4301,7 +4301,7 @@ void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgS
   } // end switch
 }
 
-void FortranCodeGeneration_locatedNode::unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info)
+void FortranCodeGeneration_locatedNode::unparseOmpDoStatement(SgStatement* stmt, SgUnparse_Info &info)
 {
   ASSERT_not_null(stmt);
   SgOmpDoStatement * d_stmt = isSgOmpDoStatement (stmt);

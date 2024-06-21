@@ -54,6 +54,7 @@ namespace
 #endif /* FOR_DEBUG_ONLY */
 
 
+#if FOR_DEBUG_ONLY
   inline
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
   {
@@ -62,6 +63,7 @@ namespace
 
     return nullptr;
   }
+#endif /* FOR_DEBUG_ONLY */
 
 
   /// Track visible renaming and using declarations
@@ -518,7 +520,7 @@ namespace
     const SgDeclarationStatement* dcl = isSgDeclarationStatement(&n);
     const SgScopeStatement*       dclscope = dcl ? dcl->get_scope() : nullptr;
 
-    auto pred = [&dclname, &n, dclscope, dcl](const SgScopeStatement* scope)->bool
+    auto pred = [&dclname, &n, dclscope](const SgScopeStatement* scope)->bool
                 {
                   const SgSymbol* sym = scope->lookup_symbol(dclname, nullptr, nullptr);
                   bool            shadowed = (sym != nullptr);
@@ -6709,8 +6711,6 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
   // DQ (9/24/2012): Track the recursive depth in computing name qualification for template arguments of template instantiations used as template arguments.
      static int recursiveDepth = 0;
-
-  // Used for debugging...
      int counter = 0;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)

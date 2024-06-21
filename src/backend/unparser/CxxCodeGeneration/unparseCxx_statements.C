@@ -171,7 +171,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end,
    SgUnparse_Info & info,
-   bool unparseOnlyWhitespace, int start_offset, int end_offset )
+   bool unparseOnlyWhitespace, int /*start_offset*/, int end_offset )
    {
   // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
   // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
@@ -11476,7 +11476,7 @@ Unparse_ExprStmt::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) 
+Unparse_ExprStmt::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
      ASSERT_not_null(break_stmt);
@@ -11485,7 +11485,7 @@ Unparse_ExprStmt::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) 
+Unparse_ExprStmt::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgContinueStmt* continue_stmt = isSgContinueStmt(stmt);
      ASSERT_not_null(continue_stmt);
@@ -12076,7 +12076,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
    }
 
 void
-Unparse_ExprStmt::unparseNonrealDecl(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseNonrealDecl(SgStatement* stmt, SgUnparse_Info &)
    {
      SgNonrealDecl * nrdecl = isSgNonrealDecl(stmt);
      ASSERT_not_null(nrdecl);
@@ -13522,7 +13522,7 @@ Unparse_ExprStmt::unparseUpcForAllStatement(SgStatement* stmt, SgUnparse_Info& i
 
 
 // OpenMP support 
-void Unparse_ExprStmt::unparseOmpPrefix(SgUnparse_Info& info)
+void Unparse_ExprStmt::unparseOmpPrefix(SgUnparse_Info &)
 {
   curprint(string ("#pragma omp "));
 }
@@ -13621,7 +13621,6 @@ Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnpars
 
      unparseExpression(staticAssertionDeclaration->get_condition(), info);
      curprint(",\"");
-  // unparseExpression(staticAssertionDeclaration->get_string_literal(), info);
      curprint(staticAssertionDeclaration->get_string_literal());
      curprint("\");");
 
@@ -13634,7 +13633,7 @@ Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnpars
 
 
 void
-Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnparse_Info &)
    {
   // DQ (8/17/2014): Adding support for Microsoft attributes.
      SgMicrosoftAttributeDeclaration* microsoftAttributeDeclaration = isSgMicrosoftAttributeDeclaration(stmt);
@@ -13643,13 +13642,7 @@ Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnp
      curprint("[");
      curprint(microsoftAttributeDeclaration->get_attribute_string());
      curprint("]");
-
-#if 0
-      printf ("Exiting as a test! (unparseMicrosoftAttributeDeclaration not implemented) \n");
-      ROSE_ABORT();
-#endif
    }
-
 
  // EOF
 

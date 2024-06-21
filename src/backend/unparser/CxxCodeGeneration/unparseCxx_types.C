@@ -1072,10 +1072,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
 
 void
-Unparse_Type::unparseNullptrType(SgType* type, SgUnparse_Info& info)
+Unparse_Type::unparseNullptrType(SgType*, SgUnparse_Info &)
    {
-  // DQ (7/31/2014): Adding support for nullptr constant expression and its associated type.
-
      curprint("std::nullptr_t");
    }
 
@@ -1083,16 +1081,9 @@ Unparse_Type::unparseNullptrType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseDeclType(SgType* type, SgUnparse_Info& info)
    {
-  // DQ (8/2/2014): Adding support for C++11 decltype.
-
      SgDeclType* decltype_node = isSgDeclType(type);
      ASSERT_not_null(decltype_node);
-
      ASSERT_not_null(decltype_node->get_base_expression());
-
-#if 0
-     printf ("In Unparse_Type::unparseDeclType(): decltype_node = %p \n",decltype_node);
-#endif
 
      if (info.isTypeFirstPart() == true)
         {
@@ -4752,11 +4743,10 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 
 
 void
-Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
+Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info &)
    {
      SgTemplateType* template_type = isSgTemplateType(type);
      ASSERT_not_null(template_type);
-
      ROSE_ABORT();
    }
 

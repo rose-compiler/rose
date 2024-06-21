@@ -1715,7 +1715,7 @@ IncludedFilesUnparser::collectAdditionalFilesToUnparse()
 #endif
    }
 
-void IncludedFilesUnparser::collectNewFilesToUnparse(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
+void IncludedFilesUnparser::collectNewFilesToUnparse(const string& /*includedFile*/, PreprocessingInfo* includingPreprocessingInfo)
    {
 #if 0
      printf ("In collectNewFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
@@ -1892,7 +1892,7 @@ IncludedFilesUnparser::collectAdditionalListOfHeaderFilesToCopy()
    }
 
 
-void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
+void IncludedFilesUnparser::collectNewFilesToCopy(const string& /*includedFile*/, PreprocessingInfo* includingPreprocessingInfo)
    {
 #if 0
      printf ("In collectNewFilesToCopy(): filesToCopy.size() = %zu includingPreprocessingInfo->getString() = %s \n",filesToCopy.size(),includingPreprocessingInfo->getString().c_str());

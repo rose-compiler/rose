@@ -1029,7 +1029,7 @@ UnparseLanguageIndependentConstructs::outputCompilerGeneratedStatements( SgUnpar
 
 // void UnparseLanguageIndependentConstructs::unparseStatementNumbers ( SgStatement* stmt )
 void
-UnparseLanguageIndependentConstructs::unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info & info )
+UnparseLanguageIndependentConstructs::unparseStatementNumbers(SgStatement* stmt, SgUnparse_Info &)
    {
   // This is the base class (which is called only for C/C++ code generation).
 
@@ -1646,7 +1646,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
    SgStatement* stmt,
    SgUnparse_Info & info,
    bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream,
-   unparsed_as_enum_type unparsed_as)
+   unparsed_as_enum_type /*unparsed_as*/)
    {
   // This function returns non-zero value if the input statement can be wholely unparsed using the token stream (not partially and not from the AST).
 
@@ -5562,7 +5562,7 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseNullExpression (SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseNullExpression (SgExpression*, SgUnparse_Info &)
    {
   // Nothing to do here! (unless we need a ";" or something)
    }
@@ -6052,7 +6052,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
 
 void
-UnparseLanguageIndependentConstructs::unparseFuncTblStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseFuncTblStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgFunctionTypeTable* functbl_stmt = isSgFunctionTypeTable(stmt);
      ASSERT_not_null(functbl_stmt);
@@ -7593,7 +7593,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
 
 bool
-UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op, bool current_function_call_uses_operator_syntax, bool parent_function_call_uses_operator_syntax )
+UnparseLanguageIndependentConstructs::isRequiredOperator(SgBinaryOp* binary_op, bool /*current_function_call_uses_operator_syntax*/, bool parent_function_call_uses_operator_syntax)
    {
   // DQ (4/14/2013): The mixing of overloaded operator names and operator syntax has been a bit complex.
   // There are special cases that are especially troubling, so this code tries to handle this.
@@ -7789,7 +7789,7 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
 
 
 void
-UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgUnparse_Info &)
    {
      ASSERT_not_null(expr);
      curprint("nullptr");
@@ -7859,7 +7859,7 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseShortVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseShortVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgShortVal* short_val = isSgShortVal(expr);
      ASSERT_not_null(short_val);
@@ -7875,7 +7875,7 @@ UnparseLanguageIndependentConstructs::unparseShortVal(SgExpression* expr, SgUnpa
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseCharVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseCharVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgCharVal* char_val = isSgCharVal(expr);
      ASSERT_not_null(char_val);
@@ -7971,7 +7971,7 @@ UnparseLanguageIndependentConstructs::unparseCharVal(SgExpression* expr, SgUnpar
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseUCharVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseUCharVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgUnsignedCharVal* uchar_val = isSgUnsignedCharVal(expr);
      ASSERT_not_null(uchar_val);
@@ -7989,7 +7989,7 @@ UnparseLanguageIndependentConstructs::unparseUCharVal(SgExpression* expr, SgUnpa
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgWcharVal* wchar_val = isSgWcharVal(expr);
      ASSERT_not_null(wchar_val);
@@ -8012,13 +8012,11 @@ UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnpa
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnparse_Info &)
    {
      SgChar16Val* char_val = isSgChar16Val(expr);
      ASSERT_not_null(char_val);
 
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
-  // curprint ( (int) wchar_val->get_value();
      if (char_val->get_valueString() == "")
         {
           curprint (tostring(char_val->get_value()));
@@ -8030,13 +8028,11 @@ UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnp
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnparse_Info &)
    {
      SgChar32Val* char_val = isSgChar32Val(expr);
      ASSERT_not_null(char_val);
 
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
-  // curprint ( (int) wchar_val->get_value();
      if (char_val->get_valueString() == "")
         {
           curprint (tostring(char_val->get_value()));
@@ -8050,7 +8046,7 @@ UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnp
 #if 0
 // Because of the details of Fortran string, this can't be language independent.
 void
-UnparseLanguageIndependentConstructs::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseStringVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgStringVal* str_val = isSgStringVal(expr);
      ASSERT_not_null(str_val);
@@ -8114,7 +8110,7 @@ UnparseLanguageIndependentConstructs::unparseStringVal(SgExpression* expr, SgUnp
 
 
 void
-UnparseLanguageIndependentConstructs::unparseUShortVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseUShortVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgUnsignedShortVal* ushort_val = isSgUnsignedShortVal(expr);
      ASSERT_not_null(ushort_val);
@@ -8137,7 +8133,7 @@ UnparseLanguageIndependentConstructs::unparseUShortVal(SgExpression* expr, SgUnp
 
 
 void
-UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnparse_Info &info)
    {
      SgEnumVal* enum_val = isSgEnumVal(expr);
      ASSERT_not_null(enum_val);
@@ -8304,7 +8300,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 
 void
-UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgIntVal* int_val = isSgIntVal(expr);
      ASSERT_not_null(int_val);
@@ -8321,7 +8317,7 @@ UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnpars
 
 
 void
-UnparseLanguageIndependentConstructs::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseUIntVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgUnsignedIntVal* uint_val = isSgUnsignedIntVal(expr);
      ASSERT_not_null(uint_val);
@@ -8337,7 +8333,7 @@ UnparseLanguageIndependentConstructs::unparseUIntVal(SgExpression* expr, SgUnpar
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseLongIntVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgLongIntVal* longint_val = isSgLongIntVal(expr);
      ASSERT_not_null(longint_val);
@@ -8353,7 +8349,7 @@ UnparseLanguageIndependentConstructs::unparseLongIntVal(SgExpression* expr, SgUn
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgLongLongIntVal* longlongint_val = isSgLongLongIntVal(expr);
      ASSERT_not_null(longlongint_val);
@@ -8369,7 +8365,7 @@ UnparseLanguageIndependentConstructs::unparseLongLongIntVal(SgExpression* expr, 
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgUnsignedLongLongIntVal* ulonglongint_val = isSgUnsignedLongLongIntVal(expr);
      ASSERT_not_null(ulonglongint_val);
@@ -8385,7 +8381,7 @@ UnparseLanguageIndependentConstructs::unparseULongLongIntVal(SgExpression* expr,
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseULongIntVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseULongIntVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgUnsignedLongVal* ulongint_val = isSgUnsignedLongVal(expr);
      ASSERT_not_null(ulongint_val);
@@ -8401,7 +8397,7 @@ UnparseLanguageIndependentConstructs::unparseULongIntVal(SgExpression* expr, SgU
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgFloatVal* float_val = isSgFloatVal(expr);
      ASSERT_not_null(float_val);
@@ -8474,7 +8470,7 @@ UnparseLanguageIndependentConstructs::zeroRemainder( long double doubleValue )
 #endif
 
 void
-UnparseLanguageIndependentConstructs::unparseDoubleVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseDoubleVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgDoubleVal* dbl_val = isSgDoubleVal(expr);
      ASSERT_not_null(dbl_val);
@@ -8537,7 +8533,7 @@ UnparseLanguageIndependentConstructs::unparseDoubleVal(SgExpression* expr, SgUnp
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info &)
    {
      SgLongDoubleVal* longdbl_val = isSgLongDoubleVal(expr);
      ASSERT_not_null(longdbl_val);
@@ -8822,7 +8818,7 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseDefineDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseDefineDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgDefineDirectiveStatement* directive = isSgDefineDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8846,7 +8842,7 @@ UnparseLanguageIndependentConstructs::unparseDefineDirectiveStatement (SgStateme
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseUndefDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseUndefDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgUndefDirectiveStatement* directive = isSgUndefDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8860,7 +8856,7 @@ UnparseLanguageIndependentConstructs::unparseUndefDirectiveStatement (SgStatemen
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseIfdefDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseIfdefDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgIfdefDirectiveStatement* directive = isSgIfdefDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8874,7 +8870,7 @@ UnparseLanguageIndependentConstructs::unparseIfdefDirectiveStatement (SgStatemen
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseIfndefDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseIfndefDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgIfndefDirectiveStatement* directive = isSgIfndefDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8888,7 +8884,7 @@ UnparseLanguageIndependentConstructs::unparseIfndefDirectiveStatement (SgStateme
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseDeadIfDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseDeadIfDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgDeadIfDirectiveStatement* directive = isSgDeadIfDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8902,7 +8898,7 @@ UnparseLanguageIndependentConstructs::unparseDeadIfDirectiveStatement (SgStateme
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseIfDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseIfDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgIfDirectiveStatement* directive = isSgIfDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8920,7 +8916,7 @@ UnparseLanguageIndependentConstructs::unparseIfDirectiveStatement (SgStatement* 
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseElseDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseElseDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgElseDirectiveStatement* directive = isSgElseDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8934,7 +8930,7 @@ UnparseLanguageIndependentConstructs::unparseElseDirectiveStatement (SgStatement
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseElseifDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseElseifDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgElseifDirectiveStatement* directive = isSgElseifDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8948,7 +8944,7 @@ UnparseLanguageIndependentConstructs::unparseElseifDirectiveStatement (SgStateme
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseEndifDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseEndifDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgEndifDirectiveStatement* directive = isSgEndifDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8962,7 +8958,7 @@ UnparseLanguageIndependentConstructs::unparseEndifDirectiveStatement (SgStatemen
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseLineDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseLineDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgLineDirectiveStatement* directive = isSgLineDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8976,7 +8972,7 @@ UnparseLanguageIndependentConstructs::unparseLineDirectiveStatement (SgStatement
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseWarningDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseWarningDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgWarningDirectiveStatement* directive = isSgWarningDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -8990,7 +8986,7 @@ UnparseLanguageIndependentConstructs::unparseWarningDirectiveStatement (SgStatem
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseErrorDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseErrorDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgErrorDirectiveStatement* directive = isSgErrorDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -9004,7 +9000,7 @@ UnparseLanguageIndependentConstructs::unparseErrorDirectiveStatement (SgStatemen
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseEmptyDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseEmptyDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgEmptyDirectiveStatement* directive = isSgEmptyDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -9018,7 +9014,7 @@ UnparseLanguageIndependentConstructs::unparseEmptyDirectiveStatement (SgStatemen
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseIdentDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseIdentDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgIdentDirectiveStatement* directive = isSgIdentDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -9032,7 +9028,7 @@ UnparseLanguageIndependentConstructs::unparseIdentDirectiveStatement (SgStatemen
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseIncludeNextDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseIncludeNextDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgIncludeNextDirectiveStatement* directive = isSgIncludeNextDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -9046,7 +9042,7 @@ UnparseLanguageIndependentConstructs::unparseIncludeNextDirectiveStatement (SgSt
    }
 
 void
-UnparseLanguageIndependentConstructs::unparseLinemarkerDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::unparseLinemarkerDirectiveStatement (SgStatement* stmt, SgUnparse_Info &)
    {
      SgLinemarkerDirectiveStatement* directive = isSgLinemarkerDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -9059,7 +9055,7 @@ UnparseLanguageIndependentConstructs::unparseLinemarkerDirectiveStatement (SgSta
      unp->u_sage->curprint_newline();
    }
 
-void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* clause, SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* clause, SgUnparse_Info &)
 {
   ASSERT_not_null(clause);
   SgOmpDefaultClause * c = isSgOmpDefaultClause(clause);
@@ -9095,7 +9091,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
   curprint(string(")"));
 }
 
-void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause* clause, SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause* clause, SgUnparse_Info &)
 {
   ASSERT_not_null(clause);
   SgOmpProcBindClause * c = isSgOmpProcBindClause(clause);
@@ -9126,7 +9122,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause*
   curprint(string(")"));
 }
 
-void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* clause, SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* clause, SgUnparse_Info &)
 {
   ASSERT_not_null(clause);
   SgOmpAtomicClause * c = isSgOmpAtomicClause(clause);
@@ -9163,7 +9159,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* c
 
 
 
-void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info &info)
 {
   ASSERT_not_null(clause);
   SgOmpScheduleClause* c = isSgOmpScheduleClause(clause);
@@ -9792,7 +9788,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
 
 //! This is not intended to be directly called anytime.
 //  Individual languages should have implemented their own OpenMP prefixes
-void UnparseLanguageIndependentConstructs::unparseOmpPrefix(SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpPrefix(SgUnparse_Info &)
 {
   cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpPrefix() should not be called directly!"<<endl;
   cerr<<"Individual languages should have implemented their own OpenMP prefixes."<<endl;
@@ -10045,14 +10041,14 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
 // This is necessary since some clauses should only appear with the begin part of a directive
 // C/C++ derivation: unparse all clauses attached to the directive
 // Fortran derivation: unparse most clauses except a few nowait, copyprivate clauses which should appear with the end directive
-void UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses      (SgStatement* stmt,     SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses(SgStatement*, SgUnparse_Info &)
 {
   cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses() should not be called directly"<<endl;
   ROSE_ABORT ();
 }
 
 // Output the corresponding end directive text for an OpenMP AST nodes for directive
-void UnparseLanguageIndependentConstructs::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpEndDirectivePrefixAndName(SgStatement* stmt, SgUnparse_Info &)
 {
   ASSERT_not_null(stmt);
   // This one should do nothing by default
@@ -10060,14 +10056,14 @@ void UnparseLanguageIndependentConstructs::unparseOmpEndDirectivePrefixAndName (
 }
 
 // Default behavior for unparsing clauses appearing with 'end xxx'
-void UnparseLanguageIndependentConstructs::unparseOmpEndDirectiveClauses        (SgStatement* stmt,     SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpEndDirectiveClauses(SgStatement*, SgUnparse_Info &)
 {
   // it should not do anything here , and for C/C++ subclass
   // Derived implementation in Fortran should do something.
 }
 
 // This is a catch-all helper function
-void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStatement* stmt,     SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement(SgStatement* stmt, SgUnparse_Info& info)
 {
   ASSERT_not_null(stmt);
   // unparse the begin directive
@@ -10840,26 +10836,17 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
    }
 
 bool
-UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
+UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info &)
    {
      ASSERT_not_null(expr);
 
   // Rasmussen (3/25/2020): For unparsing of Jovial Conversion operators (casts)
      if (SageInterface::is_Jovial_language())
         {
-        // DQ (11/12/2020): Eliminate compiler warning.
-        // if (SgCastExp* cast_expr = isSgCastExp(expr)) {
-           if (isSgCastExp(expr) != NULL) {
+           if (isSgCastExp(expr) != nullptr) {
               return false;
            }
         }
-
-#if 0
-     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
-        {
-          return false;
-        }
-#endif
 
      SgExpression* parentExpr = isSgExpression(expr->get_parent());
 

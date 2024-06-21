@@ -900,7 +900,7 @@ GetFirstOperand(SgExpression* expr)
 //  such that 17 has the highest precedence and 1 has the lowest precedence.
 //-----------------------------------------------------------------------------------
 int
-GetPrecedence(int variant)
+GetPrecedence(int)
    {
      ROSE_ASSERT(!"Deprecated. Use UnparseLanguageIndependentConstructs::getPrecedence instead");
      return -1;
@@ -2513,7 +2513,7 @@ Unparse_MOD_SAGE::printSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_
 
 
 void
-Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_Info& info)
+Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_Info &)
    {
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
@@ -2619,7 +2619,7 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
 
 
 void
-Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUnparse_Info &)
    {
   // DQ (12/31/2013): Added support for missing attributes on types within declarations (in unparsed code).
 
@@ -2676,7 +2676,7 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
 
 
 void
-Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info &)
    {
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
@@ -2937,7 +2937,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
 
 void
-Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info &)
    {
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
      if (functionDeclaration != NULL)

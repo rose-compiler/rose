@@ -57,7 +57,7 @@ UnparseJovial::unparseType(SgType* type, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
+UnparseJovial::unparseTypeDesc(SgType* type, SgUnparse_Info &)
    {
      ASSERT_not_null(type);
 
@@ -299,7 +299,7 @@ UnparseJovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& 
   }
 
 void
-UnparseJovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info &)
   {
      ROSE_ASSERT(type_def);
      curprint(type_def->get_name());

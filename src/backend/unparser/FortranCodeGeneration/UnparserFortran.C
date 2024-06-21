@@ -2,6 +2,6 @@
 
 #include "UnparserFortran.h"
 
-bool UnparserFortran::unparse_statement(SgStatement* stmt, SgUnparse_Info &info) {
+bool UnparserFortran::unparse_statement(SgStatement*, SgUnparse_Info &) {
   return true;
 }

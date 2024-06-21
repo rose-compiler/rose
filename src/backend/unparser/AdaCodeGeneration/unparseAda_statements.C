@@ -1373,7 +1373,7 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgAdaTerminateStmt& n)
+    void handle(SgAdaTerminateStmt&)
     {
       prn("terminate");
       prn(STMT_SEP);

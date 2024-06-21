@@ -1032,7 +1032,7 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
                     MemoryMap::Segment::staticInstance(&data[0], data.size(), MemoryMap::READABLE|MemoryMap::EXECUTABLE,
                                                        "static data block"));
         unparser->set_prefix_format(args.unparser->get_prefix_format());
-        rose_addr_t offset=0, nskipped=0;
+        rose_addr_t offset=0;
         while (offset < data.size()) {
             rose_addr_t insn_va = args.data->get_address() + offset;
             SgAsmInstruction *insn = NULL;
@@ -1043,7 +1043,6 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
                 SageInterface::deleteAST(insn);
             } catch (...) {
                 offset += 1;
-                ++nskipped;
             }
         }
     }
@@ -1178,12 +1177,10 @@ AsmUnparser::FunctionSuccessors::operator()(bool enabled, const FunctionArgs &ar
         CG_FunctionMap::const_iterator fmi = args.unparser->cg_functionmap.find(args.func);
         if (fmi!=args.unparser->cg_functionmap.end()) {
             CG_Vertex vertex = fmi->second;
-            size_t nsuccs = 0;
             boost::graph_traits<CG>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(vertex, args.unparser->cg); ei!=ei_end; ++ei) {
                 SgAsmFunction *succ = get(boost::vertex_name, args.unparser->cg, target(*ei, args.unparser->cg));
                 if (succ) {
-                    ++nsuccs;
                     args.output <<args.unparser->line_prefix()
                                 <<"This function calls " <<StringUtility::addrToString(succ->get_entryVa());
                     std::string fname = succ->get_name();

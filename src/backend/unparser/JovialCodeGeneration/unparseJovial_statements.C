@@ -255,7 +255,7 @@ UnparseJovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 //----------------------------------------------------------------------------
 
 void 
-UnparseJovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info &)
    {
      SgJovialCompoolStatement* compool = isSgJovialCompoolStatement(stmt);
      ASSERT_not_null(compool);
@@ -809,7 +809,7 @@ UnparseJovial::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
   }
 
 void 
-UnparseJovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info &info)
   {
  // Sage node corresponding to Jovial DefaultOption rule
     SgDefaultOptionStmt* default_stmt = isSgDefaultOptionStmt(stmt);
@@ -828,7 +828,7 @@ UnparseJovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
   }
 
 void
-UnparseJovial::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseBreakStmt(SgStatement*, SgUnparse_Info &)
   {
  // This IR node is compiler generated for no FALLTHRU option in CaseAlternative rule.
  // It should not be unparsed, unparseCaseOptionStmt and unparseDefaultStmt will
@@ -884,7 +884,7 @@ UnparseJovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info
    }
 
 void
-UnparseJovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info &)
    {
       SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
       ASSERT_not_null(return_stmt);
@@ -1346,7 +1346,7 @@ UnparseJovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info &)
 {
   // unparse comments preceding the statement
   const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
@@ -1361,7 +1361,7 @@ UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info)
 }
 
 void
-UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info& info, bool newline)
+UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info &, bool newline)
 {
   // unparse comments after the statement
   const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();

@@ -430,8 +430,7 @@ Unparse_Python::unparseBaseClassPtrList(SgBaseClassPtrList& inheritances,
 }
 
 void
-Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
-                                SgUnparse_Info& info)
+Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op, SgUnparse_Info &info)
 {
     unparseExpression(bin_op->get_lhs_operand(), info);
     unparseOperator(bin_op->variantT());
@@ -439,15 +438,13 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
 }
 
 void
-Unparse_Python::unparseBreakStmt(SgBreakStmt* break_stmt,
-                                 SgUnparse_Info& info)
+Unparse_Python::unparseBreakStmt(SgBreakStmt*, SgUnparse_Info &)
 {
     curprint("break");
 }
 
 void
-Unparse_Python::unparseCallExpression(SgCallExpression* func_call,
-                                       SgUnparse_Info& info)
+Unparse_Python::unparseCallExpression(SgCallExpression* func_call, SgUnparse_Info &info)
 {
     unparseExpression(func_call->get_function(), info);
     curprint("(");
@@ -456,8 +453,7 @@ Unparse_Python::unparseCallExpression(SgCallExpression* func_call,
 }
 
 void
-Unparse_Python::unparseCatchOptionStmt(SgCatchOptionStmt* catch_stmt,
-                                       SgUnparse_Info& info)
+Unparse_Python::unparseCatchOptionStmt(SgCatchOptionStmt* catch_stmt, SgUnparse_Info &info)
 {
     if (catch_stmt->get_condition() != NULL) {
         curprint_indented("except ", info);
@@ -496,15 +492,13 @@ Unparse_Python::unparseClassDeclaration(SgClassDeclaration* class_decl,
 }
 
 void
-Unparse_Python::unparseClassDefinition(SgClassDefinition* class_def,
-                                       SgUnparse_Info& info)
+Unparse_Python::unparseClassDefinition(SgClassDefinition* class_def, SgUnparse_Info& info)
 {
     unparseAsSuite(class_def, info);
 }
 
 void
-Unparse_Python::unparseClassNameRefExp(SgClassNameRefExp* class_ref,
-                                       SgUnparse_Info& info)
+Unparse_Python::unparseClassNameRefExp(SgClassNameRefExp* class_ref, SgUnparse_Info &)
 {
     curprint( class_ref->get_symbol()->get_name().getString() );
 }
@@ -547,25 +541,20 @@ Unparse_Python::unparseDictionaryComprehension(SgDictionaryComprehension* dict_c
     curprint("}");
 }
 
-// DQ (3/28/2017): This should take a SgExpression* to match the base class virtual function signature.
-// Fixing this eliminates a warning in Clang.
-// void Unparse_Python::unparseDoubleVal(SgDoubleVal* d_val, SgUnparse_Info& info)
 void
-Unparse_Python::unparseDoubleVal(SgExpression* e, SgUnparse_Info& info)
+Unparse_Python::unparseDoubleVal(SgExpression* expr, SgUnparse_Info &)
 {
- // DQ (3/28/2017): Adding this here so that the function parameter can be SgExpression*.
-    SgDoubleVal* d_val = isSgDoubleVal(e);
-    ASSERT_not_null(d_val);
+    SgDoubleVal* dVal = isSgDoubleVal(expr);
+    ASSERT_not_null(dVal);
 
     stringstream code;
     code.setf( ios::showpoint );
-    code << d_val->get_value();
+    code << dVal->get_value();
     curprint( code.str() );
 }
 
 void
-Unparse_Python::unparseComplexVal(SgComplexVal* value,
-                                  SgUnparse_Info& info)
+Unparse_Python::unparseComplexVal(SgComplexVal* value, SgUnparse_Info &info)
 {
     unparseExpression(value->get_real_value(), info);
     curprint("+");
@@ -574,15 +563,13 @@ Unparse_Python::unparseComplexVal(SgComplexVal* value,
 }
 
 void
-Unparse_Python::unparseContinueStmt(SgContinueStmt* continue_stmt,
-                                    SgUnparse_Info& info)
+Unparse_Python::unparseContinueStmt(SgContinueStmt*, SgUnparse_Info &)
 {
     curprint("continue");
 }
 
 void
-Unparse_Python::unparseConditionalExp(SgConditionalExp* cond_exp,
-                                      SgUnparse_Info& info)
+Unparse_Python::unparseConditionalExp(SgConditionalExp* cond_exp, SgUnparse_Info &info)
 {
     unparseExpression(cond_exp->get_true_exp(), info);
     curprint(" if ");
@@ -700,8 +687,7 @@ Unparse_Python::unparseFunctionParameterList(SgFunctionParameterList* param_list
 }
 
 void
-Unparse_Python::unparseFunctionRefExp(SgFunctionRefExp* func_ref,
-                                      SgUnparse_Info& info)
+Unparse_Python::unparseFunctionRefExp(SgFunctionRefExp* func_ref, SgUnparse_Info &)
 {
     curprint( func_ref->get_symbol()->get_name().str() );
 }
@@ -821,14 +807,10 @@ Unparse_Python::unparseListExp(SgListExp* list_exp,
     curprint("]");
 }
 
-// DQ (3/28/2017): This should take a SgExpression* to match the base class virtual function signature.
-// Fixing this eliminates a warning in Clang.
-// void Unparse_Python::unparseLongLongIntVal(SgLongLongIntVal* lli_val, SgUnparse_Info& info)
 void
-Unparse_Python::unparseLongLongIntVal(SgExpression* e, SgUnparse_Info& info)
+Unparse_Python::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info &)
 {
- // DQ (3/28/2017): Adding this here so that the function parameter can be SgExpression*.
-    SgLongLongIntVal* lli_val = isSgLongLongIntVal(e);
+    SgLongLongIntVal* lli_val = isSgLongLongIntVal(expr);
     ASSERT_not_null(lli_val);
 
     stringstream code;
@@ -837,8 +819,7 @@ Unparse_Python::unparseLongLongIntVal(SgExpression* e, SgUnparse_Info& info)
 }
 
 void
-Unparse_Python::unparseNaryOp(SgNaryOp* op,
-                              SgUnparse_Info& info)
+Unparse_Python::unparseNaryOp(SgNaryOp* op, SgUnparse_Info &info)
 {
     SgExpressionPtrList& operands = op->get_operands();
     VariantTList& operators = op->get_operators();
@@ -854,8 +835,7 @@ Unparse_Python::unparseNaryOp(SgNaryOp* op,
 }
 
 void
-Unparse_Python::unparsePntrArrRefExp(SgPntrArrRefExp* ref,
-                                     SgUnparse_Info& info)
+Unparse_Python::unparsePntrArrRefExp(SgPntrArrRefExp* ref, SgUnparse_Info &info)
 {
     unparseExpression(ref->get_lhs_operand(), info);
     curprint("[");
@@ -864,16 +844,14 @@ Unparse_Python::unparsePntrArrRefExp(SgPntrArrRefExp* ref,
 }
 
 void
-Unparse_Python::unparsePointerDerefExp(SgPointerDerefExp* exp,
-                                     SgUnparse_Info& info)
+Unparse_Python::unparsePointerDerefExp(SgPointerDerefExp* exp, SgUnparse_Info &info)
 {
     curprint("*");
     unparseExpression(exp->get_operand(), info);
 }
 
 void
-Unparse_Python::unparsePassStatement(SgPassStatement* pass_stmt,
-                                     SgUnparse_Info& info)
+Unparse_Python::unparsePassStatement(SgPassStatement*, SgUnparse_Info &)
 {
     curprint("pass");
 }
@@ -950,8 +928,7 @@ Unparse_Python::unparseStringConversion(SgStringConversion* str_conv,
 }
 
 void
-Unparse_Python::unparseStringVal(SgExpression* exp,
-                                 SgUnparse_Info& info)
+Unparse_Python::unparseStringVal(SgExpression* exp, SgUnparse_Info &info)
 {
     SgStringVal* str = isSgStringVal(exp);
     ASSERT_not_null(str);
@@ -959,8 +936,7 @@ Unparse_Python::unparseStringVal(SgExpression* exp,
 }
 
 void
-Unparse_Python::unparseStringVal(SgStringVal* str,
-                                 SgUnparse_Info& info)
+Unparse_Python::unparseStringVal(SgStringVal* str, SgUnparse_Info &)
 {
     stringstream code;
     code << "\"" << str->get_value() << "\"";
@@ -987,8 +963,7 @@ Unparse_Python::unparseSubscriptExpression(SgSubscriptExpression* slice,
 
 
 void
-Unparse_Python::unparseTryStmt(SgTryStmt* try_stmt,
-                               SgUnparse_Info& info)
+Unparse_Python::unparseTryStmt(SgTryStmt* try_stmt, SgUnparse_Info &info)
 {
     curprint("try:\n");
     unparseAsSuite(try_stmt->get_body(), info);
@@ -1034,8 +1009,7 @@ Unparse_Python::unparseUnaryOp(SgUnaryOp* unary_op,
 }
 
 void
-Unparse_Python::unparseVarRefExp(SgVarRefExp* var_ref_exp,
-                                 SgUnparse_Info& info)
+Unparse_Python::unparseVarRefExp(SgVarRefExp* var_ref_exp, SgUnparse_Info &)
 {
     SgVariableSymbol* symbol = var_ref_exp->get_symbol();
     curprint( symbol->get_name().str() );
@@ -1092,9 +1066,9 @@ Unparse_Python::unparseYieldExpression(SgYieldExpression* yield_exp,
 }
 
 bool
-Unparse_Python::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+Unparse_Python::requiresParentheses(SgExpression* expr, SgUnparse_Info &) {
     SgExpression* parent = isSgExpression(expr->get_parent());
-    if (parent == NULL) return false;
+    if (parent == nullptr) return false;
 
     PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
     PrecedenceSpecifier parentPrecedence = getPrecedence(parent);

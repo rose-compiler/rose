@@ -9,7 +9,7 @@
 #endif
 
 
-void UnparseJovial::unparseNullptrVal(SgExpression* expr, SgUnparse_Info& info)
+void UnparseJovial::unparseNullptrVal(SgExpression*, SgUnparse_Info&)
   {
      curprint("NULL");
   }
@@ -87,7 +87,7 @@ void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpa
   }
 
 void
-UnparseJovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info &)
   {
      SgJovialBitVal* bitval = isSgJovialBitVal(expr);
      ASSERT_not_null(bitval);
@@ -95,7 +95,7 @@ UnparseJovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-UnparseJovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseStringVal(SgExpression* expr, SgUnparse_Info &)
   {
      SgStringVal* string_val = isSgStringVal(expr);
      ASSERT_not_null(string_val);
@@ -106,7 +106,7 @@ UnparseJovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-UnparseJovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info &info)
   {
      SgAssignOp* op = isSgAssignOp(expr);
      ASSERT_not_null(op);
@@ -271,7 +271,7 @@ UnparseJovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info &info)
    {
   // Sage node corresponds to array indicing
      SgPntrArrRefExp* arrayRefExp = isSgPntrArrRefExp(expr);
@@ -287,14 +287,14 @@ UnparseJovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info &)
    {
      ASSERT_not_null( isSgAsteriskShapeExp(expr));
      curprint("*");
    }
 
 void
-UnparseJovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info &info)
    {
       SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
       ASSERT_not_null(func_call);
@@ -394,7 +394,7 @@ UnparseJovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
 //----------------------------------------------------------------------------
 
 void
-UnparseJovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info &)
    {
       SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
       ASSERT_not_null(func_ref);
@@ -404,7 +404,7 @@ UnparseJovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseLabelRef(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseLabelRef(SgExpression* expr, SgUnparse_Info &)
    {
      SgLabelRefExp* labelRef = isSgLabelRefExp(expr);
 
@@ -415,7 +415,7 @@ UnparseJovial::unparseLabelRef(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseVarRef(SgExpression* expr, SgUnparse_Info &)
    {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
 
@@ -426,7 +426,7 @@ UnparseJovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info &info)
    {
      SgPointerDerefExp* deref = isSgPointerDerefExp(expr);
      ASSERT_not_null(deref);
@@ -461,7 +461,7 @@ UnparseJovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info &)
    {
      SgTypeExpression* type_expr = isSgTypeExpression(expr);
      ASSERT_not_null(type_expr);
@@ -617,13 +617,12 @@ UnparseJovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseCommentsBefore(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseCommentsBefore(SgExpression* expr, SgUnparse_Info &)
 {
   // unparse comments before the expression
   const AttachedPreprocessingInfoType* preprocInfo = expr->get_attachedPreprocessingInfoPtr();
   if (preprocInfo) {
     for (PreprocessingInfo* info : *preprocInfo) {
-      auto pos = info->getRelativePosition();
       if (info->getRelativePosition() == PreprocessingInfo::before) {
         curprint(" ");
         curprint(info->getString());
@@ -633,7 +632,7 @@ UnparseJovial::unparseCommentsBefore(SgExpression* expr, SgUnparse_Info& info)
 }
 
 void
-UnparseJovial::unparseCommentsAfter(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseCommentsAfter(SgExpression* expr, SgUnparse_Info &)
 {
   // unparse comments after the expression
   const AttachedPreprocessingInfoType* preprocInfo = expr->get_attachedPreprocessingInfoPtr();
