@@ -6,7 +6,7 @@
 # Codethorn/src/ has some .h and .C files that require ifdef macros
 # if we want it to work on Windows in the future
 
-if(NOT WIN32 AND ENABLE_OPENMP STREQUAL "ON" AND ENABLE-C STREQUAL "ON") 
+if(NOT WIN32 AND ENABLE-C STREQUAL "ON") 
   add_subdirectory(CodeThorn) 
 endif() 
 

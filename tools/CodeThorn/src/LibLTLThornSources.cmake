@@ -1,0 +1,57 @@
+# libltlthorn.so source/header files 
+set(LTLTHORN_HEADER_FILES 
+    ltlthorn-lib/CounterexampleAnalyzer.h 
+    ltlthorn-lib/LtsminConnection.h 
+    ltlthorn-lib/ParProAutomataGenerator.h 
+    ltlthorn-lib/ParProAutomata.h 
+    ltlthorn-lib/ParProAnalyzer.h 
+    ltlthorn-lib/ParProEState.h 
+    ltlthorn-lib/ParProExplorer.h 
+    ltlthorn-lib/ParProLtlMiner.h 
+    ltlthorn-lib/ParProSpotState.h 
+    ltlthorn-lib/ParProSpotSuccIter.h 
+    ltlthorn-lib/ParProSpotTgba.h 
+    ltlthorn-lib/ParProTransitionGraph.h 
+    ltlthorn-lib/PromelaCodeGenerator.h 
+    ltlthorn-lib/Solver10.h 
+    ltlthorn-lib/Solver11.h 
+    ltlthorn-lib/Solver12.h 
+    ltlthorn-lib/SpotConnection.h 
+    ltlthorn-lib/SpotMiscellaneous.h 
+    ltlthorn-lib/SpotRenameVisitor.h 
+    ltlthorn-lib/SpotState.h 
+    ltlthorn-lib/SpotSuccIter.h 
+    ltlthorn-lib/SpotTgba.h
+)
+
+set(LTLTHORN_SOURCE_FILES
+    ltlthorn-lib/CounterexampleAnalyzer.C 
+    ltlthorn-lib/LtsminConnection.C 
+    ltlthorn-lib/ParProAutomataGenerator.C 
+    ltlthorn-lib/ParProAutomata.C 
+    ltlthorn-lib/ParProAnalyzer.C 
+    ltlthorn-lib/ParProEState.C 
+    ltlthorn-lib/ParProExplorer.C 
+    ltlthorn-lib/ParProLtlMiner.C 
+    ltlthorn-lib/ParProSpotState.C 
+    ltlthorn-lib/ParProSpotSuccIter.C 
+    ltlthorn-lib/ParProSpotTgba.C 
+    ltlthorn-lib/ParProTransitionGraph.C 
+    ltlthorn-lib/PromelaCodeGenerator.C 
+    ltlthorn-lib/Solver10.C 
+    ltlthorn-lib/Solver11.C 
+    ltlthorn-lib/Solver12.C 
+    ltlthorn-lib/SpotConnection.C 
+    ltlthorn-lib/SpotMiscellaneous.C 
+    ltlthorn-lib/SpotRenameVisitor.C 
+    ltlthorn-lib/SpotState.C 
+    ltlthorn-lib/SpotSuccIter.C 
+    ltlthorn-lib/SpotTgba.C
+    LTLThornLib.C
+)
+
+# only informative (not installed)
+set(LIBLTLTHORN_XHEADERS  
+    $(LTLTHORN_HEADER_FILES) 
+    LTLThornLib.h
+  )

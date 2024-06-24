@@ -613,6 +613,8 @@ set(rose_LIB_OBJS
   midend_util
   midend_binary
   midend_pt
+  ExtractFunctionArgumentsNormalization
+  SingleStatementToBlockNormalization
   sageInterface
   astTokenStream
   astHiddenTypeAndDeclarationLists
@@ -682,28 +684,26 @@ endif()
 
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
 
-foreach(_object IN LISTS rose_LIB_OBJS)
-  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:${_object}>)
-  get_target_property(_sources ${_object} SOURCES)
-  get_target_property(_sources_dir ${_object} SOURCE_DIR)
-  foreach(_file IN LISTS _sources)
-    list(APPEND rose_LIB_SRC_FILES ${_sources_dir}/${_file})
-  endforeach()
-endforeach()
+#foreach(_object IN LISTS rose_LIB_OBJS)
+#  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:${_object}>)
+#  get_target_property(_sources ${_object} SOURCES)
+#  get_target_property(_sources_dir ${_object} SOURCE_DIR)
+#  foreach(_file IN LISTS _sources)
+#    list(APPEND rose_LIB_SRC_FILES ${_sources_dir}/${_file})
+#  endforeach()
+#endforeach()
 
-list(LENGTH rose_LIB_SRC_FILES list_length)
+#list(LENGTH rose_LIB_SRC_FILES list_length)
 
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
 ########################################################################################################################
-
-add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-
+add_library(ROSE_DLL SHARED ${rose_LIB_SRCS})
 add_dependencies(ROSE_DLL roseUtil)
 
 set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")
 
-target_link_libraries(ROSE_DLL ${link_with_libraries})
+target_link_libraries(ROSE_DLL ${link_with_libraries} ${rose_LIB_OBJS})
 
 set_target_properties(ROSE_DLL PROPERTIES
   VERSION 1.0.0
@@ -717,10 +717,10 @@ install(
     ${CMAKE_BINARY_DIR}/rosePublicConfig.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
 
-cmake_host_system_information(RESULT Ncpu QUERY NUMBER_OF_PHYSICAL_CORES)
-blt_add_code_checks(PREFIX "rosecheck"
-                    SOURCES ${rose_LIB_SRC_FILES}
-                    CPPCHECK_FLAGS "-j${Ncpu}")
+#cmake_host_system_information(RESULT Ncpu QUERY NUMBER_OF_PHYSICAL_CORES)
+#blt_add_code_checks(PREFIX "rosecheck"
+#                    SOURCES ${rose_LIB_SRC_FILES}
+#                    CPPCHECK_FLAGS "-j${Ncpu}")
 
 ########################################################################################################################
 # Dependencies of the ROSE library. librose depends on additional libraries.
@@ -734,7 +734,7 @@ if(Z3_FOUND_LIB)
 endif()
 
 # YAML-cpp is for parsing YAML and JSON files.
-if(YAMLCPP_FOUND)
+if(ENABLE-YAML AND YAMLCPP_FOUND)
   target_link_libraries(ROSE_DLL ${YAMLCPP_LIBRARY})
 endif()
 
@@ -749,7 +749,7 @@ if(CAPSTONE_FOUND)
 endif()
 
 # If readline was found.
-if(READLINE_FOUND)
+if(ENABLE-READLINE AND READLINE_FOUND)
   target_link_libraries(ROSE_DLL ${READLINE_LIBRARY})
 endif()
 
@@ -869,8 +869,13 @@ endif()
 foreach(X IN LISTS rose_library_dir_list)
   set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${X}")
 endforeach()
-set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/usr/include")
 
+# Add -pthread if Threads_FOUND or Boost::thread is found to avoid rose-tool segfaults 
+if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
+  set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -pthread")
+endif()
+
+set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/usr/include")
 
 set(rose_library_list "rose")
 set(rose_library_list "${rose_library_list};${Boost_LIBRARIES}")
@@ -881,16 +886,34 @@ if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
   endif()
 endif()
 
+# Add -pthread if Threads_FOUND or Boost::thread found to avoid rose-tool segfaults 
+if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
+  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -pthread")
+endif()
+
 foreach(X IN LISTS rose_library_list)
-  get_filename_component(Y ${X} NAME_WE)
-  if(${Y} MATCHES "-l.*")
-    string(SUBSTRING ${Y} 2 -1 Y)
+  # Dereference ${X} with "" to fix Windows CI/CD error 
+  get_filename_component(Y "${X}" NAME_WE)
+  
+  # If Y is empty, use X directly
+  if(Y STREQUAL "") 
+    set(Y "${X}")
+  endif() 
+
+  # Handle non-path library names appropriately
+  string(REGEX REPLACE "^-l" "" Y "${Y}")  # Remove '-l' prefix if present
+  string(REGEX REPLACE "^lib" "" Y "${Y}") # Remove 'lib' prefix if present
+  
+  # Avoid treating empty strings as library names
+  if(NOT Y STREQUAL "")
+    set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -l${Y}")
   endif()
-  if(${Y} MATCHES "lib.*")
-    string(SUBSTRING ${Y} 3 -1 Y)
-  endif()
-  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -l${Y}")
 endforeach()
+
+ # Add -ldl before -lm if HAVE_LIBDL
+ if(HAVE_LIBDL)
+   string(REPLACE " -lm " " -ldl -lm " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
+ endif()
 
 #Need to update config ldflags with the following potential values
    #     $(JAVA_JVM_LINK) \
@@ -957,3 +980,4 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R $
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIR_DEBUG}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
+

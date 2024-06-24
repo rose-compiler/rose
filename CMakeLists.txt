@@ -1,4 +1,4 @@
-﻿################################################################################################ -*- cmake -*- #########
+################################################################################################ -*- cmake -*- #########
 # General warnings, instructions, and style guide.
 ########################################################################################################################
 
@@ -75,11 +75,11 @@ endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
 
-# CMake 2.8.12 and newer has support for using @rpath in a target’s install name. This was enabled by setting the target
+# CMake 2.8.12 and newer has support for using @rpath in a targetb install name. This was enabled by setting the target
 # property MACOSX_RPATH. The @rpath in an install name is a more flexible and powerful mechanism than @executable_path
 # or @loader_path for locating shared libraries.
 #
-# CMake 3.0 and later prefer CMP0042 to be ON by default. Projects wanting @rpath in a target’s install name may remove
+# CMake 3.0 and later prefer CMP0042 to be ON by default. Projects wanting @rpath in a target's install name may remove
 # any setting of the INSTALL_NAME_DIR and CMAKE_INSTALL_NAME_DIR variables.
 #
 # CMP0042 was introduced in CMake version 3.0. CMake version 3.0.2 warns when the policy is not set and uses OLD
@@ -190,48 +190,29 @@ message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
 # information (e.g., adding the boost version number).
 set(ROSE_CONFIG_TOKEN "rose-${ROSE_SCM_VERSION_ID}")
 
-
-
 ########################################################################################################################
 # Boost libraries
 ########################################################################################################################
-
-message(STATUS
-  "If you get a whole bunch of warnings saying 'New Boost version may have incorrect or missing dependencies and "
-  "imported targets' it is probably because you're using a Boost version that was released after your CMake version. "
-  "See [https://github.com/Kitware/CMake/commits/master/Modules/FindBoost.cmake] to see latest supported version and "
-  "[https://github.com/Microsoft/vcpkg/issues/2459] for a description of the problem. Note that CMake versions "
-  "3.11.0 through 3.13.2 and possibly later) cannot be compiled (syntax errors) with a GNU C++ compiler that's "
-  "configured to use a non-default language standard (e.g., C++11 with GCC-5.4 whose default is GNU++03).")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  message(STATUS
+    "If you get a whole bunch of warnings saying 'New Boost version may have incorrect or missing dependencies and "
+    "imported targets' it is probably because you're using a Boost version that was released after your CMake version. "
+    "See [https://github.com/Kitware/CMake/commits/master/Modules/FindBoost.cmake] to see latest supported version and "
+    "[https://github.com/Microsoft/vcpkg/issues/2459] for a description of the problem. Note that CMake versions "
+    "3.11.0 through 3.13.2 and possibly later) cannot be compiled (syntax errors) with a GNU C++ compiler that's "
+    "configured to use a non-default language standard (e.g., C++11 with GCC-5.4 whose default is GNU++03).")
+endif() 
 
 set(Boost_USE_STATIC_LIBS FALSE)
 set(Boost_DEBUG ${VERBOSE})
+option(BOOST_USE_MULTITHREADED "Should Boost multithreaded libraries be used?" OFF) # puts -pthread on link and compile
 
 # Honor BOOST_HOME environment variable
 if(DEFINED ENV{BOOST_HOME})
   set(BOOST_ROOT "$ENV{BOOST_HOME}")
 endif()
 
-option(BOOST_USE_MULTITHREADED "Should Boost multithreaded libraries be used?" OFF)
-
-if(WIN32)
-  find_package(Boost REQUIRED)
-  set(BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS})
-  set(BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/)
-
-  message("Boost information:")
-  message("  BOOST_ROOT: ${BOOST_ROOT}")
-  message("  Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
-  message("  Boost_LIBRARIES: ${Boost_LIBRARIES}")
-  message("  Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
-  message("  BOOST_LIBRARYDIR : ${BOOST_LIBRARYDIR}")
-  message("  BOOST_INCLUDEDIR : ${BOOST_INCLUDEDIR}")
-
-  include_directories(${Boost_INCLUDE_DIRS})
-  link_directories(${Boost_LIBRARY_DIRS})
-endif(WIN32)
-
-# FIXME: 1.47 is no longer supported by ROSE, but is what's installed on Jenkins' CMake test machine. This should
+# Boost 1.47 is no longer supported by ROSE, but is what's installed on Jenkins' CMake test machine. This should
 #        be changed to the actual minimum supported version once Pei-Hung upgrades the machine. [Matzke 2019-01-21]
 #
 # First look for the Boost libraries that are required in order to compile ROSE, then additionally look for any optional
@@ -244,25 +225,49 @@ endif(WIN32)
 # REQUIRED clause after the first one has succeeded.  That way the first clause checks for requires components, and the
 # second can check again including optional components.  If the version of cmake is high enough you can use an
 # OPTIONAL_COMPONENTS clause instead, but that wasn't introduced until 3.11."
-find_package(Boost 1.47.0
-  COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread
-  REQUIRED)
-if(NOT Boost_FOUND)
-  message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
-endif()
-find_package(Boost 1.47.0
-  COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread serialization)
+find_package(Boost REQUIRED COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread serialization)
+if(WIN32) 
+  set(BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS})
+  set(BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/)
+endif() 
+
 include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+# Defines for rose_config.h  
 set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} boost-${Boost_VERSION}")
+
+# Boost version-specific macros
+if(Boost_VERSION VERSION_GREATER_EQUAL "1.78.0") 
+  # Resolves compiler warning about Boost placeholders (_1, _2, etc.) in the global namespace, which is deprecate
+  # Boost now recommends including the <boost/bind/bind.hpp> header and using the boost::placeholders namespace instead
+  # To resolve this warning, we can use the line of CMake below or Update the code to use the recommended namespace
+  # To update the code,  Modify Sawyer codes to include <boost/bind/bind.hpp> and use boost::placeholders
+  add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS) 
+endif()
+
+# Boost compiler-specific flags
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
+  # Compiler specific commands, not to be used with MSVC 
+  add_compile_options(-Wno-switch-default) # supress warnings coming from the boost library code itself 
+  add_compile_options(-Wno-deprecated)     # supress warnings coming from the boost library code itself 
+endif() 
 
 # If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or
 # whatever is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link
 # commands--the "-pthread" switch MUST be added to the compile commands as well.
-set(Threads_FIND_QUIETLY ${QUIET})
-find_package(Threads)
-if(CMAKE_USE_PTHREADS_INIT)
-  add_definitions(-pthread)
-  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")
+# FIXME: Do we want to use our option(BOOST_USE_MULTITHREADED) or always do this? 
+if(Boost_THREAD_FOUND)
+  set(Threads_FIND_QUIETLY ${QUIET})
+  find_package(Threads)
+  # FIXME: This breaks things
+  # if(Threads_FOUND)
+  #   if(BOOST_USE_MULTITHREADED) # Something inside this conditional gets OpenCL   
+  #     message(WARNING "Setting _REENTRANT") 
+  #     set(_REENTRANT 1) 
+  #  endif() 
+  add_definitions(-pthread) # it seems we always want this  
+  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread") # TODO: What is this 
 endif()
 
 # Paths to install header, executable, and libraries
@@ -329,8 +334,8 @@ if(WIN32)
   set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
   set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
-
-else()
+endif()
+if(NOT WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
 
@@ -408,11 +413,6 @@ option(ENABLE-C "Enable C/C++ analysis" ON)
 if(ENABLE-C)
   set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
   set(ROSE_BUILD_C_LANGUAGE_SUPPORT 1)
-  # For pipeline test 
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
-     message(STATUS "Turning on OpenMP for pipeline test to build codethorn")
-    set(ENABLE_OPENMP ON CACHE BOOL "Enable OpenMP" FORCE) 
-  endif() 
 endif()
 
 # CUDA
@@ -618,7 +618,7 @@ option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of e
 option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
 
 if(EXISTS "${PROJECT_SOURCE_DIR}/tests/Readme.md")
-  option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" ON)
+  set(ENABLE-TESTS-DIRECTORY ON CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
 endif()
 
 option(ENABLE-TUTORIAL-DIRECTORY "Enable compilation and testing of the ROSE/tutorial directory" OFF)
@@ -724,7 +724,7 @@ endif()
 
 option(ENABLE-POET "Enable POET support" OFF)
 
-# To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=no
+# We are removing BISON 
 include(FindBison)
 find_bison()
 
@@ -738,8 +738,11 @@ find_doxygen()
 
 # FIXME: Deprecated. Remove this and the FindYamlcpp file once YAML-CPP has been eliminated from the ROSE source code.
 # To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
-include(FindYamlcpp)
-find_yamlcpp()
+option(ENABLE-YAML-DEPRECATED "Option to Enable Yaml, which is now deprecated" OFF)
+if(ENABLE_YAML) 
+  include(FindYamlcpp)
+  find_yamlcpp()
+endif() 
 
 # To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=no
 include(FindDlib)
@@ -753,13 +756,16 @@ find_capstone()
 include(FindCereal)
 find_cereal()
 
-# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=no
-include(FindGcrypt)
-find_gcrypt()
-if(GCRYPT_FOUND)
-  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=no
-  include(FindGpgError)
-  find_gpgerror()
+# To use GCrypt, set cmake .. -DENABLE_GCRYPT=ON -DGCRYPT_ROOT=/path/to/GCrypt/installation
+option(ENABLE_GCRYPT "Use the GNU cryptography library, libgcrypt, available from https://www.gnupg.org/related_software/libgcrypt/" OFF)
+if(ENABLE_CRYPT)
+  include(FindGcrypt)
+  find_gcrypt()
+  if(GCRYPT_FOUND)
+    # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=no
+    include(FindGpgError)
+    find_gpgerror()
+  endif()
 endif()
 
 # To use libmagic, set MAGIC_ROOT to the libmagic installation prefix. To avoid libmagic set MAGIC_ROOT=no
@@ -777,8 +783,11 @@ if(WITH-ROSEQT)
 endif()
 
 # To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
-include(FindReadline)
-find_readline()
+option(ENABLE-READLINE "Option to enable Readline" OFF)
+if(ENABLE-READLINE)
+  include(FindReadline)
+  find_readline()
+endif() 
 
 # To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
 if(ENABLE-C)
@@ -855,8 +864,22 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
+# Initialize variable for where to look for libquadmath.so
+set(QUADMATH_SEARCH_PATHS "")
+# libquadmath.so is in compiler files for gcc, not clang (on LC systems)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-C)
+  if(DEFINED ENV{SYS_TYPE} AND ${CMAKE_CXX_COMPILER_VERSION} MATCHES "10")
+    # set to find in GCC 10 for LC Systems 
+    set(QUADMATH_SEARCH_PATHS /usr/tce/packages/gcc/gcc-10.3.1/lib/gcc/x86_64-redhat-linux/10)
+  else()
+    # set to find in /usr/lib64 for hudson-rose 
+    set(QUADMATH_SEARCH_PATHS /usr/lib64) 
+  endif()
+endif()
+
 if(NOT WIN32)
   find_library(M_LIB m)
+  find_library(QUADMATH_LIBRARY quadmath PATHS ${QUADMATH_SEARCH_PATHS})
   if(NOT APPLE)
     find_library(RT_LIB rt)
   endif()
@@ -915,15 +938,20 @@ if(WITH-ALT-BACKEND-JAVA-COMPILER)
   endif()
 endif()
 
-# define a global variable to collect all common linked third-party libraries for rose
+# Initialize an empty list to collect all common linked third-party libraries for rose
+set(link_with_libraries "") 
 if(NOT WIN32)
   if(NOT APPLE)
-    set(link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
+    list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
+    # Each library appended above should do this check to enhance portability
+    if(QUADMATH_LIBRARY)
+      list(APPEND link_with_libraries ${QUADMATH_LIBRARY})
+    endif()
   else()
-    set(link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
+    list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
   endif()
 else()
-  set(link_with_libraries ${Boost_LIBRARIES} shlwapi.lib psapi.lib)
+  list(APPEND link_with_libraries ${Boost_LIBRARIES} shlwapi.lib psapi.lib)
 endif()
 
 # Check compilers and version numbers. The module is located in src/cmake/modules.
@@ -1035,7 +1063,7 @@ if(VERBOSE)
   message(STATUS "MSVC80:                             ${MSVC80}")
   message(STATUS "CMAKE_COMPILER_2005:                ${CMAKE_COMPILER_2005}")
 
-  # set this to true if you don't want to rebuild the object files if the rules have changed,
+# set this to true if you don't want to rebuild the object files if the rules have changed,
   # but not the actual source files or headers (e.g. if you changed the some compiler switches)
   message(STATUS "CMAKE_SKIP_RULE_DEPENDENCY:         ${CMAKE_SKIP_RULE_DEPENDENCY}")
 
@@ -1400,3 +1428,4 @@ if(NOT UNIX)
   # This include file defines how CPack should create our installers.
   include(cmake/ROSECPack.cmake)
 endif()
+

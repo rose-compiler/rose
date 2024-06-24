@@ -39,6 +39,9 @@
 /* define if the Boost library is available , convert the cmake output Boost_FOUND to our custom HAVE_BOOST */
 #cmakedefine HAVE_BOOST
 
+/* define if multithread support */ 
+#cmakedefine _REENTRANT @_REENTRANT@ 
+
 /* define if the Boost::Date_Time library is available */
 #cmakedefine HAVE_BOOST_DATE_TIME
 
@@ -62,7 +65,7 @@
 #cmakedefine USE_ROSE_BOOST_WAVE_SUPPORT
 
 /* Define if the boost::serialization library is available */
-#cmakedefine HAVE_BOOST_SERIALIZATION_LIB 1
+#cmakedefine HAVE_BOOST_SERIALIZATION_LIB @HAVE_BOOST_SERIALIZATION_LIB@ 
 
 /* Define if Z3 library is available */
 #cmakedefine ROSE_HAVE_Z3
@@ -324,9 +327,8 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #cmakedefine HAVE_CLOCK_GETTIME 1
 
-
-/* Define to 1 if you have the `dl' library (-ldl). */
-#cmakedefine HAVE_LIBDL 1
+/* this will be defined as 1 if the `dl' library (-ldl) is found on the system */
+#cmakedefine01 HAVE_LIBDL 
 
 /* Define if libdlloader will be built on this platform */
 //AS FIXME
