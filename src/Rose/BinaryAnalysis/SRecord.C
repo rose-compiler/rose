@@ -2,13 +2,13 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/SRecord.h>
 
+#include <Rose/BitOps.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/NumberToString.h>
 #include <Rose/StringUtility/StringToNumber.h>
 #include <rose_getline.h>
-#include <integerOps.h>                                 // rose
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
@@ -118,6 +118,7 @@ SRecord::parseMotorola(const std::string &input) {
     // Address
     if (!parseBigEndianInteger(input, 4, 2*addressNBytes(srec.type())).assignTo(srec.addr_))
         return srec.error("address syntax error; expected four hexadecimal characters");
+    srec.addr_ = BitOps::signExtend(srec.addr_, 8*addressNBytes(srec.type()));
 
     // Data
     ASSERT_require(payloadNBytes >= addressNBytes(srec.type()) + 1 /*checksum*/);
@@ -585,14 +586,14 @@ SRecord::toString() const {
                 throw Exception("S-Record size is too large");
             s += (boost::format("%|02X|") % size).str();
 
-            rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(8*addressNBytes(type_));
-            if ((addr_ & ~addrMask) != 0) {
+            const rose_addr_t addrMask = BitOps::lowMask<rose_addr_t>(8 * addressNBytes(type_));
+            if (BitOps::signExtend(addr_ & addrMask, 8*addressNBytes(type_)) != addr_) {
                 throw Exception("S-Record address " + StringUtility::addrToString(addr_) +
                                 " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");
             }
 
             std::string addrFmt = "%|0" + StringUtility::numberToString(2*addressNBytes(type_)) + "x|";
-            s += (boost::format(addrFmt) % addr_).str();
+            s += (boost::format(addrFmt) % (addr_ & addrMask)).str();
             checksumOffset = 2;                         // skip 'S' and the type
             break;
         }
