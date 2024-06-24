@@ -315,18 +315,12 @@ namespace {
   // may need special processing for pragmas in body
   using DeferredPragmaBodyCompletion = std::function<void(AstContext::PragmaContainer)>;
 
-  void
-  processInheritedSubroutines( SgNamedType* derivedTy,
-                               ada_base_entity* tydef,
-                               AstContext ctx
-                             )
-  {
-    /*processInheritedSubroutines( SG_DEREF(derivedTy),
-                                 idRange(tydef.Implicit_Inherited_Subprograms),
-                                 idRange(tydef.Implicit_Inherited_Declarations),
-                                 ctx
-                               );*/ //TODO How does Libadalang pass the inherited subps/decls?
-  }
+  // following proc is public and located at the bottom of the file
+  //   void
+  //   processInheritedSubroutines( SgNamedType& derivedType,
+  //                                ada_base_entity* tydef,
+  //                                AstContext ctx
+  //                              )
 
   template <class SageTypeDeclStmt>
   void
@@ -335,7 +329,7 @@ namespace {
                                AstContext ctx
                              )
   {
-    processInheritedSubroutines(tyDecl.get_type(), tydef, ctx);
+    processInheritedSubroutines(SG_DEREF(tyDecl.get_type()), tydef, ctx);
   }
 
   std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
@@ -379,72 +373,55 @@ namespace {
     ada_base_entity lal_subtype_indication, lal_base_type;
     ada_derived_type_def_f_subtype_indication(tydef, &lal_subtype_indication);
     ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type);
-    /*{
-      ElemIdRange  range        = idRange(tydef.Implicit_Inherited_Subprograms);
-      SgEnumType&  derivedType  = SG_DEREF(derivedTypeDcl.get_type());
-      SgType*      baseType     = si::Ada::baseType(derivedType);
-      SgNamedType* baseRootType = isSgNamedType(si::Ada::typeRoot(baseType).typerep());
 
-      if (baseRootType == nullptr)
-      {
-        logFlaw() << "unable to find base-root for enum " << derivedType.get_name()
-                  << " / base = " << baseType
-                  << std::endl;
-        return;
+    //We process the subps in a different function, so just handle the decls
+
+    using BaseTuple = std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>;
+
+    BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
+    SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
+
+    // do not process derivations from Standard.*Char type.
+    //   the reason is that the derived enums will have its symbols
+    //   injected into the new scope as alias symbols, but for
+    //   character based enums, the symbols are not physically present.
+    if ( si::Ada::characterBaseType(origDecl.get_type()) )
+      return;
+
+    //Get the range of inherited decls
+    ada_base_entity lal_inherited_decl_list;
+    ada_type_decl_f_type_def(&lal_inherited_decl_list, &lal_inherited_decl_list);
+    ada_enum_type_def_f_enum_literals(&lal_inherited_decl_list, &lal_inherited_decl_list);
+    int count = ada_node_children_count(&lal_inherited_decl_list);
+
+    // just traverse the IDs, as the elements are not present
+    for(int i = 0; i < count ; i++){
+      ada_base_entity lal_inherited_decl;
+      if(ada_node_child(&lal_inherited_decl_list, i, &lal_inherited_decl) != 0){
+        //TODO How will this work? It isn't a unique node.
+        SgType& enumty = SG_DEREF(derivedTypeDcl.get_type());
+
+        //Get the name
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_enum_literal_decl_f_name(&lal_inherited_decl, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_symbol_type p_canonical_text;
+        ada_text ada_canonical_text;
+        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
+        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+        ada_destroy_text(&ada_canonical_text);
+
+        // \todo name.ident could be a character literal, such as 'c'
+        //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
+        //       SgInitializedName are created with the name 'c' instead of character constants.
+        SgExpression&       repval = getEnumRepresentationValue(&lal_inherited_decl, i, ctx);
+        SgInitializedName&  sgnode = mkEnumeratorDecl(derivedTypeDcl, ident, enumty, repval);
+
+        attachSourceLocation(sgnode, &lal_inherited_decl, ctx);
+        //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
+        derivedTypeDcl.append_enumerator(&sgnode);
       }
-
-      traverseIDs(range, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
-    }*/ //TODO Why is this here? I don't think enums can have subprograms to inherit?
-
-    {
-      using BaseTuple = std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>;
-
-      BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
-      SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
-
-      // do not process derivations from Standard.*Char type.
-      //   the reason is that the derived enums will have its symbols
-      //   injected into the new scope as alias symbols, but for
-      //   character based enums, the symbols are not physically present.
-      if ( si::Ada::characterBaseType(origDecl.get_type()) )
-        return;
-
-      //Get the range of inherited decls
-      ada_base_entity lal_inherited_decl_list;
-      ada_type_decl_f_type_def(&lal_inherited_decl_list, &lal_inherited_decl_list);
-      ada_enum_type_def_f_enum_literals(&lal_inherited_decl_list, &lal_inherited_decl_list);
-      int count = ada_node_children_count(&lal_inherited_decl_list);
-
-      // just traverse the IDs, as the elements are not present
-      for(int i = 0; i < count ; i++){
-        ada_base_entity lal_inherited_decl;
-        if(ada_node_child(&lal_inherited_decl_list, i, &lal_inherited_decl) != 0){
-          //TODO How will this work? It isn't a unique node.
-          SgType& enumty = SG_DEREF(derivedTypeDcl.get_type());
-
-          //Get the name
-          ada_base_entity lal_defining_name, lal_identifier;
-          ada_enum_literal_decl_f_name(&lal_inherited_decl, &lal_defining_name);
-          ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-          ada_symbol_type p_canonical_text;
-          ada_text ada_canonical_text;
-          ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-          std::string ident = ada_text_to_locale_string(&ada_canonical_text);
-          ada_destroy_text(&ada_canonical_text);
-
-          // \todo name.ident could be a character literal, such as 'c'
-          //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
-          //       SgInitializedName are created with the name 'c' instead of character constants.
-          SgExpression&       repval = getEnumRepresentationValue(&lal_inherited_decl, i, ctx);
-          SgInitializedName&  sgnode = mkEnumeratorDecl(derivedTypeDcl, ident, enumty, repval);
-
-          attachSourceLocation(sgnode, &lal_inherited_decl, ctx);
-          //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
-          derivedTypeDcl.append_enumerator(&sgnode);
-        }
-      }
-      //std::for_each(range.first, range.second, InheritedEnumeratorCreator{derivedTypeDcl, origDecl, ctx});
     }
   }
 
@@ -461,16 +438,18 @@ namespace {
       return;
     }
 
-    if (SgTypedefDeclaration* derivedTypeDcl = isSgTypedefDeclaration(&dcl))
+    if (SgTypedefDeclaration* derivedTypeDcl = isSgTypedefDeclaration(&dcl)){
       processInheritedSubroutines(tydef, *derivedTypeDcl, ctx);
-    else if (SgClassDeclaration* classTypeDcl = isSgClassDeclaration(&dcl))
+    } else if (SgClassDeclaration* classTypeDcl = isSgClassDeclaration(&dcl)){
       processInheritedSubroutines(tydef, *classTypeDcl, ctx);
-    else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
+    } else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl)){
       processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
-    else if (SgAdaDiscriminatedTypeDecl* discrTypeDcl = isSgAdaDiscriminatedTypeDecl(&dcl))
+      processInheritedSubroutines(tydef, *derivedEnumDcl, ctx);
+    } else if (SgAdaDiscriminatedTypeDecl* discrTypeDcl = isSgAdaDiscriminatedTypeDecl(&dcl)) {
       processInheritedSubroutines(tydef, *discrTypeDcl, ctx);
-    else
+    } else {
       logError() << "Unknown SgNode in processInheritedElementsOfDerivedTypes.\n";
+    }
   }
 
   void completeDiscriminatedDecl( int type_hash,
@@ -1214,6 +1193,42 @@ namespace {
     sg::linkParentChild(SG_DEREF(ifStmt), condStmt, &SgIfStmt::set_conditional);
     ifStmtCommonBranch(lal_path, ifStmt, ctx, &SgIfStmt::set_true_body);
   }
+
+  void createInheritedSymbol(ada_base_entity* lal_element, SgNamedType& baseType, SgNamedType& derivedType, AstContext ctx)
+  {
+    logTrace() << "In createInheritedSymbol\n";
+    int                           hash   = hash_node(lal_element);
+    SgDeclarationStatement*       fndcl  = findFirst(libadalangDecls(), hash);
+    SgFunctionDeclaration*        fn     = isSgFunctionDeclaration(fndcl);
+
+    if (fn == nullptr)
+    {
+      logFlaw() << "unable to find function with hash " << hash << std::endl;
+      return;
+    }
+
+    SgFunctionSymbol*             fnsym  = findFirst(inheritedSymbols(), std::make_pair(fn, &baseType));
+    if (fnsym == nullptr) fnsym = isSgFunctionSymbol(fn->search_for_symbol_from_symbol_table());
+
+    if (fnsym == nullptr)
+    {
+      logFlaw() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
+      return;
+    }
+
+    SgDeclarationStatement const* symdcl = fnsym->get_declaration();
+    if (symdcl && (symdcl->get_firstNondefiningDeclaration() != fn->get_firstNondefiningDeclaration()))
+    {
+      logFlaw() << fn->get_name() << " sym/dcl mismatch"
+                << std::endl;
+    }
+
+    SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, derivedType, ctx.scope());
+    const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &derivedType}, &sgnode));
+
+    ROSE_ASSERT(inserted.second);
+  }
+
 } //End unnamed namespace
 
 /// converts a libadalang parameter declaration to a ROSE parameter (i.e., variable)
@@ -2030,11 +2045,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_symbol_text(&p_canonical_text, &ada_canonical_text);
         std::string ident = ada_text_to_locale_string(&ada_canonical_text);
 
-        const bool              isFunc  = (subp_kind_kind == ada_subp_kind_function);
+        const bool              isFunc       = (subp_kind_kind == ada_subp_kind_function);
         SgScopeStatement*       parent_scope = &ctx.scope();
-        //ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx)); 
-        SgType&                 rettype = isFunc ? getDeclType(&subp_returns, ctx)
-                                                 : mkTypeVoid();
+        //ElemIdRange             params       = idRange(usableParameterProfile(decl, ctx)); 
+        SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
+                                                      : mkTypeVoid();
 
         ada_base_entity lal_previous_decl;
         ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
@@ -2043,8 +2058,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         if(!ada_node_is_null(&lal_previous_decl)){
           int decl_hash = hash_node(&lal_previous_decl);
-          SgDeclarationStatement* ndef    = findFirst(libadalangDecls(), decl_hash);
-          SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
+          ndef          = findFirst(libadalangDecls(), decl_hash);
+          nondef        = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
         }
 
         //~ logError() << "proc body: " << nondef << std::endl;
@@ -2181,9 +2196,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgFunctionDeclaration*  nondef  = nullptr;
 
         if(!ada_node_is_null(&lal_previous_decl)){
-          int                     decl_hash = hash_node(&lal_previous_decl);
-          SgDeclarationStatement* ndef      = findFirst(libadalangDecls(), decl_hash);
-          SgFunctionDeclaration*  nondef    = getFunctionDeclaration(ndef);
+          int decl_hash = hash_node(&lal_previous_decl);
+          ndef          = findFirst(libadalangDecls(), decl_hash);
+          nondef        = getFunctionDeclaration(ndef);
         }
 
         SgScopeStatement&       logicalScope = SG_DEREF(parent_scope);
@@ -2278,9 +2293,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgAdaTaskTypeDecl*          nondef    = nullptr;
 
         if(!ada_node_is_null(&lal_previous_decl)){
-          int                         decl_hash = hash_node(&lal_previous_decl);
-          SgDeclarationStatement*     ndef      = findFirst(libadalangTypes(), decl_hash);
-          SgAdaTaskTypeDecl*          nondef    = isSgAdaTaskTypeDecl(ndef);
+          int decl_hash = hash_node(&lal_previous_decl);
+          ndef          = findFirst(libadalangTypes(), decl_hash);
+          nondef        = isSgAdaTaskTypeDecl(ndef);
         }
 
         SgScopeStatement*           parentScope = &ctx.scope();
@@ -2458,6 +2473,82 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
   //processAspects(lal_element, decl, assocdecl, ctx);
   //recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
+}
+
+void
+processInheritedSubroutines( SgNamedType& derivedType,
+                             ada_base_entity* tydef,
+                             AstContext ctx
+                           )
+{
+  ada_base_entity lal_tydef_deref = *tydef;
+  // use a deferred unit completion, so that all information of records
+  //   (i.e., detailed inheritance relationship) have been seen when
+  //   the inherited subroutines are processed.
+  auto deferredSubRoutineProcessing =
+       [&derivedType, lal_tydef_deref, ctx]() -> void
+       {
+         SgType*      baseType     = si::Ada::baseType(derivedType);
+         SgType*      baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
+         SgNamedType* baseRootType = isSgNamedType(baseRootRaw);
+
+         if (baseRootType == nullptr)
+         {
+           // if baseRootRaw != nullptr
+           //   it will correspond to a universal type in package standard.
+           //   -> not an error
+           if (baseRootRaw == nullptr)
+             logFlaw() << "unable to find any base-root for " << derivedType.get_name()
+                       << " / base = " << baseType
+                       << std::endl;
+           return;
+         }
+
+         //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
+                   //~ << std::endl;
+         //Figure out what the subprograms to inherit are
+         //Get the original type
+         ada_base_entity lal_tydef = lal_tydef_deref;
+         ada_base_entity lal_super_type;
+         ada_derived_type_def_f_subtype_indication(&lal_tydef, &lal_super_type);
+         ada_type_expr_p_designated_type_decl(&lal_super_type, &lal_super_type);
+
+         //  Get the programs that use the original type
+         //Get the name of the type
+         ada_text_type lal_unique_identifying_name;
+         ada_basic_decl_p_unique_identifying_name(&lal_super_type, &lal_unique_identifying_name);
+         std::string unique_identifying_name = dot_ada_text_type_to_string(lal_unique_identifying_name);
+
+         ada_base_entity lal_node_list;
+         ada_ada_node_parent(&lal_super_type, &lal_node_list);
+         int count = ada_node_children_count(&lal_node_list);
+         for(int i = 0; i < count; i++){
+           ada_base_entity lal_stmt;
+           if(ada_node_child(&lal_node_list, i, &lal_stmt) != 0){
+             //Check if this is a subp_decl that uses the original type
+             ada_node_kind_enum lal_stmt_kind = ada_node_kind(&lal_stmt);
+             if(lal_stmt_kind == ada_subp_decl){
+               ada_text_type lal_subp_unique_name;
+               ada_basic_decl_p_unique_identifying_name(&lal_stmt, &lal_subp_unique_name);
+               std::string subp_unique_name = dot_ada_text_type_to_string(lal_subp_unique_name);
+               if(subp_unique_name.find(unique_identifying_name) != std::string::npos){
+                 createInheritedSymbol(&lal_stmt, *baseRootType, derivedType, ctx);
+               }
+             }
+           }
+         }
+
+         /*if (!declarations.empty())
+         {
+           // fields will be added later during the fixup pass: FixupAstSymbolTablesToSupportAliasedSymbols
+           // \todo also implement fixup for discriminants and enumerations..
+           logInfo() << "A derived/extension record type's implicit declaration is not empty: "
+                     << derivedType.get_name()
+                     << std::endl;
+         }*/
+       };
+
+  ctx.storeDeferredUnitCompletion(std::move(deferredSubRoutineProcessing));
 }
  
 } //end Libadalang_ROSE_Translation

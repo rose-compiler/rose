@@ -63,6 +63,16 @@ struct AdaIdentifier : std::string
   {}
 };
 
+/// returns a map that collects inherited function symbols for
+struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgNamedType*>
+{
+  using base = std::tuple<const SgFunctionDeclaration*, const SgNamedType*>;
+  using base::base;
+
+  std::tuple_element<0, base>::type function()        const { return std::get<0>(*this); }
+  std::tuple_element<1, base>::type associatedType()  const { return std::get<1>(*this); }
+};
+
 struct OperatorKey : std::tuple<const SgScopeStatement*, AdaIdentifier>
 {
   using base = std::tuple<const SgScopeStatement*, AdaIdentifier>;
@@ -169,6 +179,8 @@ map_t<int, SgAdaPackageSpecDecl*>& adaPkgs();
 /// \note currently used to support the obsolescent ASCII package,
 ///       as long as there is no proper Character Type.
 map_t<int, SgInitializedName*>& adaVars();
+
+std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 
 /// returns a map with all functions that a type supports
 /// \details

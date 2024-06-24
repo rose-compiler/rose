@@ -41,6 +41,15 @@ namespace Libadalang_ROSE_Translation
   /// converts a Libadalang exception
   void handleExceptionHandler(ada_base_entity* lal_exception, SgTryStmt& tryStmt, AstContext ctx);
 
+  /// processes inherited subprograms and (TODO) declarations
+  /// \param derivedType  the derived or extended type
+  /// \param tydef        the def of the original type
+  /// \param ctx          the translation context
+  void processInheritedSubroutines( SgNamedType& derivedType,
+                                    ada_base_entity* tydef,
+                                    AstContext ctx
+                                  );
+
 }
 
 

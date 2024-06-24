@@ -51,6 +51,9 @@ namespace{
   /// stores variables defined in Standard or Ascii
   map_t<int, SgInitializedName*> adaVarsMap;
 
+  /// map of inherited symbols
+  std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
+
   /// maps generated operators
   map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
 
@@ -58,15 +61,16 @@ namespace{
 
 } //end unnamed namespace
 
-map_t<int, SgInitializedName*>&                     libadalangVars()         { return libadalangVarsMap;   }
-map_t<int, SgDeclarationStatement*>&               libadalangDecls()         { return libadalangDeclsMap;  }
-map_t<int, SgDeclarationStatement*>&               libadalangTypes()         { return libadalangTypesMap;  }
-map_t<int, SgType*>&                                      adaTypes()         { return adaTypesMap;         }
-map_t<AdaIdentifier, SgType*>&                      adaTypesByName()         { return adaTypesByNameMap;   }
-map_t<int, SgAdaPackageSpecDecl*>&                         adaPkgs()         { return adaPkgsMap;          }
-map_t<int, SgInitializedName*>&                            adaVars()         { return adaVarsMap;          }
-std::vector<SgExpression*>&                          operatorExprs()         { return operatorExprsVector; }
-map_t<OperatorKey, std::vector<OperatorDesc> >&    operatorSupport()         { return operatorSupportMap;  }
+map_t<int, SgInitializedName*>&                                libadalangVars() { return libadalangVarsMap;   }
+map_t<int, SgDeclarationStatement*>&                          libadalangDecls() { return libadalangDeclsMap;  }
+map_t<int, SgDeclarationStatement*>&                          libadalangTypes() { return libadalangTypesMap;  }
+map_t<int, SgType*>&                                                 adaTypes() { return adaTypesMap;         }
+map_t<AdaIdentifier, SgType*>&                                 adaTypesByName() { return adaTypesByNameMap;   }
+map_t<int, SgAdaPackageSpecDecl*>&                                    adaPkgs() { return adaPkgsMap;          }
+map_t<int, SgInitializedName*>&                                       adaVars() { return adaVarsMap;          }
+std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap;  }
+std::vector<SgExpression*>&                                     operatorExprs() { return operatorExprsVector; }
+map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;  }
 
 //Function to turn an ada_text_type into a string
 std::string dot_ada_text_type_to_string(ada_text_type input_text){

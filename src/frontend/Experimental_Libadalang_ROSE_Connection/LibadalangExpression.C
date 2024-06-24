@@ -1181,15 +1181,15 @@ namespace{
           const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
 
           //Check if this is an enum value instead of a variable
-          //For now, we check p_is_static_expr to tell the difference
+          //For now, we check p_is_static_expr & p_is_static_subtype to tell the difference
           //TODO Test this some more
           ada_bool lal_static_expr;
           ada_expr_p_is_static_expr(lal_element, 1, &lal_static_expr);
           ada_bool lal_static_subtype;
           ada_name_p_is_static_subtype(lal_element, 1, &lal_static_subtype);
 
-          if(lal_static_expr && !lal_static_subtype){
-            logInfo() << "identifier " << name << " is being treated as an enum value (is_static_expr = true).\n";
+          if(lal_static_expr == true && lal_static_subtype != true){
+            logInfo() << "identifier " << name << " is being treated as an enum value (is_static_expr = true & is_static_subtype = false).\n";
 
             //Get the hash for the decl
             ada_base_entity lal_first_corresponding_decl;
