@@ -263,10 +263,8 @@ AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
   //ADA_ASSERT(s.get_parent() == &scope);
 }
 
-///
-
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
-  {
+{
     //Get the kind of this node
     ada_node_kind_enum element_kind = ada_node_kind(lal_element);
 
@@ -343,9 +341,29 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         logWarn() << "Unhandled element " << kind_name_string << std::endl;
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
+}
+
+namespace{
+  /// clears all mappings created during translation
+  void clearMappings()
+  {
+    libadalangVars().clear();
+    //libadalangExcps().clear();
+    libadalangDecls().clear();
+    libadalangTypes().clear();
+    //libadalangBlocks().clear();
+    adaTypes().clear();
+    //adaExcps().clear();
+    adaPkgs().clear();
+    adaVars().clear();
+    //~ adaFuncs().clear();
+
+    inheritedSymbols().clear();
+    operatorSupport().clear();
+    operatorExprs().clear();
   }
 
-void handleUnit(ada_base_entity* lal_unit, AstContext context, const std::string& src_file_name)
+  void handleUnit(ada_base_entity* lal_unit, AstContext context, const std::string& src_file_name)
   {
 
     //First, make sure this is a unit node
@@ -435,8 +453,701 @@ void handleUnit(ada_base_entity* lal_unit, AstContext context, const std::string
     }
   }
 
+  const SgFunctionCallExp* callNode(const SgFunctionRefExp& fnref)
+  {
+    return isSgFunctionCallExp(fnref.get_parent());
+  }
 
-namespace{
+/*
+  const SgExpressionPtrList& paramList(const SgCallExpression* call)
+  {
+    ASSERT_not_null(call);
+
+    return SG_DEREF(call->get_args()).get_expressions();
+  }
+*/
+
+  const SgFunctionCallExp* parentCallNode(const SgExprListExp* arglst)
+  {
+    return arglst ? isSgFunctionCallExp(arglst->get_parent()) : nullptr;
+  }
+
+  const SgFunctionCallExp* parentCallNode(const SgCallExpression* call)
+  {
+    ASSERT_not_null(call);
+
+    const SgNode* parent = call->get_parent();
+
+    if (const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(parent))
+      parent = actarg->get_parent();
+
+    return parentCallNode(isSgExprListExp(parent));
+  }
+
+  using OverloadSet = std::vector<SgFunctionSymbol*>;
+
+  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet, bool>
+  {
+    using base = std::tuple<SgFunctionSymbol*, OverloadSet, bool>;
+    using base::base;
+
+    /// the symbol which was originally in place
+    SgFunctionSymbol*  orig_sym() const { return std::get<0>(*this); }
+
+    /// the overload set
+    /// \{
+          OverloadSet& ovlset()         { return std::get<1>(*this); }
+    const OverloadSet& ovlset() const   { return std::get<1>(*this); }
+    /// \}
+
+    /// \todo reconsider whether foldable is needed ..
+    /// true, iff all arguments are literals or calls to literal-equivalent functions
+    /// \{
+          bool&        literalEquivalent()       { return std::get<2>(*this); }
+    const bool&        literalEquivalent() const { return std::get<2>(*this); }
+    /// \}
+  };
+
+  using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
+  using WorkItem    = OverloadMap::iterator;
+
+  struct WorkItems : private std::deque<WorkItem>
+  {
+    using base = std::deque<WorkItem>;
+
+    WorkItems() = default;
+
+    using base::size;
+
+    void add(WorkItem item) { base::push_back(item); }
+
+    WorkItem next()
+    {
+      WorkItem item = base::front();
+
+      base::pop_front();
+      return item;
+    }
+
+    bool empty() const { return base::size() == 0; }
+  };
+
+  bool
+  testProperty(const Sg_File_Info* n, bool (Sg_File_Info::*property)() const)
+  {
+    return n && (n->*property)();
+  }
+
+  bool
+  testProperty(const SgLocatedNode& n, bool (Sg_File_Info::*property)() const)
+  {
+    return (  testProperty(n.get_file_info(),        property)
+           || testProperty(n.get_startOfConstruct(), property)
+           || testProperty(n.get_endOfConstruct(),   property)
+           );
+  }
+
+  bool
+  isAdaLiteralList(const SgExpression* arg);
+
+  bool isAdaLiteralExp(const SgExpression* e)
+  {
+    if (const SgActualArgumentExpression* act = isSgActualArgumentExpression(e))
+      return isAdaLiteralExp(act->get_expression());
+
+    return isSgValueExp(e) || isAdaLiteralList(e);
+  }
+
+  bool
+  isAdaLiteralList(const SgExpression* arg)
+  {
+    return isSgAggregateInitializer(arg);
+    //~ const SgExprListExp* lst = isSgExprListExp(arg);
+    //~ if (!lst) return false;
+
+    //~ const SgExpressionPtrList& exprs = lst->get_expressions();
+
+    //~ return std::all_of( exprs.begin(), exprs.end(),
+                        //~ [](const SgExpression* e) { return isAdaLiteralExp(e); }
+                      //~ );
+  }
+
+  bool isLiteralEquivalent(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp& fnref)
+  {
+    // function has been compiler generated
+    //   and has no definition ...
+    const SgFunctionSymbol*      fnsym  = fnref.get_symbol();
+
+    if (fnsym == nullptr)
+    {
+      logWarn() << "function symbol not available" << std::endl;
+      return false;
+    }
+
+    const SgFunctionDeclaration* fndcl  = fnsym->get_declaration();
+    if (!fndcl || !testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated) || fndcl->get_definingDeclaration())
+      return false;
+
+    // all arguments are literals or literal equivalent
+    const SgExprListExp&         args   = SG_DEREF(call.get_args());
+    const SgExpressionPtrList&   arglst = args.get_expressions();
+    auto  isLitEquCall = [&m](SgFunctionRefExp* r) -> bool
+                         {
+                           if (r == nullptr) return false;
+
+                           auto pos = m.find(r);
+
+                           return (pos != m.end()) && pos->second.literalEquivalent();
+                         };
+
+    auto  isLiteralEquExp = [isLitEquCall](SgExpression* e)-> bool
+                            {
+                              return isAdaLiteralExp(e) || isLitEquCall(isSgFunctionRefExp(e));
+                            };
+
+    return std::all_of(arglst.begin(), arglst.end(), isLiteralEquExp);
+  }
+
+
+  struct AmbiguousCallExtractor : AstSimpleProcessing
+  {
+      explicit
+      AmbiguousCallExtractor(decltype(inheritedSymbolMap)& inhsymbols)
+      : AstSimpleProcessing(), m(), inhsyms(inhsymbols)
+      {}
+
+      void visit(SgNode* sageNode) override
+      {
+        using iterator   = decltype(inhsyms.begin());
+        using value_type = decltype(*inhsyms.begin());
+
+        SgFunctionCallExp*           call = isSgFunctionCallExp(sageNode);
+        if (call == nullptr) return;
+
+        SgFunctionRefExp*            fnref = isSgFunctionRefExp(call->get_function());
+        if (fnref == nullptr) return;
+
+        const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
+        if (fndcl == nullptr) return;
+
+        iterator const beg = inhsyms.lower_bound(std::make_pair(fndcl,   nullptr));
+        iterator const lim = inhsyms.lower_bound(std::make_pair(fndcl+1, nullptr));
+
+        // we add all calls to the overload map, b/c they may be needed for
+        //   ambiguity resolution in context.
+        if (beg != lim) ++reqdisambig;
+
+        OverloadSet       overloads;
+        SgFunctionSymbol* fnsym = fnref->get_symbol();
+
+        overloads.emplace_back(fnsym);
+        std::transform( beg, lim,
+                        std::back_inserter(overloads),
+                        [](value_type& val) -> SgFunctionSymbol*
+                        {
+                          return val.second;
+                        }
+                      );
+
+        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads), isLiteralEquivalent(m, *call, *fnref)});
+        //~ logTrace() << "adding " << fnref << std::endl;
+      }
+
+      operator OverloadMap () &&
+      {
+        return std::move(m);
+      }
+
+      int                           reqdisambig = 0;
+    private:
+      OverloadMap                   m;
+      decltype(inheritedSymbolMap)& inhsyms;
+  };
+
+  OverloadMap collectAllFunctionRefExp(SgGlobal& scope)
+  {
+    AmbiguousCallExtractor extractor{inheritedSymbols()};
+
+    extractor.traverse(&scope, postorder);
+
+    logInfo() << "Calls requiring disambiguation: " << extractor.reqdisambig << std::endl;
+    return extractor;
+  }
+
+  WorkItems createWorksetFrom(OverloadMap& m)
+  {
+    WorkItems res;
+
+    for (WorkItem pos = m.begin(), lim = m.end(); pos != lim; ++pos)
+      res.add(pos);
+
+    return res;
+  }
+
+  struct ArgParamTypeCompatibility
+  {
+    static
+    bool areCompatible(const SgType& arg, const SgType& prm)
+    {
+      // a constant's type is determined by the context
+      //   \note returning always true oversimplifies...
+      if (isSgAutoType(&arg)) return true;
+
+      // currently we do not resolve pointer types
+      // \note not sure if type derivation can be pointer based
+      // \todo revise and complete as needed
+      if (isSgAdaAccessType(&arg)) return true;
+
+      si::Ada::TypeDescription prmRoot = si::Ada::typeRoot(const_cast<SgType&>(prm));
+
+      // \todo this assumes that the argument is a subtype of prmRoot
+      if (prmRoot.polymorphic())
+      {
+        logInfo() << "polymorphic arg type" << std::endl;
+        return true;
+      }
+
+      si::Ada::TypeDescription argRoot = si::Ada::typeRoot(const_cast<SgType&>(arg));
+      const bool               res = (  (argRoot.typerep() != nullptr)
+                                     && (argRoot.typerep() == prmRoot.typerep())
+                                     );
+      if (false)
+      {
+        logFlaw() << res << '\n'
+                  << " * a " << (argRoot.typerep() ? typeid(*argRoot.typerep()).name() : std::string{})
+                  << " " << argRoot.typerep() << " / "
+                  << typeid(arg).name() << " " << &arg << '\n'
+                  << " * p " << (prmRoot.typerep() ? typeid(*prmRoot.typerep()).name() : std::string{})
+                  << " " << prmRoot.typerep() << " / "
+                  << typeid(prm).name() << " " << &prm << '\n'
+                  << std::flush;
+
+        if (SgTypedefType* tydef = isSgTypedefType(prmRoot.typerep()))
+        {
+          logFlaw() << "prmtydef: " << tydef->get_name() << " -> "
+                    << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
+                    << std::endl;
+        }
+
+        if (SgTypedefType* tydef = isSgTypedefType(argRoot.typerep()))
+        {
+          logFlaw() << "argtydef: " << tydef->get_name() << " -> "
+                    << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
+                    << std::endl;
+        }
+      }
+
+      return res;
+    }
+
+    bool operator()(const std::set<const SgType*>& args, const SgType* prm) const
+    {
+      ASSERT_not_null(prm);
+
+      // when the set is empty, the argument does not participate in overload resolution
+      //   e.g., the set is empty when an argument is defaulted.
+      if (args.empty()) return true;
+
+      auto areTypeCompatible = [prm](const SgType* arg) -> bool
+                               {
+                                 return areCompatible(SG_DEREF(arg), *prm);
+                               };
+
+      return std::any_of( args.begin(), args.end(), areTypeCompatible );
+    }
+
+    bool operator()(const SgType* arg, const std::set<const SgType*>& parms) const
+    {
+      if (arg == nullptr)
+      {
+        logFlaw() << "null function return" << std::endl;
+        return true;
+      }
+
+      // when the set is empty, the argument does not participate in overload resolution
+      //   e.g., the set is empty when an argument is defaulted.
+      if (parms.empty()) return true;
+
+      auto areTypeCompatible = [arg](const SgType* prm) -> bool
+                               {
+                                 return areCompatible(*arg, SG_DEREF(prm));
+                               };
+
+      return std::any_of( parms.begin(), parms.end(), areTypeCompatible );
+    }
+  };
+
+
+  std::set<const SgType*>
+  simpleExpressionType(const SgExpression& arg)
+  {
+    // literals are convertible to derived types
+    //    without further type resolution, it is unclear what type this
+    //    literals have. Thus, exclude literals from participating in
+    //    overload resolution for now.
+    if (isAdaLiteralExp(&arg))
+      return {};
+
+    return { si::Ada::typeOfExpr(arg).typerep() };
+    // return { arg.get_type() };
+  }
+
+  const SgType*
+  functionReturnType(const SgFunctionSymbol* sym)
+  {
+    return si::Ada::functionType(SG_DEREF(sym)).get_return_type();
+/*
+ *  was:
+    const SgFunctionType* fnty = isSgFunctionType(sym->get_type());
+
+    return fnty ? fnty->get_return_type() : nullptr;
+ */
+  }
+
+  const std::vector<SgType*>&
+  parameterTypes(const SgFunctionSymbol* sym)
+  {
+    return si::Ada::functionType(SG_DEREF(sym)).get_arguments();
+  }
+
+
+  std::set<const SgType*>
+  resultTypes(const SgExpression* parg, const OverloadMap& allrefs)
+  {
+    using ResultType = decltype(resultTypes(parg, allrefs));
+
+    if (parg == nullptr)
+      return { /* empty set */ };
+
+    const SgExpression& arg   = *parg;
+    SgFunctionRefExp*   fnref = nullptr;
+
+    if (const SgCallExpression* call = isSgCallExpression(&arg))
+      fnref = isSgFunctionRefExp(call->get_function());
+
+    if (fnref == nullptr)
+      return simpleExpressionType(arg);
+
+    const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
+    if (fndcl && testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated))
+      return {};
+
+    OverloadMap::const_iterator pos = allrefs.find(fnref);
+
+    if (pos == allrefs.end()) // fallback ..
+      return simpleExpressionType(arg);
+
+    ResultType res;
+
+    for (const SgFunctionSymbol* sym : pos->second.ovlset())
+      res.insert(functionReturnType(sym));
+
+    return res;
+  }
+
+  std::vector<std::set<const SgType*> >
+  argumentTypes(const SgExpressionPtrList& args, OverloadMap& allrefs)
+  {
+    decltype(argumentTypes(args, allrefs)) res;
+
+    for (const SgExpression* arg : args)
+      res.emplace_back(resultTypes(arg, allrefs));
+
+    return res;
+  }
+
+  bool isComparisonOperator(const SgFunctionDeclaration& fn)
+  {
+    static const std::string eq  = si::Ada::roseOperatorPrefix + "=";
+    static const std::string neq = si::Ada::roseOperatorPrefix + "/=";
+
+    const std::string name = fn.get_name();
+
+    return (  boost::iequals(name, eq)
+           || boost::iequals(name, neq)
+           );
+  }
+
+  const SgFunctionParameterList&
+  parameterList(const SgFunctionSymbol& fnsym)
+  {
+    if (const SgAdaInheritedFunctionSymbol* inhsym = isSgAdaInheritedFunctionSymbol(&fnsym))
+      if (const SgFunctionSymbol* pubsym = inhsym->get_publiclyVisibleFunctionSymbol())
+      {
+        return parameterList(*pubsym);
+      }
+
+    const SgFunctionDeclaration& fndcl = SG_DEREF(fnsym.get_declaration());
+    return SG_DEREF(fndcl.get_parameterList());
+  }
+
+  SgExpressionPtrList
+  normalizedArguments(const SgFunctionCallExp& fncall, const OverloadMap& allrefs)
+  {
+    SgFunctionRefExp* fnref = isSgFunctionRefExp(fncall.get_function());
+    if (fnref == nullptr) return {};
+
+    for (const SgFunctionSymbol* fnsym : allrefs.at(fnref).ovlset())
+    {
+      try
+      {
+        return si::Ada::normalizedCallArguments2(fncall, parameterList(SG_DEREF(fnsym)));
+      }
+      catch (const std::logic_error& e) {}
+    }
+
+    logError() << "Unable to normalize argument list in call "
+               << fncall.unparseToString()
+               << std::endl;
+    return {};
+  }
+
+  SgExpressionPtrList
+  normalizedArguments(const SgFunctionCallExp* fncall, const OverloadMap& allrefs)
+  {
+    return normalizedArguments(SG_DEREF(fncall), allrefs);
+  }
+
+/*
+  std::set<const SgType*>
+  typesFromCallContext( const SgFunctionCallExp& parentCall,
+                        const SgFunctionCallExp& childCall,
+                        const OverloadMap& allrefs
+                      );
+*/
+
+  std::set<const SgType*>
+  callTypeEqualityConstraint( const SgFunctionCallExp& parentCall,
+                              std::size_t pos,
+                              const OverloadMap& allrefs
+                            )
+  {
+    const SgExpression* arg = normalizedArguments(parentCall, allrefs).at(pos);
+
+    return resultTypes(arg, allrefs);
+  }
+
+  /// returns eligible return types of a childcall when the
+  ///   child is part of an argument list of a parent call.
+  /// returns the empty set when the contextual types shall not be used
+  /// (due to current inaccuracies, for example, when the parent call
+  /// calls a compiler generated operator.)
+  std::set<const SgType*>
+  typesFromCallContext( const SgFunctionCallExp& parentCall,
+                        const SgFunctionCallExp& childCall,
+                        const OverloadMap& allrefs
+                      )
+  {
+    SgFunctionRefExp*            fnref = isSgFunctionRefExp(parentCall.get_function());
+    OverloadMap::const_iterator  ovpos = allrefs.find(fnref);
+
+    if (ovpos == allrefs.end())
+      return {};
+
+    const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
+
+    if (fndcl == nullptr)
+      return {};
+
+    // do not trust arguments of compiler generated functions
+    const bool compilerGenerated     = testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated);
+    const bool compilerGenComparison = compilerGenerated && isComparisonOperator(*fndcl);
+
+    if (compilerGenerated && !compilerGenComparison)
+      return {};
+
+    std::set<const SgType*> res;
+
+    try
+    {
+      // \todo instead of computing the normalizedArgumentPosition every time,
+      //       the information could be memoized.
+      //       TODO_MEMOIZE_NORMALIZED_ARGPOS
+      std::size_t argpos = si::Ada::normalizedArgumentPosition(parentCall, childCall);
+
+      if (!compilerGenComparison)
+      {
+        for (SgFunctionSymbol* fnsym : ovpos->second.ovlset())
+          res.insert(parameterTypes(fnsym).at(argpos));
+      }
+      else
+      {
+
+        res = callTypeEqualityConstraint(parentCall, 1 - argpos, allrefs);
+      }
+    }
+    catch (const std::logic_error& e)
+    {
+      /* catches exceptions from normalizedArgumentPosition. */
+      logWarn() << "ex: " << e.what() << std::endl;
+    }
+
+    return res;
+  }
+
+  std::set<const SgType*>
+  typesFromAssignContext(const SgAssignOp& parentAssign, const SgFunctionCallExp& childCall)
+  {
+    const SgExpression& lhs = SG_DEREF(parentAssign.get_lhs_operand());
+
+    return { lhs.get_type() };
+  }
+
+  std::set<const SgType*>
+  typesFromAssignInitializer( const SgAssignInitializer& assignIni,
+                              const SgFunctionCallExp& /* childCall */
+                            )
+  {
+    if (const SgInitializedName* var = isSgInitializedName(assignIni.get_parent()))
+      return { var->get_type() };
+
+    return { };
+  }
+
+  std::set<const SgType*>
+  typesFromExpression(const SgExpression* exp)
+  {
+    const SgType* ty = si::Ada::typeOfExpr(const_cast<SgExpression*>(exp)).typerep();
+
+    if (ty == nullptr)
+      return {};
+
+    return { ty };
+  }
+
+  std::set<const SgType*>
+  typesFromResolvedCallContext(const SgFunctionCallExp& parentCall, const SgFunctionCallExp& childCall)
+  {
+    std::set<const SgType*> res;
+
+    try
+    {
+      // \todo instead of computing the normalizedArgumentPosition every time,
+      //       the information could be memoized.
+      //       TODO_MEMOIZE_NORMALIZED_ARGPOS
+      const std::size_t       argpos = si::Ada::normalizedArgumentPosition(parentCall, childCall);
+      const SgFunctionRefExp* fnref  = isSgFunctionRefExp(parentCall.get_function());
+
+      if (fnref == nullptr)
+      {
+        logFlaw() << "resolve context for fn-pointer calls .. [incomplete]"
+                  << std::endl;
+      }
+      else
+      {
+        res = { parameterTypes(fnref->get_symbol()).at(argpos) };
+      }
+    }
+    catch (std::logic_error& e)
+    {
+      logTrace() << "typesFromResolvedCallContext: ex " << e.what() << std::endl;
+    }
+
+    return res;
+  }
+
+  struct ExpectedTypes : sg::DispatchHandler<std::set<const SgType*> >
+  {
+    using base = sg::DispatchHandler<std::set<const SgType*> >;
+    using CallContextHandler = std::function<std::set<const SgType*>(const SgFunctionCallExp&, const SgFunctionCallExp&)>;
+
+    ExpectedTypes(const SgFunctionCallExp& call, CallContextHandler callCtxHandler)
+    : base(), origCall(call), callContextHandler(std::move(callCtxHandler))
+    {}
+
+    void handle(const SgNode& n)
+    {
+      // SG_UNEXPECTED_NODE(n);
+      logFlaw() << "unrecognizedCall context: " << typeid(n).name()
+                << std::endl;
+    }
+
+    //
+    // Expression contexts
+
+    // assignment and initialization
+    void handle(const SgAssignOp& n)                 { res = typesFromAssignContext(n, origCall); }
+    void handle(const SgAssignInitializer& n)        { res = typesFromAssignInitializer(n, origCall); };
+
+    // calls
+    // void handle(const SgFunctionCallExp& n)          {  }
+
+    // logical operators
+    void handle(const SgOrOp&)                       { res = { adaTypesByName().at(AdaIdentifier{"BOOLEAN"}) }; }
+    void handle(const SgAndOp&)                      { res = { adaTypesByName().at(AdaIdentifier{"BOOLEAN"}) }; }
+
+    // other expressions
+    void handle(const SgCastExp& n)
+    {
+      const bool    qualexpr = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+
+      // for true casts, we cannot make any assumption.
+      if (!qualexpr) return;
+
+      res = { n.get_type() };
+    }
+
+    void handle(const SgActualArgumentExpression& n) { res = sg::dispatch(*this, n.get_parent()); }
+    void handle(const SgMembershipOp& n)             { res = typesFromExpression(n.get_rhs_operand()); }
+    void handle(const SgNonMembershipOp& n)          { res = typesFromExpression(n.get_rhs_operand()); }
+
+    void handle(const SgExprListExp& n)
+    {
+      if (const SgFunctionCallExp* call = isSgFunctionCallExp(n.get_parent()))
+      {
+        res = callContextHandler(*call, origCall);
+        return;
+      }
+
+      handle(static_cast<const SgNode&>(n));
+    }
+
+    //
+    // Relevant statements
+
+    void handle(const SgExprStatement&)              { /* procedure call */ }
+
+    void handle(const SgReturnStmt& n)
+    {
+      const SgFunctionDeclaration& fndcl = sg::ancestor<SgFunctionDeclaration>(n);
+      const SgFunctionType&        fnty  = SG_DEREF(fndcl.get_type());
+
+      res = { fnty.get_return_type() };
+    }
+
+    private:
+      const SgFunctionCallExp& origCall;
+      CallContextHandler       callContextHandler;
+  };
+
+  // computes the types as expected from the call context and all currently viable functions
+  //   if the type should not be used, or the call is to a procedure
+  //   return the empty set.
+  std::set<const SgType*>
+  expectedTypes(const SgFunctionCallExp* call, const OverloadMap& allrefs)
+  {
+    auto callHandler = [&allrefs]
+                       (const SgFunctionCallExp& parentCall, const SgFunctionCallExp& childCall) -> std::set<const SgType*>
+                       {
+                         return typesFromCallContext(parentCall, childCall, allrefs);
+                       };
+
+    return sg::dispatch(ExpectedTypes{SG_DEREF(call), std::move(callHandler)}, call->get_parent());
+  }
+
+  // computes the expected types from the call context.
+  std::set<const SgType*>
+  expectedTypes(const SgFunctionCallExp* call)
+  {
+    auto callHandler = []
+                       (const SgFunctionCallExp& parentCall, const SgFunctionCallExp& childCall) -> std::set<const SgType*>
+                       {
+                         return typesFromResolvedCallContext(parentCall, childCall);
+                       };
+
+    return sg::dispatch(ExpectedTypes{SG_DEREF(call), std::move(callHandler)}, call->get_parent());
+  }
+
   template <class SageNode>
   void setFileInfo( SageNode& n,
                     void (SageNode::*setter)(Sg_File_Info*),
@@ -626,9 +1337,9 @@ void setChildIfNull( std::size_t& ctr,
     (parent.*setter)(&mkNullExpression());
     ++ctr;
 }
-
-void replaceNullptrWithNullExpr()
-{
+namespace{
+  void replaceNullptrWithNullExpr()
+  {
     std::size_t ctr = 0;
 
     auto nullrepl = [&ctr](SgExpression* e)->void
@@ -653,7 +1364,256 @@ void replaceNullptrWithNullExpr()
                  );*/
 
     logInfo() << "Replaced " << ctr << " nullptr with SgNullExpression." << std::endl;
-}
+  }
+
+  /// checks if the scope of the type returned by \ref is the same
+  ///   as the scope where \ref ty was declared.
+  /// \todo implement full type check and rename to typeCheckCallContext ..
+  bool scopeCheckCallContext(SgFunctionCallExp& exp, const SgType& ty)
+  {
+    SgFunctionRefExp* fnref    = isSgFunctionRefExp(exp.get_function());
+    std::string       rosename = SG_DEREF(fnref).get_symbol()->get_name();
+    std::string       opname   = si::Ada::convertRoseOperatorNameToAdaOperator(rosename);
+    SgScopeStatement* expScope = si::Ada::operatorScope(opname, &ty);
+    SgScopeStatement* typScope = si::Ada::operatorScope(opname, si::Ada::typeOfExpr(exp).typerep());
+    const bool        res      = si::Ada::sameCanonicalScope(expScope, typScope);
+
+    //~ logTrace() << "liteq: scope " << res
+               //~ << "(" << expScope << " | " << typScope << ") " << exp.unparseToString()
+               //~ << std::endl;
+    return res;
+  }
+
+  void decorateWithTypecast(SgFunctionCallExp& exp, const SgType& ty)
+  {
+    // Another alternative would be to place the operator into a different
+    //   scope. This seems to be more appropriate because it would
+    //   avoid casts to some composite types, and the code would be unparsed
+    //   with the operator being properly scope qualified.
+
+    // if operator syntax is used, it cannot be scope qualified ..
+    if (exp.get_uses_operator_syntax()) return;
+
+    // if the operator is not defined in the standard scope, we use it
+    //   without further casting ..
+    if (SgFunctionSymbol* fnsym = exp.getAssociatedFunctionSymbol())
+      if (fnsym->get_scope() != si::Ada::pkgStandardScope())
+        return;
+
+    SgNullExpression& dummy = mkNullExpression();
+
+    si::replaceExpression(&exp, &dummy, true /* keep exp */);
+
+    SgType&    castty = SG_DEREF( ty.stripType(SgType::STRIP_MODIFIER_TYPE) );
+    SgCastExp& castex = mkCastExp(exp, castty);
+
+    si::replaceExpression(&dummy, &castex, false /* delete dummy */);
+  }
+
+  void typecastLiteralEquivalentFunctionsIfNeeded(const OverloadMap& m)
+  {
+    std::for_each( m.begin(), m.end(),
+                   [](const OverloadMap::value_type& el) -> void
+                   {
+                     if (el.first == nullptr)
+                     {
+                       //~ logWarn() << "liteq: null" << std::endl;
+                       return;
+                     }
+
+                     if (!el.second.literalEquivalent())
+                     {
+                       //~ logTrace() << "liteq: " << el.first->unparseToString()
+                                  //~ << " - " << el.second.literalEquivalent()
+                                  //~ << std::endl;
+                       return;
+                     }
+
+                     SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
+                     if (callexp == nullptr)
+                     {
+                       //~ logTrace() << "liteq: " << typeid(*el.first->get_parent()).name() << std::endl;
+                       return;
+                     }
+
+                     std::set<const SgType*> typeCandidates = expectedTypes(callexp);
+
+                     if (typeCandidates.size() > 1)
+                       ; // logTrace() << "liteq: multiple type candidates" << std::endl;
+                     else if (typeCandidates.size() == 0)
+                       ; // logTrace() << "liteq: 0 candidates" << std::endl;
+                     else if (*typeCandidates.begin() == nullptr)
+                       ; // logTrace() << "liteq: null type" << std::endl;
+                     else if (!scopeCheckCallContext(*callexp, **typeCandidates.begin()))
+                       decorateWithTypecast(*callexp, **typeCandidates.begin());
+                   }
+                 );
+  }
+
+
+  void resolveInheritedFunctionOverloads(SgGlobal& scope)
+  {
+    OverloadMap allrefs = collectAllFunctionRefExp(scope);
+    WorkItems   workset = createWorksetFrom(allrefs);
+
+    logInfo() << "resolveInheritedFunctionOverloads " << workset.size()
+              << std::endl;
+
+    while (!workset.empty())
+    {
+      OverloadMap::value_type& item      = *workset.next();
+      OverloadSet&             overloads = item.second.ovlset();
+      const std::size_t        numcands  = overloads.size();
+
+      // nothing to be done ... go to next work item
+      if (numcands < 2) continue;
+
+      SgFunctionRefExp&         fnref  = SG_DEREF(item.first);
+      const SgFunctionCallExp*  fncall = callNode(fnref);
+      const SgExpressionPtrList args   = normalizedArguments(fncall, allrefs);
+
+      if (numcands != 1)
+        logInfo() << "resolve: " << fnref.get_parent()->unparseToString() << " " << numcands
+                  //~ << "\n   in: " << fnref.get_parent()->get_parent()->unparseToString()
+                  //~ << " : " << typeid(*fnref.get_parent()->get_parent()).name()
+                  //~ << " - " << args.size()
+                  << std::endl;
+
+      {
+        // ...
+        // disambiguate based on arguments and argument types
+        OverloadSet viables;
+        auto isViable = [argTypes = argumentTypes(args, allrefs)]
+                        (SgFunctionSymbol* fnsy)->bool
+                        {
+                          const std::vector<SgType*>& parmTypes = parameterTypes(fnsy);
+
+                          return std::equal( argTypes.begin(),  argTypes.end(),
+                                             parmTypes.begin(), parmTypes.end(),
+                                             ArgParamTypeCompatibility{}
+                                           );
+                        };
+
+        std::copy_if( overloads.begin(), overloads.end(),
+                      std::back_inserter(viables),
+                      isViable
+                    );
+
+        // put in place candidates
+        if (viables.size())
+          overloads.swap(viables);
+        else
+          logFlaw() << "0-viables (a) " << fnref.get_parent()->unparseToString()
+                    << std::endl;
+      }
+
+      {
+        if (overloads.size() != 1)
+          logInfo() << "result-resolve: " << fnref.get_parent()->unparseToString() << " " << overloads.size()
+                    << std::endl;
+
+        // ...
+        // disambiguate based on return types and context
+        OverloadSet viables;
+        auto isViableReturn = [expTypes = expectedTypes(fncall, allrefs)]
+                              (SgFunctionSymbol* fnsy)->bool
+                              {
+                                if (expTypes.empty()) return true;
+
+                                return ArgParamTypeCompatibility{}(functionReturnType(fnsy), expTypes);
+                              };
+
+        std::copy_if( overloads.begin(), overloads.end(),
+                      std::back_inserter(viables),
+                      isViableReturn
+                    );
+
+        // put in place candidates
+        if (viables.size())
+          overloads.swap(viables);
+        else
+          logFlaw() << "0-viables (r) " << fnref.get_parent()->unparseToString()
+                    << std::endl;
+      }
+
+      // was there any progress (i.e., was the overloadset reduced) ?
+      if (numcands == overloads.size()) continue;
+
+      // after disambiguation, set the (new) symbol
+
+      if (overloads.size() == 0)
+      {
+        logWarn() << "empty overload set " << fnref.unparseToString() << std::endl;
+        fnref.set_symbol(item.second.orig_sym());
+      }
+      else
+      {
+        fnref.set_symbol(overloads.front());
+      }
+
+      // put parent and children call nodes in need of disambiguation back into the worklist
+      auto appendWorkItem = [&allrefs, &workset]
+                            (const SgCallExpression* call) -> void
+                            {
+                              if (call == nullptr) return;
+
+                              WorkItem pos = allrefs.find(isSgFunctionRefExp(call->get_function()));
+
+                              if (pos != allrefs.end())
+                                workset.add(pos);
+                            };
+
+      // \todo recognize SgActualArguments
+      for (const SgExpression* exp : args)
+        appendWorkItem(isSgCallExpression(exp));
+
+      appendWorkItem(parentCallNode(fncall));
+    }
+
+    // sanity check
+    {
+      logTrace() << "checking fun calls.." << std::endl;
+
+      for (const OverloadMap::value_type& item : allrefs)
+      {
+        if (item.second.ovlset().size() != 1)
+        {
+          const SgExpression* exp = callNode(SG_DEREF(item.first));
+
+          logFlaw() << "disambig: " << (exp ? exp->unparseToString() : std::string{"<null>"})
+                                    << " " << item.second.ovlset().size()
+                                    << std::endl;
+        }
+      }
+    }
+
+    typecastLiteralEquivalentFunctionsIfNeeded(allrefs);
+  }
+
+  bool hasValidFileInfo(const Sg_File_Info& fi)
+  {
+    bool basicValidity = (  fi.isCompilerGenerated()
+                         || fi.isFrontendSpecific()
+                         || fi.isTransformation()
+                         || fi.isShared()
+                         || fi.isSourcePositionUnavailableInFrontend()
+                         );
+
+    //~ logError() << "  " << basicValidity
+               //~ << "  " << fi.get_filenameString().empty()
+               //~ << "  " << fi.get_physical_file_id()
+               //~ << std::endl;
+
+    return ( basicValidity
+           || ((!fi.get_filenameString().empty()) && (fi.get_physical_file_id() >= 0))
+           );
+  }
+
+  bool hasValidFileInfo(const SgExpression* n)
+  {
+    return (n == nullptr) || hasValidFileInfo(SG_DEREF(n->get_operatorPosition()));
+  }
+} //end anonymous namespace
 
 void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file, std::vector<std::string> file_paths)
 {
@@ -688,10 +1648,10 @@ void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* 
   }
   // post processing
   replaceNullptrWithNullExpr();
-  //resolveInheritedFunctionOverloads(astScope); //TODO enable
+  resolveInheritedFunctionOverloads(astScope);
 
   // free space that was allocated to store all translation mappings
-  //clearMappings();
+  clearMappings();
 
   logInfo() << "Checking AST post-production" << std::endl;
   genFileInfo(file);

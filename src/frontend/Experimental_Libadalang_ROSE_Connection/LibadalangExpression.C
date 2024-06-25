@@ -372,6 +372,45 @@ namespace
       AstContext ctx;
   };
 
+  struct TypeRefMaker : sg::DispatchHandler<SgExpression*>
+  {
+      using base = sg::DispatchHandler<SgExpression*>;
+
+      explicit
+      TypeRefMaker(AstContext astctx)
+      : base(), ctx(astctx)
+      {}
+
+      void set(SgType* ty);
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgDeclarationStatement& n)
+      {
+        logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
+
+        set(&mkTypeUnknown());
+      }
+
+      // void handle(SgImportStatement& n)
+
+      void handle(SgClassDeclaration& n)         { set(n.get_type()); }
+      void handle(SgTypedefDeclaration& n)       { set(n.get_type()); }
+      void handle(SgEnumDeclaration& n)          { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)        { set(n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)          { set(n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)     { set(n.get_type()); }
+      void handle(SgAdaDiscriminatedTypeDecl& n) { set(n.get_type()); }
+
+    private:
+      AstContext ctx;
+  };
+
+  void TypeRefMaker::set(SgType* ty)
+  {
+    res = &mkTypeExpression(SG_DEREF(ty));
+  }
+
   // wrapper uses homogeneous return types instead of covariant ones
   template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
   SgExpression* mk2_wrapper()
@@ -1285,11 +1324,11 @@ namespace{
           /*else if(SgInitializedName* exc = findFirst(asisExcps(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
           {
             res = &mkExceptionRef(*exc, ctx.scope());
-          }
-          else if(SgDeclarationStatement* tydcl = findFirst(asisTypes(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+          }*/
+          else if(SgDeclarationStatement* tydcl = findFirst(libadalangTypes(), hash))
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
-          }*/
+          }
           else if (SgType* ty = findFirst(adaTypes(), hash))
           {
             res = &mkTypeExpression(*ty);
