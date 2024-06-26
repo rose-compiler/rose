@@ -10,13 +10,15 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
 {
   bool reversible;
  protected:
-  virtual void UpdateDeleteNode( const LoopTreeNode *n)
-  { LoopTreeShadowNode::ReplaceRepr(0);
-    delete this; }
-  virtual LoopTreeShadowNode* CloneNode(LoopTreeNode *n) const
-    { return new CompSliceLoop( n, *this); }
-  virtual void UpdateDistNode( const DistNodeInfo &info );
-  virtual void UpdateMergeLoop( const MergeLoopInfo &info);
+  virtual void UpdateDeleteNode(const LoopTreeNode*) {
+    LoopTreeShadowNode::ReplaceRepr(0);
+    delete this;
+  }
+  virtual LoopTreeShadowNode* CloneNode(LoopTreeNode *n) const {
+    return new CompSliceLoop(n, *this);
+  }
+  virtual void UpdateDistNode(const DistNodeInfo &info);
+  virtual void UpdateMergeLoop(const MergeLoopInfo &info);
 
   void ReplaceRepr( LoopTreeNode *n)
    {  GetRepr()->DetachObserver(*this);
@@ -55,7 +57,7 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
 
  protected:
   virtual LoopTreeShadowNode* CloneNode( LoopTreeNode *n) const
-    { return new CompSliceStmt( n, *this); }
+    { return new CompSliceStmt(n, *this); }
   virtual void UpdateSplitStmt( const SplitStmtInfo &info )
     {
        LoopTreeNode* that = CloneNode(info.GetSplitStmt());
@@ -64,8 +66,11 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
                             info.GetLoop1(), info.GetLoop2(),info.GetRel());
        Notify(info1);
     }
-  virtual void UpdateDeleteNode( const LoopTreeNode *n)
-    { delete this; }
+
+  virtual void UpdateDeleteNode(const LoopTreeNode*) {
+    delete this;
+  }
+
  public:
   CompSliceStmt( LoopTreeNode *s,  CompSliceImpl *tc, int align = 0);
   CompSliceStmt( LoopTreeNode *n, const CompSliceStmt &that)
@@ -118,16 +123,16 @@ class CompSliceImpl : public LoopTreeShadowCreate
    {
      LoopTreeShadowNode *result = 0;
      if (IsSimpleStmt(n))
-        result = CreateSliceStmtNode( n);
+        result = CreateSliceStmtNode(n);
      else if (n->IncreaseLoopLevel() != 0) 
-        result = CreateSliceLoopNode( n );
+        result = CreateSliceLoopNode(n);
      return result;
    }
    virtual CompSliceLoop* CreateSliceLoopNode( LoopTreeNode *n, CompSliceLoop* that = 0)
    {  bool r = (that == 0)? true : that->LoopReversible();
          return new CompSliceLoop( n, this, r); }
    virtual CompSliceStmt* CreateSliceStmtNode( LoopTreeNode *n, CompSliceStmt* that = 0)
-   {  return new CompSliceStmt( n, this ); }
+   { return new CompSliceStmt(n, this); }
 
  public:
   CompSliceImpl( int looplevel ) : LoopTreeShadowCreate(looplevel) {}

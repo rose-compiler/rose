@@ -61,7 +61,7 @@ std::cerr << "GetFusionInfo\n";
 }
 
 FusionInfo LoopFusionAnal::
-operator()( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2,
+operator()( CompSliceLocalityRegistry* /*reg*/, CompSliceNest& n1, CompSliceNest& n2,
              int j, int k, const DepInfo& e)
 {
 #ifdef DEBUG
@@ -92,7 +92,6 @@ std::cerr << "AnyReuseFusionAnal\n";
   return false;
 }
 
-
 FusionInfo BetterReuseFusionAnal ::
 operator()( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2, int j, int k, const DepInfo& e)
 {
@@ -116,7 +115,7 @@ std::cerr << "BetterReuseFusionAnal\n";
 }
 
 FusionInfo OrigLoopFusionAnal::
-operator()(CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2, int j, int k, const DepInfo& e)
+operator()(CompSliceLocalityRegistry* /*reg*/, CompSliceNest& n1, CompSliceNest& n2, int j, int k, const DepInfo& e)
 {
 #ifdef DEBUG
 std::cerr << "OrigLoopFusionAnal\n";

@@ -64,11 +64,15 @@ class LoopNestFusion
 {
  public:
   virtual ~LoopNestFusion() {}
-  virtual bool Fusible(CompSliceLocalityRegistry *anal,CompSliceNest &n1,CompSliceNest &n2,
-                           const DepInfo &e) const { return false; }
-  virtual void Fuse( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, 
-                     DepInfo &e) const { ROSE_ABORT(); } // blame qyi
-  virtual LoopTransformOptions::OptType GetOptimizationType() { return LoopTransformOptions::MULTI_LEVEL_OPT; }
+  virtual bool Fusible(CompSliceLocalityRegistry*, CompSliceNest &, CompSliceNest &, const DepInfo &) const {
+    return false;
+  }
+  virtual void Fuse(CompSliceLocalityRegistry*, CompSliceNest &, CompSliceNest &, DepInfo &) const {
+    ROSE_ABORT();
+  } // blame qyi
+  virtual LoopTransformOptions::OptType GetOptimizationType() {
+    return LoopTransformOptions::MULTI_LEVEL_OPT;
+  }
 };
 
 class MultiLevelFusion : public LoopNestFusion

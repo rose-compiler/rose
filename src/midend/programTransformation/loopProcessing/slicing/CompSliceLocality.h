@@ -89,7 +89,8 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
 
  private:
   Impl* impl;
-  void operator = (const CompSliceLocalityRegistry& that) {}
+  void operator = (const CompSliceLocalityRegistry &) {}
+
  public:
   typedef LoopTreeLocalityAnal::AstNodeSet AstNodeSet;
   CompSliceLocalityRegistry( LoopTreeLocalityAnal &a, unsigned ls, unsigned reuseDist) ;

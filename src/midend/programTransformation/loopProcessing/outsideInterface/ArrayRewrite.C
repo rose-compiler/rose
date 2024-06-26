@@ -29,9 +29,13 @@ class HasDependence : public CollectObject<DepInfo>
   bool result;
  public:
   HasDependence() : result(false) {}
-  virtual bool operator()( const DepInfo& info) 
-   { result = true; return true; }
-  bool& get_result() { return result; }
+  virtual bool operator()(const DepInfo &) {
+    result = true;
+    return true;
+  }
+  bool& get_result() {
+    return result;
+  }
 };
 
 class RewriteModArrayAccess : public CreateTmpArray, public TransformAstTree
@@ -58,7 +62,7 @@ public:
         }
         size = subs.size();
       }
-  bool operator() (AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
+ bool operator() (AstInterface& /*_fa*/, const AstNodePtr& orig, AstNodePtr& result)
  {
   AstNodePtr array;
   AstInterface::AstNodeList subs;

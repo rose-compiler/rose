@@ -19,11 +19,11 @@ int GetConstArrayBound( const AstNodePtr& array,
 class AstRefGetAccessStride : public ProcessAstNode<AstNodePtr>
 {
   std::string name;
-  bool Traverse ( AstInterface &fa, const AstNodePtr& v,
-                       AstInterface::TraversalVisitType t)
+  bool Traverse (AstInterface &fa, const AstNodePtr& v,
+                 AstInterface::TraversalVisitType /*t*/)
   {
-   std::string name1;
-   if (fa.IsVarRef(v, 0, &name1)) {
+    std::string name1;
+    if (fa.IsVarRef(v, 0, &name1)) {
        if (name == name1) {
           return false;
        }

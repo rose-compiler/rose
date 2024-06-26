@@ -7,9 +7,12 @@
 
 class HoldTreeNodeObserver : public LoopTreeObserver
 {
-  LoopTreeNode *node;
+  LoopTreeNode* node;
  protected:
-  void UpdateDeleteNode( const LoopTreeNode *n ) { node = 0; }
+  void UpdateDeleteNode(const LoopTreeNode*) {
+     node = 0;
+  }
+
  public:
   HoldTreeNodeObserver( LoopTreeNode *n, LoopTreeObserver *_next = 0)
      : LoopTreeObserver(_next){ node = n; node->AttachObserver(*this); }

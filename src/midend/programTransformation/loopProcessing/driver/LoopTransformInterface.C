@@ -286,8 +286,9 @@ GetFunctionCallSideEffect( const AstNodePtr& fc,
 
 
 AstNodePtr LoopTransformInterface::
-CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList& args, int &id)
-{ assert(fa != 0);
+CreateDynamicFusionConfig(const AstNodePtr& groupNum, AstInterface::AstNodeList& args, int & /*id*/)
+{
+  assert(fa != 0);
   std::string name = "DynamicFusionConfig";
   ++configIndex;
   args.push_back( fa->CreateConstInt(configIndex).get_ptr() );

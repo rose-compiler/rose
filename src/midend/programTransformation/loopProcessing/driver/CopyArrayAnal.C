@@ -133,7 +133,7 @@ IsRedundantCopy( DepCompCopyArrayCollect::CopyArrayUnit& unit,
 }
 
 bool CopyArrayOperator::
-SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
+SplitDisconnectedUnit( DepCompCopyArrayCollect& /*collect*/,
                         DepCompCopyArrayCollect::CopyArrayUnit& unit,
                         DepCompAstRefGraphCreate& refDep,
                        DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
@@ -237,9 +237,9 @@ ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCrea
 }
 
 void ParameterizeCopyArray:: ApplyXform(
-                DepCompCopyArrayCollect::CopyArrayUnit& curarray,
+                DepCompCopyArrayCollect::CopyArrayUnit& /*curarray*/,
                 CopyArrayConfig& config, LoopTreeNode* repl,
-                LoopTreeNode* init, LoopTreeNode* save)
+                LoopTreeNode* /*init*/, LoopTreeNode* /*save*/)
 {
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
   assert(tuning != 0);

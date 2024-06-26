@@ -43,7 +43,7 @@ class LoopTreeObserveImpl
 LoopTreeNode:: LoopTreeNode()
   { impl = new LoopTreeObserveImpl(); }
 
-LoopTreeNode:: LoopTreeNode( const LoopTreeNode& that)
+LoopTreeNode:: LoopTreeNode(const LoopTreeNode &)
   {
     impl = new LoopTreeObserveImpl();
 /* do not copy observers?
@@ -223,7 +223,7 @@ std::string LoopTreeStmtNode :: toString() const
   return AstInterface::AstToString( start );
 }
 
-AstNodePtr LoopTreeStmtNode :: CodeGen( const AstNodePtr& c) const
+AstNodePtr LoopTreeStmtNode :: CodeGen(const AstNodePtr &) const
 {
   AstInterface& fa = LoopTransformInterface::getAstInterface();
   AstNodePtr result = fa.CopyAstTree( start );
@@ -344,10 +344,9 @@ bool LoopTreeNode :: ContainLoop() const
 
 bool LoopTreeNode :: IsPerfectLoopNest() const
 {
-  int level = 0;
   const LoopTreeNode *l=this;
   for ( ; l->ChildCount() == 1; l = l->FirstChild()) {
-     level += l->IncreaseLoopLevel();
+     l->IncreaseLoopLevel();
   }
 
   for (LoopTreeNode *s = l->FirstChild(); s != 0 ; s = s->NextSibling()) {

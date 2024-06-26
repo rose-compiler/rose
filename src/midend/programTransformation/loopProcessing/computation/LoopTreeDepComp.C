@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <strstream>
+#include <sstream>
 #include <LoopTreeDepComp.h>
 #include <LoopTreeBuild.h>
 
@@ -121,14 +121,14 @@ std::string LoopTreeDepComp :: DepToString() const
    GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
              = GetDepGraph()->GetNodeIterator();
    assert(!nodes.ReachEnd());
-   std::strstream out;
+   std::stringstream out;
    write_graph(*GetDepGraph(), out, std::string("dep"));
    return out.str();
 }
 void LoopTreeDepComp :: DumpNode( LoopTreeNode *s) const
    { std::cerr << GraphNodeToString(*GetDepGraph(),  GetDepNode(s) ) << std::endl; }
 
-void LoopTreeDepGraphCreate :: UpdateSplitStmt2( const SplitStmtInfo2 &info)
+void LoopTreeDepGraphCreate :: UpdateSplitStmt2(const SplitStmtInfo2 &)
 {
   ROSE_ABORT();
 }
@@ -232,8 +232,10 @@ UpdateMergeStmtLoop( const MergeStmtLoopInfo &info)
 class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
 {
   virtual GraphAccessInterface::Node*
-  CreateNodeImpl(AstNodePtr start, const DomainCond& c)
-  { ROSE_ABORT(); }
+  CreateNodeImpl(AstNodePtr, const DomainCond &) {
+    ROSE_ABORT();
+  }
+
   virtual void
           CreateEdgeImpl(GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2, DepInfo info)
         { LoopTreeDepGraphNode *n1 = static_cast<LoopTreeDepGraphNode*>(gn1),
@@ -285,7 +287,7 @@ BuildDep(DepInfoAnal &anal, LoopTreeDepGraphNode *n1,
 
 class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
 {
-  virtual GraphAccessInterface::Node* CreateNodeImpl(AstNodePtr start, const DomainCond& c)
+  virtual GraphAccessInterface::Node* CreateNodeImpl(AstNodePtr /*start*/, const DomainCond& c)
   {
     LoopTreeNode *cur = iter.Current();
     for ( ; (cur != NULL && !cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0); iter.Advance(), cur = iter.Current());

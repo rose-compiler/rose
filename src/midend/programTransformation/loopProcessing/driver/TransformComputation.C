@@ -61,9 +61,10 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
    int optType;
    DebugLog DebugOpt;
 
-   bool ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
-                                      const AstNodePtr& body,
-                                      AstInterface::TraversalVisitType t)
+   using ProcessAstTree::ProcessFunctionDefinition; // required, otherwise compiler warning
+   bool ProcessFunctionDefinition(AstInterface &/*fa*/, const AstNodePtr& /*s*/,
+                                  const AstNodePtr& /*body*/,
+                                  AstInterface::TraversalVisitType /*t*/)
    {
         DebugOpt("Seeing function definition inside, setting optimizability to falses");
         succ = -1;
@@ -115,9 +116,9 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
         return ProcessAstTree<AstNodePtr>::ProcessGoto(fa, s, dest);
      }
   bool ProcessIf(AstInterface &fa, const AstNodePtr& s,
-                   const AstNodePtr& cond, const AstNodePtr& truebody,
-                   const AstNodePtr& falsebody,
-                   AstInterface::TraversalVisitType t)
+                 const AstNodePtr& /*cond*/, const AstNodePtr& /*truebody*/,
+                 const AstNodePtr& /*falsebody*/,
+                 AstInterface::TraversalVisitType t)
     {
         if (succ < 0)
            return false;
@@ -162,10 +163,12 @@ class CopyDeclarations : public ProcessAstTree<AstNodePtr>
 {
   AstNodePtr dest;
  protected:
-  virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s,
-                               const AstNodePtr& init, const AstNodePtr& cond,
-                               const AstNodePtr& incr, const AstNodePtr& body,
-                               AstInterface::TraversalVisitType t)
+
+  using ProcessAstTree::ProcessLoop; // required, otherwise compiler warning
+  virtual bool ProcessLoop(AstInterface & /*fa*/, const AstNodePtr& s,
+                           const AstNodePtr& init, const AstNodePtr& /*cond*/,
+                           const AstNodePtr& /*incr*/, const AstNodePtr& body,
+                           AstInterface::TraversalVisitType t)
      {
        if (t == AstInterface::PreVisit) {
            Skip(s);
@@ -174,6 +177,7 @@ class CopyDeclarations : public ProcessAstTree<AstNodePtr>
         }
         return true;
      }
+
   bool ProcessDecls( AstInterface& fa, const AstNodePtr& decl)
   {
     AstNodePtr ndecl = fa.CopyAstTree(decl);
@@ -259,7 +263,7 @@ bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
   return true;
 }
 
-void RearrangeCompSliceGraph( LoopTreeDepComp &comp,
+void RearrangeCompSliceGraph( LoopTreeDepComp & /*comp*/,
                         CompSliceDepGraphCreate& graph,
                         CompSliceLocalityRegistry &sliceAnal)
 {

@@ -221,7 +221,7 @@ Build(LoopTreeLocalityAnal& tc, LoopTreeNode* root)
 void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
      {
        std::function<bool(AstNodePtr,AstNodePtr)> modcollect = 
-               [this](AstNodePtr mod_first, AstNodePtr mod_second) {
+               [this](AstNodePtr mod_first, AstNodePtr /*mod_second*/) {
             if (refmap.find(mod_first) == refmap.end()) {
                 int num = refmap.size();
                 refmap[mod_first] = -(num+1);
@@ -232,7 +232,7 @@ void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
             return false;
           };
        std::function<bool(AstNodePtr,AstNodePtr)> readcollect = 
-               [this](AstNodePtr read_first, AstNodePtr read_second) {
+               [this](AstNodePtr read_first, AstNodePtr /*read_second*/) {
             if (refmap.find(read_first) == refmap.end()) {
                 int num = refmap.size();
                 refmap[read_first] = num+1;

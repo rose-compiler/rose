@@ -530,7 +530,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
    return curconfig;
 }
 
-void ComputeCutBoundary( const DepCompAstRefGraphCreate& refDep,
+void ComputeCutBoundary( const DepCompAstRefGraphCreate& /*refDep*/,
                          const DepCompAstRefAnal& stmtorder,
                          DepCompCopyArrayCollect::CopyArrayUnit& unit,
                          const DepCompAstRefGraphNode*& cut1,

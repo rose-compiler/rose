@@ -51,8 +51,7 @@ class LoopTreeBuild : public ProcessAstTree<AstNodePtr>
        return ProcessAstTree::ProcessIf(fa, s, cond, body1, body2, t);
     }
 
-  bool ProcessGoto( AstInterface &fa, const AstNodePtr& start, 
-                       const AstNodePtr& dest)
+  bool ProcessGoto(AstInterface &fa, const AstNodePtr& start, const AstNodePtr &)
     { return ProcessStmt(fa, start); }
 
   bool ProcessStmt( AstInterface &fa, const AstNodePtr& start)

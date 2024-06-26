@@ -111,7 +111,8 @@ class OptSpec {
 
   /*QY: return xform declaration; modify lineNo;
         append traceMod with variables that need to be kept track of; */
-  virtual void insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lineNo) {}
+  virtual void insert_xformDecl(POETProgram&, LocalVar*, POETCode* &, int &) {}
+
   /*QY: return xform evaluation; modify lineNo with new line number */
   virtual POETCode* gen_xformEval(POETProgram& poet, LocalVar* top, 
                    POETCode* traceMod, OptLevel optLevel, int& lineNo) = 0;
@@ -189,12 +190,12 @@ class UnrollSpec : public OptSpec
 {
    /*QY: relevant POET invocation names 
          (need to be consistent with POET/lib/opt.pi*/
-   LocalVar* paramVar;
+  /*LocalVar* paramVar;*/ //warning: private field 'paramVar' is not used
  public:
   UnrollSpec(LocalVar* handle, int unrollSize); 
   virtual OptEnum get_enum() const { return UNROLL; }
   virtual OptLevel get_opt_level() const { return OPT_PROC_LEVEL; }
-  virtual std::string get_opt_prefix(OptLevel optLevel) { return "unroll"; }
+  virtual std::string get_opt_prefix(OptLevel) { return "unroll"; }
   virtual std::string to_string(OptLevel level);
 
   /*QY: insert parameter decl; modify lineNo with new line number; 
@@ -213,14 +214,14 @@ class UnrollSpec : public OptSpec
 
 class ParLoopSpec : public OptSpec
 {
-  POETCode* privateVars;
-  POETCode* ivarName, *bvarName;
-  LocalVar* parVar, *parblockVar;
+  /* POETCode* privateVars; */ //warning: private fields not used*/
+  /* POETCode* ivarName, *bvarName; */ //warning: private fields not used
+  /* LocalVar* parVar, *parblockVar; */ //warning: private fields not used
  public:
   ParLoopSpec(LocalVar* outerHandle, LoopTreeNode* loop, int bsize);
   virtual OptEnum get_enum() const { return PARLOOP; }
   virtual OptLevel get_opt_level() const { return OPT_PAR_LEVEL; }
-  virtual std::string get_opt_prefix(OptLevel optLevel) { return "par"; }
+  virtual std::string get_opt_prefix(OptLevel) { return "par"; }
   virtual std::string to_string(OptLevel level);
 
   /*QY: insert parameter decl; 
@@ -239,9 +240,9 @@ class ParLoopSpec : public OptSpec
 class BlockSpec : public OptSpec
 {
    std::vector<LoopInfo> loopVec; /*QY: the loops to block */ 
-   POETCode* nonperfect; /*QY: the non-perfect loops*/
-   LocalVar* blockPar, *ujPar;
-   HandleMap& handleMap;
+   /* POETCode* nonperfect; */ /*QY: the non-perfect loops*/ //warning: private fields not used
+   /* LocalVar* blockPar, *ujPar; */ //warning: private fields not used
+   HandleMap& handleMap; // warning: private field 'handleMap' is not used
    unsigned loopnum;
 
    /*QY: compute the blocking dimension configuration */

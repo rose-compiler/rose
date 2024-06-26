@@ -406,18 +406,23 @@ UpdateSplitStmt( const SplitStmtInfo &info)
      Attach();
    }
   }
-void CompSlice::UpdateStmtIterator::
-UpdateDeleteNode( const LoopTreeNode *n )
-   { CompSlice::ConstStmtIterator::Advance(); Attach(); }
 
-void  CompSlice::UpdateLoopIterator::Attach()
-   { LoopTreeNode *cur = LoopTreeTraverseSelectLoop::Current();
-     if (cur != 0) cur->AttachObserver(*this);
-    }
+void CompSlice::UpdateStmtIterator::
+UpdateDeleteNode(const LoopTreeNode*) {
+   CompSlice::ConstStmtIterator::Advance();
+   Attach();
+}
+
+void  CompSlice::UpdateLoopIterator::Attach() {
+   LoopTreeNode *cur = LoopTreeTraverseSelectLoop::Current();
+   if (cur != 0) cur->AttachObserver(*this);
+}
+
 void CompSlice::UpdateLoopIterator::Detach()
 { LoopTreeNode *cur = LoopTreeTraverseSelectLoop::Current();
    if (cur != 0) cur->DetachObserver(*this);
 }
+
 void CompSlice::UpdateLoopIterator::
 UpdateDistNode(const DistNodeInfo &info)
    { const LoopTreeNode *o = info.GetObserveNode();
@@ -428,8 +433,9 @@ UpdateDistNode(const DistNodeInfo &info)
        Attach();
      }
    }
+
 void CompSlice::UpdateLoopIterator::
-UpdateDeleteNode( const LoopTreeNode *n )
+UpdateDeleteNode(const LoopTreeNode*)
    { CompSlice::ConstLoopIterator::Advance(); Attach(); }
 
 CompSlice::ConstStmtIterator CompSlice::ConstLoopIterator::

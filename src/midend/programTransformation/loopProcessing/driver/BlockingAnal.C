@@ -43,8 +43,7 @@ static SymbolicVal GetDefaultBlockSize(const CompSlice* slice)
     }
 
 const CompSlice* LoopNoBlocking::
-SetBlocking(CompSliceLocalityRegistry *anal,
-                           const CompSliceDepGraphNode::FullNestInfo& nestInfo)
+SetBlocking(CompSliceLocalityRegistry* /*anal*/, const CompSliceDepGraphNode::FullNestInfo& nestInfo)
    {
       const CompSliceNest* n = nestInfo.GetNest();
       int loopnum = n->NumberOfEntries();

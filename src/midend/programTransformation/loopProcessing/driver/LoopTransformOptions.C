@@ -26,7 +26,7 @@ bool DynamicTuning::Do()
   return dt > 0;
 }
 
-inline unsigned ReadUnsignedInt(LoopTransformOptions& opt, const std::vector<std::string>& argv, unsigned& index, const std::string& name, unsigned def_value)
+inline unsigned ReadUnsignedInt(LoopTransformOptions& /*opt*/, const std::vector<std::string>& argv, unsigned& index, const std::string& name, unsigned def_value)
 {
  int val = -1;
  if (index+1 < argv.size())
@@ -123,7 +123,7 @@ class ParameterizeCopyArrayOpt : public LoopTransformOptions::OptRegistryType
 
 class ReuseInterchangeOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned& /*index*/, const std::vector<std::string>& /*argv*/)
          { opt.SetInterchangeSel( new ArrangeReuseOrder() ); }
   public:
      ReuseInterchangeOpt() : OptRegistryType("-ic1", " :loop interchange for more reuses") {}
@@ -131,7 +131,7 @@ class ReuseInterchangeOpt : public LoopTransformOptions::OptRegistryType
 
 class FissionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned& /*index*/, const std::vector<std::string>& /*argv*/)
          { opt.SetFusionSel( new LoopNestFusion() ); }
   public:
      FissionOpt() : OptRegistryType("-fs0", " : maximum distribution at all loops") {}
@@ -139,7 +139,7 @@ class FissionOpt : public LoopTransformOptions::OptRegistryType
 
 class InnerFissionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned& /*index*/, const std::vector<std::string>& /*argv*/)
      {
        opt.SetFusionSel( new SameLevelFusion( new InnermostLoopFission() ) ); }
   public:
@@ -148,7 +148,7 @@ class InnerFissionOpt : public LoopTransformOptions::OptRegistryType
 
 class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned& /*index*/, const std::vector<std::string>& /*argv*/)
       { opt.SetFusionSel( new SameLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
      SingleReuseFusionOpt()
@@ -157,7 +157,7 @@ class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned& /*index*/, const std::vector<std::string>& /*argv*/)
          { opt.SetFusionSel( new MultiLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
     MultiReuseFusionOpt()
@@ -178,7 +178,7 @@ class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 
 class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 {
-  virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned& /*index*/, const std::vector<std::string>& /*argv*/)
          {
            int size = 0;
            opt.SetCacheLineSize(size);

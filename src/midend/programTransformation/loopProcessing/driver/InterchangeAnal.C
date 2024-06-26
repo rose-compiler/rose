@@ -49,7 +49,7 @@ void ArrangeNestingOrder :: operator()( CompSliceLocalityRegistry *anal,CompSlic
 }
 
 void ArrangeOrigNestingOrder ::
-SetNestingWeight( CompSliceLocalityRegistry *anal, CompSliceNest &g, float *weightvec )
+SetNestingWeight(CompSliceLocalityRegistry* /*anal*/, CompSliceNest &g, float *weightvec)
 {
    for (int i = 0; i < g.NumberOfEntries(); i++) {
       weightvec[i] = SliceNestingLevel(g[i]);

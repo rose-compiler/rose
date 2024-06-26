@@ -31,22 +31,21 @@ class LoopTreeShadowNode : public LoopTreeNode
      : repr(n), map(that.map) 
     {  map->InsertMapping(repr, this); }
  public:
-  AstNodePtr GetOrigStmt() const { return repr->GetOrigStmt(); }
-  LoopInfo * GetLoopInfo() { return repr->GetLoopInfo(); }
+  AstNodePtr GetOrigStmt() const override { return repr->GetOrigStmt(); }
+  LoopInfo * GetLoopInfo() override { return repr->GetLoopInfo(); }
   LoopTreeNode* GetRepr() const { return repr; }
-  int IncreaseLoopLevel() const { return repr->IncreaseLoopLevel(); }
+  int IncreaseLoopLevel() const override { return repr->IncreaseLoopLevel(); }
 
-  virtual LoopTreeNode* set_preAnnot(const std::string& content) { return 0; }
-  virtual LoopTreeNode* set_postAnnot(const std::string& content) { return 0; }
+  virtual LoopTreeNode* set_preAnnot(const std::string &) override { return 0; }
+  virtual LoopTreeNode* set_postAnnot(const std::string &) override { return 0; }
   
   std::string LoopTreeGetClassName() const override { return "LoopTreeShadowNode"; }
-  LoopTreeNode *Clone() const { return 0; }
+  LoopTreeNode *Clone() const override { return 0; }
   virtual LoopTreeShadowNode* CloneNode(LoopTreeNode *n) const
     { return new LoopTreeShadowNode(n, *this); }
   
-  void write( std::ostream& out) const { if (repr != NULL) repr->write(out); }
-  AstNodePtr CodeGen( const AstNodePtr& c) const
-    { return repr->CodeGen(c); }
+  void write(std::ostream& out) const override { if (repr != nullptr) repr->write(out); }
+  AstNodePtr CodeGen(const AstNodePtr& c) const override { return repr->CodeGen(c); }
  friend class LoopTreeShadowCreate;
 };
 

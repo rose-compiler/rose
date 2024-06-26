@@ -8,8 +8,9 @@ template <class Node>
 class TransDepAnalImpl  : public TransInfoOP<DepInfoSet>
 {
  public:
-  DepInfoSet GetTopInfo( const GraphAccessInterface::Node *n1, const GraphAccessInterface::Node *n2)
-  { return DepInfoSetGenerator::GetTopInfoSet(); }
+  DepInfoSet GetTopInfo( const GraphAccessInterface::Node*, const GraphAccessInterface::Node*) {
+    return DepInfoSetGenerator::GetTopInfoSet();
+  }
   DepInfoSet GetBottomInfo( const GraphAccessInterface::Node *n1, const GraphAccessInterface::Node *n2)
     {
        int nr = static_cast<const Node*>(n1)->NumOfLoops();

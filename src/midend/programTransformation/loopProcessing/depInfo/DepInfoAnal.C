@@ -46,10 +46,10 @@ bool AnalyzeStmtRefs( AstInterface& fa, const AstNodePtr& n,
                       CollectObject<AstNodePtr> &rRefs)
 {
   std::function<bool(AstNodePtr, AstNodePtr)> colw = [&wRefs]
-          (AstNodePtr mod_first, AstNodePtr mod_second) {
+          (AstNodePtr mod_first, AstNodePtr /*mod_second*/) {
                   return wRefs(mod_first); };
   std::function<bool(AstNodePtr, AstNodePtr)> colr = [&rRefs]
-          (AstNodePtr read_first, AstNodePtr read_second) {
+          (AstNodePtr read_first, AstNodePtr /*read_second*/) {
                   return rRefs(read_first); };
   return StmtSideEffectCollect<AstNodePtr>(fa, LoopTransformInterface::getSideEffectInterface())(n,&colw,&colr);
 }

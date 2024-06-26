@@ -11,9 +11,9 @@ class CompSliceAlignInfo;
 class CompSliceObserver
 {
   public:
-   virtual void UpdateDelete( const CompSlice &slice) {};
-   virtual void UpdateFusion( const CompSliceFuseInfo &info) {}
-   virtual void UpdateAlign( const CompSliceAlignInfo &info) {}
+   virtual void UpdateDelete(const CompSlice &) {};
+   virtual void UpdateFusion(const CompSliceFuseInfo &) {}
+   virtual void UpdateAlign(const CompSliceAlignInfo &) {}
    virtual void Dump() const {}
    virtual ~CompSliceObserver() {}
 };
@@ -66,12 +66,12 @@ class CompSliceNestFusionInfo;
 class CompSliceNestObserver
 {
  public:
-  virtual void UpdateDelete( const CompSliceNest&) {};
-  virtual void UpdateDeleteEntry( const CompSliceNestDeleteEntryInfo&) {}
-  virtual void UpdateAlignEntry( const CompSliceNestAlignEntryInfo&) {}
+  virtual void UpdateDelete(const CompSliceNest&) {};
+  virtual void UpdateDeleteEntry(const CompSliceNestDeleteEntryInfo&) {}
+  virtual void UpdateAlignEntry(const CompSliceNestAlignEntryInfo&) {}
   virtual void UpdateDuplicateEntry(const CompSliceNestDuplicateEntryInfo&) {}
-  virtual void UpdateSwap( const CompSliceNestSwapInfo&) {}
-  virtual void UpdateFusion( const CompSliceNestFusionInfo&) {}
+  virtual void UpdateSwap(const CompSliceNestSwapInfo&) {}
+  virtual void UpdateFusion(const CompSliceNestFusionInfo&) {}
   virtual void Dump() const {}
   virtual ~CompSliceNestObserver() {}
 };

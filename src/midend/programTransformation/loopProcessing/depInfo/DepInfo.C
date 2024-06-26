@@ -327,7 +327,7 @@ void DepInfo::InsertLoop( int level, DepDirection dir)
 
 }
 
-void DepInfo:: DistLoop( int level)
+void DepInfo:: DistLoop(int /*level*/)
 {
 /* QY: 3/4/2018: changing common level here is problematic for some tests
   if ( level < CommonLevel());

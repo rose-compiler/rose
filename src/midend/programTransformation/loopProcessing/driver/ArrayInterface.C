@@ -23,7 +23,7 @@ void ArrayInterface::observe( AstInterface& fa)
 }
 
 void ArrayInterface::
-ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy)
+ObserveCopyAst(AstInterfaceImpl& /*fa*/, const AstNodePtr& orig, const AstNodePtr& copy)
 {
   std::map <AstNodePtr, int>::const_iterator p1 = dimmap.find(orig);
   if (p1 != dimmap.end())

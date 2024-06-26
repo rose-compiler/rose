@@ -742,7 +742,7 @@ buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
 }
 
 SymbolicVal SelectArray::
-buf_offset( AstInterface& fa, std::vector<SymbolicVal>& arrindex) const
+buf_offset( AstInterface& /*fa*/, std::vector<SymbolicVal>& arrindex) const
 {
    SymbolicVal bufoffset = 0;
    SelectArray::const_iterator selp = begin();
@@ -1165,7 +1165,7 @@ AstNodePtr CopyArrayConfig:: CodeGen( const AstNodePtr& h) const
 
 extern bool DebugCopyConfig();
 void LoopTreeCopyArrayToBuffer::
-operator()( LoopTreeNode* repl, LoopTreeNode* init,
+operator()( LoopTreeNode* /*repl*/, LoopTreeNode* init,
             LoopTreeNode* save, CopyArrayConfig& c)
 {
   CopyArrayOpt opt = c.get_opt();

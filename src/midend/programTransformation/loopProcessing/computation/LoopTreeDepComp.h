@@ -30,7 +30,9 @@ class LoopTreeDepGraphNode
       if (s && IsSimpleStmt(s))
         s->DetachObserver(*this);
      }
-  void UpdateDeleteNode( const LoopTreeNode *n) { GetInfo() = 0; }
+
+  void UpdateDeleteNode(const LoopTreeNode*) { GetInfo() = 0; }
+
   void UpdateSwapStmtLoop( const SwapStmtLoopInfo &_info)
        { loopMap.SwapLoop(_info.GetLoop1(),_info.GetLoop2(),DEP_SINK); 
          domain.SwapLoop(_info.GetLoop1(), _info.GetLoop2());
@@ -106,7 +108,10 @@ class LoopTreeNodeDepMap
         { map->InsertMapping(_info, n); } 
  public:
   LoopTreeNodeDepMap(PtrMapWrap <LoopTreeNode, LoopTreeDepGraphNode>* m) : map(m) {}
-  LoopTreeNodeDepMap( const LoopTreeNodeDepMap& that) : map(that.map) {}
+
+  LoopTreeNodeDepMap& operator=(const LoopTreeNodeDepMap&) = default; // otherwise a compiler warning
+  LoopTreeNodeDepMap(const LoopTreeNodeDepMap& that) : map(that.map) {}
+
   LoopTreeNodeDepMap() { map = 0; }
 
   LoopTreeDepGraphNode * GetDepNode( const LoopTreeNode* s) const

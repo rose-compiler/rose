@@ -51,7 +51,7 @@ cmdline_configure(const std::vector<std::string>& argv,
          append_args(argv,index,*unknown_args);
 }
 
-bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodePtr& r)
+bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodePtr& /*r*/)
 {
    bool isLoop = false;
    if (enclosingloop == s || (enclosingloop == AST_NULL && (isLoop = fa.IsLoop(s)))) {

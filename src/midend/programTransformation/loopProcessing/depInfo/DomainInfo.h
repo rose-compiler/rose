@@ -57,7 +57,9 @@ DomainCond operator & ( const DomainCond &d1, const DomainCond &d2) ;
 
 class DomainInfoImpl : public LatticeElemList <DomainCond>
 {
-  void operator =(const DomainInfoImpl& that) {}
+  void operator =(const DomainInfoImpl&) {
+  }
+
  public:
   DomainInfoImpl() {}
   DomainInfoImpl( const DomainInfoImpl &that)

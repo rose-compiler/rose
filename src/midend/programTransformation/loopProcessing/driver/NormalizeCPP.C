@@ -47,8 +47,8 @@ class NormalizeLoopTraverse : public ProcessAstTree<AstNodePtr>
 {
   bool succ;
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& _s,
-                               const AstNodePtr& body,
-                               AstInterface::TraversalVisitType t)
+                           const AstNodePtr& /*body*/,
+                           AstInterface::TraversalVisitType t)
   {
     SgNode* s = AstNodePtrImpl(_s).get_ptr();
     if (t != AstInterface::PreVisit)

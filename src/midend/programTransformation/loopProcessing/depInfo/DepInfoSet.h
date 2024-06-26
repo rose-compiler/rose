@@ -9,7 +9,9 @@
 
 class DepInfoSetImpl : public LatticeElemList <DepInfo>
 {
-  void operator =(const DepInfoSetImpl& that) {}
+  void operator =(const DepInfoSetImpl&) {
+  }
+
  public:
   DepInfoSetImpl() {}
   DepInfoSetImpl( const DepInfoSetImpl &that)

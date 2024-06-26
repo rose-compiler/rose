@@ -7,12 +7,11 @@
 class CopyArrayOperator : public DepCompCopyArrayToBuffer
 {
  /*QY: modify the collected array copy specifications in (collect)  */
-  virtual void ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, 
-                DepCompAstRefGraphCreate& g) {}
+  virtual void ModifyCopyArrayCollect(DepCompCopyArrayCollect &, DepCompAstRefGraphCreate &) {}
   using DepCompCopyArrayToBuffer::ApplyXform;
 public:
   virtual ~CopyArrayOperator() {}
-  virtual LoopTransformOptions::OptType GetOptimizationType()  = 0;
+  virtual LoopTransformOptions::OptType GetOptimizationType() = 0;
 
   /* QY: Modifies (unit.root) to Ensure at most (copydim) loop dimensions are copied for the given (unit) */
   int EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
@@ -32,9 +31,9 @@ public:
 
 class NoCopyArrayOperator : public CopyArrayOperator
 {
-  virtual void ApplyXform( DepCompCopyArrayCollect::CopyArrayUnit& curarray,
-                CopyArrayConfig& config, LoopTreeNode* replRoot,
-                LoopTreeNode* initStmt, LoopTreeNode* saveStmt) {}
+  virtual void ApplyXform( DepCompCopyArrayCollect::CopyArrayUnit&,
+                CopyArrayConfig&, LoopTreeNode*,
+                LoopTreeNode*, LoopTreeNode*) {}
  public:
   virtual LoopTransformOptions::OptType GetOptimizationType() 
        { return LoopTransformOptions::NO_OPT; }
