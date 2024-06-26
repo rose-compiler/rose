@@ -6,6 +6,7 @@
 #include <string>
 #include <list>
 #include <limits>
+#include <cstdlib>
 
 namespace CodeThorn {
   enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_DEAD_CODE, ANALYSIS_OPAQUE_PREDICATE, ANALYSIS_NUM };
