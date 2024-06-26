@@ -226,6 +226,7 @@ HEADER_EXPRESSION_LIST_EXPRESSION_END
 HEADER_RANGE_EXP_START
 //Append an expression to the range
 SgRangeExp* append(SgExpression *exp);
+//~ SgType* get_type() const override;
 HEADER_RANGE_EXP_END
 
 
@@ -1272,6 +1273,17 @@ HEADER_ADA_ANCESTOR_INITIALIZER_EXPRESSION_START
           bool isLValue() const override;
           bool isChildUsedAsLValue(const SgExpression*) const override;
 HEADER_ADA_ANCESTOR_INITIALIZER_EXPRESSION_END
+
+HEADER_ADA_ATTRIBUTE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) override;
+#endif
+
+       // get lvalue
+          bool isLValue() const override;
+          bool isChildUsedAsLValue(const SgExpression*) const override;
+HEADER_ADA_ATTRIBUTE_EXPRESSION_END
 
 
 HEADER_BRACED_INITIALIZER_EXPRESSION_START

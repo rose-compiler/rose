@@ -30,3 +30,13 @@ SgRangeExp* SgRangeExp::append(SgExpression *exp)
   exp->set_parent(this);
   return this;
 }
+
+
+SgType* SgRangeExp::get_type() const
+{
+  ASSERT_not_null(p_start);
+
+  return SgRangeType::createType(p_start->get_type());
+}
+
+

@@ -279,6 +279,11 @@ namespace
       type(under);
     }
 
+    void handle(const SgRangeType& n)
+    {
+      type(n.get_base_type());
+    }
+
     void prn_subroutine_prefix(const SgAdaSubroutineType& n)
     {
       if (n.get_is_protected()) prn(" protected ");

@@ -1091,6 +1091,11 @@ namespace Ada
   /// tests if \ref attr is an attribute with name \ref attrname.
   bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname);
 
+  /// tests if \ref attr is an access attribute
+  /// \details
+  ///    either 'access, 'unchecked_access, or 'unrestricted_access.
+  bool isAnyAccessAttribute(const SgAdaAttributeExp& attr);
+
   /// tests if \ref prgdcl is a pragma with name \ref pragmaname.
   /// \param prgdcl     the pragma declaration
   /// \param pragmaname the name to test for

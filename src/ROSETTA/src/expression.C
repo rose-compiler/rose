@@ -62,8 +62,8 @@ Grammar::setUpExpressions () {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaAttributeExp,        "AdaAttributeExp",        "ADA_ATTRIBUTE_EXP" );
-    AdaAttributeExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
-                                        "../Grammar/Expression.code" );
+    AdaAttributeExp.setFunctionPrototype ( "HEADER_ADA_ATTRIBUTE_EXPRESSION", "../Grammar/Expression.code" );
+    AdaAttributeExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     AdaAttributeExp.setDataPrototype ( "SgName", "attribute", "",
                                        CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AdaAttributeExp.setDataPrototype ( "SgExpression*", "object", "= nullptr",
@@ -1877,7 +1877,7 @@ Grammar::setUpExpressions () {
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     RangeExp.setDataPrototype("SgExpression*", "stride", "= NULL",
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    RangeExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+    //~ RangeExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (RealPartOp,             "RealPartOp",             "REAL_PART_OP" );

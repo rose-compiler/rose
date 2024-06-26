@@ -140,6 +140,9 @@ Grammar::setUpTypes ()
   //              The subroutine type does that by creating a SgFunctionParameterList and SgFunctionParameterScope
      NEW_TERMINAL_MACRO ( AdaSubroutineType, "AdaSubroutineType",        "T_ADA_SUBROUTINE_TYPE" );
 
+  // PP (5/24/24) add type for ranges.
+     NEW_TERMINAL_MACRO ( RangeType, "RangeType",        "T_RANGE_TYPE" );
+
 
   // Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical operations
   //                       with literals TRUE and FALSE.
@@ -243,7 +246,7 @@ Grammar::setUpTypes ()
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
           TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           |
           AdaDiscreteType      | AdaModularType          | AdaDerivedType            | AdaSubroutineType    |
-          JovialBitType,
+          JovialBitType | RangeType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -631,6 +634,10 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaSubroutineType,
             "SOURCE_CREATE_TYPE_FOR_ADA_SUBROUTINE_TYPE",
             "SgFunctionParameterList* parmList = nullptr, SgFunctionParameterScope* parmScope = nullptr, SgType* resultType = nullptr");
+
+     CUSTOM_CREATE_TYPE_MACRO(RangeType,
+            "SOURCE_CREATE_TYPE_FOR_RANGE_TYPE",
+            "SgType* ty = nullptr");
 
      CUSTOM_CREATE_TYPE_MACRO(JovialBitType,
             "SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE",
@@ -1067,6 +1074,8 @@ Grammar::setUpTypes ()
 
      AdaSubroutineType.setFunctionPrototype ("HEADER_ADA_MODULAR_TYPE", "../Grammar/Type.code" );
 
+     RangeType.setFunctionPrototype ("HEADER_RANGE_TYPE", "../Grammar/Type.code" );
+
      //~ AdaSubroutineType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaSubroutineType.setDataPrototype ("SgFunctionParameterList*", "parameterList", "= nullptr",
@@ -1082,6 +1091,8 @@ Grammar::setUpTypes ()
      AdaSubroutineType.setDataPrototype ("bool", "is_protected", "= false",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     RangeType.setDataPrototype ("SgType*", "base_type", "= nullptr",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      JovialBitType.setFunctionPrototype ("HEADER_JOVIAL_BIT_TYPE", "../Grammar/Type.code" );
@@ -1365,6 +1376,8 @@ Grammar::setUpTypes ()
      AdaModularType.setFunctionSource    ( "SOURCE_ADA_MODULAR_TYPE", "../Grammar/Type.code");
      AdaSubroutineType.setFunctionSource ( "SOURCE_ADA_SUBROUTINE_TYPE", "../Grammar/Type.code");
      AdaSubroutineType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     RangeType.setFunctionSource         ( "SOURCE_RANGE_TYPE", "../Grammar/Type.code");
+     RangeType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      JovialBitType.setFunctionSource     ( "SOURCE_JOVIAL_BIT_TYPE", "../Grammar/Type.code");
 #endif

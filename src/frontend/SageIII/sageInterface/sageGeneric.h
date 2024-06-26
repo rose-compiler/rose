@@ -886,6 +886,7 @@ namespace sg
     GEN_VISIT(SgAdaVariantWhenStmt)
     GEN_VISIT(SgJovialLabelDeclaration)
 
+    GEN_VISIT(SgRangeType)
 
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmAarch64AtOperand)
@@ -1180,6 +1181,16 @@ namespace sg
     GEN_VISIT(SgAsmCilUint8Heap)
     GEN_VISIT(SgAsmCilUint32Heap)
     GEN_VISIT(SgAsmCliHeader)
+
+    GEN_VISIT(SgAsmJvmLocalVariableEntry)
+    GEN_VISIT(SgAsmJvmLocalVariableTable)
+    GEN_VISIT(SgAsmJvmLocalVariableTypeEntry)
+    GEN_VISIT(SgAsmJvmLocalVariableTypeTable)
+    GEN_VISIT(SgAsmUserInstruction)
+    GEN_VISIT(SgAsmJvmMethodParameters)
+    GEN_VISIT(SgAsmJvmMethodParametersEntry)
+    GEN_VISIT(SgAsmVoidType)
+    GEN_VISIT(SgAsmPointerType)
 
     // incomplete
 #endif /* WITH_BINARY_NODES */

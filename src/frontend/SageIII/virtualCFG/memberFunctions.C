@@ -5102,6 +5102,28 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx) {
     return result;
   }
 
+  std::vector<CFGEdge> SgAdaAttributeExp::cfgOutEdges(unsigned int idx) {
+    std::vector<CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(CFGNode(this, idx), this->get_object()->cfgForBeginning(), result); break;
+      case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
+      case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for SgAdaAttributeExp");
+    }
+    return result;
+  }
+
+  std::vector<CFGEdge> SgAdaAttributeExp::cfgInEdges(unsigned int idx) {
+    std::vector<CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
+      case 2: makeEdge(this->get_object()->cfgForEnd(), CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for SgAdaAttributeExp");
+    }
+    return result;
+  }
+
 
   unsigned int SgNullExpression::cfgIndexForEnd() const {
     return 0;
@@ -6169,6 +6191,23 @@ bool SgAdaAncestorInitializer::isLValue() const
 bool SgAdaAncestorInitializer::isChildUsedAsLValue(const SgExpression* child) const
 {
         if (get_operand() == child)
+          return false;
+
+        ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAdaAncestorInitializer");
+        return false;
+}
+
+bool SgAdaAttributeExp::isLValue() const
+{
+        return false;
+}
+
+bool SgAdaAttributeExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+        if (get_object() == child)
+          return SageInterface::Ada::isAnyAccessAttribute(*this);
+
+        if (get_args() == child)
           return false;
 
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAdaAncestorInitializer");

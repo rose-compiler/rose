@@ -1554,6 +1554,11 @@ namespace
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
 
+      void handle(const SgRangeType& n)
+      {
+        computeNameQualForShared(SG_DEREF(res.get_referenceNode()), n.get_base_type());
+      }
+
       //
       // define subtree traversal for type elements that are not defined by default.
 

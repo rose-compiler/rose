@@ -108,6 +108,12 @@ namespace
       void handle(SgModifierType& n)        { res = descend(n.get_base_type()); }
       void handle(SgAdaFormalType& n)       { res = descend(n.get_formal_type()); }
 
+      // \todo SUPPORT_RANGE_TYPES
+      //       current impl. preserves compatibility with previous implementation.
+      //       not sure if this needs to change.
+      void handle(SgRangeType& n)           { res = descend(n.get_base_type()); }
+
+
       //~ void handle(SgPointerType& n)         { res = descend(n.get_base_type()); }
       //~ void handle(SgReferenceType& n)       { res = descend(n.get_base_type()); }
       //~ void handle(SgRvalueReferenceType& n) { res = descend(n.get_base_type()); }
@@ -168,6 +174,9 @@ namespace
       void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
       void handle(SgAdaFormalType& n)       { res = descend(n.get_formal_type()); }
 
+      // \todo SUPPORT_RANGE_TYPES
+      void handle(SgRangeType& n)           { res = descend(n.get_base_type()); }
+
       void handle(SgAdaSubtype& n)
       {
         SgAdaRangeConstraint& range = SG_DEREF(isSgAdaRangeConstraint(n.get_constraint()));
@@ -208,6 +217,9 @@ namespace
       void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
       void handle(SgModifierType& n)        { res = descend(n.get_base_type()); }
       void handle(SgAdaFormalType& n)       { res = descend(n.get_formal_type()); }
+
+      // \todo SUPPORT_RANGE_TYPES
+      void handle(SgRangeType& n)           { res = descend(n.get_base_type()); }
 
       // subtype -> get the dimension info for each
       void handle(SgAdaSubtype& n)
@@ -352,6 +364,9 @@ namespace
       void handle(SgAdaDerivedType& n)     { res = descend(n.get_base_type()); }
       void handle(SgTypedefType& n)        { res = descend(&base_type(n)); }
 
+      // \todo SUPPORT_RANGE_TYPES
+      void handle(SgRangeType& n)          { res = descend(n.get_base_type()); }
+
     private:
       size_t dim;
   };
@@ -384,6 +399,7 @@ namespace
       void handle(const SgAdaSubtype& n)          { res = descend(n.get_base_type()); }
       void handle(const SgModifierType& n)        { res = descend(n.get_base_type()); }
       void handle(const SgAdaDerivedType& n)      { res = descend(n.get_base_type()); }
+      void handle(const SgRangeType& n)           { res = descend(n.get_base_type()); }
   };
 
   BaseTypeDecl::ReturnType
@@ -1420,6 +1436,10 @@ namespace Ada
         void handle(SgAdaSubtype& n)        { res = descend(n.get_base_type()); }
         void handle(SgAdaDerivedType& n)    { res = descend(n.get_base_type()); }
         void handle(SgTypedefType& n)       { res = descend(&base_type(n)); }
+
+        // \todo SUPPORT_RANGE_TYPES
+        void handle(SgRangeType& n)         { res = descend(n.get_base_type()); }
+
         // void handle(SgAdaFormalType& n)     { checkChild(n.get_base_type()); } // \todo enable??
 
       private:
@@ -1622,6 +1642,7 @@ namespace Ada
 
       // a derived type can be an access type
       void handle(SgAdaDerivedType& n) { res = descend(n.get_base_type()); }
+      void handle(SgRangeType& n)      { res = descend(n.get_base_type()); }
 
       // a subtype could be an access type with range constraints whose subtype is an array
       void handle(SgAdaSubtype& n)
@@ -1949,6 +1970,10 @@ namespace Ada
       void handle(SgAdaSubtype& n)        { res = find(n.get_base_type()); }
       void handle(SgAdaDerivedType& n)    { res = find(n.get_base_type()); }
 
+      // \todo SUPPORT_RANGE_TYPES
+      //       just return the range type n?
+      void handle(SgRangeType& n)         { res = find(n.get_base_type()); }
+
       void handle(SgTypedefType& n)
       {
         SgType* basety = base_type(n).stripType(SgType::STRIP_MODIFIER_TYPE);
@@ -2082,6 +2107,7 @@ namespace Ada
         void handle(const SgModifierType& n)      { res = find(n.get_base_type()); }
         void handle(const SgAdaSubtype& n)        { res = find(n.get_base_type()); }
         void handle(const SgAdaDerivedType& n)    { res = find(n.get_base_type()); }
+        void handle(const SgRangeType& n)         { res = find(n.get_base_type()); }
         // void handle(const SgDeclType& n)             { res = pkgStandardScope(); }
 
         // for records, enums, typedefs, discriminated types, and types with a real declarations
@@ -2141,6 +2167,7 @@ namespace Ada
         void handle(SgAdaDerivedType& n)    { res = associatedDeclaration_internal(n.get_base_type(), skipAccessLayers); }
         void handle(SgPointerType& n)       { res = fromBaseType(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
         void handle(SgAdaAccessType& n)     { res = fromBaseType(n.get_base_type()); }
+        void handle(SgRangeType& n)         { res = fromBaseType(n.get_base_type()); }
 
         //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
         // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
@@ -2298,10 +2325,14 @@ namespace Ada
 
     SgType* lhsty = argtypes.front();
 
+    //~ std::cerr << "l: " << typeid(*lhsty).name() << std::endl;
+
     if (argtypes.size() == 1 || isSgNamedType(typeRoot(lhsty).typerep()))
       return { lhsty, 0 };
 
     SgType* rhsty = argtypes.back();
+
+    //~ std::cerr << "r: " << typeid(*rhsty).name() << std::endl;
 
     if (isSgNamedType(typeRoot(rhsty).typerep()))
       return { rhsty, argtypes.size()-1 };
@@ -3193,8 +3224,6 @@ namespace Ada
     if (!withDefaultArguments)
       return res;
 
-    std::cerr << "x" << std::endl;
-
     const auto resbeg = res.begin();
     const auto reslim = res.end();
     auto       respos = std::find(resbeg, reslim, nullptr);
@@ -3202,8 +3231,6 @@ namespace Ada
     while (respos != reslim)
     {
       *respos = &getInitializerExpr(parmList.at(std::distance(resbeg, respos)));
-
-      std::cerr << "y " << (*respos)->unparseToString() << std::endl;
 
       respos = std::find(resbeg, reslim, nullptr);
     }
@@ -4247,6 +4274,14 @@ SgDeclarationStatement* associatedDeclaration(const SgSymbol& n)
 bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
 {
   return stringeq(attr.get_attribute().getString(), attrname);
+}
+
+bool isAnyAccessAttribute(const SgAdaAttributeExp& attr)
+{
+  return (  isAttribute(attr, "access")
+         || isAttribute(attr, "unchecked_access")
+         || isAttribute(attr, "unrestricted_access")
+         );
 }
 
 

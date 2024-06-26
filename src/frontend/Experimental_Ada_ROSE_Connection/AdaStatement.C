@@ -1356,6 +1356,7 @@ namespace
               logKind("A_Case_Path", elem.ID);
 
               SgStatement*  sgnode      = nullptr;
+              // \todo can we create the sequence without introducing a block?
               SgBasicBlock& block       = mkBasicBlock();
               ElemIdRange   caseChoices = idRange(path.Case_Path_Alternative_Choices);
 
@@ -4765,8 +4766,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
         SgExpression&          range   = getDefinitionExprID(decl.Specification_Subtype_Definition, ctx);
-        SgType&                vartype = si::Ada::typeOfExpr(range).typerep_ref();
-        SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, &range);
+        SgType*                vartype = &si::Ada::typeOfExpr(range).typerep_ref();
+
+        // \todo check when we get a range type and when not..
+        if (SgRangeType* rngty = isSgRangeType(vartype))
+          vartype = rngty->get_base_type();
+
+        SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, SG_DEREF(vartype), &range);
         SgScopeStatement&      scope   = ctx.scope();
 
         recordNode(asisVars(), adaname.id(), loopvar);

@@ -127,6 +127,10 @@ namespace Ada_ROSE_Translation
   SgAdaDerivedType&
   mkAdaDerivedType(SgType& basetype);
 
+  /// builds a range type of \ref basetype
+  SgRangeType&
+  mkRangeType(SgType& basetype);
+
   /// builds a qualified type ref.base
   /// \todo this is a stop gap function and should not be in the final code
   SgType& mkQualifiedType(SgExpression& ref, SgType& base);

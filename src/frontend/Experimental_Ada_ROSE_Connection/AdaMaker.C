@@ -310,6 +310,13 @@ mkAdaDerivedType(SgType& basetype)
 }
 
 
+SgRangeType&
+mkRangeType(SgType& basetype)
+{
+  return mkTypeNode<SgRangeType>(&basetype);
+}
+
+
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
@@ -2437,6 +2444,11 @@ namespace
     return SG_DEREF(exp.get_type());
   }
 
+  SgType& rangeTypeAttr(SgExpression& n, SgExprListExp&)
+  {
+    return mkRangeType(SG_DEREF(n.get_type()));
+  }
+
   SgType& funTypeAttr(SgExpression& funref, SgExprListExp& args)
   {
     if (SgFunctionType* funty = isSgFunctionType(funref.get_type()))
@@ -2526,10 +2538,10 @@ namespace
                                      , { "position",             &integralTypeAttr }
                                      //~ , { "pred",                 &argTypeAttr }
                                      , { "pred",                 &exprTypeAttr }   // Type'Pred may have no arguments when it is passed as function
+                                     , { "range",                &rangeTypeAttr }
                                      , { "remainder",            &argTypeAttr }
                                      , { "result",               &funTypeAttr }
                                      , { "rounding",             &argTypeAttr }
-                                     //~ , { "range",                &unknownTypeAttr }   // \todo consider creating a range type
                                      //~ , { "output",               &unknownTypeAttr }   // ???
                                      //~ , { "read",                 &unknownTypeAttr }   // ???
                                      , { "safe_first",           &realTypeAttr }
@@ -2540,7 +2552,6 @@ namespace
                                      , { "small",                &realTypeAttr }
                                      , { "storage_pool",         &voidTypeAttr }
                                      , { "storage_size",         &integralTypeAttr }
-                                     //~ , { "succ",                 &argTypeAttr }
                                      , { "succ",                 &exprTypeAttr }  // Type'Succ may have no arguments when it is passed as function
                                      , { "signed_zeros",         &boolTypeAttr }
                                      , { "size",                 &integralTypeAttr }

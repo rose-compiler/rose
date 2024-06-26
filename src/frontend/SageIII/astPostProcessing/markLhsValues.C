@@ -7,7 +7,7 @@
 void
 markLhsValues( SgNode* node )
    {
-// Liao, 2/19/2009, turn this off since it is called hundreds times and pollute the timing report   
+// Liao, 2/19/2009, turn this off since it is called hundreds times and pollute the timing report
 //     TimingPerformance timer ("Fixup l-values:");
 
      MarkLhsValues astFixupTraversal;
@@ -136,7 +136,7 @@ MarkLhsValues::visit(SgNode* node)
                   }
 
                //SgExpression* rhs = binaryOperator->get_rhs_operand();
-               // Liao 3/14/2011. This function is called by builders for binary expressions. 
+               // Liao 3/14/2011. This function is called by builders for binary expressions.
                // These builders can accept empty right hand operands.
                // ROSE_ASSERT(rhs != NULL);
 
@@ -152,7 +152,7 @@ MarkLhsValues::visit(SgNode* node)
 
             // ROSE_ASSERT(rhs->get_lvalue() == false);
              }
-          
+
           SgUnaryOp* unaryOperator = isSgUnaryOp(expression);
           if (unaryOperator != NULL)
              {
@@ -160,7 +160,7 @@ MarkLhsValues::visit(SgNode* node)
                   {
                  // IR nodes that should have a valid lvalue
                  // What about SgAddressOfOp?
-              
+
                     case V_SgAddressOfOp: break; // JJW 1/31/2008
 
                     case V_SgMinusMinusOp:
@@ -208,6 +208,7 @@ MarkLhsValues::visit(SgNode* node)
                          ROSE_ASSERT(operand != NULL);
 
                          operand->set_lvalue(false);
+                         break; // PP - 05/25/24 - prevent fall-through
                        }
 
                  // Added to address problem on Qing's machine using g++ 4.0.2
@@ -252,7 +253,7 @@ MarkLhsValues::visit(SgNode* node)
                       // DQ (10/9/2008): What is the date and author for this comment?  Is it fixed now? Was it made into a test code?
                       // Note that this fails for line 206 of file: include/g++_HEADERS/hdrs1/ext/mt_allocator.h
                          ROSE_ASSERT(operand->get_lvalue() == false);
-                       }          
+                       }
                   }
              }
         }

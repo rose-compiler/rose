@@ -680,6 +680,10 @@ HEADER_ADA_SUBROUTINE_TYPE_START
           // SgName get_name() const;
 HEADER_ADA_SUBROUTINE_TYPE_END
 
+HEADER_RANGE_TYPE_START
+          // SgName get_name() const;
+HEADER_RANGE_TYPE_END
+
 
 HEADER_ADA_TASK_TYPE_START
           //~ SgName get_name() const;
@@ -6337,6 +6341,22 @@ SgAdaSubroutineType::get_mangled(void) const {
 
 SOURCE_ADA_SUBROUTINE_TYPE_END
 
+SOURCE_RANGE_TYPE_START
+
+SgName
+SgRangeType::get_mangled(void) const {
+    ASSERT_not_null(get_base_type());
+    std::stringstream buf;
+
+    buf << "r'";
+    buf << get_base_type()->get_mangled();
+
+    return SgName(buf.str());
+}
+
+SOURCE_RANGE_TYPE_END
+
+
 
 
 SOURCE_ADA_FORMAL_TYPE_START
@@ -8548,6 +8568,33 @@ SgAdaSubroutineType::createType( SgFunctionParameterList* parmList,
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_SUBROUTINE_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_RANGE_TYPE_START
+
+SgRangeType*
+SgRangeType::createType( SgType* baseType,
+                         SgExpression* /*optional_fortran_type_kind*/)
+{
+  ASSERT_not_null(baseType);
+
+  SgRangeType proto(baseType);
+  SgName      name = proto.get_mangled();
+  SgType*     ty   = get_globalTypeTable()->lookup_type(name);
+
+  if (SgRangeType* unified = isSgRangeType(ty)) {
+     return unified;
+  }
+
+  ROSE_ASSERT(ty == NULL);
+  SgRangeType* res = new SgRangeType(baseType);
+
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_RANGE_TYPE_END
+
+
 
 
 

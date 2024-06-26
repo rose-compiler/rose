@@ -636,7 +636,10 @@ namespace
   si::Ada::OperatorScopeInfo
   operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, Element_ID id, AstContext ctx)
   {
-    if (id < 1) return si::Ada::operatorScope(name, std::move(argTypes));
+    if (id < 1)
+    {
+      return si::Ada::operatorScope(name, std::move(argTypes));
+    }
 
     SgScopeStatement&        scope = queryScopeOfID(id, ctx);
     si::Ada::DominantArgInfo dom = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
@@ -1872,7 +1875,8 @@ namespace
 
           SgType& ty = getDiscreteSubtypeID(range.Subtype_Mark, range.Subtype_Constraint, ctx);
 
-          res = &mkTypeExpression(ty);
+          res = &mkTypeExpression(mkRangeType(ty));
+          //~ res = &mkTypeExpression(ty);
           break;
         }
 
