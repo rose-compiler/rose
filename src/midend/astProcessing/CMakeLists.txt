@@ -24,7 +24,7 @@ add_library(astProcessing OBJECT ${astProcessing_SRC})
 
 if(NOT ENABLE_ALL_WARNINGS) 
   # Ignore -Wmisleading-indentation per 6-25-24 ROSE meeting discussion 
-  target_compile_options(astProcessing PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wall>)
+  target_compile_options(astProcessing PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-misleading-indentation>)
 endif() 
 
 add_dependencies(astProcessing rosetta_generated)

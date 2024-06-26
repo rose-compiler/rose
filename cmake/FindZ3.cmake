@@ -17,7 +17,7 @@
 #    Z3_VERSION    -- String:  Z3 version string, such as "4.8.1"
 #    Z3_VERSION_H  -- Boolean: whether the z3_version.h file exists
 #    Z3_LIBRARIES  -- String:  names of libraries necessary to use Z3
-
+include(CheckIncludeFiles) 
 macro(find_z3)
   if("${Z3_ROOT}" STREQUAL "no")
     # Do not use Z3, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with
