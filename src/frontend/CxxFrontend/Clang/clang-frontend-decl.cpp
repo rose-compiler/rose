@@ -537,7 +537,7 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
         return false;
     }
 
-    if (!isSgGlobal(*node))
+    if (!isSgGlobal(*node) && !isSgTemplateParameter(*node))
         applySourceRange(*node, decl->getSourceRange());
 
     if(isSgDeclarationStatement(*node))
@@ -926,11 +926,66 @@ bool ClangToSageTranslator::VisitRedeclarableTemplateDecl(clang::RedeclarableTem
 bool ClangToSageTranslator::VisitClassTemplateDecl(clang::ClassTemplateDecl * class_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitClassTemplateDecl" << "\n";
+    logger[DEBUG] << "VisitClassTemplateDecl name:" <<class_template_decl->getNameAsString() <<  "\n";
+    logger[DEBUG] << "VisitClassTemplateDecl isThisDeclarationADefinition:" <<class_template_decl->isThisDeclarationADefinition() <<  "\n";
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    std::string templateClassName = class_template_decl->getNameAsString();
+    // create top SgDeclarationScope
+    SgDeclarationScope* declScope = SageBuilder::buildDeclarationScope();
+    SageBuilder::pushScopeStack(isSgScopeStatement(declScope));
 
+    // build template parameters
+    clang::TemplateParameterList* templateParamLst = class_template_decl->getTemplateParameters();
+    SgTemplateParameterPtrList sgTemplateParamLst;
+    for (clang::NamedDecl* param : *templateParamLst){
+         // three types: clang::TemplateTypeParmDecl, clang::NonTypeTemplateTypeParmDecl, and clang::templateTemplateTypeParmDecl
+//       if(llvm::isa<clang::TemplateTypeParmDecl>(param)){
+         SgTemplateParameter* sgParam = isSgTemplateParameter(Traverse((clang::Decl*)param));
+         sgTemplateParamLst.push_back(sgParam);
+//       }
+//       else if(llvm::isa<clang::NonTypeTemplateTypeParmDecl>(param)){
+//         SgTemplateParameter* param = isSgTemplateParameter(Traverse((clang::Decl*)param));
+//       }
+    }
+    SageBuilder::popScopeStack();
+
+    SgTemplateArgumentPtrList templateSpecializationArgumentList;
+    SgName name(templateClassName);
+    clang::CXXRecordDecl* templatedDecl = class_template_decl->getTemplatedDecl();
+    SgClassDeclaration::class_types t =  SgClassDeclaration::e_class;
+    if(templatedDecl->isStruct())
+    {
+      t = SgClassDeclaration::e_struct;
+    }
+    else if(templatedDecl->isUnion())
+    {
+      t = SgClassDeclaration::e_union;
+    }
+
+    SgScopeStatement* scope = SageBuilder::topScopeStack();
+    SgTemplateClassDeclaration* nonDefTemplateClassDecl = SageBuilder::buildNondefiningTemplateClassDeclaration(name, t, scope, &sgTemplateParamLst, &templateSpecializationArgumentList );
+    SgTemplateClassDeclaration* defTemplateClassDecl = SageBuilder::buildTemplateClassDeclaration(name, t, scope, nonDefTemplateClassDecl, &sgTemplateParamLst, &templateSpecializationArgumentList);
+    nonDefTemplateClassDecl->set_parent(scope);
+    nonDefTemplateClassDecl->set_definingDeclaration(defTemplateClassDecl);
+    defTemplateClassDecl->set_parent(scope);
+
+    // ROSE currently uses string, from EDG, to handle the template unparsing.  
+    // Need to get the equivalent string from Clang, through the print() function.
+
+    std::string templateString;
+    llvm::raw_string_ostream Steram(templateString);
+    class_template_decl->print(Steram);
+    Steram.flush();
+    // Clang's template string doesn't include the ending ; symbol.  
+    if(class_template_decl->isThisDeclarationADefinition())
+    {
+       templateString += ';';
+    }
+    defTemplateClassDecl->set_string(templateString);
+
+    *node = defTemplateClassDecl;
     return VisitRedeclarableTemplateDecl(class_template_decl, node) && res;
 }
 
@@ -976,7 +1031,8 @@ bool ClangToSageTranslator::VisitTemplateTemplateParmDecl(clang::TemplateTemplat
     bool res = true;
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
-
+//    SgTemplateParameter* param = SageBuilder::buildTemplateParameter(SgTemplateParameter::template_parameter);
+//    node = *param;
     return VisitTemplateDecl(template_template_parm_decl, node) && res;
 }
 
@@ -1550,11 +1606,17 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
 bool ClangToSageTranslator::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl * template_type_parm_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitTemplateTypeParmDecl" << "\n";
+    logger[DEBUG] << "VisitTemplateTypeParmDecl wasDeclaredWithTypename: " << template_type_parm_decl->wasDeclaredWithTypename() << "\n";
+    logger[DEBUG] << "VisitTemplateTypeParmDecl hasDefaultArgument: " << template_type_parm_decl->hasDefaultArgument() << "\n";
 #endif
     bool res = true;
-
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
-
+    SgName typeName(template_type_parm_decl->getNameAsString());
+    SgDeclarationScope* declScope = isSgDeclarationScope(SageBuilder::topScopeStack());
+    SgNonrealDecl* nonrealDecl = SageBuilder::buildNonrealDecl(typeName, declScope, NULL);
+    nonrealDecl->set_parent(declScope);
+    SgNonrealType* type = nonrealDecl->get_type();
+    SgTemplateParameter* param = SageBuilder::buildTemplateParameter(SgTemplateParameter::type_parameter, type);
+    *node = param;
     return VisitTypeDecl(template_type_parm_decl, node) && res;
 }
 
@@ -2532,8 +2594,9 @@ bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateP
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
-
+    SgType * type = buildTypeFromQualifiedType(non_type_template_param_decl->getType());
+    SgTemplateParameter* param = SageBuilder::buildTemplateParameter(SgTemplateParameter::nontype_parameter, type);
+    *node = param;
     return VisitDeclaratorDecl(non_type_template_param_decl, node) && res;
 }
 
