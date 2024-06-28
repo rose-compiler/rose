@@ -89,17 +89,17 @@ IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj,
     *func = isSgMemberFunctionRefExp(f)->get_symbol()->get_name().str();
 
   SgDeclarationStatement* fun_decl = isSgMemberFunctionRefExp(f)->getAssociatedMemberFunctionDeclaration();
-  if (fun_decl->get_definingDeclaration() != 0) {
-     fun_decl = fun_decl->get_definingDeclaration(); 
-  }
-  bool is_static = (fun_decl == 0)? false : fun_decl->get_declarationModifier().get_storageModifier().isStatic();
+  SgDeclarationStatement* defn_decl = fun_decl->get_definingDeclaration(); 
+  bool is_static = (fun_decl == 0)? false : (fun_decl->get_declarationModifier().get_storageModifier().isStatic() 
+             || (defn_decl != 0 && defn_decl->get_declarationModifier().get_storageModifier().isStatic()));
   //Store object from the first argument
   if (obj != 0) {
      if (is_static) {
           *obj = 0;
-     } else {
-        assert(args.size() > 0);
+     } else if (args.size() > 0) {
         *obj = AstNodePtrImpl(args.front());
+     } else {
+       std::cerr << "Error: non static member function call should have at least one argument.\n";
      }
   }
   //Store function call arguments, excluding the firt one
