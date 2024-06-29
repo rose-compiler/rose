@@ -24,7 +24,6 @@ void cloneAccessType(SgNode* tgt, SgNode* src);
 
 // returns a string representation of the given accessType
 std::string accessTypeToStr(accessType t);
-
 }
 
 #endif

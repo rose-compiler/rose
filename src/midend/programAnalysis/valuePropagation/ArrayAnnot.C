@@ -284,7 +284,7 @@ has_array_opt( CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* 
 bool ArrayAnnotation::
 is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
                  AstNodePtr* arrayp, ArrayDescriptor* descp, bool* reshape,
-                 ReplaceParams* repl)
+                 ReplaceParams* /*repl*/)
 {
   CPPAstInterface::AstNodeList args;
   ArrayModifyDescriptor desc;
@@ -320,7 +320,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
 
 bool ArrayAnnotation::
 is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, CPPAstInterface::AstNodeList* alias,
-                       ArrayDescriptor* descp, ReplaceParams* repl)
+                       ArrayDescriptor* descp, ReplaceParams* /*repl*/)
 {
   CPPAstInterface::AstNodeList args;
   ArrayConstructDescriptor desc;

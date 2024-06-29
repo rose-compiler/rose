@@ -9,21 +9,15 @@
 #include "util.h"
 #include <VariableRenaming.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/graphviz.hpp>
-
-
-#define foreach BOOST_FOREACH
 
 using namespace std;
 
 namespace SDG
 {
-
-
 
 //! A DFS visitor used in depth first search.
 template <typename VertexT> 
@@ -77,7 +71,7 @@ void SystemDependenceGraph::build()
 
     vector<SgFunctionDefinition*> funcDefs = 
         SageInterface::querySubTree<SgFunctionDefinition>(project_, V_SgFunctionDefinition);
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    for (SgFunctionDefinition* funcDef : funcDefs)
     {
         SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
 
@@ -93,7 +87,7 @@ void SystemDependenceGraph::build()
 
         // Add all out formal parameters to SDG.
         const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
-        foreach (SgInitializedName* initName, formalArgs)
+        for (SgInitializedName* initName : formalArgs)
         {
             // If the parameter is passed by reference, create a formal-out node.
             if (isParaPassedByRef(initName->get_type()))
@@ -126,7 +120,7 @@ void SystemDependenceGraph::build()
         }
 
         // Add all CFG vertices to SDG.
-        foreach (CFGVertex cfgVertex, boost::vertices(*cfg))
+        for (CFGVertex cfgVertex : boost::vertices(*cfg))
         {
             if (cfgVertex == cfg->getEntry() || cfgVertex == cfg->getExit())
                 continue;
@@ -268,7 +262,7 @@ void SystemDependenceGraph::build()
 
     //=============================================================================================//
     // Add call edges.
-    foreach (const CallSiteInfo& callInfo, functionCalls)
+    for (const CallSiteInfo& callInfo : functionCalls)
     {
         SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(callInfo.funcCall->getAssociatedFunctionDeclaration());
         ROSE_ASSERT(funcDecl);
@@ -282,9 +276,9 @@ void SystemDependenceGraph::build()
     // Add parameter-in edges.
     typedef pair<SgNode*, Vertex> NodeVertex;
 
-    foreach (const NodeVertex& nodeToVertex, formalInParameters)
+    for (const NodeVertex& nodeToVertex : formalInParameters)
     {
-        foreach (Vertex vertex, actualInParameters[nodeToVertex.first])
+        for (Vertex vertex : actualInParameters[nodeToVertex.first])
         {
             addEdge(vertex, nodeToVertex.second, new SDGEdge(SDGEdge::ParameterIn));
         }
@@ -292,9 +286,9 @@ void SystemDependenceGraph::build()
 
     //=============================================================================================//
     // Add parameter-out edges.
-    foreach (const NodeVertex& nodeToVertex, formalOutParameters)
+    for (const NodeVertex& nodeToVertex : formalOutParameters)
     {
-        foreach (Vertex vertex, actualOutParameters[nodeToVertex.first])
+        for (Vertex vertex : actualOutParameters[nodeToVertex.first])
         {
             addEdge(nodeToVertex.second, vertex, new SDGEdge(SDGEdge::ParameterOut));
         }
@@ -310,7 +304,7 @@ void SystemDependenceGraph::build()
     // Check if this Actual-In vertex has any out-going edges. If not, the corresponding
     // function definition of this function does not exit. To be conservative, we have to
     // assume that each Actual-In parameter can affect the value of all Actual-Out parameters.
-    foreach (const CallSiteInfo& callInfo, functionCalls)
+    for (const CallSiteInfo& callInfo : functionCalls)
     {
         if (callInfo.inPara.empty())
             continue;
@@ -319,16 +313,16 @@ void SystemDependenceGraph::build()
         if (outDegree > 0)
             continue;
 
-        foreach (Vertex actualIn, callInfo.inPara)
+        for (Vertex actualIn : callInfo.inPara)
         {
-            foreach (Vertex actualOut, callInfo.outPara)
+            for (Vertex actualOut : callInfo.outPara)
                 addEdge(actualIn, actualOut, new SDGEdge(SDGEdge::Summary));
         }
     }
 
-    foreach (const CallSiteInfo& callInfo, functionCalls)
+    for (const CallSiteInfo& callInfo : functionCalls)
     {
-        foreach (Vertex actualIn, callInfo.inPara)
+        for (Vertex actualIn : callInfo.inPara)
         {
             set<Vertex> vertices;
 
@@ -339,7 +333,7 @@ void SystemDependenceGraph::build()
             // Do a DFS.
             boost::depth_first_visit(*this, actualIn, dfsVisitor, &colors[0]);
 
-            foreach (Vertex actualOut, callInfo.outPara)
+            for (Vertex actualOut : callInfo.outPara)
             {
                 if (vertices.count(actualOut))
                 {
@@ -370,7 +364,7 @@ void SystemDependenceGraph::addControlDependenceEdges(
     CFG rvsCfg = cfg.makeReverseCopy();
     DominanceFrontiersT domFrontiers = buildDominanceFrontiers(rvsCfg);
 
-    foreach (const DominanceFrontiersT::value_type& vertices, domFrontiers)
+    for (const DominanceFrontiersT::value_type& vertices : domFrontiers)
     {
         Vertex src, tar;
 
@@ -383,7 +377,7 @@ void SystemDependenceGraph::addControlDependenceEdges(
         src = cfgVerticesToSdgVertices.find(from)->second;
 
         typedef pair<CFGVertex, vector<CFGEdge> > VertexEdges;
-        foreach (const VertexEdges& vertexEdges, vertices.second)
+        for (const VertexEdges& vertexEdges : vertices.second)
         {            
             CFGVertex to = vertexEdges.first;
             const vector<CFGEdge>& cdEdges = vertexEdges.second;
@@ -391,11 +385,10 @@ void SystemDependenceGraph::addControlDependenceEdges(
             ROSE_ASSERT(cfgVerticesToSdgVertices.count(to));
             tar = cfgVerticesToSdgVertices.find(to)->second;
 
-            foreach (const CFGEdge& cdEdge, cdEdges)
+            for (const CFGEdge& cdEdge : cdEdges)
             {
                 // Add the edge.
                 Edge edge = boost::add_edge(tar, src, *this).first;
-                //(*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
                 (*this)[edge] = new SDGEdge(SDGEdge::ControlDependence);
                 (*this)[edge]->setCondition(rvsCfg[cdEdge]->condition(), rvsCfg[cdEdge]->caseLabel());
             }
@@ -404,7 +397,7 @@ void SystemDependenceGraph::addControlDependenceEdges(
 
     // Connect an edge from the entry to every node which does not have a control dependence.
     typedef pair<CFGVertex, Vertex> T;
-    foreach (const T& v, cfgVerticesToSdgVertices)
+    for (const T& v : cfgVerticesToSdgVertices)
     {
         Vertex sdgVertex = v.second;
 
@@ -451,12 +444,12 @@ void SystemDependenceGraph::addDataDependenceEdges(
 
     // Build the table above.
 
-    foreach (const DefUseChains::value_type& defUse, defUseChains)
+    for (const DefUseChains::value_type& defUse : defUseChains)
     {
         set<SgNode*> defUses = defUse.second;
         defUses.insert(defUse.first);
 
-        foreach (SgNode* use, defUses)
+        for (SgNode* use : defUses)
         {
             Iter iter = nodesToVerticesTable.find(use);
             if (iter == nodesToVerticesTable.end())
@@ -479,15 +472,15 @@ void SystemDependenceGraph::addDataDependenceEdges(
     map<pair<Vertex, Vertex>, set<VarName> > dataDependenceEdges;
 
     // First collect all defs on each DD edge.
-    foreach (const DefUseChains::value_type& defUse, defUseChains)
+    for (const DefUseChains::value_type& defUse : defUseChains)
     {
         SgNode* def = defUse.first;
 
-        foreach (Vertex src, nodesToVerticesTable.at(def))
+        for (Vertex src : nodesToVerticesTable.at(def))
         {
-            foreach (SgNode* use, defUse.second)
+            for (SgNode* use : defUse.second)
             {
-                foreach (Vertex tgt, nodesToVerticesTable.at(use))
+                for (Vertex tgt : nodesToVerticesTable.at(use))
                 {
                     // If the target is a formal-in node, we should retarget it to a formal-out node.
                     SDGNode* sdgNode = (*this)[tgt];
@@ -505,7 +498,7 @@ void SystemDependenceGraph::addDataDependenceEdges(
     }
 
     // Add an edge from returned result of each function call to all uses of this function call.
-    foreach (const CallSiteInfo& callInfo, callSiteInfo)
+    for (const CallSiteInfo& callInfo : callSiteInfo)
     {
         // Functions of void type does not return anything.
         if (callInfo.isVoid)
@@ -526,7 +519,7 @@ void SystemDependenceGraph::addDataDependenceEdges(
 
     // Add those edges.
     typedef map<pair<Vertex, Vertex>, set<VarName> >::value_type T2;
-    foreach (const T2& edges, dataDependenceEdges)
+    for (const T2& edges : dataDependenceEdges)
     {
         SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
         addEdge(edges.first.first, edges.first.second, newEdge);
@@ -537,6 +530,8 @@ void SystemDependenceGraph::addDataDependenceEdges(
 
 void SystemDependenceGraph::toDot(const string& filename) const
 {
+    using namespace boost::placeholders; // for _1, _2, ... below
+
     ofstream ofile(filename.c_str(), ios::out);
     boost::write_graphviz(ofile, *this,
             boost::bind(&SystemDependenceGraph::writeGraphNode, this, ::_1, ::_2),
@@ -548,7 +543,7 @@ void SystemDependenceGraph::writeGraphProperty(ostream& out) const
 {
     map<string, pair<string, vector<int> > > subgraphNodes;
 
-    foreach (Vertex vertex, boost::vertices(*this))
+    for (Vertex vertex : boost::vertices(*this))
     {
         SDGNode* sdgNode = (*this)[vertex];
 
@@ -568,10 +563,10 @@ void SystemDependenceGraph::writeGraphProperty(ostream& out) const
     }
 
     typedef pair<string, pair<string, vector<int> > > T;
-    foreach (const T& subgraph, subgraphNodes)
+    for (const T& subgraph : subgraphNodes)
     {
         out << "subgraph cluster_" << subgraph.first << " {label=\"" << subgraph.second.first << "\";";
-        foreach (int i, subgraph.second.second)
+        for (int i : subgraph.second.second)
         {
             out << i << "; "; 
         }
@@ -709,7 +704,7 @@ void SystemDependenceGraph::writeGraphEdge(ostream& out, const Edge& edge) const
             break;
 
         case SDGEdge::DataDependence:
-            foreach (const VarName& varName, (*this)[edge]->varNames)
+            for (const VarName& varName : (*this)[edge]->varNames)
                 label += VariableRenaming::keyToString(varName) + " ";
             style = "dotted";
             break;

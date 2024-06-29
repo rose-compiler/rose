@@ -640,7 +640,7 @@ SgNode* VxUtilFuncs::getAncestorOfType(SgNode* sgNode, enum VariantT targetT)
 }
 
 
-std::string VxUtilFuncs::generateAccessNameStrings(SgFunctionDeclaration* funcDecl, SgThisExp* thisExp)
+std::string VxUtilFuncs::generateAccessNameStrings(SgFunctionDeclaration* funcDecl, SgThisExp* /*thisExp*/)
 {
     return "@" + VxUtilFuncs::getExpandedFunctionName(funcDecl) + "@" +
         "this";

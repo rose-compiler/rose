@@ -12,20 +12,15 @@
 #include <string>
 #include <utility>
 
-//namespace CallGraph
-//{
-
 /* !!! NOTE: TraverseCallGraphDataflow LIMITED TO NON-RECURSIVE PROGRAMS (I.E. CONTROL FLOW GRAPHS WITH NO CYCLES) !!! */
 
 class Function
 {
         protected:
-        //SgFunctionDefinition* def;
-        //set<SgFunctionDeclaration*> decls;
         SgFunctionDeclaration* decl;
 
         public:
-        Function();
+        Function() = delete;
         
         Function(std::string name);
         
@@ -38,9 +33,9 @@ class Function
         void init(SgFunctionDeclaration* sample);
                 
         public:
-        Function(const Function &that);
-        
-        Function(const Function *that);
+        Function& operator=(const Function &) = default; // removes warning regarding copy constructor
+        Function(const Function &);
+        Function(const Function *);
         
         // returns a unique SgFunctionDeclaration* that is the canonical AST node that represents the given function
         // A canonial declaration means a defining function declaration if available, or the first non-defining declaration
@@ -303,19 +298,14 @@ class TraverseCallGraph
 {
         protected:
         SgIncidenceDirectedGraph* graph;
-        // maps each SgFunctionDefinition to its associated SgGraphNodes
-        //   (there may be more than one such node for a given SgFunctionDefinition)
-        //map<SgFunctionDefinition*, std::set<SgGraphNode*> > decl2CFNode;
         
         // The set of functions in this program
         std::set<CGFunction> functions;
         
         // The number of functions that call each given function
-        //std::map<SgFunctionDefinition*, int> numCallers;
         std::map<const CGFunction*, int> numCallers;
         
         // set of all the SgFunctionDefinition for all functions that are not called from other functions
-        //set<SgFunctionDefinition*> noPred;
         // Set of functions that are not called from other functions.
         // Just contains pointers to the CGFunction objects inside the functions set.
         std::set<const CGFunction*> noPred;
@@ -458,37 +448,6 @@ void annotateNumCallers(SgIncidenceDirectedGraph* graph);
 
 // Returns the number of functions that call this function or 0 if the function is compiler-generated.
 int getNumCallers(const Function* fDecl);
-
-/*class funcCallersAnalysis
-{
-        bool analyzed=false;
-        
-        // maps each function to the list of its callers, each caller record is a pair, containing the SgFunctionCallExp 
-        // that is the function call and the function that this call is inside of
-        std::map<Function, std::list<std::pair<SgFunctionCallExp*, Function> > > callersMap;
-        
-        void analyze()
-        {
-                if(!analyzed)
-                {
-                        
-                }
-                analyzed = true;
-        }
-        
-        public: 
-        void resetAnalysis()
-        {
-                analyzed = false;
-        }
-        
-        
-        std::list<pair<SgFunctionCallExp*, Function> > getFuncCallers()
-        {
-                
-        }
-}*/
-//}
 
 #endif
 #endif

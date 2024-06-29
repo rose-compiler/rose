@@ -8,7 +8,7 @@
  *** SaveDotAnalysis ***
  ***********************/
 
-bool SaveDotAnalysis::runAnalysis(const Function& func, NodeState* state)
+bool SaveDotAnalysis::runAnalysis(const Function& func, NodeState* /*state*/)
 {
         if(func.get_definition())
         {

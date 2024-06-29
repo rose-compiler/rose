@@ -13,11 +13,11 @@ class Lattice : public printable
 {
         public:
         // initializes this Lattice to its default state, if it is not already initialized
-        virtual void initialize()=0;
+        virtual void initialize() = 0;
         // returns a copy/clone of this lattice: TODO rename it to clone, avoid name confusing with copy(Lattice*)
         virtual Lattice* copy() const=0;
         // overwrites the state of this Lattice with that of that Lattice
-        virtual void copy(Lattice* that)=0;
+        virtual void copy(Lattice* that) = 0;
         
         // Called by analyses to replace variables within the current lattice (pointed by this pointer) with new variables.
        // This is often needed to propagate lattices across function calls, when dataflow information from 
@@ -35,7 +35,7 @@ class Lattice : public printable
         // We do not force child classes to define their own versions of this function since not all
         //    Lattices have per-variable information.
        //
-        virtual void remapVars(const std::map<varID, varID>& varNameMap, const Function& newFunc) {} 
+        virtual void remapVars(const std::map<varID, varID>& /*varNameMap*/, const Function& /*newFunc*/) {}
         
         // Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
         // that contains data for a set of variables.
@@ -44,7 +44,7 @@ class Lattice : public printable
        //
         // We do not force child classes to define their own versions of this function since not all
         //    Lattices have per-variable information.
-        virtual void incorporateVars(Lattice* that) {}
+        virtual void incorporateVars(Lattice* /*that*/) {}
         
        // A lattice (this lattice) may contain more information than what is relevant to a given expr. 
        // This function will create a new, potentially smaller, lattice for a given expr.
@@ -67,7 +67,7 @@ class Lattice : public printable
        //
        // TODO: this function name really does not refect what it does. 
        // A better name: Lattice * createRelevantLattice(SgExpression* expr)
-        virtual Lattice* project(SgExpression* expr) { return copy(); }
+        virtual Lattice* project(SgExpression* /*expr*/) { return copy(); }
         
        // Cherry pick the lattice information which is relevant to expr from exprState, and
        // merge the picked information into this lattice. 
@@ -84,14 +84,11 @@ class Lattice : public printable
        //
        // TODO: the semantics of this function is not the exact inverse of project()
        // TODO: a better name: bool meetRelevantLattice (SgExpression* expr, Lattice* exprState);
-        virtual bool unProject(SgExpression* expr, Lattice* exprState) { return meetUpdate(exprState); }
+        virtual bool unProject(SgExpression* /*expr*/, Lattice* exprState) { return meetUpdate(exprState); }
         
         // computes the meet of this lattice and that lattice and saves the result in this lattice
         // returns true if this causes this lattice to change and false otherwise
         virtual bool meetUpdate(Lattice* that)=0;
-       
-        // computes the meet of this and that and returns the result
-        //virtual Lattice* meet(Lattice* that)=0;
        
        //! Check if this lattice is finite or not
         virtual bool finiteLattice()=0;

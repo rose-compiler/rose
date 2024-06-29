@@ -167,13 +167,12 @@ namespace varSets
   static map <Function, varIDSet> refArrays;
   static map <Function, varIDSet> refScalars;
 
-  void initFuncRefVars(const Function& func, bool getCompilerGen=false)
+  void initFuncRefVars(const Function& func)
   {
-    if(refVars_initialized.find(func) == refVars_initialized.end())
+    if (refVars_initialized.find(func) == refVars_initialized.end())
     {
-      //printf("initFuncRefVars\n");
       SgFunctionDefinition* n = func.get_definition();
-      ROSE_ASSERT(n != NULL);
+      ASSERT_not_null(n);
       getReferencedVars(n, refVars[func]);
       refArrays[func] = arraysFilter(refVars[func]);
       refScalars[func] = scalarsFilter(refVars[func]);

@@ -170,31 +170,38 @@ class DivAnalysisTransfer : public VariableStateTransfer<DivLattice>
   void transferMod(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
 
 public:
+
+  // removes warning messages regarding overriding virtual function visit below
+  using VariableStateTransfer<DivLattice>::visit;
+
   //  void visit(SgNode *);
-  void visit(SgLongLongIntVal *sgn);
-  void visit(SgLongIntVal *sgn);
-  void visit(SgIntVal *sgn);
-  void visit(SgShortVal *sgn);
-  void visit(SgUnsignedLongLongIntVal *sgn);
-  void visit(SgUnsignedLongVal *sgn);
-  void visit(SgUnsignedIntVal *sgn);
-  void visit(SgUnsignedShortVal *sgn);
-  void visit(SgValueExp *sgn);
-  void visit(SgPlusAssignOp *sgn);
-  void visit(SgMinusAssignOp *sgn);
-  void visit(SgMultAssignOp *sgn);
-  void visit(SgDivAssignOp *sgn);
-  void visit(SgModAssignOp *sgn);
-  void visit(SgAddOp *sgn);
-  void visit(SgSubtractOp *sgn);
-  void visit(SgMultiplyOp *sgn);
-  void visit(SgDivideOp *sgn);
-  void visit(SgModOp *sgn);
-  void visit(SgPlusPlusOp *sgn);
-  void visit(SgMinusMinusOp *sgn);
-  void visit(SgUnaryAddOp *sgn);
-  void visit(SgMinusOp *sgn);
-  bool finish() { return modified; }
+  void visit(SgLongLongIntVal*) override;
+  void visit(SgLongIntVal*) override;
+  void visit(SgIntVal*) override;
+  void visit(SgShortVal*) override;
+  void visit(SgUnsignedLongLongIntVal*) override;
+  void visit(SgUnsignedLongVal*) override;
+  void visit(SgUnsignedIntVal*) override;
+  void visit(SgUnsignedShortVal*) override;
+  void visit(SgValueExp*) override;
+  void visit(SgPlusAssignOp*) override;
+  void visit(SgMinusAssignOp*) override;
+  void visit(SgMultAssignOp*) override;
+  void visit(SgDivAssignOp*) override;
+  void visit(SgModAssignOp*) override;
+  void visit(SgAddOp*) override;
+  void visit(SgSubtractOp*) override;
+  void visit(SgMultiplyOp*) override;
+  void visit(SgDivideOp*) override;
+  void visit(SgModOp*) override;
+  void visit(SgPlusPlusOp*) override;
+  void visit(SgMinusMinusOp*) override;
+  void visit(SgUnaryAddOp*) override;
+  void visit(SgMinusOp*) override;
+
+  bool finish() override {
+    return modified;
+  }
 
   DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo);
 };
@@ -231,11 +238,14 @@ class DivAnalysis : public IntraFWDataflow
         //    maintain only one copy of each lattice may for the duration of the analysis.
         //std::map<varID, Lattice*>& genConstVarLattices() const;
                 
-  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo)
-  { ROSE_ABORT(); }
+  bool transfer(const Function&, const DataflowNode&, NodeState&, const std::vector<Lattice*>&) {
+     ROSE_ABORT();
+  }
+
   boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
-                                                            NodeState& state, const std::vector<Lattice*>& dfInfo)
-  { return boost::shared_ptr<IntraDFTransferVisitor>(new DivAnalysisTransfer(func, n, state, dfInfo)); }
+                                                               NodeState& state, const std::vector<Lattice*>& dfInfo) {
+     return boost::shared_ptr<IntraDFTransferVisitor>(new DivAnalysisTransfer(func, n, state, dfInfo));
+  }
 };
 
 // prints the Lattices set by the given DivAnalysis 

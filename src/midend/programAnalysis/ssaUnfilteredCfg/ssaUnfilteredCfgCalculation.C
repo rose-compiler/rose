@@ -577,7 +577,7 @@ void SSA_UnfilteredCfg::insertPhiFunctions(SgFunctionDefinition* function, const
     }
 }
 
-void SSA_UnfilteredCfg::renumberAllDefinitions(SgFunctionDefinition* func, const vector<CFGNode>& cfgNodesInPostOrder)
+void SSA_UnfilteredCfg::renumberAllDefinitions(SgFunctionDefinition* /*func*/, const vector<CFGNode>& cfgNodesInPostOrder)
 {
     //Map from each name to the next index. Not in map means 0
     map<VarName, int> nameToNextIndexMap;

@@ -72,7 +72,8 @@ IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool 
 }
 
 VirtualCFG::dataflow*
-IntraBWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState)
+IntraBWDataflow::getInitialWorklist(const Function &func, bool /*firstVisit*/, bool /*analyzeDueToCallers*/,
+                                    const set<Function> &/*calleesUpdated*/, NodeState* /*fState*/)
 {
   ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
@@ -208,7 +209,6 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                 ROSE_ASSERT(numStates == 1);
                 // the NodeStates themselves
                 const vector<NodeState*> nodeStates = NodeState::getNodeStates(n);
-                int i=0;
                 NodeState* state = NULL;
                 
                 // Iterate over all of this node's NodeStates
@@ -277,7 +277,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                         // used there anymore, either
 
                         // Look at the next NodeState
-                        i++; itS++;
+                        itS++;
                 }
                 ROSE_ASSERT(state);
                 

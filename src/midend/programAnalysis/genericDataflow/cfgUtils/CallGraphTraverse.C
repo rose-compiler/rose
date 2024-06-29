@@ -11,22 +11,13 @@
 #include <set>
 using namespace std;
 using namespace Rose;
-//namespace CallGraph
-//{
 
 /****************************
  ********* Function *********
  ****************************/
-Function::Function()
+
+Function::Function(string name) : decl{nullptr}
 {
-        decl=NULL;
-}
- 
-Function::Function(string name)
-{
-        //printf("Function::Function(string name) this=0x%x\n", this);
-        //def = NULL;
-        
         Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(cfgUtils::project, V_SgFunctionDeclaration);
         for (Rose_STL_Container<SgNode*>::const_iterator it = functions.begin(); it != functions.end(); it++)
         {
@@ -50,29 +41,21 @@ Function::Function(string name)
                         }*/
                 }
         }
-        
-        // every function must have at least one declaration
-        //ROSE_ASSERT(decls.size()>0);
-        ROSE_ASSERT(decl);
+        ASSERT_not_null(decl);
 }
 
-Function::Function(SgFunctionDeclaration* sample)
+Function::Function(SgFunctionDeclaration* sample) : decl{nullptr}
 {
         assert(!isSgTemplateFunctionDeclaration(sample));
-        //printf("Function::Function(SgFunctionDeclaration* sample) this=0x%x\n", this);
         init(sample);
 }
 
-Function::Function(SgFunctionDefinition* sample)
+Function::Function(SgFunctionDefinition* sample) : decl{nullptr}
 {
-        //printf("Function::Function(SgFunctionDefinition* sample) this=0x%x\n", this);
         init(sample->get_declaration());
-        
-        // ensure that the definition found by init() is the same as what got passed in here
-        //ROSE_ASSERT(def == sample);
 }
 
-Function::Function(SgFunctionCallExp* funcCall)
+Function::Function(SgFunctionCallExp* funcCall) : decl{nullptr}
 {
     // EDG3 removes all SgPointerDerefExp nodes from an expression like this:
     //    void f() { (****f)(); }
@@ -80,24 +63,16 @@ Function::Function(SgFunctionCallExp* funcCall)
     // SgPointerDerefExp nodes is a SgFunctionRefExp. The SgFunctionCallExp::getAssociatedFunctionSymbol() will take care of
     // this case and some others. [Robb Matzke 2012-12-28]
     SgFunctionSymbol *fsym = funcCall->getAssociatedFunctionSymbol();
-    assert(fsym!=NULL);
+    ASSERT_not_null(fsym);
     init(fsym->get_declaration());
 }
 
 void Function::init(SgFunctionDeclaration* sample)
 {
         assert(!isSgTemplateFunctionDeclaration(sample));
-        //SgName mangledName = sample->get_mangled_name();
-        //def = NULL;
-        
-        //printf("Function::init() name=%s=%s\n", this, sample->get_name().str(), mangledName.str());
         
         // decl will be initialized to the defining declaration or the first non-defining declaration if there is no definition
         decl = getCanonicalDecl(sample);
-        
-        // insert the sample declaration into decls, in case this is a name-less function declaration (i.e. a function pointer)
-        // which won't show up in an AST query
-        //decls.insert(sample);
         
         /*Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(cfgUtils::project, V_SgFunctionDeclaration);
         for (Rose_STL_Container<SgNode*>::const_iterator it = functions.begin(); it != functions.end(); it++)
@@ -118,11 +93,6 @@ void Function::init(SgFunctionDeclaration* sample)
                         }
                 }
         }
-        //decls.insert(sample);
-        //def = sample->get_definition();
-        
-        //printf("Function::init() this: 0x%x, name=%s *(decls.begin())=0x%x  decls.size()=%d def=0x%x\n", this, get_name().str(), *(decls.begin()), decls.size(), def);
-        //printf("Function::init() this: 0x%x, name=%s decls.size()=%d def=0x%x\n", this, get_name().str(), decls.size(), def);
         
         // every function must have at least one declaration
         ROSE_ASSERT(decls.size()>0);*/
@@ -130,23 +100,11 @@ void Function::init(SgFunctionDeclaration* sample)
 
 Function::Function(const Function &that)
 {
-        //printf("Function::Function(const Function &that) this=0x%x\n", this);
-        /*def = that.def;
-        for(set<SgFunctionDeclaration*>::const_iterator it = that.decls.begin(); it!=that.decls.end(); it++)
-        {       //printf("                  declaration: 0x%x\n", *it);
-                decls.insert(*it);
-        }*/
         decl = that.decl;
 }
 
 Function::Function(const Function *that)
 {
-        //printf("Function::Function(const Function &that) this=0x%x\n", this);
-        /*def = that.def;
-        for(set<SgFunctionDeclaration*>::const_iterator it = that.decls.begin(); it!=that.decls.end(); it++)
-        {       //printf("                  declaration: 0x%x\n", *it);
-                decls.insert(*it);
-        }*/
         decl = that->decl;
 }
 
@@ -166,27 +124,9 @@ SgFunctionDeclaration* Function::getCanonicalDecl(SgFunctionDeclaration* sampleD
 
 bool Function::eq(const Function &that) const
 {
-        /*printf("Function::eq() %s  that=%s\n", get_name().str(), that.get_name().str());
-        
-        printf("               (def != that.def) = %d\n", (def != that.def));
-        if(def != that.def) return false;
-                
-        // check that that's set of declarations is a subset of this's set of declarations
-        for(set<SgFunctionDeclaration*>::const_iterator it = that.decls.begin(); it!=that.decls.end(); it++)
-        {
-                printf("               (decls.find(*it) == decls.end()) = %d\n", (decls.find(*it) == decls.end()));
-                if(decls.find(*it) == decls.end()) return false;
+        if (decl != that.decl) {
+          return false;
         }
-        
-        // check that this's set of declarations is a subset of that's set of declarations
-        for(set<SgFunctionDeclaration*>::iterator it = decls.begin(); it!=decls.end(); it++)
-        {
-                printf("               (that.decls.find(*it) == that.decls.end()) = %d\n", (that.decls.find(*it) == that.decls.end()));
-                if(that.decls.find(*it) == that.decls.end()) return false;
-        }*/
-        if(decl != that.decl) return false;
-        
-        //printf("               Equal\n");
         return true;
 }
 
@@ -293,7 +233,7 @@ SgInitializedNamePtrList Function::get_params() const
         }
 }
 
-string Function::str(string indent) const
+string Function::str(string /*indent*/) const
 {
         ostringstream oss;
         oss << get_name().getString()<<"(";
@@ -620,9 +560,6 @@ void TraverseCallGraphBottomUp<SynthesizedAttribute>::traverse()
         // start the traversal from the nodes that are called from no other node
         for(set<const CGFunction*>::iterator it = noPred.begin(); it!=noPred.end(); it++)
         {
-                //printf("        *it=0x%x\n", *it);
-                
-                //printf("TraverseCallGraphTopDown::traverse() funcDecl=%s\n", (*it)->get_name().str());
                 traverse_rec(*it, visitRecords, touchedEdges);
         }
 }
@@ -636,8 +573,6 @@ SynthesizedAttribute TraverseCallGraphBottomUp<SynthesizedAttribute>::traverse_r
         // list of attributes from this function's callees
         list <SynthesizedAttribute> fromCallees;
         
-        //printf("traverse_rec::function: %s\n", fd->get_name().str());
-        //printf("<<<\n");
         // traverse over the callees and compute the list of their synthesized attributes (fromCallees)
         for(CGFunction::iterator it = fd->successors(); it != fd->end(); it++)
         {
@@ -645,13 +580,11 @@ SynthesizedAttribute TraverseCallGraphBottomUp<SynthesizedAttribute>::traverse_r
                         
                 // if the target is compiler-generated, skip it
                 if(target==NULL) continue;
-                //printf("    calls: %s\n", tgtFuncDecl->get_name().str());
                 
                 // if we haven't yet called this function before
                 pair<const CGFunction*, const CGFunction*> edge(fd, target);
                 if(visitRecords.find(target) == visitRecords.end())
                 {
-                        //printf("        new edge/function\n");
                         // recurse down to this function, storing its result in visitRecords
                         traverse_rec(target, visitRecords, touchedEdges);
                 }
@@ -662,7 +595,6 @@ SynthesizedAttribute TraverseCallGraphBottomUp<SynthesizedAttribute>::traverse_r
                         // add the current callee's synthesized attribute into the list for the current function
                         fromCallees.push_back(visitRecords[target]);
                         
-                        //printf("   adding edge from %s to %s\n", fd->get_name().str(), tgtFuncDecl->get_name().str());
                         if(touchedEdges.find(edge) == touchedEdges.end())
                                 // add this edge to touchedEdges
                                 touchedEdges.insert(edge);
@@ -679,15 +611,12 @@ SynthesizedAttribute TraverseCallGraphBottomUp<SynthesizedAttribute>::traverse_r
         SynthesizedAttribute res = visit(fd, fromCallees);
         // add the current function's result to the visitRecords for use by this function's callers
         visitRecords[fd] = res;
-        //printf(">>>\n");
         
         return res;
 }
 
 template <class SynthesizedAttribute>
 TraverseCallGraphBottomUp<SynthesizedAttribute>::~TraverseCallGraphBottomUp() {}
-
-//}
 
 /*************************************
  ***** TraverseCallGraphDataflow *****
@@ -761,14 +690,11 @@ class numCallersAnnotator : public virtual TraverseCallGraphTopDown<numCallersAn
         
         numCallersAnnotator_Int visit(const CGFunction* func, list<numCallersAnnotator_Int>& fromCallers)
         {
-                //printf("visit: fromCallers.size()=%d\n", fromCallers.size());
-                
-                int totalCallers=0;
+                int totalCallers = 0;
                 for(list<numCallersAnnotator_Int>::iterator it = fromCallers.begin(); it!=fromCallers.end(); it++)
                 {
                         totalCallers+=(*it).val;
                 }
-                //printf("annotating %s / 0x%x\n", func->get_name().str(), func->get_declaration());
                 func->get_declaration()->addNewAttribute("numCallers", new numCallersAttribute(totalCallers));
                 
                 numCallersAnnotator_Int retInt(1);
@@ -794,9 +720,6 @@ int getNumCallers(const Function* func)
         ROSE_ASSERT(calledAnnotateNumCallers);
         
         if(func->get_declaration()->get_file_info()->isCompilerGenerated()) return 0;
-        //printf("looking up numCallers of func=0x%x=%s()\n", func, func->get_declaration()->get_name().str());
-        
-        //printf("looking up %s / 0x%x\n", func->get_name().str(), func->get_declaration());
         
         return ((numCallersAttribute*)func->get_declaration()->getAttribute("numCallers"))->getNumCallers();
 }

@@ -46,7 +46,6 @@ class dbgBuf: public std::streambuf
         bool ownerAccess;
         std::streambuf* baseBuf;
         std::list<std::string> funcs;
-        //std::list<std::string> indents;
         
         // The number of observed '<' characters that have not yet been balanced out by '>' characters.
         //      numOpenAngles = 1 means that we're inside an HTML tag

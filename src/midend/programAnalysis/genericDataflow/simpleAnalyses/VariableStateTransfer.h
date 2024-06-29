@@ -117,11 +117,11 @@ public:
   }
 
   // XXX: This needs to be handled by an inter-procedural analysis
-  void visit(SgConstructorInitializer *sgn)
+  void visit(SgConstructorInitializer*)
   { }
 
   // XXX: I don't even know what this is - Phil
-  void visit(SgDesignatedInitializer *sgn)
+  void visit(SgDesignatedInitializer*)
   { }
 
   void visit(SgInitializedName *initName)

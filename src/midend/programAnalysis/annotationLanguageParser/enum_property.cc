@@ -70,7 +70,7 @@ enumPropertyAnn::enumPropertyAnn(const parserID * id,
                                  bool is_may_property,
                                  const parserID * default_name,
                                  enumvalue_list * lowest_values,
-                                 parserid_list * diagnostic_values)
+                                 parserid_list * /*diagnostic_values*/)
   : propertyAnn(id, direction, EnumProperty),
     _is_may_property(is_may_property),
     _enforce_weak_updates(true),

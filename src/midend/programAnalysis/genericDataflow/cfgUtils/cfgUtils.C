@@ -201,13 +201,17 @@ namespace cfgUtils
   // wrFromExp - map of flags indicating for each variable in arrays whether ast_node 
   //    contains an array Write expression with its index in the wrong format: something 
   //    other than i or i+c
-  bool findArrayAccesses(SgNode* ast_node, 
-      m_varID2varID2quad &wrIndex, m_varID2varID2quad &rdIndex,
-      m_varID2bool &rdFromExp, m_varID2bool &wrFromExp, 
-      varIDSet arrays, m_varID2str vars2Name)
+bool findArrayAccesses(SgNode* /*ast_node*/,
+                       m_varID2varID2quad &/*wrIndex*/, m_varID2varID2quad &/*rdIndex*/,
+                       m_varID2bool &/*rdFromExp*/, m_varID2bool &/*wrFromExp*/,
+                       varIDSet /*arrays*/, m_varID2str /*vars2Name*/)
   {
     ROSE_ABORT();
+
     /*  SgNode* lhs, rhs;
+
+#error "DEAD CODE!"
+
     // indicates whether this is an expression that reads the left-hand-side (i.e. i++)
     bool readlhs;
     // we only consider assignments
@@ -215,18 +219,23 @@ namespace cfgUtils
 
     if ( !(AstInterface::IsAssignment( ast_node, &lhs, &rhs, &readlhs ) ) )
     {
-#ifdef DEBUG_FLAG1X
-cout << "    findArrayAccesses() Not Assignment\n";
-#endif
 return false;
+
+#error "DEAD CODE!"
+
 }
+
+#error "DEAD CODE!"
 
     // list of all array access expressions on the left-hand-side of ast_node
     Rose_STL_Container<SgNode *>arraysLhs;
     if ( lhs )
     arraysLhs = NodeQuery::querySubTree( lhs, V_SgPntrArrRefExp );
 
+#error "DEAD CODE!"
+
     // list of all array access expressions on the right-hand-side of ast_node  
+
     list<SgNode *>arraysRhs;
     if (rhs)
     arraysRhs = NodeQuery::querySubTree( rhs, V_SgPntrArrRefExp );
@@ -242,9 +251,7 @@ return false;
     }
 
     // processing lhs of assignment
-#ifdef DEBUG_FLAG1X
-cout << "        LHS accesses: " << arraysLhs.size() << "\tRHS accesses: " << arraysRhs.size() << "\n";
-#endif
+
     // iterate over all the array accesses on the left-hand-side
     for ( Rose_STL_Container<SgNode *>::iterator it = arraysLhs.begin(); it != arraysLhs.end(); it++ )
     {
@@ -261,15 +268,13 @@ cout << "        LHS accesses: " << arraysLhs.size() << "\tRHS accesses: " << ar
     // gets the id of the variable on the lhs of the array access expression
     v = getRefOfTypeConsidered( arr->get_lhs_operand() );
 
+#error "DEAD CODE!"
+
     // iterate through all the arrays of interest to see if the 
     // array being accessed is one that we care about
     for ( set<variable>::iterator curArray = arrays.begin(); 
     curArray != arrays.end(); curArray++ )
     {
-#ifdef DEBUG_FLAG1X
-cout << "        B LHS vars2Name["<<v<<"]="<<vars2Name[v]<<"  curArray="<<
-vars2Name[*curArray]<<"\n";
-#endif
     // if we care about the array being accessed
     if ( vars2Name[v] == vars2Name[*curArray] )
     {
@@ -301,6 +306,8 @@ vars2Name[*curArray]<<"\n";
   }
   }
 
+#error "DEAD CODE!"
+
 // parsing rhs
 for ( Rose_STL_Container<SgNode *>::iterator it = arraysRhs.begin(); it != arraysRhs.end(); it++ )
 {
@@ -320,17 +327,12 @@ for ( Rose_STL_Container<SgNode *>::iterator it = arraysRhs.begin(); it != array
   for ( set<variable>::iterator curArray = arrays.begin(); 
       curArray != arrays.end(); curArray++ )
   {
-#ifdef DEBUG_FLAG1X
-    cout << "        C RHS vars2Name["<<v<<"]="<<vars2Name[v]<<"  curArray="<<vars2Name[*curArray]<<"\n";
-#endif
+
+#error "DEAD CODE!"
 
     // if we care about the array being accessed
     if ( vars2Name[v] == vars2Name[*curArray] )
     {
-#ifdef DEBUG_FLAG1X
-      cout << "        C.1 access found!  parseAddition( isSgBinaryOp( *it )->get_rhs_operand(), &j, &c )="<<parseAddition( isSgBinaryOp( *it )->get_rhs_operand(), &j, &c )<<"\n";
-#endif
-
       varID j;
       quad c;
       found = true; // we've found an access to variableConsidered
@@ -345,11 +347,9 @@ for ( Rose_STL_Container<SgNode *>::iterator it = arraysRhs.begin(); it != array
     }
   }
 }
-#ifdef DEBUG_FLAG1X
-for ( set<variable>::iterator curArray = arrays.begin(); 
-    curArray != arrays.end(); curArray++ )
-cout << "findArrayAccesses END rdIndex["<<vars2Name[*curArray]<<"].size()="<<rdIndex[*curArray].size()<<"  wrIndex["<<vars2Name[*curArray]<<"].size()="<<wrIndex[*curArray].size()<<"  found["<<vars2Name[*curArray]<<"]="<<found<<"  rdFromExp["<<vars2Name[*curArray]<<"]="<<rdFromExp[*curArray]<<"  wrFromExp["<<vars2Name[*curArray]<<"]="<<wrFromExp[*curArray]<<"\n";
-#endif
+
+#error "DEAD CODE!"
+
 return found;*/
 }
 
@@ -364,24 +364,28 @@ return found;*/
 //    and c is a constant
 // wrIndexCpx, rdIndexCpx -  lists of array variables that were accessed (for writing or 
 //    reading, respectively) using a complex index expression
-bool parseArrayAccess ( SgNode* ast_node,
-    m_varID2varID2quad& wrIndexSimp, varIDlist& wrIndexCpx, 
-    m_varID2varID2quad& rdIndexSimp, varIDlist& rdIndexCpx,
-    m_varID2str vars2Name)
+bool parseArrayAccess(SgNode* /*ast_node*/,
+                      m_varID2varID2quad& /*wrIndexSimp*/, varIDlist& /*wrIndexCpx*/,
+                      m_varID2varID2quad& /*rdIndexSimp*/, varIDlist& /*rdIndexCpx*/,
+                      m_varID2str /*vars2Name*/)
 {
   ROSE_ABORT (  );
   /*
+#error "DEAD CODE!"
+
      SgNode* lhs, rhs;
   // indicates whether this is an expression that reads the left-hand-side (i.e. i++)
   bool readlhs;
   // we only consider assignments
   if ( !(AstInterface::IsAssignment( ast_node, &lhs, &rhs, &readlhs ) ) )
   {
-#ifdef DEBUG_FLAG1X
-cout << "parseArrayAccess\n";
-#endif
 return false;
+
+#error "DEAD CODE!"
+
 }
+
+#error "DEAD CODE!"
 
   // list of all array access expressions on the left-hand-side of ast_node
   Rose_STL_Container<SgNode *>arraysLhs;
@@ -393,16 +397,17 @@ return false;
   if (rhs)
   arraysRhs = NodeQuery::querySubTree( rhs, V_SgPntrArrRefExp );
 
-  // processing lhs of assignment
-#ifdef DEBUG_FLAG1X
-cout << "LHS accesses: " << arraysLhs.size() << "\tRHS accesses: " << arraysRhs.size() << "\n";
-#endif
+#error "DEAD CODE!"
+
   // iterate over all the array accesses on the left-hand-side
   for ( Rose_STL_Container<SgNode *>::iterator it = arraysLhs.begin(); it != arraysLhs.end(); it++ )
   {
   ROSE_ASSERT ( *it );
   SgPntrArrRefExp *arr = isSgPntrArrRefExp( *it );
   ROSE_ASSERT ( arr );
+
+#error "DEAD CODE!"
+
   // convert the lhs of the array access expression into either a variable reference or
   // a dot expression
   SgVarRefExp *var = isSgVarRefExp( arr->get_lhs_operand() );
@@ -413,9 +418,7 @@ cout << "LHS accesses: " << arraysLhs.size() << "\tRHS accesses: " << arraysRhs.
   // gets the id of the variable on the lhs of the array access expression
   v = getRefOfTypeConsidered( arr->get_lhs_operand() );
 
-#ifdef DEBUG_FLAG1X
-cout << "parseArrayAccess B LHS vars2Name["<<v<<"]="<<vars2Name[v]<<"\n";
-#endif
+#error "DEAD CODE!"
 
   // if index is of form j + c
   if ( parseAddition( isSgBinaryOp( *it )->get_rhs_operand(), &j, &c ) )
@@ -440,6 +443,8 @@ cout << "parseArrayAccess B LHS vars2Name["<<v<<"]="<<vars2Name[v]<<"\n";
   }
   }
 
+#error "DEAD CODE!"
+
   // parsing rhs
   for ( Rose_STL_Container<SgNode *>::iterator it = arraysRhs.begin(); it != arraysRhs.end(); it++ )
 {
@@ -454,9 +459,7 @@ cout << "parseArrayAccess B LHS vars2Name["<<v<<"]="<<vars2Name[v]<<"\n";
   // gets the id of the variable on the rhs of the array access expression
   v = getRefOfTypeConsidered( isSgPntrArrRefExp( *it )->get_lhs_operand() );
 
-#ifdef DEBUG_FLAG1X
-  cout << "parseArrayAccess C RHS vars2Name["<<v<<"]="<<vars2Name[v]<<"\n";
-#endif
+#error "DEAD CODE!"
 
   if ( parseAddition( isSgBinaryOp( *it )->get_rhs_operand(), &j, &c ) )
   {
@@ -468,6 +471,8 @@ cout << "parseArrayAccess B LHS vars2Name["<<v<<"]="<<vars2Name[v]<<"\n";
     rdIndexCpx.push_front(v);
 }
 
+#error "DEAD CODE!"
+
 // return true if this expression involved an array access (use or def) and false otherwise
 return (arraysLhs.size() + arraysRhs.size() > 0);*/
 }
@@ -475,20 +480,17 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
 // if the given SgNode is an assignment operation, returns true, otherwise false
 //// SgExpression that is that 
 //// assignment (effectively a type cast) or NULL otherwise
-/*SgExpression**/ bool isAssignment(SgNode* n)
+bool isAssignment(SgNode* n)
 {
   if(isSgAssignOp(n) || isSgPlusAssignOp(n) || isSgMinusAssignOp(n) || isSgMultAssignOp(n) || isSgDivAssignOp(n) ||
       isSgMinusMinusOp(n) || isSgPlusPlusOp(n)/* || isSgAssignInitializer(n)*/)
-    //return isSgExpression(n);
     return true;
   // variable declaration with an initalization
   else if(isSgVariableDeclaration(n) && isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer() &&
       (isSgAssignInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer())/* ||
                                                                                                                SgAggregateInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer()*/))
-      //return isSgExpression(isSgAssignInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer())->get_operand());
       return true;
       else
-      //return NULL;
       return false;
       }
 
@@ -496,7 +498,6 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
       // side of this assignment and NULL otherwise
       SgNode* getAssignmentLHS(SgNode* n)
       {
-      //SgExpression* asgn;
 
       if(isAssignment(n))
       {
@@ -508,16 +509,10 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
       {
         return isSgUnaryOp(n)->get_operand();
       }
-      /*else if(isSgAssignInitializer(asgn))
-        {
-        return isSgAssignInitializer(asgn)->get_operand();
-        }*/
       else if(isSgVariableDeclaration(n))
       {
         if(isSgAssignInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer()))
           return isSgVariableDeclaration(n)->get_definition()->get_vardefn();
-        /*else if(SgAggregateInitializer (isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer()))
-          return isSgVariableDeclaration(n)->get_definition()->get_vardefn();*/
         else
           return NULL;
       }
@@ -532,9 +527,7 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
 // side of this assignment
 void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs)
 {
-  //SgExpression* asgn;
-
-  if(isAssignment(n))
+  if (isAssignment(n))
   {
     if(isSgBinaryOp(n))
     {
@@ -548,10 +541,6 @@ void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs)
       rhs.insert(isSgUnaryOp(n)->get_operand());
       return;
     }
-    /*else if(isSgAssignInitializer(asgn))
-      {
-      return isSgAssignInitializer(asgn)->get_operand();
-      }*/
     else if(isSgVariableDeclaration(n))
     {
       if(isSgAssignInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer()))
@@ -559,8 +548,6 @@ void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs)
         rhs.insert(isSgAssignInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer())->get_operand());
         return;
       }
-      /*else if(SgAggregateInitializer (isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer()))
-        return SgAggregateInitializer(isSgVariableDeclaration(n)->get_definition()->get_vardefn()->get_initializer())->get_initializers();*/
     }
   }
 

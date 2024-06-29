@@ -27,15 +27,6 @@ int CGprofileLevel=0;
 int CGdebugTransClosure=1;
 
 /**** Constructors & Destructors ****/
-/*ConstrGraph::ConstrGraph(bool initialized, string indent="")
-{
-        // Start this constraint graph as Uninitialized or Bottom, as requested
-        if(initialized) level = bottom;
-        else            level = uninitialized;
-        
-        constrChanged=false;
-        inTransaction=false;
-}*/
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, bool initialized, string indent) :
         func(func), state(state)
@@ -52,13 +43,13 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
 }
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
-              LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, 
-              // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
-              bool initialized, string indent) : func(func), state(state)
+              LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL,
+              // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL,
+              bool /*initialized*/, string indent) : func(func), state(state)
 {
         this->ldva = ldva;
-        // Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
-        // wildcard annotation that matches all variables       
+        // Initialize the map of divisibility and sign lattices, associating divL and sgnL with the
+        // wildcard annotation that matches all variables
         if(divL) {
                 pair<string, void*> noAnnot("", NULL);
                 this->divL[noAnnot] = divL;
@@ -69,26 +60,26 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
         initCG(func, nodes, false, indent);
 }
 
-ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
-                              LiveDeadVarsAnalysis* ldva, 
-                              const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
-                              // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
-                              bool initialized, string indent) : func(func), state(state)
+ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state,
+                         LiveDeadVarsAnalysis* ldva,
+                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL,
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL,
+                         bool /*initialized*/, string indent) : func(func), state(state)
 {
         this->ldva = ldva;
         // Initialize the map of divisibility and sign lattices
         this->divL = divL;
-        // GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL = sgnL; 
+        // GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL = sgnL;
 
         set<NodeDesc> nodes; nodes.insert(NodeDesc(n, state));
         initCG(func, nodes, false, indent);
 }
 
 ConstrGraph::ConstrGraph(const Function& func, const set<NodeDesc>& nodes, const NodeState& state, 
-                              LiveDeadVarsAnalysis* ldva, 
-                              const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
-                              // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
-                              bool initialized, string indent) : func(func), state(state)
+                         LiveDeadVarsAnalysis* ldva,
+                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL,
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL,
+                         bool /*initialized*/, string indent) : func(func), state(state)
 {
         this->ldva = ldva;
         // Initialize the map of divisibility and sign lattices
@@ -98,24 +89,20 @@ ConstrGraph::ConstrGraph(const Function& func, const set<NodeDesc>& nodes, const
         initCG(func, nodes, false, indent);
 }
 
-ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized, string indent) : func(that.func), state(that.state)
+ConstrGraph::ConstrGraph(ConstrGraph &that, bool /*initialized*/, string indent) : func(that.func), state(that.state)
 {
         vars = that.vars;
-// noDivVars    divVars = that.divVars;
         copyFrom(that, indent+"    ");
         ldva = that.ldva;
         divL = that.divL;
-        // GB : 2011-03-05 (Removing Sign Lattice Dependence)sgnL = that.sgnL;
 }
 
-ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string indent) : func(that->func), state(that->state)
+ConstrGraph::ConstrGraph(const ConstrGraph* that, bool /*initialized*/, string indent) : func(that->func), state(that->state)
 {
         vars = that->vars;
-// noDivVars    divVars = that->divVars;
         copyFrom(*((ConstrGraph*)that), indent+"    ");
         ldva = that->ldva;
         divL = that->divL;
-        // GB : 2011-03-05 (Removing Sign Lattice Dependence)sgnL = that->sgnL;
 }
 
 // Creates a constraint graph that contains the given set of inequalities, 
@@ -123,8 +110,8 @@ ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string inden
 ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, 
                          const Function& func, const DataflowNode& n, const NodeState& state,
                          LiveDeadVarsAnalysis* ldva, 
-                         FiniteVarsExprsProductLattice* divL, 
-                         // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
+                         FiniteVarsExprsProductLattice* divL,
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL,
                          string indent) : 
                                 func(func), state(state)
 {
@@ -132,7 +119,7 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
         // Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
         // wildcard annotation that matches all variables       
         if(divL) {
-                pair<string, void*> noAnnot("", NULL);
+                pair<string, void*> noAnnot("", nullptr);
                 this->divL[noAnnot] = divL;
         }
         // GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL[noAnnot] = sgnL;
@@ -161,9 +148,9 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
 ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, 
                          const Function& func, const DataflowNode& n, const NodeState& state,
                          LiveDeadVarsAnalysis* ldva,
-                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
-                         // GB : 2011-03-05 (Removing Sign Lattice Dependence) const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
-                         string indent) : 
+                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL,
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence) const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL,
+                         string indent) :
                                   func(func), state(state)
 {
         this->ldva = ldva;
@@ -199,7 +186,7 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
 //    state - the NodeState of node n
 //    annotName/annotVal - the annotation that will be associated with all variables live at node n
 // initialized - If false, starts this ConstrGraph as uninitialized. If false, starts it at bottom.
-void ConstrGraph::initCG(const Function& func, const set<NodeDesc>& nodes, bool initialized, string indent)
+void ConstrGraph::initCG(const Function& /*func*/, const set<NodeDesc>& nodes, bool initialized, string indent)
 {
         // Start this constraint graph as Uninitialized or Bottom, as requested
         if(initialized) level = bottom;
@@ -287,7 +274,7 @@ void ConstrGraph::initialize(string indent)
 // noDivVars }
 
 // Returns a divisibility product lattice that matches the given variable
-FiniteVarsExprsProductLattice* ConstrGraph::getDivLattice(const varID& var, string indent)
+FiniteVarsExprsProductLattice* ConstrGraph::getDivLattice(const varID& var, string /*indent*/)
 {
         for(map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator itDiv=divL.begin();
                     itDiv!=divL.end(); itDiv++)
@@ -353,7 +340,7 @@ string ConstrGraph::DivLattices2Str(string indent)
 
 // Adds the given variable to the variables list, returning true if this causes
 // the constraint graph to change and false otherwise.
-bool ConstrGraph::addVar(const varID& var, string indent)
+bool ConstrGraph::addVar(const varID& var, string /*indent*/)
 {
         pair<varIDSet::iterator,bool> loc = vars.insert(var);
         return loc.second;
@@ -405,12 +392,6 @@ Lattice* ConstrGraph::copy() const
         return new ConstrGraph(this);
 }
 
-// Returns a copy of this LogicalCond object
-/*LogicalCond* ConstrGraph::copy()
-{
-        return new ConstrGraph(this);
-}*/
-
 // Copies the state of that to this constraint graph
 // Returns true if this causes this constraint graph's state to change
 bool ConstrGraph::copyFrom(ConstrGraph &that, string indent)
@@ -438,10 +419,6 @@ bool ConstrGraph::copyFrom(ConstrGraph &that, string indent)
                 }
                 Dbg::dbg .flush();
         }*/
-        
-        // Ensure that both constraint graphs map the same set of variables
-        //ROSE_ASSERT(vars == that.vars);
-        //ROSE_ASSERT(divVars == that.divVars);
         
         // Copy the constraint information from cg to this              
         modified = copyConstraints(that, indent+"    ") || modified;
@@ -549,7 +526,7 @@ bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
 
 // Determines whether constraints in that are different from
 // the constraints in this
-bool ConstrGraph::diffConstraints(ConstrGraph &that, string indent)
+bool ConstrGraph::diffConstraints(ConstrGraph &that, string /*indent*/)
 {
         //Check to see if map::operator== is sufficient for this
         // if these two constraint graphs differ on their bottom-ness
@@ -569,7 +546,7 @@ bool ConstrGraph::diffConstraints(ConstrGraph &that, string indent)
 
 // Copies the constraints of cg into this constraint graph.
 // Returns true if this causes this constraint graph's state to change.
-bool ConstrGraph::copyConstraints(ConstrGraph &that, string indent)
+bool ConstrGraph::copyConstraints(ConstrGraph &that, string /*indent*/)
 {
         bool modified;
         
@@ -935,7 +912,7 @@ bool ConstrGraph::replaceVar(const varID& origVar, const varID& newVar, bool noC
 // Used by copyAnnotVars() and mergeAnnotVars() to identify variables that are interesting
 // from their perspective.
 bool ConstrGraph::annotInterestingVar(const varID& var, const set<pair<string, void*> >& noCopyAnnots, const set<varID>& noCopyVars,
-                                      const string& annotName, void* annotVal, string indent)
+                                      const string& annotName, void* annotVal, string /*indent*/)
 {
         return !varHasAnnot(var, noCopyAnnots) && noCopyVars.find(var)==noCopyVars.end() && 
                     varHasAnnot(var, annotName, annotVal);
@@ -956,7 +933,7 @@ bool ConstrGraph::annotInterestingVar(const varID& var, const set<pair<string, v
 bool ConstrGraph::copyAnnotVars(string srcAnnotName, void* srcAnnotVal, 
                                 string tgtAnnotName, void* tgtAnnotVal,
                                 const set<pair<string, void*> >& noCopyAnnots,
-                                     const set<varID>& noCopyVars, string indent)
+                                const set<varID>& noCopyVars, string /*indent*/)
 {
         bool modified = false;
         map<varID, map<varID, affineInequality> > xCopyAdditions;
@@ -1259,7 +1236,7 @@ bool ConstrGraph::mergeAnnotVars(const string& finalAnnotName, void* finalAnnotV
 
 // Union the current inequality for y in the given subMap of vars2Value with the given affine inequality
 // Returns true if this causes a change in the subMap, false otherwise.
-bool ConstrGraph::unionXYsubMap(map<varID, affineInequality>& subMap, const varID& y, const affineInequality& ineq, string indent)
+bool ConstrGraph::unionXYsubMap(map<varID, affineInequality>& subMap, const varID& y, const affineInequality& ineq, string /*indent*/)
 {
         bool modified = false;
         
@@ -1428,7 +1405,7 @@ bool ConstrGraph::varHasAnnot(const varID& var, const set<pair<string, void*> >&
 // Returns true if the given variable has an annotation in the given set and false otherwise.
 // The variable matches an annotation if its name and value directly match or if the variable
 // has no annotations and the annotName=="".
-bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal, string indent)
+bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal, string /*indent*/)
 {
         // If the annotation matches variables with no annotation and this variable has no annotations
         if(annotName=="" && var.numAnnotations()==0)
@@ -1446,9 +1423,6 @@ bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal
 // It is assumed that focusVars only contains scalars and not array ranges.
 ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars, string indent)
 {
-        //ConstrGraph* pCG = new ConstrGraph(func, n, state, ldva, divL, // GB : 2011-03-05 (Removing Sign Lattice Dependence) sgnL, 
-        //                                   getLevel(true).first!=uninitialized, indent+"    ");
-
         ConstrGraph* pCG = dynamic_cast<ConstrGraph*>(copy());
         pCG->setToConstrKnown(conj, true, indent+"    ");
         
@@ -1530,7 +1504,6 @@ ConstrGraph* ConstrGraph::joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* 
 {
         // Both constraint graphs correspond to the same function, dataflow node and state
         ROSE_ASSERT(cg1->func     == cg2->func);
-        //ROSE_ASSERT(cg1->n        == cg2->n);
         ROSE_ASSERT(&(cg1->state) == &(cg2->state));
         
         // The annotations that will be associated with the two constraint graphs are different 
@@ -1670,7 +1643,7 @@ void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void*
 
 // Replaces all references to variables with the given annotName->annot annotation to references to variables without the annotation
 // Returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::removeVarAnnot(string annotName, void* annot, string indent)
+bool ConstrGraph::removeVarAnnot(string annotName, void* annot, string /*indent*/)
 {
         bool modified=false;
         
@@ -1754,7 +1727,7 @@ bool ConstrGraph::removeVarAnnot(string annotName, void* annot, string indent)
 // references to variables without the annotation
 // Returns true if this causes the constraint graph to change and false otherwise
 bool ConstrGraph::replaceVarAnnot(string oldAnnotName, void* oldAnnot,
-                                  string newAnnotName, void* newAnnot, string indent)
+                                  string newAnnotName, void* newAnnot, string /*indent*/)
 {
         bool modified=false;
         
@@ -1839,7 +1812,7 @@ bool ConstrGraph::replaceVarAnnot(string oldAnnotName, void* oldAnnot,
 //    (or if tgtAnnotName=="" and the variable has no annotations), add the annotation
 //    (newAnnotName -> newAnnotVal).
 // Returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string newAnnotName, void* newAnnotVal, string indent)
+bool ConstrGraph::addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string newAnnotName, void* newAnnotVal, string /*indent*/)
 {
         bool modified=false;
         // === vars2Value ===
@@ -2327,74 +2300,8 @@ bool ConstrGraph::assertEq(const varID& x, const varID& y, int a, int b, int c, 
 
 /**** Dataflow Functions ****/
 
-// returns the sign of the given variable
-// GB : 2011-03-05 (Removing Sign Lattice Dependence) 
-/*affineInequality::signs ConstrGraph::getVarSign(const varID& var, string indent)
-{
-/ *     affineInequality* constrZeroVar = getVal(zeroVar, var);
-        affineInequality* constrVarZero = getVal(var, zeroVar);
-        
-        affineInequality::signs varSign = affineInequality::unknownSgn;
-
-        if(constrZeroVar && constrZeroVar->getC()==0 &&
-           constrVarZero && constrVarZero->getC()==0)
-                varSign  = affineInequality::eqZero;
-        else if(constrZeroVar && constrZeroVar->getC()<=0)
-                varSign = affineInequality::posZero;
-        else if(constrVarZero && constrVarZero->getC()<=0)
-                varSign = affineInequality::negZero;* /
-        
-        FiniteVarsExprsProductLattice* sgnLattice = getSgnLattice(var, indent+"    ");
-        if(sgnLattice)
-        {
-                SgnLattice* sign = dynamic_cast<SgnLattice*>(sgnLattice->getVarLattice(var));
-                if(sign)
-                {
-                        //Dbg::dbg << "    getVarSign() "<<var.str()<<" : "<<sign->str("")<<"\n";
-                        if(sign->getLevel() == SgnLattice::eqZero)
-                                return affineInequality::eqZero;
-                        else if(sign->getLevel() == SgnLattice::sgnKnown)
-                                if(sign->getSgnState() == SgnLattice::posZero)
-                                        return affineInequality::posZero;
-                                if(sign->getSgnState() == SgnLattice::negZero)  
-                                        return affineInequality::negZero;
-                }
-                / *else
-                        Dbg::dbg << "    getVarSign() "<<var.str()<<" : NULL\n";* /
-        }
-        
-        return affineInequality::unknownSgn;
-}*/
-
 bool ConstrGraph::isEqZero(const varID& var, string indent)
 {
-/*      if(var==zeroVar) return true;
-        // a divisibility scalar is =0 if its original variable is =0 and the remainder ==0
-        if(isDivScalar(var))
-        {
-                varID origVar = divVar2OrigVar[var];
-                DivLattice* d = dynamic_cast<DivLattice*>(divL->getVarLattice(origVar));
-                if(d->getLevel() == DivLattice::divKnown)
-                        return d->getValue()==0;
-        }
-        else
-        {       
-                DivLattice* d = dynamic_cast<DivLattice*>(divL->getVarLattice(var));
-                
-                if(d->getLevel() == DivLattice::valKnown)
-                        return d->getValue()==0;
-        }
-        return false;*/
-        
-        /*affineInequality* constrZeroVar = getVal(zeroVar, var);
-        affineInequality* constrVarZero = getVal(var, zeroVar);
-
-        if(constrZeroVar && constrZeroVar->getC()==0 &&
-           constrVarZero && constrVarZero->getC()==0)
-                return true;
-
-        return false;*/
-        
         return eqVars(zeroVar, var, indent);
 }
 
@@ -2406,12 +2313,10 @@ bool ConstrGraph::eqVars(const varID& v1, const varID& v2, int a, int b, int c, 
 
 // If v1*a = v2*b + c, sets a, b and c appropriately and returns true. 
 // Otherwise, returns false.
-bool ConstrGraph::isEqVars(const varID& v1, const varID& v2, int& a, int& b, int& c, string indent)
+bool ConstrGraph::isEqVars(const varID& v1, const varID& v2, int& a, int& b, int& c, string /*indent*/)
 {
         if(v1 == v2) return true;
                 
-        // If v1*constrV1V2.getA() <= v2*constrV1V2.getB() + constrV1V2.getC() AND
-        //    v1*constrV1V2.getA() >= v2*constrV1V2.getB() + constrV1V2.getC()
         affineInequality* constrV1V2 = getVal(v1, v2);
         if(constrV1V2 && lteVars(v2, v1, constrV1V2->getB(), constrV1V2->getA(), 0-constrV1V2->getC()))
         {
@@ -2549,9 +2454,7 @@ ConstrGraph::leIterator ConstrGraph::leEnd()
  **** ConstrGraph::geIterator ****
  *********************************/
 
-ConstrGraph::geIterator::geIterator()
-{
-        isEnd = true;
+ConstrGraph::geIterator::geIterator() : isEnd{true}, parent{nullptr}, y{} {
 }
 
 // Class used to iterate over all the constraints x*a <= y*b + c for a given variable y
@@ -3192,7 +3095,7 @@ void ConstrGraph::OrAndWidenUpdate_XinThisNotThat(
 //      at the first level by vals2Value.
 void ConstrGraph::OrAndWidenUpdate_XinThatNotThis(
                                     bool OR, bool limitToThat, 
-                                    ConstrGraph* that,
+                                    ConstrGraph* /*that*/,
                                     map<varID, map<varID, affineInequality> >::iterator& itThatX, 
                                     map<varID, map<varID, affineInequality> >& additionsToThis, 
                                     bool& modified, string indent)
@@ -3491,8 +3394,6 @@ bool ConstrGraph::transitiveClosureDiv(string indent)
 
 void ConstrGraph::transitiveClosureY(const varID& x, const varID& y, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent)
 {
-// noDivVars    varID divY = getDivVar(y);
-        
         // if x and y are different variables and they're not both constants
         //    (we don't want to do inference on constants since we can't learn anything more 
         //     about them and we might lose information because we're being conservative)
@@ -3516,7 +3417,8 @@ void ConstrGraph::transitiveClosureY(const varID& x, const varID& y, bool& modif
         }       
 }
 
-void ConstrGraph::transitiveClosureZ(const varID& x, const varID& y, const varID& z, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent)
+void ConstrGraph::transitiveClosureZ(const varID& x, const varID& y, const varID& z,
+                                     bool& /*modified*/, int& numSteps, int& numInfers, bool& iterModified, string indent)
 {
         numSteps++;
 
@@ -3543,10 +3445,7 @@ void ConstrGraph::transitiveClosureZ(const varID& x, const varID& y, const varID
                         affineInequality inferredXY(*constrXZ, *constrZY/*, x==zeroVar, y==zeroVar, 
                                                     dynamic_cast<DivLattice*>(divL->getVarLattice(x)), 
                                                     dynamic_cast<DivLattice*>(divL->getVarLattice(y)), z*/);
-                        //affineInequality *constrXY = getVal(x, y);
                         
-//printf("transitiveClosure() constrXY=%p\n", &inferredXY, constrXY);
-
                         // If there doesn't exist an x-y constraint in the graph, add it
                         if(!constrXY)
                         {
@@ -4209,7 +4108,7 @@ bool ConstrGraph::checkSelfConsistency(string indent)
 
 // Adds a new divisibility lattice, with the associated anotation
 // Returns true if this causes the constraint graph to be modified and false otherwise
-bool ConstrGraph::addDivL(FiniteVarsExprsProductLattice* divLattice, string annotName, void* annot, string indent)
+bool ConstrGraph::addDivL(FiniteVarsExprsProductLattice* divLattice, string annotName, void* annot, string /*indent*/)
 {
         bool modified = false;
         pair<string, void*> divLAnnot(annotName, annot);
@@ -4231,36 +4130,11 @@ bool ConstrGraph::addDivL(FiniteVarsExprsProductLattice* divLattice, string anno
         return modified;
 }
 
-// Adds a new sign lattice, with the associated anotation
-// Returns true if this causes the constraint graph to be modified and false otherwise
-// GB : 2011-03-05 (Removing Sign Lattice Dependence) 
-/*bool ConstrGraph::addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent)
-{
-        bool modified = false;
-        pair<string, void*> sgnLAnnot(annotName, annot);
-        map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator loc = sgnL.find(sgnLAnnot);
-        // If we already have a divisibility lattice associated with the given annotation
-        if(loc != sgnL.end())
-        {
-                // Update the mapping
-                modified = loc->second != sgnLattice;
-                loc->second = sgnLattice;
-        }
-        else
-        {
-                // Create a new mapping
-                modified = true;
-                sgnL[sgnLAnnot] = sgnLattice;
-        }
-        
-        return modified;
-}*/
-
 /**** State Accessor Functions *****/
 
 // Returns true if this constraint graph includes constraints for the given variable
 // and false otherwise
-bool ConstrGraph::containsVar(const varID& var, string indent)
+bool ConstrGraph::containsVar(const varID& var, string /*indent*/)
 {
         // First check if there are any var <= x constraints
         if(vars2Value.find(var) != vars2Value.end())
@@ -4279,7 +4153,7 @@ bool ConstrGraph::containsVar(const varID& var, string indent)
 }
 
 // returns the x->y constraint in this constraint graph
-affineInequality* ConstrGraph::getVal(varID x, varID y, string indent)
+affineInequality* ConstrGraph::getVal(varID x, varID y, string /*indent*/)
 {
         if(x == y)
                 return NULL;
@@ -4352,7 +4226,7 @@ bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c,
 }
 
 // GB : 2011-03-05 (Removing Sign Lattice Dependence)
-bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq, string indent)
+bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq, string /*indent*/)
 {
         return setVal(x, y, ineq.getA(), ineq.getB(), ineq.getC()// GB : 2011-03-05 (Removing Sign Lattice Dependence), ineq.getXSign(), ineq.getYSign()
                      );
@@ -4361,7 +4235,7 @@ bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq, string 
 // Sets the state of this constraint graph to Uninitialized, without modifying its contents. Thus, 
 //    the graph will register as uninitalized but when it is next used, its state will already be set up.
 // Returns true if this causes the constraint graph to be modified and false otherwise.
-bool ConstrGraph::setToUninitialized_KeepState(string indent)
+bool ConstrGraph::setToUninitialized_KeepState(string /*indent*/)
 {
         bool modified = (level != uninitialized);
         
@@ -4374,24 +4248,19 @@ bool ConstrGraph::setToUninitialized_KeepState(string indent)
 
 // Sets the state of this constraint graph to Bottom
 // Returns true if this causes the constraint graph to be modified and false otherwise.
-bool ConstrGraph::setToBottom(string indent)
+bool ConstrGraph::setToBottom(string /*indent*/)
 {
         bool modified = (level != bottom);
         
         // Erase all the data in this constraint graph
-        //Dbg::dbg << indent << "    #vars2Value="<<vars2Value.size()<<"\n";
         eraseConstraints(true, "");
-        /*Dbg::dbg << indent << "    #vars2Value="<<vars2Value.size()<<"\n";
-        Dbg::dbg << indent << "    AFTER CONSTRAINTS ERASED="<<str(indent+"        ")<<"\n";*/
         
         // This graph now contains no constraints
         level = bottom;
         constrType = unknown;
-
         
         // Erase the modification state
         modifiedVars.clear();
-        /* GB 2011-06-02 : newConstrVars->modifiedVars : newConstrVars.clear(); */
         
         // Reset constrChanged because the state of the graph is now correct with 
         // respect to its constraints.
@@ -4403,7 +4272,7 @@ bool ConstrGraph::setToBottom(string indent)
 // Sets the state of this constraint graph to constrKnown, with the given constraintType
 // eraseCurConstr - if true, erases the current set of constraints and if false, leaves them alone
 // Returns true if this causes the constraint graph to be modified and false otherwise.
-bool ConstrGraph::setToConstrKnown(constrTypes ct, bool eraseCurConstr, string indent)
+bool ConstrGraph::setToConstrKnown(constrTypes ct, bool eraseCurConstr, string /*indent*/)
 {
         bool modified = (level != constrKnown);
         
@@ -4549,7 +4418,7 @@ string ConstrGraph::str(string indent)
 // Otherwise, the bottom variable is checked.
 // If useIsBottom=true, isBottom() is used to determine whether the graph is =bottom.
 // Otherwise, the bottom variable is checked.
-string ConstrGraph::str(string indent, bool useIsBottom)
+string ConstrGraph::str(string indent, bool /*useIsBottom*/)
 {
         ostringstream outs;
         
@@ -4725,7 +4594,7 @@ string ConstrGraph::toDOT(string graphName) {
 }
 // Returns a string that containts the representation of this constraint graph as a graph in the DOT language
 // that has the given name, focusing the graph on just the variables inside focusVars.
-string ConstrGraph::toDOT(string graphName, set<varID>& focusVars)
+string ConstrGraph::toDOT(string graphName, set<varID>& /*focusVars*/)
 {
         ostringstream oss;
         
@@ -4998,7 +4867,6 @@ bool ConstrGraph::mustOutsideRange(varID x, int b, int c, varID y, string indent
                         if(constrYX) Dbg::dbg << indent << "mustOutsideRange() "<<y.str()<<"->"<<x.str()<<"="<<Dbg::escape(constrYX->str(y, x, ""))<<" b="<<b<<" c="<<c<<"\n";
                 }
         }
-        //Dbg::dbg << str("    ") <<"\n";
                 
         ROSE_ASSERT(b==1);
         if(constrXY) ROSE_ASSERT(constrXY->getA()==1 && constrXY->getB()==1);
@@ -5018,26 +4886,7 @@ bool ConstrGraph::mustOutsideRange(varID x, int b, int c, varID y, string indent
         if(constrYX) return (constrYX && (c - constrYX->getC())>0);
                 
         return false;
-        
-        
-/*      // x<=y+c'
-        if((getVal(x,y)!=INF && (getVal(x,y)+c)<0) || 
-               (getVal(y, x)!=INF && getVal(y,x)<c))
-                Dbg::dbg << "    must be outside the range\n";
-        else Dbg::dbg << "    may be inside the range\n";
-                
-        return (getVal(x,y)!=INF && (getVal(x,y)+c)<0) || 
-               (getVal(y, x)!=INF && getVal(y,x)<c);*/
 }
-
-/*// returns true if x+c MUST be inside the range of y and false otherwise
-// If two variables are unrelated, it is assumed that there is no information 
-// about their relationship and mustInsideRange() thus proceeds conservatively.
-bool ConstrGraph::mustInsideRange(varID x, int b, int c, varID y)
-{
-        return !mayOutsideRange(x, b, c, y);
-}
-*/
 
 // returns true if this logical condition must be true and false otherwise
 // <from LogicalCond>
@@ -5049,12 +4898,12 @@ bool ConstrGraph::mayTrue(string indent)
 }
 
 /* Transactions */
-void ConstrGraph::beginTransaction(string indent)
+void ConstrGraph::beginTransaction(string /*indent*/)
 {
         inTransaction = true;
 }
 
-void ConstrGraph::endTransaction(string indent)
+void ConstrGraph::endTransaction(string /*indent*/)
 {
         ROSE_ASSERT(inTransaction);
         inTransaction = false;

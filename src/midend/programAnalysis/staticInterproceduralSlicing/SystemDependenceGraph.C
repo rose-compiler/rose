@@ -297,25 +297,21 @@ void SystemDependenceGraph::computeSummaryEdges()
   std::set<Edge> pathEdge,summaryEdgel;
   std::vector<Edge> workList;
   // for all formaloutvertices...
-  int count=0;
   for(Rose_STL_Container<InterproceduralInfo *>::iterator i=interproceduralInformationList.begin();i!=interproceduralInformationList.end();i++)
   {
     DependenceNode * w;
 #ifdef VERBOSE_DEBUG
     cout <<"processing iterprocedural #"<<count<<endl;
 #endif
-    count++;
     InterproceduralInfo * ii = *i;
     for (int j=0;j<ii->getFormalCount();j++)
     {
-//      cout <<"adding formalout to worklist"<<endl;
       w=getNode(DependenceNode::FORMALOUT,ii->getFormal(j));
       pathEdge.insert(Edge(w,w));
       workList.push_back(Edge(w,w));
     }
     if (ii->getEllipse())
     {
-//      cout <<"adding formalout to worklist"<<endl;
       w=getNode(DependenceNode::FORMALOUT,ii->getEllipse());
       pathEdge.insert(Edge(w,w));
       workList.push_back(Edge(w,w));

@@ -39,6 +39,7 @@ class DefUseChain
 
       return n;
     }
+
   Edge* CreateEdge( Node* n1, Node* n2)
     {
       Edge* e = new Edge(this);

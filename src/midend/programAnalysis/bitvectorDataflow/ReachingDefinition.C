@@ -149,7 +149,7 @@ class CollectKillDefinitions
   ReachingDefinitions kill;
   const ReachingDefinitionGenerator& g;
  public:
-  bool operator()( AstNodePtr mod_first, AstNodePtr mod_second)
+  bool operator()( AstNodePtr mod_first, AstNodePtr /*mod_second*/)
   {
     std::string varname;
     AstNodePtr scope;
@@ -158,15 +158,20 @@ class CollectKillDefinitions
     }
     return true;
   }
-public:
+
   CollectKillDefinitions( AstInterface& _fa, const ReachingDefinitionGenerator& _g)
       : fa(_fa), g(_g)
    {
      init();
    }
-  ReachingDefinitions get_kill() const { return kill; }
-  void init()
-  { kill = g.get_empty_set(); }
+
+  ReachingDefinitions get_kill() const {
+    return kill;
+  }
+
+  void init() {
+    kill = g.get_empty_set();
+  }
 };
 
 void ReachingDefNode::

@@ -245,9 +245,6 @@ public:
         // Returns a copy of this lattice
         Lattice* copy() const;
         
-        // Returns a copy of this LogicalCond object
-        //LogicalCond* copy();
-        
         // Copies the state of that to this constraint graph
         // Returns true if this causes this constraint graph's state to change
         bool copyFrom(ConstrGraph &that, std::string indent="");
@@ -404,14 +401,16 @@ public:
         // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
         //              old variable and pair->second is the new variable
         // func - the function that the copy Lattice will now be associated with
-        void remapVars(const std::map<varID, varID>& varNameMap, const Function& newFunc) {} 
+        void remapVars(const std::map<varID, varID>&, const Function &) {
+        }
         
         // Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
         // that contains data for a set of variables and incorporateVars must overwrite the state of just
         // those variables, while leaving its state for other variables alone.
         // We do not force child classes to define their own versions of this function since not all
         //    Lattices have per-variable information.
-        void incorporateVars(Lattice* that) {}
+        void incorporateVars(Lattice*) {
+        }
         
         // Returns a Lattice that describes the information known within this lattice
         // about the given expression. By default this could be the entire lattice or any portion of it.
@@ -421,14 +420,18 @@ public:
         // the given expression. 
         // It it legal for this function to return NULL if no information is available.
         // The function's caller is responsible for deallocating the returned object
-        Lattice* project(SgExpression* expr) { return copy(); }
+        Lattice* project(SgExpression*) {
+           return copy();
+        }
         
         // The inverse of project(). The call is provided with an expression and a Lattice that describes
         // the dataflow state that relates to expression. This Lattice must be of the same type as the lattice
         // returned by project(). unProject() must incorporate this dataflow state into the overall state it holds.
         // Call must make an internal copy of the passed-in lattice and the caller is responsible for deallocating it.
         // Returns true if this causes this to change and false otherwise.
-        bool unProject(SgExpression* expr, Lattice* exprState) { return meetUpdate(exprState, "    "); }
+        bool unProject(SgExpression* /*expr*/, Lattice* exprState) {
+           return meetUpdate(exprState, "    ");
+        }
         
         // Returns a constraint graph that only includes the constrains in this constraint graph that involve the
         // variables in focusVars and their respective divisibility variables, if any. 

@@ -25,15 +25,6 @@
 #include <string>
 #include <vector>
 
-//class partition
-//{
-//      // The analysis that is this partition.
-//      IntraPartitionDataflow* analysis;
-//      
-//      // The current execution state of the analysis.
-//      IntraPartitionDataflowCheckpoint* chkpt;
-//}
-
 class IntraPartitionDataflow;
 class IntraPartitionDataflowCheckpoint;
 
@@ -166,7 +157,7 @@ class partitionDFAnalysisState: virtual public UnstructuredPassIntraAnalysis
                 this->tgtAnalysis = tgtAnalysis;
         }
         
-        void visit(const Function& func, const DataflowNode& n, NodeState& state)
+        void visit(const Function &/*func*/, const DataflowNode &/*n*/, NodeState &state)
         {
                 state.cloneAnalysisState(srcAnalysis, tgtAnalysis);
         }
@@ -204,7 +195,7 @@ class deleteDFAnalysisState: virtual public UnstructuredPassIntraAnalysis
                 this->tgtA = tgtA;
         }
         
-        void visit(const Function& func, const DataflowNode& n, NodeState& state)
+        void visit(const Function &/*func*/, const DataflowNode &/*n*/, NodeState &state)
         {
                 for(std::set<IntraPartitionDataflow*>::iterator it = tgtA.begin(); it!=tgtA.end(); it++)
                         state.deleteState((Analysis*)*it);
@@ -238,16 +229,6 @@ class IntraPartitionDataflow : virtual public IntraProceduralDataflow
                 delete partitionCond;
         }
         
-/*      IntraPartitionDataflow()
-        {
-                parent = NULL;
-        }
-        
-        void setParent(PartitionedAnalysis* parent)
-        {
-                this->parent = parent;  
-        }*/
-        
         PartitionedAnalysis* getParent() const
         {
                 return parent;  
@@ -262,8 +243,9 @@ class IntraPartitionDataflow : virtual public IntraProceduralDataflow
         // This instance will be used to instantiate a new partition of the analysis.
         virtual IntraPartitionDataflow* copy()=0;
         
+        using IntraProceduralDataflow::runAnalysis;
         virtual bool runAnalysis(const Function& func, NodeState* fState, bool& splitPart, 
-                                      bool &joinPart, IntraPartitionDataflowCheckpoint*& outChkpt)=0;
+                                      bool &joinPart, IntraPartitionDataflowCheckpoint*& outChkpt) = 0;
         
         // Resumes the execution of runAnalysis from the given checkpoint
         // splitPart - set by the call to indicate that it exited because it was split
@@ -276,9 +258,10 @@ class IntraPartitionDataflow : virtual public IntraProceduralDataflow
         
         // Called when a partition is created to allow a specific analysis to initialize
         // its dataflow information from the partition condition
-        virtual void initDFfromPartCond(const Function& func, const DataflowNode& n, NodeState& state, 
-                                        const std::vector<Lattice*>& dfInfo, const std::vector<NodeFact*>& facts,
-                                        /*LogicalCond*/printable* partitionCond) {}
+        virtual void initDFfromPartCond(const Function &, const DataflowNode &, NodeState &,
+                                        const std::vector<Lattice*> &, const std::vector<NodeFact*> &,
+                                        /*LogicalCond*/printable*) {
+        }
 };
 
 class IntraPartitionDataflowCheckpoint
@@ -369,12 +352,6 @@ class IntraPartitionDataflowCheckpoint
 
 class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
 {
-        protected:
-        //std::vector<<Lattice*> initState;
-        
-        //std::map <DataflowNode, Lattice*> nodeState;
-        //std::map<DataflowNode, std::list<Lattice*> > nodeState;
-        
         public:
         IntraPartitionFWDataflow(PartitionedAnalysis* parent): IntraPartitionDataflow(parent)
         { }
@@ -382,7 +359,6 @@ class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
         IntraPartitionFWDataflow(const IntraPartitionFWDataflow& that): 
                         IntraPartitionDataflow((const IntraPartitionDataflow&)that)
         {
-                //this->initState = that.initState;
         }
         
         /*IntraPartitionFWDataflow(): IntraPartitionDataflow()

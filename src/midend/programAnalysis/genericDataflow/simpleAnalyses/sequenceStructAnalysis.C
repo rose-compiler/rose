@@ -55,7 +55,7 @@ SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, int i
 }
 
 // Common initialization code for SeqStructLattice
-void SeqStructLattice::init(string indent)
+void SeqStructLattice::init(string /*indent*/)
 {
         ostringstream vInitName;
         vInitName << "vInit_SeqStructLattice_" << this;
@@ -123,7 +123,7 @@ void SeqStructLattice::copy(Lattice* that)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void SeqStructLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
+void SeqStructLattice::remapVars(const map<varID, varID>&, const Function&)
 {
         // Do nothing here since each SeqStructLattice will always be used in conjuction with
         // a ConstrGraph and this call on the ConstrGraph will perform the appropriate replacement
@@ -152,7 +152,7 @@ void SeqStructLattice::incorporateVars(Lattice* that_arg)
 // the given expression. 
 // It it legal for this function to return NULL if no information is available.
 // The function's caller is responsible for deallocating the returned object
-Lattice* SeqStructLattice::project(SgExpression* expr)
+Lattice* SeqStructLattice::project(SgExpression*)
 {
         // This lattice only refers to virtual variables
         return new SeqStructLattice(*this);
@@ -163,7 +163,7 @@ Lattice* SeqStructLattice::project(SgExpression* expr)
 // returned by project(). unProject() must incorporate this dataflow state into the overall state it holds.
 // Call must make an internal copy of the passed-in lattice and the caller is responsible for deallocating it.
 // Returns true if this causes this to change and false otherwise.
-bool SeqStructLattice::unProject(SgExpression* expr, Lattice* exprState)
+bool SeqStructLattice::unProject(SgExpression* /*expr*/, Lattice* exprState)
 {
         bool modified = false;
         SeqStructLattice* that = dynamic_cast<SeqStructLattice*>(exprState);
@@ -338,15 +338,15 @@ bool SeqStructLattice::operator==(Lattice* that_arg)
 // The string that represents this object
 // If indent!="", every line of this string must be prefixed by indent
 // The last character of the returned string should not be '\n', even if it is a multi-line string.
-string SeqStructLattice::str(string indent)
+string SeqStructLattice::str(string /*indent*/)
 {
         ostringstream oss;
         
-        if(level == uninitialized)   oss << "SeqStructLattice: uninitialized>";
-        else if(level == bottom)     oss << "SeqStructLattice: bottom>";
-        else if(level == startKnown) oss << "SeqStructLattice: startKnown: vInit="<<vInit<<", vFin="<<vFin<<">";
-        else if(level == seqKnown)   oss << "SeqStructLattice: seqKnown: vInit="<<vInit<<", vFin="<<vFin<<", s="<<s<<">";
-        else if(level == top)        oss << "SeqStructLattice: top>";
+        if (level == uninitialized)   oss << "SeqStructLattice: uninitialized>";
+        else if (level == bottom)     oss << "SeqStructLattice: bottom>";
+        else if (level == startKnown) oss << "SeqStructLattice: startKnown: vInit="<<vInit<<", vFin="<<vFin<<">";
+        else if (level == seqKnown)   oss << "SeqStructLattice: seqKnown: vInit="<<vInit<<", vFin="<<vFin<<", s="<<s<<">";
+        else if (level == top)        oss << "SeqStructLattice: top>";
 
         return oss.str();
 }

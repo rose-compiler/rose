@@ -2,11 +2,6 @@
 #include <CallGraph.h>
 #include "PtrAliasAnalysis.h"
 
-// warning: poor practice and possible name conflicts according to Boost documentation
-#define foreach BOOST_FOREACH
-#define reverse_foreach BOOST_REVERSE_FOREACH
-
-
 struct FunctionFilter
 {
         bool operator()(SgFunctionDeclaration* funcDecl)
@@ -67,18 +62,12 @@ struct OnlyNonCompilerGenerated
         
         AstDOTGeneration dotgen;
         dotgen.writeIncidenceGraphToDOTFile(cgBuilder->getGraph(), "init_call_graph.dot");
-#if 0        
-        typedef boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> res_map;    
-        foreach (res_map::value_type it, cg2.getGraphNodesMapping()) {
-            std::cout << it.first <<" - "<< isSgFunctionDeclaration(it.first->get_definingDeclaration()) << " - " << it.first->get_name().getString() << std::endl;
-        }
-#endif        
  }
  PtrAliasAnalysis::~PtrAliasAnalysis() {
 
         typedef boost::unordered_map<SgFunctionDeclaration *, IntraProcAliasAnalysis *> map;
-        foreach (map::value_type it, intraAliases) {
-                delete ((IntraProcAliasAnalysis *)it.second);
+        for (map::value_type it : intraAliases) {
+            delete ((IntraProcAliasAnalysis *)it.second);
         }
 }
  
@@ -105,15 +94,13 @@ struct OnlyNonCompilerGenerated
             
         // Order the graph nodes in alternate fashion
         order =  (order == TOPOLOGICAL) ? REVERSE_TOPOLOGICAL : TOPOLOGICAL;
-
- 
  }
 
 void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunction, SgIncidenceDirectedGraph* callGraph,
                boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> &graphNodeToFunction, boost::unordered_map<SgGraphNode*, COLOR> &colors,
                vector<SgFunctionDeclaration*> &processingOrder, TRAVERSAL_TYPE order) {
         
-                //If the function is already in the list of functions to be processed, don't add it again.
+        // If the function is already in the list of functions to be processed, don't add it again.
         if (find(processingOrder.begin(), processingOrder.end(), targetFunction) != processingOrder.end())
                 return;
 
@@ -145,7 +132,7 @@ void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunc
         callGraph->getSuccessors(graphNode, callees);
 
         //Recursively process all the callees before adding this function to the list
-        foreach(SgGraphNode* calleeNode, callees)
+        for (SgGraphNode* calleeNode : callees)
         {
             if(colors.at(calleeNode)  == WHITE) {
                 SgFunctionDeclaration* calleeDecl = isSgFunctionDeclaration(calleeNode->get_SgNode());
@@ -181,7 +168,7 @@ void PtrAliasAnalysis::SortCallGraphNodes(SgFunctionDeclaration* targetFunction,
         boost::unordered_map<SgGraphNode*, COLOR> colors;
         typedef boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> my_map;
         
-        foreach(my_map::value_type item, graphNodeToFunction) {
+        for (my_map::value_type item : graphNodeToFunction) {
             colors[item.second] = WHITE;
         }
         
@@ -200,56 +187,27 @@ void PtrAliasAnalysis::computeCallGraphNodes(SgFunctionDeclaration* targetFuncti
 }
 
 void PtrAliasAnalysis::run()  {
-
-#if 0
-     printf ("In PtrAliasAnalysis::run(): TOP \n");
-#endif
         CallGraphBuilder fullCallGraph(project);
         fullCallGraph.buildCallGraph();
         std::set<SgGraphNode *>allNodes =  fullCallGraph.getGraph()->computeNodeSet();
 
-        int counter = 0;
-        foreach(SgGraphNode *node, allNodes) {
-#if 0
-          printf ("In PtrAliasAnalysis::run(): in loop body: counter = %d \n",counter);
-#endif
-            counter++;
-        
-            SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node->get_SgNode());
-            
-            assert(funcDecl != NULL);
+        for (SgGraphNode* node : allNodes) {
+            SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node->get_SgNode());
+            ASSERT_not_null(funcDecl);
             
             if(funcDecl->get_definingDeclaration() == NULL || isSgFunctionDeclaration(funcDecl->get_definingDeclaration())->get_definition() == NULL)
                 continue;
-#if 0
-          printf ("In PtrAliasAnalysis::run(): in loop body: calling IntraProcAliasAnalysis \n");
-#endif                
             IntraProcAliasAnalysis *intra = new IntraProcAliasAnalysis(funcDecl, classHierarchy, cgBuilder, intraAliases, resolver);
-#if 0
-          printf ("In PtrAliasAnalysis::run(): in loop body: AFTER calling IntraProcAliasAnalysis \n");
-#endif
             intra->init();
-#if 0
-          printf ("In PtrAliasAnalysis::run(): in loop body: AFTER calling init() \n");
-#endif
             intraAliases[funcDecl] = intra;
 
         }
-        
-#if 0
-     printf ("In PtrAliasAnalysis::run(): after loop \n");
-#endif
         order = TOPOLOGICAL;
         
         // Get the main funciton declaration
-        SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
-        
-        ROSE_ASSERT(mainDecl != NULL);
+        SgFunctionDeclaration* mainDecl = SageInterface::findMain(project);
+        ASSERT_not_null(mainDecl);
         
         InterProcDataFlowAnalysis::run();
-
-#if 0
-     printf ("Leaving PtrAliasAnalysis::run(): TOP \n");
-#endif
  }
 

@@ -50,9 +50,6 @@ class BoolAndLattice : public FiniteLattice
         // returns true if this causes this to change and false otherwise
         bool meetUpdate(Lattice* that);
         
-        // computes the meet of this and that and returns the result
-        //Lattice* meet(Lattice* that);
-                
         bool operator==(Lattice* that);
         
         // returns the current state of this object
@@ -110,9 +107,6 @@ class IntMaxLattice : public InfiniteLattice
         // computes the meet of this and that and saves the result in this
         // returns true if this causes this to change and false otherwise
         bool meetUpdate(Lattice* that);
-        
-        // computes the meet of this and that and returns the result
-        //Lattice* meet(Lattice* that);
         
         bool operator==(Lattice* that);
         
@@ -228,8 +222,10 @@ class FiniteProductLattice : public virtual ProductLattice, public virtual Finit
                                 ROSE_ASSERT((*it)->finiteLattice());
         }
         
+        using ProductLattice::copy; // removes warning of hiding overloaded virtual function
+
         // Returns a copy of this lattice
-        Lattice* copy() const
+        Lattice* copy() const override
         {
                 return new FiniteProductLattice(*this);
         }
@@ -247,15 +243,17 @@ class InfiniteProductLattice : public virtual ProductLattice, public virtual Inf
         InfiniteProductLattice(const InfiniteProductLattice& that) : ProductLattice(that.lattices), InfiniteLattice()
         {}
         
+        using ProductLattice::copy; // removes warning of hiding overloaded virtual function
+
         // returns a copy of this lattice
-        Lattice* copy() const
+        Lattice* copy() const override
         {
                 return new InfiniteProductLattice(*this);
         }
         
         // Widens this from that and saves the result in this.
         // Returns true if this causes this to change and false otherwise.
-        bool widenUpdate(InfiniteLattice* that);
+        bool widenUpdate(InfiniteLattice* that) override;
 };
 
 
@@ -329,9 +327,6 @@ class VariablesProductLattice : public virtual ProductLattice
         // returns the set of variables(scalars and/or arrays) visible in this function
         varIDSet getVisibleVars(Function func) const;
         
-        // returns a copy of this lattice
-        //Lattice* copy() const;
-        
         // overwrites the state of this Lattice with that of that Lattice
         void copy(Lattice* that);
         
@@ -397,8 +392,10 @@ class FiniteVariablesProductLattice : public virtual VariablesProductLattice, pu
                 verifyFinite();
         }
         
+        using VariablesProductLattice::copy; // removes warning of hiding overloaded virtual function
+
         // returns a copy of this lattice
-        Lattice* copy() const
+        Lattice* copy() const override
         {
                 return new FiniteVariablesProductLattice(*this);
         }
@@ -432,8 +429,10 @@ class InfiniteVariablesProductLattice : public virtual VariablesProductLattice, 
         {
         }
         
+        using VariablesProductLattice::copy; // removes warning of hiding overloaded virtual function
+
         // returns a copy of this lattice
-        Lattice* copy() const
+        Lattice* copy() const override
         {
                 return new InfiniteVariablesProductLattice(*this);
         }

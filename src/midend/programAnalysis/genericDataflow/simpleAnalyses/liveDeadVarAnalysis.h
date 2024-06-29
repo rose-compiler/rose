@@ -175,7 +175,9 @@ class LiveDeadVarsAnalysis : public IntraBWDataflow
                                                                NodeState& state, const std::vector<Lattice*>& dfInfo)
   { return boost::shared_ptr<IntraDFTransferVisitor>(new LiveDeadVarsTransfer(func, n, state, dfInfo, fseu)); }
 
-  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo) { ROSE_ABORT(); }
+  bool transfer(const Function&, const DataflowNode&, NodeState&, const std::vector<Lattice*>&) {
+    ROSE_ABORT();
+  }
 };
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
@@ -339,7 +341,7 @@ class FiniteVarsExprsProductLattice : public virtual VarsExprsProductLattice, pu
         FiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
         
         // Returns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
-        VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state);
+        VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state) override;
                 
         public:
         // creates a new VarsExprsProductLattice
@@ -362,8 +364,10 @@ class FiniteVarsExprsProductLattice : public virtual VarsExprsProductLattice, pu
         
         FiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that);
         
+        using VarsExprsProductLattice::copy; // removes warning of hidden overloaded virtual function
+
         // returns a copy of this lattice
-        Lattice* copy() const;
+        Lattice* copy() const override;
 };
 
 class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, public virtual InfiniteProductLattice
@@ -374,7 +378,7 @@ class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, p
         InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
         
         // Returns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
-        VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state);
+        VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state) override;
         
         public:
         // creates a new VarsExprsProductLattice
@@ -397,8 +401,10 @@ class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, p
         
         InfiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that);
         
+        using VarsExprsProductLattice::copy; // removes warning of hidden overloaded virtual function
+
         // returns a copy of this lattice
-        Lattice* copy() const;
+        Lattice* copy() const override;
 };
 
 // prints the Lattices set by the given LiveDeadVarsAnalysis 

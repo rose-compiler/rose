@@ -16,6 +16,7 @@ class IntExpressionEvaluationAttribute
  public: 
   int newValue; // load store bytes are integer values
   IntExpressionEvaluationAttribute():newValue(0){};
+  IntExpressionEvaluationAttribute& operator=(const IntExpressionEvaluationAttribute &) = default; // fixes compiler warning
   IntExpressionEvaluationAttribute (const IntExpressionEvaluationAttribute &X):newValue(X.newValue) {};
 };
 
@@ -61,17 +62,9 @@ T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
   T foldedValue; // to be converted to result type
   switch (unaryOperator->variantT())
   {
-#if 0
-    // integer-exclusive oprations
-    case V_SgMinusOp: // this should not appear in our size expressions.
-      {
-        foldedValue = -theValue;
-        break;
-      }
-#endif
    default:
       {
-        cerr<<"warning: calculuate - unhandled operator type:"<<unaryOperator->class_name()<<endl;
+        cerr<<"warning: calculate - unhandled operator type:"<<unaryOperator->class_name()<<endl;
         ROSE_ABORT(); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
       }
   }
@@ -115,9 +108,7 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
       cerr<<"error, non-expression is encountered in IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() "<<astNode->class_name() <<endl;
   }
   
-//  cout<<"debugging IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute() synth value is "<< returnAttribute.newValue << " for" <<astNode->class_name()<<endl;
   return returnAttribute;
-
 }
 
 //----------------------------------------
@@ -807,10 +798,9 @@ namespace ArithmeticIntensityMeasurement
   //
   // Return false if side effect analysis fails.
   bool CountLoadStoreBytes (SgLocatedNode* input, 
-      std::pair <SgExpression*, SgExpression*>& result,
-    bool includeScalars /* = false */, bool includeIntType /* = false */)
+      std::pair <SgExpression*, SgExpression*>& result, bool includeScalars, bool)
   {
-    assert (input != NULL);
+    ASSERT_not_null(input);
 
     // the input is essentially the loop body, a statement
     SgStatement* lbody = isSgStatement(input);
@@ -879,7 +869,7 @@ namespace ArithmeticIntensityMeasurement
   // count memory load/store operations, store into attribute FPCounters
   void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= false*/, bool includeIntType /*= false */)
   {
-    ROSE_ASSERT (input != NULL);
+    ASSERT_not_null(input);
     std::pair <SgExpression*, SgExpression*> load_store_count_pair; 
     bool success = CountLoadStoreBytes (input, load_store_count_pair, includeScalars, includeIntType);
 
@@ -1619,7 +1609,7 @@ namespace ArithmeticIntensityMeasurement
       // write to the report file here, bottom up order though, not a good idea
       ofstream reportFile(report_filename.c_str(), ios::app);
       //      cout<<"Writing counter results to "<< report_filename <<endl;
-      reportFile<< fpcounters->toString();
+      reportFile<< fpcounters->toString("");
     }
 
 

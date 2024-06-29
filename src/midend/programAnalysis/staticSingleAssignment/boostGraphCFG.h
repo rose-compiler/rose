@@ -7,8 +7,7 @@
 // #include "sage3basic.h"
 
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/dominator_tree.hpp>

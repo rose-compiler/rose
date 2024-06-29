@@ -666,13 +666,8 @@ NodeFact* NodeState::getFact(const Analysis* analysis, int factName) const
                 if((factsIt = facts.find((Analysis*)analysis)) != facts.end())
         #endif
         {
-                vector<NodeFact*>::const_iterator it;
-                //printf("NodeState::getFact() factName=%d factsIt->second.size()=%d\n", factName, factsIt->second.size());
-                //if((it = factsIt->second.find(factName)) != factsIt->second.end())
-                if((unsigned int)factName < factsIt->second.size())
+                if ((unsigned int)factName < factsIt->second.size())
                 {
-                        //return it->second;
-                        //return *it;
                         return (factsIt->second)[factName];
                 }
         }
@@ -687,17 +682,20 @@ const vector<NodeFact*>& NodeState::getFacts(const Analysis* analysis) const
         #ifdef THREADED
                 NodeFactMap::const_accessor factsIt;
                 // if this analysis has registered some facts at this node, return their map
-                if(facts.find(factsIt, (Analysis*)analysis))
+                if (facts.find(factsIt, (Analysis*)analysis)) {
                         return factsIt->second;
+                }
         #else
                 //printf("NodeState::getFacts facts.find(%p)==facts.end()=%d\n", analysis, facts.find((Analysis*)analysis)==facts.end());
                 // if this analysis has registered some facts at this node, return their map
-                if(facts.find((Analysis*)analysis)!=facts.end())
+                if (facts.find((Analysis*)analysis)!=facts.end()) {
                         return facts.find((Analysis*)analysis)->second;
+                }
         #endif
-                else
+                else {
                         // otherwise, return an empty map
                         return emptyFactsMap;
+                }
 }
 
 // returns the map of all the facts owned by the given analysis at this NodeState

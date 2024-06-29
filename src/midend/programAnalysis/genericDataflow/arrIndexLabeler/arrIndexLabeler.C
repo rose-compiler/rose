@@ -36,9 +36,6 @@ class aiRecord
         // (i.e. given a[b[i][j]][k][l], it is either a[b[i][j]][k][l] or b[i][j])
         bool topArrayRefExpFlag;
         
-        // if arrayIndexFlag==true, the depth of the current index expression (i.e. its dimension)
-        //int indexDim;
-        
         // a default aiRecord (the one at the root of a tree)
         aiRecord()
         {
@@ -46,7 +43,6 @@ class aiRecord
                 arrayNameSubtree = NULL;
                 arrayIndexFlag=false;
                 topArrayRefExpFlag=false;
-                //indexDim=-1;
         }
 };
 
@@ -143,7 +139,6 @@ class arrIndexAttribute : public AstAttribute
         {
                 arrayIndexFlag = ir.arrayIndexFlag;
                 topArrayRefExpFlag = ir.topArrayRefExpFlag;
-                //indexDim = ir.indexDim;
                 arrayNameExp = NULL;
                 arrayDim = 0;
         }
@@ -187,24 +182,16 @@ class arrayIndexLabeler : public SgTopDownBottomUpProcessing<aiRecord, adRecord>
                 arrIndexAttribute* aiAttr = new arrIndexAttribute(ir);
                 n->addNewAttribute("ArrayIndex", aiAttr);
                 
-/*              if(isSgPntrArrRefExp(n))
-                        printf("SgPntrArrRefExp:0x%x DOWN arrayIndexFlag=%d indexSubtree=0x%x\n", n, aiAttr->arrayIndexFlag, ir.indexSubtree);
-                else
-                        printf("SgNode:0x%x DOWN arrayIndexFlag=%d indexSubtree=0x%x\n", n, aiAttr->arrayIndexFlag, ir.indexSubtree);*/
-                
                 return ir;
         }
         
-        adRecord evaluateSynthesizedAttribute (SgNode* n, aiRecord inherited, 
-                                               SubTreeSynthesizedAttributes synthesized )
+        adRecord evaluateSynthesizedAttribute(SgNode* n, aiRecord /*inherited*/, SubTreeSynthesizedAttributes synthesized)
         {
-                //printf("evaluateSynthesizedAttribute(n=%p)\n");
                 adRecord dr(n);
                 SgPntrArrRefExp* arrRef;
                 
                 if((arrRef = isSgPntrArrRefExp(n)))
                 {
-                        //printf("evaluateSynthesizedAttribute() arrRef->lhs=%p, arrRef->rhs=%p\n", arrRef->get_lhs_operand(), );
                         bool found=false;
                         // look through both the synthesized attributes 
                         // (one from the SgPntrArrRefExp's array name subtree and one from the index subtree)
@@ -229,7 +216,6 @@ class arrayIndexLabeler : public SgTopDownBottomUpProcessing<aiRecord, adRecord>
                                         
                                         // initialize this SgPntrArrRefExp's list of indexes from the lower-level list
                                         dr.indexExprs = (*it).indexExprs;
-//                                      break;
                                 }
                         }
                         ROSE_ASSERT(found);
@@ -250,12 +236,6 @@ class arrayIndexLabeler : public SgTopDownBottomUpProcessing<aiRecord, adRecord>
                         ROSE_ASSERT(found);
                 }
                 
-/*              if(isSgPntrArrRefExp(n))
-                        printf("SgPntrArrRefExp:0x%x UP arrayIndexFlag=%d arrayNameExp=0x%x arrayDim=%d\n", n, dr.arrayIndexFlag, dr.arrayNameExp, dr.arrayDim);
-                else
-                        printf("SgNode:0x%x UP arrayIndexFlag=%d arrayNameExp=0x%x arrayDim=%d\n", n, dr.arrayIndexFlag, dr.arrayNameExp, dr.arrayDim);
-                printf("         <%s>\n", n->unparseToString().c_str());*/
-                                
                 // label this node with its read/write access information
                 arrIndexAttribute* aiAttr = new arrIndexAttribute(dr);
                 char attrName[100];

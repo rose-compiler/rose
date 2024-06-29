@@ -17,19 +17,14 @@ class fancyPointer
         // indicates whether matching on this pointer will be exact (=true) or wildcard(=false)
         bool exactMatch;
         
-        fancyPointer()
-        {
-                ptr=NULL;
-                exactMatch=true;
+        // Default constructor
+        fancyPointer() : ptr{nullptr}, exactMatch{true} {
         }
                 
-        fancyPointer(void* ptr, bool exactMatch)
-        {
-                this->ptr = ptr;
-                this->exactMatch = exactMatch;
+        fancyPointer(void* p, bool match) : ptr{p}, exactMatch{match} {
         }
         
-        const bool operator == (const fancyPointer &that)
+        bool operator == (const fancyPointer &that)
         {
                 // if wildcard matching
                 if(!exactMatch || !that.exactMatch)
@@ -38,11 +33,14 @@ class fancyPointer
                         return (ptr == that.ptr);
         }
         
-        const bool operator != (const fancyPointer &that)
+        bool operator != (const fancyPointer &that)
         {
                 return !(*this == that);
         }
         
+        // Removes warning regarding definition of implicit copy constructor is deprecated
+        fancyPointer(const fancyPointer&) = default;
+
         fancyPointer& operator=(const fancyPointer& that)
         {
                 ptr = that.ptr;
@@ -50,32 +48,12 @@ class fancyPointer
                 return *this;
         }
         
-/*      const bool operator == (const SgNode* &that)
-        {
-                // if wildcard matching
-                if(!exactMatch)
-                        return true;
-                else
-                        return (ptr == that);
-        }
-        
-        const bool operator != (const SgNode* &that)
-        {
-                return !(*this == that);
-        }*/
-        
         fancyPointer& operator=(void* ptr)
         {
                 this->ptr = (void*)ptr;
                 exactMatch = true;
                 return *this;
         }
-        
-/*      fancyPointer& operator=(const unsigned long & ptr)
-        {
-                this->ptr = (void*)ptr;
-                exactMatch = true;
-        }*/
         
         void wildMatch()
         {

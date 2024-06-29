@@ -8,31 +8,22 @@
 #include "PDG.h"
 #include "util.h"
 #include <VariableRenaming.h>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/graphviz.hpp>
 
-
-#define foreach BOOST_FOREACH
-
-
 namespace SDG
 {
-
 
 void ProgramDependenceGraph::build(const CFG& cfg)
 {
     std::map<CFGVertex, Vertex> cfgVerticesToPdgVertices;
 
-    //// Remove all nodes and edges.
-    //this->clear();
-
     // Add the entry.
     entry_ = boost::add_vertex(*this);
 
     // Add all CFG vertices to PDG.
-    foreach (CFGVertex cfgVertex, boost::vertices(cfg))
+    for (CFGVertex cfgVertex : boost::vertices(cfg))
     {
         if (cfgVertex == cfg.getEntry() || cfgVertex == cfg.getExit())
             continue;
@@ -42,14 +33,11 @@ void ProgramDependenceGraph::build(const CFG& cfg)
         cfgVerticesToPdgVertices[cfgVertex] = pdgVertex;
     }
 
-
-
     // Add control dependence edges.
     addControlDependenceEdges(cfgVerticesToPdgVertices, cfg);
 
     // Add data dependence edges.
     addDataDependenceEdges(cfgVerticesToPdgVertices, cfg);
-
 }
 
 
@@ -62,7 +50,7 @@ void ProgramDependenceGraph::addControlDependenceEdges(
     CFG rvsCfg = cfg.makeReverseCopy();
     DominanceFrontiersT domFrontiers = buildDominanceFrontiers(rvsCfg);
 
-    foreach (const DominanceFrontiersT::value_type& vertices, domFrontiers)
+    for (const DominanceFrontiersT::value_type& vertices : domFrontiers)
     {
         Vertex src, tar;
 
@@ -75,7 +63,7 @@ void ProgramDependenceGraph::addControlDependenceEdges(
         src = cfgVerticesToPdgVertices.find(from)->second;
 
         typedef std::pair<CFGVertex, std::vector<CFGEdge> > VertexEdges;
-        foreach (const VertexEdges& vertexEdges, vertices.second)
+        for (const VertexEdges& vertexEdges : vertices.second)
         {            
             CFGVertex to = vertexEdges.first;
             const std::vector<CFGEdge>& cdEdges = vertexEdges.second;
@@ -83,11 +71,10 @@ void ProgramDependenceGraph::addControlDependenceEdges(
             ROSE_ASSERT(cfgVerticesToPdgVertices.count(to));
             tar = cfgVerticesToPdgVertices.find(to)->second;
 
-            foreach (const CFGEdge& cdEdge, cdEdges)
+            for (const CFGEdge& cdEdge : cdEdges)
             {
                 // Add the edge.
                 Edge edge = boost::add_edge(tar, src, *this).first;
-                //(*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
                 (*this)[edge].type = PDGEdge::ControlDependence;
                 (*this)[edge].condition = rvsCfg[cdEdge]->condition();
                 (*this)[edge].caseLabel = rvsCfg[cdEdge]->caseLabel();
@@ -96,7 +83,7 @@ void ProgramDependenceGraph::addControlDependenceEdges(
     }
 
     // Connect an edge from the entry to every node which does not have a control dependence.
-    foreach (Vertex pdgVertex, boost::vertices(*this))
+    for (Vertex pdgVertex : boost::vertices(*this))
     {
         if (pdgVertex == entry_) continue;
         //if ((*this)[pdgVertex] == cfg[cfg.getExit()])
@@ -122,6 +109,8 @@ void ProgramDependenceGraph::addDataDependenceEdges(
 
 void ProgramDependenceGraph::toDot(const std::string& filename) const
 {
+    using namespace boost::placeholders; // for _1, _2, ... below
+
     std::ofstream ofile(filename.c_str(), std::ios::out);
     boost::write_graphviz(ofile, *this,
             boost::bind(&ProgramDependenceGraph::writeGraphNode, this, ::_1, ::_2),
@@ -156,7 +145,7 @@ void ProgramDependenceGraph::writeGraphEdge(std::ostream& out, const Edge& edge)
     }
     else
     {
-        foreach (const VarName& varName, (*this)[edge].varNames)
+        for (const VarName& varName : (*this)[edge].varNames)
             str += VariableRenaming::keyToString(varName) + " ";
         style = "dotted";
         out << "[label=\"" << str << "\", style=\"" << style << "\"]";

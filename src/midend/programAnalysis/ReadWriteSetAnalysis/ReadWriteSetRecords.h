@@ -1,4 +1,3 @@
-
 #ifndef ReadWriteSetRecords_H
 #define ReadWriteSetRecords_H
 
@@ -193,16 +192,15 @@ namespace ReadWriteSets {
 
     //! \brief copy constructor
     AccessSetRecord(const AccessSetRecord &rhs) : 
-      variableName(rhs.variableName), 
+      variableName(rhs.variableName),
       globality(rhs.globality), 
       varType(rhs.varType),
       accessType(rhs.accessType),
       nodeId(rhs.nodeId),
-      noteStr(rhs.noteStr),
-      fields(rhs.fields),
-      //indexes(rhs.indexes),
       type(rhs.type),
       filename(rhs.filename),
+      noteStr(rhs.noteStr),
+      fields(rhs.fields),
       nodePtr(rhs.nodePtr) {}
 
     //! \brief assignment operator
@@ -212,11 +210,11 @@ namespace ReadWriteSets {
       varType = rhs.varType;
       accessType = rhs.accessType;
       nodeId = rhs.nodeId;
-      noteStr = rhs.noteStr;
-      fields = rhs.fields;
       //indexes = rhs.indexes;
       type = rhs.type;
       filename = rhs.filename;
+      noteStr = rhs.noteStr;
+      fields = rhs.fields;
       nodePtr = rhs.nodePtr;
       return *this;
     }
@@ -237,8 +235,8 @@ namespace ReadWriteSets {
        * accessed in multiple ways.
        **/  
     bool operator<(const AccessSetRecord& rhs) const {
-        if(nodeId < rhs.nodeId ||
-           nodeId == rhs.nodeId && accessType < rhs.accessType) {
+        if ((nodeId < rhs.nodeId) ||
+            ((nodeId == rhs.nodeId) && (accessType < rhs.accessType))) {
             return true;
         }
         return false;

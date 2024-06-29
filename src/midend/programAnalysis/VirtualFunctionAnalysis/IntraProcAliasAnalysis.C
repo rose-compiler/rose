@@ -241,7 +241,7 @@ void CompactRepresentation::printNode(std::ostream & o, SgGraphNode* node) {
         "\", style=\"" <<"solid" << "\"];\n";
 }
 
-void CompactRepresentation::printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge) {
+void CompactRepresentation::printEdge(std::ostream &o, SgDirectedGraphEdge* edge, bool /*isInEdge*/) {
     SgGraphNode *from = edge->get_from();
     SgGraphNode *to = edge->get_to();
 

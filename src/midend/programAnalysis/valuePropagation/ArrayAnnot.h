@@ -228,7 +228,6 @@ class ArrayAnnotation
     : public FunctionSideEffectInterface,
       public FunctionAliasInterface
 {
-  //map <std::string, OperatorDeclaration> decl;
   ArrayCollection arrays;
   UniqueArrayCollection unique_arrays;
   ArrayOptCollection arrayopt;
@@ -241,37 +240,37 @@ class ArrayAnnotation
                          const AstNodePtr& result,
                          CollectObject< std::pair<AstNodePtr, int> >& collectalias);
   virtual bool allow_alias(AstInterface& fa, const AstNodePtr& fc, 
-                         CollectObject< std::pair<AstNodePtr, int> >& collectalias);
+                           CollectObject< std::pair<AstNodePtr, int> >& collectalias);
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
-                               CollectObject<AstNodePtr>* collect = 0);
+                          CollectObject<AstNodePtr>* collect = nullptr);
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
-                               CollectObject<AstNodePtr>* collect = 0);
-  ArrayAnnotation() {}
+                        CollectObject<AstNodePtr>* collect = nullptr);
+  ArrayAnnotation() = default;
  public:
   static ArrayAnnotation* get_inst();
 
   void register_annot(); 
   void Dump() const;
 
-  bool known_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d = 0);
-  bool known_unique_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d = 0);
-  bool known_array_type(CPPAstInterface& fa,  const AstNodeType& array, ArrayDefineDescriptor* d = 0);
-  bool has_array_opt( CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* d = 0);
+  bool known_array(CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d = nullptr);
+  bool known_unique_array(CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d = nullptr);
+  bool known_array_type(CPPAstInterface& fa,  const AstNodeType& array, ArrayDefineDescriptor* d = nullptr);
+  bool has_array_opt(CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* d = nullptr);
 
-  bool is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
-                        AstNodePtr* modArray = 0, ArrayDescriptor* desc = 0, 
-                        bool* reshapeArray = 0, ReplaceParams* repl = 0);
-  bool is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
-                              CPPAstInterface::AstNodeList* alias = 0,
-                              ArrayDescriptor* desc = 0, ReplaceParams* repl = 0);
+  bool is_array_mod_op(CPPAstInterface& fa, const AstNodePtr& arrayExp,
+                       AstNodePtr* modArray = nullptr, ArrayDescriptor* desc = nullptr,
+                       bool* reshapeArray = nullptr, ReplaceParams* repl = nullptr);
+  bool is_array_construct_op(CPPAstInterface& fa, const AstNodePtr& arrayExp,
+                             CPPAstInterface::AstNodeList* alias = nullptr,
+                             ArrayDescriptor* desc = nullptr, ReplaceParams* repl = nullptr);
 
-  bool is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig,
-                          AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
-  bool is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig,
-                            AstNodePtr* array=0, AstNodePtr* dimast = 0, int* dim =0);
-  bool is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig,
-                    AstNodePtr* array=0, SymbolicFunction::Arguments* args=0);
-  bool is_access_array_length( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array=0, SymbolicVal *dim = 0);
+  bool is_access_array_elem(CPPAstInterface& fa, const AstNodePtr& orig,
+                            AstNodePtr* array=nullptr, CPPAstInterface::AstNodeList* args=nullptr);
+  bool is_access_array_length(CPPAstInterface& fa, const AstNodePtr& orig,
+                              AstNodePtr* array=nullptr, AstNodePtr* dimast=nullptr, int* dim=nullptr);
+  bool is_access_array_elem(CPPAstInterface& fa, const SymbolicVal& orig,
+                            AstNodePtr* array=nullptr, SymbolicFunction::Arguments* args=nullptr);
+  bool is_access_array_length(CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array=nullptr, SymbolicVal *dim=nullptr);
 
   SymbolicVal create_access_array_elem( const AstNodePtr& array, 
                            const SymbolicFunction::Arguments& args);
@@ -283,7 +282,7 @@ class ArrayAnnotation
                                          int dim);
 
   bool is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig,
-                        AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
+                        AstNodePtr* array=nullptr, CPPAstInterface::AstNodeList* args=nullptr);
   AstNodePtr create_reshape_array( CPPAstInterface& fa, const AstNodePtr& array,
                                   const CPPAstInterface::AstNodeList& args);
 };

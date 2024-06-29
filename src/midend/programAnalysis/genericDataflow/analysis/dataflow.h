@@ -127,7 +127,7 @@ class IntraUnitDataflow : virtual public IntraProceduralDataflow
       { }
 
 
-    void visit(SgNode *n) { modified = analysis->transfer(func, dfNode, nodeState, dfInfo); }
+    void visit(SgNode*) { modified = analysis->transfer(func, dfNode, nodeState, dfInfo); }
     bool finish() { return modified; }
   };
 
@@ -373,8 +373,8 @@ class UnstructuredPassInterDataflow : virtual public InterProceduralDataflow
         //          the function call's return value. The callee may not modify these lattices.
         // Returns true if any of the input lattices changed as a result of the transfer function and
         //    false otherwise.
-        bool transfer(const Function& func, const DataflowNode& n, NodeState& state,
-                      const std::vector<Lattice*>& dfInfo, std::vector<Lattice*>** retState, bool fw)
+        bool transfer(const Function&, const DataflowNode&, NodeState&,
+                      const std::vector<Lattice*>&, std::vector<Lattice*>**, bool)
         {
                 return false;
         }

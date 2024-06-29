@@ -75,7 +75,8 @@ private:
 
   /** @brief Flow sensitivity */
 
-  Broadway::FlowSensitivity _flow_sensitivity;
+  // warning: private field '_flow_sensitivity' is not used
+  // Broadway::FlowSensitivity _flow_sensitivity;
 
   /** @brief The expression to evaluate */
 
@@ -155,7 +156,8 @@ private:
    *
    * When true, just print the number of objects in the binding. */
 
-  bool _size_only;
+  // warning: private field '_flow_sensitivity' is not used
+  // bool _size_only;
 
   /** @brief A reference to the annvariable object */
 
@@ -209,11 +211,11 @@ private:
    *
    * Mark error reports so that we can count them up. */
 
-  bool _is_error;
+  // warning: private field '_is_error' is not used
+  // bool _is_error;
 
 public:
 
-// DQ (8/12/2004): Added virtual destructor to avoid g++ compiler warnings
   virtual ~reportAnn() {};
 
   reportAnn(exprAnn * condition,

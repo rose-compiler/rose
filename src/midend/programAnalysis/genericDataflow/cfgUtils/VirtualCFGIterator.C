@@ -258,7 +258,7 @@ void iterator::restartFromChkpt(iterator::checkpoint& chkpt)
         initialized = true;
 }
 
-string iterator::str(string indent)
+string iterator::str(string /*indent*/)
 {
         
         ostringstream outs;

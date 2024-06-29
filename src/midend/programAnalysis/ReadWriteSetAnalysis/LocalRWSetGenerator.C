@@ -27,7 +27,6 @@
 
 #include <sage3basic.h>
 #include <sageInterface.h>
-//~ #include <VariableIdMapping.h>
 #include <Rose/CommandLine.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Message.h>
@@ -128,7 +127,6 @@ bool isJustALocalStructDecl(SgInitializedName* initName)
 bool LocalRWSetGenerator::isFunctionPointer(SgVarRefExp* inVarRef) 
 {
   SgNode* current = inVarRef->get_parent();
-  SgNode* previous = inVarRef;
   //SgBasicBlock shows this is not a function call exp, so not a
   //function pointer call.
       
@@ -160,8 +158,6 @@ bool LocalRWSetGenerator::isFunctionPointer(SgVarRefExp* inVarRef)
       return true;
             
     }
-    
-    previous = current;
     current = current->get_parent();
   }
   return false;

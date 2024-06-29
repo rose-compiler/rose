@@ -36,9 +36,8 @@ NodeFact* NodeID::copy() const
  * placeUniqueIDs *
  ******************/
 
-void placeUniqueIDs::visit(const Function& func, const DataflowNode& n, NodeState& state)
+void placeUniqueIDs::visit(const Function& /*func*/, const DataflowNode& /*n*/, NodeState& state)
 {
-        //printf("placeUniqueIDs: node=<%s | %s>\n", n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
         NodeID* newID = new NodeID(curID);
         state.addFact(this, 0, newID);
         curID++;

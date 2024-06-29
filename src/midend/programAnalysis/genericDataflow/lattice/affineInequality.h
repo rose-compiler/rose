@@ -213,6 +213,7 @@ class varAffineInequality : public printable //: public LogicalCond
         affineInequality ineq;
         
         public:
+        varAffineInequality& operator=(const varAffineInequality&) = default; // fixes warning message regarding copy constructor
         varAffineInequality(const varAffineInequality& that);
         
         varAffineInequality(const varID& x, const varID& y, const affineInequality& ineq);
@@ -220,37 +221,25 @@ class varAffineInequality : public printable //: public LogicalCond
         varAffineInequality(const varID& x, const varID& y, int a, int b, int c, bool xZero, bool yZero);
         
         // get methods
-        /*varID& getX() const;
-        
-        varID& getY() const;
-        
-        affineInequality& getIneq() const;*/
-        
+
         const varID& getX() const;
-        
         const varID& getY() const;
         
         int getA() const;
-        
         int getB() const;
-        
         int getC() const;
-        
         
         const affineInequality& getIneq() const;
         
         // set methods, return true if this object changes
-        const bool setX(const varID& x);
+        bool setX(const varID& x);
+        bool setY(const varID& y);
         
-        const bool setY(const varID& y);
+        bool setA(int a);
+        bool setB(int b);
+        bool setC(int c);
         
-        const bool setA(int a);
-        
-        const bool setB(int b);
-        
-        const bool setC(int c);
-        
-        const bool setIneq(affineInequality& ineq);
+        bool setIneq(affineInequality& ineq);
         
         // comparison methods
         bool operator==(const varAffineInequality& that) const;
@@ -260,20 +249,6 @@ class varAffineInequality : public printable //: public LogicalCond
         std::string str(std::string indent="");
 
         std::string str(std::string indent="") const;
-        
-        // Parses expr and returns the corresponding varAffineInequality if expr can be represented
-        // as such and NULL otherwise.
-        //static varAffineInequality* parseIneq(SgExpression* expr);
-        
-        public:
-        // the basic logical operations that must be supported by any implementation of 
-        // a logical condition: NOT, AND and OR
-        /*void notUpd();
-        void andUpd(LogicalCond& that);
-        void orUpd(LogicalCond& that);
-        
-        // returns a copy of this LogicalCond object
-        LogicalCond* copy();*/
 };
 
 /****************************

@@ -13,8 +13,8 @@ analyzeAnn::analyzeAnn(Annotations * anns,
   : Ann(line),
     _property(0),
     _rules(),
-    _default(0),
-    _applicable_rule(0)
+    _default(0)
+    /* ,_applicable_rule(0) */ // warning: private field '_applicable_rule' is not used
 {
   if (rules) {
     _rules.swap(*rules);

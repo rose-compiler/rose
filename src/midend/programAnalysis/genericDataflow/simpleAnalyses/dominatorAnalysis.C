@@ -58,7 +58,7 @@ void DominatorLattice::copy(Lattice* that_arg)
 
 // Overwrites the state of this Lattice with that of that Lattice.
 // Returns true if this causes this Lattice to chance and false otherwise.
-bool DominatorLattice::copyFrom(DominatorLattice* that, string indent)
+bool DominatorLattice::copyFrom(DominatorLattice* that, string /*indent*/)
 {
         bool modified=false;
         
@@ -68,7 +68,7 @@ bool DominatorLattice::copyFrom(DominatorLattice* that, string indent)
         modified = (n != that->n);
         n = that->n;
         
-        if(level == initialized) {
+        if (level == initialized) {
                 modified = modified || (domNodes != that->domNodes);
                 domNodes = that->domNodes;
         }
@@ -84,7 +84,7 @@ bool DominatorLattice::copyFrom(DominatorLattice* that, string indent)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void DominatorLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
+void DominatorLattice::remapVars(const map<varID, varID> &, const Function &)
 {
         // Nothing to do. This analysis doesn't maintain per-variable information
 }
@@ -109,7 +109,7 @@ void DominatorLattice::incorporateVars(Lattice* that_arg)
 // the given expression. 
 // It it legal for this function to return NULL if no information is available.
 // The function's caller is responsible for deallocating the returned object
-Lattice* DominatorLattice::project(SgExpression* expr)
+Lattice* DominatorLattice::project(SgExpression*)
 {
         // Nothing to do. This analysis doesn't maintain per-variable information
         return new DominatorLattice(n); //copy();
@@ -120,11 +120,9 @@ Lattice* DominatorLattice::project(SgExpression* expr)
 // returned by project(). unProject() must incorporate this dataflow state into the overall state it holds.
 // Call must make an internal copy of the passed-in lattice and the caller is responsible for deallocating it.
 // Returns true if this causes this to change and false otherwise.
-bool DominatorLattice::unProject(SgExpression* expr, Lattice* exprState)
+bool DominatorLattice::unProject(SgExpression*, Lattice*)
 {
         // This analysis doesn't maintain per-variable information, so the information true of exprState is true for all variables.
-        /*DominatorLattice* that = dynamic_cast<DominatorLattice*>(exprState);
-        return copyFrom(that, "    ");*/
         return false;
 }
 
@@ -189,13 +187,13 @@ bool DominatorLattice::operator==(Lattice* that_arg)
 // It is assumed that a newly-added variable has not been added before and that a variable that is being
 //    removed was previously added
 // Returns true if this causes the lattice to change and false otherwise.
-bool DominatorLattice::addNode(const DataflowNode& n, string indent)
+bool DominatorLattice::addNode(const DataflowNode& n, string /*indent*/)
 {
         bool modified = (domNodes.find(n) == domNodes.end());
         domNodes.insert(n);
         return modified;
 }
-bool DominatorLattice::remNode(const DataflowNode& n, string indent)
+bool DominatorLattice::remNode(const DataflowNode& n, string /*indent*/)
 {
         bool modified = (domNodes.find(n) != domNodes.end());
         domNodes.erase(n);
@@ -203,7 +201,7 @@ bool DominatorLattice::remNode(const DataflowNode& n, string indent)
 }
 
 // Returns true if the given node dominates / post-dominates the node associated with this lattice
-bool DominatorLattice::isDominator(const DataflowNode& n, string indent)
+bool DominatorLattice::isDominator(const DataflowNode& n, string /*indent*/)
 {
         return (domNodes.find(n) != domNodes.end());
 }
@@ -230,39 +228,27 @@ string DominatorLattice::str(string indent)
 // ##### DominatorAnalysis #####
 // #############################
 
-DominatorAnalysis::DominatorAnalysis( const set<DataflowNode>& allNodes, string indent): 
-                        allNodes(allNodes)
-{
-        
+DominatorAnalysis::DominatorAnalysis(const set<DataflowNode>& allNodes, string /*indent*/) : allNodes(allNodes) {
 }
         
 // Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-void DominatorAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+void DominatorAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& /*state*/,
+                                     vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
 {
         DominatorLattice* dLat;
         
-        //cout << "    genInitState: "<<n.getNode()->unparseToString() << " | " << n.getNode()->class_name() << "\n";;
-        // If n is the application's starting node
-        //if(func.get_name().getString() == "main" && n == func.get_definition()->cfgForBeginning()/*cfgUtils::getFuncStartCFG(func.get_definition())*/) {
         assert(func.get_definition() != NULL);
-        if(func.get_name().getString() == "main" && n == DataflowNode(func.get_definition()->cfgForBeginning(),filter) /*cfgUtils::getFuncStartCFG(func.get_definition())*/) {
-                //cout << "        STARTING NODE\n";
+        if (func.get_name().getString() == "main" && n == DataflowNode(func.get_definition()->cfgForBeginning(),filter)) {
                 dLat = new DominatorLattice(n, n);
         } else {
                 dLat = new DominatorLattice(n, allNodes);
         }
-        //cout << "    "<<dLat->str("        ")<<"\n";
         initLattices.push_back(dLat);   
 }
 
-bool DominatorAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+bool DominatorAnalysis::transfer(const Function&, const DataflowNode&, NodeState&, const vector<Lattice*>&)
 {
-        //DominatorLattice* dLat = dynamic_cast<DominatorLattice*>(*(dfInfo.begin()));
         bool modified = false;
-        
-        //modified = dLat->addNode(tgtNode) || modified;
-        
         return modified;
 }
 
@@ -271,10 +257,10 @@ bool DominatorAnalysis::transfer(const Function& func, const DataflowNode& n, No
 // ##### FindAllNodesAnalysis #####
 // ################################
 
-FindAllNodesAnalysis::FindAllNodesAnalysis(const Function& func, string indent) : func(func)
-{}
+FindAllNodesAnalysis::FindAllNodesAnalysis(const Function& func, string /*indent*/) : func(func) {
+}
 
-void FindAllNodesAnalysis::visit(const Function& func, const DataflowNode& n, NodeState& state)
+void FindAllNodesAnalysis::visit(const Function&, const DataflowNode& n, NodeState&)
 {
         allNodes.insert(n);
 }
@@ -332,10 +318,8 @@ const set<DataflowNode>& getDominators(SgProject* project, const Function& func,
 }
 
 // Returns true if node a dominates node b and false otherwise
-bool dominates(const DataflowNode& a, const DataflowNode& b, string indent)
+bool dominates(const DataflowNode&, const DataflowNode&, string)
 {
-        /*const set<DataflowNode>& dominators = getDominators(const Function& func, b, indent+"    ");
-        return (dominators.find(a) != dominators.end());*/
         return true;
 }
 

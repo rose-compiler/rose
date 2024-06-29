@@ -158,7 +158,7 @@ enumPropertyExprAnn::enumPropertyExprAnn(Broadway::FlowSensitivity flow_sensitiv
     _rhs_is_property_value(false),
     _rhs(0),
     _rhs_value(),
-    _rhs_lost_information(false),
+    /*_rhs_lost_information(false),*/ // warning: private field '_applicable_rule' is not used
 #ifdef __COMPLICIT
     _complicit_property_blocks(),
 #endif
@@ -1007,7 +1007,7 @@ void numericExprAnn::report(ostream & out, bool is_error, procLocation * where)
 
 #endif
 
-void numericExprAnn::print(ostream & out)
+void numericExprAnn::print(ostream & /*out*/)
 {
 
 #ifdef __FOO
@@ -1151,9 +1151,9 @@ bool pointerExprAnn::test(procLocation * where,
 
 #endif
 
-void pointerExprAnn::lookup(propertyAnn * default_property,
-                            procedureAnn * procedure,
-                            Annotations * annotations)
+void pointerExprAnn::lookup(propertyAnn* /*default_property*/,
+                            procedureAnn* procedure,
+                            Annotations* annotations)
 {
   // --- Lookup the left-hand variable
 

@@ -3,7 +3,7 @@
 
 #include "divAnalysis.h"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/mem_fn.hpp>
 
 int divAnalysisDebugLevel=0;
@@ -463,28 +463,13 @@ Lattice* DivAnalysis::genInitNonVarState(const Function& func, const DataflowNod
 }*/
 
 // generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-//vector<Lattice*> DivAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
-void DivAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                               vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+void DivAnalysis::genInitState(const Function& /*func*/, const DataflowNode& n, const NodeState& state,
+                               vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
 {
-        //vector<Lattice*> initLattices;
         map<varID, Lattice*> emptyM;
         FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new DivLattice(), emptyM/*genConstVarLattices()*/, 
                                                                              (Lattice*)NULL, ldva, /*func, */n, state);         
-        //Dbg::dbg << "DivAnalysis::genInitState, returning l="<<l<<" n=<"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
-        //Dbg::dbg << "    l="<<l->str("    ")<<"\n";
         initLattices.push_back(l);
-        
-        
-        
-/*printf("DivAnalysis::genInitState() initLattices:\n");
-for(vector<Lattice*>::iterator it = initLattices.begin(); 
-    it!=initLattices.end(); it++)
-{       
-        Dbg::dbg << *it << ": " << (*it)->str("    ") << "\n";
-}*/
-        
-        //return initLattices;
 }
 
 // Returns a map of special constant variables (such as zeroVar) and the lattices that correspond to them
@@ -598,6 +583,9 @@ void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2
   else   // Else => Top
     updateModified(resLat->setTop());
 }
+
+using namespace boost::placeholders; // for _1, _2, ... below
+
 void DivAnalysisTransfer::visit(SgPlusAssignOp *sgn)  { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, true )); }
 void DivAnalysisTransfer::visit(SgMinusAssignOp *sgn) { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, false)); }
 void DivAnalysisTransfer::visit(SgAddOp *sgn)         { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, true )); }

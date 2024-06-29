@@ -62,8 +62,7 @@ using namespace Rose;
   }
   
   // This will be visited only once? Not sure, better check
-    void
-  analysisStatesToDOT::visit(const Function& func, const DataflowNode& n, NodeState& state)
+  void analysisStatesToDOT::visit(const Function&, const DataflowNode& n, NodeState& state)
   { 
     std::string state_str = state.str( lda, " "); // convert lattice into a string
     printNode(n, state_str);
@@ -137,10 +136,12 @@ void dbgBuf::init(std::streambuf* baseBuf)
         synched = true;
         ownerAccess = true;
         numOpenAngles = 0;
-        //numDivs = 0;
-        parentDivs.empty();
+
+        // Cast to (void) removes compiler warning, perhaps
+        // parentDivs.clear() was meant to be used [Rasmussen 2024.06.27]
+        (void) parentDivs.empty();
+
         parentDivs.push_back(0);
-        //cout << "Initially parentDivs (len="<<parentDivs.size()<<")\n";
 }
 
 // This dbgBuf has no buffer. So every character "overflows"
@@ -159,16 +160,6 @@ int dbgBuf::overflow(int c)
         }
 }
 
-// Prints the indent to the stream buffer, returns 0 on success non-0 on failure
-/*int dbgBuf::printIndent()
-{
-        string indent="";
-        for(list<string>::iterator i=indents.begin(); i!=indents.end(); i++) indent+=*i;
-        int r = baseBuf->sputn(indent.c_str(), indent.length());
-        if(r!=indent.length()) return -1;
-        return 0;
-}*/
-
 // Prints the given string to the stream buffer
 int dbgBuf::printString(string s)
 {
@@ -179,11 +170,6 @@ int dbgBuf::printString(string s)
 
 streamsize dbgBuf::xsputn(const char * s, streamsize n)
 {
-//      cout << "xputn() ownerAccess="<<ownerAccess<<" n="<<n<<" s=\""<<string(s)<<"\"\n";
-        /*if(synched && !ownerAccess) {
-                int ret2 = printIndent();
-                if(ret2 != 0) return 0;
-        }*/
         // If the owner is printing, output their text exactly
         if(ownerAccess) {
                 return baseBuf->sputn(s, n);
@@ -196,21 +182,17 @@ streamsize dbgBuf::xsputn(const char * s, streamsize n)
                 char spaceHTML[]="&nbsp;";
                 char tab[]="\t";
                 char tabHTML[]="&#09;";
-                //char lt[]="&lt;";
-                //char gt[]="&gt;";
                 while(i<n) {
                         int j;
                         for(j=i; j<n && s[j]!='\n' && s[j]!=' ' && s[j]!='\t'/* && s[j]!='<' && s[j]!='>'*/; j++) {
                                 if(s[j]=='<') numOpenAngles++;
                                 else if(s[j]=='>') numOpenAngles--;
                         }
-//                      cout << "char=\""<<s[j]<<"\" numOpenAngles="<<numOpenAngles<<"\n";
                         // Send out all the bytes from the start of the string or the 
                         // last line-break until this line-break
                         if(j-i>0) {
                                 ret = baseBuf->sputn(&(s[i]), j-i);
                                 if(ret != (j-i)) return 0;
-                                //cout << "   printing char "<<i<<" - "<<j<<"\n";
                         }
                         
                         if(j<n) {
@@ -610,7 +592,7 @@ std::string dbgStream::addDOT(string dot)
 }
 
 // The common work code for all the addDOT methods
-void dbgStream::addDOT(string imgFName, string graphName, string dot, ostream& ret)
+void dbgStream::addDOT(string imgFName, string /*graphName*/, string dot, ostream& ret)
 {
         ostringstream dotFName; dotFName << imgPath << "/image_" << numImages << ".dot";
         ostringstream mapFName; mapFName << imgPath<<"/image_" << numImages << ".map";
@@ -635,50 +617,12 @@ void dbgStream::addDOT(string imgFName, string graphName, string dot, ostream& r
                 exit(-1);
         }*/
         
-        //// Identify the names of the nodes in the dot file
-        //ostringstream namesFName; namesFName << imgPath << "/image_" << numImages << ".names";
-        //{
-        //      ostringstream cmd; cmd << "~/Compilers/dot2Nodes.pl "<<dotFName.str()<<" > "<<namesFName.str(); // -Tcmapx -o"<<mapFName.str()<<"
-        //      //cout << "Command \""<<cmd.str()<<"\"\n";
-        //      system(cmd.str().c_str());
-        //}
-   //
-        //// Read the names of the dot file's node
-        //ifstream namesFile(namesFName.str().c_str());
-        //string line;
-        //set<string> nodes;
-        //if(namesFile.is_open()) {
-        //      while(namesFile.good()) {
-        //              getline(namesFile, line);
-        //              //*(this) << line << endl;
-        //              if(line!="") nodes.insert(line);
-        //      }
-        //      namesFile.close();
-        //}
-        //else {
-        //      cout << "dbgStream::addDOT() ERROR opening file \""<<namesFName.str()<<"\" for reading!"<<endl;
-        //}
-                
         ret << "\t\t\t"<<tabs(buf.funcs.size()+1)<<"image_"<<numImages<<":<img src=\""<<imgFName<<"\" "; // <a href=\"image_" << numImages << ".dot\">
-        //usemap=\""<<graphName.str()<<"\"
         ret << "><br>\n"; // </a>
-        
-        //ret << "<a href=\"javascript:showNodes("<<numImages<<", '";
-        //for(set<string>::iterator n=nodes.begin(); n!=nodes.end(); ) {
-        //      ret << "" << *n << "";
-        //      n++;
-        //      if(n!=nodes.end())
-        //              ret << " ";
-        //}
-        //ret << "')\">Subset</a><iframe height=0 width=0 id=\"imgFrame_"<<numImages<<"\"></iframe><br>\n";
-        
-        //ret << "\t\t\t"<<tabs(buf.funcs.size()+1)<<"<embed height=\"100%\" width=\"100%\" pluginspage=\"http://www.adobe.com/svg/viewer/install\" src=\""<<imgFName<<"\">"<<endl;
-        //ret << "\t\t\t"<<tabs(buf.funcs.size()+1)<<"<object height=\"100%\" width=\"100%\" data=\""<<imgFName<<"\" type=\"image/svg+xml\"></object>"<<endl;
         
         // Open the map file and copy its contents into the output stream
         /*ifstream mapFile(mapFName.str().c_str());
         string line;
-        //cout << "opening file \""<<mapFName.str()<<"\" for reading!"<<endl;
         if(mapFile.is_open()) {
                 while(mapFile.good()) {
                         getline(mapFile, line);

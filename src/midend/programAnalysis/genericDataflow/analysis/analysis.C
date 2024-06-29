@@ -37,13 +37,10 @@ InterProceduralAnalysis::~InterProceduralAnalysis() {}
 // runs the intra-procedural analysis on the given function, returns true if 
 // the function's NodeState gets modified as a result and false otherwise
 // state - the function's NodeState
-bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* state)
+bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* /*state*/)
 {
-        ROSE_ASSERT(func.get_definition()!=NULL);
+        ASSERT_not_null(func.get_definition());
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
-
-     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-     // DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(), filter);
 
      // DQ (12/10/2016): If this function does not have side-effects then we can eliminate it as well.
         cfgUtils::getFuncEndCFG(func.get_definition(), filter);
@@ -55,8 +52,6 @@ bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState*
         for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++)
         {
                 DataflowNode n = *it;
-                // The number of NodeStates associated with the given dataflow node
-                //int numStates=NodeState::numNodeStates(n);
                 // The actual NodeStates associated with the given dataflow node
                 const vector<NodeState*> nodeStates = NodeState::getNodeStates(n);
                 
@@ -221,7 +216,7 @@ void InitDataflowState::visit(const Function& func, const DataflowNode& n, NodeS
  *** FindAllFunctionCalls ***
  ****************************/
  
-void FindAllFunctionCalls::visit(const Function&, const DataflowNode& n, NodeState& state)
+void FindAllFunctionCalls::visit(const Function&, const DataflowNode& n, NodeState& /*state*/)
 {
         SgNode* sgn = n.getNode();
         if (analysisDebugLevel>=2){
@@ -255,9 +250,8 @@ void FindAllFunctionCalls::visit(const Function&, const DataflowNode& n, NodeSta
 // Propagates the dataflow info from the current node's NodeState (curNodeState) to the next node's 
 //     NodeState (nextNodeState).
 // Returns true if the next node's meet state is modified and false otherwise.
-bool IntraUniDirectionalDataflow::propagateStateToNextNode(
-                      const vector<Lattice*>& curNodeState, DataflowNode curNode, int curNodeIndex,
-                      const vector<Lattice*>& nextNodeState, DataflowNode nextNode)
+bool IntraUniDirectionalDataflow::propagateStateToNextNode(const vector<Lattice*>& curNodeState, DataflowNode /*curNode*/, int /*curNodeIndex*/,
+                                                           const vector<Lattice*>& nextNodeState, DataflowNode nextNode)
 {
         bool modified = false;
         vector<Lattice*>::const_iterator itC, itN;
@@ -433,17 +427,14 @@ Lattice* IntraFWPerVariableDataflow::getVarLattice(const Function& func, const v
  *** function.                                      ***
  ******************************************************/
 
-//vector<Lattice*> printDataflowInfoPass::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
-void printDataflowInfoPass::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                                         vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+void printDataflowInfoPass::genInitState(const Function& /*func*/, const DataflowNode& /*n*/, const NodeState& /*state*/,
+                                         vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
         
 {
-        //vector<Lattice*> initState;
         initLattices.push_back((Lattice*)(new BoolAndLattice()));
-        //return initState;
 }
         
-bool printDataflowInfoPass::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+bool printDataflowInfoPass::transfer(const Function& /*func*/, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 {
         Dbg::dbg << "-----#############################--------\n";
         Dbg::dbg << "Node: ["<<Dbg::escape(n.getNode()->unparseToString())<<" | "<< n.getNode()->class_name()<<"]\n";
@@ -568,7 +559,7 @@ string DFStateAtReturns::str(string indent) {
  *** MergeAllReturnStates ***
  ****************************/
 
-void MergeAllReturnStates::visit(const Function& func, const DataflowNode& n, NodeState& state)
+void MergeAllReturnStates::visit(const Function& func, const DataflowNode& n, NodeState& /*state*/)
 {
         SgNode* sgn = n.getNode();
         if(analysisDebugLevel>=1) Dbg::dbg << "MergeAllReturnStates::visit() func="<<func.get_name().getString()<<"() sgn="<<sgn<<"["<<Dbg::escape(sgn->unparseToString())<<" | "<<sgn->class_name()<<"]\n";
@@ -735,7 +726,7 @@ for(vector<Lattice*>::iterator it = initState.begin();
 // Returns true if any of the input lattices changed as a result of the transfer function and
 //    false otherwise.  
 bool ContextInsensitiveInterProceduralDataflow::transfer(
-                             const Function& func, const DataflowNode& n, NodeState& state, 
+                             const Function& func, const DataflowNode& n, NodeState& /*state*/,
                              const vector<Lattice*>& dfInfo, vector<Lattice*>** retState, bool fw)
 {
         bool modified = false;

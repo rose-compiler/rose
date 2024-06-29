@@ -55,7 +55,6 @@ procedureAnn::procedureAnn(parserID * id, parserid_list * params,
   // annVariable * ret = lookup(string("return"), true);
 
   if (params) {
-    int count = 0;
     for (parserid_list_p p = params->begin();
          p != params->end();
          ++p)
@@ -65,7 +64,6 @@ procedureAnn::procedureAnn(parserID * id, parserid_list * params,
         annVariable * formal = lookup(formal_param, true);
         formal->set_formal();
         _formal_params.push_back(formal);
-        count++;
       }
   }
 

@@ -246,7 +246,8 @@ private:
    * When constructing the right-hand-side value from a variable, record if
    * constructing the now value caused information loss. */
 
-  bool _rhs_lost_information;
+  // warning: private field '_applicable_rule' is not used
+  // bool _rhs_lost_information;
 
   /** @brief Complicit property blocks
    *

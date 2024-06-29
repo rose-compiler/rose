@@ -8,24 +8,20 @@
 #include "cong_staticCFG.h"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/transpose_graph.hpp>
 #include <boost/tuple/tuple.hpp>
 
-
-#define foreach BOOST_FOREACH
-
-
 namespace StaticCFG
 {
 
-
 void ControlFlowGraph::toDot(const std::string& filename) const
 {
+    using namespace boost::placeholders; // for _1, _2, ... below
+
     std::ofstream ofile(filename.c_str(), std::ios::out);
     boost::write_graphviz(ofile, *this,
             boost::bind(&ControlFlowGraph::writeGraphNode, this, ::_1, ::_2),
@@ -58,7 +54,7 @@ void ControlFlowGraph::build(SgFunctionDefinition* funcDef)
 
 void ControlFlowGraph::setEntryAndExit()
 {
-    foreach (Vertex v, boost::vertices(*this))
+    for (Vertex v : boost::vertices(*this))
     {
         CFGNodePtr node = (*this)[v];
         if (isSgFunctionDefinition(node->getNode()))
@@ -124,7 +120,7 @@ void ControlFlowGraph::buildCFG(
     nodeCopy.setFilter(filter_);
     std::vector<CFGEdge> outEdges = nodeCopy.outEdges();
 
-    foreach (const CFGEdge& cfgEdge, outEdges)
+    for (const CFGEdge& cfgEdge : outEdges)
     {
         // For each out edge, add the target node.
         CFGNode tar = cfgEdge.target();
@@ -196,7 +192,7 @@ ControlFlowGraph ControlFlowGraph::makeReverseCopy() const
 std::vector<CFGNodePtr> ControlFlowGraph::getAllNodes() const
 {
     std::vector<CFGNodePtr> allNodes;
-    foreach (Vertex v, boost::vertices(*this))
+    for (Vertex v : boost::vertices(*this))
         allNodes.push_back((*this)[v]);
     return allNodes;
 }
@@ -204,7 +200,7 @@ std::vector<CFGNodePtr> ControlFlowGraph::getAllNodes() const
 std::vector<CFGEdgePtr> ControlFlowGraph::getAllEdges() const
 {
     std::vector<CFGEdgePtr> allEdges;
-    foreach (const Edge& e, boost::edges(*this))
+    for (const Edge& e : boost::edges(*this))
         allEdges.push_back((*this)[e]);
     return allEdges;
 }
@@ -229,7 +225,7 @@ std::set<ControlFlowGraph::Edge>
         // If the dominator tree is not built yet, build it now.
         getDominatorTree();
 
-        foreach (const Edge& e, boost::edges(*this))
+        for (const Edge& e : boost::edges(*this))
         {
             Vertex src = boost::source(e, *this);
             Vertex tar = boost::target(e, *this);
@@ -255,7 +251,7 @@ ControlFlowGraph::Vertices
     {
         std::set<Edge> backEdges = getAllBackEdges();
         Vertices headers;
-        foreach (Edge e, backEdges)
+        for (Edge e : backEdges)
             headers.insert(boost::target(e, *this));
         return headers;
     }
@@ -283,7 +279,7 @@ std::map<ControlFlowGraph::Vertex, ControlFlowGraph::Vertices>
 
         // For each back edge, make the target (loop header) visited then
         // do a DFS from the source of this edge on the reverse CFG.
-        foreach (const Edge& edge, backEdges)
+        for (const Edge& edge : backEdges)
         {
             Vertex root = boost::source(edge, rvsCFG);
             Vertex header = boost::target(edge, rvsCFG);

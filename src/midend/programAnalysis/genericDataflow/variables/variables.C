@@ -201,13 +201,6 @@ bool varID::isValidVarExp(const SgExpression* exp)
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // !!! NOTE: IN THE FUTURE WE MAY WANT TO BE MORE PRECISE ABOUT THIS BUT WE'LL NEED TO ADD THE NOTION OF ARRAYS TO OUR varIDs !!!
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        /*if(isTopArrayRefExp(exp))
-                exp = getArrayNameExp(exp);*/
-        //printf("isValidVarExp: exp->class_name()=%s  \"%s\"\n", exp->class_name().c_str(), exp->unparseToString().c_str());
-        
-/*              printf("isValidVarExp() isSgVarRefExp(exp)=%d  isSgDotExp(exp)=%d\n", isSgVarRefExp(exp), isSgDotExp(exp));
-        if(isSgVarRefExp(exp))
-        { printf("   name=%s\n", ((SgVarRefExp*)exp)->get_symbol()->get_declaration()->get_name().str()); }*/
         
         return // exp is valid if it is not part of a larger dot expression
                (!isSgDotExp(exp->get_parent())) &&
@@ -217,16 +210,14 @@ bool varID::isValidVarExp(const SgExpression* exp)
                  (isSgDotExp(exp) && isValidVarExp_rec(exp)));
 }
 
-bool varID::isValidVarExp(const SgInitializedName* exp)
+bool varID::isValidVarExp(const SgInitializedName*)
 {
         return true;
 }
 
 bool varID::isValidVarExp_rec(const SgExpression* exp)
 {
-        ROSE_ASSERT(exp->get_parent());
-        
-        //printf("isValidVarExp_rec: exp->class_name()=%s  \"%s\"\n", exp->class_name().c_str(), exp->unparseToString().c_str());
+        ASSERT_not_null(exp->get_parent());
         
         return // exp is a variable reference expression
                isSgVarRefExp(exp) ||
@@ -273,14 +264,9 @@ bool varID::remAllAnnotations()
 // does have the [fromAnnotName -> fromAnnotVal] annotation) and false otherwise.
 // If the replacement occurs and this variable already has an annotation named
 //    toAnnotName, this annotation's value is replaced by toAnnotVal.
-bool varID::swapAnnotations(const string& fromAnnotName, void* fromAnnotVal,
+bool varID::swapAnnotations(const string& fromAnnotName, void* /*fromAnnotVal*/,
                             const string& toAnnotName, void* toAnnotVal)
 {
-/*cout << "swapAnnotations("<<fromAnnotName<<", "<<toAnnotName<<") Before: ";
-for(map<string, void*>::iterator it=annotations.begin(); it!=annotations.end(); it++)
-        cout << it->first<<"->"<<it->second<<" "; 
-cout << "\n";*/
-
         map<string, void*>::iterator locFrom = annotations.find(fromAnnotName);
         if(locFrom == annotations.end())
                 return false;
@@ -296,12 +282,6 @@ cout << "\n";*/
                 annotations[toAnnotName] = toAnnotVal;
         }
         annotations.erase(locFrom);
-        
-/*cout << "swapAnnotations("<<fromAnnotName<<", "<<toAnnotName<<") After: ";
-for(map<string, void*>::iterator it=annotations.begin(); it!=annotations.end(); it++)
-        cout << it->first<<"->"<<it->second<<" "; 
-cout << "\n";*/
-
         
         return true;
 }

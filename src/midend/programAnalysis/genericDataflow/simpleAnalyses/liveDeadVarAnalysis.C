@@ -38,7 +38,7 @@ void LiveVarsLattice::copy(Lattice* that)
 // varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 //              old variable and pair->second is the new variable
 // func - the function that the copy Lattice will now be associated with
-void LiveVarsLattice::remapVars(const map<varID, varID>& varNameMap, const Function& newFunc)
+void LiveVarsLattice::remapVars(const map<varID, varID>& varNameMap, const Function& /*newFunc*/)
 {
         // Iterate over all the remapped variables
         for(map<varID, varID>::const_iterator var=varNameMap.begin(); var!=varNameMap.end(); var++) {
@@ -152,7 +152,7 @@ bool LiveVarsLattice::isLiveVar(varID var)
 // The string that represents this object
 // If indent!="", every line of this string must be prefixed by indent
 // The last character of the returned string should not be '\n', even if it is a multi-line string.
-string LiveVarsLattice::str(string indent)
+string LiveVarsLattice::str(string /*indent*/)
 {
         ostringstream oss;
         oss << "[LiveVarsLattice: liveVars=[";
@@ -170,13 +170,13 @@ string LiveVarsLattice::str(string indent)
 // ##### LiveDeadVarsAnalysis #####
 // ################################
 
-LiveDeadVarsAnalysis::LiveDeadVarsAnalysis(SgProject *project, funcSideEffectUses* fseu): fseu(fseu)
+LiveDeadVarsAnalysis::LiveDeadVarsAnalysis(SgProject* /*project*/, funcSideEffectUses* fseu): fseu(fseu)
 {
 }
 
 // Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-void LiveDeadVarsAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+void LiveDeadVarsAnalysis::genInitState(const Function& /*func*/, const DataflowNode& /*n*/, const NodeState& /*state*/,
+                                        vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
 {
         initLattices.push_back(new LiveVarsLattice());  
 }
@@ -188,7 +188,10 @@ class LDVAExpressionTransfer : public ROSE_VisitorPatternDefaultBase
 
 public:
   // Should only be called on expressions
-  void visit(SgNode *) { ROSE_ABORT(); }
+  void visit(SgNode *) {
+      ROSE_ABORT();
+  }
+
   // Catch up any other expressions that are not yet handled
   void visit(SgExpression *)
   {
@@ -324,6 +327,7 @@ public:
         ldva.used(sgn->get_builtin_args());
     }
   }
+
   // Function Calls
   void visit(SgFunctionCallExp *sgn) {
     // !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
@@ -345,6 +349,7 @@ public:
       ldva.usedVars.insert(funcUsedVars.begin(), funcUsedVars.end());
     }
   }
+
   // Sizeof
   void visit(SgSizeOfOp *sgn) {
     // XXX: The argument is NOT used, but its type is
@@ -355,11 +360,12 @@ public:
           ldva.used(sgn->get_operand_expr());
       }
   }
+
   // This
-  void visit(SgThisExp *sgn) {
+  void visit(SgThisExp* /*sgn*/) {
   }
   // Variable Reference (we know this expression is live)
-  void visit(SgVarRefExp *sgn) {
+  void visit(SgVarRefExp* /*sgn*/) {
 //  Liao, 4/5/2012. We cannot decide if a SgVarRefExp is read or written
 //    without its context information: for example, in  a = b; both a and b are represented as
 //    SgVarRefExp. But a is written and b is read.
@@ -511,22 +517,8 @@ bool LiveDeadVarsTransfer::finish()
 }
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
-//void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, const NodeState& state, set<varID>& vars, string indent)
-void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, set<varID>& vars, string indent)
+void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, set<varID>& vars, string /*indent*/)
 {
-        //Dbg::dbg << "getAllLiveVarsAt() n="<<Dbg::escape(n.getNode()->unparseToString()) << " | " << n.getNode()->class_name()<<" | "<<n.getIndex()<<endl;
-        //Dbg::dbg << "    state.getLatticeAbove(ldva): #="<<state.getLatticeAbove(ldva).size()<<endl;
-        //for(vector<Lattice*>::const_iterator lat=state.getLatticeAbove(ldva).begin(); lat!=state.getLatticeAbove(ldva).end(); lat++) {
-        //      Dbg::dbg <<"        lat="<<*lat<<endl;
-        //      Dbg::dbg <<"        lat="<<(*lat)->str("            ")<<endl;
-        //}
-        //Dbg::dbg << "    state.getLatticeBelow(ldva): #="<<state.getLatticeBelow(ldva).size()<<endl;
-        //for(vector<Lattice*>::const_iterator lat=state.getLatticeBelow(ldva).begin(); lat!=state.getLatticeBelow(ldva).end(); lat++) {
-        //      Dbg::dbg <<"        lat="<<*lat<<endl;
-        //      Dbg::dbg <<"        lat="<<(*lat)->str("            ")<<endl;
-        //}
-        //Dbg::dbg << "    state = "<<state.str(ldva, "        ")<<endl;
-        //Dbg::dbg.flush();
         LiveVarsLattice* liveLAbove = dynamic_cast<LiveVarsLattice*>(*(state.getLatticeAbove(ldva).begin()));
         LiveVarsLattice* liveLBelow = dynamic_cast<LiveVarsLattice*>(*(state.getLatticeBelow(ldva).begin()));
 
@@ -542,7 +534,6 @@ void getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, set<va
 set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, string indent)
 {
         set<varID> vars;
-        //getAllLiveVarsAt(ldva, n, state, vars, indent);
         getAllLiveVarsAt(ldva, state, vars, indent);
         return vars;
 }
@@ -550,9 +541,8 @@ set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const NodeState& state, 
 // get Live-In variable lattice for a control flow graph node generated from a SgNode with an index
 LiveVarsLattice* getLiveInVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigned int index /*= 0 */)
 {
-
-  assert (ldva != NULL); 
-  assert (n != NULL); 
+  ASSERT_not_null(ldva);
+  ASSERT_not_null(n);
 
   NodeState *state =  NodeState::getNodeState(n, index);
   assert (state != NULL);
@@ -579,8 +569,6 @@ LiveVarsLattice* getLiveOutVarsAt(LiveDeadVarsAnalysis* ldva, SgNode* n, unsigne
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
 VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const NodeState& state, bool (*filter) (CFGNode cfgn)) 
-// DQ (12/6/2016): Fixed compiler warning: -Wreorder.
-// : n(n), state(state), filter(filter)
    : filter(filter), 
      n(n), 
      state(state)
@@ -592,7 +580,6 @@ VarsExprsProductLattice::VarsExprsProductLattice(const DataflowNode& n, const No
 // example:  for a+b, the SgAddOp can be used to calculate the addition of two operands.
 class collectAllVarRefs: public AstSimpleProcessing {
         public:
-        //set<SgVarRefExp*> refs;
         set<SgExpression*> refs;
         void visit(SgNode* n) {
                 if(isSgExpression(n)) refs.insert(isSgExpression(n));
@@ -1159,8 +1146,6 @@ bool VarsExprsProductLattice::addVar(const varID& var, Lattice* lat)
 // The last character of the returned string should not be '\n', even if it is a multi-line string.
 string VarsExprsProductLattice::str(string indent)
 {
-        //printf("VarsExprsProductLattice::str() this->allVarLattice=%p\n", this->allVarLattice);
-        
         ostringstream outs;
         //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" = <"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<"> level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
         //outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<endl;
@@ -1200,8 +1185,8 @@ string VarsExprsProductLattice::str(string indent)
 
 // Initial blank FiniteVarsExprsProductLattice
 FiniteVarsExprsProductLattice::FiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state) :
-                VarsExprsProductLattice(n, state,filter)
-{}
+    VarsExprsProductLattice(n, state, /*WARN:no filter function*/nullptr) {
+}
 
 // Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
 VarsExprsProductLattice* FiniteVarsExprsProductLattice::blankVEPL(const DataflowNode& n, const NodeState& state)
@@ -1253,9 +1238,9 @@ Lattice* FiniteVarsExprsProductLattice::copy() const
 
 // Minimal constructor that initializes just the portions of the object required to make an 
 // initial blank VarsExprsProductLattice
-InfiniteVarsExprsProductLattice::InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state) : 
-                VarsExprsProductLattice(n, state,filter)
-{}
+InfiniteVarsExprsProductLattice::InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state)
+  : VarsExprsProductLattice(n, state, /*WARN:no filter function*/ nullptr) {
+}
 
 // Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
 VarsExprsProductLattice* InfiniteVarsExprsProductLattice::blankVEPL(const DataflowNode& n, const NodeState& state)

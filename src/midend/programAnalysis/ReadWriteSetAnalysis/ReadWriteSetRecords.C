@@ -523,7 +523,6 @@ void ReadWriteSets::from_json(const nlohmann::json& recordJson, ReadWriteSets::A
 nlohmann::json ReadWriteSets::convertCacheToJson(const std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>& rwSetCache) 
 {
   nlohmann::json jsonDocument;
-  int count = 0;
   auto cacheIt = rwSetCache.begin();   //For each function
   for(;cacheIt != rwSetCache.end(); ++cacheIt) {
     ROSE_ASSERT(cacheIt->internalFunctionName != "");

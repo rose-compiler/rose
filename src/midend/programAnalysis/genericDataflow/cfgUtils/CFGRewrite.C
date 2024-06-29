@@ -1112,7 +1112,7 @@ static void appendToBasicBlock(SgNode *target, SgNode *newNode, void* data)
  *************************************************************/
 
 // places newNode as thh first statement in the given SgScopeStatement 
-void prependToScopeStmt(SgNode *target, SgNode *newNode, void* data)
+void prependToScopeStmt(SgNode *target, SgNode *newNode, void* /*data*/)
 {
         ROSE_ASSERT(target && newNode);
         ROSE_ASSERT(isSgScopeStatement (target));
@@ -1121,7 +1121,7 @@ void prependToScopeStmt(SgNode *target, SgNode *newNode, void* data)
 }
 
 // places newNode as thh last statement in the given SgScopeStatement 
-void appendToScopeStmt(SgNode *target, SgNode *newNode, void* data)
+void appendToScopeStmt(SgNode *target, SgNode *newNode, void* /*data*/)
 {
         ROSE_ASSERT(target && newNode);
         ROSE_ASSERT(isSgScopeStatement (target));

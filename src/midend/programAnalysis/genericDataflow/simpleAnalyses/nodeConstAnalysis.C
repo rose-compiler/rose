@@ -243,27 +243,15 @@ string nodeConstLattice::str(string indent)
 
 
 // generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-//vector<Lattice*> nodeConstAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
 void nodeConstAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                        vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+                                     vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
 {
-        //vector<Lattice*> initLattices;
         map<varID, Lattice*> constVarLattices;
         FiniteVariablesProductLattice* l = new FiniteVariablesProductLattice(true, false, new nodeConstLattice(), constVarLattices, NULL, func, n, state);
-        //printf("nodeConstAnalysis::genInitState, returning %p\n", l);
         initLattices.push_back(l);
-        
-/*printf("nodeConstAnalysis::genInitState() initLattices:\n");
-for(vector<Lattice*>::iterator it = initLattices.begin(); 
-    it!=initLattices.end(); it++)
-{       
-        cout << *it << ": " << (*it)->str("    ") << "\n";
-}*/
-        
-        //return initLattices;
 }
 
-bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+bool nodeConstAnalysis::transfer(const Function &func, const DataflowNode &n, NodeState &/*state*/, const vector<Lattice*> &dfInfo)
 {
         bool modified=false;
         
@@ -273,12 +261,11 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
         
         // make sure that all the non-constant Lattices are initialized
         const vector<Lattice*>& lattices = prodLat->getLattices();
-        for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
-                (dynamic_cast<nodeConstLattice*>(*it))->initialize();
+        for (auto lattice : lattices) {
+                (dynamic_cast<nodeConstLattice*>(lattice))->initialize();
+        }
         
         SgNode* asgnLHS;
-        /*printf("n.getNode() = <%s|%s>\n", n.getNode()->unparseToString().c_str(), n.getNode()->class_name().c_str());
-        printf("isSgBinaryOp(n.getNode())=%p\n", isSgBinaryOp(n.getNode()));*/
         
         // If this is an assignment operation, grab the left-hand side
         if((asgnLHS = cfgUtils::getAssignmentLHS(n.getNode())) != NULL)
@@ -297,7 +284,6 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                         set<SgNode*> rhs;
                         cfgUtils::getAssignmentRHS(n.getNode(), rhs);
                         varIDSet rhsReads;
-                        //printf("rhs=\n");
                         // Iterate through the SgNodes in rhs and collect all their variable read references
                         for(set<SgNode*>::iterator it=rhs.begin(); it!=rhs.end(); it++)
                         {
@@ -307,10 +293,8 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                                         rhsReads.insert(*it2);
                                 
                                 varIDSet rhsWrites_it = getWriteVarRefsInSubtree(*it);
-                                //printf("    <%s|%s> rhsReads_it.size()=%d rhsWrites_it.size()=%d\n", (*it)->unparseToString().c_str(), (*it)->class_name().c_str(), rhsReads_it.size(), rhsWrites_it.size());
                         }
                         nodeConstLattice maxLat;
-                        //printf("    maxLat=%s, rhsReads.size()=%d\n", maxLat.str().c_str(), rhsReads.size());
                         if(rhsReads.size()>0)
                         {
                                 maxLat.initialize();
@@ -327,10 +311,8 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                                 maxLat.set(/*uids.getUID()*/ (unsigned long)n.getNode());
                         
                         nodeConstLattice* lhsVarLat = dynamic_cast<nodeConstLattice*>(prodLat->getVarLattice(func, lhsVar));
-                        ROSE_ASSERT(lhsVarLat != NULL);
-                      //lhsVarLat->set(uids.getUID());
+                        ASSERT_not_null(lhsVarLat);
                         *lhsVarLat = maxLat;
-                        //lhsVarLat->meetUpdate(&maxLat);
                         printf("    Final RHS lattice: %s\n", maxLat.str().c_str());
                         printf("    Final LHS variable %s, lattice: %s\n", lhsVar.str().c_str(), lhsVarLat->str().c_str());
                 }
@@ -347,8 +329,9 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                 if(ncLat)
                 {
                         ncLat->set(/*uids.getUID()*/ (unsigned long)n.getNode());
-                        if(nodeConstAnalysisDebugLevel>=1)
+                        if (nodeConstAnalysisDebugLevel>=1) {
                                 printf("Declaration of variable %s\n", var.str().c_str());
+                        }
                         modified = ncLat->setToBottom() || modified;
                 }
         }

@@ -2,12 +2,10 @@
 
 #include "newDDG.h"
 #include <VariableRenaming.h>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/unordered_set.hpp>
-
-#define foreach BOOST_FOREACH
 
 using namespace StaticCFG;
 
@@ -45,7 +43,6 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
 
     std::vector<CFGNodePtr> allNodes = cfg.getAllNodes();
     std::sort(allNodes.begin(), allNodes.end());
-    //, boost::bind(&CFGNode::getNode, _1) < boost::bind(&CFGNode::getNode, _2));
 
     const VariableRenaming::DefUseTable& useTable = varRenaming.getUseTable();
 
@@ -55,7 +52,7 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
     typedef std::map<std::pair<Vertex, Vertex>, std::set<DDGEdge::VarName> > DDGEdgeTable;
     DDGEdgeTable ddgEdges;
 
-    foreach(const CFGNodePtr& node, allNodes)
+    for (const CFGNodePtr &node : allNodes)
     {
         Vertex src, tar;
 
@@ -81,7 +78,7 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
         // A SgNode may contain sevaral subnodes which have defs, and we will find all those defs.
         std::vector<SgNode*> nodes = SageInterface::querySubTree<SgNode > (node->getNode(), V_SgNode);
 
-        foreach(SgNode* subnode, nodes)
+        for (SgNode* subnode : nodes)
         {
             VariableRenaming::DefUseTable::const_iterator entry = useTable.find(subnode);
             if (entry != useTable.end())
@@ -91,13 +88,13 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
 
                 typedef VariableRenaming::TableEntry::value_type NameAndVars;
 
-                foreach(const NameAndVars& nameVars, entry->second)
+                for (const NameAndVars& nameVars : entry->second)
                 {
 
-                    foreach(SgNode* targetNode, nameVars.second)
+                    for (SgNode* targetNode : nameVars.second)
                     {
 
-                        foreach(const CFGNodePtr& n, allNodes)
+                        for (const CFGNodePtr& n : allNodes)
                         {
                             // If a non-scope node contains the target node, make this node the target.
                             // Note that SageInterface::isAncestor() returns true only on strict ancestor.
@@ -131,7 +128,7 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
         }
     }
 
-    foreach(const DDGEdgeTable::value_type& edgeAndName, ddgEdges)
+    for (const DDGEdgeTable::value_type& edgeAndName : ddgEdges)
     {
         Vertex src = edgeAndName.first.first;
         Vertex tar = edgeAndName.first.second;
@@ -141,7 +138,7 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
             continue;
 
         Edge edge = add_edge(src, tar, *this).first;
-        foreach(const DDGEdge::VarName& name, edgeAndName.second)
+        for (const DDGEdge::VarName& name : edgeAndName.second)
                 (*this)[edge].addVarName(name);
     }
 }
@@ -162,7 +159,7 @@ void DataDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& node) 
 void DataDependenceGraph::writeGraphEdge(std::ostream& out, const Edge& edge) const
 {
     std::string str;
-    foreach(const DDGEdge::VarName& varName, (*this)[edge].varNames)
+    for (const DDGEdge::VarName& varName : (*this)[edge].varNames)
     str += VariableRenaming::keyToString(varName) + " ";
     out << "[label=\"" << str << "\"]";
 }

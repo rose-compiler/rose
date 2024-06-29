@@ -35,14 +35,8 @@ map<varID, Lattice*> ConstrGraphAnalysis::constVars;
 // Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
 //vector<Lattice*> ConstrGraphAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
 void ConstrGraphAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                                       vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+                                       vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
 {
-        //vector<Lattice*> initLattices;
-//if(isSgIntVal(n.getNode())) {
-//      printf("ConstrGraphAnalysis::genInitState() n=%p<%s | %s>\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-/*      printf("ConstrGraphAnalysis::genInitState() state=%p\n", &state);
-}*/
-        
         // Create a constraint graph from the divisiblity and sign information at this CFG node
         FiniteVarsExprsProductLattice* divProdL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
 /*if(isSgIntVal(n.getNode()))
@@ -672,7 +666,7 @@ bool ConstrGraphAnalysis::incorporateDivInfo(const Function& func, const Dataflo
 
 // For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 // divisibility variable)
-bool ConstrGraphAnalysis::removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
+bool ConstrGraphAnalysis::removeConstrDivVars(const Function&, const DataflowNode&, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
 {
         bool modified = false;
         ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());

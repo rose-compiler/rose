@@ -34,7 +34,8 @@ private:
    * After testing the conditions, compute_next() will determine a rule to
    * fire. Store this rule here so that apply_next() can execute it. */
 
-  REF ruleAnn * _applicable_rule;
+  // warning: private field '_applicable_rule' is not used
+  // REF ruleAnn * _applicable_rule;
 
 public:
 

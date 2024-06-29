@@ -163,16 +163,10 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
     SgBinaryOp* binary = isSgBinaryOp(sgNode);
     SgExpression* l_expr = binary->get_lhs_operand();
     SgVarRefExp* varRefExp = isSgVarRefExp(l_expr);
-#if 1
     SgPntrArrRefExp* varPntrRefExp = isSgPntrArrRefExp(l_expr);
-#endif
     if (DEBUG_MODE)
       cout << " **********  BINARY OP. " << binary << endl;
-    if (varRefExp
-#if 1
-        || varPntrRefExp
-#endif
-        ) {
+    if (varRefExp || varPntrRefExp) {
       // if left side is a varrefexp
       if (DEBUG_MODE)
         cout << " **********  BINARY OP IS_VAR_REF_EXP. " << endl;
@@ -185,7 +179,6 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
                << "  name: " << initName << "  varRefExp: "
                << varRefExp << endl;
       }
-#if 1
       else if (varPntrRefExp) {
         while (isSgPntrArrRefExp(varPntrRefExp->get_lhs_operand())) {
           varPntrRefExp = isSgPntrArrRefExp(
@@ -196,13 +189,10 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
         if (varRefExpL == NULL) {
           Rose_STL_Container<SgNode*> vars = NodeQuery::querySubTree(varPntrRefExp, V_SgVarRefExp);
           if (vars.size()>1) {
-            //cerr << " There is more than one VarRefExp in this PntrArrRefExp. " << endl;
-            //      ROSE_ASSERT(varRefExpL);
             varRefExpL = isSgVarRefExp(*vars.begin());
           } else if (vars.size()==1)
             varRefExpL = isSgVarRefExp(*vars.begin());
           if (varRefExpL==NULL) {
-            //cerr << " TYPE of LHS : " << varPntrRefExp->get_lhs_operand()->class_name() << endl;
             ROSE_ASSERT(varRefExpL);
           }
         }
@@ -235,7 +225,6 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
           cout << " BINARY OP: " << initName->get_qualified_name().str()
                << "  name: " << initName << "  varRefExp: " << varRefExp << endl;
       }
-#endif
       ROSE_ASSERT(initName);
       ROSE_ASSERT(binary);
       switch(binary->variantT()) {
@@ -666,29 +655,12 @@ bool DefUseAnalysisPF::performUseAndDefinition(SgNode* sgNode,
     if (mul.size() > 0) {
       isCurrentValueContained = searchMulti(&mul, initName);
     }
-    /*
-    // DEBUG HELP
-    if (isSgFunctionCallExp(sgNode)) {
-    cerr << " found the function call " << initName->get_qualified_name().str() <<
-    "- contained : " << resBool(isCurrentValueContained) << endl;
-    for (multitype::const_iterator j = mul.begin(); j != mul.end(); ++j) {
-    SgInitializedName* sgInitMM = (*j).first;
-    SgNode* sgNodeMM = (*j).second;
-    ROSE_ASSERT(sgInitMM);
-    ROSE_ASSERT(sgNodeMM);
-    cerr << "  ..  initName:" << sgInitMM->get_qualified_name().str() << " ( " <<
-    ToString(dfa->getIntForSgNode(sgInitMM)) << " ) - SgNode " <<
-    ToString(dfa->getIntForSgNode(sgNodeMM)) << endl;
-    }
-    }
-    */
 
     if (DEBUG_MODE)
       cout << "  ----- Definition. Is value contained ?  " << resBool(
                                                                       isCurrentValueContained) << endl;
     // read this value from table, if changed return that a change has
     // occurred and update table. Otherwise no change
-    // map (cfgNode, multimap (initname, cfgNode))
     if (isCurrentValueContained == false) {
       if (DEBUG_MODE)
         cout << "  ----- New Definition. Adding: "
@@ -726,25 +698,7 @@ bool DefUseAnalysisPF::performUseAndDefinition(SgNode* sgNode,
       // Otherwise update the multimap with the union.
       if (nrOfInEdges <= 1) {
         multitype oldTable = dfa->getDefMultiMapFor(sgNode);
-        /* / --
-           cout << " !!!!!!!!!!!!!! oldTable " << dfa->getIntForSgNode(sgNode) << endl;
-           dfa->printMultiMap(&oldTable);
-        */
         dfa->mapDefUnion(sgNodeBefore, NULL, sgNode);
-        /*/ ---
-          cout << " !!!!!!!!!!!!!! unionTable " << dfa->getIntForSgNode(sgNode) << endl;
-          multitype unionTable = dfa->getDefUseFor(sgNode);
-          dfa->printMultiMap(&unionTable);
-          // --
-
-          // --
-          // we do not want to replace a node, if we call e.g a function
-          // we want to conservatively add the current definition
-
-          multitype mul = dfa->getDefUseFor(sgNode);
-          if (isDoubleExactEntry(&mul, initName, sgNode)==false) {
-          dfa->addElement(sgNode, initName, sgNode);
-        */
         multitype mm = dfa->getDefMultiMapFor(sgNode);
         if (dont_replace == true) {
           if (isDoubleExactEntry(&mm, initName, sgNode) == false)
@@ -752,22 +706,11 @@ bool DefUseAnalysisPF::performUseAndDefinition(SgNode* sgNode,
         } else
           dfa->replaceElement(sgNode, initName);
         mm = dfa->getDefMultiMapFor(sgNode);
-        /*/ ---
-          cout << " !!!!!!!!!!!!!! newTable " << dfa->getIntForSgNode(sgNode) << endl;
-          multitype mm2 = dfa->getDefUseFor(sgNode);
-          dfa->printMultiMap(&mm2);
-          // -- */
         changedTableEntry = checkElementsForChange(&oldTable, &(mm));
         if (DEBUG_MODE)
           cout << "  ----- changed table (one incoming)  "
                << resBool(changedTableEntry) << "  dont_replace: "
                << resBool(dont_replace) << endl;
-        /*/ ---
-          cout << " !!!!!!!!!!!!!! newTable after check elements " << dfa->getIntForSgNode(sgNode) << endl;
-          multitype mm3 = dfa->getDefUseFor(sgNode);
-          dfa->printMultiMap(&mm3);
-          // -- */
-
       } else {
         // otherwise, it we have more than one in-edge, we union the maps
         SgNode* otherInNode = getOtherInNode(cfgNode, sgNodeBefore);
@@ -800,7 +743,6 @@ bool DefUseAnalysisPF::performUseAndDefinition(SgNode* sgNode,
     // return that a change has taken place!
     if (DEBUG_MODE) {
       cout << " FINAL DEFMAP : " << endl;
-     // dfa->printDefMap();
      dfa->printMultiMap (dfa->getDefMultiMapFor(sgNode));
      cout << " FINAL USEMAP : " << endl;
      dfa->printMultiMap (dfa->getUseMultiMapFor(sgNode));
@@ -819,7 +761,6 @@ void DefUseAnalysisPF::handleDefCopy(SgNode* sgNode, int nrOfInEdges,
   if (DEBUG_MODE) {
     cout<<"--------------------------------------"<<endl;
     cout << " DEFMAP BEFORE UNION of OUT[pred]: " << endl;
-    //dfa->printDefMap();
     dfa->printMultiMap (&oldTable);
   }
   if (nrOfInEdges <= 1) {
@@ -834,11 +775,9 @@ void DefUseAnalysisPF::handleDefCopy(SgNode* sgNode, int nrOfInEdges,
     SgNode* otherInNode = getOtherInNode(cfgNode, sgNodeBefore);
     ROSE_ASSERT(otherInNode);
     dfa->mapDefUnion(sgNodeBefore, otherInNode, sgNode);
-    //replaceElement(sgNode, initName);
   }
   if (DEBUG_MODE) {
     cout << " DEFMAP AFTER UNION of OUT[pred]: " << endl;
-    //dfa->printDefMap();
     dfa->printMultiMap (dfa->getDefMultiMapFor(sgNode));
   }
 }
@@ -869,11 +808,9 @@ void DefUseAnalysisPF::handleUseCopy(SgNode* sgNode, int nrOfInEdges,
     SgNode* otherInNode = getOtherInNode(cfgNode, sgNodeBefore);
     ROSE_ASSERT(otherInNode);
     dfa->mapUseUnion(sgNodeBefore, otherInNode, sgNode);
-    //replaceElement(sgNode, initName);
   }
   if (DEBUG_MODE) {
     cout << " USEMAP AFTER UNION of OUT[pred]: " << endl;
-    //dfa->printUseMap();
     dfa->printMultiMap (dfa->getUseMultiMapFor(sgNode));
   }
 }
@@ -916,8 +853,7 @@ static void initList(
 /**********************************************************
  *  Build CFG for each function and do DefUse analysis
  *********************************************************/
-FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
-                                                   SgFunctionDefinition* funcDecl, bool& abortme) {
+FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(SgFunctionDefinition* funcDecl, bool & /*abortme*/) {
   // filter functions -- to only functions in analyzed file
   nrOfNodesVisitedPF = 0;
   breakPointForWhileNode = NULL;
@@ -945,15 +881,9 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
   // DFA on that function
   vector<FilteredCFGNode<IsDFAFilter> > worklist;
   vector<FilteredCFGNode<IsDFAFilter> > debug_path;
-  //waitAtMergeNode.clear();
 
   // add this node to worklist and work through the outgoing edges
   FilteredCFGNode<IsDFAFilter> source = FilteredCFGNode<IsDFAFilter> (funcDecl->cfgForBeginning());
-
-// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-// CFGNode cmpSrc = CFGNode(funcDecl->cfgForBeginning());
-   CFGNode(funcDecl->cfgForBeginning());
-
   FilteredCFGNode<IsDFAFilter> rem_source = source;
 
   if (DEBUG_MODE) {
@@ -962,13 +892,8 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
     f.close();
   }
 
-#if 0
-  worklist.push_back(source);
-  debug_path.push_back(source);
-#else
   // using the classic way to init the worklist: putting all CFG nodes into it
   initList (worklist, debug_path, source);
-#endif
   bool valueHasChanged = false;
   bool unhandledNode = false;
   while (!worklist.empty()) {
@@ -977,7 +902,6 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
     // do current node
     unhandledNode = false;
     SgNode* next = source.getNode();
-   // counters[next] ++;
 
     if (doNotVisitMap.find(next) != doNotVisitMap.end()) //Visited or not
       continue;
@@ -996,21 +920,6 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
            << resBool(unhandledNode) << endl;
     }
 
-#if 0
-    // unhandledNode is a bad name. The nodes are still handled to propagate info.
-    // for unhandled Node, we additionally check if its DEF, USE info have changed
-    // if not, we set unhandledNode as false to avoid processing its successors.
-    // This hack is to avoid infinite looping for is.c 3.3 version
-    if (unhandledNode)
-    {
-        multitype newTable = dfa->getDefMultiMapFor(next);
-        if (checkElementsForChange(&oldTable, &newTable)) // changed?
-          unhandledNode = true; // handled, and changed. Set to true
-        else
-          unhandledNode = false; // handled, and not changes so far  , set to false
-    }
-#endif
-
     multitype newDefTable = dfa->getDefMultiMapFor(next);
     multitype newUseTable = dfa->getUseMultiMapFor(next);
 
@@ -1018,7 +927,6 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
     bool defChanged= checkElementsForChange(&oldDefTable, &newDefTable);
     bool useChanged = checkElementsForChange(&oldUseTable, &newUseTable);
     if (defChanged || useChanged)
-    //if (valueHasChanged || unhandledNode)
     {
         if (DEBUG_MODE) {
             cout<<"---------------->>>trying to add outgoing nodes due to: "<<endl;

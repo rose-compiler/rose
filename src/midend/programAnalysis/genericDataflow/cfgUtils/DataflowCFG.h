@@ -19,13 +19,21 @@ bool defaultFilter (CFGNode cfgn);
 class DataflowNode {
         public:
         CFGNode n;
+
         bool (*filter) (CFGNode cfgn); // a filter function to decide which raw CFG node to show (if return true) or hide (otherwise)           
         
+        DataflowNode() = delete;
+
         // We enforce the user codes (the framework) of DataflowNode to explicitly set filter, or provide default filter on their own
-        DataflowNode(CFGNode n, bool (*f) (CFGNode)): n(n), filter(f) {}
+        DataflowNode(CFGNode n, bool (*f) (CFGNode)) : n(n), filter(f) {
+        }
+
         // By default, the default filter function is used unless otherwise specified
-//        DataflowNode(CFGNode n, bool (*f) (CFGNode) = defaultFilter): n(n), filter(f) {}
-        DataflowNode(const DataflowNode& dfn): n(dfn.n), filter (dfn.filter) {} 
+        DataflowNode(const DataflowNode& dfn): n{dfn.n}, filter{dfn.filter} {
+        }
+
+        // Copy assignment operator (required because copy constructor is provided, otherwise deprecated warning)
+        DataflowNode & operator=(const DataflowNode& other) = default;
 
         std::string toString() const {return n.toString();}
         std::string toStringForDebugging() const {return n.toStringForDebugging();}
@@ -49,7 +57,6 @@ class DataflowEdge {
         bool (*filter) (CFGNode cfgn);
         
         public:
-//        DataflowEdge(CFGPath p, bool (*f) (CFGNode) = defaultFilter): p(p), filter(f) {}
         DataflowEdge(CFGPath p, bool (*f) (CFGNode) ): p(p), filter(f) {}
         DataflowEdge(const DataflowEdge& dfe): p(dfe.p), filter(dfe.filter) {}
 
@@ -65,10 +72,8 @@ class DataflowEdge {
         std::vector<SgInitializedName*> scopesBeingEntered() const {return p.scopesBeingEntered();}
         bool operator==(const DataflowEdge& o) const {return p == o.p;}
         bool operator!=(const DataflowEdge& o) const {return p != o.p;}
-        //bool operator<(const DataflowEdge& o) const {return p < o.p;}
 };
 
-//inline DataflowNode makeDataflowCfg(SgNode* start, bool (*f) (CFGNode) = defaultFilter) {
 inline DataflowNode makeDataflowCfg(SgNode* start, bool (*f) (CFGNode) ) {
         // Returns CFG node for just before start
         return DataflowNode(cfgBeginningOfConstruct(start), f);

@@ -531,13 +531,8 @@ bool PartitionedAnalysis::runAnalysis(const Function& func, NodeState* fState)
  *** unionDFAnalysisStatePartitions ***
  **************************************/
  
-void unionDFAnalysisStatePartitions::visit(const Function& func, const DataflowNode& n, NodeState& state)
+void unionDFAnalysisStatePartitions::visit(const Function&, const DataflowNode&, NodeState &state)
 {
-        //printf("unionDFAnalysisStatePartitions::visit() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-        
-        //const vector<Lattice*>& masterLatBel = state.getLatticeBelow(master);
-        //printf("    master=%p, masterLatBel.size()=%d\n", master, masterLatBel.size());
-        
         state.unionLattices(unionSet, master);
 }
 
@@ -548,13 +543,12 @@ void unionDFAnalysisStatePartitions::visit(const Function& func, const DataflowN
 // Runs the intra-procedural analysis on the given function. Returns true if 
 // the function's NodeState gets modified as a result and false otherwise.
 // state - the function's NodeState
-bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool analyzeDueToCallers, set<Function> calleesUpdated)
+bool IntraPartitionFWDataflow::runAnalysis(const Function&, NodeState*, bool, set<Function>)
 {
         ROSE_ABORT();
 #if 0 // [Robb Matzke 2021-03-24]: unreached
         bool joinPart=false, splitPart=false;
         IntraPartitionDataflowCheckpoint* outChkpt;
-        //IntraPartitionDataflowCheckpoint* chkpt = NULL;
         return runAnalysisResume(func, fState, NULL, splitPart, joinPart, outChkpt);
 #endif
 }
@@ -575,9 +569,6 @@ bool IntraPartitionFWDataflow::runAnalysisResume(const Function& func, NodeState
         {
                 InitDataflowState ids(this/*, initState*/);
                 ids.runAnalysis(func, fState);
-
-                //UnstructuredPassInterAnalysis upia_ids(ids);
-                //upia_ids.runAnalysis();
         }
         
         ROSE_ASSERT(func.get_definition() != NULL);
@@ -798,13 +789,7 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
                         
                         // This is the point in the code where we resume execution following a checkpoint
                         postSplit:
-                        /* If we're restarting from a checkpoint after a split
-                        if(chkpt!=NULL && chkpt->partitionCond)
-                        {
-                                // Inform the newly-created active partition about its new partition condition
-                                initDFfromPartCond(func, n, *state, state->getLatticeBelow(this), state->getFacts(this));
-                        }*/
-                        
+
                         if(analysisDebugLevel>=1)
                         {
                                 j=0;
@@ -817,26 +802,13 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
                         }
 
                         // Look at the next NodeState
-                        /*i++; itS++;
-                        // if this is not the last NodeState associated with this CFG node
-                        //if((i+1)<numStates)
-                        if(itS!=nodeStates.end())
-                        {
-                                // Get the next NodeState
-                                //NodeState* nextState = NodeState::getNodeState(n, i);
-                                NodeState* nextState = *itS;
-                                ROSE_ASSERT(nextState);
-                                modified = propagateFWStateToNextNode(
-                                 dfInfoBelow, n, i-1,
-                                 nextState->getLatticeAbove(this), n) || modified;
-         }*/
-                        if(analysisDebugLevel>=1){
+                        if (analysisDebugLevel>=1) {
                                 printf("    ------------------\n");
                         }
                 }
                 ROSE_ASSERT(state);
                 
-/*                      // if there has been a change in the dataflow state immediately below this node AND*/
+                // if there has been a change in the dataflow state immediately below this node AND
                 // If this is not the last node in the function
                 if(/*modified && */n != funcCFGEnd)
                 {
@@ -847,21 +819,9 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
                                 printf("    ~~~~~~~~~~~~\n");
                         }
                         
-                        /*cout << " first Descendant A:"<<(*(edges.begin())).target().getNode()->unparseToString()<<"\n";
-                        {
-                                DataflowNode desc=n; 
-                                int i=0;
-                                while(i<3 && desc!=funcCFGEnd)
-                                {
-                                        cout << " A d->d:"<<(*(desc.outEdges().begin())).target().getNode()->unparseToString()<<"\n";
-                                        desc = (*(desc.outEdges().begin())).target();
-                                        i++;
-                                }
-                        }*/
-                        
                         // If we're restarting from a split, focus on the outgoing edge that
                         // corresponds to this checkpoint
-                        if(chkpt!=NULL)
+                        if (chkpt != nullptr)
                         {
                                 printf("chkpt->partitionIndex=%d\n", chkpt->partitionIndex);
                                 // If we only want to follow one of the successors
@@ -873,14 +833,10 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
                                         edges.push_back(onlyEdge);
                                 }
                                 
-                                // Now that we've finished the restart, delete the checkpoint and reset it to NULL
-                                //delete chkpt;
                                 // Now that we've finished the restart, reset the checkpoint to NULL
                                 chkpt = NULL;
                         }
 
-//cout << " first Descendant B:"<<(*(edges.begin())).target().getNode()->unparseToString()<<"\n";
-                        //printf("Number of descendants = %d\n", edges.size());
                         for(vector<DataflowEdge>::iterator ei = edges.begin(); ei!=edges.end(); ei++)
                         {
                                 // The CFG node corresponding to the current descendant of n
@@ -1032,7 +988,7 @@ IntraPartitionFWDataflow::partitionTranferRet IntraPartitionFWDataflow::partitio
 //     NodeState (nextNodeState).
 // Returns true if the next node's meet state is modified and false otherwise.
 bool IntraPartitionFWDataflow::propagateFWStateToNextNode(
-                      const vector<Lattice*>& curNodeState, DataflowNode curNode, int curNodeIndex,
+                      const vector<Lattice*>& curNodeState, DataflowNode /*curNode*/, int /*curNodeIndex*/,
                       const vector<Lattice*>& nextNodeState, DataflowNode nextNode)
 {
         bool modified = false;

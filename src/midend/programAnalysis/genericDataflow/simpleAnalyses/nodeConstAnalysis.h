@@ -61,6 +61,7 @@ class nodeConstLattice : public FiniteLattice
                 level=uninitialized;
         }
         
+        nodeConstLattice& operator=(const nodeConstLattice &) = default; // removes warning regarding copy constructor
         nodeConstLattice(const nodeConstLattice& that)
         {
                 this->valID = that.valID;

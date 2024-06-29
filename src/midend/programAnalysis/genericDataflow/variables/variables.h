@@ -69,12 +69,12 @@ class varID : public variable
         // special variables do not have associated SgInitializedName nodes and thus, we just give them a name
         std::string name;
         
-        varID(){ }
+        varID() = default;
         
         varID(std::string name)
         {
                 this->name = name;
-                varType = NULL;
+                varType = nullptr;
                 genID();
         }
         
@@ -82,7 +82,7 @@ class varID : public variable
         varID(SgNode *n)
         {
                 bool ret = init(n);
-                ROSE_ASSERT(ret);
+                ASSERT_require(ret);
                 genID();
         }
         
@@ -96,16 +96,17 @@ class varID : public variable
         // pre-condition: isValidVarExp(refExp) evaluates to true
         varID(const SgExpression *exp)
         {
-                bool ret=init(exp);
-                ROSE_ASSERT(ret);
+                bool ret = init(exp);
+                ASSERT_require(ret);
                 genID();
         }
         
+        varID& operator=(const varID &) = default; // removes warning message regarding copy constructor
         varID(const varID& that) : variable()
         {
                 init(that);
         }
-        
+
         // initializes this object from the given varID
         bool init(const varID& that);
         

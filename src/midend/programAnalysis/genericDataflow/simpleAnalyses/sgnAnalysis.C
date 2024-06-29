@@ -357,7 +357,7 @@ bool SgnLattice::complexOp(const SgnLattice& that)
                 return setTop();
 }
         
-string SgnLattice::str(string indent)
+string SgnLattice::str(string /*indent*/)
 {
         ostringstream outs;
         //printf("SgnLattice::str() level=%d\n", level);
@@ -382,37 +382,18 @@ map<varID, Lattice*> SgnAnalysis::constVars;
 bool SgnAnalysis::constVars_init=false;
 
 // generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-//vector<Lattice*> SgnAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
-void SgnAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                        vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+void SgnAnalysis::genInitState(const Function& /*func*/, const DataflowNode& n, const NodeState& state,
+                               vector<Lattice*>& initLattices, vector<NodeFact*>& /*initFacts*/)
 {
-        //printf("SgnAnalysis::genInitState() n=%p<%s | %s>\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-        /*printf("SgnAnalysis::genInitState() state = %p\n", &state);*/
-        
-        //vector<Lattice*> initLattices;
-        //map<varID, Lattice*> constVars;
-        //FiniteVariablesProductLattice* l = new FiniteVariablesProductLattice(true, false, new SgnLattice(), constVars, NULL, func, n, state);
         map<varID, Lattice*> emptyM;
         FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new SgnLattice(), emptyM, (Lattice*)NULL, ldva, n, state);
         initLattices.push_back(l);
-        /*cout << "    #initLattices="<<initLattices.size()<<":\n";
-        for(vector<Lattice*>::const_iterator it=initLattices.begin(); it!=initLattices.end(); it++) {
-                cout << "        "<<(*it)<<"\n"; cout.flush();
-                cout << "        "<<(*it)->str("            ")<<"\n"; cout.flush();
-        }*/
-        //return initLattices;
 }
 
-bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+bool SgnAnalysis::transfer(const Function& /*func*/, const DataflowNode& n, NodeState& /*state*/, const vector<Lattice*>& dfInfo)
 {
         bool modified=false;
         
-        //printf("SgnAnalysis::transfer() n=%p<%s | %s>\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-        /*cout << "   #dfInfo="<<dfInfo.size()<<": \n";
-        for(vector<Lattice*>::const_iterator it=dfInfo.begin(); it!=dfInfo.end(); it++) {
-                cout << "        "<<(*it)->str("            ")<<"\n"; cout.flush();
-        }*/
-        //FiniteVariablesProductLattice* prodLat = dynamic_cast<FiniteVariablesProductLattice*>(*(dfInfo.begin()));
         FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin()));
         
         // Make sure that all the non-constant Lattices are initialized
@@ -420,8 +401,7 @@ bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
         for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
                 (dynamic_cast<SgnLattice*>(*it))->initialize();
         
-//      printf("SgnAnalysis::transfer\n");
-// Plain assignment: lhs = rhs
+        // Plain assignment: lhs = rhs
         if(isSgAssignOp(n.getNode())) {
                 varID res = SgExpr2Var(isSgExpression(n.getNode()));
                 varID lhs = SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand());

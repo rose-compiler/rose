@@ -398,7 +398,7 @@ void setTrueFalseIneq(SgExpression* expr,
         }
 }
 
-void affineInequalitiesPlacer::visit(const Function& func, const DataflowNode& n, NodeState& state)
+void affineInequalitiesPlacer::visit(const Function& func, const DataflowNode& n, NodeState& /*state*/)
 {
         if(analysisDebugLevel>0)
                 printf("affineInequalitiesPlacer::visit() function %s() node=<%s | %s>\n", 
@@ -661,30 +661,30 @@ const affineInequality& varAffineInequality::getIneq() const
 { return ineq; }
 
 // set methods, return true if this object changes
-const bool varAffineInequality::setX(const varID& x)
+bool varAffineInequality::setX(const varID& x)
 {
         bool modified = (x != this->x);
         this->x = x;
         return modified;
 }
 
-const bool varAffineInequality::setY(const varID& y)
+bool varAffineInequality::setY(const varID& y)
 {
         bool modified = (y != this->y);
         this->y = y;
         return modified;
 }
 
-const bool varAffineInequality::setA(int a)
+bool varAffineInequality::setA(int a)
 { return this->ineq.setA(a); }
 
-const bool varAffineInequality::setB(int b)
+bool varAffineInequality::setB(int b)
 { return this->ineq.setB(b); }
 
-const bool varAffineInequality::setC(int c)
+bool varAffineInequality::setC(int c)
 { return this->ineq.setC(c); }
 
-const bool varAffineInequality::setIneq(affineInequality& ineq)
+bool varAffineInequality::setIneq(affineInequality& ineq)
 {
         return this->ineq.set(ineq);
 }
@@ -946,12 +946,9 @@ bool affineInequality::operator<(const affineInequality& that) const
 // Semantic affineInequality ordering (partial order)
 // returns true if this affineInequality represents more information (less information is 
 // top, more information is bottom) than that for all values of x and y and false otherwise
-//bool affineInequality::operator<<(const affineInequality& that) const
-//bool affineInequality::semLessThan(const affineInequality& that) const
-bool affineInequality::semLessThan(const affineInequality& that, bool xEqZero, bool yEqZero) const
+bool affineInequality::semLessThan(const affineInequality& that, bool /*xEqZero*/, bool /*yEqZero*/) const
 {
         ROSE_ASSERT(xZero==that.xZero && yZero==that.yZero);
-//printf("affineInequality::operator<< this=%p that=%p\n", this, &that);
 
         // Case 1: different levels
         if(level < that.level)
@@ -1392,11 +1389,9 @@ bool affineInequality::semLessThanEq(const affineInequality& that,
 // Semantic affineInequality ordering (partial order), focused on negated inequalities
 // Returns true if the negation of this affineInequality represents more information (less information is 
 // top, more information is bottom) than the nagation of that for all values of x and y and false otherwise
-//bool affineInequality::semLessThanNeg(const affineInequality& that) const
-bool affineInequality::semLessThanNeg(const affineInequality& that, bool xEqZero, bool yEqZero) const
+bool affineInequality::semLessThanNeg(const affineInequality& that, bool /*xEqZero*/, bool /*yEqZero*/) const
 {
         ROSE_ASSERT(xZero==that.xZero && yZero==that.yZero);
-        //printf("affineInequality::semLessThanNeg this=%p that=%p\n", this, &that);
 
         // An inequality's level doesn't change due to negation since
         //         !Bottom = Bottom : no constraint in both cases
@@ -1955,27 +1950,24 @@ string affineInequality::signToString(signs sign)
                 return "???";
 }
                 
-string affineInequality::str(string indent)// const
+string affineInequality::str(string /*indent*/)
 {
         ostringstream outs;
         
         if(level==bottom)
-                //outs << "<constraint: ["<<y.str()<<"] bottom>";
                 outs << "[aI: bottom]";
         else if(level==constrKnown)
-                //outs << "<affineInequality: x*"<<a<<" <= "<<y.str<<"*"<<b<<" + "<<c<<">";
                 if(xSign==unknownSgn && ySign==unknownSgn)
                         outs << "[aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"]";
                 else
-                        outs << "[aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"]";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+                        outs << "[aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"]";
         else if(level==top)
-                //outs << "<affineInequality: ["<<y.str()<<"] top>";
                 outs << "[aI: top]";
         
         return Dbg::escape(outs.str());
 }
 
-string affineInequality::str(string indent) const
+string affineInequality::str(string /*indent*/) const
 {
         ostringstream outs;
         
@@ -1992,7 +1984,7 @@ string affineInequality::str(string indent) const
         return Dbg::escape(outs.str());
 }
 
-string affineInequality::str(varID x, varID y, string indent) const
+string affineInequality::str(varID x, varID y, string /*indent*/) const
 {
         ostringstream outs;
         
@@ -2009,14 +2001,12 @@ string affineInequality::str(varID x, varID y, string indent) const
 }
 
 // Prints out the negation of the constraint ax <= by+c
-string affineInequality::strNeg(varID x, varID y, string indent) const
+string affineInequality::strNeg(varID x, varID y, string /*indent*/) const
 {
         ostringstream outs;
         
         if(level==bottom)
                 outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] bottom]";
-        /*else if(level==falseConstr)
-                outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr]";*/
         else if(level==constrKnown)
                 outs << "[aI: "<<x.str()<<"*"<<a<<" > "<<y.str()<<"*"<<b<<" + "<<c<<"]";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
         else if(level==top)

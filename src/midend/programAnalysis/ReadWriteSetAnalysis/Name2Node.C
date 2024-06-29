@@ -39,7 +39,7 @@ protected:
         }
     }
 
-    virtual void postOrderVisit(SgNode* node) {
+    virtual void postOrderVisit(SgNode*) {
         //not necessary anymore :D
     }
 

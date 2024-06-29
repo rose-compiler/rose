@@ -38,9 +38,7 @@ literalReportElementAnn::literalReportElementAnn(const parserID * literal)
     _literal(literal->name())
 {}
 
-void literalReportElementAnn::lookup(enumPropertyAnn * default_property,
-                                     procedureAnn * procedure,
-                                     Annotations * annotations)
+void literalReportElementAnn::lookup(enumPropertyAnn*, procedureAnn*, Annotations*)
 {}
 
 #ifdef __PROCLOCATION
@@ -60,10 +58,10 @@ void literalReportElementAnn::report(ostream & out,
 //  Expression report element
 // ----------------------------------------------------------------------
 
-expressionReportElementAnn::expressionReportElementAnn(Broadway::FlowSensitivity flow_sensitivity,
+expressionReportElementAnn::expressionReportElementAnn(Broadway::FlowSensitivity /*flow_sensitivity*/,
                                                        exprAnn * expression, int line)
   : reportElementAnn(line),
-    _flow_sensitivity(flow_sensitivity),
+    /*_flow_sensitivity(flow_sensitivity),*/ // warning: private field '_flow_sensitivity' is not used
     _expr(expression)
 {}
 
@@ -131,8 +129,8 @@ locationReportElementAnn::locationReportElementAnn(const parserID * id)
 {
 }
 
-void locationReportElementAnn::lookup(enumPropertyAnn * default_property,
-                                      procedureAnn * procedure,
+void locationReportElementAnn::lookup(enumPropertyAnn * /*default_property*/,
+                                      procedureAnn * /*procedure*/,
                                       Annotations * annotations)
 {
   if (_kind_name == "callsite") _kind = Callsite;
@@ -226,14 +224,14 @@ void locationReportElementAnn::report(ostream & out,
 // ----------------------------------------------------------------------
 
 bindingReportElementAnn::bindingReportElementAnn(const parserID * varname,
-                                                 bool size_only)
+                                                 bool /*size_only*/)
   : reportElementAnn(varname->line()),
     _variable_name(varname->name()),
-    _size_only(size_only),
+    /*_size_only(size_only),*/ // warning: private field '_size_only' is not used
     _variable(0)
 {}
 
-void bindingReportElementAnn::lookup(enumPropertyAnn * default_property,
+void bindingReportElementAnn::lookup(enumPropertyAnn * /*default_property*/,
                                      procedureAnn * procedure,
                                      Annotations * annotations)
 {
@@ -315,12 +313,12 @@ void bindingReportElementAnn::report(ostream & out,
 // ----------------------------------------------------------------------
 
 reportAnn::reportAnn(exprAnn * condition,
-                     bool is_error,
+                     bool /*is_error*/,
                      report_element_list * elements, int line)
   : Ann(line),
     _condition(condition),
-    _elements(),
-    _is_error(is_error)
+    _elements()
+    /*, _is_error(is_error)*/ // warning: private field '_is_error' is not used
 {
   if (elements)
     _elements.swap( * elements );

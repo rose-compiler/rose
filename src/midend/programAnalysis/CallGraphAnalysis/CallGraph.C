@@ -1101,7 +1101,7 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
 // to functionList.
 void
 getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit,
-                         ClassHierarchyWrapper* classHierarchy,
+                         ClassHierarchyWrapper* /*classHierarchy*/,
                          Rose_STL_Container<SgFunctionDeclaration *>& functionList)
 {
   // currently, all constructor initializers can be handled by solveConstructorInitializer
@@ -1444,8 +1444,8 @@ CallTargetSet::getExpressionsForDefinition(SgFunctionDefinition* targetDef,
   }
 }
 
-FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
-    SgProject *project, ClassHierarchyWrapper *classHierarchy )
+FunctionData::FunctionData(SgFunctionDeclaration* inputFunctionDeclaration,
+                           SgProject* /*project*/, ClassHierarchyWrapper* classHierarchy)
 {
     hasDefinition = false;
 

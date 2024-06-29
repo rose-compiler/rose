@@ -369,25 +369,21 @@ namespace DUVariableAnalysisExt
 
         bool calcUseDefs(SgNode* node,bool getDef,bool getIndirect)
         {
+                SgNode* parent{node->get_parent()};
+                SgNode* current{node};
+                bool finished{false};
+                bool indirect{false}, def[2]{false,false}, use[2]{false,false};
+                bool isVariable{true};
+
                 if (!isSgVarRefExp(node))
                 {
                         cerr<<"this is not a SgVarRefExpr"<<endl;
                         return false;
                 }
-                int depth=1;
-                SgNode * parent=node->get_parent(),
-                                         * current=node;
-                bool finished=false;                    
-                bool indirect=false,def[2]={false,false},use[2]={false,false};
 
-             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-             // bool addressOf=false;
-
-                bool isVariable=true;   
-                finished=isSgStatement(parent);
+                finished = isSgStatement(parent);
                 while(!finished)
                 {
-                //      cout <<"\t"<<depth<<": "<<parent->unparseToString()<<endl;
                         if (isAssignmentExpr(parent) && isSgBinaryOp(parent)->get_lhs_operand()==current)
                         {
                                 // this is a def
@@ -464,49 +460,23 @@ namespace DUVariableAnalysisExt
                         else if (isSgAddressOfOp(parent))
                         {
                                 // the return of this is an address, this is not ok unless used for passing parameters to functions
-                //              if (!isSgExprListExp(parent->get_parent()))
-                        //      {
-                                        cerr<<"the & operator is used on a variable"<<endl;
+                                cerr<<"the & operator is used on a variable"<<endl;
 
-                                     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-                                     // addressOf=true;
-
-                     // from this point on this may be anything!!!
-                        use[0]=use[1]=1;
-                        def[0]=def[1]=1;
-//                      cerr<<"the & operator is not impleted for cases other than passing addresses to functions"<<endl;
-//                      exit(-1);
-                                        
-                //              }
-                //              else
-                //              {
-                                        // the addresOfOperator is used like foo(&LValue)
-                                        
-                                
-                        //      }
+                                // from this point on this may be anything!!!
+                                use[0]=use[1]=1;
+                                def[0]=def[1]=1;
                         }
                         
                         //do the traversal towards the top
                         current=parent;
                         parent=parent->get_parent();
-                        depth++;
-//                      cout  << "u " <<use<<" d "<<def[0]<<" id "<<def[1]<<" i "<<indirect<<endl;
 
                         if (isSgStatement(parent)) finished=true;
                 }
                 // if there is no def (indirect or direct) set the according use
                 if (isVariable &&!def[0] && !def[1])
                         use[indirect]=true;
-        /*      
-                if (use[0])
-                        cout <<"\t*is Use"<<endl;
-                if (use[1])
-                        cout <<"\t*is iUse"<<endl;
-                if (def[0])
-                        cout <<"\t*is Def"<<endl;
-                if (def[1])
-                        cout <<"\t*is iDef"<<endl;
-                */
+
                 if (getDef)
                         return def[getIndirect];
                 else 
@@ -533,15 +503,10 @@ namespace DUVariableAnalysisExt
         bool functionUsesAddressOf(SgVarRefExp * node,SgFunctionCallExp * call)
         {
                 SgNode * parent=node->get_parent(),
-                                         * current=node;
-
-             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-             // bool finished=false;
-             // finished=isSgStatement(parent);
+                       * current=node;
 
                 while(parent!=call)
                 {
-                //      cout <<"\t"<<depth<<": "<<parent->unparseToString()<<endl;
                         if (isAssignmentExpr(parent) && isSgBinaryOp(parent)->get_rhs_operand()==current)
                         {
                                 // this is a def
@@ -570,7 +535,6 @@ namespace DUVariableAnalysisExt
                                 return true;
                         }
                         //do the traversal towards the top
-                        /**/
                         current=parent;
                         parent=parent->get_parent();
                         if (isSgStatement(current))

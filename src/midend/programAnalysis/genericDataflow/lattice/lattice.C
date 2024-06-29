@@ -395,7 +395,7 @@ map<Function, map<varID, int> > VariablesProductLattice::varLatticeIndex;
 VariablesProductLattice::VariablesProductLattice(
           bool includeScalars, bool includeArrays, Lattice* perVarLattice, 
           const map<varID, Lattice*>& constVarLattices, Lattice* allVarLattice,
-          const Function& func, const DataflowNode& n, const NodeState& state) : func(func)
+          const Function& func, const DataflowNode& /*n*/, const NodeState& /*state*/) : func(func)
 {
         this->includeScalars   = includeScalars;
         this->includeArrays    = includeArrays;
@@ -404,11 +404,7 @@ VariablesProductLattice::VariablesProductLattice(
         this->perVarLattice    = perVarLattice;
         
         setUpVarLatticeIndex();
-        
         varIDSet refVars = getVisibleVars(func);
-/*printf("VariablesProductLattice: in %s(), refVars=\n", func.get_name().str());
-for(varIDSet::iterator it = refVars.begin(); it!= refVars.end(); it++)
-{ printf("    %s\n", (*it).str().c_str()); }*/
         
         // iterate over all the variables (arrays and/or scalars) referenced in this function
         // adding their initial lattices to initState
@@ -422,9 +418,6 @@ for(varIDSet::iterator it = refVars.begin(); it!= refVars.end(); it++)
                 lattices.push_back(it->second);*/
         // We don't add constVarLattices because they never change and thus, we don't need to 
         // perform standard dataflow operations on them, such as meets and widenings
-        
-        //printf("VariablesProductLattice() 2\n");
-        //cout << str("") << "\n";
         
         // allVarLattice to lattices, if we're supporting allVar
         if(allVarLattice)
@@ -658,12 +651,10 @@ void VariablesProductLattice::copy(Lattice* that_arg)
                         {
                                 // the original variable that got mapped to newVar
                                 varID oldVar = itR->first;
-//                              printf("   oldVar = %s\n", oldVar.str().c_str());
                                 
                                 Lattice* l = /*newVPL->*/getVarLattice(func, oldVar);
-//                              printf("   l=%p\n", l);
-                                ROSE_ASSERT(l);
-                                //newLattices[getVarIndex(newFunc, newVar)] = l;
+                                ASSERT_not_null(l);
+
                                 newLattices.push_back(l->copy());
                                 
                                 found = true;
@@ -676,16 +667,14 @@ void VariablesProductLattice::copy(Lattice* that_arg)
                         // check if this new variable is in fact an old variable 
                         Lattice* l = /*newVPL->*/getVarLattice(func, newVar);
                         
-                        /*cout << "VariablesProductLattice::remapVars() l = "<<l->str("") << "\n";
-                        cout << "      getVarIndex(newFunc, newVar)=" << getVarIndex(newFunc, newVar) << "\n";*/
                         // if it does, add it at its new index
-                        if(l)
-                                //newLattices[getVarIndex(newFunc, newVar)] = l;
+                        if (l) {
                                 newLattices.push_back(l);
+                        }
                         // if not, add a fresh lattice for this variable
-                        else
-                                //newLattices[getVarIndex(newFunc, newVar)] = perVarLattice->copy();
-                                newLattices.push_back(/*perVarLattice->copy()*/NULL);
+                        else {
+                                newLattices.push_back(/*perVarLattice->copy()*/nullptr);
+                        }
                 }
         }
         

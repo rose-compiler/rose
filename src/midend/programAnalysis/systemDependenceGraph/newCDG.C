@@ -1,16 +1,11 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include "newCDG.h"
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/tuple/tuple.hpp>
-
-#define foreach BOOST_FOREACH
-
-
 
 namespace SDG
 {
@@ -37,7 +32,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
     // Build a table from CFG edges to edge discriptors in the given CFG.
     // Then we can look up edges from reverse CFG to normal CFG.
     std::map<CFGEdgePtr, CFGEdgeT> edgeTable;
-    foreach (const CFGEdgeT& edge, boost::edges(cfg))
+    for (const CFGEdgeT& edge : boost::edges(cfg))
         edgeTable[cfg[edge]] = edge;
 
         // First, build a reverse CFG.
@@ -59,7 +54,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
         (*this)[exit] = cfg[cfg.getExit()];
         verticesAdded.insert(std::make_pair(cfg.getExit(), exit));
 
-        foreach (const DominanceFrontiersT::value_type& vertices, domFrontiers)
+        for (const DominanceFrontiersT::value_type& vertices : domFrontiers)
         {
                 CFGVertexT from = vertices.first;
 
@@ -80,7 +75,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
 
 
                 typedef std::map<CFGVertexT, std::vector<CFGEdgeT> > VertexEdgesMap;
-                foreach (const VertexEdgesMap::value_type& vertexEdges, vertices.second)
+                for (const VertexEdgesMap::value_type& vertexEdges : vertices.second)
                 {
                         CFGVertexT to = vertexEdges.first;
                         const std::vector<CFGEdgeT>& cdEdges = vertexEdges.second;
@@ -96,7 +91,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
                         else
                                 tar = it->second;
 
-                        foreach (CFGEdgeT cdEdge, cdEdges)
+                        for (CFGEdgeT cdEdge : cdEdges)
                         {
                                 // Add the edge.
                                 Edge edge = boost::add_edge(tar, src, *this).first;
@@ -112,7 +107,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
 ControlDependenceGraph::Vertex 
 ControlDependenceGraph::getCDGVertex(SgNode* astNode)
 {
-    foreach (Vertex node, boost::vertices(*this))
+    for (Vertex node : boost::vertices(*this))
     {
         if ((*this)[node]->getNode() == astNode) 
             return node;
@@ -126,11 +121,11 @@ ControlDependenceGraph::getControlDependences(CFGNodePtr cfgNode)
 {
     ControlDependences controlDeps;
     
-    foreach (Vertex node, boost::vertices(*this))
+    for (Vertex node : boost::vertices(*this))
     {
         if ((*this)[node] != cfgNode) continue;
         
-        foreach (const Edge& edge, boost::out_edges(node, *this))
+        for (const Edge& edge : boost::out_edges(node, *this))
         {
             Vertex tgt = boost::target(edge, *this);
             controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
@@ -151,7 +146,7 @@ ControlDependenceGraph::getControlDependences(SgNode* astNode)
     
     ROSE_ASSERT(node != GraphTraits::null_vertex());
     
-    foreach (const Edge& edge, boost::out_edges(node, *this))
+    for (const Edge& edge : boost::out_edges(node, *this))
     {
         Vertex tgt = boost::target(edge, *this);
         controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
@@ -162,6 +157,7 @@ ControlDependenceGraph::getControlDependences(SgNode* astNode)
 
 void ControlDependenceGraph::toDot(const std::string& filename) const
 {
+        using namespace boost::placeholders; // for _1, _2, ... below
         std::ofstream ofile(filename.c_str(), std::ios::out);
         boost::write_graphviz(ofile, *this,
                 boost::bind(&ControlDependenceGraph::writeGraphNode, this, ::_1, ::_2),
@@ -205,7 +201,7 @@ void ControlDependenceGraph::appendSuccessors(
         {
                 ROSE_ASSERT(!iter->second.empty());
 
-                foreach (Vertex succ, iter->second)
+                for (Vertex succ : iter->second)
                         appendSuccessors(succ, vertices, iSucc);
         }
 }
@@ -224,8 +220,9 @@ ControlDependenceGraph::buildDominanceFrontiers(
         typedef std::map<CFGVertexT, CFGVertexT>::value_type VertexVertexMap;
         // Find immediate children in the dominator tree for each node.
         std::map<CFGVertexT, std::set<CFGVertexT> > children;
-        foreach (const VertexVertexMap& vv, iDom)
+        for (const VertexVertexMap& vv : iDom) {
                 children[vv.second].insert(vv.first);
+        }
 
         CFGVertexT entry = cfg.getEntry();
         ROSE_ASSERT(children.find(entry) != children.end());
@@ -246,7 +243,7 @@ ControlDependenceGraph::buildDominanceFrontiers(
                 CFGVertexT v = vertices.back();
                 vertices.pop_back();
 
-        foreach (const CFGEdgeT& e, boost::out_edges(v, cfg))
+                for (const CFGEdgeT& e : boost::out_edges(v, cfg))
                 {
                         CFGVertexT succ = boost::target(e, cfg);
 
@@ -257,17 +254,18 @@ ControlDependenceGraph::buildDominanceFrontiers(
                                 domFrontiers[v][succ].push_back(e);
                 }
 
-                foreach (CFGVertexT child, children[v])
+                for (CFGVertexT child : children[v])
                 {
                         typedef std::map<CFGVertexT, std::vector<CFGEdgeT> > VertexEdgesMap;
-                        foreach (const VertexEdgesMap::value_type& vertexEdges, domFrontiers[child])
+                        for (const VertexEdgesMap::value_type& vertexEdges : domFrontiers[child])
                         {
                                 ROSE_ASSERT(iDom.count(vertexEdges.first) > 0);
 
                                 if (iDom.find(vertexEdges.first)->second != v)
                                 {
-                                        foreach (CFGEdgeT edge, vertexEdges.second)
+                                  for (CFGEdgeT edge : vertexEdges.second) {
                                                 domFrontiers[v][vertexEdges.first].push_back(edge);
+                                  }
                                 }
                         }
                 }

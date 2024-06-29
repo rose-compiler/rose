@@ -23,14 +23,13 @@ namespace VirtualCFG
           else
             return (cfgn.isInteresting());
       }
-
         
-        std::string DataflowNode::str(std::string indent) const
-        {
-                ostringstream outs;
-                outs << "<" << getNode() << " | " << getNode()->class_name() << " | " << getNode()->unparseToString() << " | " << getIndex() << ">";
-                return outs.str();
-        }
+      std::string DataflowNode::str(std::string /*indent*/) const
+      {
+          ostringstream outs;
+          outs << "<" << getNode() << " | " << getNode()->class_name() << " | " << getNode()->unparseToString() << " | " << getIndex() << ">";
+          return outs.str();
+      }
 
   // XXX: This code is duplicated from frontend/SageIII/virtualCFG/virtualCFG.C
   // Make a set of raw CFG edges closure. Raw edges may have src and dest CFG nodes which are to be filtered out. 
@@ -47,8 +46,6 @@ namespace VirtualCFG
     // cerr << "makeClosure starting with " << orig.size() << endl;
     while (true) {
 top:
-      // cerr << "makeClosure loop: " << currentPaths.size() << endl;
-
       // CH (5/27/2010): 'push_back' may invalidate iterators of a vector.
       // Using index instead to fix this subtle bug.
 #if 0 
@@ -88,19 +85,14 @@ top:
 #endif
       break; // If the iteration got all of the way through: all dest nodes of all paths are interesting or no new merges are made.
     }
-    // cerr << "makeClosure loop done: " << currentPaths.size() << endl;
 
     // Now convert the set of CFG paths with interesting src and dest nodes into a set of DataflowEdge 
     vector<DataflowEdge> edges;
     for (vector<CFGPath>::const_iterator i = currentPaths.begin(); i != currentPaths.end(); ++i) {
       // Only if the end node of the path is interesting
-      //if (((*i).*otherSide)().isInteresting())
       if (filter(((*i).*otherSide)()))
         edges.push_back(DataflowEdge(*i, filter));
     }
-    //cout << "makeClosure done: #edges=" << edges.size() << endl;
-    //for(vector<DataflowEdge>::iterator e=edges.begin(); e!=edges.end(); e++)
-    //    printf("Current Node %p<%s | %s>\n", e.target().getNode(), e.target().getNode()->unparseToString().c_str(), e.target().getNode()->class_name().c_str());
 #ifndef NDEBUG
     for (vector<DataflowEdge>::const_iterator i = edges.begin(); i != edges.end(); ++i) {
       CFGNode end1 = (*i).source().n;
@@ -120,20 +112,14 @@ top:
         }
 
         bool DataflowNode::isInteresting() const {
-              //  return (n.getNode())->cfgIsIndexInteresting(n.getIndex());
-                //return isDataflowInteresting(n);
                 return filter(n);
         }
         
         bool isDataflowInteresting(CFGNode cn) {
                 ROSE_ASSERT (cn.getNode());
                 return (cn.getNode()->cfgIsIndexInteresting(cn.getIndex()) && 
-                       //!isSgFunctionRefExp(cn.getNode()) &&
                        !isSgExprListExp(cn.getNode()) &&
                        !isSgForInitStatement(cn.getNode()) &&
-                       //!isSgVarRefExp(cn.getNode()) &&
-                       //!isSgValueExp(cn.getNode()) &&
-                       //!isSgExprStatement(cn.getNode()) &&
                        !(isSgInitializedName(cn.getNode()) && cn.getIndex()==0)) 
                        ||
                     // The line breaks in the following logic clause make it look like the author intended to write

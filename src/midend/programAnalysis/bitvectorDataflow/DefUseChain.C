@@ -107,7 +107,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
       };
       // Collecting read set.
       std::function<bool(AstNodePtr,AstNodePtr)>  opread = 
-              [&defvec,this, &g, &alias, &fa, &in, &CreateEdges]
+              [&defvec, this, &fa, &in, &CreateEdges]
             ( AstNodePtr read_first, AstNodePtr read_second) {
         if (DebugDefUseChain())  {
            std::cerr << "processind read info : " << AstInterface::AstToString(read_first) << " : " << AstInterface::AstToString(read_second) << std::endl;
@@ -124,7 +124,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
       };
       // Collecting mod set.
       std::function<bool(AstNodePtr,AstNodePtr)> opgen = 
-              [this, &defvec, &g, &alias, &fa, &defmap, &in, &CreateEdges]
+              [&defvec, &g, &fa, &defmap, &in, &CreateEdges]
         (AstNodePtr mod_first, AstNodePtr mod_second) {
           std::string varname;
           AstNodePtr scope;
@@ -150,7 +150,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
           return true;
       };
       std::function<bool(AstNodePtr, AstNodePtr)> opkill = 
-                      [this, &defvec, g, &alias, &fa, &defmap, &in]
+                      [&defvec, g, &fa, &in]
        (AstNodePtr mod_first, AstNodePtr mod_second) {
           std::string varname;
           AstNodePtr scope;

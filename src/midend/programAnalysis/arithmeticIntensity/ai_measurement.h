@@ -62,8 +62,14 @@ namespace ArithmeticIntensityMeasurement
       void setErrorCode(int i) {error_code = i; };
 
       void printInfo(std::string comment="");
+
       // convert the counter information to a string
-      std::string toString(std::string comment="");
+      std::string toString(std::string comment);
+
+      // Override member function to remove compiler warning
+      std::string toString() override {
+         return toString(std::string{});
+      }
 
       SgLocatedNode* getNode () {return node; }
       void  setNode (SgLocatedNode* n) {node=n; }
@@ -99,6 +105,8 @@ namespace ArithmeticIntensityMeasurement
 
       intensity = -1.0; 
     }
+
+      FPCounters& operator=(const FPCounters &) = default; // otherwise warning regarding copy constructor
 
       // copy constructor is required for synthesized attributes
       FPCounters (const FPCounters &x)
