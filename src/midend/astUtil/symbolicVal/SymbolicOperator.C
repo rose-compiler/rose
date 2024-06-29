@@ -587,7 +587,6 @@ bool operator < (const SymbolicVal &v1, const SymbolicVal& v2)
 bool operator > (const SymbolicVal &v1, const SymbolicVal& v2)
 { return CompareVal(v1,v2) == REL_GT; }
 
-
 bool operator ==( const SymbolicBound& b1, const SymbolicBound& b2)
      { return b1.lb == b2.lb && b1.ub == b2.ub; }
 bool operator != (const SymbolicBound &b1, const SymbolicBound& b2)
@@ -602,8 +601,16 @@ class SplitFraction : public SymbolicVisitor
   SymbolicVal *inp, *frp;
   bool hasfrac;
  public:
-  virtual void Default(const SymbolicVal& v)
-   { if (inp != 0) *inp = v; }
+
+  // defeats warning message regarding hidden virtual function Default
+  using SymbolicVisitor::Default;
+
+  virtual void Default(const SymbolicVal& v) {
+    if (inp != 0) {
+      *inp = v;
+    }
+  }
+
   virtual void VisitConst( const SymbolicConst &v)
    {
      std::string t = v.GetTypeName();
@@ -616,6 +623,7 @@ class SplitFraction : public SymbolicVisitor
         hasfrac = true;
      }
    }
+
   virtual void VisitFunction( const SymbolicFunction &v)
    {
      bool _hasfrac = hasfrac;

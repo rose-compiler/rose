@@ -69,11 +69,11 @@ class OperatorDeclaration : public TypeDescriptor {
   ParameterDeclaration pars; // parameter names and types
 public:
   OperatorDeclaration() {}
-  OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast, AstInterface::AstNodeList* argp= 0);
+  OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast, AstInterface::AstNodeList* argp = 0);
   
   std::string get_signiture () const { return TypeDescriptor::get_string(); }
   static std::string operator_signature(const AstNodePtr& exp, 
-                                 AstInterface::AstNodeList* argp= 0,
+                                 AstInterface::AstNodeList* argp = 0,
                                  AstInterface::AstTypeList* paramp = 0); 
   const ParameterDeclaration& get_param_info() const { return pars; }
   OperatorDeclaration& read( std::istream& in);
@@ -102,16 +102,24 @@ class OPDescriptorTemp : public BaseClass
      out << ":"; 
      BaseClass::write(out);
    }
-  void Dump() const { write(std::cerr); }
-  ReplaceParams GenReplaceParams(const AstInterface::AstNodeList& args, const AstNodePtr& exp,
-              Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) {
+
+  void Dump() const {
+    write(std::cerr);
+  }
+
+  ReplaceParams GenReplaceParams(const AstInterface::AstNodeList& args, const AstNodePtr& /*exp*/,
+                                 Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen = 0) {
     ReplaceParams paramMap( get_param_decl(), args, astcodegen);
     return paramMap;
   }
-  void replace_val(MapObject<SymbolicVal, SymbolicVal>&) {}
+
+  void replace_val(MapObject<SymbolicVal, SymbolicVal>&) {
+  }
 };
+
 //! a set of names separated by ',', begin with '(', end with ')'
 typedef  SetDescriptor<NameDescriptor,',','(',')'> NameGroup; 
+
 //! A container of std::list<> of elment of NameGroup type
 typedef OPDescriptorTemp
          <ContainerDescriptor<std::list<NameGroup>, NameGroup,',','{','}'> > 

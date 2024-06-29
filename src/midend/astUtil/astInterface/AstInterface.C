@@ -9,8 +9,6 @@
 #include <CommandOptions.h>
 #include <stdexcept>
 
-
-
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
 #ifdef _MSC_VER
@@ -142,18 +140,6 @@ std::string StripQualifier(std::string name)
    return std::string(name.c_str() + i);
 }
 
-bool DebugType()
-{
-  static int r = 0;
-  if (r == 0) {
-    if (CmdOptions::GetInstance()->HasOption("-debugtype"))
-       r = 1;
-    else
-       r = -1;
-  }
-  return r == 1;
-}
-
 bool DebugSymbol()
 {
   static int r = 0;
@@ -165,6 +151,7 @@ bool DebugSymbol()
   }
   return r == 1;
 }
+
 void DebugDiff(const std::string& debug_string)
 {
   static int r = 0;
@@ -178,7 +165,6 @@ void DebugDiff(const std::string& debug_string)
     std::cerr << debug_string << "\n";
   }
 }
-
 
 SgScopeStatement* GetNullScope()
 {
@@ -248,33 +234,35 @@ AstNodeList2ExpressionList(const_iterator b, const_iterator e)
   return explist;
 }
 
-SgStatement* ToStatement( SgNode* _stmts)
+SgStatement* ToStatement(SgNode* _stmts)
 {
     SgStatement *stmts = isSgStatement(_stmts);
     if (stmts == 0) {
        SgExpression *exp = isSgExpression(_stmts);
-       assert(exp != 0);
+       ASSERT_not_null(exp);
        NEW_EXPR_STMT(stmts,exp);
     }
     return stmts;
 }
 
-SgClassDefinition* GetClassDefn( SgClassDeclaration* classDecl)
+SgClassDefinition* GetClassDefn(SgClassDeclaration* classDecl)
 {
   SgDeclarationStatement* decl = classDecl->get_definingDeclaration();
-  assert(decl != 0);
+  ASSERT_not_null(decl);
   classDecl = isSgClassDeclaration(decl);
-  assert(classDecl != 0);
+  ASSERT_not_null(classDecl);
   SgClassDefinition* classDefn = classDecl->get_definition();
   return classDefn;
 }
 
-SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
+#if 0
+// Function not currently needed, defeat warning message by removing
+SgClassDefinition* GetClassDefinition(SgNamedType *classtype)
 {
     if (classtype->variantT() == V_SgTypedefType) {
          return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
     }
-    SgDeclarationStatement *decl = classtype->get_declaration();
+    SgDeclarationStatement* decl = classtype->get_declaration();
     if (decl->variantT() == V_SgClassDeclaration || 
         decl->variantT() == V_SgTemplateClassDeclaration) 
         return GetClassDefn(isSgClassDeclaration(decl));
@@ -283,6 +271,7 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
        ROSE_ABORT();
     }
 }
+#endif
 
 // Strip leading "const" and tailing '&'
 std::string StripParameterType( const std::string& name)
@@ -1948,7 +1937,6 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
     case V_SgDotStarOp:
       {
        const SgBinaryOp *exp1 = isSgBinaryOp(exp);
-       SgNode* lhs = exp1->get_lhs_operand();
        SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
        if (var2 == 0)
           return false;
@@ -2585,7 +2573,7 @@ bool AstInterface::IsBlock( const AstNodePtr& _n, std::string* blockname, AstNod
 }
 
 bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second, 
-                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff) 
+                   std::function<bool(const AstNodeType& first, const AstNodeType& second)>* /*call_on_diff*/)
 {
   SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
   DebugDiff("Checking Type Identical:" + first->unparseToString() + " vs " + second->unparseToString());
@@ -2843,7 +2831,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
 
 
 SgVariableDeclaration* AstInterfaceImpl::
-LookupVarDecl( const std::string& varname, SgScopeStatement* loc)
+LookupVarDecl( const std::string& varname, SgScopeStatement* /*loc*/)
 {
   SgVariableSymbol* s = LookupVar(varname);
   if (s == 0) return 0;
@@ -3763,7 +3751,7 @@ AstNodePtr AstInterface::CreateBlock( const AstNodePtr& _orig)
     return AstNodePtrImpl(r);
  }
 
-void BlockPrependAppendStmt( AstInterfaceImpl* impl, AstNodePtr& _b, const AstNodePtr& _s, bool isAppend, bool flatten=true)
+void BlockPrependAppendStmt(AstInterfaceImpl* /*impl*/, AstNodePtr& _b, const AstNodePtr& _s, bool isAppend, bool flatten=true)
     { 
       AstNodePtrImpl b(_b), s(_s);
       SgStatement* stmt = ToStatement(s.get_ptr());

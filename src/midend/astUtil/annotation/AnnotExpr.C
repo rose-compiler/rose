@@ -585,5 +585,6 @@ void DefineVariableDescriptor::Dump() const
 #include <AnnotDescriptors.C>
 template class WriteContainer<list<SymbolicFunctionDeclaration>, ',', '(', ')'>;
 template class WriteContainer<vector<SymbolicFunctionDeclaration>, ',', '(', ')'>;
-template class std::pair<SymbolicValDescriptor, SymbolicValDescriptor>;
+// template struct used to defeat warning message regarding boost declaring "struct pair"
+template struct std::pair<SymbolicValDescriptor, SymbolicValDescriptor>;
 #endif

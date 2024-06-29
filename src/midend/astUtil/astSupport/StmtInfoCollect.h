@@ -57,20 +57,21 @@ class StmtSideEffectCollect
      : fa_(fa), modunknown(false), readunknown(false),funcanal(a), modcollect(0), 
        readcollect(0), killcollect(0), callcollect(0) {}
 
-  //typedef SgNode* AstNodePtr;
   typedef typename SideEffectAnalysisInterface<AstNodePtr>::CollectObject  CollectObject;
 
-  virtual bool get_side_effect(AstInterface& fa, const AstNodePtr& h,
+  virtual bool get_side_effect(AstInterface& /*fa*/, const AstNodePtr& h,
                     CollectObject* collectmod,
-                    CollectObject* collectread= 0,
+                    CollectObject* collectread = 0,
                     CollectObject* collectkill = 0,
-                    CollectObject* collectcall = 0) override
-    { return operator()( h, collectmod, collectread, collectkill); }
-  bool operator()( const AstNodePtr& h, 
-                    CollectObject* mod,
-                    CollectObject* read= 0,
-                    CollectObject* kill = 0,
-                    CollectObject* call = 0) {
+                    CollectObject* collectcall = 0) override {
+      return operator() (h, collectmod, collectread, collectkill, collectcall);
+    }
+
+  bool operator() (const AstNodePtr& h,
+                   CollectObject* mod,
+                   CollectObject* read= 0,
+                   CollectObject* kill = 0,
+                   CollectObject* call = 0) {
       modcollect = mod;
       readcollect = read;
       killcollect = kill;
@@ -79,6 +80,7 @@ class StmtSideEffectCollect
       StmtInfoCollect<AstNodePtr>::operator()(fa_, h);
       return !modunknown && !readunknown;
     }
+
   protected:
     using StmtInfoCollect<AstNodePtr>::AppendFuncCallArguments;
     using StmtInfoCollect<AstNodePtr>::AppendFuncCallWrite;
@@ -187,7 +189,7 @@ class ModifyVariableMap : public StmtSideEffectCollect<AstNodePtr>
    void Collect(const AstNodePtr& root)
      {
        std::function<bool(AstNodePtr,AstNodePtr)> collect = 
-               [this] (AstNodePtr mod_first, AstNodePtr mod_second) {
+             [this] (AstNodePtr mod_first, AstNodePtr /*mod_second*/) {
          std::string varname;
          if (fa_.IsVarRef(mod_first,0, &varname)) {
              AstNodePtr l = fa_.GetParent(mod_first);

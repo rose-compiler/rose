@@ -57,10 +57,10 @@ class ProcessAstTree : public ProcessAstTreeBase<AstNodePtr>
                              const AstNodePtr& cond, const AstNodePtr& truebody,
                              const AstNodePtr& falsebody, 
                              AstInterface::TraversalVisitType t) ;
-  virtual bool ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
-                                          AstInterface::AstList& params, AstInterface::AstList& outParams,
-                                              const AstNodePtr& body,
-                                             AstInterface::TraversalVisitType t) ;
+  virtual bool ProcessFunctionDefinition(AstInterface &fa, const AstNodePtr& s,
+                                         AstInterface::AstList& params, AstInterface::AstList& outParams,
+                                         const AstNodePtr& body,
+                                         AstInterface::TraversalVisitType t);
   virtual bool ProcessBlock( AstInterface &fa, const AstNodePtr& s,
                                      AstInterface::TraversalVisitType t);
   virtual bool ProcessGoto( AstInterface &fa, const AstNodePtr& s, 

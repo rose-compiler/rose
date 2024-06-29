@@ -306,7 +306,7 @@ AppendModLoc(AstInterface&, const AstNodePtr& mod, const AstNodePtr& rhs)
     }
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
-AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
+AppendReadLoc(AstInterface &/*fa*/, const AstNodePtr &read)
     {
       DebugLocalInfoCollect("appending reading " + AstInterface::AstToString(read));
       if (readcollect != 0) {          

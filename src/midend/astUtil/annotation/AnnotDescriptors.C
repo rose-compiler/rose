@@ -1,5 +1,3 @@
-
-
 #include "AnnotDescriptors.h"
 #include <sstream>
 #include <list>
@@ -162,7 +160,7 @@ bool NameDescriptor:: read(istream& in)
 bool NameDescriptor::write(std::ostream& out) const
 {
   std::string content = get_name(); 
-  auto output_char = [&out, &content] (const char c) {
+  auto output_char = [&out] (const char c) {
        if (std::isalnum(c) || c == ':') {
          out << c;
        } else if (c == '_' || c == ',' || c == '(' || c == ')') {
