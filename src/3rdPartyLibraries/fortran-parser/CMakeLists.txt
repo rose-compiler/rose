@@ -1,6 +1,5 @@
- if(ENABLE-FORTRAN)
-#  set(enable-ofp-version "20200819-JDK8" CACHE STRING "version number for OFP")
-
+if(ENABLE-FORTRAN)
+  
   ########### install files ###############
   set(jar_file
     ${CMAKE_CURRENT_SOURCE_DIR}/OpenFortranParser-${enable-ofp-version}.jar)
@@ -12,10 +11,9 @@
     )
   endif()
 
-install(
-  FILES OpenFortranParser-20200819-JDK8.jar
-        ${jar_file}
-  DESTINATION ${ROSE_LIB_DIR_NAME})
+  # This seems to install the same file twice? 
+  install(FILES OpenFortranParser-20200819-JDK8.jar ${jar_file}
+          DESTINATION ${ROSE_LIB_DIR_NAME})
 
   # this file also needs to be in the binary directory for
   # related tests to pass

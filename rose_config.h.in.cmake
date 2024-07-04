@@ -169,7 +169,7 @@
 
 // BACKEND SECTION 
 /* Is this a GNU compiler being used to compile ROSE generated code */
-#define BACKEND_CXX_IS_GNU_COMPILER "${BACKEND_CXX_IS_GNU_COMPILER}"
+#cmakedefine BACKEND_CXX_IS_GNU_COMPILER @BACKEND_CXX_IS_GNU_COMPILER@ 
 
 /* May or may not explicit include path; used to call backend */
 #define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${CMAKE_CXX_COMPILER}"
@@ -182,6 +182,8 @@
 
 /* Minor version number of backend C++ compiler */
 #define BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER}
+
+#cmakedefine BACKEND_FORTRAN_IS_GNU_COMPILER @BACKEND_FORTRAN_IS_GNU_COMPILER@
 
 /* May or may not explicit include path; used to call backend */
 #define BACKEND_C_COMPILER_NAME_WITH_PATH "${CMAKE_C_COMPILER}"
@@ -341,6 +343,8 @@
 #define ROSE_OFP_MAJOR_VERSION_NUMBER 0
 #define ROSE_OFP_MINOR_VERSION_NUMBER 8
 #define ROSE_OFP_PATCH_VERSION_NUMBER 3
+
+#define ROSE_OFP_VERSION_NUMBER "@ROSE_OFP_VERSION_NUMBER@"
 
 /* EDG major version number */
 #define ROSE_EDG_MAJOR_VERSION_NUMBER @EDG_MAJOR_VERSION@

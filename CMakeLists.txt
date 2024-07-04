@@ -467,18 +467,33 @@ if(ENABLE-FORTRAN)
   endif()
   set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
   enable_language(Fortran)
-  # check if gfortran was found
-  if(CMAKE_COMPILER_IS_GNUG77)
+
+  # check if gfortran (gnu) was found
+  if(CMAKE_COMPILER_IS_GNUG77 OR CMAKE_Fortran_COMPILER MATCHES "gfortran")
     set(USE_GFORTRAN_IN_ROSE 1)
-    add_compile_definitions(BACKEND_FORTRAN_IS_GNU_COMPILER)
-    # query gfortran version
-    execute_process(
-      COMMAND ${CMAKE_Fortran_COMPILER} -dumpversion
-      OUTPUT_VARIABLE gfortran_version_output)
-    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)"
-      gfortran_version "${gfortran_version_output}")
-    message(STATUS "gfortran version ${gfortran_version} detected")
+    set(BACKEND_FORTRAN_IS_GNU_COMPILER 1)
+  endif() 
+  
+  # query fortran compiler version
+  execute_process(COMMAND ${CMAKE_Fortran_COMPILER} --version
+                  OUTPUT_VARIABLE Fortran_COMPILER_VERSION_OUTPUT
+                  OUTPUT_STRIP_TRAILING_WHITESPACE) 
+  string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)"
+         Fortran_COMPILER_VERSION "${Fortran_COMPILER_VERSION_OUTPUT}")
+  if(Fortran_COMPILER_VERSION)
+    message(STATUS "Fortran compiler version detected:  ${Fortran_COMPILER_VERSION}")
+  else() 
+    message(WARNING "Failed to detect Fortran compiler version")
   endif()
+  
+  # This is a cache string var assuming we sometimes may expect user to set  
+  set(enable-ofp-version "20200819-JDK8" CACHE STRING "version number for OFP")
+  
+  # Set rose_config.h macros
+  set(ROSE_OFP_VERSION_NUMBER "${enable-ofp-version}")
+ 
+  # This is trying to set an environment variable -- is this what we want to do?  
+  set($ENV{CLASSPATH} ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar::${CMAKE_SOURCE_DIR}/rc/3rdPartyLibraries/fortran-parser/OpenFortranParser-${enable-ofp-version}.jar)
 endif()
 
 # PHP
@@ -671,12 +686,6 @@ endif()
 option(ENABLE-MICROSOFT-EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
 if(ENABLE-MICROSOFT-EXTENSIONS)
   set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
-endif()
-
-if(ENABLE-FORTRAN)
-  # TODO: Make this internal if we never expect to fetch from user  
-  set(enable-ofp-version "20200819-JDK8" CACHE STRING "version number for OFP")
-  set($ENV{CLASSPATH} ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar::${CMAKE_SOURCE_DIR}/rc/3rdPartyLibraries/fortran-parser/OpenFortranParser-${enable-ofp-version}.jar)
 endif()
 
 if(ENABLE-JOVIAL)
