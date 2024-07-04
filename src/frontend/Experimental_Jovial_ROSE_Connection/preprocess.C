@@ -38,8 +38,8 @@ static const char* enum_str[] {
    "define_quote1", "define_quote2", "end_comment_quote1", "end_comment_quote2"
 };
 
-int const to_int(State s) { return static_cast<int>(s); }
-const char* const to_string(State s) { return enum_str[to_int(s)]; }
+int to_int(State s) { return static_cast<int>(s); }
+const char* to_string(State s) { return enum_str[to_int(s)]; }
 
 
 //

@@ -3514,7 +3514,7 @@ ATbool ATermToSageJovialTraversal::traverse_DefineString(ATerm term, std::string
    // here.
    //
    unsigned int len = def_string.length();
-   ROSE_ASSERT(len > 2);
+   ROSE_ASSERT(len > 1);
    ROSE_ASSERT(def_string[0] == '?' && def_string[len-1] == '?');
 
    def_string[0]     = '"';
