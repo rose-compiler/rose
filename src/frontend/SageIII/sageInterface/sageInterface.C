@@ -27708,6 +27708,53 @@ int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
   return retVal;
 }
 
+void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<PreprocessingInfo*>& infoList)
+{ 
+  // stop condition
+  if (current == NULL)
+    return;
+     
+  // Three possible locations: before, inside, and after
+  // immediately add prepression info that is before and inside of current node
+  // delayed additions of these that are located after the current node
+  vector<PreprocessingInfo*> afterList;  
+  if (SgLocatedNode* locatedNode = isSgLocatedNode(current))
+  { 
+    AttachedPreprocessingInfoType *comments =
+      locatedNode->getAttachedPreprocessingInfo ();
+    
+    if (comments != NULL)
+    { 
+      int counter = 0;
+      AttachedPreprocessingInfoType::iterator i;
+      for (i = comments->begin (); i != comments->end (); i++)
+      { 
+        PreprocessingInfo* info= *i; 
+        // put directives with before or inside location into the infoList 
+        if (info->getRelativePosition () == PreprocessingInfo::before||
+            info->getRelativePosition () == PreprocessingInfo::inside)
+            infoList.push_back (info);
+        else if (info->getRelativePosition () == PreprocessingInfo::after)    
+            afterList.push_back (info); // if attached to be after, save to afterList
+        else
+        {  
+           cerr<<"Error: unrecognized relative position value:" <<info->getRelativePosition () <<endl;
+           ROSE_ASSERT (false);
+        }
+      } // end for
+    }
+  } // end if
+  
+  // handling children nodes
+  std::vector<SgNode* > children = current->get_traversalSuccessorContainer();
+  for (auto c: children)
+    preOrderCollectPreprocessingInfo (c, infoList);
+  
+  // append after locations after recursively handling children nodes. 
+  for (auto fi : afterList)
+    infoList.push_back(fi);
+}
+
 // This may be expensive to run since it is called anytime replace() is called. 
 //!  Extract sequences like " #endif #endif ...  #if | #ifdef| #ifndef" buried inside subtree of lnode.
 //  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
