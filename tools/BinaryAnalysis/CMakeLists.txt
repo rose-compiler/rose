@@ -142,4 +142,6 @@ if(ENABLE-BINARY-ANALYSIS)
   target_link_libraries(bat-xml-to-json bat ROSE_DLL)
   install(TARGETS bat-xml-to-json DESTINATION bin)
 
+  install(FILES batSupport.h DESTINATION ${INCLUDE_INSTALL_DIR})
+
 endif()
