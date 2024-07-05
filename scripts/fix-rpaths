@@ -1,0 +1,103 @@
+#!/bin/bash
+# Fix the rpath in the installed binaries.
+set -e
+arg0="${0##*/}"
+
+help() {
+    echo "usage: $arg0 ROOT LIBRARY_DIRS..."
+    echo "  ROOT is the ROSE installation prefix"
+    echo "  LIBRARY_DIRS are a list of directories to search for shared libraries"
+}
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    ;;
+	-h|--help)
+	    help
+	    exit 0
+	    ;;
+	-*)
+	    die "unknown switch \"$1\""
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+[ "$#" -ge 1 ] || die "incorrect usage; see --help"
+
+ROOT="$1"
+shift
+
+# Make a colon-separated list of directories to use as the rpath
+RPATH="$ROOT/lib"
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	-L)
+	    RPATH="${RPATH}${RPATH:+:}$2"
+	    shift 2
+	    ;;
+	-L*)
+	    RPATH="${RPATH}${RPATH:+:}${1#-L}"
+	    shift
+	    ;;
+	-l*)
+	    # ignore actual libraries
+	    shift
+	    ;;
+	-*)
+	    die "invalid rpath director \"$1\""
+	    ;;
+	*)
+	    RPATH="${RPATH}${RPATH:+:}$1"
+	    shift
+	    ;;
+    esac
+done
+echo "arg0: info: new rpath is \"$RPATH\"" >&2
+
+# Figure out what rpath changer is available. This is the program we can use to change the rpath that's embedded in a dynamically
+# linked ELF executable. The patchelf tool is a bit slower than chrpath but can handle more cases, so we prefer it.  We don't report
+# any errors here yet, but rather wait to see if we're actually installing any dynamically linked executables.
+rpath_changer=
+if patchelf --version >/dev/null 2>&1; then
+    rpath_changer=patchelf
+elif chrpath --version >/dev/null 2>&1; then
+    rpath_changer=chrpath
+elif rpath --version >/dev/null 2>&1; then
+    rpath_changer=rpath
+else
+    die "no way to change rpaths; please install patchelf, chrpath, or rpath."
+fi
+
+
+# Patch all the libraries and executables so they have the correct rpath.
+for file in "$ROOT"/bin/* "$ROOT"/lib/lib*.so; do
+    if [ -r "$file" ]; then
+	echo -n "$arg0: adjusting rpath for $file... " >&2
+	case "$rpath_changer" in
+	    patchelf)
+		echo $(patchelf --set-rpath "$RPATH" "$file" || true)
+		;;
+	    chrpath)
+		# chrpath is excessively noisy
+		chrpath --replace "$RPATH" "$file" >/dev/null || \
+		    chrpath --replace "$RPATH" "$file" || \
+		    true
+		;;
+	    rpath)
+		rpath "$RPATH" "$file"
+		;;
+	    *)
+		die "unknown rpath changer: $rpath_changer"
+		;;
+	esac
+    fi
+done

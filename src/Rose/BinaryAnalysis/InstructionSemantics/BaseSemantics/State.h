@@ -144,8 +144,8 @@ public:
      *
      *  The interrupt state is modeled as bit flags specifying whether the interrupt has been raised. Interrupts have concrete major
      *  and minor numbers that correspond to the @ref RegisterDescriptor major and minor properties. It is permissible for this
-     *  state to have a null interrupt state, in which case the @ref RiscOperators do something else (such as throw an
-     *  exception).
+     *  state to have a null interrupt state, in which case the @ref BaseSemantics::RiscOperators do something else (such as throw
+     *  an exception).
      *
      * @{ */
     RegisterStatePtr interruptState() const;

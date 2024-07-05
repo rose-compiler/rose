@@ -299,6 +299,12 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Allocates storage for an argument or return value.
+ *
+ *  This class is an ordered container of storage pools, and any allocation requests are satisfied by dispatching to the
+ *  storage pools. The first storage pool that can handle the request wins. Storage pools can be things like explicit lists
+ *  of storage locations (e.g., an ordered list of registers used for integer function arguments), or they can generate storage
+ *  locations on the fly (e.g., pushing function arguments onto a stack). */
 class Allocator {
 public:
     /** Shared-ownership pointer.
