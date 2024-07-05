@@ -1306,7 +1306,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
 //========================================================================================
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, SgType* & type)
+ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_PointerItemDescription: %s\n", ATwriteToString(term));
@@ -6258,8 +6258,8 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
 
    ATerm t_literal, t_formula, t_conv_type;
 
-   SgExpression* cast_formula = nullptr;
-   SgType* conv_type = nullptr;
+   SgType* convType{nullptr};
+   SgExpression* castFormula{nullptr};
 
    if (ATmatch(term, "PointerFormula(<term>)", &t_literal)) {
       if (traverse_PointerLiteral(t_literal, expr)) {
@@ -6274,21 +6274,28 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
       } else return ATfalse;
 
    } else if (ATmatch(term, "PointerFormulaConversion(<term>,<term>)", &t_conv_type, &t_formula)) {
-      if (traverse_PointerConversion(t_conv_type, conv_type)) {
+      if (traverse_PointerConversion(t_conv_type, convType)) {
          // MATCHED PointerConversion
       } else return ATfalse;
 
-      if (traverse_Formula(t_formula, cast_formula)) {
+      if (traverse_Formula(t_formula, castFormula)) {
          // MATCHED Formula
       } else return ATfalse;
 
-      ASSERT_not_null(conv_type);
-      ASSERT_not_null(cast_formula);
-      //                                      cast_enum? default? ctype? static? dynamic?
-      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
-      ASSERT_not_null(cast_expr);
-      setSourcePosition(cast_expr, term);
-      expr = cast_expr;
+      if (convType == nullptr) {
+         // Potentially a PointerConversionP term, get type from the formula
+         if (auto cast = isSgCastExp(castFormula)) {
+            convType = cast->get_type();
+        }
+      }
+      ASSERT_not_null(convType);
+      ASSERT_not_null(castFormula);
+
+      //                                       cast_enum? default? ctype? static? dynamic?
+      SgCastExp* castExpr = SageBuilder::buildCastExp(castFormula, convType, SgCastExp::e_default);
+      ASSERT_not_null(castExpr);
+      setSourcePosition(castExpr, term);
+      expr = castExpr;
    } else return ATfalse;
 
    return ATtrue;
@@ -7967,7 +7974,6 @@ ATbool ATermToSageJovialTraversal::traverse_PointerConversion(ATerm term, SgType
 #endif
 
    ATerm t_type;
-
    type = nullptr;
 
    if (ATmatch(term, "PointerConversion(<term>)", &t_type)) {
