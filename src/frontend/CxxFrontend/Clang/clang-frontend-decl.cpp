@@ -1210,7 +1210,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     bool isAnonymousStructOrUnion = record_decl->isAnonymousStructOrUnion();
     bool hasNameForLinkage = record_decl->hasNameForLinkage();
 
-    bool definedInSameDeclContext = (record_decl->getDeclContext() == record_Definition->getDeclContext());
+    //bool definedInSameDeclContext = (record_decl->getDeclContext() == record_Definition->getDeclContext());
     //logger[DEBUG] << "defining recordDecl and nondefining are in same declContext " << definedInSameDeclContext << "\n"; 
     //logger[DEBUG] << record_decl << ":" << record_decl->getDeclContext() << " " << record_Definition << ":" << record_Definition->getDeclContext() <<  "\n";
 
