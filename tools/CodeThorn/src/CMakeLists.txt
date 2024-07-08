@@ -1,10 +1,8 @@
-# if ENABLE-CODETHORN ? 
-# or 
-# if make tools? 
+# TO DO: only make Codethorn if make tools/make install-tools
 
 if(NOT ENABLE_OPENMP)
-  # Codethorn requires OpenMP we think 
-  find_package(OpenMP QUIET) # since the user didn't enable it, don't show we are searching for it 
+  # Codethorn has openmp directives 
+  find_package(OpenMP QUIET)  
   if(NOT OpenMP_FOUND) 
     message(WARNING "Codethorn Requires OpenMP which was not found.") 
   else() 
@@ -14,7 +12,14 @@ endif()
 
 # all targets include these directories 
 include_directories(. ${ROSE_INCLUDES} ${CMAKE_PREFIX_INSTALL}/include/rose ${CMAKE_BINARY_DIR}) 
-add_compile_options(-fopenmp -Wall -O3) # all targets use these flags  
+
+# all targets apply these flags 
+add_compile_options(
+    -fopenmp
+    $<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
+    $<$<NOT:$<BOOL:${ENABLE_ALL_WARNINGS}>>:-Wno-misleading-indentation>
+    -O3
+)
 
 ################################################################################
 # LIBRARY: CODETHORN (CORE) 
@@ -26,9 +31,6 @@ add_library(codethorn SHARED ${CODETHORN_SOURCE_FILES})
 
 # Link libcodethorn.so to dependencies
 target_link_libraries(codethorn ROSE_DLL) 
-  #$<$<BOOL:${ENABLE-C}>:OpenMP::OpenMP_C> 
-  #$<$<BOOL:${HAVE_LIBDL}>:dl>)
-
 
 # Install libcodethorn.so into lib  
 install(TARGETS codethorn 
@@ -53,7 +55,6 @@ add_library(ltlthorn SHARED ${LTLTHORN_SOURCE_FILES})
 # Link libltlthorn.so to dependencies 
 target_link_libraries(ltlthorn ROSE_DLL) 
                                       
-
 # Install libltlthorn.so, don't install headers for this target
 install(TARGETS ltlthorn 
         LIBRARY DESTINATION lib)
