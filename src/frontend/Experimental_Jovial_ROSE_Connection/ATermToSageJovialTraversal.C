@@ -594,9 +594,6 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
       if (match_StatusItemDescription(t_type)) {
          // Build EnumDecl so that StatusItemDescription traversal has it to use
-
-         // This status variable declaration has an anonymous type declaration
-         // TODO: test to see if this holds if a type name is used for the item/variable type
          is_anonymous = true;
          std::string anon_type_name = std::string("_anon_typeof_") + name;
 
@@ -638,7 +635,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
    }
 
 // Begin SageTreeBuilder
-   SgVariableDeclaration* var_decl;
+   SgVariableDeclaration* var_decl{nullptr};
    sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset, std::vector<std::string>{}/*labels*/);
    setSourcePosition(var_decl, term);
 
@@ -2436,7 +2433,7 @@ ATbool ATermToSageJovialTraversal::traverse_WordsPerEntry(ATerm term, Sawyer::Op
 //========================================================================================
 // 2.1.3 CONSTANT DECLARATIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int def_or_ref)
+ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int defOrRef)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ConstantDeclaration: %s\n", ATwriteToString(term));
@@ -2445,17 +2442,18 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
    ATerm t_name, t_type, t_preset, t_dim_list, t_table_desc;
    char* name;
 
-   SgType* declared_type = nullptr;
-   SgType* const_type = nullptr;
-   SgExpression* preset = nullptr;
-   Sawyer::Optional<SgExpression*> status_size;
-   SgEnumDeclaration* enum_decl = nullptr;
+   bool isAnon{false};
+   std::string label{};
 
-   std::string label = "";
+   SgType* declaredType{nullptr};
+   SgType* constType{nullptr};
+   SgExpression* preset{nullptr};
+   SgEnumDeclaration* enumDecl{nullptr};
+   Sawyer::Optional<SgExpression*> statusSize;
 
    if (ATmatch(term, "ConstantTableDeclaration(<term>,<term>,<term>)", &t_name,&t_dim_list,&t_table_desc)) {
    // Almost everything in ConstantTableDeclaration is shared with TableDeclaration so reuse it
-      if (traverse_TableDeclaration(term, def_or_ref, /*constant*/true)) {
+      if (traverse_TableDeclaration(term, defOrRef, /*constant*/true)) {
          // MATCHED ConstantTableDeclaration
       }
       else return ATfalse;
@@ -2469,17 +2467,39 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
          // MATCHED ItemName
       } else return ATfalse;
 
-      if (traverse_ItemTypeDescription(t_type, declared_type)) {
+      if (match_StatusItemDescription(t_type)) {
+         // Build EnumDecl so that StatusItemDescription traversal has it to use
+         isAnon = true;
+         std::string anonTypeName = std::string("_anon_typeof_") + name;
+
+         // Begin SageTreeBuilder for enum
+         sage_tree_builder.Enter(enumDecl, anonTypeName);
+         setSourcePosition(enumDecl, t_type);
+      }
+
+      if (traverse_ItemTypeDescription(t_type, declaredType)) {
          // MATCHED ItemTypeDescription without StatusItemDescription
 
          // Create const SgModifierType with declared_type as base_type
-         const_type = SageBuilder::buildConstType(declared_type);
+         constType = SageBuilder::buildConstType(declaredType);
       }
-      else if (traverse_StatusItemDescription(t_type, enum_decl, status_size)) {
-         // status item declarations have to be handled differently than other ItemTypeDescription terms
-         mlog[ERROR] << "UNIMPLEMENTED: ConstantItemDeclaration with StatusItemDescription";
-         ROSE_ABORT();
-      } else return ATfalse;
+      else if (traverse_StatusItemDescription(t_type, enumDecl, statusSize)) {
+         // MATCHED StatusItemDescription: Note that they are handled differently
+         // than other ItemTypeDescriptions because they require different arguments
+
+         if (statusSize) {
+            SgType* fieldType{SageBuilder::buildIntType(*statusSize)};
+            enumDecl->set_field_type(fieldType);
+         }
+
+         // End SageTreeBuilder
+         sage_tree_builder.Leave(enumDecl);
+
+         // Create const SgModifierType with declared_type as base_type
+         declaredType = isSgEnumType(enumDecl->get_type());
+         constType = SageBuilder::buildConstType(declaredType);
+      }
+      else return ATfalse;
 
       if (traverse_ItemPreset(t_preset, preset)) {
          // MATCHED ItemPreset
@@ -2487,29 +2507,40 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
    }
    else return ATfalse;
 
-   if (declared_type == nullptr) {
+   if (constType == nullptr) {
       mlog[ERROR] << "UNIMPLEMENTED: ConstantDeclaration - type is null";
       ROSE_ABORT();
    }
 
-// Begin SageTreeBuilder
-   SgVariableDeclaration* var_decl;
-   sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset, std::vector<std::string>{}/*labels*/);
-   setSourcePosition(var_decl, term);
+   // Begin SageTreeBuilder for variable declaration
+   SgVariableDeclaration* varDecl{nullptr};
+   sage_tree_builder.Enter(varDecl, std::string(name), constType, preset, std::vector<std::string>{}/*labels*/);
+   setSourcePosition(varDecl, term);
+
    if (preset) {
       // Set source position of initializer before var_decl for comment handling
-      ROSE_ASSERT(var_decl->get_decl_item(name));
-      SgInitializer* initializer = var_decl->get_decl_item(name)->get_initializer();
+      ASSERT_not_null(varDecl->get_decl_item(name));
+      SgInitializer* initializer = varDecl->get_decl_item(name)->get_initializer();
       ASSERT_not_null(initializer);
       setSourcePosition(initializer, t_preset);
    }
 
-// Jovial block and table members are visible in parent scope so create an alias
-// to the symbol if needed.
+   // Jovial block and table members are visible in parent scope so create an alias
+   // to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
 
-// End SageTreeBuilder
-   sage_tree_builder.Leave(var_decl);
+   if (isAnon) {
+      SgEnumType* enumType = isSgEnumType(declaredType);
+      ASSERT_not_null(enumType);
+      SgEnumDeclaration* decl = isSgEnumDeclaration(enumType->get_declaration());
+      ASSERT_not_null(decl);
+      SgEnumDeclaration* defDecl = isSgEnumDeclaration(decl->get_definingDeclaration());
+      ASSERT_not_null(defDecl);
+      sage_tree_builder.setBaseTypeDefiningDeclaration(varDecl, defDecl);
+   }
+
+   // End SageTreeBuilder for variable declaration
+   sage_tree_builder.Leave(varDecl);
 
    return ATtrue;
 }
@@ -2629,7 +2660,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_BlockBodyPart(ATerm term, SgJovialTableStatement* block_decl)
+ATbool ATermToSageJovialTraversal::traverse_BlockBodyPart(ATerm term, SgJovialTableStatement* /*blockDecl*/)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockBodyPart: %s\n", ATwriteToString(term));
