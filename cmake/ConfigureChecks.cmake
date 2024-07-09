@@ -53,7 +53,7 @@ endif()
 
 # Check functions in group
 set(functions_to_check
-   clock_gettime dladdr fcntl gethrtime mach_absolute_time
+  clock_gettime fcntl gethrtime mach_absolute_time
    read_real_time time_base_to_time
 )
 
@@ -90,4 +90,7 @@ if(HAVE_SYS_TIME_H)
   check_type_exists("hrtime_t" sys/time.h HAVE_HRTIME_T)
 endif()
 
-check_library_exists(dl dlopen "/lib64;/usr/lib;/lib;/usr/local/lib;/usr/pkg/lib" HAVE_LIBDL)
+if(HAVE_DLFCN_H)
+  check_library_exists(dl dlopen "/lib64;/usr/lib;/lib;/usr/local/lib;/usr/pkg/lib" HAVE_LIBDL)
+  check_library_exists(dl dladdr "/lib64;/usr/lib;/lib;/usr/local/lib;/usr/pkg/lib" HAVE_DLADDR)
+endif() 

@@ -156,7 +156,7 @@
 /* Whether <dlfcn.h> and -ldl contain dladdr() */
 #cmakedefine HAVE_DLADDR @HAVE_DLADDR@
 
-/* Use explicit template instantiation -- TODO: See where AC defines this */
+/* Use explicit template instantiation for MSTL, ASTProcessing, and ROSETTA */
 #cmakedefine HAVE_EXPLICIT_TEMPLATE_INSTANTIATION @HAVE_EXPLICIT_TEMPLATE_INSTANTIATION@
 
 #cmakedefine HAVE_GETHRTIME 
@@ -167,7 +167,18 @@
 /* End of FUNCTIONS_TO_CHECK */
 
 
-// BACKEND SECTION 
+// BACKEND SECTION
+/* Define if building with Jovial support */ 
+#cmakedefine ATERM_BIN_PATH "@ATERM_BIN_PATH@"
+#cmakedefine ATERM_INSTALL_PATH "@ATERM_INSTALL_PATH@"
+#cmakedefine ATERM_LIBRARY_PATH "@ATERM_LIBRARY_PATH@"
+
+/* Define if building with Ada support */ 
+#cmakedefine BACKEND_ADA_COMPILER_NAME_WITH_PATH "@BACKEND_ADA_COMPILER_NAME_WITH_PATH@"
+#cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 
+/* Define this to "no" typically */ 
+#cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME@" 
+
 /* Is this a GNU compiler being used to compile ROSE generated code */
 #cmakedefine BACKEND_CXX_IS_GNU_COMPILER @BACKEND_CXX_IS_GNU_COMPILER@ 
 
