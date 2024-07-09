@@ -342,6 +342,18 @@ namespace Ada
   SgAdaPackageBodyDecl* getPackageBodyDeclaration(const SgAdaPackageSpecDecl* specDecl);
   /// @}
 
+  /// returns the specification definition (scope) of the package body
+  /// @{
+  SgAdaPackageSpec& getSpecificationDefinition(const SgAdaPackageBody& body);
+  SgAdaPackageSpec* getSpecificationDefinition(const SgAdaPackageBody* body);
+  /// @}
+
+  /// returns the body definition (scope) of the package specification
+  /// @{
+  SgAdaPackageBody& getBodyDefinition(const SgAdaPackageSpec& spec);
+  SgAdaPackageBody* getBodyDefinition(const SgAdaPackageSpec* spec);
+  /// @}
+
   /// returns the declaration node (either SgAdaTaskSpecDecl or SgAdaTaskTypeDecl) for the task specification
   /// @{
   SgDeclarationStatement& getSpecificationDeclaration(const SgAdaTaskBodyDecl& bodyDecl);
@@ -1177,7 +1189,7 @@ namespace Ada
   // void copyFileInfo(SgExpression&  tgt, const SgExpression& src);
   /// \}
 
-  /// \brief sets source position in subtree according to compiler generated
+  /// \brief sets source position in entire subtree of \ref n to compiler generated
   /// \note
   ///    compare with SageInterface::setSourcePositionAtRootAndAllChildren
   ///    the SageInterface does not implement setting the source position to
@@ -1188,12 +1200,6 @@ namespace Ada
   void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode* n);
   void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n);
   /// /}
-
-  /// marks the subtree rooted in \ref n as compiler generated
-  /// \{
-  void markSubtreeCompilerGenerated(SgLocatedNode* n);
-  void markSubtreeCompilerGenerated(SgLocatedNode& n);
-  /// \}
 
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter

@@ -445,6 +445,35 @@ namespace
     ROSE_ASSERT(symap.size() == mapsize);
   }
 
+  template <class SageDeclarationStatement, class SageScopeStatement>
+  auto
+  getSpecFromBody(const SageScopeStatement& defn)
+    -> decltype(std::declval<SageDeclarationStatement>().get_spec()->get_definition())
+  {
+    const SageDeclarationStatement* bodyDecl = dynamic_cast<const SageDeclarationStatement*>(defn.get_parent());
+    ASSERT_not_null(bodyDecl);
+
+    const auto* specDecl = bodyDecl->get_spec();
+    ASSERT_not_null(specDecl); // for a body the spec must exist
+
+    return specDecl->get_definition();
+  }
+
+  template <class SageDeclarationStatement, class SageScopeStatement>
+  auto
+  getBodyFromSpec(const SageScopeStatement& defn)
+    -> decltype(std::declval<SageDeclarationStatement>().get_body()->get_definition())
+  {
+    const SageDeclarationStatement* specDecl = dynamic_cast<const SageDeclarationStatement*>(defn.get_parent());
+    ASSERT_not_null(specDecl);
+
+    const auto* bodyDecl = specDecl->get_body();
+
+    // for a spec the body may have not been seen
+    return bodyDecl ? bodyDecl->get_definition() : nullptr;
+  }
+
+
   struct CanonicalScope : sg::DispatchHandler<const SgScopeStatement*>
   {
     static
@@ -452,7 +481,7 @@ namespace
 
     void handle(const SgNode& n)             { SG_UNEXPECTED_NODE(n); }
     void handle(const SgScopeStatement& n)   { res = &n; }
-    void handle(const SgAdaPackageBody& n)   { res = n.get_spec(); }
+    void handle(const SgAdaPackageBody& n)   { res = getSpecFromBody<SgAdaPackageBodyDecl>(n); }
     void handle(const SgAdaProtectedBody& n) { res = n.get_spec(); }
     void handle(const SgAdaTaskBody& n)      { res = n.get_spec(); }
   };
@@ -799,29 +828,13 @@ namespace Ada
   {
     if (!bodyDecl) return nullptr;
 
-    const SgAdaPackageBodyDecl* defDecl = isSgAdaPackageBodyDecl(bodyDecl->get_definingDeclaration());
-    if (!defDecl) defDecl = bodyDecl;
-
-    SgAdaPackageBody*     body = defDecl->get_definition();
-    if (!body) return nullptr;
-
-    SgAdaPackageSpec*     spec = body->get_spec();
-    if (!spec) return nullptr;
-
-    return isSgAdaPackageSpecDecl(spec->get_parent());
+    return bodyDecl->get_spec();
   }
 
   SgAdaPackageSpecDecl&
   getSpecificationDeclaration(const SgAdaPackageBodyDecl& bodyDecl)
   {
-    const SgAdaPackageBodyDecl* defDecl = isSgAdaPackageBodyDecl(bodyDecl.get_definingDeclaration());
-    if (!defDecl) defDecl = &bodyDecl;
-
-    SgAdaPackageBody&     body = SG_DEREF(defDecl->get_definition());
-    SgAdaPackageSpec&     spec = SG_DEREF(body.get_spec());
-    SgAdaPackageSpecDecl* specDecl = isSgAdaPackageSpecDecl(spec.get_parent());
-
-    return SG_DEREF(specDecl);
+    return SG_DEREF(bodyDecl.get_spec());
   }
 
   SgDeclarationStatement& getSpecificationDeclaration(const SgAdaTaskBodyDecl& bodyDecl)
@@ -849,31 +862,46 @@ namespace Ada
   {
     if (!specDecl) return nullptr;
 
-    SgAdaPackageSpec*     spec = specDecl->get_definition();
-    if (!spec) return nullptr;
-
-    SgAdaPackageBody*     body = spec->get_body();
-    if (!body) return nullptr;
-
-    return isSgAdaPackageBodyDecl(body->get_parent());
+    return specDecl->get_body();
   }
 
   SgAdaPackageBodyDecl&
   getPackageBodyDeclaration(const SgAdaPackageSpecDecl& specDecl)
   {
-    SgAdaPackageSpec&     spec = SG_DEREF(specDecl.get_definition());
-    SgAdaPackageBody&     body = SG_DEREF(spec.get_body());
-    SgAdaPackageBodyDecl* bodyDecl = isSgAdaPackageBodyDecl(body.get_parent());
-
-    return SG_DEREF(bodyDecl);
+    return SG_DEREF(specDecl.get_body());
   }
+
+  SgAdaPackageSpec& getSpecificationDefinition(const SgAdaPackageBody& body)
+  {
+    return SG_DEREF(getSpecFromBody<SgAdaPackageBodyDecl>(body));
+  }
+
+  SgAdaPackageSpec* getSpecificationDefinition(const SgAdaPackageBody* body)
+  {
+    if (!body) return nullptr;
+
+    return getSpecFromBody<SgAdaPackageBodyDecl>(*body);
+  }
+
+  SgAdaPackageBody& getBodyDefinition(const SgAdaPackageSpec& spec)
+  {
+    return SG_DEREF(getBodyFromSpec<SgAdaPackageSpecDecl>(spec));
+  }
+
+  SgAdaPackageBody* getBodyDefinition(const SgAdaPackageSpec* spec)
+  {
+    if (!spec) return nullptr;
+
+    return getBodyFromSpec<SgAdaPackageSpecDecl>(*spec);
+  }
+
 
   namespace
   {
     struct CorrespondingBodyFinder : sg::DispatchHandler<const SgScopeStatement*>
     {
       void handle(const SgNode&)               { /* nothing to be done */ }
-      void handle(const SgAdaPackageSpec& n)   { res = n.get_body(); }
+      void handle(const SgAdaPackageSpec& n)   { res = getBodyFromSpec<SgAdaPackageSpecDecl>(n); }
       void handle(const SgAdaPackageBody& n)   { res = &n; /* n is the body */ }
 
       void handle(const SgAdaTaskSpec& n)      { res = n.get_body(); }
@@ -3372,25 +3400,6 @@ namespace Ada
     converter.traverse(root, preorder);
   }
 
-  void markSubtreeCompilerGenerated(SgLocatedNode& n)
-  {
-    auto setCompilerGenerated =
-          [](SgNode* n)->void
-          {
-            if (SgLocatedNode* loc = isSgLocatedNode(n))
-              loc->setCompilerGenerated();
-          };
-
-    conversionTraversal(setCompilerGenerated, &n);
-  }
-
-  void markSubtreeCompilerGenerated(SgLocatedNode* n)
-  {
-    if (n == nullptr) return;
-
-    markSubtreeCompilerGenerated(*n);
-  }
-
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
   {
     conversionTraversal(CommentCxxifier{cxxLineComments}, root);
@@ -4106,7 +4115,7 @@ namespace
     // For Ada features that have a spec/body combination
     //   we define the logical parent to be the spec.
     // This way, both scopes are on the path for identifying overloaded symbols.
-    void handle(const SgAdaPackageBody& n)       { res = n.get_spec(); }
+    void handle(const SgAdaPackageBody& n)       { res = getSpecFromBody<SgAdaPackageBodyDecl>(n); }
     void handle(const SgAdaTaskBody& n)          { res = n.get_spec(); }
     void handle(const SgAdaProtectedBody& n)     { res = n.get_spec(); }
 
@@ -4325,7 +4334,6 @@ void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src)
   }
 }
 
-
 void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n)
 {
   auto locSetter =
@@ -4340,7 +4348,7 @@ void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n)
 
 void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode* n)
 {
-  if (!n) setSourcePositionInSubtreeToCompilerGenerated(*n);
+  if (n) setSourcePositionInSubtreeToCompilerGenerated(*n);
 }
 
 } // ada

@@ -2781,11 +2781,15 @@ Grammar::setUpStatements ()
      AdaPackageBodyDecl.setFunctionPrototype  ( "HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaPackageBodyDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaPackageBodyDecl.setDataPrototype ( "SgAdaPackageBody*", "definition", "= NULL",
+     AdaPackageBodyDecl.setDataPrototype ( "SgAdaPackageBody*", "definition", "= nullptr",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      // \todo PP could we compute the scope from the AdaPackageSpecDecl instead?
-     AdaPackageBodyDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+     AdaPackageBodyDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaPackageBodyDecl.setDataPrototype ( "SgAdaPackageSpecDecl*", "spec", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 /*
  *     OmpCriticalStatement.setDataPrototype ( "SgName", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2795,10 +2799,14 @@ Grammar::setUpStatements ()
      AdaPackageSpecDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AdaPackageSpecDecl.setDataPrototype ( "SgAdaPackageSpec*", "definition", "= NULL",
+     AdaPackageSpecDecl.setDataPrototype ( "SgAdaPackageSpec*", "definition", "= nullptr",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaPackageSpecDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+     AdaPackageSpecDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaPackageSpecDecl.setDataPrototype ( "SgAdaPackageBodyDecl*", "body", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      // generics
      AdaGenericDefn.setFunctionPrototype ( "HEADER_ADA_GENERIC_DEFN", "../Grammar/Statement.code" );
@@ -4339,8 +4347,8 @@ Grammar::setUpStatements ()
   // PP 05/08/20 Adding Ada nodes
      // packages
      AdaPackageSpec.setFunctionPrototype ( "HEADER_ADA_PACKAGE_SPEC_STATEMENT", "../Grammar/Statement.code" );
-     AdaPackageSpec.setDataPrototype ( "SgAdaPackageBody*", "body", "= NULL",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ AdaPackageSpec.setDataPrototype ( "SgAdaPackageBody*", "body", "= NULL",
+                                    //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaPackageSpec.setDataPrototype ( "bool", "hasPrivate", "= false",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -4349,8 +4357,8 @@ Grammar::setUpStatements ()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaPackageBody.setFunctionPrototype ( "HEADER_ADA_PACKAGE_BODY_STATEMENT", "../Grammar/Statement.code" );
-     AdaPackageBody.setDataPrototype ( "SgAdaPackageSpec*", "spec", "= NULL",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ AdaPackageBody.setDataPrototype ( "SgAdaPackageSpec*", "spec", "= NULL",
+                                    //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaPackageBody.setDataPrototype ( "SgStatementPtrList", "statements", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 

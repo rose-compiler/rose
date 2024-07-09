@@ -983,6 +983,9 @@ namespace
     // \todo is it sufficient that the scope contains the same name already?
     if (!scope.symbol_exists(sgnode.get_name()))
       scope.insert_symbol(sgnode.get_name(), &mkBareNode<SageAdaBodySymbol>(&sgnode));
+    else
+      logTrace() << "symbol for " << sgnode.get_name() << " already exists."
+                 << std::endl;
   }
 }
 
@@ -994,6 +997,9 @@ mkAdaPackageBodyDecl_nondef(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& sco
 
   sgnode.set_scope(&scope);
 
+  specdcl.set_body(&sgnode);
+  sgnode.set_spec(&specdcl);
+
   insertBodySymbol_opt<SgAdaPackageSymbol>(sgnode, scope);
   // markCompilerGenerated(sgnode);
   return sgnode;
@@ -1004,12 +1010,13 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgAdaPackageBodyDecl* nondef
 {
   SgAdaPackageBody&     pkgbody = mkScopeStmt<SgAdaPackageBody>();
   SgAdaPackageBodyDecl& sgnode  = mkLocatedNode<SgAdaPackageBodyDecl>(specdcl.get_name(), &pkgbody);
-  SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
+  //~ SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
 
   sgnode.set_scope(&scope);
   pkgbody.set_parent(&sgnode);
-  pkgspec.set_body(&pkgbody);
-  pkgbody.set_spec(&pkgspec);
+
+  specdcl.set_body(&sgnode);
+  sgnode.set_spec(&specdcl);
 
   linkBodyDeclDef_opt(nondef_opt, sgnode);
   insertBodySymbol_opt<SgAdaPackageSymbol>(sgnode, scope);

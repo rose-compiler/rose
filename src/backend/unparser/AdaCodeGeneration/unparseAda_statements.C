@@ -2185,7 +2185,7 @@ namespace
 
       void handle(const SgAdaPackageBodyDecl& n)
       {
-        res = ReturnType{"package ", false /* does not require type */, SG_DEREF(n.get_definition()).get_spec(), "", ""};
+        res = ReturnType{"package ", false /* does not require type */, SG_DEREF(n.get_spec()).get_definition(), "", ""};
       }
 
       void handle(const SgAdaPackageSymbol& n)

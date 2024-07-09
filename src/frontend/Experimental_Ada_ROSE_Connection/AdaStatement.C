@@ -5566,8 +5566,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                            ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
                          );
 
-        si::Ada::markSubtreeCompilerGenerated(sgnode.get_instantiatedScope());
-        // \todo mark whole subtree under sgnode.get_instantiatedScope() as instantiated
+        // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
+        si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());
 
         /* unused field
              Declaration_ID                 Corresponding_Body;

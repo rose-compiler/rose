@@ -535,7 +535,7 @@ namespace
                   if (shadowed)
                   {
                     if (const SgAdaPackageBody* bdy = isSgAdaPackageBody(scope))
-                      shadowed = (dclscope != bdy->get_spec());
+                      shadowed = (dclscope != si::Ada::getSpecificationDefinition(bdy));
                     else if (const SgAdaProtectedBody* bdy = isSgAdaProtectedBody(scope))
                       shadowed = (dclscope != bdy->get_spec());
                     else if (const SgAdaTaskBody* bdy = isSgAdaTaskBody(scope))
@@ -753,7 +753,7 @@ namespace
       return spec->get_body() == rhs;
 
     if (const SgAdaPackageSpec* spec = isSgAdaPackageSpec(lhs))
-      return spec->get_body() == rhs;
+      return si::Ada::getBodyDefinition(spec) == rhs;
 
     return false;
   }
@@ -1746,7 +1746,7 @@ namespace
       if (const SgAdaPackageSpecDecl* pkgspc = isSgAdaPackageSpecDecl(dcl))
         traversal.addRenamedScope(pkgspc->get_definition(), &n);
       else if (const SgAdaPackageBodyDecl* pkgbdy = isSgAdaPackageBodyDecl(dcl))
-        traversal.addRenamedScope(SG_DEREF(pkgbdy->get_definition()).get_spec(), &n);
+        traversal.addRenamedScope(SG_DEREF(pkgbdy->get_spec()).get_definition(), &n);
 
       // other unit refs?
       return;

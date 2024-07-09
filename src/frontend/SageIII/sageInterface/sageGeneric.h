@@ -1669,7 +1669,7 @@ namespace sg
       }
 #endif
 
-      if (n != NULL) gvisitor = sg::dispatch(std::move(gvisitor), n);
+      if (n != nullptr) gvisitor = sg::dispatch(std::move(gvisitor), n);
     }
 
     operator GVisitor()&& { return std::move(gvisitor); }
