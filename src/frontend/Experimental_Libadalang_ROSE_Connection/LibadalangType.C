@@ -887,6 +887,7 @@ void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int re
   //ADA_ASSERT(sgnode.get_parent() == &enumdcl);
 }
 
+
 template<class MapT, class StringMap>
 void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, SgGlobal& global)
 {
@@ -906,7 +907,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
   int defining_name_hash = hash_node(&lal_defining_name);
   SgType* generatedType = nullptr;
 
-  //logInfo() << "handleStdDecl called for " << canonical_fully_qualified_name << std::endl;
+  //logTrace() << "handleStdDecl called for " << canonical_fully_qualified_name << std::endl;
 
   if(canonical_fully_qualified_name.find("BOOLEAN") != std::string::npos){
     // boolean enum type
@@ -937,9 +938,10 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
         std::string ident = ada_text_to_locale_string(&ada_canonical_text);
         ada_destroy_text(&ada_canonical_text);
 
-        std::string        std_name = "__standard";
-        SgExpression&      repval   = getEnumRepresentationValue(&lal_enum_decl, i, AstContext{}.scope(global).sourceFileName(std_name));
-        SgInitializedName& sgnode   = mkEnumeratorDecl(boolDecl, ident, adaBoolType, repval);
+        std::string         std_name = "__standard";
+        LabelAndLoopManager lblmgr; //This is necessary but I don't know why
+        SgExpression&       repval   = getEnumRepresentationValue(&lal_enum_decl, i, AstContext{}.scope(global).sourceFileName(std_name).labelsAndLoops(lblmgr));
+        SgInitializedName&  sgnode   = mkEnumeratorDecl(boolDecl, ident, adaBoolType, repval);
         int hash = hash_node(&lal_enum_decl);
         recordNode(libadalangVars(), hash, sgnode);
       }
@@ -1178,7 +1180,7 @@ void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspe
 
 void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 {
-  logInfo() << "In initializePkgStandard.\n";
+  logTrace() << "In initializePkgStandard.\n";
   // make available declarations from the package standard
   // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
 

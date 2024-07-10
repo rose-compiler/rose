@@ -140,17 +140,18 @@ void logKind(const char* kind, int elemID)
   logTrace() << std::endl;
 }
 
-/*LabelAndLoopManager::~LabelAndLoopManager()
+LabelAndLoopManager::~LabelAndLoopManager()
 {
-  for (GotoContainer::value_type el : gotos)
+  /*for (GotoContainer::value_type el : gotos)
   {
     //~ el.first->set_label(&lookupNode(labels, el.second));
     ADA_ASSERT(el.first->get_label_expression() == nullptr);
     el.first->set_label_expression(&mkLabelRefExp(lookupNode(labels, el.second)));
-  }
+  }*/
 }
 
-void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
+
+/*void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
   SgLabelStatement*& mapped = labels[id];
 
@@ -218,14 +219,14 @@ AstContext::scope(SgScopeStatement& s) const
   return tmp;
 }
 
-/*AstContext
+AstContext
 AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
 {
   AstContext tmp{*this};
 
   tmp.all_labels_loops = &lm;
   return tmp;
-}*/
+}
 
 AstContext
 AstContext::sourceFileName(std::string& file) const

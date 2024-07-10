@@ -36,7 +36,7 @@ namespace Libadalang_ROSE_Translation
   void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate);
 
   /// converts a Libadalang statement
-  void handleStmt(ada_base_entity* lal_stmt, AstContext ctx);
+  void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lblname = "");
 
   /// converts a Libadalang exception
   void handleExceptionHandler(ada_base_entity* lal_exception, SgTryStmt& tryStmt, AstContext ctx);

@@ -43,19 +43,53 @@ namespace Libadalang_ROSE_Translation
     dcl.get_declarationModifier().get_accessModifier().setPrivate();
   }
 
+  SgLabelStatement&
+  labelStmt(SgStatement& stmt, std::string lblname, ada_base_entity* lal_element, AstContext ctx)
+  {
+    SgNode&           parent  = SG_DEREF(stmt.get_parent());
+    SgLabelStatement& sgn     = mkLabelStmt(lblname, stmt, ctx.scope());
+
+    //~ copyFileInfo(stmt, sgn);
+    attachSourceLocation(sgn, lal_element, ctx);
+    sgn.set_parent(&parent);
+    //ctx.labelsAndLoops().label(lblid, sgn);
+
+    return sgn;
+  }
+
   /// completes statements by setting source locations, parent node,
   /// adding labels (if needed)...
   /// @{
   void
-  completeStmt(SgStatement& sgnode, ada_base_entity* lal_stmt, AstContext ctx)
+  completeStmt(SgStatement& sgnode, ada_base_entity* lal_element, AstContext ctx)
   {
     //ADA_ASSERT (elem.Element_Kind == A_Statement);
 
-    attachSourceLocation(sgnode, lal_stmt, ctx);
+    attachSourceLocation(sgnode, lal_element, ctx);
     sgnode.set_parent(&ctx.scope());
 
     //We are handling labels differently
-    //SgStatement&      sgn  = labelIfNeeded(sgnode, lal_stmt, ctx);
+    //SgStatement&      sgn  = labelIfNeeded(sgnode, lal_element, ctx);
+
+    ctx.appendStatement(sgnode);
+  }
+
+  template <class SageScopeStmt>
+  void
+  completeStmt(SageScopeStmt& sgnode, ada_base_entity* lal_element, AstContext ctx, const std::string& lblname)
+  {
+    attachSourceLocation(sgnode, lal_element, ctx);
+    sgnode.set_parent(&ctx.scope());
+
+    //SgStatement&      sgn0 = labelIfNeeded(sgnode, lblid, ctx);
+    //Statement_Struct& stmt = elem.The_Union.Statement;
+    //SgStatement&      sgn  = labelIfNeeded(sgn0, stmt, ctx);
+    if(lblname != ""){
+      sgnode.set_string_label(lblname);
+      SgStatement& sgn = labelStmt(sgnode, lblname, lal_element, ctx);
+      ctx.appendStatement(sgn);
+      return;
+    }
 
     ctx.appendStatement(sgnode);
   }
@@ -123,9 +157,9 @@ namespace Libadalang_ROSE_Translation
   //   end of a routine through the use of the LoopAndLabelManager.
   void routineBlockHandler(ada_base_entity* lal_stmt_list, SgScopeStatement& blk, AstContext ctx)
   {
-    //LabelAndLoopManager lblmgr;
+    LabelAndLoopManager lblmgr;
 
-    simpleBlockHandler(lal_stmt_list, blk, ctx/*.labelsAndLoops(lblmgr)*/);
+    simpleBlockHandler(lal_stmt_list, blk, ctx.labelsAndLoops(lblmgr));
   }
 
   void simpleExceptionBlockHandler(ada_base_entity* lal_handlers, SgScopeStatement& blk, SgTryStmt& trystmt, AstContext ctx)
@@ -143,12 +177,10 @@ namespace Libadalang_ROSE_Translation
   //   end of a routine through the use of the LoopAndLabelManager
   void routineExceptionBlockHandler(ada_base_entity* lal_handlers, SgScopeStatement& blk, SgTryStmt& trystmt, AstContext ctx)
   {
-    //LabelAndLoopManager lblmgr;
+    LabelAndLoopManager lblmgr;
 
-    simpleExceptionBlockHandler(lal_handlers, blk, trystmt, ctx/*.labelsAndLoops(lblmgr)*/);
+    simpleExceptionBlockHandler(lal_handlers, blk, trystmt, ctx.labelsAndLoops(lblmgr));
   }
-
-
 
   // completes any block with exception handlers and pragmas attached
   void completeHandledBlock( ada_base_entity* lal_stmts,
@@ -1312,7 +1344,7 @@ queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
   return res;
 }
 
-void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
+void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lblname)
   {
     using PragmaContainer = AstContext::PragmaContainer;
     
@@ -1391,7 +1423,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgIfStmt&   sgnode = mkIfStmt();
           SgIfStmt*   ifStmt = &sgnode;
 
-          completeStmt(sgnode, lal_stmt, ctx);
+          completeStmt(sgnode, lal_stmt, ctx, lblname);
 
           //Get the first if stmt
           ada_base_entity lal_condition;
@@ -1443,7 +1475,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgBasicBlock&      casebody = mkBasicBlock();
           SgSwitchStatement& sgnode   = mkAdaCaseStmt(caseexpr, casebody);
 
-          completeStmt(sgnode, lal_stmt, ctx);
+          completeStmt(sgnode, lal_stmt, ctx, lblname);
 
           int count = ada_node_children_count(&lal_alternatives);
 
@@ -1455,6 +1487,29 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           }
 
           assocstmt = &sgnode;
+          break;
+        }
+      case ada_named_stmt:
+        {
+          logKind("ada_named_stmt", kind);
+          //Get the name
+          ada_base_entity lal_decl;
+          ada_named_stmt_f_decl(lal_stmt, &lal_decl);
+          ada_named_stmt_decl_f_name(&lal_decl, &lal_decl);
+          ada_defining_name_f_name(&lal_decl, &lal_decl);
+          ada_symbol_type p_canonical_text;
+          ada_text ada_canonical_text;
+          ada_single_tok_node_p_canonical_text(&lal_decl, &p_canonical_text);
+          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+          std::string label_name = ada_text_to_locale_string(&ada_canonical_text);
+          ada_destroy_text(&ada_canonical_text);
+
+          //Get the stmt
+          ada_base_entity lal_named_stmt;
+          ada_named_stmt_f_stmt(lal_stmt, &lal_named_stmt);
+
+          handleStmt(&lal_named_stmt, ctx, label_name);
+
           break;
         }
       case ada_while_loop_stmt:              // 5.5
@@ -1475,8 +1530,41 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgWhileStmt&    sgnode   = mkWhileStmt(cond, block);
           //int             hash     = hash_node(lal_stmt);
 
-          completeStmt(sgnode, lal_stmt, ctx);
-          //recordNode(ctx.labelsAndLoops().asisLoops(), hash, sgnode); //TODO loop map?
+          completeStmt(sgnode, lal_stmt, ctx, lblname);
+          int hash = hash_node(lal_stmt);
+          recordNode(ctx.labelsAndLoops().libadalangLoops(), hash, sgnode);
+
+          /*PragmaContainer pendingPragmas;
+          AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
+
+          traverseIDs(adaStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
+          processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/
+          int count = ada_node_children_count(&lal_loop_stmt_list);
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_loop_stmt;
+            if(ada_node_child(&lal_loop_stmt_list, i, &lal_loop_stmt) != 0){
+              handleStmt(&lal_loop_stmt, ctx.scope(block));
+            }
+          }
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_loop_stmt:                    // 5.5
+        {
+          logKind("ada_loop_stmt", kind);
+
+          SgBasicBlock&   block    = mkBasicBlock();
+          SgAdaLoopStmt&  sgnode   = mkAdaLoopStmt(block);
+
+          //Get the stmts
+          ada_base_entity lal_loop_stmt_list;
+          ada_base_loop_stmt_f_stmts(lal_stmt, &lal_loop_stmt_list);
+
+          completeStmt(sgnode, lal_stmt, ctx, lblname);
+
+          int hash = hash_node(lal_stmt);
+          recordNode(ctx.labelsAndLoops().libadalangLoops(), hash, sgnode);
 
           /*PragmaContainer pendingPragmas;
           AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
@@ -1520,7 +1608,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
 
           attachSourceLocation(forini, &lal_for_var, ctx);
           sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
-          completeStmt(sgnode, lal_stmt, ctx);
+          completeStmt(sgnode, lal_stmt, ctx, lblname);
           handleDeclaration(&lal_loop_spec, ctx.scope(sgnode), false);
 
           // this swap is needed, b/c SgForInitStatement is not a scope
@@ -1536,6 +1624,9 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgStatement&           test    = mkForLoopTest(isForwardLoop, SG_DEREF(inductionVar));
           sg::linkParentChild(sgnode, test, &SgForStatement::set_test);
 
+          int hash = hash_node(lal_stmt);
+          recordNode(ctx.labelsAndLoops().libadalangLoops(), hash, sgnode);
+
           /*PragmaContainer pendingPragmas;
           AstContext      pragmaCtx = ctx.pragmas(pendingPragmas);
 
@@ -1543,7 +1634,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           {
             ElemIdRange            loopStmts = idRange(stmt.Loop_Statements);
 
-            recordNode(pragmaCtx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
             traverseIDs(loopStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
           }
 
@@ -1561,7 +1651,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
         }
       case ada_label:
         {
-          //logKind("ada_label", kind);
+          logKind("ada_label", kind);
 
           //Make a null stmt for this label to attach to
           SgNullStatement& sgnode = mkNullStatement();
@@ -1584,6 +1674,46 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx)
           SgLabelStatement& sgn     = mkLabelStmt(label_name, sgnode, ctx.scope());
           attachSourceLocation(sgn, lal_stmt, ctx);
           ctx.appendStatement(sgn);
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_exit_stmt:                   // 5.7
+        {
+          logKind("ada_exit_stmt", kind);
+
+          //Determine the loop we are trying to exit
+          ada_base_entity lal_loop_name;
+          ada_exit_stmt_f_loop_name(lal_stmt, &lal_loop_name);
+          int loop_hash;
+          if(ada_node_is_null(&lal_loop_name)){
+            //We don't have a name, so just go up the tree until we find a loop
+            ada_base_entity lal_exit_parent;
+            ada_ada_node_parent(lal_stmt, &lal_exit_parent);
+            ada_node_kind_enum lal_exit_parent_kind = ada_node_kind(&lal_exit_parent);
+            while(lal_exit_parent_kind != ada_loop_stmt && lal_exit_parent_kind != ada_for_loop_stmt && lal_exit_parent_kind != ada_while_loop_stmt){
+              ada_ada_node_parent(&lal_exit_parent, &lal_exit_parent);
+              lal_exit_parent_kind = ada_node_kind(&lal_exit_parent);
+            } 
+            loop_hash = hash_node(&lal_exit_parent);
+          } else {
+            //Figure out which loop this name matches
+            ada_base_entity lal_loop;
+            ada_expr_p_first_corresponding_decl(&lal_loop_name, &lal_loop);
+            ada_ada_node_parent(&lal_loop, &lal_loop); //I hope named loops are always represented by ada_named_stmt
+            ada_named_stmt_f_stmt(&lal_loop, &lal_loop);
+            loop_hash = hash_node(&lal_loop);
+          }
+
+          //Get the exit condition
+          ada_base_entity lal_exit_cond;
+          ada_exit_stmt_f_cond_expr(lal_stmt, &lal_exit_cond);
+          SgStatement&  exitedLoop    = lookupNode(ctx.labelsAndLoops().libadalangLoops(), loop_hash);
+          SgExpression& exitCondition = getExpr_opt(&lal_exit_cond, ctx);
+          const bool    loopIsNamed   = ada_node_is_null(&lal_loop_name) == 0;
+          SgStatement&  sgnode        = mkAdaExitStmt(exitedLoop, exitCondition, loopIsNamed);
+
+          completeStmt(sgnode, lal_stmt, ctx);
 
           assocstmt = &sgnode;
           break;

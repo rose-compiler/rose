@@ -188,8 +188,42 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 ///     a type may have multiple operators with the same name (e.g., "&"(string, char), "&"(string, string))
 map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
 
+/// \brief resolves all goto statements to labels
+///        at the end of procedures or functions.
+struct LabelAndLoopManager
+{
+    LabelAndLoopManager() = default;
+
+    /// patch gotos with target (a label statement)
+    ///   at the end of a procedure / function.
+    ~LabelAndLoopManager();
+
+    /// records a new labeled statement \ref lblstmt with key \ref id.
+    //void label(Element_ID id, SgLabelStatement& lblstmt);
+
+    /// records a new goto statement \ref gotostmt with label key \ref id.
+    //void gotojmp(Element_ID id, SgGotoStatement& gotostmt);
+
+    /// returns a mapping from an Element_ID to a loop statement
+    map_t<int, SgStatement*>& libadalangLoops() { return loops; }
+
+  private:
+    //typedef std::map<Element_ID, SgLabelStatement*>               LabelContainer;
+    //typedef std::vector<std::pair<SgGotoStatement*, Element_ID> > GotoContainer;
+    typedef map_t<int, SgStatement*>                              LoopMap;
+
+    //LabelContainer labels;
+    //GotoContainer  gotos;
+    LoopMap        loops;
+
+    LabelAndLoopManager(const LabelAndLoopManager&)            = delete;
+    LabelAndLoopManager(LabelAndLoopManager&&)                 = delete;
+    LabelAndLoopManager& operator=(const LabelAndLoopManager&) = delete;
+    LabelAndLoopManager& operator=(LabelAndLoopManager&&)      = delete;
+};
+
 /// The context class for translation from Asis to ROSE
-///   containts context that is passed top-down
+///   contains context that is passed top-down
 struct AstContext
 {
 
@@ -218,10 +252,10 @@ struct AstContext
 
     /// sets a new label manager
     /// \note the passed object needs to survive the lifetime of the returned AstContext
-    //AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
+    AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
 
     /// returns the current label manager
-    //LabelAndLoopManager& labelsAndLoops() const { return SG_DEREF(all_labels_loops); }
+    LabelAndLoopManager& labelsAndLoops() const { return SG_DEREF(all_labels_loops); }
 
     /// unit file name
     /// \note the passed object needs to survive the lifetime of the returned AstContext
@@ -290,7 +324,7 @@ struct AstContext
   private:
     SgDeclarationStatement*      pragma_aspect_anchor    = nullptr;
     SgScopeStatement*            the_scope               = nullptr;
-    //LabelAndLoopManager*         all_labels_loops        = nullptr;
+    LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
     SgAdaGenericInstanceDecl*    enclosing_instantiation = nullptr;
     PragmaContainer*             all_pragmas             = nullptr;
