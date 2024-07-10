@@ -35,6 +35,7 @@ namespace
     ada_text kind_name;
     ada_kind_name(kind, &kind_name);
     std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    ada_destroy_text(&kind_name);
     logKind(kind_name_string.c_str(), kind);
 
     ada_base_entity actual_parameter;
@@ -66,12 +67,7 @@ namespace
               );*/
 
     //Get the name of this node
-    ada_symbol_type p_canonical_text;
-    ada_text ada_canonical_text;
-    ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    std::string element_name = ada_text_to_locale_string(&ada_canonical_text);
-    ada_destroy_text(&ada_canonical_text);
+    std::string element_name = canonical_text_as_string(lal_element);
 
     //logKind("An_Identifier", formalParm->ID);
     SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
@@ -90,12 +86,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
   //Get the name of the attribute
   ada_base_entity lal_attribute;
   ada_attribute_ref_f_attribute(lal_element, &lal_attribute);
-  ada_symbol_type p_canonical_text;
-  ada_text ada_canonical_text;
-  ada_single_tok_node_p_canonical_text(&lal_attribute, &p_canonical_text);
-  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-  std::string name = ada_text_to_locale_string(&ada_canonical_text);
-  ada_destroy_text(&ada_canonical_text);
+  std::string name = canonical_text_as_string(&lal_attribute);
 
   //Get the prefix
   ada_base_entity lal_prefix;
@@ -443,12 +434,7 @@ namespace
     logTrace() << "In getOperator_fallback for node of kind " << kind << std::endl;
 
     //Get the name of this node
-    ada_symbol_type p_canonical_text;
-    ada_text ada_canonical_text;
-    ada_single_tok_node_p_canonical_text(lal_expr, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    std::string expr_name = ada_text_to_locale_string(&ada_canonical_text);
-    ada_destroy_text(&ada_canonical_text);
+    std::string expr_name = canonical_text_as_string(lal_expr);
 
     static const OperatorMakerMap makerMap =
     { { ada_op_and,     {"ada_op_and",     mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
@@ -826,13 +812,8 @@ namespace
       }
 
       //Get the name of this expr
-      ada_symbol_type p_canonical_text;
-      ada_text ada_canonical_text;
-      ada_single_tok_node_p_canonical_text(lal_expr, &p_canonical_text);
-      ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-      expr_name = ada_text_to_locale_string(&ada_canonical_text);
+      expr_name = canonical_text_as_string(lal_expr);
       logInfo() << "In getOperator, expr_name is " << expr_name << std::endl;
-      ada_destroy_text(&ada_canonical_text);
 
       // PP 11/18/22
       // UNCLEAR_LINK_1
@@ -999,11 +980,7 @@ namespace
 
       logTrace() << "ada_identifier?" << std::endl;
 
-      ada_symbol_type p_canonical_text;
-      ada_text ada_canonical_text;
-      ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
-      ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-      std::string ident = ada_text_to_locale_string(&ada_canonical_text);
+      std::string ident = canonical_text_as_string(lal_element);
 
       if(!astnode)
         logTrace() << "Identifier '" << ident << "' has no corresponding node in ROSE."
@@ -1137,6 +1114,7 @@ namespace{
     ada_text kind_name;
     ada_kind_name(kind, &kind_name);
     std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    ada_destroy_text(&kind_name);
 
     SgExpression*      res       = NULL;
 
@@ -1153,6 +1131,7 @@ namespace{
           ada_int_literal_p_denoted_value(lal_element, &denoted_value);
           ada_big_integer_text(denoted_value, &value_text);
           std::string denoted_text = ada_text_to_locale_string(&value_text);
+          ada_destroy_text(&value_text);
 
           res = &mkAdaIntegerLiteral(denoted_text.c_str());
           break;
@@ -1194,11 +1173,7 @@ namespace{
         {
           logKind("ada_real_literal", kind);
           //Get the value
-          ada_symbol_type    p_canonical_text;
-          ada_text           ada_canonical_text;
-          ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text); //TODO this won't work after lal 2021
-          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-          std::string value_image = ada_text_to_locale_string(&ada_canonical_text);
+          std::string value_image = canonical_text_as_string(lal_element); //TODO this won't work after lal 2021
           const char* c_value_image = value_image.c_str();
 
           res = &mkValue<SgLongDoubleVal>(c_value_image);
@@ -1213,11 +1188,7 @@ namespace{
           logKind("ada_identifier", kind);
 
           //Get the text of this identifier
-          ada_symbol_type    p_canonical_text;
-          ada_text           ada_canonical_text;
-          ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
-          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-          const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+          const std::string name = canonical_text_as_string(lal_element);
 
           //Check if this is an enum value instead of a variable
           //For now, we check p_is_static_expr & p_is_static_subtype to tell the difference
@@ -1281,9 +1252,7 @@ namespace{
               ada_base_entity defining_name = defining_name_list->items[i];
               ada_base_entity name_identifier;
               ada_defining_name_f_name(&defining_name, &name_identifier);
-              ada_single_tok_node_p_canonical_text(&name_identifier, &p_canonical_text);
-              ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-              const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
+              const std::string test_name = canonical_text_as_string(&name_identifier);
               if(name == test_name){
                 hash = hash_node(&defining_name);
                 ada_node_kind_enum def_kind = ada_node_kind(&defining_name);
@@ -1297,8 +1266,6 @@ namespace{
             logError() << "Could not get corresponding decl for identifier! decl_kind = " << decl_kind << "\n";
             found_decl = false;
           }
-
-          ada_destroy_text(&ada_canonical_text);
 
           if(!found_decl){
             //If we haven't found a decl, don't check the maps
@@ -1651,7 +1618,7 @@ getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement sup
   ada_text kind_name;
   ada_kind_name(kind, &kind_name);
   std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-  logTrace()   << "getExpr called on a " << kind_name_string << std::endl;
+  logTrace() << "getExpr called on a " << kind_name_string << std::endl;
   ada_destroy_text(&kind_name);
 
   SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
@@ -1917,11 +1884,7 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
   }
 
   //Get the text of this identifier
-  ada_symbol_type    p_canonical_text;
-  ada_text           ada_canonical_text;
-  ada_single_tok_node_p_canonical_text(lal_identifier, &p_canonical_text);
-  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-  const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+  const std::string name = canonical_text_as_string(lal_identifier);
 
   //Find the definition of this identifier and get its hash
   int hash;
@@ -1936,17 +1899,13 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
     ada_base_entity defining_name = defining_name_list->items[i];
     ada_base_entity name_identifier;
     ada_defining_name_f_name(&defining_name, &name_identifier);
-    ada_single_tok_node_p_canonical_text(&name_identifier, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    const std::string test_name = ada_text_to_locale_string(&ada_canonical_text);
+    const std::string test_name = canonical_text_as_string(&name_identifier);
     if(name == test_name){
       hash = hash_node(&defining_name);
       logInfo() << "Found definition for ada_identifier " << name << std::endl;
       break;
     }
   }
-
-  ada_destroy_text(&ada_canonical_text);
 
   SgNode* res = nullptr;
 

@@ -131,6 +131,17 @@ bool traceKind(const char* /* kind */)
   return true;
 }
 
+/// Gets the p_canonical_text field for a node and returns it as a string
+std::string canonical_text_as_string(ada_base_entity* lal_element){
+  ada_symbol_type p_canonical_text;
+  ada_text ada_canonical_text;
+  ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
+  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
+  std::string canonical_text_string = ada_text_to_locale_string(&ada_canonical_text);
+  ada_destroy_text(&ada_canonical_text);
+  return canonical_text_string;
+}
+
 void logKind(const char* kind, int elemID)
 {
   if (!traceKind(kind)) return;

@@ -437,12 +437,7 @@ namespace {
         ada_base_entity lal_defining_name, lal_identifier;
         ada_enum_literal_decl_f_name(&lal_inherited_decl, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
-        ada_destroy_text(&ada_canonical_text);
+        std::string ident = canonical_text_as_string(&lal_identifier);
 
         // \todo name.ident could be a character literal, such as 'c'
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
@@ -603,28 +598,24 @@ constructInitializedNamePtrList( AstContext ctx,
   int count = ada_node_children_count(lal_name_list);
   for(int i = 0; i < count; ++i)
   {
-    ada_base_entity obj;
+    ada_base_entity lal_obj;
 
-    if (ada_node_child(lal_name_list, i, &obj) == 0){
+    if (ada_node_child(lal_name_list, i, &lal_obj) == 0){
       logError() << "Error while getting a child in constructInitializedNamePtrList.\n";
       return lst;
     }
-    if(!ada_node_is_null(&obj)){
+    if(!ada_node_is_null(&lal_obj)){
       //Get the name of this decl
-      ada_base_entity    identifier;
-      ada_defining_name_f_name(&obj, &identifier);
-      ada_symbol_type    p_canonical_text;
-      ada_text           ada_canonical_text;
-      ada_single_tok_node_p_canonical_text(&identifier, &p_canonical_text);
-      ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-      const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+      ada_base_entity    lal_identifier;
+      ada_defining_name_f_name(&lal_obj, &lal_identifier);
+      const std::string  name = canonical_text_as_string(&lal_identifier);
       SgExpression*      init = createInit(lst, initexpr, ctx);
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
-      attachSourceLocation(dcl, &obj, ctx);
+      attachSourceLocation(dcl, &lal_obj, ctx);
 
       lst.push_back(&dcl);
-      int hash = hash_node(&obj);
+      int hash = hash_node(&lal_obj);
       recordNonUniqueNode(m, hash, dcl, true /* overwrite existing entries if needed */);
 
       //~ logError() << name << " = " << id << std::endl;
@@ -1355,7 +1346,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     ada_text kind_name;
     ada_kind_name(kind, &kind_name);
     std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-    logTrace()   << "handleStmt called on a " << kind_name_string << std::endl;
+    logTrace() << "handleStmt called on a " << kind_name_string << std::endl;
     ada_destroy_text(&kind_name);
 
     /*if (elem.Element_Kind == A_Declaration)
@@ -1497,12 +1488,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_named_stmt_f_decl(lal_stmt, &lal_decl);
           ada_named_stmt_decl_f_name(&lal_decl, &lal_decl);
           ada_defining_name_f_name(&lal_decl, &lal_decl);
-          ada_symbol_type p_canonical_text;
-          ada_text ada_canonical_text;
-          ada_single_tok_node_p_canonical_text(&lal_decl, &p_canonical_text);
-          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-          std::string label_name = ada_text_to_locale_string(&ada_canonical_text);
-          ada_destroy_text(&ada_canonical_text);
+          std::string label_name = canonical_text_as_string(&lal_decl);
 
           //Get the stmt
           ada_base_entity lal_named_stmt;
@@ -1663,12 +1649,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_label_f_decl(lal_stmt, &lal_ident);
           ada_label_decl_f_name(&lal_ident, &lal_ident);
           ada_defining_name_f_name(&lal_ident, &lal_ident);
-          ada_symbol_type p_canonical_text;
-          ada_text ada_canonical_text;
-          ada_single_tok_node_p_canonical_text(&lal_ident, &p_canonical_text);
-          ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-          std::string label_name = ada_text_to_locale_string(&ada_canonical_text);
-          ada_destroy_text(&ada_canonical_text);
+          std::string label_name = canonical_text_as_string(&lal_ident);
 
           //This code is similar to labelIfNeeded/labelStmt
           SgLabelStatement& sgn     = mkLabelStmt(label_name, sgnode, ctx.scope());
@@ -1907,6 +1888,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
   ada_text kind_name;
   ada_kind_name(kind, &kind_name);
   std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+  ada_destroy_text(&kind_name);
   logTrace()   << "handleDeclaration called on a " << kind_name_string << std::endl;
   
   //Declaration_Struct&     decl = elem.The_Union.Declaration; //decl is equivalent to lal_element
@@ -1926,16 +1908,12 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_base_package_decl_f_package_name(lal_element, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
 
-        SgScopeStatement*       parent_scope = &ctx.scope();
+        std::string           ident        = canonical_text_as_string(&lal_identifier);
+        SgScopeStatement*     parent_scope = &ctx.scope();
 
-        SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
-        SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
+        SgAdaPackageSpecDecl& sgnode       = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
+        SgAdaPackageSpec&     pkgspec      = SG_DEREF(sgnode.get_definition());
 
         logTrace() << "package decl " << ident
                    << std::endl;
@@ -2005,12 +1983,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_package_body_f_package_name(lal_element, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
 
+        std::string             ident        = canonical_text_as_string(&lal_identifier);
         SgScopeStatement*       parent_scope = &ctx.scope();
 
         ada_base_entity previous_decl;
@@ -2095,22 +2069,17 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
 
         ada_node_kind_enum lal_overriding_kind = ada_node_kind(&lal_overriding);
 
         const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
         const bool          overriding = (lal_overriding_kind == ada_overriding_overriding); //TODO ada_overriding_unspecified might count?
         SgScopeStatement* parent_scope = &ctx.scope();
-        std::string              ident = ada_text_to_locale_string(&ada_canonical_text);
+        std::string              ident = canonical_text_as_string(&lal_identifier);
         //ElemIdRange             params = idRange(decl.Parameter_Profile);
         SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                 : mkTypeVoid();
 
-        ada_destroy_text(&ada_canonical_text);
         logKind(isFunc ? "A_Function_Declaration" : "A_Procedure_Declaration", kind);
 
         SgScopeStatement&      logicalScope = SG_DEREF(parent_scope);
@@ -2169,12 +2138,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
 
+        std::string             ident        = canonical_text_as_string(&lal_identifier);
         const bool              isFunc       = (subp_kind_kind == ada_subp_kind_function);
         SgScopeStatement*       parent_scope = &ctx.scope();
         //ElemIdRange             params       = idRange(usableParameterProfile(decl, ctx)); 
@@ -2226,10 +2191,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_task_body_f_name(lal_element, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
 
         //Get the hash for the decl
         ada_base_entity p_decl_part;
@@ -2237,7 +2198,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         int                          hash = hash_node(lal_element);
         int                     decl_hash = hash_node(&p_decl_part);
-        std::string             ident     = ada_text_to_locale_string(&ada_canonical_text);
+        std::string             ident     = canonical_text_as_string(&lal_identifier);
         SgAdaTaskBody&          tskbody   = mkAdaTaskBody();
         SgDeclarationStatement* ndef      = findFirst(libadalangDecls(), decl_hash);
         SgAdaTaskBodyDecl*      nondef    = isSgAdaTaskBodyDecl(ndef);
@@ -2309,17 +2270,12 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
 
-        std::string             ident        = ada_text_to_locale_string(&ada_canonical_text);
+        std::string             ident        = canonical_text_as_string(&lal_identifier);
         SgScopeStatement*       parent_scope = &ctx.scope();
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
                                                       : mkTypeVoid();
 
-        ada_destroy_text(&ada_canonical_text);
         ada_base_entity lal_previous_decl;
         ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
         SgDeclarationStatement* ndef    = nullptr;
@@ -2370,19 +2326,14 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the name
         ada_base_entity lal_identifier;
         ada_defining_name_f_name(&lal_for_var, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
 
-        std::string            ident   = ada_text_to_locale_string(&ada_canonical_text);
+        std::string            ident   = canonical_text_as_string(&lal_identifier);
         SgExpression&          range   = getDefinitionExpr(&lal_iter_expr, ctx);
         SgType&                vartype = si::Ada::typeOfExpr(range).typerep_ref();
         SgInitializedName&     loopvar = mkInitializedName(ident, vartype, &range);
         SgScopeStatement&      scope   = ctx.scope();
         int                    hash    = hash_node(&lal_for_var);
 
-        ada_destroy_text(&ada_canonical_text);
         recordNode(libadalangVars(), hash, loopvar);
 
         SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
@@ -2405,16 +2356,12 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_type_decl_f_name(lal_element, &defining_name);
         ada_base_entity lal_identifier;
         ada_defining_name_f_name(&defining_name, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
 
         //Get the discriminants
         ada_base_entity lal_discr;
         ada_task_type_decl_f_discriminants(lal_element, &lal_discr);
 
-        std::string                 ident  = ada_text_to_locale_string(&ada_canonical_text);
+        std::string                 ident  = canonical_text_as_string(&lal_identifier);
 
         ada_base_entity lal_previous_decl;
         ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
@@ -2473,12 +2420,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_entry_spec_f_entry_name(&entry_spec, &defining_name);
         ada_base_entity lal_identifier;
         ada_defining_name_f_name(&defining_name, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
 
-        std::string     ident   = ada_text_to_locale_string(&ada_canonical_text);
+        std::string     ident   = canonical_text_as_string(&lal_identifier);
         int              hash   = hash_node(lal_element);
 
         //Get the params
@@ -2552,12 +2495,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_base_type_decl_f_name(lal_element, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-        std::string type_name = ada_text_to_locale_string(&ada_canonical_text);
-        logTrace() << "  name: " << type_name << std::endl;
+        std::string type_name = canonical_text_as_string(&lal_identifier);
         SgScopeStatement*           parentScope = &ctx.scope();
         ada_base_entity             lal_discr;
         ada_type_decl_f_discriminants(lal_element, &lal_discr);

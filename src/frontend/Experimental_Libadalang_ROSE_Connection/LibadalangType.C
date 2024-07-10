@@ -711,12 +711,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     ada_base_entity lal_defining_name, lal_identifier;
     ada_enum_literal_decl_f_name(lal_element, &lal_defining_name);
     ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-    ada_symbol_type p_canonical_text;
-    ada_text ada_canonical_text;
-    ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    std::string ident = ada_text_to_locale_string(&ada_canonical_text);
-    ada_destroy_text(&ada_canonical_text);
+    std::string ident = canonical_text_as_string(&lal_identifier);
 
     // \todo name.ident could be a character literal, such as 'c'
     //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
@@ -931,12 +926,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
         ada_base_entity lal_defining_name, lal_identifier;
         ada_enum_literal_decl_f_name(&lal_enum_decl, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        ada_symbol_type p_canonical_text;
-        ada_text ada_canonical_text;
-        ada_single_tok_node_p_canonical_text(&lal_identifier, &p_canonical_text);
-        ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-        std::string ident = ada_text_to_locale_string(&ada_canonical_text);
-        ada_destroy_text(&ada_canonical_text);
+        std::string ident = canonical_text_as_string(&lal_identifier);
 
         std::string         std_name = "__standard";
         LabelAndLoopManager lblmgr; //This is necessary but I don't know why
@@ -957,11 +947,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
     ada_paren_expr_f_expr(&lal_exponent, &lal_exponent);
     ada_bin_op_f_right(&lal_exponent, &lal_exponent);
 
-    ada_symbol_type    p_canonical_text;
-    ada_text           ada_canonical_text;
-    ada_single_tok_node_p_canonical_text(&lal_exponent, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+    const std::string name = canonical_text_as_string(&lal_exponent);
     int exponent = std::stoi(name);
     int lower_bound = -std::pow(2, exponent);
     int upper_bound = std::pow(2, exponent) - 1;
@@ -973,19 +959,13 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
     ada_type_decl_f_type_def(lal_decl, &float_def);
     ada_base_entity lal_num_digits, lal_range;
     ada_floating_point_def_f_num_digits(&float_def, &lal_num_digits);
-    ada_symbol_type    p_canonical_text;
-    ada_text           ada_canonical_text;
-    ada_single_tok_node_p_canonical_text(&lal_num_digits, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    std::string name = ada_text_to_locale_string(&ada_canonical_text);
+    std::string name = canonical_text_as_string(&lal_num_digits);
     int num_digits = std::stoi(name);
     
     ada_floating_point_def_f_range(&float_def, &lal_range);
     ada_range_spec_f_range(&lal_range, &lal_range);
     ada_bin_op_f_right(&lal_range, &lal_range);
-    ada_single_tok_node_p_canonical_text(&lal_range, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    name = ada_text_to_locale_string(&ada_canonical_text);
+    name = canonical_text_as_string(&lal_range);
     int base = stoi(name.substr(0, name.find("#")));
     int exponent = stoi(name.substr(name.find("#e+")+3, name.length()-1));
     //Call declareRealSubtype
@@ -1052,11 +1032,7 @@ void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, Sg
   ada_base_entity subtype_indication, subtype_identifier;
   ada_subtype_decl_f_subtype(lal_decl, &subtype_indication);
   ada_subtype_indication_f_name(&subtype_indication, &subtype_identifier);
-  ada_symbol_type    p_canonical_text;
-  ada_text           ada_canonical_text;
-  ada_single_tok_node_p_canonical_text(&subtype_identifier, &p_canonical_text);
-  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-  AdaIdentifier supertype_name(ada_text_to_locale_string(&ada_canonical_text));
+  AdaIdentifier supertype_name(canonical_text_as_string(&subtype_identifier));
 
   SgType* adaIntegerSubType = nullptr;
 
@@ -1081,11 +1057,7 @@ void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, Sg
     ada_bin_op_f_left(&lal_exponent, &lal_exponent);
     ada_bin_op_f_right(&lal_exponent, &lal_exponent);
 
-    ada_symbol_type    p_canonical_text;
-    ada_text           ada_canonical_text;
-    ada_single_tok_node_p_canonical_text(&lal_exponent, &p_canonical_text);
-    ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-    const std::string  name = ada_text_to_locale_string(&ada_canonical_text);
+    const std::string name = canonical_text_as_string(&lal_exponent);
     int exponent = std::stoi(name);
     int upper_bound = std::pow(2, exponent)-1;
     //Now make the type

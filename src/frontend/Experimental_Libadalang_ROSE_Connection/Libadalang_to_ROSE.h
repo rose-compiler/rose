@@ -369,6 +369,9 @@ bool startsWith(const std::string& s, const std::string& sub);
 
 void logKind(const char* kind, int elemID);
 
+/// Gets the p_canonical_text field for a node and returns it as a string
+std::string canonical_text_as_string(ada_base_entity* lal_element);
+
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);
 
 } //End Libadalang_ROSE_Translation
