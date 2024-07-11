@@ -102,7 +102,7 @@ main (int argc, char *argv[])
 
   printf ("Using preorder recursive call to preserve directive orders:\n ");
   vector<PreprocessingInfo*> infoList; 
-  preOrderCollectPreprocessingInfo (project, infoList);
+  preOrderCollectPreprocessingInfo (project, infoList, 0);
 
   assert (checkIncrementalLineNumbers (infoList)==true);
 

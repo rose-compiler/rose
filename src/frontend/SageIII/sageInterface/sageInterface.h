@@ -864,13 +864,22 @@ ROSE_DLL_API int moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode);
 
 ROSE_DLL_API int eraseNullPreprocessingInfo (SgLocatedNode* lnode);
 
+
+/*  \brief For each comment, we store its container, idx within the container, 
+         and depth level of the located node within AST from a selected root
+*/
+struct PreprocessingInfoData {
+    AttachedPreprocessingInfoType* container; // the associated container
+    int index; // idx of the comment within the container
+    int depth; // starting from 0 : the root node of the selected root of the sub-tree
+};
+
 /* \brief Recursively walk a subtree rooted at current node, extract PreprocessingInfo pointers to a list
     The list preserves the orginal order in which each preprocessing info shows up in the source code.
     This function is needed since naive walking of a subtree may generate out-of-order list of preprocessing info.
     We have to consider collecting the before, inside locations first, and the after location last using a recursion function.
 */
-
-ROSE_DLL_API void preOrderCollectPreprocessingInfo(SgNode* current, std::vector<PreprocessingInfo*>& infoList);
+ROSE_DLL_API void preOrderCollectPreprocessingInfo(SgNode* current, std::vector<PreprocessingInfo*>& infoList, int depth);
 
 //@}
 

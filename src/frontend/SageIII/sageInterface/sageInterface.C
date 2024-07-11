@@ -27708,7 +27708,12 @@ int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
   return retVal;
 }
 
-void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<PreprocessingInfo*>& infoList)
+//TODO: expose this to header file?
+// We keep all things, including level : starting from 0. Later iteration ignore the level 0 directives.  
+// Should this be maintained by librose or user space code?
+static std::unordered_map <PreprocessingInfo*, SageInterface::PreprocessingInfoData> infoMap;
+
+void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<PreprocessingInfo*>& infoList, int depth)
 { 
   // stop condition
   if (current == NULL)
@@ -27727,20 +27732,35 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
     { 
       int counter = 0;
       AttachedPreprocessingInfoType::iterator i;
+      int idx=0; 
       for (i = comments->begin (); i != comments->end (); i++)
       { 
-        PreprocessingInfo* info= *i; 
-        // put directives with before or inside location into the infoList 
-        if (info->getRelativePosition () == PreprocessingInfo::before||
-            info->getRelativePosition () == PreprocessingInfo::inside)
-            infoList.push_back (info);
-        else if (info->getRelativePosition () == PreprocessingInfo::after)    
-            afterList.push_back (info); // if attached to be after, save to afterList
-        else
-        {  
-           cerr<<"Error: unrecognized relative position value:" <<info->getRelativePosition () <<endl;
-           ROSE_ASSERT (false);
-        }
+	PreprocessingInfo* info= *i; 
+
+	// prepare the data jus in case
+	PreprocessingInfoData data;
+	data.container=comments;
+	data.index = idx;
+	data.depth = depth; 
+
+	// put directives with before or inside location into the infoList 
+	if (info->getRelativePosition () == PreprocessingInfo::before||
+	    info->getRelativePosition () == PreprocessingInfo::inside)
+	{
+	  infoList.push_back (info);
+	  infoMap[info] = data; 
+	}
+	else if (info->getRelativePosition () == PreprocessingInfo::after)    
+	{ 
+	  afterList.push_back (info); // if attached to be after, save to afterList
+	  infoMap[info] = data; 
+	}    
+	else
+	{  
+	  cerr<<"Error: unrecognized relative position value:" <<info->getRelativePosition () <<endl;
+	  ROSE_ASSERT (false);
+	}
+	idx++; 
       } // end for
     }
   } // end if
@@ -27748,7 +27768,7 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
   // handling children nodes
   std::vector<SgNode* > children = current->get_traversalSuccessorContainer();
   for (auto c: children)
-    preOrderCollectPreprocessingInfo (c, infoList);
+    preOrderCollectPreprocessingInfo (c, infoList, depth +1);
   
   // append after locations after recursively handling children nodes. 
   for (auto fi : afterList)
@@ -27760,6 +27780,9 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
 //  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
 // This should be done before removing or replace the statement: lnode
 // TODO: this may need to be a recursive function for multiple levels of nested directives.
+//
+//  We only care about directives attached to inner nodes, not lnode : TODO: double check this for corner cases
+//
 int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 {
     int retVal=0;
@@ -27789,6 +27812,15 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    // we have to store this separatedly since the begin diretive pinfo becomes NULL after they have been erased!
    // associated_directives[BeginInfo] will not retrieve them! 
    vector< pair<AttachedPreprocessingInfoType*, int>> associated_erase; 
+
+   // Two steps here
+   // Step 1: We build the list first, then go through them to neutralize them
+   //    to simplify the problem: we exclude comments attached to the current located node, only consider things inside
+   //
+   // The list must provide the following information
+   //   infoList (container), index of the directive, PreprocessingInfo* itself
+   //
+   // Then we go through the list, extract keepers, neutralize anything else.   
    for(;ast_i!=ast.end();++ast_i) {
        SgLocatedNode* current  = isSgLocatedNode(*ast_i);
        if (current ==NULL ) // skip non located nodes
