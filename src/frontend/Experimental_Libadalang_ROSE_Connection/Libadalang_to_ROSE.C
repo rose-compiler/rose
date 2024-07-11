@@ -153,27 +153,30 @@ void logKind(const char* kind, int elemID)
 
 LabelAndLoopManager::~LabelAndLoopManager()
 {
-  /*for (GotoContainer::value_type el : gotos)
+  for (GotoContainer::value_type el : gotos)
   {
     //~ el.first->set_label(&lookupNode(labels, el.second));
-    ADA_ASSERT(el.first->get_label_expression() == nullptr);
+    //ADA_ASSERT(el.first->get_label_expression() == nullptr);
     el.first->set_label_expression(&mkLabelRefExp(lookupNode(labels, el.second)));
-  }*/
+  }
 }
 
 
-/*void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
+void LabelAndLoopManager::label(int hash, SgLabelStatement& lblstmt)
 {
-  SgLabelStatement*& mapped = labels[id];
+  SgLabelStatement*& mapped = labels[hash];
 
-  ADA_ASSERT(mapped == nullptr);
+  //ADA_ASSERT(mapped == nullptr);
+  if(mapped != nullptr){
+    logWarn() << "Overwriting value in labels!\n";
+  }
   mapped = &lblstmt;
 }
 
-void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
+void LabelAndLoopManager::gotojmp(int hash, SgGotoStatement& gotostmt)
 {
-  gotos.emplace_back(&gotostmt, id);
-} */
+  gotos.emplace_back(&gotostmt, hash);
+}
 
 AstContext
 AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const

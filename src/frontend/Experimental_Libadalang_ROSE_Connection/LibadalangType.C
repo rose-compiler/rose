@@ -929,8 +929,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
         std::string ident = canonical_text_as_string(&lal_identifier);
 
         std::string         std_name = "__standard";
-        LabelAndLoopManager lblmgr; //This is necessary but I don't know why
-        SgExpression&       repval   = getEnumRepresentationValue(&lal_enum_decl, i, AstContext{}.scope(global).sourceFileName(std_name).labelsAndLoops(lblmgr));
+        SgExpression&       repval   = getEnumRepresentationValue(&lal_enum_decl, i, AstContext{}.scope(global).sourceFileName(std_name));
         SgInitializedName&  sgnode   = mkEnumeratorDecl(boolDecl, ident, adaBoolType, repval);
         int hash = hash_node(&lal_enum_decl);
         recordNode(libadalangVars(), hash, sgnode);

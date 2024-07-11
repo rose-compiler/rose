@@ -1252,7 +1252,27 @@ namespace {
     ROSE_ASSERT(inserted.second);
   }
 
+  int getLabelRef(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+    if(kind == ada_dotted_name)
+    {
+      logKind("ada_dotted_name", kind);
+      //Get the suffix
+      ada_base_entity lal_suffix;
+      ada_dotted_name_f_suffix(lal_element, &lal_suffix);
+      return getLabelRef(&lal_suffix, ctx);
+    }
+
+    logKind("ada_identifier", kind);
+    ada_base_entity lal_label_decl;
+    ada_expr_p_first_corresponding_decl(lal_element, &lal_label_decl);
+    return hash_node(&lal_label_decl);
+  }
+
 } //End unnamed namespace
+
 
 /// converts a libadalang parameter declaration to a ROSE parameter (i.e., variable)
 ///   declaration.
@@ -1445,7 +1465,10 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
 
           //Get the else
           ada_if_stmt_f_else_stmts(lal_stmt, &lal_path);
-          ifStmtCommonBranch(&lal_path, ifStmt, ctx, &SgIfStmt::set_false_body);
+          count = ada_node_children_count(&lal_path);
+          if(count > 0){
+            ifStmtCommonBranch(&lal_path, ifStmt, ctx, &SgIfStmt::set_false_body);
+          }
 
           assocstmt = &sgnode;
           break;
@@ -1645,9 +1668,9 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           completeStmt(sgnode, lal_stmt, ctx);
 
           //Add the label
-          ada_base_entity lal_ident;
-          ada_label_f_decl(lal_stmt, &lal_ident);
-          ada_label_decl_f_name(&lal_ident, &lal_ident);
+          ada_base_entity lal_label_decl, lal_ident;
+          ada_label_f_decl(lal_stmt, &lal_label_decl);
+          ada_label_decl_f_name(&lal_label_decl, &lal_ident);
           ada_defining_name_f_name(&lal_ident, &lal_ident);
           std::string label_name = canonical_text_as_string(&lal_ident);
 
@@ -1655,6 +1678,43 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           SgLabelStatement& sgn     = mkLabelStmt(label_name, sgnode, ctx.scope());
           attachSourceLocation(sgn, lal_stmt, ctx);
           ctx.appendStatement(sgn);
+
+          //Record this label
+          int hash = hash_node(&lal_label_decl);
+          ctx.labelsAndLoops().label(hash, sgn);
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_decl_block:                   // 5.6
+        {
+          logKind("ada_decl_block", kind);
+
+          SgBasicBlock& sgnode   = mkBasicBlock();
+
+          //recordNode(libadalangBlocks(), elem.ID, sgnode);
+          completeStmt(sgnode, lal_stmt, ctx, lblname);
+
+          //Get the decls, stmts, exceptions, & pragmas of this block body
+          ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+
+          ada_decl_block_f_decls(lal_stmt, &lal_decls); //lal_decls should now be an ada_declarative_part
+          ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
+          ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+          ada_decl_block_f_stmts(lal_stmt, &lal_handled_stmts);
+          ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+          ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+
+          completeDeclarationsWithHandledBlock( &lal_decls,
+                                                &lal_stmts,
+                                                &lal_exceptions,
+                                                &lal_pragmas,
+                                                simpleBlockHandler,
+                                                simpleExceptionBlockHandler,
+                                                sgnode,
+                                                false /* same block for declarations and statements */,
+                                                ctx
+                                              );
 
           assocstmt = &sgnode;
           break;
@@ -1693,6 +1753,22 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           SgExpression& exitCondition = getExpr_opt(&lal_exit_cond, ctx);
           const bool    loopIsNamed   = ada_node_is_null(&lal_loop_name) == 0;
           SgStatement&  sgnode        = mkAdaExitStmt(exitedLoop, exitCondition, loopIsNamed);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_goto_stmt:                    // 5.8
+        {
+          logKind("ada_goto_stmt", kind);
+          SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
+
+          //Get the label we will goto
+          ada_base_entity lal_label;
+          ada_goto_stmt_f_label_name(lal_stmt, &lal_label);
+
+          ctx.labelsAndLoops().gotojmp(getLabelRef(&lal_label, ctx), sgnode);
 
           completeStmt(sgnode, lal_stmt, ctx);
 

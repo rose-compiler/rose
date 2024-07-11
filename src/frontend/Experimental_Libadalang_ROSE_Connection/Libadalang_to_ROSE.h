@@ -198,22 +198,22 @@ struct LabelAndLoopManager
     ///   at the end of a procedure / function.
     ~LabelAndLoopManager();
 
-    /// records a new labeled statement \ref lblstmt with key \ref id.
-    //void label(Element_ID id, SgLabelStatement& lblstmt);
+    /// records a new labeled statement \ref lblstmt with key \ref hash.
+    void label(int hash, SgLabelStatement& lblstmt);
 
     /// records a new goto statement \ref gotostmt with label key \ref id.
-    //void gotojmp(Element_ID id, SgGotoStatement& gotostmt);
+    void gotojmp(int hash, SgGotoStatement& gotostmt);
 
     /// returns a mapping from an Element_ID to a loop statement
     map_t<int, SgStatement*>& libadalangLoops() { return loops; }
 
   private:
-    //typedef std::map<Element_ID, SgLabelStatement*>               LabelContainer;
-    //typedef std::vector<std::pair<SgGotoStatement*, Element_ID> > GotoContainer;
+    typedef std::map<int, SgLabelStatement*>               LabelContainer;
+    typedef std::vector<std::pair<SgGotoStatement*, int> > GotoContainer;
     typedef map_t<int, SgStatement*>                              LoopMap;
 
-    //LabelContainer labels;
-    //GotoContainer  gotos;
+    LabelContainer labels;
+    GotoContainer  gotos;
     LoopMap        loops;
 
     LabelAndLoopManager(const LabelAndLoopManager&)            = delete;
