@@ -27735,33 +27735,33 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
       int idx=0; 
       for (i = comments->begin (); i != comments->end (); i++)
       { 
-	PreprocessingInfo* info= *i; 
+        PreprocessingInfo* info= *i; 
 
-	// prepare the data just in case
-	PreprocessingInfoData data;
-	data.container=comments;
-	data.index = idx;
-	data.depth = depth; 
+        // prepare the data just in case
+        PreprocessingInfoData data;
+        data.container=comments;
+        data.index = idx;
+        data.depth = depth; 
 
-	// put directives with before or inside location into the infoList 
-	if (info->getRelativePosition () == PreprocessingInfo::before||
-	    info->getRelativePosition () == PreprocessingInfo::inside)
-	{
-	  infoList.push_back (info);
-	  infoMap[info] = data; 
-	}
-	else if (info->getRelativePosition () == PreprocessingInfo::after)    
-	{ 
-	  afterList.push_back (info); // if attached to be after, save to afterList
-	  infoMap[info] = data; 
-	}    
-	else
-	{  
-	  cerr<<"Error: unrecognized relative position value:" <<info->getRelativePosition () <<endl;
-	  ROSE_ASSERT (false);
-	}
+        // put directives with before or inside location into the infoList 
+        if (info->getRelativePosition () == PreprocessingInfo::before||
+            info->getRelativePosition () == PreprocessingInfo::inside)
+        {
+          infoList.push_back (info);
+          infoMap[info] = data; 
+        }
+        else if (info->getRelativePosition () == PreprocessingInfo::after)    
+        { 
+          afterList.push_back (info); // if attached to be after, save to afterList
+          infoMap[info] = data; 
+        }    
+        else
+        {  
+          cerr<<"Error: unrecognized relative position value:" <<info->getRelativePosition () <<endl;
+          ROSE_ASSERT (false);
+        }
 
-	idx++; 
+        idx++; 
       } // end for
     }
   } // end if
@@ -27850,16 +27850,16 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
        //1. empty stack, or 
        // 2.  top of stack is not one of #if #ifdef #ifndef. This is an unbalanced directive (keeper)
        if (keepers.size()==0)
-	 keepers.push_back(make_pair (infoList, commentIndex));
+         keepers.push_back(make_pair (infoList, commentIndex));
        else if (isBeginDirective( (*(keepers.back().first))[keepers.back().second]  )!=1 ) // not empty , top of the stack is not beginning
        {
-	 keepers.push_back(make_pair (infoList,commentIndex)); 
+         keepers.push_back(make_pair (infoList,commentIndex)); 
        } 
        else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
        {
-	 PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
-	 // we associated this middle directive with the beginning directive
-	 associated_directives[begin_info].push_back(make_pair (infoList,commentIndex)); 
+         PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
+         // we associated this middle directive with the beginning directive
+         associated_directives[begin_info].push_back(make_pair (infoList,commentIndex)); 
        } 
      } 
      // end directive
@@ -27869,18 +27869,18 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
        // neutralize an internall matched pair, if any
        if (keepers.size()>0)
        { 
-	 AttachedPreprocessingInfoType* comments = keepers.back().first;
-	 int idx = keepers.back().second;
+         AttachedPreprocessingInfoType* comments = keepers.back().first;
+         int idx = keepers.back().second;
 
-	 if(isBeginDirective( (*comments)[idx] )==1)
-	 {
-	   keepers.pop_back();
-	   neutralized = true;
-	 }
+         if(isBeginDirective( (*comments)[idx] )==1)
+         {
+           keepers.pop_back();
+           neutralized = true;
+         }
        }
 
        if (!neutralized)
-	 keepers.push_back(make_pair (infoList,commentIndex));
+         keepers.push_back(make_pair (infoList,commentIndex));
      }
 
    }
