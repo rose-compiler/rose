@@ -1365,7 +1365,7 @@ namespace sg
   template <class AncestorNode, class QualSgNode>
   AncestorNode* _ancestor(QualSgNode& n)
   {
-    typedef AncestorTypeFinder<AncestorNode, QualSgNode> AncestorFinder;
+    using AncestorFinder = AncestorTypeFinder<AncestorNode, QualSgNode>;
 
     typename AncestorFinder::Pair res(NULL, n.get_parent());
 

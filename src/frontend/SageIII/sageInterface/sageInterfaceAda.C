@@ -3400,6 +3400,18 @@ namespace Ada
     converter.traverse(root, preorder);
   }
 
+  void conversionTraversal(std::function<void(SgNode*)>&& fn, StatementRange roots)
+  {
+    ConversionTraversal converter(std::move(fn));
+
+    std::for_each( roots.first, roots.second,
+                   [&converter](sg::NotNull<SgDeclarationStatement> n) -> void
+                   {
+                     converter.traverse(n, preorder);
+                   }
+                 );
+  }
+
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
   {
     conversionTraversal(CommentCxxifier{cxxLineComments}, root);
