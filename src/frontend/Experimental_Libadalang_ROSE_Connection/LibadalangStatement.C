@@ -241,7 +241,7 @@ namespace Libadalang_ROSE_Translation
 
     //Get the number of decls
     //Assuming lal_decls is a list of some kind, we can just call ada_node_children_count
-    int             range = ada_node_children_count(lal_decls);
+    int             range = ada_node_children_count(lal_decls); //TODO This works if lal_decls is uninitialized, but I'm not sure why?
 
     for(int i =0; i < range; i++){
          ada_base_entity lal_decl_child;
@@ -594,6 +594,17 @@ constructInitializedNamePtrList( AstContext ctx,
                                )
 {
   SgInitializedNamePtrList lst;
+
+  if(ada_node_is_null(lal_name_list)){
+    //Add a dummy blank name to the list & return
+    const std::string name = "";
+    SgExpression*      init = createInit(lst, initexpr, ctx);
+    SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
+    //attachSourceLocation(dcl, &lal_obj, ctx);
+    lst.push_back(&dcl);
+    return lst;
+  }
+
   int hash = hash_node(lal_name_list);
   int count = ada_node_children_count(lal_name_list);
   for(int i = 0; i < count; ++i)
@@ -1686,24 +1697,32 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           assocstmt = &sgnode;
           break;
         }
+      case ada_begin_block:
       case ada_decl_block:                   // 5.6
         {
-          logKind("ada_decl_block", kind);
+          logKind(kind == ada_decl_block ? "ada_decl_block" : "ada_begin_block", kind);
 
           SgBasicBlock& sgnode   = mkBasicBlock();
 
-          //recordNode(libadalangBlocks(), elem.ID, sgnode);
+          //recordNode(libadalangBlocks(), elem.ID, sgnode); //TODO Block map?
           completeStmt(sgnode, lal_stmt, ctx, lblname);
 
           //Get the decls, stmts, exceptions, & pragmas of this block body
           ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
 
-          ada_decl_block_f_decls(lal_stmt, &lal_decls); //lal_decls should now be an ada_declarative_part
-          ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
-          ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
-          ada_decl_block_f_stmts(lal_stmt, &lal_handled_stmts);
-          ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
-          ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+          if(kind == ada_decl_block){
+            ada_decl_block_f_decls(lal_stmt, &lal_decls); //lal_decls should now be an ada_declarative_part
+            ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
+            ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+            ada_decl_block_f_stmts(lal_stmt, &lal_handled_stmts);
+            ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+            ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+          } else {
+            ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+            ada_begin_block_f_stmts(lal_stmt, &lal_handled_stmts);
+            ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+            ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+          }
 
           completeDeclarationsWithHandledBlock( &lal_decls,
                                                 &lal_stmts,
@@ -1887,7 +1906,27 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           assocstmt = &sgnode;
           break;
         }
+      case ada_raise_stmt:                   // 11.3
+        {
+          logKind("ada_raise_stmt", kind);
+          //Get the exception
+          ada_base_entity lal_exception;
+          ada_raise_stmt_f_exception_name(lal_stmt, &lal_exception);
 
+          //Get the message
+          ada_base_entity lal_message;
+          ada_raise_stmt_f_error_message(lal_stmt, &lal_message);
+
+          SgExpression&   raised = getExpr_opt(&lal_exception, ctx);
+          SgExpression*   msg    = !ada_node_is_null(&lal_message) ? &getExpr(&lal_message, ctx)
+                                                                   : nullptr;
+          SgStatement&    sgnode = mkRaiseStmt(raised, msg);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
       default:
         {
           logWarn() << "Unhandled statement " << kind << std::endl;
@@ -1898,54 +1937,55 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     //recordPragmasID(std::move(pragmaVector), assocstmt, ctx);
   }
 
-//TODO Convert this
-void handleExceptionHandler(ada_base_entity* lal_exception, SgTryStmt& tryStmt, AstContext ctx)
+void handleExceptionHandler(ada_base_entity* lal_element, SgTryStmt& tryStmt, AstContext ctx)
   {
     using PragmaContainer = AstContext::PragmaContainer;
 
     //Get the kind of this node
-    ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_exception);
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
 
     if(kind != ada_exception_handler){
         logWarn() << "handleExceptionHandler given " << kind << std::endl;
     }
 
-    //ADA_ASSERT (elem.Element_Kind == An_Exception_Handler);
+    logKind("ada_exception_handler", kind);
+    
+    //Get the name(s?) for this handler
+    ada_base_entity lal_names;
+    ada_exception_handler_f_exception_name(lal_element, &lal_names); //TODO is this a list or just 1 node?
 
-    //logKind("An_Exception_Handler", elem.ID);
-    /*name_container            names   = queryDeclNames(ex.Choice_Parameter_Specification, ctx);
+    //Get the types of exceptions handled
+    ada_base_entity lal_exception_choices;
+    ada_exception_handler_f_handled_exceptions(lal_element, &lal_exception_choices);
 
-    if(names.size() == 0)
-    {
-      // add an unnamed exception handler
-      names.emplace_back(std::string{}, std::string{}, ctx.scope(), elem);
-    }
-
-    ADA_ASSERT (names.size() == 1);
-    ElemIdRange              tyRange = idRange(ex.Exception_Choices);
-    SgType&                  extypes = traverseIDs(tyRange, elemMap(), ExHandlerTypeCreator{ctx});
-    SgInitializedNamePtrList lst     = constructInitializedNamePtrList(ctx, asisVars(), names, extypes, nullptr);
+    //Get the stmts
+    ada_base_entity lal_stmts;
+    ada_exception_handler_f_stmts(lal_element, &lal_stmts);
+    SgType&                  extypes = createExHandlerType(&lal_exception_choices, ctx);
+    SgInitializedNamePtrList lst     = constructInitializedNamePtrList(ctx, libadalangVars(), &lal_names, extypes, nullptr);
     SgBasicBlock&            body    = mkBasicBlock();
 
-    ADA_ASSERT (lst.size() == 1);
     SgCatchOptionStmt&       sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body, tryStmt);
-    ElemIdRange              range   = idRange(ex.Handler_Statements);
 
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
     sgnode.set_trystmt(&tryStmt);
     sgnode.set_parent(tryStmt.get_catch_statement_seq_root());
 
-    PragmaContainer pendingPragmas;
+    /*PragmaContainer pendingPragmas;
     AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
 
-    traverseIDs(range, elemMap(), StmtCreator{pragmaCtx.scope(body)});
+    traverseIDs(range, elemMap(), StmtCreator{pragmaCtx.scope(body)});*/
+    int count = ada_node_children_count(&lal_stmts);
+    for(int i = 0; i < count; i++){
+      ada_base_entity lal_stmt;
+      if(ada_node_child(&lal_stmts, i, &lal_stmt) != 0){
+        handleStmt(&lal_stmt, ctx.scope(body));
+      }
+    }
 
     computeSourceRangeFromChildren(body);
-    attachSourceLocation(sgnode, elem, pragmaCtx);
-    processAndPlacePragmas(ex.Pragmas, { &body }, pragmaCtx); // pragmaCtx.scope(body) ?*/
-    /* unused fields:
-    */
+    attachSourceLocation(sgnode, lal_element, ctx);
+    //processAndPlacePragmas(ex.Pragmas, { &body }, pragmaCtx); // pragmaCtx.scope(body) ?
   }
 
 void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
@@ -2376,6 +2416,58 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         assocdecl = &sgnode;
         break;
+      }
+    case ada_exception_decl:                 // 11.1(2)
+      {
+        logKind("ada_exception_decl", kind);
+
+        //Get a list of names
+        ada_base_entity lal_excp_names;
+        ada_exception_decl_f_ids(lal_element, &lal_excp_names);
+
+        //Get if this is a rename
+        ada_base_entity lal_renames;
+        ada_exception_decl_f_renames(lal_element, &lal_renames);
+
+        SgScopeStatement&        scope    = ctx.scope();
+        SgType&                  excty    = lookupNode(adaTypesByName(), AdaIdentifier{"Exception"});
+        if(ada_node_is_null(&lal_renames)){
+          SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(ctx, libadalangExcps(), &lal_excp_names, excty, nullptr);
+          SgVariableDeclaration&   sgnode   = mkExceptionDecl(dclnames, scope);
+
+          attachSourceLocation(sgnode, lal_element, ctx);
+          privatize(sgnode, isPrivate);
+          ctx.appendStatement(sgnode);
+          assocdecl = &sgnode;
+          break;
+        } else {
+          logInfo() << "  renaming\n";
+
+          //TODO Asis assumes only 1 name here, is that true?
+          //Get the only? name
+          ada_base_entity lal_identifier;
+          ada_exception_decl_f_ids(lal_element, &lal_identifier);
+          ada_node_child(&lal_identifier, 0, &lal_identifier);
+          int hash = hash_node(&lal_identifier);
+          ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+
+          //Get the name of the renamed excp
+          ada_base_entity lal_renamed_object;
+          ada_renaming_clause_f_renamed_object(&lal_renames, &lal_renamed_object);
+
+          std::string        ident   = canonical_text_as_string(&lal_identifier);
+          SgExpression&      renamed = getExpr(&lal_renamed_object, ctx);
+
+          SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(ident, renamed, excty, scope);
+
+          recordNode(libadalangDecls(), hash, sgnode);
+
+          attachSourceLocation(sgnode, lal_element, ctx);
+          privatize(sgnode, isPrivate);
+          ctx.appendStatement(sgnode);
+          assocdecl = &sgnode;
+          break;
+        }
       }
     case ada_component_decl:                  // 3.8(6)
       {

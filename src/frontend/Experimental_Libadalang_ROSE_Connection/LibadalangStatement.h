@@ -39,7 +39,7 @@ namespace Libadalang_ROSE_Translation
   void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lblname = "");
 
   /// converts a Libadalang exception
-  void handleExceptionHandler(ada_base_entity* lal_exception, SgTryStmt& tryStmt, AstContext ctx);
+  void handleExceptionHandler(ada_base_entity* lal_element, SgTryStmt& tryStmt, AstContext ctx);
 
   /// processes inherited subprograms and (TODO) declarations
   /// \param derivedType  the derived or extended type

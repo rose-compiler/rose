@@ -207,16 +207,28 @@ namespace
     return sgnode;
   }
 
-  SgInitializedName&
-  declareException(const std::string& name, SgType& base, SgAdaPackageSpec& scope)
+  template<class MapT>
+  void declareException(MapT& m, ada_base_entity* lal_element, SgType& base, SgAdaPackageSpec& scope)
   {
-    SgInitializedName&              sgnode = mkInitializedName(name, base, nullptr);
+    //Get the name of this excp
+    ada_text_type fully_qualified_name;
+    ada_basic_decl_p_canonical_fully_qualified_name(lal_element, &fully_qualified_name);
+    std::string canonical_fully_qualified_name = dot_ada_text_type_to_string(fully_qualified_name);
+    //Get the name of this pkg without the "STANDARD."
+    std::string excp_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
+
+    SgInitializedName&              sgnode = mkInitializedName(excp_name, base, nullptr);
     std::vector<SgInitializedName*> exdecl{ &sgnode };
     SgVariableDeclaration&          exvar = mkExceptionDecl(exdecl, scope);
 
     exvar.set_firstNondefiningDeclaration(&exvar);
     scope.append_statement(&exvar);
-    return sgnode;
+
+    ada_base_entity lal_defining_name;
+    ada_exception_decl_f_ids(lal_element, &lal_defining_name);
+    ada_node_child(&lal_defining_name, 0, &lal_defining_name);
+    int hash = hash_node(&lal_defining_name);
+    m[hash] = &sgnode;
   }
 
   SgAdaPackageSpecDecl&
@@ -1162,6 +1174,9 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 
   stdpkg.set_scope(&global);
 
+  // \todo reconsider using a true Ada exception representation
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::Ada::exceptionName, &stdspec));
+
   //Get the lal representation of the standard package
   ada_analysis_unit std_unit;
   ada_ada_node_p_standard_unit(lal_root, &std_unit);
@@ -1208,7 +1223,11 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
           handleAsciiPkg(adaVars(), &lal_decl, stdspec);
           break;
         }
-        case ada_exception_decl: //TODO
+        case ada_exception_decl:
+        {
+          declareException(adaExcps(), &lal_decl, exceptionType, stdspec);
+          break;
+        }
         case ada_attribute_def_clause: //TODO This is about duration?
         case ada_pragma_node:
           break;
@@ -1218,10 +1237,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
     }
   }
 
-  // \todo reconsider using a true Ada exception representation
-  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::Ada::exceptionName, &stdspec));
-
-  //adaTypes()["EXCEPTION"]           = &exceptionType;
+  adaTypesByName()["EXCEPTION"]           = &exceptionType;
 
   SgType&               adaBoolType = SG_DEREF(adaTypesByName().at(AdaIdentifier{"BOOLEAN"}));
   // integral types
@@ -1244,10 +1260,10 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   SgType& adaWideWideStringType     = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_WIDE_STRING"}));
 
   // Ada standard exceptions
-  SgInitializedName& adaConstraintError    = declareException("Constraint_Error", exceptionType, stdspec);
-  SgInitializedName& adaProgramError       = declareException("Program_Error",    exceptionType, stdspec);
-  SgInitializedName& adaStorageError       = declareException("Storage_Error",    exceptionType, stdspec);
-  SgInitializedName& adaTaskingError       = declareException("Tasking_Error",    exceptionType, stdspec);
+  //SgInitializedName& adaConstraintError    = declareException("Constraint_Error", exceptionType, stdspec);
+  //SgInitializedName& adaProgramError       = declareException("Program_Error",    exceptionType, stdspec);
+  //SgInitializedName& adaStorageError       = declareException("Storage_Error",    exceptionType, stdspec);
+  //SgInitializedName& adaTaskingError       = declareException("Tasking_Error",    exceptionType, stdspec);
 
   // added packages
   adaPkgs()[pkg_hash]             = &stdpkg;
@@ -1362,6 +1378,74 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   si::Ada::stdpkg = &stdpkg;
 }
 
+std::pair<SgInitializedName*, SgAdaRenamingDecl*>
+getExceptionBase(ada_base_entity* lal_element, AstContext ctx)
+{
+  std::string name;
+  //Get the corresponding definition
+  ada_base_entity lal_corresponding_decl;
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+  if(kind == ada_identifier){
+    ada_expr_p_first_corresponding_decl(lal_element, &lal_corresponding_decl);
+    name = canonical_text_as_string(lal_element);
+  } else if(kind == ada_dotted_name) {
+    ada_dotted_name_f_suffix(lal_element, &lal_corresponding_decl);
+    kind = ada_node_kind(&lal_corresponding_decl);
+    while(kind == ada_dotted_name){
+      ada_dotted_name_f_suffix(&lal_corresponding_decl, &lal_corresponding_decl);
+      kind = ada_node_kind(&lal_corresponding_decl);
+    }
+    name = canonical_text_as_string(&lal_corresponding_decl);
+    ada_expr_p_first_corresponding_decl(&lal_corresponding_decl, &lal_corresponding_decl);
+  } else {
+    logError() << "Unhandled kind " << kind << " in getExceptionBase!\n"; 
+  }
+
+  ada_ada_node_array defining_name_list;
+  ada_basic_decl_p_defining_names(&lal_corresponding_decl, &defining_name_list);
+  int decl_hash;
+          
+  //Find the correct decl in the defining name list
+  for(int i = 0; i < defining_name_list->n; i++){
+    ada_base_entity defining_name = defining_name_list->items[i];
+    ada_base_entity name_identifier;
+    ada_defining_name_f_name(&defining_name, &name_identifier);
+    const std::string test_name = canonical_text_as_string(&name_identifier);
+    if(name == test_name){
+      decl_hash = hash_node(&defining_name);
+      ada_node_kind_enum def_kind = ada_node_kind(&defining_name);
+      logInfo() << "Found definition for exception " << name << ", kind = " << def_kind << std::endl;
+      break;
+    }
+  }
+
+  // first try: look up in user defined exceptions
+  if (SgInitializedName* ini = findFirst(libadalangExcps(), decl_hash))
+    return std::make_pair(ini, nullptr);
+
+  // second try: look up in renamed declarations
+  if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash))
+  {
+    SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(dcl));
+
+    return std::make_pair(nullptr, &rendcl);
+  }
+
+  // third try: look up in exceptions defined in standard
+  if (SgInitializedName* ini = findFirst(adaExcps(), decl_hash))
+    return std::make_pair(ini, nullptr);
+
+  // last resort: create a new initialized name representing the exception
+  logError() << "Unknown exception: " << name << std::endl;
+
+  // \todo create an SgInitializedName if the exception was not found
+  SgInitializedName& init = mkInitializedName(name, lookupNode(adaTypesByName(), AdaIdentifier{"EXCEPTION"}), nullptr);
+
+  init.set_scope(&ctx.scope());
+  return std::make_pair(&init, nullptr);
+}
+
 SgType&
 getDiscreteSubtype(ada_base_entity* lal_type, ada_base_entity* lal_constraint, AstContext ctx)
 {
@@ -1437,6 +1521,44 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
 
   attachSourceLocation(SG_DEREF(res), lal_constraint, ctx);
   return *res;
+}
+
+SgType& createExHandlerType(ada_base_entity* lal_exception_choices, AstContext ctx){
+  std::vector<SgType*> lst;
+  int count = ada_node_children_count(lal_exception_choices);
+  //Get the type for each choice
+  for(int i = 0; i < count; i++){
+    ada_base_entity lal_exception_choice;
+    if(ada_node_child(lal_exception_choices, i, &lal_exception_choice) != 0){
+      SgExpression* exceptExpr = nullptr;
+       ada_node_kind_enum kind = ada_node_kind(&lal_exception_choice);
+
+      if(kind == ada_identifier || kind == ada_dotted_name)
+      {
+        auto              expair = getExceptionBase(&lal_exception_choice, ctx);
+        SgScopeStatement& scope = ctx.scope();
+
+        exceptExpr = expair.first ? &mkExceptionRef(*expair.first, scope)
+                                  : &mkAdaRenamingRefExp(SG_DEREF(expair.second))
+                                  ;
+
+        attachSourceLocation(SG_DEREF(exceptExpr), &lal_exception_choice, ctx);
+      }
+      else if(kind == ada_others_designator) {
+        exceptExpr = &getDefinitionExpr(&lal_exception_choice, ctx);
+      } else {
+        logError() << "Unrecognized kind " << kind << " in createExHandlerType!\n";
+      }
+
+      lst.push_back(&mkExceptionType(SG_DEREF(exceptExpr)));
+    }
+  }
+  //Now, combine the types if necessary and return
+  if(lst.size() == 1){
+    return SG_DEREF(lst[0]);
+  } else {
+    return mkTypeUnion(std::move(lst));
+  }
 }
 
 } //End Libadalang_ROSE_Translation namepsace

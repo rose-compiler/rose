@@ -84,6 +84,9 @@ getDiscreteSubtype(ada_base_entity* lal_type, ada_base_entity* lal_constraint, A
 SgAdaTypeConstraint&
 getConstraint(ada_base_entity* lal_constraint, AstContext ctx);
 
+SgType&
+createExHandlerType(ada_base_entity* lal_exception_choices, AstContext ctx);
+
 } //end Libadlang_ROSE_Translation namespace
 
 

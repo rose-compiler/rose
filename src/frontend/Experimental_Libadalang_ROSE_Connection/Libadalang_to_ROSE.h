@@ -157,6 +157,10 @@ using map_t = std::unordered_map<KeyType, SageNode>;
 /// returns a mapping from hash to SgInitializedName
 map_t<int, SgInitializedName*>& libadalangVars();
 
+/// returns a mapping from hash to Exception declaration
+/// \todo revise with representation of Exceptions
+map_t<int, SgInitializedName*>& libadalangExcps();
+
 /// returns a mapping from hash to SgDeclarationStatement
 map_t<int, SgDeclarationStatement*>& libadalangDecls();
 
@@ -168,6 +172,9 @@ map_t<int, SgType*>& adaTypes();
 
 /// returns a mapping from string to standard type nodes
 map_t<AdaIdentifier, SgType*>& adaTypesByName();
+
+/// returns a mapping from hash to builtin exception types
+map_t<int, SgInitializedName*>& adaExcps();
 
 /// stores all expressions that were generated where operator declarations were expected
 std::vector<SgExpression*>& operatorExprs();
@@ -360,6 +367,14 @@ void attachSourceLocation(SgExpression& n, ada_base_entity* lal_element, AstCont
 void attachSourceLocation(SgPragma& n, ada_base_entity* lal_element, AstContext ctx);
 /// @}
 
+/// computes a nodes source location from its children
+///   e.g., a try stmt includes try block and handlers
+///         a try block ranges from first to last statement
+///         a handler list ranges from first handler to last handler
+/// \{
+void computeSourceRangeFromChildren(SgLocatedNode&);
+void computeSourceRangeFromChildren(SgLocatedNode*);
+/// \}
 
 /// tests if \ref s starts with \ref sub
 /// \param  s    a string

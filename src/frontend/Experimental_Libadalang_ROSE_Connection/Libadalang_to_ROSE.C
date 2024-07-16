@@ -33,6 +33,9 @@ namespace{
   /// stores a mapping from hash to SgInitializedName
   map_t<int, SgInitializedName*> libadalangVarsMap;
 
+  /// stores a mapping from hash to Exception declaration
+  map_t<int, SgInitializedName*> libadalangExcpsMap;
+
   /// stores a mapping from hash to SgInitializedName
   map_t<int, SgDeclarationStatement*> libadalangDeclsMap;
 
@@ -44,6 +47,9 @@ namespace{
 
   /// stores a mapping from string to builtin type nodes
   map_t<AdaIdentifier, SgType*> adaTypesByNameMap;
+
+  /// stores a mapping from hash to builtin exception nodes
+  map_t<int, SgInitializedName*> adaExcpsMap;
 
   /// stores a mapping from string to builtin pkgs (std, ascii)
   map_t<int, SgAdaPackageSpecDecl*> adaPkgsMap;
@@ -62,10 +68,12 @@ namespace{
 } //end unnamed namespace
 
 map_t<int, SgInitializedName*>&                                libadalangVars() { return libadalangVarsMap;   }
+map_t<int, SgInitializedName*>&                               libadalangExcps() { return libadalangExcpsMap;  }
 map_t<int, SgDeclarationStatement*>&                          libadalangDecls() { return libadalangDeclsMap;  }
 map_t<int, SgDeclarationStatement*>&                          libadalangTypes() { return libadalangTypesMap;  }
 map_t<int, SgType*>&                                                 adaTypes() { return adaTypesMap;         }
 map_t<AdaIdentifier, SgType*>&                                 adaTypesByName() { return adaTypesByNameMap;   }
+map_t<int, SgInitializedName*>&                                      adaExcps() { return adaExcpsMap;         }
 map_t<int, SgAdaPackageSpecDecl*>&                                    adaPkgs() { return adaPkgsMap;          }
 map_t<int, SgInitializedName*>&                                       adaVars() { return adaVarsMap;          }
 std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap;  }
@@ -302,6 +310,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_task_body:
         case ada_entry_decl:
         case ada_component_decl:
+        case ada_exception_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
@@ -1274,6 +1283,82 @@ namespace{
 
     setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
   }
+
+  void computeSourceRangeFromChildren_internal(std::vector<SgNode*> successors, SgLocatedNode& n)
+  {
+    auto beg    = successors.begin();
+    auto lim    = successors.end();
+    auto first  = std::find_if(beg, lim, hasLocationInfo);
+    auto rbeg   = successors.rbegin();
+    auto rlim   = std::make_reverse_iterator(first);
+    auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
+
+    if ((first == lim) || (last == rlim))
+    {
+      if (SgExpression* ex = isSgExpression(&n))
+        markCompilerGenerated(*ex);
+      else
+        markCompilerGenerated(n);
+
+      return;
+    }
+
+    //~ logTrace() << "set srcloc for " << typeid(n).name() << std::endl;
+
+    cpyFileInfo( n,
+                 &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+                 SG_DEREF(isSgLocatedNode(*first)) );
+
+    cpyFileInfo( n,
+                 &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+                 SG_DEREF(isSgLocatedNode(*last)) );
+
+    if (SgExpression* ex = isSgExpression(&n))
+    {
+      Sg_File_Info* oppos = ex->get_operatorPosition();
+
+      ASSERT_require(oppos);
+      (*oppos) = *ex->get_startOfConstruct();
+    }
+  }
+
+  void computeSourceRangeFromChildren_internal(SgLocatedNode& n)
+  {
+    computeSourceRangeFromChildren_internal(n.get_traversalSuccessorContainer(), n);
+  }
+
+  struct SourceLocationCalc
+  {
+    void handle(SgNode& n)        { SG_UNEXPECTED_NODE(n); }
+    void handle(SgLocatedNode& n) { computeSourceRangeFromChildren_internal(n); }
+
+    void handle(SgFunctionParameterList& n)
+    {
+      const SgInitializedNamePtrList& args = n.get_args();
+
+      if (args.size())
+      {
+        SgLocatedNode* first = args.front()->get_declptr();
+        SgLocatedNode* last  = args.back()->get_declptr();
+
+        computeSourceRangeFromChildren_internal({first, last}, n);
+      }
+      else
+        computeSourceRangeFromChildren_internal({}, n);
+    }
+  };
+} //end anonymous namespace
+
+void computeSourceRangeFromChildren(SgLocatedNode& n)
+{
+  sg::dispatch(SourceLocationCalc{}, &n);
+}
+
+void computeSourceRangeFromChildren(SgLocatedNode* n)
+{
+  if (n == nullptr) return;
+
+  computeSourceRangeFromChildren(*n);
 }
 
 /// initialize translation settins
@@ -1281,28 +1366,6 @@ void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings)
 {
   // settings.failhardAdb and fail_on_error are obsolete
   if (settings.failhardAdb) fail_on_error = true;
-}
-
-void computeSourceRangeFromChildren(SgLocatedNode& n)
-{
-  std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
-  auto beg    = successors.begin();
-  auto lim    = successors.end();
-  auto first  = std::find_if(beg, lim, hasLocationInfo);
-  auto rbeg   = successors.rbegin();
-  auto rlim   = std::make_reverse_iterator(first);
-  auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
-
-  if ((first == lim) || (last == rlim))
-    return;
-
-  cpyFileInfo( n,
-               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
-               SG_DEREF(isSgLocatedNode(*first)) );
-
-  cpyFileInfo( n,
-               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
-               SG_DEREF(isSgLocatedNode(*last)) );
 }
 
 struct GenFileInfo : AstSimpleProcessing
@@ -1374,9 +1437,9 @@ namespace{
                     };
 
 
-    /*std::for_each( operatorExprs().begin(), operatorExprs().end(),
+    std::for_each( operatorExprs().begin(), operatorExprs().end(),
                    nullrepl
-                 );*/
+                 );
 
     logInfo() << "Replaced " << ctr << " nullptr with SgNullExpression." << std::endl;
   }

@@ -1288,10 +1288,10 @@ namespace{
           {
             res = sg::dispatch(ExprRefMaker{ctx}, dcl);
           }
-          /*else if(SgInitializedName* exc = findFirst(asisExcps(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+          else if(SgInitializedName* exc = findFirst(libadalangExcps(), hash))
           {
             res = &mkExceptionRef(*exc, ctx.scope());
-          }*/
+          }
           else if(SgDeclarationStatement* tydcl = findFirst(libadalangTypes(), hash))
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
@@ -1308,10 +1308,10 @@ namespace{
           {
             res = sb::buildVarRefExp(var, &ctx.scope());
           }
-          /*else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
+          else if (SgInitializedName* exc = findFirst(adaExcps(), hash))
           {
             res = &mkExceptionRef(*exc, ctx.scope());
-          }*/ //TODO
+          }
 /*
           else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
           {
