@@ -26,7 +26,7 @@ ReplaceParams ( const ParameterDeclaration& decl, const AstInterface::AstNodeLis
     SymbolicAstWrap curarg(curAst, codegen);
     parmap[curpar] = curarg;
     partypemap[curpar] = decl.get_param_types()[index];
-    DebugOperatorDescriptor("Operator parameter " + curpar + "->" + curarg.toString());
+    DebugOperatorDescriptor([&curpar, &curarg](){ return "Operator parameter " + curpar + "->" + curarg.toString(); });
   }
 }
 
@@ -43,7 +43,7 @@ SymbolicAstWrap ReplaceParams:: find( const string& varname)
   if (p != parmap.end()) {
     return (*p).second;
   }
-  DebugOperatorDescriptor("Cannot find argument for parameter: " + varname + ". Returning empty!");
+  DebugOperatorDescriptor([&varname](){ return "Cannot find argument for parameter: " + varname + ". Returning empty!"; });
   return SymbolicAstWrap();
 }
 
@@ -63,7 +63,7 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
 std::string OperatorDeclaration::operator_signature( const AstNodePtr& exp, 
                                  AstInterface::AstNodeList* argp,
                                  AstInterface::AstTypeList* paramp) {
-    DebugOperatorDescriptor("Creating operator signature:" + AstInterface::AstToString(exp));
+    DebugOperatorDescriptor([&exp](){ return "Creating operator signature:" + AstInterface::AstToString(exp); });
     std::string fname;
     AstNodePtr f;
     AstNodeType t;
@@ -77,7 +77,7 @@ std::string OperatorDeclaration::operator_signature( const AstNodePtr& exp,
     else if ((AstInterface::IsFunctionCall(exp, &f, argp, 0, paramp) && AstInterface::IsVarRef(f,0,&fname, 0, 0, /*use_globl_name=*/true)) || 
          AstInterface::IsFunctionDefinition(exp,&fname,argp,0,0, paramp, 0, /*use_globl_name=*/true)) { 
     } else {
-      DebugOperatorDescriptor("Unexpected operator: not recognized:" + AstInterface::AstToString(exp) + ". Return empty name.");
+      DebugOperatorDescriptor([&exp](){ return "Unexpected operator: not recognized:" + AstInterface::AstToString(exp) + ". Return empty name."; });
     }
     return fname;
   }
@@ -89,13 +89,13 @@ OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast,
     if (argp == 0) { argp = &args; }
     TypeDescriptor::get_name() = operator_signature(op_ast, argp, &params);
     if (TypeDescriptor::get_name() == "" || params.size() != argp->size()) {
-        DebugOperatorDescriptor("Error: Unknown operation: " + AstInterface::AstToString(op_ast) + ". Generatign empty declaration.");
+        DebugOperatorDescriptor([&op_ast](){ return "Error: Unknown operation: " + AstInterface::AstToString(op_ast) + ". Generatign empty declaration."; });
         return;
     } 
     AstInterface::AstNodeList::const_iterator p1 = argp->begin();
     AstInterface::AstTypeList::const_iterator p2 = params.begin(); 
     while (p2 != params.end() && p1 != argp->end()) {
-       DebugOperatorDescriptor("Adding operator parameter:" + fa.GetVarName(*p1));
+       DebugOperatorDescriptor([&fa, &p1](){ return "Adding operator parameter:" + fa.GetVarName(*p1); });
        pars.add_param(fa.GetTypeName(*p2), AstInterface::GetVarName(*p1));
        ++p1; ++p2;
     }

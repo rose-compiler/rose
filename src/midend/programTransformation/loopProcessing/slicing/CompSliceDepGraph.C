@@ -8,8 +8,6 @@
 #include <GraphGroup.h>
 #include <ROSE_ASSERT.h>
 
-DebugLog DebugSlice("-debugslice");
-
 CompSliceDepGraphCreate ::
 CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
                          LoopTreeTransDepGraphCreate *tc)
@@ -17,16 +15,18 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
 {
   LoopTreeNode *root = comp.GetLoopTreeRoot();
   PtrMapWrap <LoopTreeNode, CompSliceDepGraphNode> treeMap;
-  DebugSlice("Creating CompSliceDepGraph from " + comp.TreeToString());
+  DebugLog DebugSlice("-debugslice");
+
+  DebugSlice([&comp](){ return "Creating CompSliceDepGraph from " + comp.TreeToString(); });
   for (LoopTreeNode *n = root->FirstChild(); n != 0; n = n->NextSibling()) {
     LoopTreeDepCompSubtree scope(comp, n);
     CompSliceDepGraphNode* sliceNode = 0;
     if (tc == 0 || !n->ContainLoop() || n->IsPerfectLoopNest()) {
        sliceNode = CreateNode(scope, op);
-       DebugSlice("new slice node:" + sliceNode->toString());
+       DebugSlice([&sliceNode](){ return "new slice node:" + sliceNode->toString(); });
     }
     else {
-      DebugSlice("construct transitive dep. graph for " + n->TreeToString());
+      DebugSlice([n](){ return "construct transitive dep. graph for " + n->TreeToString(); });
       sliceNode = CreateNode(scope, op, tc);
     }
     LoopTreeTraverseSelectStmt stmts(n);

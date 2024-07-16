@@ -72,13 +72,13 @@ operator()(GraphCreate *g, int level)
        if (cur == DEPDIR_EQ)
            cur = dir;
        else if (dir != DEPDIR_EQ && cur != dir) {
-           DebugSlice("Loop not slideable b/c of conflicting dependence direction: " + r.toString());
+           DebugSlice([&r](){ return "Loop not slideable b/c of conflicting dependence direction: " + r.toString(); });
            return false;
        }
        if ( (dir == DEPDIR_LE && a2 <= 0) || (dir == DEPDIR_GE && a1 >= 0)
              || (dir == DEPDIR_EQ && a2 <= 0))
           continue;
-       DebugSlice("Loop not slideable b/c of dependence direction: " + r.toString());
+       DebugSlice([&r](){ return "Loop not slideable b/c of dependence direction: " + r.toString(); });
        return false;
      }
   }

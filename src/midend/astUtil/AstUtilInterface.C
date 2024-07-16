@@ -14,35 +14,35 @@ bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
 
     OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
     assert(funcAnnot != 0);
-    DebugAstUtil("ComputeAstSideEffect: " + AstInterface::AstToString(ast));
+    DebugAstUtil([&ast](){ return "ComputeAstSideEffect: " + AstInterface::AstToString(ast); });
 
     StmtSideEffectCollect<SgNode*> collect_operator(fa, funcAnnot);
     std::function<bool(SgNode*, SgNode*)> save_mod = [&collect, &ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Modify);
       }
-      DebugAstUtil("save modify:" + AstInterface::AstToString(first));
+      DebugAstUtil([&first](){ return "save modify:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Modify);
       };
     std::function<bool(SgNode*, SgNode*)> save_read = [&collect,&ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Read);
       }
-      DebugAstUtil("save read:" + AstInterface::AstToString(first));
+      DebugAstUtil([&first](){ return "save read:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Read);
       };
     std::function<bool(SgNode*, SgNode*)> save_kill = [&collect,&ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Kill);
       }
-      DebugAstUtil("save kill:" + AstInterface::AstToString(first));
+      DebugAstUtil([&first](){ return "save kill:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Kill);
       };
     std::function<bool(SgNode*, SgNode*)> save_call = [&collect,&ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Call);
       }
-      DebugAstUtil("save call:" + AstInterface::AstToString(first));
+      DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Call);
       };
 
@@ -67,11 +67,11 @@ std::pair<std::string, std::string>
 AstUtilInterface::AddOperatorSideEffectAnnotation(
               SgNode* op_ast, SgNode* var, AstUtilInterface::OperatorSideEffect relation)
 {
-  DebugAstUtil("Adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "var is : " + AstInterface::AstToString(var));
+  DebugAstUtil([&relation, &var](){ return "Adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "var is : " + AstInterface::AstToString(var); });
   std::string op_name;
   AstInterface::AstNodeList op_params;
   if (!AstInterface::IsFunctionDefinition(op_ast, &op_name, &op_params)) {
-     DebugAstUtil("Expecting an operator but getting " + AstInterface::AstToString(op_ast));
+     DebugAstUtil([&op_ast](){ return "Expecting an operator but getting " + AstInterface::AstToString(op_ast);});
      return std::pair<std::string, std::string>("","");
   }
   AstInterfaceImpl astImpl(op_ast);
@@ -98,7 +98,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
   }
   assert(desc != 0);
   std::string varname = GetVariableSignature(var);
-  DebugAstUtil("Variable name is :" + varname);
+  DebugAstUtil([&varname](){ return "Variable name is :" + varname; });
   if (varname == "_UNKNOWN_" || varname == "") {
     desc->set_has_unknown(true);  
   } else {
@@ -141,7 +141,7 @@ bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
    if (! AstInterface::IsBlock(scope, &scope_name)) {
      return false;
    }
-   DebugAstUtil("IsLocalRef invoked: var is " + AstInterface::AstToString(ref) + "; scope is " + scope_name);
+   DebugAstUtil([&ref,&scope_name](){ return "IsLocalRef invoked: var is " + AstInterface::AstToString(ref) + "; scope is " + scope_name; });
    AstNodePtr _cur_scope;
    if (!AstInterface::IsVarRef(ref, 0, 0, &_cur_scope)) {
       return false;
@@ -152,7 +152,7 @@ bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
          if (AstInterface::IsBlock(cur_scope, &cur_scope_name) &&  cur_scope_name == scope_name) {
              return true;
          }
-         DebugAstUtil("IsLocalRef current scope:" + cur_scope->class_name());
+         DebugAstUtil([&cur_scope](){ return "IsLocalRef current scope:" + cur_scope->class_name(); });
          SgNode* n = AstInterfaceImpl::GetScope(cur_scope);
          cur_scope = n;
    }   

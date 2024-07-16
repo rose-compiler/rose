@@ -160,13 +160,13 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
   DebugLog DebugSlice("-debugslice");
   LoopTreeInterface looptreeInterface;
   LoopTreeNode *root = comp.GetLoopTreeRoot();
-  DebugSlice("Analyzing LoopTree " + comp.TreeToString());
+  DebugSlice([&comp](){ return "Analyzing LoopTree " + comp.TreeToString(); });
   int rootlevel = root->LoopLevel();
   int size, slicesize;
   GetLoopTreeSize(root, slicesize, size);
   size -= rootlevel;
   size *= slicesize;
-  DebugSlice("slice size = " + std::to_string(size));
+  DebugSlice([size]() { return "slice size = " + std::to_string(size); });
 
   result.Reset(size);
   TransSlicingAnal* tmpSlices = new TransSlicingAnal[size];
@@ -259,7 +259,7 @@ Analyze( LoopTreeDepComp &comp, CompSliceNest& result)
         continue;
      index++;
      if (!LoopSlicable()(dg, index)) {
-        DebugSlice("Loop " + std::to_string(index) + " is not sliceable.");
+        DebugSlice([index]() { return "Loop " + std::to_string(index) + " is not sliceable."; });
         continue;
      }
      CompSlice *slice = CreateCompSlice( rootlevel );

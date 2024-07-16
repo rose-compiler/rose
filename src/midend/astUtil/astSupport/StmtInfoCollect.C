@@ -13,10 +13,8 @@
 
 #ifndef TEMPLATE_ONLY
 DebugLog DebugLocalInfoCollect("-debuglocalinfocollect");
-DebugLog DebugAliasAnal("-debugaliasanal");
 #else 
 extern DebugLog DebugLocalInfoCollect;
-extern DebugLog DebugAliasAnal;
 #endif
 
 #ifdef TEMPLATE_ONLY
@@ -37,7 +35,7 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* cal
     AstNodePtr c = AstNodePtrImpl(*p1).get_ptr();
     if ( c == AstNodePtr())
         continue;
-    DebugLocalInfoCollect("Function Argument: " + AstInterface::AstToString(c) );
+    DebugLocalInfoCollect([&c]() { return "Function Argument: " + AstInterface::AstToString(c); } );
     operator()(fa, c);
   }
 }
@@ -96,24 +94,24 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       return true;
    }
    else if (fa.IsStatement(s)) {
-      DebugLocalInfoCollect("previsiting cur statement " + AstInterface::AstToString(s)); 
+      DebugLocalInfoCollect([&s]() { return "previsiting cur statement " + AstInterface::AstToString(s); }); 
       curstmt = AstNodePtrImpl(s).get_ptr();
    }
    else  {
-      DebugLocalInfoCollect("previsiting cur node " + AstInterface::AstToString(s));
+      DebugLocalInfoCollect([&s](){return "previsiting cur node " + AstInterface::AstToString(s); });
       if (curstmt == AST_NULL) {
         AstInterface::AstNodePtr s1 = fa.GetParent(s);
         for ( ; s1 != AST_NULL && !fa.IsStatement(s1); s1 = fa.GetParent(s1));
         if (s1 != AST_NULL)
            curstmt = AstNodePtrImpl(s1).get_ptr();
         else {
-          DebugLocalInfoCollect("curstmt = 0");
+          DebugLocalInfoCollect([](){ return "curstmt = 0"; });
         }
       }
    }
 
    if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
-       DebugLocalInfoCollect("Is assignment");
+       DebugLocalInfoCollect([](){return "Is assignment"; });
        ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
        if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
          modstack.push_back(s_ptr);
@@ -122,7 +120,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    }
    else if (fa.IsUnaryOp(s, &opr, &lhs) &&
            (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
-      DebugLocalInfoCollect("Is unary operator.");
+      DebugLocalInfoCollect([](){ return "Is unary operator."; });
       ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
       if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
          modstack.push_back(s_ptr);
@@ -130,7 +128,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       }
    }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
-      DebugLocalInfoCollect("Is variable declaration.");
+      DebugLocalInfoCollect([](){ return "Is variable declaration."; });
       AstInterface::AstNodeList::const_iterator pv = vars.begin();
       AstInterface::AstNodeList::const_iterator pa = args.begin();
       modstack.push_back(s_ptr);
@@ -147,7 +145,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       Skip(s);
    }
    else  if (fa.IsIOInputStmt(s, &args)) {
-     DebugLocalInfoCollect("Is IOInput stmt.");
+     DebugLocalInfoCollect([](){ return "Is IOInput stmt."; });
      modstack.push_back(s_ptr);
      for (AstInterface::AstNodeList::reverse_iterator p = args.rbegin();
            p != args.rend(); ++p) {
@@ -157,14 +155,14 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    }
    else {
      if (fa.IsFunctionCall(s)) {
-         DebugLocalInfoCollect(" append function call " + AstInterface::AstToString(s));
+         DebugLocalInfoCollect([&s]() { return " append function call " + AstInterface::AstToString(s); });
          AppendFuncCall(fa, AstNodePtrImpl(s).get_ptr());
          Skip(s);
      } 
      // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
      // to behave the same as a memory access, although it isn't one exactly
      else if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
-        DebugLocalInfoCollect(" append read set " + AstInterface::AstToString(s));
+        DebugLocalInfoCollect([&s](){ return " append read set " + AstInterface::AstToString(s); });
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
           if (mp == 0 || mp->find(s_ptr) == mp->end() || (*mp)[s_ptr].readlhs) {
@@ -184,7 +182,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    }
  }
  else {
-       DebugLocalInfoCollect("postvisiting cur node " + AstInterface::AstToString(s));
+       DebugLocalInfoCollect([&s](){ return "postvisiting cur node " + AstInterface::AstToString(s); });
        if (modstack.size() && modstack.back().root == AstNodePtrImpl(s).get_ptr()) {
           const ModMap &modmap = modstack.back().modmap;
           for (typename ModMap::const_iterator p = modmap.begin();
@@ -225,7 +223,7 @@ class CollectReadRefWrap : public CollectObject<AstInterface::AstNodePtr>
                operator()(*p);
         }
       }
-      DebugLocalInfoCollect("appending reading " + AstInterface::AstToString(ref) + " : " + AstInterface::AstToString(stmt));
+      DebugLocalInfoCollect([&ref,this](){ return "appending reading " + AstInterface::AstToString(ref) + " : " + AstInterface::AstToString(stmt); });
       if (collect != 0) {
         (*collect)( AstNodePtrImpl(ref).get_ptr(), stmt);
       }
@@ -254,7 +252,7 @@ class CollectCallRefWrap : public CollectObject<AstInterface::AstNodePtr>
       if (fa.IsFunctionCall(ref, &callee)) {
         (*collect)(AstNodePtrImpl(callee).get_ptr(), stmt);
       } else {
-        DebugLocalInfoCollect("Error: Expecting a function call but getting:" + AstInterface::AstToString(ref));
+        DebugLocalInfoCollect([&ref](){ return "Error: Expecting a function call but getting:" + AstInterface::AstToString(ref); });
         (*collect)(AstNodePtrImpl(ref).get_ptr(), stmt);
       }
       return true;
@@ -296,7 +294,7 @@ template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
 AppendModLoc(AstInterface&, const AstNodePtr& mod, const AstNodePtr& rhs)
     {
-     DebugLocalInfoCollect("appending modifying " + AstInterface::AstToString(mod) + " = " + AstInterface::AstToString(rhs));
+     DebugLocalInfoCollect([&mod,&rhs](){ return "appending modifying " + AstInterface::AstToString(mod) + " = " + AstInterface::AstToString(rhs); });
      if(curstmt == 0) return;
        assert(curstmt != AST_NULL);
        if (killcollect != 0 && rhs != AST_NULL)
@@ -308,7 +306,7 @@ template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
 AppendReadLoc(AstInterface &/*fa*/, const AstNodePtr &read)
     {
-      DebugLocalInfoCollect("appending reading " + AstInterface::AstToString(read));
+      DebugLocalInfoCollect([&read](){ return "appending reading " + AstInterface::AstToString(read); });
       if (readcollect != 0) {          
           (*readcollect)(read, curstmt);
       }
@@ -319,21 +317,21 @@ void StmtSideEffectCollect<AstNodePtr>::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 {
  CollectReadRefWrap<AstNodePtr> read(fa, funcanal, curstmt, readcollect);
- DebugLocalInfoCollect("Checking function info: " + AstInterface::AstToString(fc));
+ DebugLocalInfoCollect([&fc](){ return "Checking function info: " + AstInterface::AstToString(fc); });
 
  AstNodePtr callee;
  AppendFuncCallArguments(fa, fc, &callee);
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
-      DebugLocalInfoCollect("no interprecedural read info for : " + AstInterface::AstToString(fc) + "adding function call arguments.");
+      DebugLocalInfoCollect([&fc](){ return "no interprecedural read info for : " + AstInterface::AstToString(fc) + "adding function call arguments."; });
   }
  if (callcollect != 0) {
-     DebugLocalInfoCollect("invoking collecting call");
+     DebugLocalInfoCollect([](){ return "invoking collecting call"; });
      (*callcollect)(callee, curstmt);
  }
   CollectModRefWrap<AstNodePtr> mod(fa, funcanal, curstmt, readcollect, modcollect);
   if (funcanal == 0 || !funcanal->get_modify( fa, fc, &mod))  {
-      DebugLocalInfoCollect("no interprecedural mod info for : " + AstInterface::AstToString(fc));
+      DebugLocalInfoCollect([&fc](){ return "no interprecedural mod info for : " + AstInterface::AstToString(fc); });
       AppendFuncCallWrite(fa, fc);
       modunknown = true;
   }
@@ -359,16 +357,17 @@ public:
   {
     std::string varname;
     AstNodePtr scope;
+    DebugLog DebugAliasAnal("-debugaliasanal");
     if (cur.first == AST_NULL || !fa.IsVarRef(cur.first, 0, &varname, &scope, 0, /*use_global_unique_name=*/true))
       return false;
     if (cur.second == index) {
       aliasmap.get_alias_map(varname, scope)->union_with(repr);
-      DebugAliasAnal("Aliasing with: " + varname);
+      DebugAliasAnal([&varname](){ return "Aliasing with: " + varname; });
     }
     else {
       assert( cur.second > index);
       repr = aliasmap.get_alias_map(varname, scope);
-      DebugAliasAnal("cur alias-var repr:" + varname);
+      DebugAliasAnal([&varname](){ return "cur alias-var repr:" + varname; });
       index = cur.second;
     }
     return true;
@@ -452,6 +451,7 @@ void StmtVarAliasCollect::
 AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs)
 {
+  DebugLog DebugAliasAnal("-debugaliasanal");
   std::string modname;
   AstNodeType modtype;
   AstNodePtr modscope;
@@ -463,8 +463,8 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
     if (funcanal != 0 && funcanal->may_alias( fa, rhs, mod, collect))
         return;
     hasunknown = true;
-    DebugAliasAnal("unknown alias info for function call : " + AstInterface::AstToString(rhs));
-    DebugAliasAnal("aliasing all parameters with " + AstInterface::AstToString(mod));
+    DebugAliasAnal([&rhs](){ return "unknown alias info for function call : " + AstInterface::AstToString(rhs); });
+    DebugAliasAnal([&mod](){ return "aliasing all parameters with " + AstInterface::AstToString(mod); });
     collect.reset();
     collect( std::pair<AstNodePtr,int>(mod, 0));
     for (AstInterface::AstNodeList::const_iterator p = args.begin();
@@ -485,11 +485,12 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
 
 void StmtVarAliasCollect::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
-{
+{ 
   ModifyAliasMap collect(fa, aliasmap);
+  DebugLog DebugAliasAnal("-debugaliasanal");
   if (funcanal == 0 || !funcanal->may_alias( fa, fc, AST_NULL, collect)) {
      hasunknown = true;
-     DebugAliasAnal("unknown alias info. for function call : " + AstInterface::AstToString(fc) + "; Aliasing all parameters");
+     DebugAliasAnal([&fc](){ return "unknown alias info. for function call : " + AstInterface::AstToString(fc) + "; Aliasing all parameters"; });
      collect.reset();
      AstInterface::AstNodeList args;
      if (!fa.IsFunctionCall( fc, 0, &args))
@@ -505,11 +506,13 @@ bool StmtVarAliasCollect::
 may_alias(AstInterface& fa, const AstNodePtr& r1,
           const AstNodePtr& r2)
 {
+  DebugLog DebugAliasAnal("-debugaliasanal");
+  ModifyAliasMap collect(fa, aliasmap);
   AstNodeType t1, t2;
   if (fa.IsExpression(r1, &t1) == AST_NULL || fa.IsExpression(r2, &t2)==AST_NULL)
     ROSE_ABORT();
   if (!hasresult) {
-    DebugAliasAnal("No alias analysis performed. Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2));
+    DebugAliasAnal([&r1,&r2](){ return "No alias analysis performed. Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2); });
     return true;
   }
   std::string varname1, varname2;
@@ -517,19 +520,19 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
   bool global1, global2;
   if (!fa.IsVarRef(r1, 0, &varname1, &scope1, &global1)
       || !fa.IsVarRef(r2, 0, &varname2, &scope2, &global2)) {
-    DebugAliasAnal("no alias analysis between non_variables performed. Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2));
+    DebugAliasAnal([&r1, &r2](){ return "no alias analysis between non_variables performed. Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2); });
     return true;
   }
 
   if (global1 && global2 && hasunknown) {
     if (global1) {
-       DebugAliasAnal("INFO:" + varname1 + " and " + varname2 + " are global");
-       DebugAliasAnal("INFO: Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2));
+       DebugAliasAnal([&varname1,&varname2](){ return "INFO:" + varname1 + " and " + varname2 + " are global"; });
+       DebugAliasAnal([&r1,&r2]() { return "INFO: Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2); });
     }
     return true;
   }
   if ( aliasmap.get_alias_map(varname1, scope1)->in_same_group( aliasmap.get_alias_map(varname2, scope2))) {
-     DebugAliasAnal("INFO: Alias analysis performed. Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2));
+     DebugAliasAnal([&r1,&r2](){ return "INFO: Alias analysis performed. Has alias between " + AstInterface::AstToString(r1) + " and " + AstInterface::AstToString(r2); });
      return true;
   }
   return false;

@@ -3,8 +3,6 @@
 #include <ROSE_ASSERT.h>
 #include "CommandOptions.h"
 
-DebugLog DebugOperatorAnnotation("-debugopa");
-
 OperatorInlineAnnotation* OperatorInlineAnnotation::inst = 0;
 OperatorSideEffectAnnotation* OperatorSideEffectAnnotation::inst = 0;
 OperatorAliasAnnotation* OperatorAliasAnnotation::inst = 0;
@@ -35,12 +33,14 @@ AliasAnnotAnal(AstInterface& fa,
                const AstNodePtr& fc, const AstNodePtr& result,
                CollectObject< std::pair<AstNodePtr, int> >& collectalias)
 {
+  DebugLog DebugOperatorAnnotation("-debugopa");
+
   AstInterface::AstNodeList args;
   OperatorAliasDescriptor desc;
   if (!aliasInfo.known_operator( fa, fc, &args, &desc, false) )
     return false;
   if (desc.get_param_decl().get_params().size() != args.size()) {
-    DebugOperatorAnnotation("AliasAnnotationAnalysis: Parameter and argument sizes are different. Return false.");
+    DebugOperatorAnnotation([](){ return "AliasAnnotationAnalysis: Parameter and argument sizes are different. Return false."; });
     return false;
   }
   ReplaceParams paramMap( desc.get_param_decl(), args);

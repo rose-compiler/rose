@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include "rosedll.h"
+#include <functional>
 
 class ROSE_UTIL_API CmdOptions
 {
@@ -37,9 +38,9 @@ class DebugLog {
     }
     return r ==1;
    }
-   bool operator()(const std::string& to_print) {
+   bool operator()(std::function<std::string()> to_print) {
     if (operator()()) {
-      std::cerr << to_print << "\n";
+      std::cerr << to_print() << "\n";
       return true;
     }
     return false;

@@ -8,12 +8,8 @@
 
 using namespace std;
 
-inline bool DebugPtrAnal (const std::string& to_print)
-{
-  static DebugLog debug_ptr("-debugptranal");
-  return debug_ptr(to_print);
-}
-
+DebugLog DebugPtrAnal("-debugptranal");
+DebugLog DebugAliasAnal("-debugaliasanal");
 
 inline void stmts_pushback(std::vector<PtrAnal::Stmt>& stmts, PtrAnal::Stmt s)
 {
@@ -426,7 +422,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
     AstNodePtr lhs, rhs;
     AstInterface::AstNodeList vars, args;
     if (fa.IsStatement(s)) {
-      DebugAliasAnal("pre visiting " + AstInterface::AstToString(s));
+      DebugAliasAnal([&s](){ return "pre visiting " + AstInterface::AstToString(s); });
       stmt_active.push_back(stmts.size());
     }
 
@@ -464,16 +460,16 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
    }
  }
  else {
-   DebugPtrAnal("post visiting " + AstInterface::AstToString(s));
+   DebugPtrAnal([&s](){ return "post visiting " + AstInterface::AstToString(s); });
    if (fa.IsStatement(s)) {
        size_t stmt_firstIndex = stmt_active.back();
        stmt_active.pop_back();
        if (stmt_firstIndex < stmts.size()) {
-          DebugPtrAnal("setting stmt mapping");
+          DebugPtrAnal([](){ return "setting stmt mapping"; });
           stmtmap[s.get_ptr()] = pair<size_t,size_t>(stmt_firstIndex, stmts.size()-1);
        }
        else
-          DebugAliasAnal("no translation: " + AstInterface::AstToString(s));
+          DebugAliasAnal([&s](){ return "no translation: " + AstInterface::AstToString(s); });
   }
  }
  return true;

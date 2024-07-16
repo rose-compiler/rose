@@ -3427,7 +3427,6 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                if (info.get_declaration_of_context() != NULL)
                   {
                     edecl = isSgEnumDeclaration(info.get_declaration_of_context());
-                    if (edecl == 0) return;
                     ROSE_ASSERT(edecl != NULL);
 #if 0
                     printf ("In unparseClassType(): Using alternate declaration of context: edecl->get_name() = %s \n",edecl->get_name().str());
@@ -3440,9 +3439,6 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                     edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
                   }
 
-               if (edecl == 0) {
-                   return;
-               }
             // This fails for test2007_140.C.
                ASSERT_not_null(edecl);
 

@@ -105,7 +105,8 @@ Sg_File_Info* GetFileInfo()
    }
 
 namespace {
-static DebugLog DebugVariable("-debugvariable");
+DebugLog DebugVariable("-debugvariable");
+DebugLog DebugDiff("-debugdiff");
 
 //! Get a unique string name for a type, similar to qualified names in C++
 std::string GetFunctionSignature( const std::string& fname, const AstInterface::AstTypeList& plist)
@@ -119,7 +120,7 @@ std::string GetFunctionSignature( const std::string& fname, const AstInterface::
       AstInterface::GetTypeInfo( t, &name);
       fname_stream << "_" << name;
   }
-  DebugVariable("Function signature:" + fname + " =>" + fname_stream.str());
+  DebugVariable([&fname,&fname_stream](){ return "Function signature:" + fname + " =>" + fname_stream.str(); });
   return fname_stream.str();
 }
 
@@ -150,20 +151,6 @@ bool DebugSymbol()
        r = -1;
   }
   return r == 1;
-}
-
-void DebugDiff(const std::string& debug_string)
-{
-  static int r = 0;
-  if (r == 0) {
-    if (CmdOptions::GetInstance()->HasOption("-debugdiff"))
-       r = 1;
-    else
-       r = -1;
-  }
-  if (r == 1) {
-    std::cerr << debug_string << "\n";
-  }
 }
 
 SgScopeStatement* GetNullScope()
@@ -1386,7 +1373,7 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
 bool AstInterface:: IsFunctionType( const AstNodeType& _t,
                        AstTypeList* paramtypes, AstNodeType* returntype) {
     SgType* t = AstNodeTypeImpl(_t).get_ptr(); 
-    DebugVariable("IsFunctionType:" + t->class_name());
+    DebugVariable([t](){ return "IsFunctionType:" + t->class_name(); });
     SgFunctionType* ftype = isSgFunctionType(t);
     if (ftype != 0) {
         if (paramtypes != 0) {
@@ -1991,7 +1978,7 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
     }
   }
   if (varname != 0) {
-     DebugVariable("IsVarRef:" + exp->class_name() + ":" + *varname);
+     DebugVariable([exp,varname](){ return "IsVarRef:" + exp->class_name() + ":" + *varname; });
   }
   return true;
 }
@@ -2015,7 +2002,7 @@ std::string AstInterface::GetVarName( const AstNodePtr& _exp, bool use_global_un
   }
   std::string name;
   if (!IsVarRef(exp, 0, &name, 0, 0, use_global_unique_name)) {
-    DebugVariable("Error: expecting a variable reference but getting:" + AstToString(exp));
+    DebugVariable([&exp](){ return "Error: expecting a variable reference but getting:" + AstToString(exp); });
     return "";
   }
   return name;
@@ -2034,7 +2021,7 @@ std::string AstInterface::
 NewVar( const AstNodeType& _type, const std::string& name, bool makeunique,
         bool delayInsert, const AstNodePtr& _declLoc, const AstNodePtr& _init)
 {
-  DebugVariable("Enter NewVar:" + name);
+  DebugVariable([&name](){ return "Enter NewVar:" + name; });
   SgType* type = AstNodeTypeImpl(_type).get_ptr();
 
   SgNode* declLoc = AstNodePtrImpl(_declLoc).get_ptr();
@@ -2050,7 +2037,7 @@ NewVar( const AstNodeType& _type, const std::string& name, bool makeunique,
   assert(def != 0 && !HasNullParent(def));
 #endif
 
-  DebugVariable("Finish creating NewVar:" + name);
+  DebugVariable([&name](){ return "Finish creating NewVar:" + name; });
   SgName n =  sb->get_name();
   std::string varname =  std::string( n.str());
   return varname;
@@ -2576,12 +2563,12 @@ bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _
                    std::function<bool(const AstNodeType& first, const AstNodeType& second)>* /*call_on_diff*/)
 {
   SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
-  DebugDiff("Checking Type Identical:" + first->unparseToString() + " vs " + second->unparseToString());
+  DebugDiff([&_first,&_second](){ return "Checking Type Identical:" + GetTypeName(_first) + " vs " + GetTypeName(_second); });
   if (first->unparseToString() == second->unparseToString()) {
-    DebugDiff("Ast Type is equivalent.");
+    DebugDiff([](){ return "Ast Type is equivalent."; });
     return true;
   }
-  DebugDiff("Ast Type is not equivalent.");
+  DebugDiff([](){ return "Ast Type is not equivalent."; });
   return false;
 }
 
@@ -2594,16 +2581,16 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
     return true;
   }
   if (first == 0 || second == 0) {
-     DebugDiff("AST different: one of them is null.");
+     DebugDiff([](){ return "AST different: one of them is null."; });
      return false;
   }
-  DebugDiff("Checking AST Identical:" + AstToString(_first) + " vs " + AstToString(_second));
+  DebugDiff([&_first,&_second](){ return "Checking AST Identical:" + AstToString(_first) + " vs " + AstToString(_second); });
   if (first->variantT() != second->variantT()) { 
       if (call_on_diff != 0 && !(*call_on_diff)(_first, _second)) {
-         DebugDiff("AST considered the same with different variant due to caller intervention: " + AstToString(_first) + " vs " + AstToString(_second));
+         DebugDiff([&_first,&_second](){ return "AST considered the same with different variant due to caller intervention: " + AstToString(_first) + " vs " + AstToString(_second); });
          return true;
       }
-      DebugDiff("AST different variant: " + AstToString(_first) + " vs " + AstToString(_second));
+      DebugDiff([&_first,&_second](){ return "AST different variant: " + AstToString(_first) + " vs " + AstToString(_second); });
       return false;
   }
   std::string name1, name2;
@@ -2624,7 +2611,7 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
   if ((IsFunctionDefinition(first, &name1, &params1, 0, &body1, &paramtypes1, &returntype1) &&
       IsFunctionDefinition(_second,&name2, &params2, 0, &body2, &paramtypes2, &returntype2))) {
       if (name1 != name2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
-         DebugDiff("AST different function name: " + AstToString(_first) + " vs " + AstToString(_second));
+         DebugDiff([&_first,&_second](){ return "AST different function name: " + AstToString(_first) + " vs " + AstToString(_second); });
          return false;
       }
       return AstIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
@@ -2656,21 +2643,21 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
     OperatorEnum opr1, opr2;
     if (IsBinaryOp(_first, &opr1, &lhs1, &rhs1) && IsBinaryOp(_second, &opr2, &lhs2, &rhs2)) {
       if (opr1 != opr2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
-         DebugDiff("AST different operation: " + AstToString(_first) + " vs " + AstToString(_second));
+         DebugDiff([&_first,&_second](){ return "AST different operation: " + AstToString(_first) + " vs " + AstToString(_second); });
          return false;
       }
       return AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type) && AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type);
     }
     if (IsUnaryOp(_first, &opr1, &lhs1) && IsUnaryOp(_second, &opr2, &lhs2)) {
       if (opr1 != opr2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
-         DebugDiff("AST different operation: " + AstToString(_first) + " vs " + AstToString(_second));
+         DebugDiff([&_first,&_second](){ return "AST different operation: " + AstToString(_first) + " vs " + AstToString(_second); });
          return false;
       }
       return AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type);
     }
   }
   if (AstToString(_first) != AstToString(_second) &&  (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
-    DebugDiff("AST different unparseToString:" + AstToString(_first) + " vs " + AstToString(_second));
+    DebugDiff([&_first,&_second](){ return "AST different unparseToString:" + AstToString(_first) + " vs " + AstToString(_second); });
     return false;
   } 
   return true;
@@ -2703,7 +2690,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstTypeList* paramt
     return false;
   }
   
-  DebugVariable("Function being called:" + AstInterface::AstToString(f));
+  DebugVariable([&f](){ return "Function being called:" + AstInterface::AstToString(f); });
   SgExpression* object_arg = 0;
   AstNodeType object_type;
   switch (f->variantT()) {
@@ -2762,7 +2749,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstTypeList* paramt
       SgExpressionPtrList l = argexp->get_expressions();
       for ( SgExpressionPtrList::iterator p = l.begin(); p != l.end(); ++p) {
             SgExpression* cur = *p;
-            DebugVariable("Call argument:" + AstInterface::AstToString(cur));
+            DebugVariable([&cur](){ return "Call argument:" + AstInterface::AstToString(cur); });
             if (args != 0)  { args->push_back(cur); }
       }
   }
@@ -2775,7 +2762,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstTypeList* paramt
         if (!AstInterface::IsFunctionType(_ftype, paramtypes, returntype)) {// not a function type
            AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
            if (fdecl == 0) {
-              DebugVariable("Function has no decl: " +  AstInterface::AstToString(s));
+              DebugVariable([&s](){ return "Function has no decl: " +  AstInterface::AstToString(s); });
               return false;
            }
         }
@@ -2791,7 +2778,7 @@ bool AstInterface::
 IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args, 
                 AstNodeList* outargs, AstTypeList* paramtypes, AstNodeType* returntype)
 {
-  DebugVariable("Checking IsFunctionCall: " + AstToString(_s));
+  DebugVariable([&_s](){ return "Checking IsFunctionCall: " + AstToString(_s); });
   AstNodePtrImpl s(_s);
   AstNodeList arglist;
   AstTypeList paramtypelist;
@@ -4226,7 +4213,7 @@ SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
      if (isSgSourceFile(loc)) {
          return 0;
      }
-     DebugVariable("Error: Unprepared for this case in GetScope: " + ((loc != NULL) ? loc->class_name() : "NULL"));
+     DebugVariable([loc](){ return "Error: Unprepared for this case in GetScope: " + ((loc != NULL) ? loc->class_name() : "NULL"); });
      return 0;
 }
 

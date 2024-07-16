@@ -66,7 +66,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
                                   const AstNodePtr& /*body*/,
                                   AstInterface::TraversalVisitType /*t*/)
    {
-        DebugOpt("Seeing function definition inside, setting optimizability to falses");
+        DebugOpt([](){ return "Seeing function definition inside, setting optimizability to falses"; });
         succ = -1;
         return false;
    }
@@ -74,7 +74,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
    bool ProcessDecls(AstInterface &fa, const AstNodePtr& s)
      {
         if (fa.IsVariableDecl(s) && fa.GetParent(s) != top) {
-           DebugOpt("Not optimizable b/c local variable declaration " + AstInterface::AstToString(s) );
+           DebugOpt([&s](){ return "Not optimizable b/c local variable declaration " + AstInterface::AstToString(s); } );
             succ = -1;
             return false;
         }
@@ -87,7 +87,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
            return false;
 
         if (!fa.IsFortranLoop(s)) {
-           DebugOpt("Not Optimizable due to non-fortran loop: " + AstInterface::AstToString(s));
+           DebugOpt([&s](){ return "Not Optimizable due to non-fortran loop: " + AstInterface::AstToString(s); });
            succ = -1;
            return false;
         }
@@ -95,7 +95,7 @@ class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
            if (loop == 0)
               loop = s;
            else if (loop != 0 && !(optType & LoopTransformOptions::LOOP_DATA_OPT)) {
-              DebugOpt("Not optimizable b/c no optimization is specified");
+              DebugOpt([](){ return "Not optimizable b/c no optimization is specified"; });
               succ = -1;
               return false;
            }
@@ -205,7 +205,7 @@ bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
 {
    DebugLog DebugOpt("-debugopt");
 
-  DebugOpt("LoopTransformation1");
+  DebugOpt([](){ return "LoopTransformation1"; });
 
  /*CmdOptions *opt =*/ CmdOptions::GetInstance();
  bool reportPhaseTiming = ReportTiming();
@@ -221,11 +221,11 @@ bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
   AstInterface &fa = LoopTransformInterface::getAstInterface();
 
 
-  DebugOpt("Try applying loop transformation to " + AstInterface::AstToString(head));
+  DebugOpt([&head](){ return "Try applying loop transformation to " + AstInterface::AstToString(head); });
   if (reportPhaseTiming) GetWallTime();
   LoopTreeDepCompCreate comp(head);
   if (reportPhaseTiming) std::cerr << "dependence analysis time: " <<  GetWallTime() << "\n";
-  DebugOpt("original LoopTree :" + comp.TreeToString());
+  DebugOpt([&comp](){ return "original LoopTree :" + comp.TreeToString(); });
   if (outputdep) {
      std::cerr <<"----------------------------------------------"<<endl;
      std::cerr << "dependence graph: \n";
@@ -234,7 +234,7 @@ bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
 
   if (!depOnly && sel.PerformTransformation()) {
       LoopTreeLocalityAnal loopAnal(comp);
-      DebugOpt("LoopTree input dep graph: " + GraphToString(*loopAnal.GetInputGraph()));
+      DebugOpt([&loopAnal](){ return "LoopTree input dep graph: " + GraphToString(*loopAnal.GetInputGraph()); });
       if (lopt->DoDynamicTuning()) {
            DynamicSlicing op;
            LoopTransformation( comp, op, loopAnal, ApplyOptLevel());
@@ -243,14 +243,14 @@ bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
            DependenceHoisting op;
            LoopTransformation( comp, op, loopAnal, ApplyOptLevel());
       }
-      DebugOpt("Final LoopTree : " + comp.TreeToString());
+      DebugOpt([&comp](){ return "Final LoopTree : " + comp.TreeToString(); });
   }
 
   comp.DetachDepGraph();
   if (ApplyLoopSplitting())
     ApplyLoopSplitting(comp.GetLoopTreeRoot());
 
-  DebugOpt("Before CodeGen : " + comp.TreeToString());
+  DebugOpt([&comp](){ return "Before CodeGen : " + comp.TreeToString(); });
 
   AstNodePtr r = comp.CodeGen();
   assert (r != 0);
@@ -319,7 +319,7 @@ void LoopTransformation( LoopTreeDepComp& comp,
   CopyArrayOperator *cp = lopt->GetCopyArraySel();
   if (!(lopt->GetOptimizationType() & LoopTransformOptions::LOOP_OPT))
   {
-     DebugOpt("Configured to skip optimization");
+     DebugOpt([]() { return "Configured to skip optimization"; });
      if (cp != 0) (*cp)(loopAnal, comp.GetLoopTreeRoot());
      return;
   }
@@ -339,13 +339,13 @@ void LoopTransformation( LoopTreeDepComp& comp,
   if (reportPhaseTimings)  std::cerr << "transformation analysis timing:" << GetWallTime() << "\n";
 
   sliceGraph.TopoSort();
-  DebugOpt("*******before xform*****" + comp.TreeToString());
+  DebugOpt([&comp](){ return "*******before xform*****" + comp.TreeToString(); });
   LoopTreeNode* top = comp.GetLoopTreeRoot();
   top = LoopTreeTransform().InsertHandle(top,1);
   for (CompSliceDepGraphCreate::NodeIterator iter = sliceGraph.GetNodeIterator();
        !iter.ReachEnd(); ++iter) {
       CompSliceDepGraphNode *n = iter.Current();
-      DebugOpt("Slice Graph Node:" + n->toString());
+      DebugOpt([&n](){ return "Slice Graph Node:" + n->toString();});
       CompSliceDepGraphNode::NestInfo& nest = n->GetInfo();
 
       assert(top != 0);
@@ -362,8 +362,8 @@ void LoopTransformation( LoopTreeDepComp& comp,
       loopTree_handle = blocking->apply(*info,comp,op,loopTree_handle);
       if (par != 0)
           loopTree_handle=par->apply(*info,comp,op,loopTree_handle);
-      DebugOpt("*******after xform*****" + comp.TreeToString());
-      DebugOpt("*******after xform*****" + comp.DepToString());
+      DebugOpt([&comp](){ return "*******after xform*****" + comp.TreeToString(); });
+      DebugOpt([&comp](){ return "*******after xform*****" + comp.DepToString(); });
       if (optlevel-- > 0) {
          for (CompSlice::ConstLoopIterator p = slice->GetConstLoopIterator();
               !p.ReachEnd(); ++p) {
@@ -378,7 +378,7 @@ void LoopTransformation( LoopTreeDepComp& comp,
       }
       if (cp != 0) {
           LoopTreeTransform().InsertHandle(loopTree_handle,-1);
-          DebugOpt("Applying array copy to " + loopTree_handle->TreeToString());
+          DebugOpt([&loopTree_handle](){ return "Applying array copy to " + loopTree_handle->TreeToString(); });
           (*cp)(loopAnal, loopTree_handle->Parent());
       }
    }

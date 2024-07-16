@@ -52,7 +52,7 @@ bool SplitEquation( CoeffVec& cur,
        CompareRel r2 = CompareVal(leftval,cut, &boundop);
        bool lt = ((r1 & REL_GT) && (r2 & REL_LT)) || ((r1 & REL_LT) && (r2 & REL_GT));
        if (!lt) { // relation of r1 and r2 must be reversed pair, or error
-         DebugDep("unable to split because " + leftval.toString() + " ? " + cut.toString());
+         DebugDep([&cut, &leftval](){ return "unable to split because " + leftval.toString() + " ? " + cut.toString(); });
          return false;
        }
      }
@@ -91,9 +91,9 @@ bool SplitEquation( CoeffVec& cur,
           return true;
         }
         else if (j == dim)
-               DebugDep("unable to decide left " + left.toString() + " ? " + cut.toString());
+               DebugDep([&cut,&left](){ return "unable to decide left " + left.toString() + " ? " + cut.toString(); });
         else
-               DebugDep("unable to decide cur[" + std::to_string(j) + "] ? 0");
+               DebugDep([&j](){ return "unable to decide cur[" + std::to_string(j) + "] ? 0"; });
      }
      split.clear();
      return false;
@@ -163,7 +163,7 @@ int SetDepDirection( DepInfo &edd, int commLevel, Collect &result)
       int i;
       for ( i = 0; i < commLevel; i++) {
         DepRel e1 = edd.Entry(i,i) & lt;
-        DebugDep("at common loop level " + std::to_string(i) + ":" + e1.toString());
+        DebugDep([i,&e1]() { return "at common loop level " + std::to_string(i) + ":" + e1.toString(); });
         if (!e1.IsTop()) {
           DepInfo edd1( edd);
           edd1.Entry( i,i) = e1;
@@ -203,7 +203,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
        else if (cb.ub <= 0)
           signs.push_back(-1);
        else {
-         DebugDep("unable to decide sign of coeff when lb >=0 for ivar[" + std::to_string(index));
+         DebugDep([index](){ return "unable to decide sign of coeff when lb >=0 for ivar[" + std::to_string(index); });
          signs.push_back(2);
        }
     }
@@ -219,7 +219,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
       }
     }
     else {
-        DebugDep("unable to decide sign of ivar[" + std::to_string(index));
+        DebugDep([index](){ return "unable to decide sign of ivar[" + std::to_string(index); });
         signs.push_back(2);
     }
   }
@@ -228,7 +228,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
   else {
      SymbolicVal leftval = vec[dim];
      if (leftval.IsNIL()) {
-        DebugDep("unable to decide sign of leftval: " + leftval.toString());
+        DebugDep([&leftval](){ return "unable to decide sign of leftval: " + leftval.toString(); });
         return false;
      }
      SymbolicBound lb = GetValBound(vec[dim], boundop);
@@ -237,7 +237,7 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
      else if (lb.lb >= 0)
         signs.push_back(1);
      else {
-        DebugDep("unable to decide sign of leftval: " + leftval.toString());
+        DebugDep([&leftval](){ return "unable to decide sign of leftval: " + leftval.toString(); });
         return false;
      }
   }
