@@ -1576,19 +1576,21 @@ Unparse_ExprStmt::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnp
           unp->opt.set_this_opt(false);
    }
 
+#define DEBUG__Unparse_ExprStmt__unparseBinaryOperator 0
+
 void
 Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
    {
      SgUnparse_Info newinfo(info);
      newinfo.set_operator_name(op);
 
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
      printf ("In unparseBinaryOperator(): expr = %p op = %s \n",expr,op);
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) +
                 " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
 
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
      printf ("In unparseBinaryOperator(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In unparseBinaryOperator(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
@@ -1596,7 +1598,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
      printf ("In unparseBinaryOperator(): info.skipCompilerGeneratedSubExpressions()  = %s \n",(info.skipCompilerGeneratedSubExpressions() == true) ? "true" : "false");
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) +
               " info.skipCompilerGeneratedSubExpressions() = " + (info.skipCompilerGeneratedSubExpressions() ? "true" : "false") + " */ \n");
@@ -1612,40 +1614,40 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
           ASSERT_not_null(lhs);
           SgExpression* rhs = binaryOp->get_rhs_operand();
           ASSERT_not_null(rhs);
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
           printf ("In unparseBinaryOperator(): info.skipCompilerGeneratedSubExpressions() == true: only unparsing the rhs operand \n");
 #endif
           if (lhs->isCompilerGenerated() == true)
              {
             // Then only unparse the rhs.
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
                curprint( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) : COMPILER GENERATED: calling unparseExpression(rhs, newinfo) (only unparse the rhs) */ \n");
 #endif
                unparseExpression(rhs, newinfo);
              }
             else
              {
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
                curprint( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) : NOT COMPILER GENERATED: calling unparseBinaryExpr() */ \n");
 #endif
                unparseBinaryExpr(expr, newinfo);
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
                curprint( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) : DONE: NOT COMPILER GENERATED: unparseBinaryExpr() */ \n");
 #endif
              }
         }
        else
         {
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
           curprint( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) : calling unparseBinaryExpr() */ \n");
 #endif
           unparseBinaryExpr(expr, newinfo);
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
           curprint( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) : DONE: unparseBinaryExpr() */ \n");
 #endif
         }
 
-#if 0
+#if DEBUG__Unparse_ExprStmt__unparseBinaryOperator
      printf ("Leaving unparseBinaryOperator(): expr = %p op = %s \n",expr,op);
      curprint ( string("\n /* Leaving unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
@@ -1738,7 +1740,7 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
      ROSE_ASSERT(aggregateInitializer->get_uses_compound_literal() == true);
 
      unparseAggrInit(aggregateInitializer,info);
-       
+ 
 #if DEBUG_unparseCompoundLiteral
      printf ("Leave unparseCompoundLiteral() \n");
 #endif
