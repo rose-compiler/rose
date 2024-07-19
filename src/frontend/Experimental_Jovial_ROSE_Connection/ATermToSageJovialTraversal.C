@@ -1437,6 +1437,16 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //    The base type is the table description and there will be no body.
 //
    else if (traverse_TableDescriptionType(t_table_desc, base_type, preset, attr_list, table_spec)) {
+      // Check to see if this is a pointer type with SgTypeUnknown as base_type (and use its name, see gitlab-issue-395.jov)
+      // Reset pointer base-type name so the base type can be replaced when it has been declared
+      if (SgPointerType* pointer = isSgPointerType(base_type)) {
+         if (SgJovialTableType* tableType = isSgJovialTableType(pointer->get_base_type())) {
+            table_type_name = tableType->get_name();
+         }
+         else if (SgTypeUnknown* unknown = isSgTypeUnknown(pointer->get_base_type())) {
+           table_type_name = unknown->get_type_name();
+         }
+      }
       table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
       type = table_type;
    }

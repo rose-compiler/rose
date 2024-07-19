@@ -2304,39 +2304,52 @@ buildPointerType(const std::string& base_type_name, SgType* base_type)
 }
 
 void SageTreeBuilder::
-reset_forward_type_refs(const std::string &type_name, SgNamedType* type)
+reset_forward_type_refs(const std::string &typeName, SgNamedType* type)
 {
-  auto range = forward_type_refs_.equal_range(type_name);
+  auto range = forward_type_refs_.equal_range(typeName);
 
   bool present = false;
   for (auto pair = range.first; pair != range.second; pair++) {
-    present = true;
-    SgPointerType* ptr = pair->second;
+    SgPointerType* ptr{pair->second};
     ASSERT_not_null(ptr);
+    present = true;
 
     // The placeholder
     SgTypeUnknown* unknown = isSgTypeUnknown(ptr->get_base_type());
     ASSERT_not_null(unknown);
 
-    // The type name have been replaced by the variable name by this point
-    const std::string & var_name = unknown->get_type_name();
-    SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name);
-    ASSERT_not_null(var_sym);
+    // The type name may have been replaced by the variable or class type name
+    const std::string &name = unknown->get_type_name();
 
-    SgInitializedName* init_name = var_sym->get_declaration();
-    ASSERT_not_null(init_name);
+    if (auto varSym = SageInterface::lookupVariableSymbolInParentScopes(name)) {
+      SgInitializedName* initName = varSym->get_declaration();
+      ASSERT_not_null(initName);
+      initName->set_type(SageBuilder::buildPointerType(type));
 
-    SgPointerType* new_pointer = SageBuilder::buildPointerType(type);
-    init_name->set_type(new_pointer);
+      // Delete the placeholder and its base type
+      delete unknown;
+      delete ptr;
+    }
+    else {
+      auto classSym = SageInterface::lookupClassSymbolInParentScopes(name);
+      ASSERT_not_null(classSym);
 
-    // Delete the placeholder type and its base type
-    if (ptr->get_base_type()) delete ptr->get_base_type();
-    delete ptr;
+      auto decl = classSym->get_declaration();
+      ASSERT_not_null(decl);
+
+      auto declPtr = decl->get_type();
+      ASSERT_not_null(declPtr);
+
+      // Replace placeholder
+      ptr->set_base_type(declPtr);
+      declPtr->set_ptr_to(ptr);
+      delete unknown;
+    }
   }
 
   // Remove the type name from the multimap
   if (present) {
-    forward_type_refs_.erase(type_name);
+    forward_type_refs_.erase(typeName);
   }
 
 }
