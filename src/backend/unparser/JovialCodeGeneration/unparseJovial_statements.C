@@ -387,7 +387,16 @@ UnparseJovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // unparse the body of the function
      if (funcdef->get_body())
         {
-          unparseStatement(funcdef->get_body(), info);
+          if (funcdef->get_body()->get_statements().size() > 0) {
+             unparseStatement(funcdef->get_body(), info);
+          }
+          else {
+            // An empty body for FuncDefn will not parse so add "BEGIN END" or ";"
+            info.inc_nestingLevel();
+            curprint_indented("BEGIN\n", info);
+            curprint_indented("END\n", info);
+            info.dec_nestingLevel();
+          }
         }
    }
 
@@ -412,10 +421,9 @@ UnparseJovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_
      const SgDeclarationStatementPtrList& declarations = namespace_defn->get_declarations();
 
      info.inc_nestingLevel();
-     for (SgStatement* namespace_stmt : declarations)
-        {
-           unparseStatement(namespace_stmt, info);
-        }
+     for (SgStatement* namespace_stmt : declarations) {
+       unparseStatement(namespace_stmt, info);
+     }
      info.dec_nestingLevel();
    }
 

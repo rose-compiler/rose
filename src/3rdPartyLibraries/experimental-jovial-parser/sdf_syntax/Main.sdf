@@ -444,13 +444,13 @@ context-free syntax
   'DEF' SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutineDEF")}
         SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutine")}
 
-%% Odd construction not apparently in the grammar, see gitlab-issue-372.jov
-  'BEGIN'
-  'DEF' SubroutineDefinition
-  'END'                      -> NonNestedSubroutine   {cons("NonNestedSubroutineDEF")}
-
   Declaration*               -> DeclarationList          {cons("DeclarationList")}
   NonNestedSubroutine*       -> NonNestedSubroutineList  {cons("NonNestedSubroutineList")}
+
+%% Odd construction not apparently in the grammar, see gitlab-issue-{372,390}.jov
+  'BEGIN'
+    NonNestedSubroutine*
+  'END'                      -> NonNestedSubroutineList  {cons("NonNestedSubroutineList")}
 
 %% 1.2.3 MAIN PROGRAM MODULES
 %%
