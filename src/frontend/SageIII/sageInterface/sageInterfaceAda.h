@@ -1119,20 +1119,27 @@ namespace Ada
 
   /// Traverses all AST nodes in an unspecified order.
   /// \details
-  ///   Only traverses the links that are commonly traversed by ROSE's standard
+  ///   Only traverses edges that are commonly traversed by ROSE's standard
   ///   traversal mechanism.
-  /// \param fn    a functor that traverses and transforms the AST
+  /// \param fn    a functor that queries and possibly transforms the AST
   /// \param root  a singular root node (all subtrees are traversed)
   /// \param roots a statement range of root nodes.
   /// \note
   ///   \ref fn is typically a functor that collects all nodes that need to be
   ///   converted in a first pass.
-  ///   A second pass, triggered by fn's destructor carries out the
-  ///   actual transformations.
+  ///   An update pass, triggered by fn's destructor carries out the
+  ///   actual transformations of the collected nodes.
+  /// \{
+  void simpleTraversal(std::function<void(SgNode*)>&& fn, SgNode* root);
+  void simpleTraversal(std::function<void(SgNode*)>&& fn, StatementRange roots);
+  /// \}
+
+  /// \deprecated (renamed to simpleTraversal)
   /// \{
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root);
   void conversionTraversal(std::function<void(SgNode*)>&& fn, StatementRange roots);
   /// \}
+
 
   /// converts text to constant values
   /// \{

@@ -2500,10 +2500,10 @@ namespace Ada
 
 
 
-  struct ConversionTraversal : AstSimpleProcessing
+  struct SimpleTraversal : AstSimpleProcessing
   {
       explicit
-      ConversionTraversal(std::function<void(SgNode*)>&& conversionFn)
+      SimpleTraversal(std::function<void(SgNode*)>&& conversionFn)
       : AstSimpleProcessing(), fn(std::move(conversionFn))
       {}
 
@@ -2512,14 +2512,14 @@ namespace Ada
     private:
       std::function<void(SgNode*)> fn;
 
-      ConversionTraversal()                                      = delete;
-      ConversionTraversal(const ConversionTraversal&)            = delete;
-      ConversionTraversal(ConversionTraversal&&)                 = delete;
-      ConversionTraversal& operator=(ConversionTraversal&&)      = delete;
-      ConversionTraversal& operator=(const ConversionTraversal&) = delete;
+      SimpleTraversal()                                      = delete;
+      SimpleTraversal(const SimpleTraversal&)            = delete;
+      SimpleTraversal(SimpleTraversal&&)                 = delete;
+      SimpleTraversal& operator=(SimpleTraversal&&)      = delete;
+      SimpleTraversal& operator=(const SimpleTraversal&) = delete;
   };
 
-  void ConversionTraversal::visit(SgNode* n)
+  void SimpleTraversal::visit(SgNode* n)
   {
     fn(n);
   }
@@ -3391,40 +3391,50 @@ namespace Ada
     return res;
   }
 
-  void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
+  void simpleTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
     ASSERT_not_null(root);
 
-    ConversionTraversal converter(std::move(fn));
+    SimpleTraversal tv(std::move(fn));
 
-    converter.traverse(root, preorder);
+    tv.traverse(root, preorder);
   }
 
-  void conversionTraversal(std::function<void(SgNode*)>&& fn, StatementRange roots)
+  void simpleTraversal(std::function<void(SgNode*)>&& fn, StatementRange roots)
   {
-    ConversionTraversal converter(std::move(fn));
+    SimpleTraversal tv(std::move(fn));
 
     std::for_each( roots.first, roots.second,
-                   [&converter](sg::NotNull<SgDeclarationStatement> n) -> void
+                   [&tv](sg::NotNull<SgDeclarationStatement> n) -> void
                    {
-                     converter.traverse(n, preorder);
+                     tv.traverse(n, preorder);
                    }
                  );
   }
 
+  void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
+  {
+    simpleTraversal(std::move(fn), root);
+  }
+
+  void conversionTraversal(std::function<void(SgNode*)>&& fn, StatementRange roots)
+  {
+    simpleTraversal(std::move(fn), std::move(roots));
+  }
+
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
   {
-    conversionTraversal(CommentCxxifier{cxxLineComments}, root);
+    simpleTraversal(CommentCxxifier{cxxLineComments}, root);
   }
 
   void convertToCaseSensitiveSymbolTables(SgNode* root)
   {
-    conversionTraversal(convertSymbolTablesToCaseSensitive_internal, root);
+    simpleTraversal(convertSymbolTablesToCaseSensitive_internal, root);
   }
 
   void convertToOperatorRepresentation(SgNode* root, bool convertCallSyntax, bool convertNamedArguments)
   {
-    conversionTraversal(FunctionCallToOperatorConverter{convertCallSyntax, convertNamedArguments}, root);
+    simpleTraversal(FunctionCallToOperatorConverter{convertCallSyntax, convertNamedArguments}, root);
   }
 
 
@@ -4355,7 +4365,7 @@ void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode& n)
          l->setCompilerGenerated();
      };
 
-  conversionTraversal(locSetter, &n);
+  simpleTraversal(locSetter, &n);
 }
 
 void setSourcePositionInSubtreeToCompilerGenerated(SgLocatedNode* n)

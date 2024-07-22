@@ -102,6 +102,17 @@ namespace sg
     return *ptr;
   }
 
+  template <class U, class T, bool conv>
+  struct IfConvertible3 {}; // not convertible
+
+  template <class U, class T>
+  struct IfConvertible3<U,T,true> : std::true_type // convertible
+  {};
+
+  template <class U, class T>
+  struct IsConvertible : IfConvertible3<U, T, !std::is_same<U,T>::value && std::is_convertible<U,T>::value>
+  {};
+
   /// experimental class for returning non-null pointers
   template <class T>
   struct NotNull
@@ -117,6 +128,12 @@ namespace sg
       ~NotNull()                         = default;
       NotNull(const NotNull&)            = default;
       NotNull& operator=(const NotNull&) = default;
+
+      // when U is a derived type, or a non-const version of T
+      template <class U, bool conv = IsConvertible<U*,T*>::value>
+      NotNull(NotNull<U*> nn)
+      : ptr(nn.ptr)
+      {}
 
       /// dereference operator returns reference to object
       T& operator*()  const { return *ptr; }
