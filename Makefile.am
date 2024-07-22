@@ -85,7 +85,7 @@ all: remove_sage3basic_h_pch
 core:
 	$(MAKE) -C $(top_builddir)/src
 
-tools:
+tools: core
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
