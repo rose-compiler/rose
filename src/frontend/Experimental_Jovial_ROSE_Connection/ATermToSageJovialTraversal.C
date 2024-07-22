@@ -434,7 +434,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
    //      'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
 
-
    else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
       mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
       // MATCHED IMPLFLOATPRECISION
@@ -824,15 +823,15 @@ ATbool ATermToSageJovialTraversal::traverse_FloatingItemDescription(ATerm term, 
    }
    else return ATfalse;
 
-// The first term, t_floating_type_desc, comes from the lexer and is direct user input: "F", "f".
+   // The first term, t_floating_type_desc, comes from the lexer and is direct user input: "F", "f".
 
-// rounding or truncate mode
+   // rounding or truncate mode
    if (traverse_OptRoundOrTruncate(t_round_or_truncate, modifier_enum)) {
       // MATCHED OptRoundOrTruncate
    }
    else return ATfalse;
 
-// precision
+   // precision
    if (ATmatch(t_precision, "no-precision()")) {
       // MATCHED no-precision
    }

@@ -387,6 +387,7 @@ FractionSpecifier
 ScaleSpecifier
 Precision
 OptPrecision
+ParensPrecision
 IntegerMachineParameter
 
 %%%%%%%%%%
@@ -652,6 +653,8 @@ context-free syntax
 
 %%CompileTimeNumericFormula   -> Precision
   IntegerLiteral              -> Precision
+  '(' IntegerLiteral ')'      -> ParensPrecision         {cons("Parens")}
+  ParensPrecision             -> Precision
 
   Precision                   -> OptPrecision
   % empty %                   -> OptPrecision            {cons("no-precision")}

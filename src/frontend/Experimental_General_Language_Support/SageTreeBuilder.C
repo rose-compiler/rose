@@ -414,7 +414,7 @@ void SageTreeBuilder::Enter(SgBasicBlock* &block, const std::vector<std::string>
 }
 
 void SageTreeBuilder::
-Leave(SgBasicBlock* block, const std::vector<std::string> &labels)
+Leave(SgBasicBlock*, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgBasicBlock*) \n";
 
@@ -740,10 +740,10 @@ Enter(SgFunctionDefinition* &function_def)
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDefinition* function_def)
+Leave(SgFunctionDefinition*)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDefinition*) \n";
-// don't pop the scope stack here as the function declaration will need it on enter
+   // don't pop the scope stack here as the function declaration will need it on enter
 }
 
 void SageTreeBuilder::
@@ -980,7 +980,7 @@ Leave(SgDerivedTypeStatement* stmt, std::list<LanguageTranslation::ExpressionKin
 //
 
 void SageTreeBuilder::
-Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name, const SourcePositionPair &positions)
+Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name, const SourcePositionPair &)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
 
@@ -1002,7 +1002,7 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
 }
 
 void SageTreeBuilder::
-Leave(SgNamespaceDeclarationStatement* namespace_decl)
+Leave(SgNamespaceDeclarationStatement*)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
 
@@ -1058,18 +1058,17 @@ Enter(SgDataStatementValue* &dataValue, SgDataStatementValue::data_statement_val
 }
 
 void SageTreeBuilder::
-Enter(SgExprStatement* &proc_call_stmt, const std::string &proc_name,
-      SgExprListExp* param_list, const std::string &abort_phrase)
+Enter(SgExprStatement* &stmt, const std::string &name,
+      SgExprListExp* params, const std::string & /*abortPhrase*/)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
-   SgFunctionCallExp* proc_call_exp;
-
    // I think entering an expression is a little awkward (what about leave an expression, maybe ok)
-   Enter(proc_call_exp, proc_name, param_list);
+   SgFunctionCallExp* expr;
+   Enter(expr, name, params);
 
    // TODO: AbortPhrase for Jovial
-   proc_call_stmt = SageBuilder::buildExprStatement_nfi(proc_call_exp);
+   stmt = SageBuilder::buildExprStatement_nfi(expr);
 }
 
 void SageTreeBuilder::
@@ -1186,7 +1185,7 @@ Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand
 }
 
 void SageTreeBuilder::
-Enter(SgPntrArrRefExp* &array_ref, const std::string &name, SgExprListExp* subscripts, SgExprListExp* cosubscripts)
+Enter(SgPntrArrRefExp* &array_ref, const std::string &name, SgExprListExp* subscripts, SgExprListExp* /*cosubscripts*/)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgPntrArrRefExp* &, ...) \n";
 
@@ -1428,7 +1427,7 @@ Leave(SgProcessControlStatement* controlStmt, const std::vector<std::string> &la
 }
 
 void SageTreeBuilder::
-Enter(SgSwitchStatement* &switch_stmt, SgExpression* selector, const SourcePositionPair &sources)
+Enter(SgSwitchStatement* &switch_stmt, SgExpression* selector, const SourcePositionPair &)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgSwitchStatement* &, ...) \n";
 
@@ -1621,7 +1620,8 @@ Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
 }
 
 void SageTreeBuilder::
-Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*,
+      std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
    // Implicit with Implicit-Spec
@@ -1903,7 +1903,7 @@ Leave(SgJovialForThenStatement* forStmt)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const SourcePositionPair &positions)
+Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const SourcePositionPair &)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
@@ -1917,7 +1917,7 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 }
 
 void SageTreeBuilder::
-Leave(SgJovialCompoolStatement* compool_decl)
+Leave(SgJovialCompoolStatement*)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialCompoolStatement*, ...) \n";
 }
@@ -1949,7 +1949,7 @@ Leave(SgJovialOverlayDeclaration* overlay_decl)
 
 void SageTreeBuilder::
 Enter(SgJovialTableStatement* &table_decl,
-      const std::string &name, const SourcePositionPair &positions, bool is_block)
+      const std::string &name, const SourcePositionPair &, bool is_block)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialTableStatement* &, ...) \n";
 
@@ -1983,7 +1983,7 @@ Enter(SgJovialTableStatement* &table_decl,
 }
 
 void SageTreeBuilder::
-Leave(SgJovialTableStatement* table_type_stmt)
+Leave(SgJovialTableStatement*)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
 
@@ -2097,7 +2097,7 @@ Enter(SgVariableDeclaration* &varDecl, SgType* baseType,
 }
 
 void SageTreeBuilder::
-Leave(SgVariableDeclaration* varDecl)
+Leave(SgVariableDeclaration*)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
 }
@@ -2233,7 +2233,7 @@ Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
 }
 
 void SageTreeBuilder::
-Leave(SgTypedefDeclaration* type_def)
+Leave(SgTypedefDeclaration*)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
 }
