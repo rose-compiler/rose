@@ -112,9 +112,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // We keep the qualified names as a map of strings with keys defined by the SgNode pointer values.
        // These are referenced to the static data members in SgNode (SgNode::get_globalQualifiedNameMapForNames()
        // and SgNode::get_globalQualifiedNameMapForTypes()).  A later implementation could reference the versions
-       // in SgNode directly. Initially in the design these were not references, they were built up and assigned
-       // to the static data members in SgNode, but this does not permit the proper handling of nexted types in
-       // templates since the unparser uses the SgNode static members directly.  so the switch to make this a
+       // in SgNode directly. Initially in the design these were not references, they were built up and assigned 
+       // to the static data members in SgNode, but this does not permit the proper handling of existing types in 
+       // templates since the unparser uses the SgNode static members directly.  So the switch to make this a 
        // reference fixes this problem.
           std::map<SgNode*,std::string> & qualifiedNameMapForNames;
           std::map<SgNode*,std::string> & qualifiedNameMapForTypes;
@@ -172,6 +172,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           typedef std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasMapType;
           namespaceAliasMapType namespaceAliasDeclarationMap;
 #endif
+
+       // DQ (5/22/2024): Building a mechanism to turn off name qualification after a specific
+       // template instantiation function has been processed.  This is debug code to trace down
+       // a problem with name qualification growing too large and consuming all memory.
+          bool disableNameQualification;
 
      public:
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).

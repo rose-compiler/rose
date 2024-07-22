@@ -1830,6 +1830,12 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgTemplateInstantiationMemberFunctionDecl: unparseTemplateInstantiationMemberFunctionDeclStmt(stmt, info); break;
           case V_SgTemplateInstantiationDirectiveStatement: unparseTemplateInstantiationDirectiveStmt(stmt, info); break;
 
+       // DQ (5/12/2024): This statement does not appear to be supported yet.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+             {
+               printf ("ERROR: This SgTemplateInstantiationTypedefDeclaration is not supported in the unparser! \n");
+               ROSE_ASSERT(false);
+             }
 #if 0
           case PRAGMA_DECL:
             // cerr + "WARNING: unparsePragmaDeclStmt not implemented in SAGE 3 (exiting ...)" + endl;

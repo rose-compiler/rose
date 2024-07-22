@@ -18732,10 +18732,54 @@ SgTemplateArgument::get_qualified_name_prefix() const
      SgName nameQualifier;
      std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
 
+#if 0
+  // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
+     printf ("In SgTemplateArgument::get_qualified_name_prefix(): this = %p SgNode::get_globalQualifiedNameMapForTypes().size() = %zu \n",this,SgNode::get_globalQualifiedNameMapForTypes().size());
+#endif
+
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
+#if 0
+       // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
+          printf ("Setting nameQualifier: length: %zu \n",nameQualifier.get_length());
+#endif
+#if 0
+       // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
+          printf ("In SgTemplateArgument::get_qualified_name_prefix(): this = %p length: %zu SgNode::get_globalQualifiedNameMapForTypes().size() = %zu \n",
+               this,nameQualifier.get_length(),SgNode::get_globalQualifiedNameMapForTypes().size());
+#endif
         }
+       else
+        {
+#if 0
+       // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
+          printf ("In SgTemplateArgument::get_qualified_name_prefix(): this = %p not found in globalQualifiedNameMapForTypes \n",this);
+#endif
+        }
+
+#if 0
+  // DQ (5/23/2024): This tracks the size of the qualified names.
+     static long int max_size = 4000;
+     if (nameQualifier.get_length() > max_size)
+        {
+       // printf ("nameQualifier.get_length() = %zu \n",nameQualifier.get_length());
+          max_size = nameQualifier.get_length();
+        }
+#endif
+#if 1
+  // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
+  // printf ("Leaving SgTemplateArgument::get_qualified_name_prefix(): nameQualifier = %s \n",nameQualifier.str());
+
+     if (nameQualifier.get_length() > 10000)
+        {
+          this->display("Exiting because the type has exceeded a reasonable length");
+          printf ("Exiting because the type has exceeded a reasonable length: %zu \n",nameQualifier.get_length());
+       // ROSE_ASSERT(nameQualifier.get_length() <= 500);
+          flush(cout);
+          ROSE_ASSERT(false);
+        }
+#endif
 
      return nameQualifier;
    }
@@ -18923,6 +18967,9 @@ SgTemplateArgument::display( const std::string & label) const
 
      ASSERT_not_null(this);
 
+  // DQ (5/12/2024): Added debugging information.
+     printf ("In SgTemplateArgument::display(label = %s): get_argumentType() = %s \n",label.c_str(),this->template_argument_kind().c_str()); 
+
      switch (get_argumentType())
         {
           case SgTemplateArgument::type_argument:
@@ -18934,11 +18981,23 @@ SgTemplateArgument::display( const std::string & label) const
                Rose_STL_Container<SgType*> typeChain = type->getInternalTypes();
 
             // Debugging output.
-               mprintf (" --- Output of type chain for template argument \n");
+            // mprintf (" --- Output of type chain for template argument \n");
+               printf (" --- Output of type chain for template argument \n");
                for (size_t i = 0; i < typeChain.size(); i++)
                   {
                     SgType* element_type = typeChain[i];
-                    printf ("   --- element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+
+                 // DQ (5/12/2024): Added debugging support.
+                    string name;
+                    SgNamedType* namedType = isSgNamedType(element_type);
+                    if (namedType != NULL)
+                       {
+                      // printf (" ------ name = %s \n",namedType->get_name().str());
+                         name = namedType->get_name().str();
+                       }
+
+                    printf ("   --- element_type = %p = %s name = %s \n",element_type,element_type->class_name().c_str(),name.c_str());
+
                     SgModifierType* modifierType = isSgModifierType(element_type);
                     if (modifierType != NULL)
                        {

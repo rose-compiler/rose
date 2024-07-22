@@ -8052,6 +8052,11 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
                       case V_SgLongIntVal: {
                         return ((SgLongIntVal *)expr1)->get_value() == ((SgLongIntVal *)expr2)->get_value();
                       }
+                   // DQ (7/21/2024): Adding support for another type (from processing nlohmann/json.hpp with ROSE)
+                      case V_SgUnsignedLongVal:
+                         {
+                           return ((SgUnsignedLongVal*) expr1)->get_value() == ((SgUnsignedLongVal*) expr2)->get_value();
+                         }
                       default: {
                         printf ("FATAL: In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: expression have the same variant %s but comparison is not NIY!\n", expr1->class_name().c_str());
                         ROSE_ABORT();

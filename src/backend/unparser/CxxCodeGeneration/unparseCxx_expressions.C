@@ -1357,7 +1357,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
         }
 
 #if DEBUG_TEMPLATE_ARGUMENT
-     printf ("In unparseTemplateArgument(): templateArgument->get_argumentType() = %d \n",templateArgument->get_argumentType());
+     printf ("In unparseTemplateArgument(): templateArgument->get_argumentType() = %d = %s \n",templateArgument->get_argumentType(),templateArgument->template_argument_kind().c_str());
 #endif
 
      switch (templateArgument->get_argumentType())
@@ -5028,13 +5028,19 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
   // curprint (" ? ");
      curprint ("?");
 
+  // DQ (7/20/2024): This should be a non-null pointer.
+     ROSE_ASSERT(expr_cond->get_true_exp() != NULL);
+     
      unparseExpression(expr_cond->get_true_exp(), info);
 
-   // Liao, 2/16/2009. We have to have space to avoid first?x:::std::string("") Three colons in a row!
+  // Liao, 2/16/2009. We have to have space to avoid first?x:::std::string("") Three colons in a row!
   // DQ (1/26/2009): Added spaces to make the formatting nicer (but it breaks the diff tests in the loop processor, so fix this later).
-   curprint (" : ");
-  //   curprint (":");
+     curprint (" : ");
+  // curprint (":");
 
+  // DQ (7/20/2024): This should be a non-null pointer.
+     ROSE_ASSERT(expr_cond->get_false_exp() != NULL);
+     
      unparseExpression(expr_cond->get_false_exp(), info);
   // if (! toplevel_expression || expr_cond->get_is_lvalue())
   // if (!toplevel_expression)

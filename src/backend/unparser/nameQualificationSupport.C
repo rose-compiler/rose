@@ -30,6 +30,8 @@ namespace si = SageInterface;
 #define mfprintf(a) printf
 #endif
 
+#define DEBUG_NONTERMINATION 0
+
 
 // support for Ada
 namespace
@@ -2066,8 +2068,6 @@ namespace
 // ***********************************************************
 
 
-
-
 void
 generateNameQualificationSupport( SgNode* node, std::set<SgNode*>& referencedNameSet )
    {
@@ -2096,6 +2096,7 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*>& referencedNam
   // nested types.
 
 #if 0
+  // DQ (5/3/2024): Debugging non-terminating name qualification case in unit testing.
      printf ("NQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQ \n");
      printf ("NQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQ \n");
      printf ("In generateNameQualificationSupport(): node = %p = %s \n",node,node->class_name().c_str());
@@ -2137,6 +2138,11 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*>& referencedNam
   // Call the traversal.
      t.traverse(node,ih);
 
+#if 0
+  // DQ (5/3/2024): Debugging non-terminating name qualification case in unit testing.
+  // mfprintf(mlog [ WARN ] ) ("DONE: Calling name qualification traversal (node = %p = %s) \n",node,node->class_name().c_str());
+     printf("\nNQNQNQ DONE: Calling name qualification traversal (node = %p = %s) \n",node,node->class_name().c_str());
+#endif
 
 #if 0
      printf("Exiting as a test! \n");
@@ -2390,6 +2396,11 @@ NameQualificationTraversal::NameQualificationTraversal(
      ROSE_ASSERT(SgSymbolTable::get_aliasSymbolCausalNodeSet().empty() == true);
 
      declarationSet = NULL;
+
+  // DQ (5/22/2024): Building a mechanism to turn off name qualification after a specific
+  // template instantiation function has been processed.  This is debug code to trace down
+  // a problem with name qualification growing too large and consuming all memory.
+     disableNameQualification = false;
    }
 
 
@@ -2790,12 +2801,18 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      ASSERT_not_null(currentScope);
      ASSERT_not_null(positionStatement);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#define DEBUG_TEMPINSTDECL 0
+     
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NONTERMINATION
      mfprintf(mlog [ WARN ] ) ("11111111111111111111111111111111111111111111111111111111111111111111 \n");
      mfprintf(mlog [ WARN ] ) ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
-
+#if DEBUG_TEMPINSTDECL
+     printf ("11111111111111111111111111111111111111111111111111111111111111111111 \n");
+     printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
+          declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());     
+#endif
   // DQ (10/31/2015): This code is designed to eliminate the infinite recursion possible in some rare cases of
   // template instantiation (see test2015_105.C extracted from ROSE compiling ROSE header files and the boost
   // usage present there).  Note that this could be restricted to the handling of SgTemplateInstantiationDecl
@@ -2804,16 +2821,61 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
      SgClassDefinition* nonconst_def = templateInstantiationDeclaration != NULL ? isSgClassDefinition(templateInstantiationDeclaration->get_definition()) : NULL;
 
-#if 0
+#if DEBUG_TEMPINSTDECL
   // Note that nonconst_def can be NULL when the template instantiation has no defining declaration and is used in a template instantiation directive (see test2017_56.C).
-     mfprintf(mlog [ WARN ] ) ("In evaluateTemplateInstantiationDeclaration(): nonconst_def = %p \n",nonconst_def);
+  // mfprintf(mlog [ WARN ] ) ("In evaluateTemplateInstantiationDeclaration(): nonconst_def = %p \n",nonconst_def);
+     printf ("In evaluateTemplateInstantiationDeclaration(): nonconst_def = %p \n",nonconst_def);
 #endif
 
-     if (MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
+  // DQ (5/22/2024): Count the number of function invocations so that we can turn on forceSkip selectively.
+     static size_t functionCallCounter = 0;
+
+     functionCallCounter++;
+
+#if DEBUG_TEMPINSTDECL
+     printf ("In evaluateTemplateInstantiationDeclaration(): functionCallCounter = %zu \n",functionCallCounter);
+#endif
+
+     bool forceSkip = false;
+
+#if 0
+  // DQ (5/12/2024): Skipping the handling of template instantiations in the name qualification as a test!
+  // forceSkip = true;
+  // if (functionCallCounter >= 50000) // working
+  // if (functionCallCounter >= 70000) // working
+  // if (functionCallCounter >= 90000) // working
+  // if (functionCallCounter >= 91000) // working
+  // if (functionCallCounter >= 93000) // max is 91224
+  // if (functionCallCounter >= 120000) // max is 91224? it changes as we increase the bound.
+     if (functionCallCounter >= 150000) // max is 149764 before failing.
+        {
+       // DQ (5/22/2024): Use the disableNameQualification flag and set it to true when the qualified name sizes reach 5000 or so in length, then just disable further name qualification.
+          forceSkip = true;
+        }
+#endif
+#if 1
+  // DQ (5/22/2024): Building a mechanism to turn off name qualification after a specific
+  // template instantiation function has been processed.  This is debug code to trace down
+  // a problem with name qualification growing too large and consuming all memory.
+     if (disableNameQualification == true)
+        {
+#if DEBUG_NONTERMINATION || DEBUG_TEMPINSTDECL || 0
+          printf ("In evaluateTemplateInstantiationDeclaration(): Setting forceSkip = true \n");
+#endif
+          forceSkip = true;
+        }
+#endif
+
+  // DQ (5/12/2024): Make sure that we don't have any NULL entries.
+     ROSE_ASSERT(MangledNameSupport::visitedTemplateDefinitions.find(NULL) == MangledNameSupport::visitedTemplateDefinitions.end());
+     
+  // if (MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
+     if (forceSkip == true || MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
         {
        // Skip the call that would result in infinte recursion.
-#if 0
+#if DEBUG_NONTERMINATION
           mfprintf(mlog [ WARN ] ) ("In nameQualificationSupport.C: evaluateTemplateInstantiationDeclaration(): skipping the call to process the template class instantiation definition: def = %p = %s \n",declaration,declaration->class_name().c_str());
+          mfprintf(mlog [ WARN ] ) (" --- declaration name = %s \n",SageInterface::get_name(declaration).c_str());
 #endif
         }
        else
@@ -2827,9 +2889,15 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 #endif
             // Not clear why we need to use an iterator to simply insert a pointer into the set.
             // SgTemplateInstantiationDefn* nonconst_templateInstantiationDefinition = const_cast<SgTemplateInstantiationDefn*>(templateInstantiationDefinition);
+#if 0
+            // DQ (5/21/2024): Old code.
                MangledNameSupport::setType::iterator it = MangledNameSupport::visitedTemplateDefinitions.begin();
             // MangledNameSupport::visitedTemplateDeclarations.insert(it,nonconst_templateInstantiationDefinition);
                MangledNameSupport::visitedTemplateDefinitions.insert(it,nonconst_def);
+#else
+            // DQ (5/21/2024): New code using single argument for inserting to a set (this is the way it is supposed to work).
+               MangledNameSupport::visitedTemplateDefinitions.insert(nonconst_def);
+#endif
              }
 
        // DQ (11/1/2015): Indented this code (switch statement) to conform to new block layout.
@@ -2840,7 +2908,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
                     ASSERT_not_null(templateInstantiationDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
                  // mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
                     mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
@@ -2854,7 +2922,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
                     ASSERT_not_null(templateInstantiationFunctionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
                     mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
 #endif
                  // Evaluate all template arguments.
@@ -2865,7 +2933,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
                     mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
 #endif
                     ASSERT_not_null(templateInstantiationMemberFunctionDeclaration);
@@ -2881,7 +2949,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                case V_SgTemplateFunctionDeclaration:
                   {
                  // Actually there is nothing to do here.
-#if 0
+#if DEBUG_NONTERMINATION
                     mfprintf(mlog [ WARN ] ) ("Note: Template arguments being evaluated against template declaration (which has only template parameters) \n");
 #endif
 #if 0
@@ -2896,7 +2964,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(declaration);
                     ASSERT_not_null(templateInstantiationTypedefDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
                     mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- templateInstantiationTypedefDeclaration = %p \n",templateInstantiationTypedefDeclaration);
 #endif
                  // Evaluate all template arguments.
@@ -2908,7 +2976,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgNonrealDecl* nrdecl = isSgNonrealDecl(declaration);
                     ASSERT_not_null(nrdecl);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
                     mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- nrdecl = %p \n",nrdecl);
 #endif
                     evaluateNameQualificationForTemplateArgumentList (nrdecl->get_tpl_args(),currentScope,positionStatement);
@@ -2916,11 +2984,10 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                     break;
                   }
 
-
                default:
                   {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
+                    mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
                   }
              }
@@ -2937,7 +3004,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
              }
         }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPINSTDECL
      mfprintf(mlog [ WARN ] ) ("Leaving evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
@@ -3327,6 +3394,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      currentScope->get_startOfConstruct()->display("currentScope");
      mfprintf(mlog [ WARN ] ) ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
      positionStatement->get_startOfConstruct()->display("positionStatement");
+#endif
+
+#if DEBUG_NONTERMINATION || 0
+     printf("Inside of NameQualificationTraversal::nameQualificationDepth(): declaration  = %p = %s = %s \n",
+          declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
 #endif
 
      SgNonrealDecl*                        nonrealDecl               = isSgNonrealDecl(declaration);
@@ -4693,10 +4765,22 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                            // Reset the symbol to be consistant with the unique scope (in case the currentScope was reset above.
                               symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
-                              ASSERT_not_null(symbol);
+
+                           // DQ (7/21/2024): Added debugging output for testing.
+                              if (symbol == NULL)
+                                 {
+                                   printf ("SageInterface::lookupFunctionSymbolInParentScopes() returned NULL: name = %s currentScope = %p = %s = %s \n",
+                                        name.str(),currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+                                 }
+
+                           // DQ (7/21/2024): This can be NULL for the processing of nlohmann/json.hpp with ROSE
+                           // ASSERT_not_null(symbol);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              mfprintf(mlog [ WARN ] ) ("@@@@@@@@ name = %s declaration = %p = %s symbol = %s \n",name.str(),declaration,declaration->class_name().c_str(),symbol->class_name().c_str());
+                              if (symbol != NULL)
+                                 {
+                                   mfprintf(mlog [ WARN ] ) ("@@@@@@@@ name = %s declaration = %p = %s symbol = %s \n",name.str(),declaration,declaration->class_name().c_str(),symbol->class_name().c_str());
+                                 }
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! (current scope is a SgNamespaceDefinitionStatement) \n");
@@ -5452,7 +5536,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("DONE: Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s = %s currentScope = %p = %s \n",
                declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),currentScope,currentScope->class_name().c_str());
-          mfprintf(mlog [ WARN ] ) ("===== declaration->unparseToString() = %s \n",declaration->unparseToString().c_str());
+       // DQ (5/12/2024): This fails for test_06.C used to debug the infinite recursion in name qualification for Group G code.
+       // mfprintf(mlog [ WARN ] ) ("===== declaration->unparseToString() = %s \n",declaration->unparseToString().c_str());
 #endif
 
 #if 0
@@ -5690,10 +5775,18 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // SgClassDeclaration* associatedClassDeclaration = baseClass->get_base_class();
                               SgClassDeclaration* associatedClassDeclaration = classSymbol->get_declaration();
 
-                              ASSERT_not_null(classDeclaration);
+#if DEBUG_NONTERMINATION || 0
+                           // DQ (7/21/2024): Added debugging support.
+                              printf("In NameQualificationTraversal::nameQualificationDepth(): case V_SgClassSymbol: declaration  = %p = %s = %s \n",
+                                   declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+#endif
+                           // DQ (7/21/2024): This can be a namespaceDeclaration (for the case of processing the nlohmann/json header file).
+                           // ASSERT_not_null(classDeclaration);
                               ASSERT_not_null(associatedClassDeclaration);
 
-                              if (associatedClassDeclaration->get_firstNondefiningDeclaration() == classDeclaration->get_firstNondefiningDeclaration())
+                           // DQ (7/21/2024): This can be a namespaceDeclaration (for the case of processing the nlohmann/json header file).
+                           // if (associatedClassDeclaration->get_firstNondefiningDeclaration() == classDeclaration->get_firstNondefiningDeclaration())
+                              if ( (classDeclaration != NULL) && (associatedClassDeclaration->get_firstNondefiningDeclaration() == classDeclaration->get_firstNondefiningDeclaration()) )
                                  {
 // #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
 #if 0
@@ -6557,6 +6650,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
           qualificationDepth,(typeElaborationIsRequired == true) ? "true" : "false");
 #endif
 
+#if DEBUG_NONTERMINATION
+     printf("Leaving NameQualificationTraversal::nameQualificationDepth(): declaration  = %p = %s = %s \n",
+          declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+#endif
+
      return qualificationDepth;
    }
 
@@ -6949,6 +7047,11 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                            mfprintf(mlog [ WARN ] ) ("templateArgumentTypeDeclaration = %p = %s \n",templateArgumentTypeDeclaration,templateArgumentTypeDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION || 0
+                        // DQ (5/5/2024): Debugging non-termination behavior.
+                           printf("calling setNameQualification(templateArgument): templateArgumentTypeDeclaration = %p = %s \n",templateArgumentTypeDeclaration,templateArgumentTypeDeclaration->class_name().c_str());
+                           flush(cout);
+#endif
                            setNameQualification(templateArgument,templateArgumentTypeDeclaration,amountOfNameQualificationRequiredForTemplateArgument);
                          }
                        }
@@ -7040,6 +7143,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH || 0
      mfprintf(mlog [ WARN ] ) ("In nameQualificationDepth(SgType*): type = %p = %s \n",type,type->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+     static int counter = 0;
+     printf("In nameQualificationDepth(SgType*): counter = %d type = %p = %s \n",counter,type,type->class_name().c_str());
+     counter++;
+#endif
 
   // DQ (7/23/2011): If this is an array type, then we need special processing for any name qualification of its index expressions.
      processNameQualificationForPossibleArrayType(type,currentScope);
@@ -7047,11 +7155,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
      SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(type);
      if (declaration != NULL)
         {
-
        // Check the visability and unambiguity of this declaration.
+#if DEBUG_NONTERMINATION
+          printf("In nameQualificationDepth(SgType*): declaration != NULL: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
           amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
           mfprintf(mlog [ WARN ] ) ("amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+#if DEBUG_NONTERMINATION
+          printf("amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
         }
        else
@@ -7059,10 +7172,19 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
           mfprintf(mlog [ WARN ] ) ("ERROR: In nameQualificationDepth(SgType*): declaration NOT found for type = %p = %s\n",type,type->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("ERROR: In nameQualificationDepth(SgType*): declaration NOT found for type = %p = %s\n",type,type->class_name().c_str());
+#endif
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
      mfprintf(mlog [ WARN ] ) ("Leaving nameQualificationDepth(SgType*): type = %p = %s amountOfNameQualificationRequired = %d \n",type,type->class_name().c_str(),amountOfNameQualificationRequired);
+#endif
+#if DEBUG_NONTERMINATION
+     counter--;
+     printf("Leaving nameQualificationDepth(SgType*): counter = %d type = %p = %s amountOfNameQualificationRequired = %d \n",
+          counter,type,type->class_name().c_str(),amountOfNameQualificationRequired);
+     flush(cout);
 #endif
 
      return amountOfNameQualificationRequired;
@@ -7077,6 +7199,11 @@ NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* i
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      mfprintf(mlog [ WARN ] ) ("In nameQualificationDepthForType(): initializedName = %s type = %p = %s currentScope = %p = %s \n",initializedName->get_name().str(),initializedName->get_type(),initializedName->get_type()->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+     printf("In nameQualificationDepthForType(): initializedName = %s type = %p = %s currentScope = %p = %s \n",
+          initializedName->get_name().str(),initializedName->get_type(),initializedName->get_type()->class_name().c_str(),
+          currentScope,currentScope->class_name().c_str());
 #endif
 
      SgType* initializedNameType = initializedName->get_type();
@@ -7106,6 +7233,12 @@ NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* i
              }
         }
 
+#if DEBUG_NONTERMINATION
+     printf ("Calling nameQualificationDepth(): initializedNameType = %p = %s \n",initializedNameType,initializedNameType->class_name().c_str());
+#endif
+
+  // return nameQualificationDepth(initializedName->get_type(),initializedName->get_scope(),positionStatement);
+  // return nameQualificationDepth(initializedName->get_type(),currentScope,positionStatement);
      return nameQualificationDepth(initializedNameType,currentScope,positionStatement);
    }
 
@@ -8508,8 +8641,9 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
         {
           mfprintf(mlog [ WARN ] ) ("   --- declaration ->get_definingDeclaration()                      = %p = %s \n",
                declaration->get_definingDeclaration(),declaration->get_definingDeclaration()->class_name().c_str());
-          mfprintf(mlog [ WARN ] ) ("   --- declaration->get_definingDeclaration()->get_parent()         = %p = %s \n",
-               declaration->get_definingDeclaration()->get_parent(),declaration->get_definingDeclaration()->get_parent()->class_name().c_str());
+       // DQ (5/12/2024): This fails for test_06.C used to debug infinite recursion in the Group G code.
+       // mfprintf(mlog [ WARN ] ) ("   --- declaration->get_definingDeclaration()->get_parent()         = %p = %s \n",
+       //      declaration->get_definingDeclaration()->get_parent(),declaration->get_definingDeclaration()->get_parent()->class_name().c_str());
         }
 #endif
 
@@ -8669,6 +8803,11 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
           printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): before stripType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
+          printf("Case SgInitializedName: initializedName->get_type(): before stripType(): type = %p = %s \n",type,type->class_name().c_str());
+          printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
+#endif
        // DQ (4/15/2019): Reset the type so that we don't miss the SgPointerMemberType.
        // unsigned char bit_array = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE |
        //                           SgType::STRIP_POINTER_TYPE  | SgType::STRIP_POINTER_TYPE   | SgType::STRIP_ARRAY_TYPE;
@@ -8679,7 +8818,9 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): after stripType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
-
+#if DEBUG_NONTERMINATION
+          printf("Case SgInitializedName: initializedName->get_type(): after stripType(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
 
 #if 0
        // DQ (4/17/2019): Need more general type support, required for more complex nesting of SgPointerMemberType types.
@@ -8780,12 +8921,25 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
        // the best example of this.
           ASSERT_not_null(currentScope);
 
-       // DQ (4/27/2019): Refactored this code to be outside of the flase block below, so it can be used both there
+       // DQ (4/27/2019): Refactored this code to be outside of the false block below, so it can be used both there
        // and outside the false branch afterward.
           SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+#if DEBUG_NONTERMINATION
+       // DQ (5/4/2024): Added to support debugging non-termination of unit test tool.
+          printf ("debugging non-termination: declaration = %p \n",declaration);
+          if (declaration != NULL)
+             {
+               printf ("debugging non-termination: declaration = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+               Sg_File_Info* fileInfo = declaration->get_file_info();
+               if (fileInfo != NULL)
+                  {
+                    printf("debugging non-termination: declaration: --- line %d col = %d file = %s \n",fileInfo->get_line(),fileInfo->get_col(),fileInfo->get_filenameString().c_str());
+                  }
+             }
+#endif
 
-       // DQ (4/22/2019): If we have resolved the type (after stripType() function) to a SgPointerMemberType, then
-       // we need to traverse the type using a type traversal.  Else we can handle it normally.
+       // DQ (4/22/2019): If we have resolved the type (after stripType() function) to a SgPointerMemberType,
+       // then we need to traverse the type using a type traversal.  Else we can handle it normally.
        // generateNestedTraversalWithExplicitScope(type,currentScope,currentStatement,initializedName);
        // traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
           SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
@@ -8812,6 +8966,9 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
              {
 #if DEBUG_INITIALIZED_NAME
                mfprintf(mlog [ WARN ] ) ("Normal processing of type (no recursive call to evaluate the type) \n");
+#endif
+#if DEBUG_NONTERMINATION
+               printf("Normal processing of type (no recursive call to evaluate the type) \n");
 #endif
             // The code for the normal processing of the type is below.
 
@@ -8995,6 +9152,9 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 #if DEBUG_INITIALIZED_NAME || 0
                mfprintf(mlog [ WARN ] ) ("processAsNormalTypeThatMightRequireNameQualification = %s \n",processAsNormalTypeThatMightRequireNameQualification ? "true" : "false");
 #endif
+#if DEBUG_NONTERMINATION
+               printf("processAsNormalTypeThatMightRequireNameQualification = %s \n",processAsNormalTypeThatMightRequireNameQualification ? "true" : "false");
+#endif
             // if (declaration != NULL)
                if (processAsNormalTypeThatMightRequireNameQualification == true)
                   {
@@ -9037,6 +9197,11 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                       // debugging = true;
                        }
 
+#if DEBUG_NONTERMINATION
+                    printf ("Calling nameQualificationDepthForType: currentStatement = %p = %s name = %s \n",currentStatement,
+                         currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+                    printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
                  // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
                  // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentStatement);
                     int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
@@ -9044,6 +9209,9 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
                     mfprintf(mlog [ WARN ] ) ("SgInitializedName's (%s) type: amountOfNameQualificationRequiredForType = %d \n",
                          initializedName->get_name().str(),amountOfNameQualificationRequiredForType);
+#endif
+#if DEBUG_NONTERMINATION
+                    printf ("DONE: calling nameQualificationDepthForType: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
 #endif
 #if 0
                  // DQ (1/3/2020): Debugging code for Cxx11_tests/test2020_07.C.
@@ -9355,7 +9523,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 
        // endif for type handling.
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NONTERMINATION
           printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
           printf ("Leaving nameQualificationTypeSupport \n");
           printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
@@ -9373,8 +9541,31 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("\n\n****************************************************** \n");
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
-     mfprintf(mlog [ WARN ] ) ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
+  // mfprintf(mlog [ WARN ] ) ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
+     mfprintf(mlog [ WARN ] ) ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %s = %s = %p \n",n->class_name().c_str(),SageInterface::get_name(n).c_str(),n);
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
+#endif
+
+#if DEBUG_NONTERMINATION
+  // DQ (5/3/2024): Debugging non-terminating name qualification case in unit testing.
+     printf("In evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     Sg_File_Info* tmp_fileInfo = n->get_file_info();
+     if (tmp_fileInfo != NULL)
+        {
+          printf("NameQualificationTraversal: --- n = %p = %s line %d col = %d file = %s \n",n,n->class_name().c_str(),tmp_fileInfo->get_line(),tmp_fileInfo->get_col(),tmp_fileInfo->get_filenameString().c_str());
+        }
+#endif
+
+#if 0
+     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(n);
+     if (templateInstantiationMemberFunctionDecl != NULL)
+        {
+          if (templateInstantiationMemberFunctionDecl->get_name() == "allocator")
+             {
+               printf ("Setting disableNameQualification == true \n");
+               disableNameQualification = true;
+             }
+        }
 #endif
 
 #if 0
@@ -10478,6 +10669,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if DEBUG_INITIALIZED_NAME || 0
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName = %p = %s name = %s \n",initializedName,initializedName->class_name().c_str(),initializedName->get_name().str());
           mfprintf(mlog [ WARN ] ) (" --- initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+
+#if DEBUG_NONTERMINATION
+       // DQ (5/3/2024): Debugging non-terminating name qualification.
+          printf("Case SgInitializedName: initializedName = %p = %s name = %s \n",initializedName,initializedName->class_name().c_str(),initializedName->get_name().str());
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
@@ -11939,6 +12135,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("############################################################### \n");
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: END OF Processing the SgInitializedName \n");
           mfprintf(mlog [ WARN ] ) ("############################################################### \n");
+#endif
+
+#if DEBUG_NONTERMINATION
+       // DQ (5/3/2024): Debugging non-terminating name qualification.
+          printf("Leaving case SgInitializedName: initializedName = %p = %s name = %s \n",initializedName,initializedName->class_name().c_str(),initializedName->get_name().str());
 #endif
 
 #if 0
@@ -13531,6 +13732,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if DEBUG_MEMBER_FUNCTION_REF
                               mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),memberFunctionRefExp,memberFunctionRefExp->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+                              printf("TEST 1: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),memberFunctionRefExp,memberFunctionRefExp->class_name().c_str());
+#endif
                               qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(memberFunctionRefExp,qualifier));
                             }
                            else
@@ -14447,6 +14651,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+                              printf("TEST 2: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
 #endif
                               qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(varRefExp,qualifier));
                             }
@@ -16182,7 +16389,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
         }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
      mfprintf(mlog [ WARN ] ) ("Leaving NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
      mfprintf(mlog [ WARN ] ) ("******************************************************\n\n\n");
@@ -16599,6 +16806,9 @@ void NameQualificationTraversal::setNameQualificationOnClassOf ( SgPointerMember
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      mfprintf(mlog [ WARN ] ) ("In setNameQualification(SgPointerMemberType*) \n");
 #endif
+#if DEBUG_NONTERMINATION
+     printf("In setNameQualification(SgPointerMemberType*): calling setNameQualificationSupport() \n");
+#endif
 
      SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(declaration);
   // SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(referenceNode);
@@ -16637,6 +16847,9 @@ void NameQualificationTraversal::setNameQualificationOnClassOf ( SgPointerMember
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for (SgPointerMemberType) name = %s into list at IR node = %p = %s \n",qualifier.c_str(),pointerMemberType,pointerMemberType->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf ("TEST 3: calling qualifiedNameMapForNames.insert(): pointerMemberType = %p qualifier = %s \n",pointerMemberType,qualifier.c_str());
 #endif
        // qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(pointerMemberType,qualifier));
        // qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(pointerMemberType,qualifier));
@@ -16696,6 +16909,9 @@ void NameQualificationTraversal::setNameQualificationOnBaseType ( SgPointerMembe
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      mfprintf(mlog [ WARN ] ) ("In setNameQualification(SgPointerMemberType*) \n");
 #endif
+#if DEBUG_NONTERMINATION
+     printf("In setNameQualification(SgPointerMemberType*): calling setNameQualificationSupport() \n");
+#endif
 
      SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(declaration);
   // SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(referenceNode);
@@ -16733,6 +16949,9 @@ void NameQualificationTraversal::setNameQualificationOnBaseType ( SgPointerMembe
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for (SgPointerMemberType) name = %s into list at IR node = %p = %s \n",qualifier.c_str(),pointerMemberType,pointerMemberType->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST T1: Inserting qualifier for (SgPointerMemberType) name = %s into list at IR node = %p = %s \n",qualifier.c_str(),pointerMemberType,pointerMemberType->class_name().c_str());
 #endif
        // qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(pointerMemberType,qualifier));
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(pointerMemberType,qualifier));
@@ -16954,6 +17173,9 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+               printf("TEST 5: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
+#endif
                qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(varRefExp,qualifier));
              }
             else
@@ -17026,6 +17248,9 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
                   {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+                    printf("TEST 6: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
 #endif
                     qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(varRefExp,qualifier));
                   }
@@ -17240,6 +17465,9 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for (SgFunctionRefExp) name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionRefExp,functionRefExp->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 7: Inserting qualifier for (SgFunctionRefExp) name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionRefExp,functionRefExp->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(functionRefExp,qualifier));
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -17306,6 +17534,9 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting (memberFunction) qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionRefExp,functionRefExp->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 8: Inserting (memberFunction) qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionRefExp,functionRefExp->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(functionRefExp,qualifier));
         }
        else
@@ -17371,6 +17602,9 @@ NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseud
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting (pseudoDestructorRefExp) qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),pseudoDestructorRefExp,pseudoDestructorRefExp->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 9: Inserting (pseudoDestructorRefExp) qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),pseudoDestructorRefExp,pseudoDestructorRefExp->class_name().c_str());
 #endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(pseudoDestructorRefExp,qualifier));
         }
@@ -17444,6 +17678,9 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),constructorInitializer,constructorInitializer->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 10: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),constructorInitializer,constructorInitializer->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(constructorInitializer,qualifier));
         }
        else
@@ -17513,6 +17750,9 @@ NameQualificationTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDecla
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),enumVal,enumVal->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 11: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),enumVal,enumVal->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(enumVal,qualifier));
         }
        else
@@ -17579,6 +17819,9 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),baseClass,baseClass->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 12: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),baseClass,baseClass->class_name().c_str());
 #endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(baseClass,qualifier));
         }
@@ -17761,6 +18004,9 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionDeclaration,functionDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 13: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(functionDeclaration,qualifier));
         }
        else
@@ -17880,6 +18126,9 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for type = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionDeclaration,functionDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST T2: Inserting qualifier for type = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(functionDeclaration,qualifier));
         }
        else
@@ -17941,6 +18190,9 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDeclaration,usingDeclaration->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 14: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDeclaration,usingDeclaration->class_name().c_str());
 #endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(usingDeclaration,qualifier));
         }
@@ -18009,6 +18261,9 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDeclaration,usingDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 15: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDeclaration,usingDeclaration->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(usingDeclaration,qualifier));
         }
        else
@@ -18053,6 +18308,9 @@ NameQualificationTraversal::setNameQualification ( SgUsingDirectiveStatement* us
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDirective,usingDirective->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 16: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDirective,usingDirective->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(usingDirective,qualifier));
         }
        else
@@ -18095,6 +18353,9 @@ NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationSt
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),namespaceAliasDeclaration,namespaceAliasDeclaration->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 17: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),namespaceAliasDeclaration,namespaceAliasDeclaration->class_name().c_str());
 #endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(namespaceAliasDeclaration,qualifier));
         }
@@ -18262,6 +18523,9 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for type = %s into list at SgInitializedName IR node = %p = %s \n",qualifier.c_str(),initializedName,initializedName->get_name().str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST T3: Inserting qualifier for type = %s into list at SgInitializedName IR node = %p = %s \n",qualifier.c_str(),initializedName,initializedName->get_name().str());
+#endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(initializedName,qualifier));
         }
        else
@@ -18357,6 +18621,9 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for SgInitializedName = %s into list at SgInitializedName IR node = %p = %s \n",qualifier.c_str(),initializedName,initializedName->get_name().str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 18: Inserting qualifier for SgInitializedName = %s into list at SgInitializedName IR node = %p = %s \n",qualifier.c_str(),initializedName,initializedName->get_name().str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(initializedName,qualifier));
         }
        else
@@ -18425,6 +18692,9 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at SgVariableDeclaration IR node = %p = %s \n",qualifier.c_str(),variableDeclaration,variableDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 19: Inserting qualifier for name = %s into list at SgVariableDeclaration IR node = %p = %s \n",qualifier.c_str(),variableDeclaration,variableDeclaration->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(variableDeclaration,qualifier));
         }
        else
@@ -18489,6 +18759,9 @@ NameQualificationTraversal::setNameQualificationOnBaseType(SgTypedefDeclaration*
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for type = %s into list at IR node = %p = %s \n",qualifier.c_str(),typedefDeclaration,typedefDeclaration->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST T4: Inserting qualifier for type = %s into list at IR node = %p = %s \n",qualifier.c_str(),typedefDeclaration,typedefDeclaration->class_name().c_str());
 #endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(typedefDeclaration,qualifier));
         }
@@ -18558,6 +18831,9 @@ NameQualificationTraversal::setNameQualificationOnPointerMemberClass(SgTypedefDe
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for type = %s into list at IR node = %p = %s \n",qualifier.c_str(),typedefDeclaration,typedefDeclaration->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 20: Inserting qualifier for type = %s into list at IR node = %p = %s \n",qualifier.c_str(),typedefDeclaration,typedefDeclaration->class_name().c_str());
 #endif
        // qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(typedefDeclaration,qualifier));
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(typedefDeclaration,qualifier));
@@ -18629,6 +18905,30 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPLATE_ARGUMENT_NAME_QUALIFICATION
      mfprintf(mlog [ WARN ] ) (" - qualifier = %s\n", qualifier.c_str());
 #endif
+
+#if DEBUG_NONTERMINATION || 0
+     printf ("In setNameQualification(SgTemplateArgument*): qualifier.length() = %zu \n",qualifier.length());
+#endif
+
+#if 1
+  // DQ (5/23/2024): When the names start getting too long, use this as a way to short-circuit the runaway process.
+     const size_t qualifier_length_limit = 6000;
+     if (qualifier.length() > qualifier_length_limit)
+        {
+          static bool messageOutput = false;
+          if (messageOutput == false)
+             {
+            // mfprintf(mlog [ WARN ] ) ("In setNameQualification(SgTemplateArgument*): qualifier.length() length exceeded (qualifier_length_limit = %zu) Setting disableNameQualification == true \n",qualifier_length_limit);
+               printf ("In setNameQualification(SgTemplateArgument*): qualifier.length() length exceeded (qualifier_length_limit = %zu) Setting disableNameQualification == true \n",qualifier_length_limit);
+               messageOutput = true;
+
+               disableNameQualification = true;
+             }
+
+       // Zero out the qualifier.
+          qualifier = "";
+        }
+#endif     
 
   // These may not be important under the newest version of name qualification that uses the qualified
   // name string map to IR nodes that reference the construct using the name qualification.
@@ -18795,6 +19095,9 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 #if 0
           qualifier = string("/* initialized */ ") + qualifier;
 #endif
+#if DEBUG_NONTERMINATION || 0
+          printf("TEST T5: Inserting qualifier (length = %zu) for name or type = %s into list at IR node = %p = %s \n",qualifier.length(),qualifier.c_str(),templateArgument,templateArgument->class_name().c_str());
+#endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(templateArgument,qualifier));
 
        // Handle the defining declaration's template argument.
@@ -18803,6 +19106,9 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
              {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("Insert qualified name = %s for defining_templateArgument = %p \n",qualifier.c_str(),defining_templateArgument);
+#endif
+#if DEBUG_NONTERMINATION || 0
+               printf("TEST T6: Insert qualifier (length = %zu) for name = %s for defining_templateArgument = %p \n",qualifier.length(),qualifier.c_str(),defining_templateArgument);
 #endif
                qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(defining_templateArgument,qualifier));
              }
@@ -18815,7 +19121,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
         }
        else
         {
-       // If it already existes then overwrite the existing information.
+       // If it already exists then overwrite the existing information.
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(templateArgument);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
@@ -18830,13 +19136,33 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 #if 0
                qualifier = string("/* replaced */ ") + qualifier;
 #endif
+#if DEBUG_NONTERMINATION || 0
+               printf ("TEST A: Resetting qualifier via assignment: qualifier.length() = %zu \n",qualifier.length());
+               printf (" --- i->second = |%s| \n",i->second.c_str());
+               printf (" --- qualifier = %s \n",qualifier.c_str());
+
+               // DQ (5/12/2024): Debugging support.
+               if (i->second == "__gnu_cxx::__alloc_traits< allocator_type ,value_type > ::")
+                  {
+                    printf ("Exiting as a early point in the identification of infinite recursion! \n");
+
+                    templateArgument->display("Exiting as a early point in the identification of infinite recursion!");
+#if 0
+                    flush(cout);
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
+
                i->second = qualifier;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
             // ROSE_ASSERT(false);
 #endif
-
+#if DEBUG_NONTERMINATION
+               printf ("Calling templateArgument->get_qualified_name_prefix(): setting testNameInMap \n");
+#endif
                SgName testNameInMap = templateArgument->get_qualified_name_prefix();
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("testNameInMap = %s \n",testNameInMap.str());
@@ -18857,9 +19183,15 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 
                     if (j->second != qualifier)
                        {
+#if DEBUG_NONTERMINATION || 0
+                         printf ("TEST B: Resetting qualifier via assignment: qualifier.length() = %zu \n",qualifier.length());
+#endif
                          j->second = qualifier;
                        }
 
+#if DEBUG_NONTERMINATION
+                    printf ("Calling templateArgument->get_qualified_name_prefix(): setting defining_testNameInMap \n");
+#endif
                     SgName defining_testNameInMap = defining_templateArgument->get_qualified_name_prefix();
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     mfprintf(mlog [ WARN ] ) ("defining_testNameInMap = %s \n",defining_testNameInMap.str());
@@ -18871,7 +19203,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
              {
             // DQ (5/30/2019): Need to handle the case where the name qualification stored in the qualifiedNameMapForTypes
             // are the same for templateArgument, but different for defining_templateArgument.  This is a bugfix for test2019_444.C
-            // reported by Charles as part of reproducers for bugs in ROE from ASC codes.
+            // reported by Charles as part of reproducers for bugs in ROSE from ASC codes.
 #if 0
                mfprintf(mlog [ WARN ] ) ("The name qualifier is the same in the qualifiedNameMapForTypes for templateArgument, but need to check for defining_templateArgument \n");
 #endif
@@ -18885,6 +19217,9 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
                        {
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Setting the qualified for defining_templateArgument: j->second = %s qualifier = %s \n",j->second.c_str(),qualifier.c_str());
+#endif
+#if DEBUG_NONTERMINATION || 0
+                         printf ("TEST C: Resetting qualifier via assignment: qualifier.length() = %zu \n",qualifier.length());
 #endif
                          j->second = qualifier;
                        }
@@ -18932,6 +19267,9 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST T7: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
 #endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(exp,qualifier));
         }
@@ -19012,6 +19350,9 @@ NameQualificationTraversal::setNameQualificationForPointerToMember(SgExpression*
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
+#endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 21: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
 #endif
        // qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(exp,qualifier));
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(exp,qualifier));
@@ -19094,6 +19435,9 @@ NameQualificationTraversal::setNameQualification(SgNonrealRefExp* exp, SgDeclara
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 22: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(exp,qualifier));
         }
        else
@@ -19170,6 +19514,9 @@ NameQualificationTraversal::setNameQualification(SgAggregateInitializer* exp, Sg
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST T8: Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
+#endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(exp,qualifier));
         }
        else
@@ -19243,6 +19590,9 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at SgClassDeclaration IR node = %p = %s \n",qualifier.c_str(),classDeclaration,classDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 23: Inserting qualifier for name = %s into list at SgClassDeclaration IR node = %p = %s \n",qualifier.c_str(),classDeclaration,classDeclaration->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(classDeclaration,qualifier));
         }
        else
@@ -19312,6 +19662,9 @@ NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclarat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at SgEnumDeclaration IR node = %p = %s \n",qualifier.c_str(),enumDeclaration,enumDeclaration->class_name().c_str());
 #endif
+#if DEBUG_NONTERMINATION
+          printf("TEST 24: Inserting qualifier for name = %s into list at SgEnumDeclaration IR node = %p = %s \n",qualifier.c_str(),enumDeclaration,enumDeclaration->class_name().c_str());
+#endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(enumDeclaration,qualifier));
         }
        else
@@ -19351,6 +19704,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
   // either the map to names or the map to types (two different hash maps).
      string qualifierString;
 
+#define DEBUG_NQ_SCOPE 0
+
      output_amountOfNameQualificationRequired = inputNameQualificationLength;
      outputGlobalQualification                = false;
      outputTypeEvaluation                     = false;
@@ -19363,6 +19718,11 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #if 0
      printf ("test 6: qualifierString = %s \n",qualifierString.c_str());
 #endif
+#if DEBUG_NQ_SCOPE
+  // DQ (5/5/2024): Debugging non-termination.
+     printf("\nSTART: In NameQualificationTraversal::setNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",
+          scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
+#endif
 
   // DQ (8/1/2020): This should always be true.
   // ROSE_ASSERT(namespaceAliasDeclarationMapFromInheritedAttribute != NULL);
@@ -19373,8 +19733,12 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
      for (int i = 0; i < inputNameQualificationLength; i++)
         {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NQ_SCOPE
           mfprintf(mlog [ WARN ] ) ("   --- In loop: i = %d scope = %p = %s = %s \n",i,scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#endif
+#if DEBUG_NQ_SCOPE
+       // DQ (5/5/2024): Debugging non-termination.
+          printf ("In setNameQualificationSupport(): in loop: i = %d scope = %p = %s = %s \n",i,scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
 #endif
           string scope_name;
 
@@ -19385,7 +19749,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
        // DQ (8/19/2014): This is used to control the generation of qualified names for un-named namespaces
        // (and maybe also other un-named language constructs).
           bool skip_over_scope = false;
-#if 0
+#if DEBUG_NQ_SCOPE
           printf ("test 7: qualifierString = %s \n",qualifierString.c_str());
 #endif
        // This requirement to visit the template arguments occurs for templaed functions and templated member functions as well.
@@ -19403,7 +19767,10 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
             // This is the name of the template (without and internal template arguments)
                mfprintf(mlog [ WARN ] ) ("templateClassDeclaration->get_templateName() = %s \n",templateClassDeclaration->get_templateName().str());
 #endif
-
+#if DEBUG_NQ_SCOPE
+            // DQ (5/5/2024): Debugging non-termination.
+               printf("templateClassDeclaration->get_name()          = %s \n",templateClassDeclaration->get_name().str());
+#endif
                SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
                ASSERT_not_null(unparseInfoPointer);
                unparseInfoPointer->set_outputCompilerGeneratedStatements();
@@ -19417,6 +19784,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                SgTemplateArgumentPtrList & templateArgumentList = templateClassDeclaration->get_templateArguments();
 #if 0
                mfprintf(mlog [ WARN ] ) ("In name qualification: templateArgumentList.size() = %zu \n",templateArgumentList.size());
+#endif
+#if DEBUG_NQ_SCOPE
+               printf("In name qualification: templateArgumentList.size() = %zu \n",templateArgumentList.size());
 #endif
                bool isEmptyTemplateArgumentList = templateArgumentList.empty();
 
@@ -19454,14 +19824,33 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                               template_name += ",";
                             }
                          string template_argument_name = globalUnparseToString(*i,unparseInfoPointer);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NQ_SCOPE
                          mfprintf(mlog [ WARN ] ) ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ In name qualification: templateArgument = %p template_argument_name (globalUnparseToString()) = %s \n",*i,template_argument_name.c_str());
                          mfprintf(mlog [ WARN ] ) ("   --- template_argument_name.length() = %zu \n",template_argument_name.length());
+#endif
+#if DEBUG_NQ_SCOPE
+                      // printf("   --- template_name = %s \n",template_name.c_str());
+                         printf("   --- template_name.length() = %zu \n",template_name.length());
+                      // printf("   --- template_argument_name.length() = %zu template_argument_name.substr(0,50) = %s \n",template_argument_name.length(),template_argument_name.substr(0,50).c_str());
+                         printf("   --- template_argument_name.length() = %zu \n",template_argument_name.length());
+                         printf("   --- template_argument_name = %s \n",template_argument_name.c_str());
+#if 0
+                         printf("   --- template_argument_name.substr(0,50) = %s \n",
+                              template_argument_name.substr(0,50).c_str());
+                         printf("   --- template_argument_name.substr(template_argument_name.length()-50,template_argument_name.length()) = %s \n",
+                              template_argument_name.substr(template_argument_name.length()-50,template_argument_name.length()-1).c_str());
+#endif
 #endif
                          template_name += template_argument_name;
                          previousTemplateArgumentOutput = true;
                        }
+
                     i++;
+#if 0
+                 // DQ (5/12/2024): Added to force a single iteration through this loop.
+                    printf ("Added to force a single iteration through this loop \n");
+                    break;
+#endif
                   }
 
             // template_name += "> ";
@@ -19475,7 +19864,10 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("NAME OF SCOPE: scope name -- template_name = %s \n",template_name.c_str());
 #endif
-
+#if DEBUG_NQ_SCOPE
+            // printf("NAME OF SCOPE: scope name -- template_name = %s \n",template_name.c_str());
+               printf("NAME OF SCOPE: scope name -- template_name.length() = %zu \n",template_name.length());
+#endif
             // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
                delete unparseInfoPointer;
              }
@@ -19483,7 +19875,11 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
              {
             // scope_name = scope->class_name().c_str();
                scope_name = SageInterface::get_name(scope).c_str();
-#if 0
+#if DEBUG_NQ_SCOPE
+            // DQ (5/5/2024): Debugging non-termination.
+               printf ("templateClassDefinition != NULL: scope_name = %s \n",scope_name.c_str());
+#endif
+#if DEBUG_NQ_SCOPE
                printf ("test 8: qualifierString = %s \n",qualifierString.c_str());
 #endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -19533,14 +19929,25 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                   {
                  // DQ (4/6/2013): Added test (this would be better to add to the AST consistancy tests).
                  // ROSE_ASSERT(scope->get_isUnNamed() == false);
-#if 0
+#if DEBUG_NQ_SCOPE
+                    printf("test 9: scope name = %s \n",scope_name.c_str());
+#endif
+#if DEBUG_NQ_SCOPE
                     printf ("test 9: qualifierString = %s \n",qualifierString.c_str());
+#endif
+#if DEBUG_NQ_SCOPE
+                 // DQ (5/5/2024): Debugging non-termination.
+                    printf ("In setNameQualificationSupport(): not anonymous \n");
 #endif
                     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
                     if (namespaceDefinition != NULL)
                        {
 #if 0
                          mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): Detected a SgNamespaceDefinition: namespaceDefinition = %p \n",namespaceDefinition);
+#endif
+#if DEBUG_NQ_SCOPE
+                      // DQ (5/5/2024): Debugging non-termination.
+                         printf ("In setNameQualificationSupport(): namespaceDefinition != NULL \n");
 #endif
 
                          SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(namespaceDefinition->get_namespaceDeclaration());
@@ -19571,13 +19978,16 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                                 // SgDeclarationStatement* declaration = namespaceAliasDeclarationMap[namespaceDeclaration];
                                    SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = namespaceAliasDeclarationMap[namespaceDeclaration];
                                    ROSE_ASSERT(namespaceAliasDeclaration != NULL);
-#if 0
+#if DEBUG_NQ_SCOPE
                                    printf ("test 10: qualifierString = %s \n",qualifierString.c_str());
 #endif
                                 // qualifierString = " /* use the namspace alias */ ";
 
                                 // DQ (8/2/2020): Reset the name of the scope.
                                    scope_name = namespaceAliasDeclaration->get_name();
+#if DEBUG_NQ_SCOPE
+                                   printf("namespaceAliasDeclaration: scope name = %s \n",scope_name.c_str());
+#endif
 
                                    breakOutOfLoop = true;
 #if 0
@@ -19599,11 +20009,20 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                       // "class-name<template-parameter>::class-name<template-parameter>" instead.
                       // Other logic will have to add the template header where these are used (not clear how to
                       // do that if we don't do it here).
+                         
+#if DEBUG_NQ_SCOPE
+                      // DQ (5/5/2024): Debugging non-termination.
+                         printf ("In setNameQualificationSupport(): namespaceDefinition == NULL \n");
+#endif
                          SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
                          if (templateClassDefinition != NULL)
                             {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): Found SgTemplateClassDefinition: templateClassDefinition = %p = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
+#endif
+#if DEBUG_NQ_SCOPE
+                           // DQ (5/5/2024): Debugging non-termination.
+                              printf ("In setNameQualificationSupport(): templateClassDefinition != NULL \n");
 #endif
                               SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
                               ASSERT_not_null(templateClassDeclaration);
@@ -19656,6 +20075,16 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
                               scope_name = template_name;
 
+#if DEBUG_NQ_SCOPE
+                              printf("templateClassDefinition: scope name = %s \n",scope_name.c_str());
+#endif
+#if DEBUG_NQ_SCOPE
+                           // DQ (5/5/2024): Debugging non-terminating behavior.
+                              if (scope_name.length() > 2000)
+                                 {
+                                   printf ("Warning: scope_name.length() > 10000 \n");
+                                 }
+#endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               mfprintf(mlog [ WARN ] ) ("setNameQualificationSupport(): case of SgTemplateClassDefinition: scope_name = %s \n",scope_name.c_str());
 #endif
@@ -19666,6 +20095,10 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                             }
                            else
                             {
+#if DEBUG_NQ_SCOPE
+                           // DQ (5/5/2024): Debugging non-termination.
+                              printf ("In setNameQualificationSupport(): templateClassDefinition == NULL \n");
+#endif
                            // DQ (4/27/2019): Need to add case for SgClassDefinition, to support test2019_102.C.
                               SgClassDefinition* classDefinition = isSgClassDefinition(scope);
                               if (classDefinition != NULL)
@@ -19682,7 +20115,10 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                                  }
                             }
                        }
-#if 0
+#if DEBUG_NQ_SCOPE
+                    printf("test 11: scope name = %s \n",scope_name.c_str());
+#endif
+#if DEBUG_NQ_SCOPE
                     printf ("test 11: qualifierString = %s \n",qualifierString.c_str());
 #endif
                  // DQ (2/13/2019): Detect error in use of un-named scope (e.g. SgBasicBlock).
@@ -19737,7 +20173,10 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                mfprintf(mlog [ WARN ] ) (" --- outputGlobalQualification = %s \n",outputGlobalQualification ? "true" : "false");
 #endif
-#if 0
+#if DEBUG_NQ_SCOPE
+               printf("test 12: scope name = %s \n",scope_name.c_str());
+#endif
+#if DEBUG_NQ_SCOPE
                printf ("test 12: qualifierString = %s \n",qualifierString.c_str());
 #endif
             // qualifierString = scope_name + "::" + qualifierString;
@@ -19755,8 +20194,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                        }
                       else
                        {
-#if 0
-                         printf ("test 13: qualifierString = %s \n",qualifierString.c_str());
+#if DEBUG_NQ_SCOPE
+                         printf ("test 13: scope_name.length() = %zu qualifierString = %s \n",scope_name.length(),qualifierString.c_str());
 #endif
                          qualifierString = scope_name + "::" + qualifierString;
 #if 0
@@ -19786,11 +20225,15 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #endif
                break;
              }
-
+#if DEBUG_NQ_SCOPE
+       // DQ (5/5/2024): Debugging non-termination.
+          printf ("BASE of loop: i = %d scope = %p = %s = %s \n",i,scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#endif
         }
 
-#if 0
+#if DEBUG_NQ_SCOPE
      printf ("test 15: qualifierString = %s \n",qualifierString.c_str());
+     printf ("test 15: qualifierString.length() = %zu \n",qualifierString.length());
 #endif
 #if 0
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): After loop over name qualifiction depth: inputNameQualificationLength = %d \n",inputNameQualificationLength);
@@ -19829,8 +20272,11 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
         }
 #endif
 
+#if DEBUG_NQ_SCOPE
+  // printf ("test 16: qualifierString = %s \n",qualifierString.c_str());
+     printf ("test 16: qualifierString.length() = %zu \n",qualifierString.length());
+#endif
 #if 0
-     printf ("test 16: qualifierString = %s \n",qualifierString.c_str());
      mfprintf(mlog [ WARN ] ) (" --- outputGlobalQualification                = %s \n",outputGlobalQualification ? "true" : "false");
      mfprintf(mlog [ WARN ] ) (" --- output_amountOfNameQualificationRequired = %d \n",output_amountOfNameQualificationRequired);
 #endif
