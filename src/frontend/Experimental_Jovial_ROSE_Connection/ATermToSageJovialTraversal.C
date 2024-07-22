@@ -5346,15 +5346,16 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultOption(ATerm term)
 #endif
 
    ATerm t_stmt, t_fall_thru;
-   bool fall_thru = false;
+   SgDefaultOptionStmt* stmt{nullptr};
+   bool fallThru{false};
 
-   SgDefaultOptionStmt* default_option_stmt = nullptr;
-
-   if (ATmatch(term, "DefaultOption(<term>,<term>)", &t_stmt, &t_fall_thru)) {
-
-   // Begin SageTreeBuilder
-      sage_tree_builder.Enter(default_option_stmt);
-      setSourcePosition(default_option_stmt, term);
+   if (ATmatch(term, "DefaultOptionNoBlock()")) {
+      sage_tree_builder.Enter(stmt);
+      setSourcePosition(stmt, term);
+   }
+   else if (ATmatch(term, "DefaultOption(<term>,<term>)", &t_stmt, &t_fall_thru)) {
+      sage_tree_builder.Enter(stmt);
+      setSourcePosition(stmt, term);
 
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
@@ -5362,19 +5363,19 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultOption(ATerm term)
 
       if (ATmatch(t_fall_thru, "no-fall-thru()")) {
          // MATCHED no-fall-thru
-         fall_thru = false;
+         fallThru = false;
       } else if (ATmatch(t_fall_thru, "FALLTHRU()")) {
          // MATCHED FALLTHRU
-         fall_thru = true;
+         fallThru = true;
       } else return ATfalse;
+   }
+   else return ATfalse;
 
-   } else return ATfalse;
-
-   ASSERT_not_null(default_option_stmt);
-   default_option_stmt->set_has_fall_through(fall_thru);
+   ASSERT_not_null(stmt);
+   stmt->set_has_fall_through(fallThru);
 
 // End SageTreeBuilder
-   sage_tree_builder.Leave(default_option_stmt);
+   sage_tree_builder.Leave(stmt);
 
    return ATtrue;
 }

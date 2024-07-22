@@ -1436,7 +1436,9 @@ context-free syntax
 
   '(' 'DEFAULT' ')' ':'
     Statement
-    OptFALLTHRU                -> DefaultOption        {cons("DefaultOption")}
+    OptFALLTHRU                -> DefaultOption        {cons("DefaultOption"), prefer}
+%% Not in grammar
+  '(' 'DEFAULT' ')' ':'        -> DefaultOption        {cons("DefaultOptionNoBlock")}
 
   'FALLTHRU'                   -> OptFALLTHRU          {cons("FALLTHRU")}
   % empty %                    -> OptFALLTHRU          {cons("no-fall-thru")}
