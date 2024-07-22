@@ -300,6 +300,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
     {
         case ada_subp_body:             // Asis.Declarations
         case ada_subp_decl:
+        case ada_null_subp_decl:
         case ada_subp_body_stub:
         case ada_abstract_subp_decl:
         case ada_package_body:

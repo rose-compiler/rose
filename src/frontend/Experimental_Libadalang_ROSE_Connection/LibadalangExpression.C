@@ -39,10 +39,12 @@ namespace
     logKind(kind_name_string.c_str(), kind);
 
     ada_base_entity actual_parameter;
+    ada_base_entity formal_parameter;
 
     //If this is an assoc, get the actual parameter
     if(kind == ada_param_assoc){
       ada_param_assoc_f_r_expr(lal_element, &actual_parameter);
+      ada_param_assoc_f_designator(lal_element, &formal_parameter);
     } else if(kind == ada_pragma_argument_assoc){
       ada_pragma_argument_assoc_f_expr(lal_element, &actual_parameter);
     } else { //TODO What of the other assocs?
@@ -50,15 +52,8 @@ namespace
     }
 
     SgExpression&       arg        = getExpr(&actual_parameter, ctx);
-    int*                formalParm = nullptr; //retrieveElemOpt(elemMap(), assoc.Formal_Parameter);
-    //TODO What is a formal parm? right=x, left=y?
 
-    /* unused fields (A_Parameter_Association)
-       bool                   Is_Normalized
-       bool                   Is_Defaulted_Association
-    */
-
-    if (!formalParm) return arg;
+    if(ada_node_is_null(&formal_parameter)) return arg;
 
     /*ADA_ASSERT(formalParm->Element_Kind == An_Expression);
 
@@ -67,7 +62,7 @@ namespace
               );*/
 
     //Get the name of this node
-    std::string element_name = canonical_text_as_string(lal_element);
+    std::string element_name = canonical_text_as_string(&formal_parameter);
 
     //logKind("An_Identifier", formalParm->ID);
     SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
