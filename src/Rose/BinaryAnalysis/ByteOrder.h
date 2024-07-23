@@ -11,6 +11,8 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
+
+/** Definitions dealing with byte order. */
 namespace ByteOrder {
 
 /** Byte order. */
