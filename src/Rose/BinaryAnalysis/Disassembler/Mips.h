@@ -51,6 +51,7 @@ public:
     virtual Base::Ptr clone() const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) override;
+    virtual size_t nDelaySlots(MipsInstructionKind);
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
     SgAsmMipsInstruction *makeUnknownInstruction(rose_addr_t insn_va, unsigned opcode) const;
 
@@ -86,7 +87,7 @@ public:
      *  the bits can be disassembled, then a new SgAsmMipsInstruction is returned, otherwise it returns the null pointer. It
      *  may also throw an exception if a valid instruction-specific disassembler can be found but the instruction is
      *  malformed. */
-    SgAsmMipsInstruction *disassemble_insn(rose_addr_t insn_va, unsigned insn_bits) const;
+    SgAsmMipsInstruction *disassemble_insn(Address insn_va, unsigned insn_bits, const std::vector<uint8_t> &bytes) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

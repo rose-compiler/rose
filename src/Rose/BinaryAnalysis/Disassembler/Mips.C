@@ -107,25 +107,110 @@ Mips::clone() const {
 
 // see base class
 SgAsmInstruction *
-Mips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t insn_va, AddressSet *successors)
-{
-    // Instructions are always four-byte, naturally-aligned, in big- or little-endian order.
+Mips::disassembleOne(const MemoryMap::Ptr &map, const Address insn_va, AddressSet *successors) {
+    // Read the machine code instruction. It is always four-byte, naturally-aligned, in big- or little-endian order.
     if (insn_va % instructionAlignment_ != 0)
         throw Exception("non-aligned instruction", insn_va);
     uint32_t insn_disk; // instruction in file byte order
-    if (4!=map->at(insn_va).limit(4).require(MemoryMap::EXECUTABLE).read((uint8_t*)&insn_disk).size())
+    if (4 != map->at(insn_va).limit(4).require(MemoryMap::EXECUTABLE).read((uint8_t*)&insn_disk).size())
         throw Exception("short read", insn_va);
     unsigned insn_bits = ByteOrder::diskToHost(byteOrder(), insn_disk);
-    SgAsmMipsInstruction *insn = disassemble_insn(insn_va, insn_bits);
-    if (!insn)
-        throw Exception("cannot disassemble MIPS instruction: " + StringUtility::addrToString(insn_bits), insn_va);
-    insn->set_rawBytes(SgUnsignedCharList((unsigned char*)&insn_disk, (unsigned char*)&insn_disk+4));
+    const std::vector<uint8_t> memBytes((unsigned char*)&insn_disk, (unsigned char*)&insn_disk + 4);
 
+    // Try to decode the machine instruction. If this fails, then return an "unknown" instruction.
+    SgAsmMipsInstruction *insn = nullptr;
+    try {
+        insn = disassemble_insn(insn_va, insn_bits, memBytes);
+    } catch (const Exception &) {
+    }
+    if (!insn)
+        return makeUnknownInstruction(insn_va, insn_bits);
+
+    // Naive CFG successors
     if (successors) {
         bool complete;
         *successors |= architecture()->getSuccessors(insn, complete/*out*/);
     }
+
+    // Some MIPS instructions have a delay slot.
+    for (size_t count = nDelaySlots(insn->get_kind()); count > 0; --count) {
+        const Address delayAddr = insn->get_delaySlots().empty() ?
+                                  insn->get_address() + insn->get_size() :
+                                  insn->get_delaySlots().back()->get_address() + insn->get_delaySlots().back()->get_size();
+        try {
+            if (SgAsmInstruction *delayInsn = disassembleOne(map, delayAddr, nullptr)) {
+                insn->get_delaySlots().push_back(delayInsn);
+            } else {
+                break;
+            }
+        } catch (...) {
+            break;
+        }
+    }
+
     return insn;
+}
+
+size_t
+Mips::nDelaySlots(MipsInstructionKind kind) {
+    // From the "MIPS Architecture for Programmers Volume I-A: Introduction to the MIPS32 Architecture" document MD00082 revision
+    // 6.01, 2014-08-20:
+    //
+    //   > The original MIPS architecture supports, indeed requires, delayed branches: the instruction after the branch may be
+    //   > executed before the branch is taken (since typically the instruction after the branch has already been fetched). Code //
+    //   > optimization can place instructions into this branch delay slot for improved performance. Typical delayed branches
+    //   > execute // the delay-slot instruction, whether or not the branch was taken.
+    //
+    //   > Branch-likely instructions execute the delay-slot instruction if and only if the branch is taken. If the branch is not
+    //   > taken, the delay-slot instruction is not executed. While Branch Likely was deprecated prior to Release 6, Release 6
+    //   > removes Branch Likelies.
+    //
+    //   > Release 6 introduces conditional compact branches and compact jumps that do not have a delay slot; they have instead a
+    //   > forbidden slot. Release 6 unconditional compact branches have neither a delay slot nor a forbidden slot
+    switch (kind) {
+        // Original branch instructions
+        case mips_bc1f:
+        case mips_bc1t:
+        case mips_bc2f:
+        case mips_bc2t:
+        case mips_beq:
+        case mips_bgez:
+        case mips_bgezal:
+        case mips_bgtz:
+        case mips_blez:
+        case mips_bltz:
+        case mips_bltzal:
+        case mips_bne:
+            return 1;
+
+        // Branch-likely instructions
+        case mips_bc1fl:
+        case mips_bc1tl:
+        case mips_bc2fl:
+        case mips_bc2tl:
+        case mips_beql:
+        case mips_bgezall:
+        case mips_bgezl:
+        case mips_bgtzl:
+        case mips_blezl:
+        case mips_bltzall:
+        case mips_bltzl:
+        case mips_bnel:
+            return 1;
+
+        // Jump instructions
+        case mips_j:
+        case mips_jal:
+        case mips_jalr:
+        case mips_jalr_hb:
+        case mips_jalx:
+        case mips_jr:
+            return 1;
+
+        // Other instructions don't have a delay slot
+        default:
+            return 0;
+    }
 }
 
 // see base class
@@ -651,11 +736,14 @@ Mips::insert_idis(Decoder *idis, bool replace)
 }
 
 SgAsmMipsInstruction *
-Mips::disassemble_insn(rose_addr_t insn_va, unsigned insn_bits) const
-{
-    if (Decoder *idis = find_idis(insn_va, insn_bits))
-        return (*idis)(insn_va, this, insn_bits);
-    return NULL;
+Mips::disassemble_insn(const Address insn_va, const unsigned insn_bits, const std::vector<uint8_t> &bytes) const {
+    if (Decoder *idis = find_idis(insn_va, insn_bits)) {
+        if (SgAsmMipsInstruction *insn = (*idis)(insn_va, this, insn_bits)) {
+            insn->set_rawBytes(bytes);
+            return insn;
+        }
+    }
+    return nullptr;
 }
 
 /*******************************************************************************************************************************
