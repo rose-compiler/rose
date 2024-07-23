@@ -2564,7 +2564,10 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
     // struct C2 { C2() : x(-1){};C2(int v) : x(v){};int x;};
     // C2 c2_3(2);
     //
-    SgClassDefinition* enclosingClassDef = isSgClassDefinition(cxxConstructorDecl->get_parent());
+
+    // Pei-Hung (07/22/24) enclosingClassDecl is only accessible from the first nondefiningDeclaration.
+    SgMemberFunctionDeclaration* firstNonDefMemberFuncDecl = isSgMemberFunctionDeclaration(cxxConstructorDecl->get_firstNondefiningDeclaration());
+    SgClassDefinition* enclosingClassDef = isSgClassDefinition(firstNonDefMemberFuncDecl->get_parent());
     ROSE_ASSERT(enclosingClassDef);
     SgClassDeclaration* enclosingClassDecl = isSgClassDeclaration(enclosingClassDef->get_declaration());
     ROSE_ASSERT(enclosingClassDecl);
