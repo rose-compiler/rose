@@ -45,6 +45,16 @@ SgAsmInstruction::set_operandList(SgAsmOperandList* const& x) {
     set_isModified(true);
 }
 
+std::vector<SgAsmInstruction*> const&
+SgAsmInstruction::get_delaySlots() const {
+    return p_delaySlots;
+}
+
+std::vector<SgAsmInstruction*>&
+SgAsmInstruction::get_delaySlots() {
+    return p_delaySlots;
+}
+
 int64_t const&
 SgAsmInstruction::get_stackDeltaIn() const {
     return p_stackDeltaIn;

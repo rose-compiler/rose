@@ -43234,6 +43234,12 @@ class SgAsmInstruction: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
+        "std::vector<SgAsmInstruction*>", "delaySlots", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmInstruction.setDataPrototype(
         "SgAsmStatementPtrList", "sources", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
@@ -43267,6 +43273,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
         s & BOOST_SERIALIZATION_NVP(p_cacheLockCount);
+        s & BOOST_SERIALIZATION_NVP(p_delaySlots);
         s & BOOST_SERIALIZATION_NVP(p_sources);
         debugSerializationEnd("SgAsmInstruction");
     }
@@ -43346,12 +43353,25 @@ public:
      * @{ */
     size_t cacheLockCount() const;
     void adjustCacheLockCount(int increment);
-
+    /** @} */
+public:
+    /** Property: Delay slot instructions.
+     *
+     *  The instructions in this list are the delay slots for this instruction. A delay slot is an instruction that is executed
+     *  without the effects of a preceding instruction. The most common form is a single arbitrary instruction located immediately
+     *  after a branch instruction on a RISC architecture, in which case the delay instruction will execute even if the preceding
+     *  branch is taken. This makes the instruction execute out-of-order compared to its location in memory or in the original
+     *  assembler language code.
+     *
+     *  All delay slot instructions must be non-null and must be at the addresses immediately following this instruction. There is
+     *  no AST edge from this instruction to its delay slot instructions. 
+     *  
+     *  @{ */
+    std::vector<SgAsmInstruction*> const& get_delaySlots() const;
+    std::vector<SgAsmInstruction*>& get_delaySlots();
+    /** @} */
     // FIXME[Robb P Matzke 2017-02-13]: unused?
 public:
-/** 
- * @{ */
-    /** @} */
     void appendSources( SgAsmInstruction* instruction );
 
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
