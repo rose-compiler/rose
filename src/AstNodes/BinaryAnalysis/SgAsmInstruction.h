@@ -94,6 +94,19 @@ public:
     void adjustCacheLockCount(int increment);
     /** @} */
 
+    /** Property: Delay slot instructions.
+     *
+     *  The instructions in this list are the delay slots for this instruction. A delay slot is an instruction that is executed
+     *  without the effects of a preceding instruction. The most common form is a single arbitrary instruction located immediately
+     *  after a branch instruction on a RISC architecture, in which case the delay instruction will execute even if the preceding
+     *  branch is taken. This makes the instruction execute out-of-order compared to its location in memory or in the original
+     *  assembler language code.
+     *
+     *  All delay slot instructions must be non-null and must be at the addresses immediately following this instruction. There is
+     *  no AST edge from this instruction to its delay slot instructions. */
+    [[using Rosebud: rosetta, mutators(), large]]
+    std::vector<SgAsmInstruction*> delaySlots;
+
     // FIXME[Robb P Matzke 2017-02-13]: unused?
     [[using Rosebud: rosetta, accessors(), mutators()]]
     SgAsmStatementPtrList sources;
