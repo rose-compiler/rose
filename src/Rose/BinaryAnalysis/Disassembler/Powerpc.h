@@ -13,6 +13,8 @@
 #include "integerOps.h"
 #include "SageBuilderAsm.h"
 
+#include <Sawyer/BitFlags.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
@@ -33,6 +35,7 @@ private:
 
     PowerpcWordSize wordSize_;
     ByteOrder::Endianness sex_;
+    Sawyer::BitFlags<PowerpcCapability> capabilities_;
 
 protected:
     explicit Powerpc(const Architecture::BaseConstPtr&);
@@ -47,6 +50,16 @@ public:
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&);
+
+    /** Capabilities describe what instructions can be decoded.
+     *
+     *  The decoder capability set describes what subsets of the PowerPC complete instruction set can be decoded. Machine
+     *  instructions that fall outside the selected subset(s) are decoded as "unknown" instructions.
+     *
+     * @{ */
+    const Sawyer::BitFlags<PowerpcCapability>& capabilities() const;
+    Sawyer::BitFlags<PowerpcCapability>& capabilities();
+    /** @} */
 
 private:
     // Same as Exception except with a different constructor for ease of use in Powerpc. This constructor should be used when
@@ -70,7 +83,7 @@ private:
 
     /** Creates an instruction AST. */
     SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind,
-                                                            uint32_t insnBytes);
+                                                            uint32_t insnBytes, PowerpcCapability);
 
     // Helper function to use field definitions (counted with bits from left and inclusive on both sides) from manual.
     template <size_t First, size_t Last> uint64_t fld(State&) const;

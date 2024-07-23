@@ -8,6 +8,46 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Subsets for the PowerPC instruction set. */
+enum PowerpcCapability {
+    /** User instruction set architecture (UISA). */
+    powerpc_capability_uisa             = 0x00000001,
+
+    /** Virtual environment architecture (VEA). */
+    powerpc_capability_vea              = 0x00000002,
+
+    /** Operating environment architecture (OEA). */
+    powerpc_capability_oea              = 0x00000004,
+
+    /** PowerPC 440 floating-point unit.
+     *
+     *  The PowerPC 440 floating-point unit (FPU) with complex arithmetic extensions is an embedded application-specific integrated
+     *  circuit (ASIC) core designed to be used with the IBM PowerPC 440 processor core on the Blue Gene/L compute chip. The FPU
+     *  core implements the floating-point instruction set from the PowerPC Architecture and the floating-point instruction
+     *  extensions created to aid in matrix and complex-arithmetic operations. The FPU instruction extensions define
+     *  double-precision operations that are primarily single-instruction multiple-data (SIMD) and require two (primary and
+     *  secondary) arithmetic pipelines and floating-point register files. Howerver, to aid complex-arithmetic routines, some FPU
+     *  extensions actually perform different (yet closely related) operations while executing in the arithmetic pipelines. The FPU
+     *  core implements an operand crossbar between the primary and secondary arithmetic datapaths to enable each pipeline operand
+     *  access from the primary or secondary register file. The PowerPC 440 processor core provides 128-bit storage buses and
+     *  simultaneous issue of an arithmetic instruction with a storage instruction, allowing the FPU core to fully utilize the
+     *  parallel arithmetic pipes.
+     *
+     *  See "IBM PowerPC 440 FPU with complex-arithmetic extensions" IBM J. RES. & DEV. Vol 49 no 2/3; March/May 2005. */
+    powerpc_capability_440fpu           = 0x00000008,
+
+    /** Uncategorized or unknown.
+     *
+     *  This is a subset of instructions that have not yet been assigned to any specific category. More research is needed. */
+    powerpc_capability_uncategorized    = 0x00000010,
+
+    /** Default decoding capabilities. */
+    powerpc_capability_default          = 0x00000017,
+
+    /** All decoding capabilities. */
+    powerpc_capability_all              = 0x0000001f
+};
+
 // PowerPC word size.
 enum PowerpcWordSize {
     powerpc_32,                                         // 32 bits per word.

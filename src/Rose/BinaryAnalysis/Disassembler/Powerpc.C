@@ -82,6 +82,7 @@ Powerpc::init() {
     ASSERT_require(REG_SP);
     ASSERT_require(REG_SF);
     ASSERT_require(REG_LINK);
+    capabilities_.set(powerpc_capability_default);
 }
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.
@@ -126,29 +127,41 @@ Powerpc::makeUnknownInstruction(const Exception &e) {
     return insn;
 }
 
+const Sawyer::BitFlags<PowerpcCapability>&
+Powerpc::capabilities() const {
+    return capabilities_;
+}
+
+Sawyer::BitFlags<PowerpcCapability>&
+Powerpc::capabilities() {
+    return capabilities_;
+}
+
 template <size_t First, size_t Last>
 uint64_t
 Powerpc::fld(State &state) const {
     return (state.insn >> (31 - Last)) & (IntegerOps::GenMask<uint32_t, Last - First + 1>::value);
 }
 
+
 // FIXME[Robb Matzke 2019-08-20]: Replace with proper C++ since nested macros make debugging hard
-#define MAKE_INSN0(Mne) (makeInstructionWithoutOperands(state.ip, #Mne, powerpc_##Mne, state.insn))
-#define MAKE_INSN0_RC(Mne) (Rc(state) ? MAKE_INSN0(Mne##_record) : MAKE_INSN0(Mne))
-#define MAKE_INSN0_O_RC(Mne) (OE() ? MAKE_INSN0_RC(Mne##o) : MAKE_INSN0_RC(Mne))
-#define MAKE_INSN1(Mne, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0(Mne), (Op1)))
-#define MAKE_INSN1_RC(Mne, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0_RC(Mne), (Op1)))
-#define MAKE_INSN1_O_RC(Mne, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0_O_RC(Mne), (Op1)))
-#define MAKE_INSN2(Mne, Op1, Op2) (SageBuilderAsm::appendOperand(MAKE_INSN1(Mne, Op1), (Op2)))
-#define MAKE_INSN2_RC(Mne, Op1, Op2) (SageBuilderAsm::appendOperand(MAKE_INSN1_RC(Mne, Op1), (Op2)))
-#define MAKE_INSN2_O_RC(Mne, Op1, Op2) (SageBuilderAsm::appendOperand(MAKE_INSN1_O_RC(Mne, Op1), (Op2)))
-#define MAKE_INSN3(Mne, Op1, Op2, Op3) (SageBuilderAsm::appendOperand(MAKE_INSN2(Mne, Op1, Op2), (Op3)))
-#define MAKE_INSN3_RC(Mne, Op1, Op2, Op3) (SageBuilderAsm::appendOperand(MAKE_INSN2_RC(Mne, Op1, Op2), (Op3)))
-#define MAKE_INSN3_O_RC(Mne, Op1, Op2, Op3) (SageBuilderAsm::appendOperand(MAKE_INSN2_O_RC(Mne, Op1, Op2), (Op3)))
-#define MAKE_INSN4(Mne, Op1, Op2, Op3, Op4) (SageBuilderAsm::appendOperand(MAKE_INSN3(Mne, Op1, Op2, Op3), (Op4)))
-#define MAKE_INSN4_RC(Mne, Op1, Op2, Op3, Op4) (SageBuilderAsm::appendOperand(MAKE_INSN3_RC(Mne, Op1, Op2, Op3), (Op4)))
-#define MAKE_INSN5(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4(Mne, Op1, Op2, Op3, Op4), (Op5)))
-#define MAKE_INSN5_RC(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4_RC(Mne, Op1, Op2, Op3, Op4), (Op5)))
+#define MAKE_INSN0(Mne, Cap) (makeInstructionWithoutOperands(state.ip, #Mne, powerpc_##Mne, state.insn, powerpc_capability_##Cap))
+#define MAKE_INSN0_RC(Mne, Cap) (Rc(state) ? MAKE_INSN0(Mne##_record, Cap) : MAKE_INSN0(Mne, Cap))
+#define MAKE_INSN0_O_RC(Mne, Cap) (OE() ? MAKE_INSN0_RC(Mne##o, Cap) : MAKE_INSN0_RC(Mne, Cap))
+#define MAKE_INSN1(Mne, Cap, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0(Mne, Cap), (Op1)))
+#define MAKE_INSN1_RC(Mne, Cap, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0_RC(Mne, Cap), (Op1)))
+#define MAKE_INSN1_O_RC(Mne, Cap, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0_O_RC(Mne, Cap), (Op1)))
+#define MAKE_INSN2(Mne, Cap, Op1, Op2) (SageBuilderAsm::appendOperand(MAKE_INSN1(Mne, Cap, Op1), (Op2)))
+#define MAKE_INSN2_RC(Mne, Cap, Op1, Op2) (SageBuilderAsm::appendOperand(MAKE_INSN1_RC(Mne, Cap, Op1), (Op2)))
+#define MAKE_INSN2_O_RC(Mne, Cap, Op1, Op2) (SageBuilderAsm::appendOperand(MAKE_INSN1_O_RC(Mne, Cap, Op1), (Op2)))
+#define MAKE_INSN3(Mne, Cap, Op1, Op2, Op3) (SageBuilderAsm::appendOperand(MAKE_INSN2(Mne, Cap, Op1, Op2), (Op3)))
+#define MAKE_INSN3_RC(Mne, Cap, Op1, Op2, Op3) (SageBuilderAsm::appendOperand(MAKE_INSN2_RC(Mne, Cap, Op1, Op2), (Op3)))
+#define MAKE_INSN3_O_RC(Mne, Cap, Op1, Op2, Op3) (SageBuilderAsm::appendOperand(MAKE_INSN2_O_RC(Mne, Cap, Op1, Op2), (Op3)))
+#define MAKE_INSN4(Mne, Cap, Op1, Op2, Op3, Op4) (SageBuilderAsm::appendOperand(MAKE_INSN3(Mne, Cap, Op1, Op2, Op3), (Op4)))
+#define MAKE_INSN4_RC(Mne, Cap, Op1, Op2, Op3, Op4) (SageBuilderAsm::appendOperand(MAKE_INSN3_RC(Mne, Cap, Op1, Op2, Op3), (Op4)))
+#define MAKE_INSN5(Mne, Cap, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4(Mne, Cap, Op1, Op2, Op3, Op4), (Op5)))
+#define MAKE_INSN5_RC(Mne, Cap, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4_RC(Mne, Cap, Op1, Op2, Op3, Op4), (Op5)))
+#define MAKE_UNKNOWN() (makeInstructionWithoutOperands(state.ip, "unknown", powerpc_unknown_instruction, state.insn, powerpc_capability_all))
 
 SgAsmIntegerValueExpression*
 Powerpc::makeBranchTarget(uint64_t targetAddr) const {
@@ -223,15 +236,15 @@ Powerpc::is64bitInsn(PowerpcInstructionKind kind) {
 
 SgAsmPowerpcInstruction*
 Powerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind,
-                                                    uint32_t insn) {
+                                        uint32_t insn, const PowerpcCapability cap) {
 
-    if (powerpc_32 == wordSize_ && is64bitInsn(kind)) {
+    if (capabilities_.isClear(cap) || (powerpc_32 == wordSize_ && is64bitInsn(kind))) {
+        // This machine instruction encoding is not valid for this situation. E.g., we found an encoding for an instruction that's
+        // part of the Virtual Environment Architecture (VEA) but this decoder is not configured to decode such instructions.
         ASSERT_forbid(powerpc_unknown_instruction == kind);
-        return makeInstructionWithoutOperands(address, "unknown", powerpc_unknown_instruction, insn);
+        return makeInstructionWithoutOperands(address, "unknown", powerpc_unknown_instruction, insn, powerpc_capability_all);
     }
 
-    // Constructor: SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind =
-    // powerpc_unknown_instruction);
     SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, architecture()->name(), mnemonic, kind);
     ASSERT_not_null(instruction);
 
@@ -242,7 +255,7 @@ Powerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mne
     instruction->set_operandList(operands);
     operands->set_parent(instruction);
 
-    // PowerPC uses a fixed length instruction set (like ARM, but unlike x86)
+    // PowerPC uses a fixed length instruction set.
     SgUnsignedCharList bytes(4, '\0');
     for (int i = 0; i < 4; ++i)
         bytes[i] = (insn >> (24 - (8 * i))) & 0xFF; // Force big-endian
@@ -404,13 +417,13 @@ Powerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, int reg_numb
 SgAsmPowerpcInstruction*
 Powerpc::disassemble(State &state) {
     // The Primary Opcode Field is bits 0-5, 6-bits wide, so there are max 64 primary opcode values
-    uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
+    const uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
 
     switch (primaryOpcode) {
         case 0x00: {
-            // These are the BGL specific PowerPC440 FP2 Architecture instructions.  Depending on if this is A form or X form,
-            // the extended opCode maps to different bit ranges, so this code is incorrect!
-            uint8_t a_Opcode = (state.insn >> 1) & 0x1F;
+            // These are the BGL specific PowerPC440 FP2 Architecture instructions.  Depending on if this is A form or X form, the
+            // extended opCode maps to different bit ranges, so this code is incorrect!
+            const uint8_t a_Opcode = (state.insn >> 1) & 0x1F;
 
             // Different parts of the instruction are used to identify what kind of instruction this is!
             if (a_Opcode == 5 || (a_Opcode >= 8 && a_Opcode <= 31)) {
@@ -421,100 +434,91 @@ Powerpc::disassemble(State &state) {
             break;
         }
 
-        case 0x01: throw ExceptionPowerpc("invalid primary opcode (0x01)", state, 26);
-        case 0x02: return MAKE_INSN3(tdi, TO(state), RA(state), SI(state));
-        case 0x03: return MAKE_INSN3(twi, TO(state), RA(state), SI(state));
+        case 0x02: return MAKE_INSN3(tdi, uisa, TO(state), RA(state), SI(state));
+        case 0x03: return MAKE_INSN3(twi, uisa, TO(state), RA(state), SI(state));
         case 0x04: return decode_A_formInstruction_04(state);
-        case 0x05: throw ExceptionPowerpc("invalid primary opcode (0x05)", state, 26);
-        case 0x06: throw ExceptionPowerpc("invalid primary opcode (0x06)", state, 26);
-        case 0x07: return MAKE_INSN3(mulli, RT(state), RA(state), SI(state));
-        case 0x08: return MAKE_INSN3(subfic, RT(state), RA(state), SI(state));
-        case 0x09: throw ExceptionPowerpc("invalid primary opcode (0x09)", state, 26);
-        case 0x0A: return MAKE_INSN4(cmpli, BF_cr(state), L_10(state), RA(state), UI(state));
-        case 0x0B: return MAKE_INSN4(cmpi, BF_cr(state), L_10(state), RA(state), SI(state));
-        case 0x0C: return MAKE_INSN3(addic, RT(state), RA(state), SI(state));
-        case 0x0D: return MAKE_INSN3(addic_record, RT(state), RA(state), SI(state));
-        case 0x0E: return MAKE_INSN3(addi, RT(state), RA_or_zero(state), SI(state));
-        case 0x0F: return MAKE_INSN3(addis, RT(state), RA_or_zero(state), SI(state));
+        case 0x07: return MAKE_INSN3(mulli, uisa, RT(state), RA(state), SI(state));
+        case 0x08: return MAKE_INSN3(subfic, uisa, RT(state), RA(state), SI(state));
+        case 0x0A: return MAKE_INSN4(cmpli, uisa, BF_cr(state), L_10(state), RA(state), UI(state));
+        case 0x0B: return MAKE_INSN4(cmpi, uisa, BF_cr(state), L_10(state), RA(state), SI(state));
+        case 0x0C: return MAKE_INSN3(addic, uisa, RT(state), RA(state), SI(state));
+        case 0x0D: return MAKE_INSN3(addic_record, uisa, RT(state), RA(state), SI(state));
+        case 0x0E: return MAKE_INSN3(addi, uisa, RT(state), RA_or_zero(state), SI(state));
+        case 0x0F: return MAKE_INSN3(addis, uisa, RT(state), RA_or_zero(state), SI(state));
         case 0x10: return decode_B_formInstruction(state);
         case 0x11: return decode_SC_formInstruction(state);
         case 0x12: return decode_I_formInstruction(state);
         case 0x13: return decode_XL_formInstruction(state);
-        case 0x14: return MAKE_INSN5_RC(rlwimi, RA(state), RS(state), SH_32bit(state), MB_32bit(state), ME_32bit(state));
-        case 0x15: return MAKE_INSN5_RC(rlwinm, RA(state), RS(state), SH_32bit(state), MB_32bit(state), ME_32bit(state));
-        case 0x17: return MAKE_INSN5_RC(rlwnm, RA(state), RS(state), RB(state), MB_32bit(state), ME_32bit(state));
-        case 0x18: return MAKE_INSN3(ori, RA(state), RS(state), UI(state));
-        case 0x19: return MAKE_INSN3(oris, RA(state), RS(state), UI(state));
-        case 0x1A: return MAKE_INSN3(xori, RA(state), RS(state), UI(state));
-        case 0x1B: return MAKE_INSN3(xoris, RA(state), RS(state), UI(state));
-        case 0x1C: return MAKE_INSN3(andi_record, RA(state), RS(state), UI(state));
-        case 0x1D: return MAKE_INSN3(andis_record, RA(state), RS(state), UI(state));
+        case 0x14: return MAKE_INSN5_RC(rlwimi, uisa, RA(state), RS(state), SH_32bit(state), MB_32bit(state), ME_32bit(state));
+        case 0x15: return MAKE_INSN5_RC(rlwinm, uisa, RA(state), RS(state), SH_32bit(state), MB_32bit(state), ME_32bit(state));
+        case 0x17: return MAKE_INSN5_RC(rlwnm, uisa, RA(state), RS(state), RB(state), MB_32bit(state), ME_32bit(state));
+        case 0x18: return MAKE_INSN3(ori, uisa, RA(state), RS(state), UI(state));
+        case 0x19: return MAKE_INSN3(oris, uisa, RA(state), RS(state), UI(state));
+        case 0x1A: return MAKE_INSN3(xori, uisa, RA(state), RS(state), UI(state));
+        case 0x1B: return MAKE_INSN3(xoris, uisa, RA(state), RS(state), UI(state));
+        case 0x1C: return MAKE_INSN3(andi_record, uisa, RA(state), RS(state), UI(state));
+        case 0x1D: return MAKE_INSN3(andis_record, uisa, RA(state), RS(state), UI(state));
         case 0x1E: return decode_MD_formInstruction(state);
         case 0x1F: return decode_X_formInstruction_1F(state);
-        case 0x20: return MAKE_INSN2(lwz, RT(state), memref(state, T_U32));
+        case 0x20: return MAKE_INSN2(lwz, uisa, RT(state), memref(state, T_U32));
         case 0x21:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LWZU instruction", state);
-            return MAKE_INSN2(lwzu, RT(state), memrefu(state, T_U32));
-        case 0x22: return MAKE_INSN2(lbz, RT(state), memref(state, T_U8));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lwzu, uisa, RT(state), memrefu(state, T_U32));
+        case 0x22: return MAKE_INSN2(lbz, uisa, RT(state), memref(state, T_U8));
         case 0x23:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LBZU instruction", state);
-            return MAKE_INSN2(lbzu, RT(state), memrefu(state, T_U8));
-        case 0x24: return MAKE_INSN2(stw, RS(state), memref(state, T_U32));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lbzu, uisa, RT(state), memrefu(state, T_U8));
+        case 0x24: return MAKE_INSN2(stw, uisa, RS(state), memref(state, T_U32));
         case 0x25:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STWU instruction", state);
-            return MAKE_INSN2(stwu, RS(state), memrefu(state, T_U32));
-        case 0x26: return MAKE_INSN2(stb, RS(state), memref(state, T_U8));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(stwu, uisa, RS(state), memrefu(state, T_U32));
+        case 0x26: return MAKE_INSN2(stb, uisa, RS(state), memref(state, T_U8));
         case 0x27:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STBU instruction", state);
-            return MAKE_INSN2(stbu, RS(state), memrefu(state, T_U8));
-        case 0x28: return MAKE_INSN2(lhz, RT(state), memref(state, T_U16));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(stbu, uisa, RS(state), memrefu(state, T_U8));
+        case 0x28: return MAKE_INSN2(lhz, uisa, RT(state), memref(state, T_U16));
         case 0x29:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LHZU instruction", state);
-            return MAKE_INSN2(lhzu, RT(state), memrefu(state, T_U16));
-        case 0x2A: return MAKE_INSN2(lha, RT(state), memref(state, T_U16));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lhzu, uisa, RT(state), memrefu(state, T_U16));
+        case 0x2A: return MAKE_INSN2(lha, uisa, RT(state), memref(state, T_U16));
         case 0x2B:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LHAU instruction", state);
-            return MAKE_INSN2(lhau, RT(state), memrefu(state, T_U16));
-        case 0x2C: return MAKE_INSN2(sth, RS(state), memref(state, T_U16));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lhau, uisa, RT(state), memrefu(state, T_U16));
+        case 0x2C: return MAKE_INSN2(sth, uisa, RS(state), memref(state, T_U16));
         case 0x2D:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STHU instruction", state);
-            return MAKE_INSN2(sthu, RS(state), memrefu(state, T_U16));
-        case 0x2E: return MAKE_INSN2(lmw, RT(state), memref(state, T_U32));
-        case 0x2F: return MAKE_INSN2(stmw, RS(state), memref(state, T_U32));
-        case 0x30: return MAKE_INSN2(lfs, FRT(state), memref(state, T_FLOAT32));
-        case 0x31: return MAKE_INSN2(lfsu, FRT(state), memrefu(state, T_FLOAT32));
-        case 0x32: return MAKE_INSN2(lfd, FRT(state), memref(state, T_FLOAT64));
-        case 0x33: return MAKE_INSN2(lfdu, FRT(state), memrefu(state, T_FLOAT64));
-        case 0x34: return MAKE_INSN2(stfs, FRS(state), memref(state, T_FLOAT32));
-        case 0x35: return MAKE_INSN2(stfsu, FRS(state), memrefu(state, T_FLOAT32));
-        case 0x36: return MAKE_INSN2(stfd, FRS(state), memref(state, T_FLOAT64));
-        case 0x37: return MAKE_INSN2(stfdu, FRS(state), memrefu(state, T_FLOAT64));
-        case 0x38: throw ExceptionPowerpc("invalid primary opcode (0x38)", state, 26);
-        case 0x39: throw ExceptionPowerpc("invalid primary opcode (0x39)", state, 26);
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(sthu, uisa, RS(state), memrefu(state, T_U16));
+        case 0x2E: return MAKE_INSN2(lmw, uisa, RT(state), memref(state, T_U32));
+        case 0x2F: return MAKE_INSN2(stmw, uisa, RS(state), memref(state, T_U32));
+        case 0x30: return MAKE_INSN2(lfs, uisa, FRT(state), memref(state, T_FLOAT32));
+        case 0x31: return MAKE_INSN2(lfsu, uisa, FRT(state), memrefu(state, T_FLOAT32));
+        case 0x32: return MAKE_INSN2(lfd, uisa, FRT(state), memref(state, T_FLOAT64));
+        case 0x33: return MAKE_INSN2(lfdu, uisa, FRT(state), memrefu(state, T_FLOAT64));
+        case 0x34: return MAKE_INSN2(stfs, uisa, FRS(state), memref(state, T_FLOAT32));
+        case 0x35: return MAKE_INSN2(stfsu, uisa, FRS(state), memrefu(state, T_FLOAT32));
+        case 0x36: return MAKE_INSN2(stfd, uisa, FRS(state), memref(state, T_FLOAT64));
+        case 0x37: return MAKE_INSN2(stfdu, uisa, FRS(state), memrefu(state, T_FLOAT64));
         case 0x3A: {
             switch (unsigned xo = state.insn & 0x3) {
-                case 0: return MAKE_INSN2(ld, RT(state), memrefds(state, T_U64));
+                case 0: return MAKE_INSN2(ld, uisa, RT(state), memrefds(state, T_U64));
                 case 1:
                     if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                        throw ExceptionPowerpc("invalid LDU instruction", state);
-                    return MAKE_INSN2(ldu, RT(state), memrefds(state, T_U64));
-                case 2: return MAKE_INSN2(lwa, RT(state), memrefds(state, T_U32));
+                        return MAKE_UNKNOWN();
+                    return MAKE_INSN2(ldu, uisa, RT(state), memrefds(state, T_U64));
+                case 2: return MAKE_INSN2(lwa, uisa, RT(state), memrefds(state, T_U32));
                 default:
-                    throw ExceptionPowerpc("decoding error for pimary opcode 0x3a, XO=" + StringUtility::numberToString(xo),
-                                           state);
+                    return MAKE_UNKNOWN();
             }
             break;
         }
         case 0x3B: return decode_A_formInstruction_3B(state);
-        case 0x3C: throw ExceptionPowerpc("invalid primary opcode (0x3c)", state, 26);
-        case 0x3D: throw ExceptionPowerpc("invalid primary opcode (0x3d)", state, 26);
         case 0x3E: return decode_DS_formInstruction(state);
         case 0x3F: {
             // Depending on if this is A form or X form, the extended opCode maps to different bit ranges, so this code is
@@ -531,7 +535,7 @@ Powerpc::disassemble(State &state) {
         }
 
         default:
-            throw ExceptionPowerpc("illegal primary opcode: "+StringUtility::addrToString(primaryOpcode), state, 26);
+            return MAKE_UNKNOWN();
     }
 
     ASSERT_not_reachable("op code not handled");
@@ -550,22 +554,22 @@ Powerpc::decode_I_formInstruction(State &state) {
 
             if (AA(state) == 0) {
                 if (LK(state) == 0) {
-                    return MAKE_INSN1(b, targetAddressExpression);
+                    return MAKE_INSN1(b, uisa, targetAddressExpression);
                 } else {
-                    return MAKE_INSN1(bl, targetAddressExpression);
+                    return MAKE_INSN1(bl, uisa, targetAddressExpression);
                 }
             } else {
                 if (LK(state) == 0) {
-                    return MAKE_INSN1(ba, targetAddressExpression);
+                    return MAKE_INSN1(ba, uisa, targetAddressExpression);
                 } else {
-                    return MAKE_INSN1(bla, targetAddressExpression);
+                    return MAKE_INSN1(bla, uisa, targetAddressExpression);
                 }
             }
             break;
         }
 
         default:
-            throw ExceptionPowerpc("invaild I-Form primary opcode: " + StringUtility::addrToString(primaryOpcode), state);
+            return MAKE_UNKNOWN();
     }
 }
 
@@ -581,22 +585,22 @@ Powerpc::decode_B_formInstruction(State &state) {
 
              if (LK(state) == 0) {
                  if (AA(state) == 0) {
-                     return MAKE_INSN3(bc, BO(state), BI(state), targetAddressExpression);
+                     return MAKE_INSN3(bc, uisa, BO(state), BI(state), targetAddressExpression);
                  } else {
-                     return MAKE_INSN3(bca, BO(state), BI(state), targetAddressExpression);
+                     return MAKE_INSN3(bca, uisa, BO(state), BI(state), targetAddressExpression);
                  }
              } else {
                  if (AA(state) == 0) {
-                     return MAKE_INSN3(bcl, BO(state), BI(state), targetAddressExpression);
+                     return MAKE_INSN3(bcl, uisa, BO(state), BI(state), targetAddressExpression);
                  } else {
-                     return MAKE_INSN3(bcla, BO(state), BI(state), targetAddressExpression);
+                     return MAKE_INSN3(bcla, uisa, BO(state), BI(state), targetAddressExpression);
                  }
              }
              break;
          }
 
          default:
-             throw ExceptionPowerpc("invalid B-Form primary opcode: " + StringUtility::addrToString(primaryOpcode), state);
+             return MAKE_UNKNOWN();
      }
      ASSERT_not_reachable("opcode not handled");
 }
@@ -609,9 +613,9 @@ Powerpc::decode_SC_formInstruction(State &state) {
     // Get bit 30, 1 bit as the reserved flag
     uint8_t constantOneOpcode = (state.insn >> 1) & 0x1;
     if (constantOneOpcode!=1)
-        throw ExceptionPowerpc("expected bit to be set", state, 1);
+        return MAKE_UNKNOWN();
 
-    return MAKE_INSN1(sc, LEV(state));
+    return MAKE_INSN1(sc, uisa, LEV(state));
 }
 
 SgAsmPowerpcInstruction*
@@ -620,202 +624,225 @@ Powerpc::decode_DS_formInstruction(State &state) {
     ASSERT_always_require(primaryOpcode == 0x3e);
 
     switch (state.insn & 0x03) {
-        case 0: return MAKE_INSN2(std, RS(state), memrefds(state, T_U64));
+        case 0: return MAKE_INSN2(std, uisa, RS(state), memrefds(state, T_U64));
         case 1:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STDU instruction", state);
-            return MAKE_INSN2(stdu, RS(state), memrefds(state, T_U64));
-        default: throw ExceptionPowerpc("invalid DS-form instruction", state);
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(stdu, uisa, RS(state), memrefds(state, T_U64));
+        default: return MAKE_UNKNOWN();
     }
 }
 
 SgAsmPowerpcInstruction*
 Powerpc::decode_X_formInstruction_1F(State &state) {
-    uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
+    const uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     ASSERT_always_require(primaryOpcode == 0x1F);
 
     // Get the bits 21-30, next 10 bits
-    uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
+    const uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x000: return MAKE_INSN4(cmp, BF_cr(state), L_10(state), RA(state), RB(state));
-        case 0x004: return MAKE_INSN3(tw, TO(state), RA(state), RB(state));
-        case 0x008: return MAKE_INSN3_RC(subfc, RT(state), RA(state), RB(state));
-        case 0x009: return MAKE_INSN3_RC(mulhdu, RT(state), RA(state), RB(state));
-        case 0x00A: return MAKE_INSN3_RC(addc, RT(state), RA(state), RB(state));
-        case 0x00B: return MAKE_INSN3_RC(mulhwu, RT(state), RA(state), RB(state));
-        case 0x014: return MAKE_INSN2(lwarx, RT(state), memrefx(state, T_U32));
-        case 0x015: return MAKE_INSN2(ldx, RT(state), memrefx(state, T_U64));
-        case 0x017: return MAKE_INSN2(lwzx, RT(state), memrefx(state, T_U32));
-        case 0x018: return MAKE_INSN3_RC(slw, RA(state), RS(state), RB(state));
-        case 0x01A: return MAKE_INSN2_RC(cntlzw, RA(state), RS(state));
-        case 0x01B: return MAKE_INSN3_RC(sld, RA(state), RS(state), RB(state));
-        case 0x01C: return MAKE_INSN3_RC(and, RA(state), RS(state), RB(state));
-        case 0x020: return MAKE_INSN4(cmpl, BF_cr(state), L_10(state), RA(state), RB(state));
-        case 0x028: return MAKE_INSN3_RC(subf, RT(state), RA(state), RB(state));
+        case 0x000: return MAKE_INSN4(cmp, uisa, BF_cr(state), L_10(state), RA(state), RB(state));
+        case 0x004: return MAKE_INSN3(tw, uisa, TO(state), RA(state), RB(state));
+        case 0x008: return MAKE_INSN3_RC(subfc, uisa, RT(state), RA(state), RB(state));
+        case 0x009: return MAKE_INSN3_RC(mulhdu, uisa, RT(state), RA(state), RB(state));
+        case 0x00A: return MAKE_INSN3_RC(addc, uisa, RT(state), RA(state), RB(state));
+        case 0x00B: return MAKE_INSN3_RC(mulhwu, uisa, RT(state), RA(state), RB(state));
+        case 0x014: return MAKE_INSN2(lwarx, vea, RT(state), memrefx(state, T_U32));
+        case 0x015: return MAKE_INSN2(ldx, uisa, RT(state), memrefx(state, T_U64));
+        case 0x017: return MAKE_INSN2(lwzx, uisa, RT(state), memrefx(state, T_U32));
+        case 0x018: return MAKE_INSN3_RC(slw, uisa, RA(state), RS(state), RB(state));
+        case 0x01A: return MAKE_INSN2_RC(cntlzw, uisa, RA(state), RS(state));
+        case 0x01B: return MAKE_INSN3_RC(sld, uisa, RA(state), RS(state), RB(state));
+        case 0x01C: return MAKE_INSN3_RC(and, uisa, RA(state), RS(state), RB(state));
+        case 0x020: return MAKE_INSN4(cmpl, uisa, BF_cr(state), L_10(state), RA(state), RB(state));
+        case 0x028: return MAKE_INSN3_RC(subf, uisa, RT(state), RA(state), RB(state));
         case 0x035:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LDUX instruction", state);
-            return MAKE_INSN2(ldux, RT(state), memrefux(state, T_U64));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(ldux, uisa, RT(state), memrefux(state, T_U64));
         case 0x037:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LWZUX instruction", state);
-            return MAKE_INSN2(lwzux, RT(state), memrefux(state, T_U32));
-        case 0x03a: return MAKE_INSN2_RC(cntlzd, RA(state), RS(state));
-        case 0x03C: return MAKE_INSN3_RC(andc, RA(state), RS(state), RB(state));
-        case 0x044: return MAKE_INSN3(td, TO(state), RA(state), RB(state));
-        case 0x049: return MAKE_INSN3_RC(mulhd, RT(state), RA(state), RB(state));
-        case 0x04B: return MAKE_INSN3_RC(mulhw, RT(state), RA(state), RB(state));
-        case 0x053: return MAKE_INSN1(mfmsr, RT(state));
-        case 0x057: return MAKE_INSN2(lbzx, RT(state), memrefx(state, T_U8));
-        case 0x068: return MAKE_INSN2_RC(neg, RT(state), RA(state));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lwzux, uisa, RT(state), memrefux(state, T_U32));
+        case 0x03a: return MAKE_INSN2_RC(cntlzd, uisa, RA(state), RS(state));
+        case 0x03C: return MAKE_INSN3_RC(andc, uisa, RA(state), RS(state), RB(state));
+        case 0x044: return MAKE_INSN3(td, uisa, TO(state), RA(state), RB(state));
+        case 0x049: return MAKE_INSN3_RC(mulhd, uisa, RT(state), RA(state), RB(state));
+        case 0x04B: return MAKE_INSN3_RC(mulhw, uisa, RT(state), RA(state), RB(state));
+        case 0x053: return MAKE_INSN1(mfmsr, oea, RT(state));
+        case 0x057: return MAKE_INSN2(lbzx, uisa, RT(state), memrefx(state, T_U8));
+        case 0x068: return MAKE_INSN2_RC(neg, uisa, RT(state), RA(state));
         case 0x077:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LBZUX instruction", state);
-            return MAKE_INSN2(lbzux, RT(state), memrefux(state, T_U8));
-        case 0x07A: return MAKE_INSN2(popcntb, RA(state), RS(state));
-        case 0x07C: return MAKE_INSN3_RC(nor, RA(state), RS(state), RB(state));
-        case 0x088: return MAKE_INSN3_RC(subfe, RT(state), RA(state), RB(state));
-        case 0x08A: return MAKE_INSN3_RC(adde, RT(state), RA(state), RB(state));
-        case 0x08E: return MAKE_INSN2(lfssx, FRT(state), memrefx(state, T_FLOAT32));
-        case 0x095: return MAKE_INSN2(stdx, RS(state), memrefx(state, T_U64));
-        case 0x096: return MAKE_INSN2(stwcx_record, RS(state), memrefx(state, T_U32));
-        case 0x097: return MAKE_INSN2(stwx, RS(state), memrefx(state, T_U32));
-        case 0x0AE: return MAKE_INSN2(lfssux, FRT(state), memrefux(state, T_FLOAT32));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lbzux, uisa, RT(state), memrefux(state, T_U8));
+        case 0x07A: return MAKE_INSN2(popcntb, uisa, RA(state), RS(state));
+        case 0x07C: return MAKE_INSN3_RC(nor, uisa, RA(state), RS(state), RB(state));
+        case 0x088: return MAKE_INSN3_RC(subfe, uisa, RT(state), RA(state), RB(state));
+        case 0x08A: return MAKE_INSN3_RC(adde, uisa, RT(state), RA(state), RB(state));
+        case 0x08E: return MAKE_INSN2(lfssx, uncategorized, FRT(state), memrefx(state, T_FLOAT32));
+        case 0x092:
+            if (fld<11, 20>(state) == 0 && fld<31, 31>(state) == 0) {
+                return MAKE_INSN1(mtmsr, oea, RS(state));
+            } else {
+                return MAKE_UNKNOWN();
+            }
+        case 0x095: return MAKE_INSN2(stdx, uisa, RS(state), memrefx(state, T_U64));
+        case 0x096: return MAKE_INSN2(stwcx_record, vea, RS(state), memrefx(state, T_U32));
+        case 0x097: return MAKE_INSN2(stwx, uisa, RS(state), memrefx(state, T_U32));
+        case 0x0AE: return MAKE_INSN2(lfssux, uncategorized, FRT(state), memrefux(state, T_FLOAT32));
         case 0x0B5:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STDUX instruction", state);
-            return MAKE_INSN2(stdux, RS(state), memrefux(state, T_U64));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(stdux, uisa, RS(state), memrefux(state, T_U64));
         case 0x0B7:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STWUX instruction", state);
-            return MAKE_INSN2(stwux, RS(state), memrefux(state, T_U32));
-        case 0x0C8: return MAKE_INSN2_RC(subfze, RT(state), RA(state));
-        case 0x0CA: return MAKE_INSN2_RC(addze, RT(state), RA(state));
-        case 0x0CE: return MAKE_INSN2(lfsdx, FRT(state), memrefx(state, T_FLOAT64));
-        case 0x0D6: return MAKE_INSN2(stdcx_record, RS(state), memrefx(state, T_U64));
-        case 0x0D7: return MAKE_INSN2(stbx, RS(state), memrefx(state, T_U8));
-        case 0x0E8: return MAKE_INSN2_RC(subfme, RT(state), RA(state));
-        case 0x0EA: return MAKE_INSN2_RC(addme, RT(state), RA(state));
-        case 0x0EB: return MAKE_INSN3_RC(mullw, RT(state), RA(state), RB(state));
-        case 0x0EE: return MAKE_INSN2(lfsdux, FRT(state), memrefux(state, T_FLOAT64));
-        case 0x0f4: return MAKE_INSN3_RC(mulld, RT(state), RA(state), RB(state));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(stwux, uisa, RS(state), memrefux(state, T_U32));
+        case 0x0C8: return MAKE_INSN2_RC(subfze, uisa, RT(state), RA(state));
+        case 0x0CA: return MAKE_INSN2_RC(addze, uisa, RT(state), RA(state));
+        case 0x0CE: return MAKE_INSN2(lfsdx, uncategorized, FRT(state), memrefx(state, T_FLOAT64));
+        case 0x0D6: return MAKE_INSN2(stdcx_record, vea, RS(state), memrefx(state, T_U64));
+        case 0x0D7: return MAKE_INSN2(stbx, uisa, RS(state), memrefx(state, T_U8));
+        case 0x0E8: return MAKE_INSN2_RC(subfme, uisa, RT(state), RA(state));
+        case 0x0EA: return MAKE_INSN2_RC(addme, uisa, RT(state), RA(state));
+        case 0x0EB: return MAKE_INSN3_RC(mullw, uisa, RT(state), RA(state), RB(state));
+        case 0x0EE: return MAKE_INSN2(lfsdux, uncategorized, FRT(state), memrefux(state, T_FLOAT64));
+        case 0x0f4: return MAKE_INSN3_RC(mulld, uisa, RT(state), RA(state), RB(state));
         case 0x0F7:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STBUX instruction", state);
-            return MAKE_INSN2(stbux, RS(state), memrefux(state, T_U8));
-        case 0x10A: return MAKE_INSN3_RC(add, RT(state), RA(state), RB(state));
-        case 0x10E: return MAKE_INSN2(lfxsx, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x116: return MAKE_INSN1(dcbt, memrefx(state, T_U8));
-        case 0x117: return MAKE_INSN2(lhzx, RT(state), memrefx(state, T_U16));
-        case 0x11C: return MAKE_INSN3_RC(eqv, RA(state), RS(state), RB(state));
-        case 0x12E: return MAKE_INSN2(lfxsux, FRT(state), memrefux(state, T_V2_FLOAT32));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(stbux, uisa, RS(state), memrefux(state, T_U8));
+        case 0x10A: return MAKE_INSN3_RC(add, uisa, RT(state), RA(state), RB(state));
+        case 0x10E: return MAKE_INSN2(lfxsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
+        case 0x116: return MAKE_INSN1(dcbt, vea, memrefx(state, T_U8));
+        case 0x117: return MAKE_INSN2(lhzx, uisa, RT(state), memrefx(state, T_U16));
+        case 0x11C: return MAKE_INSN3_RC(eqv, uisa, RA(state), RS(state), RB(state));
+        case 0x12E: return MAKE_INSN2(lfxsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
+        case 0x132:
+            if (fld<6, 15>(state) == 0 && fld<31, 31>(state) == 0)
+                return MAKE_INSN1(tlbie, oea, RB(state));
+            return MAKE_UNKNOWN();
         case 0x137:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LHZUX instruction", state);
-            return MAKE_INSN2(lhzux, RT(state), memrefux(state, T_U16));
-        case 0x13C: return MAKE_INSN3_RC(xor, RA(state), RS(state), RB(state));
-        case 0x14E: return MAKE_INSN2(lfxdx, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x153: return MAKE_INSN2(mfspr, RT(state), SPR(state));
-        case 0x155: return MAKE_INSN2(lwax, RT(state), memrefx(state, T_U32));
-        case 0x157: return MAKE_INSN2(lhax, RT(state), memrefx(state, T_U16));
-        case 0x16E: return MAKE_INSN2(lfxdux, FRT(state), memrefux(state, T_V2_FLOAT64));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lhzux, uisa, RT(state), memrefux(state, T_U16));
+        case 0x13C: return MAKE_INSN3_RC(xor, uisa, RA(state), RS(state), RB(state));
+        case 0x14E: return MAKE_INSN2(lfxdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
+        case 0x153: return MAKE_INSN2(mfspr, uisa, RT(state), SPR(state));
+        case 0x155: return MAKE_INSN2(lwax, uisa, RT(state), memrefx(state, T_U32));
+        case 0x157: return MAKE_INSN2(lhax, uisa, RT(state), memrefx(state, T_U16));
+        case 0x16E: return MAKE_INSN2(lfxdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
+        case 0x173:
+            if (fld<31, 31>(state) == 0) {
+                const unsigned tbr = fld<16, 20>(state) * 32 + fld<11, 15>(state);
+                if (tbr == 0b01000'01100 || tbr == 0b01000'01101)
+                    return MAKE_INSN2(mftb, vea, D(state), TBR(state));
+            }
+            return MAKE_UNKNOWN();
         case 0x175:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LWAUX instruction", state);
-            return MAKE_INSN2(lwaux, RT(state), memrefux(state, T_U32));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lwaux, uisa, RT(state), memrefux(state, T_U32));
         case 0x177:
             if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
-                throw ExceptionPowerpc("invalid LHAUX instruction", state);
-            return MAKE_INSN2(lhaux, RT(state), memrefux(state, T_U16));
-        case 0x18E: return MAKE_INSN2(lfpsx, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x197: return MAKE_INSN2(sthx, RS(state), memrefx(state, T_U16));
-        case 0x19C: return MAKE_INSN3_RC(orc, RA(state), RS(state), RB(state));
-        case 0x1AE: return MAKE_INSN2(lfpsux, FRT(state), memrefux(state, T_V2_FLOAT32));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(lhaux, uisa, RT(state), memrefux(state, T_U16));
+        case 0x18E: return MAKE_INSN2(lfpsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
+        case 0x197: return MAKE_INSN2(sthx, uisa, RS(state), memrefx(state, T_U16));
+        case 0x19C: return MAKE_INSN3_RC(orc, uisa, RA(state), RS(state), RB(state));
+        case 0x1AE: return MAKE_INSN2(lfpsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
         case 0x1B7:
             if (fld<11, 15>(state) == 0)
-                throw ExceptionPowerpc("invalid STHUX instruction", state);
-            return MAKE_INSN2(sthux, RS(state), memrefux(state, T_U16));
-        case 0x1BC: return MAKE_INSN3_RC(or, RA(state), RS(state), RB(state));
-        case 0x1C9: return MAKE_INSN3_RC(divdu, RT(state), RA(state), RB(state));
-        case 0x1CB: return MAKE_INSN3_RC(divwu, RT(state), RA(state), RB(state));
-        case 0x1CE: return MAKE_INSN2(lfpdx, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x1D3: return MAKE_INSN2(mtspr, SPR(state), RS(state));
-        case 0x1DC: return MAKE_INSN3_RC(nand, RA(state), RS(state), RB(state));
-        case 0x1E9: return MAKE_INSN3_RC(divd, RT(state), RA(state), RB(state));
-        case 0x1EB: return MAKE_INSN3_RC(divw, RT(state), RA(state), RB(state));
-        case 0x1EE: return MAKE_INSN2(lfpdux, FRT(state), memrefux(state, T_V2_FLOAT64));
-        case 0x208: return MAKE_INSN3_RC(subfco, RT(state), RA(state), RB(state));
-        case 0x20A: return MAKE_INSN3_RC(addco, RT(state), RA(state), RB(state));
-        case 0x20E: return MAKE_INSN2(stfpiwx, FRT(state), memrefx(state, T_V2_U32));
-        case 0x215: return MAKE_INSN2(lswx, RT(state), memrefx(state, T_U8));
-        case 0x216: return MAKE_INSN2(lwbrx, RT(state), memrefx(state, T_U32));
-        case 0x217: return MAKE_INSN2(lfsx, FRT(state), memrefx(state, T_FLOAT32));
-        case 0x218: return MAKE_INSN3_RC(srw, RA(state), RS(state), RB(state));
-        case 0x21B: return MAKE_INSN3_RC(srd, RA(state), RS(state), RB(state));
-        case 0x228: return MAKE_INSN3_RC(subfo, RT(state), RA(state), RB(state));
-        case 0x237: return MAKE_INSN2(lfsux, FRT(state), memrefux(state, T_FLOAT32));
-        case 0x255: return MAKE_INSN3(lswi, RT(state), memrefra(state, T_U8), NB(state));
-        case 0x257: return MAKE_INSN2(lfdx, FRT(state), memrefx(state, T_FLOAT64));
-        case 0x268: return MAKE_INSN2_RC(nego, RT(state), RA(state));
-        case 0x288: return MAKE_INSN3_RC(subfeo, RT(state), RA(state), RB(state));
-        case 0x28A: return MAKE_INSN3_RC(addeo, RT(state), RA(state), RB(state));
-        case 0x28E: return MAKE_INSN2(stfssx, FRT(state), memrefx(state, T_FLOAT32));
-        case 0x295: return MAKE_INSN2(stswx, RS(state), memrefx(state, T_U8));
-        case 0x296: return MAKE_INSN2(stwbrx, RS(state), memrefx(state, T_U32));
-        case 0x2AE: return MAKE_INSN2(stfssux, FRT(state), memrefux(state, T_FLOAT32));
-        case 0x2C8: return MAKE_INSN2_RC(subfzeo, RT(state), RA(state));
-        case 0x2CA: return MAKE_INSN2_RC(addzeo, RT(state), RA(state));
-        case 0x2CE: return MAKE_INSN2(stfsdx, FRT(state), memrefx(state, T_FLOAT64));
-        case 0x2D5: return MAKE_INSN3(stswi, RS(state), memrefra(state, T_U8), NB(state));
-        case 0x2D7: return MAKE_INSN2(stfdx, FRS(state), memrefx(state, T_FLOAT64));
-        case 0x2E8: return MAKE_INSN2_RC(subfmeo, RT(state), RA(state));
-        case 0x2EA: return MAKE_INSN2_RC(addmeo, RT(state), RA(state));
-        case 0x2EB: return MAKE_INSN3_RC(mullwo, RT(state), RA(state), RB(state));
-        case 0x2EE: return MAKE_INSN2(stfsdux, FRT(state), memrefux(state, T_FLOAT64));
-        case 0x2F4: return MAKE_INSN3_RC(mulldo, RT(state), RA(state), RB(state));
-        case 0x2F7: return MAKE_INSN2(stfdux, FRS(state), memrefx(state, T_FLOAT64));
-        case 0x30A: return MAKE_INSN3_RC(addo, RT(state), RA(state), RB(state));
-        case 0x30E: return MAKE_INSN2(stfxsx, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x316: return MAKE_INSN2(lhbrx, RT(state), memrefx(state, T_U16));
-        case 0x318: return MAKE_INSN3_RC(sraw, RA(state), RS(state), RB(state));
-        case 0x31A: return MAKE_INSN3_RC(srad, RA(state), RS(state), RB(state));
-        case 0x32E: return MAKE_INSN2(stfxsux, FRT(state), memrefux(state, T_V2_FLOAT32));
-        case 0x338: return MAKE_INSN3_RC(srawi, RA(state), RS(state), SH_32bit(state));
-        case 0x33A: return MAKE_INSN3_RC(sradi, RA(state), RS(state), SH_64bit(state)); // The last bit of the ext. opcode is part of SH
-        case 0x33B: return MAKE_INSN3_RC(sradi, RA(state), RS(state), SH_64bit(state)); // Same as previous insn
-        case 0x34E: return MAKE_INSN2(stfxdx, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x356: return MAKE_INSN0(eieio);
-        case 0x36E: return MAKE_INSN2(stfxdux, FRT(state), memrefux(state, T_V2_FLOAT64));
-        case 0x38E: return MAKE_INSN2(stfpsx, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x396: return MAKE_INSN2(sthbrx, RS(state), memrefx(state, T_U16));
-        case 0x39A: return MAKE_INSN2_RC(extsh, RA(state), RS(state));
-        case 0x3AE: return MAKE_INSN2(stfpsux, FRT(state), memrefux(state, T_V2_FLOAT32));
-        case 0x3BA: return MAKE_INSN2_RC(extsb, RA(state), RS(state));
-        case 0x3C9: return MAKE_INSN3_RC(divduo, RT(state), RA(state), RB(state));
-        case 0x3CB: return MAKE_INSN3_RC(divwuo, RT(state), RA(state), RB(state));
-        case 0x3CE: return MAKE_INSN2(stfpdx, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x3D7: return MAKE_INSN2(stfiwx, FRS(state), memrefx(state, T_U32));
-        case 0x3DA: return MAKE_INSN2_RC(extsw, RA(state), RS(state));
-        case 0x3E9: return MAKE_INSN3_RC(divdo, RT(state), RA(state), RB(state));
-        case 0x3EB: return MAKE_INSN3_RC(divwo, RT(state), RA(state), RB(state));
-        case 0x3EE: return MAKE_INSN2(stfpdux, FRT(state), memrefux(state, T_V2_FLOAT64));
-        case 0x3F6: return MAKE_INSN1(dcbz, memrefx(state, T_U8));
+                return MAKE_UNKNOWN();
+            return MAKE_INSN2(sthux, uisa, RS(state), memrefux(state, T_U16));
+        case 0x1BC: return MAKE_INSN3_RC(or, uisa, RA(state), RS(state), RB(state));
+        case 0x1C9: return MAKE_INSN3_RC(divdu, uisa, RT(state), RA(state), RB(state));
+        case 0x1CB: return MAKE_INSN3_RC(divwu, uisa, RT(state), RA(state), RB(state));
+        case 0x1CE: return MAKE_INSN2(lfpdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
+        case 0x1D3: return MAKE_INSN2(mtspr, uisa, SPR(state), RS(state));
+        case 0x1DC: return MAKE_INSN3_RC(nand, uisa, RA(state), RS(state), RB(state));
+        case 0x1E9: return MAKE_INSN3_RC(divd, uisa, RT(state), RA(state), RB(state));
+        case 0x1EB: return MAKE_INSN3_RC(divw, uisa, RT(state), RA(state), RB(state));
+        case 0x1EE: return MAKE_INSN2(lfpdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
+        case 0x208: return MAKE_INSN3_RC(subfco, uisa, RT(state), RA(state), RB(state));
+        case 0x20A: return MAKE_INSN3_RC(addco, uisa, RT(state), RA(state), RB(state));
+        case 0x20E: return MAKE_INSN2(stfpiwx, uncategorized, FRT(state), memrefx(state, T_V2_U32));
+        case 0x215: return MAKE_INSN2(lswx, uisa, RT(state), memrefx(state, T_U8));
+        case 0x216: return MAKE_INSN2(lwbrx, uisa, RT(state), memrefx(state, T_U32));
+        case 0x217: return MAKE_INSN2(lfsx, uisa, FRT(state), memrefx(state, T_FLOAT32));
+        case 0x218: return MAKE_INSN3_RC(srw, uisa, RA(state), RS(state), RB(state));
+        case 0x21B: return MAKE_INSN3_RC(srd, uisa, RA(state), RS(state), RB(state));
+        case 0x228: return MAKE_INSN3_RC(subfo, uisa, RT(state), RA(state), RB(state));
+        case 0x237: return MAKE_INSN2(lfsux, uisa, FRT(state), memrefux(state, T_FLOAT32));
+        case 0x255: return MAKE_INSN3(lswi, uisa, RT(state), memrefra(state, T_U8), NB(state));
+        case 0x256:
+            if (fld<6, 20>(state) == 0 && fld<31, 31>(state) == 0) {
+                return MAKE_INSN0(sync, vea);
+            } else {
+                return MAKE_UNKNOWN();
+            }
+        case 0x257: return MAKE_INSN2(lfdx, uisa, FRT(state), memrefx(state, T_FLOAT64));
+        case 0x268: return MAKE_INSN2_RC(nego, uisa, RT(state), RA(state));
+        case 0x288: return MAKE_INSN3_RC(subfeo, uisa, RT(state), RA(state), RB(state));
+        case 0x28A: return MAKE_INSN3_RC(addeo, uisa, RT(state), RA(state), RB(state));
+        case 0x28E: return MAKE_INSN2(stfssx, uncategorized, FRT(state), memrefx(state, T_FLOAT32));
+        case 0x295: return MAKE_INSN2(stswx, uisa, RS(state), memrefx(state, T_U8));
+        case 0x296: return MAKE_INSN2(stwbrx, uisa, RS(state), memrefx(state, T_U32));
+        case 0x2AE: return MAKE_INSN2(stfssux, uncategorized, FRT(state), memrefux(state, T_FLOAT32));
+        case 0x2C8: return MAKE_INSN2_RC(subfzeo, uisa, RT(state), RA(state));
+        case 0x2CA: return MAKE_INSN2_RC(addzeo, uisa, RT(state), RA(state));
+        case 0x2CE: return MAKE_INSN2(stfsdx, uncategorized, FRT(state), memrefx(state, T_FLOAT64));
+        case 0x2D5: return MAKE_INSN3(stswi, uisa, RS(state), memrefra(state, T_U8), NB(state));
+        case 0x2D7: return MAKE_INSN2(stfdx, uisa, FRS(state), memrefx(state, T_FLOAT64));
+        case 0x2E8: return MAKE_INSN2_RC(subfmeo, uisa, RT(state), RA(state));
+        case 0x2EA: return MAKE_INSN2_RC(addmeo, uisa, RT(state), RA(state));
+        case 0x2EB: return MAKE_INSN3_RC(mullwo, uisa, RT(state), RA(state), RB(state));
+        case 0x2EE: return MAKE_INSN2(stfsdux, uncategorized, FRT(state), memrefux(state, T_FLOAT64));
+        case 0x2F4: return MAKE_INSN3_RC(mulldo, uisa, RT(state), RA(state), RB(state));
+        case 0x2F7: return MAKE_INSN2(stfdux, uisa, FRS(state), memrefx(state, T_FLOAT64));
+        case 0x30A: return MAKE_INSN3_RC(addo, uisa, RT(state), RA(state), RB(state));
+        case 0x30E: return MAKE_INSN2(stfxsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
+        case 0x316: return MAKE_INSN2(lhbrx, uisa, RT(state), memrefx(state, T_U16));
+        case 0x318: return MAKE_INSN3_RC(sraw, uisa, RA(state), RS(state), RB(state));
+        case 0x31A: return MAKE_INSN3_RC(srad, uisa, RA(state), RS(state), RB(state));
+        case 0x32E: return MAKE_INSN2(stfxsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
+        case 0x338: return MAKE_INSN3_RC(srawi, uisa, RA(state), RS(state), SH_32bit(state));
+        case 0x33A: return MAKE_INSN3_RC(sradi, uisa, RA(state), RS(state), SH_64bit(state)); // The last bit of the ext. opcode is part of SH
+        case 0x33B: return MAKE_INSN3_RC(sradi, uisa, RA(state), RS(state), SH_64bit(state)); // Same as previous insn
+        case 0x34E: return MAKE_INSN2(stfxdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
+        case 0x356: return MAKE_INSN0(eieio, vea);
+        case 0x36E: return MAKE_INSN2(stfxdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
+        case 0x38E: return MAKE_INSN2(stfpsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
+        case 0x396: return MAKE_INSN2(sthbrx, uisa, RS(state), memrefx(state, T_U16));
+        case 0x39A: return MAKE_INSN2_RC(extsh, uisa, RA(state), RS(state));
+        case 0x3AE: return MAKE_INSN2(stfpsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
+        case 0x3BA: return MAKE_INSN2_RC(extsb, uisa, RA(state), RS(state));
+        case 0x3C9: return MAKE_INSN3_RC(divduo, uisa, RT(state), RA(state), RB(state));
+        case 0x3CB: return MAKE_INSN3_RC(divwuo, uisa, RT(state), RA(state), RB(state));
+        case 0x3CE: return MAKE_INSN2(stfpdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
+        case 0x3D7: return MAKE_INSN2(stfiwx, uisa, FRS(state), memrefx(state, T_U32));
+        case 0x3DA: return MAKE_INSN2_RC(extsw, uisa, RA(state), RS(state));
+        case 0x3E9: return MAKE_INSN3_RC(divdo, uisa, RT(state), RA(state), RB(state));
+        case 0x3EB: return MAKE_INSN3_RC(divwo, uisa, RT(state), RA(state), RB(state));
+        case 0x3EE: return MAKE_INSN2(stfpdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
+        case 0x3F6: return MAKE_INSN1(dcbz, vea, memrefx(state, T_U8));
         case 0x13:
             if (fld<11, 11>(state) == 0) {
-                return MAKE_INSN1(mfcr, RT(state));
+                return MAKE_INSN1(mfcr, uisa, RT(state));
             } else {
-                return MAKE_INSN1(mfcr, RT(state));
+                return MAKE_INSN1(mfcr, uisa, RT(state));
             }
             break;
         case 0x90:
             if (fld<11, 11>(state) == 0) {
-                return MAKE_INSN2(mtcrf, FXM(state), RS(state));
+                return MAKE_INSN2(mtcrf, uisa, FXM(state), RS(state));
             } else {
-                return MAKE_INSN2(mtcrf, FXM(state), RS(state));
+                return MAKE_INSN2(mtcrf, uisa, FXM(state), RS(state));
             }
             break;
         default:
-            throw ExceptionPowerpc("X-Form 1F xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), state, 1);
+            return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("unhandled opcode");
 }
@@ -828,21 +855,21 @@ Powerpc::decode_X_formInstruction_3F(State &state) {
     // Get the bits 21-30, next 10 bits
     uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x000: return MAKE_INSN3(fcmpu, BF_cr(state), FRA(state), FRB(state));
-        case 0x00C: return MAKE_INSN2_RC(frsp, FRT(state), FRB(state));
-        case 0x00E: return MAKE_INSN2_RC(fctiw, FRT(state), FRB(state));
-        case 0x00F: return MAKE_INSN2_RC(fctiwz, FRT(state), FRB(state));
-        case 0x026: return MAKE_INSN1(mtfsb1, BT(state));
-        case 0x028: return MAKE_INSN2_RC(fneg, FRT(state), FRB(state));
-        case 0x046: return MAKE_INSN1_RC(mtfsb0, BT(state));
-        case 0x048: return MAKE_INSN2_RC(fmr, FRT(state), FRB(state));
-        case 0x086: return MAKE_INSN2_RC(mtfsfi, BF_fpscr(state), U(state));
-        case 0x088: return MAKE_INSN2_RC(fnabs, FRT(state), FRB(state));
-        case 0x108: return MAKE_INSN2_RC(fabs, FRT(state), FRB(state));
-        case 0x247: return MAKE_INSN1_RC(mffs, FRT(state));
-        case 0x2C7: return MAKE_INSN2_RC(mtfsf, FLM(state), FRB(state));
-        default:
-            throw ExceptionPowerpc("X-Form 3F xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), state, 1);
+        case 0x000: return MAKE_INSN3(fcmpu, uisa, BF_cr(state), FRA(state), FRB(state));
+        case 0x00C: return MAKE_INSN2_RC(frsp, uisa, FRT(state), FRB(state));
+        case 0x00E: return MAKE_INSN2_RC(fctiw, uisa, FRT(state), FRB(state));
+        case 0x00F: return MAKE_INSN2_RC(fctiwz, uisa, FRT(state), FRB(state));
+        case 0x026: return MAKE_INSN1(mtfsb1, uisa, BT(state));
+        case 0x028: return MAKE_INSN2_RC(fneg, uisa, FRT(state), FRB(state));
+        case 0x046: return MAKE_INSN1_RC(mtfsb0, uisa, BT(state));
+        case 0x048: return MAKE_INSN2_RC(fmr, uisa, FRT(state), FRB(state));
+        case 0x086: return MAKE_INSN2_RC(mtfsfi, uisa, BF_fpscr(state), U(state));
+        case 0x088: return MAKE_INSN2_RC(fnabs, uisa, FRT(state), FRB(state));
+        case 0x108: return MAKE_INSN2_RC(fabs, uisa, FRT(state), FRB(state));
+        case 0x247: return MAKE_INSN1_RC(mffs, uisa, FRT(state));
+        case 0x2C7: return MAKE_INSN2_RC(mtfsf, uisa, FLM(state), FRB(state));
+        default: return MAKE_UNKNOWN();
+
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -850,27 +877,26 @@ Powerpc::decode_X_formInstruction_3F(State &state) {
 SgAsmPowerpcInstruction*
 Powerpc::decode_X_formInstruction_00(State &state) {
     if (state.insn == 0)
-        throw ExceptionPowerpc("zero instruction", state, 0);
+        return MAKE_UNKNOWN();
 
     // Get the bits 21-30, next 10 bits
     uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x020: return MAKE_INSN2(fpmr, FRT(state), FRB(state));
-        case 0x060: return MAKE_INSN2(fpabs, FRT(state), FRB(state));
-        case 0x0A0: return MAKE_INSN2(fpneg, FRT(state), FRB(state));
-        case 0x0C0: return MAKE_INSN2(fprsp, FRT(state), FRB(state));
-        case 0x0E0: return MAKE_INSN2(fpnabs, FRT(state), FRB(state));
-        case 0x120: return MAKE_INSN2(fsmr, FRT(state), FRB(state));
-        case 0x160: return MAKE_INSN2(fsabs, FRT(state), FRB(state));
-        case 0x1A0: return MAKE_INSN2(fsneg, FRT(state), FRB(state));
-        case 0x1E0: return MAKE_INSN2(fsnabs, FRT(state), FRB(state));
-        case 0x220: return MAKE_INSN2(fxmr, FRT(state), FRB(state));
-        case 0x240: return MAKE_INSN2(fpctiw, FRT(state), FRB(state));
-        case 0x2C0: return MAKE_INSN2(fpctiwz, FRT(state), FRB(state));
-        case 0x320: return MAKE_INSN2(fsmtp, FRT(state), FRB(state));
-        case 0x3A0: return MAKE_INSN2(fsmfp, FRT(state), FRB(state));
-        default:
-            throw ExceptionPowerpc("X-Form 00 xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), state, 1);
+        case 0x020: return MAKE_INSN2(fpmr, 440fpu, FRT(state), FRB(state));
+        case 0x060: return MAKE_INSN2(fpabs, 440fpu, FRT(state), FRB(state));
+        case 0x0A0: return MAKE_INSN2(fpneg, 440fpu, FRT(state), FRB(state));
+        case 0x0C0: return MAKE_INSN2(fprsp, 440fpu, FRT(state), FRB(state));
+        case 0x0E0: return MAKE_INSN2(fpnabs, 440fpu, FRT(state), FRB(state));
+        case 0x120: return MAKE_INSN2(fsmr, 440fpu, FRT(state), FRB(state));
+        case 0x160: return MAKE_INSN2(fsabs, 440fpu, FRT(state), FRB(state));
+        case 0x1A0: return MAKE_INSN2(fsneg, 440fpu, FRT(state), FRB(state));
+        case 0x1E0: return MAKE_INSN2(fsnabs, 440fpu, FRT(state), FRB(state));
+        case 0x220: return MAKE_INSN2(fxmr, 440fpu, FRT(state), FRB(state));
+        case 0x240: return MAKE_INSN2(fpctiw, 440fpu, FRT(state), FRB(state));
+        case 0x2C0: return MAKE_INSN2(fpctiwz, 440fpu, FRT(state), FRB(state));
+        case 0x320: return MAKE_INSN2(fsmtp, 440fpu, FRT(state), FRB(state));
+        case 0x3A0: return MAKE_INSN2(fsmfp, 440fpu, FRT(state), FRB(state));
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -884,32 +910,40 @@ Powerpc::decode_XL_formInstruction(State &state) {
     // Get the bits 21-30, next 10 bits
     uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x000: return MAKE_INSN2(mcrf, BF_cr(state), BFA_cr(state));
+        case 0x000: return MAKE_INSN2(mcrf, uisa, BF_cr(state), BFA_cr(state));
         case 0x010:
             if (LK(state) == 0) {
-                return MAKE_INSN3(bclr, BO(state), BI(state), BH(state));
+                return MAKE_INSN3(bclr, uisa, BO(state), BI(state), BH(state));
             } else {
-                return MAKE_INSN3(bclrl, BO(state), BI(state), BH(state));
+                return MAKE_INSN3(bclrl, uisa, BO(state), BI(state), BH(state));
             }
             break;
-        case 0x021: return MAKE_INSN3(crnor, BT(state), BA(state), BB(state));
-        case 0x081: return MAKE_INSN3(crandc, BT(state), BA(state), BB(state));
-        case 0x0C1: return MAKE_INSN3(crxor, BT(state), BA(state), BB(state));
-        case 0x0E1: return MAKE_INSN3(crnand, BT(state), BA(state), BB(state));
-        case 0x101: return MAKE_INSN3(crand, BT(state), BA(state), BB(state));
-        case 0x121: return MAKE_INSN3(creqv, BT(state), BA(state), BB(state));
-        case 0x1A1: return MAKE_INSN3(crorc, BT(state), BA(state), BB(state));
-        case 0x1C1: return MAKE_INSN3(cror, BT(state), BA(state), BB(state));
+        case 0x021: return MAKE_INSN3(crnor, uisa, BT(state), BA(state), BB(state));
+        case 0x32:
+            if (fld<6, 20>(state) == 0 && fld<31, 31>(state) == 0)
+                return MAKE_INSN0(rfi, uncategorized);
+            return MAKE_UNKNOWN();
+        case 0x081: return MAKE_INSN3(crandc, uisa, BT(state), BA(state), BB(state));
+        case 0x096:
+            if (fld<6, 20>(state) == 0 && fld<31, 31>(state) == 0)
+                return MAKE_INSN0(isync, vea);
+            return MAKE_UNKNOWN();
+        case 0x0C1: return MAKE_INSN3(crxor, uisa, BT(state), BA(state), BB(state));
+        case 0x0E1: return MAKE_INSN3(crnand, uisa, BT(state), BA(state), BB(state));
+        case 0x101: return MAKE_INSN3(crand, uisa, BT(state), BA(state), BB(state));
+        case 0x121: return MAKE_INSN3(creqv, uisa, BT(state), BA(state), BB(state));
+        case 0x1A1: return MAKE_INSN3(crorc, uisa, BT(state), BA(state), BB(state));
+        case 0x1C1: return MAKE_INSN3(cror, uisa, BT(state), BA(state), BB(state));
         case 0x210:
             if (LK(state) == 0) {
-                return MAKE_INSN3(bcctr, BO(state), BI(state), BH(state));
+                return MAKE_INSN3(bcctr, uisa, BO(state), BI(state), BH(state));
             } else {
-                return MAKE_INSN3(bcctrl, BO(state), BI(state), BH(state));
+                return MAKE_INSN3(bcctrl, uisa, BO(state), BI(state), BH(state));
             }
             break;
 
         default:
-            throw ExceptionPowerpc("invalid XL-Form opcode: " + StringUtility::addrToString(xoOpcode), state);
+            return MAKE_UNKNOWN();
     }
 
     ASSERT_not_reachable("xoOpcode not handled");
@@ -918,33 +952,32 @@ Powerpc::decode_XL_formInstruction(State &state) {
 SgAsmPowerpcInstruction*
 Powerpc::decode_A_formInstruction_00(State &state) {
     switch(fld<26, 30>(state)) {
-        case 0x05: return MAKE_INSN4(fpsel, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x08: return MAKE_INSN3(fpmul, FRT(state), FRA(state), FRC(state));
-        case 0x09: return MAKE_INSN3(fxmul, FRT(state), FRA(state), FRC(state));
-        case 0x0A: return MAKE_INSN3(fxpmul, FRT(state), FRA(state), FRC(state));
-        case 0x0B: return MAKE_INSN3(fxsmul, FRT(state), FRA(state), FRC(state));
-        case 0x0C: return MAKE_INSN3(fpadd, FRT(state), FRA(state), FRB(state));
-        case 0x0D: return MAKE_INSN3(fpsub, FRT(state), FRA(state), FRB(state));
-        case 0x0E: return MAKE_INSN2(fpre, FRT(state), FRB(state));
-        case 0x0F: return MAKE_INSN2(fprsqrte, FRT(state), FRB(state));
-        case 0x10: return MAKE_INSN4(fpmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x11: return MAKE_INSN4(fxmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x12: return MAKE_INSN4(fxcpmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x13: return MAKE_INSN4(fxcsmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x14: return MAKE_INSN4(fpnmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x15: return MAKE_INSN4(fxnmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x16: return MAKE_INSN4(fxcpnmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x17: return MAKE_INSN4(fxcsnmadd, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x18: return MAKE_INSN4(fpmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x19: return MAKE_INSN4(fxmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1A: return MAKE_INSN4(fxcpmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1B: return MAKE_INSN4(fxcsmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1C: return MAKE_INSN4(fpnmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1D: return MAKE_INSN4(fxnmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1E: return MAKE_INSN4(fxcpnmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1F: return MAKE_INSN4(fxcsnmsub, FRT(state), FRA(state), FRB(state), FRC(state));
-        default:
-            throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>(state))), state);
+        case 0x05: return MAKE_INSN4(fpsel, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x08: return MAKE_INSN3(fpmul, 440fpu, FRT(state), FRA(state), FRC(state));
+        case 0x09: return MAKE_INSN3(fxmul, 440fpu, FRT(state), FRA(state), FRC(state));
+        case 0x0A: return MAKE_INSN3(fxpmul, 440fpu, FRT(state), FRA(state), FRC(state));
+        case 0x0B: return MAKE_INSN3(fxsmul, 440fpu, FRT(state), FRA(state), FRC(state));
+        case 0x0C: return MAKE_INSN3(fpadd, 440fpu, FRT(state), FRA(state), FRB(state));
+        case 0x0D: return MAKE_INSN3(fpsub, 440fpu, FRT(state), FRA(state), FRB(state));
+        case 0x0E: return MAKE_INSN2(fpre, 440fpu, FRT(state), FRB(state));
+        case 0x0F: return MAKE_INSN2(fprsqrte, 440fpu, FRT(state), FRB(state));
+        case 0x10: return MAKE_INSN4(fpmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x11: return MAKE_INSN4(fxmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x12: return MAKE_INSN4(fxcpmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x13: return MAKE_INSN4(fxcsmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x14: return MAKE_INSN4(fpnmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x15: return MAKE_INSN4(fxnmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x16: return MAKE_INSN4(fxcpnmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x17: return MAKE_INSN4(fxcsnmadd, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x18: return MAKE_INSN4(fpmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x19: return MAKE_INSN4(fxmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1A: return MAKE_INSN4(fxcpmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1B: return MAKE_INSN4(fxcsmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1C: return MAKE_INSN4(fpnmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1D: return MAKE_INSN4(fxnmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1E: return MAKE_INSN4(fxcpnmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1F: return MAKE_INSN4(fxcsnmsub, 440fpu, FRT(state), FRA(state), FRB(state), FRC(state));
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -953,16 +986,15 @@ SgAsmPowerpcInstruction*
 Powerpc::decode_A_formInstruction_04(State &state) {
     // FIXME: Make the floating point registers use the powerpc_regclass_fpr instead of powerpc_regclass_gpr
     switch(fld<26, 30>(state)) {
-        case 0x18: return MAKE_INSN4(fxcpnpma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x19: return MAKE_INSN4(fxcsnpma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1A: return MAKE_INSN4(fxcpnsma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1B: return MAKE_INSN4(fxcsnsma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1C: return MAKE_INSN4(fxcxma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1D: return MAKE_INSN4(fxcxnpma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1E: return MAKE_INSN4(fxcxnsma, FRT(state), FRA(state), FRB(state), FRC(state));
-        case 0x1F: return MAKE_INSN4(fxcxnms, FRT(state), FRA(state), FRB(state), FRC(state));
-        default:
-            throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>(state))), state);
+        case 0x18: return MAKE_INSN4(fxcpnpma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x19: return MAKE_INSN4(fxcsnpma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1A: return MAKE_INSN4(fxcpnsma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1B: return MAKE_INSN4(fxcsnsma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1C: return MAKE_INSN4(fxcxma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1D: return MAKE_INSN4(fxcxnpma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1E: return MAKE_INSN4(fxcxnsma, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        case 0x1F: return MAKE_INSN4(fxcxnms, uncategorized, FRT(state), FRA(state), FRB(state), FRC(state));
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -970,19 +1002,18 @@ Powerpc::decode_A_formInstruction_04(State &state) {
 SgAsmPowerpcInstruction*
 Powerpc::decode_A_formInstruction_3B(State &state) {
     switch(fld<26, 30>(state)) {
-        case 0x12: return MAKE_INSN3_RC(fdivs, FRT(state), FRA(state), FRB(state));
-        case 0x14: return MAKE_INSN3_RC(fsubs, FRT(state), FRA(state), FRB(state));
-        case 0x15: return MAKE_INSN3_RC(fadds, FRT(state), FRA(state), FRB(state));
-        case 0x16: return MAKE_INSN2_RC(fsqrts, FRT(state), FRB(state));
-        case 0x18: return MAKE_INSN2_RC(fres, FRT(state), FRB(state));
-        case 0x19: return MAKE_INSN3_RC(fmuls, FRT(state), FRA(state), FRC(state));
-        case 0x1A: return MAKE_INSN2_RC(frsqrtes, FRT(state), FRB(state));
-        case 0x1C: return MAKE_INSN4_RC(fmsubs, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x1D: return MAKE_INSN4_RC(fmadds, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x1E: return MAKE_INSN4_RC(fnmsubs, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x1F: return MAKE_INSN4_RC(fnmadds, FRT(state), FRA(state), FRC(state), FRB(state));
-        default:
-            throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>(state))), state);
+        case 0x12: return MAKE_INSN3_RC(fdivs, uisa, FRT(state), FRA(state), FRB(state));
+        case 0x14: return MAKE_INSN3_RC(fsubs, uisa, FRT(state), FRA(state), FRB(state));
+        case 0x15: return MAKE_INSN3_RC(fadds, uisa, FRT(state), FRA(state), FRB(state));
+        case 0x16: return MAKE_INSN2_RC(fsqrts, uisa, FRT(state), FRB(state));
+        case 0x18: return MAKE_INSN2_RC(fres, uisa, FRT(state), FRB(state));
+        case 0x19: return MAKE_INSN3_RC(fmuls, uisa, FRT(state), FRA(state), FRC(state));
+        case 0x1A: return MAKE_INSN2_RC(frsqrtes, uisa, FRT(state), FRB(state));
+        case 0x1C: return MAKE_INSN4_RC(fmsubs, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x1D: return MAKE_INSN4_RC(fmadds, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x1E: return MAKE_INSN4_RC(fnmsubs, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x1F: return MAKE_INSN4_RC(fnmadds, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -991,20 +1022,19 @@ SgAsmPowerpcInstruction*
 Powerpc::decode_A_formInstruction_3F(State &state) {
     // FIXME: Make the floating point registers use the powerpc_regclass_fpr instead of powerpc_regclass_gpr
     switch(fld<26, 30>(state)) {
-        case 0x12: return MAKE_INSN3_RC(fdiv, FRT(state), FRA(state), FRB(state));
-        case 0x14: return MAKE_INSN3_RC(fsub, FRT(state), FRA(state), FRB(state));
-        case 0x15: return MAKE_INSN3_RC(fadd, FRT(state), FRA(state), FRB(state));
-        case 0x16: return MAKE_INSN2_RC(fsqrt, FRT(state), FRB(state));
-        case 0x17: return MAKE_INSN4_RC(fsel, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x18: return MAKE_INSN2_RC(fre, FRT(state), FRB(state));
-        case 0x19: return MAKE_INSN3_RC(fmul, FRT(state), FRA(state), FRC(state));
-        case 0x1A: return MAKE_INSN2_RC(frsqrte, FRT(state), FRB(state));
-        case 0x1C: return MAKE_INSN4_RC(fmsub, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x1D: return MAKE_INSN4_RC(fmadd, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x1E: return MAKE_INSN4_RC(fnmsub, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x1F: return MAKE_INSN4_RC(fnmadd, FRT(state), FRA(state), FRC(state), FRB(state));
-        default:
-            throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>(state))), state);
+        case 0x12: return MAKE_INSN3_RC(fdiv, uisa, FRT(state), FRA(state), FRB(state));
+        case 0x14: return MAKE_INSN3_RC(fsub, uisa, FRT(state), FRA(state), FRB(state));
+        case 0x15: return MAKE_INSN3_RC(fadd, uisa, FRT(state), FRA(state), FRB(state));
+        case 0x16: return MAKE_INSN2_RC(fsqrt, uisa, FRT(state), FRB(state));
+        case 0x17: return MAKE_INSN4_RC(fsel, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x18: return MAKE_INSN2_RC(fre, uisa, FRT(state), FRB(state));
+        case 0x19: return MAKE_INSN3_RC(fmul, uisa, FRT(state), FRA(state), FRC(state));
+        case 0x1A: return MAKE_INSN2_RC(frsqrte, uisa, FRT(state), FRB(state));
+        case 0x1C: return MAKE_INSN4_RC(fmsub, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x1D: return MAKE_INSN4_RC(fmadd, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x1E: return MAKE_INSN4_RC(fnmsub, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x1F: return MAKE_INSN4_RC(fnmadd, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -1012,13 +1042,12 @@ Powerpc::decode_A_formInstruction_3F(State &state) {
 SgAsmPowerpcInstruction*
 Powerpc::decode_MD_formInstruction(State &state) {
     switch (fld<27, 29>(state)) {
-        case 0: return MAKE_INSN4_RC(rldicl, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
-        case 1: return MAKE_INSN4_RC(rldicr, RA(state), RS(state), SH_64bit(state), ME_64bit(state));
-        case 2: return MAKE_INSN4_RC(rldic, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
-        case 3: return MAKE_INSN4_RC(rldimi, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
+        case 0: return MAKE_INSN4_RC(rldicl, uisa, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
+        case 1: return MAKE_INSN4_RC(rldicr, uisa, RA(state), RS(state), SH_64bit(state), ME_64bit(state));
+        case 2: return MAKE_INSN4_RC(rldic, uisa, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
+        case 3: return MAKE_INSN4_RC(rldimi, uisa, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
         case 4: return decode_MDS_formInstruction(state);
-        default:
-            throw ExceptionPowerpc("invalid MD-Form extended opcode: " + StringUtility::addrToString(int(fld<27, 29>(state))), state);
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
@@ -1026,10 +1055,9 @@ Powerpc::decode_MD_formInstruction(State &state) {
 SgAsmPowerpcInstruction*
 Powerpc::decode_MDS_formInstruction(State &state) {
     switch (fld<27, 30>(state)) {
-        case 8: return MAKE_INSN4_RC(rldcl, RA(state), RS(state), RB(state), MB_64bit(state));
-        case 9: return MAKE_INSN4_RC(rldcr, RA(state), RS(state), RB(state), ME_64bit(state));
-        default:
-            throw ExceptionPowerpc("invalid MDS-Form extended opcode: " + StringUtility::addrToString(int(fld<27, 30>(state))), state);
+        case 8: return MAKE_INSN4_RC(rldcl, uisa, RA(state), RS(state), RB(state), MB_64bit(state));
+        case 9: return MAKE_INSN4_RC(rldcr, uisa, RA(state), RS(state), RB(state), ME_64bit(state));
+        default: return MAKE_UNKNOWN();
     }
     ASSERT_not_reachable("opcode not handled");
 }
