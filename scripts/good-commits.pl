@@ -89,15 +89,28 @@ sub getCommitInfo {
     return { author => $author, message => $message };
 }
 
+# Format a commit message into a quote
+sub quotedCommit {
+    my($hash) = @_;
+    my($mesg) = git "log", $hash, "^$hash^";
+    return "  +" . ('-' x 80) . "\n" .
+	   (join "\n", map {"  |" . $_} split "\n", $mesg) .
+           "\n  +" . ('-' x 80) . "\n";
+}
+
 # Build a histogram for each user and display it
 sub showHistogram {
     my %histogram;
+    my $bad_example;
     for my $hash (split /\n/, git "log", @_, '--format=%H') {
 	my($commit) = getCommitInfo($hash);
 	my($err) = badMessage($commit->{message});
 	$histogram{$commit->{author}} ||= [0, 0]; # errors and non-errors
 	++$histogram{$commit->{author}}[$err?0:1];
 	print STDERR ".";
+	if ($err && !$bad_example && $commit->{author} ne "hudson-rose") {
+	    $bad_example = $err . "\n" . quotedCommit($hash);
+	}
     }
     print STDERR "\n";
 
@@ -137,6 +150,13 @@ sub showHistogram {
 	       $record->{ngood}, $record->{total},
 	       $record->{author});
     }
+    printf "----- ------- ---------- --------------------\n";
+
+    # Print an example of a bad commit
+    if ($bad_example) {
+	print "\nHere's an example of a bad commit message: ";
+	print $bad_example;
+    }
 }
 
 # Show errors for specified commits
@@ -145,6 +165,10 @@ sub showEachCommit {
 	my($commit) = getCommitInfo($hash);
 	my($err) = badMessage($commit->{message}) || "good";
 	printf "%8s %-32s %s\n", substr($hash,0,8), $commit->{author}, $err;
+
+	if ($err ne "good") {
+	    print quotedCommit($hash);
+	}
     }
 }
     
