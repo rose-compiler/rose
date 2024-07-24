@@ -148,7 +148,11 @@ bool
 Mips32::matchesHeader(SgAsmGenericHeader *header) const {
     ASSERT_not_null(header);
     const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
+    const SgAsmGenericFormat *fmt = header->get_executableFormat();
+    ASSERT_not_null(fmt);
+
+    return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family &&
+            fmt->get_sex() == byteOrder());
 }
 
 Sawyer::Container::Interval<size_t>
