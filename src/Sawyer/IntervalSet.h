@@ -614,7 +614,7 @@ public:
         }
         if (hull().least() < interval.least())
             map_.erase(Interval::hull(hull().least(), interval.least()-1));
-        if (hull().greatest() > interval.greatest())
+        if (hull() && hull().greatest() > interval.greatest())
             map_.erase(Interval::hull(interval.greatest(), hull().greatest()));
     }
 
