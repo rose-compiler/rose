@@ -6016,7 +6016,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
 #ifdef DEBUG_MANGLED_SHORTNAME
                    //Check for hash colisions, if we found an idNumber, but the long mangled name is different, we have a problem
                    auto collisionIt = mangledNameHashCollisionCheckMap.find(idNumber);
-                   if(collisionIt != mangledNameHashCollisionCheckMap.end() && 
+                   if(collisionIt != mangledNameHashCollisionCheckMap.end() &&
                      oldMangledName != shortMNIter->first)
                    {
                      mlog[Sawyer::Message::Common::ERROR] <<" Got a short mangled name collision.  \n "<<
@@ -6037,7 +6037,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
                    idNumber = hasher.make64Bits();
                    shortMangledNameCache.insert(std::pair<std::string, uint64_t>(oldMangledName, idNumber));
                  }
- 
+
              std::ostringstream mn;
              mn << 'L' << Combinatorics::toBase62String(idNumber) << 'R';
              mangledName = mn.str();
@@ -10029,7 +10029,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
        // Liao 10/28/2010. Sometimes we want remove the statement with all its preprocessing information
           if (autoRelocatePreprocessingInfo == true)
              {
-               // WE need to move up inner danglinge #endif or #if directives first. 
+               // WE need to move up inner danglinge #endif or #if directives first.
                SageInterface::moveUpInnerDanglingIfEndifDirective(targetStmt);
                // DQ (9/16/2010): Added support to move comments and CPP directives marked to
                // appear before the statment to be attached to the inserted statement (and marked
@@ -10199,7 +10199,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 #endif
      // Liao 2024/1/24
      // There is a corner case: #if #endif may span very wide in the code. The lead #if may be moved without the matching #endif being found.
-     // A solution : pcounter++  whenever a leading #if #ifdef #ifndef is encountered. 
+     // A solution : pcounter++  whenever a leading #if #ifdef #ifndef is encountered.
      //  pcounter -- if #endif is countered
      //  Normally the final pcounter ==0, if pcounter>=1, a #endif is missing somewhere. We should patch it up.
 
@@ -10230,10 +10230,10 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
           // It should not be treated as either before or after the source statement we want to move comments from
           // SgGlobal should be treated as the enclosing scope of the source statement
           // The comments of the source statements should be attached to inside position of SgGlobal.
-          // This is a variant of the before position (SgGlobal vs. source statement). 
-          // We do not treate SgGlobal as the same as  if sgGlobal is preceeding source 
-          // because the comments of source statement would be attached to ::after of SgGlobal and  
-          // all comments will show up in the end of the file. 
+          // This is a variant of the before position (SgGlobal vs. source statement).
+          // We do not treate SgGlobal as the same as  if sgGlobal is preceeding source
+          // because the comments of source statement would be attached to ::after of SgGlobal and
+          // all comments will show up in the end of the file.
           // The ::inside location relies on the unparser to properly handle them later.
           if (surroundingStatementPreceedsTargetStatement == true || isSgGlobal(targetStatement) != NULL )
              {
@@ -10259,7 +10259,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 
                 // special handling of inside position
                 if (isSgGlobal(targetStatement))
-                  (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside); 
+                  (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside);
 
                 targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
 
@@ -10294,7 +10294,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                    targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
                }
                else
-               {  
+               {
                   // target stmt has comments
                   // first time to grab thing
                   if( prevTargetAnchorComment==NULL)
@@ -10394,7 +10394,7 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
                printf ("In loop: after getPreviousStatement(): surroundingStatement = %p = %s name = %s \n",surroundingStatement,
                     surroundingStatement->class_name().c_str(),SageInterface::get_name(surroundingStatement).c_str());
 #endif
-               
+
                if (surroundingStatement == NULL)
                   {
                     surroundingStatement_fileId = Sg_File_Info::BAD_FILE_ID;
@@ -11168,19 +11168,27 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  }
-  else if (isSgValueExp(parent)) {
+  } else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
-  }
-  else if (SgActualArgumentExpression* actexp = isSgActualArgumentExpression(parent)) {
+  } else if (SgActualArgumentExpression* actexp = isSgActualArgumentExpression(parent)) {
     // PP (4/25/22) since SgExpression::replace_expression is deprecated, I added the
     //              functionality for replacing SgActualArgumentExpression::expression
     //              here.
     //              Note, this case needs to be ordered before isSgExpression!
     ROSE_ASSERT(oldExp == actexp->get_expression());
     actexp->set_expression(newExp);
+  } else if (SgAdaAttributeExp* adaattrexp = isSgAdaAttributeExp(parent)) {
+    if (oldExp == adaattrexp->get_object()) {
+      adaattrexp->set_object(&newexp);
+    } else if (oldExp == attr.get_args()) {
+      SgExprListExp* repllst = isSgExprListExp(newExp);
+
+      adaattrexp->set_args(repllst);
+    } else {
+      ROSE_ABORT();
+    }
   } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
@@ -11264,6 +11272,9 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   } else if (SgAdaVariantDecl* vtdcl = isSgAdaVariantDecl(parent)) {
     ROSE_ASSERT(oldExp == vtdcl->get_discriminant());
     vtdcl->set_discriminant(newExp);
+  } else if (SgAdaRepresentationClause* clause = isSgAdaRepresentationClause(parent)) {
+    ROSE_ASSERT(oldExp == clause->get_alignment());
+    clause->set_alignment(newExp);
   } else if (SgAdaVariantWhenStmt* vtwhen = isSgAdaVariantWhenStmt(parent)) {
     ROSE_ASSERT(oldExp == vtwhen->get_choices());
     SgExprListExp* newLst = isSgExprListExp(newExp);
@@ -25398,14 +25409,14 @@ void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemaining, o
             out<<*i<<" classification="<<PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str ();
             out<<" string="<<(*i)->getString ().c_str ();
             out<<" relative pos=" ; // << (*i)->getRelativePosition ();
-#if 1       
+#if 1
             if ((*i)->getRelativePosition () == PreprocessingInfo::inside)
                 out<<"inside";
             else if ((*i)->getRelativePosition () == PreprocessingInfo::before)
                 out<<"before";
             else
                 out<<"after";
-#endif          
+#endif
         }
         out<<">";
       }
@@ -27629,10 +27640,10 @@ SageInterface::findFirstSgCastExpMarkedAsTransformation(SgNode* n, const std::st
 #endif
    }
 
-// A helper function to check 
+// A helper function to check
 //   begin: return 1
 //   middle (#else, #elif): return 2
-//   end directive: return -1 
+//   end directive: return -1
 // othewise return 0;
 static int isBeginDirective (PreprocessingInfo* info)
 {
@@ -27644,7 +27655,7 @@ static int isBeginDirective (PreprocessingInfo* info)
     {
         return 1;
     }
-    else if (dtype==PreprocessingInfo::CpreprocessorElseDeclaration|| 
+    else if (dtype==PreprocessingInfo::CpreprocessorElseDeclaration||
              dtype==PreprocessingInfo::CpreprocessorElifDeclaration)
     {
        return 2;
@@ -27674,27 +27685,27 @@ static void moveInofListToNewPlace(AttachedPreprocessingInfoType* infoList, int 
      retVal++;
 
      // zero out from original list
-     (*infoList)[cidx]= NULL; 
+     (*infoList)[cidx]= NULL;
 }
 
 // Return the number of NULL PreprocessingInfo* within a subtree of a SgLocatedNode, inclusive
-int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode) 
+int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
 {
    int retVal=0;
    ROSE_ASSERT(lnode);
 
    // collecting NULL entries
    RoseAst ast(lnode);
-   RoseAst::iterator ast_i=ast.begin(); 
+   RoseAst::iterator ast_i=ast.begin();
 
    vector < pair< AttachedPreprocessingInfoType*, int> > empty_entries; // preprocessing info. to be erased, list vs. idx/offset
    for(;ast_i!=ast.end();++ast_i) {
        SgLocatedNode* current  = isSgLocatedNode(*ast_i);
        if (current ==NULL ) // skip non located nodes
-         continue; 
+         continue;
 
        AttachedPreprocessingInfoType* infoList = current->getAttachedPreprocessingInfo();
-       if (infoList == NULL) continue; 
+       if (infoList == NULL) continue;
 
        int commentIndex=0;
        for (Rose_STL_Container<PreprocessingInfo*>::iterator ci = (*infoList).begin(); ci != (*infoList).end(); ci++)
@@ -27709,7 +27720,7 @@ int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
   }
 
    // using reverse iterator to remove from backwards
-   for (auto ki = empty_entries.rbegin(); ki != empty_entries.rend(); ki ++) 
+   for (auto ki = empty_entries.rbegin(); ki != empty_entries.rend(); ki ++)
    {
      AttachedPreprocessingInfoType* infoList =  (*ki).first;
      int cidx=  (*ki).second;
@@ -27721,7 +27732,7 @@ int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
      AttachedPreprocessingInfoType::iterator k = infoList->begin();
      infoList->erase(k+cidx);
 //     cout<<"debugging: direct erasing: info@"<< infoList<< " idx="<<cidx<<endl;
-     retVal ++;     
+     retVal ++;
    }
   return retVal;
 }
@@ -27736,18 +27747,18 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
   // stop condition
   if (current == NULL)
     return;
-     
+
   // Three possible locations: before, inside, and after
   // immediately add prepression info that is before and inside of current node
   // delayed additions of these that are located after the current node
-  vector<PreprocessingInfo*> afterList;  
+  vector<PreprocessingInfo*> afterList;
   if (SgLocatedNode* locatedNode = isSgLocatedNode(current))
-  { 
+  {
     AttachedPreprocessingInfoType *comments =
       locatedNode->getAttachedPreprocessingInfo ();
-    
+
     if (comments != NULL)
-    { 
+    {
       int counter = 0;
       AttachedPreprocessingInfoType::iterator i;
       int idx=0; 
@@ -27794,7 +27805,7 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
     infoList.push_back(fi);
 }
 
-// This may be expensive to run since it is called anytime replace() is called. 
+// This may be expensive to run since it is called anytime replace() is called.
 //!  Extract sequences like " #endif #endif ...  #if | #ifdef| #ifndef" buried inside subtree of lnode.
 //  We need to attach them to be after lnode, before we can safely remove lnode. So the inner preprocessing info. can be preserved properly.
 // This should be done before removing or replace the statement: lnode
@@ -27808,16 +27819,16 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
     ROSE_ASSERT(lnode);
 
 // algorithm: using a queue (vector to simulate it)
-// queue <PreProcessingInfo* >  q; 
+// queue <PreProcessingInfo* >  q;
 //  start from 2nd node: ignore the first root node
-//  if  start preprocessing info: (if, ifndef, ifdef), push to the end of q 
+//  if  start preprocessing info: (if, ifndef, ifdef), push to the end of q
 //  if  end of preprocessing info. (endif),  neturalize possible end p info at the end of q, otherwise push it to the end
 //
 //  the queue in the end may contain mixed  preprocessing info.   #endif #endif ... #if   #ifndef
-//  They cannot neutralize each other. 
+//  They cannot neutralize each other.
 //  They should be attached to be after lnode !
    RoseAst ast(lnode);
-   RoseAst::iterator ast_i=ast.begin(); 
+   RoseAst::iterator ast_i=ast.begin();
    ++ast_i; // skip the root node itself
 
   // we store both the container and the element's index within the container. so later we can easily remove elements from containers
@@ -27909,10 +27920,10 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    for(;ast_i!=ast.end();++ast_i) {
        SgLocatedNode* current  = isSgLocatedNode(*ast_i);
        if (current ==NULL ) // skip non located nodes
-         continue; 
+         continue;
 
        AttachedPreprocessingInfoType* infoList = current->getAttachedPreprocessingInfo();
-       if (infoList == NULL) continue; 
+       if (infoList == NULL) continue;
 
        int commentIndex=0;
        for (Rose_STL_Container<PreprocessingInfo*>::iterator ci = (*infoList).begin(); ci != (*infoList).end(); ci++)
@@ -27927,35 +27938,35 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
            {
                keepers.push_back(make_pair (infoList,commentIndex));
            }
-           // the middle #else, #elif, 
-           else if (isBeginDirective(info) == 2) 
+           // the middle #else, #elif,
+           else if (isBeginDirective(info) == 2)
            {
                // two situtations for immediate decision of unbalanced status
-               //1. empty stack, or 
+               //1. empty stack, or
                // 2.  top of stack is not one of #if #ifdef #ifndef. This is an unbalanced directive (keeper)
                if (keepers.size()==0)
                     keepers.push_back(make_pair (infoList,commentIndex));
                else if (isBeginDirective( (*(keepers.back().first))[keepers.back().second]  )!=1 ) // not empty , top of the stack is not beginning
                {
-                  keepers.push_back(make_pair (infoList,commentIndex)); 
-               } 
-               else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
+                  keepers.push_back(make_pair (infoList,commentIndex));
+               }
+               else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning,
                {
                        PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
                   // we associated this middle directive with the beginning directive
-                  associated_directives[begin_info].push_back(make_pair (infoList,commentIndex)); 
-               } 
-           } 
+                  associated_directives[begin_info].push_back(make_pair (infoList,commentIndex));
+               }
+           }
            // end directive
            else if ( isBeginDirective(info) == -1)
            {
               bool neutralized = false;
                // neutralize an internall matched pair, if any
                if (keepers.size()>0)
-               { 
+               {
                   AttachedPreprocessingInfoType* comments = keepers.back().first;
                   int idx = keepers.back().second;
-                 
+
                   if(isBeginDirective( (*comments)[idx] )==1)
                   {
                       keepers.pop_back();
@@ -27974,7 +27985,7 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    set <AttachedPreprocessingInfoType*> relatedInfoList; // containers with comments to be moved
    // now we go through the keepers: those to be moved to the new location!! They are also the ones to be erased from original location!
    // move from old containers, and add into lnode's after position
-   for (auto ki = keepers.begin(); ki != keepers.end(); ki ++) 
+   for (auto ki = keepers.begin(); ki != keepers.end(); ki ++)
    {
      AttachedPreprocessingInfoType* infoList =  (*ki).first;
      int cidx=  (*ki).second;
@@ -27993,9 +28004,9 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
      if (associated_directives.count (info)!=0)
      {
         vector<pair<AttachedPreprocessingInfoType*,int>> a_list_vec =  associated_directives[info];
-        for (auto vec_i  = a_list_vec.rbegin(); vec_i != a_list_vec.rend(); vec_i ++  ) 
+        for (auto vec_i  = a_list_vec.rbegin(); vec_i != a_list_vec.rend(); vec_i ++  )
         {
-           AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first; 
+           AttachedPreprocessingInfoType* a_infoList =  (*vec_i).first;
            int aidx=  (*vec_i).second;
            moveInofListToNewPlace (a_infoList, aidx, relatedInfoList, lnode, retVal);
            associated_erase.push_back(make_pair (a_infoList, aidx));
@@ -28004,9 +28015,9 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 
      // Doing this after the associated directives are processed.
      // zero out from original list, Note this element slot is NULL now!
-     (*infoList)[cidx]= NULL; 
+     (*infoList)[cidx]= NULL;
 
    }
     eraseNullPreprocessingInfo (lnode);
-    return retVal; 
+    return retVal;
 }

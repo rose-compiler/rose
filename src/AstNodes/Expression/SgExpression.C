@@ -506,6 +506,15 @@ SgExpression::set_explicitly_stored_type( SgType* type )
                exp->set_type(type);
                break;
              }
+
+           case V_SgAdaAttributeExp:
+             {
+               SgAdaAttributeExp* exp = isSgAdaAttributeExp(this);
+               ASSERT_not_null(exp);
+               exp->set_attrType(type);
+               break;
+             }
+
           default:
              {
                printf ("Error: SgExpression::set_explicit_type(): default reached: expression = %p = %s \n",this,this->class_name().c_str());
