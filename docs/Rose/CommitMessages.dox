@@ -3,28 +3,34 @@
 /** @defgroup commit_messages Writing Git commit messages
  *  @ingroup developer_docs
  *
- *  What constitutes a good Git commit message.
- *
- *  Each commit should ideally provide a single bug fix or (part of) a feature, and thus the comment should be quite focused.
- *  Each commit message consists of a title line and a body separated from one another by a blank line.
+ *  This document describes how to write good, useful commit messages. The script that checks the policies stated here is
+ *  called `good-commits.pl` in the ROSE "scripts" directory, and its usage is described below.
  *
  *  @section commit_messages_title Titles
  *
- *  @li The title should start with a subject in parentheses.
- *  @li Titles should be short, single-line statements. Details are in the body.
+ *  @li The title must start with a parenthesized category not more than 20 characters.
+ *  @li Titles must be short, single-line statements not more than 80 characters; details should go in the body.
+ *  @li The title and body must be separated by a single blank line.
  *
- *  Subjects are created on the fly. Their purpose is to make it easier for a human to scan a long list of commit titles to
- *  find certain things since it's faster to read a one or two word subject than it is to read a whole title. They also make it
- *  easier to visually group related commit titles. A few example subjects:
+ *  The parenthesized category is one or more words. The category's purpose is to make it easier for humans
+ *  to quickly scan a long list of commits and see what they concern. The category names can be made up on the fly. Here are some
+ *  examples:
  *
  *  <table>
- *    <tr><td><b>Subject name</b></td><td><b>What it means</b></td></tr>
+ *    <tr><td><b>Examples</b></td><td><b>What they might mean</b></td></tr>
  *    <tr><td>%Frontend, %Binary %Analysis</td><td>Some broad part of the ROSE library.</td></tr>
  *    <tr><td>codethorn, compass2</td><td>A particular project that uses ROSE.</td></td>
  *    <tr><td>%Attribute, %Stack %Delta</td><td>Some specific feature.</td></tr>
  *  </table>
  *
- *  Some examples of good commit titles:
+ *  The titles are intentionally short, but not as short as some best practices recommend. Some reasons for such short titles are:
+ *
+ *  @li Tools and websites (e.g., Github, GitLab, qgit, Magit) have limited space in which to show a title and sometimes truncate
+ *      the title if it's too long.
+ *  @li When looking at long lists of commit titles, it's easier to read them if they're terse. Additional details can always be
+ *      added to the commit message body.
+ *
+ *  Some examples of good titles:
  *
  *  @li (Attributes) BinaryAnalysis::Attribute is moved
  *  @li (move tool) one more test case for comments handling
@@ -36,30 +42,73 @@
  *  The body provides details that are missing from the title and which are not easily evident from the patch.  Some examples
  *  about what is good for a commit message body:
  *
- *  @li The <b>general overview</b> of what changed. Often the patch is so detailed and/or spread out that it's hard to
- *      otherwise discern what really changed.  For instance, if test answers are updated the commit should explain why the
- *      answer changed.
+ *  @li The <b>general overview</b> of what changed. Often the patch is so detailed and/or spread out that it's hard to otherwise
+ *      discern what really changed.  For instance, if test answers are updated the commit should explain why the answer changed.
+ *  @li Warning to the user if a ROSE <b>API changed</b> in a way that is not backward compatible.
  *  @li Where the commit came from, if not from the committer.  For instance, if the commit was a patch submitted by a user it
  *      is polite to <b>thank the user</b> or the organization (provided they don't object).
  *  @li If controversial, the commit should mention its <b>provenance</b>. Perhaps it came from developer consensus at a team
  *      meeting. Otherwise someone who wasn't privy to that information might revert the commit later.
- *  @li <b>Changes that affect users</b> should be listed including what the user needs to change in their own code. Some of
- *      our users know how to use Git and will either look through the commit messages before merging or will search the commit
- *      messages when they have a compile error due to changed names. (On a similar note, try not to change the API without
- *      first using ROSE_DEPRECATED for a suitable period of time.)
- *  @li The body should <b>reference a JIRA issue</b> if the commit is related to an issue, especially if that issue has
- *      relevant details, discussion, test cases, etc. Place the issue name as the last line of the commit message, one
- *      issue per line for the sake of automated tools. Most commits should correspond to at least one JIRA issue. Git
- *      has tools for searching for commits that affect a JIRA issue (e.g., "git log --grep '^ROSE-1234'").
- *
- *  The body must be separated from the title by a blank line because some Git tools concatenate the first lines together into
- *  a single title line, which creates formatting problems since the title then becomes very long. Also, although ROSE uses a
- *  130-column policy throughout, commit messages should try to keep lines around 80-characters because that works better
- *  in GUIs like github and qgit.
+ *  @li <b>Changes that affect users</b> should be listed including what the user needs to change in their own code. Some of our
+ *      users know how to use Git and will either look through the commit messages before merging or will search the commit messages
+ *      when they have a compile error due to changed names. (On a similar note, try not to change the API without first using
+ *      ROSE_DEPRECATED for a suitable period of time.)
+ *  @li The body of the commit can be <b>formatted as Markdown</b>, which is readable to humans and can be displayed reasonably in
+ *      user interfaces. The most useful Markdown in commit messages are: bullet lists introduced with asterisks, inline source code
+ *      quoted in backticks, and multi-line source code delimited by lines containing three backticks.
  *
  *  Make sure your message is spelled correctly since it cannot be changed once it's merged into a release branch--at least not
  *  without a very disruptive history rewrite. Commit messages are for posterity, so be careful. "I hate git", commit
  *  [a53823f](https://github.com/rose-compiler/rose/commit/a53823f), was unprofessional but is now effectively permanent.
+ *
+ *  @section commit_messages_issues Issue references
+ *
+ *  Every commit must reference at least one issue, and may reference multiple issues. The issues are listed after the message
+ *  body and are separated from the body by a blank line.  Issues are listed one per line. Each issue line has one of two forms:
+ *
+ *  @li An all-uppercase word followed by a hyphen, followed by decimal digits.
+ *  @li The word "Issue" followed by a space, the number sign (#), decimal digits, and an optional plus sign.
+ *
+ *  Some examples of issue references:
+ *
+ *  <table>
+ *    <tr><td><b>Example</b></td><td><b>What it means</b></td></tr>
+ *    <tr><td>Issue #123</td><td>An issue in the ROSE Gitlab project at rosecompiler2.llnl.gov/gitlab.</td></tr>
+ *    <tr><td>Issue #123+</td><td>Similar, but will expand to the issue title when viewed in Gitlab.</td></tr>
+ *    <tr><td>RC-123</td><td>An issue in the ROSE Confluence instance.</td></tr>
+ *    <tr><td>JIRA-123</td><td>Issue number 123 in JIRA, which the ROSE team no longer uses.</td></tr>
+ *  </table>
+ *
+ *  The purpose of issue references in commit messages is to provide context and help trace the history of changes. For instance,
+ *  in Gitlab it's easy for developers to hold a lengthy discussion about an issue, but it's not as easy to change a commit message.
+ *
+ *  To search for commits that implement a certain issue, use a command like this:
+ *
+ * @code
+ *   git log --grep '^Issue #1234'
+ * @endcode
+ *
+ * In a shell script, to get the list of all the issues for a particular commit, use this command:
+ *
+ * @code
+ *   git log -n1 --format='%B' $commit_sha1 |grep '^\([A-Z]\+-[1-9][0-9]*\|Issue #[1-9][0-9]*+\?\)$'
+ * @endcode
+ *
+ *  @section commit_messages_checker Commit message policy checker
+ *
+ *  The `good-commits.pl` script in ROSE's "scripts" directory checks that commits follow the policy outlined here. It should be run
+ *  from inside the ROSE repository.
+ *
+ *  When run with no arguments it will show one line per commit over the last 30 days for the current user and indicate whether
+ *  the commit passes the policy checks, or why it fails.
+ *
+ *  To create a summary table with one row per author, run the script with the "--histogram" switch plus any additional
+ *  commit-selecting switches that are passed to the `git rev-list` command. For instance, the table that we create for the weekly
+ *  ROSE meetings is generated by running:
+ *
+ *  @code
+ *  good-commits.pl --histogram --no-merges --since '1 month ago' origin/master
+ *  @endcode
  *
  *  @section commit_messages_examples Examples of good commit messages
  *
@@ -68,12 +117,14 @@
  *  @verbatim
     (Binary Analysis) Changed names for some classes in the new SymbolicExpr
     
+    **API CHANGE**
+
     SymbolicExpr::TreeNode         -> SymbolicExpr::Node
     SymbolicExpr::TreeNodePtr      -> SymbolicExpr::Ptr
     SymbolicExpr::LeafNodePtr      -> SymbolicExpr::LeafPtr
     SymbolicExpr::InternalNodePtr  -> SymbolicExpr::InternalPtr
 
-    BINARY-123
+    Issue #123
  @endverbatim
  *
  * This commit makes it clear to the simulator2 project maintainer why a change was made since it was changed by someone that
@@ -82,10 +133,10 @@
  * @verbatim
     (Simulator2) Add Linux conditional around statfs::f_flags
     
-    statfs::f_flags is only available since Linux 2.6.36.
+    `statfs::f_flags` is only available since Linux 2.6.36.
     Our internal RHEL5 testing servers are Linux 2.6.18.
 
-    ROSE-123
+    RC-123
  @endverbatim
  *
  * This commit explains why a change was made, which is not evident from the change itself:
@@ -111,18 +162,4 @@
     ROSE-123
     JENKINS-456
  @endverbatim
- *
- * @section commit_messages_jira JIRA Issues
- *
- * To search for which commits implement a certain JIRA issue, use this command:
- *
- * @code
- *   git log --grep '^ROSE-1234'
- * @endcode
- *
- * In a shell script, to get the list of all the JIRA issues for a particular commit, use this command:
- *
- * @code
- *   git log -n1 --format='%B' $commit_sha1 |grep '^[A-Z]\+-[1-9][0-9]*$'
- * @endcode
  */
