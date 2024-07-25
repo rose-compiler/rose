@@ -1230,7 +1230,16 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     SgClassDeclaration * sg_first_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_firstNondefiningDeclaration());
 
     //SgClassDeclaration * sg_def_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_definingDeclaration());
-    SgClassSymbol * sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
+    SgClassSymbol * sg_defining_sym = NULL;
+    // Pei-Hung (07/25/24) The case that a CXXRecordDecl has its definition inside a namespace.
+    if(isa<clang::CXXRecordDecl>(record_decl) && ((clang::CXXRecordDecl*)record_decl)->hasDefinition())
+    {
+      sg_defining_sym = NULL;
+    }
+    else
+    {
+      sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
+    }
     SgClassDeclaration * sg_def_class_decl = sg_defining_sym == NULL ? NULL : isSgClassDeclaration(sg_defining_sym->get_declaration()->get_definingDeclaration());
 
 
