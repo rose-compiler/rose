@@ -314,7 +314,7 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // unparse function arguments
      SgFunctionParameterList* params = func->get_parameterList();
-     SgInitializedNamePtrList & args = params->get_args();
+     SgInitializedNamePtrList &args = params->get_args();
 
      const std::vector<SgInitializedName*> in_params = SageInterface::getInParameters(args);
      const std::vector<SgInitializedName*> out_params = SageInterface::getOutParameters(args);
@@ -343,13 +343,11 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseType(type, ninfo);
 
      curprint(";\n");
+     curprint_indented("BEGIN\n", info);
+     info.inc_nestingLevel();
 
-     if (is_defining_decl) {
-        ASSERT_not_null(func->get_definition());
-
-        info.inc_nestingLevel();
+     if (is_defining_decl && func->get_definition()) {
         unparseStatement(func->get_definition(), ninfo);
-        info.dec_nestingLevel();
      }
      else {
         for (SgDeclarationStatement* decl : param_scope->getDeclarationList()) {
@@ -358,10 +356,7 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            }
         }
 
-    // There still needs to be at least a BEGIN and END
-        curprint_indented("BEGIN\n", info);
-
-        info.inc_nestingLevel();
+        //        info.inc_nestingLevel();
         for (SgInitializedName* arg : args) {
            SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), param_scope);
            SgInitializedName* var_init_name = var_sym->get_declaration();
@@ -371,11 +366,11 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
            unparseVarDeclStmt(var_decl, info);
         }
-        info.dec_nestingLevel();
-
-        curprint_indented("END\n", info);
+        //        info.dec_nestingLevel();
      } // !is_defining_decl
 
+     info.dec_nestingLevel();
+     curprint_indented("END\n", info);
    }
 
 void

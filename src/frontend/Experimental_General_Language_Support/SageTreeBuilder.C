@@ -841,14 +841,14 @@ Leave(SgFunctionDeclaration* declaration, SgScopeStatement* param_scope)
 
     // Connect the result SgInitializedName initially created in param_scope into the scope of the function body
        if (result_symbol) {
-         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(declaration);
-         SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
-         ASSERT_not_null(proc_decl);
-         ASSERT_not_null(result_name);
+         auto proc = isSgProcedureHeaderStatement(declaration);
+         auto result = isSgInitializedName(result_symbol->get_declaration());
+         ASSERT_not_null(proc);
+         ASSERT_not_null(result);
 
-         proc_decl->set_result_name(result_name);
-         result_name->set_parent(declaration);
-         result_name->set_scope(function_body);
+         proc->set_result_name(result);
+         result->set_parent(declaration);
+         result->set_scope(function_body);
          ASSERT_not_null(function_body->lookup_symbol(function_name));
        }
 
@@ -864,7 +864,19 @@ Leave(SgFunctionDeclaration* declaration, SgScopeStatement* param_scope)
      {
        ASSERT_not_null(isSgFunctionParameterScope(param_scope));
        ASSERT_require(declaration->get_functionParameterScope() == nullptr);
+
        declaration->set_functionParameterScope(isSgFunctionParameterScope(param_scope));
+       param_scope->set_parent(declaration);
+
+       // The scope of the parameter names may end up connected incorrectly (gitlab-issue-287.jov)
+       if (auto proc = isSgProcedureHeaderStatement(declaration)) {
+         for (auto arg : declaration->get_parameterList()->get_args()) {
+           SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), param_scope);
+           if (symbol) {
+             mlog[WARN] << "potential duplicate initialized name, arg: " << arg << " scope: " << arg->get_scope() << "\n";
+           }
+         }
+       }
 
        if (result_symbol) {
          SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(declaration);

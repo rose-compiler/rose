@@ -21619,19 +21619,37 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgClassDeclaration:
       case V_SgEnumDeclaration:
         {
-          SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
           SgDeclarationStatement* nondef_decl = declaration->get_firstNondefiningDeclaration();
+          ASSERT_not_null(nondef_decl);
 
           nondef_decl->set_parent(targetBlock);
           nondef_decl->set_scope(targetBlock);
 
-          def_decl->set_parent(targetBlock);
-          def_decl->set_scope(targetBlock);
+          SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
+          if (def_decl)
+            {
+              def_decl->set_parent(targetBlock);
+              def_decl->set_scope(targetBlock);
+            }
+          else
+            {
+              // Set the scope of the function arguments
+              if (auto proc = isSgProcedureHeaderStatement(nondef_decl)) {
+                for (auto arg : proc->get_parameterList()->get_args()) {
+                  if (arg->get_scope() != proc->get_scope()) {
+                    // Note: arg (is an SgInitializedName) from the parameter list does not have
+                    // a symbol in the scope of the procedure declaration (proc). Should add
+                    // arg to initname_vec, which will check for missing symbols [GL-387, Rasmussen 7/22/2024].
+                    arg->set_scope(proc->get_scope());
+                  }
+                }
+              }
+            }
 
           SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
-          if (enum_decl) // Rasmussen (12/23/2020)
+          if (enum_decl)
             {
-              // Set the scope of the enumerators
+              // Set the scope of the enumerators [Rasmussen 12/23/2020]
               for (SgInitializedName* name : enum_decl->get_enumerators())
                 {
                   name->set_scope(targetBlock);
@@ -21641,7 +21659,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         }
       case V_SgJovialTableStatement:
         {
-          // Rasmussen 9/21/2020: Needed for issue RC-135
+          // [RC-135, Rasmussen 9/21/2020]
           SgJovialTableStatement* table = isSgJovialTableStatement(declaration);
           ROSE_ASSERT (table);
 
@@ -21652,9 +21670,9 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           def_decl->set_scope(targetBlock);
           break;
         }
-      case V_SgTypedefDeclaration: // Rasmussen (10/19/2020)
+      case V_SgTypedefDeclaration:
         {
-          // Rasmussen 10/19/2020: Needed for issue RC-227
+          // [RC-227, Rasmussen 10/19/2020]
           SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(declaration);
           ASSERT_not_null(typedef_decl);
           typedef_decl->set_parent(targetBlock);
