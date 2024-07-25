@@ -167,6 +167,9 @@ map_t<int, SgDeclarationStatement*>& libadalangDecls();
 /// returns a mapping from hash to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& libadalangTypes();
 
+/// returns a mapping from hash to blocks
+map_t<int, SgBasicBlock*>& libadalangBlocks();
+
 /// returns a mapping from hash to standard type nodes
 map_t<int, SgType*>& adaTypes();
 

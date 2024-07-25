@@ -1119,14 +1119,22 @@ namespace{
         {
           logKind("ada_int_literal", kind);
 
-          ada_big_integer denoted_value;
+          /*ada_big_integer denoted_value; //TODO This way strips the formatting, but will work after lal_2021
           ada_text value_text;
 
           //Get the value of this node
           ada_int_literal_p_denoted_value(lal_element, &denoted_value);
           ada_big_integer_text(denoted_value, &value_text);
           std::string denoted_text = ada_text_to_locale_string(&value_text);
-          ada_destroy_text(&value_text);
+          ada_destroy_text(&value_text);*/
+
+          //Get the value of this node
+          ada_symbol_type canonical_text_symbol;
+          ada_text canonical_text;
+          ada_single_tok_node_p_canonical_text(lal_element, &canonical_text_symbol);
+          ada_symbol_text(&canonical_text_symbol, &canonical_text);
+          std::string denoted_text = ada_text_to_locale_string(&canonical_text);
+          ada_destroy_text(&canonical_text);
 
           res = &mkAdaIntegerLiteral(denoted_text.c_str());
           break;
@@ -1594,7 +1602,7 @@ namespace{
         }
 
       default:
-        logFlaw() << "unhandled expression: " << kind_name_string << std::endl;
+        logFlaw() << "Unhandled expression: " << kind_name_string << std::endl;
         res = sb::buildIntVal();
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -1908,8 +1916,8 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
   || (res = findFirst(libadalangVars(),   hash))
   || (res = findFirst(libadalangDecls(),  hash))
   || (res = findFirst(libadalangTypes(),  hash))
-  /*|| (res = findFirst(asisExcps(),  hash))
-  || (res = findFirst(asisBlocks(), hash))*/
+  || (res = findFirst(libadalangExcps(),  hash))
+  || (res = findFirst(libadalangBlocks(), hash))
   || (res = queryBuiltIn(hash))
   ;
 

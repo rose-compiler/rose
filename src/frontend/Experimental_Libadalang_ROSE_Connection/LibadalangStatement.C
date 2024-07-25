@@ -330,11 +330,12 @@ namespace Libadalang_ROSE_Translation
   ada_base_entity*
   secondaryDiscriminants(ada_base_entity* lal_decl, ada_base_entity* first_discriminant, AstContext)
   {
-    const bool useThisDecl = (  ada_node_is_null(first_discriminant)
+    const bool useThisDecl = (  ada_node_is_null(first_discriminant) == 0
                              );
 
     if (useThisDecl) return nullptr;
     //TODO Where should the 2nd discr come from?
+    logWarn() << "1st discr is null, don't have 2nd discr\n";
     return nullptr;
     //Element_Struct& firstDecl = retrieveElem(elemMap(), decl.Corresponding_Type_Declaration);
     //ADA_ASSERT(firstDecl.Element_Kind == A_Declaration);
@@ -668,23 +669,65 @@ namespace {
     // \todo link nondef and def SgAdaDiscriminatedTypeDecl
   }
 
+  /// converts a libadalang parameter declaration to a ROSE parameter (i.e., variable)
+  ///   declaration.
+  SgVariableDeclaration&
+  getDiscriminant(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    if(kind != ada_discriminant_spec){
+      logError() << "getDicriminant called on non discriminant kind " << kind << std::endl;
+    }
+
+    //Get the ids and type_expr
+    ada_base_entity lal_names, lal_type_expr;
+    ada_discriminant_spec_f_ids(lal_element, &lal_names);
+    ada_discriminant_spec_f_type_expr(lal_element, &lal_type_expr);
+
+    SgType&                  basety   = getDeclType(&lal_type_expr, ctx);
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         libadalangVars(),
+                                                                         &lal_names,
+                                                                         basety,
+                                                                         getVarInit(lal_element, &basety, ctx)
+                                                                       );
+    SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+
+    return sgnode;
+  }
+
   SgAdaDiscriminatedTypeDecl&
   createDiscriminatedDecl(ada_base_entity* lal_element, ada_base_entity* secondary, AstContext ctx)
   {
-    //ADA_ASSERT (elem.Element_Kind == A_Definition);
-    //logKind("A_Definition", elem.ID);
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
 
     // many definitions are handled else where
     // here we want to convert the rest that can appear in declarative context
 
     SgScopeStatement&           scope  = ctx.scope();
     SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(scope);
+    SgAdaParameterList&         params = SG_DEREF(sgnode.get_discriminants());
 
     ctx.appendStatement(sgnode);
 
-    if(!ada_node_is_null(lal_element) && ada_node_kind(lal_element) == ada_known_discriminant_part)
+    if(!ada_node_is_null(lal_element) && kind == ada_known_discriminant_part)
     {
-      //logKind("A_Known_Discriminant_Part", elem.ID);
+      logKind("ada_known_discriminant_part", kind);
+      //Get the list of discrs
+      ada_base_entity lal_discr_list;
+      ada_known_discriminant_part_f_discr_specs(lal_element, &lal_discr_list);
+
+     //Iterate over the discrs
+     int count = ada_node_children_count(&lal_discr_list);
+     for(int i = 0; i < count; i++){
+       ada_base_entity lal_discr_spec;
+       if(ada_node_child(&lal_discr_list, i, &lal_discr_spec) != 0){
+         params.append_parameter(&getDiscriminant(&lal_discr_spec, ctx));
+       }
+     }
+
       //TODO Figure out discriminants
       /*SgScopeStatement&       scope         = SG_DEREF(sgnode.get_discriminantScope());
       ElemIdRange             discriminants = idRange(def.The_Union.The_Known_Discriminant_Part.Discriminants);
@@ -695,6 +738,7 @@ namespace {
     }
     else
     {
+      logWarn() << "createDiscriminatedDecl given non-discr kind " << kind << std::endl;
       //ADA_ASSERT (def.Definition_Kind == An_Unknown_Discriminant_Part);
 
       //logKind("An_Unknown_Discriminant_Part", elem.ID);
@@ -813,8 +857,8 @@ createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext ctx)
 }
 
 /// creates a sequence of initialized names for all names \ref names.
-/// \param m        a map that maintains mappings between Asis IDs and variables/parameters
-/// \param names    the list of Asis names
+/// \param m        a map that maintains mappings between libadalang hashes and variables/parameters
+/// \param names    the list of libadalang names
 /// \param dcltype  the type of all initialized name
 /// \param initexpr the initializer (if it exists) that will be cloned for each
 ///                 of the initialized names.
@@ -947,6 +991,10 @@ getVarInit(ada_base_entity* lal_decl, SgType* /*expectedType*/, AstContext ctx)
     ada_param_spec_f_default_expr(lal_decl, &default_expr);
   } else if(kind ==ada_component_decl){
     ada_component_decl_f_default_expr(lal_decl, &default_expr);
+  } else if(kind == ada_number_decl){
+    ada_number_decl_f_expr(lal_decl, &default_expr);
+  } else if(kind == ada_discriminant_spec){
+    ada_discriminant_spec_f_default_expr(lal_decl, &default_expr);
   } else {
     logWarn() << "getVarInit called with unhandled kind: " << kind << std::endl;
     return nullptr;
@@ -1129,6 +1177,8 @@ namespace {
       ada_object_decl_f_ids(lal_element, &ids);
     } else if(kind == ada_component_decl){
       ada_component_decl_f_ids(lal_element, &ids);
+    } else if(kind == ada_number_decl){
+      ada_number_decl_f_ids(lal_element, &ids);
     }
     //
     // https://www.adaic.com/resources/add_content/standards/05rm/html/RM-3-3-1.html#S0032
@@ -1855,9 +1905,28 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         {
           logKind(kind == ada_decl_block ? "ada_decl_block" : "ada_begin_block", kind);
 
-          SgBasicBlock& sgnode   = mkBasicBlock();
+          SgBasicBlock& sgnode = mkBasicBlock();
 
-          //recordNode(libadalangBlocks(), elem.ID, sgnode); //TODO Block map?
+          int hash = hash_node(lal_stmt);
+          recordNode(libadalangBlocks(), hash, sgnode);
+
+          //If this block is a named stmt, we also want to record it under its name
+          if(lblname != ""){
+            //Get the defining name & its hash
+            ada_base_entity lal_defining_name;
+            ada_ada_node_parent(lal_stmt, &lal_defining_name);
+            //Quick sanity check
+            ada_node_kind_enum lal_parent_kind  = ada_node_kind(&lal_defining_name);
+            if(lal_parent_kind != ada_named_stmt){
+              logError() << "Block stmt has lblname, but parent is of kind " << lal_parent_kind << ", not ada_named_stmt!\n";
+              break;
+            }
+            ada_named_stmt_f_decl(&lal_defining_name, &lal_defining_name);
+            ada_named_stmt_decl_f_name(&lal_defining_name, &lal_defining_name);
+            int name_hash = hash_node(&lal_defining_name);
+            recordNode(libadalangBlocks(), name_hash, sgnode);
+          }
+
           completeStmt(sgnode, lal_stmt, ctx, lblname);
 
           //Get the decls, stmts, exceptions, & pragmas of this block body
@@ -2462,6 +2531,32 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_number_decl:            // 3.3.2(2), 3.5.6(2)
+      {
+        logKind("ada_number_decl", kind);
+
+        //Get the expr to see what kind it is
+        ada_base_entity lal_expr;
+        ada_number_decl_f_expr(lal_element, &lal_expr);
+        ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);
+
+        SgType* expected_type = nullptr;
+        switch(lal_expr_kind){
+          case ada_int_literal:
+            expected_type = &mkIntegralType();
+            break;
+          case ada_real_literal:
+            expected_type = &mkRealType();
+            break;
+          default:
+            logError() << "Unexpected expr kind " << lal_expr_kind << " for ada_number_decl!\n";
+            break;
+        }
+
+        assocdecl = &handleNumberDecl(lal_element, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), SG_DEREF(expected_type));
+
+        break;
+      }
     case ada_task_body:                  // 9.1(6)
       {
         logKind("ada_task_body", kind);
@@ -2801,7 +2896,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         ada_node_kind_enum type_def_kind = ada_node_kind(&lal_type_def);
 
-        logTrace() << "Ordinary Type ";
+        logTrace() << "Ordinary Type\n";
 
         bool has_with_private = false;
 
@@ -2824,7 +2919,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
             has_with_private = true; //TODO If has_with_private is true, this corresponds to A_PRIVATE_EXTENSION_DECLARATION
           }
 
-          logTrace() << "\n  abstract: " << has_abstract
+          logTrace() << "  abstract: " << has_abstract
                      << "\n  limited: " << has_limited
                      << "\n  private: " << has_with_private
                      << std::endl;

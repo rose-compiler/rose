@@ -42,6 +42,8 @@ namespace{
   /// stores a mapping from hash to ROSE type declaration
   map_t<int, SgDeclarationStatement*> libadalangTypesMap;
 
+  map_t<int, SgBasicBlock*> libadalangBlocksMap;
+
   /// stores a mapping from hash to builtin type nodes
   map_t<int, SgType*> adaTypesMap;
 
@@ -71,6 +73,7 @@ map_t<int, SgInitializedName*>&                                libadalangVars() 
 map_t<int, SgInitializedName*>&                               libadalangExcps() { return libadalangExcpsMap;  }
 map_t<int, SgDeclarationStatement*>&                          libadalangDecls() { return libadalangDeclsMap;  }
 map_t<int, SgDeclarationStatement*>&                          libadalangTypes() { return libadalangTypesMap;  }
+map_t<int, SgBasicBlock*>&                                   libadalangBlocks() { return libadalangBlocksMap; }
 map_t<int, SgType*>&                                                 adaTypes() { return adaTypesMap;         }
 map_t<AdaIdentifier, SgType*>&                                 adaTypesByName() { return adaTypesByNameMap;   }
 map_t<int, SgInitializedName*>&                                      adaExcps() { return adaExcpsMap;         }
@@ -312,6 +315,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_entry_decl:
         case ada_component_decl:
         case ada_exception_decl:
+        case ada_number_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;

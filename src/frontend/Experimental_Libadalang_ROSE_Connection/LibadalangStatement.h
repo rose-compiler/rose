@@ -50,6 +50,34 @@ namespace Libadalang_ROSE_Translation
                                     AstContext ctx
                                   );
 
+  /// creates a ROSE expression for a libadalang declaration's initializer expression
+  /// returns null, if no declaration exists.
+  /// \param expectedType a type that is carried over from a lhs constant declaration
+  SgExpression*
+  getVarInit(ada_base_entity* lal_decl, SgType* /*expectedType*/, AstContext ctx);
+
+  /// creates a sequence of initialized names for all names \ref names.
+  /// \param m        a map that maintains mappings between libadalang hashes and variables/parameters
+  /// \param names    the list of libadalang names
+  /// \param dcltype  the type of all initialized name
+  /// \param initexpr the initializer (if it exists) that will be cloned for each
+  ///                 of the initialized names.
+  SgInitializedNamePtrList
+  constructInitializedNamePtrList( AstContext ctx,
+                                   map_t<int, SgInitializedName*>& m,
+                                   ada_base_entity* lal_name_list,
+                                   SgType& dcltype,
+                                   SgExpression* initexpr,
+                                   std::vector<int>& secondaries
+                                 );
+  SgInitializedNamePtrList
+  constructInitializedNamePtrList( AstContext ctx,
+                                   map_t<int, SgInitializedName*>& m,
+                                   ada_base_entity* lal_name_list,
+                                   SgType& dcltype,
+                                   SgExpression* initexpr
+                                 );
+
 }
 
 
