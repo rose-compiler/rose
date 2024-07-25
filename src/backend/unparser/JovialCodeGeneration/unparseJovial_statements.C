@@ -302,8 +302,8 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ASSERT_not_null(param_scope);
 
   // unparse the declaration modifiers
-     if (func->get_declarationModifier().isJovialDef())   curprint("DEF ");
-     if (func->get_declarationModifier().isJovialRef())   curprint("REF ");
+     if (func->get_declarationModifier().isJovialDef())   curprint_indented("DEF ", info);
+     if (func->get_declarationModifier().isJovialRef())   curprint_indented("REF ", info);
 
      curprint("PROC ");
      curprint(func->get_name());
@@ -314,7 +314,7 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // unparse function arguments
      SgFunctionParameterList* params = func->get_parameterList();
-     SgInitializedNamePtrList &args = params->get_args();
+     SgInitializedNamePtrList & args = params->get_args();
 
      const std::vector<SgInitializedName*> in_params = SageInterface::getInParameters(args);
      const std::vector<SgInitializedName*> out_params = SageInterface::getOutParameters(args);
@@ -343,11 +343,22 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseType(type, ninfo);
 
      curprint(";\n");
-     curprint_indented("BEGIN\n", info);
-     info.inc_nestingLevel();
 
-     if (is_defining_decl && func->get_definition()) {
-        unparseStatement(func->get_definition(), ninfo);
+     if (is_defining_decl) {
+        ASSERT_not_null(func->get_definition());
+
+        // Don't add extra BEGIN/ENDs
+        auto funcdef = isSgFunctionDefinition(func->get_definition());
+        if (funcdef && funcdef->get_body() && funcdef->get_body()->get_statements().size() == 0) {
+          unparseStatement(func->get_definition(), ninfo);
+        }
+        else {
+          curprint_indented("BEGIN\n", info);
+          info.inc_nestingLevel();
+          unparseStatement(func->get_definition(), ninfo);
+          info.dec_nestingLevel();
+          curprint_indented("END\n", info);
+        }
      }
      else {
         for (SgDeclarationStatement* decl : param_scope->getDeclarationList()) {
@@ -356,7 +367,10 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            }
         }
 
-        //        info.inc_nestingLevel();
+    // There still needs to be at least a BEGIN and END
+        curprint_indented("BEGIN\n", info);
+
+        info.inc_nestingLevel();
         for (SgInitializedName* arg : args) {
            SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), param_scope);
            SgInitializedName* var_init_name = var_sym->get_declaration();
@@ -366,11 +380,10 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
            unparseVarDeclStmt(var_decl, info);
         }
-        //        info.dec_nestingLevel();
-     } // !is_defining_decl
+        info.dec_nestingLevel();
 
-     info.dec_nestingLevel();
-     curprint_indented("END\n", info);
+        curprint_indented("END\n", info);
+     } // !is_defining_decl
    }
 
 void
