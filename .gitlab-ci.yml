@@ -1,9 +1,9 @@
 variables:
     THIS_FILE: ".gitlab-ci.yml"
-    SSH_ORIGIN: "ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler/rose.git"
-    TEST_SCRIPTS: "ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler/testing-scripts.git"
+    SSH_ORIGIN: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/rose.git"
+    TEST_SCRIPTS: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/testing-scripts.git"
     ROSE_REMOTE_URL: "rose-github:rose-compiler/rose.git"
-    TEST_SUITE: "ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler/rose-tests.git"
+    TEST_SUITE: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/rose-tests.git"
     TEST_DIRECTORY: "testing-scripts"
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
