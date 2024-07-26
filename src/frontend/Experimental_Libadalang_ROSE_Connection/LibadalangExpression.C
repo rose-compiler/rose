@@ -40,20 +40,24 @@ namespace
 
     ada_base_entity actual_parameter;
     ada_base_entity formal_parameter;
+    bool has_formal = false;
 
     //If this is an assoc, get the actual parameter
     if(kind == ada_param_assoc){
       ada_param_assoc_f_r_expr(lal_element, &actual_parameter);
       ada_param_assoc_f_designator(lal_element, &formal_parameter);
+      has_formal = true;
     } else if(kind == ada_pragma_argument_assoc){
       ada_pragma_argument_assoc_f_expr(lal_element, &actual_parameter);
+      ada_pragma_argument_assoc_f_id(lal_element, &formal_parameter);
+      has_formal = true; //TODO Test this
     } else { //TODO What of the other assocs?
       actual_parameter = *lal_element;
     }
 
     SgExpression&       arg        = getExpr(&actual_parameter, ctx);
 
-    if(ada_node_is_null(&formal_parameter)) return arg;
+    if(!has_formal || ada_node_is_null(&formal_parameter)) return arg;
 
     /*ADA_ASSERT(formalParm->Element_Kind == An_Expression);
 
@@ -1451,6 +1455,7 @@ namespace{
       case ada_op_lte:
       case ada_op_neq:
       case ada_op_mult:
+      case ada_op_concat:
         {
           logKind("An_Operator_Symbol", kind);
 
@@ -1598,6 +1603,14 @@ namespace{
         {
           logKind("ada_others_designator", kind);
           res = &mkAdaOthersExp();
+          break;
+        }
+
+      case ada_box_expr:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
+        {
+          logKind("ada_box_expr", kind);
+
+          res = &mkAdaBoxExp();
           break;
         }
 
