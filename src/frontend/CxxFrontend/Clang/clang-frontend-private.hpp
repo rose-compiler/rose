@@ -299,6 +299,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
             virtual bool VisitPragmaCommentDecl(clang::PragmaCommentDecl * pragma_comment_decl, SgNode ** node);
             virtual bool VisitPragmaDetectMismatchDecl(clang::PragmaDetectMismatchDecl * pragma_detect_mismatch, SgNode ** node);
             virtual bool VisitStaticAssertDecl(clang::StaticAssertDecl * static_assert_decl, SgNode ** node);
+            virtual bool VisitLinkageSpecDecl(clang::LinkageSpecDecl * linkage_spec_decl, SgNode ** node);
             virtual bool VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node);
 
   /* 

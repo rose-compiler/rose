@@ -447,6 +447,10 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             ret_status = VisitVarDecl((clang::VarDecl *)decl, &result);
             ROSE_ASSERT(ret_status == false || result != NULL);
             break;
+        case clang::Decl::LinkageSpec:
+            ret_status = VisitLinkageSpecDecl((clang::LinkageSpecDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
+            break;
 
         default:
             logger[ERROR] << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << "\n";
@@ -3150,6 +3154,18 @@ bool ClangToSageTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * prag
 
     return VisitDecl(pragma_static_assert_decl, node) && res;
 }
+
+bool ClangToSageTranslator::VisitLinkageSpecDecl(clang::LinkageSpecDecl * linkage_spec_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    logger[DEBUG] << "ClangToSageTranslator::VisitLinkageSpecDecl" << "\n";
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(linkage_spec_decl, node) && res;
+}
+
 
 bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
