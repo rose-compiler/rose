@@ -162,12 +162,36 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureModule(ATerm term)
    return ATtrue;
 }
 
+ATbool ATermToSageJovialTraversal::traverse_DeclsAndStmts(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DeclarationList: %s\n", ATwriteToString(term));
+#endif
+   ATerm t_stmts;
+
+   if (ATmatch(term, "DeclsAndStmts(<term>)", &t_stmts)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_stmts);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_Declaration(head)) {
+            // MATCHED Declaration & CompoolDeclaration
+         }
+         else if (traverse_Statement(head)) {
+            // MATCHED Statement
+         }
+         else return ATfalse;
+      }
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
 ATbool ATermToSageJovialTraversal::traverse_DeclarationList(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DeclarationList: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_decls;
 
    if (ATmatch(term, "DeclarationList(<term>)", &t_decls)) {
@@ -275,25 +299,19 @@ ATbool ATermToSageJovialTraversal::traverse_ProgramBody(ATerm term)
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProgramBody: %s\n", ATwriteToString(term));
 #endif
-
-   ATerm t_stmt;
-   ATerm t_decls, t_stmts, t_funcs, t_labels;
+   ATerm t_stmt, t_stmts, t_funcs, t_labels;
 
    if (ATmatch(term, "ProgramSimpleBody(<term>)", &t_stmt)) {
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
       } else return ATfalse;
    }
-   else if (ATmatch(term, "ProgramBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
+   else if (ATmatch(term, "ProgramBody(<term>,<term>,<term>)", &t_stmts,&t_funcs,&t_labels)) {
       std::vector<std::string> labels;
       std::vector<PosInfo> locations;
 
-      if (traverse_DeclarationList(t_decls)) {
+      if (traverse_DeclsAndStmts(t_stmts)) {
          // MATCHED DeclarationList
-      } else return ATfalse;
-
-      if (traverse_StatementList(t_stmts)) {
-         // MATCHED StatementList
       } else return ATfalse;
 
       if (traverse_SubroutineDefinitionList(t_funcs)) {
@@ -4134,9 +4152,8 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineBody(ATerm term)
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SubroutineBody: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_stmt;
-   ATerm t_decls, t_stmts, t_funcs, t_labels;
+   ATerm t_stmts, t_funcs, t_labels;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    std::string temp_label = "";
@@ -4146,14 +4163,9 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineBody(ATerm term)
          // MATCHED Statement
       } else return ATfalse;
    }
-
-   else if (ATmatch(term, "SubroutineBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
-      if (traverse_DeclarationList(t_decls)) {
-         // MATCHED DeclarationList
-      } else return ATfalse;
-
-      if (traverse_StatementList(t_stmts)) {
-         // MATCHED StatementList
+   else if (ATmatch(term, "SubroutineBody(<term>,<term>,<term>)", &t_stmts,&t_funcs,&t_labels)) {
+      if (traverse_DeclsAndStmts(t_stmts)) {
+         // MATCHED Declarations and Statements
       } else return ATfalse;
 
       if (traverse_SubroutineDefinitionList(t_funcs)) {
@@ -4611,7 +4623,11 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   if (ATmatch(term, "SimpleStatement(<term>,<term>)", &t_labels, &t_stmt)) {
+   if (ATmatch(term, "NullStatement()")) {
+      // MATCHED NullStatement (SimpleStatement without a label)
+   }
+
+   else if (ATmatch(term, "SimpleStatement(<term>,<term>)", &t_labels, &t_stmt)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
@@ -4715,14 +4731,30 @@ ATbool ATermToSageJovialTraversal::traverse_NullStatement(ATerm term, const std:
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_NullStatement: %s\n", ATwriteToString(term));
 #endif
+  ATerm t_labels;
+
+  std::vector<std::string> localLabels;
+  std::vector<PosInfo> locations;
+  SgNullStatement* stmt{nullptr};
 
   if (ATmatch(term, "NullStatement()")) {
-    SgNullStatement* stmt{nullptr};
-    sage_tree_builder.Enter(stmt);
-    setSourcePosition(stmt, term);
-    sage_tree_builder.Leave(stmt, labels);
+    if (labels.size() > 0) {
+      localLabels = labels;
+    }
+  }
+  else if (ATmatch(term, "LabeledNullStatement(<term>)", &t_labels)) {
+    // The grammar is not optional for a NullStatement with a label, but
+    // we have the grammar we have
+    ASSERT_require(labels.size() == 0);
+    if (traverse_LabelList(t_labels, localLabels, locations)) {
+      // MATCHED LabelList
+    } else return ATfalse;
   }
   else return ATfalse;
+
+  sage_tree_builder.Enter(stmt);
+  setSourcePosition(stmt, term);
+  sage_tree_builder.Leave(stmt, localLabels);
 
   return ATtrue;
 }
@@ -6561,7 +6593,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    printf("... traverse_TableDereference: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_name, t_subscript;
+   ATerm t_deref, t_name, t_subscript;
    char* name;
    std::vector<SgExpression*> subscript;
    SgVarRefExp* var_ref = nullptr;
@@ -6574,7 +6606,17 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
       // MATCHED no-table-dereference
       return ATtrue;
    }
-   else if (ATmatch(term, "TableDereference(<term>,<term>)", &t_name, &t_subscript)) {
+   else if (ATmatch(term, "TableDereference(<term>,<term>)", &t_deref, &t_subscript)) {
+      if (ATmatch(t_deref, "Dereference(<term>)", &t_name)) {
+         // MATCHED Dereference with a name
+      }
+      else {
+         // Grammar has been changed (for GL-394), this path unlikely (not preferred in grammar)
+         mlog[WARN] << "TableDereference with no Dereference to name, attempting to recover\n";
+         t_name = t_deref;
+         ROSE_ABORT();
+      }
+
       if (ATmatch(t_name, "<str>", &name)) {
          // The right-hand side of a dereference (SgAtOp) may be a function call
          SgScopeStatement* scope = SageBuilder::topScopeStack();

@@ -58,7 +58,7 @@ if ROSE_BUILD_ATERM_SUPPORT
    libroseExperimentalGeneralLanguagelibraries = \
         frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
         frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
-   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/jovial-parser/share/rose/Jovial.tbl
 else
    libroseExperimentalGeneralLanguagelibraries =
 endif

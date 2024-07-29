@@ -45,6 +45,7 @@ ATbool traverse_CompoolModule(ATerm term);
 
 // 1.2.2 PROCEDURE MODULES
 ATbool traverse_ProcedureModule(ATerm term);
+ATbool traverse_DeclsAndStmts(ATerm term);
 ATbool traverse_DeclarationList(ATerm term);
 ATbool traverse_NullDeclaration(ATerm term);
 

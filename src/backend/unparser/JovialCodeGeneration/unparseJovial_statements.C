@@ -93,11 +93,11 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
 
        // declarations
 
-          case V_SgEmptyDeclaration:           /* let's ignore it (or print ';') */   break;
-          case V_SgEnumDeclaration:            unparseEnumDeclStmt   (stmt, info);    break;
-          case V_SgJovialOverlayDeclaration:   unparseOverlayDeclStmt(stmt, info);    break;
-          case V_SgJovialTableStatement:       unparseTableDeclStmt  (stmt, info);    break;
-          case V_SgVariableDeclaration:        unparseVarDeclStmt    (stmt, info);    break;
+          case V_SgEmptyDeclaration:           unparseEmptyDecl      (stmt, info);  break;
+          case V_SgEnumDeclaration:            unparseEnumDeclStmt   (stmt, info);  break;
+          case V_SgJovialOverlayDeclaration:   unparseOverlayDeclStmt(stmt, info);  break;
+          case V_SgJovialTableStatement:       unparseTableDeclStmt  (stmt, info);  break;
+          case V_SgVariableDeclaration:        unparseVarDeclStmt    (stmt, info);  break;
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
@@ -345,20 +345,20 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint(";\n");
 
      if (is_defining_decl) {
-        ASSERT_not_null(func->get_definition());
+        auto block_size = func_body->get_statements().size();
+        info.inc_nestingLevel();
 
-        // Don't add extra BEGIN/ENDs
-        auto funcdef = isSgFunctionDefinition(func->get_definition());
-        if (funcdef && funcdef->get_body() && funcdef->get_body()->get_statements().size() == 0) {
-          unparseStatement(func->get_definition(), ninfo);
-        }
-        else {
+        // Don't add extra BEGIN/ENDs (if block_size > 1, SgBasicBlock adds BEGIN/END)
+        if (block_size == 1) {
           curprint_indented("BEGIN\n", info);
-          info.inc_nestingLevel();
-          unparseStatement(func->get_definition(), ninfo);
-          info.dec_nestingLevel();
+          unparseStatement(func_def, ninfo);
           curprint_indented("END\n", info);
         }
+        else {
+          unparseStatement(func_def, ninfo);
+        }
+
+        info.dec_nestingLevel();
      }
      else {
         for (SgDeclarationStatement* decl : param_scope->getDeclarationList()) {
@@ -907,6 +907,15 @@ UnparseJovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info &)
 
       curprint("RETURN ;");
       unp->cur.insert_newline(1);
+   }
+
+void
+UnparseJovial::unparseEmptyDecl(SgStatement* stmt, SgUnparse_Info &info)
+   {
+      if (isSgEmptyDeclaration(stmt)) {
+         // unparse ';' because "BEGIN ; END" appears in code
+        curprint_indented(";\n", info);
+      }
    }
 
 void

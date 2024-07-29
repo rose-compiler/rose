@@ -48,7 +48,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      commandString += " | "  + stratego_bin_path + "/sglri";
 
   // Add path to the parse table (located in the source tree)
-     std::string parse_table_path = "src/3rdPartyLibraries/experimental-jovial-parser/share/rose";
+     std::string parse_table_path = "src/3rdPartyLibraries/jovial-parser/share/rose";
      parse_table = findRoseSupportPathFromSource(parse_table_path, "share/rose") + "/Jovial.tbl";
      commandString += " -p " + parse_table;
 

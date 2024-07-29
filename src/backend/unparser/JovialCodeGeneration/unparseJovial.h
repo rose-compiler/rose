@@ -53,6 +53,7 @@ public:
           virtual void unparseProcessControlStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt             (SgStatement* stmt, SgUnparse_Info& info);
 
+          virtual void unparseEmptyDecl              (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseEnumDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
                   void unparseEnumBody               (SgEnumDeclaration* enum_decl, SgUnparse_Info& info);
 

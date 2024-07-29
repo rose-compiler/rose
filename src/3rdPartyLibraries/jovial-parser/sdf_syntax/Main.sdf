@@ -21,7 +21,7 @@ sorts
 
 % 3.0    %  SubroutineDeclaration SubroutineDefinition
 
-% 4.0    %  Statement SimpleStatement NullStatement Label StatementName LabeledCompoundStatement
+% 4.0    %  Statement SimpleStatement StatementOrNull NullBlockStatement Label StatementName LabeledCompoundStatement
             LabeledSimpleStatement LabelList
 
 InterferenceControl
@@ -390,6 +390,10 @@ OptPrecision
 ParensPrecision
 IntegerMachineParameter
 
+%% Changes to combine Declaration and Statement lists
+DeclOrStmt
+DeclsAndStmts
+
 %%%%%%%%%%
 %% Changes to add operator precedence to the grammar based on Fortran
 %%%%%%%%%%
@@ -466,12 +470,11 @@ context-free syntax
 
   Name                       -> ProgramName           {cons("Name")}
 
-  Statement                  -> ProgramBody           {cons("ProgramSimpleBody")}
+  StatementOrNull            -> ProgramBody           {cons("ProgramSimpleBody")}
 
   'BEGIN'
-%%  Directive* has been moved from the original grammar to DeclarationList
-    DeclarationList
-    Statement+
+%%  Directive*, Declaration* and Statement+ moved from the original grammar to DeclsAndStmts
+    DeclsAndStmts
     SubroutineDefinition*
     LabelList
   'END'                      -> ProgramBody           {cons("ProgramBody"), prefer}
@@ -1209,12 +1212,17 @@ context-free syntax
 
   SubroutineBody                  -> ProcedureBody
 
-  Statement                       -> SubroutineBody         {cons("SubroutineSimpleBody")}
+  StatementOrNull                 -> SubroutineBody         {cons("SubroutineSimpleBody")}
+
+  Declaration                     -> DeclOrStmt
+  Statement                       -> DeclOrStmt
+
+  DeclOrStmt*                     -> DeclsAndStmts          {cons("DeclsAndStmts")}
+
 
   'BEGIN'
-%%  Directive* has been moved from the original grammar to DeclarationList
-    DeclarationList
-    Statement*
+%%  Directive*, Declaration* and Statement* moved from the original grammar to DeclsAndStmts
+    DeclsAndStmts
     SubroutineDefinition*
     LabelList
   'END'                           -> SubroutineBody         {cons("SubroutineBody"), prefer}
@@ -1293,7 +1301,6 @@ context-free syntax
   LabelList SimpleStatement   -> Statement             {cons("SimpleStatement")}
   LabeledSimpleStatement      -> Statement             {cons("SimpleStatement")}
   LabeledCompoundStatement    -> Statement
-  EjectDirective              -> Statement
 
   AssignmentStatement         -> SimpleStatement
   LoopStatement               -> LabeledSimpleStatement
@@ -1305,13 +1312,17 @@ context-free syntax
   ExitStatement               -> LabeledSimpleStatement
   StopStatement               -> LabeledSimpleStatement
   AbortStatement              -> LabeledSimpleStatement
-  NullStatement               -> SimpleStatement
+  NullBlockStatement          -> SimpleStatement
 
-  ';'                         -> NullStatement         {cons("NullStatement")}
+  ';'                         -> SimpleStatement         {cons("LabeledNullStatement"), reject}
+  LabelList ';'               -> SimpleStatement         {cons("LabeledNullStatement"), prefer}
+
+  ';'                          -> StatementOrNull        {cons("NullStatement")}
+  Statement                    -> StatementOrNull
 
   'BEGIN'
     LabelList
-  'END'                       -> NullStatement         {cons("NullBlockStatement")}
+  'END'                       -> NullBlockStatement     {cons("NullBlockStatement")}
 
 %% StatementName changed to Name when cons("Name") was added to StatementName
 %% Otherwise terms like Name(Label("label_string")) would appear.
@@ -1326,7 +1337,7 @@ context-free syntax
 
   LabelList
   'BEGIN'
-    Statement+
+    StatementOrNull+
     LabelList
   'END'                       -> LabeledCompoundStatement {cons("CompoundStatement")}
   
@@ -1353,7 +1364,7 @@ context-free syntax
   WhileClause                  -> LoopType
   ForClause                    -> LoopType
 
-  Statement                    -> ControlledStatement
+  StatementOrNull              -> ControlledStatement
 
   'WHILE' Formula     ';'      -> WhileClause          {cons("WhileClause")}
 
@@ -1410,9 +1421,9 @@ context-free syntax
     ConditionalStatement
     ElseClause               -> IfElseStatement        {cons("IfElseStatement")}
 
-  'ELSE' Statement           -> ElseClause             {cons("ElseClause")}
+  'ELSE' StatementOrNull     -> ElseClause             {cons("ElseClause")}
 
-  Statement                  -> ConditionalStatement
+  StatementOrNull            -> ConditionalStatement
 
 %% 4.4 CASE STATEMENTS
 %%
@@ -1432,13 +1443,13 @@ context-free syntax
   CaseAlternative+             -> CaseBody
 
   CaseIndexGroup
-    Statement
+    StatementOrNull
     OptFALLTHRU                -> CaseAlternative      {cons("CaseAlternative")}
 
   DefaultOption                -> CaseAlternative      {prefer}
 
   '(' 'DEFAULT' ')' ':'
-    Statement
+    StatementOrNull
     OptFALLTHRU                -> DefaultOption        {cons("DefaultOption"), prefer}
 %% Not in grammar
   '(' 'DEFAULT' ')' ':'        -> DefaultOption        {cons("DefaultOptionNoBlock")}
@@ -1745,10 +1756,12 @@ context-free syntax
 
   Dereference                 -> TableDereference      {prefer}
 
-  '@' Name Subscript          -> Dereference           {cons("TableDereference")}
   '@' PointerItemName         -> Dereference           {cons("Dereference")}
   '@' '(' Formula ')'         -> Dereference           {cons("Dereference")}
   '@' '(' PointerLiteral ')'  -> Dereference           {cons("Dereference"), reject}  %% This prevents NULL from being dereferenced
+
+  '@' Name Subscript          -> Dereference           {cons("TableDereference")}
+  Dereference Subscript       -> Dereference           {cons("TableDereference"), prefer}
 
   ItemName                    -> PointerItemName       {prefer}
   TableItemName               -> PointerItemName

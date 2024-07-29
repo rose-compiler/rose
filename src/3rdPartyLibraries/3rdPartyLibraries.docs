@@ -1,7 +1,7 @@
  /*!
      \defgroup ROSE_3rdPartyLibrariesGroup ROSE 3rd Party Libraries
 
-     \brief A number of independent librres used in ROSE.
+     \brief A number of independent libraries used in ROSE.
 
      These are libraries that are non dependent on ROSE and which we use internally.
      In some cases these will be made available separately from ROSE in later 
