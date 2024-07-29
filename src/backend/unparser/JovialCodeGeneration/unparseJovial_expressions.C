@@ -444,11 +444,21 @@ UnparseJovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info &info)
            curprint("@");
            unparseVarRef(operand, info);
            break;
-        case V_SgPntrArrRefExp:
+        case V_SgPntrArrRefExp: {
+           // Unparse SgPntrArrRefExp, explicitly handling parens locally
+           auto ptr = isSgPntrArrRefExp(operand);
+
+           // Unparse dereference of pointer name
            curprint("@(");
-           unparseArrayOp(operand, info);
+           unparseExpression(ptr->get_lhs_operand(), info);
+           curprint(")");
+
+           // Unparse table subscript
+           curprint("(");
+           unparseExpression(ptr->get_rhs_operand(), info);
            curprint(")");
            break;
+        }
         case V_SgCastExp:
            curprint("@ (");
            unparseCastExp(operand, info);
