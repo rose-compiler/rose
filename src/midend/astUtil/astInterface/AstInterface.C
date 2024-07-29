@@ -2529,6 +2529,17 @@ bool AstInterface::IsBlock( const AstNodePtr& _n, std::string* blockname, AstNod
         l2 = isSgNamespaceDeclarationStatement(n.get_ptr())->get_definition()->getDeclarationList();
     }
     break;
+   case V_SgClassDeclaration:
+      // If there is no definition, it is not a block.
+      if (isSgClassDeclaration(n.get_ptr())->get_definition() == 0) 
+          return false;
+      if (blockname != 0) {
+          *blockname = isSgClassDeclaration(n.get_ptr())->get_name().str();
+      }
+      if (_stmts != 0) {
+         l2 = isSgClassDeclaration(n.get_ptr())->get_definition()->getDeclarationList();
+      }
+      break;
   case V_SgClassDefinition: 
     if (blockname != 0) {
          *blockname = isSgClassDefinition(n.get_ptr())->get_declaration()->get_name().str();
