@@ -38,6 +38,12 @@ AC_DEFUN([ROSE_SUPPORT_PYTHON],
     # check already performed by AX_PYTHON_DEVEL. I've removed the duplicate and replaced it with "true".
     AM_CONDITIONAL(ROSE_APPROVED_PYTHON_VERSION, true)
 
+    # Sets PYTHON3 if it exists
+    AC_PATH_PROG([PYTHON3], [python3])
+    AM_CONDITIONAL(ROSE_USE_PYTHON3, test "x$PYTHON3" != "x")
+
+    
+
     AC_MSG_NOTICE([Python detection results:])
     AC_MSG_NOTICE([    PYTHON                       = $PYTHON])
     AC_MSG_NOTICE([    PYTHON_VERSION_MAJOR_VERSION = $PYTHON_VERSION_MAJOR_VERSION])
