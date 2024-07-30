@@ -7,7 +7,7 @@
 
 namespace Rose { namespace AST { namespace Checker {
 
-bool integrity_symbols(SgProject * project) {
+bool integrity_symbols(SgProject*) {
   auto defect_cnt = Defect::all.size();
   // TODO
   return defect_cnt == Defect::all.size();

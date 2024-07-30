@@ -50,7 +50,7 @@ static void mergeFunctionTypeSymbolTable(SgFunctionTypeTable * gftt, SgFunctionT
 
 static void mergeFileIDs(
   std::map<int, std::string> const & f2n,
-  std::map<std::string, int> const & n2f,
+  std::map<std::string, int> const & /*n2f*/,
   std::map<int, std::string> & gf2n,
   std::map<std::string, int> & gn2f,
   size_t start_node

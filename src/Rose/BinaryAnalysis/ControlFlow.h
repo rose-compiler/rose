@@ -410,13 +410,13 @@ public:
     /** Default vertex property writer is a no-op. */
     template<class CFG>
     struct DefaultVertexPropertyWriter {
-        void operator()(std::ostream &o, typename boost::graph_traits<CFG>::vertex_descriptor vertex) const {}
+        void operator()(std::ostream &, typename boost::graph_traits<CFG>::vertex_descriptor) const {}
     };
 
     /** Default edge property writer is a no-op. */
     template<class CFG>
     struct DefaultEdgePropertyWriter {
-        void operator()(std::ostream&, typename boost::graph_traits<CFG>::edge_descriptor /*vertex*/) const {}
+        void operator()(std::ostream&, typename boost::graph_traits<CFG>::edge_descriptor) const {}
     };
 
     /** Write a CFG to a graphviz file, creating a cluster subgraph for each function.
@@ -946,7 +946,7 @@ ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Ver
 
 template<class ControlFlowGraph>
 void
-ControlFlow::FlowOrder<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g) {
+ControlFlow::FlowOrder<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph) {
     forward_order->push_back(v);
 }
 

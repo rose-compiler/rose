@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "Rose/AST/Utility.h"
 
@@ -52,7 +51,7 @@ static void registerSymbolsForSubstitution(
   std::set<typename LinkT::sym_t *> const & oldsyms,
   std::map<SgNode *, SgNode *> & node_repl_map,
   std::set<SgSymbol *> & sym_del_set,
-  std::set<SgType *> & type_del_set
+  std::set<SgType *> & /*type_del_set*/
 ) {
   for (auto oldsym: oldsyms) {
     ROSE_ASSERT(oldsym != refsym);
@@ -119,7 +118,7 @@ class LinkAcrossFiles {
     }
 
     static void log_defn_vs_nodefn(
-      std::string const & name,
+      std::string const & /*name*/,
       descmap_t const & descmap,
       std::vector<sym_t *> syms_nodefn,
       std::vector<sym_t *> syms_defns,
@@ -146,7 +145,7 @@ class LinkAcrossFiles {
     }
 
     static void log_cluster(
-      std::string const & name,
+      std::string const & /*name*/,
       descmap_t const & descmap,
       cluster_t & clusters,
       std::ostream & out
@@ -345,7 +344,7 @@ struct FunctionLinker {
           out << prefix << "Extra non-defining: " << decl_to_string(d) << std::endl;
     }
 
-    bool equivalent(desc_t const & desc) const {
+    bool equivalent(desc_t const &) const {
       return true;
     }
   };
@@ -356,7 +355,7 @@ struct FunctionLinker {
   static void collection(
     Collector<decl_t> & decls,
     Collector<sym_t> & syms,
-    Collector<type_t> & types
+    Collector<type_t> & /*types*/
   ) {
     SgFunctionDeclaration::traverseMemoryPoolNodes(decls);
     SgTemplateInstantiationFunctionDecl::traverseMemoryPoolNodes(decls);
@@ -427,7 +426,7 @@ struct FunctionLinker {
 
   static void clusterProcessing(
     SgGlobal * gsaf,
-    std::string const & name,
+    std::string const & /*name*/,
     descmap_t const & descmap,
     cluster_t const & clusters,
     std::map<SgNode *, SgNode *> & node_repl_map,
@@ -447,12 +446,9 @@ struct FunctionLinker {
     }
   }
 
-  static void typeProcessing(
-    std::set<type_t *> const & types,
-    std::map<SgNode *, SgNode *> & node_repl_map,
-    std::set<SgSymbol *> & sym_del_set,
-    std::set<SgType *> & type_del_set
-  ) {}
+  static void typeProcessing(std::set<type_t*> const &, std::map<SgNode*,SgNode*> &,
+                             std::set<SgSymbol*> &, std::set<SgType *> &) {
+  }
 };
 
 struct VariableLinker {
@@ -475,7 +471,7 @@ struct VariableLinker {
       }
     }
 
-    bool equivalent(desc_t const & desc) const {
+    bool equivalent(desc_t const &) const {
       return true;
     }
   };
@@ -486,7 +482,7 @@ struct VariableLinker {
   static void collection(
     Collector<decl_t> & decls,
     Collector<sym_t> & syms,
-    Collector<type_t> & types
+    Collector<type_t> & /*types*/
   ) {
     SgInitializedName::traverseMemoryPoolNodes(decls);
     SgVariableSymbol::traverseMemoryPoolNodes(syms);
@@ -545,7 +541,7 @@ struct VariableLinker {
   static void clusteringSymbolTriage(
     sym_t * symbol,
     desc_t const & desc,
-    std::vector<sym_t *> & syms_nodefn,
+    std::vector<sym_t *> & /*syms_nodefn*/,
     std::vector<sym_t *> & syms_defns
   ) {
     if (!has_file_visibility(desc.first)) {
@@ -555,12 +551,12 @@ struct VariableLinker {
 
   static void clusterProcessing(
     SgGlobal * gsaf,
-    std::string const & name,
+    std::string const & /*name*/,
     descmap_t const & descmap,
     cluster_t const & clusters,
     std::map<SgNode *, SgNode *> & node_repl_map,
     std::set<SgSymbol *> & sym_del_set,
-    std::set<SgType *> & type_del_set
+    std::set<SgType *> & /*type_del_set*/
   ) {
     for (auto c: clusters) {
       sym_t * refsym = c.first;
@@ -595,12 +591,9 @@ struct VariableLinker {
     }
   }
 
-  static void typeProcessing(
-    std::set<type_t *> const & types,
-    std::map<SgNode *, SgNode *> & node_repl_map,
-    std::set<SgSymbol *> & sym_del_set,
-    std::set<SgType *> & type_del_set
-  ) {}
+  static void typeProcessing(std::set<type_t*> const &, std::map<SgNode*,SgNode*> &,
+                             std::set<SgSymbol*> &, std::set<SgType*> &) {
+  }
 };
 
 struct ClassLinker {
@@ -723,7 +716,7 @@ struct ClassLinker {
 
   static void clusterProcessing(
     SgGlobal * gsaf,
-    std::string const & name,
+    std::string const & /*name*/,
     descmap_t const & descmap,
     cluster_t const & clusters,
     std::map<SgNode *, SgNode *> & node_repl_map,
@@ -746,7 +739,7 @@ struct ClassLinker {
   static void typeProcessing(
     std::set<type_t *> const & types,
     std::map<SgNode *, SgNode *> & node_repl_map,
-    std::set<SgSymbol *> & sym_del_set,
+    std::set<SgSymbol *> & /*sym_del_set*/,
     std::set<SgType *> & type_del_set
   ) {
     // Build map from first decl to map of type to assoc. decl

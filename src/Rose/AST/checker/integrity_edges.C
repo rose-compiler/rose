@@ -66,7 +66,7 @@ struct EdgeIntegrityTraversal : public ROSE_VisitTraversal {
   }
 };
 
-bool integrity_edges(SgProject * project) {
+bool integrity_edges(SgProject*) {
   auto defect_cnt = Defect::all.size();
   EdgeIntegrityTraversal eit;
   eit.traverseMemoryPool();

@@ -17,7 +17,7 @@ void defect_t<Kind::any>::clear() {
   all.clear();
 }
 
-void defect_t<Kind::any>::display(std::ostream & out) {
+void defect_t<Kind::any>::display(std::ostream &) {
   // TODO
 }
 
@@ -25,11 +25,11 @@ void defect_t<Kind::any>::display(std::ostream & out) {
 
 namespace Rose { namespace AST { namespace Checker {
 
-bool all(SgProject * project) {
+bool all(SgProject* project) {
   return integrity(project) && consistency(project);
 }
 
-bool integrity(SgProject * project) {
+bool integrity(SgProject* project) {
   bool res = integrity_edges(project);
   if (!res) return false;
   res &= integrity_declarations(project);
@@ -38,7 +38,7 @@ bool integrity(SgProject * project) {
   return res;
 }
 
-bool consistency(SgProject * project) {
+bool consistency(SgProject*) {
   return true; // TODO
 }
 

@@ -126,6 +126,7 @@ registerDefinition(const Base::Ptr &arch) {
     registry.push_back(arch);
 }
 
+#ifdef __linux__
 static std::string
 nameVariation(const std::string &name, int variation) {
     switch (variation) {
@@ -196,6 +197,7 @@ loadSharedLibrary(const std::string &name) {
         return {newArchNames, "", ""};
     }
 }
+#endif
 
 void
 registerDefinition(const std::string &name) {
@@ -220,6 +222,7 @@ registerDefinition(const std::string &name) {
     }
 #else
     mlog[ERROR] <<"loading architecture definitions from shared objects is not supported on this platform\n";
+    mlog[ERROR] <<"registerDefinition name is " << name << "\n";
 #endif
 }
 

@@ -8,7 +8,7 @@ namespace Rose { namespace AST { namespace cmdline {
 
 __when_T<checker_t> checker;
 
-void checker_t::exec(SgProject * project) const {
+void checker_t::exec(SgProject*) const {
   if (!on) return;
 
   unsigned issues = 0;

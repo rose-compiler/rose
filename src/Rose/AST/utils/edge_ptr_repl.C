@@ -31,7 +31,7 @@ struct EdgeReplacer : public SimpleReferenceToPointerHandler {
 
   virtual ~EdgeReplacer() {}
 
-  virtual void operator()(SgNode* & key, const SgName& debugStringName, bool /* traverse */) {
+  virtual void operator()(SgNode* &key, const SgName &/*debugStringName*/, bool /*traverse*/) {
     if (key != nullptr) {
       auto it = rmap.find(key);
       if (it != rmap.end() && key != it->second) {
