@@ -63,7 +63,7 @@ public:
                 " and the word \"empty\" or an empty string represents the empty " + interval + "."
 
                 " When the " + interval + " is specified as a range, the first " + value + " must be less than or equal to"
-                " the second value. A " + value + " can be specified in decimal, hexadecimal (leading \"0x\"),"
+                " the second value. The " + value + " can be specified in decimal, hexadecimal (leading \"0x\"),"
                 " octal (leading \"0\"), or binary (leading \"0b\"). The upper " + value + " can be the word \"max\" when"
                 " appearing after a comma.");
     }
