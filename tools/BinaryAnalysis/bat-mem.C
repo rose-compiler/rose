@@ -9,6 +9,7 @@ static const char *description =
 #include <rose.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/CommandLine.h>
@@ -37,9 +38,9 @@ struct Settings {
     std::vector<AddressInterval> where;
 };
 
-// Parses the command-line and returns the name of the input file if any (the ROSE binary state).
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+// Create a command-line switch parser
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     //---------- Generic Switches ----------
@@ -110,19 +111,23 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.with(output).with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
 
-    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
+    return parser;
+}
+
+// Parses the command-line and returns the positional arguments that specify a specimen.
+std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
     if (OutputFormat::UNSPECIFIED == settings.outputFormat)
         settings.outputFormat = settings.where.empty() ? OutputFormat::NONE : OutputFormat::HEXDUMP;
     if (settings.where.empty())
         settings.where.push_back(AddressInterval::whole());
 
-    return input.empty() ? boost::filesystem::path("-") : input[0];
+    return specimen;
 }
 
 class Dumper {
@@ -222,19 +227,20 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings /*in,out*/);
+
+    MemoryMap::Ptr map;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        map = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat)->memoryMap();
+    } else {
+        map = engine->loadSpecimens(specimen);
     }
-    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
     if (OutputFormat::NONE == settings.outputFormat) {
-        switch (partitioner->memoryMap()->byteOrder()) {
+        switch (map->byteOrder()) {
             case ByteOrder::ORDER_LSB:
                 std::cout <<"default byte order is little-endian\n";
                 break;
@@ -245,7 +251,7 @@ main(int argc, char *argv[]) {
                 std::cout <<"default byte order is unspecified\n";
                 break;
         }
-        partitioner->memoryMap()->dump(std::cout);
+        map->dump(std::cout);
 
     } else if (OutputFormat::VXCORE_1 == settings.outputFormat || OutputFormat::VXCORE_2 == settings.outputFormat) {
         if (settings.outputPrefix.empty()) {
