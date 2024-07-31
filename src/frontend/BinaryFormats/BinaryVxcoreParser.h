@@ -34,7 +34,16 @@ namespace BinaryAnalysis {
  *
  *  A register record (at most one per file) begins with the word "registers", a space, and the instruction set architecture name
  *  recognized by ROSE.  Following the header is one line per register, each line being a register name recognized by ROSE, a colon,
- *  optional horizontal white space, and a hexadecimal value, this time with a leading "0x". */
+ *  optional horizontal white space, and a hexadecimal value, this time with a leading "0x".
+ *
+ *  This format version was designed by Jim Leek.
+ *
+ *  @seciton vxcore_v2 Version 2
+ *
+ *  Version 2 of this format is a sequence of messages consisting of a binary header followed by a binary payload. Each header
+ *  contains naturally aligned fields: a one byte version number having the value 2; two bytes not currently used for any purpose;
+ *  one byte containing the memory access permission bits (see @ref MemoryMap); a four-byte little-endian payload size in bytes; an
+ *  eight-byte little-endian starting memory address. */
 class VxcoreParser {
 public:
     /** Settings that control the parser and unparser. */
@@ -75,6 +84,17 @@ public:
             e.print(out);
             return out;
         }
+    };
+
+private:
+    // Message headers for version 2.
+    struct HeaderVersion2 {
+        uint8_t version;                                // must be 2
+        uint8_t unused0;
+        uint8_t unused1;
+        uint8_t mapFlags;                               // MemoryMap::{READABLE,WRITABLE,EXECUTABLE}
+        uint32_t payloadSize;                           // little-endian
+        uint64_t addr;                                  // little-endian
     };
 
 private:

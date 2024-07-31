@@ -949,11 +949,11 @@ EngineBinary::specimenNameDocumentation() {
 
         "@bullet{If the name begins with the string \"vxcore:\" then it is treated as a special VxWorks core dump "
         "in a format defined by ROSE. The complete specification has the syntax \"vxcore:[@v{memory_attributes}]"
-        ":[@v{file_attributes}]:@v{file_name}\". The parts in square brackets are optional. The only memory attribute "
-        "recognized at this time is an equal sign (\"=\") followed by zero of more of the letters \"r\" (read), "
-        "\"w\" (write), and \"x\" (execute) to specify the mapping permissions. The default mapping permission if "
-        "no equal sign is specified is read, write, and execute.  The only file attribute recognized at this time is "
-        "\"version=@v{v}\" where @v{v} is a version number, and ROSE currently supports only version 1.}"
+        ":[@v{file_attributes}]:@v{file_name}\". The parts in square brackets are optional. The only file attribute "
+        "recognized at this time is \"version=@v{v}\" where @v{v} is a version number which must be 1 or 2, defaulting "
+        "to 1. For version 1, the only memory attribute is an equal sign (\"=\") followed by zero of more of the letters "
+        "\"r\" (read), \"w\" (write), and \"x\" (execute) to specify the mapping permissions, defaulting to read, write, and "
+        "execute. Version 2 has no memory attributes.}"
 
         "@bullet{If the name begins with the string \"meta:\" then it adjusts meta information about the memory "
         "map, such as permissions. " + MemoryMap::adjustMapDocumentation() + "}"

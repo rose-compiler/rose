@@ -70,8 +70,12 @@ VxcoreParser::parseUrl(const std::string &spec) {
             throw Exception("URL", 0, "invalid file attribute for vxcore URL: \"" + StringUtility::cEscape(parts[1]) + "\"");
         }
     }
-    if (settings_.version != 1)
+    if (settings_.version != 1 && settings_.version != 2)
         throw Exception("URL", 0, "vxcore version " + boost::lexical_cast<std::string>(settings_.version) + " is not supported");
+
+    // Error checking
+    if (2 == settings_.version && settings_.protOverride)
+        throw Exception("URL", 0, "vxcore version 2 does not support memory protection override (\"=\" attribute)");
 
     return parts[2];
 }
@@ -97,18 +101,64 @@ VxcoreParser::parse(const boost::filesystem::path &fileName, const MemoryMap::Pt
 void
 VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const BaseSemantics::RegisterState::Ptr &registers,
                     const BaseSemantics::RiscOperators::Ptr &ops, const std::string &inputName) {
-    for (size_t segmentIdx = 0; input; ++segmentIdx) {
-        size_t headerOffset = input.tellg();
-        std::string header = rose_getline(input);
-        if (header.empty())
-            break;                                      // EOF
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    if (1 == settings_.version) {
+        for (size_t segmentIdx = 0; input; ++segmentIdx) {
+            size_t headerOffset = input.tellg();
+            std::string header = rose_getline(input);
+            if (header.empty())
+                break;                                      // EOF
 
-        std::string name = inputName + " segment #" + boost::lexical_cast<std::string>(segmentIdx);
-        if (!parseMemory(header, input, memory, name, headerOffset) &&
-            !parseRegisters(header, input, registers, ops, name, headerOffset)) {
-            throw Exception(inputName, input.tellg(), "invalid header: \"" + StringUtility::cEscape(header.substr(0, 30)) + "\"" +
-                            (header.size() > 30 ? "..." : ""));
+            std::string name = inputName + " segment #" + boost::lexical_cast<std::string>(segmentIdx);
+            if (!parseMemory(header, input, memory, name, headerOffset) &&
+                !parseRegisters(header, input, registers, ops, name, headerOffset)) {
+                throw Exception(inputName, input.tellg(), "invalid header: \"" + StringUtility::cEscape(header.substr(0, 30)) + "\"" +
+                                (header.size() > 30 ? "..." : ""));
+            }
         }
+    } else if (2 == settings_.version) {
+        while (true) {
+            // Read the message header
+            HeaderVersion2 header;
+            const size_t headerOffset = input.tellg();
+            input.read((char*)&header, sizeof header);
+            const size_t nHeader = input.gcount();
+            header.payloadSize = BitOps::fromLittleEndian(header.payloadSize);
+            header.addr = BitOps::fromLittleEndian(header.addr);
+
+            if (0 == nHeader) {
+                break;
+            } else if (nHeader != sizeof header) {
+                throw Exception(inputName, headerOffset,
+                                (boost::format("short read (expected %1%, got only %2%) at %3%")
+                                 % sizeof(header) % nHeader % headerOffset).str());
+            } else if (2 != header.version) {
+                throw Exception(inputName, headerOffset,
+                                (boost::format("invalid message version (expected %1%, got %2%) at %3%")
+                                 % settings_.version % header.version % headerOffset).str());
+            } else if (header.unused0 || header.unused1) {
+                throw Exception(inputName, headerOffset, (boost::format("unused fields must be zero at %1%") % headerOffset).str());
+            } else if (header.mapFlags & ~MemoryMap::READ_WRITE_EXECUTE) {
+                throw Exception(inputName, headerOffset, (boost::format("invalid map flags at %1%") % headerOffset).str());
+            } else if (header.payloadSize > 0) {
+                std::vector<uint8_t> buf(header.payloadSize);
+                input.read((char*)buf.data(), header.payloadSize);
+                const size_t nPayload = input.gcount();
+                if (nPayload != header.payloadSize) {
+                    throw Exception(inputName, headerOffset,
+                                    (boost::format("short payload read (expected %1%, got only %2%) at %3%)")
+                                     % header.payloadSize % nPayload % (headerOffset + sizeof header)).str());
+                } else if (memory) {
+                    const auto where = AddressInterval::baseSize(header.addr, header.payloadSize);
+                    SAWYER_MESG(debug) <<"vxcore: addresses " <<StringUtility::addrToString(where) <<" at " <<headerOffset <<"\n";
+                    memory->insert(where, MemoryMap::Segment::anonymousInstance(header.payloadSize, header.mapFlags, inputName));
+                    const size_t nCopied = memory->at(header.addr).limit(header.payloadSize).write(buf.data()).size();
+                    ASSERT_always_require(nCopied == header.payloadSize);
+                }
+            }
+        }
+    } else {
+        ASSERT_not_implemented("vxcore version " + boost::lexical_cast<std::string>(settings_.version));
     }
 }
 
@@ -222,19 +272,34 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
                       const std::string &outputName) {
     if (memory && !memoryLimit.isEmpty()) {
         rose_addr_t va = memoryLimit.least();
-        while (const AddressInterval selected = memory->atOrAfter(va).singleSegment().available() & memoryLimit) {
+        const size_t maxPayload = 0xffffffff;
+        while (const AddressInterval selected = memory->atOrAfter(va).limit(maxPayload).singleSegment().available() & memoryLimit) {
             MemoryMap::ConstNodeIterator inode = memory->at(selected.least()).nodes().begin();
             ASSERT_forbid(inode == memory->nodes().end()); // because of the while loop's condition
             ASSERT_require(inode->key().contains(selected));
             const MemoryMap::Segment &segment = inode->value();
 
             // Header
-            out <<StringUtility::addrToString(selected.least()).substr(2)
-                <<" " <<StringUtility::addrToString(selected.size()).substr(2)
-                <<" =" <<(0 != (segment.accessibility() & MemoryMap::READABLE) ? "R" : "-")
-                <<(0 != (segment.accessibility() & MemoryMap::WRITABLE) ? "W" : "-")
-                <<(0 != (segment.accessibility() & MemoryMap::EXECUTABLE) ? "X" : "-")
-                <<"\n";
+            if (1 == settings_.version) {
+                out <<StringUtility::addrToString(selected.least()).substr(2)
+                    <<" " <<StringUtility::addrToString(selected.size()).substr(2)
+                    <<" =" <<(0 != (segment.accessibility() & MemoryMap::READABLE) ? "R" : "-")
+                    <<(0 != (segment.accessibility() & MemoryMap::WRITABLE) ? "W" : "-")
+                    <<(0 != (segment.accessibility() & MemoryMap::EXECUTABLE) ? "X" : "-")
+                    <<"\n";
+            } else if (2 == settings_.version) {
+                HeaderVersion2 header;
+                memset(&header, 0, sizeof header);
+                header.version = settings_.version;
+                header.mapFlags = segment.accessibility() & MemoryMap::READ_WRITE_EXECUTE;
+                header.payloadSize = BitOps::toLittleEndian(boost::numeric_cast<uint32_t>(selected.size()));
+                header.addr = BitOps::toLittleEndian(boost::numeric_cast<uint64_t>(selected.least()));
+                out.write((const char*)&header, sizeof header);
+                if (!out.good())
+                    throw Exception(outputName, out.tellp(), "write failed");
+            } else {
+                ASSERT_not_implemented("vxcore version " + boost::lexical_cast<std::string>(settings_.version));
+            }
 
             // Data output one buffer-full at a time since the memory map' underlying buffer might not be storing the bytes
             // contiguously, but we need contiguous bytes for std::ostream::write.
@@ -265,16 +330,22 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
     }
 
     if (registers) {
-        ASSERT_not_null(ops);
-        out <<"registers " <<registers->registerDictionary()->name() <<"\n";
-        RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->getLargestRegisters();
-        RegisterNames registerName(registers->registerDictionary());
-        BOOST_FOREACH (RegisterDescriptor reg, regs) {
-            BaseSemantics::SValue::Ptr val = registers->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
-            if (auto number = val->toUnsigned())
-                out <<(boost::format("%s 0x%x\n") % registerName(reg) % *number);
+        if (1 == settings_.version) {
+            ASSERT_not_null(ops);
+            out <<"registers " <<registers->registerDictionary()->name() <<"\n";
+            RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->getLargestRegisters();
+            RegisterNames registerName(registers->registerDictionary());
+            BOOST_FOREACH (RegisterDescriptor reg, regs) {
+                BaseSemantics::SValue::Ptr val = registers->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
+                if (auto number = val->toUnsigned())
+                    out <<(boost::format("%s 0x%x\n") % registerName(reg) % *number);
+            }
+            out <<"end\n";
+        } else if (2 == settings_.version) {
+            // Registers are not stored for version 2
+        } else {
+            ASSERT_not_implemented("vxcore version " + boost::lexical_cast<std::string>(settings_.version));
         }
-        out <<"end\n";
     }
 }
 
