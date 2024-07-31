@@ -398,6 +398,40 @@ struct IP_maddu: P {
     }
 };
 
+// Move word from coprocessor 0
+struct IP_mfc0: P {
+    void p(D d, Ops ops, I insn, A args) {
+        // TODO: Is sel field an arg?
+        //       In anycase, not finding instruction
+        assert_args(insn, args, 3);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
+// Move word from floating point
+struct IP_mfc1: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
+// Move word from coprocessor 2
+struct IP_mfc2: P {
+    void p(D d, Ops ops, I insn, A args) {
+        // TODO: Memory has to be read from co-proc-2 register args[1]
+        //       Probably need to change disassembler
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
+        d->write(args[0], result);
+    }
+};
+
 // Move word from hi register
 // Note: removed in release 6
 struct IP_mfhi: P {
@@ -873,6 +907,9 @@ DispatcherMips::initializeDispatchTable() {
 //  iprocSet(mips_lwu,   new Mips::IP_lwu); // mips_lwu (Release 6) not implemented in Mips.C
     iprocSet(mips_madd,  new Mips::IP_madd);
     iprocSet(mips_maddu, new Mips::IP_maddu);
+    iprocSet(mips_mfc0,  new Mips::IP_mfc0);
+    iprocSet(mips_mfc1,  new Mips::IP_mfc1);
+    iprocSet(mips_mfc2,  new Mips::IP_mfc2);
     iprocSet(mips_mfhi,  new Mips::IP_mfhi);
     iprocSet(mips_mflo,  new Mips::IP_mflo);
     iprocSet(mips_mov_s, new Mips::IP_mov_s);
