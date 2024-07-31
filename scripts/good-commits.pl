@@ -22,8 +22,8 @@ sub badTitleCategory {
 # Finds a ticket number within a string and returns it.
 sub findTicketNumber {
     my($s) = @_;
-    #---------------------- Upper-case word, hyphen, number     |Gitlab issue
-    my($ticket) = $s =~ /\b([A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d+|Issue #\d+\+?)\b/;
+    #---------------------- Upper-case word, hyphen, number     |Gen. Gitlab  |Gitlab project
+    my($ticket) = $s =~ /\b([A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d+|Issue #\d+\+?|\w+(\/\w+)*#\d+\+?)\b/;
     return $ticket;
 }
 
@@ -46,14 +46,28 @@ sub badTitle {
     return;
 }
 
-# Return an error message if the commit body has no issue tracker ticket number lines
+# Return an error message if the commit body doesn't end with one or more issue references.
 sub badBodyIssue {
     my($body) = @_;
+    my $ends_with_ticket_reference = 0;
+    my $last_line = "";
     for my $line (map {s/^(.*?)\s+$/\1/; $_} (split /\n/, $body)) {
-	my($ticket) = findTicketNumber($line);
-	return if $ticket && $ticket == $line;
+	if ($line =~ /\S/) {
+	    $last_line = $line;
+	    my($ticket) = findTicketNumber($line);
+	    if ($ticket && $ticket == $line) {
+		++$ends_with_ticket_reference;
+	    } else {
+		$ends_with_ticket_reference = 0;
+	    }
+	}
     }
-    return "body lacks issue tracker ticket number line(s)";
+
+    if ($ends_with_ticket_reference) {
+	return "";
+    } else {
+	return "body doesn't end with ticket number lines (last is \"$last_line\")";
+    }
 }
 
 # Returns an error message if anything is wrong with the commit message body
