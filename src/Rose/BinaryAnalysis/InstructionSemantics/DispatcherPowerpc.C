@@ -1349,10 +1349,10 @@ struct IP_mulldo: P {
     explicit IP_mulldo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValue::Ptr a = d->read(args[1], 32);
-        BaseSemantics::SValue::Ptr b = d->read(args[2], 32);
+        BaseSemantics::SValue::Ptr a = d->read(args[1]);
+        BaseSemantics::SValue::Ptr b = d->read(args[2]);
         BaseSemantics::SValue::Ptr product = ops->signedMultiply(a, b);
-        BaseSemantics::SValue::Ptr result = ops->extract(product, 0, 32);
+        BaseSemantics::SValue::Ptr result = ops->extract(product, 0, args[0]->get_type()->get_nBits());
         d->write(args[0], result);
         d->setXerOverflow(ops->invert(ops->equalToZero(ops->extract(result, 32, 64))));
         if (UpdateCr::YES == updateCr)

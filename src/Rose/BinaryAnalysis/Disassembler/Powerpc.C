@@ -102,10 +102,15 @@ Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, Address
         c = ByteOrder::swapBytes(c);
 
     // Disassemble the instruction
-    State state;
-    startInstruction(state, start_va, c);
-    SgAsmPowerpcInstruction *insn = disassemble(state);      // throws an exception on error
-    ASSERT_not_null(insn);
+    SgAsmPowerpcInstruction *insn = nullptr;
+    try {
+        State state;
+        startInstruction(state, start_va, c);
+        insn = disassemble(state);                      // throws an exception on error, but we want to return an unknown insn
+        ASSERT_not_null(insn);
+    } catch (const ExceptionPowerpc &e) {
+        return makeUnknownInstruction(e);
+    }
 
     // Note successors if necessary
     if (successors) {
