@@ -1283,7 +1283,6 @@ HEADER_ADA_ATTRIBUTE_EXPRESSION_START
        // get lvalue
           bool isLValue() const override;
           bool isChildUsedAsLValue(const SgExpression*) const override;
-          int replace_expression(SgExpression* orig, SgExpression* repl) override ROSE_DEPRECATED_FUNCTION;
 HEADER_ADA_ATTRIBUTE_EXPRESSION_END
 
 

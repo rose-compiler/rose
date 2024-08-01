@@ -121,6 +121,10 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           /// \note implemented in unparseAda_types.C
           void unparseType(const SgLocatedNode& ref, SgType* type, SgUnparse_Info& info);
 
+          /// unparses \ref type without anchor node for scope qualification
+          /// \note implemented in unparseAda_types.C
+          void unparseType(SgType* ty, SgUnparse_Info& info);
+
           // DQ (9/12/2017): Mark the derived class to support debugging.
           // virtual std::string languageName() const;
           std::string languageName() const override { return "Ada Unparser"; }

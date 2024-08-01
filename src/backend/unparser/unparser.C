@@ -2371,7 +2371,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     if (replNull)
                       adagen.setInitialScope(inheritedAttributeInfo, exprNonConst);
 
-                    adagen.unparseExpression( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+                    adagen.unparseExpression( exprNonConst, inheritedAttributeInfo );
 
                     if (replNull)
                       adagen.setInitialScope(inheritedAttributeInfo, nullptr);
@@ -2392,8 +2392,23 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
             // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
 #if 1
-               ASSERT_not_null(roseUnparser.u_type);
-               roseUnparser.u_type->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
+               // PP (07/31/1973): check for Ada language
+               if (SageInterface::is_Ada_language())
+                  {
+                    Unparse_Ada   adagen{&roseUnparser, ""};
+                    SgType*       tyNonConst = const_cast<SgType*>(type);
+                    bool          replNull = !inheritedAttributeInfo.get_current_scope();
+
+                    adagen.unparseType( tyNonConst, inheritedAttributeInfo );
+
+                    if (replNull)
+                      adagen.setInitialScope(inheritedAttributeInfo, nullptr);
+                  }
+               else
+                  {
+                     ASSERT_not_null(roseUnparser.u_type);
+                     roseUnparser.u_type->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
+                  }
 #else
                if (SageInterface::is_Fortran_language() == true)
                   {

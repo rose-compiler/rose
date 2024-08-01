@@ -11173,22 +11173,20 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       // We can just ignore this function call since it will not appear in the final AST.
       return;
   } else if (SgActualArgumentExpression* actexp = isSgActualArgumentExpression(parent)) {
-    // PP (4/25/22) since SgExpression::replace_expression is deprecated, I added the
-    //              functionality for replacing SgActualArgumentExpression::expression
-    //              here.
-    //              Note, this case needs to be ordered before isSgExpression!
     ROSE_ASSERT(oldExp == actexp->get_expression());
     actexp->set_expression(newExp);
-  } else if (SgAdaAttributeExp* adaattrexp = isSgAdaAttributeExp(parent)) {
-    if (oldExp == adaattrexp->get_object()) {
-      adaattrexp->set_object(&newexp);
-    } else if (oldExp == attr.get_args()) {
-      SgExprListExp* repllst = isSgExprListExp(newExp);
+  } else if (SgAdaAttributeExp* attrexp = isSgAdaAttributeExp(parent)) {
+    if (oldExp == attrexp->get_object()) {
+      attrexp->set_object(newExp);
+    } else if (oldExp == attrexp->get_args()) {
+      SgExprListExp* newLst = isSgExprListExp(newExp);
+      ASSERT_not_null(newLst);
 
-      adaattrexp->set_args(repllst);
+      attrexp->set_args(newLst);
     } else {
       ROSE_ABORT();
     }
+  /**** ALL expressions must be handled before the next line *****/
   } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION

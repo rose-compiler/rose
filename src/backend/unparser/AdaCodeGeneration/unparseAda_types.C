@@ -225,22 +225,36 @@ namespace
     void handle(const SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
-      SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
 
-      prn(" ");
-      prnNameQual(tyDcl);
-      prn(tyDcl.get_name());
+      // was: SgAdaTaskTypeDecl& tyDcl = SG_DEREF(isSgAdaTaskTypeDecl(n.get_declaration()))
+      if (SgAdaTaskTypeDecl* tyDcl = isSgAdaTaskTypeDecl(n.get_declaration()))
+      {
+        prn(" ");
+        prnNameQual(*tyDcl);
+        prn(tyDcl->get_name());
+      }
+      else
+      {
+        // \TODO why can we end up here?
+        prn("tasktype?");
+      }
     }
 
     void handle(const SgAdaProtectedType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
-      SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
-
-      prn(" ");
-
-      prnNameQual(tyDcl);
-      prn(tyDcl.get_name());
+      // was: SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
+      if (SgAdaProtectedTypeDecl* tyDcl  = isSgAdaProtectedTypeDecl(n.get_declaration()))
+      {
+        prn(" ");
+        prnNameQual(*tyDcl);
+        prn(tyDcl->get_name());
+      }
+      else
+      {
+        // \TODO why can we end up here?
+        prn("protectedtype?");
+      }
     }
 
     void handle(const SgAdaDiscreteType&)
@@ -277,6 +291,25 @@ namespace
         prn_subroutine_prefix(*rout);
 
       type(under);
+    }
+
+    void handle(const SgPointerType& n)
+    {
+      // TODO: should not be in Ada
+      prn(" access");
+
+      SgType* under = n.get_base_type();
+
+      if (SgAdaSubroutineType* rout = isSgAdaSubroutineType(under))
+        prn_subroutine_prefix(*rout);
+
+      type(under);
+    }
+
+    void handle(const SgTypeNullptr& n)
+    {
+      // TODO: should not be in Ada
+      prn(" null-type");
     }
 
     void handle(const SgRangeType& n)
@@ -377,6 +410,33 @@ Unparse_Ada::unparseType(const SgLocatedNode& ref, SgType* ty, SgUnparse_Info& i
   // set the reference node, unless the unparser is already in type mode
   if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
     info.set_reference_node_for_qualification(const_cast<SgLocatedNode*>(&ref));
+
+  SgNode*            refNode = info.get_reference_node_for_qualification();
+  const NameQualMap& currentNameQualMap = nameQualificationMap();
+  const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+  const NameQualMap& nameQualMapForTypeSubtree = getQualMapping(typeQualMap, refNode, SgNode::get_globalQualifiedNameMapForTypes());
+
+  withNameQualificationMap(nameQualMapForTypeSubtree);
+  sg::dispatch(AdaTypeUnparser{*this, info, std::cerr}, ty);
+  withNameQualificationMap(currentNameQualMap);
+
+  // restore reference node
+  info.set_reference_node_for_qualification(currentReferenceNode);
+}
+
+
+void
+Unparse_Ada::unparseType(SgType* ty, SgUnparse_Info& info)
+{
+  using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
+
+  ASSERT_not_null(ty);
+
+  SgNode* const currentReferenceNode = info.get_reference_node_for_qualification();
+
+  //~ // set the reference node, unless the unparser is already in type mode
+  //~ if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
+    //~ info.set_reference_node_for_qualification(const_cast<SgLocatedNode*>(&ref));
 
   SgNode*            refNode = info.get_reference_node_for_qualification();
   const NameQualMap& currentNameQualMap = nameQualificationMap();
