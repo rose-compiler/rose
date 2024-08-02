@@ -82,7 +82,7 @@ install(FILES
   setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h ROSE_UNUSED.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h ROSE_DEPRECATED.h ROSE_NELMTS.h
   Map.h timing.h rose_getline.h rose_strtoull.h
-  roseTraceLib.c ParallelSort.h rose_isnan.h rose_pragma_message.h
+  roseTraceLib.c rose_isnan.h rose_pragma_message.h
   rose_extent.h
   rose_serialize_path.h
   rose_serialize_uuid.h

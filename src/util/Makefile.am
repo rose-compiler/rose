@@ -52,7 +52,6 @@ pkginclude_HEADERS =				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
 	timing.h				\
-	ParallelSort.h				\
 	processSupport.h			\
 	ROSE_ABORT.h				\
 	ROSE_ASSERT.h                           \

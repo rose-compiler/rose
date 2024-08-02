@@ -48,6 +48,7 @@ install(FILES
   Initialize.h
   Location.h
   Logger.h
+  ParallelSort.h
   Progress.h
   RecursionCounter.h
   Sarif.h

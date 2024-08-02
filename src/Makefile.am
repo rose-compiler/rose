@@ -620,6 +620,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Location.h									\
 	Rose/Logger.h									\
 	Rose/metaprog.h									\
+	Rose/ParallelSort.h								\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/Sarif.h									\
