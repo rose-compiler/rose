@@ -174,7 +174,7 @@ struct IP_andi: P {
 
 // Breakpoint
 struct IP_break: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         ops->raiseInterrupt(mips_signal_exception, mips_breakpoint, ops->boolean_(true));
     }
@@ -227,6 +227,7 @@ struct IP_divu: P {
 };
 
 // Load byte
+// Load byte EVA (mips_lbe, implemented by IP_lb)
 struct IP_lb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -236,31 +237,12 @@ struct IP_lb: P {
     }
 };
 
-// Load byte EVA
-struct IP_lbe: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
-
-// Load byte unsigned
+// Load byte unsigned (mips_lbu)
+// Load byte unsigned EVA (mips_lbue, implemented by IP_lbu)
 struct IP_lbu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        const size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
-
-// Load byte unsigned EVA
-struct IP_lbue: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        const size_t nBits = d->architecture()->bitsPerWord();
+        size_t nBits = d->architecture()->bitsPerWord();
         SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
         d->write(args[0], result);
     }
@@ -275,27 +257,13 @@ struct IP_lbue: P {
 // Load doubleword to coprocessor 2 (LDC2)
 //TODO: implement
 
-// Load halfword
-struct IP_lh: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
+// Load halfword (mips_lh, implemented by IP_lb)
+// Load halfword EVA (mips_lhe, implemented by IP_lb)
 
-// Load halfword unsigned
-struct IP_lhu: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
+// Load halfword unsigned (mips_lhu, implemented by IP_lbu)
+// Load halfword unsigned EVA (mips_lhue, implemented by IP_lbu)
 
-// Load upper immediate
+// Load upper immediate (mips_lui)
 struct IP_lui: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -307,44 +275,19 @@ struct IP_lui: P {
     }
 };
 
-// Load word
-struct IP_lw: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
+// Load word (mips_lw, implemented by IP_lb)
 
 // Load word to floating point
 struct IP_lwc1: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         // TODO: load into low word of FPR ft
         d->write(args[0], d->read(args[1]));
     }
 };
 
-// Load word EVA
-struct IP_lwe: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->signExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
-
-// Load word unsigned
-struct IP_lwu: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nBits = d->architecture()->bitsPerWord();
-        SValue::Ptr result = ops->unsignedExtend(d->read(args[1]), nBits);
-        d->write(args[0], result);
-    }
-};
+// Load word EVA (mips_lwe, implemented by IP_lb)
+// Load word unsigned (mips_lwu, implemented by IP_lbu)
 
 // Multiply and add word to hi, lo
 // Note: removed in release 6
@@ -452,7 +395,7 @@ struct IP_mflo: P {
 
 // Floating point move (single)
 struct IP_mov_s: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr fs = d->read(args[1]);
         d->write(args[0], fs);
@@ -461,7 +404,7 @@ struct IP_mov_s: P {
 
 // Floating point move (double)
 struct IP_mov_d: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr fs = d->read(args[1]);
         d->write(args[0], fs);
@@ -471,7 +414,7 @@ struct IP_mov_d: P {
 // Floating point move (paired-single)
 // Note: removed in release 6
 struct IP_mov_ps: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr fs = d->read(args[1]);
         d->write(args[0], fs);
@@ -505,7 +448,6 @@ struct IP_movf_s: P {
 };
 
 // Floating point move conditional on floating point false (double)
-// Note: removed in release 6
 struct IP_movf_d: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -518,7 +460,6 @@ struct IP_movf_d: P {
 };
 
 // Floating point move conditional on floating point false (paired-single)
-// Note: removed in release 6
 struct IP_movf_ps: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -538,14 +479,8 @@ struct IP_movf_ps: P {
 // TODO:
 //struct IP_movz.fmt: P {
 
-// Multiply and subtract word to hi, lo (mips_msub)
-// See IP_msub_su below
-
-// Multiply and subtract unsigned word to hi, lo (mips_msubu)
-// See IP_msub_su below
-
-// Multiply and subtract word (signed and unsigned) to hi, lo
-// Note: removed in release 6
+// Multiply and subtract word to hi, lo (mips_msub, implemented by IP_msub_su)
+// Multiply and subtract unsigned word to hi, lo (mips_msubu, implemented by IP_msub_su)
 struct IP_msub_su: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -577,7 +512,6 @@ struct IP_msub_su: P {
 };
 
 // Multiply word to GPR
-// Note: removed in release 6
 struct IP_mul: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -595,13 +529,7 @@ struct IP_mul: P {
 };
 
 // Multiply word (mips_mult)
-// See IP_mult_su below
-
 // Multiply unsigned word (mips_multu)
-// See IP_mult_su below
-
-// Multiply word (signed and unsigned)
-// Note: removed in release 6
 struct IP_mult_su: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -628,7 +556,7 @@ struct IP_mult_su: P {
 
 // No operation
 struct IP_nop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 0);
     }
 };
@@ -666,21 +594,41 @@ struct IP_ori: P {
     }
 };
 
-// Store byte
-struct IP_sb: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SValue::Ptr byte = d->read(args[0], 8);
-        d->write(args[1], byte);
-    }
-};
+// Store byte (mips_sb, implemented by IP_store)
+// Store byte EVA (mips_sbe, implemented by IP_store)
 
-// Store byte EVA
-struct IP_sbe: P {
-    void p(D d, Ops ops, I insn, A args) {
+struct IP_store: P {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        SValue::Ptr byte = d->read(args[0], 8);
-        d->write(args[1], byte);
+
+        // Calculate element size
+        size_t nBits{0};
+        switch (insn->get_kind()) {
+            case mips_sb:
+            case mips_sbe:
+                nBits = 8;
+                break;
+            case mips_sh:
+            case mips_she:
+                nBits = 16;
+                break;
+            case mips_sw:
+            case mips_swc1:
+            case mips_swc2:
+            case mips_swe:
+            case mips_swxc1:
+                nBits = 32;
+                break;
+            case mips_suxc1:
+                nBits = 64;
+                break;
+            default:
+                ASSERT_not_reachable("instruction not handled");
+        }
+
+        // Read and store result
+        SValue::Ptr result = d->read(args[0], nBits);
+        d->write(args[1], result);
     }
 };
 
@@ -707,37 +655,11 @@ struct IP_seh: P {
     }
 };
 
-// Store halfword
-struct IP_sh: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SValue::Ptr halfWord = d->read(args[0], 16);
-        d->write(args[1], halfWord);
-    }
-};
+// Store halfword (mips_sh, implemented by IP_store)
+// Store halfword EVA (mips_she, implemented by IP_store)
 
-// Store halfword EVA
-struct IP_she: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SValue::Ptr halfWord = d->read(args[0], 16);
-        d->write(args[1], halfWord);
-    }
-};
-
-// Set on less than (mips_slt)
-// See IP_slt_su below
-
-// Set on less than unsigned (mips_sltu)
-// See IP_slt_su below
-
-// Set on less than immediate (mips_slti)
-// See IP_slti_su below
-
-// Set on less than immediate unsigned (mips_sltiu)
-// See IP_slti_su below
-
-// Set on less than (signed and unsigned)
+// Set on less than (mips_slt, implemented by IP_slt_su)
+// Set on less than unsigned (mips_sltu, implemented by IP_slt_su)
 struct IP_slt_su: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -761,7 +683,8 @@ struct IP_slt_su: P {
     }
 };
 
-// Set on less than immediate (signed and unsigned)
+// Set on less than immediate (mips_slti, implemented by IP_slti_su)
+// Set on less than immediate unsigned (mips_sltiu, implemented by IP_slti_su))
 struct IP_slti_su: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -785,8 +708,7 @@ struct IP_slti_su: P {
     }
 };
 
-// Superscalar no operation
-//   - implemented by IP_nop above
+// Superscalar no operation (mips_ssnop, implemented by IP_nop)
 
 // Subtract word
 struct IP_sub: P {
@@ -826,32 +748,12 @@ struct IP_subu: P {
     }
 };
 
-// Store word
-struct IP_sw: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SValue::Ptr word = d->read(args[0], 32);
-        d->write(args[1], word);
-    }
-};
-
-// Store word from floating point
-struct IP_swc1: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SValue::Ptr word = d->read(args[0], 32);
-        d->write(args[1], word);
-    }
-};
-
-// Store word EVA
-struct IP_swe: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SValue::Ptr word = d->read(args[0], 32);
-        d->write(args[1], word);
-    }
-};
+// Store doubleword indexed unaligned from floating point (mips_suxc1, implemented by IP_store)
+// Store word (mips_sw, implemented by IP_store)
+// Store word from floating point (mips_swc1, implemented by IP_store)
+// Store word from coprocessor 2 (mips_swc2, implemented by IP_store)
+// Store word EVA (mips_swe, implemented by IP_store)
+// Store word indexed from floating point (mips_swxc1, implemented by IP_store)
 
 // Exclusive OR
 struct IP_xor: P {
@@ -895,15 +797,17 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_div,   new Mips::IP_div);
     iprocSet(mips_divu,  new Mips::IP_divu);
     iprocSet(mips_lb,    new Mips::IP_lb);
-    iprocSet(mips_lbe,   new Mips::IP_lbe);
+    iprocSet(mips_lbe,   new Mips::IP_lb);  // mips_lbe shares common implementation mips_lb
     iprocSet(mips_lbu,   new Mips::IP_lbu);
-    iprocSet(mips_lbue,  new Mips::IP_lbue);
-    iprocSet(mips_lh,    new Mips::IP_lh);
-    iprocSet(mips_lhu,   new Mips::IP_lhu);
+    iprocSet(mips_lbue,  new Mips::IP_lbu); // mips_lbue shares common implementation mips_lbu
+    iprocSet(mips_lh,    new Mips::IP_lb);  // mips_lh   shares common implementation mips_lb
+    iprocSet(mips_lhe,   new Mips::IP_lb);  // mips_lhe  shares common implementation mips_lb
+    iprocSet(mips_lhu,   new Mips::IP_lbu); // mips_lhu  shares common implementation mips_lbu
+    iprocSet(mips_lhue,  new Mips::IP_lbu); // mips_lhue shares common implementation mips_lbu
     iprocSet(mips_lui,   new Mips::IP_lui);
-    iprocSet(mips_lw,    new Mips::IP_lw);
+    iprocSet(mips_lw,    new Mips::IP_lb);  // mips_lw shares common implementation mips_lb
     iprocSet(mips_lwc1,  new Mips::IP_lwc1);
-    iprocSet(mips_lwe,   new Mips::IP_lwe);
+    iprocSet(mips_lwe,   new Mips::IP_lb);  // mips_lwe shares common implementation mips_lb
 //  iprocSet(mips_lwu,   new Mips::IP_lwu); // mips_lwu (Release 6) not implemented in Mips.C
     iprocSet(mips_madd,  new Mips::IP_madd);
     iprocSet(mips_maddu, new Mips::IP_maddu);
@@ -921,31 +825,37 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_movf_d,  new Mips::IP_movf_d);
     iprocSet(mips_movf_ps, new Mips::IP_movf_ps);
 
-    iprocSet(mips_msub,  new Mips::IP_msub_su); // Note, both mips_msub and mips_msubu use IP_msub_su
-    iprocSet(mips_msubu, new Mips::IP_msub_su);
+    iprocSet(mips_msub,  new Mips::IP_msub_su); // mips_msub  shares common implementation IP_msub_su
+    iprocSet(mips_msubu, new Mips::IP_msub_su); // mips_msubu shares common implementation IP_msub_su
     iprocSet(mips_mul,   new Mips::IP_mul);
-    iprocSet(mips_mult,  new Mips::IP_mult_su); // Note, both mips_mult and mips_multu use IP_mult_su
-    iprocSet(mips_multu, new Mips::IP_mult_su);
+    iprocSet(mips_mult,  new Mips::IP_mult_su); // mips_mult  shares common implementation IP_mult_su
+    iprocSet(mips_multu, new Mips::IP_mult_su); // mips_multu shares common implementation IP_mult_su
     iprocSet(mips_nop,   new Mips::IP_nop);
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
     iprocSet(mips_ori,   new Mips::IP_ori);
-    iprocSet(mips_sb,    new Mips::IP_sb);
-    iprocSet(mips_sbe,   new Mips::IP_sbe);
+    iprocSet(mips_sb,    new Mips::IP_store);   // mips_sb    shares common implementation IP_store
+    iprocSet(mips_sbe,   new Mips::IP_store);   // mips_sbe   shares common implementation IP_store
     iprocSet(mips_seb,   new Mips::IP_seb);
     iprocSet(mips_seh,   new Mips::IP_seh);
-    iprocSet(mips_sh,    new Mips::IP_sh);
-    iprocSet(mips_she,   new Mips::IP_she);
-    iprocSet(mips_slt,   new Mips::IP_slt_su); // Note, both mips_slt and mips_sltu use IP_slt_su
-    iprocSet(mips_sltu,  new Mips::IP_slt_su);
-    iprocSet(mips_slti,  new Mips::IP_slti_su); // Note, both mips_slti and mips_sltiu use IP_slt_su
-    iprocSet(mips_sltiu, new Mips::IP_slti_su);
-    iprocSet(mips_ssnop, new Mips::IP_nop); // Note, mips_ssnop implemented by IP_nop
+    iprocSet(mips_sh,    new Mips::IP_store);   // mips_sh    shares common implementation IP_store
+    iprocSet(mips_she,   new Mips::IP_store);   // mips_she   shares common implementation IP_store
+    iprocSet(mips_slt,   new Mips::IP_slt_su);  // mips_slt   shares common implementation IP_slt_su
+    iprocSet(mips_sltu,  new Mips::IP_slt_su);  // mips_sltu  shares common implementation IP_slt_su
+    iprocSet(mips_slti,  new Mips::IP_slti_su); // mips_slti  shares common implementation IP_slti_su
+    iprocSet(mips_sltiu, new Mips::IP_slti_su); // mips_sltiu shares common implementation IP_slti_su
+    iprocSet(mips_ssnop, new Mips::IP_nop);     // mips_ssnop shares common implementation IP_nop
+
     iprocSet(mips_sub,   new Mips::IP_sub);
     iprocSet(mips_subu,  new Mips::IP_subu);
-    iprocSet(mips_sw,    new Mips::IP_sw);
-    iprocSet(mips_swc1,  new Mips::IP_swc1);
-    iprocSet(mips_swe,   new Mips::IP_swe);
+
+    iprocSet(mips_suxc1, new Mips::IP_store);   // mips_suxc1 shares common implementation IP_store
+    iprocSet(mips_sw,    new Mips::IP_store);   // mips_sw    shares common implementation IP_store
+    iprocSet(mips_swc1,  new Mips::IP_store);   // mips_swc1  shares common implementation IP_store
+    iprocSet(mips_swc2,  new Mips::IP_store);   // mips_swc2  shares common implementation IP_store
+    iprocSet(mips_swe,   new Mips::IP_store);   // mips_swe   shares common implementation IP_store
+    iprocSet(mips_swxc1, new Mips::IP_store);   // mips_swxc1 shares common implementation IP_store
+
     iprocSet(mips_xor,   new Mips::IP_xor);
     iprocSet(mips_xori,  new Mips::IP_xori);
 }
