@@ -68,6 +68,7 @@
  *
  *  @li An all-uppercase word followed by a hyphen, followed by decimal digits.
  *  @li The word "Issue" followed by a space, the number sign (#), decimal digits, and an optional plus sign.
+ *  @li The name of a Gitlab project followed immediately (no space) by the number sign, decimal digits, and an optional plus sign.
  *
  *  Some examples of issue references:
  *
@@ -75,6 +76,7 @@
  *    <tr><td><b>Example</b></td><td><b>What it means</b></td></tr>
  *    <tr><td>Issue #123</td><td>An issue in the ROSE Gitlab project at rosecompiler2.llnl.gov/gitlab.</td></tr>
  *    <tr><td>Issue #123+</td><td>Similar, but will expand to the issue title when viewed in Gitlab.</td></tr>
+ *    <tr><td>ROSE#123+</td><td>An issue in the ROSE project changed to a reference by Gitlab.</td></tr>
  *    <tr><td>RC-123</td><td>An issue in the ROSE Confluence instance.</td></tr>
  *    <tr><td>JIRA-123</td><td>Issue number 123 in JIRA, which the ROSE team no longer uses.</td></tr>
  *  </table>
@@ -86,12 +88,6 @@
  *
  * @code
  *   git log --grep '^Issue #1234'
- * @endcode
- *
- * In a shell script, to get the list of all the issues for a particular commit, use this command:
- *
- * @code
- *   git log -n1 --format='%B' $commit_sha1 |grep '^\([A-Z]\+-[1-9][0-9]*\|Issue #[1-9][0-9]*+\?\)$'
  * @endcode
  *
  *  @section commit_messages_checker Commit message policy checker
