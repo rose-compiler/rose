@@ -22,7 +22,7 @@ class SinglyLinkedListWrap
 {
     SinglyLinkedEntryWrap<T>* head, *end;
     unsigned count;
-    void operator = (const SinglyLinkedListWrap<T> & that) {}
+    void operator = (const SinglyLinkedListWrap<T> &) {}
   public:
     SinglyLinkedListWrap() : head(0), end(0), count(0) {}
 

@@ -63,6 +63,7 @@ class PtrSetWrap
     bool operator == (const const_iterator& that) const
       { return Iterator::operator==(that); }
 
+    const_iterator(const const_iterator &) = default;
     const_iterator& operator = (const const_iterator& that)
       { 
         Iterator::operator=(that);

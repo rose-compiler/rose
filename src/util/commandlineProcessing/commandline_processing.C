@@ -43,7 +43,6 @@ namespace Rose
 using namespace std;
 using namespace Rose;
 
-
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
 // DQ (7/8/2005):
@@ -543,6 +542,7 @@ CommandlineProcessing::isSourceFilename(string name)
               return true;
             }
        }
+
     return false;
 }
 

@@ -17,8 +17,8 @@ template <class T1, class T2>
 class PtrMapWrap 
 {
   VoidPtrMap *impl;
-  PtrMapWrap( const PtrMapWrap<T1,T2>& that) : impl( that.impl) {}
-  void operator = (const PtrMapWrap<T1,T2>& that) {}
+  PtrMapWrap( const PtrMapWrap<T1,T2>& that) : impl{that.impl} {}
+  void operator = (const PtrMapWrap<T1,T2> &) {}
  public:
   PtrMapWrap() { impl = new VoidPtrMap; }
   ~PtrMapWrap() { delete impl; }

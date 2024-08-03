@@ -111,13 +111,10 @@ std::string unescapeString(const std::string& s) {
             break;
           }
           assert (i + 2 < s.length());
-          unsigned char c = (s[i] - '0') << 6;
           ++i;
           assert (s[i] >= '0' && s[i] <= '7');
-          c |= (s[i] - '0') << 3;
           ++i;
           assert (s[i] >= '0' && s[i] <= '7');
-          c |= (s[i] - '0');
           break;
         }
         default: ++i; result += s[i]; break;
