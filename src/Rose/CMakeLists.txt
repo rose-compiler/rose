@@ -22,6 +22,7 @@ add_definitions(-DROSE_UTIL_EXPORTS)
 add_library(roseNamespace OBJECT
   FormattedTable.C
   Initialize.C
+  Logger.C
   Progress.C
   SourceLocation.C
   Yaml.C)
@@ -46,6 +47,7 @@ install(FILES
   GraphUtility.h
   Initialize.h
   Location.h
+  Logger.h
   Progress.h
   RecursionCounter.h
   Sarif.h

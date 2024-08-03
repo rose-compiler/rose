@@ -288,6 +288,7 @@ librose_partial_la_SOURCES =								\
 	FileSystem/FileSystem.C								\
 	FormattedTable.C								\
 	Initialize.C									\
+	Logger.C									\
 	Progress.C									\
 	Sarif/Analysis.C								\
 	Sarif/Artifact.C								\
