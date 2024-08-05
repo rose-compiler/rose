@@ -1561,4 +1561,44 @@ SgType& createExHandlerType(ada_base_entity* lal_exception_choices, AstContext c
   }
 }
 
+SgType* getNumberDeclType(ada_base_entity* lal_element){
+  ada_base_entity lal_expr = *lal_element;
+  ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);
+  switch(lal_expr_kind){
+    case ada_int_literal:
+      return &mkIntegralType();
+      break;
+    case ada_real_literal:
+      return &mkRealType();
+      break;
+    case ada_bin_op:
+      {
+        //Take f_left until we get something that isn't a bin op
+        while(lal_expr_kind == ada_bin_op){
+          ada_bin_op_f_left(&lal_expr, &lal_expr);
+          lal_expr_kind = ada_node_kind(&lal_expr);
+        }
+        return getNumberDeclType(&lal_expr);
+        break;
+      }
+    case ada_identifier:
+      {
+        ada_base_entity lal_first_decl;
+        ada_expr_p_first_corresponding_decl(&lal_expr, &lal_first_decl);
+        lal_expr_kind = ada_node_kind(&lal_first_decl);
+        if(lal_expr_kind == ada_number_decl){
+          ada_number_decl_f_expr(&lal_first_decl, &lal_first_decl);
+          return getNumberDeclType(&lal_first_decl);
+        } else {
+          logWarn() << "Constant references unhandled kind " << lal_expr_kind << std::endl;
+          return &mkTypeUnknown();
+        }
+        break;
+      }
+    default:
+      logError() << "Unexpected expr kind " << lal_expr_kind << " for ada_number_decl!\n";
+      break;
+  }
+}
+
 } //End Libadalang_ROSE_Translation namepsace

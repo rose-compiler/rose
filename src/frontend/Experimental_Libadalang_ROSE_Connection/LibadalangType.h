@@ -87,6 +87,10 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx);
 SgType&
 createExHandlerType(ada_base_entity* lal_exception_choices, AstContext ctx);
 
+/// Given the expr portion of an ada_number_decl, returns the type of said decl
+SgType*
+getNumberDeclType(ada_base_entity* lal_element);
+
 } //end Libadlang_ROSE_Translation namespace
 
 

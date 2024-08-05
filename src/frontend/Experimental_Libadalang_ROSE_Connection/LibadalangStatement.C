@@ -2538,20 +2538,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the expr to see what kind it is
         ada_base_entity lal_expr;
         ada_number_decl_f_expr(lal_element, &lal_expr);
-        ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);
 
-        SgType* expected_type = nullptr;
-        switch(lal_expr_kind){
-          case ada_int_literal:
-            expected_type = &mkIntegralType();
-            break;
-          case ada_real_literal:
-            expected_type = &mkRealType();
-            break;
-          default:
-            logError() << "Unexpected expr kind " << lal_expr_kind << " for ada_number_decl!\n";
-            break;
-        }
+        SgType* expected_type = getNumberDeclType(&lal_expr);
 
         assocdecl = &handleNumberDecl(lal_element, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), SG_DEREF(expected_type));
 

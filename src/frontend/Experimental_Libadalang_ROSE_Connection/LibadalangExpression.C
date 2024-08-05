@@ -1198,15 +1198,23 @@ namespace{
           const std::string name = canonical_text_as_string(lal_element);
 
           //Check if this is an enum value instead of a variable
-          //For now, we check p_is_static_expr & p_is_static_subtype to tell the difference
-          //TODO Test this some more
-          ada_bool lal_static_expr;
-          ada_expr_p_is_static_expr(lal_element, 1, &lal_static_expr);
-          ada_bool lal_static_subtype;
-          ada_name_p_is_static_subtype(lal_element, 1, &lal_static_subtype);
+          //Get the expression type & check for ada_enum_type_def
+          ada_base_entity lal_expr_type;
+          ada_node_kind_enum lal_expr_type_kind;
+          ada_expr_p_expression_type(lal_element, &lal_expr_type);
+          if(!ada_node_is_null(&lal_expr_type)){
+            ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
+            lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+            while(lal_expr_type_kind == ada_derived_type_def){
+              ada_derived_type_def_f_subtype_indication(&lal_expr_type, &lal_expr_type);
+              ada_type_expr_p_designated_type_decl(&lal_expr_type, &lal_expr_type);
+              ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
+              lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+            }
+          }
 
-          if(lal_static_expr == true && lal_static_subtype != true){
-            logInfo() << "identifier " << name << " is being treated as an enum value (is_static_expr = true & is_static_subtype = false).\n";
+          if(!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def){
+            logInfo() << "identifier " << name << " is being treated as an enum value (p_expr_type_def = ada_enum_type_def).\n";
 
             //Get the hash for the decl
             ada_base_entity lal_first_corresponding_decl;
@@ -1445,6 +1453,7 @@ namespace{
           break;
         }
 
+      case ada_op_concat:
       case ada_op_plus:                        // 4.1 TODO Add more ops
       case ada_op_minus:
       case ada_op_eq:
@@ -1455,7 +1464,8 @@ namespace{
       case ada_op_lte:
       case ada_op_neq:
       case ada_op_mult:
-      case ada_op_concat:
+      case ada_op_div:
+      case ada_op_pow:
         {
           logKind("An_Operator_Symbol", kind);
 
