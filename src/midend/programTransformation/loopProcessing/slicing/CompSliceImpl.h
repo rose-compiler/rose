@@ -20,21 +20,21 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
   virtual void UpdateDistNode(const DistNodeInfo &info);
   virtual void UpdateMergeLoop(const MergeLoopInfo &info);
 
-  void ReplaceRepr( LoopTreeNode *n)
+  void ReplaceRepr(LoopTreeNode* n)
    {  GetRepr()->DetachObserver(*this);
       n->AttachObserver(*this);
       LoopTreeShadowNode::ReplaceRepr(n);
    }
  public:
-  CompSliceLoop( LoopTreeNode *l, CompSliceImpl* impl,
+  CompSliceLoop(LoopTreeNode *l, CompSliceImpl* impl,
                 bool r = true);
-  CompSliceLoop( LoopTreeNode *n, const CompSliceLoop& that)
+  CompSliceLoop(LoopTreeNode *n, const CompSliceLoop& that)
      : LoopTreeShadowNode(n, that) 
      { reversible = that.reversible; n->AttachObserver(*this); }
   ~CompSliceLoop() { if (GetRepr() != 0)
                         GetRepr()->DetachObserver(*this); }
 
-  void SetReversal( bool r)
+  void SetReversal(bool r)
      { if (reversible) reversible = r; }
 
   CompSlice::SliceLoopInfo GetSliceInfo() const;
@@ -44,7 +44,7 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
   virtual std::string toString() const
     { 
       std::string res =  "slice loop: " + GetRepr()->toString();
-      if ( LoopReversible())
+      if (LoopReversible())
          res = res + " loop reversible ";
       return res;
     }
@@ -56,14 +56,14 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
   int align;
 
  protected:
-  virtual LoopTreeShadowNode* CloneNode( LoopTreeNode *n) const
+  virtual LoopTreeShadowNode* CloneNode(LoopTreeNode *n) const
     { return new CompSliceStmt(n, *this); }
-  virtual void UpdateSplitStmt( const SplitStmtInfo &info )
+  virtual void UpdateSplitStmt(const SplitStmtInfo &info)
     {
        LoopTreeNode* that = CloneNode(info.GetSplitStmt());
        that->Link(this, AsPrevSibling);
-       SplitStmtInfo info1( this, that,
-                            info.GetLoop1(), info.GetLoop2(),info.GetRel());
+       SplitStmtInfo info1(this, that,
+                           info.GetLoop1(), info.GetLoop2(),info.GetRel());
        Notify(info1);
     }
 
@@ -72,14 +72,14 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
   }
 
  public:
-  CompSliceStmt( LoopTreeNode *s,  CompSliceImpl *tc, int align = 0);
-  CompSliceStmt( LoopTreeNode *n, const CompSliceStmt &that)
+  CompSliceStmt(LoopTreeNode *s,  CompSliceImpl *tc, int align = 0);
+  CompSliceStmt(LoopTreeNode *n, const CompSliceStmt &that)
      : LoopTreeShadowNode(n, that) 
      { align = that.align; n->AttachObserver(*this); }
   ~CompSliceStmt() { GetRepr()->DetachObserver(*this); }
 
-  void SetSliceAlign( int a) { align = a; }
-  void IncreaseSliceAlign( int a) { align += a; }
+  void SetSliceAlign(int a) { align = a; }
+  void IncreaseSliceAlign(int a) { align += a; }
   LoopTreeNode* GetSliceStmt() const { return GetRepr(); }
   CompSlice::SliceStmtInfo GetSliceInfo() const
     { CompSliceLoop *l = static_cast <CompSliceLoop*> (Parent());
@@ -87,7 +87,7 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
                                        l->LoopReversible(), align); 
      }
   int GetSliceAlign() const {return align; }
-  void SetSliceLoop( CompSliceLoop *loop, int a)
+  void SetSliceLoop(CompSliceLoop *loop, int a)
      { Unlink();
        Link(loop, AsLastChild);
        align = a;
@@ -119,57 +119,57 @@ inline CompSlice::SliceLoopInfo CompSliceLoop:: GetSliceInfo() const
 class CompSliceImpl : public LoopTreeShadowCreate
 {
  protected:
-  virtual LoopTreeShadowNode* CreateShadowNode( LoopTreeNode *n)
+  virtual LoopTreeShadowNode* CreateShadowNode(LoopTreeNode* n)
    {
-     LoopTreeShadowNode *result = 0;
+     LoopTreeShadowNode* result = nullptr;
      if (IsSimpleStmt(n))
-        result = CreateSliceStmtNode(n);
+        result = CreateSliceStmtNode(n, nullptr);
      else if (n->IncreaseLoopLevel() != 0) 
         result = CreateSliceLoopNode(n);
      return result;
    }
-   virtual CompSliceLoop* CreateSliceLoopNode( LoopTreeNode *n, CompSliceLoop* that = 0)
+   virtual CompSliceLoop* CreateSliceLoopNode(LoopTreeNode *n, CompSliceLoop* that = nullptr)
    {  bool r = (that == 0)? true : that->LoopReversible();
-         return new CompSliceLoop( n, this, r); }
-   virtual CompSliceStmt* CreateSliceStmtNode( LoopTreeNode *n, CompSliceStmt* that = 0)
+         return new CompSliceLoop(n, this, r); }
+   virtual CompSliceStmt* CreateSliceStmtNode(LoopTreeNode *n, CompSliceStmt* /*that = nullptr*/)
    { return new CompSliceStmt(n, this); }
 
  public:
-  CompSliceImpl( int looplevel ) : LoopTreeShadowCreate(looplevel) {}
+  CompSliceImpl(int looplevel ) : LoopTreeShadowCreate(looplevel) {}
   ~CompSliceImpl() {}
   virtual CompSliceImpl* CloneImpl() const 
-    { return new CompSliceImpl( QuerySliceLevel() ); }
+    { return new CompSliceImpl(QuerySliceLevel() ); }
 
   void Dump() const { GetTreeRoot()->DumpTree(); }
   std::string toString() const { return GetTreeRoot()->TreeToString(); }
-  CompSliceStmt * QuerySliceStmt( const LoopTreeNode *n) const
+  CompSliceStmt * QuerySliceStmt(const LoopTreeNode *n) const
     { return (IsSimpleStmt(n))?
-                static_cast <CompSliceStmt*>( QueryShadowNode(n)):0;
+                static_cast <CompSliceStmt*>(QueryShadowNode(n)):0;
     }
-  CompSliceLoop* QuerySliceLoop( const LoopTreeNode *n) const
+  CompSliceLoop* QuerySliceLoop(const LoopTreeNode *n) const
     { return n->IncreaseLoopLevel()?
                 static_cast<CompSliceLoop*>(QueryShadowNode(n)):0; 
     }
 
-  CompSliceLoop *CreateSliceLoop( LoopTreeNode *l, CompSliceLoop* that = 0)
+  CompSliceLoop *CreateSliceLoop(LoopTreeNode *l, CompSliceLoop* that = nullptr)
     {
       CompSliceLoop *n = QuerySliceLoop(l);
       if (n == 0) {
         n = CreateSliceLoopNode(l, that);
-        n->Link( GetTreeRoot(), LoopTreeNode::AsLastChild);
+        n->Link(GetTreeRoot(), LoopTreeNode::AsLastChild);
       }
       return n;
     }
-  CompSliceStmt *CreateSliceStmt( LoopTreeNode *s, CompSliceStmt* that = 0)
+  CompSliceStmt *CreateSliceStmt(LoopTreeNode *s, CompSliceStmt* that = nullptr)
     {
       CompSliceStmt *ns = QuerySliceStmt(s);
       if (ns == 0) {
          ns = CreateSliceStmtNode(s, that);
-         ns->Link( GetTreeRoot(), LoopTreeNode::AsLastChild);
+         ns->Link(GetTreeRoot(), LoopTreeNode::AsLastChild);
       }
       return ns;
     }
-  virtual void Append( const CompSliceImpl& that)
+  virtual void Append(const CompSliceImpl& that)
    {
      LoopTreeTraverseSelectLoop loopIter(that.GetTreeRoot());
      for (LoopTreeNode *n; (n=loopIter.Current()); loopIter++) {
@@ -179,7 +179,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
        for (LoopTreeNode *n1; (n1 = stmtIter.Current()); stmtIter++)  {
           CompSliceStmt *s = static_cast <CompSliceStmt*>(n1);
           CompSliceStmt *mys = CreateSliceStmt(s->GetSliceStmt(), s);
-          mys->SetSliceLoop( myl, s->GetSliceAlign() );
+          mys->SetSliceLoop(myl, s->GetSliceAlign() );
        }
      }
    }
@@ -188,41 +188,41 @@ class CompSliceImpl : public LoopTreeShadowCreate
 };
 
 inline CompSliceLoop:: 
-CompSliceLoop( LoopTreeNode *l, CompSliceImpl *_slice, bool r)
-    : LoopTreeShadowNode( l, _slice), reversible(r)
+CompSliceLoop(LoopTreeNode *l, CompSliceImpl *_slice, bool r)
+    : LoopTreeShadowNode(l, _slice), reversible(r)
  { l->AttachObserver(*this); }
 
 inline CompSliceStmt::
-CompSliceStmt( LoopTreeNode *s, CompSliceImpl *_slice, int a)
+CompSliceStmt(LoopTreeNode *s, CompSliceImpl *_slice, int a)
   : LoopTreeShadowNode(s, _slice), align(a)
 { s->AttachObserver(*this); }
 
-inline void CompSliceLoop:: UpdateDistNode( const DistNodeInfo &info )
+inline void CompSliceLoop:: UpdateDistNode(const DistNodeInfo &info )
 {
  LoopTreeNode * n = info.GetNewNode();
  const LoopTreeNode *orig = info.GetObserveNode();
  int pos = info.get_pos();
 
- CompSliceLoop *that = 0;
+ CompSliceLoop *that = nullptr;
  for (LoopTreeNode *s = FirstChild(); s != 0; ) {
     CompSliceStmt *ss = static_cast <CompSliceStmt*>(s);
     s = s->NextSibling();
-    LoopTreeNode *c1 = ss->GetSliceStmt();
-    while( c1 && c1 != orig && c1 != n)
+    LoopTreeNode* c1 = ss->GetSliceStmt();
+    while(c1 && c1 != orig && c1 != n)
        c1 = c1->Parent();
-    assert( c1 != 0);
+    assert(c1 != 0);
     if (c1 == n) {
-       if (that == 0) {
+       if (that == nullptr) {
            that = static_cast<CompSliceLoop*>( CloneNode(n) );
            if (pos < 0)
-              that->Link( this, AsPrevSibling);
+              that->Link(this, AsPrevSibling);
            else 
-              that->Link( this, AsNextSibling);
+              that->Link(this, AsNextSibling);
        }
        ss->SetSliceLoop(that, ss->GetSliceAlign());
     }
  }
- if (that != 0) {
+ if (that != nullptr) {
     DistNodeInfo info1(this, that, pos);
     Notify(info1);
  }
@@ -230,7 +230,7 @@ inline void CompSliceLoop:: UpdateDistNode( const DistNodeInfo &info )
     delete this;
 }
 
-inline void CompSliceLoop:: UpdateMergeLoop( const MergeLoopInfo &info)
+inline void CompSliceLoop:: UpdateMergeLoop(const MergeLoopInfo &info)
 {
   int a = info.GetMergeAlign();
   LoopTreeNode *l = info.GetNewLoop();
@@ -240,7 +240,7 @@ inline void CompSliceLoop:: UpdateMergeLoop( const MergeLoopInfo &info)
        CompSliceStmt *cn = static_cast<CompSliceStmt*>(n);
        n = n->NextSibling();
        int a1 = cn->GetSliceAlign() - a;
-       cn->SetSliceLoop( nl, a1);
+       cn->SetSliceLoop(nl, a1);
      }
      Unlink();
      delete this;

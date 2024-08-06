@@ -7,8 +7,11 @@ class FixupPrettyFunctionVariablesInheritedAttribute
           SgFunctionDeclaration* functionDeclaration;
           FixupPrettyFunctionVariablesInheritedAttribute();
 
-       // NOTE: This copy constructor is required to propegate the value of "functionDeclaration" member data across copies.
-          FixupPrettyFunctionVariablesInheritedAttribute( const FixupPrettyFunctionVariablesInheritedAttribute & X );
+       // NOTE: This copy constructor is required to propagate the value of "functionDeclaration" member data across copies.
+          FixupPrettyFunctionVariablesInheritedAttribute(const FixupPrettyFunctionVariablesInheritedAttribute &);
+
+          FixupPrettyFunctionVariablesInheritedAttribute&
+             operator=(const FixupPrettyFunctionVariablesInheritedAttribute&) = default;
    };
 
 /*! \brief This traversal uses inherited attributes to fixup the variables put into the AST that match the function name (this is EDG trickery to signal that the variable name is "__PRETTY_FUNCTION__").

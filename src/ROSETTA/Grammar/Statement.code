@@ -204,8 +204,6 @@ HEADER_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
-       // DQ (12/16/2007): Added virtual function so that we could set the end_numeric_label on all relevant Fortran constructs
-       // virtual void set_end_numeric_label(SgLabelSymbol* end_numeric_label);
           virtual void set_end_numeric_label(SgLabelRefExp* end_numeric_label);
 
        // Report if a construct has a concept of end_numeric_label
@@ -319,15 +317,10 @@ HEADER_SCOPE_STATEMENT_START
 
        //! get the first symbol with name (note that "" is a valid name and is used for unnamed declarations)
        //! the input name is stored as internal state to support the use of next_XXX_symbol() member function.
-       // SgSymbol*          lookup_symbol            (const SgName& n) const;
-       // SgSymbol*          lookup_symbol            (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const;
           SgSymbol*          lookup_symbol            (const SgName& n, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL) const;
 
           SgVariableSymbol*  lookup_var_symbol        (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  lookup_variable_symbol   (const SgName& n) const;
-
-       // DQ (8/21/2013): Nw that we permit the default parameter, this version of the function is ambiguous.
-       // SgClassSymbol*     lookup_class_symbol      (const SgName& n) const;
 
        // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
           SgClassSymbol*     lookup_class_symbol      (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
@@ -337,32 +330,16 @@ HEADER_SCOPE_STATEMENT_START
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n) const;
 
        // DQ (8/10/2013): Added to support function symbol lookup for template instantiations that would only be disambiguated by their template arguments.
-       // SgFunctionSymbol*  lookup_function_symbol   (const SgName& n, const SgType* t) const;
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
 
           SgTypedefSymbol*   lookup_typedef_symbol    (const SgName& n) const;
           SgEnumSymbol*      lookup_enum_symbol       (const SgName& n) const;
-       // SgEnumFieldSymbol* lookup_enumfield_symbol  (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgEnumFieldSymbol* lookup_enum_field_symbol (const SgName& n) const;
           SgLabelSymbol*     lookup_label_symbol      (const SgName& n) const;
           SgJavaLabelSymbol* lookup_java_label_symbol (const SgName& n) const; // charles4: added 09/12/2011
           SgNamespaceSymbol* lookup_namespace_symbol  (const SgName& n) const;
 
-#if 0
-       // DQ (8/13/2013): Since function templates, member function templates, and class templates are symbols not derived from SgTemplateSymbol,
-       // this function is not very useful since it returns a SgTemplateSymbol.  This was a part of the older pre-EDG4x API.
-
-       // A class template can have partial specialization, so we need to support both template parameter list and the
-       // template argument list used for specialization as part of looking up symbols for template that could include
-       // class templates, however, a template function can not have template partial specialization, so the template
-       // argument list for partial specialization will not be used here (since specializations of template functions
-       // are template instantiations, not templates and should use another symbol lookup function.
-       // SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
-          SgTemplateSymbol*  lookup_template_symbol   (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
-#endif
-
        // DQ (12/12/2011): Added support for template declarations in the AST.
-       // SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
           SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
 
        // DQ (3/8/2017): Adding support for SgTemplateTypedefDeclaration IR nodes.
@@ -374,17 +351,13 @@ HEADER_SCOPE_STATEMENT_START
 
        // DQ (8/9/2013): Note that template functions can't be specialized, so we need to only handle SgTemplateParameterPtrList
        // DQ (12/27/2011): Added support for template declarations in the AST.
-       // SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
           SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const;
 
           SgTemplateVariableSymbol*       lookup_template_variable_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList) const;
 
        // DQ (8/10/2013): If there are template arguments then they are used to disambiguate template instantiations that might match existing non-template instantiations (normal functions).
-       // SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const;
           SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
 
-       // SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t) const;
-       // SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
           SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const;
 
        // DQ (8/10/2013): If there are template arguments then they are used to disambiguate template instantiations that might match existing non-template instantiations (normal functions).
@@ -402,13 +375,11 @@ HEADER_SCOPE_STATEMENT_START
 
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
-       // SgVariableSymbol*  first_var_symbol        () const ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  first_variable_symbol   () const;
           SgClassSymbol*     first_class_symbol      () const;
           SgFunctionSymbol*  first_function_symbol   () const;
           SgTypedefSymbol*   first_typedef_symbol    () const;
           SgEnumSymbol*      first_enum_symbol       () const;
-       // SgEnumFieldSymbol* first_enumfield_symbol  () const ROSE_DEPRECATED_FUNCTION;
           SgEnumFieldSymbol* first_enum_field_symbol () const;
           SgLabelSymbol*     first_label_symbol      () const;
           SgNamespaceSymbol* first_namespace_symbol  () const;
@@ -422,13 +393,11 @@ HEADER_SCOPE_STATEMENT_START
        //! lookup_XXX_symbol(const SgName&) or after first_XXX_symbol() member function)
        //! and return the next symbol.
           SgSymbol*          next_any_symbol        () const;
-       // SgVariableSymbol*  next_var_symbol        () const ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  next_variable_symbol   () const;
           SgClassSymbol*     next_class_symbol      () const;
           SgFunctionSymbol*  next_function_symbol   () const;
           SgTypedefSymbol*   next_typedef_symbol    () const;
           SgEnumSymbol*      next_enum_symbol       () const;
-       // SgEnumFieldSymbol* next_enumfield_symbol  () const ROSE_DEPRECATED_FUNCTION;
           SgEnumFieldSymbol* next_enum_field_symbol () const;
           SgLabelSymbol*     next_label_symbol      () const;
           SgNamespaceSymbol* next_namespace_symbol  () const;
@@ -438,33 +407,9 @@ HEADER_SCOPE_STATEMENT_START
        // SgFunctionSymbol*  next_function_symbol  (const SgType* t) const;
 
        /* some symbol table printing utility routines */
-       // void print_symboltable(const std::string& str, std::ostream& os = std::cout);
           void print_symboltable(const std::string& str, std::ostream& os );
           void print_symboltable(const std::string & label, VariantT nodeType);
           void print_symboltable(const std::string & str);
-
-#if 0
-       // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-       // The next for functions have been placed back into the Sage III interface.
-          SgSymbol *first_any_symbol();
-          SgVariableSymbol *first_variable_symbol();
-          SgSymbol *next_any_symbol();
-          SgVariableSymbol *next_variable_symbol();
-#endif
-
-#if 0
-       // Not clear if we need more insert functions to support the X version terminals/nonterminals
-          SgVariableSymbol *insert_symbol(const SgInitializedNamePtrList::iterator&);
-          SgVariableSymbol *insert_symbol(SgVariableDeclaration *);
-          SgFunctionSymbol *insert_symbol(SgFunctionDeclaration *);
-          SgMemberFunctionSymbol *insert_symbol(SgMemberFunctionDeclaration *);
-          SgClassSymbol *insert_symbol(SgClassDeclaration *cdecl);
-          SgEnumSymbol *insert_symbol(SgEnumDeclaration *cdecl);
-          SgTypedefSymbol *insert_symbol(SgTypedefDeclaration *);
-          SgLabelSymbol *insert_symbol(SgLabelStatement *);
-
-          SgEnumFieldSymbol *insert_enum_symbol(const SgInitializedNamePtrList::iterator&);
-#endif
 
        // DQ (7/17/2002) Added to support rewrite mechanism some scopes can only contain
        // SgDeclarationStmt while others can contain any kind of SgStatement
@@ -589,9 +534,6 @@ HEADER_SCOPE_STATEMENT_START
        // DQ (5/21/2013): Added support for organizing how we match function declarations with function symbols.
        // This function was moved from the symbol table to the SgScopeStatement so that we could make the
        // symbol table access functions private as part of the new namespace symbol table handling.
-       // template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type);
-       // template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type, SgTemplateArgumentPtrList* templateArgumentList);
-       // template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type, SgTemplateArgumentPtrList* templateArgumentList, SgTemplateParameterPtrList* templateParameterList);
           template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
 
        // DQ (5/21/2013): This function is used by the get_symbol_from_symbol_table() functions.
@@ -639,70 +581,29 @@ namespace ASTtools
 // now optionally generated within ROSE to support smaller ROSETTA
 // generated files.
 
-#if 1
 // DQ (12/30/2009): This does not appear to be required to be a template function (base class will work just fine).
 
 // Replace target with newstmt if target matches 'cur'
 template <class Elemtype>
 inline bool
-StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgStatement *newstmt)
+StatementReplace(SgStatement* /*parent*/, Elemtype* &cur, SgStatement* target, SgStatement* newstmt)
    {
      if (cur == target)
         {
        // newstmt can be NULL or it must be compatible with cur's type
-       // assert( newstmt == 0 || newstmt->variantT() == cur->variantT());
           ROSE_ASSERT (newstmt == 0 || dynamic_cast<Elemtype*>(newstmt));
 #ifndef REMOVE_SET_PARENT_FUNCTION
        // DQ (9/24/2004): Parent will be set in the AST fixup (in post-processing of the AST in AST Fixup)
        // Should not be set within EDG/Sage III connection code!
           printf ("Warning: Temporarily skipping set_parent in StatementReplace \n");
-       // if (newstmt != 0)
-       //    newstmt->set_parent( parent);
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-#if 0
-          if (SgProject::get_verbose() >= 1)
-             {
-               printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
-             }
-#endif
-       // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
-       // parent->set_isModified(true);
 
           return true;
         }
      return false;
    }
-#else
-
-#error "DEAD CODE!"
-
-// DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
-// If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as
-// "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
-inline bool
-StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, SgStatement *newstmt)
-// StatementReplace (SgStatement *parent, SgLocatedNode *& cur, SgStatement *target, SgStatement *newstmt)
-   {
-     if (cur == target)
-        {
-       // newstmt can be NULL or it must be compatible with cur's type
-          ROSE_ASSERT (newstmt == NULL || newstmt->variantT() == cur->variantT());
-
-       // cur = static_cast<Elemtype *>(newstmt);
-       // cur = static_cast<SgStatement*>(newstmt);
-          cur = static_cast<SgLocatedNode*>(newstmt);
-
-          parent->set_isModified(true);
-          return true;
-        }
-     return false;
-   }
-
-#error "DEAD CODE!"
-
-#endif
 
 #if 0
 // DQ (12/30/2009): This has been moved to the header file since it was a used in
@@ -710,22 +611,8 @@ StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, 
 // support the generation of smaller and more numerous files by ROSETTA.
 inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
    {
-  // DQ (11/20/2004): Modified to provide more accurate information, use the
-  // copy constructor instead of the constructor that takes a file name.
-  // return new Sg_File_Info( p->get_file_info()->get_filename());
-
-  // DQ (11/6/2006): startOfConstruct is the one Sg_File_Info that will always exist and must exist.
-  // ROSE_ASSERT(p->get_file_info() != NULL);
-  // Sg_File_Info* returnFileInfo = new Sg_File_Info( *( p->get_file_info() ) );
-  // ROSE_ASSERT(returnFileInfo != NULL);
-     ROSE_ASSERT(p->get_startOfConstruct() != NULL);
-     Sg_File_Info* returnFileInfo = new Sg_File_Info( *( p->get_startOfConstruct() ) );
-     ROSE_ASSERT(returnFileInfo != NULL);
-
-  // printf ("In New_File_Info: returnFileInfo = %p \n",returnFileInfo);
-
-     return returnFileInfo;
-   }
+#error "DEAD CODE!"
+#error "DEAD CODE!"
 #else
 // Temporary while we move code to use generateMatchingFileInfo directly.
 inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
@@ -747,11 +634,9 @@ HEADER_FUNCTION_TYPE_TABLE_START
 
       //! Constructor
        // $CLASSNAME ();
-       // SgFunctionTypeTable( bool case_insensitive = false );
           SgFunctionTypeTable();
 
           void insert_function_type(const SgName&, SgType *);
-       // void insert_function_type(const SgFunctionDeclaration *);
 
           SgType* lookup_function_type (const SgName&);
 
@@ -851,14 +736,9 @@ HEADER_DECLARATION_STATEMENT_START
        // Support for skipping the "<" and ">" when the output of the template argument list would be empty.
           bool skipEmptyTemplateArgumentListTest ( SgFunctionDeclaration* functionDeclaration );
 
-       // DQ (12/30/2009): Uncomment this so that it can be placed into a class and not be a global scope (or file scope function).
-       // DQ (4/28/2005): names of template functions are setup with a name of the form "foo<int>"
-       // and must be converted to a name that can be more easily mangled (with out "<" and ">").
-       // SgName fixupTemplateNameForMangledNameSupport( const SgName & s) const;
           SgName fixupTemplateNameForMangledNameSupport( const SgName & s) const;
 
        // DQ (6/2/2006): Support for name mangling of unnamed classes embedded in
-       // SgVariableDeclaration and SgTypedefDeclaration.
           SgName generate_alternative_name_for_unnamed_declaration ( SgNode* parent ) const;
 
        // DQ (6/3/2006): Support for unnamed declaration is scopes.
@@ -967,10 +847,6 @@ HEADER_GLOBAL_START
        // C/C++ standards for construction of variable names.
           virtual SgName get_mangled_name() const override;
 
-       // DQ (10/6/2006): Support for mangle name caching (for better performance)
-       // std::map<SgNode*,std::string> & get_mangledNameCache();
-       // std::map<std::string, uint64_t> & get_shortMangledNameCache();
-
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) override;
@@ -978,10 +854,8 @@ HEADER_GLOBAL_START
           virtual unsigned int cfgIndexForEnd() const override;
 #endif
 
-#if 1
        // DQ (10/1/2009): Adding support for new name qualification.
           void buildStatementNumbering();
-#endif
 
 HEADER_LIST_DECLARATIONS
 
@@ -1091,23 +965,16 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& st
      ROSE_ASSERT(parent != NULL);
      ROSE_ASSERT(target != NULL);
 
-  // DQ (7/19/2005): Milind says that we can comment this out (because the remove function
-  // calls the replace function which calls this insert function with n == NULL)
-  // This function's name is misleading and could be more clear.
-  // ROSE_ASSERT(n != NULL);
-
      bool targetLocated = find(statement_or_declaration_container.begin(),statement_or_declaration_container.end(),target) != statement_or_declaration_container.end();
      if (targetLocated == false)
         {
           printf ("Error: target statement = %p not found in list of statements provided. \n",target);
           ROSE_ASSERT(false);
         }
-  // ROSE_ASSERT (find(statement_or_declaration_container.begin(),statement_or_declaration_container.end(),target) != statement_or_declaration_container.end());
 
      unsigned int size = statement_or_declaration_container.size();
      for (unsigned int p = 0; p < size; ++p)
         {
-       // printf ("Looping through the list of statements! p = %p \n",statement_or_declaration_container[p]);
           if ( statement_or_declaration_container[p] == target )
              {
                if (removeCurrent)
@@ -9233,17 +9100,8 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                         case V_SgReferenceType:
                                            {
                                           // Need to reach in and see if this is a template instantiation of a class type and then reset its name
-                                          // SgModifierType* modifierType = isSgModifierType(argumentType);
-                                          // ROSE_ASSERT(modifierType != NULL);
-                                          // SgType* strippedType = modifierType->stripType();
 #if 0
-                                             printf ("Case of SgPointerType, SgModifierType, SgReferenceType \n");
-#endif
-#if 0
-                                          // This passes by too many places where (within typedefs for example) template names could be reset
-                                             SgType* strippedType = argumentType->stripType()
 #error "DEAD CODE!"
-
 #else
                                           // Handle this explicitly so that we can see the full type chain (in case there is a unset template name in the chain!)
                                              SgType* currentType = argumentType;
@@ -19928,6 +19786,9 @@ SgSymbol*
 SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
    {
 #if 0
+
+#DEAD CODE!
+
      SgDeclarationStatement* declaration = get_declaration_associated_with_symbol();
      if (declaration == NULL)
         {
@@ -19938,6 +19799,9 @@ SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
      SgSymbol* symbol = declaration->get_symbol_from_symbol_table();
      ROSE_ASSERT(symbol != NULL);
      return symbol;
+
+#DEAD CODE!
+
 #else
   // If we are searching for a symbol associated with this declaration, then it could only be a numeric label
   // in which case we have to search for it in the function scope (SgFunctionDefinition).
@@ -19954,12 +19818,9 @@ SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
         {
           printf ("Labels are stored in the SgFunctionDefinition (function scope), could not locate associated function scope \n");
         }
-     ROSE_ASSERT(functionDefinition != NULL);
-  // return functionDefinition->get_symbol_table()->find(this);
-     return functionDefinition->find_symbol_from_declaration(this);
+     ROSE_ASSERT(functionDefinition != nullptr);
 
-  // printf ("In SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table(): returning NULL \n");
-  // return NULL;
+     return functionDefinition->find_symbol_from_declaration(this);
 #endif
    }
 

@@ -25,7 +25,9 @@ class FixupSourcePositionInformationSynthesizedAttribute
    {
      public:
           FixupSourcePositionInformationSynthesizedAttribute();
-          FixupSourcePositionInformationSynthesizedAttribute( const FixupSourcePositionInformationSynthesizedAttribute & X );
+          FixupSourcePositionInformationSynthesizedAttribute(const FixupSourcePositionInformationSynthesizedAttribute &);
+          FixupSourcePositionInformationSynthesizedAttribute&
+             operator=(const FixupSourcePositionInformationSynthesizedAttribute &) = default;
 
           Sg_File_Info* startingPosition;
           Sg_File_Info* endingPosition;

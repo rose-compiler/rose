@@ -9,27 +9,23 @@
 #include "DefUseAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
-#include <boost/config.hpp>
-#include <boost/bind.hpp>
-
+#include <boost/bind/bind.hpp>
 
 using namespace std;
+
 // static counter for the node numbering (for visualization)
 int DefUseAnalysis::sgNodeCounter = 1;
-
 
 /**********************************************************
  * Retrieve the unique int representation for a SgNode
  * according to its dataflow (sequence)
  *********************************************************/
 int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
-  //  if (visualizationEnabled) {
     bool contained = searchVizzMap (sgNode);
     if (contained) {
       int nr = vizzhelp[sgNode];
       return nr;
     }
-    //  }
   return -1;
 }
 
@@ -37,7 +33,6 @@ int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
  *  Add helping ID to each node for vizz purpose
  *********************************************************/
 bool DefUseAnalysis::addID(SgNode* sgNode) { 
-  //  if (visualizationEnabled) {
   if (searchVizzMap(sgNode)==false) {
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisaddID) 
@@ -49,19 +44,8 @@ bool DefUseAnalysis::addID(SgNode* sgNode) {
       }
       return true;
   }
-  //  }
   return false;
 }
-
-
-/**********************************************************
- *  Add an element to the indirect definition table
- *********************************************************
-void DefUseAnalysis::addIDefElement(SgNode* sgNode, 
-                                SgInitializedName* initName) { 
-  idefTable.insert(make_pair(sgNode, initName));
-}
-*/
 
 /**********************************************************
  *  Add an element to the table
@@ -90,7 +74,6 @@ void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode,
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisaddUseE) 
 #endif
-  //  (*tabl)[sgNode].insert(make_pair(initName, defNode));
   std::pair<SgInitializedName*, SgNode*> el = make_pair(initName, defNode); 
   multitype currentList = (*tabl)[sgNode];
   if (find ( currentList.begin(), currentList.end(), el) == currentList.end())
@@ -114,17 +97,12 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
   ROSE_ASSERT(initName);
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
-  //table[sgNode].erase(table[sgNode].lower_bound(initName), table[sgNode].upper_bound(initName));
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisreplaceE1) 
 #endif
   {
-    //table[sgNode].erase(initName);
-    //    table[sgNode].insert(make_pair(initName,sgNode));
-
     multitype& map = table[sgNode];
-    map.erase(std::remove_if(map.begin(), map.end(), boost::bind(boost::type<bool>(), DefUseAnalysismycond, _1, initName)), map.end());
-    //         table[sgNode].erase(it);
+    map.erase(std::remove_if(map.begin(), map.end(), boost::bind(boost::type<bool>(), DefUseAnalysismycond, boost::placeholders::_1, initName)), map.end());
 
     table[sgNode].push_back(make_pair(initName,sgNode));
   }
@@ -139,10 +117,10 @@ void DefUseAnalysis::clearUseOfElement(SgNode* sgNode,
 #pragma omp critical (DefUseAnalysisclearUse) 
 #endif
   {
-  //  usetable[sgNode].erase(initName);
-
     multitype& map = usetable[sgNode];
-    map.erase(std::remove_if(map.begin(), map.end(), boost::bind(boost::type<bool>(), DefUseAnalysismycond, _1, initName)), map.end());
+
+    // Removal of boost requires C++20
+    map.erase(std::remove_if(map.begin(), map.end(), boost::bind(boost::type<bool>(), DefUseAnalysismycond, boost::placeholders::_1, initName)), map.end());
 
   }
 }
@@ -204,7 +182,6 @@ void DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other,
  *  meaning is it in the globalVar table
  *********************************************************/
 bool DefUseAnalysis::isNodeGlobalVariable(SgInitializedName* sgNode){
-  //  SgNode* node = sgNode;
   return isContainedinVector(sgNode, globalVarList);
 }
 
@@ -311,32 +288,17 @@ bool DefUseAnalysis::searchMap(SgNode* node) {
   return searchMap(&table, node);
 }
 
-
-
 /**********************************************************
  *  Search for the value for a certain key in the vizzmap
  *********************************************************/
 bool DefUseAnalysis::searchVizzMap(SgNode* node) {
   bool isCurrentValueContained=false;
-  //  std::cerr << " size of vizzhelp " << vizzhelp.size() << std::endl;
-  ROSE_ASSERT(node);
+  ASSERT_not_null(node);
 
   convtype::iterator i= vizzhelp.find(node);
   if (i!=vizzhelp.end()) {
     isCurrentValueContained=true;
   }
-#if 0
-    convtype::const_iterator i = vizzhelp.begin();
-    i = vizzhelp.begin();
-    //SgNode* sgNodeMM = NULL;
-    for (; i != vizzhelp.end(); ++i) {
-      SgNode* initNameMM = (*i).first;
-      if (initNameMM==node) {
-        isCurrentValueContained=true;
-        break;
-      }
-    } 
-#endif
   return isCurrentValueContained;
 }
 
@@ -345,25 +307,11 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
  *********************************************************/
 bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
   bool isCurrentValueContained=false;
-  //  std::cerr << " size map : " << ltable->size() << std::endl;
-#if 0   
-  if (ltable->size()>0) {
-    tabletype::const_iterator i = ltable->begin();
-    for (; i != ltable->end(); ++i) {
-      SgNode* initNameMM = (*i).first;
-      if (initNameMM==node) {
-        isCurrentValueContained=true;
-        break;
-      }
-    } 
-  }
-#else
    if (!ltable->empty()) {
       if (ltable->find(node) != ltable->end()) {
          isCurrentValueContained=true;
       }
     }
-#endif  
   return isCurrentValueContained;
 }
 
@@ -393,7 +341,6 @@ std::vector < SgNode* > DefUseAnalysis::getUseFor(SgNode* node, SgInitializedNam
 std::vector < SgNode* > DefUseAnalysis::getAnyFor(const multitype* multi, SgInitializedName* initName) {
   vector < SgNode*> defNodes;
   defNodes.clear();
-  //multitype multi = getDefUseFor(node);
   if (multi->size()>0) {
     multitype::const_iterator i = multi->begin();
     for (; i!=multi->end();++i) {
@@ -452,8 +399,6 @@ void  DefUseAnalysis::find_all_global_variables() {
   GlobalVarAnalysis* globalVars = new GlobalVarAnalysis(DEBUG_MODE, project, this);
   globalVarList = globalVars->run();
   delete globalVars;
-  //bool test = isNodeGlobalVariable(*(globalVarList.begin()));
-  //cerr << "isGlobalVar : " << resBool(test) << endl; 
 
   if (DEBUG_MODE) {
     cout << "FINISH: Finding global variables" << endl; 
@@ -492,9 +437,10 @@ bool  DefUseAnalysis::start_traversal_of_functions() {
       cout << "\t function Def@"<< proc->get_file_info()->get_filename() <<":" << proc->get_file_info()->get_line() << endl;
     FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
     nrOfNodesVisited += defuse_perfunc->getNumberOfNodesVisited();
-    //cout << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 
-    if (rem_source.getNode()!=NULL)
+
+    if (rem_source.getNode() != nullptr) {
       dfaFunctions.push_back(rem_source);
+    }
   }
   delete defuse_perfunc;
 
@@ -517,14 +463,9 @@ DefUseAnalysis::start_traversal_of_one_function(SgFunctionDefinition* proc) {
   bool abortme=false;
   DefUseAnalysisPF*  defuse_perfunc = new DefUseAnalysisPF(false, this);
 
-// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-// FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
-   defuse_perfunc->run(proc,abortme);
-
+  defuse_perfunc->run(proc,abortme);
   nrOfNodesVisited = defuse_perfunc->getNumberOfNodesVisited();
 
-  //cout << " nodes visited: " << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 
-  
   return nrOfNodesVisited;
 }
 
@@ -549,10 +490,10 @@ int DefUseAnalysis::run() {
   bool aborted;
   sgNodeCounter = 1;
   nrOfNodesVisited = 0;
-  if (DEBUG_MODE) 
+  if (DEBUG_MODE) {
     cout << "START: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
-  // assert input is correct
-  ROSE_ASSERT(project != NULL);
+  }
+  ASSERT_not_null(project);
 
   table.clear();
   vizzhelp.clear();
@@ -569,9 +510,8 @@ int DefUseAnalysis::run() {
     "  --  #CFG nodes visited: "<< nrOfNodesVisited << endl;
     }
 
-  //if (DEBUG_MODE) 
-  //cout << "FINISH: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
-  if (aborted) 
+  if (aborted) {
     return 1;
+  }
    return 0;
 }

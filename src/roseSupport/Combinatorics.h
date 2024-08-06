@@ -376,7 +376,7 @@ public:
       #endif
     }
 
-    HasherGcrypt(const HasherGcrypt &other) {
+    HasherGcrypt(const HasherGcrypt &) {
       #ifdef ROSE_HAVE_LIBGCRYPT
         if (gcry_md_copy(&md_, other.md_) != GPG_ERR_NO_ERROR)
             throw Exception("cannot copy libgcrypt hash " + std::string(gcry_md_algo_name(hashAlgorithmId)));
@@ -391,7 +391,7 @@ public:
       #endif
     }
 
-    HasherGcrypt& operator=(const HasherGcrypt &other) {
+    HasherGcrypt& operator=(const HasherGcrypt &) {
       #ifdef ROSE_HAVE_LIBGCRYPT
         gcry_md_close(md_);
         if (gcry_md_copy(&md_, other.md_) != GPG_ERR_NO_ERROR)

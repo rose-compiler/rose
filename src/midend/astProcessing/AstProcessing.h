@@ -79,7 +79,7 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
 typedef void *DummyAttribute;
 // We initialize DummyAttributes to this value to avoid "may not be
 // initialized" warnings. If you change the typedef, adjust the constant...
-static const DummyAttribute defaultDummyAttribute = NULL;
+static const DummyAttribute defaultDummyAttribute = nullptr;
 // The attribute _DummyAttribute is reserved for the implementation, so we
 // should deprecate it, but there is code using it explicitly. Which it
 // shouldn't.
@@ -389,7 +389,7 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 SgTreeTraversal() 
   : useDefaultIndexBasedTraversal(true),
     traversalConstraint(false),
-    fileToVisit(NULL),
+    fileToVisit(nullptr),
     synthesizedAttributes(new SynthesizedAttributesList())
 {
 }
@@ -400,9 +400,9 @@ template<class InheritedAttributeType, class SynthesizedAttributeType>
 SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 ~SgTreeTraversal()
 {
-    ROSE_ASSERT(synthesizedAttributes != NULL);
+    ASSERT_not_null(synthesizedAttributes);
     delete synthesizedAttributes;
-    synthesizedAttributes = NULL;
+    synthesizedAttributes = nullptr;
 }
 
 
@@ -432,7 +432,7 @@ operator=(const SgTreeTraversal &other)
     traversalConstraint = other.traversalConstraint;
     fileToVisit = other.fileToVisit;
 
-    ROSE_ASSERT(synthesizedAttributes != NULL);
+    ASSERT_not_null(synthesizedAttributes);
     delete synthesizedAttributes;
     synthesizedAttributes = other.synthesizedAttributes->deepCopy();
 
@@ -468,7 +468,7 @@ traverseInputFiles(SgProject* projectNode,
 
      for (SgFilePtrList::const_iterator fl_iter = fList.begin(); fl_iter != fList.end(); fl_iter++)
         {
-          ROSE_ASSERT(*fl_iter != NULL);
+          ASSERT_not_null(*fl_iter);
           traverseWithinFile((*fl_iter), inheritedValue, travOrder);
         }
    }
@@ -668,14 +668,13 @@ traverseWithinFile(SgNode* node,
         InheritedAttributeType inheritedValue,
         t_traverseOrder treeTraversalOrder)
 {
-  // DQ (1/18/2006): debugging
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      traversalConstraint = true;
 
      SgFile* filenode = isSgFile(node);
-     if (filenode == NULL)
+     if (filenode == nullptr)
         {
-          if (node == NULL)
+          if (node == nullptr)
              {
                printf ("Error: traverseWithinFile(): (node should be non-null) node = %p \n",node);
              }
@@ -685,7 +684,7 @@ traverseWithinFile(SgNode* node,
                printf ("Error: traverseWithinFile(): (node should be type SgFile) node = %p = %s \n",node,node->class_name().c_str());
              }
         }
-     ROSE_ASSERT(filenode != NULL); // this function will be extended to work with all nodes soon
+     ASSERT_not_null(filenode); // this function will be extended to work with all nodes soon
 
      // GB (05/30/2007): changed to a SgFile* instead of a file name,
      // comparisons are much cheaper this way
@@ -693,7 +692,7 @@ traverseWithinFile(SgNode* node,
 
 #if 0
   // DQ (8/17/2018): Added debugging support for new combined unparse tokens with unparse headers feature.
-     std::string filename = fileToVisit != NULL ? fileToVisit->getFileName() : "";
+     std::string filename = fileToVisit != nullptr ? fileToVisit->getFileName() : "";
      printf ("In SgTreeTraversal<>::traverseWithinFile(): fileToVisit = %p filename = %s \n",fileToVisit,filename.c_str());
 #endif
 
@@ -795,23 +794,21 @@ performTraversal(SgNode* node,
 
           for (size_t idx = 0; idx < numberOfSuccessors; idx++)
              {
-               SgNode *child = NULL;
+               SgNode* child = nullptr;
 
                if (useDefaultIndexBasedTraversal)
                   {
-                 // ROSE_ASSERT(node->get_traversalSuccessorByIndex(idx) != NULL || node->get_traversalSuccessorByIndex(idx) == NULL);
                     child = node->get_traversalSuccessorByIndex(idx);
 
                  // DQ (4/21/2014): Valgrind test to isolate uninitialised read reported where child is read below.
-                    ROSE_ASSERT(child == NULL || child != NULL);
+                    ASSERT_require(child == nullptr || child != nullptr);
                   }
                  else
                   {
-                 // ROSE_ASSERT(succContainer[idx] != NULL || succContainer[idx] == NULL);
                     child = succContainer[idx];
 
                  // DQ (4/21/2014): Valgrind test to isolate uninitialised read reported where child is read below.
-                    ROSE_ASSERT(child == NULL || child != NULL);
+                    ASSERT_require(child == nullptr || child != nullptr);
                   }
 
 #if 0
@@ -819,7 +816,7 @@ performTraversal(SgNode* node,
                printf ("In SgTreeTraversal<>::performTraversal(): child = %p \n",child);
 #endif
 
-               if (child != NULL)
+               if (child != nullptr)
                   {
 #if 0
                  // DQ (8/17/2018): Add support for debugging.

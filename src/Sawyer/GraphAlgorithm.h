@@ -502,7 +502,7 @@ public:
      *  The vector @p x contains vertex IDs from graph @p g1, and @p y contains IDs from @p g2. Both vectors will always be the
      *  same length.  This implementation prints the vectors @p w and @p y to standard output. See the class definition for
      *  more information. */
-    CsiNextAction operator()(const GraphA &g1, const std::vector<size_t> &x, const GraphB &g2, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const GraphA &/*g1*/, const std::vector<size_t> &x, const GraphB &/*g2*/, const std::vector<size_t> &y) {
         ASSERT_require(x.size() == y.size());
         std::cout <<"Common subgraph isomorphism solution #" <<n <<" found:\n"
                   <<"  x = [";

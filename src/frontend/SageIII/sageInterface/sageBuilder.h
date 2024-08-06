@@ -1855,7 +1855,7 @@ namespace Rose {
       template <typename... Args>
       struct TemplateArgumentList {
         static std::string str() { return ""; }
-        static void fill(std::vector<SgTemplateArgument *> & tpl_args) {}
+        static void fill(std::vector<SgTemplateArgument *> &) {}
       };
 
       template <typename T>

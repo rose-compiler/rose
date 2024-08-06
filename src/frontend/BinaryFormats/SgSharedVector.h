@@ -129,10 +129,10 @@ public:
         p_size = 0;
         p_capacity = 0;
     }
-    void erase(iterator position) {
+    void erase(iterator /*position*/) {
         abort(); //FIXME
     }
-    void erase(iterator start, iterator finish) {
+    void erase(iterator /*start*/, iterator /*finish*/) {
         abort(); //FIXME
     }
     void pop_back() {
@@ -141,13 +141,13 @@ public:
     }
 
     /**** Insertion ****/
-    void insert(iterator position, const_reference x) {
+    void insert(iterator /*position*/, const_reference /*x*/) {
         abort(); //FIXME
     }
-    void insert(iterator position, size_type n, const_reference x) {
+    void insert(iterator /*position*/, size_type /*n*/, const_reference /*x*/) {
         abort(); //FIXME
     }
-    void insert(iterator position, iterator start, iterator finish) {
+    void insert(iterator /*position*/, iterator /*start*/, iterator /*finish*/) {
         abort(); //FIXME
     }
     void push_back(const_reference x) {

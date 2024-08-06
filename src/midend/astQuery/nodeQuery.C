@@ -1,23 +1,11 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// include file for transformation specification support
-// include "specification.h"
-// include "globalTraverse.h"
-
-// include "query.h"
-
-// string class used if compiler does not contain a C++ string class
-// include <roseString.h>
-
-#include <boost/bind.hpp>
-
+#include <boost/bind/bind.hpp>
 #include "nodeQuery.h"
+
 #define DEBUG_NODEQUERY 0
-// #include "arrayTransformationSupport.h"
 
-
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace AstQueryNamespace;
 
@@ -568,7 +556,6 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
         printf ("\nHere is a variable :Line = %d Columns = %d \n",
             Rose::getLineNumber (isSgLocatedNode (astNode)),
             Rose::getColumnNumber (isSgLocatedNode (astNode)));
-        //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
         typedef SgInitializedNamePtrList::iterator variableIterator;
@@ -1001,11 +988,8 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode
 NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, VariantVector targetVariantVector, AstQueryNamespace::QueryDepth defineQueryType)
    {
      NodeQuerySynthesizedAttributeType returnList;
-#if 0
-     printf ("Inside of NodeQuery::querySubTree #5 \n");
-#endif
 
-     AstQueryNamespace::querySubTree(subTree, boost::bind(querySolverGrammarElementFromVariantVector, _1, targetVariantVector, &returnList), defineQueryType);
+     AstQueryNamespace::querySubTree(subTree, boost::bind(querySolverGrammarElementFromVariantVector, boost::placeholders::_1, targetVariantVector, &returnList), defineQueryType);
 
      return returnList;
    }
@@ -1014,18 +998,13 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList ( NodeQuerySynthesize
    {
      NodeQuerySynthesizedAttributeType returnList;
 
-     AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), boost::bind(querySolverGrammarElementFromVariantVector, _1, targetVariantVector, &returnList));
+     AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), boost::bind(querySolverGrammarElementFromVariantVector, boost::placeholders::_1, targetVariantVector, &returnList));
 
      return returnList;
    }
 
-// DQ (3/26/2004): Added query based on variant
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, VariantT targetVariant, AstQueryNamespace::QueryDepth defineQueryType )
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree(SgNode * subTree, VariantT targetVariant, AstQueryNamespace::QueryDepth defineQueryType )
    {
-#if 0
-     printf ("Inside of NodeQuery::querySubTree #6 \n");
-#endif
-
      return NodeQuery::querySubTree(subTree, VariantVector(targetVariant), defineQueryType);
    }
 
@@ -1085,16 +1064,12 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
 
   Rose_STL_Container<SgNode*> nodeList;
 
-  // if (isSgProject(astNode) != NULL || (isSgFile(astNode) != NULL && SgProject::numberOfFiles() == 1) )
-  // if (isSgProject(astNode) != NULL)
   bool useMemoryPool = (isSgProject(astNode) != NULL);
   if (useMemoryPool == false)
   {
     // Check if this is a SgFile or SgGlobal where there is only a single SgFile in the SgProject!
     if (isSgFile(astNode) != NULL || isSgGlobal(astNode) != NULL)
     {
-   // DQ (1/25/2011): We want to be able to use this functionality, it is not depreicated...
-   // printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
       SgProject* project = TransformationSupport::getProject(astNode);
 
       // 2nd chance to reset useMemoryPool and provide an optimized query for types!
@@ -1105,7 +1080,6 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
   if (useMemoryPool == true)
   {
     // Then just query the memory pool and provide a much faster query.
-    // printf ("Using memory pool access to type information ... \n");
 
     TypeQueryDummyFunctionalTest funcTest;
 
@@ -1113,11 +1087,6 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
     VariantVector ir_nodes (V_SgType);
 
     // Execute the query on each separate memory pool for the list of IR node variants
-
-    // DQ (3/14/2007): The NodeQuery::queryMemoryPool() function assumes that the function return type is a std::list
-    // so try to use the AstQueryNamespace::queryMemoryPool() function directly.
-    // nodeList = NodeQuery::queryMemoryPool(funcTest,&ir_nodes);
-    // AstQueryNamespace::queryMemoryPool(funcTest,nodeList,&ir_nodes);
 
     // DQ (2/16/2007): This is Andreas's fix for the performance problem represented by the previous 
     // implementat which built and returns STL lists by value with only a single IR node in the list.
@@ -1132,34 +1101,9 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
 #endif
 
     // Get the types from the specified subtree
-#if 1
- // DQ (1/13/2011): This will only get a subset of types.
+    // DQ (1/13/2011): This will only get a subset of types.
     nodeList = NodeQuery::querySubTree (astNode,V_SgType);
-#else
- // DQ (1/13/2011): But I don't think this is the correct approach...
-    AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::ExtractTypes;
-    nodeList = NodeQuery::querySubTree (astNode,V_SgType,defineQueryType);
-#endif
-
-#if 0
-    printf ("/* AST Test: nodeList.size() = %" PRIuPTR " */ \n",nodeList.size());
-    printNodeList(nodeList);
-    printf ("*** Sorted list *** \n");
-#endif
-
-    // DQ (9/25/2007): These operations don't exist for a std::vector and were used with we used std::list.
-    // nodeList.sort();
-    // nodeList.unique();
-#if 0
-    printf ("Skipping use of std::list<>::sort() and std::list<>::unique() now that we are using std::vector! (Is this a problem for NodeQuery::generateListOfTypes()?) \n");
-#endif
   }
-
-#if 0
-  printNodeList(nodeList);
-  printf ("DONE: Generate list of types ... \n");
-  printf ("************************** \n\n\n");
-#endif
 
   return nodeList;
 }

@@ -1976,7 +1976,7 @@ Process (SgProject* project, std::vector<std::string>& argv)
 
 void
 Rose::Cmdline::Gnu::
-ProcessParam (SgProject* project, std::vector<std::string>& argv)
+ProcessParam (SgProject*, std::vector<std::string>& argv)
 {
   std::string param;
   bool has_param =

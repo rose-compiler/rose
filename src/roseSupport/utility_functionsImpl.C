@@ -46,28 +46,20 @@ struct generateDOTExtended
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>
 struct generateDOTExtended_withIncludes
 {
-        generateDOTExtended_withIncludes ( const SgProject & project, std::string filenamePostfix = "", ExtraNodeInfo_t eni = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo(), ExtraNodeOptions_t eno = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions(), ExtraEdgeInfo_t eei = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo(), ExtraEdgeOptions_t eeo = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions() )
-        {
-//     TimingPerformance timer ("ROSE generateDOT_withIncludes():");
-
-                AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, ExtraEdgeOptions_t> astdotgen(eni, eno, eei, eeo);
-                SgProject & nonconstProject = (SgProject &) project;
+  generateDOTExtended_withIncludes (const SgProject & project, std::string /*filenamePostfix = ""*/, ExtraNodeInfo_t eni = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo(), ExtraNodeOptions_t eno = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions(), ExtraEdgeInfo_t eei = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo(), ExtraEdgeOptions_t eeo = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions() )
+    {
+       AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, ExtraEdgeOptions_t> astdotgen(eni, eno, eei, eeo);
+       SgProject & nonconstProject = (SgProject &) project;
 
   // Note that the use of generateInputFiles causes the graph to be generated 
   // for only the input source file and not any included header files. The 
   // result is a much smaller file (and generally a more useful one).
-#if 1
+
   // This used to be the default, but it would output too much data (from include files).
   // It is particularly useful when handling multiple files on the command line and 
   // traversing the files included from each file.
-                astdotgen.generate(&nonconstProject);
-#else
-  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
-  // is not being processed (which appears to be a bug). This is because in the implementation
-  // of the generateInputFiles the function traverseInputFiles is called.
-                astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
-#endif
-        }
+       astdotgen.generate(&nonconstProject);
+    }
 };
 
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>

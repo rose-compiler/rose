@@ -9786,7 +9786,6 @@ SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFun
      X.new_function_prototype     = NULL;
 
   // DQ (2/28/2021): Added new data member to support deferred transformations.
-  // X.statementInterval;
      X.locationToOverwriteWithTransformation             = NULL;
      X.transformationToOverwriteFirstStatementInInterval = NULL;
      X.blockOfStatementsToOutline                        = NULL;
@@ -9795,7 +9794,7 @@ SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFun
    }
 
 SageInterface::DeferredTransformation
-SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessingInfo/* = false*/)
+SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool /*movePreprocessingInfo = false*/)
    {
 #if 0
      printf ("In SageInterface::DeferredTransformation constructor for replaceStatement called \n");
@@ -9812,7 +9811,6 @@ SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, Sg
      X.new_function_prototype     = NULL;
 
   // DQ (2/28/2021): Added new data member to support deferred transformations.
-  // X.statementInterval;
      X.locationToOverwriteWithTransformation = NULL;
      X.transformationToOverwriteFirstStatementInInterval = NULL;
      X.blockOfStatementsToOutline = NULL;
@@ -15737,11 +15735,10 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 /*
  * function declarations can have a scope that is different from their structural location (e.g. member functions declared outside of the defining class declaration.
  */
-void SageInterface::fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope)
+void SageInterface::fixTemplateDeclaration(SgTemplateDeclaration*, SgScopeStatement*)
    {
   // DQ (12/4/2011): This function has not been implemented yet.  It will assert fail if it is required.
      printf ("Need to handle SgTemplateDeclaration IR nodes as well...(implement later) \n");
-  // ROSE_ASSERT(false);
    }
 
 
@@ -15755,14 +15752,8 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
         }
        else if (isStructDeclaration(stmt))
         {
-       // DQ (1/2/2010): Enforce some rules as early as possible.
-       // fixStructDeclaration(isSgClassDeclaration(stmt),scope);
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
-          ROSE_ASSERT(classDeclaration != NULL);
-#if 0
-          ROSE_ASSERT(classDeclaration->get_firstNondefiningDeclaration() != NULL);
-          ROSE_ASSERT(classDeclaration->get_definingDeclaration() != NULL);
-#endif
+          ROSE_ASSERT(classDeclaration != nullptr);
           fixStructDeclaration(classDeclaration,scope);
         }
        else if (isSgClassDeclaration(stmt))
@@ -19561,7 +19552,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
 
 
 
-void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id)
+void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode*, int /*physical_file_id*/)
    {
   // DQ (7/13/2021): This function marks nodes in a subtree to be a transformation, but avoids marking subtrees of the SgCastExp.
   // This is important because currently the marking of an implicit cast will cause it to be unparsed, even though it is marked
@@ -25075,25 +25066,15 @@ SageInterface::skipTranslateToUseCppDeclaration( PreprocessingInfo* currentPrepr
    }
 
 std::vector<SgC_PreprocessorDirectiveStatement*>
-SageInterface::translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope)
+SageInterface::translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement*)
    {
-
-#if 0
-     printOutComments(statement);
-#endif
-
      std::vector<SgC_PreprocessorDirectiveStatement*> directiveList;
 
   // Find existing first and last header.
-     AttachedPreprocessingInfoType *comments = statement->getAttachedPreprocessingInfo ();
+     AttachedPreprocessingInfoType* comments = statement->getAttachedPreprocessingInfo();
 
-     if (comments != NULL)
+     if (comments != nullptr)
         {
-       // DQ (3/23/2019): I think we can use this function instead.
-       // SgC_PreprocessorDirectiveStatement* SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* currentPreprocessingInfo )
-
-       // PreprocessingInfo * firstExistingHeader = NULL;
-       // PreprocessingInfo * lastExistingHeader  = NULL;
           AttachedPreprocessingInfoType::iterator i; // , firsti, lasti;
           for (i = comments->begin (); i != comments->end(); i++)
              {
@@ -27752,12 +27733,10 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
   vector<PreprocessingInfo*> afterList;
   if (SgLocatedNode* locatedNode = isSgLocatedNode(current))
   {
-    AttachedPreprocessingInfoType *comments =
-      locatedNode->getAttachedPreprocessingInfo ();
+    AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
 
-    if (comments != NULL)
+    if (comments != nullptr)
     {
-      int counter = 0;
       AttachedPreprocessingInfoType::iterator i;
       int idx=0; 
       for (i = comments->begin (); i != comments->end (); i++)

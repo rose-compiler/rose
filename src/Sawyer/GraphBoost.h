@@ -756,14 +756,14 @@ in_degree(typename graph_traits<const Sawyer::Container::Graph<V, E, VKey, EKey,
 template<class V, class E, class VKey, class EKey, class Alloc>
 typename graph_traits<Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >::degree_size_type
 degree(typename graph_traits<Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >::vertex_descriptor vertex,
-       Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &graph) {
+       Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &/*graph*/) {
     return in_degree(vertex) + out_degree(vertex);
 }
 
 template<class V, class E, class VKey, class EKey, class Alloc>
 typename graph_traits<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >::degree_size_type
 degree(typename graph_traits<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >::vertex_descriptor vertex,
-       const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &graph) {
+       const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &) {
     return in_degree(vertex) + out_degree(vertex);
 }
 
