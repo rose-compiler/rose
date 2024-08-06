@@ -123,8 +123,8 @@ VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const Bas
             const size_t headerOffset = input.tellg();
             input.read((char*)&header, sizeof header);
             const size_t nHeader = input.gcount();
-            header.payloadSize = BitOps::fromLittleEndian(header.payloadSize);
-            header.addr = BitOps::fromLittleEndian(header.addr);
+            header.payloadSize = BitOps::fromBigEndian(header.payloadSize);
+            header.addr = BitOps::fromBigEndian(header.addr);
 
             if (0 == nHeader) {
                 break;
@@ -292,8 +292,8 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
                 memset(&header, 0, sizeof header);
                 header.version = settings_.version;
                 header.mapFlags = segment.accessibility() & MemoryMap::READ_WRITE_EXECUTE;
-                header.payloadSize = BitOps::toLittleEndian(boost::numeric_cast<uint32_t>(selected.size()));
-                header.addr = BitOps::toLittleEndian(boost::numeric_cast<uint64_t>(selected.least()));
+                header.payloadSize = BitOps::toBigEndian(boost::numeric_cast<uint32_t>(selected.size()));
+                header.addr = BitOps::toBigEndian(boost::numeric_cast<uint64_t>(selected.least()));
                 out.write((const char*)&header, sizeof header);
                 if (!out.good())
                     throw Exception(outputName, out.tellp(), "write failed");
