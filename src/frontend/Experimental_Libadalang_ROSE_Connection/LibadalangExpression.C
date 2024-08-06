@@ -1349,6 +1349,20 @@ namespace{
           break;
         }
 
+      case ada_explicit_deref:                   // 4.1
+        {
+          logKind("ada_explicit_deref", kind);
+
+          //Get the prefix
+          ada_base_entity lal_prefix;
+          ada_explicit_deref_f_prefix(lal_element, &lal_prefix);
+
+          SgExpression& exp = getExpr(&lal_prefix, ctx);
+
+          res = &mkPointerDerefExp(exp);
+          break;
+        }
+
       case ada_bin_op:
       case ada_un_op:
       case ada_relation_op:
@@ -1798,6 +1812,22 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
 
       ada_base_entity* lal_constraint = nullptr; //TODO Where should this come from?
       SgType& ty = getDiscreteSubtype(lal_element, lal_constraint, ctx);
+
+      res = &mkTypeExpression(ty);
+      break;
+    }
+
+    case ada_subtype_indication:
+    {
+      logKind("A_Discrete_Subtype_Definition", kind);
+
+      ada_base_entity lal_identifier;
+      ada_subtype_indication_f_name(lal_element, &lal_identifier);
+
+      ada_base_entity lal_constraint;
+      ada_subtype_indication_f_constraint(lal_element, &lal_constraint);
+
+      SgType& ty = getDiscreteSubtype(&lal_identifier, &lal_constraint, ctx);
 
       res = &mkTypeExpression(ty);
       break;

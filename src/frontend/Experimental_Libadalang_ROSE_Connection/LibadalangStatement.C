@@ -2128,6 +2128,27 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           assocstmt = &sgnode;
           break;
         }
+      case ada_delay_stmt:             // 9.6
+        {
+          logKind("ada_delay_stmt", kind);
+
+          //Get the until status of this node
+          ada_base_entity lal_has_until;
+          ada_delay_stmt_f_has_until(lal_stmt, &lal_has_until);
+          bool has_until = (ada_node_kind(&lal_has_until) == ada_until_present);
+
+          //Get the delay expression
+          ada_base_entity lal_expr;
+          ada_delay_stmt_f_expr(lal_stmt, &lal_expr);
+
+          SgExpression&   delayexpr = getExpr(&lal_expr, ctx);
+          SgAdaDelayStmt& sgnode    = mkAdaDelayStmt(delayexpr, !has_until);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
       case ada_raise_stmt:                   // 11.3
         {
           logKind("ada_raise_stmt", kind);

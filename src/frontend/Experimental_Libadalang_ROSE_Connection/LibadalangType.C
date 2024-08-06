@@ -94,12 +94,20 @@ namespace
 
   
   SgArrayType&
-  createUnconstrainedArrayType(ada_base_entity* lal_element, AstContext ctx)
+  createArrayType(ada_base_entity* lal_element, AstContext ctx)
   {
     //Get the indices
     ada_base_entity lal_indices;
     ada_array_type_def_f_indices(lal_element, &lal_indices);
-    ada_unconstrained_array_indices_f_types(&lal_indices, &lal_indices);
+    ada_node_kind_enum lal_indices_kind = ada_node_kind(&lal_indices);
+    bool unconstrained = true;
+
+    if(lal_indices_kind == ada_unconstrained_array_indices){
+      ada_unconstrained_array_indices_f_types(&lal_indices, &lal_indices);
+    } else {
+      unconstrained = false;
+      ada_constrained_array_indices_f_list(&lal_indices, &lal_indices);
+    }
 
     //Get the component type
     ada_base_entity lal_component_type;
@@ -109,22 +117,26 @@ namespace
 
     int count = ada_node_children_count(&lal_indices);
     for(int i = 0; i < count; i++){
-      ada_base_entity lal_unconstrained_array_index;
-      if(ada_node_child(&lal_indices, i, &lal_unconstrained_array_index) != 0){
+      ada_base_entity lal_array_index;
+      if(ada_node_child(&lal_indices, i, &lal_array_index) != 0){
         //Call getExpr on the name
-        //TODO Can this ever need getDefinitionExpr instead?
         ada_base_entity lal_identifier;
-        ada_unconstrained_array_index_f_subtype_indication(&lal_unconstrained_array_index, &lal_identifier);
-        ada_subtype_indication_f_name(&lal_identifier, &lal_identifier);
-        SgExpression& index = getExpr(&lal_identifier, ctx);
-        indicesSeq.push_back(&index);
+        if(unconstrained){
+          ada_unconstrained_array_index_f_subtype_indication(&lal_array_index, &lal_identifier);
+          ada_subtype_indication_f_name(&lal_identifier, &lal_identifier);
+          SgExpression& index = getExpr(&lal_identifier, ctx);
+          indicesSeq.push_back(&index);
+        } else {
+          SgExpression& index = getDefinitionExpr(&lal_array_index, ctx);
+          indicesSeq.push_back(&index);
+        }
       }
     }
 
     SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
     SgType&                    compType    = getDefinitionType(&lal_component_type, ctx);
 
-    return mkArrayType(compType, indicesAst, true /* unconstrained */);
+    return mkArrayType(compType, indicesAst, unconstrained);
   }
 
   SgTypedefDeclaration&
@@ -339,6 +351,11 @@ namespace
         }
         break;
       }
+      case ada_array_type_def: //TODO This is a hack b/c array type defs look the same to accesses in lal
+      {
+        return createArrayType(&lal_type_access, ctx);
+        break;
+      }
 
       /*case An_Anonymous_Access_To_Procedure:           // access procedure
       case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
@@ -512,9 +529,8 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     switch(kind)
     {
       case ada_type_decl:
+      case ada_subtype_decl:
         {
-          //logKind("An_Identifier");
-
           int hash = hash_node(lal_expr);
           logInfo() << "Searching for hash: " << hash;
 
@@ -821,11 +837,11 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
 
           break;
         }
-      case ada_array_type_def:      // 3.6(2) TODO This probably also matches constrained arrays
+      case ada_array_type_def:      // 3.6(2)
         {
           logKind("ada_array_type_def", kind);
 
-          res.sageNode(createUnconstrainedArrayType(lal_def, ctx));
+          res.sageNode(createArrayType(lal_def, ctx));
           break;
         }
       case ada_record_type_def:               // 3.8(2)     -> Trait_Kinds
