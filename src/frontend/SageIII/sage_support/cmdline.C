@@ -1976,7 +1976,7 @@ Process (SgProject* project, std::vector<std::string>& argv)
 
 void
 Rose::Cmdline::Gnu::
-ProcessParam (SgProject*, std::vector<std::string>& argv)
+ProcessParam (SgProject* /*project*/, std::vector<std::string>& argv)
 {
   std::string param;
   bool has_param =
@@ -2019,7 +2019,7 @@ Rose::Cmdline::Ada::commandlineSettings()
 
 void
 Rose::Cmdline::Ada::
-Process(SgProject*, std::vector<std::string>& argv)
+Process(SgProject* /*project*/, std::vector<std::string>& argv)
 {
   std::string tmp;
 
