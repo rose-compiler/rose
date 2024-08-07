@@ -19552,7 +19552,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
 
 
 
-void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode*, int /*physical_file_id*/)
+void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id)
    {
   // DQ (7/13/2021): This function marks nodes in a subtree to be a transformation, but avoids marking subtrees of the SgCastExp.
   // This is important because currently the marking of an implicit cast will cause it to be unparsed, even though it is marked
