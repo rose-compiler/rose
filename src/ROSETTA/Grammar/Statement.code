@@ -605,22 +605,12 @@ StatementReplace(SgStatement* /*parent*/, Elemtype* &cur, SgStatement* target, S
      return false;
    }
 
-#if 0
-// DQ (12/30/2009): This has been moved to the header file since it was a used in
-// several places and could not be supported in the source file now that we
-// support the generation of smaller and more numerous files by ROSETTA.
-inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
-   {
-#error "DEAD CODE!"
-#error "DEAD CODE!"
-#else
 // Temporary while we move code to use generateMatchingFileInfo directly.
 inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
    {
      ROSE_ASSERT(p != NULL);
      return p->generateMatchingFileInfo();
    }
-#endif
 
 HEADER_STATEMENT_POSTDECLARATION_END
 
@@ -8243,23 +8233,6 @@ SgGlobal::prepend_declaration(SgDeclarationStatement * what)
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
    }
-
-#if 0
-void
-SgGlobal::insert_declaration ( const SgDeclarationStatementPtrList::iterator& where, SgDeclarationStatement* what)
-   {
-#ifndef REMOVE_SET_PARENT_FUNCTION
-#error "DEAD CODE"
-     what->set_parent(this);
-#endif
-     what->set_parent(this);
-
-     get_declarations().insert(where,what);
-
-  // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
-     ROSE_ASSERT(what->get_parent() != NULL);
-   }
-#endif
 #endif
 
 bool
@@ -19785,24 +19758,6 @@ SgAttributeSpecificationStatement::get_dimension_object_list()
 SgSymbol*
 SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
    {
-#if 0
-
-#DEAD CODE!
-
-     SgDeclarationStatement* declaration = get_declaration_associated_with_symbol();
-     if (declaration == NULL)
-        {
-          printf ("Error: in SgDeclarationStatement::search_for_symbol_from_symbol_table(): declaration == NULL \n");
-          printf ("     this = %p = %s = %s \n",this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
-        }
-     ROSE_ASSERT(declaration != NULL);
-     SgSymbol* symbol = declaration->get_symbol_from_symbol_table();
-     ROSE_ASSERT(symbol != NULL);
-     return symbol;
-
-#DEAD CODE!
-
-#else
   // If we are searching for a symbol associated with this declaration, then it could only be a numeric label
   // in which case we have to search for it in the function scope (SgFunctionDefinition).
 
@@ -19821,7 +19776,6 @@ SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
      ROSE_ASSERT(functionDefinition != nullptr);
 
      return functionDefinition->find_symbol_from_declaration(this);
-#endif
    }
 
 SOURCE_ATTRIBUTE_SPECIFICATION_STATEMENT_END
