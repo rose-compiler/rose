@@ -92,7 +92,7 @@ namespace
       AstContext      ctx;
   };
 
-  
+  /// Handles type creation for constrained/unconstrained array declarations
   SgArrayType&
   createArrayType(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -127,6 +127,7 @@ namespace
           SgExpression& index = getExpr(&lal_identifier, ctx);
           indicesSeq.push_back(&index);
         } else {
+          //Constrained arrays have a different format, so they need getDefinitionExpr 
           SgExpression& index = getDefinitionExpr(&lal_array_index, ctx);
           indicesSeq.push_back(&index);
         }
@@ -139,6 +140,7 @@ namespace
     return mkArrayType(compType, indicesAst, unconstrained);
   }
 
+  /// Creates an integer subtype from the standard package, with a name and range
   SgTypedefDeclaration&
   declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
   {
@@ -158,6 +160,7 @@ namespace
     return sgnode;
   }
 
+  /// Creates an integer subtype with a \ref name, and a range based on the size of a Cxx type
   template <class CxxType>
   SgTypedefDeclaration&
   declareIntSubtype(const std::string& name, SgAdaPackageSpec& scope)
@@ -167,6 +170,8 @@ namespace
     return declareIntSubtype(name, TypeLimits::min(), TypeLimits::max(), scope);
   }
 
+  /// Creates a real subtype from the standard package with a name, max size, and digit constraint
+  /// @{
   SgTypedefDeclaration&
   declareRealSubtype(const std::string& name, int ndigits, long double base, int exp, SgAdaPackageSpec& scope)
   {
@@ -207,7 +212,9 @@ namespace
 
     return declareRealSubtype(name, ndigits, base, exp, scope);
   }
+  /// @}
 
+  /// Declares a string as an array of \ref comp type chars
   SgTypedefDeclaration&
   declareStringType(const std::string& name, SgType& positive, SgType& comp, SgAdaPackageSpec& scope)
   {
@@ -219,6 +226,7 @@ namespace
     return sgnode;
   }
 
+  /// Creates a standard exception and adds it to the provided map
   template<class MapT>
   void declareException(MapT& m, ada_base_entity* lal_element, SgType& base, SgAdaPackageSpec& scope)
   {
@@ -243,6 +251,7 @@ namespace
     m[hash] = &sgnode;
   }
 
+  /// Create a new package that is defined in standard. Currently used only for the ascii package
   SgAdaPackageSpecDecl&
   declarePackage(const std::string& name, SgAdaPackageSpec& scope)
   {
@@ -310,6 +319,7 @@ namespace
     return exclNull ? mkNotNullType(ty) : ty;
   }
 
+  /// Handles the type def of an ada_anonymous_type
   SgType&
   getAnonymousAccessType(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -397,6 +407,7 @@ namespace
     return excludeNullIf(res, has_null_exclusion, ctx);
   }
 
+  /// Get the type associated with a definition
   SgType&
   getDefinitionType(ada_base_entity* lal_def, AstContext ctx, bool forceSubtype)
   {
@@ -474,24 +485,24 @@ namespace
     return SG_DEREF(res);
   }
 
-/// returns the ROSE type for an Asis definition \ref lal_element
-/// iff lal_element is NULL, an SgTypeVoid is returned.
-SgType&
-getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
-{
-  // defid is null for example for an entry that does not specify a family type
-  if(ada_node_is_null(lal_element)){
-    return mkTypeVoid();
-  }
-
-  if(lal_element == nullptr)
+  /// returns the ROSE type for an Asis definition \ref lal_element
+  /// iff lal_element is NULL, an SgTypeVoid is returned.
+  SgType&
+  getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
   {
-    logError() << "undefined type id: " << lal_element << std::endl;
-    return mkTypeUnknown();
-  }
+    // defid is null for example for an entry that does not specify a family type
+    if(ada_node_is_null(lal_element)){
+      return mkTypeVoid();
+    }
 
-  return getDefinitionType(lal_element, ctx);
-}
+    if(lal_element == nullptr)
+    {
+      logError() << "undefined type id: " << lal_element << std::endl;
+      return mkTypeUnknown();
+    }
+
+    return getDefinitionType(lal_element, ctx);
+  }
 
   //Function to hash a unique int from a node using the node's kind and location.
   //The kind and location can be provided, but if not they will be determined in the function
@@ -515,6 +526,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return hash;
   }
 
+  /// returns the ROSE type a Libadalang type decl corresponds to
   SgNode&
   getExprType(ada_base_entity* lal_expr, AstContext ctx)
   {
@@ -557,6 +569,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return SG_DEREF(res);
   }
 
+  /// returns a ROSE SgType for what \ref lal_element is accessing
   SgType&
   getAccessType(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -639,6 +652,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return excludeNullIf(SG_DEREF(access_t), has_not_null, ctx);
   }
 
+  /// Returns a reference to the type the decl \ref lal_element is indicating
   SgType&
   getDeclType(ada_base_entity* lal_id, AstContext ctx)
   {
@@ -682,6 +696,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return lal_element ? &getConstraint(lal_element, ctx) : nullptr;
   }
 
+  /// Returns a record class with associated components as represetned in \ref lal_element
   SgClassDefinition&
   getRecordBody(ada_base_entity* lal_record, AstContext ctx)
   {
@@ -729,6 +744,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return sgnode;
   }
 
+  /// Creates an enum value and attaches it to the \ref enumdef
   void addEnumLiteral(ada_base_entity* lal_element, SgEnumDeclaration& enumdef, int enum_position, AstContext ctx)
   {
     SgType& enumty = SG_DEREF(enumdef.get_type());
@@ -763,6 +779,7 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return mkRecordParent(basety);
   }
 
+  /// Create a ROSE representation of the def, and record whether it is abstract, limited, tagged, or inherits any routines
   TypeData
   getTypeFoundation(const std::string& name, ada_base_entity* lal_def, AstContext ctx)
   {
@@ -807,6 +824,8 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
           logKind("ada_enum_type_def", kind);
 
           SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
+
+          //Get the enum values
           ada_base_entity lal_enum_literals;
           ada_enum_type_def_f_enum_literals(lal_def, &lal_enum_literals);
 
@@ -821,7 +840,6 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
           res.sageNode(sgnode);
           break ;
         }
-
       case ada_signed_int_type_def:           // 3.5.4(3)
         {
           logKind("ada_signed_int_type_def", kind);
@@ -897,20 +915,9 @@ getDefinitionType_opt(ada_base_entity* lal_element, AstContext ctx)
     return res;
   }
 
-void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int repval)
-{
-  SgEnumType&         enumty = SG_DEREF(enumdcl.get_type());
-  SgExpression&       sginit = SG_DEREF(sb::buildIntVal(repval));
-  markCompilerGenerated(sginit);
-
-  SgInitializedName&  sgnode = mkInitializedName(name, enumty, &sginit);
-
-  sgnode.set_scope(enumdcl.get_scope());
-  enumdcl.append_enumerator(&sgnode);
-  //ADA_ASSERT(sgnode.get_parent() == &enumdcl);
-}
-
-
+/// Creates a ROSE representation for a type defined in the Ada standard package
+/// All types created are stored in 2 maps: 1 by hash (\ref map2), and 1 by name (\ref map2)
+/// Types handled are: boolean, int, float, character, string, duration
 template<class MapT, class StringMap>
 void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, SgGlobal& global)
 {
@@ -938,9 +945,6 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
     SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
     generatedType                     = boolDecl.get_type();
 
-    declareEnumItem(boolDecl, "False", 0);
-    declareEnumItem(boolDecl, "True",  1);
-
     //Add the enum values to the libadalangVars() map
     //They aren't technically, but this is the only standard enum
     ada_base_entity lal_enum_decl_list;
@@ -959,6 +963,8 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
         std::string         std_name = "__standard";
         SgExpression&       repval   = getEnumRepresentationValue(&lal_enum_decl, i, AstContext{}.scope(global).sourceFileName(std_name));
         SgInitializedName&  sgnode   = mkEnumeratorDecl(boolDecl, ident, adaBoolType, repval);
+        sgnode.set_scope(boolDecl.get_scope());
+        boolDecl.append_enumerator(&sgnode);
         int hash = hash_node(&lal_enum_decl);
         recordNode(libadalangVars(), hash, sgnode);
       }
@@ -1040,6 +1046,9 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
   map2[AdaIdentifier{type_name}] = generatedType;
 }
 
+/// Creates a ROSE representation for a subtype defined in the Ada standard package
+/// All types created are stored in 2 maps: 1 by hash (\ref map2), and 1 by name (\ref map2)
+/// Types handled are: positive, natural
 template<class MapT, class StringMap>
 void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec)
 {
@@ -1099,6 +1108,9 @@ void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, Sg
 
 }
 
+/// Creates a ROSE represntation of the ascii package as defined in the Ada standard package
+/// Handles all of the possible values of the ascii enum
+/// Values are registered to the map \ref m
 template<class MapT>
 void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec)
 {
@@ -1394,6 +1406,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   si::Ada::stdpkg = &stdpkg;
 }
 
+/// Creates a reference to a previously declared exception that \ref lal_element refers to
 std::pair<SgInitializedName*, SgAdaRenamingDecl*>
 getExceptionBase(ada_base_entity* lal_element, AstContext ctx)
 {
@@ -1471,6 +1484,7 @@ getDiscreteSubtype(ada_base_entity* lal_type, ada_base_entity* lal_constraint, A
   return constraint ? mkAdaSubtype(*res, *constraint) : *res;
 }
 
+/// Creates a constraint for a type based on \ref lal_constraint
 SgAdaTypeConstraint&
 getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
 {
@@ -1539,6 +1553,7 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
   return *res;
 }
 
+/// Creates a combined type that represents the type of all choices for an exception
 SgType& createExHandlerType(ada_base_entity* lal_exception_choices, AstContext ctx){
   std::vector<SgType*> lst;
   int count = ada_node_children_count(lal_exception_choices);
@@ -1577,6 +1592,8 @@ SgType& createExHandlerType(ada_base_entity* lal_exception_choices, AstContext c
   }
 }
 
+/// Get the type for a constant declaration
+/// This function can call itself recursively
 SgType* getNumberDeclType(ada_base_entity* lal_element){
   ada_base_entity lal_expr = *lal_element;
   ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);

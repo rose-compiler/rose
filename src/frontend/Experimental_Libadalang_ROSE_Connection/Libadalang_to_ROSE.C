@@ -83,7 +83,7 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() 
 std::vector<SgExpression*>&                                     operatorExprs() { return operatorExprsVector; }
 map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;  }
 
-//Function to turn an ada_text_type into a string
+/// Function to turn an ada_text_type into a string
 std::string dot_ada_text_type_to_string(ada_text_type input_text){
     ada_text value_text;
     value_text.length = input_text->n;
@@ -93,7 +93,7 @@ std::string dot_ada_text_type_to_string(ada_text_type input_text){
     return return_string;
 }
 
-//Function to turn an ada_unbounded_text_type_array into a string
+/// Function to turn an ada_unbounded_text_type_array into a string
 std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array input_text){
     ada_text value_text;
     std::string return_string = "";
@@ -107,7 +107,7 @@ std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array 
 }
 
 
-//Function to get the source location of an ada node as a string
+/// Function to get the source location of an ada node as a string
 std::string dot_ada_full_sloc(ada_base_entity *node){
     ada_text_type file_name;
     ada_source_location_range line_numbers;

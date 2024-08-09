@@ -26,6 +26,7 @@ namespace Libadalang_ROSE_Translation
 
 namespace
 {
+  /// Handles a single argument provided in a function call
   SgExpression&
   getArg(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -59,16 +60,9 @@ namespace
 
     if(!has_formal || ada_node_is_null(&formal_parameter)) return arg;
 
-    /*ADA_ASSERT(formalParm->Element_Kind == An_Expression);
-
-    ADA_ASSERT(  formalName.Expression_Kind == An_Identifier
-              || formalName.Expression_Kind == An_Operator_Symbol
-              );*/
-
-    //Get the name of this node
+    //If there is a formal parameter, get its name
     std::string element_name = canonical_text_as_string(&formal_parameter);
 
-    //logKind("An_Identifier", formalParm->ID);
     SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
 
     attachSourceLocation(namedArg, lal_element, ctx);
@@ -76,6 +70,7 @@ namespace
   }
 } //End unnamed namespace
 
+/// Makes an attribute
 SgAdaAttributeExp&
 getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* argRangeSuppl)
 {
@@ -513,7 +508,7 @@ namespace
     return argty && argty->get_is_anonymous();
   }
 
-
+  /// Gets the standard bool type from the current context
   SgType& boolType(AstContext ctx)
   {
     ada_base_entity* lal_root = ctx.unit_root();
@@ -713,8 +708,8 @@ namespace
     return res;
   }
 
-  // if \ref id is valid, lookup scope from translation context
-  //   otherwise use si::Ada::operatorScope to find an appropriate scope
+  /// if \ref id is valid, lookup scope from translation context
+  ///   otherwise use si::Ada::operatorScope to find an appropriate scope
   si::Ada::OperatorScopeInfo
   operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, int id, AstContext ctx)
   {
@@ -788,6 +783,8 @@ namespace
     return &mkFunctionRefExp(opdcl);
   }
 
+  /// Handles an operator (can be node of kind ada_op_*, or ada_string_literal)
+  /// Checks for overloading first, then defaults to standard if not found
   SgExpression&
   getOperator(ada_base_entity* lal_expr, OperatorCallSupplement suppl, bool unary, AstContext ctx)
   {
@@ -872,13 +869,10 @@ namespace
       logWarn() << "Using first version generator as fallback to model operator " << expr_name
                 << std::endl;
 
-    /* unused fields:
-       Defining_Name_List    Corresponding_Name_Definition_List;
-       Defining_Name_ID      Corresponding_Generic_Element;
-    */
     return getOperator_fallback(lal_expr, unary, ctx);
   }
 
+  /// Returns the ROSE representation of stnadard TURE or FALSE, if \ref boolid matches
   SgExpression&
   getBooleanEnumItem(AdaIdentifier boolid)
   {
@@ -1025,6 +1019,7 @@ namespace
     return true;
   }
 
+  /// Handles a single aggregate node, by processing all of its assocs & their designators
   SgExprListExp&
   getRecordAggregate(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -1043,9 +1038,9 @@ namespace
         ada_base_entity lal_designators;
         ada_aggregate_assoc_f_designators(&lal_aggregate_assoc, &lal_designators);
 
-        SgExpression&              init = getExpr(&lal_r_expr, ctx);
-        SgExpression*              sgnode = &init;
-        int                        num_designators = ada_node_children_count(&lal_designators);
+        SgExpression&  init            = getExpr(&lal_r_expr, ctx);
+        SgExpression*  sgnode          = &init;
+        int            num_designators = ada_node_children_count(&lal_designators);
 
         if(!ada_node_is_null(&lal_designators) && num_designators > 0)
         {
@@ -1123,7 +1118,7 @@ namespace{
         {
           logKind("ada_int_literal", kind);
 
-          /*ada_big_integer denoted_value; //TODO This way strips the formatting, but will work after lal_2021
+          /*ada_big_integer denoted_value; //TODO This way strips the formatting, but the other way won't work after lal_2021
           ada_text value_text;
 
           //Get the value of this node
@@ -1151,6 +1146,7 @@ namespace{
           //Get the value of this char
           uint32_t lal_denoted_value;
           ada_char_literal_p_denoted_value(lal_element, &lal_denoted_value);
+          //Add ' around the char, so that mkValue works properly
           std::string denoted_char = "\'";
           denoted_char += char(lal_denoted_value);
           denoted_char += '\'';
@@ -1205,6 +1201,7 @@ namespace{
           if(!ada_node_is_null(&lal_expr_type)){
             ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
             lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+            //Find the original type if this is a derived type
             while(lal_expr_type_kind == ada_derived_type_def){
               ada_derived_type_def_f_subtype_indication(&lal_expr_type, &lal_expr_type);
               ada_type_expr_p_designated_type_decl(&lal_expr_type, &lal_expr_type);
@@ -1221,6 +1218,7 @@ namespace{
             ada_expr_p_first_corresponding_decl(lal_element, &lal_first_corresponding_decl);
             int decl_hash = hash_node(&lal_first_corresponding_decl);
 
+            //Search libadalangVars for a match (standard TRUE & FALSE are also in libadalangVars, so this should be the only map to check)
             if (SgInitializedName* enumitem = findFirst(libadalangVars(), decl_hash))
             {
               SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
@@ -1311,7 +1309,7 @@ namespace{
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
           }
-          else if (SgType* ty = findFirst(adaTypes(), hash))
+          else if(SgType* ty = findFirst(adaTypes(), hash))
           {
             res = &mkTypeExpression(*ty);
           }
@@ -1460,7 +1458,7 @@ namespace{
           //               but some arguments have no underlying functiom declaration.
           // \todo Consider adding an optional function reference to the SgAdaAttribute rep.
           if(false /*queryExprKindID(expr.Prefix) == An_Attribute_Reference TODO How to convert this?*/){
-            //res = &getAttributeExprID(expr.Prefix, ctx, range);
+            //res = &getAttributeExpr(&prefix, ctx, range);
           } else {
             res = &createCall(&prefix, params, operatorCallSyntax, objectCallSyntax, ctx);
           }
@@ -1649,54 +1647,56 @@ namespace{
   }
 } //End unnamed namespace
 
-SgExpression&
-getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl, bool unary)
-{
-  //Check the kind
-  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  SgExpression&
+  getExpr(ada_base_entity* lal_element, AstContext ctx, OperatorCallSupplement suppl, bool unary)
+  {
+    //Check the kind
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
   
-  ada_text kind_name;
-  ada_kind_name(kind, &kind_name);
-  std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-  logTrace() << "getExpr called on a " << kind_name_string << std::endl;
-  ada_destroy_text(&kind_name);
+    ada_text kind_name;
+    ada_kind_name(kind, &kind_name);
+    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    logTrace() << "getExpr called on a " << kind_name_string << std::endl;
+    ada_destroy_text(&kind_name);
 
-  SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
+    SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
 
-  switch(kind)
-  {
-    case ada_aggregate:              // 4.3
-    /*case A_Named_Array_Aggregate:                   // 4.3 TODO: Are there more aggregate nodes to worry about?
-    case A_Record_Aggregate:                        // 4.3
-    case An_Extension_Aggregate:                    // 4.3*/
-      {
-        SgExprListExp* explst = isSgExprListExp(res);
+    switch(kind)
+    {
+      case ada_aggregate:              // 4.3
+      /*case A_Named_Array_Aggregate:                   // 4.3 TODO: Are there more aggregate nodes to worry about?
+      case A_Record_Aggregate:                        // 4.3
+      case An_Extension_Aggregate:                    // 4.3*/
+        {
+          SgExprListExp* explst = isSgExprListExp(res);
 
-        res = &mkAggregateInitializer(SG_DEREF(explst));
-        attachSourceLocation(SG_DEREF(res), lal_element, ctx);
+          res = &mkAggregateInitializer(SG_DEREF(explst));
+          attachSourceLocation(SG_DEREF(res), lal_element, ctx);
+          break;
+        }
+
+      default:
         break;
-      }
+    }
 
-    default:;
+    return SG_DEREF(res);
   }
 
-  return SG_DEREF(res);
-}
-
-SgExpression&
-getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement suppl)
-{
-  if(lal_expr == nullptr)
+  SgExpression&
+  getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement suppl)
   {
-    logFlaw() << "uninitialized expression id " << lal_expr << std::endl;
-    return mkNullExpression();
+    if(lal_expr == nullptr)
+    {
+      logFlaw() << "uninitialized expression id " << lal_expr << std::endl;
+      return mkNullExpression();
+    }
+
+    return ada_node_is_null(lal_expr) ? mkNullExpression()
+                                      : getExpr(lal_expr, ctx, std::move(suppl))
+                                      ;
   }
 
-  return ada_node_is_null(lal_expr) ? mkNullExpression()
-                                    : getExpr(lal_expr, ctx, std::move(suppl))
-                                    ;
-}
-
+  /// Handles range definitions for specific nodes that getExpr won't do correctly
   SgExpression&
   getDiscreteRangeGeneric(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -1748,16 +1748,7 @@ getExpr_opt(ada_base_entity* lal_expr, AstContext ctx, OperatorCallSupplement su
     return *res;
   }
 
-  /*/// \private
-  /// returns a range expression from the Asis definition \ref def
-  SgExpression&
-  getDiscreteRange(Element_Struct& el, Definition_Struct& def, AstContext ctx)
-  {
-    ADA_ASSERT(def.Definition_Kind == A_Discrete_Range);
-
-    return getDiscreteRangeGeneric(el, def.The_Union.The_Discrete_Range, ctx);
-  }*/
-
+  /// returns a range expression from the Libadalang definition \ref lal_element
   SgExpression&
   getDiscreteRange(ada_base_entity* lal_element, AstContext ctx)
   {
@@ -1810,7 +1801,7 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
     {
       logKind("A_Discrete_Subtype_Definition", kind);
 
-      ada_base_entity* lal_constraint = nullptr; //TODO Where should this come from?
+      ada_base_entity* lal_constraint = nullptr; //identifiers don't have constraints
       SgType& ty = getDiscreteSubtype(lal_element, lal_constraint, ctx);
 
       res = &mkTypeExpression(ty);
@@ -1899,6 +1890,7 @@ SgExpression& createCall(ada_base_entity* lal_prefix, std::vector<ada_base_entit
   return SG_DEREF(res);
 }
 
+/// Begins the process of representing an enum value in an enum type def by creating an expression for the position
 SgExpression&
 getEnumRepresentationValue(ada_base_entity* lal_element, int enum_position, AstContext ctx)
 {
@@ -1910,6 +1902,7 @@ getEnumRepresentationValue(ada_base_entity* lal_element, int enum_position, AstC
   return sgnode;
 }
 
+/// Searches all nodes generated from the standard library for a node that matches /ref hash
 SgNode*
 queryBuiltIn(int hash)
 {
@@ -1927,6 +1920,7 @@ queryBuiltIn(int hash)
   return res;
 }
 
+/// Searches for the node that \ref lal_identifier references in all previously mapped nodes (not standard nodes)
 SgNode*
 queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
 {
