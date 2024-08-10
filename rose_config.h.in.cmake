@@ -221,16 +221,8 @@
 #define BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH "${BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH}"
 /* END OF BACKEND SECTION */
 
-
-/* Internal EDG specific consistency tests. */
-//AS FIXME
-#define CHECKING 1
-
 /* Include path for backend C++ compiler. */
 #cmakedefine CXX_INCLUDE_STRING @CXX_INCLUDE_STRING@
-
-/* -D options to hand to EDG C++ front-end. */
-#define CXX_SPEC_DEF {"-D__GNUG__=${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC__=${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC_MINOR__=${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}", "-D__GNUC_PATCHLEVEL__=${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER}", "--preinclude", "rose_edg_required_macros_and_functions.h"}
 
 /* Include path for backend C compiler. */
 #cmakedefine C_INCLUDE_STRING @C_INCLUDE_STRING@
@@ -315,9 +307,6 @@
 /* Link-time support for Purify. */
 #cmakedefine USE_PURIFY_LINKER
 
-/* Controls if EDG Union/Struct debugging support is to be used. */
-#cmakedefine01 USE_ROSE_EDG_DEBUGGING_SUPPORT
-
 /* Use of GCC OpenMP in ROSE. */
 //AS Don't know what to do with this
 #cmakedefine USE_ROSE_GCC_OMP
@@ -363,11 +352,23 @@
 /* EDG minor version number */
 #define ROSE_EDG_MINOR_VERSION_NUMBER @EDG_MINOR_VERSION@
 
-/* Defined if we're building using CMake */
-#cmakedefine USE_CMAKE @USE_CMAKE@
+/* Controls if EDG Union/Struct debugging support is to be used. */
+#cmakedefine01 USE_ROSE_EDG_DEBUGGING_SUPPORT
 
 /* Defined if we're using a prebuilt EDG library */
 #cmakedefine BINARY_EDG
+
+/* Internal EDG specific consistency tests. */
+//AS FIXME
+#define CHECKING 1
+
+/* -D options to hand to EDG C++ front-end. */
+#define CXX_SPEC_DEF {"-D__GNUG__=${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC__=${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC_MINOR__=${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}", "-D__GNUC_PATCHLEVEL__=${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER}", "--preinclude", "rose_edg_required_macros_and_functions.h"}
+
+#cmakedefine ROSE_USE_EDG_QUADFLOAT @ROSE_USE_EDG_QUADFLOAT@ 
+
+/* Defined if we're building using CMake */
+#cmakedefine USE_CMAKE @USE_CMAKE@
 
 /* Build ROSE to support the Binary Analysis */
 #cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT

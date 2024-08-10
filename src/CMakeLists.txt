@@ -877,9 +877,17 @@ endif()
 
 set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/usr/include")
 
+# TSG to do: improve conditionals for quadmath 
 set(rose_library_list "rose")
 set(rose_library_list "${rose_library_list};${Boost_LIBRARIES}")
 set(rose_library_list "${rose_library_list};m;quadmath")
+
+# Set macro for EDG 6 and 6.5
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # Move this to src/frontend/CxxFrontend/EDG/EDG_6.5/src/CMakeLists.txt and edg_6.0
+  set(ROSE_USE_EDG_QUADFLOAT 1)
+endif() 
+
 if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
   if(NOT ${ATERM_LIBRARY} STREQUAL "")
     set(rose_library_list "${rose_library_list};${ATERM_LIBRARY}")
