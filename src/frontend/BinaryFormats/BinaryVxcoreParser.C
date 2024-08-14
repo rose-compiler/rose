@@ -135,7 +135,7 @@ VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const Bas
             } else if (2 != header.version) {
                 throw Exception(inputName, headerOffset,
                                 (boost::format("invalid message version (expected %1%, got %2%) at %3%")
-                                 % settings_.version % header.version % headerOffset).str());
+                                 % settings_.version % (unsigned)header.version % headerOffset).str());
             } else if (header.unused0 || header.unused1) {
                 throw Exception(inputName, headerOffset, (boost::format("unused fields must be zero at %1%") % headerOffset).str());
             } else if (header.mapFlags & ~MemoryMap::READ_WRITE_EXECUTE) {
