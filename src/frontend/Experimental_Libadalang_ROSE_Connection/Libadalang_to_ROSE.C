@@ -106,7 +106,6 @@ std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array 
     return return_string;
 }
 
-
 /// Function to get the source location of an ada node as a string
 std::string dot_ada_full_sloc(ada_base_entity *node){
     ada_text_type file_name;
@@ -309,6 +308,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_package_body:
         case ada_package_decl:
         case ada_object_decl:
+        case ada_subtype_decl:
         case ada_type_decl:
         case ada_task_type_decl:
         case ada_task_body:

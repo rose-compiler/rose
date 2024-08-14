@@ -140,6 +140,51 @@ namespace
     return mkArrayType(compType, indicesAst, unconstrained);
   }
 
+  /// Handles a discriminant association, placing each name into \ref elems
+  void createDiscriminantAssoc(ada_base_entity* lal_element, SgExpressionPtrList& elems, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    logKind("ada_discriminant_assoc", kind);
+
+    //Get the list of names
+    ada_base_entity lal_name_list;
+    ada_discriminant_assoc_f_ids(lal_element, &lal_name_list);
+
+    //Get the discr expr
+    ada_base_entity lal_discr_expr;
+    ada_discriminant_assoc_f_discr_expr(lal_element, &lal_discr_expr);
+
+    SgExpression& sgnode = getExpr(&lal_discr_expr, ctx);
+    int num_names = ada_node_children_count(&lal_name_list);
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+
+    if(num_names <= 0)
+    {
+      elems.push_back(&sgnode);
+    }
+    else
+    {
+      //Get the first name from the list
+      ada_base_entity lal_identifier; //TODO Can this node be a non-ada_identifier?
+      if(ada_node_child(&lal_name_list, 0, &lal_identifier) != 0){
+        std::string ident = canonical_text_as_string(&lal_identifier);
+        elems.push_back(sb::buildActualArgumentExpression_nfi(ident, &sgnode));
+      }
+
+      //Handle the remaining names, if they exist
+      for(int i = 1; i < num_names; i++){
+        // \todo SgActualArgumentExpression only supports 1:1 mapping from name to an expression
+        //       but not n:1.
+        //       => create an entry for each name beyond the first, and duplicate the expression
+        if(ada_node_child(&lal_name_list, i, &lal_identifier) != 0){
+          std::string ident = canonical_text_as_string(&lal_identifier);
+          elems.push_back(sb::buildActualArgumentExpression_nfi(ident, si::deepCopy(&sgnode)));
+        }
+      }
+    }
+  }
+
   /// Creates an integer subtype from the standard package, with a name and range
   SgTypedefDeclaration&
   declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
@@ -1541,6 +1586,28 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         }
 
         res = &mkAdaIndexConstraint(std::move(ranges));
+        break;
+      }
+
+    case ada_discriminant_constraint:             // 3.2.2
+      {
+        logKind("ada_discriminant_constraint", kind);
+
+        //Get the list of associations
+        ada_base_entity lal_assoc_list;
+        ada_discriminant_constraint_f_constraints(lal_constraint, &lal_assoc_list);
+
+        SgExpressionPtrList constraints;
+
+        int count = ada_node_children_count(&lal_assoc_list);
+        for(int i = 0; i < count; i++){
+          ada_base_entity lal_discr_assoc;
+          if(ada_node_child(&lal_assoc_list, i, &lal_discr_assoc) != 0){
+            createDiscriminantAssoc(&lal_discr_assoc, constraints, ctx);
+          }
+        }
+
+        res = &mkAdaDiscriminantConstraint(std::move(constraints));
         break;
       }
 

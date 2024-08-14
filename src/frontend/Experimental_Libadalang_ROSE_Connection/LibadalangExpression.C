@@ -94,19 +94,44 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
-  if(name == "")
+  if(name == "range")
     {
-      /*ElemIdRange                range = idRange(expr.Attribute_Designator_Expressions);
-      ADA_ASSERT(argRangeSuppl.empty() || range.empty());
+      //Get the list of args
+      ada_base_entity lal_arg_list;
+      ada_attribute_ref_f_args(lal_element, &lal_arg_list);
+      int range = ada_node_children_count(&lal_arg_list);
 
       std::vector<SgExpression*> exprs;
 
-      if (range.empty())
-        exprs = traverseIDs(argRangeSuppl, elemMap(), ArgListCreator{ctx});
-      else
-        exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+      if(range <= 0){
+        if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
+          //Call getArg on each child node
+          int count = ada_node_children_count(argRangeSuppl);
+          for(int i = 0; i < count; i++){
+            ada_base_entity lal_arg;
+            if(ada_node_child(argRangeSuppl, i, &lal_arg) != 0){
+              exprs.push_back(&getArg(&lal_arg, ctx));
+            }
+          }
+        }
+      } else {
+        for(int i = 0; i < range; i++){
+          ada_base_entity lal_arg;
+          if(ada_node_child(&lal_arg_list, i, &lal_arg) != 0){
+            ada_node_kind_enum lal_arg_kind = ada_node_kind(&lal_arg);
+            if(lal_arg_kind == ada_param_assoc){
+              ada_base_entity lal_param;
+              ada_param_assoc_f_r_expr(&lal_arg, &lal_param);
+              exprs.push_back(&getExpr(&lal_param, ctx));
+            } else {
+              //TODO Will this ever happen? Are args always ada_param_assoc?
+              logFlaw() << "Unknown attribute argument kind " << lal_arg_kind << " in getAttributeExpr.\n";
+            }
+          }
+        }
+      }
 
-      res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp(exprs));*/ //TODO
+      res = &mkAdaAttributeExp(obj, name, mkExprListExp(exprs));
     }
 
     // attributes with empty expression list argument
@@ -1714,7 +1739,6 @@ namespace{
           res = &mkTypeExpression(ty);
           break;
         }*/
-
       case ada_bin_op:    // 3.6.1, 3.5
         {
           logKind("A_Discrete_Simple_Expression_Range", kind);
@@ -1730,15 +1754,13 @@ namespace{
           res = &mkRangeExp(lb, ub);
           break;
         }
-
-      /*case A_Discrete_Range_Attribute_Reference:  // 3.6.1, 3.5
+      case ada_attribute_ref: //A_Discrete_Range_Attribute_Reference:  // 3.6.1, 3.5
         {
-          logKind("A_Discrete_Range_Attribute_Reference", el.ID);
+          logKind("ada_attribute_ref", kind);
 
-          res = &getExprID(range.Range_Attribute, ctx);
+          res = &getExpr(lal_element, ctx);
           break;
-        }*/
-
+        }
       default:
         logFlaw() << "Unhandled range: " << kind << " in getDiscreteRangeGeneric" << std::endl;
         res = &mkRangeExp();
@@ -1807,7 +1829,6 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
       res = &mkTypeExpression(ty);
       break;
     }
-
     case ada_subtype_indication:
     {
       logKind("A_Discrete_Subtype_Definition", kind);
@@ -1823,14 +1844,17 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
       res = &mkTypeExpression(ty);
       break;
     }
-
+    case ada_attribute_ref:
+    {
+      res = &getDiscreteRangeGeneric(lal_element, ctx);
+      break;
+    }
     case ada_others_designator:
     {
       logKind("ada_others_designator", kind);
       res = &mkAdaOthersExp();
       break;
     }
-
     /*case A_Constraint:
       logKind("A_Constraint", el.ID);
       res = &getConstraintExpr(def, ctx);

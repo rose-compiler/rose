@@ -2634,6 +2634,34 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_subtype_decl:                    // 3.2.2(2)
+      {
+        logKind("ada_subtype_decl", kind);
+
+        //Get the name
+        ada_base_entity lal_identifier;
+        ada_base_type_decl_f_name(lal_element, &lal_identifier);
+        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        std::string ident = canonical_text_as_string(&lal_identifier);
+
+        //Get the subtype indication
+        ada_base_entity lal_subtype_indication;
+        ada_subtype_decl_f_subtype(lal_element, &lal_subtype_indication);
+
+        int                   hash = hash_node(lal_element);
+        const bool            forceSubtype = true;
+        SgType&               subtype = getDefinitionType(&lal_subtype_indication, ctx, forceSubtype);
+        SgScopeStatement&     scope   = ctx.scope();
+        SgTypedefDeclaration& sgnode  = mkTypeDecl(ident, subtype, scope);
+
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+        recordNode(libadalangTypes(), hash, sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_number_decl:            // 3.3.2(2), 3.5.6(2)
       {
         logKind("ada_number_decl", kind);
