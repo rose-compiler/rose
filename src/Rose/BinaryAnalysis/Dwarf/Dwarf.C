@@ -7,11 +7,21 @@
 // only AST for binary executable files (the ROSE Binary AST).
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>                                 // needed for Sg_File_Info
 #include <Rose/BinaryAnalysis/Dwarf.h>
 
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
+
 #include <ROSE_UNUSED.h>
+
+#include <SgAsmDwarfCompilationUnit.h>
+#include <SgAsmDwarfConstruct.h>
+#include <SgAsmDwarfConstructList.h>
+#include <SgAsmDwarfLine.h>
+#include <SgAsmDwarfLineList.h>
+
+#include <Cxx_GrammarDowncast.h>
 
 #include <stringify.h>
 
