@@ -84,7 +84,7 @@ Result::emit(std::ostream &out) {
             out <<",\"level\":\"note\"";
             break;
         case Severity::WARNING:
-            out <<",\"level\"::\"warning\"";
+            out <<",\"level\":\"warning\"";
             break;
         case Severity::ERROR:
             out <<",\"level\":\"error\"";
