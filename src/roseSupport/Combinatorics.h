@@ -4,6 +4,7 @@
 #include <rosePublicConfig.h>
 
 #include <Rose/Constants.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -376,11 +377,12 @@ public:
       #endif
     }
 
-    HasherGcrypt(const HasherGcrypt &) {
+    HasherGcrypt(const HasherGcrypt &other) {
       #ifdef ROSE_HAVE_LIBGCRYPT
         if (gcry_md_copy(&md_, other.md_) != GPG_ERR_NO_ERROR)
             throw Exception("cannot copy libgcrypt hash " + std::string(gcry_md_algo_name(hashAlgorithmId)));
       #else
+        ROSE_UNUSED(other);
         throw Exception("ROSE was not configured with libgcrypt");
       #endif
     }
@@ -391,12 +393,13 @@ public:
       #endif
     }
 
-    HasherGcrypt& operator=(const HasherGcrypt &) {
+    HasherGcrypt& operator=(const HasherGcrypt &other) {
       #ifdef ROSE_HAVE_LIBGCRYPT
         gcry_md_close(md_);
         if (gcry_md_copy(&md_, other.md_) != GPG_ERR_NO_ERROR)
             throw Exception("cannot copy libgcrypt hash " + std::string(gcry_md_algo_name(hashAlgorithmId)));
       #else
+        ROSE_UNUSED(other);
         throw Exception("ROSE was not configured with libgcrypt");
       #endif
     }
