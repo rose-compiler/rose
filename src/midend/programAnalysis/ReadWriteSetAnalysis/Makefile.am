@@ -11,8 +11,6 @@ readWriteSetSources = TestabilityGrader.C \
 		      LocalRWSetGenerator.C  ReadWriteSetRecords.C  VxUtilFuncs.C \
 		      Name2Node.C            SageUtils.C
 
-
-
 noinst_LTLIBRARIES = libReadWriteSet.la
 readWriteSet_la_SOURCES = $(readWriteSetSources)
 
@@ -24,6 +22,5 @@ distclean-local:
 
 pkginclude_HEADERS = LocalRWSetGenerator.h sageUtility.h VxUtilFuncs.h \
 		     Name2Node.h SageUtils.h ReadWriteSetRecords.h  TestabilityGrader.h
-
 
 EXTRA_DIST = CMakeLists.txt
