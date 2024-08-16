@@ -36,6 +36,7 @@ private:
     PowerpcWordSize wordSize_;
     ByteOrder::Endianness sex_;
     Sawyer::BitFlags<PowerpcCapability> capabilities_;
+    bool strictReserved_ = false;                       // if true, then reserved instruction bits must be zero
 
 protected:
     explicit Powerpc(const Architecture::BaseConstPtr&);
@@ -43,6 +44,16 @@ protected:
 public:
     /** Allocating constructor for 32- or 64-bit disassembler. */
     static Ptr instance(const Architecture::BaseConstPtr&);
+
+    /** Property: Whether to enforce reserved instruction fields.
+     *
+     *  If this property is true, then any instruction that has a reserved field that is not zero will be treated as an invalid
+     *  instruction.
+     *
+     * @{ */
+    bool strictReserved() const;
+    void strictReserved(bool);
+    /** @} */
 
     // Overrides documented in a super class
     virtual ~Powerpc() {}
@@ -87,6 +98,9 @@ private:
 
     // Helper function to use field definitions (counted with bits from left and inclusive on both sides) from manual.
     template <size_t First, size_t Last> uint64_t fld(State&) const;
+
+    // Helper function to test whether reserved fields have appropriate values
+    template<size_t First, size_t Last> bool reservedOk(State&) const;
 
     // Decoded fields from section 1.7.16 of the v2.01 UISA.
     bool AA(State &state) const;

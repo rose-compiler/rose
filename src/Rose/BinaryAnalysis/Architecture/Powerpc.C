@@ -43,7 +43,9 @@ Powerpc::callingConventions() const {
 
 Disassembler::Base::Ptr
 Powerpc::newInstructionDecoder() const {
-    return Disassembler::Powerpc::instance(shared_from_this());
+    auto decoder = Disassembler::Powerpc::instance(shared_from_this());
+    decoder->strictReserved(true);
+    return decoder;
 }
 
 Sawyer::Container::Interval<size_t>

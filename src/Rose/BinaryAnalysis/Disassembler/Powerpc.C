@@ -85,6 +85,16 @@ Powerpc::init() {
     capabilities_.set(powerpc_capability_default);
 }
 
+bool
+Powerpc::strictReserved() const {
+    return strictReserved_;
+}
+
+void
+Powerpc::strictReserved(const bool b) {
+    strictReserved_ = b;
+}
+
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.
 SgAsmInstruction*
 Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors) {
@@ -148,8 +158,19 @@ Powerpc::fld(State &state) const {
     return (state.insn >> (31 - Last)) & (IntegerOps::GenMask<uint32_t, Last - First + 1>::value);
 }
 
+// Test whether the specified field is zero if strict reserved fields are enabled
+template<size_t First, size_t Last>                     // inclusive
+bool
+Powerpc::reservedOk(State &state) const {
+    return !strictReserved_ || fld<First, Last>(state) == 0;
+}
 
 // FIXME[Robb Matzke 2019-08-20]: Replace with proper C++ since nested macros make debugging hard
+// `Mne` is the `PowerpcInstructionKind` enum without the trailing "_record"
+// `Cap` is the `PowerpcCapability` enum without the leading "powerpc_capability_"
+// `Op1`, `Op2`, etc. are non-null `SgAsmExpression*` operand expressions
+// The "*_O_RC" forms append "o" to the `Mne` symbol if the `OE` bit is set, and/or append "_record" if the `Rc` bit is set
+// The "*_RC" forms of the macros append "_record" to the `Mne` symbol if the `Rc` bit is set in the machine instruction
 #define MAKE_INSN0(Mne, Cap) (makeInstructionWithoutOperands(state.ip, #Mne, powerpc_##Mne, state.insn, powerpc_capability_##Cap))
 #define MAKE_INSN0_RC(Mne, Cap) (Rc(state) ? MAKE_INSN0(Mne##_record, Cap) : MAKE_INSN0(Mne, Cap))
 #define MAKE_INSN0_O_RC(Mne, Cap) (OE() ? MAKE_INSN0_RC(Mne##o, Cap) : MAKE_INSN0_RC(Mne, Cap))
@@ -444,8 +465,18 @@ Powerpc::disassemble(State &state) {
         case 0x04: return decode_A_formInstruction_04(state);
         case 0x07: return MAKE_INSN3(mulli, uisa, RT(state), RA(state), SI(state));
         case 0x08: return MAKE_INSN3(subfic, uisa, RT(state), RA(state), SI(state));
-        case 0x0A: return MAKE_INSN4(cmpli, uisa, BF_cr(state), L_10(state), RA(state), UI(state));
-        case 0x0B: return MAKE_INSN4(cmpi, uisa, BF_cr(state), L_10(state), RA(state), SI(state));
+        case 0x0A:
+            if (!reservedOk<9, 9>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN4(cmpli, uisa, BF_cr(state), L_10(state), RA(state), UI(state));
+            }
+        case 0x0B:
+            if (!reservedOk<9, 9>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN4(cmpi, uisa, BF_cr(state), L_10(state), RA(state), SI(state));
+            }
         case 0x0C: return MAKE_INSN3(addic, uisa, RT(state), RA(state), SI(state));
         case 0x0D: return MAKE_INSN3(addic_record, uisa, RT(state), RA(state), SI(state));
         case 0x0E: return MAKE_INSN3(addi, uisa, RT(state), RA_or_zero(state), SI(state));
@@ -511,7 +542,7 @@ Powerpc::disassemble(State &state) {
         case 0x36: return MAKE_INSN2(stfd, uisa, FRS(state), memref(state, T_FLOAT64));
         case 0x37: return MAKE_INSN2(stfdu, uisa, FRS(state), memrefu(state, T_FLOAT64));
         case 0x3A: {
-            switch (unsigned xo = state.insn & 0x3) {
+            switch (state.insn & 0x3) {
                 case 0: return MAKE_INSN2(ld, uisa, RT(state), memrefds(state, T_U64));
                 case 1:
                     if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
@@ -620,7 +651,11 @@ Powerpc::decode_SC_formInstruction(State &state) {
     if (constantOneOpcode!=1)
         return MAKE_UNKNOWN();
 
-    return MAKE_INSN1(sc, uisa, LEV(state));
+    if (!reservedOk<6, 19>(state) || !reservedOk<27, 29>(state) || !reservedOk<31, 31>(state)) {
+        return MAKE_UNKNOWN();
+    } else {
+        return MAKE_INSN1(sc, uisa, LEV(state));
+    }
 }
 
 SgAsmPowerpcInstruction*
@@ -646,42 +681,130 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
     // Get the bits 21-30, next 10 bits
     const uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x000: return MAKE_INSN4(cmp, uisa, BF_cr(state), L_10(state), RA(state), RB(state));
-        case 0x004: return MAKE_INSN3(tw, uisa, TO(state), RA(state), RB(state));
+        case 0x000:
+            if (!reservedOk<9, 9>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN4(cmp, uisa, BF_cr(state), L_10(state), RA(state), RB(state));
+            }
+        case 0x004:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(tw, uisa, TO(state), RA(state), RB(state));
+            }
         case 0x008: return MAKE_INSN3_RC(subfc, uisa, RT(state), RA(state), RB(state));
-        case 0x009: return MAKE_INSN3_RC(mulhdu, uisa, RT(state), RA(state), RB(state));
+        case 0x009:
+            if (!reservedOk<21, 21>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(mulhdu, uisa, RT(state), RA(state), RB(state));
+            }
         case 0x00A: return MAKE_INSN3_RC(addc, uisa, RT(state), RA(state), RB(state));
-        case 0x00B: return MAKE_INSN3_RC(mulhwu, uisa, RT(state), RA(state), RB(state));
+        case 0x00B:
+            if (!reservedOk<21, 21>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(mulhwu, uisa, RT(state), RA(state), RB(state));
+            }
         case 0x014: return MAKE_INSN2(lwarx, vea, RT(state), memrefx(state, T_U32));
-        case 0x015: return MAKE_INSN2(ldx, uisa, RT(state), memrefx(state, T_U64));
-        case 0x017: return MAKE_INSN2(lwzx, uisa, RT(state), memrefx(state, T_U32));
+        case 0x015:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(ldx, uisa, RT(state), memrefx(state, T_U64));
+            }
+        case 0x017:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lwzx, uisa, RT(state), memrefx(state, T_U32));
+            }
         case 0x018: return MAKE_INSN3_RC(slw, uisa, RA(state), RS(state), RB(state));
-        case 0x01A: return MAKE_INSN2_RC(cntlzw, uisa, RA(state), RS(state));
+        case 0x01A:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(cntlzw, uisa, RA(state), RS(state));
+            }
         case 0x01B: return MAKE_INSN3_RC(sld, uisa, RA(state), RS(state), RB(state));
         case 0x01C: return MAKE_INSN3_RC(and, uisa, RA(state), RS(state), RB(state));
-        case 0x020: return MAKE_INSN4(cmpl, uisa, BF_cr(state), L_10(state), RA(state), RB(state));
+        case 0x020:
+            if (!reservedOk<9, 9>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN4(cmpl, uisa, BF_cr(state), L_10(state), RA(state), RB(state));
+            }
         case 0x028: return MAKE_INSN3_RC(subf, uisa, RT(state), RA(state), RB(state));
         case 0x035:
-            if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(ldux, uisa, RT(state), memrefux(state, T_U64));
+            } else if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(ldux, uisa, RT(state), memrefux(state, T_U64));
+            }
         case 0x037:
-            if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(lwzux, uisa, RT(state), memrefux(state, T_U32));
-        case 0x03a: return MAKE_INSN2_RC(cntlzd, uisa, RA(state), RS(state));
+            } else if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lwzux, uisa, RT(state), memrefux(state, T_U32));
+            }
+        case 0x03a:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(cntlzd, uisa, RA(state), RS(state));
+            }
         case 0x03C: return MAKE_INSN3_RC(andc, uisa, RA(state), RS(state), RB(state));
-        case 0x044: return MAKE_INSN3(td, uisa, TO(state), RA(state), RB(state));
-        case 0x049: return MAKE_INSN3_RC(mulhd, uisa, RT(state), RA(state), RB(state));
-        case 0x04B: return MAKE_INSN3_RC(mulhw, uisa, RT(state), RA(state), RB(state));
-        case 0x053: return MAKE_INSN1(mfmsr, oea, RT(state));
-        case 0x057: return MAKE_INSN2(lbzx, uisa, RT(state), memrefx(state, T_U8));
-        case 0x068: return MAKE_INSN2_RC(neg, uisa, RT(state), RA(state));
-        case 0x077:
-            if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
+        case 0x044:
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(lbzux, uisa, RT(state), memrefux(state, T_U8));
-        case 0x07A: return MAKE_INSN2(popcntb, uisa, RA(state), RS(state));
+            } else {
+                return MAKE_INSN3(td, uisa, TO(state), RA(state), RB(state));
+            }
+        case 0x049:
+            if (!reservedOk<21, 21>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(mulhd, uisa, RT(state), RA(state), RB(state));
+            }
+        case 0x04B:
+            if (!reservedOk<21, 21>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(mulhw, uisa, RT(state), RA(state), RB(state));
+            }
+        case 0x053: return MAKE_INSN1(mfmsr, oea, RT(state));
+        case 0x057:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lbzx, uisa, RT(state), memrefx(state, T_U8));
+            }
+        case 0x068:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(neg, uisa, RT(state), RA(state));
+            }
+        case 0x077:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lbzux, uisa, RT(state), memrefux(state, T_U8));
+            }
+
+        case 0x07A:
+            if (!reservedOk<16, 20>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(popcntb, uisa, RA(state), RS(state));
+            }
         case 0x07C: return MAKE_INSN3_RC(nor, uisa, RA(state), RS(state), RB(state));
         case 0x088: return MAKE_INSN3_RC(subfe, uisa, RT(state), RA(state), RB(state));
         case 0x08A: return MAKE_INSN3_RC(adde, uisa, RT(state), RA(state), RB(state));
@@ -692,36 +815,88 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
             } else {
                 return MAKE_UNKNOWN();
             }
-        case 0x095: return MAKE_INSN2(stdx, uisa, RS(state), memrefx(state, T_U64));
+        case 0x095:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stdx, uisa, RS(state), memrefx(state, T_U64));
+            }
         case 0x096: return MAKE_INSN2(stwcx_record, vea, RS(state), memrefx(state, T_U32));
-        case 0x097: return MAKE_INSN2(stwx, uisa, RS(state), memrefx(state, T_U32));
+        case 0x097:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stwx, uisa, RS(state), memrefx(state, T_U32));
+            }
         case 0x0AE: return MAKE_INSN2(lfssux, uncategorized, FRT(state), memrefux(state, T_FLOAT32));
         case 0x0B5:
-            if (fld<11, 15>(state) == 0)
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(stdux, uisa, RS(state), memrefux(state, T_U64));
+            } else if (fld<11, 15>(state) == 0) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stdux, uisa, RS(state), memrefux(state, T_U64));
+            }
         case 0x0B7:
-            if (fld<11, 15>(state) == 0)
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(stwux, uisa, RS(state), memrefux(state, T_U32));
-        case 0x0C8: return MAKE_INSN2_RC(subfze, uisa, RT(state), RA(state));
-        case 0x0CA: return MAKE_INSN2_RC(addze, uisa, RT(state), RA(state));
+            } else if (fld<11, 15>(state) == 0) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stwux, uisa, RS(state), memrefux(state, T_U32));
+            }
+        case 0x0C8:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(subfze, uisa, RT(state), RA(state));
+            }
+        case 0x0CA:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(addze, uisa, RT(state), RA(state));
+            }
         case 0x0CE: return MAKE_INSN2(lfsdx, uncategorized, FRT(state), memrefx(state, T_FLOAT64));
         case 0x0D6: return MAKE_INSN2(stdcx_record, vea, RS(state), memrefx(state, T_U64));
-        case 0x0D7: return MAKE_INSN2(stbx, uisa, RS(state), memrefx(state, T_U8));
-        case 0x0E8: return MAKE_INSN2_RC(subfme, uisa, RT(state), RA(state));
-        case 0x0EA: return MAKE_INSN2_RC(addme, uisa, RT(state), RA(state));
+        case 0x0D7:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stbx, uisa, RS(state), memrefx(state, T_U8));
+            }
+        case 0x0E8:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(subfme, uisa, RT(state), RA(state));
+            }
+        case 0x0EA:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(addme, uisa, RT(state), RA(state));
+            }
         case 0x0EB: return MAKE_INSN3_RC(mullw, uisa, RT(state), RA(state), RB(state));
         case 0x0EE: return MAKE_INSN2(lfsdux, uncategorized, FRT(state), memrefux(state, T_FLOAT64));
         case 0x0f4: return MAKE_INSN3_RC(mulld, uisa, RT(state), RA(state), RB(state));
         case 0x0F7:
-            if (fld<11, 15>(state) == 0)
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(stbux, uisa, RS(state), memrefux(state, T_U8));
+            } else if (fld<11, 15>(state) == 0) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stbux, uisa, RS(state), memrefux(state, T_U8));
+            }
         case 0x10A: return MAKE_INSN3_RC(add, uisa, RT(state), RA(state), RB(state));
         case 0x10E: return MAKE_INSN2(lfxsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
         case 0x116: return MAKE_INSN1(dcbt, vea, memrefx(state, T_U8));
-        case 0x117: return MAKE_INSN2(lhzx, uisa, RT(state), memrefx(state, T_U16));
+        case 0x117:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lhzx, uisa, RT(state), memrefx(state, T_U16));
+            }
         case 0x11C: return MAKE_INSN3_RC(eqv, uisa, RA(state), RS(state), RB(state));
         case 0x12E: return MAKE_INSN2(lfxsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
         case 0x132:
@@ -729,14 +904,33 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
                 return MAKE_INSN1(tlbie, oea, RB(state));
             return MAKE_UNKNOWN();
         case 0x137:
-            if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(lhzux, uisa, RT(state), memrefux(state, T_U16));
+            } else if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lhzux, uisa, RT(state), memrefux(state, T_U16));
+            }
         case 0x13C: return MAKE_INSN3_RC(xor, uisa, RA(state), RS(state), RB(state));
         case 0x14E: return MAKE_INSN2(lfxdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x153: return MAKE_INSN2(mfspr, uisa, RT(state), SPR(state));
-        case 0x155: return MAKE_INSN2(lwax, uisa, RT(state), memrefx(state, T_U32));
-        case 0x157: return MAKE_INSN2(lhax, uisa, RT(state), memrefx(state, T_U16));
+        case 0x153:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(mfspr, uisa, RT(state), SPR(state));
+            }
+        case 0x155:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lwax, uisa, RT(state), memrefx(state, T_U32));
+            }
+        case 0x157:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lhax, uisa, RT(state), memrefx(state, T_U16));
+            }
         case 0x16E: return MAKE_INSN2(lfxdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
         case 0x173:
             if (fld<31, 31>(state) == 0) {
@@ -746,26 +940,48 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
             }
             return MAKE_UNKNOWN();
         case 0x175:
-            if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(lwaux, uisa, RT(state), memrefux(state, T_U32));
+            } else if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lwaux, uisa, RT(state), memrefux(state, T_U32));
+            }
         case 0x177:
-            if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state))
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(lhaux, uisa, RT(state), memrefux(state, T_U16));
+            } else if (fld<11, 15>(state) == 0 || fld<11, 15>(state) == fld<6, 10>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lhaux, uisa, RT(state), memrefux(state, T_U16));
+            }
         case 0x18E: return MAKE_INSN2(lfpsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x197: return MAKE_INSN2(sthx, uisa, RS(state), memrefx(state, T_U16));
+        case 0x197:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(sthx, uisa, RS(state), memrefx(state, T_U16));
+            }
         case 0x19C: return MAKE_INSN3_RC(orc, uisa, RA(state), RS(state), RB(state));
         case 0x1AE: return MAKE_INSN2(lfpsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
         case 0x1B7:
-            if (fld<11, 15>(state) == 0)
+            if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
-            return MAKE_INSN2(sthux, uisa, RS(state), memrefux(state, T_U16));
+            } else if (fld<11, 15>(state) == 0) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(sthux, uisa, RS(state), memrefux(state, T_U16));
+            }
         case 0x1BC: return MAKE_INSN3_RC(or, uisa, RA(state), RS(state), RB(state));
         case 0x1C9: return MAKE_INSN3_RC(divdu, uisa, RT(state), RA(state), RB(state));
         case 0x1CB: return MAKE_INSN3_RC(divwu, uisa, RT(state), RA(state), RB(state));
         case 0x1CE: return MAKE_INSN2(lfpdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x1D3: return MAKE_INSN2(mtspr, uisa, SPR(state), RS(state));
+        case 0x1D3:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(mtspr, uisa, SPR(state), RS(state));
+            }
         case 0x1DC: return MAKE_INSN3_RC(nand, uisa, RA(state), RS(state), RB(state));
         case 0x1E9: return MAKE_INSN3_RC(divd, uisa, RT(state), RA(state), RB(state));
         case 0x1EB: return MAKE_INSN3_RC(divw, uisa, RT(state), RA(state), RB(state));
@@ -773,42 +989,127 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
         case 0x208: return MAKE_INSN3_RC(subfco, uisa, RT(state), RA(state), RB(state));
         case 0x20A: return MAKE_INSN3_RC(addco, uisa, RT(state), RA(state), RB(state));
         case 0x20E: return MAKE_INSN2(stfpiwx, uncategorized, FRT(state), memrefx(state, T_V2_U32));
-        case 0x215: return MAKE_INSN2(lswx, uisa, RT(state), memrefx(state, T_U8));
-        case 0x216: return MAKE_INSN2(lwbrx, uisa, RT(state), memrefx(state, T_U32));
-        case 0x217: return MAKE_INSN2(lfsx, uisa, FRT(state), memrefx(state, T_FLOAT32));
+        case 0x215:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lswx, uisa, RT(state), memrefx(state, T_U8));
+            }
+        case 0x216:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lwbrx, uisa, RT(state), memrefx(state, T_U32));
+            }
+        case 0x217:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lfsx, uisa, FRT(state), memrefx(state, T_FLOAT32));
+            }
         case 0x218: return MAKE_INSN3_RC(srw, uisa, RA(state), RS(state), RB(state));
         case 0x21B: return MAKE_INSN3_RC(srd, uisa, RA(state), RS(state), RB(state));
         case 0x228: return MAKE_INSN3_RC(subfo, uisa, RT(state), RA(state), RB(state));
-        case 0x237: return MAKE_INSN2(lfsux, uisa, FRT(state), memrefux(state, T_FLOAT32));
-        case 0x255: return MAKE_INSN3(lswi, uisa, RT(state), memrefra(state, T_U8), NB(state));
+        case 0x237:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lfsux, uisa, FRT(state), memrefux(state, T_FLOAT32));
+            }
+        case 0x255:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(lswi, uisa, RT(state), memrefra(state, T_U8), NB(state));
+            }
         case 0x256:
             if (fld<6, 20>(state) == 0 && fld<31, 31>(state) == 0) {
                 return MAKE_INSN0(sync, vea);
             } else {
                 return MAKE_UNKNOWN();
             }
-        case 0x257: return MAKE_INSN2(lfdx, uisa, FRT(state), memrefx(state, T_FLOAT64));
-        case 0x268: return MAKE_INSN2_RC(nego, uisa, RT(state), RA(state));
+        case 0x257:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lfdx, uisa, FRT(state), memrefx(state, T_FLOAT64));
+            }
+        case 0x268:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(nego, uisa, RT(state), RA(state));
+            }
         case 0x288: return MAKE_INSN3_RC(subfeo, uisa, RT(state), RA(state), RB(state));
         case 0x28A: return MAKE_INSN3_RC(addeo, uisa, RT(state), RA(state), RB(state));
         case 0x28E: return MAKE_INSN2(stfssx, uncategorized, FRT(state), memrefx(state, T_FLOAT32));
-        case 0x295: return MAKE_INSN2(stswx, uisa, RS(state), memrefx(state, T_U8));
-        case 0x296: return MAKE_INSN2(stwbrx, uisa, RS(state), memrefx(state, T_U32));
+        case 0x295:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stswx, uisa, RS(state), memrefx(state, T_U8));
+            }
+        case 0x296:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stwbrx, uisa, RS(state), memrefx(state, T_U32));
+            }
         case 0x2AE: return MAKE_INSN2(stfssux, uncategorized, FRT(state), memrefux(state, T_FLOAT32));
-        case 0x2C8: return MAKE_INSN2_RC(subfzeo, uisa, RT(state), RA(state));
-        case 0x2CA: return MAKE_INSN2_RC(addzeo, uisa, RT(state), RA(state));
+        case 0x2C8:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(subfzeo, uisa, RT(state), RA(state));
+            }
+        case 0x2CA:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(addzeo, uisa, RT(state), RA(state));
+            }
         case 0x2CE: return MAKE_INSN2(stfsdx, uncategorized, FRT(state), memrefx(state, T_FLOAT64));
-        case 0x2D5: return MAKE_INSN3(stswi, uisa, RS(state), memrefra(state, T_U8), NB(state));
-        case 0x2D7: return MAKE_INSN2(stfdx, uisa, FRS(state), memrefx(state, T_FLOAT64));
-        case 0x2E8: return MAKE_INSN2_RC(subfmeo, uisa, RT(state), RA(state));
-        case 0x2EA: return MAKE_INSN2_RC(addmeo, uisa, RT(state), RA(state));
+        case 0x2D5:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(stswi, uisa, RS(state), memrefra(state, T_U8), NB(state));
+            }
+        case 0x2D7:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stfdx, uisa, FRS(state), memrefx(state, T_FLOAT64));
+            }
+        case 0x2E8:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(subfmeo, uisa, RT(state), RA(state));
+            }
+        case 0x2EA:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(addmeo, uisa, RT(state), RA(state));
+            }
         case 0x2EB: return MAKE_INSN3_RC(mullwo, uisa, RT(state), RA(state), RB(state));
         case 0x2EE: return MAKE_INSN2(stfsdux, uncategorized, FRT(state), memrefux(state, T_FLOAT64));
         case 0x2F4: return MAKE_INSN3_RC(mulldo, uisa, RT(state), RA(state), RB(state));
-        case 0x2F7: return MAKE_INSN2(stfdux, uisa, FRS(state), memrefx(state, T_FLOAT64));
+        case 0x2F7:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stfdux, uisa, FRS(state), memrefx(state, T_FLOAT64));
+            }
         case 0x30A: return MAKE_INSN3_RC(addo, uisa, RT(state), RA(state), RB(state));
         case 0x30E: return MAKE_INSN2(stfxsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x316: return MAKE_INSN2(lhbrx, uisa, RT(state), memrefx(state, T_U16));
+        case 0x316:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(lhbrx, uisa, RT(state), memrefx(state, T_U16));
+            }
         case 0x318: return MAKE_INSN3_RC(sraw, uisa, RA(state), RS(state), RB(state));
         case 0x31A: return MAKE_INSN3_RC(srad, uisa, RA(state), RS(state), RB(state));
         case 0x32E: return MAKE_INSN2(stfxsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
@@ -819,29 +1120,43 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
         case 0x356: return MAKE_INSN0(eieio, vea);
         case 0x36E: return MAKE_INSN2(stfxdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
         case 0x38E: return MAKE_INSN2(stfpsx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT32));
-        case 0x396: return MAKE_INSN2(sthbrx, uisa, RS(state), memrefx(state, T_U16));
+        case 0x396:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(sthbrx, uisa, RS(state), memrefx(state, T_U16));
+            }
         case 0x39A: return MAKE_INSN2_RC(extsh, uisa, RA(state), RS(state));
         case 0x3AE: return MAKE_INSN2(stfpsux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT32));
         case 0x3BA: return MAKE_INSN2_RC(extsb, uisa, RA(state), RS(state));
         case 0x3C9: return MAKE_INSN3_RC(divduo, uisa, RT(state), RA(state), RB(state));
         case 0x3CB: return MAKE_INSN3_RC(divwuo, uisa, RT(state), RA(state), RB(state));
         case 0x3CE: return MAKE_INSN2(stfpdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
-        case 0x3D7: return MAKE_INSN2(stfiwx, uisa, FRS(state), memrefx(state, T_U32));
+        case 0x3D7:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(stfiwx, uisa, FRS(state), memrefx(state, T_U32));
+            }
         case 0x3DA: return MAKE_INSN2_RC(extsw, uisa, RA(state), RS(state));
         case 0x3E9: return MAKE_INSN3_RC(divdo, uisa, RT(state), RA(state), RB(state));
         case 0x3EB: return MAKE_INSN3_RC(divwo, uisa, RT(state), RA(state), RB(state));
         case 0x3EE: return MAKE_INSN2(stfpdux, uncategorized, FRT(state), memrefux(state, T_V2_FLOAT64));
         case 0x3F6: return MAKE_INSN1(dcbz, vea, memrefx(state, T_U8));
         case 0x13:
-            if (fld<11, 11>(state) == 0) {
-                return MAKE_INSN1(mfcr, uisa, RT(state));
+            if (!reservedOk<12, 20>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else if (fld<11, 11>(state) != 0) {
+                return MAKE_UNKNOWN();
             } else {
                 return MAKE_INSN1(mfcr, uisa, RT(state));
             }
             break;
         case 0x90:
-            if (fld<11, 11>(state) == 0) {
-                return MAKE_INSN2(mtcrf, uisa, FXM(state), RS(state));
+            if (!reservedOk<20, 20>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else if (fld<11, 11>(state) != 0) {
+                return MAKE_UNKNOWN();
             } else {
                 return MAKE_INSN2(mtcrf, uisa, FXM(state), RS(state));
             }
@@ -860,19 +1175,84 @@ Powerpc::decode_X_formInstruction_3F(State &state) {
     // Get the bits 21-30, next 10 bits
     uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x000: return MAKE_INSN3(fcmpu, uisa, BF_cr(state), FRA(state), FRB(state));
-        case 0x00C: return MAKE_INSN2_RC(frsp, uisa, FRT(state), FRB(state));
-        case 0x00E: return MAKE_INSN2_RC(fctiw, uisa, FRT(state), FRB(state));
-        case 0x00F: return MAKE_INSN2_RC(fctiwz, uisa, FRT(state), FRB(state));
-        case 0x026: return MAKE_INSN1(mtfsb1, uisa, BT(state));
-        case 0x028: return MAKE_INSN2_RC(fneg, uisa, FRT(state), FRB(state));
-        case 0x046: return MAKE_INSN1_RC(mtfsb0, uisa, BT(state));
-        case 0x048: return MAKE_INSN2_RC(fmr, uisa, FRT(state), FRB(state));
-        case 0x086: return MAKE_INSN2_RC(mtfsfi, uisa, BF_fpscr(state), U(state));
-        case 0x088: return MAKE_INSN2_RC(fnabs, uisa, FRT(state), FRB(state));
-        case 0x108: return MAKE_INSN2_RC(fabs, uisa, FRT(state), FRB(state));
-        case 0x247: return MAKE_INSN1_RC(mffs, uisa, FRT(state));
-        case 0x2C7: return MAKE_INSN2_RC(mtfsf, uisa, FLM(state), FRB(state));
+        case 0x000:
+            if (!reservedOk<9, 10>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(fcmpu, uisa, BF_cr(state), FRA(state), FRB(state));
+            }
+        case 0x00C:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(frsp, uisa, FRT(state), FRB(state));
+            }
+        case 0x00E:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fctiw, uisa, FRT(state), FRB(state));
+            }
+        case 0x00F:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fctiwz, uisa, FRT(state), FRB(state));
+            }
+        case 0x026:
+            if (!reservedOk<11, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN1(mtfsb1, uisa, BT(state));
+            }
+        case 0x028:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fneg, uisa, FRT(state), FRB(state));
+            }
+        case 0x046:
+            if (!reservedOk<11, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN1_RC(mtfsb0, uisa, BT(state));
+            }
+        case 0x048:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fmr, uisa, FRT(state), FRB(state));
+            }
+        case 0x086:
+            if (!reservedOk<9, 15>(state) || !reservedOk<20, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(mtfsfi, uisa, BF_fpscr(state), U(state));
+            }
+        case 0x088:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fnabs, uisa, FRT(state), FRB(state));
+            }
+        case 0x108:
+            if (!reservedOk<11, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fabs, uisa, FRT(state), FRB(state));
+            }
+        case 0x247:
+            if (!reservedOk<11, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN1_RC(mffs, uisa, FRT(state));
+            }
+        case 0x2C7:
+            if (!reservedOk<6, 6>(state) || !reservedOk<15, 15>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(mtfsf, uisa, FLM(state), FRB(state));
+            }
         default: return MAKE_UNKNOWN();
 
     }
@@ -915,32 +1295,81 @@ Powerpc::decode_XL_formInstruction(State &state) {
     // Get the bits 21-30, next 10 bits
     uint16_t xoOpcode = (state.insn >> 1) & 0x3FF;
     switch(xoOpcode) {
-        case 0x000: return MAKE_INSN2(mcrf, uisa, BF_cr(state), BFA_cr(state));
+        case 0x000:
+            if (!reservedOk<9, 10>(state) || !reservedOk<14, 20>(state) || !reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2(mcrf, uisa, BF_cr(state), BFA_cr(state));
+            }
         case 0x010:
-            if (LK(state) == 0) {
+            if (!reservedOk<16, 18>(state)) {
+                return MAKE_UNKNOWN();
+            } else if (LK(state) == 0) {
                 return MAKE_INSN3(bclr, uisa, BO(state), BI(state), BH(state));
             } else {
                 return MAKE_INSN3(bclrl, uisa, BO(state), BI(state), BH(state));
             }
             break;
-        case 0x021: return MAKE_INSN3(crnor, uisa, BT(state), BA(state), BB(state));
+        case 0x021:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(crnor, uisa, BT(state), BA(state), BB(state));
+            }
         case 0x32:
             if (fld<6, 20>(state) == 0 && fld<31, 31>(state) == 0)
                 return MAKE_INSN0(rfi, uncategorized);
             return MAKE_UNKNOWN();
-        case 0x081: return MAKE_INSN3(crandc, uisa, BT(state), BA(state), BB(state));
+        case 0x081:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(crandc, uisa, BT(state), BA(state), BB(state));
+            }
         case 0x096:
             if (fld<6, 20>(state) == 0 && fld<31, 31>(state) == 0)
                 return MAKE_INSN0(isync, vea);
             return MAKE_UNKNOWN();
-        case 0x0C1: return MAKE_INSN3(crxor, uisa, BT(state), BA(state), BB(state));
-        case 0x0E1: return MAKE_INSN3(crnand, uisa, BT(state), BA(state), BB(state));
-        case 0x101: return MAKE_INSN3(crand, uisa, BT(state), BA(state), BB(state));
-        case 0x121: return MAKE_INSN3(creqv, uisa, BT(state), BA(state), BB(state));
-        case 0x1A1: return MAKE_INSN3(crorc, uisa, BT(state), BA(state), BB(state));
-        case 0x1C1: return MAKE_INSN3(cror, uisa, BT(state), BA(state), BB(state));
+        case 0x0C1:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(crxor, uisa, BT(state), BA(state), BB(state));
+            }
+        case 0x0E1:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(crnand, uisa, BT(state), BA(state), BB(state));
+            }
+        case 0x101:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(crand, uisa, BT(state), BA(state), BB(state));
+            }
+        case 0x121:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(creqv, uisa, BT(state), BA(state), BB(state));
+            }
+        case 0x1A1:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(crorc, uisa, BT(state), BA(state), BB(state));
+            }
+        case 0x1C1:
+            if (!reservedOk<31, 31>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3(cror, uisa, BT(state), BA(state), BB(state));
+            }
         case 0x210:
-            if (LK(state) == 0) {
+            if (!reservedOk<16, 18>(state)) {
+                return MAKE_UNKNOWN();
+            } else if (LK(state) == 0) {
                 return MAKE_INSN3(bcctr, uisa, BO(state), BI(state), BH(state));
             } else {
                 return MAKE_INSN3(bcctrl, uisa, BO(state), BI(state), BH(state));
@@ -1007,13 +1436,48 @@ Powerpc::decode_A_formInstruction_04(State &state) {
 SgAsmPowerpcInstruction*
 Powerpc::decode_A_formInstruction_3B(State &state) {
     switch(fld<26, 30>(state)) {
-        case 0x12: return MAKE_INSN3_RC(fdivs, uisa, FRT(state), FRA(state), FRB(state));
-        case 0x14: return MAKE_INSN3_RC(fsubs, uisa, FRT(state), FRA(state), FRB(state));
-        case 0x15: return MAKE_INSN3_RC(fadds, uisa, FRT(state), FRA(state), FRB(state));
-        case 0x16: return MAKE_INSN2_RC(fsqrts, uisa, FRT(state), FRB(state));
-        case 0x18: return MAKE_INSN2_RC(fres, uisa, FRT(state), FRB(state));
-        case 0x19: return MAKE_INSN3_RC(fmuls, uisa, FRT(state), FRA(state), FRC(state));
-        case 0x1A: return MAKE_INSN2_RC(frsqrtes, uisa, FRT(state), FRB(state));
+        case 0x12:
+            if (!reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fdivs, uisa, FRT(state), FRA(state), FRB(state));
+            }
+        case 0x14:
+            if (!reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fsubs, uisa, FRT(state), FRA(state), FRB(state));
+            }
+        case 0x15:
+            if (!reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fadds, uisa, FRT(state), FRA(state), FRB(state));
+            }
+        case 0x16:
+            if (!reservedOk<11, 15>(state) || !reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fsqrts, uisa, FRT(state), FRB(state));
+            }
+        case 0x18:
+            if (!reservedOk<11, 15>(state) || !reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fres, uisa, FRT(state), FRB(state));
+            }
+        case 0x19:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fmuls, uisa, FRT(state), FRA(state), FRC(state));
+            }
+        case 0x1A:
+            if (!reservedOk<11, 15>(state) || !reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(frsqrtes, uisa, FRT(state), FRB(state));
+            }
         case 0x1C: return MAKE_INSN4_RC(fmsubs, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
         case 0x1D: return MAKE_INSN4_RC(fmadds, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
         case 0x1E: return MAKE_INSN4_RC(fnmsubs, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
@@ -1027,14 +1491,50 @@ SgAsmPowerpcInstruction*
 Powerpc::decode_A_formInstruction_3F(State &state) {
     // FIXME: Make the floating point registers use the powerpc_regclass_fpr instead of powerpc_regclass_gpr
     switch(fld<26, 30>(state)) {
-        case 0x12: return MAKE_INSN3_RC(fdiv, uisa, FRT(state), FRA(state), FRB(state));
-        case 0x14: return MAKE_INSN3_RC(fsub, uisa, FRT(state), FRA(state), FRB(state));
-        case 0x15: return MAKE_INSN3_RC(fadd, uisa, FRT(state), FRA(state), FRB(state));
-        case 0x16: return MAKE_INSN2_RC(fsqrt, uisa, FRT(state), FRB(state));
-        case 0x17: return MAKE_INSN4_RC(fsel, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
-        case 0x18: return MAKE_INSN2_RC(fre, uisa, FRT(state), FRB(state));
-        case 0x19: return MAKE_INSN3_RC(fmul, uisa, FRT(state), FRA(state), FRC(state));
-        case 0x1A: return MAKE_INSN2_RC(frsqrte, uisa, FRT(state), FRB(state));
+        case 0x12:
+            if (!reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fdiv, uisa, FRT(state), FRA(state), FRB(state));
+            }
+        case 0x14:
+            if (!reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fsub, uisa, FRT(state), FRA(state), FRB(state));
+            }
+        case 0x15:
+            if (!reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fadd, uisa, FRT(state), FRA(state), FRB(state));
+            }
+        case 0x16:
+            if (!reservedOk<11, 15>(state) || !reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fsqrt, uisa, FRT(state), FRB(state));
+            }
+        case 0x17:
+            return MAKE_INSN4_RC(fsel, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
+        case 0x18:
+            if (!reservedOk<11, 15>(state) || !reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(fre, uisa, FRT(state), FRB(state));
+            }
+        case 0x19:
+            if (!reservedOk<16, 20>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN3_RC(fmul, uisa, FRT(state), FRA(state), FRC(state));
+            }
+        case 0x1A:
+            if (!reservedOk<11, 15>(state) || !reservedOk<21, 25>(state)) {
+                return MAKE_UNKNOWN();
+            } else {
+                return MAKE_INSN2_RC(frsqrte, uisa, FRT(state), FRB(state));
+            }
         case 0x1C: return MAKE_INSN4_RC(fmsub, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
         case 0x1D: return MAKE_INSN4_RC(fmadd, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
         case 0x1E: return MAKE_INSN4_RC(fnmsub, uisa, FRT(state), FRA(state), FRC(state), FRB(state));
