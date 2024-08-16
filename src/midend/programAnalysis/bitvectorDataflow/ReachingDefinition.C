@@ -74,7 +74,8 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
        return collect(first, second);
   };
   StmtSideEffectCollect<AstNodePtr> op(fa, a);
-  op(h, &collect_f);
+  op.set_modify_collect(collect_f);
+  op(h); 
 }
 
 void ReachingDefinitionGenerator::
@@ -183,10 +184,12 @@ finalize( AstInterface& fa, const ReachingDefinitionGenerator& g,
   std::function<bool(AstNodePtr, AstNodePtr)> collectgen_f = [&collectgen](AstNodePtr first, AstNodePtr second) { return collectgen(first, second); };
   std::function<bool(AstNodePtr, AstNodePtr)> collectkill_f = [&collectkill](AstNodePtr first, AstNodePtr second) { return collectkill(first, second); }; 
   StmtSideEffectCollect<AstNodePtr> op(fa, a);
+  op.set_modify_collect(collectgen_f);
+  op.set_kill_collect(collectkill_f);
   std::list <AstNodePtr>& stmts = GetStmts();
   for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
        ++p) {
-    op( *p, &collectgen_f, 0, &collectkill_f);
+    op( *p);
   }
   gen = collectgen.get_gen();
   notkill = collectkill.get_kill();

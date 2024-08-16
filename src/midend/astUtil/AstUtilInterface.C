@@ -23,30 +23,38 @@ bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       }
       DebugAstUtil([&first](){ return "save modify:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Modify);
-      };
+    };
     std::function<bool(SgNode*, SgNode*)> save_read = [&collect,&ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Read);
       }
       DebugAstUtil([&first](){ return "save read:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Read);
-      };
+    };
     std::function<bool(SgNode*, SgNode*)> save_kill = [&collect,&ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Kill);
       }
       DebugAstUtil([&first](){ return "save kill:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Kill);
-      };
+    };
     std::function<bool(SgNode*, SgNode*)> save_call = [&collect,&ast] (SgNode* first, SgNode* second) {
       if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
          AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Call);
       }
       DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Call);
-      };
-
-    return collect_operator(ast, &save_mod, &save_read, &save_kill, &save_call);
+    };
+    std::function<bool(SgNode*, SgNode*)> save_decl = [&collect,&ast] (SgNode* var, SgNode* init) {
+      DebugAstUtil([&var](){ return "save new decl:" + AstInterface::AstToString(var); });
+      return collect(var, init, OperatorSideEffect::Decl);
+    };
+    collect_operator.set_modify_collect(save_mod);
+    collect_operator.set_read_collect(save_read);
+    collect_operator.set_kill_collect(save_kill);
+    collect_operator.set_call_collect(save_call);
+    collect_operator.set_new_var_collect(save_decl);
+    return collect_operator(ast);
 }
 
 void AstUtilInterface::ReadAnnotations(std::istream& input) {
@@ -90,19 +98,20 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
         desc = funcAnnot->get_call_descriptor(fa, op_ast, true);
           break;
      case OperatorSideEffect::Kill:
-        desc = funcAnnot->get_kill_descriptor(fa, op_ast, true);
+     case OperatorSideEffect::Decl:
           break;
      default: 
         std::cerr << "Unexpected relation: " << relation << "\n";
         assert(0);
   }
-  assert(desc != 0);
   std::string varname = GetVariableSignature(var);
   DebugAstUtil([&varname](){ return "Variable name is :" + varname; });
-  if (varname == "_UNKNOWN_" || varname == "") {
-    desc->set_has_unknown(true);  
-  } else {
-    desc->push_back(SymbolicValDescriptor(SymbolicValGenerator::GetSymbolicVal(fa, AstNodePtrImpl(var)), varname));
+  if (desc != 0) {
+     if (varname == "_UNKNOWN_" || varname == "") {
+       desc->set_has_unknown(true);  
+     } else {
+       desc->push_back(SymbolicValDescriptor(SymbolicValGenerator::GetSymbolicVal(fa, AstNodePtrImpl(var)), varname));
+     }
   }
   return std::pair<std::string, std::string>(GetVariableSignature(op_ast), varname);
 } 
@@ -110,6 +119,8 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
 std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     if (variable == 0) return "_UNKNOWN_";
     switch (variable->variantT()) {
+     case V_SgClassType:
+          return isSgClassType(variable)->get_name().getString();
      case V_SgNamespaceDeclarationStatement:
           return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
      case V_SgUsingDirectiveStatement:

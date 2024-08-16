@@ -11,7 +11,7 @@ class SgFunctionDeclaration;
 namespace AstUtilInterface{
 
    enum OperatorSideEffect {
-     Modify, Read, Kill, Call
+     Modify, Read, Kill, Call, Decl
    };
    inline std::string OperatorSideEffectName(OperatorSideEffect what) {
      switch (what) {
@@ -19,6 +19,7 @@ namespace AstUtilInterface{
       case OperatorSideEffect::Read: return "read";
       case OperatorSideEffect::Kill: return "kill";
       case OperatorSideEffect::Call: return "call";
+      case OperatorSideEffect::Decl: return "decl";
       default:
           std::cerr << "Error: Unexpected enum value:" << what << "\n";
           assert(false);

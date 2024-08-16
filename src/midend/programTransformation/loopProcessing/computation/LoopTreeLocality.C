@@ -248,7 +248,9 @@ void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
            assert(stmtmap.find(curstmt) == stmtmap.end());
            stmtmap[curstmt] = stmtnum; 
            StmtSideEffectCollect<AstNodePtr> effect(fa, LoopTransformInterface::getSideEffectInterface());
-           effect(curstmt->GetOrigStmt(), &modcollect, &readcollect);  
+           effect.set_modify_collect(modcollect);
+           effect.set_read_collect(readcollect);
+           effect(curstmt->GetOrigStmt());
        } 
      }
 

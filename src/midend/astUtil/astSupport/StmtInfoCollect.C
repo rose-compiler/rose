@@ -138,7 +138,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
          if (read_ast != AST_NULL) {
             operator()(fa, read_ast);
          }
-        AppendModLoc( fa, ast, read_ast);
+        AppendVariableDecl( fa, ast, read_ast);
          ++pv;
          ++pa;
       }
@@ -289,6 +289,21 @@ class CollectModRefWrap : public CollectReadRefWrap<AstNodePtr>
       return true;
    }
 };
+
+template <class AstNodePtr>
+void StmtSideEffectCollect<AstNodePtr>::
+AppendVariableDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init)
+    {
+     DebugLocalInfoCollect([&variable,&var_init](){ return "appending var decl " + AstInterface::AstToString(variable) + " = " + AstInterface::AstToString(var_init); });
+     AstNodeType vartype;
+     if(curstmt == 0) return;
+       assert(curstmt != AST_NULL);
+       if (varcollect != 0) {
+            (*varcollect)(variable, var_init);
+       } else if (modcollect != 0) {
+            (*modcollect)(variable, curstmt);
+       }
+    }
 
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
@@ -445,6 +460,11 @@ get_alias_map( const std::string& varname, const AstNodePtr& scope)
   if (aliasmap.find(name) == aliasmap.end())
      aliasmap[name] = new UF_elem();
   return aliasmap[name];
+}
+
+void StmtVarAliasCollect::
+AppendVariableDecl( AstInterface& fa, const AstNodePtr& var, const AstNodePtr& init) {
+  return AppendModLoc(fa, var, init);
 }
 
 void StmtVarAliasCollect::

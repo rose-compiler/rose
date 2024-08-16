@@ -51,7 +51,10 @@ bool AnalyzeStmtRefs( AstInterface& fa, const AstNodePtr& n,
   std::function<bool(AstNodePtr, AstNodePtr)> colr = [&rRefs]
           (AstNodePtr read_first, AstNodePtr /*read_second*/) {
                   return rRefs(read_first); };
-  return StmtSideEffectCollect<AstNodePtr>(fa, LoopTransformInterface::getSideEffectInterface())(n,&colw,&colr);
+  StmtSideEffectCollect<AstNodePtr> op(fa, LoopTransformInterface::getSideEffectInterface());
+  op.set_modify_collect(colw);
+  op.set_read_collect(colr);
+  return op(n);
 }
 
 std::string toString( std::vector<SymbolicVal> & analvec)
