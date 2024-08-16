@@ -86,6 +86,7 @@ static SgAsmType *type_I16() { return SageBuilderAsm::buildTypeI16(); }
 static SgAsmType *type_I32() { return SageBuilderAsm::buildTypeI32(); }
 static SgAsmType *type_U8()  { return SageBuilderAsm::buildTypeU8(); }
 static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16(); }
+static SgAsmType *type_U32() { return SageBuilderAsm::buildTypeU32(); }
 
 /*****************************************************************************************************************************/
 
@@ -2182,7 +2183,7 @@ static struct Mips32_lwu: Mips::Decoder {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lwu, "lwu",
                                   d->makeRegister(insn_va, gR1(ib)),
-                                  d->makeMemoryReference(addr, type_I32()));
+                                  d->makeMemoryReference(addr, type_U32()));
     }
 } mips32_lwu;
 
