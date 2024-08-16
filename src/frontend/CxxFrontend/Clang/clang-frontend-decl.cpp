@@ -20,6 +20,13 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
     logger[DEBUG] << "Find anonymous fieldDecl: " << declName << "\n";
 #endif
     }
+    else if(llvm::isa<clang::EnumDecl>(decl) && declName == "")
+    {
+      declName = "__anonymous_" +  generate_source_position_string(decl->getBeginLoc());
+#if DEBUG_SYMBOL_TABLE_LOOKUP
+    logger[DEBUG] << "Find anonymous EnumDecl: " << declName << "\n";
+#endif
+    }
 
     SgName name(declName);
 
@@ -168,7 +175,7 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
         }
         case clang::Decl::Enum:
         {
-            name = SgName(((clang::EnumDecl *)decl)->getName().str());
+            // An anonymous enum should have its name set with prefix "__anonymous_".  There is no need to to retreive the name from clang::EnumDecl, as it will be empty.
             it = SageBuilder::ScopeStack.rbegin();
             while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
                 sym = (*it)->lookup_enum_symbol(name);

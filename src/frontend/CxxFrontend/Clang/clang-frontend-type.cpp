@@ -902,6 +902,7 @@ bool ClangToSageTranslator::VisitTagType(clang::TagType * tag_type, SgNode ** no
 bool ClangToSageTranslator::VisitEnumType(clang::EnumType * enum_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
     logger[DEBUG] << "ClangToSageTranslator::VisitEnumType" << "\n";
+    logger[DEBUG] << "VisitEnumType isSugared: " << enum_type->isSugared() << "\n";
 #endif
 
     SgSymbol * sym = GetSymbolFromSymbolTable(enum_type->getDecl());
