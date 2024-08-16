@@ -216,6 +216,7 @@ enum MipsInstructionKind {
     mips_lwle,                  // Load word left EVA.
     mips_lwr,                   // Load word right.
     mips_lwre,                  // Load word right EVA.
+    mips_lwu,                   // Load word unsigned.
     mips_lwxc1,                 // Load word indexed to floating point.
     mips_madd,                  // Multiply and add word to hi, lo.
     mips_madd_s,                // Floating point multiply add.

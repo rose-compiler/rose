@@ -165,7 +165,7 @@ BasicBlock::instructionIndex(SgAsmInstruction *toFind) const {
     return instructionIndex(toFind->get_address());
 }
 
-// Reset semantics back to a state similar to  after calling init() followed by append() with a failed dispatch, except also
+// Reset semantics back to a state similar to after calling init() followed by append() with a failed dispatch, except also
 // discard the initial and penultimate state.
 void
 BasicBlock::dropSemantics(const Partitioner::ConstPtr &partitioner) {

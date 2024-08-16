@@ -327,6 +327,7 @@ Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
         case mips_lwle:                 return "load word left EVA";
         case mips_lwr:                  return "load word right";
         case mips_lwre:                 return "load word right EVA";
+        case mips_lwu:                  return "load word unsigned";
         case mips_lwxc1:                return "load word indexed to fp";
         case mips_madd:                 return "multiply and add word to hi, lo";
         case mips_madd_s:               return "fp multiply add";

@@ -2175,6 +2175,17 @@ static struct Mips32_lwre: Mips::Decoder {
     }
 } mips32_lwre;
 
+// LWU -- load word unsigned
+static struct Mips32_lwu: Mips::Decoder {
+    Mips32_lwu(): Mips::Decoder(Release1, sOP(047), mOP()) {}
+    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+        SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
+        return d->makeInstruction(insn_va, mips_lwu, "lwu",
+                                  d->makeRegister(insn_va, gR1(ib)),
+                                  d->makeMemoryReference(addr, type_I32()));
+    }
+} mips32_lwu;
+
 // LWXC1 -- load word indexed to floating point
 static struct Mips32_lwxc1: Mips::Decoder {
     Mips32_lwxc1(): Mips::Decoder(Release2,
@@ -4159,6 +4170,7 @@ Mips::init()
     insert_idis(&mips32_lwle);
     insert_idis(&mips32_lwr);
     insert_idis(&mips32_lwre);
+    insert_idis(&mips32_lwu);
     insert_idis(&mips32_lwxc1);
     insert_idis(&mips32_madd);
     insert_idis(&mips32_madd_s);
