@@ -875,7 +875,7 @@ if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -pthread")
 endif()
 
-set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/usr/include")
+set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/${Boost_INCLUDE_DIRS}")
 
 # TSG to do: improve conditionals for quadmath 
 set(rose_library_list "rose")
@@ -911,6 +911,7 @@ foreach(X IN LISTS rose_library_list)
   # Handle non-path library names appropriately
   string(REGEX REPLACE "^-l" "" Y "${Y}")  # Remove '-l' prefix if present
   string(REGEX REPLACE "^lib" "" Y "${Y}") # Remove 'lib' prefix if present
+  string(REGEX REPLACE "^Boost::" "boost_" Y "${Y}") # Convert boost modules into ld-recognizeable libraries
   
   # Avoid treating empty strings as library names
   if(NOT Y STREQUAL "")
@@ -971,6 +972,7 @@ else()
     set(ACTUAL_CXX ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
 endif()
 
+
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${ACTUAL_CC}\n")
@@ -981,11 +983,11 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${ro
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${Boost_LIBRARY_DIRS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIR_DEBUG}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${Boost_LIBRARY_DIRS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIRS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
 
