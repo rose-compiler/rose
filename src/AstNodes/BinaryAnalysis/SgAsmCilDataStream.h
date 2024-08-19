@@ -39,7 +39,7 @@ public:
      *   stream. */
     virtual void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData); /* FIXME: should be abstract */
 
-    /** unparses the metadata objects into the buffer */
+    /** Unparses the metadata objects into the buffer */
     virtual void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const; /* FIXME: should be abstract */
 
     /** Prints the object's data in a human readable form. */

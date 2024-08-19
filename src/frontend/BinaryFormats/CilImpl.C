@@ -15,6 +15,8 @@
 #include <frontend/SageIII/sageInterface/SageBuilderAsm.h>
 #include <ROSE_UNUSED.h>
 
+#include <numeric>
+
 
 namespace sb = Rose::SageBuilderAsm;
 using namespace Rose::Diagnostics; // mlog WARN, ...
@@ -50,7 +52,6 @@ namespace // anonymous namespace for auxiliary functions
     
     ensureSize(buf, index+NUM_BYTES);
     
-    // \todo is this correct?
     *reinterpret_cast<T*>(buf.data()+index) = Rose::BitOps::toLittleEndian(value);
     index += NUM_BYTES;
   }
@@ -3466,7 +3467,9 @@ SgAsmCilMetadataHeap::get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind
 namespace
 {
 
-struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>
+using MethodHeaderBase = std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>;
+
+struct MethodHeader : MethodHeaderBase
 {
   static constexpr std::uint8_t TINY           = 0x2;
   static constexpr std::uint8_t FAT            = 0x3;
@@ -3476,7 +3479,7 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
   static constexpr std::uint8_t FLAGS          = MORE_SECTS | INIT_LOCALS;
   static constexpr std::uint8_t FAT_HEADER_LEN = 12;
 
-  using base = std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>;
+  using base = MethodHeaderBase;
   using base::base;
 
   // accessors
@@ -3529,6 +3532,7 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
 MethodHeader
 parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
 {
+  // II.25.4.3 Fat format
   std::uint8_t         buf[12];
   const std::size_t    nread = fhdr->get_loaderMap()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
@@ -3553,7 +3557,7 @@ parseTinyHeader(std::uint8_t header)
 
 
 SgAsmBlock*
-disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
+disassemble(rose_addr_t base_va, SgAsmCilMethodDef*, MethodHeader,
             std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
 {
   rose_addr_t        addr = 0;
@@ -3577,6 +3581,8 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
     if (disasm->architecture()->isUnknown(instr)) {
       // Pad block with noops because something went wrong
       // TODO: don't pad with noops, pad by expanding current unknown instruction
+      mlog[ERROR] << "unknown instruction.. use padding." << std::endl;
+      
       SgUnsignedCharList rawBytes(1,'\0');
       while (addr < sz) {
         SgAsmCilInstruction* insn = new SgAsmCilInstruction(base_va+addr, *disasm->architecture()->registrationId(),
@@ -3615,36 +3621,187 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
   return sb::buildBasicBlock(lst);
 }
 
-enum struct code_type
-{
-  cil            = 0,
-  native         = 1,
-  optil_reserved = 2,
-  runtime        = 3,
+// II.23.1.11 Flags for methods [MethodImplAttributes]
+//   https://github.com/stakx/ecma-335/blob/master/docs/ii.23.1.11-flags-for-methods-methodimplattributes.md
+// \{
+
+enum struct CodeTypeMask
+{  
+  cil            = 0x0000,
+  native         = 0x0001,
+  optil_reserved = 0x0002,
+  runtime        = 0x0003,
   mask           = cil | native | optil_reserved | runtime,
 };
 
 inline
-code_type operator&(int lhs, code_type rhs)
+CodeTypeMask operator&(int lhs, CodeTypeMask rhs)
 {
-  return static_cast<code_type>(lhs & int(rhs));
+  return static_cast<CodeTypeMask>(lhs & int(rhs));
 }
 
 inline
-code_type operator&(code_type lhs, int rhs)
+CodeTypeMask operator&(CodeTypeMask lhs, int rhs)
 {
-  return static_cast<code_type>(int(lhs) & rhs);
+  return static_cast<CodeTypeMask>(int(lhs) & rhs);
 }
 
 inline
-code_type operator&(code_type lhs, code_type rhs)
+CodeTypeMask operator&(CodeTypeMask lhs, CodeTypeMask rhs)
 {
-  return static_cast<code_type>(int(lhs) & int(rhs));
+  return static_cast<CodeTypeMask>(int(lhs) & int(rhs));
+}
+
+
+enum struct ManagedMask
+{
+  unmanaged      = 0x0004,
+  managed        = 0x0000,
+  mask           = unmanaged | managed,
+};
+
+enum struct ImplementationInfo
+{
+  forwardRef        = 0x0010,
+  preserveSig       = 0x0080,
+  internalCall      = 0x1000, 
+  synchronized      = 0x0020,
+  noInlining        = 0x0008,
+  maxMethodImplVal  = 0xffff,
+  noOptimization    = 0x0040
+};
+
+// \}
+
+SgAsmCilExceptionData*
+exceptionData( std::uint32_t f,  
+               std::uint32_t to, 
+               std::uint32_t tl, 
+               std::uint32_t ho, 
+               std::uint32_t hl, 
+               std::uint32_t tokOrOfs
+             )
+{
+  SgAsmCilExceptionData* res = new SgAsmCilExceptionData;
+  
+  res->set_flags(f);
+  res->set_tryOffset(to);
+  res->set_tryLength(tl);
+  res->set_handlerOffset(ho);
+  res->set_handlerLength(hl);
+  res->set_classTokenOrFilterOffset(tokOrOfs);
+  
+  return res;
+} 
+
+SgAsmCilMethodData*
+methodData( std::uint64_t kind, 
+            std::uint32_t dataSize, 
+            std::vector<SgAsmCilExceptionData*> clauses
+          )
+{
+  SgAsmCilMethodData* res = new SgAsmCilMethodData;
+  
+  res->set_kind(kind);
+  res->set_dataSize(dataSize);
+  res->get_Clauses().swap(clauses);
+  
+  return res;
+};                         
+   
+SgAsmCilExceptionData*
+parseFatEHClause(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
+{
+  using Rose::BinaryAnalysis::ByteOrder::leToHost;
+  
+  static constexpr std::uint8_t SECLEN = 24;
+  
+  std::uint8_t buf[SECLEN];
+  std::size_t  nread = fhdr.get_loaderMap()->readQuick(buf, sectionRva, SECLEN);
+  ASSERT_require(nread == SECLEN);
+  
+  return exceptionData( leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 0)),
+                        leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 4)),
+                        leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 8)),
+                        leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 12)),
+                        leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 16)),
+                        leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 20))
+                      );
+}
+
+SgAsmCilExceptionData*
+parseTinyEHClause(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
+{
+  using Rose::BinaryAnalysis::ByteOrder::leToHost;
+  
+  static constexpr std::uint8_t SECLEN = 12;
+
+  std::uint8_t buf[SECLEN];
+  std::size_t  nread = fhdr.get_loaderMap()->readQuick(buf, sectionRva, SECLEN);
+  ASSERT_require(nread == SECLEN);
+  
+  return exceptionData( leToHost(*reinterpret_cast<const std::uint16_t*>(buf + 0)),
+                        leToHost(*reinterpret_cast<const std::uint16_t*>(buf + 2)),
+                        leToHost(*reinterpret_cast<const std::uint8_t*> (buf + 4)),
+                        leToHost(*reinterpret_cast<const std::uint16_t*>(buf + 5)),
+                        leToHost(*reinterpret_cast<const std::uint8_t*> (buf + 7)),
+                        leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 8))   
+                      );
+}
+
+std::vector<SgAsmCilExceptionData*>
+parseEHClauses( SgAsmPEFileHeader& fhdr, 
+                rose_addr_t sectionRva, 
+                std::size_t len, 
+                std::size_t elemLen, 
+                std::function<SgAsmCilExceptionData*(SgAsmPEFileHeader&, rose_addr_t)> parseClause
+              )
+{
+  ASSERT_require((len % elemLen) == 0);
+  
+  std::vector<SgAsmCilExceptionData*> res;
+  
+  for (std::size_t i = len / elemLen; i != 0; --i)
+  {
+    res.emplace_back(parseClause(fhdr, sectionRva));
+    sectionRva += elemLen;
+  }
+  
+  return res;
+}              
+
+SgAsmCilMethodData*
+parseSection(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
+{
+  ASSERT_require((sectionRva % 4) == 0);
+  
+  std::uint8_t   kind;
+  std::size_t    nread1 = fhdr.get_loaderMap()->readQuick(&kind, sectionRva, 1);
+  ASSERT_require(nread1 == 1);
+  
+  // buffer for 3 bytes
+  std::uint8_t   buf[] = { 0, 0, 0, 0 };
+  std::size_t    nread3 = fhdr.get_loaderMap()->readQuick(buf, sectionRva+1, 3);
+  ASSERT_require(nread3 == 3);
+  
+  std::uint8_t   fatFlag = SgAsmCilMethodData::CorILMethod_Sect_FatFormat;
+  const bool     fat = (kind & fatFlag) == fatFlag;
+  
+  ASSERT_require(fat || ((buf[1] == 0) && (buf[2] == 0)));
+  std::uint8_t   len = fat ? 3 : 1;
+  
+  auto           sizeCalc = [](std::uint32_t l, std::uint32_t r) -> std::uint32_t { return l*256 + r; };
+  std::uint32_t  dataSize = std::accumulate( buf, buf + len, std::uint32_t{0}, sizeCalc);
+  
+  auto           clauses = fat ? parseEHClauses(fhdr, sectionRva+4, dataSize-4, 24, parseFatEHClause)
+                               : parseEHClauses(fhdr, sectionRva+4, dataSize-4, 12, parseTinyEHClause);
+  
+  return methodData( kind, dataSize, std::move(clauses) );    
 }
 
 
 void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root, 
-                    size_t dbgbuf_beg, size_t dbgbuf_lim)
+                    size_t /*dbgbuf_beg*/, size_t /*dbgbuf_lim*/)
 {
   ASSERT_not_null(mdh); ASSERT_not_null(root);
 
@@ -3662,60 +3819,60 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    rose_addr_t rva = static_cast<std::uint32_t>(m->get_RVA());
+    rose_addr_t    rva = static_cast<std::uint32_t>(m->get_RVA());
     
     if (rva == 0) continue;
       
     // parse header
     std::uint8_t   mh0;
     std::size_t    nread = fhdr->get_loaderMap()->readQuick(&mh0, base_va + rva, 1);
-    ROSE_ASSERT(nread == 1);
+    ASSERT_require(nread == 1);
 
     const bool     isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
-    ROSE_ASSERT(isTiny || (((base_va+rva)%4) == 0));
+    ASSERT_require(isTiny || (((base_va+rva)%4) == 0));
     MethodHeader   mh = isTiny ? parseTinyHeader(mh0) : parseFatHeader(base_va, rva, fhdr);
 
     m->set_stackSize(mh.maxStackSize());
     m->set_hasMoreSections(mh.moreSections());
     m->set_initLocals(mh.initLocals());
+    m->set_localVarSigTok(mh.localVarSigTok());
     
     // parse code
     rose_addr_t    codeRVA = rva + mh.headerSize();
     std::uint32_t  codeLen = mh.codeSize();
 
+/*
     std::cerr << "base_va: "    << base_va    << " <= "
               << "code_beg: "   << base_va + codeRVA << " <= "
               << "code_lim: "   << base_va + codeRVA + codeLen << " <= "
               << "dbgbuf_beg: " << dbgbuf_beg << " <= "
               << "dbgbuf_lim: " << dbgbuf_lim 
               << std::endl;
+*/
     
-    //ASSERT_require(dbgbuf_beg                  <= base_va + codeRVA);
-    //ASSERT_require(base_va + codeRVA + codeLen <= dbgbuf_lim);
-
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t nreadCode = fhdr->get_loaderMap()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    std::size_t    nreadCode = fhdr->get_loaderMap()->readQuick(code.data(), base_va + codeRVA, codeLen);
     ASSERT_require(nreadCode == codeLen);
 
-    SgAsmBlock* blk = nullptr;
+    SgAsmBlock*    blk = nullptr;
     
-    switch (m->get_ImplFlags() & code_type::mask)
+    switch (m->get_ImplFlags() & CodeTypeMask::mask)
     {
       namespace rb = Rose::BinaryAnalysis;
 
-      case code_type::cil: {
+      case CodeTypeMask::cil: {
         auto arch = rb::Architecture::findByName("cil").orThrow();
         blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance(arch));
         break;
       }
 
-      case code_type::native: {
+      case CodeTypeMask::native: {
         auto arch = rb::Architecture::findByName("intel-pentium4").orThrow();
         blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(arch));
         break;
       }
         
-      case code_type::runtime :
+      case CodeTypeMask::runtime :
         std::cerr << "  - runtime provided: " << code.size()
                   << std::endl;
         // looking for sample code
@@ -3728,6 +3885,21 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     ASSERT_not_null(blk);
     m->set_body(blk);
+    
+    bool        hasMoreSections = m->get_hasMoreSections();
+    rose_addr_t sectionRva = base_va + codeRVA + codeLen;
+    
+    while (hasMoreSections)
+    {
+      // compute 4 byte boundary
+      sectionRva = ((sectionRva*4) + 3) / 4; 
+      
+      SgAsmCilMethodData* section = parseSection(*fhdr, sectionRva);
+      ASSERT_require(section);
+      // TODO
+      
+      hasMoreSections = section->hasMoreSections();
+    }
   }
 }
 
@@ -3766,7 +3938,7 @@ unparseMethodHeader(SgAsmCilMethodDef* m, std::size_t codesize)
   mh.flags(m->get_hasMoreSections(), m->get_initLocals());
   mh.maxStackSize(m->get_stackSize());
   mh.codeSize(codesize);
-  // \todo mh.localVarSigTok(m->get_LocalVarSigTok());
+  mh.localVarSigTok(m->get_localVarSigTok());
   
   return unparseMethodHeader(mh);
 }
@@ -3818,8 +3990,8 @@ void encodeMetadata(std::vector<std::uint8_t>& buf, rose_addr_t base_va, rose_ad
     if (rva == 0) continue;
     
     // only code that can be parsed can be unparsed ..
-    ASSERT_require(  ((m->get_ImplFlags() & code_type::mask) == code_type::cil)
-                  || ((m->get_ImplFlags() & code_type::mask) == code_type::native)
+    ASSERT_require(  ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::cil)
+                  || ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::native)
                   );
                   
     // \todo revise and write directly into buf              

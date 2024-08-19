@@ -1057,3 +1057,5 @@ SgAsmVoidType
 SgAsmPointerType
 SgAsmAarch64PState
 SgRangeType
+SgAsmCilExceptionData
+SgAsmCilMethodData

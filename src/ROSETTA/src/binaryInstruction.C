@@ -42,7 +42,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -50,7 +50,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -34199,6 +34199,18 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+    AsmCilMethodDef.setDataPrototype(
+        "uint32_t", "localVarSigTok", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilMethodDef.setDataPrototype(
+        "std::vector<SgAsmCilMethodData*>", "methodData", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
     DECLARE_OTHERS(AsmCilMethodDef);
 #if defined(SgAsmCilMethodDef_OTHERS) || defined(DOCUMENTATION)
 
@@ -34221,6 +34233,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_initLocals);
         s & BOOST_SERIALIZATION_NVP(p_stackSize);
         s & BOOST_SERIALIZATION_NVP(p_hasMoreSections);
+        s & BOOST_SERIALIZATION_NVP(p_localVarSigTok);
+        s & BOOST_SERIALIZATION_NVP(p_methodData);
         debugSerializationEnd("SgAsmCilMethodDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -34324,6 +34338,28 @@ public:
     bool const& get_hasMoreSections() const;
     void set_hasMoreSections(bool const&);
     /** @} */
+    //
+    // additional fields
+public:
+    /** Property: localVarSigTok (II.24.4.3).
+     *
+     *  localVarSigTok is extracted from fat method headers; 0 when a
+     *  tiny header is used. 
+     *  
+     *  @{ */
+    uint32_t const& get_localVarSigTok() const;
+    void set_localVarSigTok(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: methodData (II.24.4.5).
+     *
+     *  Collection of data sections (see hasMoreSections) 
+     *  
+     *  @{ */
+    std::vector<SgAsmCilMethodData*> const& get_methodData() const;
+    std::vector<SgAsmCilMethodData*>& get_methodData();
+    /** @} */
 public:
     void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
     void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
@@ -34349,6 +34385,132 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmCilMethodDef_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilMethodData           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilMethodData);
+IS_SERIALIZABLE(AsmCilMethodData);
+
+#ifndef DOCUMENTATION
+AsmCilMethodData.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmCilMethodData);
+#if defined(SgAsmCilMethodData_HEADERS) || defined(DOCUMENTATION)
+#include <vector>
+#endif // SgAsmCilMethodData_HEADERS
+
+#ifdef DOCUMENTATION
+/** Property class representing CIL Extra Sections (II.25.4.5). 
+ *  
+ * \note parsing/unparsing is handled by the using class (i.e., SgAsmCilMethoDef)
+ */
+class SgAsmCilMethodData: public SgAsmCilNode {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilMethodData.setDataPrototype(
+        "uint64_t", "kind", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilMethodData.setDataPrototype(
+        "std::uint32_t", "dataSize", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilMethodData.setDataPrototype(
+        "std::vector<SgAsmCilExceptionData*>", "clauses", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilMethodData);
+#if defined(SgAsmCilMethodData_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilMethodData -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodData");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+        s & BOOST_SERIALIZATION_NVP(p_kind);
+        s & BOOST_SERIALIZATION_NVP(p_dataSize);
+        s & BOOST_SERIALIZATION_NVP(p_clauses);
+        debugSerializationEnd("SgAsmCilMethodData");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+  enum
+  {
+    CorILMethod_Sect_EHTable    = 0x01,
+    CorILMethod_Sect_OptILTable = 0x02,
+    CorILMethod_Sect_FatFormat  = 0x40,
+    CorILMethod_Sect_MoreSects  = 0x40,
+  };
+
+private:
+public:
+    uint64_t const& get_kind() const;
+    void set_kind(uint64_t const&);
+
+public:
+    std::uint32_t const& get_dataSize() const;
+    void set_dataSize(std::uint32_t const&);
+
+public:
+    std::vector<SgAsmCilExceptionData*> const& get_Clauses() const;
+    std::vector<SgAsmCilExceptionData*>& get_Clauses();
+public:
+  bool isExceptionSection() const
+  {
+    return (p_kind & CorILMethod_Sect_EHTable) == CorILMethod_Sect_EHTable;
+  }
+
+  bool isOptILTable() const
+  {
+    const bool res = (p_kind & CorILMethod_Sect_OptILTable) == CorILMethod_Sect_OptILTable;
+
+    ASSERT_require(!res);
+    return res;
+  }
+
+  bool usesFatFormat() const
+  {
+    return (p_kind & CorILMethod_Sect_FatFormat) == CorILMethod_Sect_FatFormat;
+  }
+
+  bool hasMoreSections() const
+  {
+    return (p_kind & CorILMethod_Sect_MoreSects) == CorILMethod_Sect_MoreSects;
+  }
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilMethodData();
+
+public:
+    /** Default constructor. */
+    SgAsmCilMethodData();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilMethodData_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -37727,6 +37889,152 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilExceptionData           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilExceptionData);
+IS_SERIALIZABLE(AsmCilExceptionData);
+
+#ifndef DOCUMENTATION
+AsmCilExceptionData.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** Property class representing CIL Exception clauses (II.25.4.6). 
+ *  
+ * \note parsing/unparsing is handled by the using class (i.e., SgAsmCilMethoDef)
+ */
+class SgAsmCilExceptionData: public SgAsmCilNode {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilExceptionData.setDataPrototype(
+        "std::uint32_t", "flags", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilExceptionData.setDataPrototype(
+        "std::uint32_t", "tryOffset", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilExceptionData.setDataPrototype(
+        "std::uint32_t", "tryLength", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilExceptionData.setDataPrototype(
+        "std::uint32_t", "handlerOffset", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilExceptionData.setDataPrototype(
+        "std::uint32_t", "handlerLength", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilExceptionData.setDataPrototype(
+        "std::uint32_t", "classTokenOrFilterOffset", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilExceptionData);
+#if defined(SgAsmCilExceptionData_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilExceptionData -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilExceptionData");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+        s & BOOST_SERIALIZATION_NVP(p_flags);
+        s & BOOST_SERIALIZATION_NVP(p_tryOffset);
+        s & BOOST_SERIALIZATION_NVP(p_tryLength);
+        s & BOOST_SERIALIZATION_NVP(p_handlerOffset);
+        s & BOOST_SERIALIZATION_NVP(p_handlerLength);
+        s & BOOST_SERIALIZATION_NVP(p_classTokenOrFilterOffset);
+        debugSerializationEnd("SgAsmCilExceptionData");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+  enum
+  {
+    COR_ILEXCEPTION_CLAUSE_EXCEPTION = 0x0000,
+    COR_ILEXCEPTION_CLAUSE_FILTER    = 0x0001,
+    COR_ILEXCEPTION_CLAUSE_FINALLY   = 0x0002,
+    COR_ILEXCEPTION_CLAUSE_FAULT     = 0x0004,
+    COR_ILEXCEPTION_CLAUSE_MASK      = ( COR_ILEXCEPTION_CLAUSE_EXCEPTION
+                                       | COR_ILEXCEPTION_CLAUSE_FILTER
+                                       | COR_ILEXCEPTION_CLAUSE_FINALLY
+                                       | COR_ILEXCEPTION_CLAUSE_FAULT
+                                       ),
+  };
+
+private:
+public:
+    std::uint32_t const& get_flags() const;
+    void set_flags(std::uint32_t const&);
+
+public:
+    std::uint32_t const& get_tryOffset() const;
+    void set_tryOffset(std::uint32_t const&);
+
+public:
+    std::uint32_t const& get_tryLength() const;
+    void set_tryLength(std::uint32_t const&);
+
+public:
+    std::uint32_t const& get_handlerOffset() const;
+    void set_handlerOffset(std::uint32_t const&);
+
+public:
+    std::uint32_t const& get_handlerLength() const;
+    void set_handlerLength(std::uint32_t const&);
+
+public:
+    std::uint32_t const& get_classTokenOrFilterOffset() const;
+    void set_classTokenOrFilterOffset(std::uint32_t const&);
+public:
+  /**
+   * Convenience functions to query the flags property.
+   * \{
+   */
+  bool isException() const { return (get_flags() & COR_ILEXCEPTION_CLAUSE_MASK) == COR_ILEXCEPTION_CLAUSE_EXCEPTION; }
+  bool isFilter()    const { return (get_flags() & COR_ILEXCEPTION_CLAUSE_MASK) == COR_ILEXCEPTION_CLAUSE_FILTER; }
+  bool isFinally()   const { return (get_flags() & COR_ILEXCEPTION_CLAUSE_MASK) == COR_ILEXCEPTION_CLAUSE_FINALLY; }
+  bool isFault()     const { return (get_flags() & COR_ILEXCEPTION_CLAUSE_MASK) == COR_ILEXCEPTION_CLAUSE_FAULT; }
+  /** \} */
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilExceptionData();
+
+public:
+    /** Default constructor. */
+    SgAsmCilExceptionData();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilExceptionData_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilEventTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38368,7 +38676,7 @@ public:
      *   stream. */
     virtual void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData); /* FIXME: should be abstract */
 
-    /** unparses the metadata objects into the buffer */
+    /** Unparses the metadata objects into the buffer */
     virtual void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const; /* FIXME: should be abstract */
 
     /** Prints the object's data in a human readable form. */
@@ -40331,8 +40639,10 @@ AstNodeClass& AsmCilNode = nonTerminalConstructor(
     "AsmCilNodeTag",
     SubclassListBuilder()
         | AsmCilDataStream
+        | AsmCilExceptionData
         | AsmCilMetadata
         | AsmCilMetadataRoot
+        | AsmCilMethodData
     , false);
 assert(AsmCilNode.associatedGrammar != nullptr);
 AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");

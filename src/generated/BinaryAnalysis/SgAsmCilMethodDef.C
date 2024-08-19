@@ -117,6 +117,27 @@ SgAsmCilMethodDef::set_hasMoreSections(bool const& x) {
     set_isModified(true);
 }
 
+uint32_t const&
+SgAsmCilMethodDef::get_localVarSigTok() const {
+    return p_localVarSigTok;
+}
+
+void
+SgAsmCilMethodDef::set_localVarSigTok(uint32_t const& x) {
+    this->p_localVarSigTok = x;
+    set_isModified(true);
+}
+
+std::vector<SgAsmCilMethodData*> const&
+SgAsmCilMethodDef::get_methodData() const {
+    return p_methodData;
+}
+
+std::vector<SgAsmCilMethodData*>&
+SgAsmCilMethodDef::get_methodData() {
+    return p_methodData;
+}
+
 SgAsmCilMethodDef::~SgAsmCilMethodDef() {
     destructorHelper();
 }
@@ -131,7 +152,8 @@ SgAsmCilMethodDef::SgAsmCilMethodDef()
     , p_body(0)
     , p_initLocals(0)
     , p_stackSize(0)
-    , p_hasMoreSections(0) {}
+    , p_hasMoreSections(0)
+    , p_localVarSigTok(0) {}
 
 void
 SgAsmCilMethodDef::initializeProperties() {
@@ -145,6 +167,7 @@ SgAsmCilMethodDef::initializeProperties() {
     p_initLocals = 0;
     p_stackSize = 0;
     p_hasMoreSections = 0;
+    p_localVarSigTok = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

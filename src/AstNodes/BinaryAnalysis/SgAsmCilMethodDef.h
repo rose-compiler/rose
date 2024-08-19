@@ -1,3 +1,4 @@
+
 /** CIL MethodDef node (II.22.26). */
 class SgAsmCilMethodDef: public SgAsmCilMetadata {
 
@@ -61,6 +62,23 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
      *  Returns true if this method has more sections in addition to the body. */
     [[using Rosebud: rosetta]]
     bool hasMoreSections = 0;
+    
+    //
+    // additional fields
+
+    /** Property: localVarSigTok (II.24.4.3).
+     *
+     *  localVarSigTok is extracted from fat method headers; 0 when a
+     *  tiny header is used. */
+    [[using Rosebud: rosetta]]
+    uint32_t localVarSigTok = 0;
+
+    /** Property: methodData (II.24.4.5).
+     *
+     *  Collection of data sections (see hasMoreSections) */    
+    [[using Rosebud: rosetta, accessors(get_methodData), mutators(), large]]
+    std::vector<SgAsmCilMethodData*> methodData;
+
 public:
     void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
     void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;

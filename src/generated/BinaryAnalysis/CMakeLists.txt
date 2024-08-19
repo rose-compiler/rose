@@ -57,6 +57,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmCilEventMap.C
   SgAsmCilEventMapTable.C
   SgAsmCilEventTable.C
+  SgAsmCilExceptionData.C
   SgAsmCilExportedType.C
   SgAsmCilExportedTypeTable.C
   SgAsmCilField.C
@@ -85,6 +86,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmCilMetadata.C
   SgAsmCilMetadataHeap.C
   SgAsmCilMetadataRoot.C
+  SgAsmCilMethodData.C
   SgAsmCilMethodDef.C
   SgAsmCilMethodDefTable.C
   SgAsmCilMethodImpl.C
