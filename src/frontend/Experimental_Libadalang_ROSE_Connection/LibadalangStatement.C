@@ -1671,11 +1671,9 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_stmt);
 
-    ada_text kind_name;
-    ada_kind_name(kind, &kind_name);
-    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    LibadalangText kind_name(kind);
+    std::string kind_name_string = kind_name.string_value();
     logTrace() << "handleStmt called on a " << kind_name_string << std::endl;
-    ada_destroy_text(&kind_name);
 
     SgStatement*            assocstmt = nullptr;
     //Statement_Struct&       stmt = elem.The_Union.Statement; //Same as lal_stmt now
@@ -2341,10 +2339,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
   ada_node_kind_enum kind;
   kind = ada_node_kind(lal_element);
 
-  ada_text kind_name;
-  ada_kind_name(kind, &kind_name);
-  std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-  ada_destroy_text(&kind_name);
+  LibadalangText kind_name(kind);
+  std::string kind_name_string = kind_name.string_value();
   logTrace()   << "handleDeclaration called on a " << kind_name_string << std::endl;
   
   //std::vector<Element_ID> pragmaVector;

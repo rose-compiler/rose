@@ -1204,11 +1204,9 @@ void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspe
         ada_param_assoc_f_r_expr(&lal_int_literal, &lal_int_literal);
         //Get the value of the int literal
         ada_big_integer denoted_value;
-        ada_text value_text;
         ada_int_literal_p_denoted_value(&lal_int_literal, &denoted_value);
-        ada_big_integer_text(denoted_value, &value_text);
-        std::string denoted_text = ada_text_to_locale_string(&value_text);
-        ada_destroy_text(&value_text);
+        LibadalangText value_text(denoted_value);
+        std::string denoted_text = value_text.string_value();
         cval = char(stoi(denoted_text));
       } else {
         logFlaw() << "Unhandled default expr kind in handleAsciiPkg: " << lal_default_expr_kind << std::endl;

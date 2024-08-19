@@ -85,25 +85,18 @@ map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() 
 
 /// Function to turn an ada_text_type into a string
 std::string dot_ada_text_type_to_string(ada_text_type input_text){
-    ada_text value_text;
-    value_text.length = input_text->n;
-    value_text.chars = input_text->items;
-    std::string return_string = ada_text_to_locale_string(&value_text);
-    ada_destroy_text(&value_text);
-    return return_string;
+    //ada_text_type does not have a func to convert to string,
+    // so we convert to ada_text using LibadalangText
+    LibadalangText value_text(input_text);
+    return value_text.string_value();
 }
 
 /// Function to turn an ada_unbounded_text_type_array into a string
 std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array input_text){
-    ada_text value_text;
-    std::string return_string = "";
-    for(int i = 0; i < input_text->n; i++){
-        ada_symbol_type current_symbol = input_text->items[i];
-        ada_symbol_text(&current_symbol, &value_text);
-        return_string += ada_text_to_locale_string(&value_text);
-        ada_destroy_text(&value_text);
-    }
-    return return_string;
+    //ada_unbounded_text_type_array does not have a func to convert to string,
+    // so we convert to ada_text using LibadalangText
+    LibadalangText value_text(input_text);
+    return value_text.string_value();
 }
 
 /// Function to get the source location of an ada node as a string
@@ -144,11 +137,9 @@ bool traceKind(const char* /* kind */)
 /// Gets the p_canonical_text field for a node and returns it as a string
 std::string canonical_text_as_string(ada_base_entity* lal_element){
   ada_symbol_type p_canonical_text;
-  ada_text ada_canonical_text;
   ada_single_tok_node_p_canonical_text(lal_element, &p_canonical_text);
-  ada_symbol_text(&p_canonical_text, &ada_canonical_text);
-  std::string canonical_text_string = ada_text_to_locale_string(&ada_canonical_text);
-  ada_destroy_text(&ada_canonical_text);
+  LibadalangText ada_canonical_text(&p_canonical_text);
+  std::string canonical_text_string = ada_canonical_text.string_value();
   return canonical_text_string;
 }
 
@@ -291,14 +282,13 @@ AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
 {
     //Get the kind of this node
-    ada_node_kind_enum element_kind = ada_node_kind(lal_element);
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
 
-    ada_text kind_name;
-    ada_kind_name(element_kind, &kind_name);
-    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    LibadalangText kind_name(kind);
+    std::string kind_name_string = kind_name.string_value();
     logTrace() << "handleElement called on a " << kind_name_string << std::endl;
 
-    switch (element_kind)
+    switch (kind)
     {
         case ada_subp_body:             // Asis.Declarations
         case ada_subp_decl:
@@ -408,9 +398,8 @@ namespace{
     bool        logParentUnit = false;
     bool        logBodyUnit   = false;
 
-    ada_text kind_name;
-    ada_kind_name(kind, &kind_name);
-    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    LibadalangText kind_name(kind);
+    std::string kind_name_string = kind_name.string_value();
 
     if (processUnit)
     {
@@ -467,8 +456,8 @@ namespace{
           ada_base_entity ada_private_node;
           ada_bool p_as_bool;
           ada_library_item_f_has_private(&unit_body, &ada_private_node);
-          ada_with_private_p_as_bool(&ada_private_node, &p_as_bool);
-          privateDecl = (p_as_bool != 0);
+          ada_node_kind_enum ada_private_kind = ada_node_kind(&ada_private_node);
+          privateDecl = (ada_private_kind == ada_private_present);
       } else {
           ada_subunit_f_body(&unit_body, &unit_declaration);
       }
@@ -1703,8 +1692,6 @@ void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* 
   //ADA_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
-
-  ada_base_entity* root = roots.at(0);
 
   // the SageBuilder should not mess with source location information
   //   the mode is not well supported in ROSE

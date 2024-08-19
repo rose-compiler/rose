@@ -33,10 +33,8 @@ namespace
     //Get the kind
     ada_node_kind_enum kind = ada_node_kind(lal_element);
 
-    ada_text kind_name;
-    ada_kind_name(kind, &kind_name);
-    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-    ada_destroy_text(&kind_name);
+    LibadalangText kind_name(kind);
+    std::string kind_name_string = kind_name.string_value();
     logKind(kind_name_string.c_str(), kind);
 
     ada_base_entity actual_parameter;
@@ -1130,10 +1128,8 @@ namespace{
     //Get the kind
     ada_node_kind_enum kind = ada_node_kind(lal_element);
 
-    ada_text kind_name;
-    ada_kind_name(kind, &kind_name);
-    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
-    ada_destroy_text(&kind_name);
+    LibadalangText kind_name(kind);
+    std::string kind_name_string = kind_name.string_value();
 
     SgExpression*      res       = NULL;
 
@@ -1144,21 +1140,17 @@ namespace{
           logKind("ada_int_literal", kind);
 
           /*ada_big_integer denoted_value; //TODO This way strips the formatting, but the other way won't work after lal_2021
-          ada_text value_text;
 
           //Get the value of this node
           ada_int_literal_p_denoted_value(lal_element, &denoted_value);
-          ada_big_integer_text(denoted_value, &value_text);
-          std::string denoted_text = ada_text_to_locale_string(&value_text);
-          ada_destroy_text(&value_text);*/
+          LibadalangText value_text(denoted_value);
+          std::string denoted_text = value_text.string_value();*/
 
           //Get the value of this node
           ada_symbol_type canonical_text_symbol;
-          ada_text canonical_text;
           ada_single_tok_node_p_canonical_text(lal_element, &canonical_text_symbol);
-          ada_symbol_text(&canonical_text_symbol, &canonical_text);
-          std::string denoted_text = ada_text_to_locale_string(&canonical_text);
-          ada_destroy_text(&canonical_text);
+          LibadalangText canonical_text(&canonical_text_symbol);
+          std::string denoted_text = canonical_text.string_value();
 
           res = &mkAdaIntegerLiteral(denoted_text.c_str());
           break;
@@ -1678,11 +1670,9 @@ namespace{
     //Check the kind
     ada_node_kind_enum kind = ada_node_kind(lal_element);
   
-    ada_text kind_name;
-    ada_kind_name(kind, &kind_name);
-    std::string kind_name_string = ada_text_to_locale_string(&kind_name);
+    LibadalangText kind_name(kind);
+    std::string kind_name_string = kind_name.string_value();
     logTrace() << "getExpr called on a " << kind_name_string << std::endl;
-    ada_destroy_text(&kind_name);
 
     SgExpression*      res   = &getExpr_undecorated(lal_element, ctx, std::move(suppl), unary);
 

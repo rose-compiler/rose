@@ -344,6 +344,69 @@ struct AstContext
     //~ Element_Struct*      elem;
 };
 
+/// Class that handles ada_text variables from Libadalang
+/// ada_text variables need to be destroyed using the ada_destroy_text func
+struct LibadalangText {
+    LibadalangText()                                 = delete;
+    LibadalangText(LibadalangText&&)                 = default;
+    LibadalangText& operator=(LibadalangText&&)      = default;
+    LibadalangText(const LibadalangText&)            = default;
+    LibadalangText& operator=(const LibadalangText&) = default;
+
+    //If init with ada_node_kind, call ada_kind_name to get the ada_text value
+    LibadalangText(ada_node_kind_enum kind){
+      ada_kind_name(kind, &internal_text);
+      cxx_text = ada_text_to_locale_string(&internal_text);
+    }
+
+    //If init with ada_symbol_type, call ada_symbol_text to get the ada_text value
+    LibadalangText(ada_symbol_type* symbol){
+      ada_symbol_text(symbol, &internal_text);
+      cxx_text = ada_text_to_locale_string(&internal_text);
+    }
+
+    //If init with ada_big_integer, call ada_big_integer_text to get the ada_text value
+    LibadalangText(ada_big_integer big_int){
+      ada_big_integer_text(big_int, &internal_text);
+      cxx_text = ada_text_to_locale_string(&internal_text);
+    }
+
+    //If init with ada_base_entity, call ada_node_image to get the ada_text value
+    LibadalangText(ada_base_entity* lal_element){
+      ada_node_image(lal_element, &internal_text);
+      cxx_text = ada_text_to_locale_string(&internal_text);
+    }
+
+    //If init with ada_text_type, use pointers to construct ada_text value
+    LibadalangText(ada_text_type text_type){
+      internal_text.length = text_type->n;
+      internal_text.chars = text_type->items;
+      cxx_text = ada_text_to_locale_string(&internal_text);
+    }
+
+    //If init with ada_unbounded_text_type_array, use pointers to construct ada_text value from the entire array
+    LibadalangText(ada_unbounded_text_type_array text_type_array){
+      cxx_text = "";
+      for(int i = 0; i < text_type_array->n; i++){
+        ada_symbol_type current_symbol = text_type_array->items[i];
+        ada_symbol_text(&current_symbol, &internal_text);
+        cxx_text += ada_text_to_locale_string(&internal_text);
+        if(i < text_type_array->n - 1){
+          //destroy all but the last ada_text
+          ada_destroy_text(&internal_text);
+        }
+      }
+    }
+
+    ~LibadalangText() { ada_destroy_text(&internal_text); }
+
+    std::string string_value() const { return cxx_text; }
+
+  private:
+    ada_text     internal_text;
+    std::string  cxx_text;
+};
+
 //
 // debugging
 
