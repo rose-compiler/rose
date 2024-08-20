@@ -17,6 +17,11 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 
+namespace Mips {
+    struct IP_lwl;
+    struct IP_lwr;
+}
+
 /** Shared-ownership pointer to a MIPS instruction dispatcher. */
 using DispatcherMipsPtr = boost::shared_ptr<class DispatcherMips>;
 
@@ -78,7 +83,6 @@ public:
     /** Dynamic cast to DispatcherMipsPtr with assertion. */
     static Ptr promote(const BaseSemantics::DispatcherPtr&);
 
-
 public:
     // documented in the base class
     virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&) const override;
@@ -91,6 +95,14 @@ private:
     // Initialize memory state, such as the default byte order
     void initializeMemoryState();
 
+
+    // Merge unaligned memory with contents of register
+    BaseSemantics::SValuePtr mergeLeft(BaseSemantics::SValuePtr reg, BaseSemantics::SValuePtr mem);
+    BaseSemantics::SValuePtr mergeRight(BaseSemantics::SValuePtr reg, BaseSemantics::SValuePtr mem);
+
+    // Classes that are allowed to mergeLeft and mergeRight
+    friend struct Mips::IP_lwl;
+    friend struct Mips::IP_lwr;
 };
 
 } // namespace

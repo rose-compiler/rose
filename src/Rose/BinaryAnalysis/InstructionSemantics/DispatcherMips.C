@@ -12,6 +12,10 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/StringUtility/Diagnostics.h>
 
+#include <SgAsmExpression.h>
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmIntegerValueExpression.h>
 #include <SgAsmMipsInstruction.h>
 #include <SgAsmOperandList.h>
 
@@ -45,7 +49,7 @@ public:
     virtual void process(const Dispatcher::Ptr &dispatcher_, SgAsmInstruction *insn_) override {
         DispatcherMipsPtr dispatcher = DispatcherMips::promote(dispatcher_);
         RiscOperators::Ptr operators = dispatcher->operators();
-        SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(insn_);
+        SgAsmMipsInstruction* insn = isSgAsmMipsInstruction(insn_);
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->currentInstruction());
 
@@ -289,6 +293,50 @@ struct IP_lwc1: P {
 // Load word EVA (mips_lwe, implemented by IP_lb)
 // Load word unsigned (mips_lwu, implemented by IP_lbu)
 
+// Load word left
+struct IP_lwl: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+
+        SValue::Ptr rt = d->read(args[0]);
+        SValue::Ptr mem = d->read(args[1]);
+        SValue::Ptr merged = d->mergeRight(rt, mem);
+
+        // sign-extend and write result
+        d->write(args[0], ops->signExtend(merged, nBits));
+    }
+};
+
+// Load word right
+struct IP_lwr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+
+        SValue::Ptr rt = d->read(args[0]);
+        SValue::Ptr mem = d->read(args[1]);
+        SValue::Ptr merged = d->mergeRight(rt, mem);
+
+        // sign-extend and write result
+        d->write(args[0], ops->signExtend(merged, nBits));
+    }
+};
+
+// Load word unsigned (mips_lwu, implemented by IP_lbu)
+
+// Load word indexed to floating point
+// TODO: Load doubleword indexed to floating point (reuse functions, is that what this is on?)
+struct IP_lwxc1: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr word = d->read(args[1]);
+        // TODO: loaded to low word in FPR fd
+        // TODO: AddressError if EffectiveAddress[1..0] != 0
+        d->write(args[0], word);
+    }
+};
+
 // Multiply and add word to hi, lo
 // Note: removed in release 6
 struct IP_madd: P {
@@ -412,6 +460,7 @@ struct IP_mov_d: P {
 };
 
 // Floating point move (paired-single)
+// TODO: In paired-single format, both the halves of the pair are copied to fd
 // Note: removed in release 6
 struct IP_mov_ps: P {
     void p(D d, Ops, I insn, A args) {
@@ -808,6 +857,8 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_lw,    new Mips::IP_lb);  // mips_lw shares common implementation mips_lb
     iprocSet(mips_lwc1,  new Mips::IP_lwc1);
     iprocSet(mips_lwe,   new Mips::IP_lb);  // mips_lwe shares common implementation mips_lb
+    iprocSet(mips_lwl,   new Mips::IP_lwl);
+    iprocSet(mips_lwr,   new Mips::IP_lwr);
 //  iprocSet(mips_lwu,   new Mips::IP_lwu); // mips_lwu (Release 6) not implemented in Mips.C
     iprocSet(mips_madd,  new Mips::IP_madd);
     iprocSet(mips_maddu, new Mips::IP_maddu);
@@ -922,6 +973,120 @@ DispatcherMips::initializeMemoryState() {
             }
         }
     }
+}
+
+// Merge unaligned memory left
+SValuePtr
+DispatcherMips::mergeLeft(SValuePtr reg, SValuePtr mem) {
+    size_t nBits = architecture()->bitsPerWord();
+    RiscOperators::Ptr ops = operators();
+
+    // Determine the effective address of memory access [GPR[base] + offset]
+    auto mipsI = isSgAsmMipsInstruction(currentInstruction());
+    ASSERT_not_null(mipsI);
+    ASSERT_require(mipsI->nOperands() > 1);
+    auto memRef = isSgAsmMemoryReferenceExpression(mipsI->operand(1));
+    ASSERT_not_null(memRef);
+
+    SValue::Ptr effAddr = effectiveAddress(memRef, nBits);
+
+    // Calculate alignment offset (first two bits of memory address)
+    SValue::Ptr take1, take2, take3;
+    SValue::Ptr offset = ops->extract(effAddr, 0, 2); // bits 0..1
+
+    // See Figure 5.2, Bytes Loaded by LWL Instruction
+    if (ByteOrder::BE == architecture()->byteOrder()) {
+        take1 = ops->isEqual(ops->number_(2,3), offset);
+        take2 = ops->isEqual(ops->number_(2,2), offset);
+        take3 = ops->isEqual(ops->number_(2,1), offset);
+    }
+    else {
+        take1 = ops->isEqual(ops->number_(2,0), offset);
+        take2 = ops->isEqual(ops->number_(2,1), offset);
+        take3 = ops->isEqual(ops->number_(2,2), offset);
+    }
+
+    // default (take 4), result is memory contents
+    SValue::Ptr result = mem;
+
+    // Note: all register bytes are from the least significant half, if 64-bit architecture
+
+    // take1, word will contain last byte from memory | last three (least) bytes from register
+    SValue::Ptr src = ops->extract(mem, 24, 32); // word is 4 bytes
+    SValue::Ptr dst = ops->extract(reg, nBits-24, nBits); // register is nBits
+    SValue::Ptr word = ops->concatHiLo(src, dst);
+    result = ops->ite(take1, word, result);
+
+    // take2, word will contain last two bytes from memory | last two (least) bytes from register
+    src = ops->extract(mem, 16, 32); // word is 4 bytes
+    dst = ops->extract(reg, nBits-16, nBits); // register is nBits
+    word = ops->concatHiLo(src, dst);
+    result = ops->ite(take2, word, result);
+
+    // take3, word will contain last three bytes from memory | last (least) byte from register
+    src = ops->extract(mem, 8, 32); // word is 4 bytes
+    dst = ops->extract(reg, nBits-8, nBits); // register is nBits
+    word = ops->concatHiLo(src, dst);
+    result = ops->ite(take3, word, result);
+
+    return result;
+}
+
+// Merge unaligned memory right
+SValuePtr
+DispatcherMips::mergeRight(SValuePtr reg, SValuePtr mem) {
+    size_t nBits = architecture()->bitsPerWord();
+    RiscOperators::Ptr ops = operators();
+
+    // Determine the effective address of memory access [GPR[base] + offset]
+    auto mipsI = isSgAsmMipsInstruction(currentInstruction());
+    ASSERT_not_null(mipsI);
+    ASSERT_require(mipsI->nOperands() > 1);
+    auto memRef = isSgAsmMemoryReferenceExpression(mipsI->operand(1));
+    ASSERT_not_null(memRef);
+
+    SValue::Ptr effAddr = effectiveAddress(memRef, nBits);
+
+    // Calculate alignment offset (first two bits of memory address)
+    SValue::Ptr take1, take2, take3;
+    SValue::Ptr offset = ops->extract(effAddr, 0, 2); // bits 0..1
+
+    // See Figure 5.8, Bytes Loaded by LWR Instruction
+    if (ByteOrder::BE == architecture()->byteOrder()) {
+        take1 = ops->isEqual(ops->number_(2,0), offset);
+        take2 = ops->isEqual(ops->number_(2,1), offset);
+        take3 = ops->isEqual(ops->number_(2,2), offset);
+    }
+    else {
+        take1 = ops->isEqual(ops->number_(2,3), offset);
+        take2 = ops->isEqual(ops->number_(2,2), offset);
+        take3 = ops->isEqual(ops->number_(2,1), offset);
+    }
+
+    // default (take 4), result is memory contents
+    SValue::Ptr result = mem;
+
+    // Note: all register bytes are from the least significant half, if 64-bit arch
+
+    // take1, word will contain first byte from memory | first three (least) bytes from register
+    SValue::Ptr src = ops->extract(mem, 0, 8); // word is 4 bytes
+    SValue::Ptr dst = ops->extract(reg, nBits-24, nBits); // register is nBits
+    SValue::Ptr word = ops->concatHiLo(dst, src);
+    result = ops->ite(take1, word, result);
+
+    // take2, word will contain first two bytes from memory | first two (least) bytes from register
+    src = ops->extract(mem, 0, 16); // word is 4 bytes
+    dst = ops->extract(reg, nBits-16, nBits); // register is nBits
+    word = ops->concatHiLo(dst, src);
+    result = ops->ite(take2, word, result);
+
+    // take3, word will contain first three bytes from memory | first byte (least) from register
+    src = ops->extract(mem, 0, 24); // word is 4 bytes
+    dst = ops->extract(reg, nBits-8, nBits); // register is nBits
+    word = ops->concatHiLo(dst, src);
+    result = ops->ite(take3, word, result);
+
+    return result;
 }
 
 } // namespace
