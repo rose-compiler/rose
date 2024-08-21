@@ -133,7 +133,7 @@ Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, Address
 
 SgAsmInstruction*
 Powerpc::makeUnknownInstruction(const Exception &e) {
-    SgAsmPowerpcInstruction *insn = new SgAsmPowerpcInstruction(e.ip, architecture()->name(), "unknown",
+    SgAsmPowerpcInstruction *insn = new SgAsmPowerpcInstruction(e.ip, *architecture()->registrationId(), "unknown",
                                                                 powerpc_unknown_instruction);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
@@ -271,7 +271,7 @@ Powerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mne
         return makeInstructionWithoutOperands(address, "unknown", powerpc_unknown_instruction, insn, powerpc_capability_all);
     }
 
-    SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, architecture()->name(), mnemonic, kind);
+    SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, *architecture()->registrationId(), mnemonic, kind);
     ASSERT_not_null(instruction);
 
     if (mnemonic.size() >= 7 && mnemonic.substr(mnemonic.size() - 7) == "_record")

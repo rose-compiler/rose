@@ -16,9 +16,9 @@ public:
     Rose::BinaryAnalysis::Aarch64InstructionCondition condition =
         Rose::BinaryAnalysis::Aarch64InstructionCondition::ARM64_CC_INVALID;
 
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
     /** Property: Whether this instruction updates N, Z, C, and/or V status flags. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     bool updatesFlags = false;
 
 public:

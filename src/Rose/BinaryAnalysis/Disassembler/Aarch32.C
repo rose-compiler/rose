@@ -201,7 +201,7 @@ Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
             operands->get_operands().push_back(operand);
             operand->set_parent(operands);
         }
-        auto insn = new SgAsmAarch32Instruction(va, architecture()->name(), fixMnemonic(r.csi->mnemonic, detail.cc),
+        auto insn = new SgAsmAarch32Instruction(va, *architecture()->registrationId(), fixMnemonic(r.csi->mnemonic, detail.cc),
                                                 (Aarch32InstructionKind)r.csi->id, detail.cc);
         insn->set_rawBytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
         insn->set_updatesFlags(detail.update_flags);
@@ -322,7 +322,7 @@ Aarch32::commentIpRelative(SgAsmInstruction *insn) {
 
 SgAsmInstruction*
 Aarch32::makeUnknownInstruction(const Exception &e) {
-    SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, architecture()->name(), "unknown",
+    SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, *architecture()->registrationId(), "unknown",
                                                                 ARM_INS_INVALID, ARM_CC_AL);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);

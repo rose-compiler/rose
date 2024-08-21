@@ -243,7 +243,7 @@ public:
     /** Property: utf8_bytes (bytes in CONSTANT_Utf8_info structure).
      *
      *  The bytes array contains the bytes of the string. Present in CONSTANT_Utf8_info table entries. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     char* utf8_bytes = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -19,12 +19,19 @@ using namespace Rose::BinaryAnalysis;
 // Indicates concrete stack delta is not known or not calculated.
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
 
+std::string
+SgAsmInstruction::architectureIdSerialize(uint8_t id) const {
+    return Architecture::name(id);
+}
+
+uint8_t
+SgAsmInstruction::architectureIdDeserialize(const std::string &name) const {
+    return boost::numeric_cast<uint8_t>(*Architecture::findByName(name).orThrow()->registrationId());
+}
+
 Architecture::Base::ConstPtr
 SgAsmInstruction::architecture() const {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    if (!architecture_.isCached())
-        architecture_ = Architecture::findByName(get_architectureName()).orThrow();
-    return architecture_.get();
+    return Architecture::findById(get_architectureId()).orThrow();
 }
 
 // [Robb Matzke 2023-12-04]: deprecated

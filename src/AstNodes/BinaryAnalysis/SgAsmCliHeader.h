@@ -79,9 +79,9 @@ public:
     [[using Rosebud: rosetta]]
     uint64_t managedNativeHeader = 0;
 
-    // FIXME[Robb Matzke 2023-03-20]: is no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-20]: is the lack of serialization a bug?
     /** Property: pointer to the root of the CIL Metadata. */
-    [[using Rosebud: rosetta, traverse, no_serialize]]
+    [[using Rosebud: rosetta, traverse, serialize()]]
     SgAsmCilMetadataRoot* metadataRoot = nullptr;
 
  public:

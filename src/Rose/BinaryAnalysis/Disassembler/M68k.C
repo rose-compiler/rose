@@ -836,7 +836,8 @@ M68k::makeOffsetWidthPair(State &state, unsigned w1) const
 SgAsmInstruction *
 M68k::makeUnknownInstruction(const Exception &e)
 {
-    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(e.ip, architecture()->name(), "unknown", m68k_unknown_instruction);
+    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(e.ip, *architecture()->registrationId(), "unknown",
+                                                          m68k_unknown_instruction);
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -858,7 +859,7 @@ M68k::makeInstruction(State &state, M68kInstructionKind kind, const std::string 
                                   SgAsmExpression *op7) const
 {
     ASSERT_forbid2(m68k_unknown_instruction==kind, "should have called make_unknown_instruction instead");
-    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(state.insn_va, architecture()->name(), mnemonic, kind);
+    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(state.insn_va, *architecture()->registrationId(), mnemonic, kind);
 
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);

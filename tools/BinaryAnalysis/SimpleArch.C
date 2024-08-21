@@ -215,7 +215,7 @@ public:
     }
 
     SgAsmInstruction* makeInstruction(rose_addr_t addr, const std::vector<uint8_t> &bytes, InsnKind kind) {
-        auto insn = new SgAsmUserInstruction(addr, architecture()->name(), mnemonic(kind), static_cast<unsigned>(kind));
+        auto insn = new SgAsmUserInstruction(addr, *architecture()->registrationId(), mnemonic(kind), static_cast<unsigned>(kind));
         auto operands = new SgAsmOperandList;
         insn->set_operandList(operands);
         operands->set_parent(insn);

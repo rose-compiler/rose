@@ -52,11 +52,22 @@ private:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Architecture name.
+    /** Property: Architecture registration ID.
      *
-     *  The name of the architecture to which this instruction belongs. */
-    [[using Rosebud: rosetta, ctor_arg, mutators()]]
-    std::string architectureName;
+     *  Every instruction must belong to a registered architecture. This ID specifies the architecture of which this instruction
+     *  is a member.
+     *
+     *  When an instruction is serialized to a file, the architecture name is saved in place of its registration ID, and when the
+     *  instruction is deserialized, that name is looked up in the registry and the registration ID is saved in the reconstituted
+     *  instruction. This mechanism enables the instruction to point to the correct architecture even if the writer and reader
+     *  tools have slightly different sets of architectures registered. */
+    [[using Rosebud: rosetta, ctor_arg, mutators(), serialize(architectureId)]]
+    uint8_t architectureId;
+
+    // Architecture registration IDs change from run to run, so serialize the architecture name instead. The architecture names
+    // will probably not change as frequently as their registration IDs.
+    std::string architectureIdSerialize(uint8_t id) const;
+    uint8_t architectureIdDeserialize(const std::string &name) const;
 
     /** Property: Instruction mnemonic string.
      *
@@ -112,21 +123,21 @@ public:
     SgAsmStatementPtrList sources;
     void appendSources( SgAsmInstruction* instruction );
 
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
     /** Property: Stack pointer at start of instruction relative to start of instruction's function.
      *
      *  If the stack delta was not computed, or could not be computed, or is a non-numeric value then the special value
      *  @ref INVALID_STACK_DELTA is used. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     int64_t stackDeltaIn = SgAsmInstruction::INVALID_STACK_DELTA;
 
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
     /** Property: Ordered list of instruction semantics.
      *
      *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
      *  semantic side effects of the instruction. The semantics are attached by using the @ref
      *  Rose::BinaryAnalysis::InstructionSemantics::StaticSemantics semantic domain. */
-    [[using Rosebud: rosetta, traverse, no_serialize]]
+    [[using Rosebud: rosetta, traverse, serialize()]]
     SgAsmExprListExp* semantics = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,9 +149,6 @@ private:
     // Synchronized data members. All the following data members (as listed in binaryInstruction.C, not the ROSETTA-generated
     // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
-
-    // Cached architecture pointer corresponding to the architectureName property.
-    Sawyer::Cached<Rose::BinaryAnalysis::Architecture::BaseConstPtr> architecture_;
 
 public:
     /** Represents an invalid stack delta.
@@ -155,8 +163,9 @@ public:
 public:
     /** Architecture for instruction.
      *
-     *  Returns a cached architecture pointer if available. Otherwise, it uses the @ref architectureName property to look up
-     *  an architecture that can handle this instruction and caches the pointer before returning it.
+     *  The architecture is looked up in the architecture registery in constant time by using the @ref architectureId property.
+     *  It is generally unwise to change the architecture registery after instructions have been created since this may cause
+     *  instructions to refer to an incorrect architecture.
      *
      *  Thread safety: This function is thread safe. */
     Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;

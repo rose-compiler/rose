@@ -36,7 +36,7 @@ public:
      *
      *  If a symbol refers to this expression then it is linked by this property, otherwise null.  The symbol is not
      *  considered to be a child of this node in the AST. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     SgSymbol* symbol = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

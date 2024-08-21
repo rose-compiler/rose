@@ -26,11 +26,11 @@ public:
     [[using Rosebud: rosetta]]
     uint32_t code_length = 0;
 
-    // FIXME[Robb Matzke 2023-03-20]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-20]: is the lack of serialization a bug?
     /** Property: code
      *
      *  The code array gives the actual bytes of Java Virtual Machine code that implement the method. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     const char* code = nullptr;
 
     /** Property: Exception table.

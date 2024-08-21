@@ -235,7 +235,7 @@ Mips::makeInstruction(rose_addr_t insn_va, MipsInstructionKind kind, const std::
                       SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3,
                       SgAsmExpression *op4) const
 {
-    SgAsmMipsInstruction *insn = new SgAsmMipsInstruction(insn_va, architecture()->name(), mnemonic, kind);
+    SgAsmMipsInstruction *insn = new SgAsmMipsInstruction(insn_va, *architecture()->registrationId(), mnemonic, kind);
 
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);

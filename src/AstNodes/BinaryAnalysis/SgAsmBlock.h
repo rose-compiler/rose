@@ -64,11 +64,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
     /** Property: Identification.
      *
      *  Block unique identification number. Not used by ROSE. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     rose_addr_t id = 0;
 
     /** Property: Reasons this block was created.

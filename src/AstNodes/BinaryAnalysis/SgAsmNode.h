@@ -13,6 +13,6 @@ public:
      *  type is to have the type be derived from @c Sawyer::Attribute::Storage. But as things stand now, ROSETTA doesn't support
      *  multiple inheritance and we must therefore use an awkward interface that reads like @c node->attributes().setAttribute(....)
      *  instead of the more streamlined @c node->setAttribute(....). */
-    [[using Rosebud: large, mutators(), no_serialize]]
+    [[using Rosebud: large, mutators(), serialize()]]
     Sawyer::Attribute::Storage<> attributes;
 };

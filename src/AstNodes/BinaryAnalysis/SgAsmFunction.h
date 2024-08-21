@@ -194,7 +194,7 @@ public:
      *
      *  A ROSE symbol table associated with this function. This is not the same as the symbol table that appears in the
      *  binary specimen, such as ELF or PE symbol tables. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     SgSymbolTable* symbolTable = nullptr;
 
     // FIXME[Robb P Matzke 2017-02-13]: what is this?

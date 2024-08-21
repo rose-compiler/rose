@@ -1768,7 +1768,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
 SgAsmInstruction*
 Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
-    auto insn = new SgAsmCilInstruction(e.ip, architecture()->name(), "unknown", Cil_unknown_instruction);
+    auto insn = new SgAsmCilInstruction(e.ip, *architecture()->registrationId(), "unknown", Cil_unknown_instruction);
     auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -1785,7 +1785,7 @@ Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
 SgAsmCilInstruction*
 Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size)
 {
-    auto insn = new SgAsmCilInstruction(va, architecture()->name(), "unknown", Cil_unknown_instruction);
+    auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), "unknown", Cil_unknown_instruction);
     auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -1802,7 +1802,7 @@ Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size,
 {
     ASSERT_forbid2(Cil_unknown_instruction==kind, "should have called make_unknown_instruction instead");
 
-    auto insn = new SgAsmCilInstruction(va, architecture()->name(), mnemonic, kind);
+    auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), mnemonic, kind);
     auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);

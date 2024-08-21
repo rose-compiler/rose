@@ -45,7 +45,7 @@ public:
     /** Property: Read-only file descriptor.
      *
      *  Negative represents lack of valid file descriptor. */
-    [[using Rosebud: rosetta, no_serialize]]
+    [[using Rosebud: rosetta, serialize()]]
     int fd = -1;
 
     [[using Rosebud: rosetta, mutators()]]
