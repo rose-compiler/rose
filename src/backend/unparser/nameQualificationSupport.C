@@ -1516,7 +1516,7 @@ namespace
       void handle(const SgDesignatedInitializer& n)
       {
         // SgDesignatedInitializer -> SgExprListExp -> SgAggregateInitializer
-        const SgAggregateInitializer* parentinit = sg::ancestor_path<SgExprListExp, SgAggregateInitializer>(n);
+        const SgAggregateInitializer* parentinit = sg::ancestorPath<SgExprListExp, SgAggregateInitializer>(n);
         const bool                    suppressNameQual = (  !parentinit
                                                          || si::Ada::getArrayTypeInfo(parentinit->get_type()).type() == nullptr
                                                          );

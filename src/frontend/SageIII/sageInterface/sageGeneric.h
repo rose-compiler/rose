@@ -102,37 +102,43 @@ namespace sg
     return *ptr;
   }
 
-  template <class U, class T, bool conv>
-  struct IfConvertible3 {}; // not convertible
+  template <bool conv>
+  struct ConditionalEnable : std::true_type // enable
+  {};
 
-  template <class U, class T>
-  struct IfConvertible3<U,T,true> : std::true_type // convertible
+  template <>
+  struct ConditionalEnable<false>  // disable
   {};
 
   template <class U, class T>
-  struct IsConvertible : IfConvertible3<U, T, !std::is_same<U,T>::value && std::is_convertible<U,T>::value>
+  struct EnableConversion : ConditionalEnable<!std::is_same<U,T>::value && std::is_convertible<U,T>::value>
   {};
 
   /// experimental class for returning non-null pointers
   template <class T>
   struct NotNull
   {
+      /// standard constructor testing that p is not nullptr
+      /// \param p a not-null pointer
+      /// \pre p != nullptr
       // not explicit to enable auto-conversion
       NotNull(T* p)
       : ptr(p)
       {
-        if (ptr == nullptr)
-          throw std::runtime_error{"failed null pointer check."};
+        SG_ERROR_IF(ptr == nullptr, "failed null pointer check.");
       }
 
-      ~NotNull()                         = default;
       NotNull(const NotNull&)            = default;
       NotNull& operator=(const NotNull&) = default;
+      ~NotNull()                         = default;
 
-      // when U is a derived type, or a non-const version of T
-      template <class U, bool conv = IsConvertible<U*,T*>::value>
-      NotNull(NotNull<U*> nn)
-      : ptr(nn.ptr)
+      /// converting ctor for derived types and non-const versions of T
+      /// \note
+      ///   WithConversion<U*,T*>::value may fail SFINAE when
+      ///   U is not convertible to T.
+      template <class U, bool = EnableConversion<U*,T*>::value>
+      NotNull(NotNull<U> nn)
+      : ptr(nn.pointer())
       {}
 
       /// dereference operator returns reference to object
@@ -1514,12 +1520,14 @@ namespace sg
     void handle(SageNode& n) { this->res = &n; }
   };
 
+  /// \deprecated
   template <class SageNode>
   auto ancestor_path(const SgNode& n) -> SageNode*
   {
     return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
   }
 
+  /// \deprecated
   template <class SageNode, class... SageNodes>
   auto ancestor_path(const SgNode& n) -> decltype(ancestor_path<SageNodes...>(n))
   {
@@ -1528,6 +1536,29 @@ namespace sg
 
     return nullptr;
   }
+
+
+  /// returns the last parent in an ancestor path
+  /// \{
+
+  // base case
+  template <class SageNode>
+  auto ancestorPath(const SgNode& n) -> SageNode*
+  {
+    return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
+  }
+
+  // general case
+  template <class SageNode, class... SageNodes>
+  auto ancestorPath(const SgNode& n) -> decltype(ancestorPath<SageNodes...>(n))
+  {
+    if (SageNode* parent = ancestorPath<SageNode>(n))
+      return ancestorPath<SageNodes...>(*parent);
+
+    return nullptr;
+  }
+  /// \}
+
 
 /// \brief swaps the parent pointer of two nodes
 /// \note  internal use

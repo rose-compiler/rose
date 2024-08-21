@@ -263,7 +263,7 @@ namespace
 
   template <class SageNode>
   void setFileInfo( SageNode& n,
-                    void (SageNode::*setter)(Sg_File_Info*),
+                    void (SageNode::*)(Sg_File_Info*),
                     Sg_File_Info* (SageNode::*getter)() const,
                     const std::string& filename,
                     int line,
@@ -2335,21 +2335,9 @@ bool startsWith(const std::string& s, const std::string& sub)
 }
 
 
-bool FAIL_ON_ERROR(AstContext ctx)
+bool FAIL_ON_ERROR(AstContext)
 {
   return true;
-/*
-  static const char* failSuffix = ".adb";
-
-  if (!fail_on_error)
-    return fail_on_error;
-
-  const std::string& filename = ctx.sourceFileName();
-
-  return (  filename.size() > 3
-         && std::equal(filename.end()-4, filename.end(), failSuffix)
-         );
-*/
 }
 
 /// initialize translation settins

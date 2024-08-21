@@ -154,7 +154,7 @@ namespace
     void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
 
     // expressions
-    void handle(SgExpression& n)      { /*logInfo() << typeid(n).name() << std::endl;*/ }
+    void handle(SgExpression&)        { /*logInfo() << typeid(n).name() << std::endl;*/ }
     void handle(SgTypeExpression& n)  { res = extract(n.get_type()); }
     void handle(SgAdaAttributeExp& n) { res = &n; }
 

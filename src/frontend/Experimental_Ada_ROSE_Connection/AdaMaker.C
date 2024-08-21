@@ -176,6 +176,7 @@ namespace
         /* fall-through */
 
       case sb::e_sourcePositionFrontendConstruction:
+        /* fall-through */
       case sb::e_sourcePositionDefault:
         startpos = Sg_File_Info::generateDefaultFileInfo();
         limitpos = Sg_File_Info::generateDefaultFileInfo();
@@ -2153,7 +2154,7 @@ mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
 }
 
 SgExprStatement&
-mkForLoopTest(bool forward, SgVariableDeclaration& var)
+mkForLoopTest(SgVariableDeclaration& var)
 {
   SgVarRefExp&         varref = SG_DEREF( sb::buildVarRefExp(&var) );
   SgInitializedName&   inivar = SG_DEREF( var.get_variables().front() );

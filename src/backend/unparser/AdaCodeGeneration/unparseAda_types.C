@@ -225,39 +225,36 @@ namespace
     void handle(const SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
+      std::string                   dclname;
+      const SgDeclarationStatement& dcl = SG_DEREF(n.get_declaration());
 
-      // was: SgAdaTaskTypeDecl& tyDcl = SG_DEREF(isSgAdaTaskTypeDecl(n.get_declaration()))
-      if (SgAdaTaskTypeDecl* tyDcl = isSgAdaTaskTypeDecl(n.get_declaration()))
-      {
-        prn(" ");
-        prnNameQual(*tyDcl);
-        prn(tyDcl->get_name());
-      }
-      else
-      {
-        // \TODO why can we end up here?
-        prn("tasktype?");
-      }
+      if (const SgAdaTaskTypeDecl* tyDcl = isSgAdaTaskTypeDecl(&dcl))
+        dclname = tyDcl->get_name();
+      else if (const SgAdaTaskSpecDecl* spDcl = isSgAdaTaskSpecDecl(&dcl))
+        dclname = spDcl->get_name();
+
+      prn(" ");
+      prnNameQual(dcl);
+      prn(dclname);
     }
 
     void handle(const SgAdaProtectedType& n)
     {
-      // \todo fix in AST and override get_name and get_declaration in AdaTaskType
-      // was: SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
-      if (SgAdaProtectedTypeDecl* tyDcl  = isSgAdaProtectedTypeDecl(n.get_declaration()))
-      {
-        prn(" ");
-        prnNameQual(*tyDcl);
-        prn(tyDcl->get_name());
-      }
-      else
-      {
-        // \TODO why can we end up here?
-        prn("protectedtype?");
-      }
+      // \todo fix in AST and override get_name and get_declaration in AdaProtectedType
+      std::string                   dclname;
+      const SgDeclarationStatement& dcl = SG_DEREF(n.get_declaration());
+
+      if (const SgAdaProtectedTypeDecl* tyDcl = isSgAdaProtectedTypeDecl(&dcl))
+        dclname = tyDcl->get_name();
+      else if (const SgAdaProtectedSpecDecl* spDcl = isSgAdaProtectedSpecDecl(&dcl))
+        dclname = spDcl->get_name();
+
+      prn(" ");
+      prnNameQual(dcl);
+      prn(dclname);
     }
 
-    void handle(const SgAdaDiscreteType&)
+    void handle(const SgAdaDiscreteType& n)
     {
       // should not be reached
       ROSE_ABORT();
@@ -296,6 +293,7 @@ namespace
     void handle(const SgPointerType& n)
     {
       // TODO: should not be in Ada
+      //   FIXED, ==> assert(false)
       prn(" access");
 
       SgType* under = n.get_base_type();
@@ -308,7 +306,9 @@ namespace
 
     void handle(const SgTypeNullptr& n)
     {
-      // TODO: should not be in Ada
+      // the type of "null"
+      //   in C++ that would std::nullptr_t, not sure if there exists
+      //   a type in Ada that represents the same concept.
       prn(" null-type");
     }
 

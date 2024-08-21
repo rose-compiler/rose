@@ -634,7 +634,7 @@ namespace
   ///    The ROSE AST looks like:
   ///      int a = InitExpr, int b = InitExpr
   SgExpression*
-  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext ctx)
+  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext)
   {
     // the first variable declarations gets the original initializer
     if ((exp == nullptr) || lst.empty()) return exp;
@@ -1972,7 +1972,7 @@ namespace
           sg::linkParentChild(sgnode, direction, &SgForStatement::set_increment);
 
           // test is not strictly necessary; added for convenience
-          SgStatement&           test    = mkForLoopTest(isForwardLoop(forvar), SG_DEREF(inductionVar));
+          SgStatement&           test    = mkForLoopTest(SG_DEREF(inductionVar));
           sg::linkParentChild(sgnode, test, &SgForStatement::set_test);
 
           PragmaContainer pendingPragmas;
@@ -2905,7 +2905,7 @@ namespace
 
   struct InheritedEnumeratorCreator
   {
-      InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
+      InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& /*orig*/, AstContext astctx)
       : derivedDcl(enumDcl), ctx(astctx)
       {}
 

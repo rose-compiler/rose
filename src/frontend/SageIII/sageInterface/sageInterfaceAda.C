@@ -2,6 +2,7 @@
 #include "sageInterface.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"
+#include "Experimental_Ada_ROSE_Connection/AdaMaker.h"
 
 #include <iostream>
 #include <limits>
@@ -1815,6 +1816,13 @@ namespace Ada
           if (SgAssignInitializer* init = isSgAssignInitializer(var.get_initializer()))
             res = typeRoot(SG_DEREF(init->get_operand()).get_type());
         }
+      }
+
+      void handle(const SgNewExp& n)
+      {
+        namespace art = Ada_ROSE_Translation;
+
+        res = TypeDescription{&art::mkAdaAccessType(SG_DEREF(n.get_type()))};
       }
 
       void handle(const SgPointerDerefExp& n)

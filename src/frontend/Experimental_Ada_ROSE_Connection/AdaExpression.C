@@ -531,10 +531,12 @@ namespace
       if (!req)
       {
         if (true)
+        {
           logWarn() << "(sca: " << si::Ada::isScalarType(domTy)
                     << " | dsc: " << si::Ada::isDiscreteArrayType(domTy)
                     << " -> : " << req
                     << std::endl;
+        }
 
         return OperatorCallSupplement{};
       }
@@ -557,7 +559,7 @@ namespace
        )
     {
       if (suppl.args().size() == 1)
-         return createSupplement( { domTy }, domTy );
+        return createSupplement( { domTy }, domTy );
 
       return createSupplement( {domTy,domTy}, domTy );
     }
@@ -2110,7 +2112,7 @@ queryBuiltIn(AdaIdentifier adaIdent)
 }
 
 SgNode*
-queryCorrespondingAstNode(Expression_Struct& expr, AstContext ctx)
+queryCorrespondingAstNode(Expression_Struct& expr, AstContext)
 {
   ADA_ASSERT(expr.Expression_Kind == An_Identifier);
 

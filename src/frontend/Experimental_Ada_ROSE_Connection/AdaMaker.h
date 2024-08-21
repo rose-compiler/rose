@@ -946,7 +946,7 @@ namespace Ada_ROSE_Translation
 
   /// creates a loop test
   SgExprStatement&
-  mkForLoopTest(bool forward, SgVariableDeclaration& var);
+  mkForLoopTest(SgVariableDeclaration& var);
 
   /// creates an  expression list from \ref exprs
   SgExprListExp&
