@@ -51,7 +51,8 @@ Sawyer::Message::Facility mlog;
 
 // The following variables are protected by registryMutex
 static SAWYER_THREAD_TRAITS::Mutex registryMutex;
-static std::vector<Base::Ptr> registry;
+static std::vector<Base::Ptr> registryList;
+static std::vector<Base::Ptr> registryIds;
 static boost::once_flag initFlag = BOOST_ONCE_INIT;
 
 static void
@@ -63,42 +64,49 @@ initRegistryHelper() {
 
     // ARM
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    registry.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::T32));
-    registry.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::A32));
+    registryList.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::T32));
+    registryList.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::A32));
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    registry.push_back(ArmAarch64::instance());
+    registryList.push_back(ArmAarch64::instance());
 #endif
 
     // MIPS
-    registry.push_back(Mips32::instance(ByteOrder::ORDER_MSB));
-    registry.push_back(Mips32::instance(ByteOrder::ORDER_LSB));
+    registryList.push_back(Mips32::instance(ByteOrder::ORDER_MSB));
+    registryList.push_back(Mips32::instance(ByteOrder::ORDER_LSB));
 
     // Motorola
-    registry.push_back(Motorola68040::instance());
-    registry.push_back(NxpColdfire::instance());
+    registryList.push_back(Motorola68040::instance());
+    registryList.push_back(NxpColdfire::instance());
 
     // PowerPC
-    registry.push_back(Powerpc32::instance(ByteOrder::ORDER_MSB));
-    registry.push_back(Powerpc32::instance(ByteOrder::ORDER_LSB));
-    registry.push_back(Powerpc64::instance(ByteOrder::ORDER_MSB));
-    registry.push_back(Powerpc64::instance(ByteOrder::ORDER_LSB));
+    registryList.push_back(Powerpc32::instance(ByteOrder::ORDER_MSB));
+    registryList.push_back(Powerpc32::instance(ByteOrder::ORDER_LSB));
+    registryList.push_back(Powerpc64::instance(ByteOrder::ORDER_MSB));
+    registryList.push_back(Powerpc64::instance(ByteOrder::ORDER_LSB));
 
     // x86
-    registry.push_back(Intel8086::instance());
-    registry.push_back(Intel8088::instance());
-    registry.push_back(Intel80286::instance());
-    registry.push_back(IntelI386::instance());
-    registry.push_back(IntelI486::instance());
-    registry.push_back(IntelPentium::instance());
-    registry.push_back(IntelPentiumii::instance());
-    registry.push_back(IntelPentiumiii::instance());
-    registry.push_back(IntelPentium4::instance());
-    registry.push_back(Amd64::instance());
+    registryList.push_back(Intel8086::instance());
+    registryList.push_back(Intel8088::instance());
+    registryList.push_back(Intel80286::instance());
+    registryList.push_back(IntelI386::instance());
+    registryList.push_back(IntelI486::instance());
+    registryList.push_back(IntelPentium::instance());
+    registryList.push_back(IntelPentiumii::instance());
+    registryList.push_back(IntelPentiumiii::instance());
+    registryList.push_back(IntelPentium4::instance());
+    registryList.push_back(Amd64::instance());
 
     // Byte code
-    registry.push_back(Cil::instance());
-    registry.push_back(Jvm::instance());
+    registryList.push_back(Cil::instance());
+    registryList.push_back(Jvm::instance());
+
+    // Assign IDs to the registered architectures.
+    registryIds.resize(registryList.size(), Base::Ptr());
+    for (size_t i = 0; i < registryList.size(); ++i) {
+        registryList[i]->registrationId(i);
+        registryIds[i] = registryList[i];
+    }
 }
 
 // Initialize the registry with ROSE's built-in architecture definitions.
@@ -117,13 +125,28 @@ initDiagnostics() {
     }
 }
 
-void
+size_t
 registerDefinition(const Base::Ptr &arch) {
     ASSERT_not_null(arch);
     initRegistry();
 
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
-    registry.push_back(arch);
+    registryList.push_back(arch);
+
+    // Assign a registration ID
+    for (size_t i = 0; i < registryIds.size(); ++i) {
+        if (!registryIds[i]) {
+            arch->registrationId(i);
+            registryIds[i] = arch;
+        }
+    }
+    if (!arch->registrationId()) {
+        arch->registrationId(registryIds.size());
+        registryIds.push_back(arch);
+    }
+
+    ASSERT_require(arch->registrationId());
+    return *arch->registrationId();
 }
 
 #ifdef __linux__
@@ -228,12 +251,19 @@ registerDefinition(const std::string &name) {
 
 bool
 deregisterDefinition(const Base::Ptr &arch) {
-    if (arch) {
+    if (arch && arch->registrationId()) {
         initRegistry();
         SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
-        for (size_t i = registry.size(); i > 0; --i) {
-            if (registry[i-1] == arch) {
-                registry.erase(registry.begin() + (i-1));
+
+        ASSERT_require(arch->registrationId());
+        ASSERT_require(*arch->registrationId() < registryIds.size());
+        ASSERT_require(registryIds[*arch->registrationId()] == arch);
+        registryIds[*arch->registrationId()] = Base::Ptr();
+        arch->registrationId(Sawyer::Nothing());
+
+        for (size_t i = registryList.size(); i > 0; --i) {
+            if (registryList[i-1] == arch) {
+                registryList.erase(registryList.begin() + (i-1));
                 return true;
             }
         }
@@ -246,9 +276,9 @@ registeredDefinitions() {
     initRegistry();
     std::vector<Base::Ptr> retval;
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
-    retval.reserve(registry.size());
-    for (size_t i = registry.size(); i > 0; --i)
-        retval.push_back(registry[i-1]);
+    retval.reserve(registryList.size());
+    for (size_t i = registryList.size(); i > 0; --i)
+        retval.push_back(registryList[i-1]);
     return retval;
 }
 
@@ -257,7 +287,7 @@ registeredNames() {
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     std::set<std::string> names;
-    for (const Base::Ptr &arch: registry)
+    for (const Base::Ptr &arch: registryList)
         names.insert(arch->name());
     return names;
 }
@@ -266,7 +296,7 @@ Sawyer::Result<Base::Ptr, NotFound>
 findByName(const std::string &name) {
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
-    for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
+    for (auto iter = registryList.rbegin(); iter != registryList.rend(); ++iter) {
         ASSERT_not_null(*iter);
         if ((*iter)->matchesName(name))
             return Sawyer::makeOk(*iter);
@@ -275,11 +305,20 @@ findByName(const std::string &name) {
 }
 
 Sawyer::Result<Base::Ptr, NotFound>
+findById(const size_t id) {
+    if (id >= registryIds.size() || !registryIds[id]) {
+        return Sawyer::makeError(NotFound("architecture ID " + boost::lexical_cast<std::string>(id) + " not found"));
+    } else {
+        return Sawyer::makeOk(registryIds[id]);
+    }
+}
+
+Sawyer::Result<Base::Ptr, NotFound>
 findByHeader(SgAsmGenericHeader *header) {
     ASSERT_not_null(header);
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
-    for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
+    for (auto iter = registryList.rbegin(); iter != registryList.rend(); ++iter) {
         ASSERT_not_null(*iter);
         if ((*iter)->matchesHeader(header))
             return Sawyer::makeOk(*iter);
@@ -336,6 +375,11 @@ const std::string&
 name(const Base::ConstPtr &arch) {
     static const std::string empty;
     return arch ? arch->name() : empty;
+}
+
+const std::string&
+name(const size_t id) {
+    return name(findById(id).orDefault());
 }
 
 InstructionSemantics::BaseSemantics::DispatcherPtr

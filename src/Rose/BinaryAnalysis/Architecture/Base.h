@@ -12,6 +12,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
 #include <Sawyer/Interval.h>
+#include <Sawyer/Optional.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -28,6 +29,7 @@ public:
 
 private:
     std::string name_;                                  // name of architecture
+    Sawyer::Optional<size_t> registrationId_;           // registration identification number
     size_t bytesPerWord_ = 0;
     ByteOrder::Endianness byteOrder_ = ByteOrder::ORDER_UNSPECIFIED;
 
@@ -58,6 +60,16 @@ public:
      *
      *  Thread safety: Thread safe. The name is specified during construction and is thereafter read-only. */
     const std::string& name() const;
+
+    /** Property: Registration identification number.
+     *
+     *  Architectures are identified by a small number that is automtically assigned when it is registered, and cleared when it is
+     *  deregistered.
+     *
+     * @{ */
+    const Sawyer::Optional<size_t>& registrationId() const;
+    void registrationId(const Sawyer::Optional<size_t>&);
+    /** @} */
 
     /** Property: Word size.
      *

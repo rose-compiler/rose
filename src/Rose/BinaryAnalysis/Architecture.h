@@ -46,7 +46,7 @@ namespace BinaryAnalysis {
  *  library. There are two ways to register a new architecture:
  *
  *  @li If the architecture is intended to be part of the ROSE library, then it should be compiled when the ROSE library is
- *  compiled and linked in as part of the ROSE library. These are called the "built-in" architecture definitions and are registered
+ *  compiled, and linked in as part of the ROSE library. These are called the "built-in" architecture definitions and are registered
  *  by modifying the @p initRegistryHelper function in @ref Rose::BinaryAnalysis::Architecture in the "BasicTypes.C" source file.
  *
  *  @li If the architecture is not intended to be part of the ROSE library, then it should be compiled into its own shared library

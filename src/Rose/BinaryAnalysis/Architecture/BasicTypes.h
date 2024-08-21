@@ -118,8 +118,12 @@ void initDiagnostics();
  *  The specified definition is added to the ROSE library. When searching for an architecture, architectures registered later
  *  are preferred over architectures registered earlier.
  *
+ *  Returns the registration ID number assigned to the architecture. Since the argument can have only one registration ID number,
+ *  it is an error to register the same architecture object multiple times concurrently. The registration ID is also stored in
+ *  the architecture object's @ref Architecture::Base::registrationId "registrationId" property.
+ *
  *  Thread safety: This function is thread safe. */
-void registerDefinition(const BasePtr&);
+size_t registerDefinition(const BasePtr&);
 
 /** Register definitions from a shared library.
  *
@@ -131,9 +135,7 @@ void registerDefinition(const BasePtr&);
  *  Thread safety: Thread safe.
  *
  *  See also, @ref registerDefinitions. */
-
 void registerDefinition(const std::string&);
-
 
 /** Register definitions from shared libraries.
  *
@@ -146,8 +148,8 @@ void registerDefinitions(Iterator begin, Iterator end) {
 
 /** Remove the specified architecture from the list of registered architectures.
  *
- *  If the specified architecture object is found, then the latest such object is removed from the registration. This function
- *  is a no-ip if the argument is a null pointer.
+ *  If the specified architecture object is found, then it is removed from the registration list and its registration ID is reset to
+ *  zero. This function is a no-op if the argument is a null pointer.
  *
  *  Returns true if any architecture definition object was removed, false if the object was not found.
  *
@@ -178,8 +180,20 @@ std::set<std::string> registeredNames();
  *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns the first
  *  one whose @c matchesName predicate returns true. If none match, then a @ref NotFound error is returned.
  *
+ *  The time to look up a name has linear time complexity which is a function of the number of architectures registered.
+ *
  *  Thread safety: This function is thread safe. */
 Sawyer::Result<BasePtr, NotFound> findByName(const std::string&);
+
+/** Look up a new architecture by registration ID.
+ *
+ *  Returns the architecture having the specified registration ID. If there is no such architecture, then a @ref NotFound error is
+ *  returned.
+ *
+ *  Lookup by ID is a constant time operation.
+ *
+ *  Thread safety: This function is thread safe. */
+Sawyer::Result<BasePtr, NotFound> findById(size_t);
 
 /** Finds a suitable architecture for a file header.
  *
@@ -215,9 +229,16 @@ std::pair<BasePtr, size_t> findBestByInterpretation(SgAsmInterpretation*);
 /** Architecture name free function.
  *
  *  This is a convenient way to obtain an architecture definition's name without having to include "Base.h", and is therefore useful
- *  in header files that try to include a minimal number of type definitions. Returns a null pointer if the argument is a null
- *  pointer. */
+ *  in header files that try to include a minimal number of type definitions. If the argument is a null architecture or invalid
+ *  registration ID, then an empty name is returned.
+ *
+ *  Returns a null pointer if the argument is a null
+ *  pointer.
+ *
+ * @{ */
 const std::string& name(const BaseConstPtr&);
+const std::string& name(size_t registrationId);
+/** @} */
 
 /** Create a new instruction dispatcher by name.
  *

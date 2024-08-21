@@ -38,6 +38,17 @@ Base::name() const {
     return name_;
 }
 
+const Sawyer::Optional<size_t>&
+Base::registrationId() const {
+    return registrationId_;
+}
+
+void
+Base::registrationId(const Sawyer::Optional<size_t> &id) {
+    ASSERT_require2(!id || 0 == registrationId_, "already registered");
+    registrationId_ = id;
+}
+
 size_t
 Base::bytesPerWord() const {
     return bytesPerWord_;
