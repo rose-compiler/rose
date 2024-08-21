@@ -158,9 +158,13 @@
  *  the compile-time type of that object and its copy constructor] [is not supported (Sawyer)]. This is intended to be a temporary
  *  attribute since it can easily be done directly in C++ in many ways.
  *
- *  @li The `Rosebud::no_serialize` attribute indicates that the property should not participate in serialization or
- *  deserialization. Normally, if one or more serialization backends are used, they will generate code to serialize and deserialize
- *  every property.
+ *  @li The `Rosebud::serialize` attribute, which requires an argument list even if it's empty, specifies the base name for
+ *  alternate serialization and deserialization functions. If the argument list is empty, then the property is not serialized or
+ *  deserialized. Otherwise serialization and deserialization function names are created by appending the strings "Serialize" and
+ *  "Deserialize". The user must define these functions so that the serialization function takes the property as an argument and
+ *  returns a new value that should be serialized by the default method, while the deserialization function takes an argument that
+ *  is the same type returned by the serialize function and returns a value to be assigned to the property.  If this attribute isn't
+ *  specified, then the property is serialzied and deserialized directly.
  *
  *  @li The `Rosebud::large` attribute indicates that the property value is large and expensive to copy. Therefore, in addition to
  *  any other mutators, the accessors will be overloaded to return a non-const reference to the property's data member. Use this

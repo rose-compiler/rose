@@ -64,11 +64,27 @@ CerealSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class:
             body <<THIS_LOCATION <<"        archive(" <<"cereal::base_class<" <<parent.source()->value()->name <<">(this));\n";
     }
     for (const auto &p: c->properties) {
-        if (!p->findAttribute("Rosebud::no_serialize")) {
+        if (!p->serializerBaseName) {
+            // Default serialization for this property
             p->cppStack->emitOpen(body);
             const std::string dataMember = generator.propertyDataMemberName(p());
-            body <<THIS_LOCATION <<"        archive(" <<"cereal::make_nvp(\"" <<p->name <<"\", " <<dataMember <<"));\n";
+            body <<THIS_LOCATION <<"        archive(cereal::make_nvp(\"" <<p->name <<"\", " <<dataMember <<"));\n";
             p->cppStack->emitClose(body);
+        } else if (!p->serializerBaseName->empty()) {
+            // User-controlled serialization for this property
+            p->cppStack->emitOpen(body);
+            const std::string dataMember = generator.propertyDataMemberName(p());
+            const std::string serializer = *p->serializerBaseName + "Serialize";
+            const std::string deserializer = *p->serializerBaseName + "Deserialize";
+            body <<THIS_LOCATION
+                 <<"        {\n"
+                 <<"            auto temp = " <<serializer <<"(" <<dataMember <<");\n"
+                 <<"            archive(serial::make_nvp(\"" <<p->name <<"\", temp));\n"
+                 <<"            " <<dataMember <<" = " <<deserializer <<"(temp);\n"
+                 <<"        }\n";
+            p->cppStack->emitClose(body);
+        } else {
+            // No serialization for this property
         }
     }
 

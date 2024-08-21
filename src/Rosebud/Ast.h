@@ -343,6 +343,12 @@ public:
      *  will be generated. Lack of a vector means that the backend should choose mutator names. */
     Sawyer::Optional<std::vector<std::string>> mutatorNames;
 
+    /** Optional override for the serializer name.
+     *
+     *  This usually comes from the "Rosebud::serializer" attribute, but can be set directly. An empty name means that the property
+     *  is not serialized. If no valueis present, then the default serialization function is used. */
+    Sawyer::Optional<std::string> serializerBaseName;
+
 protected:
     /** Default constructor used only by derived classes. */
     Property();

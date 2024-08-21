@@ -69,13 +69,30 @@ BoostSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class::
         header <<THIS_LOCATION <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
 
     // Serialize all properties that request serialization
+    size_t nTemps = 0;
     for (const auto &p: c->properties) {
-        if (!p->findAttribute("Rosebud::no_serialize")) {
+        if (!p->serializerBaseName) {
+            // Default serialization for this property
             p->cppStack->emitOpen(header);
             const std::string memberName = generator.propertyDataMemberName(p());
             header <<locationDirective(p->findAncestor<Ast::File>(), p->startToken)
                    <<"        s & BOOST_SERIALIZATION_NVP(" <<memberName <<");\n";
             p->cppStack->emitClose(header);
+        } else if (!p->serializerBaseName->empty()) {
+            // User-controlled serialization for this property
+            p->cppStack->emitOpen(header);
+            const std::string memberName = generator.propertyDataMemberName(p());
+            const std::string serializer = *p->serializerBaseName + "Serialize";
+            const std::string deserializer = *p->serializerBaseName + "Deserialize";
+            header <<locationDirective(p->findAncestor<Ast::File>(), p->startToken)
+                   <<"        {\n"
+                   <<"            auto temp = " <<serializer <<"(" <<memberName <<");\n"
+                   <<"            s & boost::serialization::make_nvp(\"" <<memberName <<"\", temp);\n"
+                   <<"            " <<memberName <<" = " <<deserializer <<"(temp);\n"
+                   <<"        }\n";
+            p->cppStack->emitClose(header);
+        } else {
+            // No serialization for this property
         }
     }
 

@@ -29,7 +29,7 @@ static const std::vector<std::string> validPropertyAttrNames {
     "Rosebud::ctor_arg",                                // attribute is constructor argument
     "Rosebud::data",                                    // data member name
     "Rosebud::large",                                   // property type is large
-    "Rosebud::no_serialize",                            // don't serialize the attribute
+    "Rosebud::serialize",                               // serializer/deserializer base name or empty
     "Rosebud::property",                                // data member is a property even if no other attributes are specified
     "Rosebud::mutators",                                // mutator names or empty
     "Rosebud::not_null",                                // attribute evaluates to True in a Boolean context
@@ -657,7 +657,6 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
 
         } else if ("Rosebud::ctor_arg" == attr->fqName ||
                    "Rosebud::large" == attr->fqName ||
-                   "Rosebud::no_serialize" == attr->fqName ||
                    "Rosebud::property" == attr->fqName ||
                    "Rosebud::traverse" == attr->fqName ||
                    "Rosebud::cloneptr" == attr->fqName ||
@@ -688,7 +687,30 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
                 }
             }
 
+        } else if ("Rosebud::serialize" == attr->fqName) {
+            // Optional argument which must be the symbol to use as the serializer.
+            if (attr->arguments) {
+                if (!checkNumberOfArguments(file, attr(), 0, 1)) {
+                    // error already printed
+                } else {
+                    property->serializerBaseName = "";
+                    for (const auto &arg: attr->arguments->elmts) {
+                        ASSERT_forbid(arg->empty());
+                        if (arg->size() != 1) {
+                            message(ERROR, file, arg->tokens, "attribute \"" + attr->fqName + "\" argument must be the symbol to "
+                                    "use to form the serialization/deserialization functions for the property");
+                        } else {
+                            property->serializerBaseName = arg->string(file);
+                        }
+                    }
+                }
+            } else {
+                message(ERROR, file, attr->nameTokens,
+                        "explicit argument list required for attribute \"" + attr->fqName + "\", even if no arguments present");
+            }
+
         } else if ("Rosebud::accessors" == attr->fqName) {
+            // Zero or more arguments which must the be symbols to use as data members for this property.
             if (attr->arguments) {
                 std::vector<std::string> names;
                 for (const auto &arg: attr->arguments->elmts) {
@@ -702,7 +724,6 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
                 }
                 property->accessorNames = names;
             } else {
-                // Zero or more arguments which must the be symbols to use as data members for this property.
                 message(ERROR, file, attr->nameTokens,
                         "explicit argument list required for attribute \"" + attr->fqName + "\", even if no arguments present");
             }
