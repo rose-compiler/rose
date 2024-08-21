@@ -11,6 +11,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
@@ -33,9 +34,9 @@ struct Settings {
     bool countMnemonics = false;
 };
 
-// Parse the command-line and return the name of the input file if any (the ROSE binary state).
-static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+// Create a command-line switch parser
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -72,13 +73,18 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
     parser.with(tool).with(gen);
-    std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
+
+    return parser;
+}
+
+// Parse the command-line and return the positional arguments representing the binary specimen
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
     settings.alignment = std::max(settings.alignment, rose_addr_t(1));
-    if (args.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-    return args.empty() ? boost::filesystem::path("-") : args[0];
+    if (specimen.empty())
+        specimen.push_back("-");
+    return specimen;
 }
 
 /*static*/ std::string
@@ -138,6 +144,18 @@ baseMnemonic(SgAsmInstruction *insn_) {
     return s;
 }
 
+static IS::BaseSemantics::RiscOperators::Ptr
+newOperators(const Architecture::Base::ConstPtr &arch, const MemoryMap::Ptr &map) {
+    auto ops = P2::Semantics::RiscOperators::instance(arch->registerDictionary());
+    IS::BaseSemantics::MemoryState::Ptr mem = ops->currentState()->memoryState();
+    if (auto ml = boost::dynamic_pointer_cast<P2::Semantics::MemoryListState>(mem)) {
+        ml->memoryMap(map);
+    } else if (auto mm = boost::dynamic_pointer_cast<P2::Semantics::MemoryMapState>(mem)) {
+        mm->memoryMap(map);
+    }
+    return ops;
+}
+
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
@@ -146,19 +164,25 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
+    // Parse the command-line
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings /*in,out*/);
+    Architecture::Base::ConstPtr architecture = engine->architecture();
+
+    // Map the specimen into virtual memory
+    MemoryMap::Ptr map;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        map = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat)->memoryMap();
+    } else {
+        map = engine->loadSpecimens(specimen);
     }
-    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
-    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
+    // Obtain instruction parser and unparser
+    auto insns = InstructionProvider::instance(architecture, map);
+    BinaryAnalysis::Unparser::Base::Ptr unparser = architecture->newUnparser();
     ASSERT_not_null(unparser);
     unparser->settings().function.cg.showing = false;
     unparser->settings().insn.stackDelta.showing = false;
@@ -167,7 +191,7 @@ main(int argc, char *argv[]) {
                         Sawyer::Message::StreamSink::instance(std::cout, Sawyer::Message::Prefix::silentInstance()));
     IS::BaseSemantics::Dispatcher::Ptr cpu;
     if (settings.showSideEffects) {
-        if (IS::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators()) {
+        if (IS::BaseSemantics::RiscOperators::Ptr ops = newOperators(architecture, map)) {
             if (settings.showSemanticTrace) {
                 IS::TraceSemantics::RiscOperators::Ptr tops = IS::TraceSemantics::RiscOperators::instance(ops);
                 ASSERT_not_null(tops);
@@ -178,7 +202,7 @@ main(int argc, char *argv[]) {
                 ops = tops;
             }
 
-            cpu = partitioner->newDispatcher(ops);
+            cpu = architecture->newInstructionDispatcher(ops);
             if (!cpu)
                 mlog[WARN] <<"no semantics available for this architecture\n";
         }
@@ -197,8 +221,8 @@ main(int argc, char *argv[]) {
         if (lastSeenVa && lastSeenVa.get()+1 != va)
             std::cout <<"\n";
 
-        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
-            unparser->unparse(std::cout, partitioner, insn);
+        if (SgAsmInstruction *insn = (*insns)[va]) {
+            unparser->unparse(std::cout, insn);
             std::cout <<"\n";
 
             lastSeenVa = insn->get_address() + insn->get_size() - 1;
@@ -216,7 +240,7 @@ main(int argc, char *argv[]) {
                 }
             }
 
-            if (settings.countMnemonics && !partitioner->architecture()->isUnknown(insn))
+            if (settings.countMnemonics && !architecture->isUnknown(insn))
                 ++histogram[baseMnemonic(insn)];
 
         } else {
