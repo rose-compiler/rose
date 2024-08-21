@@ -111,20 +111,20 @@ SgAsmX86Instruction::SgAsmX86Instruction()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-//    property=architectureName class=SgAsmInstruction
+//    property=architectureId   class=SgAsmInstruction
 //    property=mnemonic         class=SgAsmInstruction
 //    property=kind             class=SgAsmX86Instruction
 //    property=baseSize         class=SgAsmX86Instruction
 //    property=operandSize      class=SgAsmX86Instruction
 //    property=addressSize      class=SgAsmX86Instruction
 SgAsmX86Instruction::SgAsmX86Instruction(rose_addr_t const& address,
-                                         std::string const& architectureName,
+                                         uint8_t const& architectureId,
                                          std::string const& mnemonic,
                                          Rose::BinaryAnalysis::X86InstructionKind const& kind,
                                          Rose::BinaryAnalysis::X86InstructionSize const& baseSize,
                                          Rose::BinaryAnalysis::X86InstructionSize const& operandSize,
                                          Rose::BinaryAnalysis::X86InstructionSize const& addressSize)
-    : SgAsmInstruction(address, architectureName, mnemonic)
+    : SgAsmInstruction(address, architectureId, mnemonic)
     , p_kind(kind)
     , p_baseSize(baseSize)
     , p_operandSize(operandSize)

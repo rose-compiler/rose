@@ -7,9 +7,9 @@
 #define ROSE_SgAsmInstruction_IMPL
 #include <SgAsmInstruction.h>
 
-std::string const&
-SgAsmInstruction::get_architectureName() const {
-    return p_architectureName;
+uint8_t const&
+SgAsmInstruction::get_architectureId() const {
+    return p_architectureId;
 }
 
 std::string const&
@@ -89,13 +89,13 @@ SgAsmInstruction::SgAsmInstruction()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-//    property=architectureName class=SgAsmInstruction
+//    property=architectureId   class=SgAsmInstruction
 //    property=mnemonic         class=SgAsmInstruction
 SgAsmInstruction::SgAsmInstruction(rose_addr_t const& address,
-                                   std::string const& architectureName,
+                                   uint8_t const& architectureId,
                                    std::string const& mnemonic)
     : SgAsmStatement(address)
-    , p_architectureName(architectureName)
+    , p_architectureId(architectureId)
     , p_mnemonic(mnemonic)
     , p_operandList(nullptr)
     , p_cacheLockCount(0)

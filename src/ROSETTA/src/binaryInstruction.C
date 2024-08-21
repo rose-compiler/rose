@@ -301,7 +301,7 @@ public:
 public:
     /** Constructor. */
     SgAsmX86Instruction(rose_addr_t const& address,
-                        std::string const& architectureName,
+                        uint8_t const& architectureId,
                         std::string const& mnemonic,
                         Rose::BinaryAnalysis::X86InstructionKind const& kind,
                         Rose::BinaryAnalysis::X86InstructionSize const& baseSize,
@@ -539,7 +539,7 @@ public:
 public:
     /** Constructor. */
     SgAsmUserInstruction(rose_addr_t const& address,
-                         std::string const& architectureName,
+                         uint8_t const& architectureId,
                          std::string const& mnemonic,
                          unsigned const& kind);
 
@@ -1939,7 +1939,7 @@ public:
 public:
     /** Constructor. */
     SgAsmPowerpcInstruction(rose_addr_t const& address,
-                            std::string const& architectureName,
+                            uint8_t const& architectureId,
                             std::string const& mnemonic,
                             Rose::BinaryAnalysis::PowerpcInstructionKind const& kind);
 
@@ -5517,7 +5517,7 @@ public:
 public:
     /** Constructor. */
     SgAsmNullInstruction(rose_addr_t const& address,
-                         std::string const& architectureName,
+                         uint8_t const& architectureId,
                          std::string const& mnemonic);
 
 protected:
@@ -7329,7 +7329,7 @@ public:
 public:
     /** Constructor. */
     SgAsmMipsInstruction(rose_addr_t const& address,
-                         std::string const& architectureName,
+                         uint8_t const& architectureId,
                          std::string const& mnemonic,
                          Rose::BinaryAnalysis::MipsInstructionKind const& kind);
 
@@ -7511,7 +7511,7 @@ public:
 public:
     /** Constructor. */
     SgAsmM68kInstruction(rose_addr_t const& address,
-                         std::string const& architectureName,
+                         uint8_t const& architectureId,
                          std::string const& mnemonic,
                          Rose::BinaryAnalysis::M68kInstructionKind const& kind);
 
@@ -11390,7 +11390,7 @@ public:
 public:
     /** Constructor. */
     SgAsmJvmInstruction(rose_addr_t const& address,
-                        std::string const& architectureName,
+                        uint8_t const& architectureId,
                         std::string const& mnemonic,
                         Rose::BinaryAnalysis::JvmInstructionKind const& kind);
 
@@ -13358,7 +13358,7 @@ public:
     uint32_t const& get_code_length() const;
     void set_code_length(uint32_t const&);
     /** @} */
-    // FIXME[Robb Matzke 2023-03-20]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-20]: is the lack of serialization a bug?
 public:
     /** Property: code
      *
@@ -30832,7 +30832,7 @@ public:
     uint64_t const& get_managedNativeHeader() const;
     void set_managedNativeHeader(uint64_t const&);
     /** @} */
-    // FIXME[Robb Matzke 2023-03-20]: is no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-20]: is the lack of serialization a bug?
 public:
     /** Property: pointer to the root of the CIL Metadata. 
      * 
@@ -36107,7 +36107,7 @@ public:
 public:
     /** Constructor. */
     SgAsmCilInstruction(rose_addr_t const& address,
-                        std::string const& architectureName,
+                        uint8_t const& architectureId,
                         std::string const& mnemonic,
                         Rose::BinaryAnalysis::CilInstructionKind const& kind);
 
@@ -40615,7 +40615,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
 public:
     /** Property: Identification.
      *
@@ -42687,7 +42687,7 @@ public:
     Rose::BinaryAnalysis::Aarch64InstructionCondition const& get_condition() const;
     void set_condition(Rose::BinaryAnalysis::Aarch64InstructionCondition const&);
     /** @} */
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
 public:
     /** Property: Whether this instruction updates N, Z, C, and/or V status flags. 
      * 
@@ -42709,7 +42709,7 @@ public:
 public:
     /** Constructor. */
     SgAsmAarch64Instruction(rose_addr_t const& address,
-                            std::string const& architectureName,
+                            uint8_t const& architectureId,
                             std::string const& mnemonic,
                             Rose::BinaryAnalysis::Aarch64InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch64InstructionCondition const& condition);
@@ -43107,7 +43107,7 @@ public:
 public:
     /** Constructor. */
     SgAsmAarch32Instruction(rose_addr_t const& address,
-                            std::string const& architectureName,
+                            uint8_t const& architectureId,
                             std::string const& mnemonic,
                             Rose::BinaryAnalysis::Aarch32InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch32InstructionCondition const& condition);
@@ -43204,7 +43204,7 @@ class SgAsmInstruction: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
-        "std::string", "architectureName", "",
+        "uint8_t", "architectureId", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -43268,7 +43268,11 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
-        s & BOOST_SERIALIZATION_NVP(p_architectureName);
+        {
+            auto temp = architectureIdSerialize(p_architectureId);
+            s & boost::serialization::make_nvp("p_architectureId", temp);
+            p_architectureId = architectureIdDeserialize(temp);
+        }
         s & BOOST_SERIALIZATION_NVP(p_mnemonic);
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
@@ -43301,14 +43305,17 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 public:
-    /** Property: Architecture name.
+    /** Property: Architecture registration ID.
      *
-     *  The name of the architecture to which this instruction belongs. 
+     *  Every instruction must belong to a registered architecture. This ID specifies the architecture of which this instruction
+     *  is a member. 
      *  
      *  @{ */
-    std::string const& get_architectureName() const;
+    uint8_t const& get_architectureId() const;
     /** @} */
-
+    // Architecture registration IDs change from run to run, so serialie the architecture name instead.
+    std::string architectureIdSerialize(uint8_t id) const;
+    uint8_t architectureIdDeserialize(const std::string &name) const;
 public:
     /** Property: Instruction mnemonic string.
      *
@@ -43374,7 +43381,7 @@ public:
 public:
     void appendSources( SgAsmInstruction* instruction );
 
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
 public:
     /** Property: Stack pointer at start of instruction relative to start of instruction's function.
      *
@@ -43385,7 +43392,7 @@ public:
     int64_t const& get_stackDeltaIn() const;
     void set_stackDeltaIn(int64_t const&);
     /** @} */
-    // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
+    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
 public:
     /** Property: Ordered list of instruction semantics.
      *
@@ -43406,9 +43413,6 @@ private:
     // Synchronized data members. All the following data members (as listed in binaryInstruction.C, not the ROSETTA-generated
     // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
-
-    // Cached architecture pointer corresponding to the architectureName property.
-    Sawyer::Cached<Rose::BinaryAnalysis::Architecture::BaseConstPtr> architecture_;
 
 public:
     /** Represents an invalid stack delta.
@@ -43734,7 +43738,7 @@ public:
 public:
     /** Constructor. */
     SgAsmInstruction(rose_addr_t const& address,
-                     std::string const& architectureName,
+                     uint8_t const& architectureId,
                      std::string const& mnemonic);
 
 protected:
