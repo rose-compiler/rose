@@ -49,8 +49,18 @@ ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::stri
  *  std::string input = "has 1234567 vertices and 345678910 edges, weight 12345.67891";
  *  std::string result = insertCommas(input);
  *  assert(result == "has 1,234,567 vertices and 34,567,890 edges, weight 12,345.67891");
- *  @endcode */
+ *  @endcode
+ *
+ * @{ */
 std::string insertCommas(const std::string&);
+
+template<class T>
+std::string insertCommas(const T &x) {
+    std::ostringstream ss;
+    ss <<x;
+    return insertCommas(ss.str());
+}
+/** @} */
 
 /** Helpful way to print singular or plural words.
  *
