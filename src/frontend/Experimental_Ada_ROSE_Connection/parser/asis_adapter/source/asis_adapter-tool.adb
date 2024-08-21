@@ -63,8 +63,10 @@ package body Asis_Adapter.Tool is
          This.My_Context.Process (Tree_File_Name => Tree_File_Name,
                                   Unit_Options   => Unit_Options,
                                   Outputs        => This.Outputs);
-         This.Outputs.Graph.Write_File
-           (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name, False, Debug);
+         if Debug then
+           This.Outputs.Graph.Write_File
+             (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name, False, Debug);
+         end if;
          if Asis_Adapter.Log_On then
            This.Outputs.A_Nodes.Print_Stats;
          end if;
