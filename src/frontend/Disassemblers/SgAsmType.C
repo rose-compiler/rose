@@ -60,10 +60,12 @@ SgAsmScalarType::toString() const {
     std::ostringstream retval;
     retval <<"scalar(";
     if (p_majorNBytes > 0) {
-        retval <<"majorOrder=" <<stringifyByteOrderEndianness(p_majorOrder) <<" over " <<p_majorNBytes <<"-byte units";
-        retval <<"minorOrder=" <<stringifyByteOrderEndianness(p_minorOrder) <<" within " <<p_majorNBytes <<"-byte units";
+        retval <<"majorOrder=" <<stringify::Rose::BinaryAnalysis::ByteOrder::Endianness(p_majorOrder, "")
+               <<" over " <<p_majorNBytes <<"-byte units";
+        retval <<"minorOrder=" <<stringify::Rose::BinaryAnalysis::ByteOrder::Endianness(p_minorOrder, "")
+               <<" within " <<p_majorNBytes <<"-byte units";
     } else {
-        retval <<"order=" <<stringifyByteOrderEndianness(p_minorOrder);
+        retval <<"order=" <<stringify::Rose::BinaryAnalysis::ByteOrder::Endianness(p_minorOrder, "");
     }
     retval <<", nBits=" <<p_nBits <<")";
     return retval.str();

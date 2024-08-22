@@ -20,7 +20,7 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     fprintf(f, "%s%-*s = %s\n", p, w, "family", toString(get_family()).c_str());
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", toString(get_purpose()).c_str());
-    fprintf(f, "%s%-*s = %s\n", p, w, "sex", stringifyByteOrderEndianness(get_sex()).c_str());
+    fprintf(f, "%s%-*s = %s\n", p, w, "sex", stringify::Rose::BinaryAnalysis::ByteOrder::Endianness(get_sex(), "").c_str());
 
     fprintf(f, "%s%-*s = %u (%scurrent)\n", p, w, "version", get_version(), get_isCurrentVersion() ? "" : "not-" );
     
