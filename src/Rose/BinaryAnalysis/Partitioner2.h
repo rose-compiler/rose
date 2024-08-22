@@ -25,7 +25,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
-#include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>

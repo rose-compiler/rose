@@ -98,10 +98,6 @@ if(ENABLE-BINARY-ANALYSIS)
   target_link_libraries(bat-native-trace bat ROSE_DLL)
   install(TARGETS bat-native-trace DESTINATION bin)
 
-  add_executable(bat-pardis bat-pardis.C)
-  target_link_libraries(bat-pardis bat ROSE_DLL)
-  install(TARGETS bat-pardis DESTINATION bin)
-
   add_executable(bat-pointers bat-pointers.C)
   target_link_libraries(bat-pointers bat ROSE_DLL)
   install(TARGETS bat-pointers DESTINATION bin)

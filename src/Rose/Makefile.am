@@ -141,7 +141,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/FunctionSimilarity.C						\
 	BinaryAnalysis/Hexdump.C							\
 	BinaryAnalysis/HotPatch.C							\
-	BinaryAnalysis/InstructionCache.C						\
 	BinaryAnalysis/InstructionProvider.C						\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BaseSemantics.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
@@ -234,7 +233,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/ModulesPe.C						\
 	BinaryAnalysis/Partitioner2/ModulesPowerpc.C					\
 	BinaryAnalysis/Partitioner2/ModulesX86.C					\
-	BinaryAnalysis/Partitioner2/ParallelPartitioner.C				\
 	BinaryAnalysis/Partitioner2/Partitioner.C					\
 	BinaryAnalysis/Partitioner2/Reference.C						\
 	BinaryAnalysis/Partitioner2/Semantics.C						\

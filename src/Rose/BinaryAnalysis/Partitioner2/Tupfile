@@ -31,8 +31,7 @@ run $(librose_compile)				\
     Semantics.C					\
     StackDeltaAnalysis.C			\
     Thunk.C					\
-    Utility.C					\
-    ParallelPartitioner.C
+    Utility.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     AddressUsageMap.h							\
@@ -63,5 +62,4 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     Reference.h								\
     Semantics.h								\
     Thunk.h								\
-    Utility.h								\
-    ParallelPartitioner.h
+    Utility.h

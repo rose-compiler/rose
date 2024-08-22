@@ -33,7 +33,6 @@
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
-#include <Rose/BinaryAnalysis/InstructionCache.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
@@ -263,7 +262,6 @@ namespace Rose {
  *  ---MIWEF Rose::BinaryAnalysis::ModelChecker                      -- model checking
  *  ---MIWEF Rose::BinaryAnalysis::NoOperation                       -- determining insn sequences having no effect
  *  ---MIWEF Rose::BinaryAnalysis::Partitioner2                      -- partitioning insns to basic blocks and functions
- *  ---MIWEF Rose::BinaryAnalysis::Partitioner2::ParallelPartitioner -- decoding machine language instructions
  *  ---MIWEF Rose::BinaryAnalysis::PointerDetection                  -- finding pointers to code and data
  *  ---MIWEF Rose::BinaryAnalysis::Reachability                      -- propagating reachability through a CFG
  *  ---MIWEF Rose::BinaryAnalysis::ReturnValueUsed                   -- determining whether a return value is used
@@ -319,7 +317,6 @@ namespace Rose {
  *  ------EF Rose::BinaryAnalysis::ModelChecker                      -- model checking
  *  ------EF Rose::BinaryAnalysis::NoOperation                       -- determining insn sequences having no effect
  *  ------EF Rose::BinaryAnalysis::Partitioner2                      -- partitioning insns to basic blocks and functions
- *  ------EF Rose::BinaryAnalysis::Partitioner2::ParallelPartitioner -- decoding machine language instructions
  *  ------EF Rose::BinaryAnalysis::PointerDetection                  -- finding pointers to code and data
  *  ------EF Rose::BinaryAnalysis::Reachability                      -- propagating reachability through a CFG
  *  ------EF Rose::BinaryAnalysis::ReturnValueUsed                   -- determining whether a return value is used

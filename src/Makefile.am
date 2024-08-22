@@ -399,7 +399,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/FunctionSimilarity.h					\
 	Rose/BinaryAnalysis/Hexdump.h							\
 	Rose/BinaryAnalysis/HotPatch.h							\
-	Rose/BinaryAnalysis/InstructionCache.h						\
 	Rose/BinaryAnalysis/InstructionEnumsAarch32.h					\
 	Rose/BinaryAnalysis/InstructionEnumsAarch64.h					\
 	Rose/BinaryAnalysis/InstructionEnumsCil.h					\
@@ -542,7 +541,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/ModulesPe.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h				\
 	Rose/BinaryAnalysis/Partitioner2/ModulesX86.h					\
-	Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h				\
 	Rose/BinaryAnalysis/Partitioner2/Partitioner.h					\
 	Rose/BinaryAnalysis/Partitioner2/Reference.h					\
 	Rose/BinaryAnalysis/Partitioner2/Semantics.h					\

@@ -30,7 +30,6 @@ run $(tool_compile_linkexe) --install -I. bat-lsf.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-lsv.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-mem.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-native-trace.C      libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-pardis.C            libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-pointers.C          libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-prop.C              libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-scan-magic.C        libbatSupport
@@ -67,7 +66,6 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(test) bat-lsv               ./bat-lsv               --self-test --no-error-if-disabled
     run $(test) bat-mem               ./bat-mem               --self-test --no-error-if-disabled
     run $(test) bat-native-trace      ./bat-native-trace      --self-test --no-error-if-disabled
-    run $(test) bat-pardis            ./bat-pardis            --self-test --no-error-if-disabled
     run $(test) bat-pointers          ./bat-pointers          --self-test --no-error-if-disabled
     run $(test) bat-prop              ./bat-prop              --self-test --no-error-if-disabled
     run $(test) bat-scan-magic        ./bat-scan-magic        --self-test --no-error-if-disabled                     

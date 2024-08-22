@@ -23,7 +23,6 @@ run $(librose_compile)				\
     FunctionSimilarity.C			\
     Hexdump.C					\
     HotPatch.C					\
-    InstructionCache.C				\
     InstructionProvider.C			\
     LibraryIdentification.C			\
     MagicNumber.C				\
@@ -85,7 +84,6 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     FunctionSimilarity.h					\
     Hexdump.h							\
     HotPatch.h							\
-    InstructionCache.h						\
     InstructionEnumsAarch32.h					\
     InstructionEnumsAarch64.h					\
     InstructionEnumsCil.h					\

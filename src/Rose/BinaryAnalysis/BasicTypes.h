@@ -35,12 +35,8 @@ class FeasiblePath;
 class FunctionCall;
 class FunctionSimilarity;
 class HotPatch;
-class InstructionCache;
-class InstructionPtr;
 class LibraryIdentification;
-class LockedInstruction;
 class MagicNumber;
-class ManagedInstruction;
 class MemoryMap;
 using MemoryMapPtr = Sawyer::SharedPointer<MemoryMap>;  /**< Reference counting pointer. */
 class NoOperation;

@@ -4,7 +4,7 @@ add_library(roseBinaryAnalysisPartitioner2 OBJECT
   Exception.C Function.C FunctionCallGraph.C FunctionNoop.C GraphViz.C
   MayReturnAnalysis.C Modules.C ModulesElf.C ModulesJvm.C ModulesLinux.C ModulesM68k.C
   ModulesMips.C ModulesPe.C ModulesPowerpc.C ModulesX86.C Partitioner.C Reference.C
-  Semantics.C StackDeltaAnalysis.C Thunk.C Utility.C ParallelPartitioner.C)
+  Semantics.C StackDeltaAnalysis.C Thunk.C Utility.C)
 
 add_dependencies(roseBinaryAnalysisPartitioner2 rosetta_generated)
 
@@ -14,6 +14,6 @@ install(FILES
   EngineJvm.h Exception.h Function.h FunctionCallGraph.h GraphViz.h
   Modules.h ModulesElf.h ModulesJvm.h ModulesLinux.h ModulesM68k.h
   ModulesMips.h ModulesPe.h ModulesPowerpc.h ModulesX86.h Partitioner.h Reference.h
-  Semantics.h Thunk.h Utility.h ParallelPartitioner.h
+  Semantics.h Thunk.h Utility.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/Partitioner2)

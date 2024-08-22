@@ -40,11 +40,6 @@ namespace BinaryAnalysis {
     namespace Unparser { void initDiagnostics(); }
     namespace Variables { void initDiagnostics(); }
     void SerialIo_initDiagnostics();
-    namespace Partitioner2 {
-      namespace Experimental {
-        namespace ParallelPartitioner { void initDiagnostics(); }
-      }
-    }
 } // namespace
 } // namespace
 #endif
@@ -154,7 +149,6 @@ void initialize() {
 #endif
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
-        BinaryAnalysis::Partitioner2::Experimental::ParallelPartitioner::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::Reachability::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();

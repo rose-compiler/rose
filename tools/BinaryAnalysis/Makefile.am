@@ -177,13 +177,6 @@ bat_native_trace_LDFLAGS = $(ROSE_RPATHS)
 bat_native_trace_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-native-trace.passed
 
-bin_PROGRAMS += bat-pardis
-bat_pardis_SOURCES = bat-pardis.C
-bat_pardis_CPPFLAGS = $(ROSE_INCLUDES)
-bat_pardis_LDFLAGS = $(ROSE_RPATHS)
-bat_pardis_LDADD = libbatSupport.a $(ROSE_LIBS)
-tests += bat-pardis.passed
-
 bin_PROGRAMS += bat-pointers
 bat_pointers_SOURCES = bat-pointers.C
 bat_pointers_CPPFLAGS = $(ROSE_INCLUDES)
