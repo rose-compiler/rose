@@ -134,18 +134,16 @@ Mips::disassembleOne(const MemoryMap::Ptr &map, const Address insn_va, AddressSe
     }
 
     // Some MIPS instructions have a delay slot.
-    for (size_t count = nDelaySlots(insn->get_kind()); count > 0; --count) {
-        const Address delayAddr = insn->get_delaySlots().empty() ?
-                                  insn->get_address() + insn->get_size() :
-                                  insn->get_delaySlots().back()->get_address() + insn->get_delaySlots().back()->get_size();
+    if (nDelaySlots(insn->get_kind()) > 0) {
+        // We currently support only single delay slots for MIPS. Later, if we decide to support older MIPS architectures, we can
+        // represent multiple delay slots by chaining them together. I.e., given instruction I0 with two delay slots I1 and I2, we
+        // can represent them by setting I0.delaySlot = I1 and I1.delaySlot = I2.
+        ASSERT_require(nDelaySlots(insn->get_kind()) == 1);
+        const Address delayAddr = insn->get_address() + insn->get_size();
         try {
-            if (SgAsmInstruction *delayInsn = disassembleOne(map, delayAddr, nullptr)) {
-                insn->get_delaySlots().push_back(delayInsn);
-            } else {
-                break;
-            }
+            if (SgAsmInstruction *delayInsn = disassembleOne(map, delayAddr, nullptr))
+                insn->set_delaySlot(delayInsn);
         } catch (...) {
-            break;
         }
     }
 
