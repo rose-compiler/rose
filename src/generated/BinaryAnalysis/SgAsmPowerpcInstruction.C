@@ -28,13 +28,11 @@ SgAsmPowerpcInstruction::SgAsmPowerpcInstruction()
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
-//    property=mnemonic         class=SgAsmInstruction
 //    property=kind             class=SgAsmPowerpcInstruction
 SgAsmPowerpcInstruction::SgAsmPowerpcInstruction(rose_addr_t const& address,
                                                  uint8_t const& architectureId,
-                                                 std::string const& mnemonic,
                                                  Rose::BinaryAnalysis::PowerpcInstructionKind const& kind)
-    : SgAsmInstruction(address, architectureId, mnemonic)
+    : SgAsmInstruction(address, architectureId)
     , p_kind(kind) {}
 
 void

@@ -302,7 +302,6 @@ public:
     /** Constructor. */
     SgAsmX86Instruction(rose_addr_t const& address,
                         uint8_t const& architectureId,
-                        std::string const& mnemonic,
                         Rose::BinaryAnalysis::X86InstructionKind const& kind,
                         Rose::BinaryAnalysis::X86InstructionSize const& baseSize,
                         Rose::BinaryAnalysis::X86InstructionSize const& operandSize,
@@ -540,7 +539,6 @@ public:
     /** Constructor. */
     SgAsmUserInstruction(rose_addr_t const& address,
                          uint8_t const& architectureId,
-                         std::string const& mnemonic,
                          unsigned const& kind);
 
 protected:
@@ -1940,7 +1938,6 @@ public:
     /** Constructor. */
     SgAsmPowerpcInstruction(rose_addr_t const& address,
                             uint8_t const& architectureId,
-                            std::string const& mnemonic,
                             Rose::BinaryAnalysis::PowerpcInstructionKind const& kind);
 
 protected:
@@ -5517,8 +5514,7 @@ public:
 public:
     /** Constructor. */
     SgAsmNullInstruction(rose_addr_t const& address,
-                         uint8_t const& architectureId,
-                         std::string const& mnemonic);
+                         uint8_t const& architectureId);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -7330,7 +7326,6 @@ public:
     /** Constructor. */
     SgAsmMipsInstruction(rose_addr_t const& address,
                          uint8_t const& architectureId,
-                         std::string const& mnemonic,
                          Rose::BinaryAnalysis::MipsInstructionKind const& kind);
 
 protected:
@@ -7470,6 +7465,12 @@ class SgAsmM68kInstruction: public SgAsmInstruction {
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+    AsmM68kInstruction.setDataPrototype(
+        "Rose::BinaryAnalysis::M68kDataFormat", "dataFormat", "= Rose::BinaryAnalysis::m68k_fmt_unknown",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
     DECLARE_OTHERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_OTHERS) || defined(DOCUMENTATION)
 
@@ -7483,6 +7484,7 @@ private:
         debugSerializationBegin("SgAsmM68kInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
+        s & BOOST_SERIALIZATION_NVP(p_dataFormat);
         debugSerializationEnd("SgAsmM68kInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -7496,6 +7498,14 @@ public:
      *  @{ */
     Rose::BinaryAnalysis::M68kInstructionKind const& get_kind() const;
     void set_kind(Rose::BinaryAnalysis::M68kInstructionKind const&);
+    /** @} */
+
+public:
+    /** Property: Data format. 
+     * 
+     * @{ */
+    Rose::BinaryAnalysis::M68kDataFormat const& get_dataFormat() const;
+    void set_dataFormat(Rose::BinaryAnalysis::M68kDataFormat const&);
     /** @} */
 public:
     // Overrides are documented in the base class
@@ -7512,8 +7522,8 @@ public:
     /** Constructor. */
     SgAsmM68kInstruction(rose_addr_t const& address,
                          uint8_t const& architectureId,
-                         std::string const& mnemonic,
-                         Rose::BinaryAnalysis::M68kInstructionKind const& kind);
+                         Rose::BinaryAnalysis::M68kInstructionKind const& kind,
+                         Rose::BinaryAnalysis::M68kDataFormat const& dataFormat);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -11391,7 +11401,6 @@ public:
     /** Constructor. */
     SgAsmJvmInstruction(rose_addr_t const& address,
                         uint8_t const& architectureId,
-                        std::string const& mnemonic,
                         Rose::BinaryAnalysis::JvmInstructionKind const& kind);
 
 protected:
@@ -36108,7 +36117,6 @@ public:
     /** Constructor. */
     SgAsmCilInstruction(rose_addr_t const& address,
                         uint8_t const& architectureId,
-                        std::string const& mnemonic,
                         Rose::BinaryAnalysis::CilInstructionKind const& kind);
 
 protected:
@@ -42710,7 +42718,6 @@ public:
     /** Constructor. */
     SgAsmAarch64Instruction(rose_addr_t const& address,
                             uint8_t const& architectureId,
-                            std::string const& mnemonic,
                             Rose::BinaryAnalysis::Aarch64InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch64InstructionCondition const& condition);
 
@@ -43108,7 +43115,6 @@ public:
     /** Constructor. */
     SgAsmAarch32Instruction(rose_addr_t const& address,
                             uint8_t const& architectureId,
-                            std::string const& mnemonic,
                             Rose::BinaryAnalysis::Aarch32InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch32InstructionCondition const& condition);
 
@@ -43210,12 +43216,6 @@ class SgAsmInstruction: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
-        "std::string", "mnemonic", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmInstruction.setDataPrototype(
         "SgUnsignedCharList", "rawBytes", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
@@ -43273,7 +43273,6 @@ private:
             s & boost::serialization::make_nvp("p_architectureId", temp);
             p_architectureId = architectureIdDeserialize(temp);
         }
-        s & BOOST_SERIALIZATION_NVP(p_mnemonic);
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
         s & BOOST_SERIALIZATION_NVP(p_cacheLockCount);
@@ -43316,19 +43315,6 @@ public:
     // Architecture registration IDs change from run to run, so serialie the architecture name instead.
     std::string architectureIdSerialize(uint8_t id) const;
     uint8_t architectureIdDeserialize(const std::string &name) const;
-public:
-    /** Property: Instruction mnemonic string.
-     *
-     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @c kind property
-     *  defined in the subclasses, or the @ref SgAsmInstruction::get_anyKind function instead of comparing mnemonic strings. But be
-     *  aware that some architectures have mnemonics that include information about the instruction operands and this information is
-     *  typically not represented by the instruction kind enum constants. 
-     *  
-     *  @{ */
-    std::string const& get_mnemonic() const;
-    void set_mnemonic(std::string const&);
-    /** @} */
-
 public:
     /** Property: Raw bytes of an instruction.
      *
@@ -43432,6 +43418,14 @@ public:
      *
      *  Thread safety: This function is thread safe. */
     Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
+
+    /** Property: Instruction mnemonic string.
+     *
+     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @c kind property
+     *  defined in the subclasses, or the @ref SgAsmInstruction::get_anyKind function instead of comparing mnemonic strings. But be
+     *  aware that some architectures have mnemonics that include information about the instruction operands and this information is
+     *  typically not represented by the instruction kind enum constants. */
+    std::string get_mnemonic() const;
 
     // [Robb Matzke 2023-12-04]: deprecated
     virtual std::string description() const final ROSE_DEPRECATED("use Architecture::Base::instructionDescription");
@@ -43738,8 +43732,7 @@ public:
 public:
     /** Constructor. */
     SgAsmInstruction(rose_addr_t const& address,
-                     uint8_t const& architectureId,
-                     std::string const& mnemonic);
+                     uint8_t const& architectureId);
 
 protected:
     /** Initialize all properties that have explicit initial values.

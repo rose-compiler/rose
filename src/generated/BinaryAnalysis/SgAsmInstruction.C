@@ -12,17 +12,6 @@ SgAsmInstruction::get_architectureId() const {
     return p_architectureId;
 }
 
-std::string const&
-SgAsmInstruction::get_mnemonic() const {
-    return p_mnemonic;
-}
-
-void
-SgAsmInstruction::set_mnemonic(std::string const& x) {
-    this->p_mnemonic = x;
-    set_isModified(true);
-}
-
 SgUnsignedCharList const&
 SgAsmInstruction::get_rawBytes() const {
     return p_rawBytes;
@@ -90,13 +79,10 @@ SgAsmInstruction::SgAsmInstruction()
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
-//    property=mnemonic         class=SgAsmInstruction
 SgAsmInstruction::SgAsmInstruction(rose_addr_t const& address,
-                                   uint8_t const& architectureId,
-                                   std::string const& mnemonic)
+                                   uint8_t const& architectureId)
     : SgAsmStatement(address)
     , p_architectureId(architectureId)
-    , p_mnemonic(mnemonic)
     , p_operandList(nullptr)
     , p_cacheLockCount(0)
     , p_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA)

@@ -28,13 +28,11 @@ SgAsmCilInstruction::SgAsmCilInstruction()
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
-//    property=mnemonic         class=SgAsmInstruction
 //    property=kind             class=SgAsmCilInstruction
 SgAsmCilInstruction::SgAsmCilInstruction(rose_addr_t const& address,
                                          uint8_t const& architectureId,
-                                         std::string const& mnemonic,
                                          Rose::BinaryAnalysis::CilInstructionKind const& kind)
-    : SgAsmInstruction(address, architectureId, mnemonic)
+    : SgAsmInstruction(address, architectureId)
     , p_kind(kind) {}
 
 void
