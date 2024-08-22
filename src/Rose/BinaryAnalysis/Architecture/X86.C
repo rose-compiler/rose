@@ -12,6 +12,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 #include <Rose/CommandLine/Parser.h>
+#include <stringify.h>                                  // ROSE
 
 #include <SgAsmX86Instruction.h>
 #include <Cxx_GrammarDowncast.h>
@@ -65,6 +66,16 @@ X86::bytesPerInstruction() const {
 Alignment
 X86::instructionAlignment() const {
     return Alignment(1, bitsPerWord());
+}
+
+std::string
+X86::instructionMnemonic(const SgAsmInstruction *insn_) const {
+    if (isUnknown(insn_))
+        return "unknown";
+
+    auto insn = isSgAsmX86Instruction(insn_);
+    ASSERT_not_null(insn);
+    return stringify::Rose::BinaryAnalysis::X86InstructionKind(insn->get_anyKind(), "x86_");
 }
 
 bool

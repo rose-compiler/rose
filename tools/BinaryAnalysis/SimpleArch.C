@@ -185,37 +185,8 @@ public:
         return Ptr(new SimpleDecoder(*this));
     }
 
-    std::string mnemonic(InsnKind kind) {
-        switch (kind) {
-            case InsnKind::ADD: return "add";
-            case InsnKind::SUB: return "sub";
-            case InsnKind::MUL: return "mul";
-            case InsnKind::DIV: return "div";
-            case InsnKind::SHL: return "shl";
-            case InsnKind::SHR: return "shr";
-            case InsnKind::AND: return "and";
-            case InsnKind::OR:  return "or";
-            case InsnKind::XOR: return "xor";
-            case InsnKind::NOT: return "not";
-            case InsnKind::CMP: return "cmp";
-            case InsnKind::JMP: return "jmp";
-            case InsnKind::BEQ: return "beq";
-            case InsnKind::BLT: return "blt";
-            case InsnKind::CALL: return "call";
-            case InsnKind::RET: return "ret";
-            case InsnKind::PUSH: return "push";
-            case InsnKind::POP: return "pop";
-            case InsnKind::READ: return "read";
-            case InsnKind::WRITE: return "write";
-            case InsnKind::MOV: return "mov";
-            case InsnKind::LOAD: return "load";
-            case InsnKind::HLT: return "hlt";
-            default: return "unk";
-        }
-    }
-
     SgAsmInstruction* makeInstruction(rose_addr_t addr, const std::vector<uint8_t> &bytes, InsnKind kind) {
-        auto insn = new SgAsmUserInstruction(addr, *architecture()->registrationId(), mnemonic(kind), static_cast<unsigned>(kind));
+        auto insn = new SgAsmUserInstruction(addr, *architecture()->registrationId(), static_cast<unsigned>(kind));
         auto operands = new SgAsmOperandList;
         insn->set_operandList(operands);
         operands->set_parent(insn);
@@ -787,6 +758,38 @@ public:
     // All instructions are aligned on 4-byte boundaries
     Alignment instructionAlignment() const override {
         return Alignment(4, bitsPerWord());
+    }
+
+    std::string instructionMnemonic(const SgAsmInstruction *insn_) const override {
+        auto insn = isSgAsmUserInstruction(insn_);
+        ASSERT_not_null(insn);
+        const auto kind = static_cast<InsnKind>(insn->get_kind());
+        switch (kind) {
+            case InsnKind::ADD: return "add";
+            case InsnKind::SUB: return "sub";
+            case InsnKind::MUL: return "mul";
+            case InsnKind::DIV: return "div";
+            case InsnKind::SHL: return "shl";
+            case InsnKind::SHR: return "shr";
+            case InsnKind::AND: return "and";
+            case InsnKind::OR:  return "or";
+            case InsnKind::XOR: return "xor";
+            case InsnKind::NOT: return "not";
+            case InsnKind::CMP: return "cmp";
+            case InsnKind::JMP: return "jmp";
+            case InsnKind::BEQ: return "beq";
+            case InsnKind::BLT: return "blt";
+            case InsnKind::CALL: return "call";
+            case InsnKind::RET: return "ret";
+            case InsnKind::PUSH: return "push";
+            case InsnKind::POP: return "pop";
+            case InsnKind::READ: return "read";
+            case InsnKind::WRITE: return "write";
+            case InsnKind::MOV: return "mov";
+            case InsnKind::LOAD: return "load";
+            case InsnKind::HLT: return "hlt";
+            default: return "unk";
+        }
     }
 
     // Single-line instruction descriptions

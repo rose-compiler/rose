@@ -9,6 +9,10 @@ public:
     [[using Rosebud: rosetta, ctor_arg]]
     Rose::BinaryAnalysis::M68kInstructionKind kind = Rose::BinaryAnalysis::m68k_unknown_instruction;
 
+    /** Property: Data format. */
+    [[using Rosebud: rosetta, ctor_arg]]
+    Rose::BinaryAnalysis::M68kDataFormat dataFormat = Rose::BinaryAnalysis::m68k_fmt_unknown;
+
 public:
     // Overrides are documented in the base class
     virtual unsigned get_anyKind() const override;

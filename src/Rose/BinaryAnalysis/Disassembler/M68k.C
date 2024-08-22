@@ -297,23 +297,6 @@ floatingFormatForFamily(M68kFamily family)
     ASSERT_not_reachable("M68k family has no floating point hardware: " + addrToString(family));
 }
 
-// Convert a numeric format to a letter that's appended to instruction mnemonics.
-static std::string
-formatLetter(M68kDataFormat fmt)
-{
-    switch (fmt) {
-        case m68k_fmt_i32: return "l";
-        case m68k_fmt_f32: return "s";
-        case m68k_fmt_f96: return "x";
-        case m68k_fmt_p96: return "p";
-        case m68k_fmt_i16: return "w";
-        case m68k_fmt_f64: return "d";
-        case m68k_fmt_i8:  return "b";
-        case m68k_fmt_unknown: ASSERT_not_reachable("m68k_fmt_unknown is not a valid data format");
-    }
-    ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
-}
-
 static size_t
 formatNBits(M68kDataFormat fmt)
 {
@@ -836,8 +819,8 @@ M68k::makeOffsetWidthPair(State &state, unsigned w1) const
 SgAsmInstruction *
 M68k::makeUnknownInstruction(const Exception &e)
 {
-    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(e.ip, *architecture()->registrationId(), "unknown",
-                                                          m68k_unknown_instruction);
+    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(e.ip, *architecture()->registrationId(), m68k_unknown_instruction,
+                                                          m68k_fmt_unknown);
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -853,13 +836,12 @@ M68k::makeUnknownInstruction(const Exception &e)
 }
 
 SgAsmM68kInstruction *
-M68k::makeInstruction(State &state, M68kInstructionKind kind, const std::string &mnemonic,
-                                  SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3,
-                                  SgAsmExpression *op4, SgAsmExpression *op5, SgAsmExpression *op6,
-                                  SgAsmExpression *op7) const
+M68k::makeInstruction(State &state, M68kInstructionKind kind, M68kDataFormat fmt, SgAsmExpression *op1, SgAsmExpression *op2,
+                      SgAsmExpression *op3, SgAsmExpression *op4, SgAsmExpression *op5, SgAsmExpression *op6,
+                      SgAsmExpression *op7) const
 {
     ASSERT_forbid2(m68k_unknown_instruction==kind, "should have called make_unknown_instruction instead");
-    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(state.insn_va, *architecture()->registrationId(), mnemonic, kind);
+    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(state.insn_va, *architecture()->registrationId(), kind, fmt);
 
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
@@ -1075,7 +1057,7 @@ struct M68k_abcd_1: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i8);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i8);
-        return d->makeInstruction(state, m68k_abcd, "abcd."+formatLetter(m68k_fmt_i8), src, dst);
+        return d->makeInstruction(state, m68k_abcd, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1086,7 +1068,7 @@ struct M68k_abcd_2: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeAddressRegisterPreDecrement(state, extract<0, 2>(w0), m68k_fmt_i8);
         SgAsmExpression *dst = d->makeAddressRegisterPreDecrement(state, extract<9, 11>(w0), m68k_fmt_i8);
-        return d->makeInstruction(state, m68k_abcd, "abcd."+formatLetter(m68k_fmt_i8), src, dst);
+        return d->makeInstruction(state, m68k_abcd, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1098,7 +1080,7 @@ struct M68k_add_1: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_add, "add."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_add, fmt, src, dst);
     }
 };
 
@@ -1111,7 +1093,7 @@ struct M68k_add_2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_add, "add."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_add, fmt, src, dst);
     }
 };
 
@@ -1126,7 +1108,7 @@ struct M68k_add_3: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_add, "add."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_add, fmt, src, dst);
     }
 };
 
@@ -1143,7 +1125,7 @@ struct M68k_adda: M68k::Decoder {
         }
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeAddressRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_adda, "adda."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_adda, fmt, src, dst);
     }
 };
 
@@ -1159,7 +1141,7 @@ struct M68k_addi: M68k::Decoder {
         size_t opandWords = (formatNBits(fmt)+15) / 16;
         SgAsmExpression *src = d->makeImmediateExtension(state, fmt, 0); // immediate argument is in extension word(s)
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, opandWords);
-        return d->makeInstruction(state, m68k_addi, "addi."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_addi, fmt, src, dst);
     }
 };
 
@@ -1180,7 +1162,7 @@ struct M68k_addq: M68k::Decoder {
             imm = 8;
         SgAsmExpression *src = d->makeImmediateValue(state, fmt, imm);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_addq, "addq."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_addq, fmt, src, dst);
     }
 };
 
@@ -1194,7 +1176,7 @@ struct M68k_addx_1: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<0, 2>(w0), fmt);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_addx, "addx."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_addx, fmt, src, dst);
     }
 };
 
@@ -1208,7 +1190,7 @@ struct M68k_addx_2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeAddressRegisterPreDecrement(state, extract<0, 2>(w0), fmt);
         SgAsmExpression *dst = d->makeAddressRegisterPreDecrement(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_addx, "addx."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_addx, fmt, src, dst);
 
     }
 };
@@ -1223,7 +1205,7 @@ struct M68k_and_1: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_and, "and."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_and, fmt, src, dst);
     }
 };
 
@@ -1241,7 +1223,7 @@ struct M68k_and_2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_and, "and."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_and, fmt, src, dst);
     }
 };
 
@@ -1257,7 +1239,7 @@ struct M68k_andi: M68k::Decoder {
         size_t opandWords = (formatNBits(fmt)+15) / 16;
         SgAsmExpression *src = d->makeImmediateExtension(state, fmt, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, opandWords);
-        return d->makeInstruction(state, m68k_andi, "andi."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_andi, fmt, src, dst);
     }
 };
 
@@ -1269,7 +1251,7 @@ struct M68k_andi_to_ccr: M68k::Decoder {
         M68kDataFormat fmt = m68k_fmt_i8;
         SgAsmExpression *src = d->makeImmediateValue(state, fmt, extract<0, 7>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
-        return d->makeInstruction(state, m68k_andi, "andi."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_andi, fmt, src, dst);
     }
 };
 
@@ -1287,9 +1269,7 @@ struct M68k_ashift_1: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32); // full register, mod 64
         SgAsmExpression *dst = d->makeDataRegister(state, extract<0, 2>(w0), fmt);
-        return d->makeInstruction(state, shift_left ? m68k_asl : m68k_asr,
-                                  (shift_left ? "asl." : "asr.")+formatLetter(fmt),
-                                  src, dst);
+        return d->makeInstruction(state, shift_left ? m68k_asl : m68k_asr, fmt, src, dst);
     }
 };
 
@@ -1310,9 +1290,7 @@ struct M68k_ashift_2: M68k::Decoder {
             count = 8;
         SgAsmExpression *src = d->makeImmediateValue(state, m68k_fmt_i8, count);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<0, 2>(w0), fmt);
-        return d->makeInstruction(state, shift_left ? m68k_asl : m68k_asr,
-                                  (shift_left ? "asl." : "asr.")+formatLetter(fmt),
-                                  src, dst);
+        return d->makeInstruction(state, shift_left ? m68k_asl : m68k_asr, fmt, src, dst);
     }
 };
 
@@ -1330,9 +1308,7 @@ struct M68k_ashift_3: M68k::Decoder {
         M68kDataFormat fmt = m68k_fmt_i16;
         // src is implied #<1>
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, shift_left ? m68k_asl : m68k_asr,
-                                  (shift_left ? "asl." : "asr.")+formatLetter(fmt),
-                                  dst);
+        return d->makeInstruction(state, shift_left ? m68k_asl : m68k_asr, fmt, dst);
     }
 };
 
@@ -1386,21 +1362,21 @@ struct M68k_branch: M68k::Decoder {
             case 14: kind = m68k_bgt; break;
             case 15: kind = m68k_ble; break;
         }
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
         rose_addr_t base = state.insn_va + 2;
         int32_t offset = signExtend<8, 32>(extract<0, 7>(w0));
+        M68kDataFormat fmt = m68k_fmt_unknown;
         if (0==offset) {
             offset = signExtend<16, 32>((uint32_t)d->instructionWord(state, 1));
-            mnemonic += ".w";
+            fmt = m68k_fmt_i16;
         } else if (-1==offset) {
             offset = shiftLeft<32>((uint32_t)d->instructionWord(state, 1), 16) | (uint32_t)d->instructionWord(state, 2);
-            mnemonic += ".l";
+            fmt = m68k_fmt_i32;
         } else {
-            mnemonic += ".b";
+            fmt = m68k_fmt_i8;
         }
         rose_addr_t target_va = (base + offset) & GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(state, m68k_fmt_i32, target_va);
-        return d->makeInstruction(state, kind, mnemonic, target);
+        return d->makeInstruction(state, kind, fmt, target);
     }
 };
 
@@ -1411,7 +1387,7 @@ struct M68k_bchg_1: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bchg, "bchg.l", src, dst);
+        return d->makeInstruction(state, m68k_bchg, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1423,7 +1399,7 @@ struct M68k_bchg_2: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 1);
-        return d->makeInstruction(state, m68k_bchg, "bchg.b", src, dst);
+        return d->makeInstruction(state, m68k_bchg, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1434,7 +1410,7 @@ struct M68k_bchg_3: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_bchg, "bchg.l", src, dst);
+        return d->makeInstruction(state, m68k_bchg, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1445,7 +1421,7 @@ struct M68k_bchg_4: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, m68k_bchg, "bchg.b", src, dst);
+        return d->makeInstruction(state, m68k_bchg, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1456,7 +1432,7 @@ struct M68k_bclr_1: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bclr, "bclr.l", src, dst);
+        return d->makeInstruction(state, m68k_bclr, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1468,7 +1444,7 @@ struct M68k_bclr_2: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 1);
-        return d->makeInstruction(state, m68k_bclr, "bclr.b", src, dst);
+        return d->makeInstruction(state, m68k_bclr, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1479,7 +1455,7 @@ struct M68k_bclr_3: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_bclr, "bclr.l", src, dst);
+        return d->makeInstruction(state, m68k_bclr, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1490,7 +1466,7 @@ struct M68k_bclr_4: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, m68k_bclr, "bclr.b", src, dst);
+        return d->makeInstruction(state, m68k_bclr, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1502,7 +1478,7 @@ struct M68k_bfchg: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bfchg, "bfchg", dst, offset_width.first, offset_width.second);
+        return d->makeInstruction(state, m68k_bfchg, m68k_fmt_unknown, dst, offset_width.first, offset_width.second);
     }
 };
 
@@ -1514,7 +1490,7 @@ struct M68k_bfclr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bfclr, "bfclr", dst, offset_width.first, offset_width.second);
+        return d->makeInstruction(state, m68k_bfclr, m68k_fmt_unknown, dst, offset_width.first, offset_width.second);
     }
 };
 
@@ -1527,7 +1503,7 @@ struct M68k_bfexts: M68k::Decoder {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_bfexts, "bfexts", src, offset_width.first, offset_width.second, dst);
+        return d->makeInstruction(state, m68k_bfexts, m68k_fmt_unknown, src, offset_width.first, offset_width.second, dst);
     }
 };
 
@@ -1540,7 +1516,7 @@ struct M68k_bfextu: M68k::Decoder {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_bfextu, "bfextu", src, offset_width.first, offset_width.second, dst);
+        return d->makeInstruction(state, m68k_bfextu, m68k_fmt_unknown, src, offset_width.first, offset_width.second, dst);
     }
 };
 
@@ -1556,7 +1532,7 @@ struct M68k_bfffo: M68k::Decoder {
         ExpressionPair offset_width d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_bfffo, "bfffo", src, offset_width.first, offset_width.second, dst);
+        return d->makeInstruction(state, m68k_bfffo, m68k_fmt_unknown, src, offset_width.first, offset_width.second, dst);
     }
 };
 #endif
@@ -1570,7 +1546,7 @@ struct M68k_bfins: M68k::Decoder {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *src = d->makeDataRegister(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bfins, "bfins", src, dst, offset_width.first, offset_width.second);
+        return d->makeInstruction(state, m68k_bfins, m68k_fmt_unknown, src, dst, offset_width.first, offset_width.second);
     }
 };
 
@@ -1582,7 +1558,7 @@ struct M68k_bfset: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bfset, "bfset", dst, offset_width.first, offset_width.second);
+        return d->makeInstruction(state, m68k_bfset, m68k_fmt_unknown, dst, offset_width.first, offset_width.second);
     }
 };
 
@@ -1594,7 +1570,7 @@ struct M68k_bftst: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68k::ExpressionPair offset_width = d->makeOffsetWidthPair(state, d->instructionWord(state, 1));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bftst, "bftst", src, offset_width.first, offset_width.second);
+        return d->makeInstruction(state, m68k_bftst, m68k_fmt_unknown, src, offset_width.first, offset_width.second);
     }
 };
 
@@ -1604,7 +1580,7 @@ struct M68k_bkpt: M68k::Decoder {
                       OP(4) & BITS<3, 11>(0x109)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *data = d->makeImmediateValue(state, m68k_fmt_i8, extract<0, 2>(w0));
-        return d->makeInstruction(state, m68k_bkpt, "bkpt", data);
+        return d->makeInstruction(state, m68k_bkpt, m68k_fmt_unknown, data);
     }
 };
 
@@ -1615,7 +1591,7 @@ struct M68k_bset_1: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bset, "bset.l", src, dst);
+        return d->makeInstruction(state, m68k_bset, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1627,7 +1603,7 @@ struct M68k_bset_2: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_bset, "bset.b", src, dst);
+        return d->makeInstruction(state, m68k_bset, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1638,7 +1614,7 @@ struct M68k_bset_3: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_bset, "bset.l", src, dst);
+        return d->makeInstruction(state, m68k_bset, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1649,7 +1625,7 @@ struct M68k_bset_4: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, m68k_bset, "bset.b", src, dst);
+        return d->makeInstruction(state, m68k_bset, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1661,7 +1637,7 @@ struct M68k_btst_1: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_btst, "btst.l", src, dst);
+        return d->makeInstruction(state, m68k_btst, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1675,7 +1651,7 @@ struct M68k_btst_2: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 1);
-        return d->makeInstruction(state, m68k_btst, "btst.b", src, dst);
+        return d->makeInstruction(state, m68k_btst, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1686,7 +1662,7 @@ struct M68k_btst_3: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_btst, "btst.l", src, dst);
+        return d->makeInstruction(state, m68k_btst, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -1697,7 +1673,7 @@ struct M68k_btst_4: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, m68k_btst, "btst.b", src, dst);
+        return d->makeInstruction(state, m68k_btst, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -1711,7 +1687,7 @@ struct M68k_callm: M68k::Decoder {
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *target = d->makeAddress(state, ea);
         ASSERT_not_null2(target, "CALLM instruction must have a memory-referencing operand");
-        return d->makeInstruction(state, m68k_callm, "callm", argcount, target);
+        return d->makeInstruction(state, m68k_callm, m68k_fmt_unknown, argcount, target);
     }
 };
 
@@ -1728,7 +1704,7 @@ struct M68k_cas: M68k::Decoder {
         SgAsmExpression *du = d->makeDataRegister(state, extract<6, 8>(w1), m68k_fmt_i32);
         SgAsmExpression *dc = d->makeDataRegister(state, extract<0, 2>(w1), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(state, m68k_cas, "cas", dc, du, dst);
+        return d->makeInstruction(state, m68k_cas, m68k_fmt_unknown, dc, du, dst);
     }
 };
 
@@ -1747,7 +1723,7 @@ struct M68k_cas2: M68k::Decoder {
         SgAsmExpression *du2 = d->makeDataRegister(state, extract<6, 8>(w2), m68k_fmt_i32);
         SgAsmExpression *dc1 = d->makeDataRegister(state, extract<0, 2>(w1), m68k_fmt_i32);
         SgAsmExpression *dc2 = d->makeDataRegister(state, extract<0, 2>(w2), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_cas2, "cas2", dc1, dc2, du1, du2, rx1, rx2);
+        return d->makeInstruction(state, m68k_cas2, m68k_fmt_unknown, dc1, dc2, du1, du2, rx1, rx2);
     }
 };
 
@@ -1760,7 +1736,7 @@ struct M68k_chk: M68k::Decoder {
         M68kDataFormat fmt = 3==extract<7, 8>(w0) ? m68k_fmt_i16 : m68k_fmt_i32;
         SgAsmExpression *bound = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *reg = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_chk, "chk."+formatLetter(fmt), bound, reg);
+        return d->makeInstruction(state, m68k_chk, fmt, bound, reg);
     }
 };
 
@@ -1776,7 +1752,7 @@ struct M68k_chk2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<9, 10>(w0));
         SgAsmExpression *bounds = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *reg = d->makeDataAddressRegister(state, extract<12, 15>(w0), fmt);
-        return d->makeInstruction(state, m68k_chk2, "chk2."+formatLetter(fmt), bounds, reg);
+        return d->makeInstruction(state, m68k_chk2, fmt, bounds, reg);
     }
 };
 
@@ -1790,7 +1766,7 @@ struct M68k_clr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_clr, "clr."+formatLetter(fmt), dst);
+        return d->makeInstruction(state, m68k_clr, fmt, dst);
     }
 };
 
@@ -1804,7 +1780,7 @@ struct M68k_cmp: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 8>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_cmp, "cmp."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_cmp, fmt, src, dst);
     }
 };
 
@@ -1817,7 +1793,7 @@ struct M68k_cmpa: M68k::Decoder {
         M68kDataFormat fmt = 3==extract<6, 8>(w0) ? m68k_fmt_i16 : m68k_fmt_i32;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeAddressRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_cmpa, "cmpa."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_cmpa, fmt, src, dst);
     }
 };
 
@@ -1833,7 +1809,7 @@ struct M68k_cmpi: M68k::Decoder {
         size_t opandWords = (formatNBits(fmt)+15) / 16;
         SgAsmExpression *src = d->makeImmediateExtension(state, fmt, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, opandWords);
-        return d->makeInstruction(state, m68k_cmpi, "cmpi."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_cmpi, fmt, src, dst);
     }
 };
 
@@ -1847,7 +1823,7 @@ struct M68k_cmpm: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeAddressRegisterPostIncrement(state, extract<0, 2>(w0), fmt);
         SgAsmExpression *dst = d->makeAddressRegisterPostIncrement(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_cmpm, "cmpm."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_cmpm, fmt, src, dst);
     }
 };
 
@@ -1863,7 +1839,7 @@ struct M68k_cmp2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<9, 10>(w0));
         SgAsmExpression *bounds = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *src2 = d->makeDataAddressRegister(state, extract<12, 15>(d->instructionWord(state, 1)), fmt);
-        return d->makeInstruction(state, m68k_cmp2, "cmp2."+formatLetter(fmt), bounds, src2);
+        return d->makeInstruction(state, m68k_cmp2, fmt, bounds, src2);
     }
 };
 
@@ -1957,8 +1933,7 @@ struct M68k_cpush: M68k::Decoder {
             default: ASSERT_not_reachable("pattern should not have matched");
         }
         SgAsmExpression *ax = d->makeAddressRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
-        return d->makeInstruction(state, kind, mnemonic, cache, ax);
+        return d->makeInstruction(state, kind, m68k_fmt_unknown, cache, ax);
     }
 };
 
@@ -2004,12 +1979,11 @@ struct M68k_dbcc: M68k::Decoder {
             case 14: kind = m68k_dbgt; break;
             case 15: kind = m68k_dble; break;
         }
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
         SgAsmExpression *src = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
         rose_addr_t target_va = state.insn_va + 2 + signExtend<16, 32>((rose_addr_t)d->instructionWord(state, 1));
         target_va &= GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(state, m68k_fmt_i32, target_va);
-        return d->makeInstruction(state, kind, mnemonic+".w", src, target);
+        return d->makeInstruction(state, kind, m68k_fmt_i16, src, target);
     }
 };
 
@@ -2020,7 +1994,7 @@ struct M68k_divs_w: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_divs, "divs.w", src, dst);
+        return d->makeInstruction(state, m68k_divs, m68k_fmt_i16, src, dst);
     }
 };
 
@@ -2031,7 +2005,7 @@ struct M68k_divu_w: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_divu, "divu.w", src, dst);
+        return d->makeInstruction(state, m68k_divu, m68k_fmt_i16, src, dst);
     }
 };
     
@@ -2053,17 +2027,17 @@ struct M68k_divide: M68k::Decoder {
             if (extract<10, 10>(d->instructionWord(state, 1)))
                 return NULL;
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(state, 1)) ? m68k_divs : m68k_divu;
-            return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dq);
+            return d->makeInstruction(state, kind, m68k_fmt_i32, ea, dq);
         } else if (extract<10, 10>(d->instructionWord(state, 1))) {
             // second form, 64-bit dividend, storing both quotient and remainder
             SgAsmExpression *dr = d->makeDataRegister(state, extract<0, 2>(d->instructionWord(state, 1)), m68k_fmt_i32);
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(state, 1)) ? m68k_divs : m68k_divu;
-            return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
+            return d->makeInstruction(state, kind, m68k_fmt_i32, ea, dr, dq);
         } else {
             // third form, 32-bit dividend, storing both quotient and remainder
             SgAsmExpression *dr = d->makeDataRegister(state, extract<0, 2>(d->instructionWord(state, 1)), m68k_fmt_i32);
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(state, 1)) ? m68k_divsl : m68k_divul;
-            return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
+            return d->makeInstruction(state, kind, m68k_fmt_i32, ea, dr, dq);
         }
     }
 };
@@ -2079,7 +2053,7 @@ struct M68k_eor: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_eor, "eor."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_eor, fmt, src, dst);
     }
 };
 
@@ -2095,7 +2069,7 @@ struct M68k_eori: M68k::Decoder {
         size_t opandWords = (formatNBits(fmt)+15) / 16;
         SgAsmExpression *src = d->makeImmediateExtension(state, fmt, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, opandWords);
-        return d->makeInstruction(state, m68k_eori, "eori."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_eori, fmt, src, dst);
     }
 };
 
@@ -2106,7 +2080,7 @@ struct M68k_eori_to_ccr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *src = d->makeImmediateExtension(state, m68k_fmt_i8, 0);
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
-        return d->makeInstruction(state, m68k_eori, "eori.b", src, dst);
+        return d->makeInstruction(state, m68k_eori, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -2132,7 +2106,7 @@ struct M68k_exg: M68k::Decoder {
                 ry = d->makeAddressRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
                 break;
         }
-        return d->makeInstruction(state, m68k_exg, "exg.l", rx, ry);
+        return d->makeInstruction(state, m68k_exg, m68k_fmt_i32, rx, ry);
     }
 };
 
@@ -2142,7 +2116,7 @@ struct M68k_ext_w: M68k::Decoder {
                        OP(4) & BITS<3, 11>(0x110)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *rx = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i16);
-        return d->makeInstruction(state, m68k_ext, "ext.w", rx);
+        return d->makeInstruction(state, m68k_ext, m68k_fmt_i16, rx);
     }
 };
 
@@ -2152,7 +2126,7 @@ struct M68k_ext_l: M68k::Decoder {
                        OP(4) & BITS<3, 11>(0x118)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *rx = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_ext, "ext.l", rx);
+        return d->makeInstruction(state, m68k_ext, m68k_fmt_i32, rx);
     }
 };
 
@@ -2162,7 +2136,7 @@ struct M68k_extb_l: M68k::Decoder {
                         OP(4) & BITS<3, 11>(0x138)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *rx = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_extb, "extb.l", rx);
+        return d->makeInstruction(state, m68k_extb, m68k_fmt_i32, rx);
     }
 };
 
@@ -2196,8 +2170,7 @@ struct M68k_fabs_from_drd: M68k::Decoder {
             case 0x58: kind = m68k_fsabs; break;
             case 0x5c: kind = m68k_fdabs; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2239,8 +2212,7 @@ struct M68k_fabs_mr: M68k::Decoder {
             case 0x58: kind = m68k_fsabs; break;
             case 0x5c: kind = m68k_fdabs; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2264,8 +2236,7 @@ struct M68k_fabs_rr: M68k::Decoder {
             case 0x58: kind = m68k_fsabs; break;
             case 0x5c: kind = m68k_fdabs; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2299,8 +2270,7 @@ struct M68k_fadd_from_drd: M68k::Decoder {
             case 0x62: kind = m68k_fsadd; break;
             case 0x66: kind = m68k_fdadd; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2342,8 +2312,7 @@ struct M68k_fadd_mr: M68k::Decoder {
             case 0x62: kind = m68k_fsadd; break;
             case 0x66: kind = m68k_fdadd; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2367,8 +2336,7 @@ struct M68k_fadd_rr: M68k::Decoder {
             case 0x62: kind = m68k_fsadd; break;
             case 0x66: kind = m68k_fdadd; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2489,8 +2457,7 @@ struct M68k_fb: M68k::Decoder {
         rose_addr_t base = state.insn_va + 2;
         rose_addr_t target_va = (base + offset) & GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(state, m68k_fmt_i32, target_va);
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), target);
+        return d->makeInstruction(state, kind, fmt, target);
     }
 };
 
@@ -2512,7 +2479,7 @@ struct M68k_fcmp_from_drd: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fcmp, "fcmp."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fcmp, fmt, src, dst);
     }
 };
 
@@ -2535,7 +2502,7 @@ struct M68k_fcmp_mr: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fcmp, "fcmp."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fcmp, fmt, src, dst);
     }
 };
 
@@ -2552,7 +2519,7 @@ struct M68k_fcmp_rr: M68k::Decoder {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fcmp, "fcmp."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fcmp, fmt, src, dst);
     }
 };
 
@@ -2586,8 +2553,7 @@ struct M68k_fdiv_from_drd: M68k::Decoder {
             case 0x60: kind = m68k_fsdiv; break;
             case 0x64: kind = m68k_fddiv; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2629,8 +2595,7 @@ struct M68k_fdiv_mr: M68k::Decoder {
             case 0x60: kind = m68k_fsdiv; break;
             case 0x64: kind = m68k_fddiv; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2654,8 +2619,7 @@ struct M68k_fdiv_rr: M68k::Decoder {
             case 0x60: kind = m68k_fsdiv; break;
             case 0x64: kind = m68k_fddiv; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2675,7 +2639,7 @@ struct M68k_fint_from_drd: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fint, "fint."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fint, fmt, src, dst);
     }
 };
 
@@ -2696,7 +2660,7 @@ struct M68k_fint_mr: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fint, "fint."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fint, fmt, src, dst);
     }
 };
 
@@ -2711,7 +2675,7 @@ struct M68k_fint_rr: M68k::Decoder {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fint, "fint."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fint, fmt, src, dst);
     }
 };
 
@@ -2731,7 +2695,7 @@ struct M68k_fintrz_from_drd: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fintrz, "fintrz."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fintrz, fmt, src, dst);
     }
 };
 
@@ -2752,7 +2716,7 @@ struct M68k_fintrz_mr: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fintrz, "fintrz."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fintrz, fmt, src, dst);
     }
 };
 
@@ -2767,7 +2731,7 @@ struct M68k_fintrz_rr: M68k::Decoder {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_fintrz, "fintrz."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fintrz, fmt, src, dst);
     }
 };
 
@@ -2801,8 +2765,7 @@ struct M68k_fmove_from_drd: M68k::Decoder {
             case 0x40: kind = m68k_fsmove; break;
             case 0x44: kind = m68k_fdmove; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2841,8 +2804,7 @@ struct M68k_fmove_mr: M68k::Decoder {
             case 0x40: kind = m68k_fsmove; break;
             case 0x44: kind = m68k_fdmove; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2864,7 +2826,7 @@ struct M68k_fmove_rm: M68k::Decoder {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
-        return d->makeInstruction(state, m68k_fmove, "fmove."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fmove, fmt, src, dst);
     }
 };
 
@@ -2888,8 +2850,7 @@ struct M68k_fmove_rr: M68k::Decoder {
             case 0x40: kind = m68k_fsmove; break;
             case 0x44: kind = m68k_fdmove; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -2911,7 +2872,7 @@ struct M68k_fmove_to_drd: M68k::Decoder {
         ASSERT_require(fmt==m68k_fmt_i8 || fmt==m68k_fmt_i16 || fmt==m68k_fmt_i32 || fmt==m68k_fmt_f32);
         SgAsmExpression *src = d->makeFPRegister(state, extract<7, 9>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
-        return d->makeInstruction(state, m68k_fmove, "fmove." + formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fmove, fmt, src, dst);
     }
 };
 
@@ -2939,7 +2900,7 @@ struct M68k_fmovem_mr: M68k::Decoder {
         } else {
             dst = d->makeFPRegistersFromMask(state, extract<0, 8>(d->instructionWord(state, 1)), fmt, true); // order is FN7 to FN0
         }
-        return d->makeInstruction(state, m68k_fmovem, "fmovem."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fmovem, fmt, src, dst);
     }
 };
 
@@ -2967,7 +2928,7 @@ struct M68k_fmovem_rm: M68k::Decoder {
             src = d->makeFPRegistersFromMask(state, extract<0, 8>(d->instructionWord(state, 1)), fmt); // order is FN0 to FN7
         }
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
-        return d->makeInstruction(state, m68k_fmovem, "fmovem."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_fmovem, fmt, src, dst);
     }
 };
 
@@ -3001,8 +2962,7 @@ struct M68k_fmul_from_drd: M68k::Decoder {
             case 0x63: kind = m68k_fsmul; break;
             case 0x67: kind = m68k_fdmul; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3044,8 +3004,7 @@ struct M68k_fmul_mr: M68k::Decoder {
             case 0x63: kind = m68k_fsmul; break;
             case 0x67: kind = m68k_fdmul; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3069,8 +3028,7 @@ struct M68k_fmul_rr: M68k::Decoder {
             case 0x63: kind = m68k_fsmul; break;
             case 0x67: kind = m68k_fdmul; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3104,8 +3062,7 @@ struct M68k_fneg_from_drd: M68k::Decoder {
             case 0x5a: kind = m68k_fsneg; break;
             case 0x5e: kind = m68k_fdneg; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3147,8 +3104,7 @@ struct M68k_fneg_mr: M68k::Decoder {
             case 0x5a: kind = m68k_fsneg; break;
             case 0x5e: kind = m68k_fdneg; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3172,8 +3128,7 @@ struct M68k_fneg_rr: M68k::Decoder {
             case 0x5a: kind = m68k_fsneg; break;
             case 0x5e: kind = m68k_fdneg; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3184,7 +3139,7 @@ struct M68k_fnop: M68k::Decoder {
                       OP(15) & BITS<9, 11>(1) & BITS<0, 8>(0x080) &
                       INSN_WORD<1>(BITS<0, 15>(0))) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
-        return d->makeInstruction(state, m68k_fnop, "fnop");
+        return d->makeInstruction(state, m68k_fnop, m68k_fmt_unknown);
     }
 };
 
@@ -3218,8 +3173,7 @@ struct M68k_fsqrt_from_drd: M68k::Decoder {
             case 0x41: kind = m68k_fssqrt; break;
             case 0x45: kind = m68k_fdsqrt; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3261,8 +3215,7 @@ struct M68k_fsqrt_mr: M68k::Decoder {
             case 0x41: kind = m68k_fssqrt; break;
             case 0x45: kind = m68k_fdsqrt; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3286,8 +3239,7 @@ struct M68k_fsqrt_rr: M68k::Decoder {
             case 0x41: kind = m68k_fssqrt; break;
             case 0x45: kind = m68k_fdsqrt; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3321,8 +3273,7 @@ struct M68k_fsub_from_drd: M68k::Decoder {
             case 0x68: kind = m68k_fssub; break;
             case 0x6c: kind = m68k_fdsub; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3364,8 +3315,7 @@ struct M68k_fsub_mr: M68k::Decoder {
             case 0x68: kind = m68k_fssub; break;
             case 0x6c: kind = m68k_fdsub; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3389,8 +3339,7 @@ struct M68k_fsub_rr: M68k::Decoder {
             case 0x68: kind = m68k_fssub; break;
             case 0x6c: kind = m68k_fdsub; break;
         }
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
-                                  "."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, kind, fmt, src, dst);
     }
 };
 
@@ -3410,7 +3359,7 @@ struct M68k_ftst_from_drd: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
-        return d->makeInstruction(state, m68k_ftst, "ftst."+formatLetter(fmt), src);
+        return d->makeInstruction(state, m68k_ftst, fmt, src);
     }
 };
 
@@ -3431,7 +3380,7 @@ struct M68k_ftst_mr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = floatingFormat(state, extract<10, 12>(d->instructionWord(state, 1)));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
-        return d->makeInstruction(state, m68k_ftst, "ftst."+formatLetter(fmt), src);
+        return d->makeInstruction(state, m68k_ftst, fmt, src);
     }
 };
 
@@ -3446,7 +3395,7 @@ struct M68k_ftst_rr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
         SgAsmExpression *src = d->makeFPRegister(state, extract<10, 12>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_ftst, "ftst."+formatLetter(fmt), src);
+        return d->makeInstruction(state, m68k_ftst, fmt, src);
     }
 };
 
@@ -3455,7 +3404,7 @@ struct M68k_illegal: M68k::Decoder {
     M68k_illegal(): M68k::Decoder("illegal", m68k_family,
                          OP(4) & BITS<0, 11>(0xafc)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
-        return d->makeInstruction(state, m68k_illegal, "illegal");
+        return d->makeInstruction(state, m68k_illegal, m68k_fmt_unknown);
     }
 };
 
@@ -3467,7 +3416,7 @@ struct M68k_jmp: M68k::Decoder {
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
         SgAsmExpression *target = d->makeAddress(state, ea);
         ASSERT_not_null2(target, "JMP instruction must have a memory-referencing operand");
-        return d->makeInstruction(state, m68k_jmp, "jmp", target);
+        return d->makeInstruction(state, m68k_jmp, m68k_fmt_unknown, target);
     }
 };
                 
@@ -3479,7 +3428,7 @@ struct M68k_jsr: M68k::Decoder {
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
         SgAsmExpression *target = d->makeAddress(state, ea);
         ASSERT_not_null2(target, "JSR instruction must have a memory-referencing operand");
-        return d->makeInstruction(state, m68k_jsr, "jsr", target);
+        return d->makeInstruction(state, m68k_jsr, m68k_fmt_unknown, target);
     }
 };
 
@@ -3490,7 +3439,7 @@ struct M68k_lea: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
         SgAsmExpression *dst = d->makeAddressRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_lea, "lea.l", src, dst);
+        return d->makeInstruction(state, m68k_lea, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -3501,7 +3450,7 @@ struct M68k_link_w: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *rx = d->makeAddressRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
         SgAsmExpression *dsp = d->makeImmediateExtension(state, m68k_fmt_i16, 0);
-        return d->makeInstruction(state, m68k_link, "link.w", rx, dsp);
+        return d->makeInstruction(state, m68k_link, m68k_fmt_i16, rx, dsp);
     }
 };
 
@@ -3512,7 +3461,7 @@ struct M68k_link_l: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *rx = d->makeAddressRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
         SgAsmExpression *dsp = d->makeImmediateExtension(state, m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_link, "link.l", rx, dsp);
+        return d->makeInstruction(state, m68k_link, m68k_fmt_i32, rx, dsp);
     }
 };
 
@@ -3531,8 +3480,7 @@ struct M68k_lshift_rr: M68k::Decoder {
         SgAsmExpression *dy = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32, 0);
         SgAsmExpression *dx = d->makeDataRegister(state, extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_lsl : m68k_lsr;
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
-        return d->makeInstruction(state, kind, mnemonic, dy, dx);
+        return d->makeInstruction(state, kind, fmt, dy, dx);
     }
 };
 
@@ -3552,8 +3500,7 @@ struct M68k_lshift_ir: M68k::Decoder {
         SgAsmExpression *sa = d->makeImmediateValue(state, m68k_fmt_i8, 0==n ? 8 : n);
         SgAsmExpression *dx = d->makeDataRegister(state, extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_lsl : m68k_lsr;
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
-        return d->makeInstruction(state, kind, mnemonic, sa, dx);
+        return d->makeInstruction(state, kind, fmt, sa, dx);
     }
 };
 
@@ -3567,8 +3514,7 @@ struct M68k_lshift_mem: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_lsl : m68k_lsr;
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".w";
-        return d->makeInstruction(state, kind, mnemonic, ea);
+        return d->makeInstruction(state, kind, m68k_fmt_i16, ea);
     }
 };
 
@@ -3607,7 +3553,7 @@ struct M68k_mac: M68k::Decoder {
         }
         unsigned accNumber = (extract<4, 4>(d->instructionWord(state, 1)) << 1) | extract<7, 7>(w0);
         SgAsmExpression *acc = d->makeMacAccumulatorRegister(state, accNumber);
-        return d->makeInstruction(state, m68k_mac, "mac."+formatLetter(fmt), ry, rx, sf, acc);
+        return d->makeInstruction(state, m68k_mac, fmt, ry, rx, sf, acc);
     }
 };
 
@@ -3651,7 +3597,7 @@ struct M68k_mac_l2: M68k::Decoder {
         unsigned rwRegisterNumber = (extract<6, 6>(w0)<<3) | extract<9, 11>(w0);
         SgAsmExpression *rw = d->makeDataAddressRegister(state, rwRegisterNumber, m68k_fmt_i32, 0);
 
-        return d->makeInstruction(state, m68k_mac, "mac.l", ry, rx, scaleFactor, accRegister, source, useMask, rw);
+        return d->makeInstruction(state, m68k_mac, m68k_fmt_i32, ry, rx, scaleFactor, accRegister, source, useMask, rw);
     }
 };
 
@@ -3696,7 +3642,7 @@ struct M68k_mac_w2: M68k::Decoder {
         unsigned rwRegisterNumber = (extract<6, 6>(w0)<<3) | extract<9, 11>(w0);
         SgAsmExpression *rw = d->makeDataAddressRegister(state, rwRegisterNumber, m68k_fmt_i32, 0);
 
-        return d->makeInstruction(state, m68k_mac, "mac.w", ry, rx, scaleFactor, accRegister, source, useMask, rw);
+        return d->makeInstruction(state, m68k_mac, m68k_fmt_i16, ry, rx, scaleFactor, accRegister, source, useMask, rw);
     }
 };
 
@@ -3710,7 +3656,7 @@ struct M68k_mov3q: M68k::Decoder {
         if (0==val)
             val = -1;
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_mov3q, "mov3q.l", d->makeImmediateValue(state, m68k_fmt_i32, val), dst);
+        return d->makeInstruction(state, m68k_mov3q, m68k_fmt_i32, d->makeImmediateValue(state, m68k_fmt_i32, val), dst);
     }
 };
 
@@ -3721,7 +3667,7 @@ struct M68k_movclr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *acc = d->makeMacAccumulatorRegister(state, extract<9, 10>(w0));
         SgAsmExpression *dst = d->makeDataAddressRegister(state, extract<0, 3>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_movclr, "movclr.l", acc, dst);
+        return d->makeInstruction(state, m68k_movclr, m68k_fmt_i32, acc, dst);
     }
 };
 
@@ -3742,7 +3688,7 @@ struct M68k_move: M68k::Decoder {
         }
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<6, 8>(w0), extract<9, 11>(w0), fmt, d->extensionWordsUsed(state));
-        return d->makeInstruction(state, m68k_move, "move."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_move, fmt, src, dst);
     }
 };
 
@@ -3753,7 +3699,7 @@ struct M68k_move_from_acc: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         unsigned accumNumber = extract<9, 10>(w0);
         M68kMacRegister accumulatorMinor = (M68kMacRegister)(m68k_mac_acc0 + accumNumber);
-        return d->makeInstruction(state, m68k_move_acc, "move.l",
+        return d->makeInstruction(state, m68k_move_acc, m68k_fmt_i32,
                                   d->makeMacRegister(state, accumulatorMinor),
                                   d->makeDataAddressRegister(state, extract<0, 3>(w0), m68k_fmt_i32));
     }
@@ -3766,7 +3712,7 @@ struct M68k_move_from_accext: M68k::Decoder {
                                   OP(10) & BIT<11>(1) & BITS<4, 9>(0x38)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kMacRegister extreg = extract<10, 10>(w0) ? m68k_mac_ext23 : m68k_mac_ext01;
-        return d->makeInstruction(state, m68k_move_accext, "move.l",
+        return d->makeInstruction(state, m68k_move_accext, m68k_fmt_i32,
                                   d->makeMacRegister(state, extreg),
                                   d->makeDataAddressRegister(state, extract<0, 3>(w0), m68k_fmt_i32));
     }
@@ -3780,7 +3726,7 @@ struct M68k_move_from_ccr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeConditionCodeRegister(state);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
-        return d->makeInstruction(state, m68k_move_ccr, "move.w", src, dst);
+        return d->makeInstruction(state, m68k_move_ccr, m68k_fmt_i16, src, dst);
     }
 };
 
@@ -3789,7 +3735,7 @@ struct M68k_move_from_macsr: M68k::Decoder {
     M68k_move_from_macsr(): M68k::Decoder("move_from_macsr", m68k_freescale_mac,
                                  OP(10) & BITS<4, 11>(0x98)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-        return d->makeInstruction(state, m68k_move_macsr, "move.l",
+        return d->makeInstruction(state, m68k_move_macsr, m68k_fmt_i32,
                                   d->makeMacRegister(state, m68k_mac_macsr),
                                   d->makeDataAddressRegister(state, extract<0, 3>(w0), m68k_fmt_i32));
     }
@@ -3800,7 +3746,7 @@ struct M68k_move_from_mask: M68k::Decoder {
     M68k_move_from_mask(): M68k::Decoder("move_from_mask", m68k_freescale_mac,
                                 OP(10) & BITS<4, 11>(0xd8)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-        return d->makeInstruction(state, m68k_move_mask, "move.l",
+        return d->makeInstruction(state, m68k_move_mask, m68k_fmt_i32,
                                   d->makeMacRegister(state, m68k_mac_mask),
                                   d->makeDataAddressRegister(state, extract<0, 3>(w0), m68k_fmt_i32));
     }
@@ -3813,7 +3759,7 @@ struct M68k_move_from_sr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeStatusRegister(state);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
-        return d->makeInstruction(state, m68k_move_sr, "move.w", src, dst);
+        return d->makeInstruction(state, m68k_move_sr, m68k_fmt_i16, src, dst);
     }
 };
 
@@ -3825,7 +3771,7 @@ struct M68k_move_to_acc: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         unsigned accumNumber = extract<9, 10>(w0);
         M68kMacRegister accumulatorMinor = (M68kMacRegister)(m68k_mac_acc0 + accumNumber);
-        return d->makeInstruction(state, m68k_move_acc, "move.l",
+        return d->makeInstruction(state, m68k_move_acc, m68k_fmt_i32,
                                   d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0),
                                   d->makeMacRegister(state, accumulatorMinor));
     }
@@ -3838,7 +3784,7 @@ struct M68k_move_to_accext: M68k::Decoder {
                                 OP(10) & BIT<11>(1) & BITS<6, 9>(0xc) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kMacRegister extreg = extract<10, 10>(w0) ? m68k_mac_ext23 : m68k_mac_ext01;
-        return d->makeInstruction(state, m68k_move_accext, "move.l",
+        return d->makeInstruction(state, m68k_move_accext, m68k_fmt_i32,
                                   d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0),
                                   d->makeMacRegister(state, extreg));
     }
@@ -3851,7 +3797,7 @@ struct M68k_move_to_ccr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
-        return d->makeInstruction(state, m68k_move_ccr, "move.w", src, dst);
+        return d->makeInstruction(state, m68k_move_ccr, m68k_fmt_i16, src, dst);
     }
 };
 
@@ -3861,7 +3807,7 @@ struct M68k_move_to_macsr: M68k::Decoder {
     M68k_move_to_macsr(): M68k::Decoder("move_to_macsr", m68k_freescale_mac,
                                OP(10) & BITS<6, 11>(0x24) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-        return d->makeInstruction(state, m68k_move_macsr, "move.l",
+        return d->makeInstruction(state, m68k_move_macsr, m68k_fmt_i32,
                                   d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0),
                                   d->makeMacRegister(state, m68k_mac_macsr));
     }
@@ -3873,7 +3819,7 @@ struct M68k_move_to_mask: M68k::Decoder {
     M68k_move_to_mask(): M68k::Decoder("move_to_mask", m68k_freescale_mac,
                               OP(10) & BITS<6, 11>(0x34) & EAM(m68k_eam_direct|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-        return d->makeInstruction(state, m68k_move_mask, "move.l",
+        return d->makeInstruction(state, m68k_move_mask, m68k_fmt_i32,
                                   d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0),
                                   d->makeMacRegister(state, m68k_mac_mask));
     }
@@ -3884,7 +3830,7 @@ struct M68k_move_to_sr: M68k::Decoder {
     M68k_move_to_sr(): M68k::Decoder("move_to_sr", m68k_family,
                             OP(4) & BITS<6, 11>(0x1b) & EAM(m68k_eam_drd|m68k_eam_imm)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-        return d->makeInstruction(state, m68k_move_sr, "move.w",
+        return d->makeInstruction(state, m68k_move_sr, m68k_fmt_i16,
                                   d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0),
                                   d->makeStatusRegister(state));
     }
@@ -3897,7 +3843,7 @@ struct M68k_move16_pp: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeAddressRegisterPostIncrement(state, extract<0, 2>(w0), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeAddressRegisterPostIncrement(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_move16, "move16", src, dst);
+        return d->makeInstruction(state, m68k_move16, m68k_fmt_unknown, src, dst);
     }
 };
 
@@ -3928,7 +3874,7 @@ struct M68k_move16_a: M68k::Decoder {
                 dst = d->makeEffectiveAddress(state, 020|extract<0, 2>(w0), m68k_fmt_i32, 0);
                 break;
         }
-        return d->makeInstruction(state, m68k_move16, "move16", src, dst);
+        return d->makeInstruction(state, m68k_move16, m68k_fmt_unknown, src, dst);
     }
 };
 
@@ -3941,7 +3887,7 @@ struct M68k_movea: M68k::Decoder {
         M68kDataFormat fmt = 2==extract<12, 13>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeAddressRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_movea, "movea."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_movea, fmt, src, dst);
     }
 };
 
@@ -3952,7 +3898,7 @@ struct M68k_move_to_cr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *src = d->makeDataAddressRegister(state, extract<12, 15>(d->instructionWord(state, 1)), m68k_fmt_i32, 0);
         SgAsmExpression *dst = d->makeColdFireControlRegister(state, extract<0, 11>(d->instructionWord(state, 1)));
-        return d->makeInstruction(state, m68k_movec, "movec.l", src, dst);
+        return d->makeInstruction(state, m68k_movec, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -3965,7 +3911,7 @@ struct M68k_movem_mr: M68k::Decoder {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
         SgAsmExpression *dst = d->makeRegistersFromMask(state, d->instructionWord(state, 1), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_movem, "movem."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_movem, fmt, src, dst);
     }
 };
 
@@ -3980,7 +3926,7 @@ struct M68k_movem_rm: M68k::Decoder {
         bool isPreDecrement = extract<3, 5>(w0) == 4;
         SgAsmRegisterNames *src = d->makeRegistersFromMask(state, d->instructionWord(state, 1), m68k_fmt_i32, isPreDecrement);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 1);
-        return d->makeInstruction(state, m68k_movem, "movem."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_movem, fmt, src, dst);
     }
 };
                 
@@ -3997,7 +3943,7 @@ struct M68k_movep: M68k::Decoder {
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
         if (extract<7, 7>(w0))
             std::swap(src, dst);                        // register-to-memory
-        return d->makeInstruction(state, m68k_movep, "movep."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_movep, fmt, src, dst);
     }
 };
 
@@ -4008,7 +3954,7 @@ struct M68k_moveq: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeImmediateValue(state, m68k_fmt_i32, signExtend<8, 32>(extract<0, 7>(w0)));
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_moveq, "moveq.l", src, dst);
+        return d->makeInstruction(state, m68k_moveq, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -4046,7 +3992,7 @@ struct M68k_msac: M68k::Decoder {
         }
         unsigned accNumber = (extract<4, 4>(d->instructionWord(state, 1)) << 1) | extract<7, 7>(w0);
         SgAsmExpression *acc = d->makeMacAccumulatorRegister(state, accNumber);
-        return d->makeInstruction(state, m68k_msac, "msac."+formatLetter(fmt), ry, rx, sf, acc);
+        return d->makeInstruction(state, m68k_msac, fmt, ry, rx, sf, acc);
     }
 };
 
@@ -4058,7 +4004,7 @@ struct M68k_muls_w: M68k::Decoder {
         SgAsmExpression *a0 = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         SgAsmExpression *a1 = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i16);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_muls, "muls.w", a0, a1, dst);
+        return d->makeInstruction(state, m68k_muls, m68k_fmt_i16, a0, a1, dst);
     }
 };
 
@@ -4072,7 +4018,7 @@ struct M68k_multiply_l: M68k::Decoder {
         M68kInstructionKind kind = extract<11, 11>(d->instructionWord(state, 1)) ? m68k_muls : m68k_mulu;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
-        return d->makeInstruction(state, kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", src, dst);
+        return d->makeInstruction(state, kind, m68k_fmt_i32, src, dst);
     }
 };
 
@@ -4087,7 +4033,7 @@ struct M68k_multiply_64: M68k::Decoder {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dh = d->makeDataRegister(state, extract<0, 2>(d->instructionWord(state, 1)), m68k_fmt_i32);
         SgAsmExpression *dl = d->makeDataRegister(state, extract<12, 14>(d->instructionWord(state, 1)), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_muls, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", src, dl, dh);
+        return d->makeInstruction(state, kind, m68k_fmt_i32, src, dl, dh);
     }
 };
 
@@ -4099,7 +4045,7 @@ struct M68k_mulu_w: M68k::Decoder {
         SgAsmExpression *a0 = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         SgAsmExpression *a1 = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i16);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_mulu, "mulu.w", a0, a1, dst);
+        return d->makeInstruction(state, m68k_mulu, m68k_fmt_i16, a0, a1, dst);
     }
 };
 
@@ -4113,7 +4059,7 @@ struct M68k_mvs: M68k::Decoder {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i16 : m68k_fmt_i8;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_mvs, "mvs."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_mvs, fmt, src, dst);
     }
 };
 
@@ -4126,7 +4072,7 @@ struct M68k_mvz: M68k::Decoder {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i16 : m68k_fmt_i8;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(state, m68k_mvz, "mvz."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_mvz, fmt, src, dst);
     }
 };
 
@@ -4136,7 +4082,7 @@ struct M68k_nbcd: M68k::Decoder {
                       OP(8) & BITS<6, 11>(0x20) & EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, m68k_nbcd, "nbcd.b", ea);
+        return d->makeInstruction(state, m68k_nbcd, m68k_fmt_i8, ea);
     }
 };
 
@@ -4150,7 +4096,7 @@ struct M68k_neg: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_neg, "neg."+formatLetter(fmt), ea);
+        return d->makeInstruction(state, m68k_neg, fmt, ea);
     }
 };
 
@@ -4164,7 +4110,7 @@ struct M68k_negx: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_negx, "negx."+formatLetter(fmt), ea);
+        return d->makeInstruction(state, m68k_negx, fmt, ea);
     }
 };
 
@@ -4173,7 +4119,7 @@ struct M68k_nop: M68k::Decoder {
     M68k_nop(): M68k::Decoder("nop", m68k_family,
                      OP(4) & BITS<0, 11>(0xe71)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
-        return d->makeInstruction(state, m68k_nop, "nop");
+        return d->makeInstruction(state, m68k_nop, m68k_fmt_unknown);
     }
 };
 
@@ -4187,7 +4133,7 @@ struct M68k_not: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_not, "not."+formatLetter(fmt), ea);
+        return d->makeInstruction(state, m68k_not, fmt, ea);
     }
 };
 
@@ -4201,7 +4147,7 @@ struct M68k_or_1: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_or, "or."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_or, fmt, src, dst);
     }
 };
 
@@ -4216,7 +4162,7 @@ struct M68k_or_2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_or, "or."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_or, fmt, src, dst);
     }
 };
 
@@ -4232,7 +4178,7 @@ struct M68k_ori: M68k::Decoder {
         size_t opandWords = (formatNBits(fmt)+15) / 16;
         SgAsmExpression *src = d->makeImmediateExtension(state, fmt, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 2>(w0), fmt, opandWords);
-        return d->makeInstruction(state, m68k_ori, "ori."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_ori, fmt, src, dst);
     }
 };
 
@@ -4243,7 +4189,7 @@ struct M68k_ori_to_ccr: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *src = d->makeImmediateValue(state, m68k_fmt_i8, extract<0, 7>(d->instructionWord(state, 1)));
         SgAsmExpression *dst = d->makeConditionCodeRegister(state);
-        return d->makeInstruction(state, m68k_ori, "ori.b", src, dst);
+        return d->makeInstruction(state, m68k_ori, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -4264,7 +4210,7 @@ struct M68k_pack: M68k::Decoder {
             dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i16, 0);
         }
         SgAsmExpression *adj = d->makeImmediateExtension(state, m68k_fmt_i16, 0);
-        return d->makeInstruction(state, m68k_pack, "pack", src, dst, adj);
+        return d->makeInstruction(state, m68k_pack, m68k_fmt_unknown, src, dst, adj);
     }
 };
 
@@ -4274,7 +4220,7 @@ struct M68k_pea: M68k::Decoder {
                      OP(4) & BITS<6, 11>(0x21) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_pea, "pea.l", src);
+        return d->makeInstruction(state, m68k_pea, m68k_fmt_i32, src);
     }
 };
 
@@ -4304,8 +4250,7 @@ struct M68k_rotate_reg: M68k::Decoder {
         }
         SgAsmExpression *dy = d->makeDataRegister(state, extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_rol : m68k_ror; // "dr"
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
-        return d->makeInstruction(state, kind, mnemonic, sa, dy);
+        return d->makeInstruction(state, kind, fmt, sa, dy);
     }
 };
 
@@ -4318,8 +4263,7 @@ struct M68k_rotate_mem: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *eay = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_rol : m68k_ror; // "dr"
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".w";
-        return d->makeInstruction(state, kind, mnemonic, eay);
+        return d->makeInstruction(state, kind, m68k_fmt_i16, eay);
     }
 };
 
@@ -4349,8 +4293,7 @@ struct M68k_rotate_extend_reg: M68k::Decoder {
         }
         SgAsmExpression *dy = d->makeDataRegister(state, extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_roxl : m68k_roxr; // "dr"
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
-        return d->makeInstruction(state, kind, mnemonic, sa, dy);
+        return d->makeInstruction(state, kind, fmt, sa, dy);
     }
 };
 
@@ -4363,8 +4306,7 @@ struct M68k_rotate_extend_mem: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *eay = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i16, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_roxl : m68k_roxr; // "dr"
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".w";
-        return d->makeInstruction(state, kind, mnemonic, eay);
+        return d->makeInstruction(state, kind, m68k_fmt_i16, eay);
     }
 };
 
@@ -4374,7 +4316,7 @@ struct M68k_rtd: M68k::Decoder {
                      OP(4) & BITS<0, 11>(0xe74)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
         SgAsmExpression *disp = d->makeImmediateExtension(state, m68k_fmt_i16, 0);
-        return d->makeInstruction(state, m68k_rtd, "rtd", disp);
+        return d->makeInstruction(state, m68k_rtd, m68k_fmt_unknown, disp);
     }
 };
 
@@ -4384,7 +4326,7 @@ struct M68k_rtm: M68k::Decoder {
                      OP(0) & BITS<4, 11>(0x6c)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *rn = d->makeDataAddressRegister(state, extract<0, 3>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_rtm, "rtm", rn);
+        return d->makeInstruction(state, m68k_rtm, m68k_fmt_unknown, rn);
     }
 };
 
@@ -4393,7 +4335,7 @@ struct M68k_rtr: M68k::Decoder {
     M68k_rtr(): M68k::Decoder("rtr", m68k_family,
                      OP(4) & BITS<0, 11>(0xe77)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
-        return d->makeInstruction(state, m68k_rtr, "rtr");
+        return d->makeInstruction(state, m68k_rtr, m68k_fmt_unknown);
     }
 };
 
@@ -4402,7 +4344,7 @@ struct M68k_rts: M68k::Decoder {
     M68k_rts(): M68k::Decoder("rts", m68k_family,
                      OP(4) & BITS<0, 11>(0xe75)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
-        return d->makeInstruction(state, m68k_rts, "rts");
+        return d->makeInstruction(state, m68k_rts, m68k_fmt_unknown);
     }
 };
 
@@ -4422,7 +4364,7 @@ struct M68k_sbcd: M68k::Decoder {
             src = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i8, 0);
             dst = d->makeDataRegister(state, extract<9, 11>(w0), m68k_fmt_i8, 0);
         }
-        return d->makeInstruction(state, m68k_sbcd, "sbcd.b", src, dst);
+        return d->makeInstruction(state, m68k_sbcd, m68k_fmt_i8, src, dst);
     }
 };
 
@@ -4467,9 +4409,8 @@ struct M68k_scc: M68k::Decoder {
             case 0xe: kind = m68k_sgt; break;
             case 0xf: kind = m68k_sle; break;
         }
-        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".b";
         SgAsmExpression *ea = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, kind, mnemonic, ea);
+        return d->makeInstruction(state, kind, m68k_fmt_i8, ea);
     }
 };
 
@@ -4483,7 +4424,7 @@ struct M68k_sub_1: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
-        return d->makeInstruction(state, m68k_sub, "sub."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_sub, fmt, src, dst);
     }
 };
 
@@ -4498,7 +4439,7 @@ struct M68k_sub_2: M68k::Decoder {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeDataRegister(state, extract<9, 11>(w0), fmt);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_sub, "sub."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_sub, fmt, src, dst);
     }
 };
 
@@ -4511,7 +4452,7 @@ struct M68k_suba: M68k::Decoder {
         M68kDataFormat fmt = extract<8, 8>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
         SgAsmExpression *dst = d->makeAddressRegister(state, extract<9, 11>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_suba, "suba."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_suba, fmt, src, dst);
     }
 };
 
@@ -4527,7 +4468,7 @@ struct M68k_subi: M68k::Decoder {
         size_t opandWords = (formatNBits(fmt)+15) / 16;
         SgAsmExpression *src = d->makeImmediateExtension(state, fmt, 0);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, opandWords);
-        return d->makeInstruction(state, m68k_subi, "subi."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_subi, fmt, src, dst);
     }
 };
 
@@ -4544,7 +4485,7 @@ struct M68k_subq: M68k::Decoder {
         unsigned n = extract<9, 11>(w0);
         SgAsmExpression *src = d->makeImmediateValue(state, fmt, n?n:8);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_subq, "subq."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_subq, fmt, src, dst);
     }
 };
 
@@ -4558,7 +4499,7 @@ struct M68k_subq_a: M68k::Decoder {
         unsigned n = extract<9, 11>(w0);
         SgAsmExpression *src = d->makeImmediateValue(state, fmt, n?n:8);
         SgAsmExpression *dst = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_subq, "subq."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_subq, fmt, src, dst);
     }
 };
 
@@ -4583,7 +4524,7 @@ struct M68k_subx: M68k::Decoder {
             src = d->makeDataRegister(state, extract<0, 2>(w0), fmt, 0);
             dst = d->makeDataRegister(state, extract<9, 11>(w0), fmt, 0);
         }
-        return d->makeInstruction(state, m68k_subx, "subx."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(state, m68k_subx, fmt, src, dst);
     }
 };
 
@@ -4593,7 +4534,7 @@ struct M68k_swap: M68k::Decoder {
                       OP(4) & BITS<3, 11>(0x108)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_swap, "swap.w", src); // mnemonic is "w" because it swaps words of a 32-bit reg
+        return d->makeInstruction(state, m68k_swap, m68k_fmt_i16, src); // mnemonic is "w" because it swaps words of a 32-bit reg
     }
 };
 
@@ -4603,7 +4544,7 @@ struct M68k_tas: M68k::Decoder {
                      OP(4) & BITS<6, 11>(0x2b) & EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), m68k_fmt_i8, 0);
-        return d->makeInstruction(state, m68k_tas, "tas.b", src);
+        return d->makeInstruction(state, m68k_tas, m68k_fmt_i8, src);
     }
 };
 
@@ -4613,7 +4554,7 @@ struct M68k_trap: M68k::Decoder {
                       OP(4) & BITS<4, 11>(0x0e4)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *vector = d->makeImmediateValue(state, m68k_fmt_i8, extract<0, 3>(w0));
-        return d->makeInstruction(state, m68k_trap, "trap", vector);
+        return d->makeInstruction(state, m68k_trap, m68k_fmt_unknown, vector);
     }
 };
 
@@ -4667,12 +4608,10 @@ struct M68k_trapcc: M68k::Decoder {
             case 0xf: kind = m68k_traple; break;
         }
         if (m68k_fmt_unknown==fmt) {
-            std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
-            return d->makeInstruction(state, kind, mnemonic);
+            return d->makeInstruction(state, kind, fmt);
         } else {
             SgAsmExpression *data = d->makeImmediateExtension(state, fmt, 0);
-            std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
-            return d->makeInstruction(state, kind, mnemonic, data);
+            return d->makeInstruction(state, kind, fmt, data);
         }
     }
 };
@@ -4682,7 +4621,7 @@ struct M68k_trapv: M68k::Decoder {
     M68k_trapv(): M68k::Decoder("trapv", m68k_family,
                        OP(4) & BITS<0, 11>(0xe76)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned) {
-        return d->makeInstruction(state, m68k_trapv, "trapv");
+        return d->makeInstruction(state, m68k_trapv, m68k_fmt_unknown);
     }
 };
 
@@ -4695,7 +4634,7 @@ struct M68k_tst: M68k::Decoder {
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(state, extract<0, 5>(w0), fmt, 0);
-        return d->makeInstruction(state, m68k_tst, "tst."+formatLetter(fmt), src);
+        return d->makeInstruction(state, m68k_tst, fmt, src);
     }
 };
 
@@ -4705,7 +4644,7 @@ struct M68k_unlk: M68k::Decoder {
                       OP(4) & BITS<3, 11>(0x1cb)) {}
     SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
         SgAsmExpression *dst = d->makeAddressRegister(state, extract<0, 2>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(state, m68k_unlk, "unlk", dst);
+        return d->makeInstruction(state, m68k_unlk, m68k_fmt_unknown, dst);
     }
 };
 
@@ -4726,7 +4665,7 @@ struct M68k_unpk: M68k::Decoder {
             dst = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i16, 0);
         }
         SgAsmExpression *adj = d->makeImmediateExtension(state, m68k_fmt_i16, 0);
-        return d->makeInstruction(state, m68k_unpk, "unpk", src, dst, adj);
+        return d->makeInstruction(state, m68k_unpk, m68k_fmt_unknown, src, dst, adj);
     }
 };
 
@@ -4741,7 +4680,7 @@ struct M68k_unpk: M68k::Decoder {
 //  struct M68k_bitrev: M68k::Decoder {
 //      M68k_bitrev(): M68k::Decoder("bitrev", OP(0) & BITS<3, 11>(0x18)) {}
 //      SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-//          return d->makeInstruction(state, m68k_bitrev, "bitrev.l", d->makeDataRegister(state, extract<0, 2>(w0), 32));
+//          return d->makeInstruction(state, m68k_bitrev, m68k_fmt_i32, d->makeDataRegister(state, extract<0, 2>(w0), 32));
 //      }
 //  };
 //  
@@ -4749,7 +4688,7 @@ struct M68k_unpk: M68k::Decoder {
 //  struct M68k_byterev: M68k::Decoder {
 //      M68k_byterev(): M68k::Decoder("byterev", OP(0) & BITS<3, 11>(0x58)) {}
 //      SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-//          return d->makeInstruction(state, m68k_byterev, "byterev.l", d->makeDataRegister(state, extract<0, 2>(w0), 32));
+//          return d->makeInstruction(state, m68k_byterev, m68k_fmt_i32, d->makeDataRegister(state, extract<0, 2>(w0), 32));
 //      }
 //  };
 //  
@@ -4757,7 +4696,7 @@ struct M68k_unpk: M68k::Decoder {
 //  struct M68k_ff1: M68k::Decoder {
 //      M68k_ff1(): M68k::Decoder("ff1", OP(0) & BITS<3, 11>(0x98)) {}
 //      SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-//          return d->makeInstruction(state, m68k_ff1, "ff1.l", d->makeDataRegister(state, extract<0, 2>(w0), 32));
+//          return d->makeInstruction(state, m68k_ff1, m68k_fmt_i32, d->makeDataRegister(state, extract<0, 2>(w0), 32));
 //      }
 //  };
 //  
@@ -4767,7 +4706,7 @@ struct M68k_unpk: M68k::Decoder {
 //  struct M68k_move_macsr2ccr: M68k::Decoder {
 //      M68k_move_macsr2ccr(): M68k::Decoder("move_macsr2ccr", OP(10) & BITS<0, 11>(0x9c0)) {}
 //      SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-//          return d->makeInstruction(state, m68k_move, "move.l",
+//          return d->makeInstruction(state, m68k_move, m68k_fmt_i32,
 //                                    d->makeRegister(RegisterDescriptor(m68k_regclass_mac, m68k_mac_macsr, 0, 32)),
 //                                    d->makeConditionCodeRegister(state));
 //      }
@@ -4789,7 +4728,7 @@ struct M68k_unpk: M68k::Decoder {
 //          SgAsmExpression *rw = extract<6, 6>(w0) ?
 //                                d->makeAddressRegister(state, extract<9, 11>(w0), 32) :
 //                                d->makeDataRegister(state, extract<9, 11>(w0), 32);
-//          return d->makeInstruction(state, m68k_msac, "msac.w", ry, rx, sf, eay, use_mask, rw);
+//          return d->makeInstruction(state, m68k_msac, m68k_fmt_i16, ry, rx, sf, eay, use_mask, rw);
 //      }
 //  };
 //  
@@ -4797,7 +4736,7 @@ struct M68k_unpk: M68k::Decoder {
 //  struct M68k_pulse: M68k::Decoder {
 //      M68k_pulse(): M68k::Decoder("pulse", OP(4) & BITS<0, 11>(0xacc)) {}
 //      SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
-//          return d->makeInstruction(state, m68k_pulse, "pulse");
+//          return d->makeInstruction(state, m68k_pulse, m68k_fmt_unknown);
 //      }
 //  };
 //  
@@ -4806,7 +4745,7 @@ struct M68k_unpk: M68k::Decoder {
 //      M68k_sats(): M68k::Decoder("sats", OP(4) & BITS<3, 11>(0x190)) {}
 //      SgAsmM68kInstruction *operator()(M68k::State &state, const D *d, unsigned w0) {
 //          SgAsmExpression *dx = d->makeDataRegister(state, extract<0, 2>(w0), 32);
-//          return d->makeInstruction(state, m68k_sats, "sats.l", dx);
+//          return d->makeInstruction(state, m68k_sats, m68k_fmt_i32, dx);
 //      }
 //  };
 //  
@@ -4822,12 +4761,12 @@ struct M68k_unpk: M68k::Decoder {
 //          switch (opmode) {
 //              case 2:
 //                  src = d->makeImmediateExtension(state, 16, 0);
-//                  return d->makeInstruction(state, m68k_tpf, "tpf.w", src);
+//                  return d->makeInstruction(state, m68k_tpf, m68k_fmt_i16, src);
 //              case 3:
 //                  src = d->makeImmediateExtension(state, 32, 0);
-//                  return d->makeInstruction(state, m68k_tpf, "tpf.l", src);
+//                  return d->makeInstruction(state, m68k_tpf, m68k_fmt_i32, src);
 //              case 4:
-//                  return d->makeInstruction(state, m68k_tpf, "tpf");
+//                  return d->makeInstruction(state, m68k_tpf, m68k_fmt_unknown);
 //              default:
 //                  throw Exception("invalid opmode "+numberToString(opmode)+" for TPF instruction",
 //                                                state.insn_va);

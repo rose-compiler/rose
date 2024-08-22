@@ -201,8 +201,8 @@ Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
             operands->get_operands().push_back(operand);
             operand->set_parent(operands);
         }
-        auto insn = new SgAsmAarch32Instruction(va, *architecture()->registrationId(), fixMnemonic(r.csi->mnemonic, detail.cc),
-                                                (Aarch32InstructionKind)r.csi->id, detail.cc);
+        auto insn = new SgAsmAarch32Instruction(va, *architecture()->registrationId(), (Aarch32InstructionKind)r.csi->id,
+                                                detail.cc);
         insn->set_rawBytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
         insn->set_updatesFlags(detail.update_flags);
         insn->set_operandList(operands);
@@ -240,7 +240,6 @@ Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
         (arm_insn)r.csi->id == ARM_INS_LSL ||
         (arm_insn)r.csi->id == ARM_INS_LSR ||
         (arm_insn)r.csi->id == ARM_INS_ROR) {
-        retval->set_mnemonic("mov");
         retval->set_kind(ARM_INS_MOV);
     }
 
@@ -322,74 +321,14 @@ Aarch32::commentIpRelative(SgAsmInstruction *insn) {
 
 SgAsmInstruction*
 Aarch32::makeUnknownInstruction(const Exception &e) {
-    SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, *architecture()->registrationId(), "unknown",
-                                                                ARM_INS_INVALID, ARM_CC_AL);
+    SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, *architecture()->registrationId(), ARM_INS_INVALID,
+                                                                ARM_CC_AL);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);
     insn->set_rawBytes(e.bytes);
     insn->set_condition(Aarch32InstructionCondition::ARM_CC_AL);
     return insn;
-}
-
-std::string
-Aarch32::fixMnemonic(const std::string &orig, arm_cc cc) {
-    std::string suffix;
-    switch (cc) {
-        case ARM_CC_INVALID:
-            return orig;
-        case ARM_CC_EQ:
-            suffix = "eq";
-            break;
-        case ARM_CC_NE:
-            suffix = "ne";
-            break;
-        case ARM_CC_HS:
-            suffix = "hs";
-            break;
-        case ARM_CC_LO:
-            suffix = "lo";
-            break;
-        case ARM_CC_MI:
-            suffix = "mi";
-            break;
-        case ARM_CC_PL:
-            suffix = "pl";
-            break;
-        case ARM_CC_VS:
-            suffix = "vs";
-            break;
-        case ARM_CC_VC:
-            suffix = "vc";
-            break;
-        case ARM_CC_HI:
-            suffix = "hi";
-            break;
-        case ARM_CC_LS:
-            suffix = "ls";
-            break;
-        case ARM_CC_GE:
-            suffix = "ge";
-            break;
-        case ARM_CC_LT:
-            suffix = "lt";
-            break;
-        case ARM_CC_GT:
-            suffix = "gt";
-            break;
-        case ARM_CC_LE:
-            suffix = "le";
-            break;
-        case ARM_CC_AL:
-            suffix = "al";
-            break;
-    }
-
-    if (boost::ends_with(orig, suffix) && orig.size() > suffix.size() && suffix.size() > 0) {
-        return orig.substr(0, orig.size()-2) + "." + suffix;
-    } else {
-        return orig;
-    }
 }
 
 SgAsmExpression*

@@ -205,6 +205,13 @@ public:
     virtual std::string toStringNoAddr(const SgAsmInstruction*) const;
     /** @} */
 
+    /** Mnemonic for an instruction.
+     *
+     *  Returns the mnemonic for a particular instruction.
+     *
+     *  Thread safety: Thread safe. */
+    virtual std::string instructionMnemonic(const SgAsmInstruction*) const = 0;
+
     /** Description for an instruction.
      *
      *  Returns the description for a particular instruction. The description must be a single line with no leading or trailing

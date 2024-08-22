@@ -65,71 +65,71 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
  // Switch over opcode values (Warning: the switch is not over CilInstructionKind)
     switch (rawBytes[0]) {
         case 0x00: // Cil_nop: do nothing
-            insn = makeInstruction(va, rawBytes, 1, Cil_nop, "nop");
+            insn = makeInstruction(va, rawBytes, 1, Cil_nop);
             break;
 
         case 0x01: // Cil_break: inform a debugger that a breakpoint has been reached
-           insn = makeInstruction(va, rawBytes, 1, Cil_break, "break");
+           insn = makeInstruction(va, rawBytes, 1, Cil_break);
            break;
 
         case 0x02: // Cil_ldarg_0: load argument 0 onto the stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_0, "ldarg_0");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_0);
             break;
 
         case 0x03: // Cil_ldarg_1: load argument 1 onto the stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_1, "ldarg_1");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_1);
             break;
 
         case 0x04: // Cil_ldarg_2: load argument 2 onto the stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_2, "ldarg_2");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_2);
             break;
 
         case 0x05: // Cil_ldarg_3: load argument 3 onto the stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_3, "ldarg_3");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_3);
             break;
 
         case 0x06: // Cil_ldloc_0: load local variable 0 onto stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_0, "ldloc_0");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_0);
             break;
 
         case 0x07: // Cil_ldloc_1: load local variable 1 onto stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_1, "ldloc_1");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_1);
             break;
 
         case 0x08: // Cil_ldloc_2: load local variable 2 onto stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_2, "ldloc_2");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_2);
             break;
 
         case 0x09: // Cil_ldloc_3: load local variable 3 onto stack
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_3, "ldloc_3");
+            insn = makeInstruction(va, rawBytes, 1, Cil_ldloc_3);
             break;
 
         case 0x0A: // Cil_stloc_0: pop a value from stack into local variable 0
-            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_0, "stloc_0");
+            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_0);
             break;
 
         case 0x0B: // Cil_stloc_1: pop a value from stack into local variable 1
-            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_1, "stloc_1");
+            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_1);
             break;
 
         case 0x0C: // Cil_stloc_2: pop a value from stack into local variable 2
-            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_2, "stloc_2");
+            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_2);
             break;
 
         case 0x0D: // Cil_stloc_3: pop a value from stack into local variable 3
-            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_3, "stloc_3");
+            insn = makeInstruction(va, rawBytes, 1, Cil_stloc_3);
             break;
 
         case 0x0E: // Cil_ldarg_s: load argument numbered num onto the stack, short form
             valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueU8(valueU8);
-            insn = makeInstruction(va, rawBytes, 2, Cil_ldarg_s, "ldarg_s", operand);
+            insn = makeInstruction(va, rawBytes, 2, Cil_ldarg_s, operand);
             break;
 
         case 0x0F: // Cil_ldarga_s: fetch the address of argument argNum, short form
             valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueU8(valueU8);
-            insn = makeInstruction(va, rawBytes, 2, Cil_ldarga_s, "ldarga_s", operand);
+            insn = makeInstruction(va, rawBytes, 2, Cil_ldarga_s, operand);
             break;
 
         case 0x10:
@@ -139,90 +139,90 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueU8(valueU8);
-             insn = makeInstruction(va, rawBytes, 2, Cil_starg_s, "starg_s", operand);
+             insn = makeInstruction(va, rawBytes, 2, Cil_starg_s, operand);
              break;
            }
 
         case 0x11: // Cil_ldloc_s: load local variable of index indx onto stack, short form
             valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueU8(valueU8);
-            insn = makeInstruction(va, rawBytes, 2, Cil_ldloc_s, "ldloc_s", operand);
+            insn = makeInstruction(va, rawBytes, 2, Cil_ldloc_s, operand);
             break;
 
         case 0x12: // Cil_ldloca_s: load address of local variable with index indx, short form
             valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueU8(valueU8);
-            insn = makeInstruction(va, rawBytes, 2, Cil_ldloca_s, "ldloca_s", operand);
+            insn = makeInstruction(va, rawBytes, 2, Cil_ldloca_s, operand);
             break;
 
         case 0x13: // Cil_stloc_s: pop a value from stack into local variable indx, short form
             valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueU8(valueU8);
-            insn = makeInstruction(va, rawBytes, 2, Cil_stloc_s, "stloc_s", operand);
+            insn = makeInstruction(va, rawBytes, 2, Cil_stloc_s, operand);
             break;
 
         case 0x14: // Cil_ldnull: push a null reference on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldnull, "ldnull");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldnull);
            break;
 
         case 0x15: // Cil_ldc_i4_m1: push -1 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_m1, "ldc_i4_m1");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_m1);
            break;
 
         case 0x16: // Cil_ldc_i4_0: push 0 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_0, "ldc_i4_0");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_0);
            break;
 
         case 0x17: // Cil_ldc_i4_1: push 1 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_1, "ldc_i4_1");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_1);
            break;
 
         case 0x18: // Cil_ldc_i4_2: push 2 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_2, "ldc_i4_2");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_2);
            break;
 
         case 0x19: // Cil_ldc_i4_3: push 3 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_3, "ldc_i4_3");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_3);
            break;
 
         case 0x1A: // Cil_ldc_i4_4: push 4 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_4, "ldc_i4_4");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_4);
            break;
 
         case 0x1B: // Cil_ldc_i4_5: push 5 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_5, "ldc_i4_5");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_5);
            break;
 
         case 0x1C: // Cil_ldc_i4_6: push 6 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_6, "ldc_i4_6");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_6);
            break;
 
         case 0x1D: // Cil_ldc_i4_7: push 7 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_7, "ldc_i4_7");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_7);
            break;
 
         case 0x1E: // Cil_ldc_i4_8: push 8 onto the stack as int32
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_8, "ldc_i4_8");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_8);
            break;
 
         case 0x1F: { // Cil_ldc_i4_s: push num onto the stack as int32, short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_ldc_i4_s, "ldc_i4_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_ldc_i4_s, operand);
            break;
         }
 
         case 0x20: { // Cil_ldc_i4: push num of type int32 onto the stack as int32
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_ldc_i4, "ldc_i4", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ldc_i4, operand);
            break;
         }
 
         case 0x21: { // Cil_ldc_i8: push num of type int64 onto the stack as int64
            int64_t value = ByteOrder::leToHost(*((int64_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI64(value);
-           insn = makeInstruction(va, rawBytes, 9, Cil_ldc_i8, "ldc_i8", operand);
+           insn = makeInstruction(va, rawBytes, 9, Cil_ldc_i8, operand);
            break;
         }
 
@@ -230,7 +230,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
            uint32_t integer_value = ByteOrder::leToHost(*((uint32_t*)(rawBytes.data()+1)));
            float_t* fptr = (float_t*)(&integer_value);
            SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary32(*fptr);
-           insn = makeInstruction(va, rawBytes, 5, Cil_ldc_r4, "ldc_r4", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ldc_r4, operand);
            break;
         }
 
@@ -238,219 +238,219 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
            uint64_t integer_value = ByteOrder::leToHost(*((uint64_t*)(rawBytes.data()+1)));
            double_t* dptr = (double_t*)(&integer_value);
            SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary64(*dptr);
-           insn = makeInstruction(va, rawBytes, 9, Cil_ldc_r8, "ldc_r8", operand);
+           insn = makeInstruction(va, rawBytes, 9, Cil_ldc_r8, operand);
            break;
         }
 
         case 0x25: // Cil_dup: duplicate the value on the top of the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_dup, "dup");
+           insn = makeInstruction(va, rawBytes, 1, Cil_dup);
            break;
 
         case 0x26: // Cil_pop: pop value from the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_pop, "pop");
+           insn = makeInstruction(va, rawBytes, 1, Cil_pop);
            break;
 
         case 0x27: // Cil_jmp: exit current method and jump to the specified method
            token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(token);
-           insn = makeInstruction(va, rawBytes, 5, Cil_jmp, "jmp", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_jmp, operand);
            break;
 
         case 0x28: // Cil_call: call method described by method
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_call, "call", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_call, operand);
              break;
 
         case 0x29: // Cil_calli: call method indicated on the stack with arguments described by callsitedescr
            token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(token);
-           insn = makeInstruction(va, rawBytes, 5, Cil_calli, "calli", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_calli, operand);
            break;
 
         case 0x2A: // Cil_ret: return from method, possibly with a value
-           insn = makeInstruction(va, rawBytes, 1, Cil_ret, "ret");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ret);
            break;
 
         case 0x2B: { // Cil_br_s: branch to target
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_br_s, "br_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_br_s, operand);
            break;
         }
 
         case 0x2C: { // Cil_brfalse_s: branch to target if value is zero (false), short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_brfalse_s, "brfalse_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_brfalse_s, operand);
            break;
         }
 
         case 0x2D: { // Cil_brtrue_s: branch to target if value is non-zero (true), short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_brtrue_s, "brtrue_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_brtrue_s, operand);
            break;
         }
 
         case 0x2E: { // Cil_beq_s: branch to target if equal, short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_beq_s, "beq_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_beq_s, operand);
            break;
         }
 
         case 0x2F: { // Cil_bge_s: branch to target if greater than or equal to, short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_bge_s, "bge_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bge_s, operand);
            break;
         }
 
         case 0x30: { // Cil_bgt_s: branch to target if greater than, short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_bgt_s, "bgt_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bgt_s, operand);
            break;
         }
 
         case 0x31: { // Cil_ble_s: branch to target if less than or equal to
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_ble_s, "ble_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_ble_s, operand);
            break;
         }
 
         case 0x32: { // Cil_blt_s: branch to target if less than, short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_blt_s, "blt_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_blt_s, operand);
            break;
         }
 
         case 0x33: { // Cil_bne_un_s: branch to target if unequal or unordered, short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_bne_un_s, "bne_un_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bne_un_s, operand);
            break;
         }
 
         case 0x34: { // Cil_bge_un_s: Branch to target if greater than or equal to (unsigned or unordered), short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_bge_un_s, "bge_un_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bge_un_s, operand);
            break;
         }
 
         case 0x35: { // Cil_bgt_un: branch to target if greater than (unsigned or unordered), short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_bgt_un, "bgt_un", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bgt_un, operand);
            break;
         }
 
         case 0x36: { // Cil_ble_un_s: branch to target if less than or equal to (unsigned or unordered), short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_ble_un_s, "ble_un_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_ble_un_s, operand);
            break;
         }
 
         case 0x37: { // Cil_blt_un_s: branch to target if less than (unsigned or unordered), short form
            int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI8(value);
-           insn = makeInstruction(va, rawBytes, 2, Cil_blt_un_s, "blt_un_s", operand);
+           insn = makeInstruction(va, rawBytes, 2, Cil_blt_un_s, operand);
            break;
         }
 
         case 0x38: { // Cil_br: branch to target
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_br, "br", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_br, operand);
            break;
         }
 
         case 0x39: { // Cil_brfalse: branch to target if value is zero (false)
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_brfalse, "brfalse", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_brfalse, operand);
            break;
         }
 
         case 0x3A: { // Cil_brtrue: branch to target if value is non-zero (true)
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_brtrue, "brtrue", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_brtrue, operand);
            break;
         }
 
         case 0x3B: { // Cil_beq: branch to target if equal
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_beq, "beq", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_beq, operand);
            break;
         }
 
         case 0x3C: { // Cil_bge: branch to target if greater than or equal to
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_bge, "bge", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_bge, operand);
            break;
         }
 
         case 0x3D: { // Cil_bgt: branch to target if greater than
              int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_bgt, "bgt", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_bgt, operand);
              break;
            }
 
         case 0x3E: { // Cil_ble: branch to target if less than or equal
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_ble, "ble", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ble, operand);
            break;
         }
 
         case 0x3F: { // Cil_blt: branch to target if less than
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_blt, "blt", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_blt, operand);
            break;
         }
 
         case 0x40: { // Cil_bne_un: branch to target if unequal or unordered
              int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_bne_un, "bne_un", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_bne_un, operand);
              break;
            }
 
         case 0x41: { // Cil_bge_un: branch to target if greater than or equal to (unsigned or unordered)
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_bge_un, "bge_un", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_bge_un, operand);
            break;
         }
 
         case 0x42: { // Cil_bgt_un: branch to target if greater than (unsigned or unordered)
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_bgt_un, "bgt_un", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_bgt_un, operand);
            break;
         }
 
         case 0x43: { // Cil_ble_un: Branch to target if less than or equal to (unsigned or unordered)
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_ble_un, "ble_un", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ble_un, operand);
            break;
         }
 
         case 0x44: { // Cil_blt_un: branch to target if less than (unsigned or unordered)
            int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
            operand = SageBuilderAsm::buildValueI32(value);
-           insn = makeInstruction(va, rawBytes, 5, Cil_blt_un, "blt_un", operand);
+           insn = makeInstruction(va, rawBytes, 5, Cil_blt_un, operand);
            break;
         }
 
@@ -471,7 +471,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
            }
 
            operand = SageBuilderAsm::buildValueU32(nTargets);
-           insn = makeInstruction(va, rawBytes, minSwitchSize, Cil_switch, "switch", operand);
+           insn = makeInstruction(va, rawBytes, minSwitchSize, Cil_switch, operand);
 
            const std::uint32_t branchTableSize = sizeof(std::int32_t)*nTargets;
 
@@ -501,7 +501,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldind_i1 instruction (load value indirect onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i1, "ldind_i1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i1);
              break;
            }
 
@@ -510,7 +510,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldind_u1 instruction (load value indirect onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u1, "ldind_u1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u1);
              break;
            }
 
@@ -519,7 +519,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldind_i2 instruction (load value indirect onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i2, "ldind_i2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i2);
              break;
            }
 
@@ -528,7 +528,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldind_u2 instruction (load value indirect onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u2, "ldind_u2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u2);
              break;
            }
 
@@ -537,32 +537,32 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldind_i4 instruction (load value indirect onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i4, "ldind_i4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i4);
              break;
            }
 
         case 0x4B: // Cil_ldind_u4: ndirect load value of type unsigned int32 as int32 on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u4, "ldind_u4");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u4);
            break;
 
         case 0x4C: // Cil_ldind_i8: indirect load value of type int64 as int64 on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i8, "ldind_i8");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i8);
            break;
 
         case 0x4D: // Cil_ldind_i: indirect load value of type native int as native int on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i, "ldind_i");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i);
            break;
 
         case 0x4E: // Cil_ldind_r4: indirect load value of type float32 as F on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r4, "ldind_r4");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r4);
            break;
 
         case 0x4F: // Cil_ldind_r8: indirect load value of type float64 as F on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r8, "ldind_r8");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r8);
            break;
 
         case 0x50: // Cil_ldind_ref: indirect load value of type object ref as O on the stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_ref, "ldind_ref");
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_ref);
            break;
 
         case 0x51:
@@ -570,7 +570,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_ref instruction (store value of type object ref (type o) into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_ref, "stind_ref");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_ref);
              break;
            }
 
@@ -579,7 +579,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_i1 instruction (store value of type int8 into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i1, "stind_i1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i1);
              break;
            }
 
@@ -588,7 +588,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_i2 instruction (store value of type int16 into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i2, "stind_i2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i2);
              break;
            }
 
@@ -597,7 +597,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_i4 instruction (store value of type int32 into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i4, "stind_i4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i4);
              break;
            }
 
@@ -606,7 +606,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_i8 instruction (store value of type int64 into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i8, "stind_i8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i8);
              break;
            }
 
@@ -615,7 +615,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_r4 instruction (store value of type float32 into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_r4, "stind_r4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_r4);
              break;
            }
 
@@ -624,16 +624,16 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_r8 instruction (store value of type float64 into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_r8, "stind_r8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_r8);
              break;
            }
 
         case 0x58: // Cil_add: add two values, returning a new value
-            insn = makeInstruction(va, rawBytes, 1, Cil_add, "add");
+            insn = makeInstruction(va, rawBytes, 1, Cil_add);
             break;
 
         case 0x59: // Cil_sub: subtract value2 from value1, returning a new value
-            insn = makeInstruction(va, rawBytes, 1, Cil_sub, "sub");
+            insn = makeInstruction(va, rawBytes, 1, Cil_sub);
             break;
 
         case 0x5A:
@@ -641,7 +641,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_mul instruction (multiply values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_mul, "mul");
+             insn = makeInstruction(va, rawBytes, 1, Cil_mul);
              break;
            }
 
@@ -650,7 +650,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_div instruction (divide values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_div, "div");
+             insn = makeInstruction(va, rawBytes, 1, Cil_div);
              break;
            }
 
@@ -659,7 +659,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_div_un instruction (divide values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_div_un, "div_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_div_un);
              break;
            }
 
@@ -668,7 +668,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_rem instruction (remiander values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_rem, "rem");
+             insn = makeInstruction(va, rawBytes, 1, Cil_rem);
              break;
            }
 
@@ -677,7 +677,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_rem_un instruction (remainder values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_rem_un, "rem_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_rem_un);
              break;
            }
 
@@ -686,7 +686,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_and instruction (and values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_and, "and");
+             insn = makeInstruction(va, rawBytes, 1, Cil_and);
              break;
            }
 
@@ -695,7 +695,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_or instruction (or values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_or, "or");
+             insn = makeInstruction(va, rawBytes, 1, Cil_or);
              break;
            }
 
@@ -704,7 +704,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_xor instruction (or values on stack and replace with result onto stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_xor, "xor");
+             insn = makeInstruction(va, rawBytes, 1, Cil_xor);
              break;
            }
 
@@ -713,7 +713,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_shl instruction (shift an integer left (shift in zero), return an integer) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_shl, "shl");
+             insn = makeInstruction(va, rawBytes, 1, Cil_shl);
              break;
            }
 
@@ -722,7 +722,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_shr instruction (shift an integer right (shift in zero), return an integer) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_shr, "shr");
+             insn = makeInstruction(va, rawBytes, 1, Cil_shr);
              break;
            }
 
@@ -731,7 +731,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_shr_un instruction (shift an integer right (shift in zero), return an integer) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_shr_un, "shr_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_shr_un);
              break;
            }
 
@@ -740,7 +740,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_neg instruction (negates value from stack and pushes new value onto the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_neg, "neg");
+             insn = makeInstruction(va, rawBytes, 1, Cil_neg);
              break;
            }
 
@@ -749,46 +749,46 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_not instruction (bitwise complement) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_not, "not");
+             insn = makeInstruction(va, rawBytes, 1, Cil_not);
              break;
            }
 
         case 0x67: // Cil_conv_i1: convert to int8, pushing int32 on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1);
            break;
 
         case 0x68: // Cil_conv_i2: convert to int16, pushing int32 on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i2, "conv_i2");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i2);
            break;
 
         case 0x69: // Cil_conv_i4: convert to int32, pushing int32 on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i4, "conv_i4");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i4);
            break;
 
         case 0x6A: // Cil_conv_i8: convert to int64, pushing int64 on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i8, "conv_i8");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i8);
            break;
 
         case 0x6B: // Cil_conv_r4: convert to float32, pushing F on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_r4, "conv_r4");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_r4);
            break;
 
         case 0x6C: // Cil_conv_r8: convert to float64, pushing F on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_r8, "conv_r8");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_r8);
            break;
 
         case 0x6D: // Cil_conv_u4: convert to unsigned int32, pushing int32 on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_u4, "conv_u4");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_u4);
            break;
 
         case 0x6E: // Cil_conv_u8: convert to unsigned int64, pushing int64 on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_u8, "conv_u8");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_u8);
            break;
 
         case 0x6F: // Cil_callvirt: call a method associated with an object
             token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueI32(token);
-            insn = makeInstruction(va, rawBytes, 5, Cil_callvirt, "callvirt", operand);
+            insn = makeInstruction(va, rawBytes, 5, Cil_callvirt, operand);
             break;
 
         case 0x70:
@@ -798,7 +798,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_cpobj, "cpobj", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_cpobj, operand);
              break;
            }
 
@@ -809,7 +809,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldobj, "ldobj", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldobj, operand);
              break;
            }
 
@@ -820,14 +820,14 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldstr, "ldstr", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldstr, operand);
              break;
            }
 
         case 0x73: // Cil_newobj: allocate an uninitialized object or value type and call ctor
             token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
             operand = SageBuilderAsm::buildValueI32(token);
-            insn = makeInstruction(va, rawBytes, 5, Cil_newobj, "newobj", operand);
+            insn = makeInstruction(va, rawBytes, 5, Cil_newobj, operand);
             break;
 
         case 0x74:
@@ -837,7 +837,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_castclass, "castclass", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_castclass, operand);
              break;
            }
 
@@ -848,7 +848,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_isinst, "isinst", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_isinst, operand);
              break;
            }
 
@@ -857,7 +857,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_r_un instruction (data conversion unsigned integer, to floating-point,pushing F on stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_r_un, "conv_r_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_r_un);
              break;
            }
 
@@ -870,7 +870,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_unbox, "unbox", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_unbox, operand);
              break;
            }
 
@@ -879,7 +879,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_throw instruction (throw an exception) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_throw, "throw");
+             insn = makeInstruction(va, rawBytes, 1, Cil_throw);
              break;
            }
 
@@ -890,7 +890,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldfld, "ldfld", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldfld, operand);
              break;
            }
 
@@ -901,7 +901,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldflda, "ldflda", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldflda, operand);
              break;
            }
 
@@ -912,7 +912,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_stfld, "stfld", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_stfld, operand);
              break;
            }
 
@@ -923,7 +923,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldsfld, "ldsfld", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldsfld, operand);
              break;
            }
 
@@ -934,7 +934,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldsflda, "ldsflda", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldsflda, operand);
              break;
            }
 
@@ -945,7 +945,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_stsfld, "stsfld", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_stsfld, operand);
              break;
            }
 
@@ -956,7 +956,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_stobj, "stobj", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_stobj, operand);
              break;
            }
 
@@ -965,7 +965,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i1_un instruction (unsigned data conversion to int8 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i1_un, "conv_ovf_i1_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i1_un);
              break;
            }
 
@@ -974,7 +974,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i2_un instruction (unsigned data conversion to int16 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i2_un, "conv_ovf_i2_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i2_un);
              break;
            }
 
@@ -983,7 +983,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i4_un instruction (unsigned data conversion to int32 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i4_un, "conv_ovf_i4_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i4_un);
              break;
            }
 
@@ -992,7 +992,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i8_un instruction (unsigned data conversion to int64 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i8_un, "conv_ovf_i8_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i8_un);
              break;
            }
 
@@ -1001,7 +1001,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u1_un instruction (unsigned data conversion to unsigned int8 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u1_un, "conv_ovf_u1_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u1_un);
              break;
            }
 
@@ -1010,7 +1010,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u2_un instruction (unsigned data conversion to unsigned int16 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u2_un, "conv_ovf_u2_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u2_un);
              break;
            }
 
@@ -1019,7 +1019,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u4_un instruction (unsigned data conversion to unsigned int32 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u4_un, "conv_ovf_u4_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u4_un);
              break;
            }
 
@@ -1028,7 +1028,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u8_un instruction (unsigned data conversion to unsigned int64 (on stack as int32) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u8_un, "conv_ovf_u8_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u8_un);
              break;
            }
 
@@ -1037,7 +1037,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i_un instruction (unsigned data conversion to native int (on stack as native int) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i_un, "conv_ovf_i_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i_un);
              break;
            }
 
@@ -1046,7 +1046,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u_un instruction (unsigned data conversion to native unsigned int (on stack as native int) with overflow detection) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u_un, "conv_ovf_u_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u_un);
              break;
            }
 
@@ -1057,7 +1057,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_box, "box", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_box, operand);
              break;
            }
 
@@ -1068,7 +1068,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_newarr, "newarr", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_newarr, operand);
              break;
            }
 
@@ -1077,7 +1077,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldlen instruction (push the length (of type native unsigned int) or array on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldlen, "ldlen");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldlen);
              break;
            }
 
@@ -1088,7 +1088,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldelema, "ldelema", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldelema, operand);
              break;
            }
 
@@ -1097,7 +1097,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_i1 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i1, "ldelem_i1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i1);
              break;
            }
 
@@ -1106,7 +1106,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_u1 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_u1, "ldelem_u1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_u1);
              break;
            }
 
@@ -1115,7 +1115,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_i2 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i2, "ldelem_i2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i2);
              break;
            }
 
@@ -1124,7 +1124,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_u2 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_u2, "ldelem_u2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_u2);
              break;
            }
 
@@ -1133,7 +1133,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_i4 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i4, "ldelem_i4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i4);
              break;
            }
 
@@ -1142,7 +1142,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_u4 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_u4, "ldelem_u4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_u4);
              break;
            }
 
@@ -1151,7 +1151,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_i8 instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i8, "ldelem_i8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i8);
              break;
            }
 
@@ -1160,7 +1160,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_i instruction (load the element with type native into the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i, "ldelem_i");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_i);
              break;
            }
 
@@ -1169,7 +1169,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_r4 instruction (load numeric constant) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_r4, "ldelem_r4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_r4);
              break;
            }
 
@@ -1178,7 +1178,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_r8 instruction (load numeric constant) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_r8, "ldelem_r8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_r8);
              break;
            }
 
@@ -1187,7 +1187,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ldelem_ref instruction (load the address of element at index onto the top of the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_ref, "ldelem_ref");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ldelem_ref);
              break;
            }
 
@@ -1196,7 +1196,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_i instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i, "stelem_i");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i);
              break;
            }
 
@@ -1205,7 +1205,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_i1 instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i1, "stelem_i1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i1);
              break;
            }
 
@@ -1214,7 +1214,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_i2 instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i2, "stelem_i2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i2);
              break;
            }
 
@@ -1223,7 +1223,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_i4 instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i4, "stelem_i4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i4);
              break;
            }
 
@@ -1232,7 +1232,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_i8 instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i8, "stelem_i8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_i8);
              break;
            }
 
@@ -1241,7 +1241,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_r4 instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_r4, "stelem_r4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_r4);
              break;
            }
 
@@ -1250,7 +1250,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_r8 instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_r8, "stelem_r8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_r8);
              break;
            }
 
@@ -1259,7 +1259,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stelem_ref instruction (replace array element at index with the native int value on the stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_ref, "stelem_ref");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stelem_ref);
              break;
            }
 
@@ -1270,7 +1270,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldelem, "ldelem", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldelem, operand);
              break;
            }
 
@@ -1281,7 +1281,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_stelem, "stelem", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_stelem, operand);
              break;
            }
 
@@ -1292,7 +1292,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_unbox_any, "unbox_any", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_unbox_any, operand);
              break;
            }
 
@@ -1304,7 +1304,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i1 instruction (convert to an int8 (on the stack as a int32) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i1, "conv_ovf_i1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i1);
              insn->set_rawBytes(rawBytes);
              break;
            }
@@ -1314,7 +1314,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u1 instruction (convert to an unsigned int8 (on the stack as a int32) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u1, "conv_ovf_u1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u1);
              break;
            }
 
@@ -1323,7 +1323,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i2 instruction (convert to an int16 (on the stack as a int32) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i2, "conv_ovf_i2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i2);
              break;
            }
 
@@ -1332,7 +1332,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u2 instruction (convert to an unsigned int16 (on the stack as a int32) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u2, "conv_ovf_u2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u2);
              break;
            }
 
@@ -1341,7 +1341,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i4 instruction (convert to an int32 (on the stack as a int32) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i4, "conv_ovf_i4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i4);
              break;
            }
 
@@ -1350,7 +1350,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u4 instruction (convert to an unsigned int32 (on the stack as a int32) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u4, "conv_ovf_u4");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u4);
              break;
            }
 
@@ -1359,7 +1359,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_i8 instruction (convert to an int64 (on the stack as a int64) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i8, "conv_ovf_i8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i8);
              break;
            }
 
@@ -1368,7 +1368,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u8 instruction (convert to an unsigned int64 (on the stack as a int64) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u8, "conv_ovf_u8");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u8);
              break;
            }
 
@@ -1382,7 +1382,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_refanyval, "refanyval", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_refanyval, operand);
              break;
            }
 
@@ -1391,7 +1391,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_ckfinite instruction (throw ArithmeticException if value is not a finite number) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ckfinite, "ckfinite");
+             insn = makeInstruction(va, rawBytes, 1, Cil_ckfinite);
              break;
            }
 
@@ -1404,7 +1404,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_mkrefany, "mkrefany");
+             insn = makeInstruction(va, rawBytes, 5, Cil_mkrefany);
              break;
            }
 
@@ -1417,7 +1417,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
              token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ldtoken, "ldtoken", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_ldtoken, operand);
              break;
            }
 
@@ -1426,7 +1426,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_u2 instruction (data conversion to unsigned int16, pushing int32 on stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u2, "conv_u2");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u2);
              break;
            }
 
@@ -1435,16 +1435,16 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_u1 instruction (data conversion to unsigned int8, pushing int32 on stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u1, "conv_u1");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u1);
              break;
            }
 
         case 0xD3: // Cil_conv_i: convert to native int, pushing native int on stack
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i, "conv_i");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i);
            break;
 
         case 0xD4: // Cil_conv_ovf_i: convert to a native int (on the stack as a native int) and throw exception on overflow
-           insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i, "conv_ovf_i");
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i);
            break;
 
         case 0xD5:
@@ -1452,7 +1452,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_ovf_u instruction (convert to a native unsigned int (on the stack as a native int) and throw exception on overflow) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u, "conv_ovf_u");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_u);
              break;
            }
 
@@ -1461,7 +1461,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_add_ovf instruction (add signed integer values with overflow check) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_add_ovf, "add_ovf");
+             insn = makeInstruction(va, rawBytes, 1, Cil_add_ovf);
              break;
            }
 
@@ -1470,7 +1470,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_add_ovf_un instruction (add unsigned integer values with overflow check) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_add_ovf_un, "add_ovf_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_add_ovf_un);
              break;
            }
 
@@ -1479,7 +1479,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_mul_ovf instruction (multiply signed integer values with overflow check) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_mul_ovf, "mul_ovf");
+             insn = makeInstruction(va, rawBytes, 1, Cil_mul_ovf);
              break;
            }
 
@@ -1488,7 +1488,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_mul_ovf_un instruction (multiply unsigned integer values with overflow check) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_mul_ovf_un, "mul_ovf_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_mul_ovf_un);
              break;
            }
 
@@ -1497,7 +1497,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_sub_ovf instruction (subtract signed integer values with overflow check) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_sub_ovf, "sub_ovf");
+             insn = makeInstruction(va, rawBytes, 1, Cil_sub_ovf);
              break;
            }
 
@@ -1506,7 +1506,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_sub_ovf_un instruction (subtract unsigned integer values with overflow check) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_sub_ovf_un, "sub_ovf_un");
+             insn = makeInstruction(va, rawBytes, 1, Cil_sub_ovf_un);
              break;
            }
 
@@ -1516,21 +1516,21 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_endfinally (endfault) instruction (end finally clause of an exception block) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_endfinally, "endfinally");
+             insn = makeInstruction(va, rawBytes, 1, Cil_endfinally);
              break;
            }
 
         case 0xDD: { // Cil_leave: exit a protected region of code
              int32_t value = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_leave, "leave", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_leave, operand);
              break;
            }
 
         case 0xDE: { // Cil_leave_s: exit a protected region of code, short form
              int8_t value = ByteOrder::leToHost(*((int8_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_leave_s, "leave_s", operand);
+             insn = makeInstruction(va, rawBytes, 2, Cil_leave_s, operand);
              break;
            }
 
@@ -1539,7 +1539,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_stind_i instruction (store value of native int into memory at address) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i, "stind_i");
+             insn = makeInstruction(va, rawBytes, 1, Cil_stind_i);
              break;
            }
 
@@ -1548,7 +1548,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              if (TRACE_DECODING)
                printf ("Found Cil_conv_u instruction (data conversion native unsigned int, pushing native int on stack) \n");
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u, "conv_u");
+             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u);
              break;
            }
 
@@ -1559,39 +1559,39 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              switch (rawBytes[1])
                 {
                   case 0x00: // Cil_arglist: return argument list handle for the current method
-                     insn = makeInstruction(va, rawBytes, 2, Cil_arglist, "arglist");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_arglist);
                      break;
 
                   case 0x01: // Cil_ceq: push 1 (of type int32) if value 1 equals value2, else push 0
-                     insn = makeInstruction(va, rawBytes, 2, Cil_ceq, "ceq");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_ceq);
                      break;
 
                   case 0x02: // Cil_cgt: push 1 (of type int32) if value1 > value2, else push 0
-                      insn = makeInstruction(va, rawBytes, 2, Cil_cgt, "cgt");
+                      insn = makeInstruction(va, rawBytes, 2, Cil_cgt);
                       break;
 
                   case 0x03: // Cil_cgt_un: push 1 (of type int32) if value1 > value2, unsigned or unordered, else push 0
-                     insn = makeInstruction(va, rawBytes, 2, Cil_cgt_un, "cgt_un");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_cgt_un);
                      break;
 
                   case 0x04: // Cil_clt: push 1 (of type int32) if value1 < value2, else push 0
-                      insn = makeInstruction(va, rawBytes, 2, Cil_clt, "clt");
+                      insn = makeInstruction(va, rawBytes, 2, Cil_clt);
                       break;
 
                   case 0x05: // Cil_clt_un: push 1 (of type int32) if value1 < value2, unsigned or unordered, else push 0
-                     insn = makeInstruction(va, rawBytes, 2, Cil_clt_un, "clt_un");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_clt_un);
                      break;
 
                   case 0x06: // Cil_ldftn: push a pointer to a method referenced by method, on the stack
                      token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueI32(token);
-                     insn = makeInstruction(va, rawBytes, 6, Cil_ldftn, "ldftn", operand);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_ldftn, operand);
                      break;
 
                   case 0x07: // Cil_ldvirtftn: push address of virtual method method on the stack
                      token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueI32(token);
-                     insn = makeInstruction(va, rawBytes, 6, Cil_ldvirtftn, "ldvirtftn", operand);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_ldvirtftn, operand);
                      break;
 
                // Note: instruction 0xFE08 is an unused instruction
@@ -1599,110 +1599,110 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
                   case 0x09: { // Cil_ldarg: load argument numbered num onto the stack
                      uint16_t value = ByteOrder::leToHost(*((uint16_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU16(value);
-                     insn = makeInstruction(va, rawBytes, 4, Cil_ldarg, "ldarg", operand);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_ldarg, operand);
                      break;
                   }
 
                   case 0x0A: { // Cil_ldarga: fetch the address of the argument argNum
                      uint16_t value = ByteOrder::leToHost(*((uint16_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU16(value);
-                     insn = makeInstruction(va, rawBytes, 4, Cil_ldarga, "ldarga", operand);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_ldarga, operand);
                      break;
                   }
 
                   case 0x0B: { // Cil_starg: store value to the argument numbered num
                      uint16_t value = ByteOrder::leToHost(*((uint16_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU16(value);
-                     insn = makeInstruction(va, rawBytes, 4, Cil_starg, "starg", operand);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_starg, operand);
                      break;
                   }
 
                   case 0x0C: { // Cil_ldloc: load local variable of index onto stack
                      uint16_t value = ByteOrder::leToHost(*((uint16_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU16(value);
-                     insn = makeInstruction(va, rawBytes, 4, Cil_ldloc, "ldloc", operand);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_ldloc, operand);
                      break;
                   }
 
                   case 0x0D: // Cil_ldloca: load address of local variable with index indx
                      valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU8(valueU8);
-                     insn = makeInstruction(va, rawBytes, 3, Cil_ldloca, "ldloca", operand);
+                     insn = makeInstruction(va, rawBytes, 3, Cil_ldloca, operand);
                      break;
 
                   case 0x0E: { // Cil_stloc: pop a value from stack into local variable indx
                      uint16_t value = ByteOrder::leToHost(*((uint16_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU16(value);
-                     insn = makeInstruction(va, rawBytes, 4, Cil_stloc, "stloc", operand);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_stloc, operand);
                      break;
                   }
 
                   case 0x0F: // Cil_localloc: allocate space from the local memory pool
-                     insn = makeInstruction(va, rawBytes, 2, Cil_localloc, "localloc");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_localloc);
                      break;
 
                // Note: instruction 0xFE10 is not a legal instruction
 
                   case 0x11: // Cil_endfilter: end an exception handling filter clause
-                     insn = makeInstruction(va, rawBytes, 2, Cil_endfilter, "endfilter");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_endfilter);
                      break;
 
                   case 0x12: // Cil_unaligned_: subsequence pointer instruction might be unaligned
                      valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU8(valueU8);
-                     insn = makeInstruction(va, rawBytes, 3, Cil_unaligned_, "unaligned", operand);
+                     insn = makeInstruction(va, rawBytes, 3, Cil_unaligned_, operand);
                      break;
 
                   case 0x13: // Cil_volatile_: subsequent pointer reference is volatile
-                     insn = makeInstruction(va, rawBytes, 2, Cil_volatile_, "volatile");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_volatile_);
                      break;
 
                   case 0x14: // Cil_tail_: subsequent call terminates current method
-                     insn = makeInstruction(va, rawBytes, 2, Cil_tail_, "tail");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_tail_);
                      break;
 
                   case 0x15: // Cil_initobj: initialize the value at address dest
                      token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueI32(token);
-                     insn = makeInstruction(va, rawBytes, 6, Cil_initobj, "initobj", operand);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_initobj, operand);
                      break;
 
                   case 0x16: // Cil_constrained_ call a virtual method on a type constrained to be type T
                      token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueI32(token);
-                     insn = makeInstruction(va, rawBytes, 6, Cil_constrained_, "constrained", operand);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_constrained_, operand);
                      break;
 
                   case 0x17: // Cil_cpblk: copy data from memory to memory
-                     insn = makeInstruction(va, rawBytes, 2, Cil_cpblk, "cpblk");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_cpblk);
                      break;
 
                   case 0x18: // Cil_initblk: set all bytes in a block of memory to a given byte value
-                     insn = makeInstruction(va, rawBytes, 2, Cil_initblk, "initblk");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_initblk);
                      break;
 
                   case 0x19: // Cil_no_: the specified fault check(s) normally performed as part of the execution of the subsequent instruction can/shall be skipped
                      valueU8 = ByteOrder::leToHost(*((uint8_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueU8(valueU8);
-                     insn = makeInstruction(va, rawBytes, 3, Cil_no_, "no", operand);
+                     insn = makeInstruction(va, rawBytes, 3, Cil_no_, operand);
                      break;
 
                   case 0x1A: // Cil_rethrow: rethrow the current exception
-                     insn = makeInstruction(va, rawBytes, 2, Cil_rethrow, "rethrow");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_rethrow);
                      break;
 
                   case 0x1C: // Cil_sizeof: push the size, in bytes, of a type as an unsigned int32
                      token = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+2)));
                      operand = SageBuilderAsm::buildValueI32(token);
-                     insn = makeInstruction(va, rawBytes, 6, Cil_sizeof, "sizeof", operand);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_sizeof, operand);
                      break;
 
                   case 0x1D: // Cil_refanytype: push the type token stored in a typed reference
-                    insn = makeInstruction(va, rawBytes, 2, Cil_refanytype, "refanytype");
+                    insn = makeInstruction(va, rawBytes, 2, Cil_refanytype);
                     break;
 
                   case 0x1E: // Cil_readonly_ specify that the subsequent array address operation performs no type check at runtime, and that it returns a controlled-mutability managed pointer
-                     insn = makeInstruction(va, rawBytes, 2, Cil_readonly_, "readonly");
+                     insn = makeInstruction(va, rawBytes, 2, Cil_readonly_);
                      break;
 
                   case 0x08: // Cil_unused56
@@ -1751,7 +1751,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
         case 0xFF: // Cil_prefixref
            mlog[WARN] << "found internal instruction Cil_prefixref: " << hex << (int)rawBytes[0] << dec << "\n";
-           insn = makeInstruction(va, rawBytes, 1, Cil_prefixref, "prefixref");
+           insn = makeInstruction(va, rawBytes, 1, Cil_prefixref);
            break;
 
         default:
@@ -1768,7 +1768,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
 SgAsmInstruction*
 Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
-    auto insn = new SgAsmCilInstruction(e.ip, *architecture()->registrationId(), "unknown", Cil_unknown_instruction);
+    auto insn = new SgAsmCilInstruction(e.ip, *architecture()->registrationId(), Cil_unknown_instruction);
     auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -1785,7 +1785,7 @@ Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
 SgAsmCilInstruction*
 Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size)
 {
-    auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), "unknown", Cil_unknown_instruction);
+    auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), Cil_unknown_instruction);
     auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -1797,12 +1797,12 @@ Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t si
 }
 
 SgAsmCilInstruction*
-Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size,
-                     CilInstructionKind kind, const std::string &mnemonic, SgAsmExpression* operand) const
+Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size, CilInstructionKind kind,
+                     SgAsmExpression* operand) const
 {
     ASSERT_forbid2(Cil_unknown_instruction==kind, "should have called make_unknown_instruction instead");
 
-    auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), mnemonic, kind);
+    auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), kind);
     auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);

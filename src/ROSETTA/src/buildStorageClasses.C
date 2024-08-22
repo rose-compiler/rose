@@ -899,6 +899,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "JvmInstructionKind") || "Rose::BinaryAnalysis::JvmInstructionKind" == varTypeString ||
                  ( varTypeString == "MipsInstructionKind") || "Rose::BinaryAnalysis::MipsInstructionKind" == varTypeString ||
                  ( varTypeString == "M68kInstructionKind") || "Rose::BinaryAnalysis::M68kInstructionKind" == varTypeString ||
+                 ( varTypeString == "Rose::BinaryAnalysis::M68kDataFormat") ||
                  ( varTypeString == "ByteOrder::Endianness" ) || "Rose::BinaryAnalysis::ByteOrder::Endianness" == varTypeString ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||

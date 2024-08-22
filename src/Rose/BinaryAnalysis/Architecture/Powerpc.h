@@ -20,6 +20,7 @@ public:
 
 public:
     virtual const CallingConvention::Dictionary& callingConventions() const override;
+    std::string instructionMnemonic(const SgAsmInstruction*) const override;
     std::string instructionDescription(const SgAsmInstruction*) const override;
 
     Sawyer::Container::Interval<size_t> bytesPerInstruction() const override;

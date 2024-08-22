@@ -440,7 +440,7 @@ buildX86MultibyteNopInstruction(size_t nBytes) {
     ASSERT_require(nBytes <= 9);
 
     auto arch = Architecture::findByName("intel-pentium4").orThrow();
-    SgAsmX86Instruction *instruction = new SgAsmX86Instruction(0, *arch->registrationId(), "nop", x86_nop,
+    SgAsmX86Instruction *instruction = new SgAsmX86Instruction(0, *arch->registrationId(), x86_nop,
                                                                x86_insnsize_32, x86_insnsize_32, x86_insnsize_32);
 
     // Build a simple version of multi-byte nop using repeated prefixes.

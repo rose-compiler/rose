@@ -69,15 +69,6 @@ public:
     std::string architectureIdSerialize(uint8_t id) const;
     uint8_t architectureIdDeserialize(const std::string &name) const;
 
-    /** Property: Instruction mnemonic string.
-     *
-     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @c kind property
-     *  defined in the subclasses, or the @ref SgAsmInstruction::get_anyKind function instead of comparing mnemonic strings. But be
-     *  aware that some architectures have mnemonics that include information about the instruction operands and this information is
-     *  typically not represented by the instruction kind enum constants. */
-    [[using Rosebud: rosetta, ctor_arg]]
-    std::string mnemonic;
-
     /** Property: Raw bytes of an instruction.
      *
      *  These are the bytes that were actually decoded to obtain the instruction AST. */
@@ -169,6 +160,14 @@ public:
      *
      *  Thread safety: This function is thread safe. */
     Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
+
+    /** Property: Instruction mnemonic string.
+     *
+     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @c kind property
+     *  defined in the subclasses, or the @ref SgAsmInstruction::get_anyKind function instead of comparing mnemonic strings. But be
+     *  aware that some architectures have mnemonics that include information about the instruction operands and this information is
+     *  typically not represented by the instruction kind enum constants. */
+    std::string get_mnemonic() const;
 
     // [Robb Matzke 2023-12-04]: deprecated
     virtual std::string description() const final ROSE_DEPRECATED("use Architecture::Base::instructionDescription");

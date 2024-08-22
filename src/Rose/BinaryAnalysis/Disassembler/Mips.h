@@ -94,7 +94,7 @@ public:
     // The following functions are used by the various instruction-specific Mips32 subclasses.
 
     /** Create a new instruction. */
-    SgAsmMipsInstruction *makeInstruction(rose_addr_t insn_va, MipsInstructionKind, const std::string &mnemonic,
+    SgAsmMipsInstruction *makeInstruction(rose_addr_t insn_va, MipsInstructionKind,
                                           SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL) const;
 

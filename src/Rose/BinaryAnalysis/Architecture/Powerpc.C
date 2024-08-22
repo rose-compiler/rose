@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
+#include <stringify.h>                                  // ROSE
 
 #include <SgAsmPowerpcInstruction.h>
 #include <Cxx_GrammarDowncast.h>
@@ -56,6 +57,20 @@ Powerpc::bytesPerInstruction() const {
 Alignment
 Powerpc::instructionAlignment() const {
     return Alignment(4, bitsPerWord());
+}
+
+std::string
+Powerpc::instructionMnemonic(const SgAsmInstruction *insn) const {
+    if (isUnknown(insn))
+        return "unknown";
+
+    ASSERT_not_null(isSgAsmPowerpcInstruction(insn));
+    const std::string s = stringify::Rose::BinaryAnalysis::PowerpcInstructionKind(insn->get_anyKind(), "powerpc_");
+    if (s.size() > 7 && boost::ends_with(s, "_record")) {
+        return s.substr(0, s.size()-7) + ".";
+    } else {
+        return s;
+    }
 }
 
 std::string

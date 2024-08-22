@@ -146,40 +146,12 @@ Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
         operand->set_parent(operands);
     }
     wrapPrePostIncrement(operands, detail);
-    auto insn = new SgAsmAarch64Instruction(va, *architecture()->registrationId(), r.csi->mnemonic,
-                                            (Aarch64InstructionKind)r.csi->id, detail.cc);
+    auto insn = new SgAsmAarch64Instruction(va, *architecture()->registrationId(), (Aarch64InstructionKind)r.csi->id, detail.cc);
     insn->set_rawBytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
     insn->set_operandList(operands);
     insn->set_updatesFlags(detail.update_flags);
     operands->set_parent(insn);
     retval = insn;
-
-    // Capstone doesn't provide a condition argument for some instructions, nor does it indicate the condition as part of the
-    // mnemonic like it does for the B.cond instructions. Therefore, we adjust the mnemonic ourselves.
-    if (insn->get_kind() != Aarch64InstructionKind::ARM64_INS_B && insn->get_condition() != Aarch64InstructionCondition::ARM64_CC_INVALID) {
-        std::string cond;
-        switch (insn->get_condition()) {
-            case ARM64_CC_INVALID: ASSERT_not_reachable("impossible");
-            case ARM64_CC_EQ: cond = ".eq"; break;
-            case ARM64_CC_NE: cond = ".ne"; break;
-            case ARM64_CC_HS: cond = ".hs"; break;
-            case ARM64_CC_LO: cond = ".lo"; break;
-            case ARM64_CC_MI: cond = ".mi"; break;
-            case ARM64_CC_PL: cond = ".pl"; break;
-            case ARM64_CC_VS: cond = ".vs"; break;
-            case ARM64_CC_VC: cond = ".vc"; break;
-            case ARM64_CC_HI: cond = ".hi"; break;
-            case ARM64_CC_LS: cond = ".ls"; break;
-            case ARM64_CC_GE: cond = ".ge"; break;
-            case ARM64_CC_LT: cond = ".lt"; break;
-            case ARM64_CC_GT: cond = ".gt"; break;
-            case ARM64_CC_LE: cond = ".le"; break;
-            case ARM64_CC_AL: cond = ".al"; break;
-            case ARM64_CC_NV: cond = ".nv"; break;
-        }
-        if (!boost::ends_with(insn->get_mnemonic(), cond))
-            insn->set_mnemonic(insn->get_mnemonic() + cond);
-    }
 
     // Work around capstone bugs
     if (BitOps::bits(opcode(insn), 24, 31) == 0b10011000) {
@@ -225,8 +197,8 @@ Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
 
 SgAsmInstruction*
 Aarch64::makeUnknownInstruction(const Exception &e) {
-    SgAsmAarch64Instruction *insn = new SgAsmAarch64Instruction(e.ip, *architecture()->registrationId(), "unknown",
-                                                                ARM64_INS_INVALID, ARM64_CC_INVALID);
+    SgAsmAarch64Instruction *insn = new SgAsmAarch64Instruction(e.ip, *architecture()->registrationId(), ARM64_INS_INVALID,
+                                                                ARM64_CC_INVALID);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);

@@ -249,7 +249,7 @@ private:
      *  disassembler object (see the instruction-related data members below). In order that the new instruction contains the
      *  correct number of raw instruction bytes (p_raw_bytes) it should be called after all the instruction bytes have been
      *  read, otherwise remember to call set_raw_bytes() explicitly. */
-    SgAsmX86Instruction *makeInstruction(State &state, X86InstructionKind kind, const std::string &mnemonic,
+    SgAsmX86Instruction *makeInstruction(State &state, X86InstructionKind kind,
                                          SgAsmExpression *op1=nullptr, SgAsmExpression *op2=nullptr,
                                          SgAsmExpression *op3=nullptr, SgAsmExpression *op4=nullptr) const;
 

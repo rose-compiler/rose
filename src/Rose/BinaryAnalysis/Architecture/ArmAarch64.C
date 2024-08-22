@@ -237,6 +237,818 @@ ArmAarch64::instructionAlignment() const {
 }
 
 std::string
+ArmAarch64::instructionMnemonic(const SgAsmInstruction *insn_) const {
+    if (isUnknown(insn_))
+        return "unknown";
+
+    using Kind = Aarch64InstructionKind;
+    auto insn = isSgAsmAarch64Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    const std::string base = [insn]() {
+        // The commented out cases are not present in Capstone at this time. Parenthesized reasons are given when available.
+        switch (insn->get_kind()) {
+            case Kind::ARM64_INS_INVALID:           return "unknown";
+
+            case Kind::ARM64_INS_ABS:               return "abs";
+            case Kind::ARM64_INS_ADC:               return "adc";
+                //case Kind::ARM64_INS_ADCS: add with carry, setting flags
+            case Kind::ARM64_INS_ADD:               return "add";
+                // case Kind::ARM64_INS_ADDG: add with tag (ARMv8.5)
+            case Kind::ARM64_INS_ADDHN:             return "addhn";
+            case Kind::ARM64_INS_ADDHN2:            return "addhn2";
+            case Kind::ARM64_INS_ADDP:              return "addp";
+                // case Kind::ARM64_INS_ADDS: add, setting flags
+            case Kind::ARM64_INS_ADDV:              return "addv";
+            case Kind::ARM64_INS_ADR:               return "adr";
+            case Kind::ARM64_INS_ADRP:              return "adrp";
+            case Kind::ARM64_INS_AESD:              return "aesd";
+            case Kind::ARM64_INS_AESE:              return "aese";
+            case Kind::ARM64_INS_AESIMC:            return "aesimc";
+            case Kind::ARM64_INS_AESMC:             return "aesmc";
+            case Kind::ARM64_INS_AND:               return "and";
+                // case Kind::ARM64_INS_ANDS: bitwise AND, setting flags
+            case Kind::ARM64_INS_ASR:               return "asr";
+                // case Kind::ARM64_INS_ASRV: arithmetic shift right variable (used by the alias ASR)
+            case Kind::ARM64_INS_AT:                return "at";
+                // case Kind::ARM64_INS_AUTDA: authenticate data address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTDZA: authenticate data address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTDB: authenticate data address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AUTDZB: authenticate data address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIA: authenticate instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIA1716: authenticate instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIASP: authenticate instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIAZ: authenticate instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIZA: authenticate instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIB: authenticate instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIB1716: authenticate instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIBSP: authenticate instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIBZ: authenticate instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AUTIZB: authenticate instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_AXFlag: convert floating-point condition flags from ARM to external format (ARMv8.5)
+            case Kind::ARM64_INS_B:                 return "b";
+                // case Kind::ARM64_INS_BCAX: bit clear and exclusive OR (ARMv8.2)
+                // case Kind::ARM64_INS_BFC: bitfield clear (ARMv8.2)
+            case Kind::ARM64_INS_BFI:               return "bfi"; // alias of BFM
+            case Kind::ARM64_INS_BFM:               return "bfm";
+            case Kind::ARM64_INS_BFXIL:             return "bfxil";
+            case Kind::ARM64_INS_BIC:               return "bic";
+                // case Kind::ARM64_INS_BICS: bitwise bit clear, setting flags
+            case Kind::ARM64_INS_BIF:               return "bif";
+            case Kind::ARM64_INS_BIT:               return "bit";
+            case Kind::ARM64_INS_BL:                return "bl";
+            case Kind::ARM64_INS_BLR:               return "blr";
+                // case Kind::ARM64_INS_BLRAA: branch with link to register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_BLRAAZ: branch with link to register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_BLRAB: branch with link to register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_BLRABZ: branch with link to register with pointer authentication (ARMv8.3)
+            case Kind::ARM64_INS_BR:                return "br";
+                // case Kind::ARM64_INS_BRAA: branch to register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_BRAAZ: branch to register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_BRAB: branch to register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_BRABZ: branch to register with pointer authentication (ARMv8.3)
+            case Kind::ARM64_INS_BRK:               return "brk";
+            case Kind::ARM64_INS_BSL:               return "bsl";
+                // case Kind::ARM64_INS_BTI: branch target identification (ARMv8.5)
+                // case Kind::ARM64_INS_CAS: compare and swap (ARMv8.1)
+                // case Kind::ARM64_INS_CASA: compare and swap (ARMv8.1)
+                // case Kind::ARM64_INS_CASAL: compare and swap (ARMv8.1)
+                // case Kind::ARM64_INS_CASL: compare and swap word or doubleword (ARMv8.1)
+                // case Kind::ARM64_INS_CASB: compare and swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_CASAB: compare and swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_CASALB: compare and swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_CASLB: compare and swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_CASH: compare and swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_CASAH: compare and swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_CASALH: compare and swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_CASLH: compare and swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_CASP: compare and swap apir of words or doublewords (ARMv8.1)
+                // case Kind::ARM64_INS_CASPA: compare and swap apir of words or doublewords (ARMv8.1)
+                // case Kind::ARM64_INS_CASPAL: compare and swap apir of words or doublewords (ARMv8.1)
+                // case Kind::ARM64_INS_CASPL: compare and swap apir of words or doublewords (ARMv8.1)
+            case Kind::ARM64_INS_CBNZ:              return "cbnz";
+            case Kind::ARM64_INS_CBZ:               return "cbz";
+            case Kind::ARM64_INS_CCMN:              return "ccmn";
+            case Kind::ARM64_INS_CCMP:              return "ccmp";
+                // case Kind::ARM64_INS_CFINV: invert carry flag (ARMv8.4)
+                // case Kind::ARM64_INS_CFP: control flow prediction restriction by context (alias of SYS)
+            case Kind::ARM64_INS_CINC:              return "cinc"; // alias of CSINC
+            case Kind::ARM64_INS_CINV:              return "cinv"; // alias of CSINV
+            case Kind::ARM64_INS_CLREX:             return "clrex";
+            case Kind::ARM64_INS_CLS:               return "cls";
+            case Kind::ARM64_INS_CLZ:               return "clz";
+            case Kind::ARM64_INS_CMEQ:              return "cmeq";
+            case Kind::ARM64_INS_CMGE:              return "cmge";
+            case Kind::ARM64_INS_CMGT:              return "cmgt";
+            case Kind::ARM64_INS_CMHI:              return "cmhi";
+            case Kind::ARM64_INS_CMHS:              return "cmhs";
+            case Kind::ARM64_INS_CMLE:              return "cmle";
+            case Kind::ARM64_INS_CMLT:              return "cmlt";
+            case Kind::ARM64_INS_CMN:               return "cmn"; // alias of ADDS
+            case Kind::ARM64_INS_CMP:               return "cmp"; // alias of SUBS
+                // case Kind::ARM64_INS_CMPP: compare with tag (ARMv8.5)
+            case Kind::ARM64_INS_CMTST:             return "cmtst";
+            case Kind::ARM64_INS_CNEG:              return "cneg"; // alias of CSNEG
+            case Kind::ARM64_INS_CNT:               return "cnt";
+                // case Kind::ARM64_INS_CPP: cache prefetch prediction restriction by context (alias of SYS)
+            case Kind::ARM64_INS_CRC32B:            return "crc32b";
+            case Kind::ARM64_INS_CRC32CB:           return "crc32cb";
+            case Kind::ARM64_INS_CRC32CH:           return "crc32ch";
+            case Kind::ARM64_INS_CRC32CW:           return "crc32cw";
+            case Kind::ARM64_INS_CRC32CX:           return "crc32cx";
+            case Kind::ARM64_INS_CRC32H:            return "crc32h";
+            case Kind::ARM64_INS_CRC32W:            return "crc32w";
+            case Kind::ARM64_INS_CRC32X:            return "crc32x";
+                // case Kind::ARM64_INS_CSDB: consumption of speculative data barrier
+            case Kind::ARM64_INS_CSEL:              return "csel";
+            case Kind::ARM64_INS_CSET:              return "cset"; // alias of CSINC
+            case Kind::ARM64_INS_CSETM:             return "csetm"; // alias of CSINV
+            case Kind::ARM64_INS_CSINC:             return "csinc";
+            case Kind::ARM64_INS_CSINV:             return "csinv";
+            case Kind::ARM64_INS_CSNEG:             return "csneg";
+            case Kind::ARM64_INS_DC:                return "dc"; // alias of SYS
+            case Kind::ARM64_INS_DCPS1:             return "dcps1";
+            case Kind::ARM64_INS_DCPS2:             return "dcps2";
+            case Kind::ARM64_INS_DCPS3:             return "dcps3";
+            case Kind::ARM64_INS_DMB:               return "dmb";
+            case Kind::ARM64_INS_DRPS:              return "drps";
+            case Kind::ARM64_INS_DSB:               return "dsb";
+            case Kind::ARM64_INS_DUP:               return "dup";
+                // case Kind::ARM64_INS_DVP: data value prediction restriction by context (alias of SYS)
+            case Kind::ARM64_INS_EON:               return "eon";
+            case Kind::ARM64_INS_EOR:               return "eor";
+                // case Kind::ARM64_INS_EOR3: three-way exclusive OR (ARMv8.2)
+            case Kind::ARM64_INS_ERET:              return "eret";
+                // case Kind::ARM64_INS_ERETAA: exception return (ARMv8.3)
+                // case Kind::ARM64_INS_ERETAB: exception return (ARMv8.3)
+                // case Kind::ARM64_INS_ESB: error synchronization barrier (ARMv8.2)
+            case Kind::ARM64_INS_EXT:               return "ext";
+            case Kind::ARM64_INS_EXTR:              return "extr";
+            case Kind::ARM64_INS_FABD:              return "fabd";
+            case Kind::ARM64_INS_FABS:              return "fabs";
+            case Kind::ARM64_INS_FACGE:             return "facge";
+            case Kind::ARM64_INS_FACGT:             return "facgt";
+            case Kind::ARM64_INS_FADD:              return "fadd";
+            case Kind::ARM64_INS_FADDP:             return "faddp";
+            case Kind::ARM64_INS_FCCMP:             return "fccmp";
+            case Kind::ARM64_INS_FCCMPE:            return "fccmpe";
+            case Kind::ARM64_INS_FCMEQ:             return "fcmeq";
+            case Kind::ARM64_INS_FCMGE:             return "fcmge";
+            case Kind::ARM64_INS_FCMGT:             return "fcmgt";
+                // case Kind::ARM64_INS_FCMLA: floating-point complex multiply accumulate (ARMv8.3)
+            case Kind::ARM64_INS_FCMLE:             return "fcmle";
+            case Kind::ARM64_INS_FCMLT:             return "fcmlt";
+            case Kind::ARM64_INS_FCMP:              return "fcmp";
+            case Kind::ARM64_INS_FCMPE:             return "fcmpe";
+            case Kind::ARM64_INS_FCSEL:             return "fcsel";
+            case Kind::ARM64_INS_FCVT:              return "fcvt";
+            case Kind::ARM64_INS_FCVTAS:            return "fcvtas";
+            case Kind::ARM64_INS_FCVTAU:            return "fcvtau";
+            case Kind::ARM64_INS_FCVTL:             return "fcvtl";
+            case Kind::ARM64_INS_FCVTL2:            return "fcvtl2";
+            case Kind::ARM64_INS_FCVTMS:            return "fcvtms";
+            case Kind::ARM64_INS_FCVTMU:            return "fcvtmu";
+            case Kind::ARM64_INS_FCVTN:             return "fcvtn";
+            case Kind::ARM64_INS_FCVTN2:            return "fcvtn2";
+            case Kind::ARM64_INS_FCVTNS:            return "fcvtns";
+            case Kind::ARM64_INS_FCVTNU:            return "fcvtnu";
+            case Kind::ARM64_INS_FCVTPS:            return "fcvtps";
+            case Kind::ARM64_INS_FCVTPU:            return "fcvtpu";
+            case Kind::ARM64_INS_FCVTXN:            return "fcvtxn";
+            case Kind::ARM64_INS_FCVTXN2:           return "fcvtxn2";
+            case Kind::ARM64_INS_FCVTZS:            return "fcvtzs";
+            case Kind::ARM64_INS_FCVTZU:            return "fcvtzu";
+            case Kind::ARM64_INS_FDIV:              return "fdiv";
+                // case Kind::ARM64_INS_FJCVTZS: floating-point Javascript convert to signed fixed-point (ARMv8.3)
+            case Kind::ARM64_INS_FMADD:             return "fmadd";
+            case Kind::ARM64_INS_FMAX:              return "fmax";
+            case Kind::ARM64_INS_FMAXNM:            return "fmaxnm";
+            case Kind::ARM64_INS_FMAXNMP:           return "fmaxnmp";
+            case Kind::ARM64_INS_FMAXNMV:           return "fmaxnmv";
+            case Kind::ARM64_INS_FMAXP:             return "fmaxp";
+            case Kind::ARM64_INS_FMAXV:             return "fmaxv";
+            case Kind::ARM64_INS_FMIN:              return "fmin";
+            case Kind::ARM64_INS_FMINNM:            return "fminnm";
+            case Kind::ARM64_INS_FMINNMP:           return "fminnmp";
+            case Kind::ARM64_INS_FMINNMV:           return "fminnmv";
+            case Kind::ARM64_INS_FMINP:             return "fminp";
+            case Kind::ARM64_INS_FMINV:             return "fminv";
+            case Kind::ARM64_INS_FMLA:              return "fmla";
+                // case Kind::ARM64_INS_FMLAL: floating-point fused multiply-add long (ARMv8.2)
+                // case Kind::ARM64_INS_FMLAL2: floating-point fused multiply-add long (ARMv8.2)
+            case Kind::ARM64_INS_FMLS:              return "fmls";
+                // case Kind::ARM64_INS_FMLSL: floating-point fused multiply-subtract long (ARMv8.2)
+                // case Kind::ARM64_INS_FMLSL2: floating-point fused multiply-subtract long (ARMv8.2)
+            case Kind::ARM64_INS_FMOV:              return "fmov";
+            case Kind::ARM64_INS_FMSUB:             return "fmsub";
+            case Kind::ARM64_INS_FMUL:              return "fmul";
+            case Kind::ARM64_INS_FMULX:             return "fmulx";
+            case Kind::ARM64_INS_FNEG:              return "fneg";
+            case Kind::ARM64_INS_FNMADD:            return "fnmadd";
+            case Kind::ARM64_INS_FNMSUB:            return "fnmsub";
+            case Kind::ARM64_INS_FNMUL:             return "fnmul";
+            case Kind::ARM64_INS_FRECPE:            return "frecpe";
+            case Kind::ARM64_INS_FRECPS:            return "frecps";
+            case Kind::ARM64_INS_FRECPX:            return "frecpx";
+                // case Kind::ARM64_INS_FRINT32X: floating-point round to 32-integer (ARMv8.5)
+                // case Kind::ARM64_INS_FRINT32Z: floating-point round to 32-bit integer toward zero
+                // case Kind::ARM64_INS_FRINT64X: floating-point round to 64-bit integer
+                // case Kind::ARM64_INS_FRINT64Z: floating-point round to 64-bit integer toward zero
+            case Kind::ARM64_INS_FRINTA:            return "frinta";
+            case Kind::ARM64_INS_FRINTI:            return "frinti";
+            case Kind::ARM64_INS_FRINTM:            return "frintm";
+            case Kind::ARM64_INS_FRINTN:            return "frintn";
+            case Kind::ARM64_INS_FRINTP:            return "frintp";
+            case Kind::ARM64_INS_FRINTX:            return "frintx";
+            case Kind::ARM64_INS_FRINTZ:            return "frintz";
+            case Kind::ARM64_INS_FRSQRTE:           return "frsqrte";
+            case Kind::ARM64_INS_FRSQRTS:           return "frsqrts";
+            case Kind::ARM64_INS_FSQRT:             return "fsqrt";
+            case Kind::ARM64_INS_FSUB:              return "fsub";
+                // case Kind::ARM64_INS_GMI: tag mask insert (ARMv8.5)
+            case Kind::ARM64_INS_HINT:              return "hint";
+            case Kind::ARM64_INS_HLT:               return "hlt";
+            case Kind::ARM64_INS_HVC:               return "hvc";
+            case Kind::ARM64_INS_IC:                return "ic"; // alias of SYS
+            case Kind::ARM64_INS_INS:               return "ins";
+                // case Kind::ARM64_INS_IRG: insert random tag (ARMv8.5)
+            case Kind::ARM64_INS_ISB:               return "isb";
+            case Kind::ARM64_INS_LD1:               return "ld1";
+            case Kind::ARM64_INS_LD1R:              return "ld1r";
+            case Kind::ARM64_INS_LD2:               return "ld2";
+            case Kind::ARM64_INS_LD2R:              return "ld2r";
+            case Kind::ARM64_INS_LD3:               return "ld3";
+            case Kind::ARM64_INS_LD3R:              return "ld3r";
+            case Kind::ARM64_INS_LD4:               return "ld4";
+            case Kind::ARM64_INS_LD4R:              return "ld4r";
+                // case Kind::ARM64_INS_LDADD: atomic add on word or doubleword (ARMv8.1, used by STADD, STADDL)
+                // case Kind::ARM64_INS_LDADDA: atomic add on word or doubleword (ARMv8.1, used by STADD, STADDL)
+                // case Kind::ARM64_INS_LDADDAL: atomic add on word or doubleword (ARMv8.1, used by STADD, STADDL)
+                // case Kind::ARM64_INS_LDADDL: atomic add on word or doubleword (ARMv8.1, used by STADD, STADDL)
+                // case Kind::ARM64_INS_LDADDB: atomic add on word or doubleword (ARMv8.1, used by STADDB, STADDLB)
+                // case Kind::ARM64_INS_LDADDAB: atomic add on word or doubleword (ARMv8.1, used by STADDB, STADDLB)
+                // case Kind::ARM64_INS_LDADDALB: atomic add on word or doubleword (ARMv8.1, used by STADDB, STADDLB)
+                // case Kind::ARM64_INS_LDADDLB: atomic add on word or doubleword (ARMv8.1, used by STADDB, STADDLB)
+                // case Kind::ARM64_INS_LDADDH: atomic add on halfword (ARMv8.1, used by STADDH, STADDLH)
+                // case Kind::ARM64_INS_LDADDAH: atomic add on halfword (ARMv8.1, used by STADDH, STADDLH)
+                // case Kind::ARM64_INS_LDADDALH: atomic add on halfword (ARMv8.1, used by STADDH, STADDLH)
+                // case Kind::ARM64_INS_LDADDLH: atomic add on halfword (ARMv8.1, used by STADDH, STADDLH)
+                // case Kind::ARM64_INS_LDAPR: load-acquire RCpc register (ARMv8.3)
+                // case Kind::ARM64_INS_LDAPRB: load-acquire RCpc register byte (ARMv8.3)
+                // case Kind::ARM64_INS_LDAPRH: load-acquire RCpc register halfword (ARMv8.3)
+                // case Kind::ARM64_INS_LDAPUR: load-acquire RCpc register
+                // case Kind::ARM64_INS_LDAPURB: load-acquire RCpc register byte
+                // case Kind::ARM64_INS_LDAPURH: load-acquire RCpc regsiter halfword
+                // case Kind::ARM64_INS_LDAPURSB: load-acquire RCpc regsiter signed byte
+                // case Kind::ARM64_INS_LDAPURSH: load-acquire RCpc register signed halfword
+                // case Kind::ARM64_INS_LDAPURSW: load-acquire RCpc register signed word
+            case Kind::ARM64_INS_LDAR:              return "ldar";
+            case Kind::ARM64_INS_LDARB:             return "ldarb";
+            case Kind::ARM64_INS_LDARH:             return "ldarh";
+            case Kind::ARM64_INS_LDAXP:             return "ldaxp";
+            case Kind::ARM64_INS_LDAXR:             return "ldaxr";
+            case Kind::ARM64_INS_LDAXRB:            return "ldaxrb";
+            case Kind::ARM64_INS_LDAXRH:            return "ldaxrh";
+                // case Kind::ARM64_INS_LDCLR: atomic bit clear on word or doubleword (ARMv8.1, used by STCLR, STCLRL)
+                // case Kind::ARM64_INS_LDCLRA: atomic bit clear on word or doubleword (ARMv8.1, used by STCLR, STCLRL)
+                // case Kind::ARM64_INS_LDCLRAL: atomic bit clear on word or doubleword (ARMv8.1, used by STCLR, STCLRL)
+                // case Kind::ARM64_INS_LDCLRL: atomic bit clear on word or doubleword (ARMv8.1, used by STCLR, STCLRL)
+                // case Kind::ARM64_INS_LDCLRB: atomic bit clear on byte (ARMv8.1, used by STCLRB, STCLRLB)
+                // case Kind::ARM64_INS_LDCLRAB: atomic bit clear on byte (ARMv8.1, used by STCLRB, STCLRLB)
+                // case Kind::ARM64_INS_LDCLRALB: atomic bit clear on byte (ARMv8.1, used by STCLRB, STCLRLB)
+                // case Kind::ARM64_INS_LDCLRLB: atomic bit clear on byte (ARMv8.1, used by STCLRB, STCLRLB)
+                // case Kind::ARM64_INS_LDCLRH: atomic bit clear on halfword (ARMv8.1, used by STCLRH, STCLRLH)
+                // case Kind::ARM64_INS_LDCLRAH: atomic bit clear on halfword (ARMv8.1, used by STCLRH, STCLRLH)
+                // case Kind::ARM64_INS_LDCLRALH: atomic bit clear on halfword (ARMv8.1, used by STCLRH, STCLRLH)
+                // case Kind::ARM64_INS_LDCLRLH: atomic bit clear on halfword (ARMv8.1, used by STCLRH, STCLRLH)
+                // case Kind::ARM64_INS_LDEOR: atomic exlusive OR on word or doubleword (ARMv8.1, used by STEOR, STEORL)
+                // case Kind::ARM64_INS_LDEORA: atomic exlusive OR on word or doubleword (ARMv8.1, used by STEOR, STEORL)
+                // case Kind::ARM64_INS_LDEORAL: atomic exlusive OR on word or doubleword (ARMv8.1, used by STEOR, STEORL)
+                // case Kind::ARM64_INS_LDEORL: atomic exlusive OR on word or doubleword (ARMv8.1, used by STEOR, STEORL)
+                // case Kind::ARM64_INS_LDEORB: atomic ex8sive OR on byte (ARMv8.1, used by STEORB, STEORLB)
+                // case Kind::ARM64_INS_LDEORAB: atomic ex8sive OR on byte (ARMv8.1, used by STEORB, STEORLB)
+                // case Kind::ARM64_INS_LDEORALB: atomic ex8sive OR on byte (ARMv8.1, used by STEORB, STEORLB)
+                // case Kind::ARM64_INS_LDEORLB: atomic ex8sive OR on byte (ARMv8.1, used by STEORB, STEORLB)
+                // case Kind::ARM64_INS_LDEORH: atomic exlusive OR on halfword (ARMv8.1, used by STEORH, STEORLH)
+                // case Kind::ARM64_INS_LDEORAH: atomic exlusive OR on halfword (ARMv8.1, used by STEORH, STEORLH)
+                // case Kind::ARM64_INS_LDEORALH: atomic exlusive OR on halfword (ARMv8.1, used by STEORH, STEORLH)
+                // case Kind::ARM64_INS_LDEORLH: atomic exlusive OR on halfword (ARMv8.1, used by STEORH, STEORLH)
+                // case Kind::ARM64_INS_LDG: load allocation tag (ARMv8.5)
+                // case Kind::ARM64_INS_LDGV: load tag vector (ARMv8.5)
+                // case Kind::ARM64_INS_LDLAR: load LOAcquire register (ARMv8.1)
+                // case Kind::ARM64_INS_LDLARB: load LOAcquire register byte (ARMv8.1)
+                // case Kind::ARM64_INS_LDLARH: load LOAcquire register halfword (ARMv8.1)
+            case Kind::ARM64_INS_LDNP:              return "ldnp";
+            case Kind::ARM64_INS_LDP:               return "ldp";
+            case Kind::ARM64_INS_LDPSW:             return "ldpsw";
+            case Kind::ARM64_INS_LDR:               return "ldr";
+                // case Kind::ARM64_INS_LDRAA: load register with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_LDRAB: load register with pointer authentication (ARMv8.3)
+            case Kind::ARM64_INS_LDRB:              return "ldrb";
+            case Kind::ARM64_INS_LDRH:              return "ldrh";
+            case Kind::ARM64_INS_LDRSB:             return "ldrsb";
+            case Kind::ARM64_INS_LDRSH:             return "ldrsh";
+            case Kind::ARM64_INS_LDRSW:             return "ldrsw";
+                // case Kind::ARM64_INS_LDSET: atomic bit set on word or doubleword (ARMv8.1, used by STSET, STSETL)
+                // case Kind::ARM64_INS_LDSETA: atomic bit set on word or doubleword (ARMv8.1, used by STSET, STSETL)
+                // case Kind::ARM64_INS_LDSETAL: atomic bit set on word or doubleword (ARMv8.1, used by STSET, STSETL)
+                // case Kind::ARM64_INS_LDSETL: atomic bit set on word or doubleword (ARMv8.1, used by STSET, STSETL)
+                // case Kind::ARM64_INS_LDSETB: atomic bit set on byte (ARMv8.1, used by STSETB, STSETLB)
+                // case Kind::ARM64_INS_LDSETAB: atomic bit set on byte (ARMv8.1, used by STSETB, STSETLB)
+                // case Kind::ARM64_INS_LDSETALB: atomic bit set on byte (ARMv8.1, used by STSETB, STSETLB)
+                // case Kind::ARM64_INS_LDSETLB: atomic bit set on byte (ARMv8.1, used by STSETB, STSETLB)
+                // case Kind::ARM64_INS_LDSETH: atomic bit set on halfword (ARMv8.1, used by STSETH, STSETLH)
+                // case Kind::ARM64_INS_LDSETAH: atomic bit set on halfword (ARMv8.1, used by STSETH, STSETLH)
+                // case Kind::ARM64_INS_LDSETALH: atomic bit set on halfword (ARMv8.1, used by STSETH, STSETLH)
+                // case Kind::ARM64_INS_LDSETLH: atomic bit set on halfword (ARMv8.1, used by STSETH, STSETLH)
+                // case Kind::ARM64_INS_LDSMAX: atomic signed maximum on word or doubleword (ARMv8.1, used by STSMAX, STSMAXL)
+                // case Kind::ARM64_INS_LDSMAXA: atomic signed maximum on word or doubleword (ARMv8.1, used by STSMAX, STSMAXL)
+                // case Kind::ARM64_INS_LDSMAXAL: atomic signed maximum on word or doubleword (ARMv8.1, used by STSMAX, STSMAXL)
+                // case Kind::ARM64_INS_LDSMAXL: atomic signed maximum on word or doubleword (ARMv8.1, used by STSMAX, STSMAXL)
+                // case Kind::ARM64_INS_LDSMAXB: atomic signed maximum on byte (ARMv8.1, used by STSMAXB, STSMAXLB)
+                // case Kind::ARM64_INS_LDSMAXAB: atomic signed maximum on byte (ARMv8.1, used by STSMAXB, STSMAXLB)
+                // case Kind::ARM64_INS_LDSMAXALB: atomic signed maximum on byte (ARMv8.1, used by STSMAXB, STSMAXLB)
+                // case Kind::ARM64_INS_LDSMAXLB: atomic signed maximum on byte (ARMv8.1, used by STSMAXB, STSMAXLB)
+                // case Kind::ARM64_INS_LDSMAXH: atomic signed maximum on halfword (ARMv8.1, used by STSMAXH, STSMAXLH)
+                // case Kind::ARM64_INS_LDSMAXAH: atomic signed maximum on halfword (ARMv8.1, used by STSMAXH, STSMAXLH)
+                // case Kind::ARM64_INS_LDSMAXALH: atomic signed maximum on halfword (ARMv8.1, used by STSMAXH, STSMAXLH)
+                // case Kind::ARM64_INS_LDSMAXLH: atomic signed maximum on halfword (ARMv8.1, used by STSMAXH, STSMAXLH)
+                // case Kind::ARM64_INS_LDSMIN: atomic signed minimum on word or doubleword (ARMv8.1, used by STSMIN, STSMINL)
+                // case Kind::ARM64_INS_LDSMINA: atomic signed minimum on word or doubleword (ARMv8.1, used by STSMIN, STSMINL)
+                // case Kind::ARM64_INS_LDSMINAL: atomic signed minimum on word or doubleword (ARMv8.1, used by STSMIN, STSMINL)
+                // case Kind::ARM64_INS_LDSMINL: atomic signed minimum on word or doubleword (ARMv8.1, used by STSMIN, STSMINL)
+                // case Kind::ARM64_INS_LDSMINB: atomic signed minimum on byte (ARMv8.1, used by STSMINB, STSMINLB)
+                // case Kind::ARM64_INS_LDSMINAB: atomic signed minimum on byte (ARMv8.1, used by STSMINB, STSMINLB)
+                // case Kind::ARM64_INS_LDSMINALB: atomic signed minimum on byte (ARMv8.1, used by STSMINB, STSMINLB)
+                // case Kind::ARM64_INS_LDSMINLB: atomic signed minimum on byte (ARMv8.1, used by STSMINB, STSMINLB)
+                // case Kind::ARM64_INS_LDSMINH: atomic signed minimum on halfword (ARMv8.1, used by STSMINH, STSMINLH)
+                // case Kind::ARM64_INS_LDSMINAH: atomic signed minimum on halfword (ARMv8.1, used by STSMINH, STSMINLH)
+                // case Kind::ARM64_INS_LDSMINALH: atomic signed minimum on halfword (ARMv8.1, used by STSMINH, STSMINLH)
+                // case Kind::ARM64_INS_LDSMINLH: atomic signed minimum on halfword (ARMv8.1, used by STSMINH, STSMINLH)
+            case Kind::ARM64_INS_LDTR:              return "ldtr";
+            case Kind::ARM64_INS_LDTRB:             return "ldtrb";
+            case Kind::ARM64_INS_LDTRH:             return "ldtrh";
+            case Kind::ARM64_INS_LDTRSB:            return "ldtrsb";
+            case Kind::ARM64_INS_LDTRSH:            return "ldtrsh";
+            case Kind::ARM64_INS_LDTRSW:            return "ldtrsw";
+                // case Kind::ARM64_INS_LDUMAX: atomic unsigned maximum on word or doubleword (ARMv8.1, used by STUMAX, STUMAXL)
+                // case Kind::ARM64_INS_LDUMAXA: atomic unsigned maximum on word or doubleword (ARMv8.1, used by STUMAX, STUMAXL)
+                // case Kind::ARM64_INS_LDUMAXAL: atomic unsigned maximum on word or doubleword (ARMv8.1, used by STUMAX, STUMAXL)
+                // case Kind::ARM64_INS_LDUMAXL: atomic unsigned maximum on word or doubleword (ARMv8.1, used by STUMAX, STUMAXL)
+                // case Kind::ARM64_INS_LDUMAXB: atomic unsigned maximum on byte (ARMv8.1, used by STUMAXB, STUMAXLB)
+                // case Kind::ARM64_INS_LDUMAXAB: atomic unsigned maximum on byte (ARMv8.1, used by STUMAXB, STUMAXLB)
+                // case Kind::ARM64_INS_LDUMAXALB: atomic unsigned maximum on byte (ARMv8.1, used by STUMAXB, STUMAXLB)
+                // case Kind::ARM64_INS_LDUMAXLB: atomic unsigned maximum on byte (ARMv8.1, used by STUMAXB, STUMAXLB)
+                // case Kind::ARM64_INS_LDUMAXH: atomic unsigned maximum on halfword (ARMv8.1, used by STUMAXH, STUMAXLH)
+                // case Kind::ARM64_INS_LDUMAXAH: atomic unsigned maximum on halfword (ARMv8.1, used by STUMAXH, STUMAXLH)
+                // case Kind::ARM64_INS_LDUMAXALH: atomic unsigned maximum on halfword (ARMv8.1, used by STUMAXH, STUMAXLH)
+                // case Kind::ARM64_INS_LDUMAXLH: atomic unsigned maximum on halfword (ARMv8.1, used by STUMAXH, STUMAXLH)
+                // case Kind::ARM64_INS_LDUMIN: atomic unsigned minimum on word or doubleword (ARMv8.1, used by STUMIN, STUMINL)
+                // case Kind::ARM64_INS_LDUMINA: atomic unsigned minimum on word or doubleword (ARMv8.1, used by STUMIN, STUMINL)
+                // case Kind::ARM64_INS_LDUMINAL: atomic unsigned minimum on word or doubleword (ARMv8.1, used by STUMIN, STUMINL)
+                // case Kind::ARM64_INS_LDUMINL: atomic unsigned minimum on word or doubleword (ARMv8.1, used by STUMIN, STUMINL)
+                // case Kind::ARM64_INS_LDUMINB: atomic unsigned minimum on byte (ARMv8.1, used by STUMINB, STUMINLB)
+                // case Kind::ARM64_INS_LDUMINAB: atomic unsigned minimum on byte (ARMv8.1, used by STUMINB, STUMINLB)
+                // case Kind::ARM64_INS_LDUMINALB: atomic unsigned minimum on byte (ARMv8.1, used by STUMINB, STUMINLB)
+                // case Kind::ARM64_INS_LDUMINLB: atomic unsigned minimum on byte (ARMv8.1, used by STUMINB, STUMINLB)
+                // case Kind::ARM64_INS_LDUMINH: atomic unsigned minimum on halfword (ARMv8.1, used by STUMINH, STUMINLH)
+                // case Kind::ARM64_INS_LDUMINAH: atomic unsigned minimum on halfword (ARMv8.1, used by STUMINH, STUMINLH)
+                // case Kind::ARM64_INS_LDUMINALH: atomic unsigned minimum on halfword (ARMv8.1, used by STUMINH, STUMINLH)
+                // case Kind::ARM64_INS_LDUMINLH: atomic unsigned minimum on halfword (ARMv8.1, used by STUMINH, STUMINLH)
+            case Kind::ARM64_INS_LDUR:              return "ldur";
+            case Kind::ARM64_INS_LDURB:             return "ldurb";
+            case Kind::ARM64_INS_LDURH:             return "ldurh";
+            case Kind::ARM64_INS_LDURSB:            return "ldursb";
+            case Kind::ARM64_INS_LDURSH:            return "ldursh";
+            case Kind::ARM64_INS_LDURSW:            return "ldursw";
+            case Kind::ARM64_INS_LDXP:              return "ldxp";
+            case Kind::ARM64_INS_LDXR:              return "ldxr";
+            case Kind::ARM64_INS_LDXRB:             return "ldxrb";
+            case Kind::ARM64_INS_LDXRH:             return "ldxrh";
+            case Kind::ARM64_INS_LSL:               return "lsl";
+                // case Kind::ARM64_INS_LSLV: logical shift left variable (used by LSL)
+            case Kind::ARM64_INS_LSR:               return "lsr";
+                // case Kind::ARM64_INS_LSRV: logical shift right variable (used by LSR)
+            case Kind::ARM64_INS_MADD:              return "madd";
+            case Kind::ARM64_INS_MLA:               return "mla";
+            case Kind::ARM64_INS_MLS:               return "mls";
+            case Kind::ARM64_INS_MNEG:              return "mneg"; // alias of MSUB
+            case Kind::ARM64_INS_MOV:               return "mov";
+            case Kind::ARM64_INS_MOVI:              return "movi";
+            case Kind::ARM64_INS_MOVK:              return "movk";
+            case Kind::ARM64_INS_MOVN:              return "movn";
+            case Kind::ARM64_INS_MOVZ:              return "movz";
+            case Kind::ARM64_INS_MRS:               return "mrs";
+            case Kind::ARM64_INS_MSR:               return "msr";
+            case Kind::ARM64_INS_MSUB:              return "msub";
+            case Kind::ARM64_INS_MUL:               return "mul";
+            case Kind::ARM64_INS_MVN:               return "mvn"; // alias of NOT
+            case Kind::ARM64_INS_MVNI:              return "mvni";
+            case Kind::ARM64_INS_NEG:               return "neg";
+            case Kind::ARM64_INS_NEGS:              return "negs";
+            case Kind::ARM64_INS_NGC:               return "ngc"; // alias of SBC
+            case Kind::ARM64_INS_NGCS:              return "ngcs"; // alias of SBCS
+            case Kind::ARM64_INS_NOP:               return "nop";
+            case Kind::ARM64_INS_NOT:               return "not";
+            case Kind::ARM64_INS_ORN:               return "orn";
+            case Kind::ARM64_INS_ORR:               return "orr";
+                // case Kind::ARM64_INS_PACDA: pointer authentication code for data addresses using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACDZA: pointer authentication code for data addresses using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACDB: pointer authentication code for data address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_PACDZB: pointer authentication code for data address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_PACGA: pointer authentication code using generic key (ARMv8.3)
+                // case Kind::ARM64_INS_PACIA: pointer authentication code for instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACIA1716: pointer authentication code for instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACIASP: pointer authentication code for instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACIAZ: pointer authentication code for instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACIZA: pointer authentication code for instruction address using key A (ARMv8.3)
+                // case Kind::ARM64_INS_PACIB: pointer authentication code for instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_PACIB1716: pointer authentication code for instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_PACIBSP: pointer authentication code for instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_PACIBZ: pointer authentication code for instruction address using key B (ARMv8.3)
+                // case Kind::ARM64_INS_PACIZB: pointer authentication code for instruction address using key B (ARMv8.3)
+            case Kind::ARM64_INS_PMUL:              return "pmul";
+            case Kind::ARM64_INS_PMULL:             return "pmull";
+            case Kind::ARM64_INS_PMULL2:            return "pmull2";
+            case Kind::ARM64_INS_PRFM:              return "prfm";
+            case Kind::ARM64_INS_PRFUM:             return "prfum";
+                // case Kind::ARM64_INS_PSB_CSYNC: profiling synchronization barrier (ARMv8.2)
+                // case Kind::ARM64_INS_PSSBB: physical speculative store bypass barrier
+            case Kind::ARM64_INS_RADDHN:            return "raddhn";
+            case Kind::ARM64_INS_RADDHN2:           return "raddhn2";
+                // case Kind::ARM64_INS_RAX1: rotate and exclusive OR (ARMv8.2)
+            case Kind::ARM64_INS_RBIT:              return "rbit";
+            case Kind::ARM64_INS_RET:               return "ret";
+                // case Kind::ARM64_INS_RETAA: return from subroutine with pointer authentication (ARMv8.3)
+                // case Kind::ARM64_INS_RETAB: return from subroutine with pointer authentication (ARMv8.3)
+            case Kind::ARM64_INS_REV:               return "rev";
+            case Kind::ARM64_INS_REV16:             return "rev16";
+            case Kind::ARM64_INS_REV32:             return "rev32";
+            case Kind::ARM64_INS_REV64:             return "rev64";
+                // case Kind::ARM64_INS_RMIF: rotation right and masked save (ARMv8.4)
+            case Kind::ARM64_INS_ROR:               return "ror";
+                // case Kind::ARM64_INS_RORV: rotate right variable (used by ROR)
+            case Kind::ARM64_INS_RSHRN:             return "rshrn";
+            case Kind::ARM64_INS_RSHRN2:            return "rshrn2";
+            case Kind::ARM64_INS_RSUBHN:            return "rsubhn";
+            case Kind::ARM64_INS_RSUBHN2:           return "rsubhn2";
+            case Kind::ARM64_INS_SABA:              return "saba";
+            case Kind::ARM64_INS_SABAL:             return "sabal";
+            case Kind::ARM64_INS_SABAL2:            return "sabal2";
+            case Kind::ARM64_INS_SABD:              return "sabd";
+            case Kind::ARM64_INS_SABDL:             return "sabdl";
+            case Kind::ARM64_INS_SABDL2:            return "sabdl2";
+            case Kind::ARM64_INS_SADALP:            return "sadalp";
+            case Kind::ARM64_INS_SADDL:             return "saddl";
+            case Kind::ARM64_INS_SADDL2:            return "saddl2";
+            case Kind::ARM64_INS_SADDLP:            return "saddlp";
+            case Kind::ARM64_INS_SADDLV:            return "saddlv";
+            case Kind::ARM64_INS_SADDW:             return "saddw";
+            case Kind::ARM64_INS_SADDW2:            return "saddw2";
+                // case Kind::ARM64_INS_SB: speculation barrier
+            case Kind::ARM64_INS_SBC:               return "sbc";
+                // case Kind::ARM64_INS_SBCS: subtract with carry, setting flags
+            case Kind::ARM64_INS_SBFIZ:             return "sbfiz"; // alias of SBFM
+            case Kind::ARM64_INS_SBFM:              return "sbfm";
+            case Kind::ARM64_INS_SBFX:              return "sbfx"; // alias of SBFM
+            case Kind::ARM64_INS_SCVTF:             return "scvtf";
+            case Kind::ARM64_INS_SDIV:              return "sdiv";
+                // case Kind::ARM64_INS_SDOT: signed dot product (ARMv8.2)
+                // case Kind::ARM64_INS_SETF8: set the PSTATE.NZV flags (ARMv8.4)
+                // case Kind::ARM64_INS_SETF16: set the PSTATE.NZV flags (ARMv8.4)
+            case Kind::ARM64_INS_SEV:               return "sev";
+            case Kind::ARM64_INS_SEVL:              return "sevl";
+            case Kind::ARM64_INS_SHA1C:             return "sha1c";
+            case Kind::ARM64_INS_SHA1H:             return "sha1h";
+            case Kind::ARM64_INS_SHA1M:             return "sha1m";
+            case Kind::ARM64_INS_SHA1P:             return "sha1p";
+            case Kind::ARM64_INS_SHA1SU0:           return "sha1su0";
+            case Kind::ARM64_INS_SHA1SU1:           return "sha1su1";
+            case Kind::ARM64_INS_SHA256H:           return "sha256h";
+            case Kind::ARM64_INS_SHA256H2:          return "sha256h2";
+            case Kind::ARM64_INS_SHA256SU0:         return "sha256su0";
+            case Kind::ARM64_INS_SHA256SU1:         return "sha256su1";
+                // case Kind::ARM64_INS_SHA512H: SHA512 hash update, part 1 (ARMv8.2)
+                // case Kind::ARM64_INS_SHA512H2: SHA512 hash update part 2 (ARMv8.2)
+                // case Kind::ARM64_INS_SHA512SU0: SHA512 schedule update 0
+                // case Kind::ARM64_INS_SHA512SU1: SHA512 schedule update 1
+            case Kind::ARM64_INS_SHADD:             return "shadd";
+            case Kind::ARM64_INS_SHL:               return "shl";
+            case Kind::ARM64_INS_SHLL:              return "shll";
+            case Kind::ARM64_INS_SHLL2:             return "shll2";
+            case Kind::ARM64_INS_SHRN:              return "shrn";
+            case Kind::ARM64_INS_SHRN2:             return "shrn2";
+            case Kind::ARM64_INS_SHSUB:             return "shsub";
+            case Kind::ARM64_INS_SLI:               return "sli";
+                // case Kind::ARM64_INS_SM3PARTW1: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM3PARTW2: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM3SS1: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM3TT1A: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM3TT1B: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM3TT2A: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM3TT2B: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM4E: no succinct description (ARMv8.2)
+                // case Kind::ARM64_INS_SM4EKEY: no succinct description (ARMv8.2)
+            case Kind::ARM64_INS_SMADDL:            return "smaddl";
+            case Kind::ARM64_INS_SMAX:              return "smax";
+            case Kind::ARM64_INS_SMAXP:             return "smaxp";
+            case Kind::ARM64_INS_SMAXV:             return "smaxv";
+            case Kind::ARM64_INS_SMC:               return "smc";
+            case Kind::ARM64_INS_SMIN:              return "smin";
+            case Kind::ARM64_INS_SMINP:             return "sminp";
+            case Kind::ARM64_INS_SMINV:             return "sminv";
+            case Kind::ARM64_INS_SMLAL:             return "smlal";
+            case Kind::ARM64_INS_SMLAL2:            return "smlal2";
+            case Kind::ARM64_INS_SMLSL:             return "smlsl";
+            case Kind::ARM64_INS_SMLSL2:            return "smlsl2";
+            case Kind::ARM64_INS_SMNEGL:            return "smnegl"; // alias of SMSUBL
+            case Kind::ARM64_INS_SMOV:              return "smov";
+            case Kind::ARM64_INS_SMSUBL:            return "smsubl";
+            case Kind::ARM64_INS_SMULH:             return "smulh";
+            case Kind::ARM64_INS_SMULL:             return "smull";
+            case Kind::ARM64_INS_SMULL2:            return "smull2";
+            case Kind::ARM64_INS_SQABS:             return "sqabs";
+            case Kind::ARM64_INS_SQADD:             return "sqadd";
+            case Kind::ARM64_INS_SQDMLAL:           return "sqdmlal";
+            case Kind::ARM64_INS_SQDMLAL2:          return "sqdmlal2";
+            case Kind::ARM64_INS_SQDMLSL:           return "sqdmlsl";
+            case Kind::ARM64_INS_SQDMLSL2:          return "sqdmlsl2";
+            case Kind::ARM64_INS_SQDMULH:           return "sqdmulh";
+            case Kind::ARM64_INS_SQDMULL:           return "sqdmull";
+            case Kind::ARM64_INS_SQDMULL2:          return "sqdmull2";
+            case Kind::ARM64_INS_SQNEG:             return "sqneg";
+                // case Kind::ARM64_INS_SQRDMLAH: signed saturating rounding doubling multiply accumulate returning high half (ARMv8.1)
+                // case Kind::ARM64_INS_SQRDMLSH: signed saturating rounding doubling multiply subtract returning high half (ARMv8.1)
+            case Kind::ARM64_INS_SQRDMULH:          return "sqrdmulh";
+            case Kind::ARM64_INS_SQRSHL:            return "sqrshl";
+            case Kind::ARM64_INS_SQRSHRN:           return "sqrshrn";
+            case Kind::ARM64_INS_SQRSHRN2:          return "sqrshrn2";
+            case Kind::ARM64_INS_SQRSHRUN:          return "sqrshrun";
+            case Kind::ARM64_INS_SQRSHRUN2:         return "sqrshrun2";
+            case Kind::ARM64_INS_SQSHL:             return "sqshl";
+            case Kind::ARM64_INS_SQSHLU:            return "sqshlu";
+            case Kind::ARM64_INS_SQSHRN:            return "sqshrn";
+            case Kind::ARM64_INS_SQSHRN2:           return "sqshrn2";
+            case Kind::ARM64_INS_SQSHRUN:           return "sqshrun";
+            case Kind::ARM64_INS_SQSHRUN2:          return "sqshrun2";
+            case Kind::ARM64_INS_SQSUB:             return "sqsub";
+            case Kind::ARM64_INS_SQXTN:             return "sqxtn";
+            case Kind::ARM64_INS_SQXTN2:            return "sqxtn2";
+            case Kind::ARM64_INS_SQXTUN:            return "sqxtun";
+            case Kind::ARM64_INS_SQXTUN2:           return "sqxtun2";
+            case Kind::ARM64_INS_SRHADD:            return "srhadd";
+            case Kind::ARM64_INS_SRI:               return "sri";
+            case Kind::ARM64_INS_SRSHL:             return "srshl";
+            case Kind::ARM64_INS_SRSHR:             return "srshr";
+            case Kind::ARM64_INS_SRSRA:             return "srsra";
+                // case Kind::ARM64_INS_SSBB: speculative store bypass barrier
+            case Kind::ARM64_INS_SSHL:              return "sshl";
+            case Kind::ARM64_INS_SSHLL:             return "sshll";
+            case Kind::ARM64_INS_SSHLL2:            return "sshll2";
+            case Kind::ARM64_INS_SSHR:              return "sshr";
+            case Kind::ARM64_INS_SSRA:              return "ssra";
+            case Kind::ARM64_INS_SSUBL:             return "ssubl";
+            case Kind::ARM64_INS_SSUBL2:            return "ssubl2";
+            case Kind::ARM64_INS_SSUBW:             return "ssubw";
+            case Kind::ARM64_INS_SSUBW2:            return "ssubw2";
+            case Kind::ARM64_INS_ST1:               return "st1";
+            case Kind::ARM64_INS_ST2:               return "st2";
+                // case Kind::ARM64_INS_ST2G: store allocation tags (ARMv8.5)
+            case Kind::ARM64_INS_ST3:               return "st3";
+            case Kind::ARM64_INS_ST4:               return "st4";
+                // case Kind::ARM64_INS_STADD: atomic add on word or doubleword (ARMv8.1, alias of LDADD, LDADDA, LDADDAL, LDADDL)
+                // case Kind::ARM64_INS_STADDL: atomic add on word or doubleword (ARMv8.1, alias of LDADD, LDADDA, LDADDAL, LDADDL)
+                // case Kind::ARM64_INS_STADDB: atomic add on byte (ARMv8.1, alias of LDADDB, LDADDAB, LDADDALB, LDADDLB)
+                // case Kind::ARM64_INS_STADDLB: atomic add on byte (ARMv8.1, alias of LDADDB, LDADDAB, LDADDALB, LDADDLB)
+                // case Kind::ARM64_INS_STADDH: atomic add on halfword (ARMv8.1, alias of LDADDH, LDADDAH, LDADDALH, LDADDLH)
+                // case Kind::ARM64_INS_STADDLH: atomic add on halfword (ARMv8.1, alias of LDADDH, LDADDAH, LDADDALH, LDADDLH)
+                // case Kind::ARM64_INS_STCRL: atomic bit clear on word or doubleword (ARMv8.1, alias of LDCLR, LDCLRA, LDCLRAL, LDCLRL)
+                // case Kind::ARM64_INS_STCLRL: atomic bit clear on word or doubleword (ARMv8.1, alias of LDCLR, LDCLRA, LDCLRAL, LDCLRL)
+                // case Kind::ARM64_INS_STCLRB: atomic bit clear on byte (ARMv8.1, alias of LDCLRB, LDCLRAB, LDCLRALB, LDCLRLB)
+                // case Kind::ARM64_INS_STCLRLB: atomic bit clear on byte (ARMv8.1, alias of LDCLRB, LDCLRAB, LDCLRALB, LDCLRLB)
+                // case Kind::ARM64_INS_STCLRH: atomic bit clear on halfword (ARMv8.1, alias of LDCLRH, LDCLRAH, LDCLRALH, LDCLRLH)
+                // case Kind::ARM64_INS_STCLRLH: atomic bit clear on halfword (ARMv8.1, alias of LDCLRH, LDCLRAH, LDCLRALH, LDCLRLH)
+                // case Kind::ARM64_INS_STEOR: atomic exlusive OR on word or doubleword (ARMv8.1, alias of LDEOR, LDEORA, LDEORAL, LDEORL)
+                // case Kind::ARM64_INS_STEORL: atomic exlusive OR on word or doubleword (ARMv8.1, alias of LDEOR, LDEORA, LDEORAL, LDEORL)
+                // case Kind::ARM64_INS_STEORB: atomic exlusive OR on byte (ARMv8.1, alias of LDEORB, LDEORAB, LDEORALB, LDEORLB)
+                // case Kind::ARM64_INS_STEORLB: atomic exlusive OR on byte (ARMv8.1, alias of LDEORB, LDEORAB, LDEORALB, LDEORLB)
+                // case Kind::ARM64_INS_STEORH: atomic exlusive OR on halfword (ARMv8.1, alias of LDEORH, LDEORAH, LDEORALH, LDEORLH)
+                // case Kind::ARM64_INS_STG: store allocatio tag (ARMv8.5)
+                // case Kind::ARM64_INS_STGP: store allocation tag and pair (ARMv8.5)
+                // case Kind::ARM64_INS_STGV: store tag vector (ARMv8.5)
+                // case Kind::ARM64_INS_STLLR: store LO release register (ARMv8.1)
+                // case Kind::ARM64_INS_STLLRB: store LO release register byte (ARMv8.1)
+                // case Kind::ARM64_INS_STLLRH: store LO release register halfword (ARMv8.1)
+            case Kind::ARM64_INS_STLR:              return "stlr";
+            case Kind::ARM64_INS_STLRB:             return "stlrb";
+            case Kind::ARM64_INS_STLRH:             return "stlrh";
+                // case Kind::ARM64_INS_STLUR: store-release register unscaled
+                // case Kind::ARM64_INS_STLURB: store-release register byte
+                // case Kind::ARM64_INS_STLURH: store-release register halfword
+            case Kind::ARM64_INS_STLXP:             return "stlxp";
+            case Kind::ARM64_INS_STLXR:             return "stlxr";
+            case Kind::ARM64_INS_STLXRB:            return "stlxrb";
+            case Kind::ARM64_INS_STLXRH:            return "stlxrh";
+            case Kind::ARM64_INS_STNP:              return "stnp";
+            case Kind::ARM64_INS_STP:               return "stp";
+            case Kind::ARM64_INS_STR:               return "str";
+            case Kind::ARM64_INS_STRB:              return "strb";
+            case Kind::ARM64_INS_STRH:              return "strh";
+                // case Kind::ARM64_INS_STSET: atomic bit set on word or doubleword (ARMv8.1, alias of LDSET, LDSETA, LDSETAL, LDSETL)
+                // case Kind::ARM64_INS_STSETL: atomic bit set on word or doubleword (ARMv8.1, alias of LDSET, LDSETA, LDSETAL, LDSETL)
+                // case Kind::ARM64_INS_STSETB: atomic bit set on byte (ARMv8.1, alias of LDSETB, LDSETAB, LDSETALB, LDSETLB)
+                // case Kind::ARM64_INS_STSETLB: atomic bit set on byte (ARMv8.1, alias of LDSETB, LDSETAB, LDSETALB, LDSETLB)
+                // case Kind::ARM64_INS_STSETH: atomic bit set on halfword (ARMv8.1, alias of LDSETH, LDSETAH, LDSETALH, LDSETLH)
+                // case Kind::ARM64_INS_STSETLH: atomic bit set on halfword (ARMv8.1, alias of LDSETH, LDSETAH, LDSETALH, LDSETLH)
+                // case Kind::ARM64_INS_STSMAX: atomic signed maximum on word or doubleword (ARMv8.1, alias of LDSMAX, LDSMAXA, LDSMAXAL, LDSMAXL)
+                // case Kind::ARM64_INS_STSMAXL: atomic signed maximum on word or doubleword (ARMv8.1, alias of LDSMAX, LDSMAXA, LDSMAXAL, LDSMAXL)
+                // case Kind::ARM64_INS_STSMAXB: atomic signed maximum on byte (ARMv8.1, alias of LDSMAXB, LDSAMXAB, LDSMAXALB, LDSMAXLB)
+                // case Kind::ARM64_INS_STSMAXLB: atomic signed maximum on byte (ARMv8.1, alias of LDSMAXB, LDSAMXAB, LDSMAXALB, LDSMAXLB)
+                // case Kind::ARM64_INS_STSMAXH: atomic signed maximum on halfword (ARMv8.1, alias of LDSMAXH, LDSMAXAH, LDSMAXALH, LDSMAXLH)
+                // case Kind::ARM64_INS_STSMAXLH: atomic signed maximum on halfword (ARMv8.1, alias of LDSMAXH, LDSMAXAH, LDSMAXALH, LDSMAXLH)
+                // case Kind::ARM64_INS_STSMIN: atomic signed minimum on word or doubleword (ARMv8.1, alias of LDSMIN, LDSMINA, LDSMINAL, LDSMINL)
+                // case Kind::ARM64_INS_STSMINL: atomic signed minimum on word or doubleword (ARMv8.1, alias of LDSMIN, LDSMINA, LDSMINAL, LDSMINL)
+                // case Kind::ARM64_INS_STSMINB: atomic signed minimum on byte (ARMv8.1, alias of LDSMINB, LDSMINAB, LDSMINALB, LDSMINLB)
+                // case Kind::ARM64_INS_STSMINLB: atomic signed minimum on byte (ARMv8.1, alias of LDSMINB, LDSMINAB, LDSMINALB, LDSMINLB)
+                // case Kind::ARM64_INS_STSMINH: atomic signed minimum on halfword (ARMv8.1, alias of LDSMINH, LDSMINAH, LDSMINALH, LDSMINLH)
+                // case Kind::ARM64_INS_STSMINLH: atomic signed minimum on halfword (ARMv8.1, alias of LDSMINH, LDSMINAH, LDSMINALH, LDSMINLH)
+            case Kind::ARM64_INS_STTR:              return "sttr";
+            case Kind::ARM64_INS_STTRB:             return "sttrb";
+            case Kind::ARM64_INS_STTRH:             return "sttrh";
+                // case Kind::ARM64_INS_STUMAX: atomic unsigned maximum on word or doubleword (ARMv8.1, alias of LDUMAX, LDUMAXA, LDUMAXAL, LDUMAXL)
+                // case Kind::ARM64_INS_STUMAXL: atomic unsigned maximum on word or doubleword (ARMv8.1, alias of LDUMAX, LDUMAXA, LDUMAXAL, LDUMAXL)
+                // case Kind::ARM64_INS_STUMAXB: atomic unsigned maximum o byte (ARMv8.1, alias of LDUMAXB, LDUMAXAB, LDUMAXALB, LDUMAXLB)
+                // case Kind::ARM64_INS_STUMAXLB: atomic unsigned maximum o byte (ARMv8.1, alias of LDUMAXB, LDUMAXAB, LDUMAXALB, LDUMAXLB)
+                // case Kind::ARM64_INS_STUMAXH: atomic unsigned maximum on halfword (ARMv8.1, alias of LDUMAXH, LDUMAXAH, LDUMAXALH, LDUMAXLH)
+                // case Kind::ARM64_INS_STUMAXLH: atomic unsigned maximum on halfword (ARMv8.1, alias of LDUMAXH, LDUMAXAH, LDUMAXALH, LDUMAXLH)
+                // case Kind::ARM64_INS_STUMIN: atomic unsigend minmum on word or doubleword (ARMv8.1, alias of LDUMIN, LDUMINA, LDUMINAL, LDUMINL)
+                // case Kind::ARM64_INS_STUMINL: atomic unsigend minmum on word or doubleword (ARMv8.1, alias of LDUMIN, LDUMINA, LDUMINAL, LDUMINL)
+                // case Kind::ARM64_INS_STUMINB: atomic unsigned minimum on byte (ARMv8.1, alias of LDUMINB, LDUMINAB, LDUMINALB, LDUMINLB)
+                // case Kind::ARM64_INS_STUMINLB: atomic unsigned minimum on byte (ARMv8.1, alias of LDUMINB, LDUMINAB, LDUMINALB, LDUMINLB)
+                // case Kind::ARM64_INS_STUMINH: atomic unsigned minum on halfword (ARMv8.1, alias of LDUMINH, LDUMINAH, LDUMINALH, LDUMINLH)
+                // case Kind::ARM64_INS_STUMINLH: atomic unsigned minum on halfword (ARMv8.1, alias of LDUMINH, LDUMINAH, LDUMINALH, LDUMINLH)
+            case Kind::ARM64_INS_STUR:              return "stur";
+            case Kind::ARM64_INS_STURB:             return "sturb";
+            case Kind::ARM64_INS_STURH:             return "sturh";
+            case Kind::ARM64_INS_STXP:              return "stxp";
+            case Kind::ARM64_INS_STXR:              return "stxr";
+            case Kind::ARM64_INS_STXRB:             return "stxrb";
+            case Kind::ARM64_INS_STXRH:             return "stxrh";
+                // case Kind::ARM64_INS_STZ2G: no succinct description (ARMv8.5)
+                // case Kind::ARM64_INS_STZG: no succinct description (ARMv8.5)
+            case Kind::ARM64_INS_SUB:               return "sub";
+                // case Kind::ARM64_INS_SUBG: subtract with tag (ARMv8.5)
+            case Kind::ARM64_INS_SUBHN:             return "subhn";
+            case Kind::ARM64_INS_SUBHN2:            return "subhn2";
+                // case Kind::ARM64_INS_SUBP: subtract pointer (ARMv8.5)
+                // case Kind::ARM64_INS_SUBPS: subtract pointer, setting flags (ARMv8.5)
+                // case Kind::ARM64_INS_SUBS: subtact, setting flags
+            case Kind::ARM64_INS_SUQADD:            return "suqadd";
+            case Kind::ARM64_INS_SVC:               return "svc";
+                // case Kind::ARM64_INS_SWP: swap word or doubleword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPA: swap word or doubleword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPAL: swap word or doubleword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPL: swap word or doubleword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPB: swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_SWPAB: swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_SWPALB: swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_SWPLB: swap byte (ARMv8.1)
+                // case Kind::ARM64_INS_SWPH: swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPAH: swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPALH: swap halfword (ARMv8.1)
+                // case Kind::ARM64_INS_SWPLH: swap halfword (ARMv8.1)
+            case Kind::ARM64_INS_SXTB:              return "sxtb"; // alias of SBFM
+            case Kind::ARM64_INS_SXTH:              return "sxth"; // alias of SBFM
+                // case Kind::ARM64_INS_SXTL: signed extend long (alias of SSHLL, SSHLL2)
+                // case Kind::ARM64_INS_SXTL2: signed extend long (alias of SSHLL, SSHLL2)
+            case Kind::ARM64_INS_SXTW:              return "sxtw"; // alias of SBFM
+            case Kind::ARM64_INS_SYS:               return "sys";
+            case Kind::ARM64_INS_SYSL:              return "sysl";
+            case Kind::ARM64_INS_TBL:               return "tbl";
+            case Kind::ARM64_INS_TBNZ:              return "tbnz";
+            case Kind::ARM64_INS_TBX:               return "tbx";
+            case Kind::ARM64_INS_TBZ:               return "tbz";
+            case Kind::ARM64_INS_TLBI:              return "tlbi"; // alias of SYS
+            case Kind::ARM64_INS_TRN1:              return "trn1";
+            case Kind::ARM64_INS_TRN2:              return "trn2";
+                // case Kind::ARM64_INS_TSB_CSYNC: trace synchronizatio barrier (ARMv8.4)
+            case Kind::ARM64_INS_TST:               return "tst"; // alias of ANDS
+            case Kind::ARM64_INS_UABA:              return "uaba";
+            case Kind::ARM64_INS_UABAL:             return "uabal";
+            case Kind::ARM64_INS_UABAL2:            return "uabal2";
+            case Kind::ARM64_INS_UABD:              return "uabd";
+            case Kind::ARM64_INS_UABDL:             return "uabdl";
+            case Kind::ARM64_INS_UABDL2:            return "uabdl2";
+            case Kind::ARM64_INS_UADALP:            return "uadalp";
+            case Kind::ARM64_INS_UADDL:             return "uaddl";
+            case Kind::ARM64_INS_UADDL2:            return "uaddl2";
+            case Kind::ARM64_INS_UADDLP:            return "uaddlp";
+            case Kind::ARM64_INS_UADDLV:            return "uaddlv";
+            case Kind::ARM64_INS_UADDW:             return "uaddw";
+            case Kind::ARM64_INS_UADDW2:            return "uaddw2";
+            case Kind::ARM64_INS_UBFIZ:             return "ubfiz"; // alias of UBFM
+            case Kind::ARM64_INS_UBFM:              return "ubfm";
+            case Kind::ARM64_INS_UBFX:              return "ubfx";
+            case Kind::ARM64_INS_UCVTF:             return "ucvtf";
+                // case Kind::ARM64_INS_UDF: permanently undefined
+            case Kind::ARM64_INS_UDIV:              return "udiv";
+                // case Kind::ARM64_INS_UDOT: unsigned dot product (ARMv8.2)
+            case Kind::ARM64_INS_UHADD:             return "uhadd";
+            case Kind::ARM64_INS_UHSUB:             return "uhsub";
+            case Kind::ARM64_INS_UMADDL:            return "umaddl";
+            case Kind::ARM64_INS_UMAX:              return "umax";
+            case Kind::ARM64_INS_UMAXP:             return "umaxp";
+            case Kind::ARM64_INS_UMAXV:             return "umaxv";
+            case Kind::ARM64_INS_UMIN:              return "umin";
+            case Kind::ARM64_INS_UMINP:             return "uminp";
+            case Kind::ARM64_INS_UMINV:             return "uminv";
+            case Kind::ARM64_INS_UMLAL:             return "umlal";
+            case Kind::ARM64_INS_UMLAL2:            return "umlal2";
+            case Kind::ARM64_INS_UMLSL:             return "umlsl";
+            case Kind::ARM64_INS_UMLSL2:            return "umlsl2";
+            case Kind::ARM64_INS_UMNEGL:            return "umnegl"; // alias of UMSUBL
+            case Kind::ARM64_INS_UMOV:              return "umov";
+            case Kind::ARM64_INS_UMSUBL:            return "umsubl";
+            case Kind::ARM64_INS_UMULH:             return "umulh";
+            case Kind::ARM64_INS_UMULL:             return "umull";
+            case Kind::ARM64_INS_UMULL2:            return "umull2";
+            case Kind::ARM64_INS_UQADD:             return "uqadd";
+            case Kind::ARM64_INS_UQRSHL:            return "uqrshl";
+            case Kind::ARM64_INS_UQRSHRN:           return "uqrshrn";
+            case Kind::ARM64_INS_UQRSHRN2:          return "uqrshrn2";
+            case Kind::ARM64_INS_UQSHL:             return "uqshl";
+            case Kind::ARM64_INS_UQSHRN:            return "uqshrn";
+            case Kind::ARM64_INS_UQSHRN2:           return "uqshrn2";
+            case Kind::ARM64_INS_UQSUB:             return "uqsub";
+            case Kind::ARM64_INS_UQXTN:             return "uqxtn";
+            case Kind::ARM64_INS_UQXTN2:            return "uqxtn2";
+            case Kind::ARM64_INS_URECPE:            return "urecpe";
+            case Kind::ARM64_INS_URHADD:            return "urhadd";
+            case Kind::ARM64_INS_URSHL:             return "urshl";
+            case Kind::ARM64_INS_URSHR:             return "urshr";
+            case Kind::ARM64_INS_URSQRTE:           return "ursqrte";
+            case Kind::ARM64_INS_URSRA:             return "ursra";
+            case Kind::ARM64_INS_USHL:              return "ushl";
+            case Kind::ARM64_INS_USHLL:             return "ushll";
+            case Kind::ARM64_INS_USHLL2:            return "ushll2";
+            case Kind::ARM64_INS_USHR:              return "ushr";
+            case Kind::ARM64_INS_USQADD:            return "usqadd";
+            case Kind::ARM64_INS_USRA:              return "usra";
+            case Kind::ARM64_INS_USUBL:             return "usubl";
+            case Kind::ARM64_INS_USUBL2:            return "usubl2";
+            case Kind::ARM64_INS_USUBW:             return "usubw";
+            case Kind::ARM64_INS_USUBW2:            return "usubw2";
+            case Kind::ARM64_INS_UXTB:              return "uxtb"; // alias of UBFM
+            case Kind::ARM64_INS_UXTH:              return "uxth"; // alias of UBFM
+                // case Kind::ARM64_INS_UXTL: unsigned extend long (alias of USHLL, USHLL2)
+                // case Kind::ARM64_INS_UXTL2: unsigned extend long (alias of USHLL, USHLL2)
+            case Kind::ARM64_INS_UXTW:              return "uxtw"; //FIXME: present in capstone but not ARM documentation
+            case Kind::ARM64_INS_UZP1:              return "uzp1";
+            case Kind::ARM64_INS_UZP2:              return "uzp2";
+            case Kind::ARM64_INS_WFE:               return "wfe";
+            case Kind::ARM64_INS_WFI:               return "wfi";
+                // case Kind::ARM64_INS_XAFlag: convert floating-point condition flags from external to ARM (ARMv8.5)
+                // case Kind::ARM64_INS_XAR: exclusive OR and rotate (ARMv8.2)
+                // case Kind::ARM64_INS_XPACD: strip pointer authenticate code (ARMv8.3)
+                // case Kind::ARM64_INS_XPACI: strip pointer authenticate code (ARMv8.3)
+                // case Kind::ARM64_INS_XPACLRI: strip pointer authenticate code (ARMv8.3)
+            case Kind::ARM64_INS_XTN:               return "xtn";
+            case Kind::ARM64_INS_XTN2:              return "xtn2";
+            case Kind::ARM64_INS_YIELD:             return "yield";
+            case Kind::ARM64_INS_ZIP1:              return "zip1";
+            case Kind::ARM64_INS_ZIP2:              return "zip2";
+            case Kind::ARM64_INS_ENDING:            ASSERT_not_reachable("invalid ARM instruction kind");
+        }
+        ASSERT_not_reachable("invalid AArch64 A64 instruction kind: " + StringUtility::numberToString(insn->get_kind()));
+    }();
+
+    const std::string suffix = [insn]() {
+        switch (insn->get_condition()) {
+            case ARM64_CC_INVALID: return "";
+            case ARM64_CC_EQ: return ".eq";
+            case ARM64_CC_NE: return ".ne";
+            case ARM64_CC_HS: return ".hs";
+            case ARM64_CC_LO: return ".lo";
+            case ARM64_CC_MI: return ".mi";
+            case ARM64_CC_PL: return ".pl";
+            case ARM64_CC_VS: return ".vs";
+            case ARM64_CC_VC: return ".vc";
+            case ARM64_CC_HI: return ".hi";
+            case ARM64_CC_LS: return ".ls";
+            case ARM64_CC_GE: return ".ge";
+            case ARM64_CC_LT: return ".lt";
+            case ARM64_CC_GT: return ".gt";
+            case ARM64_CC_LE: return ".le";
+            case ARM64_CC_AL: return ".al";
+            case ARM64_CC_NV: return ".nv";
+        }
+        ASSERT_not_reachable("invalid AArch64 A64 condition: " + StringUtility::numberToString(insn->get_condition()));
+    }();
+
+    return base + (insn->get_updatesFlags() ? "s" : "") + suffix;
+}
+
+std::string
 ArmAarch64::instructionDescription(const SgAsmInstruction *insn_) const {
     using Kind = Aarch64InstructionKind;
     auto insn = isSgAsmAarch64Instruction(insn_);

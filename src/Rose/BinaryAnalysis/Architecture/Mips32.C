@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherMips.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
+#include <stringify.h>                                  // ROSE
 
 #include <SgAsmExecutableFileFormat.h>
 #include <SgAsmGenericHeader.h>
@@ -163,6 +164,20 @@ Mips32::bytesPerInstruction() const {
 Alignment
 Mips32::instructionAlignment() const {
     return Alignment(4, bitsPerWord());
+}
+
+std::string
+Mips32::instructionMnemonic(const SgAsmInstruction *insn) const {
+    if (isUnknown(insn))
+        return "unknown";
+
+    ASSERT_not_null(isSgAsmMipsInstruction(insn));
+    std::string s = stringify::Rose::BinaryAnalysis::MipsInstructionKind(insn->get_anyKind(), "mips_");
+    for (char &ch: s) {
+        if ('_' == ch)
+            ch = '.';
+    }
+    return s;
 }
 
 std::string

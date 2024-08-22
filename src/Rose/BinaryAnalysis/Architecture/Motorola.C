@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 #include <Rose/CommandLine/Parser.h>
+#include <stringify.h>                                  // ROSE
 
 #include <SgAsmInstruction.h>
 #include <SgAsmM68kInstruction.h>
@@ -133,6 +134,46 @@ Motorola::bytesPerInstruction() const {
 Alignment
 Motorola::instructionAlignment() const {
     return Alignment(2, bitsPerWord());
+}
+
+std::string
+Motorola::instructionMnemonic(const SgAsmInstruction *insn_) const {
+    if (isUnknown(insn_))
+        return "unknown";
+
+    auto insn = isSgAsmM68kInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    const std::string base = [insn]() -> std::string {
+        switch (insn->get_kind()) {
+            case m68k_move_acc:
+            case m68k_move_accext:
+            case m68k_move_ccr:
+            case m68k_move_macsr:
+            case m68k_move_mask:
+            case m68k_move_sr:
+                return "move";
+            default:
+                return stringify::Rose::BinaryAnalysis::M68kInstructionKind(insn->get_anyKind(), "m68k_");
+        }
+    }();
+
+
+    const std::string ext = [insn]() -> std::string {
+        switch (insn->get_dataFormat()) {
+            case m68k_fmt_i32: return ".l";
+            case m68k_fmt_f32: return ".s";
+            case m68k_fmt_f96: return ".x";
+            case m68k_fmt_p96: return ".p";
+            case m68k_fmt_i16: return ".w";
+            case m68k_fmt_f64: return ".d";
+            case m68k_fmt_i8:  return ".b";
+            case m68k_fmt_unknown: return "";
+        }
+        ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(insn->get_dataFormat()));
+    }();
+
+    return base + ext;
 }
 
 std::string

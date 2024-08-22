@@ -34,6 +34,11 @@ SgAsmInstruction::architecture() const {
     return Architecture::findById(get_architectureId()).orThrow();
 }
 
+std::string
+SgAsmInstruction::get_mnemonic() const {
+    return architecture()->instructionMnemonic(this);
+}
+
 // [Robb Matzke 2023-12-04]: deprecated
 std::string
 SgAsmInstruction::description() const {

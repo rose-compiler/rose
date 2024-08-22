@@ -23,6 +23,7 @@ public:
 
     Sawyer::Container::Interval<size_t> bytesPerInstruction() const override;
     Alignment instructionAlignment() const override;
+    std::string instructionMnemonic(const SgAsmInstruction*) const override;
     bool terminatesBasicBlock(SgAsmInstruction*) const override;
     bool isUnknown(const SgAsmInstruction*) const override;
     bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const override;

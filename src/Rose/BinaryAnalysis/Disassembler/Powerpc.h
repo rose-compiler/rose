@@ -93,8 +93,8 @@ private:
     bool is64bitInsn(PowerpcInstructionKind);
 
     /** Creates an instruction AST. */
-    SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind,
-                                                            uint32_t insnBytes, PowerpcCapability);
+    SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint64_t address, PowerpcInstructionKind, uint32_t insnBytes,
+                                                            PowerpcCapability);
 
     // Helper function to use field definitions (counted with bits from left and inclusive on both sides) from manual.
     template <size_t First, size_t Last> uint64_t fld(State&) const;

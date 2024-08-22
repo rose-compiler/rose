@@ -49,7 +49,7 @@ public:
 private:
     SgAsmCilInstruction* makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size);
     SgAsmCilInstruction* makeInstruction(rose_addr_t, SgUnsignedCharList& bytes/*in,out*/, size_t, CilInstructionKind,
-                                         const std::string&, SgAsmExpression* operand=nullptr) const;
+                                         SgAsmExpression* operand=nullptr) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization

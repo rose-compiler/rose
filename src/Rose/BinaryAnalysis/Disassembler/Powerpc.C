@@ -133,7 +133,7 @@ Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, Address
 
 SgAsmInstruction*
 Powerpc::makeUnknownInstruction(const Exception &e) {
-    SgAsmPowerpcInstruction *insn = new SgAsmPowerpcInstruction(e.ip, *architecture()->registrationId(), "unknown",
+    SgAsmPowerpcInstruction *insn = new SgAsmPowerpcInstruction(e.ip, *architecture()->registrationId(),
                                                                 powerpc_unknown_instruction);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
@@ -171,7 +171,7 @@ Powerpc::reservedOk(State &state) const {
 // `Op1`, `Op2`, etc. are non-null `SgAsmExpression*` operand expressions
 // The "*_O_RC" forms append "o" to the `Mne` symbol if the `OE` bit is set, and/or append "_record" if the `Rc` bit is set
 // The "*_RC" forms of the macros append "_record" to the `Mne` symbol if the `Rc` bit is set in the machine instruction
-#define MAKE_INSN0(Mne, Cap) (makeInstructionWithoutOperands(state.ip, #Mne, powerpc_##Mne, state.insn, powerpc_capability_##Cap))
+#define MAKE_INSN0(Mne, Cap) (makeInstructionWithoutOperands(state.ip, powerpc_##Mne, state.insn, powerpc_capability_##Cap))
 #define MAKE_INSN0_RC(Mne, Cap) (Rc(state) ? MAKE_INSN0(Mne##_record, Cap) : MAKE_INSN0(Mne, Cap))
 #define MAKE_INSN0_O_RC(Mne, Cap) (OE() ? MAKE_INSN0_RC(Mne##o, Cap) : MAKE_INSN0_RC(Mne, Cap))
 #define MAKE_INSN1(Mne, Cap, Op1) (SageBuilderAsm::appendOperand(MAKE_INSN0(Mne, Cap), (Op1)))
@@ -187,7 +187,7 @@ Powerpc::reservedOk(State &state) const {
 #define MAKE_INSN4_RC(Mne, Cap, Op1, Op2, Op3, Op4) (SageBuilderAsm::appendOperand(MAKE_INSN3_RC(Mne, Cap, Op1, Op2, Op3), (Op4)))
 #define MAKE_INSN5(Mne, Cap, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4(Mne, Cap, Op1, Op2, Op3, Op4), (Op5)))
 #define MAKE_INSN5_RC(Mne, Cap, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4_RC(Mne, Cap, Op1, Op2, Op3, Op4), (Op5)))
-#define MAKE_UNKNOWN() (makeInstructionWithoutOperands(state.ip, "unknown", powerpc_unknown_instruction, state.insn, powerpc_capability_all))
+#define MAKE_UNKNOWN() (makeInstructionWithoutOperands(state.ip, powerpc_unknown_instruction, state.insn, powerpc_capability_all))
 
 SgAsmIntegerValueExpression*
 Powerpc::makeBranchTarget(uint64_t targetAddr) const {
@@ -261,21 +261,17 @@ Powerpc::is64bitInsn(PowerpcInstructionKind kind) {
 }
 
 SgAsmPowerpcInstruction*
-Powerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind,
-                                        uint32_t insn, const PowerpcCapability cap) {
+Powerpc::makeInstructionWithoutOperands(uint64_t address, PowerpcInstructionKind kind, uint32_t insn, const PowerpcCapability cap) {
 
     if (capabilities_.isClear(cap) || (powerpc_32 == wordSize_ && is64bitInsn(kind))) {
         // This machine instruction encoding is not valid for this situation. E.g., we found an encoding for an instruction that's
         // part of the Virtual Environment Architecture (VEA) but this decoder is not configured to decode such instructions.
         ASSERT_forbid(powerpc_unknown_instruction == kind);
-        return makeInstructionWithoutOperands(address, "unknown", powerpc_unknown_instruction, insn, powerpc_capability_all);
+        return makeInstructionWithoutOperands(address, powerpc_unknown_instruction, insn, powerpc_capability_all);
     }
 
-    SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, *architecture()->registrationId(), mnemonic, kind);
+    SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, *architecture()->registrationId(), kind);
     ASSERT_not_null(instruction);
-
-    if (mnemonic.size() >= 7 && mnemonic.substr(mnemonic.size() - 7) == "_record")
-        instruction->set_mnemonic(mnemonic.substr(0, mnemonic.size() - 7) + ".");
 
     SgAsmOperandList* operands = new SgAsmOperandList();
     instruction->set_operandList(operands);

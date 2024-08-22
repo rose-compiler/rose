@@ -230,7 +230,7 @@ public:
     ExpressionPair makeOffsetWidthPair(State&, unsigned extension_word) const;
 
     /** Build an instruction. */
-    SgAsmM68kInstruction *makeInstruction(State&, M68kInstructionKind, const std::string &mnemonic,
+    SgAsmM68kInstruction *makeInstruction(State&, M68kInstructionKind, M68kDataFormat,
                                           SgAsmExpression *arg0=NULL, SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL, SgAsmExpression *arg5=NULL,
                                           SgAsmExpression *arg6=NULL) const;

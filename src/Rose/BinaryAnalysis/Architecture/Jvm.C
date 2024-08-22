@@ -4,6 +4,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
+#include <stringify.h>                                  // ROSE
 
 #include <SgAsmExecutableFileFormat.h>
 #include <SgAsmGenericHeader.h>
@@ -52,6 +53,15 @@ Jvm::bytesPerInstruction() const {
 Alignment
 Jvm::instructionAlignment() const {
     return Alignment(1, bitsPerWord());
+}
+
+std::string
+Jvm::instructionMnemonic(const SgAsmInstruction *insn) const {
+    if (isUnknown(insn))
+        return "unknown";
+
+    ASSERT_not_null(isSgAsmJvmInstruction(insn));
+    return stringify::Rose::BinaryAnalysis::JvmInstructionKind(insn->get_anyKind(), "");
 }
 
 std::string

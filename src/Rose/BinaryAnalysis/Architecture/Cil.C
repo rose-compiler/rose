@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
+#include <stringify.h>                                  // ROSE
 
 #include <SgAsmCilInstruction.h>
 #include <SgAsmGenericHeader.h>
@@ -49,6 +50,15 @@ Cil::bytesPerInstruction() const {
 Alignment
 Cil::instructionAlignment() const {
     return Alignment(1, bitsPerWord());
+}
+
+std::string
+Cil::instructionMnemonic(const SgAsmInstruction *insn) const {
+    if (isUnknown(insn))
+        return "unknown";
+
+    ASSERT_not_null(isSgAsmCilInstruction(insn));
+    return stringify::Rose::BinaryAnalysis::CilInstructionKind(insn->get_anyKind(), "Cil_");
 }
 
 std::string

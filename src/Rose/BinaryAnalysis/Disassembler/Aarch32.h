@@ -68,9 +68,6 @@ private:
     // Replace instruction-pointer expressions with constants if possible, leaving a comment in its place.
     void commentIpRelative(SgAsmInstruction*);
 
-    // Fix the mnemonic to be something more human readable.
-    std::string fixMnemonic(const std::string&, arm_cc);
-
     // Make a ROSE instruction operand from a Capstone operand
     SgAsmExpression* makeOperand(const cs_insn&, const cs_arm_op&);
 

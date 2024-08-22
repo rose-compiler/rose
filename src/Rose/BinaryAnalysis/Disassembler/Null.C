@@ -44,12 +44,16 @@ Null::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*) {
 
 SgAsmInstruction*
 Null::makeUnknownInstruction(const Exception &e) {
+#if 0 // [Robb Matzke 2024-08-21]: we need to set an instruction kind corresponding to the arch's unknown instruction
     SgAsmInstruction *insn = new SgAsmNullInstruction(e.ip, *architecture()->registrationId(), "unknown");
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
     insn->set_rawBytes(e.bytes);
     return insn;
+#else
+    ASSERT_not_implemented("[Robb Matzke 2024-08-21]");
+#endif
 }
 
 } // namespace
