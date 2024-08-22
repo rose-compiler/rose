@@ -3424,7 +3424,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
             // the one from the shared type, this allows us to support multiple files on the command line.
             // DQ (4/22/2013): We need the defining declaration.
             // edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
-               if (info.get_declaration_of_context() != NULL)
+               if (info.get_declaration_of_context() != NULL &&  info.get_declaration_of_context()->variantT() == V_SgEnumDeclaration)
                   {
                     edecl = isSgEnumDeclaration(info.get_declaration_of_context());
                     ROSE_ASSERT(edecl != NULL);
