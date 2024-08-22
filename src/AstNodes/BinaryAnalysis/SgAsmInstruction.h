@@ -82,20 +82,6 @@ public:
     [[using Rosebud: rosetta, traverse]]
     SgAsmOperandList* operandList = nullptr;
 
-    /** Property: Cache lock count.
-     *
-     *  Number of locks held on this object, preventing the AST rooted at this node from being evicted from a cache.
-     *
-     *  Thread safety: This method is thread safe.
-     *
-     * @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    size_t cacheLockCount = 0;
-
-    size_t cacheLockCount() const;
-    void adjustCacheLockCount(int increment);
-    /** @} */
-
     /** Property: Delay slot instructions.
      *
      *  The instructions in this list are the delay slots for this instruction. A delay slot is an instruction that is executed
@@ -136,10 +122,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     SemanticFailure semanticFailure_;
-
-    // Synchronized data members. All the following data members (as listed in binaryInstruction.C, not the ROSETTA-generated
-    // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
 public:
     /** Represents an invalid stack delta.

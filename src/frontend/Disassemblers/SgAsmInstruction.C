@@ -297,24 +297,6 @@ SgAsmInstruction::incrementSemanticFailure() {
     ++semanticFailure_.n;
 }
 
-size_t
-SgAsmInstruction::cacheLockCount() const {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return p_cacheLockCount;
-}
-
-void
-SgAsmInstruction::adjustCacheLockCount(int amount) {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    if (amount >= 0) {
-        p_cacheLockCount += amount;
-    } else {
-        size_t decrement = -amount;
-        ASSERT_require(p_cacheLockCount >= decrement);
-        p_cacheLockCount -= decrement;
-    }
-}
-
 bool
 SgAsmInstruction::normalizeOperands() {
     bool changed = false;
