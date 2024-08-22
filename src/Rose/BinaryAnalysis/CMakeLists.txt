@@ -73,6 +73,7 @@ install(FILES
   AddressIntervalSet.h
   AddressSet.h
   Alignment.h
+  Architecture.h
   AsmFunctionIndex.h
   AstHasher.h
   BasicTypes.h

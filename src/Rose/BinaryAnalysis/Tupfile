@@ -60,6 +60,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AddressIntervalSet.h					\
     AddressSet.h						\
     Alignment.h							\
+    Architecture.h						\
     AsmFunctionIndex.h						\
     AstHasher.h							\
     BasicTypes.h						\
