@@ -395,8 +395,8 @@ namespace{
 
 
     bool        processUnit   = true;
-    bool        logParentUnit = false;
-    bool        logBodyUnit   = false;
+    //bool        logParentUnit = false;
+    //bool        logBodyUnit   = false;
 
     LibadalangText kind_name(kind);
     std::string kind_name_string = kind_name.string_value();
@@ -454,7 +454,6 @@ namespace{
           ada_library_item_f_item(&unit_body, &unit_declaration);
           //Update the privateDecl field
           ada_base_entity ada_private_node;
-          ada_bool p_as_bool;
           ada_library_item_f_has_private(&unit_body, &ada_private_node);
           ada_node_kind_enum ada_private_kind = ada_node_kind(&ada_private_node);
           privateDecl = (ada_private_kind == ada_private_present);
@@ -1006,6 +1005,10 @@ namespace{
   std::set<const SgType*>
   typesFromAssignContext(const SgAssignOp& parentAssign, const SgFunctionCallExp& childCall)
   {
+    if(parentAssign.get_rhs_operand() != &childCall){
+      logWarn() << "Parent & child do not match in typesFromAssignContext.\n";
+    }
+
     const SgExpression& lhs = SG_DEREF(parentAssign.get_lhs_operand());
 
     return { lhs.get_type() };
@@ -1713,7 +1716,7 @@ void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* 
   initializePkgStandard(astScope, roots.at(0));
 
   // translate all units
-  for(int i = 0; i < roots.size(); i++){
+  for(long unsigned int i = 0; i < roots.size(); ++i){
     handleUnit(roots.at(i), AstContext{}.scope(astScope), file_paths.at(i));
   }
   // post processing

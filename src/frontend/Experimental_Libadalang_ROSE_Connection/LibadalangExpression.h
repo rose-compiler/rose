@@ -84,9 +84,9 @@ namespace Libadalang_ROSE_Translation
   SgNode*
   queryBuiltIn(int hash);
 
-  /// queries the corresponding ROSE AST node in ROSE for a given Asis representation.
+  /// queries the corresponding ROSE AST node in ROSE for a given Libadalang representation.
   SgNode*
-  queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx);
+  queryCorrespondingAstNode(ada_base_entity* lal_identifier);
 
 } //end Libadalang_ROSE_Translation
 

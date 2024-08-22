@@ -187,19 +187,19 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
                                     << std::endl;
 
        //TODO Figure out what all these settings mean
-       ctx = ada_create_analysis_context(NULL, NULL, NULL, 1, 8);
-       if (ctx == NULL){
-           mlog[Sawyer::Message::FATAL] << "ada_create_analysis_context returned NULL." << std::endl;
+       ctx = ada_create_analysis_context(nullptr, nullptr, nullptr, 1, 8);
+       if (ctx == nullptr){
+           mlog[Sawyer::Message::FATAL] << "ada_create_analysis_context returned nullptr." << std::endl;
        }
        mlog[Sawyer::Message::INFO] << "Calling ada_get_analysis_unit_from_file on " << srcFile
                                    << std::endl;
        analysis_units.resize(num_source_files);
        for(int i = 0 ; i < num_source_files; i++){
          char* cstring_SrcFile = const_cast<char*>(source_files.at(i).c_str());
-         analysis_units.at(i) = ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, NULL, 0, ada_default_grammar_rule);
+         analysis_units.at(i) = ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, nullptr, 0, ada_default_grammar_rule);
 
          if (analysis_units.at(i) == nullptr) {
-            mlog[Sawyer::Message::FATAL] << "ada_get_analysis_unit_from_file returned NULL." << std::endl;
+            mlog[Sawyer::Message::FATAL] << "ada_get_analysis_unit_from_file returned nullptr." << std::endl;
             status = 1;
          } else {
             mlog[Sawyer::Message::INFO] << "ada_get_analysis_unit_from_file returned a value"

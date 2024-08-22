@@ -356,32 +356,37 @@ struct LibadalangText {
     //If init with ada_node_kind, call ada_kind_name to get the ada_text value
     LibadalangText(ada_node_kind_enum kind){
       ada_kind_name(kind, &internal_text);
-      cxx_text = ada_text_to_locale_string(&internal_text);
+      c_text = ada_text_to_locale_string(&internal_text);
+      cxx_text = std::string(c_text);
     }
 
     //If init with ada_symbol_type, call ada_symbol_text to get the ada_text value
     LibadalangText(ada_symbol_type* symbol){
       ada_symbol_text(symbol, &internal_text);
-      cxx_text = ada_text_to_locale_string(&internal_text);
+      c_text = ada_text_to_locale_string(&internal_text);
+      cxx_text = std::string(c_text);
     }
 
     //If init with ada_big_integer, call ada_big_integer_text to get the ada_text value
     LibadalangText(ada_big_integer big_int){
       ada_big_integer_text(big_int, &internal_text);
-      cxx_text = ada_text_to_locale_string(&internal_text);
+      c_text = ada_text_to_locale_string(&internal_text);
+      cxx_text = std::string(c_text);
     }
 
     //If init with ada_base_entity, call ada_node_image to get the ada_text value
     LibadalangText(ada_base_entity* lal_element){
       ada_node_image(lal_element, &internal_text);
-      cxx_text = ada_text_to_locale_string(&internal_text);
+      c_text = ada_text_to_locale_string(&internal_text);
+      cxx_text = std::string(c_text);
     }
 
     //If init with ada_text_type, use pointers to construct ada_text value
     LibadalangText(ada_text_type text_type){
       internal_text.length = text_type->n;
       internal_text.chars = text_type->items;
-      cxx_text = ada_text_to_locale_string(&internal_text);
+      c_text = ada_text_to_locale_string(&internal_text);
+      cxx_text = std::string(c_text);
     }
 
     //If init with ada_unbounded_text_type_array, use pointers to construct ada_text value from the entire array
@@ -390,20 +395,26 @@ struct LibadalangText {
       for(int i = 0; i < text_type_array->n; i++){
         ada_symbol_type current_symbol = text_type_array->items[i];
         ada_symbol_text(&current_symbol, &internal_text);
-        cxx_text += ada_text_to_locale_string(&internal_text);
+        c_text = ada_text_to_locale_string(&internal_text);
+        cxx_text += std::string(c_text);
         if(i < text_type_array->n - 1){
           //destroy all but the last ada_text
           ada_destroy_text(&internal_text);
+          free(c_text);
         }
       }
     }
 
-    ~LibadalangText() { ada_destroy_text(&internal_text); }
+    ~LibadalangText() {
+      ada_destroy_text(&internal_text);
+      free(c_text);
+     }
 
     std::string string_value() const { return cxx_text; }
 
   private:
     ada_text     internal_text;
+    char*        c_text;
     std::string  cxx_text;
 };
 

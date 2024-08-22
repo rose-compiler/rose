@@ -116,7 +116,7 @@ namespace
     std::vector<SgExpression*> indicesSeq;
 
     int count = ada_node_children_count(&lal_indices);
-    for(int i = 0; i < count; i++){
+    for(int i = 0; i < count; ++i){
       ada_base_entity lal_array_index;
       if(ada_node_child(&lal_indices, i, &lal_array_index) != 0){
         //Call getExpr on the name
@@ -173,7 +173,7 @@ namespace
       }
 
       //Handle the remaining names, if they exist
-      for(int i = 1; i < num_names; i++){
+      for(int i = 1; i < num_names; ++i){
         // \todo SgActualArgumentExpression only supports 1:1 mapping from name to an expression
         //       but not n:1.
         //       => create an entry for each name beyond the first, and duplicate the expression
@@ -565,7 +565,7 @@ namespace
     //Generate the hash
     int seed = 131; 
     unsigned int hash = 0;
-    for(int i = 0; i < word_to_hash.length(); i++){
+    for(long unsigned int i = 0; i < word_to_hash.length(); ++i){
       hash = (hash * seed) + word_to_hash[i];
     }
     return hash;
@@ -573,7 +573,7 @@ namespace
 
   /// returns the ROSE type a Libadalang type decl corresponds to
   SgNode&
-  getExprType(ada_base_entity* lal_expr, AstContext ctx)
+  getExprType(ada_base_entity* lal_expr)
   {
     //Get the kind of this node
     ada_node_kind_enum kind;
@@ -726,7 +726,7 @@ namespace
       logError() << "getDeclType cannot find definition.\n";
     }
 
-    SgNode& basenode = getExprType(&lal_declaration, ctx);
+    SgNode& basenode = getExprType(&lal_declaration);
     SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
 
     return SG_DEREF(res);
@@ -772,7 +772,7 @@ namespace
       ada_component_list_f_components(&lal_component_list, &lal_component_list);
 
       int component_count = ada_node_children_count(&lal_component_list); //TODO What if no components?
-      for(int i = 0; i < component_count; i++){
+      for(int i = 0; i < component_count; ++i){
         ada_base_entity lal_component;
         if(ada_node_child(&lal_component_list, i, &lal_component) != 0){
           handleElement(&lal_component, ctx.scope(sgnode));
@@ -875,7 +875,7 @@ namespace
           ada_enum_type_def_f_enum_literals(lal_def, &lal_enum_literals);
 
           int count = ada_node_children_count(&lal_enum_literals);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_enum_literal;
             if(ada_node_child(&lal_enum_literals, i, &lal_enum_literal) != 0){
               addEnumLiteral(&lal_enum_literal, sgnode, i, ctx);
@@ -996,7 +996,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
     ada_type_decl_f_type_def(lal_decl, &lal_enum_decl_list);
     ada_enum_type_def_f_enum_literals(&lal_enum_decl_list, &lal_enum_decl_list);
     int count = ada_node_children_count(&lal_enum_decl_list);
-    for(int i = 0; i < count; i++){
+    for(int i = 0; i < count; ++i){
       ada_base_entity lal_enum_decl;
       if(ada_node_child(&lal_enum_decl_list, i, &lal_enum_decl) != 0){
         //Get the name
@@ -1178,7 +1178,7 @@ void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspe
   SgType& adaCharType = SG_DEREF(adaTypesByName().at(AdaIdentifier{"CHARACTER"}));
 
   int count = ada_node_children_count(&lal_ascii_decls);
-  for(int i = 0; i < count; i++){
+  for(int i = 0; i < count; ++i){
     ada_base_entity lal_ascii_decl;
     if(ada_node_child(&lal_ascii_decls, i, &lal_ascii_decl) != 0){
       //Get the name of this decl
@@ -1238,8 +1238,6 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   // make available declarations from the package standard
   // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
 
-  constexpr auto ADAMAXINT = std::numeric_limits<std::int64_t>::max();
-
   SgAdaPackageSpecDecl& stdpkg  = mkAdaPackageSpecDecl(si::Ada::packageStandardName, global);
   SgAdaPackageSpec&     stdspec = SG_DEREF(stdpkg.get_definition());
 
@@ -1266,7 +1264,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   //For each decl, call a function to add it to std based on its type
   //Get the children
   int count = ada_node_children_count(&decl_list);
-  for (int i = 0; i < count; ++i)
+  for(int i = 0; i < count; ++i)
   {
     ada_base_entity lal_decl;
 
@@ -1479,7 +1477,7 @@ getExceptionBase(ada_base_entity* lal_element, AstContext ctx)
   int decl_hash;
           
   //Find the correct decl in the defining name list
-  for(int i = 0; i < defining_name_list->n; i++){
+  for(int i = 0; i < defining_name_list->n; ++i){
     ada_base_entity defining_name = defining_name_list->items[i];
     ada_base_entity name_identifier;
     ada_defining_name_f_name(&defining_name, &name_identifier);
@@ -1575,7 +1573,7 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         int count = ada_node_children_count(&lal_constraint_list);
 
         SgExpressionPtrList ranges;
-        for(int i = 0; i < count; i++){
+        for(int i = 0; i < count; ++i){
           ada_base_entity lal_range_constraint;
           if(ada_node_child(&lal_constraint_list, i, &lal_range_constraint) != 0){
             SgExpression& range_constraint = getDiscreteRange(&lal_range_constraint, ctx);
@@ -1598,7 +1596,7 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         SgExpressionPtrList constraints;
 
         int count = ada_node_children_count(&lal_assoc_list);
-        for(int i = 0; i < count; i++){
+        for(int i = 0; i < count; ++i){
           ada_base_entity lal_discr_assoc;
           if(ada_node_child(&lal_assoc_list, i, &lal_discr_assoc) != 0){
             createDiscriminantAssoc(&lal_discr_assoc, constraints, ctx);
@@ -1623,7 +1621,7 @@ SgType& createExHandlerType(ada_base_entity* lal_exception_choices, AstContext c
   std::vector<SgType*> lst;
   int count = ada_node_children_count(lal_exception_choices);
   //Get the type for each choice
-  for(int i = 0; i < count; i++){
+  for(int i = 0; i < count; ++i){
     ada_base_entity lal_exception_choice;
     if(ada_node_child(lal_exception_choices, i, &lal_exception_choice) != 0){
       SgExpression* exceptExpr = nullptr;
@@ -1695,6 +1693,7 @@ SgType* getNumberDeclType(ada_base_entity* lal_element){
       }
     default:
       logError() << "Unexpected expr kind " << lal_expr_kind << " for ada_number_decl!\n";
+      return &mkTypeUnknown();
       break;
   }
 }

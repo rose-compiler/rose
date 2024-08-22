@@ -92,6 +92,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
+
   if(name == "range")
     {
       //Get the list of args
@@ -105,7 +106,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
         if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
           //Call getArg on each child node
           int count = ada_node_children_count(argRangeSuppl);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_arg;
             if(ada_node_child(argRangeSuppl, i, &lal_arg) != 0){
               exprs.push_back(&getArg(&lal_arg, ctx));
@@ -113,7 +114,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
           }
         }
       } else {
-        for(int i = 0; i < range; i++){
+        for(int i = 0; i < range; ++i){
           ada_base_entity lal_arg;
           if(ada_node_child(&lal_arg_list, i, &lal_arg) != 0){
             ada_node_kind_enum lal_arg_kind = ada_node_kind(&lal_arg);
@@ -241,7 +242,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
         if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
           //Call getArg on each child node
           int count = ada_node_children_count(argRangeSuppl);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_arg;
             ada_node_child(argRangeSuppl, i, &lal_arg);
             exprs.push_back(&getArg(&lal_arg, ctx));
@@ -471,8 +472,6 @@ namespace
       { ada_op_mod,     {"ada_op_mod",     mk2_wrapper<SgModOp,            sb::buildModOp> }},
       { ada_op_rem,     {"ada_op_rem",     mk2_wrapper<SgRemOp,            sb::buildRemOp> }},
       { ada_op_pow,     {"ada_op_pow",     mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> }},
-      { ada_op_abs,     {"ada_op_abs",     mk1_wrapper<SgAbsOp,            sb::buildAbsOp> }},
-      { ada_op_not,     {"ada_op_not",     mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
     };
 
     //Libadalang doesn't inherently treat unary +/- different from binary +/-, so we need a different map for them
@@ -480,11 +479,12 @@ namespace
     {
       { ada_op_plus,    {"ada_op_plus",    mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp> }},
       { ada_op_minus,   {"ada_op_minus",   mk1_wrapper<SgMinusOp,          sb::buildMinusOp> }},
+      { ada_op_abs,     {"ada_op_abs",     mk1_wrapper<SgAbsOp,            sb::buildAbsOp> }},
+      { ada_op_not,     {"ada_op_not",     mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
     };
 
     //TODO What about ada_op_and_then: ada_op_double_dot: ada_op_in: ada_op_not_in: ada_op_or_else:
 
-    //ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
     if(unary){
       OperatorMakerMap::const_iterator pos = unaryMakerMap.find(kind);
@@ -512,14 +512,6 @@ namespace
       return SG_DEREF(res);
     }
 
-    //ADA_ASSERT(expr.Operator_Kind != Not_An_Operator);
-
-    /* unused fields:
-         Defining_Name_ID      Corresponding_Name_Definition;
-         Defining_Name_List    Corresponding_Name_Definition_List; // Only >1 if the expression in a pragma is ambiguous
-         Element_ID            Corresponding_Name_Declaration; // Decl or stmt
-         Defining_Name_ID      Corresponding_Generic_Element;
-    */
     return SG_DEREF(sb::buildOpaqueVarRefExp(expr_name, &ctx.scope()));
   }
 
@@ -895,25 +887,6 @@ namespace
     return getOperator_fallback(lal_expr, unary, ctx);
   }
 
-  /// Returns the ROSE representation of stnadard TURE or FALSE, if \ref boolid matches
-  SgExpression&
-  getBooleanEnumItem(AdaIdentifier boolid)
-  {
-    SgEnumType&               enty  = SG_DEREF( isSgEnumType(adaTypesByName().at(AdaIdentifier{"BOOLEAN"})) );
-    SgEnumDeclaration&        endcl = SG_DEREF( isSgEnumDeclaration(enty.get_declaration()) );
-    SgInitializedNamePtrList& enlst = endcl.get_enumerators();
-
-    auto lim = enlst.end();
-    auto pos = std::find_if( enlst.begin(), lim,
-                             [id = std::move(boolid)](const SgInitializedName* itm)->bool
-                             {
-                               return id == AdaIdentifier{itm->get_name().getString()};
-                             }
-                           );
-
-    return mkEnumeratorRef(endcl, **pos);
-  }
-
   auto
   refFromWithinFunction(const SgFunctionDeclaration& ref, const SgScopeStatement& refedFrom) -> bool
   {
@@ -992,7 +965,7 @@ namespace
 
     if(kind == ada_identifier)
     {
-      const SgNode* astnode = queryCorrespondingAstNode(lal_element, ctx);
+      const SgNode* astnode = queryCorrespondingAstNode(lal_element);
 
       logTrace() << "ada_identifier?" << std::endl;
 
@@ -1051,7 +1024,7 @@ namespace
     int count = ada_node_children_count(&lal_assocs);
     std::vector<SgExpression*> components;
 
-    for(int i = 0; i < count; i++){
+    for(int i = 0; i < count; ++i){
       ada_base_entity lal_aggregate_assoc;
       if(ada_node_child(&lal_assocs, i, &lal_aggregate_assoc) != 0){
         //Process this aggregate assoc node and add it to components
@@ -1069,7 +1042,7 @@ namespace
         {
           std::vector<SgExpression*> exprs;
 
-          for(int j = 0; j < num_designators; j++){
+          for(int j = 0; j < num_designators; ++j){
             ada_base_entity lal_designator;
             if(ada_node_child(&lal_designators, j, &lal_designator) != 0){
               SgExpression* res = &getExpr(&lal_designator, ctx); //TODO What if this is a definition?
@@ -1257,7 +1230,7 @@ namespace{
           }
 
           //Find the definition of this identifier and get its hash
-          int hash;
+          int hash = 0;
 
           //Bool for if we found the corresponding decl
           bool found_decl = true;
@@ -1278,7 +1251,7 @@ namespace{
             ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
           
             //Find the correct decl in the defining name list
-            for(int i = 0; i < defining_name_list->n; i++){
+            for(int i = 0; i < defining_name_list->n; ++i){
               ada_base_entity defining_name = defining_name_list->items[i];
               ada_base_entity name_identifier;
               ada_defining_name_f_name(&defining_name, &name_identifier);
@@ -1467,6 +1440,9 @@ namespace{
             }
             operatorCallSyntax = true;
             objectCallSyntax = false;
+          } else {
+            logFlaw() << "Unhandled function call of kind " << kind << std::endl;
+            break;
           }
 
           // PP (04/22/22) if the callee is an Ada Attribute then integrate
@@ -1495,6 +1471,13 @@ namespace{
       case ada_op_mult:
       case ada_op_div:
       case ada_op_pow:
+      case ada_op_and:
+      case ada_op_or:
+      case ada_op_xor:
+      case ada_op_mod:
+      case ada_op_rem:
+      case ada_op_abs:
+      case ada_op_not:
         {
           logKind("An_Operator_Symbol", kind);
 
@@ -1936,7 +1919,7 @@ queryBuiltIn(int hash)
 
 /// Searches for the node that \ref lal_identifier references in all previously mapped nodes (not standard nodes)
 SgNode*
-queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
+queryCorrespondingAstNode(ada_base_entity* lal_identifier)
 {
   static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
 
@@ -1959,7 +1942,7 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier, AstContext ctx)
   ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
           
   //Find the correct decl in the defining name list
-  for(int i = 0; i < defining_name_list->n; i++){
+  for(int i = 0; i < defining_name_list->n; ++i){
     ada_base_entity defining_name = defining_name_list->items[i];
     ada_base_entity name_identifier;
     ada_defining_name_f_name(&defining_name, &name_identifier);

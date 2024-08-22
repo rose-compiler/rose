@@ -147,7 +147,7 @@ namespace Libadalang_ROSE_Translation
   {
     int                 range = ada_node_children_count(lal_stmt_list);
 
-    for(int i = 0; i < range; i++){
+    for(int i = 0; i < range; ++i){
         ada_base_entity lal_stmt;
         ada_node_child(lal_stmt_list, i, &lal_stmt);
         handleStmt(&lal_stmt, ctx.scope(blk));
@@ -168,7 +168,7 @@ namespace Libadalang_ROSE_Translation
   {
     int                 range = ada_node_children_count(lal_handlers);
 
-    for(int i = 0; i < range; i++){
+    for(int i = 0; i < range; ++i){
         ada_base_entity lal_handler;
         ada_node_child(lal_handlers, i, &lal_handler);
         handleExceptionHandler(&lal_handler, trystmt, ctx.scope(blk));
@@ -245,7 +245,7 @@ namespace Libadalang_ROSE_Translation
     //Assuming lal_decls is a list of some kind, we can just call ada_node_children_count
     int             range = ada_node_children_count(lal_decls); //TODO This works if lal_decls is uninitialized, but I'm not sure why?
 
-    for(int i =0; i < range; i++){
+    for(int i =0; i < range; ++i){
          ada_base_entity lal_decl_child;
          ada_node_child(lal_decls, i, &lal_decl_child);
          handleElement(&lal_decl_child, pragmaCtx.scope(dominantBlock));
@@ -438,7 +438,7 @@ namespace {
     int count = ada_node_children_count(&lal_inherited_decl_list);
 
     // just traverse the IDs, as the elements are not present
-    for(int i = 0; i < count ; i++){
+    for(int i = 0; i < count ; ++i){
       ada_base_entity lal_inherited_decl;
       if(ada_node_child(&lal_inherited_decl_list, i, &lal_inherited_decl) != 0){
         //TODO How will this work? It isn't a unique node.
@@ -565,7 +565,7 @@ namespace {
 
   /// Determines & sets the abstract, limited, & tagged modifiers for a decl
   void
-  setTypeModifiers(SgDeclarationStatement& dcl, ada_base_entity* lal_element, AstContext ctx)
+  setTypeModifiers(SgDeclarationStatement& dcl, ada_base_entity* lal_element)
   {
     ada_node_kind_enum kind = ada_node_kind(lal_element);
     switch(kind)
@@ -723,7 +723,7 @@ namespace {
     SgDeclarationStatement& resdcl = SG_DEREF(res);
 
     if (typeview){
-      setTypeModifiers(resdcl, &lal_type_def, ctx);
+      setTypeModifiers(resdcl, &lal_type_def);
     } else if(true /*TODO decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration*/) {
       setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
     }
@@ -801,19 +801,25 @@ namespace {
       ada_base_entity lal_discr_list;
       ada_known_discriminant_part_f_discr_specs(lal_element, &lal_discr_list);
 
-     //Iterate over the discrs
-     int count = ada_node_children_count(&lal_discr_list);
-     for(int i = 0; i < count; i++){
-       ada_base_entity lal_discr_spec;
-       if(ada_node_child(&lal_discr_list, i, &lal_discr_spec) != 0){
-         params.append_parameter(&getDiscriminant(&lal_discr_spec, ctx));
-       }
-     }
+      //Iterate over the discrs
+      int count = ada_node_children_count(&lal_discr_list);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_discr_spec;
+        if(ada_node_child(&lal_discr_list, i, &lal_discr_spec) != 0){
+          params.append_parameter(&getDiscriminant(&lal_discr_spec, ctx));
+        }
+      }
 
-      //TODO Secondary discrs?
-    }
-    else
-    {
+    } else if(secondary != nullptr && !ada_node_is_null(secondary)){
+      //TODO Check if this works for secondary discrs
+      int count = ada_node_children_count(secondary);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_discr_spec;
+        if(ada_node_child(secondary, i, &lal_discr_spec) != 0){
+          params.append_parameter(&getDiscriminant(&lal_discr_spec, ctx));
+        }
+      }
+    } else {
       logWarn() << "createDiscriminatedDecl given non-discr kind " << kind << std::endl;
     }
 
@@ -869,7 +875,7 @@ namespace {
     ada_node_kind_enum lal_type_def_kind = ada_node_kind(&lal_type_def);
 
     SgScopeStatement*       parentScope = &ctx.scope();
-    SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDecl_opt(&lal_discr, 0, ctx);
+    SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDecl_opt(&lal_discr, second_discr, ctx);
 
     if (discr)
     {
@@ -919,7 +925,7 @@ namespace {
   ///    The ROSE AST looks like:
   ///      int a = InitExpr, int b = InitExpr
   SgExpression*
-  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext ctx)
+  createInit(SgInitializedNamePtrList& lst, SgExpression* exp)
   {
     // the first variable declarations gets the original initializer
     if ((exp == nullptr) || lst.empty()) return exp;
@@ -953,14 +959,13 @@ namespace {
     if(ada_node_is_null(lal_name_list)){
       //Add a dummy blank name to the list & return
       const std::string name = "";
-      SgExpression*      init = createInit(lst, initexpr, ctx);
+      SgExpression*      init = createInit(lst, initexpr);
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
      //attachSourceLocation(dcl, &lal_obj, ctx);
       lst.push_back(&dcl);
       return lst;
     }
 
-    int hash = hash_node(lal_name_list);
     int count = ada_node_children_count(lal_name_list);
     //Iterate over the list of defining names
     for(int i = 0; i < count; ++i)
@@ -976,7 +981,7 @@ namespace {
         ada_base_entity    lal_identifier;
         ada_defining_name_f_name(&lal_obj, &lal_identifier);
         const std::string  name = canonical_text_as_string(&lal_identifier);
-        SgExpression*      init = createInit(lst, initexpr, ctx);
+        SgExpression*      init = createInit(lst, initexpr);
         SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
         attachSourceLocation(dcl, &lal_obj, ctx);
@@ -1004,7 +1009,7 @@ namespace {
                                    map_t<int, SgInitializedName*>& m,
                                    ada_base_entity* lal_name_list,
                                    SgType& dcltype,
-                                     SgExpression* initexpr
+                                   SgExpression* initexpr
                                  )
   {
     std::vector<int> dummy;
@@ -1351,7 +1356,7 @@ namespace {
 
     if(!ada_node_is_null(&public_part)){
       int range = ada_node_children_count(&public_part);
-      for(int i =0; i < range; i++){
+      for(int i =0; i < range; ++i){
         ada_base_entity lal_entry;
         ada_node_child(&public_part, i, &lal_entry);
         handleElement(&lal_entry, ctx.scope(*nodePtr));
@@ -1363,7 +1368,7 @@ namespace {
       ada_declarative_part_f_decls(&private_part, &private_part);
 
       int range = ada_node_children_count(&private_part);
-      for(int i =0; i < range; i++){
+      for(int i =0; i < range; ++i){
         ada_base_entity lal_entry;
         ada_node_child(&private_part, i, &lal_entry);
         handleElement(&lal_entry, ctx.scope(*nodePtr), true /* private items */);
@@ -1383,7 +1388,7 @@ namespace {
 
                         if(!ada_node_is_null(&public_part)){
                           int range = ada_node_children_count(&public_part);
-                          for(int i =0; i < range; i++){
+                          for(int i =0; i < range; ++i){
                              ada_base_entity lal_entry;
                              ada_node_child(&public_part, i, &lal_entry);
                              handleElement(&lal_entry, pragmaCtx.scope(*nodePtr));
@@ -1400,7 +1405,7 @@ namespace {
 
                         if(!ada_node_is_null(&private_part)){
                           int range = ada_node_children_count(&private_part);
-                          for(int i =0; i < range; i++){
+                          for(int i =0; i < range; ++i){
                              ada_base_entity lal_entry;
                              ada_node_child(&private_part, i, &lal_entry);
                              handleElement(&lal_entry, pragmaCtx.scope(*nodePtr), true /* private items *//*);
@@ -1461,7 +1466,7 @@ namespace {
     } else {
       //If this isn't a "when others", get the options for ths path
       std::vector<SgExpression*> choices;
-      for(int i = 0; i < num_choices; i++){
+      for(int i = 0; i < num_choices; ++i){
         ada_base_entity lal_choice;
         if(ada_node_child(&lal_choices, i, &lal_choice) !=0){
           ada_node_kind_enum lal_choice_kind = ada_node_kind(&lal_choice);
@@ -1484,7 +1489,7 @@ namespace {
 
     //Handle the stmts
     int num_stmts = ada_node_children_count(&lal_stmts);
-    for(int i = 0; i < num_stmts; i++){
+    for(int i = 0; i < num_stmts; ++i){
       ada_base_entity lal_stmt;
       if(ada_node_child(&lal_stmts, i, &lal_stmt) != 0){
         handleStmt(&lal_stmt, ctx.scope(block));
@@ -1502,7 +1507,7 @@ namespace {
     sg::linkParentChild(SG_DEREF(ifStmt), static_cast<SgStatement&>(block), branchSetter);
 
     int count = ada_node_children_count(lal_path);
-    for(int i = 0; i < count; i++){
+    for(int i = 0; i < count; ++i){
       ada_base_entity lal_stmt;
       if(ada_node_child(lal_path, i, &lal_stmt) != 0){
         handleStmt(&lal_stmt, ctx.scope(block));
@@ -1665,7 +1670,7 @@ queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
 
 void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lblname)
   {
-    using PragmaContainer = AstContext::PragmaContainer;
+    //~using PragmaContainer = AstContext::PragmaContainer;
     
     //Get the kind of this node
     ada_node_kind_enum kind;
@@ -1733,7 +1738,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_base_entity lal_elsif_list;
           ada_if_stmt_f_alternatives(lal_stmt, &lal_elsif_list);
           int count = ada_node_children_count(&lal_elsif_list);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_alternative;
             if(ada_node_child(&lal_elsif_list, i, &lal_alternative) != 0){
               ada_elsif_stmt_part_f_cond_expr(&lal_alternative, &lal_condition);
@@ -1780,7 +1785,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           int count = ada_node_children_count(&lal_alternatives);
 
           //Handle each alternative
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_case_stmt_alternative;
             if(ada_node_child(&lal_alternatives, i, &lal_case_stmt_alternative) != 0){
               createCaseStmtPath(&lal_case_stmt_alternative, sgnode, ctx.scope(casebody));
@@ -1837,7 +1842,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO Pragmas
           //Call handleStmt for each stmt in the loop
           int count = ada_node_children_count(&lal_loop_stmt_list);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_loop_stmt;
             if(ada_node_child(&lal_loop_stmt_list, i, &lal_loop_stmt) != 0){
               handleStmt(&lal_loop_stmt, ctx.scope(block));
@@ -1870,7 +1875,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO Pragmas
           //Call handleStmt for each stmt in the loop
           int count = ada_node_children_count(&lal_loop_stmt_list);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_loop_stmt;
             if(ada_node_child(&lal_loop_stmt_list, i, &lal_loop_stmt) != 0){
               handleStmt(&lal_loop_stmt, ctx.scope(block));
@@ -1938,7 +1943,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO pragmas
           //Call handleStmt for each stmt in the loop
           int count = ada_node_children_count(&lal_loop_stmt_list);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
             ada_base_entity lal_loop_stmt;
             if(ada_node_child(&lal_loop_stmt_list, i, &lal_loop_stmt) != 0){
               handleStmt(&lal_loop_stmt, ctx.scope(block));
@@ -2108,7 +2113,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           //We can't pass ada_base_entity as a func arg, so we will pass the pointers instead
           std::vector<ada_base_entity*> lal_args (count);
           std::vector<ada_base_entity> lal_args_backend (count);
-          for(int i = 0; i < count; i++){
+          for(int i = 0; i < count; ++i){
               if(ada_node_child(&lal_arg_list, i, &lal_args_backend.at(i)) == 0){
                 logError() << "Error while getting a child in handleStmt.\n";
               }
@@ -2166,7 +2171,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
 
           //If there are params, add them to paramlst
           int param_count = ada_node_is_null(&params) ? 0 : ada_node_children_count(&params);
-          for(int i = 0; i < param_count; i++){
+          for(int i = 0; i < param_count; ++i){
             ada_base_entity param;
             if(ada_node_child(&params, i, &param) != 0){
               SgVariableDeclaration& decl = getParm(&param, parmctx);
@@ -2266,7 +2271,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
 
   void handleExceptionHandler(ada_base_entity* lal_element, SgTryStmt& tryStmt, AstContext ctx)
   {
-    using PragmaContainer = AstContext::PragmaContainer;
+    //~using PragmaContainer = AstContext::PragmaContainer;
 
     //Get the kind of this node
     ada_node_kind_enum kind = ada_node_kind(lal_element);
@@ -2314,7 +2319,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     traverseIDs(range, elemMap(), StmtCreator{pragmaCtx.scope(body)});*/ //TODO Pragmas
     //Handle the stmts for this excp
     int count = ada_node_children_count(&lal_stmts);
-    for(int i = 0; i < count; i++){
+    for(int i = 0; i < count; ++i){
       ada_base_entity lal_stmt;
       if(ada_node_child(&lal_stmts, i, &lal_stmt) != 0){
         handleStmt(&lal_stmt, ctx.scope(body));
@@ -2387,7 +2392,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
           if(!ada_node_is_null(&public_part)){
             int range = ada_node_children_count(&public_part);
-            for(int i = 0; i < range; i++){
+            for(int i = 0; i < range; ++i){
               ada_base_entity lal_child;
               ada_node_child(&public_part, i, &lal_child);
               handleElement(&lal_child, pragmaCtx.scope(pkgspec));
@@ -2403,7 +2408,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
           if(!ada_node_is_null(&private_part)){
             int range = ada_node_children_count(&private_part);
-            for(int i = 0; i < range; i++){
+            for(int i = 0; i < range; ++i){
               ada_base_entity lal_child;
               ada_node_child(&private_part, i, &lal_child);
               handleElement(&lal_child, pragmaCtx.scope(pkgspec), true /* private items */);
@@ -3172,7 +3177,7 @@ processInheritedSubroutines( SgNamedType& derivedType,
          ada_base_entity lal_node_list;
          ada_ada_node_parent(&lal_super_type, &lal_node_list);
          int count = ada_node_children_count(&lal_node_list);
-         for(int i = 0; i < count; i++){
+         for(int i = 0; i < count; ++i){
            ada_base_entity lal_stmt;
            if(ada_node_child(&lal_node_list, i, &lal_stmt) != 0){
              //Check if this is a subp_decl that uses the original type
