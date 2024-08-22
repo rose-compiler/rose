@@ -2941,7 +2941,7 @@ SgFile::usage ( int status )
        // it would be nice to insert the version of ROSE being used (using the VERSION macro)
           fputs(
 "\n"
-"This ROSE translator provides a means for operating on C, C++, Fortran and Java\n"
+"This ROSE translator provides a means for operating on Ada, C, C++, Fortran and Java\n"
 "source code; as well as on x86, ARM, and PowerPC executable code (plus object files \n"
 "and libraries).\n"
 "\n"

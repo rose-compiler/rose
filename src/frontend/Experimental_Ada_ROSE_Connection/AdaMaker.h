@@ -768,6 +768,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada Enum representation clause for \ref enumtype and
   ///   enumerator initializations \ref initlst.
+  /// \pre isSgEnumType(enumtype) || isSgTypedefType(enumtype)
   /// \details
   ///   the type of \ref enumtype should be either SgEnumType or SgTypedefType
   SgAdaEnumRepresentationClause&
@@ -838,6 +839,8 @@ namespace Ada_ROSE_Translation
   /// Creates a new expression
   /// \param ty the type of the allocation
   /// \param args_opt an optional aggregate to initialize the type
+  /// \post
+  ///    result.get_type() == &ty
   SgNewExp&
   mkNewExp(SgType& ty, SgExprListExp* args_opt = nullptr);
 

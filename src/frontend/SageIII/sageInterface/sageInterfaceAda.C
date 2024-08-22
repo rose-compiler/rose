@@ -2,7 +2,6 @@
 #include "sageInterface.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"
-#include "Experimental_Ada_ROSE_Connection/AdaMaker.h"
 
 #include <iostream>
 #include <limits>
@@ -1616,24 +1615,6 @@ namespace Ada
       return SG_DEREF(res);
     }
 
-    SgType& standardType(std::string name)
-    {
-      ASSERT_not_null(pkgStandardScope());
-
-      if (SgTypedefSymbol* tysy = pkgStandardScope()->lookup_typedef_symbol(name))
-      {
-        SgTypedefDeclaration& tydcl = SG_DEREF(tysy->get_declaration());
-        return SG_DEREF(tydcl.get_type());
-      }
-
-      SgEnumSymbol&           ensy   = SG_DEREF(pkgStandardScope()->lookup_enum_symbol(name));
-      SgDeclarationStatement& nondef = SG_DEREF(ensy.get_declaration());
-      SgEnumDeclaration&      defdcl = SG_DEREF(isSgEnumDeclaration(nondef.get_definingDeclaration()));
-
-      //~ std::cerr << "e" << &endcl << " " << endcl.get_firstNondefiningDeclaration() << std::endl;
-      return SG_DEREF(defdcl.get_type());
-    }
-
     bool denotesRange(const SgExpression* exp)
     {
       return sg::dispatch(DimRange{}, exp) != nullptr;
@@ -1820,9 +1801,10 @@ namespace Ada
 
       void handle(const SgNewExp& n)
       {
-        namespace art = Ada_ROSE_Translation;
+        SgType* accessTy = new SgAdaAccessType(n.get_type(), false /*generalAccess*/, true /* its anonymous at this point */);
+        // SgType* accessTy = &mkAdaAccessType(n.get_type(), false /*generalAccess*/, true /* its anonymous at this point */);
 
-        res = TypeDescription{&art::mkAdaAccessType(SG_DEREF(n.get_type()))};
+        res = TypeDescription{accessTy};
       }
 
       void handle(const SgPointerDerefExp& n)
@@ -3330,6 +3312,25 @@ namespace Ada
            && (arg != nullptr)
            && isOutInoutArgument(*call, *arg)
            );
+  }
+
+
+  SgType& standardType(const std::string& name)
+  {
+    ASSERT_not_null(pkgStandardScope());
+
+    if (SgTypedefSymbol* tysy = pkgStandardScope()->lookup_typedef_symbol(name))
+    {
+      SgTypedefDeclaration& tydcl = SG_DEREF(tysy->get_declaration());
+      return SG_DEREF(tydcl.get_type());
+    }
+
+    SgEnumSymbol&           ensy   = SG_DEREF(pkgStandardScope()->lookup_enum_symbol(name));
+    SgDeclarationStatement& nondef = SG_DEREF(ensy.get_declaration());
+    SgEnumDeclaration&      defdcl = SG_DEREF(isSgEnumDeclaration(nondef.get_definingDeclaration()));
+
+    //~ std::cerr << "e" << &endcl << " " << endcl.get_firstNondefiningDeclaration() << std::endl;
+    return SG_DEREF(defdcl.get_type());
   }
 
 

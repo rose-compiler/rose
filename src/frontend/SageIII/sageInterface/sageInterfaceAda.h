@@ -248,6 +248,14 @@ namespace Ada
   FlatArrayType getArrayTypeInfo(SgType& atype);
   /// @}
 
+
+  /// returns a type from the standard package with name \ref name.
+  /// \param  the name of a type in the standard package
+  /// \return a type representation
+  /// \pre
+  ///    name must be a type in package Standard, otherwise an exception is thrown
+  SgType& standardType(const std::string& name);
+
   using RecordFieldBase = std::tuple<const SgSymbol*>;
 
   struct RecordField : RecordFieldBase
