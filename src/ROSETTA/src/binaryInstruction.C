@@ -43228,13 +43228,7 @@ class SgAsmInstruction: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
-        "size_t", "cacheLockCount", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmInstruction.setDataPrototype(
-        "std::vector<SgAsmInstruction*>", "delaySlots", "",
+        "SgAsmInstruction*", "delaySlot", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -43275,8 +43269,7 @@ private:
         }
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
-        s & BOOST_SERIALIZATION_NVP(p_cacheLockCount);
-        s & BOOST_SERIALIZATION_NVP(p_delaySlots);
+        s & BOOST_SERIALIZATION_NVP(p_delaySlot);
         s & BOOST_SERIALIZATION_NVP(p_sources);
         debugSerializationEnd("SgAsmInstruction");
     }
@@ -43337,31 +43330,20 @@ public:
     /** @} */
 
 public:
-    /** Property: Cache lock count.
-     *
-     *  Number of locks held on this object, preventing the AST rooted at this node from being evicted from a cache.
-     *
-     *  Thread safety: This method is thread safe.
-     *
-     * @{ */
-    size_t cacheLockCount() const;
-    void adjustCacheLockCount(int increment);
-    /** @} */
-public:
     /** Property: Delay slot instructions.
      *
-     *  The instructions in this list are the delay slots for this instruction. A delay slot is an instruction that is executed
-     *  without the effects of a preceding instruction. The most common form is a single arbitrary instruction located immediately
-     *  after a branch instruction on a RISC architecture, in which case the delay instruction will execute even if the preceding
-     *  branch is taken. This makes the instruction execute out-of-order compared to its location in memory or in the original
-     *  assembler language code.
+     *  The instruction occupying the delay slot for this instruction. A delay slot is an instruction that is executed without the
+     *  effects of a preceding instruction. The most common form is a single arbitrary instruction located immediately after a
+     *  branch instruction on a RISC architecture, in which case the delay instruction will execute even if the preceding branch is
+     *  taken. This makes the instruction execute out-of-order compared to its location in memory or in the original assembler
+     *  language code.
      *
-     *  All delay slot instructions must be non-null and must be at the addresses immediately following this instruction. There is
-     *  no AST edge from this instruction to its delay slot instructions. 
+     *  The address of the instruction pointed to by the delay slot must immediately follow this instruction. There is no AST edge
+     *  from this instruction to its delay slot instruction. 
      *  
      *  @{ */
-    std::vector<SgAsmInstruction*> const& get_delaySlots() const;
-    std::vector<SgAsmInstruction*>& get_delaySlots();
+    SgAsmInstruction* const& get_delaySlot() const;
+    void set_delaySlot(SgAsmInstruction* const&);
     /** @} */
     // FIXME[Robb P Matzke 2017-02-13]: unused?
 public:
@@ -43395,10 +43377,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     SemanticFailure semanticFailure_;
-
-    // Synchronized data members. All the following data members (as listed in binaryInstruction.C, not the ROSETTA-generated
-    // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
 public:
     /** Represents an invalid stack delta.

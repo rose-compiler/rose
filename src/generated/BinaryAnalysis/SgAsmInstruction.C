@@ -34,14 +34,15 @@ SgAsmInstruction::set_operandList(SgAsmOperandList* const& x) {
     set_isModified(true);
 }
 
-std::vector<SgAsmInstruction*> const&
-SgAsmInstruction::get_delaySlots() const {
-    return p_delaySlots;
+SgAsmInstruction* const&
+SgAsmInstruction::get_delaySlot() const {
+    return p_delaySlot;
 }
 
-std::vector<SgAsmInstruction*>&
-SgAsmInstruction::get_delaySlots() {
-    return p_delaySlots;
+void
+SgAsmInstruction::set_delaySlot(SgAsmInstruction* const& x) {
+    this->p_delaySlot = x;
+    set_isModified(true);
 }
 
 int64_t const&
@@ -72,7 +73,7 @@ SgAsmInstruction::~SgAsmInstruction() {
 
 SgAsmInstruction::SgAsmInstruction()
     : p_operandList(nullptr)
-    , p_cacheLockCount(0)
+    , p_delaySlot(nullptr)
     , p_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA)
     , p_semantics(nullptr) {}
 
@@ -84,14 +85,14 @@ SgAsmInstruction::SgAsmInstruction(rose_addr_t const& address,
     : SgAsmStatement(address)
     , p_architectureId(architectureId)
     , p_operandList(nullptr)
-    , p_cacheLockCount(0)
+    , p_delaySlot(nullptr)
     , p_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA)
     , p_semantics(nullptr) {}
 
 void
 SgAsmInstruction::initializeProperties() {
     p_operandList = nullptr;
-    p_cacheLockCount = 0;
+    p_delaySlot = nullptr;
     p_stackDeltaIn = SgAsmInstruction::INVALID_STACK_DELTA;
     p_semantics = nullptr;
 }
