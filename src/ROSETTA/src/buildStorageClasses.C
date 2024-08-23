@@ -968,6 +968,11 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "uint16_t" ) ||
                  ( varTypeString == "uint8_t" ) ||
                  ( varTypeString == "size_t" ) ||
+                 ( varTypeString == "std::uint64_t" ) ||
+                 ( varTypeString == "std::uint32_t" ) ||
+                 ( varTypeString == "std::uint16_t" ) ||
+                 ( varTypeString == "std::uint8_t" ) ||
+                 ( varTypeString == "std::size_t" ) ||
                  ( varTypeString == "time_t" ) ||
               // DQ (8/7/2008): Note that these are not primative types, but I will account
               // for them as such at least temporarily so that we can be the IR in place.
