@@ -92,6 +92,7 @@ install(FILES
   Debugger.h
   Demangler.h
   Disassembler.h
+  Dwarf.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h
