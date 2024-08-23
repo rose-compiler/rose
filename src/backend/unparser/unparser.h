@@ -56,12 +56,6 @@ class Unparser_Nameq;
 
 #define KAI_NONSTD_IOSTREAM 1
 
-// typedef map<int,int,less<int>,allocator<int> > X;
-// typedef multimap<int,int,less<int>,allocator<int> > X;
-// multimap<int,int,less<int>,allocator<int> > X;
-// list<int> Y;
-// typedef multimap<int,int,less<int> > X;
-
 #if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
 // I think this is part of the connection to lex support for comments
 // extern ROSEAttributesList* getPreprocessorDirectives( char *fileName);
@@ -78,9 +72,7 @@ class Unparser_Nameq;
                     convert the stream output to a string.
      \endif
   */
-// string globalUnparseToString ( SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL );
 
-// void printOutComments ( SgLocatedNode* locatedNode );
 std::string get_output_filename( SgFile& file);
 //! returns the name of type t
 std::string get_type_name( SgType* t);
@@ -105,7 +97,6 @@ void outputFirstAndLastIncludeFileInfo( SgSourceFile* sourceFile );
 class Unparser
    {
      public:
-       // DQ (8/13/2007): This was added by Thomas and will be commented later.
           Unparse_Type* u_type;
           Unparser_Nameq* u_name;
           Unparse_Sym* u_sym;
@@ -161,18 +152,6 @@ class Unparser
           bool p_resetSourcePosition;
 
      public:
-#if 0
-       // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
-          enum token_sequence_position_enum_type
-             {
-               e_leading_whitespace_start,
-               e_leading_whitespace_end,
-               e_token_subsequence_start,
-               e_token_subsequence_end,
-               e_trailing_whitespace_start,
-               e_trailing_whitespace_end
-             };
-#endif
 
       //! constructor
           Unparser(std::ostream* localStream, std::string filename, Unparser_Opt info,
@@ -207,7 +186,7 @@ class Unparser
 
       //! friend string globalUnparseToString ( SgNode* astNode );
 
-          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope = NULL );
+          void unparseFile (SgSourceFile* file, SgUnparse_Info &info, SgScopeStatement* unparseScope=nullptr);
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
           void unparseFile ( SgBinaryComposite*, SgUnparse_Info& info );
           void unparseFile ( SgJvmComposite*, SgUnparse_Info& info );

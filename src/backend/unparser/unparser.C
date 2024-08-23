@@ -789,23 +789,18 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                        }
                       else
                        {
-                      // printf ("Unparsing a source file (different from all other source files) \n");
                          printf ("Unparsing a header file of an AST from a given source file \n");
                        }
-                 // ROSE_ASSERT(this->currentFile != globalScope->get_parent());
 #endif
                     SgSourceFile* currentSourceFile = isSgSourceFile(this->currentFile);
                     ROSE_ASSERT(currentSourceFile != nullptr);
 
 #if DEBUG_UNPARSE_FILE
-                 // printf ("globalScope_from_currentFile     = %p \n",globalScope_from_currentFile);
                     printf ("globalScope                      = %p \n",globalScope);
                     printf ("currentSourceFile->getFileName() = %s \n",currentSourceFile->getFileName().c_str());
 #endif
                     SgGlobal* globalScope_from_currentFile = currentSourceFile->get_globalScope();
-
-                 // DQ (4/11/2021): Added assertion.
-                    ROSE_ASSERT(globalScope == globalScope_from_currentFile);
+                    ASSERT_require(globalScope == globalScope_from_currentFile);
 
                     u_exprStmt->unparseStatement(globalScope, info);
 #if DEBUG_UNPARSE_FILE
@@ -842,8 +837,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_PHP_language:
              {
-            // printf ("Error: SgFile::e_PHP_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
                Unparse_PHP unparser(this,file->get_unparse_output_filename());
                unparser.unparseStatement(globalScope, info);
                break;
@@ -851,8 +844,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Python_language:
              {
-            // printf ("Error: SgFile::e_Python_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
                Unparse_Python unparser(this,file->get_unparse_output_filename());
                unparser.unparseGlobalStmt(globalScope, info);
@@ -881,10 +872,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Jovial_language:
              {
-            // Rasmussen (11/24/2017): Begin implementation of the Jovial unparser
                UnparseJovial unparser{this, file->getFileName()};
                unparser.unparseJovialFile(file, info);
-
                break;
              }
 
