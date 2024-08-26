@@ -148,7 +148,7 @@ void Hasher::HasherFactory::registerMaker(const std::string& hashType,
     hashMakers[hashType] = hasherMakerPtr;
 }
 
-boost::shared_ptr<Hasher> Hasher::HasherFactory::createHasher(const std::string& hashType) const
+std::shared_ptr<Hasher> Hasher::HasherFactory::createHasher(const std::string& hashType) const
 {
     // Look up the maker by nodes name
     std::map<std::string, IHasherMaker* >::const_iterator hashItr = hashMakers.find(hashType);

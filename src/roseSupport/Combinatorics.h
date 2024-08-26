@@ -6,12 +6,11 @@
 #include <Rose/Constants.h>
 #include <ROSE_UNUSED.h>
 
-#include <boost/shared_ptr.hpp>
-
 #include <algorithm>
 #include <cassert>
 #include <istream>
 #include <list>
+#include <memory>
 #include <ostream>
 #include <Rose/Exception.h>
 #include <Sawyer/Assert.h>
@@ -263,7 +262,7 @@ public:
     class IHasherMaker
     {
     public:
-        virtual boost::shared_ptr<Hasher> create() const = 0;
+        virtual std::shared_ptr<Hasher> create() const = 0;
         virtual ~IHasherMaker() {}
     };
     
@@ -303,11 +302,9 @@ public:
          * Creates a Hasher (the type of Hasher is determined by the
          * template T) and returns it as a shared_ptr. 
          **/
-        virtual boost::shared_ptr<Hasher> create() const
+        virtual std::shared_ptr<Hasher> create() const
         {
-            T* hasher = new T;
-            boost::shared_ptr<Hasher> hashPtr(hasher);
-            return hashPtr;
+            return std::make_shared<T>();
         }
         
     };
@@ -338,10 +335,10 @@ public:
          *
          *  @param[in] hashType The type of the Hasher to create.
          *  e.g. FNV
-         *  @return A Hasher of the correct type in a boost::shared_ptr
+         *  @return A Hasher of the correct type in an std::shared_ptr
          *  @throw  Rose::Combinatorics::Exception if inType names an unsupported type
          **/
-    boost::shared_ptr<Hasher> createHasher(const std::string& hashType) const;
+    std::shared_ptr<Hasher> createHasher(const std::string& hashType) const;
         
     private:
         HasherFactory() {}
