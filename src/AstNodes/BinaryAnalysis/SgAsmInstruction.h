@@ -95,11 +95,6 @@ public:
     [[using Rosebud: rosetta]]
     SgAsmInstruction* delaySlot = nullptr;
 
-    // FIXME[Robb P Matzke 2017-02-13]: unused?
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    SgAsmStatementPtrList sources;
-    void appendSources( SgAsmInstruction* instruction );
-
     // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
     /** Property: Stack pointer at start of instruction relative to start of instruction's function.
      *

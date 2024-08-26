@@ -57,11 +57,6 @@ SgAsmInstruction::operand(size_t i) const {
     return i < nOperands() ? get_operandList()->get_operands()[i] : NULL;
 }
 
-void
-SgAsmInstruction::appendSources(SgAsmInstruction *inst) {
-    p_sources.push_back(inst);
-}
-
 unsigned
 SgAsmInstruction::get_anyKind() const {
     // ROSETTA doesn't support pure virtual, so run-time errors is the best we can do.
