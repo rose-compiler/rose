@@ -86,6 +86,7 @@ namespace Libadalang_ROSE_Translation
     //Statement_Struct& stmt = elem.The_Union.Statement;
     //SgStatement&      sgn  = labelIfNeeded(sgn0, stmt, ctx);
     if(lblname != ""){
+      logInfo() << "In completeStmt, adding label " << lblname << ".\n";
       sgnode.set_string_label(lblname);
       SgStatement& sgn = labelStmt(sgnode, lblname, lal_element, ctx);
       ctx.appendStatement(sgn);
@@ -2106,26 +2107,45 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_base_entity lal_call_expr;
           ada_call_stmt_f_call(lal_stmt, &lal_call_expr);
 
-          //Get the args
-          ada_base_entity lal_arg_list;
-          ada_call_expr_f_suffix(&lal_call_expr, &lal_arg_list);
-          int count  = ada_node_children_count(&lal_arg_list);
+          ada_node_kind_enum lal_call_expr_kind = ada_node_kind(&lal_call_expr);
+
           //We can't pass ada_base_entity as a func arg, so we will pass the pointers instead
-          std::vector<ada_base_entity*> lal_args (count);
-          std::vector<ada_base_entity> lal_args_backend (count);
-          for(int i = 0; i < count; ++i){
-              if(ada_node_child(&lal_arg_list, i, &lal_args_backend.at(i)) == 0){
-                logError() << "Error while getting a child in handleStmt.\n";
-              }
-              lal_args.at(i) = &lal_args_backend.at(i);
+          std::vector<ada_base_entity*> lal_args;
+          std::vector<ada_base_entity> lal_args_backend;
+
+          ada_base_entity lal_call_name;
+
+          if(lal_call_expr_kind == ada_call_expr){
+            //Get the args
+            ada_base_entity lal_arg_list;
+            ada_call_expr_f_suffix(&lal_call_expr, &lal_arg_list);
+            int count = ada_node_children_count(&lal_arg_list);
+            lal_args.resize(count);
+            lal_args_backend.resize(count);
+            for(int i = 0; i < count; ++i){
+                if(ada_node_child(&lal_arg_list, i, &lal_args_backend.at(i)) == 0){
+                  logError() << "Error while getting a child in handleStmt.\n";
+                }
+                lal_args.at(i) = &lal_args_backend.at(i);
+            }
+
+            //Get the name of the call
+            ada_call_expr_f_name(&lal_call_expr, &lal_call_name);         
+          } else if(lal_call_expr_kind == ada_dotted_name){
+            //Get the arg (there can only be 1)
+            lal_args.resize(1);
+            lal_args_backend.resize(1);
+            ada_dotted_name_f_prefix(&lal_call_expr, &lal_args_backend.at(0));
+            lal_args.at(0) = &lal_args_backend.at(0);
+
+            //Get the name
+            ada_dotted_name_f_suffix(&lal_call_expr, &lal_call_name);
+          } else {
+            logFlaw() << "Unhandled call expr kind " << lal_call_expr_kind << " in handleStmt for ada_call_stmt.\n";
           }
 
-          //Get the name of the call
-          ada_base_entity lal_call_name;
-          ada_call_expr_f_name(&lal_call_expr, &lal_call_name);         
-
           // oocall indicates if code uses object-oriented syntax: x.init instead of init(x)
-          const bool       oocall = false; //(stmt.Statement_Kind == A_Procedure_Call_Statement) && stmt.Is_Prefix_Notation; TODO check prefix notation?
+          const bool       oocall = (lal_call_expr_kind == ada_dotted_name);
           SgExpression&    call   = createCall(&lal_call_name, lal_args, true /* prefix call */, oocall, ctx);
           SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
@@ -2360,9 +2380,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         logKind("ada_package_decl", kind);
 
         //Get the name for this package
-        ada_base_entity lal_identifier;
-        ada_base_package_decl_f_package_name(lal_element, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_base_package_decl_f_package_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
 
         std::string           ident        = canonical_text_as_string(&lal_identifier);
         SgScopeStatement*     parent_scope = &ctx.scope();
@@ -2373,7 +2393,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         logTrace() << "package decl " << ident
                    << std::endl;
 
-        int hash = hash_node(lal_element);
+        int hash = hash_node(&lal_defining_name);
         recordNode(libadalangDecls(), hash, sgnode);
 
         privatize(sgnode, isPrivate);
@@ -2445,6 +2465,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the decl for this package body
         ada_base_entity previous_decl;
         ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &previous_decl); //TODO imprecise fallback
+        //Get the ada_defining_name node, since that is what we record in the map
+        ada_base_package_decl_f_package_name(&previous_decl, &previous_decl);
         int decl_hash = hash_node(&previous_decl);
         SgDeclarationStatement& declnode = lookupNode(libadalangDecls(), decl_hash);
         SgAdaPackageSpecDecl*   specdcl  = getAdaPackageSpecDecl(&declnode);
@@ -3071,9 +3093,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         }
 
         //Get the name of the type
-        ada_base_entity lal_identifier;
-        ada_base_type_decl_f_name(lal_element, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_base_type_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
         std::string type_name = canonical_text_as_string(&lal_identifier);
         SgScopeStatement*           parentScope = &ctx.scope();
         ada_base_entity             lal_discr;
@@ -3097,10 +3119,13 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgScopeStatement&       scope     = SG_DEREF(parentScope);
         TypeData                ty        = getTypeFoundation(type_name, &lal_type_def, ctx.scope(scope));
         int                     type_hash = hash_node(lal_element);
+        int                     name_hash = hash_node(&lal_defining_name);
         SgDeclarationStatement& sgdecl    = sg::dispatch(TypeDeclMaker{type_name, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
+        //Record this type with hashes for both the ada_type_decl node and ada_defining_name node, since it may be searched for by either
         recordNode(libadalangTypes(), type_hash, sgdecl, nondef != nullptr);
+        recordNode(libadalangTypes(), name_hash, sgdecl, nondef != nullptr);
         attachSourceLocation(sgdecl, lal_element, ctx);
 
         if (!discr)
@@ -3128,6 +3153,102 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
   //processAspects(lal_element, decl, assocdecl, ctx);
   //recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
+}
+
+/// Creates a choice statement from an ada_variant node
+void createVariant(ada_base_entity* lal_element, AstContext ctx)
+{
+  //Get the choices/components for this path
+  ada_base_entity lal_choices, lal_components;
+  ada_variant_f_choices(lal_element, &lal_choices);
+
+  ada_variant_f_components(lal_element, &lal_components);
+  ada_component_list_f_components(&lal_components, &lal_components);
+
+  //Process the choices
+  SgExpressionPtrList exprlst;
+  int num_choices = ada_node_children_count(&lal_choices);
+  for(int i = 0; i < num_choices; ++i){
+    ada_base_entity lal_choice;
+    if(ada_node_child(&lal_choices, i, &lal_choice) !=0){
+      ada_node_kind_enum lal_choice_kind = ada_node_kind(&lal_choice);
+      if(lal_choice_kind == ada_bin_op || lal_choice_kind == ada_others_designator){
+        exprlst.push_back(&getDefinitionExpr(&lal_choice, ctx));
+      } else {
+        exprlst.push_back(&getExpr(&lal_choice, ctx));
+      }
+    }
+  }
+
+  SgExprListExp&      choicelst = mkExprListExp(exprlst);
+  SgAdaVariantWhenStmt& sgnode  = mkAdaVariantWhenStmt(choicelst);
+  SgAdaUnscopedBlock& blk = SG_DEREF(sgnode.get_components());
+
+  ctx.appendStatement(sgnode);
+
+  //Handle the components
+  int num_components = ada_node_children_count(&lal_components);
+  for(int i = 0; i < num_components; ++i){
+    ada_base_entity lal_component;
+    if(ada_node_child(&lal_components, i, &lal_component) != 0){
+      handleElement(&lal_component, ctx.unscopedBlock(blk));
+    }
+  }
+}
+
+/// Handles an ada_variant_part node
+void handleVariant(ada_base_entity* lal_element, AstContext ctx)
+{
+  //Get the discriminant name
+  ada_base_entity lal_discr_name;
+  ada_variant_part_f_discr_name(lal_element, &lal_discr_name);
+
+  //Get the list of variants
+  ada_base_entity lal_variant_list;
+  ada_variant_part_f_variant(lal_element, &lal_variant_list);
+
+  SgExpression&       discrExpr = getExpr(&lal_discr_name, ctx);
+  SgAdaVariantDecl&   sgnode    = mkAdaVariantDecl(discrExpr);
+  SgAdaUnscopedBlock& blk       = SG_DEREF(sgnode.get_variants());
+
+  ctx.appendStatement(sgnode);
+
+  //Add each variant to the block
+  int count = ada_node_children_count(&lal_variant_list);
+  for(int i = 0; i < count; ++i){
+    ada_base_entity lal_variant;
+    if(ada_node_child(&lal_variant_list, i, &lal_variant) != 0){
+      createVariant(&lal_variant, ctx.unscopedBlock(blk));
+    }
+  }
+}
+
+void handleDefinition(ada_base_entity* lal_element, AstContext ctx){
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  logKind("A_Definition", kind);
+
+  // many definitions are handled else where
+  // here we want to convert the rest that can appear in declarative context
+
+  switch(kind)
+  {
+    case ada_null_component_decl:                 // 3.8(4)
+      {
+        SgDeclarationStatement& sgnode = mkNullDecl();
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+        break;
+      }
+    case ada_variant_part:                   // 3.8.1(2)
+      {
+        handleVariant(lal_element, ctx);
+        break;
+      }
+    default:
+      logFlaw() << "unhandled definition kind: " << kind << std::endl;
+      break;
+  }
 }
 
 void

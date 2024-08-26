@@ -573,7 +573,7 @@ namespace
 
   /// returns the ROSE type a Libadalang type decl corresponds to
   SgNode&
-  getExprType(ada_base_entity* lal_expr)
+  getExprType(ada_base_entity* lal_expr, AstContext ctx)
   {
     //Get the kind of this node
     ada_node_kind_enum kind;
@@ -605,8 +605,13 @@ namespace
 
           break;
         }
+      case ada_attribute_ref:
+        {
+          res = &getAttributeExpr(lal_expr, ctx);
+          break;
+        }
       default:
-        logWarn() << "Unknown type expression: " << kind << std::endl;
+        logFlaw() << "Unknown type expression: " << kind << std::endl;
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
         res = &mkTypeUnknown();
     }
@@ -708,14 +713,18 @@ namespace
     ada_base_entity lal_declaration;
 
     if(kind == ada_subtype_indication){
-      //Get the type this references
-      ada_type_expr_p_designated_type_decl(lal_id, &lal_declaration);
-    } else if(kind == ada_identifier){
+      //Call getDeclType on the f_name property
+      ada_subtype_indication_f_name(lal_id, &lal_declaration);
+      return getDeclType(&lal_declaration, ctx);
+    } else if(kind == ada_identifier || kind == ada_dotted_name){
       //Get the type this references
       ada_expr_p_first_corresponding_decl(lal_id, &lal_declaration);
     } else if(kind == ada_anonymous_type){
       //Can ada_anonymous_type ever not be an access?
       return getAnonymousAccessType(lal_id, ctx);
+    } else if(kind == ada_attribute_ref){
+      //Pass this node on to getExprType
+      lal_declaration = *lal_id;
     } else {
       logError() << "getDeclType: unhandled definition kind: " << kind
                  << std::endl;
@@ -726,7 +735,7 @@ namespace
       logError() << "getDeclType cannot find definition.\n";
     }
 
-    SgNode& basenode = getExprType(&lal_declaration);
+    SgNode& basenode = getExprType(&lal_declaration, ctx);
     SgType* res      = sg::dispatch(MakeTyperef(lal_id, ctx), &basenode);
 
     return SG_DEREF(res);
@@ -762,21 +771,30 @@ namespace
     sgnode.set_parent(&ctx.scope());
 
     if(kind == ada_record_def){
+      logKind("ada_record_def", kind);
 
       //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
       // NOTE: the true parent is when the record is created; this is set to enable
       //       traversal from the record body to global scope.
-      ada_base_entity lal_component_list;
+      //Get the list of components, and the variant part
+      ada_base_entity lal_component_list, lal_variant_part;
       ada_base_record_def_f_components(lal_record, &lal_component_list);
+      ada_component_list_f_variant_part(&lal_component_list, &lal_variant_part);
       ada_component_list_f_components(&lal_component_list, &lal_component_list);
 
-      int component_count = ada_node_children_count(&lal_component_list); //TODO What if no components?
+      //Call handleElement on each component
+      int component_count = ada_node_children_count(&lal_component_list);
       for(int i = 0; i < component_count; ++i){
         ada_base_entity lal_component;
         if(ada_node_child(&lal_component_list, i, &lal_component) != 0){
           handleElement(&lal_component, ctx.scope(sgnode));
         }
+      }
+
+      //lal has a separate section for variants, so call handleElement on it if it exists
+      if(!ada_node_is_null(&lal_variant_part)){
+        handleElement(&lal_variant_part, ctx.scope(sgnode));
       }
 
       // how to represent implicit components

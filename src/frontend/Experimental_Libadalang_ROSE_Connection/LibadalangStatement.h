@@ -35,6 +35,10 @@ namespace Libadalang_ROSE_Translation
   /// converts a Libadalang declaration and adds the new node to the current scope
   void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate);
 
+
+  /// converts a Libadalang definition and adds the new node to the current scope
+  void handleDefinition(ada_base_entity* lal_element, AstContext ctx);
+
   /// converts a Libadalang statement
   /// \param lal_stmt the stmt to convert
   /// \param ctx the context

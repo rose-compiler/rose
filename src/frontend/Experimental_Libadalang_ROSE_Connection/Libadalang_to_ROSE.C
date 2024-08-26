@@ -339,15 +339,16 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         {
           // handled by handleExceptionHandler
           ROSE_ABORT();
-        }
+        }*/
 
-      case A_Definition:              // Asis.Definitions
+      case ada_variant_part:          // Asis.Definitions
+      case ada_null_component_decl:
         {
-          handleDefinition(elem, ctx);
+          handleDefinition(lal_element, ctx);
           break;
         }
 
-      case A_Pragma:                  // Asis.Elements
+      /*case A_Pragma:                  // Asis.Elements
         {
           handlePragma(elem, nullptr, ctx);
           break;
