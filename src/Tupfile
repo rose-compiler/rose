@@ -76,7 +76,7 @@ export SPOCK_EMPLOYED
     ( \
         echo "# Software versions used to compile ROSE:"; $(ROSE)/scripts/tup/show-versions; echo; \
         eval `cd $(ROSE) && ./scripts/tup/vars-from-configure`; \
-        echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
+        echo "ROSE_VERSION  = @(ROSE_VERSION)"; \
         echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
         echo "ROSE_SOURCE   = `readlink -f @(ROSE_SOURCE)`"; \
         echo "ROSE_BUILD    = `readlink -f $(ROSE)`"; \
@@ -107,7 +107,7 @@ run $(public_header) --language=shell -o include rose-installed-make.cfg
     ( \
         echo "# Software versions used to compile ROSE:"; $(ROSE)/scripts/tup/show-versions; echo; \
         eval `cd $(ROSE) && ./scripts/tup/vars-from-configure`; \
-        echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
+        echo "ROSE_VERSION  = @(ROSE_VERSION)"; \
         : no ROSE_PREFIX necessary for in-tree builds; \
         echo "ROSE_CC       = $(tool_CC)"; \
         echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
