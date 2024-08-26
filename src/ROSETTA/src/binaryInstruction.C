@@ -43234,12 +43234,6 @@ class SgAsmInstruction: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
-        "SgAsmStatementPtrList", "sources", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmInstruction.setDataPrototype(
         "int64_t", "stackDeltaIn", "= SgAsmInstruction::INVALID_STACK_DELTA",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
@@ -43270,7 +43264,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
         s & BOOST_SERIALIZATION_NVP(p_delaySlot);
-        s & BOOST_SERIALIZATION_NVP(p_sources);
         debugSerializationEnd("SgAsmInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -43300,12 +43293,18 @@ public:
     /** Property: Architecture registration ID.
      *
      *  Every instruction must belong to a registered architecture. This ID specifies the architecture of which this instruction
-     *  is a member. 
+     *  is a member.
+     *
+     *  When an instruction is serialized to a file, the architecture name is saved in place of its registration ID, and when the
+     *  instruction is deserialized, that name is looked up in the registry and the registration ID is saved in the reconstituted
+     *  instruction. This mechanism enables the instruction to point to the correct architecture even if the writer and reader
+     *  tools have slightly different sets of architectures registered. 
      *  
      *  @{ */
     uint8_t const& get_architectureId() const;
     /** @} */
-    // Architecture registration IDs change from run to run, so serialie the architecture name instead.
+    // Architecture registration IDs change from run to run, so serialize the architecture name instead. The architecture names
+    // will probably not change as frequently as their registration IDs.
     std::string architectureIdSerialize(uint8_t id) const;
     uint8_t architectureIdDeserialize(const std::string &name) const;
 public:
@@ -43345,10 +43344,6 @@ public:
     SgAsmInstruction* const& get_delaySlot() const;
     void set_delaySlot(SgAsmInstruction* const&);
     /** @} */
-    // FIXME[Robb P Matzke 2017-02-13]: unused?
-public:
-    void appendSources( SgAsmInstruction* instruction );
-
     // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
 public:
     /** Property: Stack pointer at start of instruction relative to start of instruction's function.
@@ -43391,8 +43386,9 @@ public:
 public:
     /** Architecture for instruction.
      *
-     *  Returns a cached architecture pointer if available. Otherwise, it uses the @ref architectureName property to look up
-     *  an architecture that can handle this instruction and caches the pointer before returning it.
+     *  The architecture is looked up in the architecture registery in constant time by using the @ref architectureId property.
+     *  It is generally unwise to change the architecture registery after instructions have been created since this may cause
+     *  instructions to refer to an incorrect architecture.
      *
      *  Thread safety: This function is thread safe. */
     Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
