@@ -668,7 +668,7 @@ traverseWithinFile(SgNode* node,
         InheritedAttributeType inheritedValue,
         t_traverseOrder treeTraversalOrder)
 {
-     ASSERT_not_null(this);
+     ASSERT_this();
      traversalConstraint = true;
 
      SgFile* filenode = isSgFile(node);
