@@ -521,6 +521,21 @@ namespace
 
           break;
         }
+      case ada_bin_op:
+        {
+          logKind("ada_bin_op (range)", kind);
+
+          //Get the upper and lower bounds
+          ada_base_entity lal_upper, lal_lower;
+          ada_bin_op_f_left(lal_def, &lal_lower);
+          ada_bin_op_f_right(lal_def, &lal_upper);
+
+          SgExpression& lb = getExpr(&lal_lower, ctx);
+          SgExpression& ub = getExpr(&lal_upper, ctx);
+
+          res = &mkExprAsType(mkRangeExp(lb, ub));
+          break;
+        }
       default:
         logWarn() << "Unhandled type definition: " << kind << std::endl;
         res = &mkTypeUnknown();

@@ -1530,10 +1530,23 @@ namespace{
         }
 
       case ada_aggregate:                        // 4.3
+      case ada_null_record_aggregate:                    // 4.3
         {
-          logKind("ada_aggregate", kind);
+          logKind("ada_aggregate?", kind);
 
-          res = &getRecordAggregate(lal_element, ctx);
+          //Get the ancestor expr
+          ada_base_entity lal_ancestor_expr;
+          ada_base_aggregate_f_ancestor_expr(lal_element, &lal_ancestor_expr);
+
+          SgExprListExp& elemlst  = getRecordAggregate(lal_element, ctx);
+
+          //If the ancestor expr exists, add it to the expr
+          if(!ada_node_is_null(&lal_ancestor_expr)){
+            SgExpression&  parentexp = getExpr(&lal_ancestor_expr, ctx);
+            elemlst.prepend_expression(&mkAdaAncestorInitializer(parentexp));
+          }
+
+          res = &elemlst;
           break;
         }
 
@@ -1547,6 +1560,14 @@ namespace{
           res = &getExpr(&lal_expr, ctx);
           res->set_need_paren(true);
 
+          break;
+        }
+
+      case ada_null_literal:                            // 4.4
+        {
+          logKind("ada_null_literal", kind);
+
+          res = sb::buildNullptrValExp();
           break;
         }
 
@@ -1667,10 +1688,10 @@ namespace{
 
     switch(kind)
     {
-      case ada_aggregate:              // 4.3
+      case ada_aggregate:                             // 4.3
+      case ada_null_record_aggregate:                 // 4.3
       /*case A_Named_Array_Aggregate:                   // 4.3 TODO: Are there more aggregate nodes to worry about?
-      case A_Record_Aggregate:                        // 4.3
-      case An_Extension_Aggregate:                    // 4.3*/
+      case A_Record_Aggregate:                        // 4.3*/
         {
           SgExprListExp* explst = isSgExprListExp(res);
 

@@ -1187,7 +1187,7 @@ namespace {
         if(!ada_node_is_null(lal_element))
         {
           ada_node_kind_enum kind = ada_node_kind(lal_element);
-          logKind("An_Entry_Index_Specification", kind);
+          logKind("ada_entry_index_spec", kind);
 
           //Get the subtype
           ada_base_entity lal_subtype;
@@ -1195,7 +1195,8 @@ namespace {
 
           //Get the name
           ada_base_entity lal_id;
-          ada_entry_index_spec_f_id(lal_element, &lal_id); //TODO identifier or def name?
+          ada_entry_index_spec_f_id(lal_element, &lal_id);
+          ada_defining_name_f_name(&lal_id, &lal_id);
 
           name = canonical_text_as_string(&lal_id);
           ty   = &getDefinitionType(&lal_subtype, ctx);
