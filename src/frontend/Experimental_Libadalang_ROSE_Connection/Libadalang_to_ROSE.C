@@ -306,6 +306,8 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_component_decl:
         case ada_exception_decl:
         case ada_number_decl:
+        case ada_single_protected_decl:
+        case ada_protected_body:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;

@@ -280,7 +280,15 @@ namespace Libadalang_ROSE_Translation
         ada_subp_body_f_stmts(lal_decl, &lal_handled_stmts);
         ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
         ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
-        //lal_pragmas = ???; //TODO Figure out pragmas
+        //lal_pragmas = ???; //TODO pragmas
+    } else if(kind == ada_entry_body){
+        ada_entry_body_f_decls(lal_decl, &lal_decls); //lal_decls should now be an ada_declarative_part
+        ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
+        ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
+        ada_entry_body_f_stmts(lal_decl, &lal_handled_stmts);
+        ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+        ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+        //lal_pragmas = ???; //TODO pragmas
     } else {
         //TODO
     }
@@ -1164,6 +1172,51 @@ namespace {
     return nullptr;
   }
 
+  /// handles an entry specification
+  struct EntryIndexCompletion
+  {
+      EntryIndexCompletion(ada_base_entity* lal_entry_spec, AstContext astctx)
+      : lal_element(lal_entry_spec), ctx(astctx)
+      {}
+
+      SgInitializedName& operator()(SgScopeStatement& scope)
+      {
+        std::string     name;
+        SgType*         ty   = &mkTypeVoid();
+
+        if(!ada_node_is_null(lal_element))
+        {
+          ada_node_kind_enum kind = ada_node_kind(lal_element);
+          logKind("An_Entry_Index_Specification", kind);
+
+          //Get the subtype
+          ada_base_entity lal_subtype;
+          ada_entry_index_spec_f_subtype(lal_element, &lal_subtype);
+
+          //Get the name
+          ada_base_entity lal_id;
+          ada_entry_index_spec_f_id(lal_element, &lal_id); //TODO identifier or def name?
+
+          name = canonical_text_as_string(&lal_id);
+          ty   = &getDefinitionType(&lal_subtype, ctx);
+        }
+
+        SgInitializedName&     ini = mkInitializedName(name, SG_DEREF(ty));
+        SgVariableDeclaration& var = mkVarDecl(ini, scope);
+
+        if (!ada_node_is_null(lal_element))
+        {
+          attachSourceLocation(var, lal_element, ctx);
+        }
+
+        return ini;
+      }
+
+    private:
+      ada_base_entity*  lal_element;
+      AstContext        ctx;
+  };
+
   /// creates a ROSE declaration depending on the provided type/definition
   struct TypeDeclMaker : sg::DispatchHandler<SgDeclarationStatement*>
   {
@@ -1432,6 +1485,131 @@ namespace {
   }
   /// @}
 
+  /// @{
+  // protected objects
+  //
+  // protected objects are represented as ClassDeclaration and ClassDefinition
+
+  std::pair<SgAdaProtectedSpec*, DeferredPragmaBodyCompletion>
+  getProtectedSpec(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    if(kind != ada_protected_def){
+      logFlaw() << "getProtectedSpec called with kind = " << kind << std::endl;
+    } else {
+      logKind("ada_protected_def", kind);
+    }
+
+    //Get the private status
+    ada_base_entity lal_private_list;
+    ada_protected_def_f_private_part(lal_element, &lal_private_list);
+    ada_declarative_part_f_decls(&lal_private_list, &lal_private_list);
+
+    SgAdaProtectedSpec&     sgnode = mkAdaProtectedSpec();
+    SgAdaProtectedSpec*     nodePtr  = &sgnode;
+
+    sgnode.set_hasPrivate(!ada_node_is_null(&lal_private_list) && ada_node_children_count(&lal_private_list) > 0);
+
+    /*auto deferred = [ctx,nodePtr,protectedNode](AstContext::PragmaContainer pragmas) -> void
+                    {
+                      AstContext pragmaCtx = ctx.pragmas(pragmas);
+
+                      // visible items
+                      {
+                        //Get the public part
+                        ada_base_entity lal_public_part;
+                        ada_protected_def_f_public_part(lal_element, &lal_public_part);
+                        ada_declarative_part_f_decls(&lal_public_part, &lal_public_part);
+                        int count = ada_node_children_count(&lal_public_part);
+
+                        //Call getElement on each public decl
+                        for(int i = 0; i < count; ++i){
+                          ada_base_entity lal_decl;
+                          if(ada_node_child(&lal_public_part, i, &lal_decl) != 0){
+                            handleElement(&lal_decl, pragmaCtx.scope(*nodePtr));
+                          }
+                        }
+                      }
+
+                      // private items
+                      {
+                        //Get the private part
+                        ada_base_entity lal_private_part;
+                        ada_protected_def_f_private_part(lal_element, &lal_private_part);
+                        ada_declarative_part_f_decls(&lal_private_part, &lal_private_part);
+                        int count = ada_node_children_count(&lal_private_part);
+
+                        //Call getElement on each private decl
+                        for(int i = 0; i < count; ++i){
+                          ada_base_entity lal_decl;
+                          if(ada_node_child(&lal_private_part, i, &lal_decl) != 0){
+                            handleElement(&lal_decl, pragmaCtx.scope(*nodePtr), true /* private items *//*);
+                          }
+                        }
+                      }
+
+                      placePragmas({ nodePtr }, pragmaCtx.scope(*nodePtr));
+                    };*/ //TODO pragmas
+
+    //Get the public part
+    ada_base_entity lal_public_part;
+    ada_protected_def_f_public_part(lal_element, &lal_public_part);
+    ada_declarative_part_f_decls(&lal_public_part, &lal_public_part);
+    int count = ada_node_children_count(&lal_public_part);
+
+    //Call getElement on each public decl
+    for(int i = 0; i < count; ++i){
+      ada_base_entity lal_decl;
+      if(ada_node_child(&lal_public_part, i, &lal_decl) != 0){
+        handleElement(&lal_decl, ctx.scope(*nodePtr));
+      }
+    }
+
+    //Get the private part
+    ada_base_entity lal_private_part;
+    ada_protected_def_f_private_part(lal_element, &lal_private_part);
+    ada_declarative_part_f_decls(&lal_private_part, &lal_private_part);
+    count = ada_node_children_count(&lal_private_part);
+
+    //Call getElement on each private decl
+    for(int i = 0; i < count; ++i){
+      ada_base_entity lal_decl;
+      if(ada_node_child(&lal_private_part, i, &lal_decl) != 0){
+        handleElement(&lal_decl, ctx.scope(*nodePtr), true /* private items */);
+      }
+    }
+
+    auto deferred = nothingToComplete;
+
+    return std::make_pair(&sgnode, deferred);
+  }
+
+  std::pair<SgAdaProtectedSpec*, DeferredPragmaBodyCompletion>
+  getProtectedSpecForProtectedType(ada_base_entity* lal_element, AstContext ctx)
+  {
+    //Get the definition
+    ada_base_entity lal_definition;
+    ada_protected_type_decl_f_definition(lal_element, &lal_definition);
+
+    if(ada_node_is_null(&lal_definition)){
+      return std::make_pair(&mkAdaProtectedSpec(), nothingToComplete);
+    }
+
+    return getProtectedSpec(&lal_definition, ctx);
+  }
+
+
+  std::pair<SgAdaProtectedSpec*, DeferredPragmaBodyCompletion>
+  getProtectedSpecForSingleProtected(ada_base_entity* lal_element, AstContext ctx)
+  {
+    //Get the definition
+    ada_base_entity lal_definition;
+    ada_single_protected_decl_f_definition(lal_element, &lal_definition);
+
+    return getProtectedSpec(&lal_definition, ctx);
+  }
+  /// @}
+
   /// Create a node for one path of a case stmt, and add it to \ref caseNode
   void createCaseStmtPath(ada_base_entity* lal_element, SgSwitchStatement& caseNode, AstContext ctx)
   {
@@ -1627,8 +1805,14 @@ getParm(ada_base_entity* lal_param_spec, AstContext ctx)
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
 {
   if(!ada_node_is_null(range)){
+    ada_node_kind_enum range_kind = ada_node_kind(range);
     ada_base_entity param_list;
-    ada_params_f_params(range, &param_list);
+    if(range_kind == ada_params){
+      ada_params_f_params(range, &param_list);
+    } else if(range_kind == ada_entry_completion_formal_params){
+      ada_entry_completion_formal_params_f_params(range, &param_list);
+    }
+
     int count = ada_node_children_count(&param_list);
     for (int i = 0; i < count; ++i)
     {
@@ -2279,6 +2463,12 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           assocstmt = &sgnode;
           break;
         }
+      //Declarations //TODO Add more decls?
+      case ada_entry_body:
+        {
+          handleDeclaration(lal_stmt, ctx, false);
+          return;
+        }
       default:
         {
           logWarn() << "Unhandled statement " << kind << std::endl;
@@ -2699,6 +2889,63 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         break;
       }
+    case ada_protected_body:             // 9.4(7)
+      {
+        logKind("ada_protected_body", kind);
+
+        //Get the defining name of the decl
+        ada_base_entity lal_defining_name;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_defining_name);
+        ada_single_protected_decl_f_name(&lal_defining_name, &lal_defining_name);
+        int decl_hash = hash_node(&lal_defining_name);
+
+        SgAdaProtectedBody&     pobody  = mkAdaProtectedBody();
+        SgDeclarationStatement* ndef    = findFirst(libadalangDecls(), decl_hash);
+        SgAdaProtectedBodyDecl* nondef  = isSgAdaProtectedBodyDecl(ndef);
+
+        //Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Protected_Body_Stub, ctx);
+        SgDeclarationStatement& podecl  = lookupNode(libadalangDecls(), decl_hash);
+        SgScopeStatement&       logicalScope = SG_DEREF(&ctx.scope());
+        SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, nondef, pobody, logicalScope);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        ada_base_entity lal_body_name;
+        ada_protected_body_f_name(lal_element, &lal_body_name);
+        int body_hash = hash_node(&lal_body_name);
+
+        recordNode(libadalangDecls(), body_hash, sgnode);
+
+        //Get the decls
+        ada_base_entity lal_decl_list;
+        ada_protected_body_f_decls(lal_element, &lal_decl_list);
+        ada_declarative_part_f_decls(&lal_decl_list, &lal_decl_list);
+        int count = ada_node_children_count(&lal_decl_list);
+
+        //Call handleStmt on each decl
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_decl;
+          if(ada_node_child(&lal_decl_list, i, &lal_decl) != 0){
+            handleStmt(&lal_decl, ctx.scope(pobody));
+          }
+        }
+
+        /*PragmaContainer pendingPragmas;
+        AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
+
+        {
+          ElemIdRange decls = idRange(decl.Protected_Operation_Items);
+
+          traverseIDs(decls, elemMap(), StmtCreator{pragmaCtx.scope(pobody)});
+        }
+
+        processAndPlacePragmas(decl.Pragmas, { &pobody }, pragmaCtx.scope(pobody));*/ //TODO pragmas
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_task_body:                  // 9.1(6)
       {
         logKind("ada_task_body", kind);
@@ -2752,6 +2999,76 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
                                               false /* same block for declarations and statements */,
                                               ctx
                                             );
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_entry_body:                // 9.5.2(5)
+      {
+        logKind("ada_entry_body", kind);
+
+        //Get the defining name for the ada_entry_decl
+        ada_base_entity lal_decl_name;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_decl_name);
+        ada_entry_decl_f_spec(&lal_decl_name, &lal_decl_name);
+        ada_entry_spec_f_entry_name(&lal_decl_name, &lal_decl_name);
+        int decl_hash = hash_node(&lal_decl_name);
+
+        //Get the barrier
+        ada_base_entity lal_barrier;
+        ada_entry_body_f_barrier(lal_element, &lal_barrier);
+
+        //Get the defining name
+        ada_base_entity lal_defining_name;
+        ada_entry_body_f_entry_name(lal_element, &lal_defining_name);
+        int body_hash = hash_node(&lal_defining_name);
+
+        //Get the params
+        ada_base_entity lal_params;
+        ada_entry_body_f_params(lal_element, &lal_params);
+
+        //Get the index spec
+        ada_base_entity lal_index_spec;
+        ada_entry_body_f_index_spec(lal_element, &lal_index_spec);
+
+        SgDeclarationStatement* sagedcl  = findFirst(libadalangDecls(), decl_hash);
+        SgAdaEntryDecl&         entrydcl = SG_DEREF(isSgAdaEntryDecl(sagedcl));
+
+        //~ SgScopeStatement&       logicalScope = adaname.parent_scope();
+        //~ SgAdaEntryDecl&         sgnode  = mkAdaEntryDef(entrydcl, logicalScope, ParameterCompletion{range, ctx});
+        //ElemIdRange             secondaryIDs = secondaryParameters(decl, ctx); TODO secondary params?
+        //std::vector<Element_ID> secondaries  = reverseElems(flattenNameLists(secondaryIDs, ctx));
+
+        // PP (1/20/23): *SCOPE_COMMENT_1
+        //               replace outer with entrydcl.get_scope()
+        //               note, this will have entries use the same scope handling as
+        //                     functions and procedures.
+        //                     Not sure if this is correct, because by giving a definition
+        //                     in the body the scope of a spec, will make symbols
+        //                     in the body invisible, unless the physical scope is used
+        //                     for lookup.
+        SgAdaEntryDecl&         sgnode  = mkAdaEntryDefn( entrydcl,
+                                                          SG_DEREF(entrydcl.get_scope()), // was: ctx.scope(),
+                                                          ParameterCompletion{&lal_params, ctx},
+                                                          EntryIndexCompletion{&lal_index_spec, ctx}
+                                                        );
+
+        recordNode(libadalangDecls(), body_hash, sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
+
+        ctx.appendStatement(sgnode);
+
+        SgFunctionDefinition&   fndef   = SG_DEREF(sgnode.get_definition());
+        SgBasicBlock&           declblk = SG_DEREF(fndef.get_body());
+
+        //~ if (isInvalidId(decl.Entry_Barrier))
+        //~ logError() << "Entry_Barrier-id " << decl.Entry_Barrier << std::endl;
+
+        SgExpression&           barrier = getExpr_opt(&lal_barrier, ctx.scope(fndef));
+
+        sg::linkParentChild(sgnode, barrier, &SgAdaEntryDecl::set_entryBarrier);
+        completeRoutineBody(lal_element, declblk, ctx);
 
         assocdecl = &sgnode;
         break;
@@ -2977,6 +3294,32 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
          break;
       }
+    case ada_single_protected_decl:           // 3.3.1(2):9.4(2)
+      {
+        logKind("ada_single_protected_decl", kind);
+
+        //Get the name of this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_single_protected_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = canonical_text_as_string(&lal_identifier);
+
+        auto spec = getProtectedSpecForSingleProtected(lal_element, ctx);
+        SgAdaProtectedSpecDecl& sgnode = mkAdaProtectedSpecDecl(ident, SG_DEREF(spec.first), ctx.scope());
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+        int hash = hash_node(&lal_defining_name);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        /*AstContext::PragmaContainer protectedPragmas = splitOfPragmas(pragmaVector, protectedDeclPragmas, ctx);
+
+        spec.second(std::move(protectedPragmas)); // complete the body*/ //TODO pragmas
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_entry_decl:                     // 9.5.2(2)
       {
         logKind("ada_entry_decl", kind);
@@ -2990,7 +3333,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_defining_name_f_name(&defining_name, &lal_identifier);
 
         std::string     ident   = canonical_text_as_string(&lal_identifier);
-        int              hash   = hash_node(lal_element);
+        int              hash   = hash_node(&defining_name);
 
         //Get the params
         ada_base_entity entry_params;

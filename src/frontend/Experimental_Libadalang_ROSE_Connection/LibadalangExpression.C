@@ -1200,8 +1200,12 @@ namespace{
             }
           }
 
-          if(!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def){
-            logInfo() << "identifier " << name << " is being treated as an enum value (p_expr_type_def = ada_enum_type_def).\n";
+          //Also check p_is_static_expr
+          ada_bool lal_is_static_expr;
+          ada_expr_p_is_static_expr(lal_element, 1, &lal_is_static_expr);
+
+          if(!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def && lal_is_static_expr){
+            logInfo() << "identifier " << name << " is being treated as an enum value (p_expr_type_def = ada_enum_type_def & p_is_static_expr = true).\n";
 
             //Get the hash for the decl
             ada_base_entity lal_first_corresponding_decl;
