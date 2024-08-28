@@ -340,7 +340,10 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
       readunknown = true;
       DebugLocalInfoCollect([&fc](){ return "no interprecedural read info for : " + AstInterface::AstToString(fc) + "adding function call arguments."; });
   }
- if (callcollect != 0) {
+ if (allocate_collect != 0 && AstInterface::IsMemoryAllocation(fc)) {
+   (*allocate_collect)(fc, curstmt);
+ }
+ else if (callcollect != 0) {
      DebugLocalInfoCollect([](){ return "invoking collecting call"; });
      (*callcollect)(callee, curstmt);
  }

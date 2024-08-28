@@ -57,6 +57,7 @@ class StmtSideEffectCollect
   using SideEffectAnalysisInterface<AstNodePtr>::killcollect;
   using SideEffectAnalysisInterface<AstNodePtr>::readcollect;
   using SideEffectAnalysisInterface<AstNodePtr>::callcollect;
+  using SideEffectAnalysisInterface<AstNodePtr>::allocate_collect;
   using SideEffectAnalysisInterface<AstNodePtr>::varcollect;
  public:
   StmtSideEffectCollect(AstInterface& fa, FunctionSideEffectInterface* a=0) 

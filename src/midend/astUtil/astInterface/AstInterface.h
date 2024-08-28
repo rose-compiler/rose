@@ -269,6 +269,8 @@ public:
 
   bool IsAddressOfOp( const AstNodePtr& _s);
   bool IsMemoryAccess( const AstNodePtr& s);
+  static bool IsMemoryAllocation( const AstNodePtr& s);
+
   static AstNodePtr IsExpression( const AstNodePtr& s, AstNodeType* exptype =0);
   static AstNodeType GetExpressionType( const AstNodePtr& s);
 

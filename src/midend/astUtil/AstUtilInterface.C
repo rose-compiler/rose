@@ -49,11 +49,16 @@ bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       DebugAstUtil([&var](){ return "save new decl:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Decl);
     };
+    std::function<bool(SgNode*, SgNode*)> save_allocate = [&collect,&ast] (SgNode* var, SgNode* init) {
+      DebugAstUtil([&var](){ return "save allocate:" + AstInterface::AstToString(var); });
+      return collect(var, init, OperatorSideEffect::Allocate);
+    };
     collect_operator.set_modify_collect(save_mod);
     collect_operator.set_read_collect(save_read);
     collect_operator.set_kill_collect(save_kill);
     collect_operator.set_call_collect(save_call);
     collect_operator.set_new_var_collect(save_decl);
+    collect_operator.set_allocate_collect(save_allocate);
     return collect_operator(ast);
 }
 
@@ -99,6 +104,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
           break;
      case OperatorSideEffect::Kill:
      case OperatorSideEffect::Decl:
+     case OperatorSideEffect::Allocate:
           break;
      default: 
         std::cerr << "Unexpected relation: " << relation << "\n";
@@ -144,6 +150,7 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     if (name == "") {
         name = "_UNKNOWN_";
     }
+    DebugAstUtil([&variable,&name](){ return "viable is " + AstInterface::AstToString(variable) + " name is " + name; });
     return name;
 }
 
@@ -160,7 +167,8 @@ bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
    SgNode* cur_scope = AstNodePtrImpl(_cur_scope).get_ptr(); 
    std::string cur_scope_name;
    while (cur_scope != 0 && cur_scope->variantT() != V_SgGlobal) {
-         if (AstInterface::IsBlock(cur_scope, &cur_scope_name) &&  cur_scope_name == scope_name) {
+         if (AstInterface::IsBlock(cur_scope, &cur_scope_name) &&  
+              (cur_scope == scope || cur_scope_name == scope_name)) {
              return true;
          }
          DebugAstUtil([&cur_scope](){ return "IsLocalRef current scope:" + cur_scope->class_name(); });

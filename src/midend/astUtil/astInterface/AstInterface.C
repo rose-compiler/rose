@@ -1427,6 +1427,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       SgFunctionDeclaration *decl = isSgFunctionDeclaration(d);
       if (returntype != 0)
         *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+   std::cerr << AstToString(decl) << "\n";
       if (name != 0) 
         *name =  std::string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 
@@ -1997,9 +1998,6 @@ std::string AstInterface::GetVarName( const AstNodePtr& _exp, bool use_global_un
 {
   AstNodePtrImpl exp(_exp);
   SgAddressOfOp* addr = isSgAddressOfOp(exp.get_ptr());
-  if (addr != 0) {
-     return GetVarName(addr->get_operand(), use_global_unique_name) + "_addr_";
-  }
   std::string name;
   if (!IsVarRef(exp, 0, &name, 0, 0, use_global_unique_name)) {
     DebugVariable([&exp](){ return "Error: expecting a variable reference but getting:" + AstToString(exp); });
@@ -2265,6 +2263,25 @@ IsAddressOfOp( const AstNodePtr& _s)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   return (s->variantT() == V_SgAddressOfOp);  
+}
+
+
+bool AstInterface::
+IsMemoryAllocation( const AstNodePtr& s)
+{
+  AstNodePtrImpl f;
+  if (!IsFunctionCall(s, &f)) {
+    return false;
+  }
+  std::string name;
+  if (!IsVarRef(f, 0, &name)) {
+     return false;
+  }
+ std::cerr << "name is " << name << "\n";
+  if (name == "malloc") {
+     return true;
+  }
+  return false;
 }
 
 bool AstInterface::
