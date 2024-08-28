@@ -5,9 +5,20 @@ static const char *description =
 //! [description]
 
 //! [rose include]
-// Minimal number of header files for this tool
-#include <rose.h>                                       // must be first
-#include <Rose/BinaryAnalysis.h>                        // all of Rose::BinaryAnalysis
+#include <Rose/BinaryAnalysis/Architecture/Base.h>        // for Rose::BinaryAnalysis::Architecture::Base
+#include <Rose/BinaryAnalysis/MemoryMap.h>                // for Rose::BinaryAnalysis::MemoryMap
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>      // for Rose::BinaryAnalysis::Partitioner2::Engine
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h> // for Rose::BinaryAnalysis::Partitioner2::Partitioner
+#include <Rose/BinaryAnalysis/Unparser.h>                 // for Rose::BinaryAnalysis::Unparser
+#include <Rose/CommandLine.h>                             // for Rose::CommandLine
+#include <Rose/Initialize.h>                              // for ROSE_INITIALIZE
+
+#include <Sawyer/Message.h>                               // for Sawyer::Message (diagnostics)
+
+#include <boost/filesystem.hpp>                           // for boost::filesystem
+#include <iostream>                                       // for std::out
+#include <string>                                         // for std::string
+#include <vector>                                         // for std::vector
 //! [rose include]
 
 //! [namespaces]

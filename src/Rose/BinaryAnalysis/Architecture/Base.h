@@ -63,7 +63,7 @@ public:
 
     /** Property: Registration identification number.
      *
-     *  Architectures are identified by a small number that is automtically assigned when it is registered, and cleared when it is
+     *  Architectures are identified by a small number that is automatically assigned when it is registered, and cleared when it is
      *  deregistered.
      *
      * @{ */

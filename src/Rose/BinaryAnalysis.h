@@ -157,7 +157,7 @@ namespace Rose {
  *  @li The diagnostic output subsystem
  *  @li Command-line parsing
  *  @li Generation of version-specific documentation
- *  @li The ability to parse a variety of container
+ *  @li The ability to parse a variety of containers
  *  @li The ability to decode a variety of instruction sets
  *  @li Configuring an unparser to generate output
  *
@@ -166,7 +166,7 @@ namespace Rose {
  *  ROSE header files follow these design principles:
  *
  *  @li The directory path of the header file mirrors the namespace hierarchy of the ROSE library. For instance, the header file for
- *  @ref Rose::BinaryAnalysis::Partitioner2::BasicBlock has the path "Rose/BinaryAnalysis/Partitioner2".
+ *  the class @ref Rose::BinaryAnalysis::Partitioner2::BasicBlock has the path "Rose/BinaryAnalysis/Partitioner2".
  *
  *  @li The name of the header file matches the name of the entity it primarily declares. For instance, the header file for the @ref
  *  Rose::BinaryAnalysis::Partitioner2::BasicBlock "BasicBlock" class in the @ref Rose::BinaryAnalysis::Partitioner2 namespace is
@@ -175,23 +175,21 @@ namespace Rose {
  *  @li Header files corresponding to a C++ namespace recursively include headers for everything within that namespace. For
  *  instance, including the \"Rose/BinaryAnalysis/Partitioner2.h\" header will recursively include header files for @ref
  *  Rose::BinaryAnalysis::Partitioner2::BasicBlock, @ref Rose::BinaryAnalysis::Partitioner2::Function, @ref
- *  Rose::BinaryAnalysis::Partitioner2::Engine, etc.
+ *  Rose::BinaryAnalysis::Partitioner2::Engine, etc. The ROSE library itself doesn't generally use namespace-level recursive headers
+ *  since they increase compile times, but users are free to do so.
  *
  *  @li Header files named "BasicTypes.h" contain declarations most commonly needed as prerequisites for other header files, such
  *  as forward declarations for class names, definitions of shared pointer types, common enums, etc. As such, they can be compiled
  *  quickly.
  *
- *  @li Header files can be included in any order, and any number of times.
+ *  @li Header files can be included in any order, and any number of times. They are deterministic and idempotent.
  *
  *  @note ROSE has not always followed these principles and therefore has legacy header files that violate them. None of these
  *  headers have paths that start with "Rose", and most of them are included with no path at all (or perhaps just lower-case "rose",
- *  depending on the build system and how ROSE was installed). One of these legacy headers is "rose.h" which must be pre-included by
- *  every program that uses ROSE.
- *
- *  To keep this example simple, we will include the bare minimum of header files. We must first include "rose.h" for legacy
- *  reasons, and then we include a namespace header that will declare everything we need for binary analysis. Including such an
- *  all-encompassing header is not the most efficient if you're building a large tool with many compilation units, but it suffices
- *  for this example; most large tools will want to include only those things they use.
+ *  depending on the build system and how ROSE was installed). One of these legacy headers is "rose.h". It was once necessary to
+ *  include "rose.h" before any other header files, but this requirement has been relaxed for most headers under the "Rose"
+ *  directory and all Sage "SgAsm*.h" headers for AST node types. If you get strange compile errors for things you don't think
+ *  you're using, try adding `#include <rose.h>` to the top of your source code.
  *
  *  @snippet{trimleft} disassembler.C rose include
  *
@@ -202,7 +200,8 @@ namespace Rose {
  *
  *  Namely, we will bring @ref Rose::BinaryAnalysis into scope for the entire compilation unit as well as @ref
  *  Sawyer::Message::Common. The latter provides (among other things) the diagnostic message severity levels like @c FATAL, @c
- *  ERROR, @c WARN, @c INFO, and others. In addition, we abbreviate "Partitioner2" to just "P2".
+ *  ERROR, @c WARN, @c INFO, and others. In addition, we abbreviate "Partitioner2" to just "P2" as is customary in many existing
+ *  binary analysis tools.
  *
  *  @snippet{trimleft} disassembler.C namespaces
  *
@@ -392,7 +391,7 @@ namespace Rose {
  *
  *  @snippet{trimleft} disassembler.C description
  *
- *  The following code will show how the command-line parser is used.
+ *  Up to this point, we have only defined the parser. Later/below we will show how the parser is used.
  *
  *  @subsection rose_binaryanalysis_example_partitioning Partitioning
  *
@@ -426,7 +425,7 @@ namespace Rose {
  *  These steps are all performed with two function calls from the tool. One to find the correct engine and another to process the
  *  command-line using the adjusted parser. Command-line parsing has two parts: the actual parsing and verification of the
  *  command-line syntax, and then applying the parse results to update the C++ switch argument destination variables that were noted
- *  when the parser was built, namely our `Settings settings;` variable in `main` and the settings in the @ref
+ *  when the parser was built, namely our `Settings settings` variable in `main` and the settings in the @ref
  *  Rose::BinaryAnalysis::Partitioner2::Engine "engine" that was returned. For this reason, the locations bound to the parser must
  *  outlive the call to @ref Sawyer::CommandLine::ParserResult::apply "apply".
  *
