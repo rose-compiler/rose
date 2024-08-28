@@ -1,0 +1,167 @@
+#!/bin/bash
+
+####################################################################################################################################
+#
+# Example configure script for tools. This script is mainly to configure the tool, but also to optionally run a build command such
+# as "install".
+#
+# Requirements for this script, which you can implement however you like.
+#
+#   1. If interpretted, this script MUST be written in a language whose interpreter is customarily installed on all platforms
+#      where this project is expected to be built. On other platforms where the interpreter might not be installed, the project's
+#      installation document MUST describe this build-time dependency.
+#
+#   2. This script MUST be runnable from a command-shell using the name "configure".
+#
+#   3. This script MUST be able to be run from any working directory.
+#
+#   4. This script MUST be able to be run directly with no additional steps required by the user. For instance, the user most not be
+#      required to compile the configure command before running it (although it is fine for the "configure" command to perform any
+#      required compilation steps itself as part of running it).
+#
+#   5. This script MUST recognize "--" as an optional separator between command-line switches and command-line positional arguments
+#      when run on Unix-like systems.
+#
+#   6. This script MUST recognize both "--help" and "-h" and they MUST both print identical command usage information when run on
+#      Unix-like systems, and on other systems this script MUST use that system's conventional mechanism for obtaining usage
+#      information.
+#
+#   7. The usage information MUST be detailed enough to for a user to figure out how to run the "configure" command. The usage information
+#      may be printed directly, or may refer to another document such as the README.md file.
+#
+#   8. The first positional argument for this script MUST indicate the ROSE installation root directory, which may be either an
+#      absolute directory name or relative to another directory documented in the usage information. This positional argument MUST
+#      be present.
+#
+#      Note: ROSE's Tup build system, by default, creates a new installation directory each time ROSE is installed. This follows the
+#      industry best practice of not installing new versions or configurations of software over the top of old versions and
+#      configurations. Tup installs ROSE in "$HOME/rose-installed/${MONTH}-${DAY}-${YEAR}/${CONFIG}_${SERIAL}" where ${CONFIG} is
+#      either "debug" or "release" and "${SERIAL} is a unique serial number. It also updates symbolic links "latest", "latest-debug",
+#      and "latest-release" for each installation. If the "configure" script treats relative ROSE installation names r.w.t. the
+#      "$HOME/rose-installed" directory, then names like "latest", "latest-debug", and "latest-release" will automatically work.
+#
+#   9. The second positional argument, if present, MUST be a build target. If not present, then the script MUST NOT install anything (but
+#      may do other actions). The following build targets MUST be supported:
+#
+#        + "check" means check that all tests pass. This may require (re)building the tool and test harnesses. This target may short
+#          circuit if it can prove that re-running the tests would not produce a different result than the previous run.
+#
+#        + "install" means to install the end products and make them available for the user to run. The "install" target MUST depend on
+#          the "check" target. The tool is not required to be usable prior to installation.
+#
+#      Note: It is common for the build target "all" to be supported, but we do not require it here because "all" traditionally
+#      doesn't do all that might be expected and can therefore be confusing to users not familiar with "make". Furthermore, the
+#      things that "all" does build are not required to be usable by the end user (since they're not installed), and is therefore of
+#      limited use to the end user. Finally, "all" is a make-ism and the tools are not required to use the "make" build system.
+#
+#      Note: It is common for the build target "clean" to be supported, but we do not require it because good build systems don't
+#      need it--they already know all dependencies. See also, "git clean" for emergencies.
+#
+####################################################################################################################################
+
+set -e
+arg0="${0##*/}"
+
+# These can be set in the environment if you like. The command-line overrides them.
+: ROSE_ROOT
+: BUILD_TARGET
+
+
+####################################################################################################################################
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+####################################################################################################################################
+usage() {
+    ######--------------------------------------------------------------------------------##### 80 columns
+    echo "usage: $arg0 ROSE_ROOT [BUILD_TARGET]"
+    echo "  ROSE_ROOT defines the location where the ROSE library has been installed. It"
+    echo "    is an absolute path, or relative to the ROSE installation directory"
+    echo "    recommended by ROSE's Tup build system: $HOME/rose-installed. When ROSE is"
+    echo "    installed with Tup, the following symbolic links are present:"
+    echo "       * \"latest\" points to the latest ROSE installation"
+    echo "       * \"latest-release\" points to the latest production installation"
+    echo "       * \"latest-debug\" points to the latest debug installation"
+    echo "  BUILD_TARGET, if present, builds the specified target. Standard targets are:"
+    echo "    * \"all\" builds the tools but does not install them."
+    echo "    * \"test\" builds tools and runs their tests."
+    echo "    * \"install\" builds tools, run tests, and installs end products."
+}
+
+####################################################################################################################################
+# Copy the ROSE configuration script into ./rose.cfg
+copy-rose-config() {
+    if [ -n "$ROSE_ROOT" ]; then
+        if [ -r "$ROSE_ROOT/include/rose-installed-make.cfg" ]; then
+	    # ROSE Tup-generated configuration file for GNU Make, CMake, and Tup tool build systems
+            cp "$ROSE_ROOT/include/rose-installed-make.cfg" rose.cfg
+        elif [ -r "$ROSE_ROOT/lib/rose-config.cfg" ]; then
+	    # ROSE Autotools-generated configuration file for GNU Make, CMake, and Tup tool build systems
+	    # For some reason, the ROSE_RPATHS value has a "-R" in front of each RPATH directory
+            sed '/^ROSE_RPATHS/ s/ *-R */:/g' <"$ROSE_ROOT/lib/rose-config.cfg" >rose.cfg
+        else
+            die "cannot find ROSE configuration script under \"$ROSE_ROOT\""
+        fi
+    fi
+}
+
+####################################################################################################################################
+# Maybe build something
+build-something() {
+    if [ -n "$BUILD_TARGET" ]; then
+	make -j$(nproc) "$BUILD_TARGET"
+    fi
+}
+
+####################################################################################################################################
+# Parse command-line and set global variables
+parse-command-line() {
+
+    # Parse command-line switches
+    while [ "$#" -gt 0 ]; do
+	case "$1" in
+	    --)
+		shift
+		break
+		;;
+	    -h|--help)
+		usage
+		exit 0
+		;;
+	    -*)
+		die "unknown switch: \"$1\""
+		;;
+	    *)
+		break
+		;;
+	esac
+    done
+
+    # Parse command-line positional arguments
+    if [ "$#" -gt 0 ]; then
+	if [ -e "$HOME/rose-installed/$1" ]; then
+	    ROSE_ROOT="$HOME/rose-installed/$1"
+	else
+	    ROSE_ROOT_"$1"
+	fi
+	shift
+    fi
+
+    if [ "$#" -gt 0 ]; then
+	BUILD_TARGET="$1"
+	shift
+    fi
+
+    if [ "$#" -ne 0 ]; then
+	usage >&2
+	exit 1
+    fi
+}
+
+####################################################################################################################################
+cd "$dir0"
+parse-command-line "$@"
+copy-rose-config
+build-something

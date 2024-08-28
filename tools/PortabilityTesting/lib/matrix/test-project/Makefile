@@ -1,6 +1,8 @@
 ################################################################################
 # Variables
 ################################################################################
+
+# Copied here by the configure script
 include rose.cfg
 
 CC            = $(ROSE_CC)
@@ -27,6 +29,9 @@ test-rose: test-rose.o
 
 .PHONY: check
 check: test-rose
+	./test-rose --version
+	./test-rose --version-long
+	./test-rose --self-test
 	./test-rose --help |cat; exit ${PIPESTATUS[0]}
 
 ################################################################################
@@ -35,14 +40,13 @@ check: test-rose
 
 # Install this project's user-level artifacts into the ROSE prefix
 .PHONY: install
-install: test-rose
-	cp $^ $(ROSE_PREFIX)/bin
+install: check
+	cp test-rose $(ROSE_PREFIX)/bin
 
 ################################################################################
 # Prerequisites
 ################################################################################
 rose.cfg:
-	@echo "error: you must copy rose-installed-make.cfg or rose-config.cfg to rose.cfg first" >&2
-	@echo "       The rose.cfg file defines ROSE features necessary to compile these tools." >&2
+	@echo "error: you must run configure first" >&2
 	@false
 

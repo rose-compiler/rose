@@ -1,4 +1,0 @@
-This directory contains a project that is used as part of Matrix testing. It is
-not intended that this project be compiled as part of ROSE, but rather this directory
-is compiled only after ROSE is already installed.  Therefore, this directory can
-also serve as an example of what an external project's build system might look like.
