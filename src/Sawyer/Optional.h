@@ -354,6 +354,20 @@ public:
         return isEmpty_;
     }
     /** @} */
+
+    /** Conditionally apply a functor @p f to the contents of an Optional.
+     *
+     *  If this optional object has a value then fmap builds a new Optional using @p f to construct the value.
+     *  If it does not have a value, the new Optional is also empty.
+     * */
+    template <typename U, typename F>
+    Optional<U>
+    fmap(F f) {
+        if (isEmpty_)
+            return Optional<U>();
+        return Optional<U>(f(get()));
+    }
+
     
     // The following trickery is to allow things like "if (x)" to work but without having an implicit
     // conversion to bool which would cause no end of other problems. This is fixed in C++11.
