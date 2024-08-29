@@ -875,7 +875,13 @@ if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -pthread")
 endif()
 
-set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/${Boost_INCLUDE_DIRS}")
+# Fix double slashes in rose-config
+if("${Boost_INCLUDE_DIRS}" MATCHES "^/")
+  # this var starts with a slash so we dont append another one after the -I 
+  set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${Boost_INCLUDE_DIRS}")
+else()
+  set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/${Boost_INCLUDE_DIRS}")
+endif() 
 
 # TSG to do: improve conditionals for quadmath 
 set(rose_library_list "rose")
@@ -972,7 +978,6 @@ else()
     set(ACTUAL_CXX ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
 endif()
 
-
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${ACTUAL_CC}\n")
@@ -990,4 +995,3 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R $
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIRS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
-
