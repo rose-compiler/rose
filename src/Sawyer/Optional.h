@@ -362,7 +362,7 @@ public:
      * */
     template <typename U, typename F>
     Optional<U>
-    fmap(F f) {
+    fmap(F&& f) {
         if (isEmpty_)
             return Optional<U>();
         return Optional<U>(f(get()));
