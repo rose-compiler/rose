@@ -517,6 +517,14 @@ endif()
 # Ada
 option(ENABLE-ADA "Enable Ada analysis" OFF)
 if(ENABLE-ADA)
+  # Require GNAT script to be sourced -- or env vars to be set  
+  if(NOT DEFINED ENV{GNAT_HOME}) 
+    message(WARNING "Please source /nfs/casc/overture/ROSE/opt/rhel8/x86_64/GNAT/setup.sh\nor something similar for Ada support") 
+  endif() 
+  if(NOT DEFINED ENV{BOOST_HOME}) 
+    message(WARNING "Please source /nfs/casc/overture/ROSE/opt/rhel8/x86_64/GNAT/setup.sh\nor something similar for Ada support") 
+  endif() 
+  # Set defines for source code 
   set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
 endif()
 
