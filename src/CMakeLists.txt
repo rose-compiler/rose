@@ -914,7 +914,7 @@ set(rose_library_list "${rose_library_list};m;quadmath")
 # Set macro for EDG 6 and 6.5
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # Move this to src/frontend/CxxFrontend/EDG/EDG_6.5/src/CMakeLists.txt and edg_6.0
-  set(ROSE_USE_EDG_QUADFLOAT 1)
+  set(ROSE_USE_EDG_QUAD_FLOAT 1)
 endif() 
 
 if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
