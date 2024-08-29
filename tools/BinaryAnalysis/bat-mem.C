@@ -284,13 +284,13 @@ main(int argc, char *argv[]) {
                     case OutputFormat::NONE:
                         ASSERT_not_reachable("handled already above");
                     case OutputFormat::HEXDUMP:
-                        HexDumper()(settings, map, interval, std::cout);
+                        HexDumper{}(settings, map, interval, std::cout);
                         break;
                     case OutputFormat::SRECORDS:
-                        SRecordDumper(settings.srecordSyntax.orElse(SRecord::SREC_MOTOROLA))(settings, map, interval, std::cout);
+                        SRecordDumper{settings.srecordSyntax.orElse(SRecord::SREC_MOTOROLA)}(settings, map, interval, std::cout);
                         break;
                     case OutputFormat::INTEL_HEX:
-                        SRecordDumper(SRecord::SREC_INTEL)(settings, map, interval, std::cout);
+                        SRecordDumper{SRecord::SREC_INTEL}(settings, map, interval, std::cout);
                         break;
                     case OutputFormat::BINARY: {
                         boost::filesystem::path outputName = settings.outputPrefix +
@@ -301,7 +301,7 @@ main(int argc, char *argv[]) {
                             mlog[FATAL] <<"cannot create output file " <<outputName <<"\n";
                             exit(1);
                         }
-                        BinaryDumper()(settings, map, interval, output);
+                        BinaryDumper{}(settings, map, interval, output);
                         std::cout <<"# Segment " <<segmentInterval <<" \"" <<StringUtility::cEscape(segment.name()) <<"\"\n"
                                   <<"map:" <<StringUtility::addrToString(segmentInterval.least())
                                   <<"+" <<StringUtility::addrToString(segmentInterval.size())

@@ -510,7 +510,7 @@ PltEntryMatcher::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anc
             //     add      x16, x16, 0x0000000000000ef8<3832>
             //     br       x17
             rose_addr_t indirectVa = 0;
-            size_t indirectNBytes = 0;
+            rose_addr_t indirectNBytes = 0;
             SgAsmInstruction *adrp = matchAarch64Adrp(partitioner, anchor, indirectVa /*out*/);
             SgAsmInstruction *ldr = adrp ? matchAarch64Ldr(partitioner, adrp->get_address() + adrp->get_size(),
                                                            indirectVa /*in,out*/, indirectNBytes /*out*/) : NULL;
