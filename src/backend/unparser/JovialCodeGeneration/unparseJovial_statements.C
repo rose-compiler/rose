@@ -29,41 +29,27 @@ UnparseJovial::~UnparseJovial()
 void 
 UnparseJovial::unparseJovialFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
 {
-  SgGlobal* globalScope = sourcefile->get_globalScope();
-  ASSERT_not_null(globalScope);
-
-  // Comments are really important in language translation. Turn them off in the base class
-  // so that care can be used to unparse and check comments in Jovial.
-  info.set_SkipComments();
-
-  // unparse comments preceding the global scope
-  auto preprocInfo = globalScope->get_attachedPreprocessingInfoPtr();
-  if (preprocInfo) {
-    for (PreprocessingInfo* info : *preprocInfo) {
-      if (info->getRelativePosition() == PreprocessingInfo::before) {
-        curprint(info->getString());
-        curprint("\n");
-      }
-    }
-  }
-
-  curprint("START\n");
-  unparseStatement(globalScope, info);
-
-  // unparse comments near end of global scope
-  preprocInfo = globalScope->get_attachedPreprocessingInfoPtr();
-  if (preprocInfo) {
-    for (PreprocessingInfo* info : *preprocInfo) {
-      if (info->getRelativePosition() == PreprocessingInfo::after) {
-        curprint(info->getString());
-        curprint("\n");
-      }
-    }
-  }
-
-  curprint("TERM\n");
+  SgGlobal* global = sourcefile->get_globalScope();
+  unparseGlobalStmt(global, info);
 }
 
+// Override unparseGlobalStmt to escape the C++ unparsing nightmare.
+void
+UnparseJovial::unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info &info)
+{
+  SgGlobal* scope = isSgGlobal(stmt);
+  ASSERT_not_null(scope);
+
+  unparseCommentsWithSyntax(scope, "START", /*atStart*/true);
+
+  for (SgStatement* stmt : scope->get_declarations()) {
+      ASSERT_not_null(stmt);
+      SgUnparse_Info infoLocal{info};
+      unparseLanguageSpecificStatement(stmt, infoLocal);
+  }
+
+  unparseCommentsWithSyntax(scope, "TERM", /*atStart*/false);
+}
 
 void
 UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
@@ -409,7 +395,7 @@ UnparseJovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgNamespaceDeclarationStatement* decl = isSgNamespaceDeclarationStatement(stmt);
      ASSERT_not_null(decl);
@@ -421,16 +407,16 @@ UnparseJovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse
    }
 
 void
-UnparseJovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_Info &info)
    {
      SgNamespaceDefinitionStatement* namespace_defn = isSgNamespaceDefinitionStatement(stmt);
      ASSERT_not_null(namespace_defn);
 
-     const SgDeclarationStatementPtrList& declarations = namespace_defn->get_declarations();
+     const SgDeclarationStatementPtrList &declarations = namespace_defn->get_declarations();
 
      info.inc_nestingLevel();
      for (SgStatement* namespace_stmt : declarations) {
-       unparseStatement(namespace_stmt, info);
+       unparseLanguageSpecificStatement(namespace_stmt, info);
      }
      info.dec_nestingLevel();
    }
@@ -1371,15 +1357,139 @@ UnparseJovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+UnparseJovial::unparseCommentsWithSyntax(SgStatement* stmt, std::string syntax, bool atStart) {
+  bool syntaxUnparsed{false};
+  const AttachedPreprocessingInfoType* preprocInfo{stmt->get_attachedPreprocessingInfoPtr()};
+  int stmtLine{stmt->get_startOfConstruct()->get_line()};
+
+  if (preprocInfo == nullptr) {
+    curprint(syntax);
+    curprint("\n");
+    return;
+  }
+
+  // Syntax associated with beginning of statement
+  if (atStart) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      auto pos = info->getRelativePosition();
+      auto infoLine = info->get_file_info()->get_line();
+
+      if (infoLine < stmtLine && pos == PreprocessingInfo::before) {
+        curprint(info->getString());
+        curprint("\n");
+      }
+      else if (infoLine == stmtLine && pos == PreprocessingInfo::before_syntax) {
+        curprint(info->getString());
+        curprint(" ");
+        if (!syntaxUnparsed) {
+          // If multiple before_syntax comments, only one unparsed before syntax
+          curprint(syntax);
+          curprint(" ");
+          syntaxUnparsed = true;
+        }
+      }
+      else if (infoLine == stmtLine && pos == PreprocessingInfo::after_syntax) {
+        if (!syntaxUnparsed) {
+          curprint(syntax);
+          curprint(" ");
+          syntaxUnparsed = true;
+        }
+        curprint(info->getString());
+        curprint("\n");
+      }
+      else if (infoLine > stmtLine) {
+        break;
+      }
+    }
+  }
+
+  // Syntax associated with end of statement
+  else {
+    auto stmtStartLine = stmt->get_startOfConstruct()->get_line();
+    auto stmtLine = stmt->get_endOfConstruct()->get_line();
+
+    for (PreprocessingInfo* info : *preprocInfo) {
+      auto pos = info->getRelativePosition();
+      auto infoLine = info->get_file_info()->get_line();
+
+      if (infoLine > stmtStartLine && pos == PreprocessingInfo::before) {
+        // Print anything left over after statement starting location
+        curprint(info->getString());
+        curprint("\n");
+      }
+      else if (infoLine == stmtLine && pos == PreprocessingInfo::before_syntax) {
+        curprint(info->getString());
+        curprint(" ");
+        if (!syntaxUnparsed) {
+          // If multiple before_syntax comments, only one unparsed before syntax
+          curprint(syntax);
+          curprint(" ");
+          syntaxUnparsed = true;
+        }
+      }
+      else if (infoLine == stmtLine && pos == PreprocessingInfo::after_syntax) {
+        if (!syntaxUnparsed) {
+          curprint(syntax);
+          curprint(" ");
+          syntaxUnparsed = true;
+        }
+        curprint(info->getString());
+        curprint("\n");
+      }
+      else if (infoLine > stmtLine && pos == PreprocessingInfo::after) {
+        if (!syntaxUnparsed) {
+          curprint(syntax);
+          curprint(" ");
+          syntaxUnparsed = true;
+        }
+        curprint(info->getString());
+        curprint("\n");
+      }
+    }
+  }
+
+  // Make sure syntax is unparsed before returning
+  if (!syntaxUnparsed) {
+    curprint(syntax);
+    curprint("\n");
+  }
+  return;
+}
+
+
+void
 UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info &)
 {
   // unparse comments preceding the statement
   const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
   if (preprocInfo) {
     for (PreprocessingInfo* info : *preprocInfo) {
+      // Don't unparse comments following statement starting syntax
+      if (info->get_file_info()->get_line() > stmt->get_startOfConstruct()->get_line()) {
+        break;
+      }
       if (info->getRelativePosition() == PreprocessingInfo::before) {
         curprint(info->getString());
         curprint("\n");
+      }
+      else if (info->getRelativePosition() == PreprocessingInfo::before_syntax) {
+        // comment preceding and on same line as syntax
+        curprint(info->getString());
+      }
+    }
+  }
+}
+
+void
+UnparseJovial::unparseCommentsEndOf(SgStatement* stmt, SgUnparse_Info &)
+{
+  // unparse comments at end (of statement or end_of_line)
+  const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      if (info->getRelativePosition() == PreprocessingInfo::end_of) {
+        curprint(" ");
+        curprint(info->getString());
       }
     }
   }
@@ -1393,20 +1503,26 @@ UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info &, bool ne
   if (preprocInfo) {
     for (PreprocessingInfo* info : *preprocInfo) {
       auto pos = info->getRelativePosition();
-      if (pos == PreprocessingInfo::end_of || pos == PreprocessingInfo::after) {
-        if (newline) {
-          newline = false;
-          if (pos == PreprocessingInfo::end_of) {
-            curprint(" "); // pad end_of_stmt from comment
-          }
-          else {
-            curprint("\n");
-          }
-        }
+      auto stmtLine = stmt->get_endOfConstruct()->get_line();
+      auto infoLine = info->get_file_info()->get_line();
+
+      // Don't unparse anything before terminating line
+      if (infoLine < stmtLine) continue;
+
+      if (pos == PreprocessingInfo::after_syntax) {
+        curprint(info->getString());
+        curprint("\n");
+      }
+      else if (pos == PreprocessingInfo::end_of) {
+        curprint(info->getString());
+        curprint("\n");
+      }
+      else if (pos == PreprocessingInfo::after) {
         curprint(info->getString());
         curprint("\n");
       }
     }
   }
+  //TODO: newline?
   if (newline) curprint("\n");
 }

@@ -88,7 +88,7 @@ generateJovialCompoolFile(SgFile *sfile)
           SgScopeStatement* compool_scope = isSgScopeStatement(compool_stmt->get_parent());
           ASSERT_not_null(compool_scope);
 
-          SgGlobal* global_scope = SageInterface::getGlobalScope (compool_scope);
+          SgGlobal* global_scope = SageInterface::getGlobalScope(compool_scope);
           ASSERT_not_null(global_scope);
 
           ninfo.set_current_scope(compool_scope);
@@ -114,10 +114,7 @@ generateJovialCompoolFile(SgFile *sfile)
        // However, that its suffix is ".rcmp" will cause UnparseLanguageIndependentConstructs::statementFromFile() 
        // to always return true.  So use of output_filename should map to the file from the file constructed.
           UnparseJovial myunp{&unp, output_filename};
-
-          output_stream << "START\n";
-          myunp.unparseStatement(global_scope, (SgUnparse_Info&)ninfo);
-          output_stream << "TERM\n";
+          myunp.unparseGlobalStmt(global_scope, ninfo);
 
           output_stream.flush();
           output_stream.close();

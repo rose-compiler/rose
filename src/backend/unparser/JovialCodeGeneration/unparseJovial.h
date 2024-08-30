@@ -6,7 +6,6 @@
 #include "Cxx_Grammar.h"
 #include "unparseLanguageIndependentConstructs.h"
 
-
 class UnparseJovial : public UnparseLanguageIndependentConstructs
 {
 public:
@@ -14,16 +13,19 @@ public:
 
           virtual ~UnparseJovial();
 
-          virtual std::string languageName() const { return "Jovial Unparser"; }
+          std::string languageName() const override { return "Jovial Unparser"; }
 
-          void unparseJovialFile(SgSourceFile *file, SgUnparse_Info &info);
+          void unparseJovialFile(SgSourceFile* file, SgUnparse_Info &info);
 
-          virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info);
-          virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info);
+          // Override this method to escape C++ unparsing nightmare.
+          void unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info &info) override;
 
-          virtual void unparseNullptrVal             (SgExpression* expr, SgUnparse_Info& info);
-          virtual void unparseStringVal              (SgExpression* expr, SgUnparse_Info& info);
-                  void unparseJovialBitVal           (SgExpression* expr, SgUnparse_Info& info);
+          void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) override;
+          void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) override;
+
+          void unparseNullptrVal             (SgExpression* expr, SgUnparse_Info& info) override;
+          void unparseStringVal              (SgExpression* expr, SgUnparse_Info& info) override;
+          void unparseJovialBitVal           (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseDefineDeclStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseDirectiveStmt          (SgStatement* stmt, SgUnparse_Info& info);
@@ -119,7 +121,10 @@ public:
           void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);
 
 private:
+  void unparseCommentsWithSyntax(SgStatement* stmt, std::string syntax, bool start);
+
   void unparseCommentsBefore(SgStatement* stmt,  SgUnparse_Info& info);
+  void unparseCommentsEndOf (SgStatement* stmt,  SgUnparse_Info& info);
   void unparseCommentsAfter (SgStatement* stmt,  SgUnparse_Info& info, bool newline=false);
   void unparseCommentsBefore(SgExpression* expr, SgUnparse_Info& info);
   void unparseCommentsAfter (SgExpression* expr, SgUnparse_Info& info);

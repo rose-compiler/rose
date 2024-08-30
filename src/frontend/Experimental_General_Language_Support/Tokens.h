@@ -67,6 +67,7 @@ public:
   TokenStream() = delete;
   TokenStream(std::istringstream &);
 
+  /** Return the next token in the list. */
   boost::optional<const Token&> const getNextToken() {
     if (next_ < tokens_.size()) {
       return boost::optional<const Token&>(tokens_[next_]);
@@ -74,6 +75,7 @@ public:
     return boost::none;
   }
 
+  /** Advance token locator and return the new next token. */
   boost::optional<const Token&> consumeNextToken() {
     boost::optional<const Token&> nextToken{getNextToken()};
     next_ += 1;
@@ -82,7 +84,7 @@ public:
 
 private:
   std::vector<Token> tokens_;
-  int next_;
+  unsigned long next_;
 
   int getTokenElement(std::istream &, std::string &);
   int getTokenComment(std::istream &, std::string &);

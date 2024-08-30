@@ -66,7 +66,7 @@ ATbool ATermToSageJovialTraversal::traverse_Module(ATerm term)
 
       SgScopeStatement* sage_tree_scope{nullptr};
       sage_tree_builder.Enter(sage_tree_scope);
-      setSourcePosition(sage_tree_scope, term);
+      setSourcePosition(sage_tree_scope, term, false);
 
       if (traverse_CompoolModule(module)) {
          // MATCHED CompoolModule
@@ -98,12 +98,14 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
    std::string name;
    RB::SourcePositionPair sources;
    std::vector<RB::Token> saved_comments{};
+   SgGlobal* global{nullptr};
    SgJovialCompoolStatement* compool_stmt{nullptr};
    SgNamespaceDeclarationStatement* namespace_decl{nullptr};
 
    if (ATmatch(term, "CompoolModule(<term>,<term>,<term>)", &t_dirs, &t_name, &t_decls)) {
-      // Save any comments preceding CompoolModule
-      sage_tree_builder.consumePrecedingComments(saved_comments, getLocation(term));
+      // Attach comments preceding CompoolModule START
+      global = isSgGlobal(SageBuilder::topScopeStack());
+      sage_tree_builder.attachComments(global, PosInfo{global});
 
    // Traverse Name first to have it available
       if (traverse_Name(t_name, name)) {
@@ -118,12 +120,15 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
       } else return ATfalse;
 
       sage_tree_builder.Enter(namespace_decl, name, sources);
-      sage_tree_builder.attachComments(namespace_decl, saved_comments, getLocation(term));
-      setSourcePosition(namespace_decl, term);
+      setSourcePosition(namespace_decl, term, false);
 
       sage_tree_builder.Enter(compool_stmt, name, sources);
       sage_tree_builder.Leave(compool_stmt);
-      setSourcePosition(compool_stmt, term);
+
+      // Let CompoolModule start with its name (rather than global scope). This
+      // helps with comment placement.
+      setSourcePositionIncludingTerm(compool_stmt, t_name, term);
+      sage_tree_builder.attachComments(compool_stmt);
 
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList and CompoolDeclarationList
@@ -132,7 +137,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
    } else return ATfalse;
 
    sage_tree_builder.Leave(namespace_decl);
-   sage_tree_builder.attachComments(namespace_decl, getLocation(term), /*at_end*/true);
+
+   // Attach any remaining comments to the global scope
+   sage_tree_builder.attachRemainingComments(global, PosInfo{global});
 
    return ATtrue;
 }
@@ -147,8 +154,13 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureModule(ATerm term)
 #endif
 
    ATerm t_decls, t_funcs;
+   SgGlobal* global{nullptr};
 
    if (ATmatch(term, "ProcedureModule(<term>,<term>)", &t_decls, &t_funcs)) {
+      // Attach comments preceding CompoolModule START
+      global = isSgGlobal(SageBuilder::topScopeStack());
+      sage_tree_builder.attachComments(global, PosInfo{global});
+
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList
       } else return ATfalse;
@@ -158,6 +170,9 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureModule(ATerm term)
       } else return ATfalse;
    }
    else return ATfalse;
+
+   // Attach any remaining comments to the global scope
+   sage_tree_builder.attachRemainingComments(global, PosInfo{global});
 
    return ATtrue;
 }
@@ -234,16 +249,17 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
 #endif
 
    ATerm t_decls, t_name, t_body, t_funcs;
+   SgGlobal* global{nullptr};
    std::vector<RB::Token> comments{};
-
-   SgProgramHeaderStatement* program_decl = nullptr;
+   SgProgramHeaderStatement* program_decl{nullptr};
 
    if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>)", &t_decls,&t_name,&t_body,&t_funcs)) {
       std::string name;
       std::vector<std::string> labels;
 
-      // Save any comments preceding MainProgramModule
-      sage_tree_builder.consumePrecedingComments(comments, getLocation(term));
+      // Attach comments preceding MainProgramModule START
+      global = isSgGlobal(SageBuilder::topScopeStack());
+      sage_tree_builder.attachComments(global, PosInfo{global});
 
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList
@@ -254,7 +270,7 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
       } else return ATfalse;
 
    // Note that MainProgramModule term start and end is not that of the function,
-   // the Program name is the best we can do for a starting positioin.
+   // the Program name is the best we can do for a starting position.
       RB::SourcePosition name_start, name_end; // start and end of program name
       RB::SourcePosition body_start, body_end; // start and end of body
       setSourcePositions(t_name, name_start, name_end);
@@ -276,6 +292,9 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
       } else return ATfalse;
    }
    else return ATfalse;
+
+   // Attach any remaining comments to the global scope
+   sage_tree_builder.attachRemainingComments(global, PosInfo{global});
 
    return ATtrue;
 }

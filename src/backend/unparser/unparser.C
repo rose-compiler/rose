@@ -879,13 +879,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_last_language:
              {
-               printf ("Error: SgFile::e_last_language detected in unparser \n");
+               mlog[ERROR] << "SgFile::e_last_language detected in unparser\n";
                ROSE_ABORT();
              }
 
           default:
              {
-               printf ("Error: default reached in unparser (unknown output language specified) \n");
+               mlog[ERROR] << "Error: default reached in unparser (unknown output language specified)\n";
                ROSE_ABORT();
              }
         }
@@ -3009,13 +3009,13 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_last_language:
                   {
-                    printf ("Error: SgFile::e_last_language detected in unparser \n");
+                    mlog[ERROR] << "SgFile::e_last_language detected in unparser\n";
                     ROSE_ABORT();
                   }
 
                default:
                   {
-                    printf ("Error: default reached in unparser (unknown output language specified) \n");
+                    mlog[ERROR] << "reached in unparser (unknown output language specified)\n";
                     ROSE_ABORT();
                   }
              }

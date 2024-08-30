@@ -257,6 +257,8 @@ private:
 
    SgStatement* wrapStmtWithLabels(SgStatement* stmt, const std::vector<std::string> &labels);
 
+   /** Set line and column information for a comment's @info and consume current token */
+   void setCommentPositionAndConsumeToken(PreprocessingInfo* info);
    void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 
 public:
@@ -275,7 +277,7 @@ public:
    void attachComments(SgLocatedNode* node, const std::vector<Token> &tokens, bool at_end=false);
    void attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos);
    void attachComments(SgExpressionPtrList const &list);
-   void attachRemainingComments(SgLocatedNode* node);
+   void attachRemainingComments(SgLocatedNode* node, const PosInfo &pos);
    void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 
