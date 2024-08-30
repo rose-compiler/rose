@@ -139,24 +139,26 @@ struct Worker {
  */
 template<class RandomAccessIterator, class Compare>
 void quicksort(RandomAccessIterator begin, RandomAccessIterator end, size_t nThreads, Compare compare) {
-    assert(begin < end);
-    using namespace Private;
+    if (begin < end) {
+        assert(begin < end);
+        using namespace Private;
 
-    Job<RandomAccessIterator, Compare> job(compare);
-    addWork(job, Work<RandomAccessIterator>(begin, end));
+        Job<RandomAccessIterator, Compare> job(compare);
+        addWork(job, Work<RandomAccessIterator>(begin, end));
 
-    // Start worker threads (we can't assume containers with move semantics, so use an array)
-    size_t nworkers = std::max(nThreads, (size_t)1) - 1;
-    boost::thread *workers = new boost::thread[nworkers];
-    for (size_t i=0; i<nworkers; ++i)
-        workers[i] = boost::thread(Worker<RandomAccessIterator, Compare>(job, i+1));
-    
-    // Participate in the work ourselves (we might be the only thread!)
-    Worker<RandomAccessIterator, Compare>(job, 0)();
+        // Start worker threads (we can't assume containers with move semantics, so use an array)
+        size_t nworkers = std::max(nThreads, (size_t)1) - 1;
+        boost::thread *workers = new boost::thread[nworkers];
+        for (size_t i=0; i<nworkers; ++i)
+            workers[i] = boost::thread(Worker<RandomAccessIterator, Compare>(job, i+1));
 
-    // Wait for all the threads to finish
-    for (size_t i=0; i<nworkers; ++i)
-        workers[i].join();
+        // Participate in the work ourselves (we might be the only thread!)
+        Worker<RandomAccessIterator, Compare>(job, 0)();
+
+        // Wait for all the threads to finish
+        for (size_t i=0; i<nworkers; ++i)
+            workers[i].join();
+    }
 }
     
 } // namespace
