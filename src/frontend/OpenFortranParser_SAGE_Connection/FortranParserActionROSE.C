@@ -1707,7 +1707,7 @@ void c_action_label(Token_t * lbl)
      * @param id The identifier.
      */
     void c_action_end_type_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* typeKeyword, Token_t* id, Token_t* /*eos*/)
+                                Token_t* /*typeKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_end_type_stmt() label = %p id = %p \n", label, id);
@@ -2233,7 +2233,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_private_components_stmt(Token_t* label, Token_t* privateKeyword, Token_t* /*eos*/)
+    void c_action_private_components_stmt(Token_t* /*label*/, Token_t* privateKeyword, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -2281,7 +2281,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_binding_private_stmt(Token_t* label, Token_t* privateKeyword, Token_t* /*eos*/)
+    void c_action_binding_private_stmt(Token_t* /*label*/, Token_t* privateKeyword, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_binding_private_stmt() \n");
@@ -2295,7 +2295,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_proc_binding_stmt(Token_t */*label*/, int type, Token_t*)
+    void c_action_proc_binding_stmt(Token_t * /*label*/, int type, Token_t*)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("c_action_proc_binding_stmt(): type = %d \n", type);
@@ -5875,7 +5875,7 @@ void c_action_label(Token_t * lbl)
      * @param hasImplicitSpecList Could be none, or it could have a list.
      */
     void c_action_implicit_stmt(Token_t* label, Token_t* implicitKeyword,
-            Token_t* noneKeyword, Token_t* /*eos*/, ofp_bool hasImplicitSpecList)
+            Token_t* /*noneKeyword*/, Token_t* /*eos*/, ofp_bool hasImplicitSpecList)
     {
         // This is the case of an IMPICIT NONE statement
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -6087,7 +6087,7 @@ void c_action_label(Token_t * lbl)
      * @param eos End of statement token.
      * @param count Number of namelist group object lists.
      */
-    void c_action_namelist_stmt(Token_t* label, Token_t* keyword, Token_t* /*eos*/,
+    void c_action_namelist_stmt(Token_t* /*label*/, Token_t* keyword, Token_t* /*eos*/,
             int count)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -6225,7 +6225,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_equivalence_stmt(Token_t* label, Token_t* equivalenceKeyword, Token_t* /*eos*/)
+    void c_action_equivalence_stmt(Token_t* /*label*/, Token_t* equivalenceKeyword, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -6374,7 +6374,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param count Number of common block object lists.
      */
-    void c_action_common_stmt(Token_t* label, Token_t* commonKeyword, Token_t* /*eos*/,
+    void c_action_common_stmt(Token_t* /*label*/, Token_t* commonKeyword, Token_t* /*eos*/,
             int numBlocks)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -11868,7 +11868,7 @@ void c_action_case_value()
      * @param selectConstructName Optional identifier immediately before end.
      */
     void c_action_type_guard_stmt(Token_t* /*label*/, Token_t* /*typeKeyword*/,
-            Token_t* isOrDefaultKeyword, Token_t* selectConstructName, Token_t* /*eos*/)
+            Token_t* /*isOrDefaultKeyword*/, Token_t* selectConstructName, Token_t* /*eos*/)
     {
     }
 
@@ -11881,8 +11881,8 @@ void c_action_case_value()
      * @param label The label.
      * @param id The identifier, if present. Otherwise null.
      */
-    void c_action_end_select_type_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* selectKeyword, Token_t* id, Token_t* /*eos*/)
+    void c_action_end_select_type_stmt(Token_t* /*label*/, Token_t* /*endKeyword*/,
+            Token_t* /*selectKeyword*/, Token_t* /*id*/, Token_t* /*eos*/)
     {
         ROSE_ASSERT(astScopeStack.empty() == false);
         ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
@@ -12193,8 +12193,8 @@ void c_action_case_value()
      * @param id Identifier for do construct name, if present. Otherwise, null.
      * @param hasLoopControl True if there is a loop control.
      */
-    void c_action_label_do_stmt(Token_t* label, Token_t* id, Token_t* doKeyword,
-            Token_t* digitString, Token_t* /*eos*/, ofp_bool hasLoopControl)
+    void c_action_label_do_stmt(Token_t* /*label*/, Token_t* /*id*/, Token_t* /*doKeyword*/,
+            Token_t* /*digitString*/, Token_t* /*eos*/, ofp_bool hasLoopControl)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_label_do_stmt(): hasLoopControl = %s \n",
@@ -13081,8 +13081,8 @@ void c_action_case_value()
      *
      * New v0.7.2
      */
-    void c_action_allstop_stmt(Token_t* label, Token_t* allKeyword,
-            Token_t* stopKeyword, Token_t* /*eos*/, ofp_bool hasStopCode)
+    void c_action_allstop_stmt(Token_t* /*label*/, Token_t* /*allKeyword*/,
+            Token_t* /*stopKeyword*/, Token_t* /*eos*/, ofp_bool /*hasStopCode*/)
     {
         printf("In c_action_allstop_stmt() - this function needs to be implemented.\n");
     }
@@ -13117,7 +13117,7 @@ void c_action_case_value()
      *
      * New v0.7.2
      */
-    void c_action_sync_stat(Token_t * syncStat)
+    void c_action_sync_stat(Token_t* /*syncStat*/)
     {
         printf("In c_action_sync_stat() - this function needs to be implemented.\n");
     }
@@ -13141,7 +13141,7 @@ void c_action_case_value()
      *
      * New v0.7.2
      */
-    void c_action_sync_stat_list(int count)
+    void c_action_sync_stat_list(int /*count*/)
     {
         printf(
                 "In c_action_sync_stat_list() - this function needs to be implemented.\n");
@@ -14963,8 +14963,8 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param label The label.
      * @param hasPositionSpecList True if there is a position spec list. False is there is a file unit number.
      */
-    void c_action_backspace_stmt(Token_t* label, Token_t* backspaceKeyword,
-            Token_t* /*eos*/, ofp_bool hasPositionSpecList)
+    void c_action_backspace_stmt(Token_t* /*label*/, Token_t* backspaceKeyword,
+            Token_t* /*eos*/, ofp_bool /*hasPositionSpecList*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_backspace_stmt(): waitKeyword = %p = %s \n",
@@ -15042,7 +15042,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param label The label.
      * @param hasPositionSpecList True if there is a position spec list. False is there is a file unit number.
      */
-    void c_action_endfile_stmt(Token_t* label, Token_t* endKeyword,
+    void c_action_endfile_stmt(Token_t* /*label*/, Token_t* endKeyword,
             Token_t* fileKeyword, Token_t* /*eos*/, ofp_bool hasPositionSpecList)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -15116,7 +15116,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param label The label.
      * @param hasPositionSpecList True if there is a position spec list. False is there is a file unit number.
      */
-    void c_action_rewind_stmt(Token_t* label, Token_t* rewindKeyword, Token_t* /*eos*/,
+    void c_action_rewind_stmt(Token_t* /*label*/, Token_t* rewindKeyword, Token_t* /*eos*/,
             ofp_bool hasPositionSpecList)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -15966,8 +15966,8 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
 #endif
     }
 
-    void c_action_main_program(ofp_bool hasProgramStmt, ofp_bool hasExecutionPart,
-            ofp_bool hasInternalSubprogramPart)
+    void c_action_main_program(ofp_bool /*hasProgramStmt*/, ofp_bool /*hasExecutionPart*/,
+            ofp_bool /*hasInternalSubprogramPart*/)
     {
         // Now can we setup the endOfConstruct in the global scope! But we have no token to use to do this!
 
@@ -15985,9 +15985,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
 
         ROSE_ASSERT(astScopeStack.empty() == false);
 
-        // resetSourcePosition(astScopeStack.front(),endKeyword);
         SgStatement* lastStatement = astScopeStack.front()->lastStatement();
-        // printf ("In c_action_main_program__begin(): lastStatement = %p \n",lastStatement);
         if (lastStatement != NULL)
         {
             resetEndingSourcePosition(astScopeStack.front(), lastStatement);
@@ -16161,7 +16159,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param id Optional program name
      */
     void c_action_end_program_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* programKeyword, Token_t* id, Token_t* /*eos*/)
+            Token_t* /*programKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_end_program_stmt() label = %s id = %s \n",
@@ -16293,16 +16291,12 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param label The label.
      * @param id The identifier, if present, otherwise null.
      */
-    void c_action_end_module_stmt(Token_t* label, Token_t* endKeyword, Token_t* moduleKeyword, Token_t* id, Token_t* /*eos*/)
+    void c_action_end_module_stmt(Token_t* label, Token_t* endKeyword, Token_t* /*moduleKeyword*/,
+            Token_t* id, Token_t* /*eos*/)
     {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_end_module_stmt(): id = %p = %s \n", id,
-                id != NULL ? id->text : "NULL");
-
-#if 0
-        printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
-#endif
-
+        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) {
+           printf("In c_action_end_module_stmt(): id = %p = %s \n", id, id != NULL ? id->text : "NULL");
+        }
 #if 1
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R1106 c_action_end_module_stmt()");
@@ -17125,15 +17119,13 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      *
      * Modified v0.7.2 (new arguments added)
      */
-    void c_action_only(ofp_bool hasGenericSpec, ofp_bool hasRename,
-            ofp_bool hasOnlyUseName)
+    void c_action_only(ofp_bool /*hasGenericSpec*/, ofp_bool /*hasRename*/,
+            ofp_bool /*hasOnlyUseName*/)
     {
         //  - boolean hasGenericSpec, boolean hasRename, boolean hasOnlyUseName
-
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_only() \n");
-
-        // outputState("At BOTTOM of R1112 c_action_only()");
+        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) {
+           printf("In c_action_only() \n");
+        }
     }
 
     /** R1112 list
@@ -17255,7 +17247,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param id Identifier if it exists. Otherwise, null.
      */
     void c_action_block_data_stmt(Token_t* label, Token_t* blockKeyword,
-            Token_t* dataKeyword, Token_t* id, Token_t* /*eos*/)
+            Token_t* /*dataKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         // The block data statement is implemented to build a function (which initializes data)
         // Note that it can be declared with the "EXTERNAL" statement and as such it works much
@@ -17321,7 +17313,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param id Identifier if it exists. Otherwise, null.
      */
     void c_action_end_block_data_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* blockKeyword, Token_t* dataKeyword, Token_t* id, Token_t* /*eos*/)
+            Token_t* /*blockKeyword*/, Token_t* /*dataKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_end_block_data_stmt(): label = %p id= %p \n",
@@ -17420,7 +17412,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param eos End of statement token.
      * @param hasGenericSpec True if has a generic spec.
      */
-    void c_action_interface_stmt(Token_t* label, Token_t* abstractToken,
+    void c_action_interface_stmt(Token_t* /*label*/, Token_t* abstractToken,
             Token_t* keyword, Token_t* /*eos*/, ofp_bool hasGenericSpec)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -17532,7 +17524,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param eos End of statement token.
      * @param hasGenericSpec True if has a generic spec.
      */
-    void c_action_end_interface_stmt(Token_t* label, Token_t* kw1, Token_t* kw2,
+    void c_action_end_interface_stmt(Token_t* /*label*/, Token_t* kw1, Token_t* kw2,
             Token_t* /*eos*/, ofp_bool hasGenericSpec)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -17592,7 +17584,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param label The label.
      * @param module Name of the module, if present.
      */
-    void c_action_procedure_stmt(Token_t* label, Token_t* module,
+    void c_action_procedure_stmt(Token_t* /*label*/, Token_t* module,
             Token_t* procedureKeyword, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -19595,11 +19587,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * Modified v0.7.2 (filename argument added)
      * Modified v0.8.3 (filepath argument added)
      */
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-    void c_action_end_of_file(const char *filename, const char *filepath)
-#else
-    void c_action_end_of_file(const char *filepath)
-#endif
+    void c_action_end_of_file(const char* /*filename*/, const char* /*filepath*/)
     {
         // New function to support Fortran include mechanism
         ROSE_ASSERT(astIncludeStack.empty() == false);
@@ -19716,10 +19704,11 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
 #endif
     }
 
-    void c_action_rice_co_shape_spec(const char *arg)
+    void c_action_rice_co_shape_spec(const char* /*arg*/)
     {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_co_shape_spec() \n");
+        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) {
+           printf("In c_action_co_shape_spec() \n");
+        }
     }
 
     void c_action_allocate_coarray_spec()
@@ -19789,8 +19778,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     /**
      * Copointer dereference.
      */
-    void c_action_rice_co_dereference_op(Token_t *leftBracket,
-            Token_t *rightBracket)
+    void c_action_rice_co_dereference_op(Token_t* /*leftBracket*/, Token_t* /*rightBracket*/)
     {
         MultipartReferenceType& mprt = astMultipartReferenceStack.front();
         mprt.hasCo_deref = true;
@@ -19860,7 +19848,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param label: label of the statement
      * @param team_id: the team ID
      */
-    void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id)
+    void c_action_rice_co_with_team_stmt(Token_t* /*label*/, Token_t* team_id)
     {
         if (team_id == NULL)
         printf("ERROR: Rice 'with team' statement without identifier\n");
@@ -20029,7 +20017,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param hasArgs True if an actual-arg-spec-list is present.
      * @param hasWhere True if a 'processor@team' is present; if so, a processor number is on expr stack.
      */
-    void c_action_rice_spawn_stmt(Token_t* label, Token_t* spawn, Token_t* /*eos*/, ofp_bool hasEvent)
+    void c_action_rice_spawn_stmt(Token_t* /*label*/, Token_t* spawn, Token_t* /*eos*/, ofp_bool hasEvent)
     {
 #if 0
         outputState("At TOP of c_action_rice_spawn_stmt()");
@@ -20129,7 +20117,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     void c_action_component_initialization()
     {
     }
-    void c_action_allocate_co_shape_spec(ofp_bool carg_0)
+    void c_action_allocate_co_shape_spec(ofp_bool)
     {
     }
     void c_action_bounds_remapping()
@@ -20141,7 +20129,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     void c_action_component_data_source()
     {
     }
-    void c_action_component_spec(Token_t *carg_0)
+    void c_action_component_spec(Token_t*)
     {
     }
     void c_action_data_pointer_object()
@@ -20150,10 +20138,10 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     void c_action_deferred_co_shape_spec()
     {
     }
-    void c_action_enumerator(Token_t *carg_0, ofp_bool carg_1)
+    void c_action_enumerator(Token_t*, ofp_bool)
     {
     }
-    void c_action_final_binding(Token_t *carg_0)
+    void c_action_final_binding(Token_t*)
     {
     }
     void c_action_forall_body_construct()
@@ -20162,13 +20150,13 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     void c_action_forall_construct()
     {
     }
-    void c_action_image_selector(Token_t *leftBracket, Token_t *rightBracket)
+    void c_action_image_selector(Token_t*, Token_t*)
     {
     }
     void c_action_pointer_object()
     {
     }
-    void c_action_proc_interface(Token_t *carg_0)
+    void c_action_proc_interface(Token_t*)
     {
     }
     void c_action_proc_pointer_object()
@@ -20180,14 +20168,13 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     void c_action_select_type_construct()
     {
     }
-    void c_action_specific_binding(Token_t *carg_0, Token_t *carg_1,
-            Token_t *carg_2, Token_t *carg_3, ofp_bool carg_4)
+    void c_action_specific_binding(Token_t*, Token_t*, Token_t*, Token_t*, ofp_bool)
     {
     }
-    void c_action_structure_constructor(Token_t *carg_0)
+    void c_action_structure_constructor(Token_t*)
     {
     }
-    void c_action_type_param_attr_spec(Token_t *carg_0)
+    void c_action_type_param_attr_spec(Token_t*)
     {
     }
     void c_action_type_spec()
@@ -20197,13 +20184,11 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
     {
     }
 
-// DQ (11/20/2010): Added Token support using newest version of OFP 0.8.2.
-    void c_action_next_token(Token_t *token)
+    void c_action_next_token(Token_t* token)
     {
         // This parser action is used in a separate mode to read the tokens from
         // the file as part of a separate pass over the AST.
-
-        ROSE_ASSERT(token != NULL);
+        ASSERT_not_null(token);
 
         string text = token->text;
         string currentFilename = getCurrentFilename();
