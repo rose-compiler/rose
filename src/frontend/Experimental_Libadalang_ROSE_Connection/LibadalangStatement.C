@@ -2707,6 +2707,95 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_generic_subp_decl:          // 12.1(2)
+      {
+        //Get whether this is a func or a proc
+        ada_base_entity lal_subp_spec, lal_subp_type;
+        ada_generic_subp_decl_f_subp_decl(lal_element, &lal_subp_spec);
+        ada_generic_subp_internal_f_subp_spec(&lal_subp_spec, &lal_subp_spec); 
+        ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_type);
+        ada_node_kind_enum lal_subp_type_kind = ada_node_kind(&lal_subp_type);
+
+        const bool             isFunc  = (lal_subp_type_kind == ada_subp_kind_function);
+
+        logKind( isFunc
+                    ? "A_Generic_Function_Declaration"
+                    : "A_Generic_Procedure_Declaration"
+               , kind
+               );
+
+        //Get the name of this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = canonical_text_as_string(&lal_identifier);
+
+        SgScopeStatement&      logicalScope = ctx.scope();
+
+        // PP (20/10/21): the assertion does not hold for proc/func defined in their own unit
+        //~ ADA_ASSERT (adaname.fullName == adaname.ident);
+        SgAdaGenericDecl&      sgnode     = mkAdaGenericDecl(ident, logicalScope);
+        SgAdaGenericDefn&      gen_defn   = SG_DEREF(sgnode.get_definition());
+
+        // PP (20/10/21): use the logical scope
+        //    the logical scope is the parent package in the package structure
+        //    this could be different from the physical parent, for example when
+        //    the generic proc/func forms its own subpackage.
+        //~ outer.insert_symbol(adaname.ident, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
+        ctx.appendStatement(sgnode);
+
+        // generic formal part
+        {
+          //Get the formal part
+          ada_base_entity lal_formal_part;
+          ada_generic_decl_f_formal_part(lal_element, &lal_formal_part);
+          ada_generic_formal_part_f_decls(&lal_formal_part, &lal_formal_part);
+
+          int count = ada_node_children_count(&lal_formal_part);
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_formal_decl;
+            if(ada_node_child(&lal_formal_part, i, &lal_formal_decl) != 0){
+              handleElement(&lal_formal_decl, ctx.scope(gen_defn));
+            }
+          }
+        }
+
+        //Get the params & return type
+        ada_base_entity lal_params, lal_return_type;
+        ada_subp_spec_f_subp_returns(&lal_subp_spec, &lal_return_type);
+        ada_subp_spec_f_subp_params(&lal_subp_spec, &lal_params);
+
+        SgType&                rettype = isFunc ? getDeclType(&lal_return_type, ctx)
+                                                : mkTypeVoid();
+
+        // PP (10/20/21): changed scoping for packages and procedures/functions
+        //                the generic proc/func is declared in the logical parent scope
+        // was: SgFunctionDeclaration&  fundec     = mkProcedureDecl_nondef(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration&  fundec     = mkProcedureDecl_nondef( ident,
+                                                                     gen_defn, //~ logicalScope,
+                                                                     rettype,
+                                                                     ParameterCompletion{&lal_params, ctx}
+                                                                   );
+
+        sgnode.set_declaration(&fundec);
+        fundec.set_parent(&gen_defn);
+
+        setOverride(fundec, false); //TODO Can this kind be overriding?
+
+        int hash = hash_node(&lal_defining_name);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        // should private be set on the generic or on the proc?
+        //~ privatize(fundec, isPrivate);
+        privatize(sgnode, isPrivate);
+
+        //~ attachSourceLocation(fundec, elem, ctx);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        //~ attachSourceLocation(gen_defn, elem, ctx);
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_subp_decl:                   // 6.1(4)   -> Trait_Kinds
     case ada_abstract_subp_decl:
     //case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
@@ -2844,6 +2933,50 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         if(kind != ada_null_subp_decl) {
           completeRoutineBody(lal_element, declblk, ctx);
         }
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_generic_formal_subp_decl:           // 12.6(2)
+      {
+        //Get whether this is a func or a proc, & the overriding status
+        ada_base_entity lal_subp_spec, lal_subp_type, lal_overriding;
+        ada_generic_formal_f_decl(lal_element, &lal_subp_spec);
+        ada_classic_subp_decl_f_overriding(&lal_subp_spec, &lal_overriding); //TODO overriding isn't needed?
+        ada_classic_subp_decl_f_subp_spec(&lal_subp_spec, &lal_subp_spec); 
+        ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_type);
+        ada_node_kind_enum lal_subp_type_kind = ada_node_kind(&lal_subp_type);
+
+        const bool             isFormalFuncDecl  = (lal_subp_type_kind == ada_subp_kind_function);
+
+        logKind( isFormalFuncDecl ? "A_Formal_Function_Declaration" : "A_Formal_Procedure_Declaration"
+               , kind
+               );
+
+        //Get the name of this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = canonical_text_as_string(&lal_identifier);
+
+        //Get the params & return type
+        ada_base_entity lal_params, lal_return_type;
+        ada_subp_spec_f_subp_returns(&lal_subp_spec, &lal_return_type);
+        ada_subp_spec_f_subp_params(&lal_subp_spec, &lal_params);
+
+        SgType&                rettype = isFormalFuncDecl ? getDeclType(&lal_return_type, ctx)
+                                                          : mkTypeVoid();
+
+        SgScopeStatement&      logicalScope = ctx.scope();
+        SgAdaSubroutineType&   funty   = mkAdaSubroutineType(rettype, ParameterCompletion{&lal_params, ctx}, ctx.scope(), false  /*isProtected*/ );
+        SgExpression&          defaultInit = mkNullExpression();//getDefaultFunctionExpr(lal_element, funty, ctx); TODO Find this in the lal tree
+        SgAdaRenamingDecl&     sgnode  = mkAdaRenamingDecl(ident, defaultInit, funty, logicalScope);
+
+        int hash = hash_node(&lal_defining_name);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
 
         assocdecl = &sgnode;
         break;

@@ -857,6 +857,28 @@ namespace
     return mkRecordParent(basety);
   }
 
+  SgAdaTypeConstraint*
+  createDigitsConstraintIfNeeded(ada_base_entity* lal_digits, SgAdaTypeConstraint* sub, AstContext ctx)
+  {
+    if(ada_node_is_null(lal_digits)) return sub;
+
+    return &mkAdaDigitsConstraint(getExpr(lal_digits, ctx), sub);
+  }
+
+  SgAdaTypeConstraint*
+  createDeltaConstraintIfNeeded(ada_base_entity* lal_delta, bool isDecimal, SgAdaTypeConstraint* sub, AstContext ctx)
+  {
+    if(ada_node_is_null(lal_delta)) return sub;
+
+    return &mkAdaDeltaConstraint(getExpr(lal_delta, ctx), isDecimal, sub);
+  }
+
+  SgType&
+  createSubtypeFromRootIfNeeded(SgType& basetype, SgAdaTypeConstraint* constraint, AstContext)
+  {
+    return constraint ? mkAdaSubtype(basetype, *constraint, true /* from root */) : basetype;
+  }
+
   /// Create a ROSE representation of the def, and record whether it is abstract, limited, tagged, or inherits any routines
   TypeData
   getTypeFoundation(const std::string& name, ada_base_entity* lal_def, AstContext ctx)
@@ -931,6 +953,69 @@ namespace
 
           res.sageNode(mkAdaSubtype(superty, constraint, true /* from root */));
 
+          break;
+        }
+      case ada_floating_point_def:            // 3.5.7(2)
+        {
+          logKind("ada_floating_point_def", kind);
+
+          //Get the range constraint
+          ada_base_entity lal_range_spec;
+          ada_floating_point_def_f_range(lal_def, &lal_range_spec);
+
+          //Get the digits
+          ada_base_entity lal_digits;
+          ada_floating_point_def_f_num_digits(lal_def, &lal_digits);
+
+          SgType&               basetype   = SG_DEREF(sb::buildFloatType()); // \todo use mkRealType() ??
+          SgAdaTypeConstraint*  constraint = getConstraint_opt(&lal_range_spec, ctx);
+
+          constraint = createDigitsConstraintIfNeeded(&lal_digits, constraint, ctx);
+
+          res.sageNode(createSubtypeFromRootIfNeeded(basetype, constraint, ctx));
+          break;
+        }
+      case ada_ordinary_fixed_point_def:     // 3.5.9(3)
+        {
+          logKind("ada_ordinary_fixed_point_def", kind);
+
+          //Get the range constraint
+          ada_base_entity lal_range_spec;
+          ada_ordinary_fixed_point_def_f_range(lal_def, &lal_range_spec);
+
+          //Get the delta
+          ada_base_entity lal_delta;
+          ada_ordinary_fixed_point_def_f_delta(lal_def, &lal_delta);
+
+          SgAdaTypeConstraint*  constraint = getConstraint_opt(&lal_range_spec, ctx);
+
+          constraint = createDeltaConstraintIfNeeded(&lal_delta, false, constraint, ctx);
+
+          res.sageNode(createSubtypeFromRootIfNeeded(mkFixedType(), constraint, ctx));
+          break;
+        }
+      case ada_decimal_fixed_point_def:       // 3.5.9(6)
+        {
+          logKind("ada_decimal_fixed_point_def", kind);
+
+          //Get the range constraint
+          ada_base_entity lal_range_spec;
+          ada_decimal_fixed_point_def_f_range(lal_def, &lal_range_spec);
+
+          //Get the delta
+          ada_base_entity lal_delta;
+          ada_decimal_fixed_point_def_f_delta(lal_def, &lal_delta);
+
+          //Get the digits
+          ada_base_entity lal_digits;
+          ada_decimal_fixed_point_def_f_digits(lal_def, &lal_digits);
+
+          SgAdaTypeConstraint*  constraint = getConstraint_opt(&lal_range_spec, ctx);
+
+          constraint = createDigitsConstraintIfNeeded(&lal_digits, constraint, ctx);
+          constraint = createDeltaConstraintIfNeeded(&lal_delta, true, constraint, ctx);
+
+          res.sageNode(createSubtypeFromRootIfNeeded(mkFixedType(), constraint, ctx));
           break;
         }
       case ada_array_type_def:      // 3.6(2)
@@ -1595,7 +1680,6 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         res = &mkAdaRangeConstraint(rangeExp);
         break;
       }
-
     case ada_index_constraint:                   // 3.2.2: 3.6.1
       {
         logKind("ada_index_constraint", kind);
@@ -1617,7 +1701,6 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         res = &mkAdaIndexConstraint(std::move(ranges));
         break;
       }
-
     case ada_discriminant_constraint:             // 3.2.2
       {
         logKind("ada_discriminant_constraint", kind);
@@ -1639,7 +1722,22 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         res = &mkAdaDiscriminantConstraint(std::move(constraints));
         break;
       }
+    case ada_digits_constraint:                   // 3.2.2: 3.5.9
+      {
+        //Get the range constraint
+        ada_base_entity lal_range_spec;
+        ada_digits_constraint_f_range(lal_constraint, &lal_range_spec);
 
+        //Get the digits
+        ada_base_entity lal_digits;
+        ada_digits_constraint_f_digits(lal_constraint, &lal_digits);
+
+        SgAdaTypeConstraint* rangeConstr = getConstraint_opt(&lal_range_spec, ctx);
+        SgExpression&        digits = getExpr(&lal_digits, ctx);
+
+        res = &mkAdaDigitsConstraint(digits, rangeConstr);
+        break;
+      }
     default:
       logError() << "Unhandled constraint: " << kind << std::endl;
       ROSE_ABORT();
