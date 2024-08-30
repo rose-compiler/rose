@@ -2152,7 +2152,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 505
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 506
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     /** Convert Rose::BinaryAnalysis::PowerpcRegisterClass enum constant to a string. */
     const char* PowerpcRegisterClass(int64_t);
@@ -2170,7 +2170,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 521
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 522
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     /** Convert Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity enum constant to a string. */
     const char* PowerpcConditionRegisterAccessGranularity(int64_t);
@@ -2188,7 +2188,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 528
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 529
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     /** Convert Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister enum constant to a string. */
     const char* PowerpcSpecialPurposeRegister(int64_t);
@@ -2206,7 +2206,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 539
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 540
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     /** Convert Rose::BinaryAnalysis::PowerpcTimeBaseRegister enum constant to a string. */
     const char* PowerpcTimeBaseRegister(int64_t);
@@ -6454,24 +6454,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/unparser.h line 166
-namespace stringify { namespace Unparser {
-    /** Convert Unparser::token_sequence_position_enum_type enum constant to a string. */
-    const char* token_sequence_position_enum_type(int64_t);
-
-    /** Convert Unparser::token_sequence_position_enum_type enum constant to a string. */
-    std::string token_sequence_position_enum_type(int64_t, const std::string &strip);
-
-    /** Return all Unparser::token_sequence_position_enum_type member values as a vector. */
-    const std::vector<int64_t>& token_sequence_position_enum_type();
-}}
-
-namespace Rose {
-    std::string stringifyUnparser_token_sequence_position_enum_type(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyUnparser_token_sequence_position_enum_type();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 543
 namespace stringify { namespace Unparse_ExprStmt {
     /** Convert Unparse_ExprStmt::token_sequence_position_enum_type enum constant to a string. */
@@ -6526,7 +6508,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.h line 75
+// /src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.h line 66
 namespace stringify { namespace UnparseLanguageIndependentConstructs {
     /** Convert UnparseLanguageIndependentConstructs::unparsed_as_enum_type enum constant to a string. */
     const char* unparsed_as_enum_type(int64_t);
@@ -24142,9 +24124,6 @@ namespace stringify {
             namespace Prefix {
             }
         }
-    }
-    /** Stringification. */
-    namespace Unparser {
     }
     /** Stringification. */
     namespace Unparse_ExprStmt {

@@ -443,6 +443,11 @@ Powerpc::disassemble(State &state) {
 
     switch (primaryOpcode) {
         case 0x00: {
+            // An instruction consisting of all zero bytes is guaranteed to be illegal and will invoke the illegal instruction error
+            // handler and have no other effect.
+            if (0 == state.insn)
+                return MAKE_INSN0(illegal, uisa);
+
             // These are the BGL specific PowerPC440 FP2 Architecture instructions.  Depending on if this is A form or X form, the
             // extended opCode maps to different bit ranges, so this code is incorrect!
             const uint8_t a_Opcode = (state.insn >> 1) & 0x1F;

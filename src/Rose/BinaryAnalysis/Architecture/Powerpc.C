@@ -318,6 +318,7 @@ Powerpc::instructionDescription(const SgAsmInstruction *insn_) const {
         case powerpc_fsubs:            return "fp subtract single";
         case powerpc_fsubs_record:     return "fp subtract single";
         case powerpc_icbi:             return "instruction cache block invalidate";
+        case powerpc_illegal:          return "illegal instruction";
         case powerpc_isync:            return "instruction synchronize";
         case powerpc_lbz:              return "load byte and zero";
         case powerpc_lbzu:             return "load byte and zero with update";
@@ -550,6 +551,7 @@ Powerpc::terminatesBasicBlock(SgAsmInstruction *insn_) const {
         case powerpc_bcctrl:
         case powerpc_bclr:
         case powerpc_bclrl:
+        case powerpc_illegal:
         case powerpc_tw:        /* trap instructions... */
         case powerpc_twi:
         case powerpc_sc:        /* system call */
@@ -672,6 +674,7 @@ Powerpc::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         }
 
         case powerpc_unknown_instruction:
+        case powerpc_illegal:
         case powerpc_tw:
         case powerpc_twi:
         case powerpc_rfi:

@@ -9402,209 +9402,210 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis {
             case 237L: return "powerpc_fsubs";
             case 238L: return "powerpc_fsubs_record";
             case 239L: return "powerpc_icbi";
-            case 240L: return "powerpc_isync";
-            case 241L: return "powerpc_lbz";
-            case 242L: return "powerpc_lbzu";
-            case 243L: return "powerpc_lbzux";
-            case 244L: return "powerpc_lbzx";
-            case 245L: return "powerpc_ld";
-            case 246L: return "powerpc_ldarx";
-            case 247L: return "powerpc_ldu";
-            case 248L: return "powerpc_ldux";
-            case 249L: return "powerpc_ldx";
-            case 250L: return "powerpc_lfd";
-            case 251L: return "powerpc_lfdu";
-            case 252L: return "powerpc_lfdux";
-            case 253L: return "powerpc_lfdx";
-            case 254L: return "powerpc_lfs";
-            case 255L: return "powerpc_lfsu";
-            case 256L: return "powerpc_lfsux";
-            case 257L: return "powerpc_lfsx";
-            case 258L: return "powerpc_lha";
-            case 259L: return "powerpc_lhau";
-            case 260L: return "powerpc_lhaux";
-            case 261L: return "powerpc_lhax";
-            case 262L: return "powerpc_lhbrx";
-            case 263L: return "powerpc_lhz";
-            case 264L: return "powerpc_lhzu";
-            case 265L: return "powerpc_lhzux";
-            case 266L: return "powerpc_lhzx";
-            case 267L: return "powerpc_lmw";
-            case 268L: return "powerpc_lswi";
-            case 269L: return "powerpc_lswx";
-            case 270L: return "powerpc_lwa";
-            case 271L: return "powerpc_lwarx";
-            case 272L: return "powerpc_lwaux";
-            case 273L: return "powerpc_lwax";
-            case 274L: return "powerpc_lwbrx";
-            case 275L: return "powerpc_lwz";
-            case 276L: return "powerpc_lwzu";
-            case 277L: return "powerpc_lwzux";
-            case 278L: return "powerpc_lwzx";
-            case 279L: return "powerpc_mcrf";
-            case 280L: return "powerpc_mcrfs";
-            case 281L: return "powerpc_mcrxr";
-            case 282L: return "powerpc_mfcr";
-            case 283L: return "powerpc_mffs";
-            case 284L: return "powerpc_mffs_record";
-            case 285L: return "powerpc_mfmsr";
-            case 286L: return "powerpc_mfspr";
-            case 287L: return "powerpc_mfsr";
-            case 288L: return "powerpc_mfsrin";
-            case 289L: return "powerpc_mftb";
-            case 290L: return "powerpc_mtcrf";
-            case 291L: return "powerpc_mtfsb0";
-            case 292L: return "powerpc_mtfsb0_record";
-            case 293L: return "powerpc_mtfsb1";
-            case 294L: return "powerpc_mtfsb1_record";
-            case 295L: return "powerpc_mtfsf";
-            case 296L: return "powerpc_mtfsf_record";
-            case 297L: return "powerpc_mtfsfi";
-            case 298L: return "powerpc_mtfsfi_record";
-            case 299L: return "powerpc_mtmsr";
-            case 300L: return "powerpc_mtmsrd";
-            case 301L: return "powerpc_mtspr";
-            case 302L: return "powerpc_mtsr";
-            case 303L: return "powerpc_mtsrd";
-            case 304L: return "powerpc_mtsrdin";
-            case 305L: return "powerpc_mtsrin";
-            case 306L: return "powerpc_mulhd";
-            case 307L: return "powerpc_mulhd_record";
-            case 308L: return "powerpc_mulhdu";
-            case 309L: return "powerpc_mulhdu_record";
-            case 310L: return "powerpc_mulhw";
-            case 311L: return "powerpc_mulhw_record";
-            case 312L: return "powerpc_mulhwu";
-            case 313L: return "powerpc_mulhwu_record";
-            case 314L: return "powerpc_mulld";
-            case 315L: return "powerpc_mulld_record";
-            case 316L: return "powerpc_mulldo";
-            case 317L: return "powerpc_mulldo_record";
-            case 318L: return "powerpc_mulli";
-            case 319L: return "powerpc_mullw";
-            case 320L: return "powerpc_mullw_record";
-            case 321L: return "powerpc_mullwo";
-            case 322L: return "powerpc_mullwo_record";
-            case 323L: return "powerpc_nand";
-            case 324L: return "powerpc_nand_record";
-            case 325L: return "powerpc_neg";
-            case 326L: return "powerpc_neg_record";
-            case 327L: return "powerpc_nego";
-            case 328L: return "powerpc_nego_record";
-            case 329L: return "powerpc_nor";
-            case 330L: return "powerpc_nor_record";
-            case 331L: return "powerpc_or";
-            case 332L: return "powerpc_or_record";
-            case 333L: return "powerpc_orc";
-            case 334L: return "powerpc_orc_record";
-            case 335L: return "powerpc_ori";
-            case 336L: return "powerpc_oris";
-            case 337L: return "powerpc_popcntb";
-            case 338L: return "powerpc_rfi";
-            case 339L: return "powerpc_rfid";
-            case 340L: return "powerpc_rldcl";
-            case 341L: return "powerpc_rldcl_record";
-            case 342L: return "powerpc_rldcr";
-            case 343L: return "powerpc_rldcr_record";
-            case 344L: return "powerpc_rldic";
-            case 345L: return "powerpc_rldic_record";
-            case 346L: return "powerpc_rldicl";
-            case 347L: return "powerpc_rldicl_record";
-            case 348L: return "powerpc_rldicr";
-            case 349L: return "powerpc_rldicr_record";
-            case 350L: return "powerpc_rldimi";
-            case 351L: return "powerpc_rldimi_record";
-            case 352L: return "powerpc_rlwimi";
-            case 353L: return "powerpc_rlwimi_record";
-            case 354L: return "powerpc_rlwinm";
-            case 355L: return "powerpc_rlwinm_record";
-            case 356L: return "powerpc_rlwnm";
-            case 357L: return "powerpc_rlwnm_record";
-            case 358L: return "powerpc_sc";
-            case 359L: return "powerpc_slbia";
-            case 360L: return "powerpc_slbie";
-            case 361L: return "powerpc_sld";
-            case 362L: return "powerpc_sld_record";
-            case 363L: return "powerpc_slw";
-            case 364L: return "powerpc_slw_record";
-            case 365L: return "powerpc_srad";
-            case 366L: return "powerpc_srad_record";
-            case 367L: return "powerpc_sradi";
-            case 368L: return "powerpc_sradi_record";
-            case 369L: return "powerpc_srd";
-            case 370L: return "powerpc_srd_record";
-            case 371L: return "powerpc_sraw";
-            case 372L: return "powerpc_sraw_record";
-            case 373L: return "powerpc_srawi";
-            case 374L: return "powerpc_srawi_record";
-            case 375L: return "powerpc_srw";
-            case 376L: return "powerpc_srw_record";
-            case 377L: return "powerpc_stb";
-            case 378L: return "powerpc_stbu";
-            case 379L: return "powerpc_stbux";
-            case 380L: return "powerpc_stbx";
-            case 381L: return "powerpc_std";
-            case 382L: return "powerpc_stdcx_record";
-            case 383L: return "powerpc_stdu";
-            case 384L: return "powerpc_stdux";
-            case 385L: return "powerpc_stdx";
-            case 386L: return "powerpc_stfd";
-            case 387L: return "powerpc_stfdu";
-            case 388L: return "powerpc_stfdux";
-            case 389L: return "powerpc_stfdx";
-            case 390L: return "powerpc_stfiwx";
-            case 391L: return "powerpc_stfs";
-            case 392L: return "powerpc_stfsu";
-            case 393L: return "powerpc_stfsux";
-            case 394L: return "powerpc_stfsx";
-            case 395L: return "powerpc_sth";
-            case 396L: return "powerpc_sthbrx";
-            case 397L: return "powerpc_sthu";
-            case 398L: return "powerpc_sthux";
-            case 399L: return "powerpc_sthx";
-            case 400L: return "powerpc_stmw";
-            case 401L: return "powerpc_stswi";
-            case 402L: return "powerpc_stswx";
-            case 403L: return "powerpc_stw";
-            case 404L: return "powerpc_stwbrx";
-            case 405L: return "powerpc_stwcx_record";
-            case 406L: return "powerpc_stwu";
-            case 407L: return "powerpc_stwux";
-            case 408L: return "powerpc_stwx";
-            case 409L: return "powerpc_subf";
-            case 410L: return "powerpc_subf_record";
-            case 411L: return "powerpc_subfo";
-            case 412L: return "powerpc_subfo_record";
-            case 413L: return "powerpc_subfc";
-            case 414L: return "powerpc_subfc_record";
-            case 415L: return "powerpc_subfco";
-            case 416L: return "powerpc_subfco_record";
-            case 417L: return "powerpc_subfe";
-            case 418L: return "powerpc_subfe_record";
-            case 419L: return "powerpc_subfeo";
-            case 420L: return "powerpc_subfeo_record";
-            case 421L: return "powerpc_subfic";
-            case 422L: return "powerpc_subfme";
-            case 423L: return "powerpc_subfme_record";
-            case 424L: return "powerpc_subfmeo";
-            case 425L: return "powerpc_subfmeo_record";
-            case 426L: return "powerpc_subfze";
-            case 427L: return "powerpc_subfze_record";
-            case 428L: return "powerpc_subfzeo";
-            case 429L: return "powerpc_subfzeo_record";
-            case 430L: return "powerpc_sync";
-            case 431L: return "powerpc_td";
-            case 432L: return "powerpc_tdi";
-            case 433L: return "powerpc_tlbia";
-            case 434L: return "powerpc_tlbie";
-            case 435L: return "powerpc_tlbsync";
-            case 436L: return "powerpc_tw";
-            case 437L: return "powerpc_twi";
-            case 438L: return "powerpc_xor";
-            case 439L: return "powerpc_xor_record";
-            case 440L: return "powerpc_xori";
-            case 441L: return "powerpc_xoris";
-            case 442L: return "powerpc_last_instruction";
+            case 240L: return "powerpc_illegal";
+            case 241L: return "powerpc_isync";
+            case 242L: return "powerpc_lbz";
+            case 243L: return "powerpc_lbzu";
+            case 244L: return "powerpc_lbzux";
+            case 245L: return "powerpc_lbzx";
+            case 246L: return "powerpc_ld";
+            case 247L: return "powerpc_ldarx";
+            case 248L: return "powerpc_ldu";
+            case 249L: return "powerpc_ldux";
+            case 250L: return "powerpc_ldx";
+            case 251L: return "powerpc_lfd";
+            case 252L: return "powerpc_lfdu";
+            case 253L: return "powerpc_lfdux";
+            case 254L: return "powerpc_lfdx";
+            case 255L: return "powerpc_lfs";
+            case 256L: return "powerpc_lfsu";
+            case 257L: return "powerpc_lfsux";
+            case 258L: return "powerpc_lfsx";
+            case 259L: return "powerpc_lha";
+            case 260L: return "powerpc_lhau";
+            case 261L: return "powerpc_lhaux";
+            case 262L: return "powerpc_lhax";
+            case 263L: return "powerpc_lhbrx";
+            case 264L: return "powerpc_lhz";
+            case 265L: return "powerpc_lhzu";
+            case 266L: return "powerpc_lhzux";
+            case 267L: return "powerpc_lhzx";
+            case 268L: return "powerpc_lmw";
+            case 269L: return "powerpc_lswi";
+            case 270L: return "powerpc_lswx";
+            case 271L: return "powerpc_lwa";
+            case 272L: return "powerpc_lwarx";
+            case 273L: return "powerpc_lwaux";
+            case 274L: return "powerpc_lwax";
+            case 275L: return "powerpc_lwbrx";
+            case 276L: return "powerpc_lwz";
+            case 277L: return "powerpc_lwzu";
+            case 278L: return "powerpc_lwzux";
+            case 279L: return "powerpc_lwzx";
+            case 280L: return "powerpc_mcrf";
+            case 281L: return "powerpc_mcrfs";
+            case 282L: return "powerpc_mcrxr";
+            case 283L: return "powerpc_mfcr";
+            case 284L: return "powerpc_mffs";
+            case 285L: return "powerpc_mffs_record";
+            case 286L: return "powerpc_mfmsr";
+            case 287L: return "powerpc_mfspr";
+            case 288L: return "powerpc_mfsr";
+            case 289L: return "powerpc_mfsrin";
+            case 290L: return "powerpc_mftb";
+            case 291L: return "powerpc_mtcrf";
+            case 292L: return "powerpc_mtfsb0";
+            case 293L: return "powerpc_mtfsb0_record";
+            case 294L: return "powerpc_mtfsb1";
+            case 295L: return "powerpc_mtfsb1_record";
+            case 296L: return "powerpc_mtfsf";
+            case 297L: return "powerpc_mtfsf_record";
+            case 298L: return "powerpc_mtfsfi";
+            case 299L: return "powerpc_mtfsfi_record";
+            case 300L: return "powerpc_mtmsr";
+            case 301L: return "powerpc_mtmsrd";
+            case 302L: return "powerpc_mtspr";
+            case 303L: return "powerpc_mtsr";
+            case 304L: return "powerpc_mtsrd";
+            case 305L: return "powerpc_mtsrdin";
+            case 306L: return "powerpc_mtsrin";
+            case 307L: return "powerpc_mulhd";
+            case 308L: return "powerpc_mulhd_record";
+            case 309L: return "powerpc_mulhdu";
+            case 310L: return "powerpc_mulhdu_record";
+            case 311L: return "powerpc_mulhw";
+            case 312L: return "powerpc_mulhw_record";
+            case 313L: return "powerpc_mulhwu";
+            case 314L: return "powerpc_mulhwu_record";
+            case 315L: return "powerpc_mulld";
+            case 316L: return "powerpc_mulld_record";
+            case 317L: return "powerpc_mulldo";
+            case 318L: return "powerpc_mulldo_record";
+            case 319L: return "powerpc_mulli";
+            case 320L: return "powerpc_mullw";
+            case 321L: return "powerpc_mullw_record";
+            case 322L: return "powerpc_mullwo";
+            case 323L: return "powerpc_mullwo_record";
+            case 324L: return "powerpc_nand";
+            case 325L: return "powerpc_nand_record";
+            case 326L: return "powerpc_neg";
+            case 327L: return "powerpc_neg_record";
+            case 328L: return "powerpc_nego";
+            case 329L: return "powerpc_nego_record";
+            case 330L: return "powerpc_nor";
+            case 331L: return "powerpc_nor_record";
+            case 332L: return "powerpc_or";
+            case 333L: return "powerpc_or_record";
+            case 334L: return "powerpc_orc";
+            case 335L: return "powerpc_orc_record";
+            case 336L: return "powerpc_ori";
+            case 337L: return "powerpc_oris";
+            case 338L: return "powerpc_popcntb";
+            case 339L: return "powerpc_rfi";
+            case 340L: return "powerpc_rfid";
+            case 341L: return "powerpc_rldcl";
+            case 342L: return "powerpc_rldcl_record";
+            case 343L: return "powerpc_rldcr";
+            case 344L: return "powerpc_rldcr_record";
+            case 345L: return "powerpc_rldic";
+            case 346L: return "powerpc_rldic_record";
+            case 347L: return "powerpc_rldicl";
+            case 348L: return "powerpc_rldicl_record";
+            case 349L: return "powerpc_rldicr";
+            case 350L: return "powerpc_rldicr_record";
+            case 351L: return "powerpc_rldimi";
+            case 352L: return "powerpc_rldimi_record";
+            case 353L: return "powerpc_rlwimi";
+            case 354L: return "powerpc_rlwimi_record";
+            case 355L: return "powerpc_rlwinm";
+            case 356L: return "powerpc_rlwinm_record";
+            case 357L: return "powerpc_rlwnm";
+            case 358L: return "powerpc_rlwnm_record";
+            case 359L: return "powerpc_sc";
+            case 360L: return "powerpc_slbia";
+            case 361L: return "powerpc_slbie";
+            case 362L: return "powerpc_sld";
+            case 363L: return "powerpc_sld_record";
+            case 364L: return "powerpc_slw";
+            case 365L: return "powerpc_slw_record";
+            case 366L: return "powerpc_srad";
+            case 367L: return "powerpc_srad_record";
+            case 368L: return "powerpc_sradi";
+            case 369L: return "powerpc_sradi_record";
+            case 370L: return "powerpc_srd";
+            case 371L: return "powerpc_srd_record";
+            case 372L: return "powerpc_sraw";
+            case 373L: return "powerpc_sraw_record";
+            case 374L: return "powerpc_srawi";
+            case 375L: return "powerpc_srawi_record";
+            case 376L: return "powerpc_srw";
+            case 377L: return "powerpc_srw_record";
+            case 378L: return "powerpc_stb";
+            case 379L: return "powerpc_stbu";
+            case 380L: return "powerpc_stbux";
+            case 381L: return "powerpc_stbx";
+            case 382L: return "powerpc_std";
+            case 383L: return "powerpc_stdcx_record";
+            case 384L: return "powerpc_stdu";
+            case 385L: return "powerpc_stdux";
+            case 386L: return "powerpc_stdx";
+            case 387L: return "powerpc_stfd";
+            case 388L: return "powerpc_stfdu";
+            case 389L: return "powerpc_stfdux";
+            case 390L: return "powerpc_stfdx";
+            case 391L: return "powerpc_stfiwx";
+            case 392L: return "powerpc_stfs";
+            case 393L: return "powerpc_stfsu";
+            case 394L: return "powerpc_stfsux";
+            case 395L: return "powerpc_stfsx";
+            case 396L: return "powerpc_sth";
+            case 397L: return "powerpc_sthbrx";
+            case 398L: return "powerpc_sthu";
+            case 399L: return "powerpc_sthux";
+            case 400L: return "powerpc_sthx";
+            case 401L: return "powerpc_stmw";
+            case 402L: return "powerpc_stswi";
+            case 403L: return "powerpc_stswx";
+            case 404L: return "powerpc_stw";
+            case 405L: return "powerpc_stwbrx";
+            case 406L: return "powerpc_stwcx_record";
+            case 407L: return "powerpc_stwu";
+            case 408L: return "powerpc_stwux";
+            case 409L: return "powerpc_stwx";
+            case 410L: return "powerpc_subf";
+            case 411L: return "powerpc_subf_record";
+            case 412L: return "powerpc_subfo";
+            case 413L: return "powerpc_subfo_record";
+            case 414L: return "powerpc_subfc";
+            case 415L: return "powerpc_subfc_record";
+            case 416L: return "powerpc_subfco";
+            case 417L: return "powerpc_subfco_record";
+            case 418L: return "powerpc_subfe";
+            case 419L: return "powerpc_subfe_record";
+            case 420L: return "powerpc_subfeo";
+            case 421L: return "powerpc_subfeo_record";
+            case 422L: return "powerpc_subfic";
+            case 423L: return "powerpc_subfme";
+            case 424L: return "powerpc_subfme_record";
+            case 425L: return "powerpc_subfmeo";
+            case 426L: return "powerpc_subfmeo_record";
+            case 427L: return "powerpc_subfze";
+            case 428L: return "powerpc_subfze_record";
+            case 429L: return "powerpc_subfzeo";
+            case 430L: return "powerpc_subfzeo_record";
+            case 431L: return "powerpc_sync";
+            case 432L: return "powerpc_td";
+            case 433L: return "powerpc_tdi";
+            case 434L: return "powerpc_tlbia";
+            case 435L: return "powerpc_tlbie";
+            case 436L: return "powerpc_tlbsync";
+            case 437L: return "powerpc_tw";
+            case 438L: return "powerpc_twi";
+            case 439L: return "powerpc_xor";
+            case 440L: return "powerpc_xor_record";
+            case 441L: return "powerpc_xori";
+            case 442L: return "powerpc_xoris";
+            case 443L: return "powerpc_last_instruction";
             default: return "";
         }
     }
@@ -10062,9 +10063,10 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis {
             439L,
             440L,
             441L,
-            442L
+            442L,
+            443L
         };
-        static const std::vector<int64_t> retval(values, values + 443);
+        static const std::vector<int64_t> retval(values, values + 444);
         return retval;
     }
 
@@ -10090,7 +10092,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 505
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 506
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcRegisterClass(int64_t i) {
         switch (i) {
@@ -10160,7 +10162,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 521
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 522
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcConditionRegisterAccessGranularity(int64_t i) {
         switch (i) {
@@ -10212,7 +10214,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 528
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 529
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcSpecialPurposeRegister(int64_t i) {
         switch (i) {
@@ -10270,7 +10272,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 539
+// /src/Rose/BinaryAnalysis/InstructionEnumsPowerpc.h line 540
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcTimeBaseRegister(int64_t i) {
         switch (i) {
@@ -25194,64 +25196,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/unparser.h line 166
-namespace stringify { namespace Unparser {
-    const char* token_sequence_position_enum_type(int64_t i) {
-        switch (i) {
-            case 0L: return "e_leading_whitespace_start";
-            case 1L: return "e_leading_whitespace_end";
-            case 2L: return "e_token_subsequence_start";
-            case 3L: return "e_token_subsequence_end";
-            case 4L: return "e_trailing_whitespace_start";
-            case 5L: return "e_trailing_whitespace_end";
-            default: return "";
-        }
-    }
-
-    std::string token_sequence_position_enum_type(int64_t i, const std::string &strip) {
-        std::string s = token_sequence_position_enum_type(i);
-        if (s.empty())
-            s = "(Unparser::token_sequence_position_enum_type)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& token_sequence_position_enum_type() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L
-        };
-        static const std::vector<int64_t> retval(values, values + 6);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifyUnparser_token_sequence_position_enum_type(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Unparser::token_sequence_position_enum_type(i);
-        if (retval.empty()) {
-            retval = "(Unparser::token_sequence_position_enum_type)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Unparser::token_sequence_position_enum_type::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyUnparser_token_sequence_position_enum_type() {
-        return stringify::Unparser::token_sequence_position_enum_type();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 543
 namespace stringify { namespace Unparse_ExprStmt {
     const char* token_sequence_position_enum_type(int64_t i) {
@@ -25426,7 +25370,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.h line 75
+// /src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.h line 66
 namespace stringify { namespace UnparseLanguageIndependentConstructs {
     const char* unparsed_as_enum_type(int64_t i) {
         switch (i) {

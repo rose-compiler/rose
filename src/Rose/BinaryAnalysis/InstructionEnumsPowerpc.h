@@ -296,6 +296,7 @@ enum PowerpcInstructionKind {
      powerpc_fsubs,                                     // Floating Subtract Single.
      powerpc_fsubs_record,                              // Floating Subtract Single.
      powerpc_icbi,                                      // Instruction Cache Block Invalidate.
+     powerpc_illegal,                                   // Invoke illegal instruction error handler.
      powerpc_isync,                                     // Instruction Synchronize.
      powerpc_lbz,                                       // Load Byte and Zero.
      powerpc_lbzu,                                      // Load Byte and Zero with Update.
