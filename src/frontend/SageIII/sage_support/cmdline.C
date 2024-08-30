@@ -940,13 +940,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      set_unparse_in_same_directory_as_input_file(false);
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","unparse_in_same_directory_as_input_file",false) == true )
         {
-       // printf ("Option -c found (compile only)! \n");
-       // set_copy_generated_source_to_same_location_as_input_file(true);
-       // set_build_generated_file_in_same_directory_as_input_file(true);
           set_unparse_in_same_directory_as_input_file(true);
         }
 
-#if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations
   // in global scope instead of handled similar to comments.
      set_addCppDirectivesToAST(false);
@@ -957,22 +953,16 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                printf ("In SgProject: addCppDirectivesToAST mode ON \n");
           set_addCppDirectivesToAST(true);
         }
-#else
-     printf ("Warning: command line CPP directives not processed \n");
-#endif
 
   //
   // prelink option
   //
-  // if ( CommandlineProcessing::isOption(argc,argv,"-rose:","(prelink)",true) == true )
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(prelink)",true) == true )
         {
-       // printf ("prelink mode ON \n");
           set_prelink(true);
         }
        else
         {
-       // printf ("-rose:prelink not found: prelink mode OFF \n");
           set_prelink(false);
         }
 
@@ -987,9 +977,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // Make our own copy of the filename string
           p_outputFileName = tempOutputFilename;
-#if 0
-          printf ("option -o|output found outputFileName = %s \n",p_outputFileName.c_str());
-#endif
         }
        else
         {
@@ -1600,34 +1587,16 @@ void
 Rose::Cmdline::
 ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
 {
-  bool keep_going =
-      CommandlineProcessing::isOption(
-          argv,
-          "-rose:keep_going",
-          "",
-          true);
+  bool keep_going = CommandlineProcessing::isOption(argv, "-rose:keep_going", "", true);
 
   if (keep_going)
   {
-      if (SgProject::get_verbose() >= 1)
-          std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
-
-#if 0
-      printf ("detected -rose:keep_going option \n");
-#endif
-
+      if (SgProject::get_verbose() >= 1) {
+        std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
+      }
       project->set_keep_going(true);
       Rose::KeepGoing::g_keep_going = true;
   }
-
-#if 0
-     printf ("In ProcessKeepGoing(): project->get_keep_going() = %s \n",project->get_keep_going() ? "true" : "false");
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1638,10 +1607,8 @@ bool
 Rose::Cmdline::Unparser::
 OptionRequiresArgument (const std::string& option)
 {
-  return
-      // ROSE Options
-      option == "-rose:unparser:some_option_taking_argument";
-}// ::Rose::Cmdline:Unparser:::OptionRequiresArgument
+  return option == "-rose:unparser:some_option_taking_argument";
+}
 
 void
 Rose::Cmdline::Unparser::
@@ -1671,7 +1638,7 @@ StripRoseOptions (std::vector<std::string>& argv)
   //         argv,                               // Remove ROSE-Unparser options from here
   //         Cmdline::Unparser::option_prefix,   // Current prefix, e.g. "-rose:unparser:"
   //         "-");                               // New prefix, e.g. "-"
-}// ::Rose::Cmdline::Unparser::StripRoseOptions
+}
 
 void
 Rose::Cmdline::Unparser::
@@ -1922,7 +1889,7 @@ ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
 
 void
 Rose::Cmdline::Fortran::Ofp::
-ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv)
+ProcessEnableRemoteDebugging (SgProject* /*project*/, std::vector<std::string>& argv)
 {
   bool has_fortran_remote_debug =
       // -rose:fortran:remoteDebug
@@ -1948,8 +1915,8 @@ ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv
               << std::endl;
           ROSE_ABORT();
 #endif
-  }// has_fortran_remote_debug
-}// Cmdline::Fortran::Ofp::ProcessEnableRemoteDebugging
+  }
+}
 
 //------------------------------------------------------------------------------
 //                                  Gnu
@@ -1962,7 +1929,7 @@ OptionRequiresArgument (const std::string& option)
   return
       option == "--param"    ||   // --param variable=value
       false;
-}// Cmdline:Java:::OptionRequiresArgument
+}
 
 void
 Rose::Cmdline::Gnu::
@@ -2501,7 +2468,7 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
 
 void
 Rose::Cmdline::Java::
-ProcessTarget (SgProject* project, std::vector<std::string>& argv)
+ProcessTarget (SgProject* project, std::vector<std::string>& /*argv*/)
 {
   if (SgProject::get_verbose() > 1)
       std::cout << "[INFO] Processing Java -target " << std::endl;
@@ -2932,7 +2899,7 @@ ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
 
 void
 Rose::Cmdline::Java::Ecj::
-ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv)
+ProcessEnableRemoteDebugging (SgProject* /*project*/, std::vector<std::string>& argv)
 {
   bool has_java_remote_debug =
       // -rose:java:remoteDebug
@@ -5640,7 +5607,7 @@ SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
    }
 
 void
-SgFile::stripFortranCommandLineOptions ( vector<string> & argv )
+SgFile::stripFortranCommandLineOptions(vector<string> & /*argv*/)
    {
   // Strip out the OFP specific commandline options the assume all
   // other arguments are to be passed onto the vendor Fortran compiler
@@ -5654,7 +5621,6 @@ SgFile::stripFortranCommandLineOptions ( vector<string> & argv )
 #endif
 
   // No OFP options that we currently filter out.
-
 #if 0
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
      printf ("In SgFile::stripFortranCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
@@ -5736,10 +5702,6 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
         {
        // don't instantiate any inline templates
           printf ("ROSE sees use of -fno-implicit-templates option for use by g++ \n");
-
-       // printf ("ERROR: This g++ specific option is not yet supported \n");
-       // ROSE_ASSERT(false);
-
           p_no_implicit_templates = true;
         }
 
@@ -5757,8 +5719,8 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
 
 
 void
-SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
-    // It filters Rose and Edg specific parameters and fixes the pathes.
+SgFile::build_CLANG_CommandLine(vector<string> &inputCommandLine, vector<string> &argv, int /*fileNameIndex*/) {
+    // It filters Rose and Edg specific parameters and fixes the paths.
 
     std::vector<std::string> inc_dirs_list;
     std::vector<std::string> define_list;
