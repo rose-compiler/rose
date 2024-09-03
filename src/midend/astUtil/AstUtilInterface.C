@@ -124,9 +124,13 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
 
 std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     if (variable == 0) return "_UNKNOWN_";
+    SgType* variable_is_type = isSgType(variable);
+    if (variable_is_type != 0) {
+        std::string variable_name;
+        AstInterface::GetTypeInfo(variable_is_type, &variable_name);
+        return variable_name;
+    }
     switch (variable->variantT()) {
-     case V_SgClassType:
-          return isSgClassType(variable)->get_name().getString();
      case V_SgNamespaceDeclarationStatement:
           return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
      case V_SgUsingDirectiveStatement:

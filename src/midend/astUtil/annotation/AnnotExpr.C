@@ -141,7 +141,7 @@ AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
          assert(NumOfArgs() == 2);
          AstNodePtr obj = first_arg().CodeGen(fa);
          AstNodeType objtype;
-         if ( fa.IsExpression(obj, &objtype) == AST_NULL)
+         if ( !fa.IsExpression(obj, &objtype))
            ROSE_ABORT();
          string objtypename;
          fa.GetTypeInfo(objtype, 0, &objtypename);

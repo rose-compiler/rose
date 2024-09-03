@@ -10,18 +10,24 @@
 #include <rosedll.h>
 #include <Rose/Diagnostics.h>
 
+
+class SgNode;
+class SgType;
 class AstNodePtr {
- protected:
-  void* repr_;
-  std::string string_content_;
  public:
-  enum class SpecialAstTypes {UNKNOWN_AST}; 
-  AstNodePtr(void* _repr=0, std::string string_content = "") : repr_(_repr), string_content_(string_content) {}
-  AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), string_content_(that.string_content_) {}
-  AstNodePtr(SpecialAstTypes t) {
+  typedef SgNode BaseType;
+  enum class SpecialAstType {SG_AST, UNKNOWN_AST, NULL_AST}; 
+ private:
+  BaseType* repr_;
+  SpecialAstType nodetype_;
+ public:
+  AstNodePtr(BaseType* _repr=0) : repr_(_repr), nodetype_(SpecialAstType::SG_AST) 
+    { if (_repr == 0) nodetype_ = SpecialAstType::NULL_AST;  }
+  AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), nodetype_(that.nodetype_) {}
+  AstNodePtr(SpecialAstType t) : nodetype_(t), repr_(0) {
       switch (t) {
-       case SpecialAstTypes::UNKNOWN_AST : 
-           repr_ = 0; string_content_ = "_UNKNOWN_";
+       case SpecialAstType::UNKNOWN_AST : 
+       case SpecialAstType::NULL_AST : 
            break;
        default:
           std::cerr << "Error: UNKNOWN Special AST type!";
@@ -29,37 +35,57 @@ class AstNodePtr {
       }
    }
   ~AstNodePtr() {}
+  bool is_null() const { return nodetype_ == SpecialAstType::NULL_AST; }
+  bool is_unknown() const { return nodetype_ == SpecialAstType::UNKNOWN_AST; }
   AstNodePtr& operator = (const AstNodePtr &that) 
-      { repr_ = that.repr_; string_content_ = that.string_content_; return *this; }
+      { repr_ = that.repr_; nodetype_ = that.nodetype_; return *this; }
   bool operator != (const AstNodePtr &that) const
-    { return repr_ != that.repr_ || string_content_ != that.string_content_; }
+    { return repr_ != that.repr_ || nodetype_ != that.nodetype_; }
   bool operator == (const AstNodePtr &that) const
-    { return repr_ == that.repr_ && string_content_ == that.string_content_; }
-  bool operator == (void *p) const
+    { return repr_ == that.repr_ && nodetype_ == that.nodetype_; }
+  bool operator == (BaseType *p) const
     { return repr_ == p; }
-  bool operator != (void *p) const
+  bool operator != (BaseType *p) const
     { return repr_ != p; }
   bool operator < (const AstNodePtr &that) const
     { return repr_ < that.repr_; }
-  void * get_ptr() const { return repr_; }
-  void *& get_ptr() { return repr_; }
-  std::string get_string_content() const { return string_content_; }
-  std::string& string_content() { return string_content_; }
+  BaseType* operator -> () const { return repr_; }
+  BaseType * get_ptr() const { return repr_; }
+  BaseType *& get_ptr() { return repr_; }
 };
-#define AST_NULL AstNodePtr()
-#define AST_UNKNOWN AstNodePtr(AstNodePtr::SpecialAstTypes::UNKNOWN_AST)
+#define AST_NULL AstNodePtr(AstNodePtr::SpecialAstType::NULL_AST)
+#define AST_UNKNOWN AstNodePtr(AstNodePtr::SpecialAstType::UNKNOWN_AST)
+#define TYPE_NULL AstNodeType(AstNodeType::SpecialAstType::NULL_TYPE)
+#define TYPE_UNKNOWN AstNodeType(AstNodeType::SpecialAstType::UNKNOWN_TYPE)
 
-class AstNodeType : private AstNodePtr {
- protected:
-  AstNodeType(void* _repr, std::string string_content = "") : AstNodePtr(_repr, string_content) {}
+class AstNodeType {
  public:
-  AstNodeType() : AstNodePtr(0) {}
-  AstNodeType(AstNodePtr::SpecialAstTypes t) : AstNodePtr(t) {}
-  AstNodeType( const AstNodeType& that) : AstNodePtr(that) {}
+  typedef SgType BaseType;
+  enum class SpecialAstType {SG_TYPE, UNKNOWN_TYPE, NULL_TYPE}; 
+ private:
+  BaseType* repr_;
+  SpecialAstType nodetype_;
+ public:
+  AstNodeType() : repr_(0), nodetype_(SpecialAstType::NULL_TYPE) { }
+  AstNodeType(BaseType* repr) : repr_(repr), nodetype_(SpecialAstType::SG_TYPE) 
+    { if (repr_ == 0) nodetype_ = SpecialAstType::NULL_TYPE; }
+  AstNodeType(AstNodeType::SpecialAstType t) : nodetype_(t), repr_(0) {
+      switch (t) {
+       case SpecialAstType::UNKNOWN_TYPE : 
+       case SpecialAstType::NULL_TYPE : 
+           break;
+       default:
+          std::cerr << "Error: UNKNOWN Special AST type!";
+          assert(0);
+      }
+   }
+  AstNodeType( const AstNodeType& that) : repr_(that.repr_), nodetype_(that.nodetype_) {}
   AstNodeType& operator = (const AstNodeType &that) 
-      { AstNodePtr::operator = (that); return *this; }
+      { repr_ = that.repr_; nodetype_ = that.nodetype_; return *this; }
   ~AstNodeType() {}
-  using AstNodePtr::get_ptr;
+  bool is_unknown() const { return nodetype_ == SpecialAstType::UNKNOWN_TYPE; }
+  BaseType * get_ptr() const { return repr_; }
+  BaseType *& get_ptr() { return repr_; }
 };
 
 class AstInterfaceImpl;
@@ -123,7 +149,7 @@ public:
   static std::string getAstLocation( const AstNodePtr& s);
   static std::string unparseToString( const AstNodePtr& s);
   AstNodePtr GetRoot() const;
-  AstNodePtr getNULL() const { return AstNodePtr(); }
+  AstNodePtr getNULL() const { return AST_NULL; }
   void SetRoot( const AstNodePtr& root);
 
   typedef enum { PreOrder, PostOrder, ReversePreOrder, ReversePostOrder, 
@@ -189,7 +215,7 @@ public:
     }
     return true;
   }
-  AstNodePtr CreateBlock( const AstNodePtr& orig = AstNodePtr()) ;
+  AstNodePtr CreateBlock( const AstNodePtr& orig = AST_NULL) ;
   /* if flatter_s == true, always flatten s if it is a block*/
   void BlockAppendStmt( AstNodePtr& b, const AstNodePtr& s, bool flatten_s=false);
   void BlockPrependStmt( AstNodePtr& b, const AstNodePtr& s);
@@ -271,7 +297,7 @@ public:
   bool IsMemoryAccess( const AstNodePtr& s);
   static bool IsMemoryAllocation( const AstNodePtr& s);
 
-  static AstNodePtr IsExpression( const AstNodePtr& s, AstNodeType* exptype =0);
+  static bool IsExpression( const AstNodePtr& s, AstNodeType* exptype =0, AstNodePtr* strip_exp = 0);
   static AstNodeType GetExpressionType( const AstNodePtr& s);
 
   bool IsConstInt( const AstNodePtr& exp, int* value = 0) ;
@@ -295,14 +321,14 @@ public:
   /*QY: by default variable declarations are merely saved to be inserted later*/
   std::string NewVar (const AstNodeType& t, const std::string& name = "", 
                 bool makeunique = false, bool delayInsert=true,
-                const AstNodePtr& declLoc=AstNodePtr(),
-                const AstNodePtr& init = AstNodePtr());
+                const AstNodePtr& declLoc=AST_NULL,
+                const AstNodePtr& init = AST_NULL);
   /*Invoke this function to add the list of new variable declarations*/
   void AddNewVarDecls();
   /* copy new var declarations to a new given basic block; by default, the new var declarations are removed from their original block*/
   void CopyNewVarDecls(const AstNodePtr& nblock, bool clearNewVars=true);
 
-  AstNodePtr CreateVarRef( std::string varname, const AstNodePtr& declLoc = AstNodePtr()); 
+  AstNodePtr CreateVarRef( std::string varname, const AstNodePtr& declLoc = AST_NULL); 
 
   bool IsScalarType(const AstNodeType& t);
   bool IsPointerType(const AstNodeType& t);

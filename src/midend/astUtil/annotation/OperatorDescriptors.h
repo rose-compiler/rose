@@ -107,7 +107,7 @@ class OPDescriptorTemp : public BaseClass
     write(std::cerr);
   }
 
-  ReplaceParams GenReplaceParams(const AstInterface::AstNodeList& args, const AstNodePtr& /*exp*/,
+  ReplaceParams GenReplaceParams(const AstInterface::AstNodeList& args,
                                  Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen = 0) {
     ReplaceParams paramMap( get_param_decl(), args, astcodegen);
     return paramMap;
@@ -164,7 +164,7 @@ class OperatorSideEffectDescriptor
       collect_f( arg.get_val().CodeGen(fa));
     }
     if (get_has_unknown()) {
-       collect_f(AstNodePtr(AstNodePtr::SpecialAstTypes::UNKNOWN_AST)); 
+       collect_f(AST_UNKNOWN);
     }
 }
 };

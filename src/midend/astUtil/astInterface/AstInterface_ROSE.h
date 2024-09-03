@@ -15,14 +15,7 @@ class SgVarRefExp;
 class SgExpression;
 class SgDotExp;
 
-class AstNodePtrImpl : public AstNodePtr {
- public:
-  AstNodePtrImpl( SgNode* n = 0) : AstNodePtr(n) {}
-  AstNodePtrImpl( const AstNodePtr& that) : AstNodePtr(that) {}
-  SgNode* get_ptr() const { return static_cast<SgNode*>(repr_); }
-  SgNode* operator -> () const { return static_cast<SgNode*>(repr_); }
-};
-
+typedef AstNodePtr AstNodePtrImpl;
 
 class AstNodeTypeImpl : public AstNodeType {
  public:

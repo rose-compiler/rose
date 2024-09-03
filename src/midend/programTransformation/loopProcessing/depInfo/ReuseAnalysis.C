@@ -53,8 +53,9 @@ class AstRefGetAccessStride : public ProcessAstNode<AstNodePtr>
    if ( LoopTransformInterface::IsArrayAccess(r, &nameAst, &subs)) {
      name = _name;
      AstNodeType elemtype;
-     AstNodePtr isexp = ai.IsExpression(r, &elemtype);
-     assert(isexp != AST_NULL);
+     if (!ai.IsExpression(r, &elemtype)) {
+        assert(false);
+     }
      int typesize;
      ai.GetTypeInfo(elemtype, 0, 0, &typesize);
 

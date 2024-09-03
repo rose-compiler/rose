@@ -37,6 +37,7 @@ class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
                               const AstNodePtr& rhs = AstNodePtr()) = 0;
   virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) = 0; 
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) = 0; 
+  virtual void AppendMemoryAllocate( AstInterface& fa, const AstNodePtr& s) {}
 
   // Analyzes call arguments to determine what are read. Returns callee if requested.
   void AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* callee) ; 
@@ -83,6 +84,7 @@ class StmtSideEffectCollect
                               const AstNodePtr& rhs = AstNodePtr()) override;
     virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) override;
     virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) override;
+    virtual void AppendMemoryAllocate( AstInterface& fa, const AstNodePtr& s) override;
     AstInterface& fa_;
   private:
     using StmtInfoCollect<AstNodePtr>::curstmt;

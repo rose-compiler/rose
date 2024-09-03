@@ -60,7 +60,7 @@ HasValueCodeGen :: operator() (AstInterface* const& fa, const AstNodePtr& orig)
       return fa->CopyAstTree(r); 
   }
   AstNodeType valtype;
-  if (fa->IsExpression( orig, &valtype) == AST_NULL)
+  if (!fa->IsExpression( orig, &valtype))
      ROSE_ABORT();
   std::string varname = fa->NewVar( valtype);
   AstNodePtr var = fa->CreateVarRef (varname);

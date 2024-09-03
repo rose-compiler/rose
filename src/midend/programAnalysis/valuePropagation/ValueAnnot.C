@@ -148,7 +148,7 @@ class ReplaceValue
   {
      AstNodePtr ast = v.get_ast();
      AstNodeType type;
-     if (fa.IsExpression( ast, &type)==AST_NULL)
+     if (!fa.IsExpression( ast, &type))
         succ = false;
      else if (!fa.IsScalarType(type))
         succ = false;

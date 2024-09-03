@@ -2009,7 +2009,7 @@ std::string AstInterface::GetVarName( const AstNodePtr& _exp, bool use_global_un
 AstNodeType AstInterface::GetExpressionType( const AstNodePtr& s)
 {
   AstNodeType t;
-  if (IsExpression(s, &t) == AST_NULL)
+  if (!IsExpression(s, &t))
      ROSE_ABORT();
   return t;
 }
@@ -2269,15 +2269,15 @@ IsAddressOfOp( const AstNodePtr& _s)
 bool AstInterface::
 IsMemoryAllocation( const AstNodePtr& s)
 {
-  AstNodePtrImpl f;
-  if (!IsFunctionCall(s, &f)) {
+ std::cerr << "checking  " << AstInterface::AstToString(s) << "\n";
+  AstNodePtrImpl s1 = SkipCasting(s.get_ptr()), f;
+  if (!IsFunctionCall(s1, &f)) {
     return false;
   }
   std::string name;
   if (!IsVarRef(f, 0, &name)) {
      return false;
   }
- std::cerr << "name is " << name << "\n";
   if (name == "malloc") {
      return true;
   }
@@ -2306,7 +2306,7 @@ IsMemoryAccess( const AstNodePtr& _s)
   default:
     { // Function call returning C++ reference type is a memory access
      AstNodeTypeImpl t;
-     if (s->variantT() == V_SgFunctionCallExp && IsExpression(_s,&t) != AST_NULL)
+     if (s->variantT() == V_SgFunctionCallExp && IsExpression(_s,&t))
      {
       //member function's return type may have several levels of typedef
       //Strip SgTypedefType off to get the real base type
@@ -2982,25 +2982,33 @@ bool AstInterface::GetArrayBound( const AstNodePtr& _arrayref, int dim, int &lb,
 
 //! Check whether $_s$ is an expression; If yes, return the expression 
 // (strip off SgExpressionRoot) and grab its type
-AstNodePtr AstInterface::
-IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
+bool AstInterface::
+IsExpression( const AstNodePtr& _s, AstNodeType* exptype, AstNodePtr* strip_exp)
 {
   AstNodePtrImpl s(_s);
-  if (IsVarRef(s, exptype))
-     return s;
+  if (IsVarRef(s, exptype)) {
+     if (strip_exp != 0) *strip_exp = s;  
+     return true;
+  }
   SgExpression* exp = isSgExpression(s.get_ptr());
   if (exp != 0) {
-      switch (exp->variantT()) {
+    switch (exp->variantT()) {
       case V_SgExpressionRoot:
            exp = isSgExpressionRoot(exp)->get_operand();
            break;
       default: break;
+    }
+    if (exptype != 0) {
+      if (exp->get_type() != 0) {
+         *exptype = AstNodeTypeImpl(exp->get_type());
+      } else {
+         *exptype = AstNodeType(AstNodeType::SpecialAstType::UNKNOWN_TYPE);
       }
-   if (exptype != 0)
-       *exptype = AstNodeTypeImpl(exp->get_type());
-    return AstNodePtrImpl(exp);
+    }
+    if (strip_exp != 0) *strip_exp = AstNodePtrImpl(exp);
+    return true;
   }
-  return AST_NULL;
+  return false;
 }
 
 // if yes, grab init, condition, increment, and body
@@ -4199,6 +4207,13 @@ ROSE_DLL_API void FixSgProject( SgProject &sageProject)
 SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
 {
      if (loc == NULL) return NULL;
+     if (loc->get_parent() != 0 && loc->get_parent()->variantT() == V_SgLambdaCapture) {
+        // Go up to the expression chain to the enclosing statement.
+        while (loc != 0 && loc->get_parent() != 0 && isSgStatement(loc) == 0) {
+           loc = loc->get_parent();
+        }
+        assert(loc != 0);
+     }
      {
       const SgClassDefinition* classdef = isSgClassDefinition(loc);
       if (classdef != NULL) {

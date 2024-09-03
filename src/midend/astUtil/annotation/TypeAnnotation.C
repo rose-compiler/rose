@@ -106,7 +106,7 @@ template <class Descriptor>
 Descriptor* TypeCollection<Descriptor>::
   known_type( AstInterface& fa, const AstNodePtr& exp) {
       AstNodeType type;
-      if (fa.IsExpression(exp, &type)==AST_NULL)
+      if (!fa.IsExpression(exp, &type))
          return 0;
       std::string tname;
       fa.GetTypeInfo(type, 0, &tname);

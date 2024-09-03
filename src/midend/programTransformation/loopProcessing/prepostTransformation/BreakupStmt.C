@@ -40,7 +40,7 @@ bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
     AstInterface::OperatorEnum opr;
     if (fa.IsAssignment(s, &lhs, &rhs)) {
            AstNodeType lhstype;
-           if ( fa.IsExpression( lhs, &lhstype) == AST_NULL)
+           if (!fa.IsExpression( lhs, &lhstype))
                  return(false);
            AstNodePtr  exp = rhs;
            SinglyLinkedListWrap<AstNodePtr> refList;

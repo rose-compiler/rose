@@ -368,9 +368,8 @@ ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, b
 bool PtrAnal::
 may_alias(AstInterface& fa, const AstNodePtr& _r1, const AstNodePtr& _r2)
 {
-  AstNodePtr r1 = fa.IsExpression(_r1);
-  AstNodePtr r2 = fa.IsExpression(_r2);
-  if (r1 == AST_NULL || r2 == AST_NULL)
+  AstNodePtr r1, r2;
+  if (!fa.IsExpression(_r1, 0, &r1) || !fa.IsExpression(_r2, 0, &r2))
     ROSE_ABORT();
   std::string varname1 = Get_VarName(fa, r1), varname2 = Get_VarName(fa, r2);
   return may_alias(varname1, varname2);
@@ -454,7 +453,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
       }
        Skip(s);
    }
-   else if ( (lhs = fa.IsExpression(s)) != AST_NULL) {
+   else if ( fa.IsExpression(s, 0, &lhs)) {
        ProcessExpression(fa, "", lhs);
        Skip(s);
    }

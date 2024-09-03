@@ -487,7 +487,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
     bool is_init = ai.IsAssignment(initInfo.stmt->GetOrigStmt(), &lhs,0,&readlhs)
                    && !readlhs && (lhs == initcut->GetInfo().orig);
     AstNodeType inittype;
-    if (ai.IsExpression(initInfo.orig, &inittype)==AST_NULL)
+    if (!ai.IsExpression(initInfo.orig, &inittype))
       ROSE_ABORT();
     bool has_write = false;
 
