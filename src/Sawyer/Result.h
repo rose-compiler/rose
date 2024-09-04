@@ -689,7 +689,7 @@ public:
      *  If it does not have a value, the new Result keeps the error of the input.
      * */
     template <typename U, typename E, typename F>
-    Result<U>
+    Result<U, E>
     fmap(F&& f) {
         if (isOk())
             return makeOk(f(unwrap()));
