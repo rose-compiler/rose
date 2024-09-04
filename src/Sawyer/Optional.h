@@ -360,12 +360,12 @@ public:
      *  If this optional object has a value then fmap builds a new Optional using @p f to construct the value.
      *  If it does not have a value, the new Optional is also empty.
      * */
-    template <typename U, typename F>
-    Optional<U>
-    fmap(F&& f) {
+    template <typename F>
+    auto
+    fmap(F&& f) -> Optional<decltype(f(get()))> {
         if (isEmpty_)
-            return Optional<U>();
-        return Optional<U>(f(get()));
+            return Optional<decltype(f(get()))>();
+        return Optional<decltype(f(get()))>(f(get()));
     }
 
     
