@@ -6,14 +6,19 @@
  *
  * <table border=0>
  *   <tr>
- *     <td>Developed at [Lawrence Livermore National Laboratory](https://llnl.gov) (LLNL), ROSE is an open source compiler
- *         infrastructure to build source-to-source program transformation and analysis tools for large-scale C (C89 and C98),
- *         C++ (e.g. C++98 and C++11), UPC, Fortran (77, 95, 2003), OpenMP, Java, Python, PHP, and Binary applications.  ROSE users
- *         range from experienced compiler researchers to library and tool developers who may have minimal compiler
- *         experience. ROSE is particularly well suited for building custom tools for static analysis, program optimization,
+ *     <td>
+ *         Developed at [Lawrence Livermore National Laboratory](https://llnl.gov) (LLNL), ROSE is an open-source compiler
+ *         infrastructure to build source-to-source program transformation and analysis tools for large-scale C (C89 and C99),
+ *         C++ (e.g., C++98 and C++11), UPC, Fortran (77, 95, 2003), OpenMP, Java, Python, PHP, and Binary applications. 
+ *         ROSE is used by a diverse range of users, from experienced compiler researchers to library and tool developers with 
+ *         minimal compiler expertise. 
+ *         ROSE is particularly well suited for building custom tools for static analysis, program optimization,
  *         arbitrary program transformation, domain-specific optimizations, complex loop optimizations, performance analysis,
- *         and cyber-security.</td>
- *     <td>@image html roseDiagrams.jpg</td>
+ *         and cyber-security.
+ *     </td>
+ *     <td>
+ *         @image html roseDiagrams.jpg
+ *     </td>
  *   </tr>
  * </table>
  *
