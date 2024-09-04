@@ -688,7 +688,7 @@ public:
      *  If this object has a value then fmap builds a new Result using @p f to construct the value.
      *  If it does not have a value, the new Result keeps the error of the input.
      * */
-    template <typename U, typename E, typename F>
+    template <typename U, typename F>
     Result<U, E>
     fmap(F&& f) {
         if (isOk())
