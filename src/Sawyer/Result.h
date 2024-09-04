@@ -682,6 +682,20 @@ public:
         return *this;
     }
     /** @} */
+
+    /** Conditionally apply a functor @p f to the contents of a Result.
+     *
+     *  If this object has a value then fmap builds a new Result using @p f to construct the value.
+     *  If it does not have a value, the new Result keeps the error of the input.
+     * */
+    template <typename U, typename E, typename F>
+    Result<U>
+    fmap(F&& f) {
+        if (isOk())
+            return makeOk(f(unwrap()));
+        return makeError(unwrapError());
+    }
+
 };
 
 } // namespace
