@@ -697,15 +697,38 @@ if(ENABLE-MICROSOFT-EXTENSIONS)
 endif()
 
 if(ENABLE-JOVIAL)
+  # ATERM 
+  # Enable Aterm because Jovial Support requires it 
+  if(NOT ENABLE-ATERM)
+    message(WARNING "Jovial Support Requires Aterm. Automatically enabling ENABLE-ATERM.")
+    set(ENABLE-ATERM ON CACHE BOOL "Enable Aterm Support" FORCE)    
+  endif() 
+  # If the user didn't specify which aterm to use   
+  if(NOT ATERM_ROOT)
+    # Try to use default aterm & inform user how to specify 
+    if(EXISTS "/opt/aterm/gcc-8.5")
+      message(WARNING "Using default install location for aterm. You can use a different Aterm by defining ATERM_ROOT") 
+      set(ATERM_ROOT "/opt/aterm/gcc-8.5") 
+    endif() 
+    # Require location of aterm to be specified if we can't find a default 
+    message(WARNING "Jovial Support Requires Aterm. Please set ATERM_ROOT to indicate the path of Aterm.")
+  endif() 
+  # Find Aterm 
   include(FindAterm)
   find_aterm()
-  if(NOT USE_ROSE_ATERM_SUPPORT)
-    message(FATAL_ERROR "ATerm not found and jovial was enabled. Define ATERM_ROOT with location of Aterm install.")
+  # Improve Aterm Support by setting unset vars 
+  if(NOT DEFINED ATERM_LIBRARY_PATH AND DEFINED ATERM_ROOT)
+    set (ATERM_LIBRARY_PATH "${ATERM_ROOT}/lib") 
   endif()
+  if(NOT USE_ROSE_ATERM_SUPPORT)
+    message(FATAL_ERROR "Support for experimental_jovial_frontend requires Aterm library support.\nPlease define ATERM_ROOT with location of Aterm install.")
+  endif() 
+
+  # STRATEGO -- TODO  
   include(FindSGLRI)
   find_sglri()
   if(NOT ${USE_ROSE_STRATEGO_SUPPORT})
-    message(FATAL_ERROR "sglri not found and jovial was enabled. Define SGLRI_ROOT with location of Aterm install.")
+    message(FATAL_ERROR "support for experimental_jovial_frontend requires Stratego library support\nPlease define SGLRI_ROOT with location of Aterm install.")
   endif()
 endif()
 
