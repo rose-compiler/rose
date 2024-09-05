@@ -2269,7 +2269,6 @@ IsAddressOfOp( const AstNodePtr& _s)
 bool AstInterface::
 IsMemoryAllocation( const AstNodePtr& s)
 {
- std::cerr << "checking  " << AstInterface::AstToString(s) << "\n";
   AstNodePtrImpl s1 = SkipCasting(s.get_ptr()), f;
   if (!IsFunctionCall(s1, &f)) {
     return false;
@@ -4206,49 +4205,43 @@ ROSE_DLL_API void FixSgProject( SgProject &sageProject)
 
 SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
 {
-     if (loc == NULL) return NULL;
+     if (loc == 0 || loc->get_parent() == 0) return 0;
+
+     if (loc->variantT() == V_SgThisExp) {
+        SgMemberFunctionDeclaration* r = 0;
+        while (loc != 0 && r == 0 && loc->get_parent() != 0) {
+           loc = loc->get_parent();
+           r = isSgMemberFunctionDeclaration(loc);
+        }
+        return r->get_class_scope();
+     }
      if (loc->get_parent() != 0 && loc->get_parent()->variantT() == V_SgLambdaCapture) {
         // Go up to the expression chain to the enclosing statement.
         while (loc != 0 && loc->get_parent() != 0 && isSgStatement(loc) == 0) {
            loc = loc->get_parent();
         }
         assert(loc != 0);
+        return GetScope(loc);
      }
-     {
-      const SgClassDefinition* classdef = isSgClassDefinition(loc);
-      if (classdef != NULL) {
-          return GetScope(classdef->get_declaration()->get_parent());
-      }
-     }
-    {
-     const SgStatement* stmt = isSgStatement(loc);
-     if (stmt != NULL) { return stmt->get_scope(); }
-    }
-
     {
      const SgInitializedName* initializedName = isSgInitializedName(loc);
      if (initializedName != NULL) {
-        return initializedName->get_scope();
-     }
-    }
-
-    {
-     const SgExpression* expression = isSgExpression(loc);
-     if (expression != NULL) {
-            SgStatement* statement = TransformationSupport::getStatement(expression);
-            if (statement != NULL) {
-               return GetScope(statement);
-             }
-     }
-    }
-     const SgLocatedNodeSupport* located = isSgLocatedNodeSupport(loc);
-     if (located != 0 && located->get_parent() != 0) {
+        if (loc->get_parent() != 0 && loc->get_parent()->variantT() == V_SgFunctionParameterList) {
+          return initializedName->get_scope();
+        } 
         return GetScope(loc->get_parent());
      }
+    }
      if (isSgSourceFile(loc)) {
          return 0;
      }
-     DebugVariable([loc](){ return "Error: Unprepared for this case in GetScope: " + ((loc != NULL) ? loc->class_name() : "NULL"); });
-     return 0;
+    {
+     SgScopeStatement* stmt = isSgScopeStatement(loc->get_parent());
+     while (stmt == 0 && loc->get_parent() != 0) { 
+         stmt = isSgScopeStatement(loc->get_parent());
+         loc = loc->get_parent();
+     }
+     return stmt;
+    }
 }
 
