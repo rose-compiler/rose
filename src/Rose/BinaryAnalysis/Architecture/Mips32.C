@@ -447,8 +447,8 @@ Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
         case mips_sqrt_d:               return "fp square root";
         case mips_sra:                  return "shift word right arithmetic";
         case mips_srav:                 return "shift word right arithmetic variable";
-        case mips_srl:                  return "shift right logical";
-        case mips_srlv:                 return "shift right logical value";
+        case mips_srl:                  return "shift word right logical";
+        case mips_srlv:                 return "shift word right logical variable";
         case mips_ssnop:                return "superscalar no operation";
         case mips_sub:                  return "subtract word";
         case mips_sub_s:                return "subtract fp";

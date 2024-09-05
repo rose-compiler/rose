@@ -707,6 +707,56 @@ struct IP_seh: P {
 // Store halfword (mips_sh, implemented by IP_store)
 // Store halfword EVA (mips_she, implemented by IP_store)
 
+// SLL -- shift word left logical (mips_sll, implemented by IP_shift)
+struct IP_shift: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr sa = d->read(args[2]);
+        SValue::Ptr low32rt = ops->extract(d->read(args[1]), 0, 32);
+
+        // Shift left (or right) logical
+        SValue::Ptr result{};
+        if (insn->get_kind() == mips_sll) {
+          result = ops->signExtend(ops->shiftLeft(low32rt, sa), nBits);
+        }
+        else if (insn->get_kind() == mips_srl) {
+          result = ops->signExtend(ops->shiftRight(low32rt, sa), nBits);
+        }
+        else if (insn->get_kind() == mips_sra) {
+          result = ops->signExtend(ops->shiftRightArithmetic(low32rt, sa), nBits);
+        }
+
+        // Write shift results
+        d->write(args[0], result);
+    }
+};
+
+// SLLV -- shift word left logical variable (mips_sllv, implemented by IP_shiftv)
+struct IP_shiftv: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr low5sa = ops->extract(d->read(args[2]), 0, 5);
+        SValue::Ptr low32rt = ops->extract(d->read(args[1]), 0, 32);
+
+        // Shift left (or right) logical variable
+        SValue::Ptr result{};
+        if (insn->get_kind() == mips_sllv) {
+          result = ops->signExtend(ops->shiftLeft(low32rt, low5sa), nBits);
+        }
+        else if (insn->get_kind() == mips_srlv) {
+          result = ops->signExtend(ops->shiftRight(low32rt, low5sa), nBits);
+        }
+        else if (insn->get_kind() == mips_srav) {
+          result = ops->signExtend(ops->shiftRightArithmetic(low32rt, low5sa), nBits);
+        }
+
+        // Write shift results
+        d->write(args[0], result);
+    }
+};
+
 // Set on less than (mips_slt, implemented by IP_slt_su)
 // Set on less than unsigned (mips_sltu, implemented by IP_slt_su)
 struct IP_slt_su: P {
@@ -756,6 +806,12 @@ struct IP_slti_su: P {
         d->write(args[0], result);
     }
 };
+
+// SRA  -- shift word right arithmetic (mips_sra, implemented by IP_shift)
+// SRAV -- shift word right arithmetic variable (mips_srav, implemented by IP_shiftv)
+
+// SRL  -- shift word right logical (mips_srl, implemented by IP_shift)
+// SRLV -- shift word right logical variable (mips_srlv, implemented by IP_shiftv)
 
 // Superscalar no operation (mips_ssnop, implemented by IP_nop)
 
@@ -891,6 +947,12 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_seh,   new Mips::IP_seh);
     iprocSet(mips_sh,    new Mips::IP_store);   // mips_sh    shares common implementation IP_store
     iprocSet(mips_she,   new Mips::IP_store);   // mips_she   shares common implementation IP_store
+    iprocSet(mips_sll,   new Mips::IP_shift);   // mips_sll   shares common implementation IP_shift
+    iprocSet(mips_sllv,  new Mips::IP_shiftv);  // mips_sllv  shares common implementation IP_shiftv
+    iprocSet(mips_sra,   new Mips::IP_shift);   // mips_sra   shares common implementation IP_shift
+    iprocSet(mips_srav,  new Mips::IP_shiftv);  // mips_srav  shares common implementation IP_shiftv
+    iprocSet(mips_srl,   new Mips::IP_shift);   // mips_srl   shares common implementation IP_shift
+    iprocSet(mips_srlv,  new Mips::IP_shiftv);  // mips_srlv  shares common implementation IP_shiftv
     iprocSet(mips_slt,   new Mips::IP_slt_su);  // mips_slt   shares common implementation IP_slt_su
     iprocSet(mips_sltu,  new Mips::IP_slt_su);  // mips_sltu  shares common implementation IP_slt_su
     iprocSet(mips_slti,  new Mips::IP_slti_su); // mips_slti  shares common implementation IP_slti_su
