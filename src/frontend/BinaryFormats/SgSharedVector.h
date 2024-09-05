@@ -83,28 +83,30 @@ public:
     // constructs a vector having no data
     explicit SgSharedVector()
         : p_pool(0), p_capacity(0), p_size(0) {}
+
     // constructs a non-extendible vector of particular size
     explicit SgSharedVector(pointer pool, size_type n)
         : p_pool(pool), p_capacity(n), p_size(n) {}
+
     // constructs an extendible vector of specified capacity and size
     explicit SgSharedVector(pointer pool, size_type n, size_type nres)
         : p_pool(pool), p_capacity(nres), p_size(0) {
         resize(n);
     }
+
     // constructs a new vector pointing to same data as initializer vector
     SgSharedVector(const SgSharedVector &x)
-        : p_pool(x.pool()), p_capacity(x.capacity()), p_size(x.size()) {}
+        : p_pool(x.pool()), p_capacity(x.capacity()), p_size(x.size()) {
+    }
+
     // new vector points to offset in initializer vector
     SgSharedVector(const SgSharedVector &x, size_type offset) {
-
-     // DQ (11/3/2011): Avoid warning about pointless comparison of unsigned integer with zero.
-     // assert(offset>=0 && offset<=x.size());
-        assert(offset <= x.size());
-
+        ASSERT_require(offset <= x.size());
         p_pool = x.pool() + offset;
         p_capacity = x.capacity() - offset;
         p_size = x.size() - offset;
     }
+
     // new vector points to subset of initializer vector
     SgSharedVector(const SgSharedVector &x, size_type offset, size_type size) {
         assert(offset+size <= x.size());
@@ -112,6 +114,7 @@ public:
         p_capacity = x.capacity() - offset;
         p_size = size;
     }
+
     // pool memory is managed externally
     ~SgSharedVector() {}
 

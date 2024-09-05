@@ -84,7 +84,7 @@ public:
 
 private:
   std::vector<Token> tokens_;
-  unsigned long next_;
+  size_t next_;
 
   int getTokenElement(std::istream &, std::string &);
   int getTokenComment(std::istream &, std::string &);

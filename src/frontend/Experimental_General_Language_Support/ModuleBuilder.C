@@ -188,7 +188,6 @@ void ModuleBuilder::loadSymbol(SgClassSymbol* symbol, SgSymbolTable* symbol_tabl
 {
   // Load class members
   SgClassDeclaration* decl = nullptr;
-  SgClassDefinition* def_decl = nullptr;
 
   // TODO: def_decl is nullptr so using table statement ...
   SgJovialTableStatement* defining_decl = nullptr;
@@ -198,7 +197,11 @@ void ModuleBuilder::loadSymbol(SgClassSymbol* symbol, SgSymbolTable* symbol_tabl
   if (decl) defining_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
   if (defining_decl) table_def = defining_decl->get_definition();
 
+#define TODO_DEF_DECL 0
+#if TODO_DEF_DECL
+  SgClassDefinition* def_decl = nullptr;
   if (decl) def_decl = isSgClassDefinition(decl->get_definingDeclaration());
+#endif
 
   if (table_def) {
     for (SgDeclarationStatement* item_decl : table_def->get_members()) {

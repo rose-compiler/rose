@@ -40,26 +40,6 @@ class NameQualificationInheritedAttribute
           SgStatement* currentStatement;
           SgNode* referenceNode;
 
-#if 0
-       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
-
-       // DQ (2/7/2019): Namen qaulification can under rare circumstances depende on the type.  And we need
-       // to pass the type through from the lhs to the rhs to get the name qualification correct on the rhs.
-       // See Cxx11_tests/test2019_80.C and test2019_81.C for examples of this.
-          SgPointerMemberType* usingPointerToMemberType;
-
-          bool containsFunctionArgumentsOfPointerMemberType;
-#endif
-
-#if 0
-       // DQ (8/1/2020): Namespace alias need to have a priority when they are available.
-       // std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasDeclarationMap;
-          namespaceAliasMapType namespaceAliasDeclarationMap;
-     public:
-          typedef std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasMapType;
-#endif
-
-
      public:
 
           NameQualificationInheritedAttribute();

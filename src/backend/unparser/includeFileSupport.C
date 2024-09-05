@@ -177,64 +177,23 @@ IncludeFileSupport::PrefixTraversal::evaluateSynthesizedAttribute ( SgNode* node
                               printf ("Ignore paths to system included files: synthesizedAttributeList[%zu].include_file: filename = %s \n",i,child_include_file->get_filename().str());
                             }
 #endif
-#if 0
-                         printf ("   --- added_include_path_set.size() = %zu \n",added_include_path_set.size());
-#endif
                        }
                   }
              }
-
-#if 0
-       // printf ("added_include_path_set.size() = %zu \n",syn_attribute.added_include_path_set.size());
-          printf ("added_include_path_set.size() = %zu \n",added_include_path_set.size());
-#endif
-
-       // for (size_t i = 0; i < syn_attribute.added_include_path_set.size(); i++)
-       // std::set<std::string>::iterator i = syn_attribute.added_include_path_set.begin();
-          std::set<std::string>::iterator i = added_include_path_set.begin();
-          int count = 0;
-       // while (i != syn_attribute.added_include_path_set.end())
-          while (i != added_include_path_set.end())
-             {
-#if 0
-               printf ("   --- added_include_path_set[%d] = %s \n",count,i->c_str());
-#endif
-               i++;
-               count++;
-             }
-
         }
 
      return syn_attribute;
    }
 
-
-// void IncludeFileSupport::headerFilePrefix ( SgIncludeFile* includeFile )
 std::set<std::string> 
 IncludeFileSupport::headerFilePrefix ( SgIncludeFile* includeFile )
    {
-#if 0
-     printf ("In IncludeFileSupport::headerFilePrefix(): includeFile filename = %s \n",includeFile->get_filename().str());
-#endif
-
-  // class PrefixTraversal : public AstTopDownBottomUpProcessing<SageInterface::InheritedAttribute,SageInterface::SythesizedAttribute>
-
      InheritedAttribute ih;
 
   // Now buid the traveral object and call the traversal (preorder) on the function definition.
      IncludeFileSupport::PrefixTraversal traversal;
-
-  // IncludeFileSupport::SynthesizedAttribute si = traversal.traverse(includeFile, inheritedAttribute);
-#if 1
      traversal.traverse(includeFile, ih);
-
      std::set<std::string> added_include_path_set = traversal.added_include_path_set;
-
-#else
-     SynthesizedAttribute = traversal.traverse(includeFile, ih);
-#endif
-
-  // printf ("si.path_prefix = %s \n",si.path_prefix.c_str());
 
      return added_include_path_set;
    }

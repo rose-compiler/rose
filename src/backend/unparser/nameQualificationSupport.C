@@ -6714,11 +6714,10 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
    {
   // DQ (6/4/2011): Note that test2005_73.C demonstrate where the Template arguments are shared between template instantiations.
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
   // DQ (9/24/2012): Track the recursive depth in computing name qualification for template arguments of template instantiations used as template arguments.
      static int recursiveDepth = 0;
      int counter = 0;
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      mfprintf(mlog [ WARN ] ) ("\n\n*********************************************************************************************************************\n");
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      mfprintf(mlog [ WARN ] ) ("*********************************************************************************************************************\n");
@@ -6865,9 +6864,13 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                               SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(classDeclaration);
                               if (templateClassInstantiationDeclaration != NULL)
                                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    recursiveDepth++;
+#endif
                                    evaluateNameQualificationForTemplateArgumentList(templateClassInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    recursiveDepth--;
+#endif
                                  }
                             }
                            else if (nrType == NULL)
@@ -6886,9 +6889,13 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                            mfprintf(mlog [ WARN ] ) ("namedType is a SgNonrealType: nrdecl = %p = %s \n",nrdecl,nrdecl->class_name().c_str());
 #endif
                            do {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                              recursiveDepth++;
+#endif
                              evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, positionStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                              recursiveDepth--;
+#endif
 
                              if (nrdecl->get_templateDeclaration() != NULL) {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
@@ -7001,12 +7008,12 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           mfprintf(mlog [ WARN ] ) ("===== templateArgument->unparseToString() = %s \n",templateArgument->unparseToString().c_str());
 #endif
 
-//        ROSE_ASSERT(templateArgument->unparseToString() != "allocator< int >");
-
           i++;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
        // Used for debugging...
           counter++;
+#endif
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
@@ -7014,13 +7021,6 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
      mfprintf(mlog [ WARN ] ) ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      mfprintf(mlog [ WARN ] ) ("*****************************************************************************************************************************\n\n");
 #endif
-
-#if 0
-  // DQ (7/22/2017): Added for testing only.
-     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
    }
 
 #define DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH 0
@@ -7035,9 +7035,6 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH || 0
      mfprintf(mlog [ WARN ] ) ("In nameQualificationDepth(SgType*): type = %p = %s \n",type,type->class_name().c_str());
 #endif
-
-  // DQ (7/23/2011): Test if we see array types here (looking for way to process all array types).
-  // ROSE_ASSERT(isSgArrayType(type) == NULL);
 
   // DQ (7/23/2011): If this is an array type, then we need special processing for any name qualification of its index expressions.
      processNameQualificationForPossibleArrayType(type,currentScope);
@@ -7067,7 +7064,6 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
    }
 
 
-// int NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgStatement* positionStatement )
 int
 NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
@@ -7080,9 +7076,8 @@ NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* i
 
      SgType* initializedNameType = initializedName->get_type();
 
-  // DQ (4/9/2019): Adding support for SgPointerMemberType.
      SgPointerMemberType* pointerMemberType = isSgPointerMemberType(initializedNameType);
-     if (pointerMemberType != NULL)
+     if (pointerMemberType != nullptr)
         {
           SgType* baseType = pointerMemberType->get_base_type();
           ASSERT_not_null(baseType);
@@ -7106,11 +7101,8 @@ NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* i
              }
         }
 
-  // return nameQualificationDepth(initializedName->get_type(),initializedName->get_scope(),positionStatement);
-  // return nameQualificationDepth(initializedName->get_type(),currentScope,positionStatement);
      return nameQualificationDepth(initializedNameType,currentScope,positionStatement);
    }
-
 
 int
 NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )

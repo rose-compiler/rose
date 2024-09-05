@@ -567,8 +567,6 @@ namespace SageInterface
 
 namespace ASTtools
    {
-  // struct VarSymSet_t;
-  // typename VarSymSet_t;
      typedef std::set<const SgVariableSymbol *> VarSymSet_t;
      void moveStatements (SgBasicBlock* src, SgBasicBlock* dest);
      void collectLocalVisibleVarSyms (const SgStatement* root,const SgStatement* target,VarSymSet_t& syms);
@@ -599,7 +597,6 @@ StatementReplace(SgStatement* /*parent*/, Elemtype* &cur, SgStatement* target, S
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-
           return true;
         }
      return false;

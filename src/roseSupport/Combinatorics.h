@@ -386,7 +386,7 @@ public:
         throw Exception("ROSE was not configured with libgcrypt");
       #endif
     }
-    
+
     ~HasherGcrypt() {
       #ifdef ROSE_HAVE_LIBGCRYPT
         gcry_md_close(md_);
