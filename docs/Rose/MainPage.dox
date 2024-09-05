@@ -28,7 +28,9 @@
  * This Doxygen main page is deliberately kept minimal to simplify maintenance.
  * Only information that depends on Doxygen is included here.
  * 
- *  @li @ref binary_tutorial @ref Rose::BinaryAnalysis
+ *  @li @ref ast_construction
+ *  @li @ref binary_tutorial 
+ *  @li @ref Rose::BinaryAnalysis
  *  @li @ref developer_docs
 
  * All other documentations of ROSE can be found at [github ROSE wiki](https://github.com/rose-compiler/rose/wiki) . 

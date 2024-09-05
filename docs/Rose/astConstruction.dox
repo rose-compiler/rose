@@ -1,0 +1,122 @@
+// -*- c++ -*-
+/** @page ast_construction AST Construction Using SageBuilder and SageInterface
+ *
+ * AST construction is a fundamental operation needed for building ROSE
+ * source-to-source translators. Several levels of interfaces are available in
+ * ROSE for users to build AST from scratch. High-level interfaces are
+ * recommended whenever possible for their simplicity. Low-level interfaces can
+ * give users maximum freedom to manipulate details in AST trees.
+ *
+ * This tutorial demonstrates how to create AST fragments for common language
+ * constructs (such as variable declarations, functions, function calls, etc.)
+ * and how to insert them into an existing AST tree.
+ * 
+ * @section ast_tutorial Variable Declarations
+ *
+ * @subsection var_decl_example1 Example 1: High-Level Variable Declaration
+ *
+ * Building a variable declaration using the high-level AST construction and
+ * manipulation interfaces defined in the `SageBuilder` and `SageInterface` namespaces.
+ *
+ *  @includelineno addVariableDeclaration2.C
+ * 
+ * The high-level construction builds a variable declaration node using 
+ * `buildVariableDeclaration()` and inserts it into the AST with `prependStatement()`.
+ * Scope pointers, symbol tables, and source file position information are handled transparently.
+ *
+ * @subsection var_decl_example2 Example 2: Low-Level Variable Declaration
+ *
+ * Building the variable declaration using low-level member functions of SAGE III node classes.
+ * The low-level approach requires manual handling of scope, parent pointers, and symbol tables.
+ *
+ *  @includelineno addVariableDeclaration.C
+ * 
+ * @section expr_addition Adding Expressions
+ *
+ * A translator using the high-level AST builder interface can be used to add an assignment
+ * statement before the last statement in a `main()` function.
+ *
+ * @includelineno addExpression.C
+ * 
+ * @section assign_statements Assignment Statements
+ *
+ * Adding an assignment statement before the last statement in a `main()` function using
+ * the high-level AST builder interface.
+ *
+ * @includelineno addAssignmentStmt.C
+ * 
+ * @section functions Function Declarations
+ *
+ * Adding a function at the top of a global scope using both high-level and low-level constructions.
+ *
+ * @subsection func_decl_high High-Level Function Declaration
+ *
+ * @includelineno addFunctionDeclaration2.C
+ *
+ * @subsection func_decl_scope_stack High-Level Function Declaration with Scope Stack
+ *
+ * @includelineno addFunctionDeclaration3.C
+ *
+ * @subsection func_decl_low Low-Level Function Declaration
+ *
+ * @includelineno addFunctionDeclaration.aa
+ *
+ * @section func_calls Function Calls
+ *
+ * Adding function calls to instrument code using the AST string-based rewrite mechanism or the AST builder interface.
+ *
+ * @subsection func_call_ast_builder AST Builder Interface Example
+ *
+ * @includelineno addFunctionCalls.C
+ * 
+ * @section struct_global Creating a 'struct' for Global Variables
+ *
+ * This tutorial demonstrates how to repackage global variables into a `struct` to support Charm++.
+ * The translator also updates all references to global variables so that they reference the variables
+ * indirectly through the `struct`. This is a preprocessing step required to use Charm++ and AMPI.
+ *
+ * The example uses low-level AST manipulation at the level of the IR. More concise versions using
+ * `SageInterface` and `SageBuilder` functions should be considered for high-level manipulation.
+ *
+ * @subsection global_struct_example1 Repackaging Global Variables
+ *
+ * The following example repackages global variables in an application into a `struct`.
+ *
+ * @includelineno CharmSupport.aa
+ *
+ * @subsection global_struct_example2 Referencing Global Variables via Struct (Part 2)
+ *
+ * This part shows the continuation of the repackaging of global variables into a `struct`.
+ *
+ * @includelineno CharmSupport.ab
+ *
+ * @subsection global_struct_example3 Handling Global Variables (Part 3)
+ *
+ * The third part of the example, continuing the transformation of global variables into a `struct`.
+ *
+ * @includelineno CharmSupport.ac
+ *
+ * @subsection global_struct_example4 Final Steps of Global Variable Repackaging (Part 4)
+ *
+ * This part completes the transformation and repackaging of global variables into a `struct`.
+ *
+ * @includelineno CharmSupport.ad
+ *
+ * @subsection global_struct_example5 Struct Usage Finalization (Part 5)
+ *
+ * This is the final part of the global variable repackaging and struct manipulation process.
+ *
+ * @includelineno CharmSupport.ae
+ *
+ * @subsection global_struct_input Example Input Code for Struct Repackaging
+ *
+ * Example source code used as input to the translator for repackaging global variables into a `struct`.
+ *
+ * @includelineno inputCode_ExampleCharmSupport.C
+ *
+ * @subsection global_struct_output Example Output of Global Variable Repackaging
+ *
+ * The output of the input after the translator repackages the global variables into a `struct`.
+ *
+ * @includelineno rose_inputCode_ExampleCharmSupport.C
+  */
