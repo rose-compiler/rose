@@ -18,6 +18,7 @@ Makefile.in
 /*.tar.gz
 /libltdl
 /configure.orig
+/build-rose.sh
 
 # Integrated Development Evironment files
 GPATH
