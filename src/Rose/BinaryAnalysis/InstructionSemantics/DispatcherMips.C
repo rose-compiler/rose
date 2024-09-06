@@ -643,6 +643,30 @@ struct IP_ori: P {
     }
 };
 
+// ROTR  -- Rotate word right (mips_rotr, implemented by IP_rotate)
+// ROTRV -- Rotate word right variable (mips_rotrv, implemented by IP_rotate)
+struct IP_rotate: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        const size_t nBits = d->architecture()->bitsPerWord();
+        SValue::Ptr low32rt = ops->extract(d->read(args[1]), 0, 32);
+
+        // Rotate right
+        SValue::Ptr result{};
+        if (insn->get_kind() == mips_rotr) {
+          SValue::Ptr sa = d->read(args[2]);
+          result = ops->signExtend(ops->rotateRight(low32rt, sa), nBits);
+        }
+        else if (insn->get_kind() == mips_rotrv) {
+          SValue::Ptr low5sa = ops->extract(d->read(args[2]), 0, 5);
+          result = ops->signExtend(ops->rotateRight(low32rt, low5sa), nBits);
+        }
+
+        // Write rotate results
+        d->write(args[0], result);
+    }
+};
+
 // Store byte (mips_sb, implemented by IP_store)
 // Store byte EVA (mips_sbe, implemented by IP_store)
 
@@ -707,7 +731,7 @@ struct IP_seh: P {
 // Store halfword (mips_sh, implemented by IP_store)
 // Store halfword EVA (mips_she, implemented by IP_store)
 
-// SLL -- shift word left logical (mips_sll, implemented by IP_shift)
+// SLL -- Shift word left logical (mips_sll, implemented by IP_shift)
 struct IP_shift: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -732,7 +756,7 @@ struct IP_shift: P {
     }
 };
 
-// SLLV -- shift word left logical variable (mips_sllv, implemented by IP_shiftv)
+// SLLV -- Shift word left logical variable (mips_sllv, implemented by IP_shiftv)
 struct IP_shiftv: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -807,11 +831,11 @@ struct IP_slti_su: P {
     }
 };
 
-// SRA  -- shift word right arithmetic (mips_sra, implemented by IP_shift)
-// SRAV -- shift word right arithmetic variable (mips_srav, implemented by IP_shiftv)
+// SRA  -- Shift word right arithmetic (mips_sra, implemented by IP_shift)
+// SRAV -- Shift word right arithmetic variable (mips_srav, implemented by IP_shiftv)
 
-// SRL  -- shift word right logical (mips_srl, implemented by IP_shift)
-// SRLV -- shift word right logical variable (mips_srlv, implemented by IP_shiftv)
+// SRL  -- Shift word right logical (mips_srl, implemented by IP_shift)
+// SRLV -- Shift word right logical variable (mips_srlv, implemented by IP_shiftv)
 
 // Superscalar no operation (mips_ssnop, implemented by IP_nop)
 
@@ -941,6 +965,8 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
     iprocSet(mips_ori,   new Mips::IP_ori);
+    iprocSet(mips_rotr,  new Mips::IP_rotate);  // mips_rotr  shares common implementation IP_rotate
+    iprocSet(mips_rotrv, new Mips::IP_rotate);  // mips_rotrv shares common implementation IP_rotate
     iprocSet(mips_sb,    new Mips::IP_store);   // mips_sb    shares common implementation IP_store
     iprocSet(mips_sbe,   new Mips::IP_store);   // mips_sbe   shares common implementation IP_store
     iprocSet(mips_seb,   new Mips::IP_seb);
