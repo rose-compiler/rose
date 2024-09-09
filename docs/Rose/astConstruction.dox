@@ -1,5 +1,5 @@
 // -*- c++ -*-
-/** @page ast_construction AST Construction Using SageBuilder and SageInterface
+/** @page ast_construction AST Construction
  *
  * AST construction is a fundamental operation needed for building ROSE
  * source-to-source translators. Several levels of interfaces are available in
