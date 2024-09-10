@@ -696,24 +696,19 @@ if(ENABLE-MICROSOFT-EXTENSIONS)
   set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
 endif()
 
-if(ENABLE-JOVIAL)
-  # ATERM 
-  # Enable Aterm because Jovial Support requires it 
-  if(NOT ENABLE-ATERM)
-    message(WARNING "Jovial Support Requires Aterm. Automatically enabling ENABLE-ATERM.")
-    set(ENABLE-ATERM ON CACHE BOOL "Enable Aterm Support" FORCE)    
-  endif() 
-  # If the user didn't specify which aterm to use   
-  if(NOT ATERM_ROOT)
+if(ENABLE-JOVIAL) # Find dependencies Aterm and Stratego 
+  if(NOT ATERM_ROOT) # If the user didn't specify which aterm to use   
     # Try to use default aterm & inform user how to specify 
     if(EXISTS "/opt/aterm/gcc-8.5")
-      message(WARNING "Using default install location for aterm. You can use a different Aterm by defining ATERM_ROOT") 
-      set(ATERM_ROOT "/opt/aterm/gcc-8.5") 
+      set(ATERM_ROOT "/opt/aterm/gcc-8.5")
+      message(STATUS "Found aterm: ${ATERM_ROOT}")
+      message(STATUS "You can use a different Aterm by defining ATERM_ROOT") 
+    else() 
+      # Require location of aterm to be specified if we can't find a default 
+      message(WARNING "Jovial Support Requires Aterm. Please set ATERM_ROOT to indicate the path of Aterm.")
     endif() 
-    # Require location of aterm to be specified if we can't find a default 
-    message(WARNING "Jovial Support Requires Aterm. Please set ATERM_ROOT to indicate the path of Aterm.")
   endif() 
-  # Find Aterm 
+  # Find Aterm based on Aterm_Root  
   include(FindAterm)
   find_aterm()
   # Improve Aterm Support by setting unset vars 
@@ -722,13 +717,16 @@ if(ENABLE-JOVIAL)
   endif()
   if(NOT USE_ROSE_ATERM_SUPPORT)
     message(FATAL_ERROR "Support for experimental_jovial_frontend requires Aterm library support.\nPlease define ATERM_ROOT with location of Aterm install.")
-  endif() 
-
-  # STRATEGO -- TODO  
+  endif()
+  # Find Stratego based on STRATEGO_ROOT
+  set(STRATEGO_ROOT "" CACHE PATH "Stratego install location") 
   include(FindSGLRI)
   find_sglri()
-  if(NOT ${USE_ROSE_STRATEGO_SUPPORT})
-    message(FATAL_ERROR "support for experimental_jovial_frontend requires Stratego library support\nPlease define SGLRI_ROOT with location of Aterm install.")
+  # Report to the user where we found stratego 
+  if(ROSE_WITH_STRATEGO)
+    message(STATUS "Found stratego: ${STRATEGO_LIBRARY}") 
+  else() 
+    message(FATAL_ERROR "support for experimental_jovial_frontend requires Stratego library support\nPlease define STRATEGO_ROOT with location of Aterm install.")
   endif()
 endif()
 
