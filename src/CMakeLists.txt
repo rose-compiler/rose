@@ -711,8 +711,6 @@ set_target_properties(ROSE_DLL PROPERTIES
   DEFINE_SYMBOL ROSE_DLL_EXPORTS)
 
 install(TARGETS ROSE_DLL DESTINATION ${ROSE_LIB_DIR_NAME})
-install(TARGETS ROSE_DLL ${rose_LIB_OBJS} RoseSQLite3xDatabase EXPORT RoseCmakePackage DESTINATION ${ROSE_LIB_DIR_NAME})
-install(EXPORT RoseCmakePackage NAMESPACE Rose:: FILE RoseCmakePackage.cmake DESTINATION ${ROSE_LIB_DIR_NAME})
 install(
   FILES
     featureTests.h RoseFirst.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
