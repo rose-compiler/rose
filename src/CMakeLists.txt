@@ -711,6 +711,8 @@ set_target_properties(ROSE_DLL PROPERTIES
   DEFINE_SYMBOL ROSE_DLL_EXPORTS)
 
 install(TARGETS ROSE_DLL DESTINATION ${ROSE_LIB_DIR_NAME})
+install(TARGETS ROSE_DLL ${rose_LIB_OBJS} RoseSQLite3xDatabase EXPORT RoseCmakePackage DESTINATION ${ROSE_LIB_DIR_NAME})
+install(EXPORT RoseCmakePackage NAMESPACE Rose:: FILE RoseCmakePackage.cmake DESTINATION ${ROSE_LIB_DIR_NAME})
 install(
   FILES
     featureTests.h RoseFirst.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
@@ -776,6 +778,14 @@ endif()
 if(NOT BINARY_EDG)
   add_definitions(-DUSE_FAKE_EDG)
 endif()
+
+# Add quadmath to link libraries if present
+if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
+  if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
+    set(rose_library_dir_list "${rose_library_dir_list};${QUADMATH_LIBRARY}")
+  endif()
+endif()
+
 
 # Depending on which language analysis (frontend) features are enabled in ROSE, we may need some additional libraries.
 if(ENABLE-FORTRAN)
@@ -855,7 +865,7 @@ install(TARGETS rose-compiler DESTINATION bin)
 ########################################################################################################################
 
 #Build LDFLAGS for ROSE tools
-set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose")
+set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose -std=c++14")
 
 set(rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
 set(rose_library_dir_list "${rose_library_dir_list};${Boost_LIBRARY_DIRS}")
@@ -949,7 +959,7 @@ function(resolve_compiler_names)
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(cc_name "gcc" PARENT_SCOPE)
         set(cxx_name "g++" PARENT_SCOPE)
-    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
         set(cc_name "clang" PARENT_SCOPE)
         set(cxx_name "clang++" PARENT_SCOPE)
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
@@ -978,6 +988,18 @@ else()
     set(ACTUAL_CXX ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
 endif()
 
+set(ROSE_LIBDIRS "")
+set(ROSE_LINK_RPATHS "")
+
+foreach(X IN LISTS rose_library_dir_list)
+  set(ROSE_LIBDIRS "${ROSE_LIBDIRS} ${X}")
+  set(ROSE_LINK_RPATHS "${ROSE_LINK_RPATHS} -Wl,-rpath ${X}")
+endforeach()
+
+message("ROSE_LIBDIRS: ${ROSE_LIBDIRS}")
+message("ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
+
+
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${ACTUAL_CC}\n")
@@ -988,10 +1010,10 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${ro
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${Boost_LIBRARY_DIRS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${ROSE_LIBDIRS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${Boost_LIBRARY_DIRS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIRS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = ${ROSE_LIBDIRS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = ${ROSE_LINK_RPATHS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
