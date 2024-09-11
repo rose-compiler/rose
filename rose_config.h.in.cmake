@@ -166,12 +166,13 @@
 
 /* End of FUNCTIONS_TO_CHECK */
 
-
 // BACKEND SECTION
 /* Define if building with Jovial support */ 
 #cmakedefine ATERM_BIN_PATH "@ATERM_BIN_PATH@"
 #cmakedefine ATERM_INSTALL_PATH "@ATERM_INSTALL_PATH@"
 #cmakedefine ATERM_LIBRARY_PATH "@ATERM_LIBRARY_PATH@"
+// defines for jovial_support.C 
+#cmakedefine STRATEGO_BIN_PATH "@STRATEGO_BIN_PATH@"
 
 /* Define if building with Ada support */ 
 #cmakedefine BACKEND_ADA_COMPILER_NAME_WITH_PATH "@BACKEND_ADA_COMPILER_NAME_WITH_PATH@"

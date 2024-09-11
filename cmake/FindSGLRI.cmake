@@ -22,8 +22,11 @@ macro(find_sglri)
   if("${STRATEGO_EXECUTABLE}" STREQUAL "STRATEGO_EXECUTABLE-NOTFOUND")
     message(FATAL_ERROR "The sglri executable was not found") 
   endif()
+  
+  # Define macro for line 32 of src/frontend/Experimental_Jovial_ROSE_Connection/jovial_support.C
+  set(STRATEGO_BIN_PATH "${STRATEGO_ROOT}/bin") 
 
-  # Try to find the library 
+  # Try to find the libATerm library 
   find_library(STRATEGO_LIBRARY NAMES ATerm PATHS "${STRATEGO_ROOT}/lib" NO_DEFAULT_PATH)
   
   # Check if we found the library
