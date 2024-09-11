@@ -429,7 +429,7 @@ endif()
 option(ENABLE-JAVA "Enable Java analysis" OFF)
 if(ENABLE-JAVA)
   message(STATUS "Looking for JAVA ...")
-  # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the only
+  # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the onlyBLE-JOV
   # value of JAVA_ROOT that we can support is the empty string.
   if("${JAVA_ROOT}" STREQUAL "")
   elseif("${JAVA_ROOT}" STREQUAL "no")
@@ -697,36 +697,31 @@ if(ENABLE-MICROSOFT-EXTENSIONS)
 endif()
 
 if(ENABLE-JOVIAL) # Find dependencies Aterm and Stratego 
-  if(NOT ATERM_ROOT) # If the user didn't specify which aterm to use   
-    # Try to use default aterm & inform user how to specify 
-    if(EXISTS "/opt/aterm/gcc-8.5")
-      set(ATERM_ROOT "/opt/aterm/gcc-8.5")
-      message(STATUS "Found aterm: ${ATERM_ROOT}")
-      message(STATUS "You can use a different Aterm by defining ATERM_ROOT") 
-    else() 
-      # Require location of aterm to be specified if we can't find a default 
-      message(WARNING "Jovial Support Requires Aterm. Please set ATERM_ROOT to indicate the path of Aterm.")
-    endif() 
+  if(NOT DEFINED ATERM_ROOT) # Require location of aterm to be specified by the user at config time  
+    message(FATAL_ERROR "Jovial Support Requires Aterm. Please define -DATERM_ROOT with the path of an Aterm installation on your system")
   endif() 
-  # Find Aterm based on Aterm_Root  
-  include(FindAterm)
+  if(NOT EXISTS "${ATERM_ROOT}" OR NOT IS_DIRECTORY "${ATERM_ROOT}")
+    message(WARNING "${ATERM_ROOT} does not exist or is not a directory.") 
+    message(FATAL_ERROR "Jovial Support Requires Aterm. Please set ATERM_ROOT to indicate the path of Aterm.")
+  endif() 
+  include(FindAterm) # Find Aterm based on ATERM_ROOT  
   find_aterm()
-  # Improve Aterm Support by setting unset vars 
-  if(NOT DEFINED ATERM_LIBRARY_PATH AND DEFINED ATERM_ROOT)
-    set (ATERM_LIBRARY_PATH "${ATERM_ROOT}/lib") 
-  endif()
+  # Error if we cannot find aterm
   if(NOT USE_ROSE_ATERM_SUPPORT)
     message(FATAL_ERROR "Support for experimental_jovial_frontend requires Aterm library support.\nPlease define ATERM_ROOT with location of Aterm install.")
-  endif()
-  # Find Stratego based on STRATEGO_ROOT
-  set(STRATEGO_ROOT "" CACHE PATH "Stratego install location") 
-  include(FindSGLRI)
-  find_sglri()
-  # Report to the user where we found stratego 
-  if(ROSE_WITH_STRATEGO)
-    message(STATUS "Found stratego: ${STRATEGO_LIBRARY}") 
   else() 
+    message(STATUS "Found aterm: ${ATERM_ROOT}") 
+  endif()
+  if(NOT DEFINED STRATEGO_ROOT) # Require location of aterm to be specified by the user at config time  
+    message(FATAL_ERROR "Jovial Support Requires Stratego. Please define -DSTRATEGO_ROOT with the path of a Stratego installation on your system")
+  endif()
+  include(FindSGLRI) # Find Stratego based on STRATEGO_ROOT
+  find_sglri()
+  # Error if we cannot find stratego 
+  if(NOT ROSE_WITH_STRATEGO)
     message(FATAL_ERROR "support for experimental_jovial_frontend requires Stratego library support\nPlease define STRATEGO_ROOT with location of Aterm install.")
+  else() 
+    message(STATUS "Found Stratego ${STRATEGO_ROOT}") # may need to link ROSE_DLL against ${STRATEGO_LIBRARY} in src/CMakeLists.txt
   endif()
 endif()
 

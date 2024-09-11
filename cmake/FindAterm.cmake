@@ -95,4 +95,8 @@ macro(find_aterm)
   set(ATERM_INSTALL_PATH ${ATERM_ROOT})
   set(USE_ROSE_ATERM_SUPPORT ${ROSE_WITH_ATERM})
   set(ROSE_BUILD_ATERM_SUPPORT ${ROSE_WITH_ATERM})
+  # Improve Aterm Support by setting unset vars 
+  if(NOT DEFINED ATERM_LIBRARY_PATH AND DEFINED ATERM_ROOT)
+    set (ATERM_LIBRARY_PATH "${ATERM_ROOT}/lib") 
+  endif()
 endmacro()
