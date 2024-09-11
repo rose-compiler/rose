@@ -173,6 +173,10 @@
 #cmakedefine ATERM_LIBRARY_PATH "@ATERM_LIBRARY_PATH@"
 // defines for jovial_support.C 
 #cmakedefine STRATEGO_BIN_PATH "@STRATEGO_BIN_PATH@"
+// defines for cmdline.C
+#cmakedefine BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH "@BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH@"
+// defines for sage_support.C, SageTreeBuilder.C, and utility_functions.C 
+#cmakedefine ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION 
 
 /* Define if building with Ada support */ 
 #cmakedefine BACKEND_ADA_COMPILER_NAME_WITH_PATH "@BACKEND_ADA_COMPILER_NAME_WITH_PATH@"

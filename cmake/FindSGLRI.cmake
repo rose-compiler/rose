@@ -25,6 +25,10 @@ macro(find_sglri)
   
   # Define macro for line 32 of src/frontend/Experimental_Jovial_ROSE_Connection/jovial_support.C
   set(STRATEGO_BIN_PATH "${STRATEGO_ROOT}/bin") 
+  # Define macro for cmdline.C
+  set(BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH "default_jovial_compiler")
+  # Define macro for sage_support.C, SageTreeBuilder.C, and utility_functions.C
+  set(ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION 1) 
 
   # Try to find the libATerm library 
   find_library(STRATEGO_LIBRARY NAMES ATerm PATHS "${STRATEGO_ROOT}/lib" NO_DEFAULT_PATH)
