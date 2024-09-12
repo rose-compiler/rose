@@ -295,7 +295,8 @@ public:
 
   bool IsAddressOfOp( const AstNodePtr& _s);
   bool IsMemoryAccess( const AstNodePtr& s);
-  static bool IsMemoryAllocation( const AstNodePtr& s);
+  static bool IsMemoryAllocation( const AstNodePtr& s, AstNodeType* allocType = 0);
+  static bool IsMemoryFree( const AstNodePtr& s, AstNodeType* freedType = 0, AstNodePtr* freedVariable=0);
 
   static bool IsExpression( const AstNodePtr& s, AstNodeType* exptype =0, AstNodePtr* strip_exp = 0);
   static AstNodeType GetExpressionType( const AstNodePtr& s);

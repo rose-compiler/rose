@@ -53,12 +53,17 @@ bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       DebugAstUtil([&var](){ return "save allocate:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Allocate);
     };
+    std::function<bool(SgNode*, SgNode*)> save_free = [&collect,&ast] (SgNode* var, SgNode* init) {
+      DebugAstUtil([&var](){ return "save free:" + AstInterface::AstToString(var); });
+      return collect(var, init, OperatorSideEffect::Free);
+    };
     collect_operator.set_modify_collect(save_mod);
     collect_operator.set_read_collect(save_read);
     collect_operator.set_kill_collect(save_kill);
     collect_operator.set_call_collect(save_call);
     collect_operator.set_new_var_collect(save_decl);
     collect_operator.set_allocate_collect(save_allocate);
+    collect_operator.set_free_collect(save_free);
     return collect_operator(ast);
 }
 
@@ -105,6 +110,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
      case OperatorSideEffect::Kill:
      case OperatorSideEffect::Decl:
      case OperatorSideEffect::Allocate:
+     case OperatorSideEffect::Free:
           break;
      default: 
         std::cerr << "Unexpected relation: " << relation << "\n";

@@ -157,6 +157,10 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       AppendMemoryAllocate(fa, s.get_ptr());
       Skip(s);
    }
+   else if (AstInterface::IsMemoryFree(s, 0, &lhs)) {
+      AppendMemoryFree(fa, lhs.get_ptr());
+      Skip(s);
+   }
    else {
      if (fa.IsFunctionCall(s)) {
          DebugLocalInfoCollect([&s]() { return " append function call " + AstInterface::AstToString(s); });
@@ -358,6 +362,16 @@ void StmtSideEffectCollect<AstNodePtr>::
 AppendMemoryAllocate( AstInterface& fa, const AstNodePtr& s) {
    if (allocate_collect != 0 && AstInterface::IsMemoryAllocation(s)) {
       (*allocate_collect)(s, curstmt);
+   }
+}
+template <class AstNodePtr>
+void StmtSideEffectCollect<AstNodePtr>::
+AppendMemoryFree( AstInterface& fa, const AstNodePtr& s) {
+   if (free_collect != 0) {
+      (*free_collect)(s, curstmt);
+   }
+   if (modcollect != 0) {
+       (*modcollect)(s, curstmt);
    }
 }
 #else

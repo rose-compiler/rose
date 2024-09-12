@@ -2267,18 +2267,65 @@ IsAddressOfOp( const AstNodePtr& _s)
 
 
 bool AstInterface::
-IsMemoryAllocation( const AstNodePtr& s)
+IsMemoryAllocation( const AstNodePtr& s, AstNodeType* exptype)
 {
   AstNodePtrImpl s1 = SkipCasting(s.get_ptr()), f;
-  if (!IsFunctionCall(s1, &f)) {
+  if (IsFunctionCall(s1, &f)) {
+    std::string name;
+    if (!IsVarRef(f, 0, &name)) {
+       return false;
+    }
+    if (name == "malloc") {
+       if (exptype != 0) {
+          *exptype = GetExpressionType(s);
+       }
+       return true;
+    }
     return false;
   }
-  std::string name;
-  if (!IsVarRef(f, 0, &name)) {
-     return false;
+  SgNewExp* is_new = isSgNewExp(s1.get_ptr());
+  if (is_new != 0) {
+     if (exptype != 0) {
+       *exptype = AstNodeTypeImpl(is_new->get_type()); 
+     }
+    return true;
   }
-  if (name == "malloc") {
-     return true;
+  return false;
+}
+
+bool AstInterface::
+IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
+{
+  AstNodePtrImpl s1 = SkipCasting(s.get_ptr()), f;
+  AstNodeList params;
+  if (IsFunctionCall(s1, &f, &params)) {
+    std::string name;
+    if (!IsVarRef(f, 0, &name)) {
+       return false;
+    }
+    if (name == "free") {
+       assert(params.size() == 1);
+       if (variable != 0) {
+         *variable = SkipCasting(params.front().get_ptr()); 
+         std::cerr << "variable is :" << AstToString(*variable) << "\n";
+       }
+       if (exptype != 0) {
+          *exptype = GetExpressionType(params.front()); 
+       }
+       return true;
+    }
+    return false;
+  }
+  SgDeleteExp* is_delete = isSgDeleteExp(s1.get_ptr());
+  if (is_delete != 0) {
+    if (variable != 0) {
+         * variable = is_delete->get_variable();
+         std::cerr << "variable is :" << AstToString(*variable) << "\n";
+    }
+    if (exptype != 0) {
+      *exptype = AstNodeTypeImpl(is_delete->get_variable()->get_type()); 
+    }
+    return true;
   }
   return false;
 }
@@ -2985,10 +3032,17 @@ bool AstInterface::
 IsExpression( const AstNodePtr& _s, AstNodeType* exptype, AstNodePtr* strip_exp)
 {
   AstNodePtrImpl s(_s);
+  {
+   SgExprStatement* is_expstmt = isSgExprStatement(s.get_ptr());
+   if (is_expstmt != 0) {
+     s = AstNodePtrImpl(is_expstmt->get_expression());
+   }
+  }
   if (IsVarRef(s, exptype)) {
      if (strip_exp != 0) *strip_exp = s;  
      return true;
   }
+  {
   SgExpression* exp = isSgExpression(s.get_ptr());
   if (exp != 0) {
     switch (exp->variantT()) {
@@ -3006,6 +3060,7 @@ IsExpression( const AstNodePtr& _s, AstNodeType* exptype, AstNodePtr* strip_exp)
     }
     if (strip_exp != 0) *strip_exp = AstNodePtrImpl(exp);
     return true;
+   }
   }
   return false;
 }

@@ -38,6 +38,7 @@ class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
   virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) = 0; 
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) = 0; 
   virtual void AppendMemoryAllocate( AstInterface& fa, const AstNodePtr& s) {}
+  virtual void AppendMemoryFree( AstInterface& fa, const AstNodePtr& s) {}
 
   // Analyzes call arguments to determine what are read. Returns callee if requested.
   void AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* callee) ; 
@@ -59,6 +60,7 @@ class StmtSideEffectCollect
   using SideEffectAnalysisInterface<AstNodePtr>::readcollect;
   using SideEffectAnalysisInterface<AstNodePtr>::callcollect;
   using SideEffectAnalysisInterface<AstNodePtr>::allocate_collect;
+  using SideEffectAnalysisInterface<AstNodePtr>::free_collect;
   using SideEffectAnalysisInterface<AstNodePtr>::varcollect;
  public:
   StmtSideEffectCollect(AstInterface& fa, FunctionSideEffectInterface* a=0) 
@@ -85,6 +87,7 @@ class StmtSideEffectCollect
     virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) override;
     virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) override;
     virtual void AppendMemoryAllocate( AstInterface& fa, const AstNodePtr& s) override;
+    virtual void AppendMemoryFree( AstInterface& fa, const AstNodePtr& s) override;
     AstInterface& fa_;
   private:
     using StmtInfoCollect<AstNodePtr>::curstmt;
