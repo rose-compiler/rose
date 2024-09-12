@@ -231,15 +231,23 @@ namespace ReadWriteSets {
     }
 
       /**
-       * Comparison includes accessType because one variable may be
+       * Comparison uses variableName, then accessType, then NodeId.
+       * Initially it only used NodeID and accessType, but
+       * variableName was added to keep the order consistent between
+       * runs to help with testing,
+       * AccessType is included because one variable may be
        * accessed in multiple ways.
        **/  
     bool operator<(const AccessSetRecord& rhs) const {
-        if ((nodeId < rhs.nodeId) ||
-            ((nodeId == rhs.nodeId) && (accessType < rhs.accessType))) {
-            return true;
-        }
-        return false;
+      if (variableName < rhs.variableName) return true;
+      if (variableName > rhs.variableName) return false;
+
+      if (accessType < rhs.accessType) return true;
+      if (accessType > rhs.accessType) return false;
+
+      if (nodeId < rhs.nodeId) return true;
+
+      return false;
     }
     //! \brief nlohmann's default way to write to json, works with >> operator 
     friend void to_json(nlohmann::json& funcJson, const ReadWriteSets::AccessSetRecord& record);
