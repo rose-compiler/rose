@@ -159,6 +159,9 @@ Jovial:
 Ada:
     extends: .develop-base
 
+Libadalang:
+    extends: .develop-base
+
 EDG-Binary-Test:
     extends: .develop-base
 
