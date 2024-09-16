@@ -1,7 +1,7 @@
 variables:
     THIS_FILE: ".gitlab-ci.yml"
     SSH_ORIGIN: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/rose.git"
-    TEST_SCRIPTS: "-b simon29/output_info ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/testing-scripts.git"
+    TEST_SCRIPTS: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/testing-scripts.git"
     ROSE_REMOTE_URL: "rose-github:rose-compiler/rose.git"
     TEST_SUITE: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/rose-tests.git"
     TEST_DIRECTORY: "testing-scripts"
@@ -189,7 +189,7 @@ Windows-Build:
     tags:
         - workpool:windows
     before_script:
-        - if (Test-Path -Path $TEST_DIRECTORY){ cd $TEST_DIRECTORY ; git pull origin master ; cd ..}  else {git clone -b simon29/output_info ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/testing-scripts.git $TEST_DIRECTORY}
+        - if (Test-Path -Path $TEST_DIRECTORY){ cd $TEST_DIRECTORY ; git pull origin master ; cd ..}  else {git clone $TEST_SCRIPTS $TEST_DIRECTORY}
     script:
         - powershell ./$TEST_DIRECTORY/development/cmake-windows.ps1
 
