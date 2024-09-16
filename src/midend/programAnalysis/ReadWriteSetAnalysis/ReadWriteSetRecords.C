@@ -385,20 +385,22 @@ void ReadWriteSets::to_json(nlohmann::json& funcJson, const ReadWriteSets::Funct
   std::sort(calledFunctionsVec.begin(), calledFunctionsVec.end());
   funcJson["calledFunctions"] = calledFunctionsVec;
   
-  
+  //Output readset
   std::vector<nlohmann::json> readSetJson;
   auto readSetIt = record.readSet.begin();
   for(;readSetIt != record.readSet.end(); ++readSetIt) {
     readSetJson.push_back(*readSetIt);
   }
-  std::sort(readSetJson.begin(), readSetJson.end());
+  //No need to sort because record.readSet is implemented as a set, which is already ordered in a BST
+  //in fact, calling sort here will mess it up because it will use nlohmann::json's operator<
 
+  //Output writeset
   std::vector<nlohmann::json> writeSetJson;
   auto writeSetIt = record.writeSet.begin();
   for(;writeSetIt != record.writeSet.end(); ++writeSetIt) {
     writeSetJson.push_back(*writeSetIt);
   }
-  std::sort(writeSetJson.begin(), writeSetJson.end());
+  //No need to sort because record.writeSet is implemented as a set, see above
 
   funcJson["readSet"] = readSetJson;
   funcJson["writeSet"] = writeSetJson;
