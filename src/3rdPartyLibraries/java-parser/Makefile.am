@@ -23,8 +23,8 @@ JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${sr
 #	DQ (11/23/2010): javah only requires the class file which are in the build directory.
 #	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaTraversal
 #	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaParser
-	$(JAVAC) -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${abs_builddir} ${srcdir}/JavaTraversal.java 
-	$(JAVAC) -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${abs_builddir} ${srcdir}/JavaParser.java 
+	$(JAVAC) -d ${abs_builddir} -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${abs_builddir} ${srcdir}/JavaTraversal.java
+	$(JAVAC) -d ${abs_builddir} -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${abs_builddir} ${srcdir}/JavaParser.java
 #	DQ (10/13/2010): I want to avoid copying ecj-3.8.2.jar into the build tree, but it is required for now.
 #	Only ROSE translators need it, not the javac and javah commands (above).
 	@echo "After building JavaTraversal.java, copy ecj-3.8.2.jar from srcdir to abs_builddir (only required for ROSE to find ecj-3.8.2.jar (fix later))"
@@ -36,7 +36,7 @@ JavaParser.class: ${srcdir}/JavaParser.java
 #	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaParser
 
 JavaParser.h: ${srcdir}/JavaParser.java
-	$(JAVAC) -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:${abs_builddir} ${srcdir}/JavaParser.java
+	$(JAVAC) -d ${abs_builddir} -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:${abs_builddir} ${srcdir}/JavaParser.java
 #	$(JAVAH) -jni -classpath ${srcdir}/ecj-3.8.2.jar:. JavaParser
 
 # This is needed when distcheck compiles the code, I don't know why.
@@ -51,7 +51,7 @@ ecjASTVisitor.class:  ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.
 # no longer be built with openjdk (at least by version 12.0).  Thus JavaTraversal.h
 # does not need to be created [CR 2019.05.05].
 JavaTraversal.h: ${srcdir}/JavaTraversal.java
-	$(JAVAC) -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${abs_builddir} ${srcdir}/JavaTraversal.java
+	$(JAVAC) -d ${abs_builddir} -h ${abs_builddir} -cp ${srcdir}/ecj-3.8.2.jar:${abs_builddir} ${srcdir}/JavaTraversal.java
 #	$(JAVAH) -jni JavaTraversal
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
