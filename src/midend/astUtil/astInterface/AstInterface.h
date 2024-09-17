@@ -338,7 +338,7 @@ public:
   AstNodeType GetType(const std::string& name);
   bool IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);
   static void GetTypeInfo( const AstNodeType& t, std::string* name = 0, 
-                           std::string* stripname = 0, int* size = 0);
+                           std::string* stripname = 0, int* size = 0, bool use_global_unique_name = false);
   static std::string GetTypeName(const AstNodeType& t) 
      { std::string r; GetTypeInfo(t, &r); return r; }
   static std::string GetBaseTypeName(const AstNodeType& t) 

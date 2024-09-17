@@ -61,7 +61,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   void set_top( SgNode* _top);
 
   static void GetTypeInfo( SgType* t, std:: string* name = 0, 
-                           std:: string* stripname = 0, int* size = 0);
+                           std:: string* stripname = 0, int* size = 0, bool use_global_unique_name=false);
   static SgType* GetTypeInt();
 
   SgClassSymbol* LookupClass(const char* start);

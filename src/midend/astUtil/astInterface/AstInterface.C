@@ -2896,17 +2896,28 @@ LookupVarDecl( const std::string& varname, SgScopeStatement* /*loc*/)
 }
 
 void AstInterfaceImpl::
-GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size)
+GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size, bool use_global_name)
 {
-  std::string typeName = get_type_name(t);
-  // for instantiated template types, return the original template type name
-  // TODO: need a better way to handle this
-  if (isSgClassType(t))
   {
-    SgDeclarationStatement * decl = isSgClassType(t)->get_declaration();
+    SgPointerType* pointer_type = isSgPointerType(t);
+    if (pointer_type != 0 && use_global_name && tname != 0) {
+       GetTypeInfo(pointer_type->get_base_type(), tname, stripname, size, use_global_name);
+       *tname = (*tname) + "*";
+       return;
+    }
+  }
+  std::string typeName = get_type_name(t);
+  // For instantiated template types, return the original template type name.
+  if (isSgNamedType(t))
+  {
+    SgDeclarationStatement * decl = isSgNamedType(t)->get_declaration();
     SgTemplateInstantiationDecl* insDecl= isSgTemplateInstantiationDecl(decl);
-    if (insDecl)
+    if (insDecl) {
       typeName=insDecl->get_templateDeclaration()->get_qualified_name();
+    }
+    else if (use_global_name) {
+      typeName = AstInterface::GetGlobalUniqueName(decl, typeName);
+    } 
   }
 
   std::string r1 = ::StripGlobalQualifier(typeName);
@@ -2928,8 +2939,8 @@ GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size)
 }
 
 void AstInterface::
-GetTypeInfo(const AstNodeType& t, std::string *tname, std::string* stripname, int* size)
-{ AstInterfaceImpl::GetTypeInfo(AstNodeTypeImpl(t).get_ptr(), tname, stripname, size); }
+GetTypeInfo(const AstNodeType& t, std::string *tname, std::string* stripname, int* size, bool use_global_name)
+{ AstInterfaceImpl::GetTypeInfo(AstNodeTypeImpl(t).get_ptr(), tname, stripname, size, use_global_name); }
 
 bool
 AstInterface::IsPointerType(const AstNodeType& __type)

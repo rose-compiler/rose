@@ -133,7 +133,7 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     SgType* variable_is_type = isSgType(variable);
     if (variable_is_type != 0) {
         std::string variable_name;
-        AstInterface::GetTypeInfo(variable_is_type, &variable_name);
+        AstInterface::GetTypeInfo(variable_is_type, &variable_name, 0, 0, true);
         return variable_name;
     }
     switch (variable->variantT()) {
