@@ -410,3 +410,6 @@ Status-Post-Processing:
     needs:
       - job: RHEL7-Status
       - job: RHEL8-Status
+
+Coverage-Analysis:
+    extends: .release-base 
