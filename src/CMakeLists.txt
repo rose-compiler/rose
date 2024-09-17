@@ -663,6 +663,13 @@ if(ENABLE-JAVA)
   list(APPEND rose_LIB_OBJS roseJava)
 endif()
 
+if(ENABLE-JOVIAL)
+  list(APPEND rose_LIB_OBJS ${ATERM_LIBRARY})
+  list(APPEND rose_LIB_OBJS roseATerm)
+  list(APPEND rose_LIB_OBJS roseTreeBuilder)
+  list(APPEND rose_LIB_OBJS roseJovial)
+endif()
+
 if (ENABLE-PHP)
   list(APPEND rose_LIB_OBJS phpFrontend)
 endif()
@@ -716,6 +723,11 @@ install(
     featureTests.h RoseFirst.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
     ${CMAKE_BINARY_DIR}/rosePublicConfig.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
+
+# Install the parse table for the Jovial front-end
+if(ENABLE-JOVIAL)
+  install(FILES ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/jovial-parser/share/rose/Jovial.tbl DESTINATION share/rose)
+endif()
 
 #cmake_host_system_information(RESULT Ncpu QUERY NUMBER_OF_PHYSICAL_CORES)
 #blt_add_code_checks(PREFIX "rosecheck"
@@ -916,12 +928,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # Move this to src/frontend/CxxFrontend/EDG/EDG_6.5/src/CMakeLists.txt and edg_6.0
   set(ROSE_USE_EDG_QUAD_FLOAT 1)
 endif() 
-
-if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
-  if(NOT ${ATERM_LIBRARY} STREQUAL "")
-    set(rose_library_list "${rose_library_list};${ATERM_LIBRARY}")
-  endif()
-endif()
 
 # Add -pthread if Threads_FOUND or Boost::thread found to avoid rose-tool segfaults 
 if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")

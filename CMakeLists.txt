@@ -712,17 +712,11 @@ if(ENABLE-JOVIAL) # Find dependencies Aterm and Stratego
   else() 
     message(STATUS "Found aterm: ${ATERM_ROOT}") 
   endif()
-  if(NOT DEFINED STRATEGO_ROOT) # Require location of aterm to be specified by the user at config time  
-    message(FATAL_ERROR "Jovial Support Requires Stratego. Please define -DSTRATEGO_ROOT with the path of a Stratego installation on your system")
+  if(NOT DEFINED STRATEGO_ROOT) # Require location of sglri executable
+    message(FATAL_ERROR "Jovial support requires the Stratego sglri executable. Please define -DSTRATEGO_ROOT with the path of a Stratego installation on your system")
   endif()
   include(FindSGLRI) # Find Stratego based on STRATEGO_ROOT
   find_sglri()
-  # Error if we cannot find stratego 
-  if(NOT ROSE_WITH_STRATEGO)
-    message(FATAL_ERROR "support for experimental_jovial_frontend requires Stratego library support\nPlease define STRATEGO_ROOT with location of Aterm install.")
-  else() 
-    message(STATUS "Found Stratego ${STRATEGO_ROOT}") # may need to link ROSE_DLL against ${STRATEGO_LIBRARY} in src/CMakeLists.txt
-  endif()
 endif()
 
 option(ENABLE-PPL "Support for Parma Polyhedral Library" OFF)

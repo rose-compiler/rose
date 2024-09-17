@@ -1,8 +1,11 @@
 #include "sage3basic.h"
 
-#include "ATermToSageJovialTraversal.h"
-#include "Jovial_to_ROSE_translation.h"
 #include "Tokens.h"
+#include "rose_config.h"
+#include "SageTreeBuilder.h"
+#include "Jovial_to_ROSE_translation.h"
+#include "ATermToSageJovialTraversal.h"
+
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0

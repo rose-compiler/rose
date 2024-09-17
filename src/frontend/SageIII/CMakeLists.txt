@@ -95,6 +95,8 @@ endif()
 add_library(sage3 OBJECT ${SAGE3_SOURCES})
 add_dependencies(sage3 rosetta_generated)
 
+# Add include directory to SageTreeBuilder files
+target_include_directories(sage3 PRIVATE ../Experimental_General_Language_Support)
 
 ########### install files ###############
 

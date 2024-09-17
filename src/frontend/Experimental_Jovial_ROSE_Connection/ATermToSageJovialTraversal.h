@@ -3,8 +3,6 @@
 
 #include "ATerm/ATermTraversal.h"
 #include "general_language_translation.h"
-#include "Jovial_to_ROSE_translation.h"
-#include "SageTreeBuilder.h"
 
 namespace rb = Rose::builder;
 

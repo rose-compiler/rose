@@ -7,6 +7,7 @@
 
 #include "jovial_support.h"
 #include "preprocess.h"
+#include "SageTreeBuilder.h"
 #include "ATermToSageJovialTraversal.h"
 
 #include <assert.h>
