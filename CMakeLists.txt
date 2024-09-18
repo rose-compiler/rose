@@ -882,7 +882,7 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
 endif()
 
 # Initialize variable for where to look for libquadmath.so
-set(QUADMATH_SEARCH_PATHS "")
+set(QUADMATH_SEARCH_PATHS "" CACHE PATH "Paths to search for libquadmath.so")
 # libquadmath.so is in compiler files for gcc, not clang (on LC systems)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-C)
   if(DEFINED ENV{SYS_TYPE} AND ${CMAKE_CXX_COMPILER_VERSION} MATCHES "10")
@@ -1127,6 +1127,8 @@ if(VERBOSE)
   # the tools for creating libraries
   message(STATUS "CMAKE_AR:                           ${CMAKE_AR}")
   message(STATUS "CMAKE_RANLIB:                       ${CMAKE_RANLIB}")
+
+  message(STATUS "QUADMATH_LIBRARY:                   ${QUADMATH_LIBRARY}")
 endif()
 
 

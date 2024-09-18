@@ -726,11 +726,19 @@ install(
 # Dependencies of the ROSE library. librose depends on additional libraries.
 ########################################################################################################################
 
+set(rose_library_dir_list "")
+set(lib_dir "")
+macro(add_library_dependency lib)
+  get_filename_component(lib_dir ${lib} DIRECTORY)
+  list(APPEND rose_library_dir_list ${lib_dir})
+endmacro()
+
 # Z3 has an executable component and a development (library and headers) component that can be installed independently
 # of each other. Therfore Z3_FOUND_EXE says whether the executable component was found, and Z3_FOUND_LIB says whether
 # the development component was found; Z3_FOUND is set if either component is found.
 if(Z3_FOUND_LIB)
   target_link_libraries(ROSE_DLL ${Z3_LIBRARY})
+  list(APPEND rose_library_dir_list ${lib_dir})
 endif()
 
 # YAML-cpp is for parsing YAML and JSON files.
@@ -746,6 +754,7 @@ endif()
 # Capstone is used to disassemble ARM.
 if(CAPSTONE_FOUND)
   target_link_libraries(ROSE_DLL ${CAPSTONE_LIBRARY})
+  add_library_dependency(${CAPSTONE_LIBRARY})
 endif()
 
 # If readline was found.
@@ -775,13 +784,6 @@ endif()
 # ???
 if(NOT BINARY_EDG)
   add_definitions(-DUSE_FAKE_EDG)
-endif()
-
-# Add quadmath to link libraries if present
-if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
-  if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
-    set(rose_library_dir_list "${rose_library_dir_list};${QUADMATH_LIBRARY}")
-  endif()
 endif()
 
 
@@ -865,15 +867,22 @@ install(TARGETS rose-compiler DESTINATION bin)
 #Build LDFLAGS for ROSE tools
 set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose -std=c++14")
 
-set(rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
-set(rose_library_dir_list "${rose_library_dir_list};${Boost_LIBRARY_DIRS}")
+list(APPEND rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
+list(APPEND rose_library_dir_list ${Boost_LIBRARY_DIRS})
 if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
   if(NOT ${ATERM_LIBRARY} STREQUAL "")
-    get_filename_component(ATERM_LIBRARY_DIR ${ATERM_LIBRARY} DIRECTORY)
-    set(rose_library_dir_list "${rose_library_dir_list};${ATERM_LIBRARY_DIR}")
+    add_library_dependency(${ATERM_LIBRARY})
     set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${ATERM_LIBRARY_DIR}/../include")
   endif()
 endif()
+
+# Add quadmath to link libraries if present
+if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
+  if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
+    add_library_dependency(${QUADMATH_LIBRARY})
+  endif()
+endif()
+
 foreach(X IN LISTS rose_library_dir_list)
   set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${X}")
 endforeach()
@@ -994,6 +1003,7 @@ foreach(X IN LISTS rose_library_dir_list)
   set(ROSE_LINK_RPATHS "${ROSE_LINK_RPATHS} -Wl,-rpath ${X}")
 endforeach()
 
+message("rose_library_dir_list: ${rose_library_dir_list}")
 message("ROSE_LIBDIRS: ${ROSE_LIBDIRS}")
 message("ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
 
