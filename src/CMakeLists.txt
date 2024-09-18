@@ -738,17 +738,19 @@ endmacro()
 # the development component was found; Z3_FOUND is set if either component is found.
 if(Z3_FOUND_LIB)
   target_link_libraries(ROSE_DLL ${Z3_LIBRARY})
-  list(APPEND rose_library_dir_list ${lib_dir})
+  add_library_dependency(${Z3_LIBRARY})
 endif()
 
 # YAML-cpp is for parsing YAML and JSON files.
 if(ENABLE-YAML AND YAMLCPP_FOUND)
   target_link_libraries(ROSE_DLL ${YAMLCPP_LIBRARY})
+  add_library_dependency(${Z3_LIBRARY})
 endif()
 
 # Dlib is a C++ support library. ROSE uses matrices and some graph algorithms currently.
 if(DLIB_FOUND)
   target_link_libraries(ROSE_DLL ${DLIB_LIBRARY})
+  add_library_dependency(${DLIB_LIBRARY})
 endif()
 
 # Capstone is used to disassemble ARM.
@@ -760,17 +762,21 @@ endif()
 # If readline was found.
 if(ENABLE-READLINE AND READLINE_FOUND)
   target_link_libraries(ROSE_DLL ${READLINE_LIBRARY})
+  add_library_dependency(${READLINE_LIBRARY})
 endif()
 
 # The GNU GCrypt library is used for computing a wide variety of hashes. It needs the GPG-Error library.
 if(GCRYPT_FOUND AND GPGERROR_FOUND)
   target_link_libraries(ROSE_DLL ${GCRYPT_LIBRARY})
+  add_library_dependency(${GCRYPT_LIBRARY})
   target_link_libraries(ROSE_DLL ${GPGERROR_LIBRARY})
+  add_library_dependency(${GPGERROR_LIBRARY})
 endif()
 
 # Zlib is a compression library and is needed by Boost. Make sure you compiled Boost with this same zlib.
 if(ZLIB_FOUND)
   target_link_libraries(ROSE_DLL ${ZLIB_LIBRARY})
+  add_library_dependency(${ZLIB_LIBRARY})
 endif()
 
 # If POET is enabled in ROSE, we need to link in some additional dependencies.
@@ -998,6 +1004,7 @@ endif()
 set(ROSE_LIBDIRS "")
 set(ROSE_LINK_RPATHS "")
 
+list(REMOVE_DUPLICATES rose_library_dir_list)
 foreach(X IN LISTS rose_library_dir_list)
   set(ROSE_LIBDIRS "${ROSE_LIBDIRS} ${X}")
   set(ROSE_LINK_RPATHS "${ROSE_LINK_RPATHS} -Wl,-rpath ${X}")
