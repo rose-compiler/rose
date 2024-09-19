@@ -2,7 +2,7 @@ if(ENABLE-JOVIAL)
   add_subdirectory(ATerm)
 
   # Library target for libroseTreeBuilder
-  add_library(roseTreeBuilder STATIC 
+  add_library(roseTreeBuilder OBJECT 
     SageTreeBuilder.C
     ModuleBuilder.C
     PosInfo.C

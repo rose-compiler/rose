@@ -271,7 +271,6 @@ endif()
 
 # Paths to install header, executable, and libraries
 set(INCLUDE_INSTALL_DIR "include/rose")
-set(INCLUDE_INSTALL_DIR_FOR_INTRINSICS "include") 
 set(BIN_INSTALL_DIR     "bin")
 set(LIB_INSTALL_DIR     "${ROSE_LIB_DIR_NAME}")
 

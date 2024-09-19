@@ -1,6 +1,6 @@
-add_library(RoseCodeGen OBJECT Driver.C API.C Factory.C)
+add_library(roseCodegen OBJECT Driver.C API.C Factory.C)
 
-add_dependencies(RoseCodeGen rosetta_generated)
+add_dependencies(roseCodegen rosetta_generated)
 
 ########### install files ###############
 

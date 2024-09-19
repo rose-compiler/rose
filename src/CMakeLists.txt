@@ -649,7 +649,7 @@ set(rose_LIB_OBJS
   roseSarif
   roseStringUtility
   RoseAST
-  RoseCodeGen
+  roseCodegen
   roseGeneratedBinaryAnalysis
   roseGeneratedJovial
   mstl
@@ -686,7 +686,7 @@ endif()
 
 # TODO Conditional either EDG or CLang or nothing
 if(ENABLE-CPP)
-  list(APPEND rose_LIB_OBJS edg_internal newsage)
+ list(APPEND rose_LIB_OBJS RoseCxxFrontendEDG)
 endif()
 
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)

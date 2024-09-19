@@ -14,7 +14,7 @@ if(ENABLE-JOVIAL)
   add_dependencies(jovial_preprocess rosetta_generated)
 
   # Library target for libroseJovial
-  add_library(roseJovial STATIC
+  add_library(roseJovial OBJECT
     jovial_support.C 
     ATermToSageJovialTraversal.C 
     preprocess.C
