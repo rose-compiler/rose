@@ -2,8 +2,8 @@
 
 #include <Sawyer/Assert.h>
 #include <boost/filesystem.hpp>
-#include <nlohmann/json.h>
 #include <fstream>
+#include <nlohmann/json.h>
 
 namespace Rose {
 namespace Yaml {
@@ -16,7 +16,7 @@ toYaml(const json &j) {
     if (j.is_null()) {
         /*void*/
     } else if (j.is_object()) {
-        for (auto &item: j.items())
+        for (auto &item : j.items())
             y[item.key()] = toYaml(item.value());
     } else if (j.is_array()) {
         for (size_t i = 0; i < j.size(); ++i)
@@ -47,5 +47,24 @@ parseJson(const std::string &content) {
     return toYaml(json::parse(content));
 }
 
-} // namespace
-} // namespace
+Node
+parseYaml(const boost::filesystem::path &fileName) {
+    return Sawyer::Yaml::parse(fileName);
+}
+
+Node
+parseYaml(std::istream &inputStream) {
+    return Sawyer::Yaml::parse(inputStream);
+}
+
+Node
+parseYaml(const std::string &content) {
+    return Sawyer::Yaml::parse(content);
+}
+Node
+parseYaml(const char *content) {
+    return Sawyer::Yaml::parse(content);
+}
+
+} // namespace Yaml
+} // namespace Rose
