@@ -949,6 +949,7 @@ GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
        } 
        scope = AstInterfaceImpl::GetScope(scope);
   }
+  result.erase(std::remove_if(result.begin(), result.end(), ::isspace), result.end());
   return result;
 }
 

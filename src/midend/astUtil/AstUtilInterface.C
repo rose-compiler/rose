@@ -160,7 +160,7 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     if (name == "") {
         name = "_UNKNOWN_";
     }
-    DebugAstUtil([&variable,&name](){ return "viable is " + AstInterface::AstToString(variable) + " name is " + name; });
+    DebugAstUtil([&variable,&name](){ return "variable is " + AstInterface::AstToString(variable) + " name is " + name; });
     return name;
 }
 
