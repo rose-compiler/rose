@@ -1507,8 +1507,7 @@ Grammar::setUpExpressions () {
     LongLongIntVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     LongLongIntVal.setFunctionSource         ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
-    // LongLongIntVal should return a value of type TypeLongLong (I think!)
-    LongLongIntVal.editSubstitute         ( "GENERIC_TYPE", "SgTypeLong" );
+    LongLongIntVal.editSubstitute         ( "GENERIC_TYPE", "SgTypeLongLong" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (LshiftAssignOp,         "LshiftAssignOp",         "LSHIFT_ASSIGN_OP" );
