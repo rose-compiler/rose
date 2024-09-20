@@ -241,6 +241,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/Utility.C						\
 	BinaryAnalysis/PointerDetection.C						\
 	BinaryAnalysis/Reachability.C							\
+	BinaryAnalysis/ReadWriteSets.C							\
 	BinaryAnalysis/RegisterDescriptor.C						\
 	BinaryAnalysis/RegisterDictionary.C						\
 	BinaryAnalysis/RegisterNames.C							\

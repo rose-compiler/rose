@@ -53,6 +53,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2.h>
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
+#include <Rose/BinaryAnalysis/ReadWriteSets.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>

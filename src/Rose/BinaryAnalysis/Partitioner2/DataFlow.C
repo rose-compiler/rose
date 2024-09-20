@@ -455,8 +455,9 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
 
             // Create the stack variable.
             const StackVariableMeta &meta = cellCoalescer[offset];
-            Variables::StackVariable var(function, offset, nBytes, Variables::StackVariable::Purpose::UNKNOWN, meta.writers);
-            var.ioProperties(meta.ioProperties);
+            Variables::StackVariable var(function, offset, nBytes, Variables::StackVariable::Purpose::UNKNOWN);
+            for (const Address insnAddr: meta.writers.values())
+                var.insertAccess(insnAddr, Variables::StackVariable::Access::WRITE);
             var.setDefaultName();
             retval.insert(var.interval(), var);
 

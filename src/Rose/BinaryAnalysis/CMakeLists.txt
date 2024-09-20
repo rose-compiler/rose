@@ -41,6 +41,7 @@ add_library(roseBinaryAnalysis OBJECT
   NoOperation.C
   PointerDetection.C
   Reachability.C
+  ReadWriteSets.C
   RegisterDescriptor.C
   RegisterParts.C
   RegisterDictionary.C
@@ -119,6 +120,7 @@ install(FILES
   Partitioner2.h
   PointerDetection.h
   Reachability.h
+  ReadWriteSets.h
   RegisterDescriptor.h
   RegisterDictionary.h
   RegisterNames.h

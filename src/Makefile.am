@@ -548,6 +548,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/Utility.h					\
 	Rose/BinaryAnalysis/PointerDetection.h						\
 	Rose/BinaryAnalysis/Reachability.h						\
+	Rose/BinaryAnalysis/ReadWriteSets.h						\
 	Rose/BinaryAnalysis/RegisterDescriptor.h					\
 	Rose/BinaryAnalysis/RegisterDictionary.h					\
 	Rose/BinaryAnalysis/RegisterNames.h						\

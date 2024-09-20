@@ -30,6 +30,7 @@ run $(librose_compile)				\
     NoOperation.C				\
     PointerDetection.C				\
     Reachability.C				\
+    ReadWriteSets.C				\
     RegisterDescriptor.C			\
     RegisterDictionary.C			\
     RegisterNames.C				\
@@ -106,6 +107,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Partitioner2.h						\
     PointerDetection.h						\
     Reachability.h						\
+    ReadWriteSets.h						\
     RegisterDescriptor.h					\
     RegisterParts.h						\
     RegisterDictionary.h					\

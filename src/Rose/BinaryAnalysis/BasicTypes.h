@@ -41,6 +41,8 @@ class MemoryMap;
 using MemoryMapPtr = Sawyer::SharedPointer<MemoryMap>;  /**< Reference counting pointer. */
 class NoOperation;
 class Reachability;
+class ReadWriteSets;
+using ReadWriteSetsPtr = std::shared_ptr<ReadWriteSets>; /**< Reference counting pointer. */
 using RegisterDescriptors = std::vector<RegisterDescriptor>; /**< List of register descriptors in dictionary. */
 class RegisterDictionary;
 using RegisterDictionaryPtr = Sawyer::SharedPointer<RegisterDictionary>; /**< Reference counting pointer. */

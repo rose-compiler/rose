@@ -71,10 +71,46 @@ std::string sizeStr(uint64_t size);
 
 /** Describes a local or global variable. */
 class BaseVariable {
-    rose_addr_t maxSizeBytes_ = 0;                  // maximum possible size of this variable in bytes
-    AddressSet insnVas_;                            // instructions where the variable was detected that reference the variable
-    InstructionSemantics::BaseSemantics::InputOutputPropertySet ioProperties_; /**< Properties of a location. */
-    std::string name_;                              // optional variable name
+public:
+    /** Whether a variable is read or written. */
+    enum class Access {
+        READ            = 0x0001,                       /**< Variable is read.  */
+        WRITE         = 0x0002,                         /**< Variable is written. */
+    };
+
+    /** Whether a variable is read or written by an instruction. */
+    using AccessFlags = Sawyer::BitFlags<Access, uint64_t>;
+
+    /** Information about how an instruction accesses a variable. */
+    class InstructionAccess {
+    public:
+        Address insnAddr = 0;                           /**< Address of instruction accessing the variable. */
+        AccessFlags access;                             /**< How the instruction accesses the variable. */
+
+    private:
+        InstructionAccess() = default;                  // needed for boost::serialization
+
+    public:
+        /** Constructor. */
+        InstructionAccess(const Address insnAddr, const AccessFlags access)
+            : insnAddr(insnAddr), access(access) {}
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(insnAddr);
+            s & BOOST_SERIALIZATION_NVP(access);
+        }
+#endif
+    };
+
+private:
+    rose_addr_t maxSizeBytes_ = 0;                      // maximum possible size of this variable in bytes
+    std::vector<InstructionAccess> insns_;              // instructions accessing the variable
+    std::string name_;                                  // optional variable name
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -83,8 +119,7 @@ private:
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(maxSizeBytes_);
-        s & BOOST_SERIALIZATION_NVP(insnVas_);
-        s & BOOST_SERIALIZATION_NVP(ioProperties_);
+        s & BOOST_SERIALIZATION_NVP(insns_);
         s & BOOST_SERIALIZATION_NVP(name_);
     }
 #endif
@@ -96,7 +131,7 @@ protected:
     BaseVariable();
 
     /** Construct a variable with a given maximum size. */
-    BaseVariable(size_t maxSizeBytes, const AddressSet &definingInstructionVas, const std::string &name);
+    BaseVariable(size_t maxSizeBytes, const std::vector<InstructionAccess> &definingInstructions, const std::string &name);
 
 public:
     BaseVariable(const BaseVariable&);
@@ -113,26 +148,26 @@ public:
     void maxSizeBytes(rose_addr_t size);
     /** @} */
 
+    /** Property: Defining instructions.
+     *
+     *  This is information about each instruction that accesses a variable, such as whether the instruction reads or writes to
+     *  that variable.
+     *
+     * @{ */
+    const std::vector<InstructionAccess>& instructionsAccessing() const;
+    void instructionsAccessing(const std::vector<InstructionAccess>&);
+    /** @} */
+
     /** Property: Addresses of instructions related to this variable.
      *
      *  This is the set of addresses for the instructions from which this variable was detected. This is typically instructions
-     *  that read or write to memory using an offset from the function's frame.
-     *
-     * @{ */
-    const AddressSet& definingInstructionVas() const;
-    AddressSet& definingInstructionVas();
-    void definingInstructionVas(const AddressSet &vas);
-    /** @} */
+     *  that read or write to memory using an offset from the function's frame. */
+    AddressSet definingInstructionVas() const;
 
     /** Property: I/O properties.
      *
-     *  This property is a set of flags that describe how the variable is accessed.
-     *
-     * @{ */
-    const InstructionSemantics::BaseSemantics::InputOutputPropertySet& ioProperties() const;
-    InstructionSemantics::BaseSemantics::InputOutputPropertySet& ioProperties();
-    void ioProperties(const InstructionSemantics::BaseSemantics::InputOutputPropertySet &set);
-    /** @} */
+     *  This property is a set of flags that describe how the variable is accessed. */
+    InstructionSemantics::BaseSemantics::InputOutputPropertySet ioProperties() const;
 
     /** Property: Optional variable name.
      *
@@ -143,6 +178,9 @@ public:
     const std::string& name() const;
     void name(const std::string &s);
     /** @} */
+
+    /** Insert information about how an instruction accesses this variable. */
+    void insertAccess(Address insnAddr, AccessFlags);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,7 +206,7 @@ public:
      *  this boundary and what purpose the addresses immediately above this boundary serve. */
     struct Boundary {
         int64_t frameOffset = 0;                        /**< Address of boundary with respect to frame pointer. */
-        AddressSet definingInsns;                       /**< Instructions that define this boundary. */
+        std::vector<InstructionAccess> definingInsns;   /**< Instructions that define this boundary. */
         Purpose purpose = Purpose::UNKNOWN;             /**< Purpose of addresses above this boundary. */
     };
 
@@ -202,7 +240,8 @@ public:
 
     /** Construct a variable descriptor. */
     StackVariable(const Partitioner2::FunctionPtr&, int64_t frameOffset, rose_addr_t maxSizeBytes, Purpose,
-                  const AddressSet &definingInstructionVas = AddressSet(), const std::string &name = "");
+                  const std::vector<InstructionAccess> &definingInstructions = std::vector<InstructionAccess>(),
+                  const std::string &name = "");
 
     StackVariable(const StackVariable&);
     ~StackVariable();
@@ -256,8 +295,12 @@ public:
 
     /** Insert a new boundary or adjust an existing boundary.
      *
-     *  The boundaries are assumed to be unsorted, and if a new boundary is inserted it is inserted at the end of the list. */
-    static Boundary& insertBoundary(Boundaries& /*in,out*/, int64_t frameOffset, rose_addr_t insnVa);
+     *  The boundaries are assumed to be unsorted, and if a new boundary is inserted it is inserted at the end of the list.
+     *
+     * @{ */
+    static Boundary& insertBoundary(Boundaries& /*in,out*/, int64_t frameOffset, const InstructionAccess&);
+    static Boundary& insertBoundaryImplied(Boundaries&/*in,out*/, int64_t frameOffset, Address insnAddr);
+    /** @} */
 
     /** Printing local variable.
      *
@@ -322,10 +365,11 @@ public:
     /** Constructor.
      *
      *  Creates a global variable descriptor for a variable whose lowest address is @p startingAddress and whose maximum size
-     *  is @p maxSizeBytes bytes. The optional @p definingInstructionVas are the addresses of the instructions from which this
+     *  is @p maxSizeBytes bytes. The optional @p definingInstruction are the addresses of the instructions from which this
      *  variable was discerned and are usually memory dereferencing instructions. */
     GlobalVariable(rose_addr_t startingAddress, rose_addr_t maxSizeBytes,
-                   const AddressSet &definingInstructionVas = AddressSet(), const std::string &name = "");
+                   const std::vector<InstructionAccess> &definingInstructions = std::vector<InstructionAccess>(),
+                   const std::string &name = "");
 
     ~GlobalVariable();
 

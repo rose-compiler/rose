@@ -130,8 +130,9 @@ print(const StackVariables &lvars, const P2::Partitioner::ConstPtr &partitioner,
     ASSERT_not_null(partitioner);
     for (const StackVariable &lvar: lvars.values()) {
         out <<prefix <<lvar <<"\n";
-        for (rose_addr_t va: lvar.definingInstructionVas().values())
-            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[va]->toString() <<"\n";
+        const AddressSet addrs = lvar.definingInstructionVas();
+        for (rose_addr_t addr: addrs.values())
+            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[addr]->toString() <<"\n";
     }
 }
 
@@ -141,8 +142,9 @@ print(const GlobalVariables &gvars, const P2::Partitioner::ConstPtr &partitioner
     ASSERT_not_null(partitioner);
     for (const GlobalVariable &gvar: gvars.values()) {
         out <<prefix <<gvar <<"\n";
-        for (rose_addr_t va: gvar.definingInstructionVas().values())
-            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[va]->toString() <<"\n";
+        const AddressSet addrs = gvar.definingInstructionVas();
+        for (rose_addr_t addr: addrs.values())
+            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[addr]->toString() <<"\n";
     }
 }
 
@@ -152,11 +154,12 @@ print(const GlobalVariables &gvars, const P2::Partitioner::ConstPtr &partitioner
 
 BaseVariable::BaseVariable() {}
 
-BaseVariable::BaseVariable(size_t maxSizeBytes, const AddressSet &definingInstructionVas, const std::string &name)
+BaseVariable::BaseVariable(size_t maxSizeBytes, const std::vector<InstructionAccess> &definingInstructionVas,
+                           const std::string &name)
     // following arithmetic is to work around lack of SSIZE_MAX on windows. The maxSizeBytes should not be more than the
     // maximum value of the signed type with the same conversion rank.
     : maxSizeBytes_(std::min(maxSizeBytes, ((size_t)(1) << (8*sizeof(size_t)-1))-1)),
-      insnVas_(definingInstructionVas), name_(name) {}
+      insns_(definingInstructionVas), name_(name) {}
 
 BaseVariable::BaseVariable(const BaseVariable &other) = default;
 BaseVariable::~BaseVariable() {}
@@ -172,34 +175,42 @@ BaseVariable::maxSizeBytes(rose_addr_t size) {
     maxSizeBytes_ = size;
 }
 
-const AddressSet&
+const std::vector<BaseVariable::InstructionAccess>&
+BaseVariable::instructionsAccessing() const {
+    return insns_;
+}
+
+void
+BaseVariable::instructionsAccessing(const std::vector<InstructionAccess> &ia) {
+    insns_ = ia;
+}
+
+AddressSet
 BaseVariable::definingInstructionVas() const {
-    return insnVas_;
+    AddressSet retval;
+    for (const InstructionAccess &ia: insns_)
+        retval.insert(ia.insnAddr);
+    return retval;
 }
 
-AddressSet&
-BaseVariable::definingInstructionVas() {
-    return insnVas_;
-}
-
-void
-BaseVariable::definingInstructionVas(const AddressSet &vas) {
-    insnVas_ = vas;
-}
-
-const InstructionSemantics::BaseSemantics::InputOutputPropertySet&
+InstructionSemantics::BaseSemantics::InputOutputPropertySet
 BaseVariable::ioProperties() const {
-    return ioProperties_;
-}
-
-InstructionSemantics::BaseSemantics::InputOutputPropertySet&
-BaseVariable::ioProperties() {
-    return ioProperties_;
-}
-
-void
-BaseVariable::ioProperties(const InstructionSemantics::BaseSemantics::InputOutputPropertySet &set) {
-    ioProperties_ = set;
+    InstructionSemantics::BaseSemantics::InputOutputPropertySet retval;
+    for (const InstructionAccess &ia: insns_) {
+        for (const Access access: ia.access.split()) {
+            switch (access) {
+                case Access::READ:
+                    retval.insert(InstructionSemantics::BaseSemantics::IO_READ);
+                    break;
+                case Access::WRITE:
+                    retval.insert(InstructionSemantics::BaseSemantics::IO_WRITE);
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid access");
+            }
+        }
+    }
+    return retval;
 }
 
 const std::string&
@@ -212,6 +223,18 @@ BaseVariable::name(const std::string &s) {
     name_ = s;
 }
 
+void
+BaseVariable::insertAccess(const Address insnAddr, const AccessFlags access) {
+    for (auto &ia: insns_) {
+        if (insnAddr == ia.insnAddr) {
+            ia.access.set(access);
+            return;
+        }
+    }
+
+    insns_.push_back(InstructionAccess(insnAddr, access));
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // StackVariable
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -219,7 +242,8 @@ BaseVariable::name(const std::string &s) {
 StackVariable::StackVariable() {}
 
 StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t frameOffset, rose_addr_t maxSizeBytes,
-                             Purpose purpose, const AddressSet &definingInstructionVas, const std::string &name)
+                             Purpose purpose, const std::vector<InstructionAccess> &definingInstructionVas,
+                             const std::string &name)
     : BaseVariable(maxSizeBytes, definingInstructionVas, name), function_(function), frameOffset_(frameOffset),
       purpose_(purpose) {}
 
@@ -330,18 +354,31 @@ StackVariable::interval() const {
 
 // class method
 StackVariable::Boundary&
-StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, int64_t frameOffset, rose_addr_t insnVa) {
+StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t frameOffset, const InstructionAccess &definer) {
     for (size_t i = 0; i < boundaries.size(); ++i) {
         if (boundaries[i].frameOffset == frameOffset) {
-            boundaries[i].definingInsns.insert(insnVa);
+
+            for (InstructionAccess &ia: boundaries[i].definingInsns) {
+                if (definer.insnAddr == ia.insnAddr) {
+                    ia.access.set(definer.access);
+                    return boundaries[i];
+                }
+            }
+            boundaries[i].definingInsns.push_back(definer);
             return boundaries[i];
         }
     }
 
     boundaries.push_back(Boundary());
     boundaries.back().frameOffset = frameOffset;
-    boundaries.back().definingInsns.insert(insnVa);
+    boundaries.back().definingInsns.push_back(definer);
     return boundaries.back();
+}
+
+// class method
+StackVariable::Boundary&
+StackVariable::insertBoundaryImplied(Boundaries &boundaries /*in,out*/, const int64_t frameOffset, const Address insnAddr) {
+    return insertBoundary(boundaries, frameOffset, InstructionAccess(insnAddr, AccessFlags()));
 }
 
 void
@@ -374,7 +411,7 @@ operator<<(std::ostream &out, const Rose::BinaryAnalysis::Variables::StackVariab
 GlobalVariable::GlobalVariable() {}
 
 GlobalVariable::GlobalVariable(rose_addr_t startingAddress, rose_addr_t maxSizeBytes,
-                               const AddressSet &definingInstructionVas, const std::string &name)
+                               const std::vector<InstructionAccess> &definingInstructionVas, const std::string &name)
     : BaseVariable(maxSizeBytes, definingInstructionVas, name), address_(startingAddress) {}
 
 GlobalVariable::~GlobalVariable() {}
@@ -565,7 +602,7 @@ public:
             SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
                                      <<" reads from address: " <<*addr <<"\n";
 
-            lookForVariable(addr);
+            lookForVariable(addr, BaseVariable::Access::READ);
         }
         return Super::readMemory(segreg, addr, dflt, cond);
     }
@@ -576,13 +613,13 @@ public:
         if (SgAsmInstruction *insn = currentInstruction()) {
             SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
                                      <<" writes to address: " <<*addr <<"\n";
-            lookForVariable(addr);
+            lookForVariable(addr, BaseVariable::Access::WRITE);
         }
         return Super::writeMemory(segreg, addr, data, cond);
     }
 
 private:
-    void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal) {
+    void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal, const BaseVariable::Access access) {
         ASSERT_not_null(base_);
         SymbolicExpression::Ptr addr = SValue::promote(addrSVal)->get_expression();
         Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -610,8 +647,10 @@ private:
             }
         } finder(base_);
         addr->depthFirstTraversal(finder);
-        if (!finder.found)
+        if (!finder.found) {
+            SAWYER_MESG(debug) <<"    address " <<*addr <<" doesn't reference " <<*base_ <<"\n";
             return;
+        }
 
         // Address must be an offset from some base address. The constant is the offet since the base address is probably a
         // symbolic stack or frame pointer. There might be more than one constant.
@@ -621,7 +660,8 @@ private:
                 if (operand->toSigned().assignTo(offset)) {
                     SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset)
                                        <<" at " <<currentInstruction()->toString() <<"\n";
-                    StackVariable::insertBoundary(boundaries_, offset, currentInstruction()->get_address());
+                    BaseVariable::InstructionAccess ia(currentInstruction()->get_address(), access);
+                    StackVariable::insertBoundary(boundaries_, offset, ia);
                 }
             }
         }
@@ -834,10 +874,10 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                    | callee saved registers    |  optional, variable size, multiple of word size
         //                    :                           :
         //                    :                           :
-        StackVariable::Boundary &parentPtr = StackVariable::insertBoundary(boundaries, 0, function->address());
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
         parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-        StackVariable::Boundary &returnPtr = StackVariable::insertBoundary(boundaries, wordNBytes, function->address());
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes, function->address());
         returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
@@ -862,14 +902,14 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         // other and from the non-variables around them. However, we don't know where these boundaries are because everything
         // is variable size. The best we can do is insert a boundary above line (1).
         if (frame.size) {
-            StackVariable::Boundary &parentPtr = StackVariable::insertBoundary(boundaries, 0, function->address());
+            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-            StackVariable::Boundary &returnPtr = StackVariable::insertBoundary(boundaries, wordNBytes, function->address());
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes, function->address());
             returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
             // Everything else is above this boundary
-            StackVariable::insertBoundary(boundaries, 2*wordNBytes, function->address());
+            StackVariable::insertBoundaryImplied(boundaries, 2*wordNBytes, function->address());
         }
 
     } else if (isSgAsmM68kInstruction(firstInsn)) {
@@ -882,14 +922,14 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                (1) | return address            | 4 bytes
         // current_frame: (0) | addr of parent frame      | 4 bytes
         //                    :                           :
-        StackVariable::Boundary &parentPtr = StackVariable::insertBoundary(boundaries, 0, function->address());
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
         parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-        StackVariable::Boundary &returnPtr = StackVariable::insertBoundary(boundaries, 4, function->address());
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 4, function->address());
         returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
         if (frame.minOffset && *frame.minOffset < 0) {
-            StackVariable::Boundary &bottom = StackVariable::insertBoundary(boundaries, *frame.minOffset, function->address());
+            StackVariable::Boundary &bottom = StackVariable::insertBoundaryImplied(boundaries, *frame.minOffset, function->address());
             bottom.purpose = StackVariable::Purpose::UNKNOWN;
         }
 
@@ -908,10 +948,10 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         if (boost::contains(frame.rule, "<saved-lr>")) {
             // The "push fp, lr" pushes 8 bytes calculated from the stack pointer, so we don't want this eight
             // bytes to cross a frame variable boundary.
-            StackVariable::Boundary &returnPtr = StackVariable::insertBoundary(boundaries, -4, function->address());
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, -4, function->address());
             returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
         } else {
-            StackVariable::Boundary &parentPtr = StackVariable::insertBoundary(boundaries, 0, function->address());
+            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
         }
 #endif
@@ -1088,7 +1128,7 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
             std::set<int64_t> offsets = findFrameOffsets(frame, partitioner, insn);
             for (int64_t offset: offsets) {
                 SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset) <<" at " <<insn->toString() <<"\n";
-                StackVariable::insertBoundary(boundaries, offset, insn->get_address());
+                StackVariable::insertBoundaryImplied(boundaries, offset, insn->get_address());
             }
         }
     }
@@ -1720,8 +1760,13 @@ VariableFinder::findGlobalVariables(const P2::Partitioner::ConstPtr &partitioner
     // Finally build the return value
     GlobalVariables retval;
     for (const GVars::Node &node: gvars.nodes()) {
-        if (node.key().least() == node.value())
-            retval.insert(node.key(), GlobalVariable(node.key().least(), node.key().size(), globalVariableVas[node.value()]));
+        if (node.key().least() == node.value()) {
+            std::vector<BaseVariable::InstructionAccess> insns;
+            insns.reserve(globalVariableVas[node.value()].size());
+            for (const Address insnAddr: globalVariableVas[node.value()].values())
+                insns.push_back(BaseVariable::InstructionAccess(insnAddr, BaseVariable::AccessFlags()));
+            retval.insert(node.key(), GlobalVariable(node.key().least(), node.key().size(), insns));
+        }
     }
 
     const_cast<P2::Partitioner*>(partitioner.getRawPointer())->setAttribute(ATTR_GLOBAL_VARS, retval);

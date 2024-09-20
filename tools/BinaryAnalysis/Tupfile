@@ -32,6 +32,7 @@ run $(tool_compile_linkexe) --install -I. bat-mem.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-native-trace.C      libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-pointers.C          libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-prop.C              libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-rwsets.C		  libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-scan-magic.C        libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-similar-functions.C libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-simplify.C          libbatSupport
@@ -68,6 +69,7 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(test) bat-native-trace      ./bat-native-trace      --self-test --no-error-if-disabled
     run $(test) bat-pointers          ./bat-pointers          --self-test --no-error-if-disabled
     run $(test) bat-prop              ./bat-prop              --self-test --no-error-if-disabled
+    run $(test) bat-rwsets	      ./bat-rwsets	      --self-test --no-error-if-disabled
     run $(test) bat-scan-magic        ./bat-scan-magic        --self-test --no-error-if-disabled                     
     run $(test) bat-similar-functions ./bat-similar-functions --self-test --no-error-if-disabled
     run $(test) bat-simplify          ./bat-simplify          --self-test --no-error-if-disabled
