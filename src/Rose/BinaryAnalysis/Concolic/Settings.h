@@ -11,7 +11,8 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 /** Settings to control various aspects of an executor. */
-struct ConcolicExecutorSettings {
+class ConcolicExecutorSettings {
+public:
     Partitioner2::EngineSettings partitionerEngine;
     Partitioner2::LoaderSettings loader;
     Partitioner2::DisassemblerSettings disassembler;

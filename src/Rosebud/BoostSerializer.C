@@ -69,7 +69,6 @@ BoostSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class::
         header <<THIS_LOCATION <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
 
     // Serialize all properties that request serialization
-    size_t nTemps = 0;
     for (const auto &p: c->properties) {
         if (!p->serializerBaseName) {
             // Default serialization for this property

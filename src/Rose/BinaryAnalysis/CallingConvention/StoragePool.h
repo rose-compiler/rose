@@ -91,7 +91,7 @@ private:
     TypePredicateConstPtr canStore_;                    // predicate for types that the locations can store
 
 public:
-    ~StoragePoolBase();
+    virtual ~StoragePoolBase();
 protected:
     StoragePoolBase() = delete;
     StoragePoolBase(const std::string &name, const TypePredicateConstPtr&);

@@ -290,7 +290,7 @@ main(int argc, char *argv[]) {
                         SRecordDumper{settings.srecordSyntax.orElse(SRecord::SREC_MOTOROLA)}(settings, map, interval, std::cout);
                         break;
                     case OutputFormat::INTEL_HEX:
-                        SRecordDumper{SRecord::SREC_INTEL}(settings, map, interval, std::cout);
+		        SRecordDumper{SRecord::SREC_INTEL}(settings, map, interval, std::cout);
                         break;
                     case OutputFormat::BINARY: {
                         boost::filesystem::path outputName = settings.outputPrefix +
