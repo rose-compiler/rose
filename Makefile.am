@@ -1,9 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST =
 
-# DQ "config" and "src" must preceed any other directories, and 
-# "tutorial" and "exampleTranslators" must preceed "docs" since 
-# they generate data that is subsequently used in the generated 
+# DQ "config" and "src" must preceed any other directories, and
+# "tutorial" and "exampleTranslators" must preceed "docs" since
+# they generate data that is subsequently used in the generated
 # ROSE documentation (examples, input codes, and generated output).
 
 # DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
@@ -26,7 +26,7 @@ endif
 
 if !ROSE_USE_CLANG_FRONTEND
 if !ROSE_USE_INSURE
-# DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with 
+# DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with
 # Insure++ compilation specific to Hudson and want to start small and work to grow the number of parts of ROSE
 # used by Insure.  Except on Hudson (e.g. on my machine) Insure++ can be used to compiler nearly all of ROSE.
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
@@ -47,7 +47,7 @@ testproj_DATA =								\
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
-# Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
+# Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors
 # in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
 # GNU 4.8 C++11 mode works fine for the C++ code that implements ROSE itself.
 # if ROSE_USING_GCC_VERSION_4_8_CXX11
@@ -64,9 +64,9 @@ if !ROSE_USING_GCC_VERSION_4_8_CXX11
 
 if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't generate example translators or the documentation
-#   SUBDIRS += tutorial exampleTranslators docs 
+#   SUBDIRS += tutorial exampleTranslators docs
 endif
-SUBDIRS += tools scripts 
+SUBDIRS += tools scripts
 
 # endif for excluding tests using GNU 4.8 and C++11 mode together.
 endif
@@ -96,6 +96,18 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
 	cp rosePublicConfig.h $(DESTDIR)/$(pkgincludedir)
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+# Currently libasis_adapter.so is built without libtool support.
+#   Thus an rpath is used to link programs within the build environment
+#   For installed programs, the rpath to the build environment may no
+#   longer exist. Thus we remove it from the rose-config.cfg file.
+#   TODO: seek better ways of integrating libasis_adapter.so
+#         with libtool.
+	sed -i 's|-L$(abs_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/lib||' $(prefix)/lib/rose-config.cfg
+	sed -i 's|-R $(abs_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/lib||' $(prefix)/lib/rose-config.cfg
+	sed -i 's|-Wl,-rpath $(abs_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/lib||' $(prefix)/lib/rose-config.cfg
+	sed -i 's|$(abs_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/lib||' $(prefix)/lib/rose-config.cfg
+endif
 
 install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
@@ -216,10 +228,10 @@ check-rose-installer-rmc2: rose-installer-rmc2
 	LD_LIBRARY_PATH=installed-binary/lib ./installed-binary/bin/rose-config --version
 	rm -rf $@.tmp installed-binary
 
-# DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
+# DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
-# DQ (9/29/2010): Next three lines are a modification suggested by Scott Warren to 
-# support Eclipse.  Supports Eclipse feature called "makefile project with existing code" 
+# DQ (9/29/2010): Next three lines are a modification suggested by Scott Warren to
+# support Eclipse.  Supports Eclipse feature called "makefile project with existing code"
 # which wants to have a single target to force the build.
 #.PHONY: all-install
 
@@ -259,7 +271,7 @@ check-policies: enforce_policies
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST += cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
-             LicenseInformation build 
+             LicenseInformation build
 
 # The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
 # each time we make a distribution because we don't want to distribute stale information.
@@ -291,14 +303,14 @@ distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
 
 # DQ (10/14/2010): We want to make sure that this does not go out to the install tree
-# it also should not be in the distribution (since we want rose_config.h.in to be put 
+# it also should not be in the distribution (since we want rose_config.h.in to be put
 # into the distribution instead; from which then rose_config.h is generated).
 # However, the public version should be installed and distributed.
 noinst_HEADERS = rose_config.h
 pkginclude_HEADERS = rosePublicConfig.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
-# called when compiling the /src/util directory (perhaps it should be located in 
+# called when compiling the /src/util directory (perhaps it should be located in
 # that directory's Makefile.am.
 # DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
 # JJW (8/25/2008): Changed to a .c file
@@ -324,14 +336,14 @@ endif
 	@echo '***** make install-data rule complete (terminated normally) *****'
 	@echo '*****************************************************************'
 
-# DQ (4/22/2005): Set this so that make distcheck will use the same 
+# DQ (4/22/2005): Set this so that make distcheck will use the same
 # --with-edg_source_code=true/false option as were used at configure.
 # JJW (5/14/2008): Add the Boost flag the same way, using an internal
 # variable from AX_BOOST_* to find the argument to --with-boost when
 # this copy of ROSE was originally configured.
 DISTCHECK_CONFIGURE_FLAGS = --with-boost=$(ac_boost_path)
 
-# DQ (7/25/2008): If ROSE was originallly configured with Fortran (by tuning 
+# DQ (7/25/2008): If ROSE was originallly configured with Fortran (by tuning
 # on the java support) then make sure it is tested as part of the distcheck rule.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
@@ -351,7 +363,7 @@ else
 # --without-java flag is confusing. I thought it meant "without java-language
 # support". Speaking with Dan, we concluded that we need to look at renaming
 # --without-java to something else like --without-jvm or --without-java-components
-# This flag is suppose to turn off all parts of ROSE that use Java: 
+# This flag is suppose to turn off all parts of ROSE that use Java:
 # projects/javaports, java- and fortran-language support, etc.
   DISTCHECK_CONFIGURE_FLAGS += --disable-fortran
 endif
@@ -363,7 +375,7 @@ if ROSE_BUILD_ROSEHPCT
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the javaport
-# work (generation of Java interface functions for ROSE using SWIG) then 
+# work (generation of Java interface functions for ROSE using SWIG) then
 # make sure it is tested as part of the distcheck rule.
 if ENABLE_JAVAPORT
   DISTCHECK_CONFIGURE_FLAGS += --with-javaport
@@ -378,7 +390,7 @@ if ROSE_USE_LLVM
    DISTCHECK_CONFIGURE_FLAGS += --with-llvm=$(llvm_path)
 endif
 
-# DQ (4/22/2005): To make clear when binaries are in the distribution as 
+# DQ (4/22/2005): To make clear when binaries are in the distribution as
 # opposed to EDG source code we rename the final generated distribution.
 # JJW (8/3/2008): This is only used for source distributions now --
 # source_with_binary_edg_dist does its own renaming
@@ -462,7 +474,7 @@ if ROSE_HAS_EDG_SOURCE
 
 # 1
 # This rule generates the simple binary tarball for the directories: EDG and EDG_SAGE_Connection
-binary_edg_tarball: 
+binary_edg_tarball:
 	$(MAKE) -C src/frontend/CxxFrontend binary_edg_tarball
 
 upload_edg_binary:
@@ -492,7 +504,7 @@ dumpHudsonEnv:
 
 
 # DQ (12/16/2009): Added interesting "git" feature by Liao.
-# It is unclear if it is very meaningful since it represents 
+# It is unclear if it is very meaningful since it represents
 # individual work style more than anything else (but it's fun).
 CheckinCounts:
 	@echo "*****************************************************"
@@ -504,8 +516,8 @@ CheckinCounts:
 
 # This rule is useful for identifing source files where "rose_config.h" should be included.
 FindFileRequiringRoseConfigHeaderShort:
-#	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
-#	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do 
+#	grep "#define" rose_config.h | cut --delimiter=" " -f 2
+#	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do
 #	list=`ls -l | cut --delimiter=" " -f 2`; for f in $$list; do
 	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
@@ -513,8 +525,8 @@ FindFileRequiringRoseConfigHeaderShort:
         grep -r $$f $(top_srcdir)/src/* | grep "\.h:" | cut --delimiter=":" -f 1; \
    done
 
-# This rule is useful for identifing header files where "rose_config.h" is required and 
-# thus should be fixed to not require this file. In the case of #undef it is represented 
+# This rule is useful for identifing header files where "rose_config.h" is required and
+# thus should be fixed to not require this file. In the case of #undef it is represented
 # as "/* #undef" so we have to detect and remove the "/* " using sed.
 # And ignore the macro definitions for "const|error_t|inline|off_t|size_t".
 FindFileRequiringRoseConfigHeaderLong:
@@ -565,9 +577,9 @@ NumberOfMakefiles:
 # DQ (10/18/2010): Added test for names used in automake conditional macros
 # (eventually we want tests for consistancy).  This rule generates a makefile
 # containing a makefile rule. The makefile rule can be run to see what automake
-# conditionals were defined in the last run of configure. It might be that 
-# this mechanism should be in a script generated by the build script, but we 
-# need an initial version of the generated script to be checked into git so that 
+# conditionals were defined in the last run of configure. It might be that
+# this mechanism should be in a script generated by the build script, but we
+# need an initial version of the generated script to be checked into git so that
 # the build script can find it.  Note that we grep the Makefile.in instead of
 # the Makefile.am (which would be more difficult, I think). So we need the
 # Makefile.in from runing the build script first.  Thus having the generated
@@ -615,7 +627,7 @@ NameOfAutoconfDefines:
 
 
 
-# DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
+# DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE
 # either doing analysis, code generation, or translation of the ROSE source code.
 ProblemAreas:
 	echo "Directories where ROSE does not analyze code for some ROSE source files."
@@ -659,18 +671,18 @@ DISTCLEANFILES = rosePublicConfig.h
 
 
 ################################################################################
-# Makefile specific to Intel codecov process generated *.dyn files 
+# Makefile specific to Intel codecov process generated *.dyn files
 # generated by Intel's codecov option to the Intel icc and icpc compilers.
 ################################################################################
 
-# For Intel's code coverage tool (codecov) we need to avoid the *.dyn files from being 
-# built across the whole directory structure. So use the -prof-dir option to force them 
-# into a single directory to simplify processing.  Then use the profmerge utility to 
-# merge them into a single pgopti.dpi file.  Then process the pgopti.dpi file with the 
+# For Intel's code coverage tool (codecov) we need to avoid the *.dyn files from being
+# built across the whole directory structure. So use the -prof-dir option to force them
+# into a single directory to simplify processing.  Then use the profmerge utility to
+# merge them into a single pgopti.dpi file.  Then process the pgopti.dpi file with the
 # codecov utility to generate the HTML file and directory of HTML files).
 
 # configure using:
-# --with-C_DEBUG="-g -prof-dir /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc-code_coverage -prof-gen=srcpos" 
+# --with-C_DEBUG="-g -prof-dir /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc-code_coverage -prof-gen=srcpos"
 # --with-CXX_DEBUG="-g -prof-dir /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-intel-v14--dq-development-rc-code_coverage -prof-gen=srcpos"
 #
 # Then run "make -ki -j24 check" to generate all of the *.dyn files.
@@ -693,7 +705,7 @@ remove_codecov_files:
 	find . -name '*.dyn' -delete
 
 ################################################################################
-# Makefile specific to lcov comment to process generated *.gcda and *.gcno files 
+# Makefile specific to lcov comment to process generated *.gcda and *.gcno files
 # generated by GNU's gcov option to the GNU gcc adn g++ compilers.
 ################################################################################
 
@@ -803,7 +815,7 @@ lcov_genhtml: coverage.info
 # DQ (2/22/2016): The file genhtml has an error.
 # genhtml: ERROR: cannot read /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.3--dq-development-rc-lcov/src/3rdPartyLibraries/POET/poet_yacc.y
 # So we can't process this directory.
-# -d src/3rdPartyLibraries/POET/.libs 
+# -d src/3rdPartyLibraries/POET/.libs
 
 # Initial result (2/22/2016):
 # Overall coverage rate:
@@ -864,7 +876,7 @@ librose-lcov.info: all-lcov.info
 
 # DQ (4/9/2017): After getting better coverage, the ultimate limitation proved to be the poor template handling within LCOV to support more significant coverage results.
 # DQ (4/5/2017): This fails with GNU 6.1 and Boost 1.51 and Boost 1.52, but it is now called and should contribute to code coverage so let it back in as a test.
-#       "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" 
+#       "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h"
 
 
 librose_lcov_web_pages: librose-lcov.info
@@ -901,8 +913,8 @@ librose_lcov_web_pages: librose-lcov.info
 # src/midend/programTransformation/implicitCodeGeneration/*
 # src/midend/programTransformation/singleStatementToBlockNormalization/*
 # src/roseSupport/stringify.C
-# 
-# 
+#
+#
 # Directories to remove from ROSE:
 # src/midend/programAnalysis/dominanceAnalysis
 # src/midend/programAnalysis/pointerAnal
@@ -915,14 +927,14 @@ librose_lcov_web_pages: librose-lcov.info
 # src/midend/programTransformation/functionCallNormalization
 # src/midend/programTransformation/implicitCodeGeneration
 # src/midend/programTransformation/singleStatementToBlockNormalization
-# 
+#
 # May be removed in the future (to be discussed) DQ (3/13/2017):
 # src/midend/programTransformation/constantFolding
 # src/midend/programTransformation/ompLowering
-# src/midend/programTransformation/partialRedundancyElimination 
+# src/midend/programTransformation/partialRedundancyElimination
 #
 # These should not be evaluated using lcov (to be discussed) DQ (3/13/2017):
-# src/roseSupport/stringify.C 
+# src/roseSupport/stringify.C
 #      Generated file, placed in source tree because it took a long time to generate when it was put into the build tree).
 #      A few functions from this file are tested (14 of 864), but not all.
 #      This file could only be tested using an automatically generated test and that might no be productive.
@@ -930,14 +942,14 @@ librose_lcov_web_pages: librose-lcov.info
 #
 # What is this:
 # src/midend/abstractMemoryObject  (DTEC work by Liao)
-# 
+#
 #
 # Why are these so poorly tested:
 # src/midend/programTransformation/astInlining
 # src/midend/programTransformation/astOutlining
-# 
-# 
-# 
+#
+#
+#
 
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
