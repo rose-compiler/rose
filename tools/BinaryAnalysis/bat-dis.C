@@ -11,6 +11,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
@@ -41,54 +42,55 @@ struct Settings {
         : discardNops(false), stateFormat(SerialIo::BINARY) {}
 };
 
-// Parses the command-line and returns the name of the input file if any (the ROSE binary state).
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+// Create a command-line switch parser
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup gen = Rose::CommandLine::genericSwitches();
-    gen.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
+    SwitchGroup tool("Tool-specific switches");
+    tool.name("tool");
 
-    SwitchGroup sel("Selection switches");
-    sel.name("sel");
+    tool.insert(Switch("function", 'f')
+                .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
+                .explosiveLists(true)
+                .whichValue(SAVE_ALL)
+                .doc("Restricts output to the specified functions. The @v{name_or_address} can be the name of a function as "
+                     "a string or the entry address for the function as a decimal, octal, hexadecimal or binary number. "
+                     "If a value is ambiguous, it's first treated as a name and if no function has that name it's then "
+                     "treated as an address. This switch may occur multiple times and multiple comma-separated values may "
+                     "be specified per occurrence."));
 
-    sel.insert(Switch("function", 'f')
-               .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
-               .explosiveLists(true)
-               .whichValue(SAVE_ALL)
-               .doc("Restricts output to the specified functions. The @v{name_or_address} can be the name of a function as "
-                    "a string or the entry address for the function as a decimal, octal, hexadecimal or binary number. "
-                    "If a value is ambiguous, it's first treated as a name and if no function has that name it's then "
-                    "treated as an address. This switch may occur multiple times and multiple comma-separated values may "
-                    "be specified per occurrence."));
+    tool.insert(Switch("containing", 'a')
+                .argument("addresses", listParser(nonNegativeIntegerParser(settings.addresses), ","))
+                .explosiveLists(true)
+                .whichValue(SAVE_ALL)
+                .doc("Restricts output to functions that contain one of the specified addresses. This switch may occur "
+                     "multiple times and multiple comma-separate addresses may be specified per occurrence."));
 
-    sel.insert(Switch("containing", 'a')
-               .argument("addresses", listParser(nonNegativeIntegerParser(settings.addresses), ","))
-               .explosiveLists(true)
-               .whichValue(SAVE_ALL)
-               .doc("Restricts output to functions that contain one of the specified addresses. This switch may occur "
-                    "multiple times and multiple comma-separate addresses may be specified per occurrence."));
-
-    SwitchGroup out = BinaryAnalysis::Unparser::commandLineSwitches(settings.unparser);
-    Rose::CommandLine::insertBooleanSwitch(out, "discard-nops", settings.discardNops,
-                                               "Omit instructions that are part of a sequence that has no effect.");
-    out.insert(Switch("output", 'o')
-               .longName("prefix")
-               .argument("name", anyParser(settings.fileNamePrefix))
-               .doc("Instead of sending all listings to standard output, create a separate file for each function. "
-                    "The file names will be constructed from the string specified here, followed by the hexadecimal "
-                    "function entry address, followed by the extension \".lst\"."));
+    Rose::CommandLine::insertBooleanSwitch(tool, "discard-nops", settings.discardNops,
+                                           "Omit instructions that are part of a sequence that has no effect.");
+    tool.insert(Switch("output", 'o')
+                .longName("prefix")
+                .argument("name", anyParser(settings.fileNamePrefix))
+                .doc("Instead of sending all listings to standard output, create a separate file for each function. "
+                     "The file names will be constructed from the string specified here, followed by the hexadecimal "
+                     "function entry address, followed by the extension \".lst\"."));
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
-    parser.with(sel).with(out).with(gen);
-    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-    return input.empty() ? boost::filesystem::path("-") : input[0];
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
+    parser.with(tool).with(Rose::CommandLine::genericSwitches());
+    return parser;
+}
+
+// Parses the command-line and returns the positional arguments that describe the binary specimen
+std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");                        // read RBA file from standard input
+
+    return specimen;
 }
 
 // A specialized unparser that omits instructions that are effectively no-ops.
@@ -175,14 +177,22 @@ main(int argc, char *argv[]) {
     Settings settings;
     if (boost::ends_with(argv[0], "-simple"))
         settings.unparser = BinaryAnalysis::Unparser::Settings::minimal();
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings /*in,out*/);
+
     P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(specimen[0]) <<"\": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
 
     // Make sure output directories exit
     boost::filesystem::path dir = boost::filesystem::path(settings.fileNamePrefix).parent_path();
