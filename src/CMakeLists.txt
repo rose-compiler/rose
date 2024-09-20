@@ -1016,10 +1016,11 @@ foreach(X IN LISTS rose_library_dir_list)
   set(ROSE_LINK_RPATHS "${ROSE_LINK_RPATHS} -Wl,-rpath ${X}")
 endforeach()
 
-message("rose_library_dir_list: ${rose_library_dir_list}")
-message("ROSE_LIBDIRS: ${ROSE_LIBDIRS}")
-message("ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
-
+if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  message(STATUS "rose_library_dir_list: ${rose_library_dir_list}")
+  message(STATUS "ROSE_LIBDIRS: ${ROSE_LIBDIRS}")
+  message(STATUS "ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
+endif() 
 
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")

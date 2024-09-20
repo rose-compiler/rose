@@ -5,19 +5,21 @@
 #------------------------------------------------------------------------------
 # Sets up targets and macros associated with documentation
 #------------------------------------------------------------------------------
-
 add_custom_target(${BLT_DOCS_TARGET_NAME})
 
 if(DOXYGEN_FOUND)
-    add_custom_target(doxygen_docs)
-    add_dependencies(${BLT_DOCS_TARGET_NAME} doxygen_docs)
+  add_custom_target(doxygen_docs)
+  add_dependencies(${BLT_DOCS_TARGET_NAME} doxygen_docs)
+else() 
+  message(WARNING "Doxygen Docs may not work appropriately, DOXYGEN_FOUND is false") 
 endif()
 
 if(SPHINX_FOUND)
-    add_custom_target(sphinx_docs)
-    add_dependencies(${BLT_DOCS_TARGET_NAME} sphinx_docs)
+  add_custom_target(sphinx_docs)
+  add_dependencies(${BLT_DOCS_TARGET_NAME} sphinx_docs)
+else() 
+  message(WARNING "Setting up Docs may require Sphinx, however, SPHINX_FOUND is false") 
 endif()
-
 
 ##------------------------------------------------------------------------------
 ## blt_add_doxygen_target(doxygen_target_name)
@@ -25,23 +27,18 @@ endif()
 ## Creates a build target for invoking doxygen to generate docs
 ##------------------------------------------------------------------------------
 macro(blt_add_doxygen_target doxygen_target_name)
+  # add a target to generate API documentation with Doxygen
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  add_custom_target(${doxygen_target_name}
+                    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "Generating API documentation with Doxygen for ${doxygen_target_name} target" VERBATIM)
 
-    # add a target to generate API documentation with Doxygen
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-    add_custom_target(${doxygen_target_name}
-                     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                     COMMENT "Generating API documentation with Doxygen for ${doxygen_target_name} target" VERBATIM)
-
-    add_dependencies(doxygen_docs ${doxygen_target_name})
-
-    install(CODE "execute_process(COMMAND ${CMAKE_BUILD_TOOL} ${doxygen_target_name} WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
-
-    install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html" 
-            DESTINATION docs/doxygen/${doxygen_target_name} OPTIONAL)
-
+  add_dependencies(doxygen_docs ${doxygen_target_name})
+  install(CODE "execute_process(COMMAND ${CMAKE_BUILD_TOOL} ${doxygen_target_name} WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html" 
+          DESTINATION docs/doxygen/${doxygen_target_name} OPTIONAL)
 endmacro(blt_add_doxygen_target)
-
 
 ##------------------------------------------------------------------------------
 ## blt_add_sphinx_target(sphinx_target_name)

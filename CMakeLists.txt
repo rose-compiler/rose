@@ -1,4 +1,4 @@
-################################################################################################ -*- cmake -*- #########
+########################################################################################################################
 # General warnings, instructions, and style guide.
 ########################################################################################################################
 
@@ -27,14 +27,13 @@
 #    on its own, so some of the logic is still necessarily in the level above.  There are exceptions to this rule,
 #    and they're pretty obvious when they occur--as when a single if() protects a whole bunch of add_subdirectory.
 
-
 ########################################################################################################################
 # Platform-independent settings
 ########################################################################################################################
-
 cmake_minimum_required(VERSION 3.15)
 
 #-----------------------------------------------------------------------------------------------------------------------
+# CCACHE
 # Enable ccache if not already enabled by symlink masquerading and if no other compiler launchers are already defined
 #-----------------------------------------------------------------------------------------------------------------------
 find_program(CCACHE_EXECUTABLE ccache)
@@ -48,34 +47,38 @@ if(CCACHE_EXECUTABLE)
   endforeach()
 endif()
 
+# TO DO: Only pass C and CXX if ENABLE_C=ONi, otherwise user can never turn it off  
 project(ROSE CXX C)
 
-if (DEFINED BLT_SOURCE_DIR)
-    # Support having a shared BLT outside of the repository if given a BLT_SOURCE_DIR
-    if (NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
-        message(FATAL_ERROR "Given BLT_SOURCE_DIR does not contain SetupBLT.cmake")
-    endif()
-else()
-    # Use internal BLT if no BLT_SOURCE_DIR is given
-    set(BLT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/cmake/blt" CACHE PATH "")
-    if (NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
-        message(FATAL_ERROR
-            "The BLT git submodule is not present. "
-            "Either run the following two commands in your git repository: \n"
-            "    git submodule init\n"
-            "    git submodule update\n"
-            "Or add -DBLT_SOURCE_DIR=/path/to/blt to your CMake command." )
-    endif()
+#-----------------------------------------------------------------------------------------------------------------------
+# BLT 
+#-----------------------------------------------------------------------------------------------------------------------
+ # Use internal BLT if no BLT_SOURCE_DIR is given
+if(NOT DEFINED BLT_SOURCE_DIR)
+  set(BLT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/cmake/blt" CACHE PATH "Path to BLT")
+endif()
+
+# Support having a shared BLT outside of the repository if given a BLT_SOURCE_DIR
+if(NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
+  message(FATAL_ERROR "Given BLT_SOURCE_DIR does not contain SetupBLT.cmake or"
+                      "the BLT git submodule is not present. "
+                      "Either run the following two commands in your git repository: \n"
+                      "    git submodule init\n"
+                      "    git submodule update\n"
+                      "Or add -DBLT_SOURCE_DIR=/path/to/blt to your CMake command." )
 endif()
 
 # Default to C++11 if not set so GTest/GMock can build
-if (NOT BLT_CXX_STD)
-    set(BLT_CXX_STD "c++14" CACHE STRING "")
+if(NOT BLT_CXX_STD)
+  set(BLT_CXX_STD "c++14" CACHE STRING "")
 endif()
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
 
-# CMake 2.8.12 and newer has support for using @rpath in a targetb install name. This was enabled by setting the target
+#-----------------------------------------------------------------------------------------------------------------------
+# CMAKE POLICIES  
+#-----------------------------------------------------------------------------------------------------------------------
+# CMake 2.8.12 and newer has support for using @rpath in a target install name. This was enabled by setting the target
 # property MACOSX_RPATH. The @rpath in an install name is a more flexible and powerful mechanism than @executable_path
 # or @loader_path for locating shared libraries.
 #
@@ -146,20 +149,16 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/mod
 set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-
 ########################################################################################################################
 # ROSE version information
 ########################################################################################################################
-
-# All distributions of ROSE also have a ROSE_VERSION file with a dotted version that's updated during the ROSE release
-# process.
+# All distributions of ROSE also have a ROSE_VERSION file with a dotted version that's updated during the ROSE release process.
 set(ROSE_SCM_VERSION_FILE "${PROJECT_SOURCE_DIR}/ROSE_VERSION")
 if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
   message(FATAL_ERROR "ROSE version file not found: ${ROSE_SCM_VERSION_FILE}")
 endif()
 
-# All distributions of ROSE also have a config/SCM_DATE file with a numerical version that's updated during the ROSE release
-# process.
+# All distributions of ROSE also have a config/SCM_DATE file with a numerical version that's updated during the ROSE release process.
 set(ROSE_SCM_DATE_FILE "${PROJECT_SOURCE_DIR}/config/SCM_DATE")
 if(NOT EXISTS "${ROSE_SCM_DATE_FILE}")
   message(FATAL_ERROR "ROSE SCM Date file not found: ${ROSE_SCM_DATE_FILE}")
@@ -169,16 +168,16 @@ file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_PACKAGE_VERSION LIMIT_COUNT 1)
 file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_SCM_VERSION_ID LIMIT_COUNT 1)
 file(READ ${ROSE_SCM_DATE_FILE} ROSE_VERSION)
 
-# Results
+# Fix trailing whitespace 
+string(STRIP "${ROSE_VERSION}" ROSE_VERSION) 
+
+# Print Results
 message(STATUS "The ROSE version integer is ${ROSE_VERSION}")
 message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
-
-
 
 ########################################################################################################################
 # Initialize the leading part of the Rose::initialize token
 ########################################################################################################################
-
 # Configuration synopsis used by Rose::initialize.  The ROSE_CONFIG_TOKEN is #define'd as a string in rose_config.h and
 # ultimately rosePublicConfig.h and the string is a synopsis of some important configuration details. This string is
 # passed by user code to the Rose::initialize function which compares it against the same macro compiled into the ROSE
@@ -300,7 +299,6 @@ set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
 ########################################################################################################################
 # Compiler toolchain features
 ########################################################################################################################
-
 # Define and initialize cache variables for optimization flags
 set(WITH_C_OPTIMIZE "-O2" CACHE STRING "Custom C optimization flags")
 set(WITH_CXX_OPTIMIZE "-O2" CACHE STRING "Custom C++ optimization flags")
@@ -387,21 +385,19 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
-       set(ROSE_USING_GCC_VERSION_LATER_6_0 1 CACHE INTERNAL "")
-    endif()
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
+    set(ROSE_USING_GCC_VERSION_LATER_6_0 1 CACHE INTERNAL "")
+  endif()
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.1)
        set(ROSE_USING_GCC_VERSION_LATER_6_1 1 CACHE INTERNAL "")
     endif()
 endif()
-# message("GNU 6.1 CHECK:" ${ROSE_USING_GCC_VERSION_LATER_6_1})
 
 ########################################################################################################################
 # Analyzable languages supported by ROSE
 ########################################################################################################################
-
 # Binary analysis
 option(ENABLE-BINARY-ANALYSIS "Enable binary analysis" OFF)
 if(ENABLE-BINARY-ANALYSIS)
@@ -429,16 +425,9 @@ endif()
 option(ENABLE-JAVA "Enable Java analysis" OFF)
 if(ENABLE-JAVA)
   message(STATUS "Looking for JAVA ...")
-  # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the onlyBLE-JOV
-  # value of JAVA_ROOT that we can support is the empty string.
-  if("${JAVA_ROOT}" STREQUAL "")
-  elseif("${JAVA_ROOT}" STREQUAL "no")
-    message(FATAL_ERROR "Java cannot be both disabled (-DJAVA_ROOT=FALSE) and
-    enabled (-DENABLE-JAVA=TRUE)")
-  else()
-    message(FATAL_ERROR "Java location cannot be explicit (-DJAVA_ROOT=...)")
-  endif()
-
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR VERBOSE)
+    message(STATUS "JAVA_ROOT is: ${JAVA_ROOT}") 
+  endif() 
   include(FindJava)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
@@ -540,11 +529,9 @@ if(ENABLE-C OR ENABLE-FORTRAN)
   set(ROSE_BUILD_CPP_LANGUAGE_SUPPORT 1)
 endif()
 
-
 ########################################################################################################################
 # EDG (Edison Design Group) frontend C/C++ compiler
 ########################################################################################################################
-
 # Default EDG version
 set(EDG_VERSION "5.0" CACHE STRING "major.minor version number for EDG (e.g. 5.0).")
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
@@ -591,13 +578,12 @@ if(NOT have_EDG_source)
       if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
         execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
       else()
-        # no need to display this message after the file has been downloaded
-        if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-          message(WARNING
-            "At build time, CMake will attempt to download a required library tarball.\n"
-            "Please note that EDG binary tarballs are available for only certain configurations.")
-        endif()
-        include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+      # no need to display this message after the file has been downloaded
+      if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+        message(WARNING "At build time, CMake will attempt to download a required library tarball.\n"
+                        "Please note that EDG binary tarballs are available for only certain configurations.")
+      endif()
+      include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
       endif()
     endif()
   endif()
@@ -612,12 +598,9 @@ else()
   message(STATUS "EDG - not needed; using a nearly empty dummy library")
 endif()
 
-
-
 ########################################################################################################################
 # System features
 ########################################################################################################################
-
 # A set of common features including endian, stdio.h, printf, size of long int, etc.
 set(CMAKE_REQUIRED_QUIET ${QUIET})
 include(ConfigureChecks)
@@ -628,7 +611,6 @@ include(MacroLibrary)
 
 # Database
 include(FindMySQL)
-
 find_package(OpenSSL)
 
 find_package(Perl REQUIRED)
@@ -759,9 +741,14 @@ find_bison()
 include(FindZ3)
 find_z3()
 
-# To use doxygen, set DOXYGEN_ROOT to the doxygen installation prefix. To avoid doxygen use DOXYGEN_ROOT=no
-include(FindDoxygen)
-find_doxygen()
+# To use doxygen, set ENABLE_DOXYGEN=ON and DOXYGEN_ROOT=<doxygen/installation/path> 
+if(ENABLE_DOXYGEN) 
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND "${DOXYGEN_ROOT}" STREQUAL "")
+    message(STATUS "Set DOXYGEN_ROOT to the directory doxygen is installed if you want to explicitly control which Doxygen to use") 
+  endif() 
+  include(FindDoxygen)
+  find_doxygen()
+endif()
 
 # FIXME: Deprecated. Remove this and the FindYamlcpp file once YAML-CPP has been eliminated from the ROSE source code.
 # To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
@@ -859,7 +846,6 @@ find_library(with-ltdl-lib ltdl DOC "Path to ltdl library")
 find_path(with-llvm "llvm" DOC "Specify the prefix where LLVM (and opt) is installed")
 find_path(with-maple "include/maple.h" DOC "Specify the prefix where Maple is installed")
 find_path(with-omni_omp_runtime_support include/omni_omp.h DOC "Specify the prefix where Omni OpenMP Runtime System is installed")
-
 find_path(with-purify bin/purify DOC "Specify the prefix where purify is installed")
 if(with-purify)
   set(USE_PURIFY 1)
@@ -927,7 +913,6 @@ endif()
 ########################################################################################################################
 # Back-end compilers
 ########################################################################################################################
-
 set(WITH-ALT-BACKEND-CXX-COMPILER "" CACHE STRING "Specify an alternative C++ back-end compiler")
 if(WITH-ALT-BACKEND-CXX-COMPILER)
   if(EXISTS ${WITH-ALT-BACKEND-CXX-COMPILER})
@@ -1001,7 +986,6 @@ endif()
 ########################################################################################################################
 # Summary of results
 ########################################################################################################################
-
 if(VERBOSE)
   # if you are building in-source, this is the same as CMAKE_SOURCE_DIR, otherwise
   # this is the top level directory of your build tree
@@ -1145,7 +1129,6 @@ endif()
 ########################################################################################################################
 # ROSE headers are scattered throughout the source tree.
 ########################################################################################################################
-
 set(ROSE_INCLUDES
   ${ROSE_TOP_BINARY_DIR}
   ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
@@ -1299,12 +1282,9 @@ if(WITH-ROSEQT)
 endif()
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS})
 
-
-
 ########################################################################################################################
 # Set output directories
 ########################################################################################################################
-
 # Set default output paths for libraries and directories.  This causes all the libraries to be built into a single lib
 # directory, and all the executables to be built into a single bin directory.  If these variables are not set, then by
 # default the targets will be littered throughout the binary directory, matching the structure of the source directory.
@@ -1337,7 +1317,6 @@ endif()
 ########################################################################################################################
 # Recursion
 ########################################################################################################################
-
 # Recursion in CMake is not automatic. We have to tell it where the other CMakeList.txt files are located rather than
 # letting it find them automatically.
 
@@ -1354,7 +1333,6 @@ configure_file(cmake/CTestCustom.cmake.in ${CMAKE_BINARY_DIR}/CTestCustom.cmake 
 #TODO: better support for other compilers & operating systems
 if(ENABLE-C)
   set(C_INCLUDE_STRING "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
-
   set(CXX_INCLUDE_STRING "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
   find_program(shell sh)
   if(shell AND CMAKE_COMPILER_IS_GNUCXX)
@@ -1422,11 +1400,9 @@ else()
   set(CXX_INCLUDE_STRING {\"none\"})
 endif()
 
-
 ########################################################################################################################
 # Private and public build-time configuration files
 ########################################################################################################################
-
 # Private configuration file.
 #
 # The rose_config.h file contains CPP macros describing what features were detected during the configuration phase.
@@ -1441,11 +1417,9 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 # rosePublicConfig.h and changing their names so as not to pollute the global name space.  See
 # scripts/publicConfiguration.pl for details.
 
-
 ########################################################################################################################
 # Ancillary ROSE components. These are things that are not part of the ROSE library.
 ########################################################################################################################
-
 add_subdirectory(tools)
 if(ENABLE-TESTS-DIRECTORY)
   enable_testing()
@@ -1456,13 +1430,10 @@ endif()
 ########################################################################################################################
 # Miscellaneous final actions
 ########################################################################################################################
-
 # These actions don't work on Linux Debian-based systems during "make install" and appear to not be necessary anyway.
 if(NOT UNIX)
   # This has to remain the last subdirectory so that all the targets are installed before bundle.cmake runs.
   add_subdirectory(cmake)
-
   # This include file defines how CPack should create our installers.
   include(cmake/ROSECPack.cmake)
 endif()
-

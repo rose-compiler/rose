@@ -11,7 +11,6 @@ include(CMakeDependentOption)
 #------------------------------------------------------------------------------
 # Build Targets
 #------------------------------------------------------------------------------
-option(ENABLE_DOCS       "Enables documentation" OFF)
 option(ENABLE_EXAMPLES   "Enables examples" OFF)
 option(ENABLE_TESTS      "Enables tests" OFF)
 option(ENABLE_BENCHMARKS "Enables benchmarks" OFF)
@@ -24,20 +23,25 @@ option(ENABLE_GIT          "Enables Git support" ON)
 
 # Documentation
 option(ENABLE_DOXYGEN      "Enables Doxygen support" ON)
-option(ENABLE_SPHINX       "Enables Sphinx support" ON)
+option(ENABLE_SPHINX       "Enables Sphinx support" OFF)
+option(ENABLE_DOCS       "Enables documentation" ON)
 
-# Quality
-option(ENABLE_CLANGQUERY   "Enables Clang-query support" ON)
-option(ENABLE_CLANGTIDY    "Enables clang-tidy support" ON)
-option(ENABLE_CPPCHECK     "Enables Cppcheck support" ON)
+# Quality & Style
+option(ENABLE_CLANGQUERY   "Enables Clang-query support" OFF)
+option(ENABLE_CLANGTIDY    "Enables clang-tidy support" OFF)
+option(ENABLE_CLANGFORMAT  "Enables ClangFormat support" OFF)
+# Allow these to be ON by default if we are using Clang to Compile
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
+  set(ENABLE_CLANGQUERY ON)
+  set(ENABLE_CLANGTIDY ON)
+  set(ENABLE_CLANGFORMAT ON)
+endif() 
+option(ENABLE_CPPCHECK     "Enables Cppcheck support" OFF)
 option(ENABLE_VALGRIND     "Enables Valgrind support" ON)
-
-# Style
-option(ENABLE_ASTYLE       "Enables AStyle support" ON)
-option(ENABLE_CLANGFORMAT  "Enables ClangFormat support" ON)
-option(ENABLE_UNCRUSTIFY   "Enables Uncrustify support" ON)
-option(ENABLE_YAPF         "Enables Yapf support" ON)
-option(ENABLE_CMAKEFORMAT  "Enables CMakeFormat support" ON)
+option(ENABLE_ASTYLE       "Enables AStyle support" OFF)
+option(ENABLE_UNCRUSTIFY   "Enables Uncrustify support" OFF)
+option(ENABLE_YAPF         "Enables Yapf support" OFF)
+option(ENABLE_CMAKEFORMAT  "Enables CMakeFormat support" OFF)
 
 #------------------------------------------------------------------------------
 # Build Options

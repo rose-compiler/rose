@@ -1,50 +1,44 @@
 # Doxygen detection for ROSE.
 #
-# Inputs:
-#    DOXYGEN_ROOT       -- Doxygen installation directory or "no" or empty.
-#                          * If "no" then do not use doxygen and do not search for it.
-#
-# Outputs:
+# CMake Variables 
+#    DOXYGEN_VERSION    -- Version string reported by doxygen executable
+#    DOXYGEN_EXECUTABLE -- Doxygen executable name found
+# 
+# User Configurable CMake Variables
+#    DOXYGEN_ROOT       -- Allows user to control which doxygen by defining the path 
+#                          to the Doxygen installation directory at config time 
+# 
+# CMake Variables that get set automatically from calling find_program() 
 #    DOXYGEN_FOUND      -- Boolean: Whether the doxygen executable was found.
-#    DOXYGEN_EXECUTABLE -- String: doxygen executable name
-#    DOXYGEN_VERSION    -- String: version string reported by doxygen
-
+#
 macro(find_doxygen)
-  if("${DOXYGEN_ROOT}" STREQUAL "no")
-    # Do not use doxygen, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with
-    # users maybe setting them.
-    set(DOXYGEN_FOUND FALSE)
-    set(DOXYGEN_EXECUTABLE "")
-    set(DOXYGEN_VERSION "")
-
+  # Try to find Doxygen depending on if/where user specifies
+  if("${DOXYGEN_ROOT}" STREQUAL "")
+    message(WARNING "DOXYGEN_ROOT is not set. DOXYGEN_EXECUTABLE might not be found.") 
+    find_program(DOXYGEN_EXECUTABLE NAMES doxygen)
   else()
-    if("${DOXYGEN_ROOT}" STREQUAL "")
-      find_program(DOXYGEN_EXECUTABLE NAMES doxygen)
-    else()
-      find_program(DOXYGEN_EXECUTABLE NAMES doxygen PATHS "${DOXYGEN_ROOT}/bin" NO_DEFAULT_PATH)
-    endif()
-    if (DOXYGEN_EXECUTABLE)
-      set(DOXYGEN_FOUND TRUE)
-      execute_process(COMMAND ${DOXYGEN_EXECUTABLE} --version OUTPUT_VARIABLE DOXYGEN_VERSION_OUTPUT)
-      string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" DOXYGEN_VERSION "${DOXYGEN_VERSION_OUTPUT}")
-    endif()
+    find_program(DOXYGEN_EXECUTABLE NAMES doxygen PATHS "${DOXYGEN_ROOT}/bin" NO_DEFAULT_PATH)
+  endif()
+  
+  # Was Doxygen found? 
+  if(NOT DOXYGEN_FOUND)
+    message(WARNING "Doxygen was enabled but not found")
+  endif()
 
-    # If if not found but requested. Extra(?) parens are due to lack of CMake operaor precedence documentation
-    if((NOT ("${DOXYGEN_ROOT}" STREQUAL "")) AND NOT DOXYGEN_FOUND)
-      message(FATAL_ERROR "doxygen requested by user at '${DOXYGEN_ROOT}' but not found")
-    endif()
+  # Do we have a Doxygen executable? 
+  if(NOT DOXYGEN_EXECUTABLE)
+    message(WARNING "DOXYGEN_EXECUTABLE not found in ${DOXYGEN_ROOT}. Please set DOXYGEN_ROOT to the installation path of Doxygen if Doxygen is needed")
+  else()
+    # Get Doxygen Version from DOXYGEN_EXECUTABLE
+    execute_process(COMMAND ${DOXYGEN_EXECUTABLE} --version OUTPUT_VARIABLE DOXYGEN_VERSION_OUTPUT)
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" DOXYGEN_VERSION "${DOXYGEN_VERSION_OUTPUT}")
   endif()
 
   # Summarize
   if(VERBOSE)
     message(STATUS "DOXYGEN_ROOT      = '${DOXYGEN_ROOT}'")
     message(STATUS "DOXYGEN_FOUND     = '${DOXYGEN_FOUND}'")
-    if(DOXYGEN_FOUND)
-      message(STATUS "DOXYGEN_EXECUTABLE = '${DOXYGEN_EXECUTABLE}'")
-      message(STATUS "DOXYGEN_VERSION    = '${DOXYGEN_VERSION}'")
-    endif()
+    message(STATUS "DOXYGEN_EXECUTABLE = '${DOXYGEN_EXECUTABLE}'")
+    message(STATUS "DOXYGEN_VERSION    = '${DOXYGEN_VERSION}'")
   endif()
-
-  # ROSE variables
-  # (none)
 endmacro()
