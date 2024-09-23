@@ -68,7 +68,7 @@ if(NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
                       "Or add -DBLT_SOURCE_DIR=/path/to/blt to your CMake command." )
 endif()
 
-# Default to C++11 if not set so GTest/GMock can build
+# Default to C++14 if not set so GTest/GMock can build
 if(NOT BLT_CXX_STD)
   set(BLT_CXX_STD "c++14" CACHE STRING "")
 endif()

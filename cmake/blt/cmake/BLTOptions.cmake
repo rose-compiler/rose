@@ -30,12 +30,14 @@ option(ENABLE_DOCS       "Enables documentation" ON)
 option(ENABLE_CLANGQUERY   "Enables Clang-query support" OFF)
 option(ENABLE_CLANGTIDY    "Enables clang-tidy support" OFF)
 option(ENABLE_CLANGFORMAT  "Enables ClangFormat support" OFF)
-# Allow these to be ON by default if we are using Clang to Compile
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
+
+# Allow these options to be ON by default if "Clang" is a substring of the compiler name we are using
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang") # Clang, AppleClang, etc
   set(ENABLE_CLANGQUERY ON)
   set(ENABLE_CLANGTIDY ON)
   set(ENABLE_CLANGFORMAT ON)
 endif() 
+
 option(ENABLE_CPPCHECK     "Enables Cppcheck support" OFF)
 option(ENABLE_VALGRIND     "Enables Valgrind support" ON)
 option(ENABLE_ASTYLE       "Enables AStyle support" OFF)
