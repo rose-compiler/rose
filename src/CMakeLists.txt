@@ -672,6 +672,13 @@ if(ENABLE-JOVIAL)
   list(APPEND rose_LIB_OBJS roseJovial)
 endif()
 
+#if(ENABLE-ADA)
+   # only do this is experimentalRoseAda is built as an obj library
+   # currently it is built asd a shared lib in cmake
+   # autoconf builds it as a static lib and compiles it with librose.so (which is shared) 
+#  list(APPEND rose_LIB_OBJS experimentalRoseAda)
+#endif() 
+
 if (ENABLE-PHP)
   list(APPEND rose_LIB_OBJS phpFrontend)
 endif()
