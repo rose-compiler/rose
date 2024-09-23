@@ -505,14 +505,59 @@ endif()
 # Ada
 option(ENABLE-ADA "Enable Ada analysis" OFF)
 if(ENABLE-ADA)
-  # Require GNAT script to be sourced -- or env vars to be set  
+  message(STATUS "Checking the environment variables GNAT_HOME and BOOST_HOME have been set.") 
+  
+  # Force user to define GNAT_HOME 
   if(NOT DEFINED ENV{GNAT_HOME}) 
-    message(WARNING "Please source /nfs/casc/overture/ROSE/opt/rhel8/x86_64/GNAT/setup.sh\nor something similar for Ada support") 
+    message(FATAL_ERROR "Ada support requires the environment variable GNAT_HOME to be set to an installed GNAT") 
   endif() 
+
+  # Force user to define GNAT_HOME as a directory that exists on the system or within the container 
+  if(NOT IS_DIRECTORY "$ENV{GNAT_HOME}") 
+    message(WARNING "GNAT_HOME: $ENV{GNAT_HOME}")
+    message(FATAL_ERROR "GNAT_HOME does not exist on this system") 
+  endif() 
+
+  # Force user to define BOOST_HOME
   if(NOT DEFINED ENV{BOOST_HOME}) 
-    message(WARNING "Please source /nfs/casc/overture/ROSE/opt/rhel8/x86_64/GNAT/setup.sh\nor something similar for Ada support") 
+    message(FATAL_ERROR "Ada support requires the environment variable BOOST_HOME to be set to an installed boost")
   endif() 
-  # Set defines for source code 
+
+  # Force user to define BOOST_HOME as a directory that exists on the system or within the container 
+  if(NOT IS_DIRECTORY "$ENV{BOOST_HOME}") 
+    message(WARNING "BOOST_HOME: $ENV{BOOST_HOME}")
+    message(FATAL_ERROR "BOOST_HOME does not exist on this system") 
+  endif()    
+
+  # Check PATH and LD_LIBRARY_PATH
+  get_filename_component(USER_PATH $ENV{PATH} ABSOLUTE)               # retrieve USER_PATH  
+  get_filename_component(USER_LD_PATH $ENV{LD_LIBRARY_PATH} ABSOLUTE) # retrieve USER_LD_PATH
+  
+    # Ensure user has GNAT_HOME/bin in their path 
+  string(FIND "${USER_PATH}" "${GNAT_HOME}/bin" found_gnat_in_path) 
+  if(found_gnat_in_path EQUAL -1) 
+    message(WARNING "GNAT_HOME/bin was not found in users path: ${USER_PATH}") 
+  else() 
+    message(STATUS "Found GNAT_HOME/bin")
+  endif()
+
+  # Ensure user has GNAT_HOME/lib in their LD path 
+  string(FIND "${USER_LD_PATH}" "${GNAT_HOME}/lib" found_gnat_in_ld_path) 
+  if(found_gnat_in_ld_path EQUAL -1) 
+    message(WARNING "GNAT_HOME/lib was not found in users LD_LIBRARY_PATH: ${USER_LD_PATH}") 
+  else() 
+    message(STATUS "Found GNAT_HOME/lib")
+  endif()
+
+  # Ensure user has GNAT_HOME/lib in their LD path 
+  string(FIND "${USER_LD_PATH}" "${BOOST_HOME}/lib" found_boost_in_ld_path) 
+  if(found_boost_in_ld_path EQUAL -1) 
+    message(WARNING "BOOST_HOME not found in users LD_LIBRARY_PATH: ${USER_LD_PATH}") 
+  else() 
+    message(STATUS "Found BOOST_HOME/lib")
+  endif()
+
+  # Define macros for source code 
   set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
 endif()
 
