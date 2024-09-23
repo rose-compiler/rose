@@ -2313,3 +2313,4 @@ context-free syntax
 %%
   "!ALIGN" Name ';'               -> AlignDirective    {cons("AlignDirective")}
   "!ALWAYS'STORE" {Name ','}+ ';' -> AlwaysDirective   {cons("AlwaysDirective")}
+  "!always'store" {Name ','}+ ';' -> AlwaysDirective   {cons("AlwaysDirective")}
