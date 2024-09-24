@@ -681,6 +681,9 @@ struct IP_store: P {
             case mips_sbe:
                 nBits = 8;
                 break;
+            case mips_sdc1:
+                nBits = 64;
+                break;
             case mips_sh:
             case mips_she:
                 nBits = 16;
@@ -877,7 +880,9 @@ struct IP_subu: P {
     }
 };
 
+// Store doubleword from floating point (mips_sdc1, implemented by IP_store)
 // Store doubleword indexed unaligned from floating point (mips_suxc1, implemented by IP_store)
+
 // Store word (mips_sw, implemented by IP_store)
 // Store word from floating point (mips_swc1, implemented by IP_store)
 // Store word from coprocessor 2 (mips_swc2, implemented by IP_store)
@@ -969,6 +974,7 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_rotrv, new Mips::IP_rotate);  // mips_rotrv shares common implementation IP_rotate
     iprocSet(mips_sb,    new Mips::IP_store);   // mips_sb    shares common implementation IP_store
     iprocSet(mips_sbe,   new Mips::IP_store);   // mips_sbe   shares common implementation IP_store
+    iprocSet(mips_sdc1,  new Mips::IP_store);   // mips_sdc1  shares common implementation IP_store
     iprocSet(mips_seb,   new Mips::IP_seb);
     iprocSet(mips_seh,   new Mips::IP_seh);
     iprocSet(mips_sh,    new Mips::IP_store);   // mips_sh    shares common implementation IP_store
