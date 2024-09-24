@@ -4325,41 +4325,15 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 
                     SgTemplateInstantiationDecl*               templateInstantiationDecl               = isSgTemplateInstantiationDecl(node);
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(node);
-                 // SgTemplateTypedefDeclaration*              templateTypedefDeclaration              = isSgTemplateTypedefDeclaration(node);
 
                  // IR nodes for which we don't want to identify as the first or last statement of a file (header file).
-                 // bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL &&
-                 //                         templateInstantiationDecl == NULL && templateInstantiationMemberFunctionDecl == NULL &&
-                 //                         templateTypedefDeclaration == NULL;
                     bool processStatement = globalScope == nullptr && functionParameterList == nullptr && ctorInitializerList == nullptr &&
                                             templateInstantiationDecl == nullptr && templateInstantiationMemberFunctionDecl == nullptr;
-#if 0
-                 // DQ (5/22/2021): Just added this, but I think we don't need it now.
-                    if (statement != nullptr && processStatement == true)
-                       {
-                         Sg_File_Info* file_info = statement->get_file_info();
-                         ROSE_ASSERT(file_info != nullptr);
-                         string processStatement_filename = file_info->get_physical_filename();
-                         int    processStatement_physical_file_id  = file_info->get_physical_file_id();
-
-#if DEBUG_FIRST_LAST_STMTS || 0
-                         printf ("processStatement_physical_file_id = %d \n",processStatement_physical_file_id);
-#endif
-                         if (processStatement_physical_file_id < 0)
-                            {
-#if DEBUG_FIRST_LAST_STMTS || 0
-                              printf ("physical_file_id < 0: processStatement_physical_file_id = %d so setting processStatement = false \n",processStatement_physical_file_id);
-#endif
-                              processStatement = false;
-                            }
-                       }
-#endif
 
 #if DEBUG_FIRST_LAST_STMTS
                     printf ("statement        = %p \n",statement);
                     printf ("processStatement = %s \n",processStatement ? "true" : "false");
 #endif
-                 // if (statement != NULL && globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL && templateInstantiationDecl == NULL)
                     if (statement != nullptr && processStatement == true)
                        {
                          Sg_File_Info* file_info = statement->get_file_info();
@@ -4394,7 +4368,6 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                          printf ("after reset filename: physical_file_id  = %d filename = %s \n",physical_file_id,filename.c_str());
 #endif
 
-                      // if (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end())
                          if (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end())
                             {
                               SgIncludeFile* includeFile = EDG_ROSE_Translation::edg_include_file_map[filename];
@@ -4864,12 +4837,8 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 
                     SgTemplateInstantiationDecl*               templateInstantiationDecl               = isSgTemplateInstantiationDecl(node);
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(node);
-                 // SgTemplateTypedefDeclaration*              templateTypedefDeclaration              = isSgTemplateTypedefDeclaration(node);
 
                  // IR nodes for which we don't want to identify as the first or last statement of a file (header file).
-                 // bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL &&
-                 //                         templateInstantiationDecl == NULL && templateInstantiationMemberFunctionDecl == NULL &&
-                 //                         templateTypedefDeclaration == NULL;
                     bool processStatement = globalScope == nullptr && functionParameterList == nullptr && ctorInitializerList == nullptr &&
                                             templateInstantiationDecl == nullptr && templateInstantiationMemberFunctionDecl == nullptr;
 
@@ -4904,7 +4873,6 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 
                        }
 
-                 // if (statement != NULL && globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL && templateInstantiationDecl == NULL)
                     if (statement != nullptr && processStatement == true)
                        {
                          Sg_File_Info* file_info = statement->get_file_info();

@@ -4832,230 +4832,85 @@ Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info, bool is_fir
      curprint(" ");
    }
 
-#if 0
-void
-Unparse_Type::foobar( SgUnparse_Info & info )
-   {
-  // DQ (5/5/2013): This function forces the instantiation of the required versions of the Unparse_Type::outputType() template function.
-
-     SgInitializedName* initializedName   = NULL;
-     SgTemplateArgument* templateArgument = NULL;
-
-     SgType* referenceNodeType = NULL;
-
-     outputType(initializedName,referenceNodeType,info);
-     outputType(templateArgument,referenceNodeType,info);
-
-     printf ("This function should not be called \n");
-     ROSE_ABORT();
-   }
-#else
 // explicit instantiation of Unparse_Type::outputType
 template void Unparse_Type::outputType(SgInitializedName*, SgType* , SgUnparse_Info &);
 template void Unparse_Type::outputType(SgTemplateArgument*, SgType*, SgUnparse_Info &);
-
-// DQ (9/4/2013): We need to support this instantiation as part of new support for SgCompoundLiteralExp
-// unparsing (via SgAggregateInitializer unparsing).
 template void Unparse_Type::outputType(SgAggregateInitializer*, SgType*, SgUnparse_Info &);
-#endif
 
-template <class T>
+template <typename T>
 void
 Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info)
    {
-  // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
-  // So this code needs to be refactored.
-
-#define DEBUG_OUTPUT_TYPE 0
-
-#if DEBUG_OUTPUT_TYPE
-     printf ("In outputType(): referenceNode     = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
-     printf ("In outputType(): referenceNodeType = %p = %s \n",referenceNodeType,referenceNodeType->class_name().c_str());
-     curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
-     curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
-#endif
-
-#if 0
-  // curprint(string("\n/* In outputType():  */ \n");
-     curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
-     curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
-#endif
-
-#if 0
-  // DQ (9/10/2014): debugging code!
-     if (isSgInitializedName(referenceNode) != NULL && isSgTypeInt(referenceNodeType) != NULL)
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
-
      SgUnparse_Info newInfo(info);
-
-  // info.set_isTypeFirstPart();
      newInfo.set_isTypeFirstPart();
-  // curprint( "\n/* unparse_helper(): output the 1st part of the type */ \n");
-
-  // DQ (8/6/2007): Skip forcing the output of qualified names now that we have a hidden list mechanism.
-  // DQ (10/14/2006): Since function can appear anywhere types referenced in function
-  // declarations have to be fully qualified.  We can't tell from the type if it requires
-  // qualification we would need the type and the function declaration (and then some
-  // analysis).  So fully qualify all function parameter types.  This is a special case
-  // (documented in the Unparse_ExprStmt::unp->u_name->generateNameQualifier() member function.
-  // info.set_forceQualifiedNames();
-
-  // SgUnparse_Info ninfo_for_type(info);
      SgUnparse_Info ninfo_for_type(newInfo);
 
-#if 1
-  // DQ (12/20/2006): This is used to specify global qualification separately from the more general name
-  // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
-  // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
-  // if (initializedName->get_requiresGlobalNameQualificationOnType() == true)
      if (referenceNode->get_requiresGlobalNameQualificationOnType() == true)
         {
-       // Output the name qualification for the type in the variable declaration.
-       // But we have to do so after any modifiers are output, so in unparseType().
-       // printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): This function parameter type requires a global qualifier \n");
-
-       // Note that general qualification of types is separated from the use of globl qualification.
-       // ninfo2.set_forceQualifiedNames();
           ninfo_for_type.set_requiresGlobalNameQualification();
         }
-#endif
-
-  // DQ (5/12/2011): Added support for newer name qualification implementation.
-  // ninfo_for_type.set_name_qualification_length(initializedName->get_name_qualification_length_for_type());
-  // ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
-  // ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
 
      SgTemplateArgument* templateArgument = isSgTemplateArgument(referenceNode);
-
      if (templateArgument != NULL)
         {
-#if DEBUG_OUTPUT_TYPE
-          printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
-          printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
-          printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
-#endif
-       // Transfer values from old variables to the newly added variables (which will be required to support the refactoring into a template of common code.
           templateArgument->set_name_qualification_length_for_type    (templateArgument->get_name_qualification_length());
           templateArgument->set_global_qualification_required_for_type(templateArgument->get_global_qualification_required());
           templateArgument->set_type_elaboration_required_for_type    (templateArgument->get_type_elaboration_required());
-#if 0
-          printf ("In outputType(): AFTER: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
-          printf ("In outputType(): AFTER: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
-          printf ("In outputType(): AFTER: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
-#endif
-        }
-       else
-        {
-          SgInitializedName* initializedName = isSgInitializedName(referenceNode);
-          if (initializedName != NULL)
-             {
-            // We don't have to transfer any data in this case.
-             }
-            else
-             {
-               SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(referenceNode);
-               if (aggregateInitializer != NULL)
-                  {
-                 // We don't have to transfer any data in this case.
-#if 0
-                    printf ("Nothing to do for this case of referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
-#endif
-                  }
-                 else
-                  {
-                    printf ("ERROR: referenceNode is not a supported type of IR node. referenceNode kind = %s \n",referenceNode->class_name().c_str());
-                    ROSE_ABORT();
-                  }
-             }
         }
 
      ninfo_for_type.set_name_qualification_length    (referenceNode->get_name_qualification_length_for_type());
      ninfo_for_type.set_global_qualification_required(referenceNode->get_global_qualification_required_for_type());
      ninfo_for_type.set_type_elaboration_required    (referenceNode->get_type_elaboration_required_for_type());
 
-  // DQ (5/29/2011): We have to set the associated reference node so that the type unparser can get the name qualification if required.
-  // ninfo_for_type.set_reference_node_for_qualification(initializedName);
      ninfo_for_type.set_reference_node_for_qualification(referenceNode);
 
-#if 0
-     printf ("ninfo_for_type.set_reference_node_for_qualification(referenceNode): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
-#endif
-
-  // TV (08/16/2018): enforce global qualification if required through the SgUnparse_Info (to circumvent the info assoc with the reference node)
      if (ninfo_for_type.requiresGlobalNameQualification()) {
-
-#if 0
-       printf ("WARNING: Setting the ninfo_for_type.set_reference_node_for_qualification(NULL) \n");
-#endif
-
        ninfo_for_type.set_global_qualification_required(true);
        ninfo_for_type.set_reference_node_for_qualification(NULL);
      }
-
-#if DEBUG_OUTPUT_TYPE
-     printf ("In outputType(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("In outputType(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
-#endif
-
-  // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
-#if DEBUG_OUTPUT_TYPE
-     curprint("\n/* outputType(): output the 1st part of the type */ \n");
-#endif
-
-  // unparseType(tmp_type, info);
-  // unp->u_type->unparseType(tmp_type, ninfo_for_type);
      unp->u_type->unparseType(referenceNodeType, ninfo_for_type);
-
-#if DEBUG_OUTPUT_TYPE
-     curprint("\n/* DONE - outputType(): output the 1st part of the type */ \n");
-#endif
 
      SgInitializedName* initializedName = isSgInitializedName(referenceNode);
      if (initializedName != NULL)
         {
           SgName tmp_name  = initializedName->get_name();
-       // DQ (5/4/2013): This would be the name of the variable of the specific type in the function
-       // parameter list, not wanted for the case of template arguments.
-
-       // forward declarations don't necessarily need the name of the argument
-       // so we must check if not NULL before adding to chars_on_line
-       // This is a more consistant way to handle the NULL string case
-       // curprint( "\n/* unparse_helper(): output the name of the type */ \n");
-       // curprint(tmp_name.str());
-       // curprint( "\n/* In unparseTemplateArgument(): <<< name of type >>> */ \n");
           curprint(tmp_name.str());
         }
 
-  // output the rest of the type
-  // info.set_isTypeSecondPart();
      newInfo.set_isTypeSecondPart();
 
-  // info.display("unparse_helper(): output the 2nd part of the type");
-
-  // printf ("unparse_helper(): output the 2nd part of the type \n");
-#if DEBUG_OUTPUT_TYPE
-     curprint( "\n/* unparse_helper(): output the 2nd part of the type */ \n");
-#endif
-  // unp->u_type->unparseType(tmp_type, info);
-  // unp->u_type->unparseType(templateArgumentType, info);
      unp->u_type->unparseType(referenceNodeType, newInfo);
+   }
 
-#if DEBUG_OUTPUT_TYPE
-     printf ("DONE: outputType(): \n");
-     curprint( "\n/* DONE: outputType(): */ \n");
-#endif
+template <>
+void
+Unparse_Type::outputType<SgConstructorInitializer>( SgConstructorInitializer* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info)
+   {
+     SgUnparse_Info newInfo(info);
+     newInfo.set_isTypeFirstPart();
+     SgUnparse_Info ninfo_for_type(newInfo);
 
-#if 0
-  // curprint(string("\n/* Leaving outputType() */ \n");
-     curprint(string("\n/* Leaving outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
-     curprint(string("\n/* Leaving outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
-#endif
+     ninfo_for_type.set_reference_node_for_qualification(referenceNode);
 
+     if (ninfo_for_type.requiresGlobalNameQualification()) {
+       ninfo_for_type.set_global_qualification_required(true);
+       ninfo_for_type.set_reference_node_for_qualification(NULL);
+     }
+     ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
+
+     unp->u_type->unparseType(referenceNodeType, ninfo_for_type);
+
+     SgInitializedName* initializedName = isSgInitializedName(referenceNode);
+     if (initializedName != NULL)
+        {
+          SgName tmp_name  = initializedName->get_name();
+          curprint(tmp_name.str());
+        }
+
+     newInfo.set_isTypeSecondPart();
+
+     unp->u_type->unparseType(referenceNodeType, newInfo);
    }
 

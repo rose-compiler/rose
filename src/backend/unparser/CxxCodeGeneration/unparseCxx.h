@@ -45,15 +45,7 @@ class Unparser;
 
 class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
    {
-#if 0
-  // DQ (8/13/2007): This should go into the base class
-     private:
-          Unparser* unp;
-          std::string currentOutputFileName;
-#endif
      public:
-       // Unparse_ExprStmt(Unparser* unp, string fname) : unp(unp)
-       // Unparse_ExprStmt(Unparser* unp, std::string fname) : UnparseLanguageIndependentConstructs(unp,fname) {};
           Unparse_ExprStmt(Unparser* unp, std::string fname);
 
           virtual ~Unparse_ExprStmt();
@@ -82,33 +74,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
                                                      bool outputParameterDeclaration, 
                                                      SgUnparse_Info& info );
 
-          void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
-
           void unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
 
-#if 0
-       // DQ (8/13/2007): This should go into the base class
 
-      //! get the filename from a Sage Statement Object
-       // const char* getFileName(SgNode* stmt);
-          std::string getFileName(SgNode* stmt);
-  
-      //! get the filename from the Sage File Object
-       // char* getFileName();
-          std::string getFileName();
-
-      //! used to support the run_unparser function
-      //! (support for #line 42 "filename" when it appears in source code)
-       // bool statementFromFile ( SgStatement* stmt, char* sourceFilename );
-          bool statementFromFile ( SgStatement* stmt, std::string sourceFilename );
-
-      //! Generate a CPP directive  
-          void outputDirective ( PreprocessingInfo* directive );
-
-  
-      //! counts the number of statements in a basic block
-          int num_stmt_in_block(SgBasicBlock*);
-#endif
 
        // DQ (5/27/2005): Added to support unparsing of compiler generated statements after comments 
        // attached to the following statement. We would like to not have any comments be attached to 
@@ -118,33 +86,6 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
       //! Unparser support for compiler-generated statments
           void outputCompilerGeneratedStatements( SgUnparse_Info & info );
-
-#if 0
-#if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
-
-#error "DEAD CODE!: I think this is OLD code that can be removed."
-
-      //! functions that unparses directives and/or comments
-          void unparseDirectives(SgStatement* stmt);
-          void unparseFinalDirectives ( char* filename );
-  
-          void unparseDirectivesUptoButNotIncludingCurrentStatement ( SgStatement* stmt );
-          void unparseDirectivesSharingLineWithStatement ( SgStatement* stmt );
-  
-       // lower level member function called by unparseDirectives() and unparseFinalDirectives()
-          void unparseDirectives ( char* currentFilename, int currentPositionInListOfDirectives, int currentStatementLineNumber );
-#else
-      //! This is the new member function
-          virtual void unparseAttachedPreprocessingInfo(SgStatement* stmt, SgUnparse_Info& info,
-                                                PreprocessingInfo::RelativePositionType whereToUnparse);
-#endif
-#endif
-  
-
-#if 0  
-       // DQ (8/13/2007): This should go into the base class
-          bool RemoveArgs(SgExpression* expr);
-#endif
 
       //! Support for Fortran numeric labels (can appear on any statement), this is an empty function for C/C++.
       //  virtual void unparseStatementNumbers ( SgStatement* stmt );
@@ -187,22 +128,8 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           template <class T> void unparseFuncRefSupport (SgExpression* expr, SgUnparse_Info& info);
           template <class T> void unparseMFuncRefSupport(SgExpression* expr, SgUnparse_Info& info);
 
-       // DQ (11/10/2005): Added general support for SgValue (so that we could unparse 
-       // expression trees from contant folding)
-       // virtual void unparseValue                   (SgExpression* expr, SgUnparse_Info& info);
-#if 0
-          virtual void unparseBoolVal                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseShortVal                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseCharVal                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseUCharVal                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseUShortVal               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseEnumVal                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseIntVal                  (SgExpression* expr, SgUnparse_Info& info);     
-#else
-          virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
-#endif
+
        // DQ (2/14/2019): Adding support for C++14 void values.
           virtual void unparseVoidValue               (SgExpression* expr, SgUnparse_Info& info);  
 
@@ -309,7 +236,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseExprInit                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAggrInit                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseCompInit                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseConInit                 (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseCtorInit                 (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseAssnInit                (SgExpression* expr, SgUnparse_Info& info);
 
        // DQ (11/15/2016): Adding support for braced initializer node.
@@ -454,15 +381,6 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
           virtual void unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& info);
 
-#if 0
-       // DQ (8/13/2007): This should go into the base class
-          bool isTransformed(SgStatement* stmt);
-          void markGeneratedFile();
-
-       // DQ (8/13/2007): This function was added by Thomas to replace (wrap) the use of cur as an output stream.
-          void curprint (std::string str);
-#endif
-
        // DQ (5/1/2004): Added support for unparsing namespace constructs
           virtual void unparseNamespaceDeclarationStatement      ( SgStatement* stmt, SgUnparse_Info & info );
           virtual void unparseNamespaceDefinitionStatement       ( SgStatement* stmt, SgUnparse_Info & info );
@@ -538,29 +456,8 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (1/21/2018): Added support for lambda function capture variables in annonymous compiler generated classes passed as template arguments
           bool isAnonymousClass(SgType* templateArgumentType);
 
-#if 0
-       // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
-          enum token_sequence_position_enum_type
-             {
-               e_leading_whitespace_start,
-               e_leading_whitespace_end,
-               e_token_subsequence_start,
-               e_token_subsequence_end,
-               e_trailing_whitespace_start,
-               e_trailing_whitespace_end
-             };
-#endif
-#if 0
-       // Single statement specification of token subsequence.
-          void unparseStatementFromTokenStream (SgStatement* stmt, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
-
-       // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
-       // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
-          void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
-#endif
 
        // DQ (8/25/2020): Changed this to a static function so that it could be called from UnparseLanguageIndependentConstructs::unparseExprList().
-       // DQ (1/30/2019): We need to call this from unparseOneElemConInit() in unparseCxxStatements.C.
        // bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
           static bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
 
@@ -573,58 +470,3 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
 #endif
 
-
-
-#if 0
-// DQ (8/13/2007): This code was previously in the class above.
-
-//! auxiliary functions (some code from original modified_sage.C)
-  bool NoDereference(SgExpression* expr);
-  bool isCast_ConstCharStar(SgType* type);
-  bool RemoveArgs(SgExpression* expr);
-  bool PrintStartParen(SgExpression* expr, SgUnparse_Info& info);
-  bool RemovePareninExprList(SgExprListExp* expr_list);
-  bool isOneElementList(SgConstructorInitializer* con_init);
-  void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
-  bool printConstructorName(SgExpression* expr);
-  bool noQualifiedName(SgExpression* expr);
-//  void output(SgLocatedNode* node);
-  void directives(SgLocatedNode* lnode);
-
-  void unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
-
-  void printSpecifier1(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
-  void printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
-  void printSpecifier (SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
-
-// DQ (4/3/2004): Added to output modifiers (e.g. register) in formal function arguments
-  void printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info );
-
-// DQ (2/16/2004): Added to refactor code and add support for old-style K&R C
-  void unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
-  void unparseFunctionParameterDeclaration ( SgFunctionDeclaration* funcdecl_stmt, 
-                                             SgInitializedName* initializedName,
-                                             bool outputParameterDeclaration, 
-                                             SgUnparse_Info& info );
-
-  //! remove unneccessary white space to build a condensed string
-  static std::string removeUnwantedWhiteSpace ( const std::string & X );
-
-
-  //! unparse symbol functions implemented in unparse_sym.C
-  // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
-  virtual void unparseSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseVarSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseFunctionSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseFuncTypeSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseClassSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseUnionSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseStructSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseEnumSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseFieldSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseTypedefSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseMFunctionSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseLabelSymbol(SgSymbol* sym, SgUnparse_Info& info);
-  void unparseConstructSymbol(SgSymbol* sym, SgUnparse_Info& info);
-#endif
- 
