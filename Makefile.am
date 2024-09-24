@@ -42,8 +42,9 @@ endif
 testprojdir = ${datarootdir}/test-project
 testproj_DATA =								\
 	tools/PortabilityTesting/lib/matrix/test-project/Makefile	\
-	tools/PortabilityTesting/lib/matrix/test-project/README		\
-	tools/PortabilityTesting/lib/matrix/test-project/test-rose.C
+	tools/PortabilityTesting/lib/matrix/test-project/README.md	\
+	tools/PortabilityTesting/lib/matrix/test-project/test-rose.C	\
+	tools/PortabilityTesting/lib/matrix/test-project/VERSION
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
