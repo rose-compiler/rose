@@ -1291,7 +1291,7 @@ namespace{
           {
             res = sb::buildVarRefExp(var, &ctx.scope());
           }
-          else if(SgDeclarationStatement* dcl = queryDecl(lal_element, ctx))
+          else if(SgDeclarationStatement* dcl = queryDecl(lal_element, hash, ctx))
           {
             res = sg::dispatch(ExprRefMaker{ctx}, dcl);
           }

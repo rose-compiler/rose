@@ -301,6 +301,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_subtype_decl:
         case ada_type_decl:
         case ada_task_type_decl:
+        case ada_single_task_decl:
         case ada_task_body:
         case ada_entry_decl:
         case ada_component_decl:

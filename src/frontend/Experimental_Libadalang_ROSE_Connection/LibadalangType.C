@@ -616,6 +616,7 @@ namespace
               logInfo() << ", found.\n";
           } else {
               logInfo() << ", couldn't find.\n";
+              res = &mkTypeUnknown();
           }
 
           break;
@@ -765,11 +766,13 @@ namespace
     return lal_element ? &getConstraint(lal_element, ctx) : nullptr;
   }
 
-  /// Returns a record class with associated components as represetned in \ref lal_element
+  /// Returns a record class with associated components as represented in \ref lal_element
   SgClassDefinition&
   getRecordBody(ada_base_entity* lal_record, AstContext ctx)
   {
     SgClassDefinition&        sgnode     = mkRecordBody();
+
+    sgnode.set_parent(&ctx.scope());
 
     //Get the kind
     ada_node_kind_enum kind = ada_node_kind(lal_record);
@@ -777,13 +780,11 @@ namespace
     if(kind == ada_null_record_def)
     {
       logKind("ada_null_record_def", kind);
-      SgClassDefinition&      sgdef = mkRecordBody();
 
-      attachSourceLocation(sgdef, lal_record, ctx);
-      return sgdef;
+      attachSourceLocation(sgnode, lal_record, ctx);
+      return sgnode;
     }
 
-    sgnode.set_parent(&ctx.scope());
 
     if(kind == ada_record_def){
       logKind("ada_record_def", kind);

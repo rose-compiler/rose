@@ -1411,7 +1411,7 @@ namespace {
 
     if(!ada_node_is_null(&public_part)){
       int range = ada_node_children_count(&public_part);
-      for(int i =0; i < range; ++i){
+      for(int i = 0; i < range; ++i){
         ada_base_entity lal_entry;
         ada_node_child(&public_part, i, &lal_entry);
         handleElement(&lal_entry, ctx.scope(*nodePtr));
@@ -1423,7 +1423,7 @@ namespace {
       ada_declarative_part_f_decls(&private_part, &private_part);
 
       int range = ada_node_children_count(&private_part);
-      for(int i =0; i < range; ++i){
+      for(int i = 0; i < range; ++i){
         ada_base_entity lal_entry;
         ada_node_child(&private_part, i, &lal_entry);
         handleElement(&lal_entry, ctx.scope(*nodePtr), true /* private items */);
@@ -1483,6 +1483,21 @@ namespace {
     }
 
     return getTaskSpec(lal_element, ctx);
+  }
+
+  std::pair<SgAdaTaskSpec*, DeferredPragmaBodyCompletion>
+  getTaskSpecForSingleTask(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    if(kind != ada_single_task_decl){
+      logError() << "getTaskSpecForSingleTask given node of kind " << kind << "!\n";
+    }
+
+    //Get the definition
+    ada_base_entity lal_definition;
+    ada_single_task_decl_f_task_type(lal_element, &lal_definition);
+
+    return getTaskSpec_opt(&lal_definition, ctx);
   }
   /// @}
 
@@ -1836,7 +1851,7 @@ void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatem
 
 /// Find the first corresponding decl for \ref lal_element
 SgDeclarationStatement*
-queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
+queryDecl(ada_base_entity* lal_element, int defining_name_hash, AstContext /*ctx*/)
 {
   ada_node_kind_enum kind = ada_node_kind(lal_element);
 
@@ -1844,11 +1859,11 @@ queryDecl(ada_base_entity* lal_element, AstContext /*ctx*/)
   ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
   int decl_hash = hash_node(&corresponding_decl);
 
-  SgDeclarationStatement* res = findFirst(libadalangDecls(), decl_hash);
+  SgDeclarationStatement* res = findFirst(libadalangDecls(), decl_hash, defining_name_hash);
 
   if((res == nullptr) && (kind == ada_identifier))
   {
-    res = findFirst(adaPkgs(), decl_hash);
+    res = findFirst(adaPkgs(), decl_hash, defining_name_hash);
   }
 
   return res;
@@ -3090,11 +3105,20 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
 
         //Get the hash for the decl
-        ada_base_entity p_decl_part;
+        ada_base_entity p_decl_part, lal_decl_defining_name;
         ada_body_node_p_decl_part(lal_element, 1, &p_decl_part);
+        ada_node_kind_enum decl_kind = ada_node_kind(&p_decl_part);
+        if(decl_kind == ada_single_task_decl){
+          ada_single_task_decl_f_task_type(&p_decl_part, &lal_decl_defining_name);
+          ada_base_type_decl_f_name(&lal_decl_defining_name, &lal_decl_defining_name);
+        } else if(decl_kind == ada_task_type_decl){
+          ada_base_type_decl_f_name(&p_decl_part, &lal_decl_defining_name);
+        } else {
+          logError() << "ada_task_body has decl of unhandled kind: " << kind << "!\n";
+        }
 
         int                          hash = hash_node(lal_element);
-        int                     decl_hash = hash_node(&p_decl_part);
+        int                     decl_hash = hash_node(&lal_decl_defining_name);
         std::string             ident     = canonical_text_as_string(&lal_identifier);
         SgAdaTaskBody&          tskbody   = mkAdaTaskBody();
         SgDeclarationStatement* ndef      = findFirst(libadalangDecls(), decl_hash);
@@ -3384,7 +3408,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Set up nondef if this isn't the first decl
         ada_base_entity lal_previous_decl;
         ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
-        int                         hash      = hash_node(lal_element);
+        int                         hash      = hash_node(&defining_name);
         SgDeclarationStatement*     ndef      = nullptr;
         SgAdaTaskTypeDecl*          nondef    = nullptr;
 
@@ -3450,6 +3474,35 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         /*AstContext::PragmaContainer protectedPragmas = splitOfPragmas(pragmaVector, protectedDeclPragmas, ctx);
 
         spec.second(std::move(protectedPragmas)); // complete the body*/ //TODO pragmas
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_single_task_decl:                // 3.3.1(2):9.1(3)
+      {
+        logKind("ada_single_task_decl", kind);
+
+        //Get the name for this task
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_single_task_decl_f_task_type(lal_element, &lal_defining_name);
+        ada_base_type_decl_f_name(&lal_defining_name, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+
+        std::string        ident   = canonical_text_as_string(&lal_identifier);
+        int                 hash   = hash_node(&lal_defining_name);
+        auto               spec    = getTaskSpecForSingleTask(lal_element, ctx);
+        SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(ident, SG_DEREF(spec.first), ctx.scope());
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        //~ recordNode(libadalangTypes(), hash, sgnode);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        //AstContext::PragmaContainer taskPragmas = splitOfPragmas(pragmaVector, taskDeclPragmas, ctx); //TODO Pragmas
+
+        //spec.second(std::move(taskPragmas)); // complete the body
 
         assocdecl = &sgnode;
         break;
