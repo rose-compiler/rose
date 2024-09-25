@@ -34456,7 +34456,7 @@ public:
     CorILMethod_Sect_EHTable    = 0x01,
     CorILMethod_Sect_OptILTable = 0x02,
     CorILMethod_Sect_FatFormat  = 0x40,
-    CorILMethod_Sect_MoreSects  = 0x40,
+    CorILMethod_Sect_MoreSects  = 0x80,
   };
 
 private:
@@ -34472,7 +34472,7 @@ public:
     std::vector<SgAsmCilExceptionData*> const& get_Clauses() const;
     std::vector<SgAsmCilExceptionData*>& get_Clauses();
 public:
-  bool isExceptionSection() const
+  bool isEHTable() const
   {
     return (p_kind & CorILMethod_Sect_EHTable) == CorILMethod_Sect_EHTable;
   }

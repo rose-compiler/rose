@@ -227,7 +227,7 @@ namespace // anonymous namespace for auxiliary functions
     {
       mlog[INFO] << "unexpected read: expected " << integerValue(expected) 
                  << ", got " << integerValue(res) << "."
-                 << std::endl;      
+                 << std::endl;               
     }
 
     return res;
@@ -3485,8 +3485,8 @@ struct MethodHeader : MethodHeaderBase
   // accessors
   std::uint16_t flags() const          { return std::get<0>(*this); }
   bool          tiny()  const          { return (flags() & FORMAT) != FAT; }
-  bool          moreSections()  const  { return (flags() & FLAGS) == MORE_SECTS; }
-  bool          initLocals()  const    { return (flags() & FLAGS) == INIT_LOCALS; }
+  bool          moreSections()  const  { return (flags() & MORE_SECTS) == MORE_SECTS; }
+  bool          initLocals()  const    { return (flags() & INIT_LOCALS) == INIT_LOCALS; }
   std::uint8_t  headerSize() const     { return tiny() ? 1 : FAT_HEADER_LEN; }
 
   std::uint16_t maxStackSize() const   { return std::get<1>(*this); }
@@ -3763,45 +3763,124 @@ parseEHClauses( SgAsmPEFileHeader& fhdr,
   
   for (std::size_t i = len / elemLen; i != 0; --i)
   {
+    // std::cerr << "parse exh clause" << std::endl;
     res.emplace_back(parseClause(fhdr, sectionRva));
     sectionRva += elemLen;
   }
   
   return res;
-}              
+} 
 
-SgAsmCilMethodData*
+void unparseFatEHClause(const SgAsmCilExceptionData& eh, std::vector<std::uint8_t>& code)
+{
+  std::size_t const lenBefore = code.size();
+  std::size_t       pos       = lenBefore;
+  
+  write32bitValue(eh.get_flags(),                    code, pos);
+  write32bitValue(eh.get_tryOffset(),                code, pos);
+  write32bitValue(eh.get_tryLength(),                code, pos);
+  write32bitValue(eh.get_handlerOffset(),            code, pos);
+  write32bitValue(eh.get_handlerLength(),            code, pos);
+  write32bitValue(eh.get_classTokenOrFilterOffset(), code, pos);
+  
+  ASSERT_require(pos-lenBefore == 24);
+}
+
+
+void unparseTinyEHClause(const SgAsmCilExceptionData& eh, std::vector<std::uint8_t>& code)
+{
+  std::size_t const lenBefore = code.size();
+  std::size_t       pos       = lenBefore;
+  
+  write16bitValue(eh.get_flags(),                    code, pos);
+  write16bitValue(eh.get_tryOffset(),                code, pos);
+  write8bitValue (eh.get_tryLength(),                code, pos);
+  write16bitValue(eh.get_handlerOffset(),            code, pos);
+  write8bitValue (eh.get_handlerLength(),            code, pos);
+  write32bitValue(eh.get_classTokenOrFilterOffset(), code, pos);
+  
+  ASSERT_require(pos-lenBefore == 12);
+}
+
+void unparseEHClauses( const std::vector<SgAsmCilExceptionData*>& clauses, 
+                       bool isFat,
+                       std::vector<std::uint8_t>& code
+                     )
+{
+  auto unparseClause = isFat ? &unparseFatEHClause : &unparseTinyEHClause;
+  
+  for (auto cl : clauses)
+  {
+    ASSERT_not_null(cl);
+    
+    unparseClause(*cl, code);
+  }
+}
+
+std::tuple<SgAsmCilMethodData*, rose_addr_t>
 parseSection(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
 {
   ASSERT_require((sectionRva % 4) == 0);
   
-  std::uint8_t   kind;
-  std::size_t    nread1 = fhdr.get_loaderMap()->readQuick(&kind, sectionRva, 1);
+  std::uint8_t   kind /* = uninitialized */;
+  std::size_t    nread1   = fhdr.get_loaderMap()->readQuick(&kind, sectionRva, 1);
   ASSERT_require(nread1 == 1);
   
   // buffer for 3 bytes
-  std::uint8_t   buf[] = { 0, 0, 0, 0 };
-  std::size_t    nread3 = fhdr.get_loaderMap()->readQuick(buf, sectionRva+1, 3);
+  std::uint8_t   buf[]    = { 0, 0, 0, 0 };
+  std::size_t    nread3   = fhdr.get_loaderMap()->readQuick(buf, sectionRva+1, 3);
   ASSERT_require(nread3 == 3);
   
-  std::uint8_t   fatFlag = SgAsmCilMethodData::CorILMethod_Sect_FatFormat;
-  const bool     fat = (kind & fatFlag) == fatFlag;
-  
+  std::uint8_t   fatFlag  = SgAsmCilMethodData::CorILMethod_Sect_FatFormat;
+  const bool     fat      = (kind & fatFlag) == fatFlag;
   ASSERT_require(fat || ((buf[1] == 0) && (buf[2] == 0)));
-  std::uint8_t   len = fat ? 3 : 1;
   
+  std::uint8_t   len      = fat ? 3 : 1;
   auto           sizeCalc = [](std::uint32_t l, std::uint32_t r) -> std::uint32_t { return l*256 + r; };
-  std::uint32_t  dataSize = std::accumulate( buf, buf + len, std::uint32_t{0}, sizeCalc);
+  std::uint32_t  dataSize = std::accumulate(buf, buf + len, std::uint32_t{0}, sizeCalc);
+  auto           clauses  = fat ? parseEHClauses(fhdr, sectionRva+4, dataSize-4, 24, parseFatEHClause)
+                                : parseEHClauses(fhdr, sectionRva+4, dataSize-4, 12, parseTinyEHClause);
   
-  auto           clauses = fat ? parseEHClauses(fhdr, sectionRva+4, dataSize-4, 24, parseFatEHClause)
-                               : parseEHClauses(fhdr, sectionRva+4, dataSize-4, 12, parseTinyEHClause);
-  
-  return methodData( kind, dataSize, std::move(clauses) );    
+  return { methodData(kind, dataSize, std::move(clauses)), sectionRva + dataSize };    
 }
 
+void unparseSection(const SgAsmCilMethodData& section, std::vector<std::uint8_t>& code)
+{
+  // unparse first byte
+  std::uint8_t kind = 0;
+  
+  if (section.usesFatFormat())   kind |= SgAsmCilMethodData::CorILMethod_Sect_FatFormat;
+  if (section.hasMoreSections()) kind |= SgAsmCilMethodData::CorILMethod_Sect_MoreSects;
+  if (section.isEHTable())       kind |= SgAsmCilMethodData::CorILMethod_Sect_EHTable;
+  if (section.isOptILTable())    kind |= SgAsmCilMethodData::CorILMethod_Sect_OptILTable;
+  
+  code.push_back(kind);
+  
+  std::uint8_t  dataSizeLen = section.usesFatFormat() ? 3 : 1;
+  std::uint32_t dataSizePos = code.size();
+  
+  // reserve space for the dataSize
+  code.resize(dataSizePos + dataSizeLen, 0);
+  
+  // unparse data sections
+  unparseEHClauses(section.get_Clauses(), section.usesFatFormat(), code);
+  
+  // put in place the datasize (either 1 [tiny] or 3 [fat] bytes)
+  std::uint32_t dataSize    = code.size() - dataSizePos;
+  
+  for ( ; dataSizeLen != 0; --dataSizeLen)
+  {
+    code.at(dataSizePos + dataSizeLen - 1) = dataSize & 255;
+    
+    dataSize >>= 8;
+  }
+  
+  ASSERT_require(dataSize == 0);
+}
 
+  
 void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root, 
-                    size_t /*dbgbuf_beg*/, size_t /*dbgbuf_lim*/)
+                    size_t /*dbg_bufbeg*/, size_t /*dbg_buflim*/)
 {
   ASSERT_not_null(mdh); ASSERT_not_null(root);
 
@@ -3831,6 +3910,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     const bool     isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
     ASSERT_require(isTiny || (((base_va+rva)%4) == 0));
     MethodHeader   mh = isTiny ? parseTinyHeader(mh0) : parseFatHeader(base_va, rva, fhdr);
+    ASSERT_require(mh.tiny() == isTiny);
 
     m->set_stackSize(mh.maxStackSize());
     m->set_hasMoreSections(mh.moreSections());
@@ -3889,16 +3969,29 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     bool        hasMoreSections = m->get_hasMoreSections();
     rose_addr_t sectionRva = base_va + codeRVA + codeLen;
     
+  /*  
+    std::cerr << "################################## " 
+              << m->get_Name_string() 
+              << " more: " << hasMoreSections 
+              << " tiny: " << isTiny
+              << " flags: " << mh.flags()
+              << " stack: " << mh.maxStackSize()
+              << " code: " << mh.codeSize()
+              << " lvst: " << mh.localVarSigTok()              
+              << " / " << (mh.flags() & 0x8) << " / " << mh.moreSections()
+              << std::endl;
+  */  
+    
     while (hasMoreSections)
     {
-      // compute 4 byte boundary
-      sectionRva = ((sectionRva*4) + 3) / 4; 
+      // extra sections start at next 4 bound boundary
+      rose_addr_t const   alignedSectionRva = (sectionRva + 3) & ~3;       
+      SgAsmCilMethodData* section = nullptr;
       
-      SgAsmCilMethodData* section = parseSection(*fhdr, sectionRva);
-      ASSERT_require(section);
-      // TODO
-      
+      std::tie(section, sectionRva) = parseSection(*fhdr, alignedSectionRva);
+      ASSERT_not_null(section);
       hasMoreSections = section->hasMoreSections();
+      m->get_methodData().push_back(section);
     }
   }
 }
@@ -3995,11 +4088,23 @@ void encodeMetadata(std::vector<std::uint8_t>& buf, rose_addr_t base_va, rose_ad
                   );
                   
     // \todo revise and write directly into buf              
-    
     std::vector<std::uint8_t> code = unparseCode(m->get_body());
     std::vector<std::uint8_t> mh   = unparseMethodHeader(m, code.size());
+        
+    // unparse extra sections following the code section..
+    for (SgAsmCilMethodData* section: m->get_methodData())
+    {
+      ASSERT_not_null(section);
+      
+      // extra sections start at next 4 bound boundary
+      rose_addr_t sectionRva = rva + base_va + mh.size() + code.size();
+      const int   padding4Byte = ((sectionRva + 3) & ~3) - sectionRva; 
+      
+      code.resize(code.size() + padding4Byte, 0);      
+      unparseSection(*section, code);
+    }
     
-    // any code must be written before the metadata object section
+    // any code must be written before the metadata object section begins
     ASSERT_require(limit_va > rva + base_va + mh.size() + code.size());
     
     std::copy(mh.begin(),   mh.end(),   buf.data() + rva + base_va);

@@ -12,7 +12,7 @@ public:
     CorILMethod_Sect_EHTable    = 0x01,
     CorILMethod_Sect_OptILTable = 0x02,
     CorILMethod_Sect_FatFormat  = 0x40,
-    CorILMethod_Sect_MoreSects  = 0x40, 
+    CorILMethod_Sect_MoreSects  = 0x80, 
   };
   
 private:
@@ -26,7 +26,7 @@ private:
   std::vector<SgAsmCilExceptionData*> clauses;
 
 public:
-  bool isExceptionSection() const
+  bool isEHTable() const
   {
     return (p_kind & CorILMethod_Sect_EHTable) == CorILMethod_Sect_EHTable;
   }
