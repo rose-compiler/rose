@@ -564,6 +564,133 @@ namespace
     return getDefinitionType(lal_element, ctx);
   }
 
+  // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
+  FormalTypeData
+  getFormalTypeFoundation( const std::string& name,
+                           ada_base_entity* lal_element,
+                           AstContext ctx
+                         )
+  {
+    //Get the type def
+    ada_base_entity lal_type_def;
+    ada_type_decl_f_type_def(lal_element, &lal_type_def);
+    ada_node_kind_enum kind = ada_node_kind(&lal_type_def);
+    logKind("A_Formal_Type_Definition", kind);
+
+    SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
+    FormalTypeData                 res{&lal_type_def, &sgnode};
+    SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
+    SgType*                        formalBaseType = nullptr;
+
+    switch(kind)
+    {
+      case ada_derived_type_def:         // 12.5.1(3)   -> Trait_Kinds
+        {
+          logKind("ada_derived_type_def", kind);
+
+          //Get the abstract & limited status
+          ada_base_entity lal_has_abstract, lal_has_limited;
+          ada_derived_type_def_f_has_abstract(&lal_type_def, &lal_has_abstract);
+          ada_derived_type_def_f_has_limited(&lal_type_def, &lal_has_limited);
+          res.setAbstract(ada_node_kind(&lal_has_abstract) == ada_abstract_present);
+          res.setLimited(ada_node_kind(&lal_has_limited) == ada_limited_present);
+
+          //Get the base type
+          ada_base_entity lal_subtype_indication;
+          ada_derived_type_def_f_subtype_indication(&lal_type_def, &lal_subtype_indication);
+          SgType& undertype = getDeclType(&lal_subtype_indication, ctx);
+
+          //Get the private status
+          ada_base_entity lal_has_private;
+          ada_derived_type_def_f_has_with_private(&lal_type_def, &lal_has_private);
+          formal.set_is_private(ada_node_kind(&lal_has_private) == ada_private_present);
+          formalBaseType = &mkAdaDerivedType(undertype);
+
+          res.inheritsRoutines(true);
+
+          break;
+        }
+      case ada_type_access_def:          // 3.10(3),3.10(5)
+        {
+          logKind("ada_type_access_def", kind);
+          formalBaseType = &getAccessType(&lal_type_def, ctx);
+
+          break;
+        }
+      case ada_signed_int_type_def:  // 12.5.2(3)
+        {
+          logKind("ada_signed_int_type_def", kind);
+          formalBaseType = &mkIntegralType();
+
+          break;
+        }
+      case ada_mod_int_type_def:         // 12.5.2(4)
+        {
+          logKind("ada_mod_int_type_def", kind);
+          formalBaseType = &mkAdaModularType(mkNullExpression());
+
+          break;
+        }
+      case ada_floating_point_def:       // 12.5.2(5)
+        {
+          logKind("ada_floating_point_def", kind);
+          formalBaseType = &mkRealType();
+
+          break;
+        }
+      case ada_formal_discrete_type_def:        // 12.5.2(2)
+        {
+          logKind("ada_formal_discrete_type_def", kind);
+          formalBaseType = &mkAdaDiscreteType();
+
+          break;
+        }
+      case ada_ordinary_fixed_point_def: // 12.5.2(6)
+        {
+          logKind("ada_ordinary_fixed_point_def", kind);
+          formalBaseType = &mkFixedType();
+
+          break;
+        }
+      case ada_decimal_fixed_point_def:  // 12.5.2(7)
+        {
+          logKind("ada_decimal_fixed_point_def", kind);
+          SgType&               fixed   = mkFixedType();
+          SgAdaDeltaConstraint& decimal = mkAdaDeltaConstraint(mkNullExpression(), true, nullptr);
+
+          formalBaseType = &mkAdaSubtype(fixed, decimal);
+          break;
+        }
+      case ada_array_type_def:  // 3.6(3), 3.6(5)
+        {
+          logKind("ada_array_type_def", kind);
+          formalBaseType = &createArrayType(&lal_type_def, ctx);
+          break;
+        }
+
+      default:
+        logWarn() << "unhandled formal type kind " << kind << std::endl;
+        // NOTE: temporarily create an AdaFormalType with the given name,
+        //       but set no fields.  This is sufficient to pass some test cases but
+        //       is not correct.
+        formalBaseType = &mkTypeUnknown();
+    }
+
+    formal.set_formal_type(formalBaseType);
+
+/*
+    if (inheritsDeclarationsAndSubprograms)
+    {
+      processInheritedSubroutines( formal,
+                                   idRange(typenode.Implicit_Inherited_Subprograms),
+                                   idRange(typenode.Implicit_Inherited_Declarations),
+                                   ctx.scope(inheritedRoutineScope)
+                                 );
+    }
+*/
+    return res;
+  }
+
   //Function to hash a unique int from a node using the node's kind and location.
   //The kind and location can be provided, but if not they will be determined in the function
   int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
@@ -603,19 +730,23 @@ namespace
       case ada_type_decl:
       case ada_subtype_decl:
         {
+          //Get and hash the defining name as well as the type decl
+          ada_base_entity lal_defining_name;
+          ada_base_type_decl_f_name(lal_expr, &lal_defining_name);
+          int decl_hash = hash_node(&lal_defining_name);
           int hash = hash_node(lal_expr);
-          logInfo() << "Searching for hash: " << hash;
+          logInfo() << "Searching for hashes: " << hash << ", " << decl_hash;
 
           // is it a type?
           findFirstOf
-          || (res = findFirst(adaTypes(),         hash))
-          || (res = findFirst(libadalangTypes(),  hash))
+          || (res = findFirst(adaTypes(),         hash, decl_hash))
+          || (res = findFirst(libadalangTypes(),  hash, decl_hash))
           ;
 
           if(res != nullptr){
-              logInfo() << ", found.\n";
+              logInfo() << ": found.\n";
           } else {
-              logInfo() << ", couldn't find.\n";
+              logInfo() << ": couldn't find.\n";
               res = &mkTypeUnknown();
           }
 

@@ -311,6 +311,9 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_protected_body:
         case ada_generic_subp_decl:
         case ada_generic_formal_subp_decl:
+        case ada_generic_package_decl:
+        case ada_generic_formal_type_decl:
+        case ada_package_renaming_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;

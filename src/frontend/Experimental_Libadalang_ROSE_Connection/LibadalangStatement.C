@@ -2722,6 +2722,103 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_generic_package_decl:            // 12.1(2)
+      {
+        logKind("ada_generic_package_decl", kind);
+
+        //Get the name of this package
+        ada_base_entity lal_package_internal, lal_defining_name, lal_identifier;
+        ada_generic_package_decl_f_package_decl(lal_element, &lal_package_internal);
+        ada_base_package_decl_f_package_name(&lal_package_internal, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = canonical_text_as_string(&lal_identifier);
+        int hash = hash_node(&lal_defining_name);
+
+        //Get the list of formal decls
+        ada_base_entity lal_formal_list;
+        ada_generic_decl_f_formal_part(lal_element, &lal_formal_list);
+        ada_generic_formal_part_f_decls(&lal_formal_list, &lal_formal_list);
+
+        // create generic declaration
+        SgScopeStatement&       logicalScope = ctx.scope();
+        SgAdaGenericDecl&       sgnode     = mkAdaGenericDecl(ident, logicalScope);
+        SgAdaGenericDefn&       gen_defn   = SG_DEREF(sgnode.get_definition());
+
+        // create package in the scope of the generic
+        //~ SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, logicalScope);
+        SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(ident, gen_defn);
+        SgAdaPackageSpec&       pkgspec    = SG_DEREF(pkgnode.get_definition());
+
+        // set declaration component of generic decl to package decl
+        sgnode.set_declaration(&pkgnode);
+        pkgnode.set_parent(&gen_defn);
+
+        // record ID to sgnode mapping
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        // should private be set on the generic or on the package?
+        //~ privatize(pkgnode, isPrivate);
+        privatize(sgnode, isPrivate);
+        //~ attachSourceLocation(pkgspec, elem, ctx);
+        //~ attachSourceLocation(pkgnode, elem, ctx);
+        //~ attachSourceLocation(gen_defn, elem, ctx);
+        attachSourceLocation(sgnode, lal_element, ctx);
+
+        ctx.appendStatement(sgnode);
+
+        // generic formal part: this must be done first so the types defined in
+        // the generic formal part exist when the package definition is processed.
+        {
+          int count = ada_node_children_count(&lal_formal_list);
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_formal_part;
+            if(ada_node_child(&lal_formal_list, i, &lal_formal_part) != 0){
+              handleElement(&lal_formal_part, ctx.scope(gen_defn));
+            }
+          }
+        }
+
+        // can the formal part also have pragmas?
+        PragmaContainer pendingPragmas;
+        AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
+
+        // visible items
+        {
+          ada_base_entity lal_public_list;
+          ada_base_package_decl_f_public_part(&lal_package_internal, &lal_public_list);
+          if(!ada_node_is_null(&lal_public_list)){
+            ada_declarative_part_f_decls(&lal_public_list, &lal_public_list);
+            int count = ada_node_children_count(&lal_public_list);
+            for(int i = 0; i < count; ++i){
+              ada_base_entity lal_public_part;
+              if(ada_node_child(&lal_public_list, i, &lal_public_part) != 0){
+                handleElement(&lal_public_part, pragmaCtx.scope(pkgspec));
+              }
+            }
+          }
+        }
+
+        // private items
+        {
+          ada_base_entity lal_private_list;
+          ada_base_package_decl_f_private_part(&lal_package_internal, &lal_private_list);
+          if(!ada_node_is_null(&lal_private_list)){
+            ada_declarative_part_f_decls(&lal_private_list, &lal_private_list);
+            int count = ada_node_children_count(&lal_private_list);
+            for(int i = 0; i < count; ++i){
+              ada_base_entity lal_private_part;
+              if(ada_node_child(&lal_private_list, i, &lal_private_part) != 0){
+                handleElement(&lal_private_part, pragmaCtx.scope(pkgspec), true);
+              }
+            }
+          }
+        }
+
+        //processAndPlacePragmas(decl.Pragmas, { &pkgspec }, pragmaCtx.scope(pkgspec)); //TODO Pragmas
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_generic_subp_decl:          // 12.1(2)
       {
         //Get whether this is a func or a proc
@@ -2947,6 +3044,53 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //            the parent scope.
         if(kind != ada_null_subp_decl) {
           completeRoutineBody(lal_element, declblk, ctx);
+        }
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_generic_formal_type_decl:                // 12.5(2)
+      {
+        logKind("ada_generic_formal_type_decl", kind);
+
+        //Get the name for this type
+        ada_base_entity lal_type_decl, lal_defining_name, lal_identifier;
+        ada_generic_formal_f_decl(lal_element, &lal_type_decl);
+        ada_base_type_decl_f_name(&lal_type_decl, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+
+        std::string          ident = canonical_text_as_string(&lal_identifier);
+        FormalTypeData          ty = getFormalTypeFoundation(ident, &lal_type_decl, ctx);
+        SgScopeStatement&    scope = ctx.scope();
+        int                   hash = hash_node(&lal_defining_name);
+
+        //Get the previous def, if there is one
+        ada_base_entity lal_previous_def;
+        SgDeclarationStatement* nondef = nullptr;
+        ada_base_type_decl_p_previous_part(&lal_type_decl, 1, &lal_previous_def);
+        if(!ada_node_is_null(&lal_previous_def)){
+          logInfo() << ada_node_kind(&lal_previous_def) << std::endl;
+          ada_base_type_decl_f_name(&lal_previous_def, &lal_previous_def);
+          int def_hash = hash_node(&lal_previous_def);
+          nondef = findFirst(libadalangTypes(), def_hash);
+        }
+
+        SgDeclarationStatement& sgnode = ty.sageNode();
+
+        setModifiers(sgnode, ty.isAbstract(), ty.isLimited(), ty.isTagged());
+
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
+
+        if (/*SgAdaDiscriminatedTypeDecl* discr =*/ isSgAdaDiscriminatedTypeDecl(&sgnode))
+          /* do nothing */;
+        else
+          ctx.appendStatement(sgnode);
+
+        recordNode(libadalangTypes(), hash, sgnode, nondef != nullptr);
+
+        if(ty.inheritsRoutines()){
+          processInheritedSubroutines(SG_DEREF(si::getDeclaredType(&sgnode)), ty.definitionStruct(), ctx);
         }
 
         assocdecl = &sgnode;
@@ -3350,6 +3494,52 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
 
         // assocdecl = &sgnode;
+        break;
+      }
+    case ada_package_renaming_decl:           // 8.5.3(2)
+      {
+        logKind("ada_package_renaming_decl", kind);
+
+        //Get the name for this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_package_renaming_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = canonical_text_as_string(&lal_identifier);
+        int hash = hash_node(&lal_defining_name);
+
+        //Get the renamed package
+        ada_base_entity lal_renames;
+        ada_package_renaming_decl_f_renames(lal_element, &lal_renames);
+        ada_renaming_clause_f_renamed_object(&lal_renames, &lal_renames);
+
+        //Check if the package we are renaming exists in the lal AST
+        ada_base_entity lal_renamed_package;
+        ada_package_renaming_decl_p_final_renamed_package(lal_element, &lal_renamed_package);
+
+        if(ada_node_is_null(&lal_renamed_package))
+        {
+          logWarn() << "skipping unknown package renaming: " << ident << std::endl;
+          return;
+        }
+
+/*
+        SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
+
+        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(aliased))
+          aliased = gendcl->get_declaration();
+*/
+        SgExpression&           renamed = getExpr(&lal_renames, ctx);
+        SgScopeStatement&       scope   = ctx.scope();
+        SgType&                 pkgtype = mkTypeVoid();
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(ident, renamed, pkgtype, scope);
+
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
         break;
       }
     case ada_for_loop_spec:           // 5.5(4)   -> Trait_Kinds
