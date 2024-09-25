@@ -370,7 +370,7 @@
 /* -D options to hand to EDG C++ front-end. */
 #define CXX_SPEC_DEF {"-D__GNUG__=${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC__=${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC_MINOR__=${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}", "-D__GNUC_PATCHLEVEL__=${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER}", "--preinclude", "rose_edg_required_macros_and_functions.h"}
 
-#cmakedefine ROSE_USE_EDG_QUAD_FLOAT @ROSE_USE_EDG_QUAD_FLOAT@ 
+#cmakedefine01 ROSE_USE_EDG_QUAD_FLOAT 
 
 /* Defined if we're building using CMake */
 #cmakedefine USE_CMAKE @USE_CMAKE@

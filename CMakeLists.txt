@@ -876,26 +876,35 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
-# Initialize variable for where to look for libquadmath.so
-set(QUADMATH_SEARCH_PATHS "" CACHE PATH "Paths to search for libquadmath.so")
-# libquadmath.so is in compiler files for gcc, not clang (on LC systems)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-C)
-  if(DEFINED ENV{SYS_TYPE} AND ${CMAKE_CXX_COMPILER_VERSION} MATCHES "10")
-    # set to find in GCC 10 for LC Systems 
-    set(QUADMATH_SEARCH_PATHS /usr/tce/packages/gcc/gcc-10.3.1/lib/gcc/x86_64-redhat-linux/10)
-  else()
-    # set to find in /usr/lib64 for hudson-rose 
-    set(QUADMATH_SEARCH_PATHS /usr/lib64) 
-  endif()
-endif()
+# initialize variable that determines where to look for libquadmath.so. make configurable later if needed 
+set(QUADMATH_SEARCH_PATHS /usr/lib64 /lib64 usr/lib) # per autoconf  
+
+# TO-DO for global control of find_library(), set up cond. to use one of these below 
+#message("CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH}")
+#message("CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH}")
 
 if(NOT WIN32)
+  # find libm.so
   find_library(M_LIB m)
-  find_library(QUADMATH_LIBRARY quadmath PATHS ${QUADMATH_SEARCH_PATHS})
-  if(NOT APPLE)
-    find_library(RT_LIB rt)
-  endif()
+  message(STATUS "Looking for Quadmath in: ${QUADMATH_SEARCH_PATHS}")
+  # find libquadmath.so 
+  find_library(QUADMATH_LIBRARY 
+               NAMES quadmath "libquadmath.so.0" "libquadmath.so.0.0.0"  
+               PATHS ${QUADMATH_SEARCH_PATHS} 
+               NO_DEFAULT_PATH)
+endif() 
+
+if(NOT WIN32 AND NOT APPLE)
+  find_library(RT_LIB rt)
 endif()
+
+if(NOT QUADMATH_LIBRARY)
+  message(FATAL_ERROR "Quadmath is required now") 
+else() 
+  message(STATUS "Found QUADMATH_LIBRARY: ${QUADMATH_LIBRARY}")
+  message(STATUS "Setting the macro ROSE_USE_EDG_QUAD_FLOAT")  
+  set(ROSE_USE_EDG_QUAD_FLOAT 1)
+endif() 
 
 # This is essential to find the right include path from either build or installation tree for a translator
 if(HAVE_DLFCN_H)
@@ -956,14 +965,19 @@ if(NOT WIN32)
     list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
     # Each library appended above should do this check to enhance portability
     if(QUADMATH_LIBRARY)
+      message(STATUS "librose will link to QUADMATH located at ${QUADMATH_LIBRARY}") 
       list(APPEND link_with_libraries ${QUADMATH_LIBRARY})
-    endif()
+    else()
+      message(WARNING "CANNOT FIND QUADMATH, THIS MAY BE A PROBLEM") 
+  endif()
   else()
     list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
   endif()
 else()
   list(APPEND link_with_libraries ${Boost_LIBRARIES} shlwapi.lib psapi.lib)
 endif()
+
+message(STATUS "Rose will be linking to ${link_with_libraries}") 
 
 # Check compilers and version numbers. The module is located in src/cmake/modules.
 if(ENABLE-C)
@@ -1306,11 +1320,13 @@ endif()
 if(NOT DEFINED CMAKE_INSTALL_RPATH)
   message(STATUS "Setting CMAKE_INSTALL_RPATH") 
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/bin;${Boost_LIBRARY_DIRS}")
+  message(STATUS "CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH}")
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH) 
-  message(STATUS "Setting CMAKE_INSTALL_RPATH_USE_LINKPATH")
+  message(STATUS "Setting CMAKE_INSTALL_RPATH_USE_LINK_PATH")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) 
+  message(STATUS "CMAKE_INSTALL_RPATH_USE_LINK_PATH ${CMAKE_INSTALL_RPATH_USE_LINK_PATH}")
 endif() 
 
 ########################################################################################################################

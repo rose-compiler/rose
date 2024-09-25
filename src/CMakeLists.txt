@@ -894,7 +894,9 @@ if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
   endif()
 endif()
 
-# Add quadmath to link libraries if present
+# Add quadmath to the libraries reported by rose-config if we did in fact link librose to it
+# see ${link_with_libraries} in the parent CMakeLists.txt file for what librose is being 
+# linked to 
 if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
   if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
     add_library_dependency(${QUADMATH_LIBRARY})
@@ -918,10 +920,15 @@ else()
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/${Boost_INCLUDE_DIRS}")
 endif() 
 
-# TSG to do: improve conditionals for quadmath 
+# There must be a cleaner approach to report this to rose-config, but for now  
 set(rose_library_list "rose")
 set(rose_library_list "${rose_library_list};${Boost_LIBRARIES}")
-set(rose_library_list "${rose_library_list};m;quadmath")
+set(rose_library_list "${rose_library_list};m")
+if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
+  if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
+    set(rose_library_list "${rose_library_list};${QUADMATH_LIBRARY}")
+  endif()
+endif() 
 
 # Set macro for EDG 6 and 6.5
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

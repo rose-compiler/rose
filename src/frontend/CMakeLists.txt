@@ -6,6 +6,15 @@ add_subdirectory(OpenFortranParser_SAGE_Connection)
 add_subdirectory(ECJ_ROSE_Connection)
 add_subdirectory(PHPFrontend)
 add_subdirectory(PythonFrontend)
-add_subdirectory(Experimental_Ada_ROSE_Connection)
-add_subdirectory(Experimental_General_Language_Support)
-add_subdirectory(Experimental_Jovial_ROSE_Connection)
+
+if(ENABLE-ADA)
+  add_subdirectory(Experimental_Ada_ROSE_Connection)
+endif() 
+
+if(ENABLE-JOVIAL OR ENABLE-ADA) 
+  add_subdirectory(Experimental_General_Language_Support)
+endif() 
+
+if(ENABLE-JOVIAL)
+  add_subdirectory(Experimental_Jovial_ROSE_Connection)
+endif() 
