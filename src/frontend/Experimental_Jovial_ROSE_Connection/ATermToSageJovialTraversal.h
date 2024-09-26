@@ -420,6 +420,12 @@ ATbool traverse_AlignDirective     (ATerm term);
 ATbool traverse_AlwaysDirective    (ATerm term);
 
 }; // class ATermToSageJovialTraversal
+
+  // Specifically for Jovial intrinsic functions
+  SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
+                                                       SgExprListExp* params=nullptr,
+                                                       SgScopeStatement* scope=nullptr);
+
 }  // namespace Jovial
 
 #endif

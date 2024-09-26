@@ -439,26 +439,40 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 #endif
 
    ATerm t_precision, t_scale_spec, t_frac_spec, t_formula;
-
    expr = nullptr;
 
    // Put these variable references into the global scope to avoid problems in post processing.
    // Consider creating an instrinsic Compool module for the parameters?
+   auto scope = SageBuilder::getGlobalScopeFromScopeStack();
 
    if (ATmatch(term, "BITSINBYTE")) {
-     expr = SageBuilder::buildVarRefExp("BITSINBYTE", SageBuilder::getGlobalScopeFromScopeStack());
+     expr = SageBuilder::buildVarRefExp("BITSINBYTE", scope);
    }
    else if (ATmatch(term, "BITSINWORD")) {
-     expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::getGlobalScopeFromScopeStack());
+     expr = SageBuilder::buildVarRefExp("BITSINWORD", scope);
    }
    else if (ATmatch(term, "BITSINPOINTER")) {
-     expr = SageBuilder::buildVarRefExp("BITSINPOINTER", SageBuilder::getGlobalScopeFromScopeStack());
+     expr = SageBuilder::buildVarRefExp("BITSINPOINTER", scope);
    }
    else if (ATmatch(term, "BYTESINWORD")) {
-     expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::getGlobalScopeFromScopeStack());
+     expr = SageBuilder::buildVarRefExp("BYTESINWORD", scope);
    }
    else if (ATmatch(term, "LOCSINWORD")) {
-     expr = SageBuilder::buildVarRefExp("LOCSINWORD", SageBuilder::getGlobalScopeFromScopeStack());
+     expr = SageBuilder::buildVarRefExp("LOCSINWORD", scope);
+   }
+   else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
+     // ItemSize is required
+     Sawyer::Optional<SgExpression*> size;
+     if (traverse_OptItemSize(t_formula, size)) {
+       // MATCHED OptItemSize
+     } else return ATfalse;
+
+     if (size) {
+       auto params = SageBuilder::buildExprListExp_nfi();
+       params->append_expression(*size);
+       expr = buildIntrinsicFunctionCallExp_nfi(std::string{"MAXINT"}, params, scope);
+     }
+     else return ATfalse;
    }
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
@@ -826,10 +840,8 @@ ATbool ATermToSageJovialTraversal::traverse_OptItemSize(ATerm term, Sawyer::Opti
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptItemSize: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_size;
-
-   SgExpression* size_expr = nullptr;
+   SgExpression* size_expr{nullptr};
 
    if (ATmatch(term, "no-item-size()")) {
       size = Sawyer::Nothing();
@@ -3509,7 +3521,7 @@ ATbool ATermToSageJovialTraversal::traverse_DefineDeclaration(ATerm term)
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_DefinitionPart(ATerm term, std::string & params, std::string & def_string)
+ATbool ATermToSageJovialTraversal::traverse_DefinitionPart(ATerm term, std::string &params, std::string &def_string)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DefinitionPart: %s\n", ATwriteToString(term));
@@ -3530,7 +3542,7 @@ ATbool ATermToSageJovialTraversal::traverse_DefinitionPart(ATerm term, std::stri
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_FormalDefineParameterList(ATerm term, std::string & params)
+ATbool ATermToSageJovialTraversal::traverse_FormalDefineParameterList(ATerm term, std::string &params)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FormalDefineParameterList: %s\n", ATwriteToString(term));
@@ -4840,13 +4852,11 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term, std:
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_AssignmentStatement: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_vars, t_expr;
+   SgExprStatement* assign_stmt{nullptr};
 
-   SgExprStatement* assign_stmt = nullptr;
-
-   if (ATmatch(term, "AssignmentStatement(<term>,<term>)", &t_vars,&t_expr)) {
-      SgExpression* rhs = nullptr;
+   if (ATmatch(term, "AssignmentStatement(<term>,<term>)", &t_vars, &t_expr)) {
+      SgExpression* rhs{nullptr};
       std::vector<SgExpression*> vars;
 
       if (traverse_VariableList(t_vars, vars)) {
@@ -8821,4 +8831,36 @@ setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref)
    else if (def_or_ref == e_storage_modifier_jovial_ref) {
       var_decl->get_declarationModifier().setJovialRef();
    }
+}
+
+SgFunctionCallExp* ATermSupport::
+buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params, SgScopeStatement* scope)
+{
+  SgType* type = nullptr;
+  SgFunctionCallExp* callExpr = nullptr;
+
+  if (!params) {
+    params = SageBuilder::buildExprListExp_nfi();
+  }
+  if (!scope) {
+    scope = SageBuilder::topScopeStack();
+  }
+  ASSERT_not_null(params);
+  ASSERT_not_null(scope);
+
+  // Create a return type based on the intrinsic name
+  if (name == "MAXINT") {
+    type = SageBuilder::buildIntType();
+  }
+  else {
+    type = SageBuilder::buildVoidType();
+  }
+
+  if (type) {
+    callExpr = SageBuilder::buildFunctionCallExp(SgName(name), type, params, scope);
+    ASSERT_not_null(callExpr);
+    SageInterface::setSourcePosition(callExpr);
+  }
+
+  return callExpr;
 }
