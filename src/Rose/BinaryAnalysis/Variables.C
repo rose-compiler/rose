@@ -130,9 +130,10 @@ print(const StackVariables &lvars, const P2::Partitioner::ConstPtr &partitioner,
     ASSERT_not_null(partitioner);
     for (const StackVariable &lvar: lvars.values()) {
         out <<prefix <<lvar <<"\n";
-        const AddressSet addrs = lvar.definingInstructionVas();
-        for (rose_addr_t addr: addrs.values())
-            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[addr]->toString() <<"\n";
+        for (const InstructionAccess &ia: lvar.instructionsAccessing()) {
+            out <<prefix <<"  " <<ia.accessString()
+                <<" detected at " <<partitioner->instructionProvider()[ia.address()]->toString() <<"\n";
+        }
     }
 }
 
@@ -142,9 +143,47 @@ print(const GlobalVariables &gvars, const P2::Partitioner::ConstPtr &partitioner
     ASSERT_not_null(partitioner);
     for (const GlobalVariable &gvar: gvars.values()) {
         out <<prefix <<gvar <<"\n";
-        const AddressSet addrs = gvar.definingInstructionVas();
-        for (rose_addr_t addr: addrs.values())
-            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[addr]->toString() <<"\n";
+        for (const InstructionAccess &ia: gvar.instructionsAccessing()) {
+            out <<prefix <<" " <<ia.accessString()
+                <<"  detected at " <<partitioner->instructionProvider()[ia.address()]->toString() <<"\n";
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// InstructionAccess
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+InstructionAccess::InstructionAccess(const Address address, const AccessFlags access)
+    : address_(address), access_(access) {}
+
+Address
+InstructionAccess::address() const {
+    return address_;
+}
+
+AccessFlags
+InstructionAccess::access() const {
+    return access_;
+}
+
+AccessFlags&
+InstructionAccess::access() {
+    return access_;
+}
+
+std::string
+InstructionAccess::accessString() const {
+    if (access_.isSet(Access::READ)) {
+        if (access_.isSet(Access::WRITE)) {
+            return "read/write";
+        } else {
+            return "read";
+        }
+    } else if (access_.isSet(Access::WRITE)) {
+        return "write";
+    } else {
+        return "no access";
     }
 }
 
@@ -175,7 +214,7 @@ BaseVariable::maxSizeBytes(rose_addr_t size) {
     maxSizeBytes_ = size;
 }
 
-const std::vector<BaseVariable::InstructionAccess>&
+const std::vector<InstructionAccess>&
 BaseVariable::instructionsAccessing() const {
     return insns_;
 }
@@ -185,19 +224,11 @@ BaseVariable::instructionsAccessing(const std::vector<InstructionAccess> &ia) {
     insns_ = ia;
 }
 
-AddressSet
-BaseVariable::definingInstructionVas() const {
-    AddressSet retval;
-    for (const InstructionAccess &ia: insns_)
-        retval.insert(ia.insnAddr);
-    return retval;
-}
-
 InstructionSemantics::BaseSemantics::InputOutputPropertySet
 BaseVariable::ioProperties() const {
     InstructionSemantics::BaseSemantics::InputOutputPropertySet retval;
     for (const InstructionAccess &ia: insns_) {
-        for (const Access access: ia.access.split()) {
+        for (const Access access: ia.access().split()) {
             switch (access) {
                 case Access::READ:
                     retval.insert(InstructionSemantics::BaseSemantics::IO_READ);
@@ -224,15 +255,15 @@ BaseVariable::name(const std::string &s) {
 }
 
 void
-BaseVariable::insertAccess(const Address insnAddr, const AccessFlags access) {
-    for (auto &ia: insns_) {
-        if (insnAddr == ia.insnAddr) {
-            ia.access.set(access);
+BaseVariable::insertAccess(const Address address, const AccessFlags access) {
+    for (InstructionAccess &ia: insns_) {
+        if (address == ia.address()) {
+            ia.access().set(access);
             return;
         }
     }
 
-    insns_.push_back(InstructionAccess(insnAddr, access));
+    insns_.push_back(InstructionAccess(address, access));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,8 +390,8 @@ StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t f
         if (boundaries[i].frameOffset == frameOffset) {
 
             for (InstructionAccess &ia: boundaries[i].definingInsns) {
-                if (definer.insnAddr == ia.insnAddr) {
-                    ia.access.set(definer.access);
+                if (definer.address() == ia.address()) {
+                    ia.access().set(definer.access());
                     return boundaries[i];
                 }
             }
@@ -602,7 +633,7 @@ public:
             SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
                                      <<" reads from address: " <<*addr <<"\n";
 
-            lookForVariable(addr, BaseVariable::Access::READ);
+            lookForVariable(addr, Access::READ);
         }
         return Super::readMemory(segreg, addr, dflt, cond);
     }
@@ -613,13 +644,13 @@ public:
         if (SgAsmInstruction *insn = currentInstruction()) {
             SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
                                      <<" writes to address: " <<*addr <<"\n";
-            lookForVariable(addr, BaseVariable::Access::WRITE);
+            lookForVariable(addr, Access::WRITE);
         }
         return Super::writeMemory(segreg, addr, data, cond);
     }
 
 private:
-    void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal, const BaseVariable::Access access) {
+    void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal, const Access access) {
         ASSERT_not_null(base_);
         SymbolicExpression::Ptr addr = SValue::promote(addrSVal)->get_expression();
         Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -660,7 +691,7 @@ private:
                 if (operand->toSigned().assignTo(offset)) {
                     SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset)
                                        <<" at " <<currentInstruction()->toString() <<"\n";
-                    BaseVariable::InstructionAccess ia(currentInstruction()->get_address(), access);
+                    InstructionAccess ia(currentInstruction()->get_address(), access);
                     StackVariable::insertBoundary(boundaries_, offset, ia);
                 }
             }
@@ -1761,10 +1792,10 @@ VariableFinder::findGlobalVariables(const P2::Partitioner::ConstPtr &partitioner
     GlobalVariables retval;
     for (const GVars::Node &node: gvars.nodes()) {
         if (node.key().least() == node.value()) {
-            std::vector<BaseVariable::InstructionAccess> insns;
+            std::vector<InstructionAccess> insns;
             insns.reserve(globalVariableVas[node.value()].size());
             for (const Address insnAddr: globalVariableVas[node.value()].values())
-                insns.push_back(BaseVariable::InstructionAccess(insnAddr, BaseVariable::AccessFlags()));
+                insns.push_back(InstructionAccess(insnAddr, AccessFlags()));
             retval.insert(node.key(), GlobalVariable(node.key().least(), node.key().size(), insns));
         }
     }

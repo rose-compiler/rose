@@ -65,48 +65,63 @@ std::string offsetStr(int64_t offset);
 /** Format size as a string. */
 std::string sizeStr(uint64_t size);
 
+/** Whether a variable is read or written. */
+enum class Access {
+    READ          = 0x0001,                             /**< Variable is read.  */
+    WRITE         = 0x0002,                             /**< Variable is written. */
+};
+
+/** Whether a variable is read and/or written by an instruction. */
+using AccessFlags = Sawyer::BitFlags<Access, uint64_t>;
+
+/** Information about how an instruction accesses a variable. */
+class InstructionAccess {
+public:
+    Address address_ = 0;                               /**< Address of instruction accessing the variable. */
+    AccessFlags access_;                                /**< How the instruction accesses the variable. */
+
+private:
+    InstructionAccess() = default;                  // needed for boost::serialization
+public:
+    /** Constructor. */
+    InstructionAccess(const Address insnAddr, const AccessFlags);
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(address_);
+        s & BOOST_SERIALIZATION_NVP(access_);
+    }
+#endif
+
+public:
+    /** Property: Instruction address. */
+    Address address() const;
+
+    /** Property: Access type.
+     *
+     *  How this instruction accesses the variable, whether it reads from the variable, writes to the variable, or both.
+     *
+     * @{ */
+    AccessFlags access() const;
+    AccessFlags& access();
+    /** @} */
+
+    /** String describing access.
+     *
+     *  Returns "read", "write", "read/write", or "no access". */
+    std::string accessString() const;
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Base class for variable descriptors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Describes a local or global variable. */
 class BaseVariable {
-public:
-    /** Whether a variable is read or written. */
-    enum class Access {
-        READ            = 0x0001,                       /**< Variable is read.  */
-        WRITE         = 0x0002,                         /**< Variable is written. */
-    };
-
-    /** Whether a variable is read or written by an instruction. */
-    using AccessFlags = Sawyer::BitFlags<Access, uint64_t>;
-
-    /** Information about how an instruction accesses a variable. */
-    class InstructionAccess {
-    public:
-        Address insnAddr = 0;                           /**< Address of instruction accessing the variable. */
-        AccessFlags access;                             /**< How the instruction accesses the variable. */
-
-    private:
-        InstructionAccess() = default;                  // needed for boost::serialization
-
-    public:
-        /** Constructor. */
-        InstructionAccess(const Address insnAddr, const AccessFlags access)
-            : insnAddr(insnAddr), access(access) {}
-
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_NVP(insnAddr);
-            s & BOOST_SERIALIZATION_NVP(access);
-        }
-#endif
-    };
-
 private:
     rose_addr_t maxSizeBytes_ = 0;                      // maximum possible size of this variable in bytes
     std::vector<InstructionAccess> insns_;              // instructions accessing the variable
@@ -157,12 +172,6 @@ public:
     const std::vector<InstructionAccess>& instructionsAccessing() const;
     void instructionsAccessing(const std::vector<InstructionAccess>&);
     /** @} */
-
-    /** Property: Addresses of instructions related to this variable.
-     *
-     *  This is the set of addresses for the instructions from which this variable was detected. This is typically instructions
-     *  that read or write to memory using an offset from the function's frame. */
-    AddressSet definingInstructionVas() const;
 
     /** Property: I/O properties.
      *

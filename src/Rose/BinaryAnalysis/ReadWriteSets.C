@@ -38,10 +38,9 @@ ReadWriteSets::analyze(const P2::Function::Ptr &function) {
     auto stackVars = varFinder->findStackVariables(partitioner_, function);
     for (const Variables::StackVariable &var: stackVars.values()) {
         std::cerr <<"ROBB: var = " <<var <<" in " <<function->printableName() <<"\n";
-        for (const Variables::BaseVariable::InstructionAccess &ia: var.instructionsAccessing()) {
-            std::cerr <<"        insn " <<StringUtility::addrToString(ia.insnAddr)
-                      <<" " <<(ia.access.isSet(Variables::BaseVariable::Access::WRITE) ? "read/write" : "read-only") <<"\n";
-        }
+        for (const Variables::InstructionAccess &ia: var.instructionsAccessing())
+            std::cerr <<"        insn " <<StringUtility::addrToString(ia.address())
+                      <<" " <<ia.accessString() <<"\n";
     }
 }
 
