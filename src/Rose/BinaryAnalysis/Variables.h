@@ -77,13 +77,16 @@ using AccessFlags = Sawyer::BitFlags<Access, uint64_t>;
 /** Information about how an instruction accesses a variable. */
 class InstructionAccess {
 public:
-    Address address_ = 0;                               /**< Address of instruction accessing the variable. */
+    Sawyer::Optional<Address> address_;                 /**< Address of instruction accessing the variable. */
     AccessFlags access_;                                /**< How the instruction accesses the variable. */
 
 private:
     InstructionAccess() = default;                  // needed for boost::serialization
 public:
-    /** Constructor. */
+    /** Constructor for variables created by no instruction. */
+    explicit InstructionAccess(const AccessFlags);
+
+    /** Constructor for variables created by an instruction. */
     InstructionAccess(const Address insnAddr, const AccessFlags);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -98,8 +101,12 @@ private:
 #endif
 
 public:
-    /** Property: Instruction address. */
-    Address address() const;
+    /** Property: Instruction address.
+     *
+     *  The address is optional. If the address is missing it means that the variable was discovered by some means other
+     *  than looking at instructions. For instance, some variables might be created by the caller according to the calling
+     *  convention. */
+    Sawyer::Optional<Address> address() const;
 
     /** Property: Access type.
      *
@@ -114,6 +121,9 @@ public:
      *
      *  Returns "read", "write", "read/write", or "no access". */
     std::string accessString() const;
+
+    /** String representation of this object. */
+    std::string toString() const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,7 +318,7 @@ public:
      *
      * @{ */
     static Boundary& insertBoundary(Boundaries& /*in,out*/, int64_t frameOffset, const InstructionAccess&);
-    static Boundary& insertBoundaryImplied(Boundaries&/*in,out*/, int64_t frameOffset, Address insnAddr);
+    static Boundary& insertBoundaryImplied(Boundaries&/*in,out*/, int64_t frameOffset);
     /** @} */
 
     /** Printing local variable.

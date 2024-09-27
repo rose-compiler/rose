@@ -130,10 +130,8 @@ print(const StackVariables &lvars, const P2::Partitioner::ConstPtr &partitioner,
     ASSERT_not_null(partitioner);
     for (const StackVariable &lvar: lvars.values()) {
         out <<prefix <<lvar <<"\n";
-        for (const InstructionAccess &ia: lvar.instructionsAccessing()) {
-            out <<prefix <<"  " <<ia.accessString()
-                <<" detected at " <<partitioner->instructionProvider()[ia.address()]->toString() <<"\n";
-        }
+        for (const InstructionAccess &ia: lvar.instructionsAccessing())
+            out <<prefix <<"  " <<ia.toString() <<"\n";
     }
 }
 
@@ -143,10 +141,8 @@ print(const GlobalVariables &gvars, const P2::Partitioner::ConstPtr &partitioner
     ASSERT_not_null(partitioner);
     for (const GlobalVariable &gvar: gvars.values()) {
         out <<prefix <<gvar <<"\n";
-        for (const InstructionAccess &ia: gvar.instructionsAccessing()) {
-            out <<prefix <<" " <<ia.accessString()
-                <<"  detected at " <<partitioner->instructionProvider()[ia.address()]->toString() <<"\n";
-        }
+        for (const InstructionAccess &ia: gvar.instructionsAccessing())
+            out <<prefix <<" " <<ia.toString() <<"\n";
     }
 }
 
@@ -154,10 +150,13 @@ print(const GlobalVariables &gvars, const P2::Partitioner::ConstPtr &partitioner
 // InstructionAccess
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+InstructionAccess::InstructionAccess(const AccessFlags access)
+    : access_(access) {}
+
 InstructionAccess::InstructionAccess(const Address address, const AccessFlags access)
     : address_(address), access_(access) {}
 
-Address
+Sawyer::Optional<Address>
 InstructionAccess::address() const {
     return address_;
 }
@@ -185,6 +184,11 @@ InstructionAccess::accessString() const {
     } else {
         return "no access";
     }
+}
+
+std::string
+InstructionAccess::toString() const {
+    return accessString() + (address() ? " at " + StringUtility::addrToString(*address()) : " implied");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +261,7 @@ BaseVariable::name(const std::string &s) {
 void
 BaseVariable::insertAccess(const Address address, const AccessFlags access) {
     for (InstructionAccess &ia: insns_) {
-        if (address == ia.address()) {
+        if (ia.address() && address == *ia.address()) {
             ia.access().set(access);
             return;
         }
@@ -390,7 +394,7 @@ StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t f
         if (boundaries[i].frameOffset == frameOffset) {
 
             for (InstructionAccess &ia: boundaries[i].definingInsns) {
-                if (definer.address() == ia.address()) {
+                if (definer.address().isEqual(ia.address())) {
                     ia.access().set(definer.access());
                     return boundaries[i];
                 }
@@ -408,8 +412,8 @@ StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t f
 
 // class method
 StackVariable::Boundary&
-StackVariable::insertBoundaryImplied(Boundaries &boundaries /*in,out*/, const int64_t frameOffset, const Address insnAddr) {
-    return insertBoundary(boundaries, frameOffset, InstructionAccess(insnAddr, AccessFlags()));
+StackVariable::insertBoundaryImplied(Boundaries &boundaries /*in,out*/, const int64_t frameOffset) {
+    return insertBoundary(boundaries, frameOffset, InstructionAccess(AccessFlags()));
 }
 
 void
@@ -905,10 +909,10 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                    | callee saved registers    |  optional, variable size, multiple of word size
         //                    :                           :
         //                    :                           :
-        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
         parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes, function->address());
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes);
         returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
@@ -933,14 +937,14 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         // other and from the non-variables around them. However, we don't know where these boundaries are because everything
         // is variable size. The best we can do is insert a boundary above line (1).
         if (frame.size) {
-            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
+            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes, function->address());
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes);
             returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
             // Everything else is above this boundary
-            StackVariable::insertBoundaryImplied(boundaries, 2*wordNBytes, function->address());
+            StackVariable::insertBoundaryImplied(boundaries, 2*wordNBytes);
         }
 
     } else if (isSgAsmM68kInstruction(firstInsn)) {
@@ -953,14 +957,14 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                (1) | return address            | 4 bytes
         // current_frame: (0) | addr of parent frame      | 4 bytes
         //                    :                           :
-        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
         parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 4, function->address());
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 4);
         returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
         if (frame.minOffset && *frame.minOffset < 0) {
-            StackVariable::Boundary &bottom = StackVariable::insertBoundaryImplied(boundaries, *frame.minOffset, function->address());
+            StackVariable::Boundary &bottom = StackVariable::insertBoundaryImplied(boundaries, *frame.minOffset);
             bottom.purpose = StackVariable::Purpose::UNKNOWN;
         }
 
@@ -979,10 +983,10 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         if (boost::contains(frame.rule, "<saved-lr>")) {
             // The "push fp, lr" pushes 8 bytes calculated from the stack pointer, so we don't want this eight
             // bytes to cross a frame variable boundary.
-            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, -4, function->address());
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, -4);
             returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
         } else {
-            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0, function->address());
+            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
         }
 #endif
@@ -1150,7 +1154,8 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
     // Sometimes the calling convention tells us what to expect on the frame.
     initializeFrameBoundaries(frame, partitioner, function, boundaries /*in,out*/);
 
-    // Look for stack offsets syntactically by looking for instructions that access memory w.r.t. the frame pointer.
+    // Look for stack offsets syntactically by looking for instructions that access memory w.r.t. the frame pointer. We don't know
+    // whether they're reading or writing, so we leave the access unset.
     SAWYER_MESG(debug) <<"  searching for local variables syntactically...\n";
     for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
         P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bblockVa);
@@ -1159,7 +1164,7 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
             std::set<int64_t> offsets = findFrameOffsets(frame, partitioner, insn);
             for (int64_t offset: offsets) {
                 SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset) <<" at " <<insn->toString() <<"\n";
-                StackVariable::insertBoundaryImplied(boundaries, offset, insn->get_address());
+                StackVariable::insertBoundary(boundaries, offset, InstructionAccess(insn->get_address(), AccessFlags()));
             }
         }
     }
