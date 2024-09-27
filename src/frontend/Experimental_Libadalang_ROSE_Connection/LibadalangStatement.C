@@ -146,12 +146,13 @@ namespace Libadalang_ROSE_Translation
   /// a simple block handler just traverses the statement list and adds them to the \ref blk.
   void simpleBlockHandler(ada_base_entity* lal_stmt_list, SgScopeStatement& blk, AstContext ctx)
   {
-    int                 range = ada_node_children_count(lal_stmt_list);
+    int                 range = ada_node_is_null(lal_stmt_list) ? 0 : ada_node_children_count(lal_stmt_list);
 
     for(int i = 0; i < range; ++i){
-        ada_base_entity lal_stmt;
-        ada_node_child(lal_stmt_list, i, &lal_stmt);
+      ada_base_entity lal_stmt;
+      if(ada_node_child(lal_stmt_list, i, &lal_stmt) != 0){
         handleStmt(&lal_stmt, ctx.scope(blk));
+      }
     }
   }
 
@@ -167,12 +168,13 @@ namespace Libadalang_ROSE_Translation
   /// Calls handleExceptionHandler for each excp in a block
   void simpleExceptionBlockHandler(ada_base_entity* lal_handlers, SgScopeStatement& blk, SgTryStmt& trystmt, AstContext ctx)
   {
-    int                 range = ada_node_children_count(lal_handlers);
+    int                 range = ada_node_is_null(lal_handlers) ? 0 : ada_node_children_count(lal_handlers);
 
     for(int i = 0; i < range; ++i){
-        ada_base_entity lal_handler;
-        ada_node_child(lal_handlers, i, &lal_handler);
+      ada_base_entity lal_handler;
+      if(ada_node_child(lal_handlers, i, &lal_handler) != 0){
         handleExceptionHandler(&lal_handler, trystmt, ctx.scope(blk));
+      }
     }
   }
 
@@ -244,12 +246,13 @@ namespace Libadalang_ROSE_Translation
 
     //Get the number of decls
     //Assuming lal_decls is a list of some kind, we can just call ada_node_children_count
-    int             range = ada_node_children_count(lal_decls); //TODO This works if lal_decls is uninitialized, but I'm not sure why?
+    int             range = ada_node_is_null(lal_decls) ? 0 : ada_node_children_count(lal_decls);
 
     for(int i =0; i < range; ++i){
          ada_base_entity lal_decl_child;
-         ada_node_child(lal_decls, i, &lal_decl_child);
-         handleElement(&lal_decl_child, pragmaCtx.scope(dominantBlock));
+         if(ada_node_child(lal_decls, i, &lal_decl_child) != 0){
+             handleElement(&lal_decl_child, pragmaCtx.scope(dominantBlock));
+        }
     }
 
     completeHandledBlock( lal_stmts,
@@ -291,11 +294,11 @@ namespace Libadalang_ROSE_Translation
         //lal_pragmas = ???; //TODO pragmas
     } else {
         //TODO
-    }
-    
+        logWarn() << "Unknown kind " << kind << " in completeRoutineBody!\n";
+    }    
 
     completeDeclarationsWithHandledBlock( &lal_decls,
-                                          &lal_stmts,
+                                          &lal_stmts, //lal_stmts sometimes breaks here??????????
                                           &lal_exceptions,
                                           &lal_pragmas,
                                           routineBlockHandler,
@@ -1413,8 +1416,9 @@ namespace {
       int range = ada_node_children_count(&public_part);
       for(int i = 0; i < range; ++i){
         ada_base_entity lal_entry;
-        ada_node_child(&public_part, i, &lal_entry);
-        handleElement(&lal_entry, ctx.scope(*nodePtr));
+        if(ada_node_child(&public_part, i, &lal_entry) != 0){
+          handleElement(&lal_entry, ctx.scope(*nodePtr));
+        }
       }
     }
 
@@ -1425,8 +1429,9 @@ namespace {
       int range = ada_node_children_count(&private_part);
       for(int i = 0; i < range; ++i){
         ada_base_entity lal_entry;
-        ada_node_child(&private_part, i, &lal_entry);
-        handleElement(&lal_entry, ctx.scope(*nodePtr), true /* private items */);
+        if(ada_node_child(&private_part, i, &lal_entry) != 0){
+          handleElement(&lal_entry, ctx.scope(*nodePtr), true /* private items */);
+        }
       }
     }
 
@@ -1445,8 +1450,9 @@ namespace {
                           int range = ada_node_children_count(&public_part);
                           for(int i =0; i < range; ++i){
                              ada_base_entity lal_entry;
-                             ada_node_child(&public_part, i, &lal_entry);
-                             handleElement(&lal_entry, pragmaCtx.scope(*nodePtr));
+                             if(ada_node_child(&public_part, i, &lal_entry) != 0){
+                               handleElement(&lal_entry, pragmaCtx.scope(*nodePtr));
+                             }
                           }
                         }
                       }
@@ -1462,8 +1468,9 @@ namespace {
                           int range = ada_node_children_count(&private_part);
                           for(int i =0; i < range; ++i){
                              ada_base_entity lal_entry;
-                             ada_node_child(&private_part, i, &lal_entry);
-                             handleElement(&lal_entry, pragmaCtx.scope(*nodePtr), true /* private items *//*);
+                             if(ada_node_child(&private_part, i, &lal_entry) != 0){
+                               handleElement(&lal_entry, pragmaCtx.scope(*nodePtr), true /* private items *//*);
+                             }
                           }
                         }
                       }
@@ -1834,7 +1841,7 @@ void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatem
     {
       ada_base_entity child;
 
-      if (ada_node_child(&param_list, i, &child) == 0){
+      if(ada_node_child(&param_list, i, &child) == 0){
         logError() << "Error while getting a child in ParameterCompletion.\n";
         return;
       }
@@ -1874,8 +1881,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     //~using PragmaContainer = AstContext::PragmaContainer;
     
     //Get the kind of this node
-    ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_stmt);
+    ada_node_kind_enum kind = ada_node_kind(lal_stmt);
 
     LibadalangText kind_name(kind);
     std::string kind_name_string = kind_name.string_value();
@@ -2620,8 +2626,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
             int range = ada_node_children_count(&public_part);
             for(int i = 0; i < range; ++i){
               ada_base_entity lal_child;
-              ada_node_child(&public_part, i, &lal_child);
-              handleElement(&lal_child, pragmaCtx.scope(pkgspec));
+              if(ada_node_child(&public_part, i, &lal_child) != 0){
+                handleElement(&lal_child, pragmaCtx.scope(pkgspec));
+              }
             }
           }
         }
@@ -2636,8 +2643,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
             int range = ada_node_children_count(&private_part);
             for(int i = 0; i < range; ++i){
               ada_base_entity lal_child;
-              ada_node_child(&private_part, i, &lal_child);
-              handleElement(&lal_child, pragmaCtx.scope(pkgspec), true /* private items */);
+              if(ada_node_child(&private_part, i, &lal_child) != 0){
+                handleElement(&lal_child, pragmaCtx.scope(pkgspec), true /* private items */);
+              }
             }
 
             // a package may contain an empty private section
@@ -2702,11 +2710,18 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
         ada_base_entity lal_handled_stmts; //This is an intermediary node required to get the stmts and exceptions
         ada_package_body_f_stmts(lal_element, &lal_handled_stmts);
-        ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
-        ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
-        //TODO lal_pragmas
 
         const bool hasBodyStatements = !ada_node_is_null(&lal_handled_stmts);
+
+        if(hasBodyStatements){
+          ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
+          ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
+        } else {
+          logInfo() << "No body statements for this ada_package_decl\n";
+          ada_package_body_f_stmts(lal_element, &lal_stmts); //Force lal_stmts and lal_exceptions to be null instead of undefined
+          ada_package_body_f_stmts(lal_element, &lal_exceptions);
+        }
+        //TODO lal_pragmas
 
         completeDeclarationsWithHandledBlock( &lal_decls,
                                               &lal_stmts,

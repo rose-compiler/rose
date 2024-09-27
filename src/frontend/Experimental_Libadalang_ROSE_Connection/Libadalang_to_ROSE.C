@@ -286,9 +286,10 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
 
     LibadalangText kind_name(kind);
     std::string kind_name_string = kind_name.string_value();
+
     logTrace() << "handleElement called on a " << kind_name_string << std::endl;
 
-    switch (kind)
+    switch(kind)
     {
         case ada_subp_body:             // Asis.Declarations
         case ada_subp_decl:
