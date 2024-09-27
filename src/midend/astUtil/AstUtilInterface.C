@@ -151,9 +151,25 @@ std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
     if (AstInterface::IsFunctionDefinition(variable)) {
         return OperatorDeclaration::operator_signature(variable);
     } 
+    {
+      std::string value;
+      if (AstInterface::IsConstant(variable, 0, &value)) {
+         return value;
+      }
+    }
+    {
     AstNodePtr f;
-    if (AstInterface::IsFunctionCall(variable, &f)) {
-       variable = AstNodePtrImpl(f).get_ptr(); 
+    AstNodeList args;
+    if (AstInterface::IsFunctionCall(variable, &f, &args)) {
+       std::string result = GetVariableSignature(f.get_ptr()) + "(";
+       bool is_first = true;
+       for (auto x : args) {
+         if (!is_first) { result = result + ","; }
+         else { is_first = false; }
+         result = result + GetVariableSignature(x.get_ptr());
+       }
+       return result + ")";
+    }
     }
     // An empty string will be returned AstInterface::IsVarRef(variable) returns false.
     std::string name = AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);

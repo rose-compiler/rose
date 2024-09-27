@@ -1599,6 +1599,13 @@ IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs)
     case V_SgDivAssignOp:
     case V_SgModAssignOp:
     case V_SgXorAssignOp:
+       {
+        const SgBinaryOp* s2 = isSgBinaryOp(exp);
+        if (lhs != 0) *lhs = s2->get_lhs_operand();
+        if (rhs != 0) { *rhs = exp; }
+        if (readlhs != 0) *readlhs = true;
+        return true;
+       }
     case V_SgAssignOp:
       {
         const SgBinaryOp* s2 = isSgBinaryOp(exp);
@@ -1609,8 +1616,7 @@ IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs)
             init = isSgAssignInitializer(init)->get_operand();
           *rhs = init;
         }
-        if (readlhs != 0)
-           *readlhs = (exp->variantT() != V_SgAssignOp);
+        if (readlhs != 0) *readlhs = false;
         return true;
       }
     default: return false;
@@ -1995,16 +2001,20 @@ IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, std::string* varname,
   return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal, use_global_unique_name);
 }
 
-std::string AstInterface::GetVarName( const AstNodePtr& _exp, bool use_global_unique_name)
+std::string AstInterface::GetVarName( const AstNodePtr& exp, bool use_global_unique_name)
 {
-  AstNodePtrImpl exp(_exp);
-  SgAddressOfOp* addr = isSgAddressOfOp(exp.get_ptr());
   std::string name;
-  if (!IsVarRef(exp, 0, &name, 0, 0, use_global_unique_name)) {
-    DebugVariable([&exp](){ return "Error: expecting a variable reference but getting:" + AstToString(exp); });
-    return "";
+  if (IsVarRef(exp, 0, &name, 0, 0, use_global_unique_name)) {
+    return name;
   }
-  return name;
+  {
+   AstNodeType alloc_type; 
+   if (IsMemoryAllocation(exp, &alloc_type)) {
+      return GetGlobalUniqueName(exp, GetTypeName(alloc_type));
+   }
+  }
+  DebugVariable([&exp](){ return "Error: expecting a variable reference but getting:" + AstToString(exp); });
+  return "";
 }
 
 AstNodeType AstInterface::GetExpressionType( const AstNodePtr& s)
@@ -2797,6 +2807,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstTypeList* paramt
      {
        SgTemplateMemberFunctionSymbol* sym = isSgTemplateMemberFunctionRefExp(f)->get_symbol();
        // QY: This is not fully correct but how do we know whehter the this object is passed in as parameter already?
+       if (sym->get_name() == "operator()") break;
        if (sym->get_scope() ==0)  break;
        if (argexp == 0 || argexp->get_expressions().empty() || argexp->get_expressions().size() == sym->get_declaration()->get_args().size()) {
           SgClassDeclaration* decl = sym->get_scope()->get_declaration();
@@ -2874,9 +2885,13 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
           AstNodeList::const_iterator p1 = args->begin();
           for (AstTypeList::const_iterator p = paramtypes->begin(); 
              p != paramtypes->end() && p1 != args->end(); ++p,++p1) {
-           SgType* t = AstNodeTypeImpl(*p).get_ptr();
-           if (t != 0 && t->variantT() == V_SgReferenceType)
-              outargs->push_back(*p1); 
+             SgType* t = AstNodeTypeImpl(*p).get_ptr();
+             if (t != 0 && t->variantT() == V_SgReferenceType) {
+                auto* modifier = isSgConstVolatileModifier(t->get_modifiers());
+                if (modifier == 0 || !modifier->isConst()) {
+                   outargs->push_back(*p1); 
+                }
+             }
           }
         }
   } 

@@ -45,7 +45,7 @@ void StmtInfoCollect<AstNodePtr>::
 AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
 {
   AstInterface::AstNodeList args;
-  if (!fa.IsFunctionCall(fc, 0, &args))
+  if (!fa.IsFunctionCall(fc, 0, 0, &args))
       ROSE_ABORT();
   for (AstInterface::AstNodeList::const_iterator p2 = args.begin();
        p2 != args.end(); ++p2) {
@@ -53,7 +53,7 @@ AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
     if (c == AstNodePtr())
        continue;
     if (fa.IsMemoryAccess(c)) {
-       AppendModLoc( fa, c, AstNodePtr());
+       AppendModLoc( fa, c);
     }
   }
 }
@@ -124,7 +124,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
       if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
          modstack.push_back(s_ptr);
-         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(lhs).get_ptr(),true);
+         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(s).get_ptr(),true);
       }
    }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
@@ -161,15 +161,14 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       AppendMemoryFree(fa, lhs.get_ptr());
       Skip(s);
    }
-   else {
-     if (fa.IsFunctionCall(s)) {
+   else if (fa.IsFunctionCall(s)) {
          DebugLocalInfoCollect([&s]() { return " append function call " + AstInterface::AstToString(s); });
          AppendFuncCall(fa, AstNodePtrImpl(s).get_ptr());
          Skip(s);
-     } 
+   } 
      // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
      // to behave the same as a memory access, although it isn't one exactly
-     else if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
+    else if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
         DebugLocalInfoCollect([&s](){ return " append read set " + AstInterface::AstToString(s); });
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
@@ -186,7 +185,6 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
            }
         }
         Skip(s);
-      }
    }
  }
  else {
@@ -319,9 +317,9 @@ AppendModLoc(AstInterface&, const AstNodePtr& mod, const AstNodePtr& rhs)
        DebugLocalInfoCollect([&mod,&rhs](){ return "appending modifying " + AstInterface::AstToString(mod) + " = " + AstInterface::AstToString(rhs); });
        if(curstmt == 0) return;
        if (killcollect != 0 && rhs != 0) 
-            (*killcollect)(mod, curstmt);
+            (*killcollect)(mod, rhs);
        if (modcollect != 0)
-            (*modcollect)(mod, curstmt);
+            (*modcollect)(mod, rhs);
     }
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
@@ -348,7 +346,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
   }
  if (callcollect != 0) {
      DebugLocalInfoCollect([](){ return "invoking collecting call"; });
-     (*callcollect)(callee, curstmt);
+     (*callcollect)(callee, fc);
  }
   CollectModRefWrap<AstNodePtr> mod(fa, funcanal, curstmt, readcollect, modcollect);
   if (funcanal == 0 || !funcanal->get_modify( fa, fc, &mod))  {
@@ -369,8 +367,7 @@ void StmtSideEffectCollect<AstNodePtr>::
 AppendMemoryFree( AstInterface& fa, const AstNodePtr& s) {
    if (free_collect != 0) {
       (*free_collect)(s, curstmt);
-   }
-   if (modcollect != 0) {
+   } else if (modcollect != 0) {
        (*modcollect)(s, curstmt);
    }
 }

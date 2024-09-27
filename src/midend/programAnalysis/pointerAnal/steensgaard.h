@@ -51,8 +51,8 @@ public:
    void set_lambda(Lambda* l) { lambda = l; } 
 };
 
-#define Variable std::string
 class ECRmap {
+ typedef std::string Variable;
  public:
    class VariableAlreadyDefined { 
        public: 

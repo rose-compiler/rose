@@ -11,7 +11,7 @@ class SgFunctionDeclaration;
 namespace AstUtilInterface{
 
    enum OperatorSideEffect {
-     Modify, Read, Kill, Call, Decl, Allocate, Free
+     Modify, Read, Kill, Call, Decl, Allocate, Free, CallInput, CallOutput
    };
    inline std::string OperatorSideEffectName(OperatorSideEffect what) {
      switch (what) {
@@ -19,6 +19,8 @@ namespace AstUtilInterface{
       case OperatorSideEffect::Read: return "read";
       case OperatorSideEffect::Kill: return "kill";
       case OperatorSideEffect::Call: return "call";
+      case OperatorSideEffect::CallInput: return "call-input";
+      case OperatorSideEffect::CallOutput: return "call-output";
       case OperatorSideEffect::Decl: return "decl";
       case OperatorSideEffect::Allocate: return "allocate";
       case OperatorSideEffect::Free: return "free";
