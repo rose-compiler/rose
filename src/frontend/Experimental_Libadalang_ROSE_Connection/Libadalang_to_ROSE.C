@@ -315,6 +315,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
         case ada_generic_package_decl:
         case ada_generic_formal_type_decl:
         case ada_package_renaming_decl:
+        case ada_subp_renaming_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
@@ -469,6 +470,7 @@ namespace{
           privateDecl = (ada_private_kind == ada_private_present);
       } else {
           ada_subunit_f_body(&unit_body, &unit_declaration);
+          privateDecl = false; //TODO I don't think subunits can be private?
       }
       
       //traverseIDs(range, elemMap(), ElemCreator{ctx}); handle the pragmas/prelude/with

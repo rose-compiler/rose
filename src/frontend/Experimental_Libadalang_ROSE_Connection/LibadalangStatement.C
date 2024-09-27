@@ -1727,6 +1727,17 @@ namespace {
     ifStmtCommonBranch(lal_path, ifStmt, ctx, &SgIfStmt::set_true_body);
   }
 
+  /// Reformats a list of Type ptrs to an OperatorCallSupplement::ArgDescList by adding an empty string parameter to each
+  OperatorCallSupplement::ArgDescList
+  toArgDescList(const SgTypePtrList& typlist)
+  {
+    OperatorCallSupplement::ArgDescList res;
+    auto toArgDesc = [](SgType* ty) -> ArgDesc { return {"", ty}; };
+
+    std::transform(typlist.begin(), typlist.end(), std::back_inserter(res), toArgDesc);
+    return res;
+  }
+
   /// Creates a new symbol for \ref derivedType based on a symbol from \ref baseType
   void createInheritedSymbol(ada_base_entity* lal_element, SgNamedType& baseType, SgNamedType& derivedType, AstContext ctx)
   {
@@ -3552,6 +3563,79 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         attachSourceLocation(sgnode, lal_element, ctx);
         privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_subp_renaming_decl:         // 8.5.4(2)
+      {
+        logKind("ada_subp_renaming_decl", kind);
+
+        //Get the name of this decl
+        ada_base_entity lal_subp_spec, lal_defining_name, lal_identifier;
+        ada_base_subp_body_f_subp_spec(lal_element, &lal_subp_spec);
+        ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+
+        //Get whether this is a func or proc
+        ada_base_entity lal_subp_kind;
+        ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_kind);
+
+        //Get the return type (if it exists)
+        ada_base_entity lal_subp_returns;
+        ada_subp_spec_f_subp_returns(&lal_subp_spec, &lal_subp_returns);
+
+        //Get the list of params
+        ada_base_entity lal_subp_params;
+        ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_params);
+
+        //Get the overriding status
+        ada_base_entity lal_overriding;
+        ada_base_subp_body_f_overriding(lal_element, &lal_overriding);
+
+        //Get the renamed object
+        ada_base_entity lal_renamed_object;
+        ada_subp_renaming_decl_f_renames(lal_element, &lal_renamed_object);
+        ada_renaming_clause_f_renamed_object(&lal_renamed_object, &lal_renamed_object);
+
+        const bool                 isFuncRename = (ada_node_kind(&lal_subp_kind) == ada_subp_kind_function);
+
+        SgScopeStatement&          outer     = ctx.scope();
+        std::string                ident     = canonical_text_as_string(&lal_identifier);
+        int                        hash      = hash_node(&lal_defining_name);
+        SgType&                    rettype   = isFuncRename ? getDeclType(&lal_subp_returns, ctx)
+                                                            : mkTypeVoid();
+        SgDeclarationStatement* nondefDcl    = nullptr;
+        SgAdaFunctionRenamingDecl* nondefFun = nullptr;
+
+        //Search for a previous decl
+        ada_base_entity lal_previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
+        //If this isn't the first decl, set up nondef
+        if(!ada_node_is_null(&lal_previous_decl)){
+          int decl_hash = hash_node(&lal_previous_decl);
+          nondefDcl = findFirst(libadalangDecls(), decl_hash);
+          nondefFun = isSgAdaFunctionRenamingDecl(nondefDcl);
+        }
+
+        SgAdaFunctionRenamingDecl& sgnode    = mkAdaFunctionRenamingDecl( ident,
+                                                                          outer,
+                                                                          rettype,
+                                                                          ParameterCompletion{&lal_subp_params, ctx},
+                                                                          nondefFun );
+        setOverride(sgnode, ada_node_kind(&lal_overriding) == ada_overriding_overriding);
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        // find declaration for the thing being renamed
+        SgFunctionType&            fntype = SG_DEREF(isSgFunctionType(sgnode.get_type()));
+        const SgTypePtrList&       typlist = SG_DEREF(fntype.get_argument_list()).get_arguments();
+        OperatorCallSupplement     suppl(toArgDescList(typlist), &rettype);
+        SgExpression&              renamedFun = getExpr(&lal_renamed_object, ctx, std::move(suppl));
+
+        sgnode.set_renamed_function(&renamedFun);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
         ctx.appendStatement(sgnode);
 
         assocdecl = &sgnode;

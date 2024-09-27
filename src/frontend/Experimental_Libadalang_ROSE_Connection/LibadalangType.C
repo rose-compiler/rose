@@ -584,6 +584,32 @@ namespace
 
     switch(kind)
     {
+      case ada_private_type_def:         // 12.5.1(2)   -> Trait_Kinds
+      //case A_Formal_Tagged_Private_Type_Definition:  // 12.5.1(2)   -> Trait_Kinds
+        {
+          logKind("ada_private_type_def", kind);
+
+          //Get the abstract, tagged, & limited status
+          ada_base_entity lal_has_abstract, lal_has_tagged, lal_has_limited;
+          ada_private_type_def_f_has_abstract(&lal_type_def, &lal_has_abstract);
+          ada_private_type_def_f_has_tagged(&lal_type_def, &lal_has_tagged);
+          ada_private_type_def_f_has_limited(&lal_type_def, &lal_has_limited);
+
+          const bool tagged = (ada_node_kind(&lal_has_tagged) == ada_tagged_present);
+
+          res.setAbstract(ada_node_kind(&lal_has_abstract) == ada_abstract_present);
+          res.setLimited(ada_node_kind(&lal_has_limited) == ada_limited_present);
+          res.setTagged(tagged);
+
+          // NOTE: we use a private flag on the type instead of the privatize()
+          // code used elsewhere since they currently denote different types of
+          // private-ness.
+          formal.set_is_private(true); //TODO Is ada_private_type_def always private?
+
+          // PP (2/16/22): to avoid null pointers in types
+          formalBaseType = &mkOpaqueType();
+          break;
+        }
       case ada_derived_type_def:         // 12.5.1(3)   -> Trait_Kinds
         {
           logKind("ada_derived_type_def", kind);

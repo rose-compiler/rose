@@ -234,7 +234,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Max_Alignment_For_Allocation_Attribute:
     case An_Overlaps_Storage_Attribute:
     //  |A2012 end*/
-    else if(name == "access" || name == "class")
+    else if(name == "access" || name == "class" || name == "val")
       {
         logInfo() << "untested attribute created: " << name
                   << std::endl;
@@ -1399,6 +1399,28 @@ namespace{
           }
           logInfo() << "Not a_type_conversion.\n";
 
+          //If this is an ada_bin_op, check if it is a short circuit
+          if(kind == ada_bin_op){
+            ada_base_entity lal_op;
+            ada_bin_op_f_op(lal_element, &lal_op);
+            ada_node_kind_enum lal_op_kind = ada_node_kind(&lal_op);
+            if(lal_op_kind == ada_op_or_else || lal_op_kind == ada_op_and_then){
+              logInfo() << " ^Actually a short circuit\n";
+              //Get the left and right exprs
+              ada_base_entity lal_left, lal_right;
+              ada_bin_op_f_left(lal_element, &lal_left);
+              ada_bin_op_f_right(lal_element, &lal_right);
+              SgExpression& lhs = getExpr(&lal_left, ctx);
+              SgExpression& rhs = getExpr(&lal_right, ctx);
+              if(kind == ada_op_or_else){
+                res = sb::buildOrOp_nfi(&lhs, &rhs);
+              } else {
+                res = sb::buildAndOp_nfi(&lhs, &rhs);
+              }
+              break;
+            }
+          }
+
           std::vector<ada_base_entity*>  params;
           ada_base_entity                prefix;
           std::vector<ada_base_entity>   param_backend;
@@ -1449,16 +1471,8 @@ namespace{
             break;
           }
 
-          // PP (04/22/22) if the callee is an Ada Attribute then integrate
-          //               the arguments into the Ada attribute expression directly.
-          //               Note sure if it is good to deviate from the Asis representation
-          //               but some arguments have no underlying functiom declaration.
-          // \todo Consider adding an optional function reference to the SgAdaAttribute rep.
-          if(false /*queryExprKindID(expr.Prefix) == An_Attribute_Reference TODO How to convert this?*/){
-            //res = &getAttributeExpr(&prefix, ctx, range);
-          } else {
-            res = &createCall(&prefix, params, operatorCallSyntax, objectCallSyntax, ctx);
-          }
+          res = &createCall(&prefix, params, operatorCallSyntax, objectCallSyntax, ctx);
+
           break;
         }
 
@@ -1525,7 +1539,15 @@ namespace{
         {
           logKind("ada_attribute_ref", kind);
 
-          res = &getAttributeExpr(lal_element, ctx);
+          //Get the args, if they exist
+          ada_base_entity lal_args;
+          ada_attribute_ref_f_args(lal_element, &lal_args);
+
+          if(ada_node_is_null(&lal_args)){
+            res = &getAttributeExpr(lal_element, ctx);
+          } else {
+            res = &getAttributeExpr(lal_element, ctx, &lal_args);
+          }
           break;
         }
 
