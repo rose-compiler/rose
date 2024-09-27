@@ -460,6 +460,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "LOCSINWORD")) {
      expr = SageBuilder::buildVarRefExp("LOCSINWORD", scope);
    }
+   else if (ATmatch(term, "MAXFLOATPRECISION")) {
+     expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
+   }
    else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
      // ItemSize is required
      Sawyer::Optional<SgExpression*> size;

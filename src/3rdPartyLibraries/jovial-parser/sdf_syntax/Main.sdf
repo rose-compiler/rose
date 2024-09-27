@@ -655,6 +655,7 @@ context-free syntax
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
 
 %%CompileTimeNumericFormula   -> Precision
+  IntegerMachineParameter     -> Precision
   IntegerLiteral              -> Precision
   '(' IntegerLiteral ')'      -> ParensPrecision         {cons("Parens")}
   ParensPrecision             -> Precision
