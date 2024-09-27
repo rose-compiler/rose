@@ -876,18 +876,11 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
-# initialize variable that determines where to look for libquadmath.so. make configurable later if needed 
-set(QUADMATH_SEARCH_PATHS /usr/lib64 /lib64 usr/lib) # per autoconf  
-
-# TO-DO for global control of find_library(), set up cond. to use one of these below 
-#message("CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH}")
-#message("CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH}")
-
-if(NOT WIN32)
-  # find libm.so
-  find_library(M_LIB m)
+# Initialize variable that determines where to look for libquadmath.so 
+set(QUADMATH_SEARCH_PATHS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib /usr/lib/gcc/x86_64-redhat-linux/8)
+if(NOT WIN32) # try to find libm and libquadmath when not on Windows OS 
+  find_library(M_LIB m)  
   message(STATUS "Looking for Quadmath in: ${QUADMATH_SEARCH_PATHS}")
-  # find libquadmath.so 
   find_library(QUADMATH_LIBRARY 
                NAMES quadmath "libquadmath.so.0" "libquadmath.so.0.0.0"  
                PATHS ${QUADMATH_SEARCH_PATHS} 
@@ -899,10 +892,16 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 if(NOT QUADMATH_LIBRARY)
-  message(FATAL_ERROR "Quadmath is required now") 
+  message(STATUS "libquadmath was not found in the following directories: ${QUADMATH_SEARCH_PATHS}") 
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(WARNING "Defining the macro ROSE_USE_EDG_QUAD_FLOAT to 1 per the behavior of the legacy build system")
+    message(WARNING "Will attempt to link to lquadmath to satisfy gnu/edg/librose dependency")
+    set(ROSE_USE_EDG_QUAD_FLOAT 1)
+    set(QUADMATH_LIBRARY -lquadmath) 
+  endif()
 else() 
   message(STATUS "Found QUADMATH_LIBRARY: ${QUADMATH_LIBRARY}")
-  message(STATUS "Setting the macro ROSE_USE_EDG_QUAD_FLOAT")  
+  message(STATUS "Defining the macro ROSE_USE_EDG_QUAD_FLOAT to 1")  
   set(ROSE_USE_EDG_QUAD_FLOAT 1)
 endif() 
 
@@ -968,8 +967,8 @@ if(NOT WIN32)
       message(STATUS "librose will link to QUADMATH located at ${QUADMATH_LIBRARY}") 
       list(APPEND link_with_libraries ${QUADMATH_LIBRARY})
     else()
-      message(WARNING "CANNOT FIND QUADMATH, THIS MAY BE A PROBLEM") 
-  endif()
+      message(WARNING "librose will not link to libquadmath since it was not located") 
+    endif()
   else()
     list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
   endif()
