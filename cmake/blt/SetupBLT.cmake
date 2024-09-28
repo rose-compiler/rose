@@ -132,8 +132,9 @@ if (NOT BLT_LOADED)
     ################################
     # Setup docs targets
     ################################
-    include(${BLT_ROOT_DIR}/cmake/SetupDocs.cmake)
-
+    if(ENABLE_DOXYGEN OR ENABLE_SPHINX OR ENABLE_DOCS)
+      include(${BLT_ROOT_DIR}/cmake/SetupDocs.cmake)
+    endif() 
     ################################
     # Setup source checks
     ################################

@@ -22,9 +22,9 @@ option(ENABLE_COVERAGE   "Enables code coverage support" OFF)
 option(ENABLE_GIT          "Enables Git support" ON)
 
 # Documentation
-option(ENABLE_DOXYGEN      "Enables Doxygen support" ON)
+option(ENABLE_DOXYGEN      "Enables Doxygen support" OFF)
 option(ENABLE_SPHINX       "Enables Sphinx support" OFF)
-option(ENABLE_DOCS       "Enables documentation" ON)
+option(ENABLE_DOCS       "Enables documentation" OFF)
 
 # Quality & Style
 option(ENABLE_CLANGQUERY   "Enables Clang-query support" OFF)
