@@ -171,9 +171,8 @@ UnparseJovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         curprint("(* ");
      }
 
-     switch(type->variantT())
-        {
-     // Note fall through
+     switch(type->variantT()) {
+        // Note fall through
         case V_SgTypeInt:
         case V_SgTypeUnsignedInt:
         case V_SgTypeChar:
@@ -181,19 +180,18 @@ UnparseJovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            unparseType(type, info);
            break;
 
-        case V_SgPointerType:
-          {
-            SgPointerType* pointer = isSgPointerType(type);
-            if (SgTypedefType* typedef_type = isSgTypedefType(pointer->get_base_type())) {
-              curprint("(* P ");
-              unparseType(typedef_type, info);
-              curprint(" *)");
-            }
-            else {
-              unparseType(type, info);
-            }
-            break;
-          }
+        case V_SgPointerType: {
+           SgPointerType* pointer = isSgPointerType(type);
+           if (SgTypedefType* typedef_type = isSgTypedefType(pointer->get_base_type())) {
+             curprint("(* P ");
+             unparseType(typedef_type, info);
+             curprint(" *)");
+           }
+           else {
+             unparseType(type, info);
+           }
+           break;
+        }
 
         case V_SgJovialBitType:
         case V_SgModifierType:
@@ -203,20 +201,29 @@ UnparseJovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            unparseType(type, info);
            curprint(" *)");
            break;
-        case V_SgTypedefType:
-           curprint("(* ");
-           unparseJovialType(isSgTypedefType(type), info);
-           curprint(" *)");
-           break;
+
         case V_SgEnumType:
            curprint("(* ");
            unparseJovialType(isSgEnumType(type), info);
            curprint(" *)");
            break;
+        case V_SgJovialTableType: {
+           auto tableType = isSgJovialTableType(type);
+           curprint("(* ");
+           curprint(tableType->get_name());
+           curprint(" *)");
+           break;
+        }
+        case V_SgTypedefType:
+           curprint("(* ");
+           unparseJovialType(isSgTypedefType(type), info);
+           curprint(" *)");
+           break;
+
         default:
            std::cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << std::endl;
            ROSE_ABORT();
-        }
+     }
 
      if (size) {
         curprint(" *)");
