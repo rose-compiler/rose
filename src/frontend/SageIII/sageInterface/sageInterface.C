@@ -11274,10 +11274,11 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     ROSE_ASSERT(oldExp == clause->get_alignment());
     clause->set_alignment(newExp);
   } else if (SgAdaVariantWhenStmt* vtwhen = isSgAdaVariantWhenStmt(parent)) {
-    ROSE_ASSERT(oldExp == vtwhen->get_choices());
     SgExprListExp* newLst = isSgExprListExp(newExp);
-    ROSE_ASSERT(newLst);
-    vtwhen->set_choices(newLst);
+    if (newLst && (oldExp == vtwhen->get_choices()))
+      vtwhen->set_choices(newLst);
+    else
+      ROSE_ABORT();
   } else if (SgAdaComponentClause* clause = isSgAdaComponentClause(parent)) {
     if (oldExp == clause->get_offset())
       clause->set_offset(newExp);
@@ -11285,6 +11286,11 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       clause->set_range(isSgRangeExp(newExp));
     else if (oldExp == clause->get_component() && isSgVarRefExp(newExp))
       clause->set_component(isSgVarRefExp(newExp));
+    else
+      ROSE_ABORT();
+  } else if (SgAdaFunctionRenamingDecl* rendcl = isSgAdaFunctionRenamingDecl(oldExp->get_parent())) {
+    if (oldExp == rendcl->get_renamed_function())
+      rendcl->set_renamed_function(newExp);
     else
       ROSE_ABORT();
   } else {
@@ -27719,12 +27725,12 @@ int SageInterface::eraseNullPreprocessingInfo (SgLocatedNode* lnode)
 }
 
 //TODO: expose this to header file?
-// We keep all things, including level : starting from 0. Later iteration ignore the level 0 directives.  
+// We keep all things, including level : starting from 0. Later iteration ignore the level 0 directives.
 // Should this be maintained by librose or user space code?
 static std::unordered_map <PreprocessingInfo*, SageInterface::PreprocessingInfoData> infoMap;
 
 void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<PreprocessingInfo*>& infoList, int depth)
-{ 
+{
   // stop condition
   if (current == NULL)
     return;
@@ -27740,46 +27746,46 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
     if (comments != nullptr)
     {
       AttachedPreprocessingInfoType::iterator i;
-      int idx=0; 
+      int idx=0;
       for (i = comments->begin (); i != comments->end (); i++)
-      { 
-        PreprocessingInfo* info= *i; 
+      {
+        PreprocessingInfo* info= *i;
 
         // prepare the data just in case
         PreprocessingInfoData data;
         data.container=comments;
         data.index = idx;
-        data.depth = depth; 
+        data.depth = depth;
 
-        // put directives with before or inside location into the infoList 
+        // put directives with before or inside location into the infoList
         if (info->getRelativePosition () == PreprocessingInfo::before||
             info->getRelativePosition () == PreprocessingInfo::inside)
         {
           infoList.push_back (info);
-          infoMap[info] = data; 
+          infoMap[info] = data;
         }
-        else if (info->getRelativePosition () == PreprocessingInfo::after)    
-        { 
+        else if (info->getRelativePosition () == PreprocessingInfo::after)
+        {
           afterList.push_back (info); // if attached to be after, save to afterList
-          infoMap[info] = data; 
-        }    
+          infoMap[info] = data;
+        }
         else
-        {  
+        {
           cerr<<"Warning: unhandled relative position value:" <<info->getRelativePosition () <<endl;
           // ROSE_ASSERT (false); // Jovial has end_of
         }
 
-        idx++; 
+        idx++;
       } // end for
     }
   } // end if
-  
+
   // handling children nodes
   std::vector<SgNode* > children = current->get_traversalSuccessorContainer();
   for (auto c: children)
     preOrderCollectPreprocessingInfo (c, infoList, depth +1);
-  
-  // append after locations after recursively handling children nodes. 
+
+  // append after locations after recursively handling children nodes.
   for (auto fi : afterList)
     infoList.push_back(fi);
 }
@@ -27815,12 +27821,12 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    // for the middle directives like #else or #elif, sometimes their status (balanced or not) is directly associatd with its preceeding begin directive
    // it is not always an independent decision.
    // Note : the association is between individual preprocessing info. however, to faciliate removing them, the second part uses  InfoList vs offset
-   unordered_map < PreprocessingInfo * , vector< pair<AttachedPreprocessingInfoType*, int>> > associated_directives;  
+   unordered_map < PreprocessingInfo * , vector< pair<AttachedPreprocessingInfoType*, int>> > associated_directives;
 
    // store the associated middle directives what should be erased in the end
    // we have to store this separatedly since the begin diretive pinfo becomes NULL after they have been erased!
-   // associated_directives[BeginInfo] will not retrieve them! 
-   vector< pair<AttachedPreprocessingInfoType*, int>> associated_erase; 
+   // associated_directives[BeginInfo] will not retrieve them!
+   vector< pair<AttachedPreprocessingInfoType*, int>> associated_erase;
 
    // Two steps here
    // Step 1: We build the list first, then go through them to neutralize them
@@ -27831,8 +27837,8 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
    vector<PreprocessingInfo*> candidateInfoList;
    // recursively search all directives, preserving original order in AST, consider attachment locations: before, inside and after.
    preOrderCollectPreprocessingInfo (lnode, candidateInfoList, 0);
-   // now we have both candidateInfoList and infoMap. 
-   
+   // now we have both candidateInfoList and infoMap.
+
    for (auto candidate: candidateInfoList)
    {
      // fundamentally, we want to move individual PreprocessingInfo objects
@@ -27841,42 +27847,42 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 
      // we skip candidate that is attached to a node with depth of 0 (root node of the subtree)
      if (infoMap[info].depth ==0)
-          continue; 
+          continue;
 
-     int commentIndex = infoMap[info].index; 
-     AttachedPreprocessingInfoType* infoList = infoMap[info].container;  
+     int commentIndex = infoMap[info].index;
+     AttachedPreprocessingInfoType* infoList = infoMap[info].container;
 
      // begin directives
      if ( isBeginDirective(info) == 1)
      {
        keepers.push_back(make_pair (infoList,commentIndex));
      }
-     // the middle #else, #elif, 
-     else if (isBeginDirective(info) == 2) 
+     // the middle #else, #elif,
+     else if (isBeginDirective(info) == 2)
      {
        // two situtations for immediate decision of unbalanced status
-       //1. empty stack, or 
+       //1. empty stack, or
        // 2.  top of stack is not one of #if #ifdef #ifndef. This is an unbalanced directive (keeper)
        if (keepers.size()==0)
          keepers.push_back(make_pair (infoList, commentIndex));
        else if (isBeginDirective( (*(keepers.back().first))[keepers.back().second]  )!=1 ) // not empty , top of the stack is not beginning
        {
-         keepers.push_back(make_pair (infoList,commentIndex)); 
-       } 
-       else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning, 
+         keepers.push_back(make_pair (infoList,commentIndex));
+       }
+       else if(isBeginDirective( (*(keepers.back().first))[keepers.back().second] )==1 ) // top of the stack is a beginning,
        {
          PreprocessingInfo* begin_info = (*(keepers.back().first))[keepers.back().second];
          // we associated this middle directive with the beginning directive
-         associated_directives[begin_info].push_back(make_pair (infoList,commentIndex)); 
-       } 
-     } 
+         associated_directives[begin_info].push_back(make_pair (infoList,commentIndex));
+       }
+     }
      // end directive
      else if ( isBeginDirective(info) == -1)
      {
        bool neutralized = false;
        // neutralize an internall matched pair, if any
        if (keepers.size()>0)
-       { 
+       {
          AttachedPreprocessingInfoType* comments = keepers.back().first;
          int idx = keepers.back().second;
 
@@ -27895,7 +27901,7 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
 
 #if 0 // old and wrong linear search of directives
 
-   // Then we go through the list, extract keepers, neutralize anything else.   
+   // Then we go through the list, extract keepers, neutralize anything else.
    for(;ast_i!=ast.end();++ast_i) {
        SgLocatedNode* current  = isSgLocatedNode(*ast_i);
        if (current ==NULL ) // skip non located nodes
@@ -27959,7 +27965,7 @@ int SageInterface::moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode)
            commentIndex++;
        }
    }
-#endif   
+#endif
 // TODO this variable is not used in the end.
    set <AttachedPreprocessingInfoType*> relatedInfoList; // containers with comments to be moved
    // now we go through the keepers: those to be moved to the new location!! They are also the ones to be erased from original location!

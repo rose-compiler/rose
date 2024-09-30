@@ -23,11 +23,6 @@ namespace Ada_ROSE_Translation
 static constexpr bool LOG_FLAW_AS_ERROR = false;
 
 //
-// debugging
-
-//~ struct AdaDbgTraversalExit {};
-
-//
 // logging
 
 extern Sawyer::Message::Facility mlog;
@@ -429,13 +424,6 @@ bool hasValidSourceLocation(const SgLocatedNode&);
 void logKind(const char* kind, int elemID = -1);
 
 
-/// tests if \ref s starts with \ref sub
-/// \param  s    a string
-/// \param  sub  a potential substring of s
-/// \return true if \ref s starts with \ref sub
-bool startsWith(const std::string& s, const std::string& sub);
-
-
 /// A range abstraction for a contiguous sequence
 template <class T>
 struct Range : std::pair<T, T>
@@ -450,17 +438,6 @@ struct Range : std::pair<T, T>
   int  size()  const { return this->second - this->first; }
 };
 
-/// A range of Asis Units
-/*
-struct UnitIdRange : Range<Unit_ID_Ptr>
-{
-  using base = Range<Unit_ID_Ptr>;
-  using value_type = Unit_Struct;
-
-  using base::base;
-};
-*/
-
 /// A range of Asis Elements
 struct ElemIdRange : Range<Element_ID_Ptr>
 {
@@ -470,10 +447,6 @@ struct ElemIdRange : Range<Element_ID_Ptr>
   using base::base;
 };
 
-
-/// non-tracing alternative
-//~ static inline
-//~ void logKind(const char*, bool = false) {}
 
 /// anonymous namespace for auxiliary templates and functions
 namespace
@@ -491,8 +464,6 @@ namespace
 
   //
   // loggers
-
-#ifndef USE_SIMPLE_STD_LOGGER
 
   inline
   auto logTrace() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE])
@@ -523,41 +494,6 @@ namespace
   {
     return Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL];
   }
-
-#else /* USE_SIMPLE_STD_LOGGER */
-
-  inline
-  std::ostream& logTrace()
-  {
-    return std::cerr << "[TRACE] ";
-  }
-
-  inline
-  std::ostream logInfo()
-  {
-    return std::cerr << "[INFO] ";
-  }
-
-  inline
-  std::ostream& logWarn()
-  {
-    return std::cerr << "[WARN] ";
-  }
-
-  inline
-  std::ostream& logError()
-  {
-    return std::cerr << "[ERROR] ";
-  }
-
-  inline
-  std::ostream& logFatal()
-  {
-    return std::cerr << "[FATAL] ";
-  }
-
-  void logInit() {}
-#endif /* USE_SIMPLE_STD_LOGGER */
 
   inline
   auto logFlaw() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR])
@@ -609,7 +545,7 @@ namespace
     recordNode(m, key, val, nodeExists);
   }
 
-  /// retrieves a node from map \ref m with key \ref key.
+  /// retrieves a node from map \p m with key \p key.
   template <class MapT>
   inline
   auto
@@ -629,7 +565,7 @@ namespace
     return {};
   }
 
-  /// tries one or more keys to find a declaration from map \ref m
+  /// tries one or more keys to find a declaration from map \p m
   /// returns the default value (e.g., nullptr) if none of the keys exist.
   template <class MapT, class Key0T, class... KeysT>
   inline
@@ -669,53 +605,15 @@ namespace
     return SG_DEREF(retrieveElemOpt(map, key));
   }
 
-  /// Type mapping for range element types
-  /*
-  template <class T>
-  struct range_types {};
 
-  template <>
-  struct range_types<Element_ID_List>
-  {
-    using type = ElemIdRange;
-  };
-
-  template <>
-  struct range_types<Unit_ID_Array_Struct>
-  {
-    using type = UnitIdRange;
-  };
-  */
-
-  /// traverses an Asis linked list and calls \ref functor
-  ///   for each element in the range [\ref first, \ref limit).
-  ///   e.g., functor(*first)
-  /// \returns a copy of the functor
-  template <class P, class FnT>
-  inline
-  FnT traverse(P* first, P* limit, FnT functor)
-  {
-    while (first != limit)
-    {
-      functor(*first);
-
-      first = first->Next;
-    }
-
-    return functor;
-  }
-
-
-  /// traverses a list of pointers to Elements (or Units) in the range [\ref first, \ref limit),
-  ///   looks up the associated Asis struct, and passes it as argument to \ref func.
+  /// traverses a list of pointers to Elements (or Units) in the range [\p first, \p limit),
+  ///   looks up the associated Asis struct, and passes it as argument to \p func.
   ///   e.g., func(*retrieveElem(map, *first))
   /// \tparam ElemT    the type of the element (Unit or Element)
   /// \tparam PtrT     pointer to elements
   /// \tparam AsisMapT the map type
   /// \tparam FnT      the functor
-  /// \returns a copy of \ref func after all elements have been traversed
-  /// \todo split the map into two, one for elements, one for units, in order
-  ///       to eliminate the need for casting.
+  /// \returns a copy of \p func after all elements have been traversed
   template <class ElemT, class PtrT, class AsisMapT, class FnT>
   inline
   FnT
@@ -740,9 +638,9 @@ namespace
     return func;
   }
 
-  /// traverses all IDs in the range \ref range and calls functor with the associated
+  /// traverses all IDs in the range \p range and calls functor with the associated
   ///   struct of each element.
-  /// \returns a copy of \ref func after all elements have been traversed
+  /// \returns a copy of \p func after all elements have been traversed
   template <class AsisMapT, class FnT>
   inline
   FnT
@@ -766,6 +664,45 @@ namespace
   inline
   bool isInvalidId(int id) { return id == -1; }
 
+#if OBSOLETE_CODE
+  /// Type mapping for range element types
+  /*
+  template <class T>
+  struct range_types {};
+
+  template <>
+  struct range_types<Element_ID_List>
+  {
+    using type = ElemIdRange;
+  };
+
+  template <>
+  struct range_types<Unit_ID_Array_Struct>
+  {
+    using type = UnitIdRange;
+  };
+  */
+
+  /// traverses an Asis linked list and calls \p functor
+  ///   for each element in the range [\p first, \p limit).
+  ///   e.g., functor(*first)
+  /// \returns a copy of the functor
+  template <class P, class FnT>
+  inline
+  FnT traverse(P* first, P* limit, FnT functor)
+  {
+    while (first != limit)
+    {
+      functor(*first);
+
+      first = first->Next;
+    }
+
+    return functor;
+  }
+
+
+
   inline
   bool isValidId(int id) { return !isInvalidId(id); }
 
@@ -788,6 +725,7 @@ namespace
 
     return fn;
   }
+#endif /* OBSOLETE_CODE */
 } // anonymous
 
 

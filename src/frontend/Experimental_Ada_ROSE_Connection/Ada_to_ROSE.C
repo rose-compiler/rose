@@ -88,6 +88,15 @@ namespace
   std::vector<SgExpression*> operatorExprsVector;
 
   std::vector<std::function<void()> > unitCompletions;
+
+  /// tests if \ref s starts with \ref sub
+  /// \param  s    a string
+  /// \param  sub  a potential substring of s
+  /// \return true if \ref s starts with \ref sub
+  bool startsWith(const std::string& s, const std::string& sub)
+  {
+    return (s.rfind(sub, 0) == 0);
+  }
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
@@ -2327,11 +2336,6 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   // undo changes to SageBuilder setup
   sb::setSourcePositionClassificationMode(defaultSourcePositionClassificationMode);
   logInfo() << "Building ROSE AST done" << std::endl;
-}
-
-bool startsWith(const std::string& s, const std::string& sub)
-{
-  return (s.rfind(sub, 0) == 0);
 }
 
 

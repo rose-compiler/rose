@@ -313,7 +313,7 @@ namespace
 
       size_t dimension() const
       {
-        ROSE_ASSERT(dim > 0);
+        ASSERT_require(dim > 0);
 
         return dim-1;
       }
@@ -423,7 +423,7 @@ namespace
     if (!scopestmt) return;
 
     SgSymbolTable&      sytable  = SG_DEREF(scopestmt->get_symbol_table());
-    ROSE_ASSERT(sytable.isCaseInsensitive());
+    ASSERT_require(sytable.isCaseInsensitive());
 
     rose_hash_multimap& symap    = SG_DEREF(sytable.get_table());
     const size_t        mapsize  = symap.size();
@@ -442,7 +442,7 @@ namespace
     for (TmpSymbolTableEntry& elTmp : tmp)
       symap.insert(elTmp);
 
-    ROSE_ASSERT(symap.size() == mapsize);
+    ASSERT_require(symap.size() == mapsize);
   }
 
   template <class SageDeclarationStatement, class SageScopeStatement>
@@ -536,7 +536,8 @@ namespace Ada
 
   bool sameCanonicalScope(const SgScopeStatement* lhs, const SgScopeStatement* rhs)
   {
-    ROSE_ASSERT(lhs && rhs);
+    ASSERT_not_null(lhs);
+    ASSERT_not_null(rhs);
 
     return (  (lhs == rhs) // short-cut
            || (canonicalScope(lhs) == canonicalScope(rhs))
@@ -557,10 +558,10 @@ namespace Ada
     if (exprlst.size() == 0)
       return 1;
 
-    ROSE_ASSERT(exprlst.size() == 1);
+    ASSERT_require(exprlst.size() == 1);
     long long res = staticIntegralValue(exprlst[0]);
 
-    ROSE_ASSERT(res <= std::numeric_limits<int>::max());
+    ASSERT_require(res <= std::numeric_limits<int>::max());
     return res;
   }
 
@@ -2248,6 +2249,29 @@ namespace Ada
     return SG_DEREF(stdpkg).get_definition();
   }
 
+  bool systemPackage(const SgScopeStatement& n)
+  {
+    ScopePath                   path = pathToGlobal(n);
+    const SgAdaPackageSpec*     toplevel = isSgAdaPackageSpec(path.back());
+    if (!toplevel) return false;
+
+    const SgAdaPackageSpecDecl* pkgdcl  = isSgAdaPackageSpecDecl(toplevel->get_parent());
+    if (!pkgdcl) return false;
+
+    const std::string           pkgname = boost::to_upper_copy(pkgdcl->get_name().getString());
+
+    return (  pkgname == "ADA"
+           || pkgname == "INTERFACES"
+           || pkgname == "SYSTEM"
+           || pkgname == "STANDARD"
+           );
+  }
+
+  bool systemPackage(const SgScopeStatement* n)
+  {
+    return n && systemPackage(*n);
+  }
+
   SgType& TypeDescription::typerep_ref() const
   {
     return SG_DEREF(typerep());
@@ -2462,12 +2486,12 @@ namespace Ada
   std::string convertRoseOperatorNameToAdaOperator(const std::string& name)
   {
     if (name.rfind(si::Ada::roseOperatorPrefix, 0) != 0)
-      return "";
+      return {};
 
     const std::string op = name.substr(si::Ada::roseOperatorPrefix.size());
 
     if (!isOperatorName(op))
-      return "";
+      return {};
 
     return op;
   }
@@ -2519,7 +2543,7 @@ namespace Ada
   {
     auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)->bool
                               {
-                                ROSE_ASSERT(dcl);
+                                ASSERT_not_null(dcl);
 
                                 const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
 
@@ -2584,7 +2608,7 @@ namespace Ada
 
     for (PreprocessingInfo* ppinfo : *prepInfo)
     {
-      ROSE_ASSERT(ppinfo);
+      ASSERT_not_null(ppinfo);
 
       if (ppinfo->getTypeOfDirective() != PreprocessingInfo::AdaStyleComment) continue;
 
@@ -2671,7 +2695,8 @@ namespace Ada
              SgExpression*       lhs = operands[0];
              SgExpression*       rhs = operands[1];
 
-             ROSE_ASSERT(lhs && rhs);
+             ASSERT_not_null(lhs);
+             ASSERT_not_null(rhs);
              SgExpression*       lhs_dummy = sb::buildNullExpression();
              SgExpression*       rhs_dummy = sb::buildNullExpression();
 
@@ -2690,7 +2715,7 @@ namespace Ada
              ROSE_ASSERT(operands.size() == 1);
              SgExpression*       arg = operands[0];
 
-             ROSE_ASSERT(arg);
+             ASSERT_not_null(arg);
              SgExpression*       arg_dummy = sb::buildNullExpression();
 
              si::replaceExpression(arg, arg_dummy, true /* keep */);
@@ -3687,7 +3712,7 @@ long long int convertIntegerLiteral(const char* img)
 
 std::string convertStringLiteral(const char* textrep)
 {
-  ROSE_ASSERT(textrep);
+  ASSERT_not_null(textrep);
 
   std::stringstream buf;
   const char        delimiter = *textrep;
@@ -3733,7 +3758,7 @@ long double convertRealLiteral(const char* img)
   const char* cur  = img;
 
   std::tie(base, cur) = parseDec<long int>(cur);
-  ROSE_ASSERT(isBasedDelimiter(*cur));
+  ASSERT_require(isBasedDelimiter(*cur));
 
   ++cur;
   std::tie(dec, cur) = parseDec<long double>(cur, base);
@@ -3746,7 +3771,7 @@ long double convertRealLiteral(const char* img)
 
   const long double res = dec + frac;
 
-  ROSE_ASSERT(isBasedDelimiter(*cur));
+  ASSERT_require(isBasedDelimiter(*cur));
   ++cur;
 
   std::tie(exp, cur) = parseExp(cur);
@@ -3862,7 +3887,7 @@ positionalArgumentLimit(const SgExprListExp& args)
 size_t
 positionalArgumentLimit(const SgExprListExp* args)
 {
-  ROSE_ASSERT(args);
+  ASSERT_not_null(args);
 
   return positionalArgumentLimit(*args);
 }
@@ -3905,7 +3930,7 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
                                      {
                                        const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(arg);
 
-                                       ROSE_ASSERT(actarg);
+                                       ASSERT_not_null(actarg);
                                        return parmName == std::string{actarg->get_argument_name()};
                                      };
     ArgumentIterator argpos   = std::find_if(firstNamed, argLimit, sameNamePred);
@@ -3927,7 +3952,7 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
 SgScopeStatement*
 overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs)
 {
-  ROSE_ASSERT(args);
+  ASSERT_not_null(args);
 
   return overridingScope(*args, primitiveArgs);
 }

@@ -1149,6 +1149,12 @@ namespace Ada
   /// \}
 
 
+  /// returns true if the scope \p n is part of a system package
+  /// \{
+  bool systemPackage(const SgScopeStatement& n);
+  bool systemPackage(const SgScopeStatement* n);
+  /// \}
+
   /// converts text to constant values
   /// \{
   long long int convertIntegerLiteral(const char* img);

@@ -202,20 +202,24 @@ namespace
   template <class SageNode>
   void _setDefaultFileInfo(SageNode& n)
   {
+    static int numerrout = 0;
+
     ASSERT_require(n.get_startOfConstruct() == nullptr);
     ASSERT_require(n.get_endOfConstruct() == nullptr);
 
-    Sg_File_Info* startpos = nullptr;
-    Sg_File_Info* limitpos = nullptr;
-    Sg_File_Info* operatorpos = nullptr;
+    Sg_File_Info* startpos       = nullptr;
+    Sg_File_Info* limitpos       = nullptr;
+    Sg_File_Info* operatorpos    = nullptr;
     const bool    hasOperatorPos = hasOperatorPosition(n);
 
     switch (sb::getSourcePositionClassificationMode())
     {
       default:
-        logError() << "AdaMaker.C: unsupported getSourcePositionClassificationMode"
-                   << "\n   using default mode instead"
-                   << std::endl;
+        if (++numerrout <= 5)
+          logError() << "AdaMaker.C: unsupported getSourcePositionClassificationMode"
+                     << "\n    using default mode instead"
+                     << (numerrout == 5 ? "\n    skipping future messages.." : "")
+                     << std::endl;
         /* fall-through */
 
       case sb::e_sourcePositionFrontendConstruction:
@@ -1266,7 +1270,7 @@ mkAdaProtectedBodyDecl( SgDeclarationStatement& podecl,
   // \todo combine with mkAdaTaskBodyDecl
   ProtectedDeclInfoResult specinfo = sg::dispatch(ProtectedDeclInfo{}, &podecl);
   SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &podecl, &pobody);
-  SgAdaProtectedSpec&     pospec = SG_DEREF( specinfo.spec );
+  SgAdaProtectedSpec&     pospec   = SG_DEREF( specinfo.spec );
 
   sgnode.set_parent(&scope); // needed?
 
@@ -1607,10 +1611,9 @@ mkAdaEntryDecl( const std::string& name,
 
                                return res;
                              };
-  SgAdaEntryDecl& sgnode = mkAdaEntryDeclInternal( name, scope, completeParams, genIndex, mkProcDecl_nondef);
+  SgAdaEntryDecl& sgnode = mkAdaEntryDeclInternal(name, scope, completeParams, genIndex, mkProcDecl_nondef);
 
   sgnode.set_firstNondefiningDeclaration(&sgnode);
-
   return sgnode;
 }
 

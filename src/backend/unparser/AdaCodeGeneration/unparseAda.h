@@ -80,7 +80,6 @@ AdaPrinter& operator<<(AdaPrinter& ap, AdaPrinterNewLine)
   return ap.newline();
 }
 
-
 #endif
 
 struct Unparse_Ada : UnparseLanguageIndependentConstructs

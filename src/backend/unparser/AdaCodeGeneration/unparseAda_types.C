@@ -254,7 +254,7 @@ namespace
       prn(dclname);
     }
 
-    void handle(const SgAdaDiscreteType& n)
+    void handle(const SgAdaDiscreteType&)
     {
       // should not be reached
       ROSE_ABORT();
@@ -304,10 +304,10 @@ namespace
       type(under);
     }
 
-    void handle(const SgTypeNullptr& n)
+    void handle(const SgTypeNullptr&)
     {
       // the type of "null"
-      //   in C++ that would std::nullptr_t, not sure if there exists
+      //   in C++ that would be std::nullptr_t, not sure if there exists
       //   a type in Ada that represents the same concept.
       prn(" null-type");
     }
