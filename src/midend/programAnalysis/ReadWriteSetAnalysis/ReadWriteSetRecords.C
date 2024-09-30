@@ -711,10 +711,10 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     SgFunctionRefExp* funcRef = isSgFunctionRefExp(current);
     SgFunctionDeclaration* funcDecl = funcRef->getAssociatedFunctionDeclaration();
     if(funcDecl) {
-      Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Got function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
+      VxUtilFuncs::mlog[Sawyer::Message::Common::INFO] << "Got function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
       return GLOBALITY_UNKNOWN;  
     } else {
-      Sawyer::Message::mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
+      VxUtilFuncs::mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
       return GLOBALITY_UNKNOWN;
     }
   }
@@ -722,10 +722,10 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(current);
     SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
     if(funcDecl) {
-      Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Got Member function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
+      VxUtilFuncs::mlog[Sawyer::Message::Common::INFO] << "Got Member function declaration: " << funcDecl->get_qualified_name().getString() << std::endl;
       return GLOBALITY_UNKNOWN;    
     } else {
-      Sawyer::Message::mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgMemberFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
+      VxUtilFuncs::mlog[Sawyer::Message::Common::WARN] << VxUtilFuncs::makeNoteString("Got SgMemberFunctionRef but couldn't resolve it", accessOrigin, accessOrigin->unparseToString()) << std::endl;
       return GLOBALITY_UNKNOWN;
     }
   }
@@ -734,7 +734,7 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     //TemplateFunctionRefExp only happen when an uninstantiated
     //template calls a templated function.  Which should never been
     //seen in the RWSets.  So this is left here as a safetly check.
-    Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "We got an SgTemplateMemberFunctionRefExp, which shouldn't be possible.  Contact ROSE team."  << std::endl;
+    VxUtilFuncs::mlog[Sawyer::Message::Common::ERROR] << "We got an SgTemplateMemberFunctionRefExp, which shouldn't be possible.  Contact ROSE team."  << std::endl;
     ROSE_ABORT();
   }
   if (isSgConstructorInitializer(current)) {
@@ -748,11 +748,11 @@ ReadWriteSets::Globality ReadWriteSets::determineGlobality(SgFunctionDefinition*
     return MEMBERS;
   }
     
-  Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+  VxUtilFuncs::mlog[Sawyer::Message::Common::ERROR] <<
     "meetsGlobalityConstraints: " <<
     current->get_file_info()->get_filename() << ":" <<
     current->get_file_info()->get_line() << "-" << current->get_file_info()->get_col()<<std::endl;
-  Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+  VxUtilFuncs::mlog[Sawyer::Message::Common::ERROR] <<
     "In meetsGlobalityConstraints: unhandled reference type:"  <<
     current->class_name()<<std::endl;
   ROSE_ABORT();

@@ -30,7 +30,6 @@ static const char *description =
 
 using namespace Rose;
 using namespace SageInterface;
-using namespace Sawyer::Message::Common;
 using namespace nlohmann;
 
     
@@ -75,7 +74,7 @@ void readConfigFile(Settings& settings)
             }
         catch (const Yaml::Exception& e)
             {
-                Sawyer::Message::mlog[ERROR] << "Exception " << e.Type() << ": " << e.what() << " configuration file not found: " << settings.yamlConfigFilename << std::endl;
+                std::cerr << "Exception " << e.Type() << ": " << e.what() << " configuration file not found: " << settings.yamlConfigFilename << std::endl;
                 exit(12);
             }
 
@@ -94,9 +93,9 @@ main(int argc, char *argv[]) {
     Rose::CommandLine::versionString =
         TOOL_VERSION_STRING " using " +
         Rose::CommandLine::versionString;
-    Rose::Diagnostics::initialize(); 
+    Rose::Diagnostics::initialize();
+    VxUtilFuncs::initDiagnostics();
 
-    //~  CodeThorn::initDiagnostics();
     //----------------------------------------------------------
     // Parse Command line args
 
@@ -132,7 +131,7 @@ main(int argc, char *argv[]) {
     readConfigFile(settings);
 
     if(settings.rwSetsFilename == "") {
-        Sawyer::Message::mlog[ERROR] << "Please provide a non-empty RWSets JSON file" <<    std::endl;
+        std::cerr << "error: no RWSets JSON file" <<    std::endl;
         exit(12);
     }
 
@@ -155,7 +154,7 @@ main(int argc, char *argv[]) {
     inFile >> c;  //flag eof if at end of file, doesn't seem to throw exception
     if(inFile.eof()) {  //nlohmann doesn't like empty files
         inFile.close();
-        Sawyer::Message::mlog[ERROR] << "Please provide a RWSets JSON file" <<    std::endl;
+        std::cerr << "error: empty RWSets JSON file\n";
         exit(13);
     }
     inFile.seekg(0, std::ios_base::beg);

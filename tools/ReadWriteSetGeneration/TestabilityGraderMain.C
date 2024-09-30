@@ -48,7 +48,8 @@ int main(int argc, char** argv) {
 
   //----------------------------------------------------------
   // Parse Command line args
-  //Diagnostics::initAndRegister(&mlog, "TestabilityGrader");
+  ROSE_INITIALIZE;
+  VxUtilFuncs::initDiagnostics();
 
   Settings settings;
   Parser p;

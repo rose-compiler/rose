@@ -42,7 +42,10 @@ namespace BinaryAnalysis {
     void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
+
 #endif
+
+namespace VxUtilsFuncs { void initDiagnosics(); }
 
 #include <Rose/Diagnostics.h>
 #include <EditDistance/EditDistance.h>                  // Rose::EditDistance
@@ -178,11 +181,10 @@ void initialize() {
         UnparseLanguageIndependentConstructs::initDiagnostics();
         SageBuilder::initDiagnostics();
         AstInterface::initDiagnostics();
+        VxUtilsFuncs::initDiagnosics();
 
-#if 1
      // DQ (3/5/2017): Adding message stream to support diagnostic message from the ROSE IR nodes.
         Rose::initDiagnostics();
-#endif
     }
 }
 

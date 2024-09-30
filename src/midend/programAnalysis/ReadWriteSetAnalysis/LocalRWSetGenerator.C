@@ -53,7 +53,6 @@ using namespace Sawyer::Message::Common;
 using namespace nlohmann;
 using namespace ReadWriteSets;
 using namespace VxUtilFuncs;
-using namespace Sawyer::Message;
 namespace fs = boost::filesystem;
 namespace ast = Rose::AST;
 

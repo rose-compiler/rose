@@ -106,8 +106,8 @@ main(int argc, char *argv[]) {
         TOOL_VERSION_STRING " using " +
         Rose::CommandLine::versionString;
     Rose::Diagnostics::initialize(); 
+    VxUtilFuncs::initDiagnostics();
 
-    //~  CodeThorn::initDiagnostics();
     //----------------------------------------------------------
     // Parse Command line args
 

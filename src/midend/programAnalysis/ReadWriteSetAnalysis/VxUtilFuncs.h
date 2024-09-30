@@ -2,9 +2,26 @@
 #define VX_UTIL_FUNCS_H
 
 #include <limits>
+#include <Rose/Diagnostics.h>
+
 
 namespace VxUtilFuncs 
 {
+
+/**
+ * mlog
+ *
+ * mlog for ReadWriteSetAnalysis
+ */
+extern Sawyer::Message::Facility mlog;
+
+
+/**
+ * initDiagnostics
+ *
+ * inits mlog for ReadWriteSetAnalysis
+ */
+void initDiagnostics();
 
 /**
  * getFunctionDefinitionFromDeclaration

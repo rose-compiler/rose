@@ -6,8 +6,30 @@
 #include "SgNodeHelper.h"
 #include "sageInterface.h"
 
+using namespace Sawyer::Message::Common;
+
 //#include <codethorn/ExprAnalyzer.h>
 
+ /**
+ * mlog
+ *
+ * mlog for ReadWriteSetAnalysis
+ */
+Sawyer::Message::Facility VxUtilFuncs::mlog;
+
+/**
+ * initDiagnostics
+ *
+ * inits mlog for ReadWriteSetAnalysis
+ */
+void VxUtilFuncs::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Rose::Diagnostics::initAndRegister(&mlog, "VxUtilFuncs");
+        mlog.comment("generating read/write set analysis");
+    }
+}
 
 /**
  * getFunctionDefinitionFromDeclaration
@@ -238,7 +260,7 @@ std::string VxUtilFuncs::getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
     if(defFuncDecl) {
         filepathStr = defFuncDecl->get_file_info()->get_filename();
     } else {
-        Sawyer::Message::mlog[Sawyer::Message::Common::WARN] << "Cannot identify defining file for " << inFuncDecl->get_name().getString() << std::endl;       
+        mlog[WARN] << "Cannot identify defining file for " << inFuncDecl->get_name().getString() << std::endl;
         filepathStr = tempDecl->get_file_info()->get_filename();    
     }
     
@@ -412,19 +434,19 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "      From: " << func->get_file_info()->displayString() << std::endl;  
+     mlog[INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[INFO] << "      From: " << func->get_file_info()->displayString() << std::endl;
      return NULL;
    }
  }
  SgFunctionDeclaration* VxUtilFuncs::getUniqueDeclaration(SgFunctionRefExp* func) {
-   SgFunctionDeclaration* funcDecl = func->getAssociatedFunctionDeclaration(); 
+   SgFunctionDeclaration* funcDecl = func->getAssociatedFunctionDeclaration();
    if(funcDecl) {
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
+     mlog[INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[INFO] << "  " << func->get_file_info()->displayString() << std::endl;
      return NULL;
    }
    //   return isSgFunctionDeclaration(func->getAssociatedFunctionDeclaration()->get_firstNondefiningDeclaration());
@@ -435,8 +457,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
+     mlog[INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[INFO] << "  " << func->get_file_info()->displayString() << std::endl;
      return NULL;
    }
    //   return isSgFunctionDeclaration(func->getAssociatedFunctionDeclaration()->get_firstNondefiningDeclaration());
@@ -450,8 +472,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      return isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
    } else {
      SgUnparse_Info info; 
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << "  " << func->get_file_info()->displayString() << std::endl;  
+     mlog[INFO] << "Could not resolve call to : " << func->unparseToString(&info) << std::endl;
+     mlog[INFO] << "  " << func->get_file_info()->displayString() << std::endl;
      return NULL;
    }
    //   return isSgFunctionDeclaration(func->getAssociatedFunctionDeclaration()->get_firstNondefiningDeclaration());
@@ -495,8 +517,8 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
      if(derefExp) {
          return extractVarRefFromAnything(derefExp->get_operand());       
      }
-     Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "Could not extract Variable Reference from unhandled type:" << obj->class_name() << std::endl;
-     Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "  From: " << obj->get_file_info()->displayString() << std::endl;   
+     mlog[ERROR] << "Could not extract Variable Reference from unhandled type:" << obj->class_name() << std::endl;
+     mlog[ERROR] << "  From: " << obj->get_file_info()->displayString() << std::endl;
      return NULL;
  }
 
@@ -653,7 +675,7 @@ std::string VxUtilFuncs::generateAccessNameStrings(SgInitializedName* coarseName
   SgStatement* coarseNameScope = coarseName->get_scope();
   SgType* coarseType = coarseName->get_type();
   ROSE_ASSERT(coarseType);
-  //Sawyer::Message::mlog[Sawyer::Message::Common::INFO] << coarseNameScope->class_name() << std::endl;
+  //mlog[INFO] << coarseNameScope->class_name() << std::endl;
 
   
   //global case
@@ -704,11 +726,11 @@ std::string VxUtilFuncs::generateAccessNameStrings(SgInitializedName* coarseName
         coarseName->get_qualified_name().getString();        
     }
   }
-    Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+    mlog[ERROR] <<
     "generateAccessNameStrings: " <<
     coarseName->get_file_info()->get_filename() << ":" <<
     coarseName->get_file_info()->get_line() << "-" << coarseName->get_file_info()->get_col()<<std::endl;
-  Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] <<
+  mlog[ERROR] <<
     "In generateAccessNameStrings: got to end of function:"  <<
     coarseName->class_name()<<std::endl;
   ROSE_ABORT();

@@ -114,7 +114,7 @@ SgNode* Name2Node::getVariable(std::string name) {
         return NULL;
     }
 
-    Sawyer::Message::mlog[Sawyer::Message::Common::ERROR] << "In Name2Node::getVariable(): got to end of function";
+    VxUtilFuncs::mlog[Sawyer::Message::Common::ERROR] << "In Name2Node::getVariable(): got to end of function";
     ROSE_ABORT();
     return NULL;
 }
