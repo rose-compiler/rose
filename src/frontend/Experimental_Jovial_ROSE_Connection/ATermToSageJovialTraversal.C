@@ -6391,10 +6391,13 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
       } else return ATfalse;
 
       if (convType == nullptr) {
-         // Potentially a PointerConversionP term, get type from the formula
+         // PointerConversion isa PointerConversionP term, get type from the formula
          if (auto cast = isSgCastExp(castFormula)) {
             convType = cast->get_type();
-        }
+         }
+         else if (isSgJovialBitVal(castFormula)) {
+            convType = SB::buildJovialBitType(/*size*/nullptr);
+         }
       }
       ASSERT_not_null(convType);
       ASSERT_not_null(castFormula);
