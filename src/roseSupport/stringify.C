@@ -10374,7 +10374,57 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 156
+// /src/Rose/BinaryAnalysis/Variables.h line 69
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables {
+    const char* Access(int64_t i) {
+        switch (i) {
+            case 1L: return "READ";
+            case 2L: return "WRITE";
+            default: return "";
+        }
+    }
+
+    std::string Access(int64_t i, const std::string &strip) {
+        std::string s = Access(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::Variables::Access)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& Access() {
+        static const int64_t values[] = {
+            1L,
+            2L
+        };
+        static const std::vector<int64_t> retval(values, values + 2);
+        return retval;
+    }
+
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisVariablesAccess(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Variables::Access(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::Variables::Access)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::Variables::Access::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyBinaryAnalysisVariablesAccess() {
+        return stringify::Rose::BinaryAnalysis::Variables::Access();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/Rose/BinaryAnalysis/Variables.h line 213
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackVariable {
     const char* Purpose(int64_t i) {
         switch (i) {
@@ -10432,7 +10482,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 443
+// /src/Rose/BinaryAnalysis/Variables.h line 506
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackFrame {
     const char* Direction(int64_t i) {
         switch (i) {
@@ -16566,7 +16616,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 35389
+// /src/ROSETTA/src/binaryInstruction.C line 35551
 namespace stringify { namespace SgAsmCilMetadataHeap {
     const char* ReferenceKind(int64_t i) {
         switch (i) {
@@ -16664,7 +16714,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 40592
+// /src/ROSETTA/src/binaryInstruction.C line 40902
 namespace stringify { namespace SgAsmBlock {
     const char* Reason(int64_t i) {
         switch (i) {
@@ -16738,7 +16788,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42079
+// /src/ROSETTA/src/binaryInstruction.C line 42389
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* ExecFamily(int64_t i) {
         switch (i) {
@@ -16800,7 +16850,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42091
+// /src/ROSETTA/src/binaryInstruction.C line 42401
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* ExecABI(int64_t i) {
         switch (i) {
@@ -16888,7 +16938,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42116
+// /src/ROSETTA/src/binaryInstruction.C line 42426
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* InsSetArchitecture(int64_t i) {
         switch (i) {
@@ -17256,7 +17306,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42298
+// /src/ROSETTA/src/binaryInstruction.C line 42608
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* ExecPurpose(int64_t i) {
         switch (i) {
@@ -18591,6 +18641,8 @@ namespace stringify { namespace AstUtilInterface {
             case 2L: return "Kill";
             case 3L: return "Call";
             case 4L: return "Decl";
+            case 5L: return "Allocate";
+            case 6L: return "Free";
             default: return "";
         }
     }
@@ -18610,9 +18662,11 @@ namespace stringify { namespace AstUtilInterface {
             1L,
             2L,
             3L,
-            4L
+            4L,
+            5L,
+            6L
         };
-        static const std::vector<int64_t> retval(values, values + 5);
+        static const std::vector<int64_t> retval(values, values + 7);
         return retval;
     }
 
@@ -18638,50 +18692,106 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/astUtil/astInterface/AstInterface.h line 18
+// /src/midend/astUtil/astInterface/AstInterface.h line 19
 namespace stringify { namespace AstNodePtr {
-    const char* SpecialAstTypes(int64_t i) {
+    const char* SpecialAstType(int64_t i) {
         switch (i) {
-            case 0L: return "UNKNOWN_AST";
+            case 0L: return "SG_AST";
+            case 1L: return "UNKNOWN_AST";
+            case 2L: return "NULL_AST";
             default: return "";
         }
     }
 
-    std::string SpecialAstTypes(int64_t i, const std::string &strip) {
-        std::string s = SpecialAstTypes(i);
+    std::string SpecialAstType(int64_t i, const std::string &strip) {
+        std::string s = SpecialAstType(i);
         if (s.empty())
-            s = "(AstNodePtr::SpecialAstTypes)" + boost::lexical_cast<std::string>(i);
+            s = "(AstNodePtr::SpecialAstType)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& SpecialAstTypes() {
+    const std::vector<int64_t>& SpecialAstType() {
         static const int64_t values[] = {
-            0L
+            0L,
+            1L,
+            2L
         };
-        static const std::vector<int64_t> retval(values, values + 1);
+        static const std::vector<int64_t> retval(values, values + 3);
         return retval;
     }
 
 }}
 
 namespace Rose {
-    std::string stringifyAstNodePtrSpecialAstTypes(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::AstNodePtr::SpecialAstTypes(i);
+    std::string stringifyAstNodePtrSpecialAstType(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::AstNodePtr::SpecialAstType(i);
         if (retval.empty()) {
-            retval = "(AstNodePtr::SpecialAstTypes)" + boost::lexical_cast<std::string>(i);
+            retval = "(AstNodePtr::SpecialAstType)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "AstNodePtr::SpecialAstTypes::" + retval;
+                retval = "AstNodePtr::SpecialAstType::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyAstNodePtrSpecialAstTypes() {
-        return stringify::AstNodePtr::SpecialAstTypes();
+    const std::vector<int64_t>& stringifyAstNodePtrSpecialAstType() {
+        return stringify::AstNodePtr::SpecialAstType();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/astUtil/astInterface/AstInterface.h line 64
+namespace stringify { namespace AstNodeType {
+    const char* SpecialAstType(int64_t i) {
+        switch (i) {
+            case 0L: return "SG_TYPE";
+            case 1L: return "UNKNOWN_TYPE";
+            case 2L: return "NULL_TYPE";
+            default: return "";
+        }
+    }
+
+    std::string SpecialAstType(int64_t i, const std::string &strip) {
+        std::string s = SpecialAstType(i);
+        if (s.empty())
+            s = "(AstNodeType::SpecialAstType)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& SpecialAstType() {
+        static const int64_t values[] = {
+            0L,
+            1L,
+            2L
+        };
+        static const std::vector<int64_t> retval(values, values + 3);
+        return retval;
+    }
+
+}}
+
+namespace Rose {
+    std::string stringifyAstNodeTypeSpecialAstType(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::AstNodeType::SpecialAstType(i);
+        if (retval.empty()) {
+            retval = "(AstNodeType::SpecialAstType)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "AstNodeType::SpecialAstType::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyAstNodeTypeSpecialAstType() {
+        return stringify::AstNodeType::SpecialAstType();
     }
 }
 
@@ -90112,8 +90222,10 @@ namespace stringify {
             case 1057L: return "AsmPointerTypeTag";
             case 1058L: return "AsmAarch64PStateTag";
             case 1059L: return "T_RANGE_TYPE";
-            case 1061L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
-            case 1062L: return "Cxx_Grammar_LAST_TAG";
+            case 1060L: return "AsmCilExceptionDataTag";
+            case 1061L: return "AsmCilMethodDataTag";
+            case 1063L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
+            case 1064L: return "Cxx_Grammar_LAST_TAG";
             default: return "";
         }
     }
@@ -91179,10 +91291,12 @@ namespace stringify {
             1057L,
             1058L,
             1059L,
+            1060L,
             1061L,
-            1062L
+            1063L,
+            1064L
         };
-        static const std::vector<int64_t> retval(values, values + 1052);
+        static const std::vector<int64_t> retval(values, values + 1054);
         return retval;
     }
 
@@ -91208,7 +91322,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarVariants.h line 1066
+// /_build/src/ROSETTA/src/Cxx_GrammarVariants.h line 1068
 namespace stringify {
     const char* VariantT(int64_t i) {
         switch (i) {
@@ -92262,7 +92376,9 @@ namespace stringify {
             case 1057L: return "V_SgAsmPointerType";
             case 1058L: return "V_SgAsmAarch64PState";
             case 1059L: return "V_SgRangeType";
-            case 1061L: return "V_SgNumVariants";
+            case 1060L: return "V_SgAsmCilExceptionData";
+            case 1061L: return "V_SgAsmCilMethodData";
+            case 1063L: return "V_SgNumVariants";
             default: return "";
         }
     }
@@ -93328,9 +93444,11 @@ namespace stringify {
             1057L,
             1058L,
             1059L,
-            1061L
+            1060L,
+            1061L,
+            1063L
         };
-        static const std::vector<int64_t> retval(values, values + 1051);
+        static const std::vector<int64_t> retval(values, values + 1053);
         return retval;
     }
 
@@ -97422,7 +97540,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248016
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248010
 namespace stringify { namespace SgForAllStatement {
     const char* forall_statement_kind_enum(int64_t i) {
         switch (i) {
@@ -97476,7 +97594,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 257796
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 257790
 namespace stringify { namespace SgJovialForThenStatement {
     const char* loop_statement_type_enum(int64_t i) {
         switch (i) {
@@ -97536,7 +97654,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268273
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268267
 namespace stringify { namespace SgDeclarationStatement {
     const char* template_specialization_enum(int64_t i) {
         switch (i) {
@@ -97592,7 +97710,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268288
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268282
 namespace stringify { namespace SgDeclarationStatement {
     const char* gnu_extension_visability_attribute_enum(int64_t i) {
         switch (i) {
@@ -97650,7 +97768,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 271324
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 271318
 namespace stringify { namespace SgVariableDeclaration {
     const char* gnu_extension_declaration_attributes_enum(int64_t i) {
         switch (i) {
@@ -97712,7 +97830,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 280600
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 280594
 namespace stringify { namespace SgAttributeSpecificationStatement {
     const char* attribute_spec_enum(int64_t i) {
         switch (i) {
@@ -97798,7 +97916,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 282812
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 282806
 namespace stringify { namespace SgTemplateDeclaration {
     const char* template_type_enum(int64_t i) {
         switch (i) {
@@ -97856,7 +97974,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 289248
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 289242
 namespace stringify { namespace SgInterfaceStatement {
     const char* generic_spec_enum(int64_t i) {
         switch (i) {
@@ -97916,7 +98034,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 300265
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 300259
 namespace stringify { namespace SgClassDeclaration {
     const char* class_types(int64_t i) {
         switch (i) {
@@ -97982,7 +98100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 301750
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 301744
 namespace stringify { namespace SgTemplateClassDeclaration {
     const char* class_types(int64_t i) {
         switch (i) {
@@ -98036,7 +98154,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 307034
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 307028
 namespace stringify { namespace SgJovialTableStatement {
     const char* WordsPerEntry(int64_t i) {
         switch (i) {
@@ -98088,7 +98206,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 308126
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 308120
 namespace stringify { namespace SgImplicitStatement {
     const char* implicit_spec_enum(int64_t i) {
         switch (i) {
@@ -98146,7 +98264,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 320942
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 320936
 namespace stringify { namespace SgProcedureHeaderStatement {
     const char* subprogram_kind_enum(int64_t i) {
         switch (i) {
@@ -98202,7 +98320,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 352921
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 352915
 namespace stringify { namespace SgJovialDirectiveStatement {
     const char* directive_types(int64_t i) {
         switch (i) {
@@ -98296,7 +98414,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 355029
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 355023
 namespace stringify { namespace SgJovialLabelDeclaration {
     const char* label_type_enum(int64_t i) {
         switch (i) {
@@ -98350,7 +98468,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 381466
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 381460
 namespace stringify { namespace SgLabelStatement {
     const char* label_type_enum(int64_t i) {
         switch (i) {
@@ -98404,7 +98522,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 395298
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 395292
 namespace stringify { namespace SgProcessControlStatement {
     const char* control_enum(int64_t i) {
         switch (i) {
@@ -98468,7 +98586,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 396383
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 396377
 namespace stringify { namespace SgIOStatement {
     const char* io_statement_enum(int64_t i) {
         switch (i) {
@@ -98536,7 +98654,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 458966
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 458960
 namespace stringify { namespace SgImageControlStatement {
     const char* image_control_statement_enum(int64_t i) {
         switch (i) {
@@ -98608,7 +98726,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 469336
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 469330
 namespace stringify { namespace SgAdaSelectStmt {
     const char* select_type_enum(int64_t i) {
         switch (i) {
@@ -98664,7 +98782,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 475816
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 475810
 namespace stringify { namespace SgUnaryOp {
     const char* Sgop_mode(int64_t i) {
         switch (i) {
@@ -98714,7 +98832,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 485912
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 485906
 namespace stringify { namespace SgCastExp {
     const char* cast_type_enum(int64_t i) {
         switch (i) {
@@ -98780,7 +98898,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 487177
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 487171
 namespace stringify { namespace SgThrowOp {
     const char* e_throw_kind(int64_t i) {
         switch (i) {
@@ -98832,7 +98950,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637972
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637966
 namespace stringify { namespace SgAsmOp {
     const char* asm_operand_modifier_enum(int64_t i) {
         switch (i) {
@@ -98898,7 +99016,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637991
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637985
 namespace stringify { namespace SgAsmOp {
     const char* asm_operand_constraint_enum(int64_t i) {
         switch (i) {
@@ -99060,7 +99178,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 709438
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 709432
 namespace stringify { namespace SgLabelSymbol {
     const char* label_type_enum(int64_t i) {
         switch (i) {

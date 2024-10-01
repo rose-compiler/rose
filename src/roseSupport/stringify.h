@@ -2242,7 +2242,25 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 156
+// /src/Rose/BinaryAnalysis/Variables.h line 69
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables {
+    /** Convert Rose::BinaryAnalysis::Variables::Access enum constant to a string. */
+    const char* Access(int64_t);
+
+    /** Convert Rose::BinaryAnalysis::Variables::Access enum constant to a string. */
+    std::string Access(int64_t, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::Variables::Access member values as a vector. */
+    const std::vector<int64_t>& Access();
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisVariablesAccess(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisVariablesAccess();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/Rose/BinaryAnalysis/Variables.h line 213
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackVariable {
     /** Convert Rose::BinaryAnalysis::Variables::StackVariable::Purpose enum constant to a string. */
     const char* Purpose(int64_t);
@@ -2260,7 +2278,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 443
+// /src/Rose/BinaryAnalysis/Variables.h line 506
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackFrame {
     /** Convert Rose::BinaryAnalysis::Variables::StackFrame::Direction enum constant to a string. */
     const char* Direction(int64_t);
@@ -3862,7 +3880,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 35389
+// /src/ROSETTA/src/binaryInstruction.C line 35551
 namespace stringify { namespace SgAsmCilMetadataHeap {
     /** Convert SgAsmCilMetadataHeap::ReferenceKind enum constant to a string. */
     const char* ReferenceKind(int64_t);
@@ -3880,7 +3898,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 40592
+// /src/ROSETTA/src/binaryInstruction.C line 40902
 namespace stringify { namespace SgAsmBlock {
     /** Convert SgAsmBlock::Reason enum constant to a string. */
     const char* Reason(int64_t);
@@ -3898,7 +3916,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42079
+// /src/ROSETTA/src/binaryInstruction.C line 42389
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::ExecFamily enum constant to a string. */
     const char* ExecFamily(int64_t);
@@ -3916,7 +3934,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42091
+// /src/ROSETTA/src/binaryInstruction.C line 42401
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::ExecABI enum constant to a string. */
     const char* ExecABI(int64_t);
@@ -3934,7 +3952,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42116
+// /src/ROSETTA/src/binaryInstruction.C line 42426
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::InsSetArchitecture enum constant to a string. */
     const char* InsSetArchitecture(int64_t);
@@ -3952,7 +3970,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 42298
+// /src/ROSETTA/src/binaryInstruction.C line 42608
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::ExecPurpose enum constant to a string. */
     const char* ExecPurpose(int64_t);
@@ -4384,21 +4402,39 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/astUtil/astInterface/AstInterface.h line 18
+// /src/midend/astUtil/astInterface/AstInterface.h line 19
 namespace stringify { namespace AstNodePtr {
-    /** Convert AstNodePtr::SpecialAstTypes enum constant to a string. */
-    const char* SpecialAstTypes(int64_t);
+    /** Convert AstNodePtr::SpecialAstType enum constant to a string. */
+    const char* SpecialAstType(int64_t);
 
-    /** Convert AstNodePtr::SpecialAstTypes enum constant to a string. */
-    std::string SpecialAstTypes(int64_t, const std::string &strip);
+    /** Convert AstNodePtr::SpecialAstType enum constant to a string. */
+    std::string SpecialAstType(int64_t, const std::string &strip);
 
-    /** Return all AstNodePtr::SpecialAstTypes member values as a vector. */
-    const std::vector<int64_t>& SpecialAstTypes();
+    /** Return all AstNodePtr::SpecialAstType member values as a vector. */
+    const std::vector<int64_t>& SpecialAstType();
 }}
 
 namespace Rose {
-    std::string stringifyAstNodePtrSpecialAstTypes(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyAstNodePtrSpecialAstTypes();
+    std::string stringifyAstNodePtrSpecialAstType(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyAstNodePtrSpecialAstType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/astUtil/astInterface/AstInterface.h line 64
+namespace stringify { namespace AstNodeType {
+    /** Convert AstNodeType::SpecialAstType enum constant to a string. */
+    const char* SpecialAstType(int64_t);
+
+    /** Convert AstNodeType::SpecialAstType enum constant to a string. */
+    std::string SpecialAstType(int64_t, const std::string &strip);
+
+    /** Return all AstNodeType::SpecialAstType member values as a vector. */
+    const std::vector<int64_t>& SpecialAstType();
+}}
+
+namespace Rose {
+    std::string stringifyAstNodeTypeSpecialAstType(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyAstNodeTypeSpecialAstType();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -22078,7 +22114,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarVariants.h line 1066
+// /_build/src/ROSETTA/src/Cxx_GrammarVariants.h line 1068
 namespace stringify {
     /** Convert VariantT enum constant to a string. */
     const char* VariantT(int64_t);
@@ -22960,7 +22996,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248016
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248010
 namespace stringify { namespace SgForAllStatement {
     /** Convert SgForAllStatement::forall_statement_kind_enum enum constant to a string. */
     const char* forall_statement_kind_enum(int64_t);
@@ -22978,7 +23014,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 257796
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 257790
 namespace stringify { namespace SgJovialForThenStatement {
     /** Convert SgJovialForThenStatement::loop_statement_type_enum enum constant to a string. */
     const char* loop_statement_type_enum(int64_t);
@@ -22996,7 +23032,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268273
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268267
 namespace stringify { namespace SgDeclarationStatement {
     /** Convert SgDeclarationStatement::template_specialization_enum enum constant to a string. */
     const char* template_specialization_enum(int64_t);
@@ -23014,7 +23050,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268288
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 268282
 namespace stringify { namespace SgDeclarationStatement {
     /** Convert SgDeclarationStatement::gnu_extension_visability_attribute_enum enum constant to a string. */
     const char* gnu_extension_visability_attribute_enum(int64_t);
@@ -23032,7 +23068,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 271324
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 271318
 namespace stringify { namespace SgVariableDeclaration {
     /** Convert SgVariableDeclaration::gnu_extension_declaration_attributes_enum enum constant to a string. */
     const char* gnu_extension_declaration_attributes_enum(int64_t);
@@ -23050,7 +23086,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 280600
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 280594
 namespace stringify { namespace SgAttributeSpecificationStatement {
     /** Convert SgAttributeSpecificationStatement::attribute_spec_enum enum constant to a string. */
     const char* attribute_spec_enum(int64_t);
@@ -23068,7 +23104,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 282812
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 282806
 namespace stringify { namespace SgTemplateDeclaration {
     /** Convert SgTemplateDeclaration::template_type_enum enum constant to a string. */
     const char* template_type_enum(int64_t);
@@ -23086,7 +23122,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 289248
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 289242
 namespace stringify { namespace SgInterfaceStatement {
     /** Convert SgInterfaceStatement::generic_spec_enum enum constant to a string. */
     const char* generic_spec_enum(int64_t);
@@ -23104,7 +23140,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 300265
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 300259
 namespace stringify { namespace SgClassDeclaration {
     /** Convert SgClassDeclaration::class_types enum constant to a string. */
     const char* class_types(int64_t);
@@ -23122,7 +23158,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 301750
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 301744
 namespace stringify { namespace SgTemplateClassDeclaration {
     /** Convert SgTemplateClassDeclaration::class_types enum constant to a string. */
     const char* class_types(int64_t);
@@ -23140,7 +23176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 307034
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 307028
 namespace stringify { namespace SgJovialTableStatement {
     /** Convert SgJovialTableStatement::WordsPerEntry enum constant to a string. */
     const char* WordsPerEntry(int64_t);
@@ -23158,7 +23194,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 308126
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 308120
 namespace stringify { namespace SgImplicitStatement {
     /** Convert SgImplicitStatement::implicit_spec_enum enum constant to a string. */
     const char* implicit_spec_enum(int64_t);
@@ -23176,7 +23212,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 320942
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 320936
 namespace stringify { namespace SgProcedureHeaderStatement {
     /** Convert SgProcedureHeaderStatement::subprogram_kind_enum enum constant to a string. */
     const char* subprogram_kind_enum(int64_t);
@@ -23194,7 +23230,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 352921
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 352915
 namespace stringify { namespace SgJovialDirectiveStatement {
     /** Convert SgJovialDirectiveStatement::directive_types enum constant to a string. */
     const char* directive_types(int64_t);
@@ -23212,7 +23248,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 355029
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 355023
 namespace stringify { namespace SgJovialLabelDeclaration {
     /** Convert SgJovialLabelDeclaration::label_type_enum enum constant to a string. */
     const char* label_type_enum(int64_t);
@@ -23230,7 +23266,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 381466
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 381460
 namespace stringify { namespace SgLabelStatement {
     /** Convert SgLabelStatement::label_type_enum enum constant to a string. */
     const char* label_type_enum(int64_t);
@@ -23248,7 +23284,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 395298
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 395292
 namespace stringify { namespace SgProcessControlStatement {
     /** Convert SgProcessControlStatement::control_enum enum constant to a string. */
     const char* control_enum(int64_t);
@@ -23266,7 +23302,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 396383
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 396377
 namespace stringify { namespace SgIOStatement {
     /** Convert SgIOStatement::io_statement_enum enum constant to a string. */
     const char* io_statement_enum(int64_t);
@@ -23284,7 +23320,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 458966
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 458960
 namespace stringify { namespace SgImageControlStatement {
     /** Convert SgImageControlStatement::image_control_statement_enum enum constant to a string. */
     const char* image_control_statement_enum(int64_t);
@@ -23302,7 +23338,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 469336
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 469330
 namespace stringify { namespace SgAdaSelectStmt {
     /** Convert SgAdaSelectStmt::select_type_enum enum constant to a string. */
     const char* select_type_enum(int64_t);
@@ -23320,7 +23356,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 475816
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 475810
 namespace stringify { namespace SgUnaryOp {
     /** Convert SgUnaryOp::Sgop_mode enum constant to a string. */
     const char* Sgop_mode(int64_t);
@@ -23338,7 +23374,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 485912
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 485906
 namespace stringify { namespace SgCastExp {
     /** Convert SgCastExp::cast_type_enum enum constant to a string. */
     const char* cast_type_enum(int64_t);
@@ -23356,7 +23392,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 487177
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 487171
 namespace stringify { namespace SgThrowOp {
     /** Convert SgThrowOp::e_throw_kind enum constant to a string. */
     const char* e_throw_kind(int64_t);
@@ -23374,7 +23410,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637972
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637966
 namespace stringify { namespace SgAsmOp {
     /** Convert SgAsmOp::asm_operand_modifier_enum enum constant to a string. */
     const char* asm_operand_modifier_enum(int64_t);
@@ -23392,7 +23428,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637991
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 637985
 namespace stringify { namespace SgAsmOp {
     /** Convert SgAsmOp::asm_operand_constraint_enum enum constant to a string. */
     const char* asm_operand_constraint_enum(int64_t);
@@ -23410,7 +23446,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 709438
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 709432
 namespace stringify { namespace SgLabelSymbol {
     /** Convert SgLabelSymbol::label_type_enum enum constant to a string. */
     const char* label_type_enum(int64_t);
@@ -23863,6 +23899,9 @@ namespace stringify {
     }
     /** Stringification. */
     namespace AstNodePtr {
+    }
+    /** Stringification. */
+    namespace AstNodeType {
     }
     /** Stringification. */
     namespace CodeThorn {
