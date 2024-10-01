@@ -683,7 +683,14 @@ if(ENABLE-CPP)
     message(STATUS "ROSE will be using Clang for the CXX Frontend")
     include(ClangFrontendChecks) # Checks User Env
     list(APPEND rose_LIB_OBJS roseClangFrontend)
+    set(BACKEND_CXX_IS_CLANG_COMPILER 1) 
   endif()
+endif()
+
+# Make sure both CxxFrontend options are not enabled
+if(EDG_COMPILE AND ENABLE-CLANG-FRONTEND)
+  message(FATAL_ERROR "EDG_COMPILE and ENABLE-CLANG-FRONTEND are mutually exclusive." 
+                      "\nPlease disable one of these options at config time") 
 endif()
 
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)

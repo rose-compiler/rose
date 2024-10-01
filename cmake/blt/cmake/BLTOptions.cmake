@@ -38,6 +38,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang") # Clang, AppleClang, etc
   set(ENABLE_CLANGFORMAT ON)
 endif() 
 
+# CXX Frontend options (EDG/Clang) 
+option(EDG_COMPILE "Compile EDG source code if available" ON)
+option(ENABLE-CLANG-FRONTEND "Use Clang for CxxFrontend" OFF) # wip 9/30/24
+
 option(ENABLE_CPPCHECK     "Enables Cppcheck support" OFF)
 option(ENABLE_VALGRIND     "Enables Valgrind support" ON)
 option(ENABLE_ASTYLE       "Enables AStyle support" OFF)

@@ -625,11 +625,19 @@ endif()
 ########################################################################################################################
 # EDG (Edison Design Group) frontend C/C++ compiler
 ########################################################################################################################
+option(EDG_COMPILE "Compile EDG source code if available" ON)
+
+# Clang or EDG is required for frontend
+if(ENABLE-CLANG-FRONTEND)
+  # Define macro which is used by source code
+  set(ROSE_USE_CLANG_FRONTEND 1)
+  set(EDG_COMPILE OFF)
+endif()
+
 # Default EDG version
 set(EDG_VERSION "6.5" CACHE STRING "major.minor version number for EDG (e.g. 5.0).")
 
 # Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
-option(EDG_COMPILE "Compile EDG source code if available" TRUE)
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
   if(EDG_COMPILE)
     set(have_EDG_source TRUE)
@@ -643,7 +651,7 @@ endif()
 
 # Check if we should download the EDG binary tarball. We only need to download it if we're not compiling the
 # EDG source code and ROSE is configured to analyze C (and C++).
-if(NOT have_EDG_source)
+if(NOT have_EDG_source AND NOT ENABLE-CLANG-FRONTEND)
   set(BINARY_EDG 0)
   if(ENABLE-C)
     set(BINARY_EDG 1)
