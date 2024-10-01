@@ -103,10 +103,12 @@ x86TypeToPtrName(SgAsmType* ty) {
             case 64: return "double";
             case 80: return "ldouble";
         }
-    } else if (ty == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64())) {
-        return "dqword";
     } else if (SgAsmVectorType *vt = isSgAsmVectorType(ty)) {
-        return "v" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());
+        if (2 == vt->get_nElmts() && isSgAsmIntegerType(vt->get_elmtType()) && vt->get_elmtType()->get_nBits() == 64) {
+            return "dqword";
+        } else {
+            return "v" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());
+        }
     }
     ASSERT_not_reachable("unhandled type: " + ty->toString());
 }
@@ -260,11 +262,13 @@ X86::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
             case 64: out <<"double"; break;
             case 80: out <<"ldouble"; break;
         }
-    } else if (type == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64())) {
-        out <<"dqword";
     } else if (SgAsmVectorType *vt = isSgAsmVectorType(type)) {
-        out <<"v" <<vt->get_nElmts();
-        state.frontUnparser().emitTypeName(out, vt->get_elmtType(), state);
+        if (2 == vt->get_nElmts() && isSgAsmIntegerType(vt->get_elmtType()) && vt->get_elmtType()->get_nBits() == 64) {
+            out <<"dqword";
+        } else {
+            out <<"v" <<vt->get_nElmts();
+            state.frontUnparser().emitTypeName(out, vt->get_elmtType(), state);
+        }
     } else {
         ASSERT_not_reachable("unhandled type: " + type->toString());
     }
