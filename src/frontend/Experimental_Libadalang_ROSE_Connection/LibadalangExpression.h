@@ -88,6 +88,10 @@ namespace Libadalang_ROSE_Translation
   SgNode*
   queryCorrespondingAstNode(ada_base_entity* lal_identifier);
 
+  /// Handles a single argument provided in a function call
+  SgExpression&
+  getArg(ada_base_entity* lal_element, AstContext ctx);
+
 } //end Libadalang_ROSE_Translation
 
 

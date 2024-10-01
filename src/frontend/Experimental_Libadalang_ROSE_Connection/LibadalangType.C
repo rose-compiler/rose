@@ -1380,8 +1380,13 @@ void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, Sg
   //Get the name of this type without the "STANDARD."
   std::string type_name = canonical_fully_qualified_name.substr(9, canonical_fully_qualified_name.length()-1);
 
+  //Get the defining name
+  ada_base_entity lal_defining_name;
+  ada_base_type_decl_f_name(lal_decl, &lal_defining_name);
+
   //Get the hash of this decl
   int hash = hash_node(lal_decl);
+  int defining_name_hash = hash_node(&lal_defining_name);
 
   //logInfo() << "handleStdSubType called for " << canonical_fully_qualified_name << std::endl;
 
@@ -1425,6 +1430,7 @@ void handleStdSubType(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, Sg
   }
 
   map1[hash]                     = adaIntegerSubType;
+  map1[defining_name_hash]       = adaIntegerSubType;
   map2[AdaIdentifier{type_name}] = adaIntegerSubType;
 
 }

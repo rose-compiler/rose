@@ -464,6 +464,9 @@ void logKind(const char* kind, int elemID);
 /// Gets the p_canonical_text field for a node and returns it as a string
 std::string canonical_text_as_string(ada_base_entity* lal_element);
 
+/// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal) 
+std::string getFullName(ada_base_entity* lal_element);
+
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);
 
 } //End Libadalang_ROSE_Translation

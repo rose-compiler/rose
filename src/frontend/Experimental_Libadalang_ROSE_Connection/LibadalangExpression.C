@@ -24,49 +24,46 @@ namespace si = SageInterface;
 namespace Libadalang_ROSE_Translation
 {
 
-namespace
+/// Handles a single argument provided in a function call
+SgExpression&
+getArg(ada_base_entity* lal_element, AstContext ctx)
 {
-  /// Handles a single argument provided in a function call
-  SgExpression&
-  getArg(ada_base_entity* lal_element, AstContext ctx)
-  {
-    //Get the kind
-    ada_node_kind_enum kind = ada_node_kind(lal_element);
+  //Get the kind
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
 
-    LibadalangText kind_name(kind);
-    std::string kind_name_string = kind_name.string_value();
-    logKind(kind_name_string.c_str(), kind);
+  LibadalangText kind_name(kind);
+  std::string kind_name_string = kind_name.string_value();
+  logKind(kind_name_string.c_str(), kind);
 
-    ada_base_entity actual_parameter;
-    ada_base_entity formal_parameter;
-    bool has_formal = false;
+  ada_base_entity actual_parameter;
+  ada_base_entity formal_parameter;
+  bool has_formal = false;
 
-    //If this is an assoc, get the actual parameter
-    if(kind == ada_param_assoc){
-      ada_param_assoc_f_r_expr(lal_element, &actual_parameter);
-      ada_param_assoc_f_designator(lal_element, &formal_parameter);
-      has_formal = true;
-    } else if(kind == ada_pragma_argument_assoc){
-      ada_pragma_argument_assoc_f_expr(lal_element, &actual_parameter);
-      ada_pragma_argument_assoc_f_id(lal_element, &formal_parameter);
-      has_formal = true; //TODO Test this
-    } else { //TODO What of the other assocs?
-      actual_parameter = *lal_element;
-    }
-
-    SgExpression&       arg        = getExpr(&actual_parameter, ctx);
-
-    if(!has_formal || ada_node_is_null(&formal_parameter)) return arg;
-
-    //If there is a formal parameter, get its name
-    std::string element_name = canonical_text_as_string(&formal_parameter);
-
-    SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
-
-    attachSourceLocation(namedArg, lal_element, ctx);
-    return namedArg;
+  //If this is an assoc, get the actual parameter
+  if(kind == ada_param_assoc){
+    ada_param_assoc_f_r_expr(lal_element, &actual_parameter);
+    ada_param_assoc_f_designator(lal_element, &formal_parameter);
+    has_formal = true;
+  } else if(kind == ada_pragma_argument_assoc){
+    ada_pragma_argument_assoc_f_expr(lal_element, &actual_parameter);
+    ada_pragma_argument_assoc_f_id(lal_element, &formal_parameter);
+    has_formal = true; //TODO Test this
+  } else { //TODO What of the other assocs?
+    actual_parameter = *lal_element;
   }
-} //End unnamed namespace
+
+  SgExpression&       arg        = getExpr(&actual_parameter, ctx);
+
+  if(!has_formal || ada_node_is_null(&formal_parameter)) return arg;
+
+  //If there is a formal parameter, get its name
+  std::string element_name = canonical_text_as_string(&formal_parameter);
+
+  SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
+
+  attachSourceLocation(namedArg, lal_element, ctx);
+  return namedArg;
+}
 
 /// Makes an attribute
 SgAdaAttributeExp&
@@ -93,7 +90,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
 
-  if(name == "range")
+  if(name == "range" || name == "first" || name == "last" || name == "img")
     {
       //Get the list of args
       ada_base_entity lal_arg_list;
@@ -234,7 +231,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Max_Alignment_For_Allocation_Attribute:
     case An_Overlaps_Storage_Attribute:
     //  |A2012 end*/
-    else if(name == "access" || name == "class" || name == "val")
+    else if(name == "access" || name == "class" || name == "val" || name == "size")
       {
         logInfo() << "untested attribute created: " << name
                   << std::endl;
@@ -1243,13 +1240,23 @@ namespace{
           ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
 
           if(ada_node_is_null(&corresponding_decl)){
-            logInfo() << "Identifier has no first_corresponding_decl, trying referenced_decl instead.\n";
             //If first_corresponding_decl isn't there, try referenced_decl
-            ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+            logInfo() << "Identifier " << name << " has no first_corresponding_decl, trying referenced_decl instead.\n";
+            int return_value = ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+
+            if(ada_node_is_null(&corresponding_decl) || return_value == 0){
+              //If referenced_decl is also null, just give up
+              logWarn() << "ADDING unresolved name: " << name
+                        << " (decl is null)" << std::endl;
+              SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
+              res = &mkUnresolvedName(name, scope);
+              break;
+            }
           }
 
           //Get the kind of the decl
           ada_node_kind_enum decl_kind = ada_node_kind(&corresponding_decl);
+          logInfo() << "decl_kind is " << decl_kind << " for ada_identifier " << name << std::endl;
           if(decl_kind >= ada_abstract_state_decl && decl_kind <= ada_single_task_decl){ //62 - 121
             ada_ada_node_array defining_name_list;
             ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
@@ -1259,6 +1266,12 @@ namespace{
               ada_base_entity defining_name = defining_name_list->items[i];
               ada_base_entity name_identifier;
               ada_defining_name_f_name(&defining_name, &name_identifier);
+              ada_node_kind_enum name_identifier_kind = ada_node_kind(&name_identifier);
+              while(name_identifier_kind == ada_dotted_name){
+                //If this is a dotted_name, keep taking the suffix until we get something else
+                ada_dotted_name_f_suffix(&name_identifier, &name_identifier);
+                name_identifier_kind = ada_node_kind(&name_identifier);
+              }
               const std::string test_name = canonical_text_as_string(&name_identifier);
               if(name == test_name){
                 hash = hash_node(&defining_name);
@@ -1277,11 +1290,10 @@ namespace{
           if(!found_decl){
             //If we haven't found a decl, don't check the maps
             SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
-            if (&scope == &ctx.scope())
-            {
+            if(&scope == &ctx.scope()){
               // issue warning for unresolved names outside pragmas and aspects
               logWarn() << "ADDING unresolved name: " << name
-                        << " (no decl found)" << std::endl;
+                        << " (unhandled decl_kind " << decl_kind << ")" << std::endl;
             }
             res = &mkUnresolvedName(name, scope);
             break;
@@ -1329,7 +1341,7 @@ namespace{
           {
             SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
 
-            if (&scope == &ctx.scope())
+            if(&scope == &ctx.scope())
             {
               // issue warning for unresolved names outside pragmas and aspects
               logWarn() << "ADDING unresolved name: " << name

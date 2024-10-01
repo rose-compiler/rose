@@ -32,9 +32,14 @@ namespace Libadalang_ROSE_Translation
   SgDeclarationStatement*
   queryDecl(ada_base_entity* lal_element, int defining_name_hash, AstContext ctx);
 
+  /// converts a Libadalang clause (with, use) and adds the new node to the current scope
+  void handleClause(ada_base_entity* lal_element, AstContext ctx);
+
   /// converts a Libadalang declaration and adds the new node to the current scope
   void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate);
 
+  /// converts a Libadalang pragma and adds the new node to the current scope
+  void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx);
 
   /// converts a Libadalang definition and adds the new node to the current scope
   void handleDefinition(ada_base_entity* lal_element, AstContext ctx);

@@ -142,7 +142,35 @@ std::string canonical_text_as_string(ada_base_entity* lal_element){
   std::string canonical_text_string = ada_canonical_text.string_value();
   return canonical_text_string;
 }
-
+/// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal) 
+std::string getFullName(ada_base_entity* lal_element){
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  switch(kind){
+    case ada_char_literal:
+    case ada_identifier:
+    case ada_string_literal:
+      return canonical_text_as_string(lal_element);
+    case ada_dotted_name:
+      {
+        //Get the prefix & suffix
+        ada_base_entity lal_prefix, lal_suffix;
+        ada_dotted_name_f_prefix(lal_element, &lal_prefix);
+        ada_dotted_name_f_suffix(lal_element, &lal_suffix);
+        return getFullName(&lal_prefix) + "." + getFullName(&lal_suffix);
+      }
+    case ada_attribute_ref:
+      {
+        //Get the prefix & attribute
+        ada_base_entity lal_prefix, lal_attribute;
+        ada_attribute_ref_f_prefix(lal_element, &lal_prefix);
+        ada_attribute_ref_f_attribute(lal_element, &lal_attribute);
+        return getFullName(&lal_prefix) + "'" + canonical_text_as_string(&lal_attribute);
+      }
+    default:
+      logError() << "Unhandled kind " << kind << " in getFullName()!\n";
+      return "nameError";
+  } 
+}
 void logKind(const char* kind, int elemID)
 {
   if (!traceKind(kind)) return;
@@ -291,43 +319,47 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
 
     switch(kind)
     {
-        case ada_subp_body:             // Asis.Declarations
-        case ada_subp_decl:
-        case ada_null_subp_decl:
-        case ada_subp_body_stub:
-        case ada_abstract_subp_decl:
-        case ada_package_body:
-        case ada_package_decl:
-        case ada_object_decl:
-        case ada_subtype_decl:
-        case ada_type_decl:
-        case ada_task_type_decl:
-        case ada_single_task_decl:
-        case ada_task_body:
-        case ada_entry_decl:
-        case ada_component_decl:
-        case ada_exception_decl:
-        case ada_number_decl:
-        case ada_single_protected_decl:
-        case ada_protected_body:
-        case ada_generic_subp_decl:
-        case ada_generic_formal_subp_decl:
-        case ada_generic_package_decl:
-        case ada_generic_formal_type_decl:
-        case ada_package_renaming_decl:
-        case ada_subp_renaming_decl:
+      case ada_subp_body:             // Asis.Declarations
+      case ada_subp_decl:
+      case ada_null_subp_decl:
+      case ada_subp_body_stub:
+      case ada_abstract_subp_decl:
+      case ada_package_body:
+      case ada_package_decl:
+      case ada_object_decl:
+      case ada_subtype_decl:
+      case ada_type_decl:
+      case ada_task_type_decl:
+      case ada_single_task_decl:
+      case ada_task_body:
+      case ada_entry_decl:
+      case ada_component_decl:
+      case ada_exception_decl:
+      case ada_number_decl:
+      case ada_single_protected_decl:
+      case ada_protected_body:
+      case ada_generic_subp_decl:
+      case ada_generic_formal_subp_decl:
+      case ada_generic_package_decl:
+      case ada_generic_formal_type_decl:
+      case ada_package_renaming_decl:
+      case ada_subp_renaming_decl:
+      case ada_generic_package_instantiation:
+      case ada_generic_package_renaming_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
         }
 
-      /*case A_Clause:                  // Asis.Clauses
+      case ada_use_package_clause:          // Asis.Clauses
+      case ada_use_type_clause:
+      case ada_with_clause:
         {
-          handleClause(elem, ctx);
+          handleClause(lal_element, ctx);
           break;
         }
 
-      case A_Defining_Name:           // Asis.Declarations
+      /*case A_Defining_Name:           // Asis.Declarations
         {
           // handled by getName
           ROSE_ABORT();
@@ -358,13 +390,13 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
           break;
         }
 
-      /*case A_Pragma:                  // Asis.Elements
+      case ada_pragma_node:              // Asis.Elements
         {
-          handlePragma(elem, nullptr, ctx);
+          handlePragma(lal_element, nullptr, ctx);
           break;
         }
 
-      case Not_An_Element:  // Nil_Element
+      /*case Not_An_Element:  // Nil_Element
       case A_Path:                    // Asis.Statements
       case An_Association:            // Asis.Expressions */ //TODO Figure out the rest of these mappings
       default:
@@ -378,12 +410,12 @@ namespace{
   void clearMappings()
   {
     libadalangVars().clear();
-    //libadalangExcps().clear();
+    libadalangExcps().clear();
     libadalangDecls().clear();
     libadalangTypes().clear();
-    //libadalangBlocks().clear();
+    libadalangBlocks().clear();
     adaTypes().clear();
-    //adaExcps().clear();
+    adaExcps().clear();
     adaPkgs().clear();
     adaVars().clear();
     //~ adaFuncs().clear();
@@ -401,7 +433,7 @@ namespace{
     kind = ada_node_kind(lal_unit);
 
     if(kind != ada_compilation_unit){
-        logError() << "handleUnit provided incorrect node kind!\n";
+        logError() << "handleUnit provided incorrect node kind: " << kind << "!\n";
     }
 
 
@@ -412,14 +444,13 @@ namespace{
     LibadalangText kind_name(kind);
     std::string kind_name_string = kind_name.string_value();
 
+    logTrace() << "handleUnit called on a " << kind_name_string << std::endl;
+
     if (processUnit)
     {
-      //Get the body node
-      ada_base_entity unit_body;
-      ada_compilation_unit_f_body(lal_unit, &unit_body);
 
-     /*//Get the name of the file this unit comes from
-     ada_text_type file_name;
+     //Get the name of the file this unit comes from
+     /*ada_text_type file_name;
      ada_ada_node_full_sloc_image(&unit_body, &file_name);
      std::string file_name_string = dot_ada_text_type_to_string(file_name);
      std::string::size_type pos = file_name_string.find(':');
@@ -434,15 +465,29 @@ namespace{
       //TODO Find a way to get the full file path for the unit from the root node
 
       std::string                             unitFile = src_file_name;
-      unitFile = unitFile;
-      logInfo() << "Unit name is " << unitFile << std::endl;
       AstContext::PragmaContainer             pragmalist;
       AstContext::DeferredCompletionContainer compls;
       AstContext                              ctx = context.sourceFileName(unitFile)
                                                            .pragmas(pragmalist)
                                                            .deferredUnitCompletionContainer(compls);
+      logInfo() << "Unit name is " << unitFile << std::endl;
 
-      logTrace()   << "handleUnit called on a " << kind_name_string << std::endl;
+      //Get the prelude, which is a list of with/use statements (& pragmas?)
+      ada_base_entity lal_prelude;
+      ada_compilation_unit_f_prelude(lal_unit, &lal_prelude);
+      //Call handleElement on each node in the prelude list
+      int count = ada_node_children_count(&lal_prelude);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_clause;
+        if(ada_node_child(&lal_prelude, i, &lal_clause) != 0){
+          handleElement(&lal_clause, ctx);
+        }
+      }
+
+      //Get the body node
+      ada_base_entity unit_body;
+      ada_compilation_unit_f_body(lal_unit, &unit_body);
+
 
       /*if (logParentUnit)
         logTrace() << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)";
@@ -473,7 +518,7 @@ namespace{
           privateDecl = false; //TODO I don't think subunits can be private?
       }
       
-      //traverseIDs(range, elemMap(), ElemCreator{ctx}); handle the pragmas/prelude/with
+      //Call handleElement on the main body of the unit
       handleElement(&unit_declaration, ctx, privateDecl);
 
       //processAndPlacePragmas(adaUnit.Compilation_Pragmas, { &ctx.scope() }, ctx);

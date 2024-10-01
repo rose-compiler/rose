@@ -716,6 +716,11 @@ namespace {
         ada_base_entity lal_subtype_indication;
         ada_derived_type_def_f_subtype_indication(&lal_base_type_def, &lal_subtype_indication);
         ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
+        if(ada_node_is_null(&lal_base_type_decl)){
+          logWarn() << "Cannot find base type in createOpaquedecl()\n";
+          //TODO This can happen for standard int, can it happen in any other case?
+          break;
+        }
         ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
         lal_type_def_kind = ada_node_kind(&lal_base_type_def);
       }
@@ -869,7 +874,6 @@ namespace {
                      AstContext ctx
                    )
   {
-
     //Get the name for this type
     ada_base_entity lal_identifier;
     ada_base_type_decl_f_name(lal_element, &lal_identifier);
@@ -1132,15 +1136,16 @@ namespace {
                     SgDeclarationStatement* nondefdcl
                   )
   {
-    if(SgClassDeclaration* recdcl = isSgClassDeclaration(nondefdcl))
+    if(SgClassDeclaration* recdcl = isSgClassDeclaration(nondefdcl)){
       return mkRecordDecl(*recdcl, def, scope);
+    }
 
     // if nondefdcl is set, it must be a SgClassDeclaration
-    if (nondefdcl)
-      logFlaw() << name << " " << typeid(*nondefdcl).name() << " not a class declaration!"
+    if(nondefdcl){
+      logFlaw() << name << " is " << typeid(*nondefdcl).name() << ", not a class declaration!"
                 << std::endl;
+    }
 
-    //ADA_ASSERT (!nondefdcl);
     return mkRecordDecl(name, def, scope);
   }
 
@@ -1777,6 +1782,7 @@ namespace {
   /// Returns the hash for the label referenced by \ref lal_element
   int getLabelRef(ada_base_entity* lal_element, AstContext ctx)
   {
+    logTrace() << "In getLabelRef()\n";
     ada_node_kind_enum kind = ada_node_kind(lal_element);
 
     if(kind == ada_dotted_name)
@@ -1791,6 +1797,10 @@ namespace {
     logKind("ada_identifier", kind);
     ada_base_entity lal_label_decl;
     ada_expr_p_first_corresponding_decl(lal_element, &lal_label_decl);
+    if(ada_node_is_null(&lal_label_decl)){
+      //Try p_referenced_decl instead
+      ada_name_p_referenced_decl(lal_element, 1, &lal_label_decl);
+    }
     return hash_node(&lal_label_decl);
   }
 
@@ -1867,7 +1877,7 @@ void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatem
   }
 }
 
-/// Find the first corresponding decl for \ref lal_element
+/// Find the first corresponding decl for \ref lal_element, then hash it and search libadalangDecls & adaPkgs
 SgDeclarationStatement*
 queryDecl(ada_base_entity* lal_element, int defining_name_hash, AstContext /*ctx*/)
 {
@@ -1875,12 +1885,14 @@ queryDecl(ada_base_entity* lal_element, int defining_name_hash, AstContext /*ctx
 
   ada_base_entity corresponding_decl;
   ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
-  int decl_hash = hash_node(&corresponding_decl);
+  int decl_hash = 0;
+  if(!ada_node_is_null(&corresponding_decl)){
+    decl_hash = hash_node(&corresponding_decl);
+  }
 
   SgDeclarationStatement* res = findFirst(libadalangDecls(), decl_hash, defining_name_hash);
 
-  if((res == nullptr) && (kind == ada_identifier))
-  {
+  if((res == nullptr) && (kind == ada_identifier)){
     res = findFirst(adaPkgs(), decl_hash, defining_name_hash);
   }
 
@@ -2357,7 +2369,12 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
 
             //Get the name
             ada_dotted_name_f_suffix(&lal_call_expr, &lal_call_name);
-          } else {
+          } else if(lal_call_expr_kind == ada_identifier){
+            //There are no args
+
+            //Get the name
+            lal_call_name = lal_call_expr;
+          }else {
             logFlaw() << "Unhandled call expr kind " << lal_call_expr_kind << " in handleStmt for ada_call_stmt.\n";
           }
 
@@ -2502,6 +2519,14 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           handleDeclaration(lal_stmt, ctx, false);
           return;
         }
+      //Clauses
+      case ada_with_clause:           // 10.1.2
+      case ada_use_type_clause:       // 8.4
+      case ada_use_package_clause:    // 8.4
+        {
+          handleClause(lal_stmt, ctx);
+          return;
+        }
       default:
         {
           logWarn() << "Unhandled statement " << kind << std::endl;
@@ -2574,6 +2599,12 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     //processAndPlacePragmas(ex.Pragmas, { &body }, pragmaCtx); // pragmaCtx.scope(body) ?
   }
 
+
+void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx){
+  logWarn() << "handlePragma() is not implemented!\n";
+  //ctx.appendStatement(createPragma_common(el, stmtOpt, ctx));
+}
+
 void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
 {
   using PragmaContainer = AstContext::PragmaContainer;
@@ -2607,7 +2638,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_package_decl_f_package_name(lal_element, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
 
-        std::string           ident        = canonical_text_as_string(&lal_identifier);
+        std::string           ident        = getFullName(&lal_identifier);
         SgScopeStatement*     parent_scope = &ctx.scope();
 
         SgAdaPackageSpecDecl& sgnode       = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
@@ -2684,7 +2715,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_package_body_f_package_name(lal_element, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
 
-        std::string             ident        = canonical_text_as_string(&lal_identifier);
+        std::string             ident        = getFullName(&lal_identifier);
         SgScopeStatement*       parent_scope = &ctx.scope();
 
         //Get the decl for this package body
@@ -2728,7 +2759,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
           ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
         } else {
-          logInfo() << "No body statements for this ada_package_decl\n";
+          logInfo() << "No body statements for this ada_package_body\n";
           ada_package_body_f_stmts(lal_element, &lal_stmts); //Force lal_stmts and lal_exceptions to be null instead of undefined
           ada_package_body_f_stmts(lal_element, &lal_exceptions);
         }
@@ -3568,6 +3599,48 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_generic_package_renaming_decl:   // 8.5.3(2)
+//    case A_Package_Renaming_Declaration:           // 8.5.3(2)
+      {
+        logKind("ada_generic_package_renaming_decl?", kind);
+
+        //Get the name for this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_generic_package_renaming_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
+        int          hash = hash_node(&lal_defining_name);
+
+        //Get the package we are renaming
+        ada_base_entity lal_renames, lal_renamed_object;
+        ada_generic_package_renaming_decl_f_renames(lal_element, &lal_renames);
+        ada_expr_p_first_corresponding_decl(&lal_renames, &lal_renamed_object);
+
+        if(ada_node_is_null(&lal_renamed_object)) {
+          logWarn() << "skipping unknown package renaming: " << ident << std::endl;
+          return;
+        }
+
+/*
+        SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
+
+        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(aliased))
+          aliased = gendcl->get_declaration();
+*/
+        SgExpression&           renamed = getExpr(&lal_renames, ctx);
+        SgScopeStatement&       scope   = ctx.scope();
+        SgType&                 pkgtype = mkTypeVoid();
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(ident, renamed, pkgtype, scope);
+
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
     case ada_subp_renaming_decl:         // 8.5.4(2)
       {
         logKind("ada_subp_renaming_decl", kind);
@@ -3637,6 +3710,76 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
         ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_generic_package_instantiation:        // 12.3(2)
+    case ada_generic_subp_instantiation:           // 12.3(2)
+      {
+        // generic instantiation
+        if(kind == ada_generic_package_instantiation){
+          logKind("ada_generic_package_instantiation", kind);
+        } else {
+          logKind("ada_generic_subp_instantiation", kind);
+          logError() << " ^This isn't implemented yet!\n";
+        }
+
+        //Get the name for this instantiation
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_generic_package_instantiation_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string  ident = canonical_text_as_string(&lal_identifier);
+        int           hash = hash_node(&lal_defining_name);
+
+        //Get the package we are instantiating off of
+        ada_base_entity lal_generic_package;
+        ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_package);
+        ada_generic_package_decl_f_package_decl(&lal_generic_package, &lal_generic_package);
+        ada_base_package_decl_f_package_name(&lal_generic_package, &lal_generic_package);
+        int base_decl_hash = hash_node(&lal_generic_package);
+        SgDeclarationStatement*   basedecl = findFirst(libadalangDecls(), base_decl_hash);
+
+        //Get the params
+        ada_base_entity lal_params;
+        ada_generic_package_instantiation_f_params(lal_element, & lal_params);
+
+        if(basedecl == nullptr)
+        {
+          logFlaw() << "Could not find base decl for ada_generic_package_instantiation!\n";
+        }
+
+        // PP (2/2/22): the base decl can also be a renamed generic declaration
+        SgScopeStatement&         logicalScope = ctx.scope();
+        SgAdaGenericInstanceDecl&       sgnode = mkAdaGenericInstanceDecl(ident, SG_DEREF(basedecl), logicalScope);
+
+        {
+          // generic actual part
+          std::vector<SgExpression*> args;
+          int count = ada_node_children_count(&lal_params);
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_param;
+            if(ada_node_child(&lal_params, i, &lal_param) != 0){
+              args.push_back(&getArg(&lal_param, ctx));
+            }
+          }
+          SgExprListExp& args2 = mkExprListExp(args);
+          sgnode.set_actual_parameters(&args2);
+        }
+
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        /*// PP (4/1/22): fill in the declaration
+        handleDeclaration( retrieveElem(elemMap(), decl.Corresponding_Declaration),
+                           ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
+                         );*/ //TODO Not sure Libadalang creates a corresponding decl?
+
+        // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
+        si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());
 
         assocdecl = &sgnode;
         break;
@@ -4012,6 +4155,187 @@ void createVariant(ada_base_entity* lal_element, AstContext ctx)
     if(ada_node_child(&lal_components, i, &lal_component) != 0){
       handleElement(&lal_component, ctx.unscopedBlock(blk));
     }
+  }
+}
+
+//Searches the adaTypes map for a match to the hashes given, and returns the decl of the match if found
+SgDeclarationStatement* typeDeclarationFromStandard(int hash1, int hash2){
+  SgType*       res = findFirst(adaTypes(), hash1, hash2);
+
+  if (SgNamedType* namedType = isSgNamedType(res)){
+    return namedType->get_declaration();
+  }
+
+  return nullptr;
+}
+
+[[noreturn]]
+bool useClauseFatalError(std::string name, AstContext ctx){
+  logFatal() << "using unknown package/type: "
+    << "'" << name << "': "
+    << "\n   in scope type: " << typeid(ctx.scope()).name()
+    << std::endl;
+
+  sg::report_error("using unknown package/type");
+}
+
+/// Creates a decl for a single package or type name in a use clause
+void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationStatement*>& m, AstContext ctx){ 
+ //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
+  ada_base_entity lal_name = *lal_element;
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  if(kind == ada_attribute_ref){
+    //If we've found an attribute ref, get the prefix
+    ada_attribute_ref_f_prefix(&lal_name, &lal_name);
+    kind = ada_node_kind(&lal_name);
+  }
+  while(kind == ada_dotted_name){
+    //If we have a chain of dotted_names, iterate until we find a leaf suffix
+    ada_dotted_name_f_suffix(&lal_name, &lal_name);
+    kind = ada_node_kind(&lal_name);
+  }
+  SgDeclarationStatement*      used = nullptr;
+  std::string             full_name = getFullName(lal_element); //TODO This might break for some ada_use_type_clauses
+
+  // Get the hash for the first declaration, and for the defining name of that declaration, if it exists
+  ada_base_entity lal_first_decl;
+  int decl_hash;
+  int decl_name_hash;
+  ada_expr_p_first_corresponding_decl(&lal_name, &lal_first_decl);
+  if(ada_node_is_null(&lal_first_decl)){
+    //Try p_referenced_decl
+    ada_name_p_referenced_decl(&lal_name, 1, &lal_first_decl);
+  }
+  if(ada_node_is_null(&lal_first_decl)){
+    decl_hash = 0; //Make sure decl_hash is undefined, even if we don't have a node
+    decl_name_hash = 0;
+    logFlaw() << "Could not find first decl for use clause!\n";
+  } else {
+    decl_hash = hash_node(&lal_first_decl);
+    //Now get the defining_name node and hash it
+    ada_base_entity lal_first_defining_name;
+    //Get the kind of the decl
+    ada_node_kind_enum decl_kind = ada_node_kind(&lal_first_decl);
+    if(decl_kind >= ada_generic_package_internal && decl_kind <= ada_package_decl){
+      ada_base_package_decl_f_package_name(&lal_first_decl, &lal_first_defining_name);
+      decl_name_hash = hash_node(&lal_first_defining_name);
+    } else if(decl_kind >= ada_discrete_base_subtype_decl && decl_kind <= ada_synth_anonymous_type_decl){
+      ada_base_type_decl_f_name(&lal_first_decl, &lal_first_defining_name);
+      decl_name_hash = hash_node(&lal_first_defining_name);
+    } else {
+      logWarn() << "Could not find defining_name for decl kind " << decl_kind << " in createUseClause()\n";
+      decl_name_hash = 0;
+    }
+  }
+
+  (used != nullptr)
+  || (used = findFirst(m, decl_hash, decl_name_hash))
+  //|| (used = fromSymbolLookup(usedEl)) //TODO This searches based off name?
+  || (used = findFirst(adaPkgs(), decl_hash, decl_name_hash))
+  || (used = typeDeclarationFromStandard(decl_hash, decl_name_hash))
+  || (useClauseFatalError(full_name, ctx))
+  ;
+
+  SgUsingDeclarationStatement& sgnode  = mkUseClause(*used);
+  std::size_t                  attrPos = full_name.find("'");
+
+  if(attrPos != std::string::npos){
+    // \todo introduce proper flag
+    sgnode.set_adaTypeAttribute(full_name.substr(attrPos+1));
+  }
+
+  int hash = hash_node(lal_element);
+  recordNode(libadalangDecls(), hash, sgnode);
+  attachSourceLocation(sgnode, lal_element, ctx);
+  ctx.appendStatement(sgnode);
+}
+
+/// Creates an SgExpression node for a single name in a with clause
+SgExpression& createWithClause(ada_base_entity* lal_element, AstContext ctx){
+  //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
+  ada_base_entity lal_name = *lal_element;
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  while(kind == ada_dotted_name){
+    ada_dotted_name_f_suffix(&lal_name, &lal_name);
+    kind = ada_node_kind(&lal_name);
+  }
+
+  SgExpression& sgnode = getExpr(&lal_name, ctx);
+
+  // store source location of the fully qualified name
+  attachSourceLocation(sgnode, lal_element, ctx);
+  return sgnode;
+}
+
+void handleClause(ada_base_entity* lal_element, AstContext ctx)
+{
+  //Get the kind of this node
+  ada_node_kind_enum kind;
+  kind = ada_node_kind(lal_element);
+
+  LibadalangText kind_name(kind);
+  std::string kind_name_string = kind_name.string_value();
+  logTrace()   << "handleClause called on a " << kind_name_string << std::endl;
+
+  switch(kind){
+    case ada_with_clause:                // 10.1.2
+      {
+        logKind("ada_with_clause", kind);
+
+        //Get the list of names for this with clause
+        ada_base_entity lal_name_list;
+        ada_with_clause_f_packages(lal_element, &lal_name_list);
+
+        //Call createWithClause on each name
+        SgExpressionPtrList implst;
+        int count = ada_node_children_count(&lal_name_list);
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_with_name;
+          if(ada_node_child(&lal_name_list, i, &lal_with_name) != 0){
+            implst.push_back(&createWithClause(&lal_with_name, ctx));
+          }
+        }
+
+        SgImportStatement&  sgnode = mkWithClause(std::move(implst));
+        int                   hash = hash_node(lal_element); //There isn't a defining name, so just use the node itself
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        recordNode(libadalangDecls(), hash, sgnode);
+        ctx.appendStatement(sgnode);
+
+        //~ recordNonUniqueNode(libadalangDecls(), ???, sgnode);
+
+        break;
+      }
+
+    case ada_use_type_clause:            // 8.4
+    case ada_use_package_clause:         // 8.4
+      {
+        const bool typeClause = (kind == ada_use_type_clause);
+
+        logKind(typeClause ? "ada_use_type_clause" : "ada_use_package_clause", kind);
+
+        //Get the list of names for this clause
+        ada_base_entity lal_name_list;
+        if(kind == ada_use_type_clause){
+          ada_use_type_clause_f_types(lal_element, &lal_name_list);
+        } else {
+          ada_use_package_clause_f_packages(lal_element, &lal_name_list);
+        }
+
+        //Call createUseClause on each node in the list
+        int count = ada_node_children_count(&lal_name_list);
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_use_name;
+          if(ada_node_child(&lal_name_list, i, &lal_use_name) != 0){
+            createUseClause(&lal_use_name, typeClause ? libadalangTypes() : libadalangDecls(), ctx);
+          }
+        }
+
+        break;
+      }
+    default:
+      logWarn() << "unhandled clause kind: " << kind << std::endl;
   }
 }
 
