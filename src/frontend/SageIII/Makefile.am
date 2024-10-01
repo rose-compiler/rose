@@ -182,6 +182,7 @@ GENERATED_SOURCE =						\
         SgAsmCilEventMap.h					\
         SgAsmCilEventMapTable.h					\
         SgAsmCilEventTable.h					\
+        SgAsmCilExceptionData.h					\
         SgAsmCilExportedType.h					\
         SgAsmCilExportedTypeTable.h				\
         SgAsmCilField.h						\
@@ -210,6 +211,7 @@ GENERATED_SOURCE =						\
         SgAsmCilMetadata.h					\
         SgAsmCilMetadataHeap.h					\
         SgAsmCilMetadataRoot.h					\
+        SgAsmCilMethodData.h					\
         SgAsmCilMethodDef.h					\
         SgAsmCilMethodDefTable.h				\
         SgAsmCilMethodImpl.h					\
@@ -588,6 +590,7 @@ GENERATED_SOURCE =						\
 	SgAsmCilEventMap.h					\
 	SgAsmCilEventMapTable.h					\
 	SgAsmCilEventTable.h					\
+	SgAsmCilExceptionData.h					\
 	SgAsmCilExportedType.h					\
 	SgAsmCilExportedTypeTable.h				\
 	SgAsmCilField.h						\
@@ -616,6 +619,7 @@ GENERATED_SOURCE =						\
 	SgAsmCilMetadata.h					\
 	SgAsmCilMetadataHeap.h					\
 	SgAsmCilMetadataRoot.h					\
+	SgAsmCilMethodData.h					\
 	SgAsmCilMethodDef.h					\
 	SgAsmCilMethodDefTable.h				\
 	SgAsmCilMethodImpl.h					\
@@ -1141,6 +1145,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmCilEventMap.h				\
    SgAsmCilEventMapTable.h			\
    SgAsmCilEventTable.h				\
+   SgAsmCilExceptionData.h			\
    SgAsmCilExportedType.h			\
    SgAsmCilExportedTypeTable.h			\
    SgAsmCilField.h				\
@@ -1169,6 +1174,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmCilMetadata.h				\
    SgAsmCilMetadataHeap.h			\
    SgAsmCilMetadataRoot.h			\
+   SgAsmCilMethodData.h				\
    SgAsmCilMethodDef.h				\
    SgAsmCilMethodDefTable.h			\
    SgAsmCilMethodImpl.h				\

@@ -72,6 +72,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilEventMap.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilEventMapTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilEventTable.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilExceptionData.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilExportedType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilExportedTypeTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilField.h
@@ -100,6 +101,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMetadata.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMetadataHeap.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMetadataRoot.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMethodData.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMethodDef.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMethodDefTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmCilMethodImpl.h

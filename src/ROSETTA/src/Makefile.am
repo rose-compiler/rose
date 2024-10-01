@@ -140,6 +140,7 @@ rosetta_generated_definitions =				\
 	  SgAsmCilEventMap.h				\
 	  SgAsmCilEventMapTable.h			\
 	  SgAsmCilEventTable.h				\
+	  SgAsmCilExceptionData.h			\
 	  SgAsmCilExportedType.h			\
 	  SgAsmCilExportedTypeTable.h			\
 	  SgAsmCilField.h				\
@@ -168,6 +169,7 @@ rosetta_generated_definitions =				\
 	  SgAsmCilMetadata.h				\
 	  SgAsmCilMetadataHeap.h			\
 	  SgAsmCilMetadataRoot.h			\
+	  SgAsmCilMethodData.h				\
 	  SgAsmCilMethodDef.h				\
 	  SgAsmCilMethodDefTable.h			\
 	  SgAsmCilMethodImpl.h				\

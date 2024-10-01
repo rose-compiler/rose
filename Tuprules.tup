@@ -765,6 +765,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmCilEventMap.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilEventMapTable.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmCilEventTable.h				\
+ $(ROSE)/src/ROSETTA/src/SgAsmCilExceptionData.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmCilExportedType.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilExportedTypeTable.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmCilField.h				\
@@ -793,6 +794,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmCilMetadata.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilMetadataHeap.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilMetadataRoot.h				\
+ $(ROSE)/src/ROSETTA/src/SgAsmCilMethodData.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilMethodDef.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilMethodDefTable.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmCilMethodImpl.h				\
