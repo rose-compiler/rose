@@ -885,7 +885,7 @@ install(TARGETS rose-compiler DESTINATION bin)
 ########################################################################################################################
 
 #Build LDFLAGS for ROSE tools
-set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose -std=c++14")
+set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose ")
 
 list(APPEND rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
 list(APPEND rose_library_dir_list ${Boost_LIBRARY_DIRS})
@@ -967,20 +967,6 @@ endforeach()
  if(HAVE_LIBDL)
    string(REPLACE " -lm " " -ldl -lm " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
  endif()
-
-#Need to update config ldflags with the following potential values
-   #     $(JAVA_JVM_LINK) \
-   #     $(SQLITE_DATABASE_LIBS) $(RT_LIBS) \
-   #     $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_Z3_LIBS_WITH_PATH) \
-   #     $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_ELF_LIBS_WITH_PATH) \
-   #     $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) \
-   #     $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
-   #     $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) \
-   #     $(ROSE_FLANG_LIBS) $(ROSE_COBOL_PT_LIBS_WITH_PATH) \
-   #     $(ROSE_YAMLCPP_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) \
-   #     $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) \
-   #     $(ROSE_CAPSTONE_LIBS_WITH_PATH) -lm $(am__append_18) \
-   #     $(am__append_19)
 
 # Function for rose-config    
 function(resolve_compiler_names)
