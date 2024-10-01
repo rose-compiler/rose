@@ -42,7 +42,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -50,7 +50,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
