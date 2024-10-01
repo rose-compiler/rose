@@ -698,15 +698,14 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
 
             if (showInstructionStackDeltas_) {
-                int64_t delta = insn->get_stackDeltaIn();
-                if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
-                    // Stack delta as a two-character hexadecimal, but show a '+' sign when it's positive and nothing
-                    // when it's negative (negative is the usual case for most architectures).
+                if (const auto delta = insn->stackDeltaIn()) {
+                    // Stack delta as a two-character hexadecimal, but show a '+' sign when it's positive and nothing when it's
+                    // negative (negative is the usual case for most architectures).
                     char buf[64];
-                    if (delta <= 0) {
-                        snprintf(buf, sizeof(buf), "%02" PRIx64 " ", -delta);
+                    if (*delta <= 0) {
+                        snprintf(buf, sizeof(buf), "%02" PRIx64 " ", -*delta);
                     } else {
-                        snprintf(buf, sizeof(buf), "+%" PRIx64 " ", delta);
+                        snprintf(buf, sizeof(buf), "+%" PRIx64 " ", *delta);
                     }
                     s += buf;
                 } else {

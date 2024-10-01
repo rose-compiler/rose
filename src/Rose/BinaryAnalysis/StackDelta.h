@@ -29,13 +29,27 @@ namespace StackDelta {
 /** Initialize diagnostics.
  *
  *  This is normally called as part of ROSE's diagnostics initialization, but it doesn't hurt to call it often. */
-// FIXME[Robb Matzke 2015-11-17]: add to Diagnostics.C and dummy functions.
 void initDiagnostics();
 
 /** Facility for diagnostic output.
  *
  *  The facility can be controlled directly or via ROSE's command-line. */
 extern Sawyer::Message::Facility mlog;
+
+/** Initialize this namespace.
+ *
+ *  This is called from @ref Rose::initialize, and must be called before any other functions in this class are called. */
+void initNamespace();
+
+/** Get or set the stack delta for an instruction.
+ *
+ *  The instruction must not be a null pointer. The instruction's stack delta is removed from the attribute storage when set to
+ *  an empty value.
+ *
+ * @{ */
+Sawyer::Optional<int64_t> getStackDelta(const SgAsmInstruction*);
+void setStackDelta(SgAsmInstruction*, const Sawyer::Optional<int64_t>&);
+/** @} */
 
 /** Stack delta anzalyzer.
  *
@@ -301,9 +315,9 @@ public:
 
     /** Convert a symbolic value to an integer.
      *
-     *  Converts the specified symbolic value to a 64-bit signed stack delta.  If the symbolic value is a null pointer or is
-     *  not an integer, or is wider than 64 bits, then the @ref SgAsmInstruction::INVALID_STACK_DELTA constant is returned. */
-    static int64_t toInt(const InstructionSemantics::BaseSemantics::SValuePtr&);
+     *  Converts the specified symbolic value to a 64-bit signed stack delta.  If the symbolic value is a null pointer or is not an
+     *  integer, or is wider than 64 bits, then nothing is returned. */
+    static Sawyer::Optional<int64_t> toInt(const InstructionSemantics::BaseSemantics::SValuePtr&);
 
     /** Print multi-line value to specified stream. */
     void print(std::ostream&) const;

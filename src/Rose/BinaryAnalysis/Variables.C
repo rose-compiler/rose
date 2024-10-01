@@ -55,9 +55,14 @@ namespace Variables {
 
 Sawyer::Message::Facility mlog;
 
-static Sawyer::Attribute::Id ATTR_FRAME_SIZE(-1);       // Key for storing uint64_t frame sizes in P2::Function objects.
-static Sawyer::Attribute::Id ATTR_LOCAL_VARS(-1);       // Key for storing StackVariables in a P2::Function.
-static Sawyer::Attribute::Id ATTR_GLOBAL_VARS(-1);      // Key for storing GlobalVariables in a P2::Partitioner.
+// Key for storing uint64_t frame sizes in P2::Function objects.
+static Sawyer::Attribute::Id ATTR_FRAME_SIZE = Sawyer::Attribute::INVALID_ID;
+
+// Key for storing StackVariables in a P2::Function.
+static Sawyer::Attribute::Id ATTR_LOCAL_VARS = Sawyer::Attribute::INVALID_ID;
+
+// Key for storing GlobalVariables in a P2::Partitioner.
+static Sawyer::Attribute::Id ATTR_GLOBAL_VARS = Sawyer::Attribute::INVALID_ID;
 
 // Called by Rose::Diagnostics::initialize before anything else in this namespace is initialized.
 void
@@ -72,24 +77,13 @@ initDiagnostics() {
 
 // Initialize our own global variables
 static void
-initNamespaceHelper() {
-    ATTR_FRAME_SIZE = Sawyer::Attribute::declare("function frame size");
-    ATTR_LOCAL_VARS = Sawyer::Attribute::declare("local variables");
-    ATTR_GLOBAL_VARS = Sawyer::Attribute::declare("global variables");
-}
-
-static void
 initNamespace() {
-#if SAWYER_MULTI_THREADED
-    static boost::once_flag initFlag = BOOST_ONCE_INIT;
-    boost::call_once(initFlag, initNamespaceHelper);
-#else
-    static bool initialized = false;
-    if (!initialized) {
-        initNamespaceHelper();
-        initialized = true;
-    }
-#endif
+    static std::once_flag onceFlag;
+    std::call_once(onceFlag, []() {
+        ATTR_FRAME_SIZE = Sawyer::Attribute::declare("function frame size");
+        ATTR_LOCAL_VARS = Sawyer::Attribute::declare("local variables");
+        ATTR_GLOBAL_VARS = Sawyer::Attribute::declare("global variables");
+    });
 }
 
 std::string

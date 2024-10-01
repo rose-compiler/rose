@@ -45,17 +45,6 @@ SgAsmInstruction::set_delaySlot(SgAsmInstruction* const& x) {
     set_isModified(true);
 }
 
-int64_t const&
-SgAsmInstruction::get_stackDeltaIn() const {
-    return p_stackDeltaIn;
-}
-
-void
-SgAsmInstruction::set_stackDeltaIn(int64_t const& x) {
-    this->p_stackDeltaIn = x;
-    set_isModified(true);
-}
-
 SgAsmExprListExp* const&
 SgAsmInstruction::get_semantics() const {
     return p_semantics;
@@ -74,7 +63,6 @@ SgAsmInstruction::~SgAsmInstruction() {
 SgAsmInstruction::SgAsmInstruction()
     : p_operandList(nullptr)
     , p_delaySlot(nullptr)
-    , p_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA)
     , p_semantics(nullptr) {}
 
 // The association between constructor arguments and their classes:
@@ -86,14 +74,12 @@ SgAsmInstruction::SgAsmInstruction(rose_addr_t const& address,
     , p_architectureId(architectureId)
     , p_operandList(nullptr)
     , p_delaySlot(nullptr)
-    , p_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA)
     , p_semantics(nullptr) {}
 
 void
 SgAsmInstruction::initializeProperties() {
     p_operandList = nullptr;
     p_delaySlot = nullptr;
-    p_stackDeltaIn = SgAsmInstruction::INVALID_STACK_DELTA;
     p_semantics = nullptr;
 }
 

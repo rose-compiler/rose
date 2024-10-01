@@ -340,4 +340,33 @@ SgAsmInstruction::set_raw_bytes(const SgUnsignedCharList &x) {
     set_rawBytes(x);
 }
 
+// [Robb Matzke 2024-10-01]: deprecated
+int64_t
+SgAsmInstruction::get_stackDeltaIn() const {
+    return stackDeltaIn().orElse(SgAsmInstruction::INVALID_STACK_DELTA);
+}
+
+// [Robb Matzke 2024-10-01]: deprecated
+void
+SgAsmInstruction::set_stackDeltaIn(const int64_t x) {
+    if (SgAsmInstruction::INVALID_STACK_DELTA == x) {
+        stackDeltaIn(Sawyer::Nothing());
+    } else {
+        stackDeltaIn(x);
+    }
+}
+
+Sawyer::Optional<int64_t>
+SgAsmInstruction::stackDeltaIn() const {
+    return StackDelta::getStackDelta(this);
+}
+
+void
+SgAsmInstruction::stackDeltaIn(const Sawyer::Optional<int64_t> &x) {
+    if (x && SgAsmInstruction::INVALID_STACK_DELTA == *x) {
+        StackDelta::setStackDelta(this, Sawyer::Nothing());
+    } else {
+        StackDelta::setStackDelta(this, x);
+    }
+}
 #endif

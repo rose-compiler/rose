@@ -600,9 +600,8 @@ bool
 AsmUnparser::InsnStackDelta::operator()(bool enabled, const InsnArgs &args) {
     static const int deltaWidth = 2;                    // min column width for delta digits
     if (enabled) {
-        int64_t delta = args.insn->get_stackDeltaIn();
-        if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
-            mfprintf(args.output)("<sp%+-*" PRId64 ">", deltaWidth+1, delta);
+        if (const auto delta = args.insn->stackDeltaIn()) {
+            mfprintf(args.output)("<sp%+-*" PRId64 ">", deltaWidth+1, *delta);
         } else {
             args.output <<std::string(deltaWidth+5, ' ');
         }

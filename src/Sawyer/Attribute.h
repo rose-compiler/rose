@@ -327,6 +327,20 @@ public:
         return boost::any_cast<T>(values_.getOptional(id).orDefault());
     }
 
+    /** Return an attribute if it exists, or else nothing.
+     *
+     *  Thread safety: This method is thread safe when synchronization is enabled. */
+    template<typename T>
+    Sawyer::Optional<T> getAttributeMaybe(const Id id) const {
+        typename Sync::LockGuard lock(mutex_);
+        checkBoost();
+        if (const auto foundAny = values_.getOptional(id)) {
+            return boost::any_cast<T>(*foundAny);
+        } else {
+            return Sawyer::Nothing();
+        }
+    }
+
     /** Return an attribute or a specified value.
      *
      *  If the attribute exists, return its value, otherwise return the specified value. Throws @ref WrongQueryType if the

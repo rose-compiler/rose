@@ -914,7 +914,8 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
     // has a different stack delta in each function.  Since we're creating a SgAsmBlock for a particular function we need to
     // use stack delta results in the context of that function.
     const StackDelta::Analysis &sdAnalysis = parentFunction->stackDeltaAnalysis();
-    ast->set_stackDeltaOut(sdAnalysis.toInt(sdAnalysis.basicBlockOutputStackDeltaWrtFunction(bb->address())));
+    ast->set_stackDeltaOut(sdAnalysis.toInt(sdAnalysis.basicBlockOutputStackDeltaWrtFunction(bb->address()))
+                           .orElse(SgAsmInstruction::INVALID_STACK_DELTA));
 
     // Stack delta analysis results for each instruction in the context of the owning function.  Instructions are shared in the
     // AST if their blocks are shared in the partitioner.  In the AST we share instructions instead of blocks because this
@@ -924,7 +925,7 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
     // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
     if (sdAnalysis.hasResults()) {
         for (SgAsmInstruction *insn: insns)
-            insn->set_stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
+            insn->stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
     }
 
     // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we

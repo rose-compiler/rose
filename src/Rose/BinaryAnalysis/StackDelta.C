@@ -30,8 +30,15 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 
+// These are initialized by calling Rose::initialize
 Sawyer::Message::Facility mlog;
+Sawyer::Attribute::Id ATTR_STACK_DELTA = Sawyer::Attribute::INVALID_ID;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Namespace-level functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Called from Rose::Diagnostics::initialize (which in turn is called from Rose::initialize).
 void
 initDiagnostics() {
     static bool initialized = false;
@@ -41,6 +48,37 @@ initDiagnostics() {
         mlog.comment("analyzing stack pointer behavior");
     }
 }
+
+// Called from Rose::initialize
+void
+initNamespace() {
+    static std::once_flag onceFlag;
+    std::call_once(onceFlag, []() {
+        ATTR_STACK_DELTA = Sawyer::Attribute::declare("stack pointer w.r.t. beginning of function (i.e., stack delta)");
+    });
+}
+
+Sawyer::Optional<int64_t>
+getStackDelta(const SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    ASSERT_require2(ATTR_STACK_DELTA != Sawyer::Attribute::INVALID_ID, "ROSE library has not been initialized");
+    return insn->attributes().getAttributeMaybe<int64_t>(ATTR_STACK_DELTA);
+}
+
+void
+setStackDelta(SgAsmInstruction *insn, const Sawyer::Optional<int64_t> &delta) {
+    ASSERT_not_null(insn);
+    ASSERT_require2(ATTR_STACK_DELTA != Sawyer::Attribute::INVALID_ID, "ROSE library has not been initialized");
+    if (delta) {
+        insn->attributes().setAttribute<int64_t>(ATTR_STACK_DELTA, *delta);
+    } else {
+        insn->attributes().eraseAttribute(ATTR_STACK_DELTA);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Analysis functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 Analysis::init(const Disassembler::Base::Ptr &disassembler) {
@@ -275,7 +313,7 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
 
 int64_t
 Analysis::functionStackDeltaConcrete() const {
-    return toInt(functionStackDelta());
+    return toInt(functionStackDelta()).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
 }
 
 Analysis::SValuePair
@@ -290,7 +328,7 @@ Analysis::basicBlockStackDelta(rose_addr_t basicBlockAddress) const {
 
 int64_t
 Analysis::basicBlockStackDeltaConcrete(rose_addr_t basicBlockAddress) const {
-    return toInt(basicBlockStackDelta(basicBlockAddress));
+    return toInt(basicBlockStackDelta(basicBlockAddress)).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
 }
 
 BaseSemantics::SValue::Ptr
@@ -327,7 +365,7 @@ Analysis::instructionStackDelta(SgAsmInstruction *insn) const {
 
 int64_t
 Analysis::instructionStackDeltaConcrete(SgAsmInstruction *insn) const {
-    return toInt(instructionStackDelta(insn));
+    return toInt(instructionStackDelta(insn)).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
 }
 
 BaseSemantics::SValue::Ptr
@@ -359,11 +397,10 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
             if (sp0 && ops) {
                 for (SgAsmBlock *block: AST::Traversal::findDescendantsTyped<SgAsmBlock>(function)) {
                     if (BaseSemantics::SValue::Ptr blkAbs = basicBlockStackPointers(block->get_address()).second) {
-                        block->set_stackDeltaOut(toInt(ops->subtract(blkAbs, sp0)));
-
+                        block->set_stackDeltaOut(toInt(ops->subtract(blkAbs, sp0)).orElse(SgAsmInstruction::INVALID_STACK_DELTA));
                         for (SgAsmInstruction *insn: AST::Traversal::findDescendantsTyped<SgAsmInstruction>(block)) {
                             if (BaseSemantics::SValue::Ptr insnAbs = instructionStackPointers(insn).first)
-                                insn->set_stackDeltaIn(toInt(ops->subtract(insnAbs, sp0)));
+                                insn->stackDeltaIn(toInt(ops->subtract(insnAbs, sp0)));
                         }
                     }
                 }
@@ -451,13 +488,13 @@ Analysis::print(std::ostream &out) const {
 }
 
 // class method
-int64_t
+Sawyer::Optional<int64_t>
 Analysis::toInt(const BaseSemantics::SValue::Ptr &v) {
     if (v) {
-        if (auto vval = v->toSigned())
-            return *vval;
+        return v->toSigned();
+    } else {
+        return Sawyer::Nothing();
     }
-    return SgAsmInstruction::INVALID_STACK_DELTA;
 }
 
 // class method
@@ -469,7 +506,7 @@ Analysis::clearAstStackDeltas(SgNode *ast) {
         } else if (SgAsmBlock *blk = isSgAsmBlock(node)) {
             blk->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
         } else if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
-            insn->set_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA);
+            insn->stackDeltaIn(Sawyer::Nothing());
         }
     });
 }

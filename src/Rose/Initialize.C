@@ -2,6 +2,7 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/StringUtility/SplitJoin.h>
 #include <rosePublicConfig.h>
 #include <rose_config.h>                                // needed for VERSION with cmake
@@ -57,6 +58,10 @@ public:
         Rose::CommandLine::versionString = "ROSE " ROSE_PACKAGE_VERSION;
 #elif defined(PACKAGE_VERSION)
         Rose::CommandLine::versionString = "ROSE " PACKAGE_VERSION;
+#endif
+
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+        Rose::BinaryAnalysis::StackDelta::initNamespace();
 #endif
 
         isInitialized_ = true;

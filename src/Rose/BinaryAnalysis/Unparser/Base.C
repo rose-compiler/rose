@@ -2055,17 +2055,18 @@ Base::emitInstructionStackDelta(std::ostream &out, SgAsmInstruction *insn, State
         if (P2::Function::Ptr function = state.currentFunction()) {
             const StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis();
             if (sdAnalysis.hasResults()) {
-                int64_t delta = sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn));
-                if (SgAsmInstruction::INVALID_STACK_DELTA == delta) {
-                    out <<" ??";
-                } else if (delta == 0) {
-                    out <<" 00";
-                } else if (delta > 0) {
-                    Diagnostics::mfprintf(out)("+%02x", (unsigned)delta);
+                if (const auto delta = sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn))) {
+                    if (*delta == 0) {
+                        out <<" 00";
+                    } else if (*delta > 0) {
+                        Diagnostics::mfprintf(out)("+%02x", (unsigned)*delta);
+                    } else {
+                        Diagnostics::mfprintf(out)("-%02x", (unsigned)(-*delta));
+                    }
                 } else {
-                    Diagnostics::mfprintf(out)("-%02x", (unsigned)(-delta));
+                    out <<" ??";
+                    return;
                 }
-                return;
             }
         }
         out <<"??";

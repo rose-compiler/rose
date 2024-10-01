@@ -96,14 +96,6 @@ public:
     SgAsmInstruction* delaySlot = nullptr;
 
     // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
-    /** Property: Stack pointer at start of instruction relative to start of instruction's function.
-     *
-     *  If the stack delta was not computed, or could not be computed, or is a non-numeric value then the special value
-     *  @ref INVALID_STACK_DELTA is used. */
-    [[using Rosebud: rosetta, serialize()]]
-    int64_t stackDeltaIn = SgAsmInstruction::INVALID_STACK_DELTA;
-
-    // FIXME[Robb Matzke 2023-03-18]: is the lack of serialization a bug?
     /** Property: Ordered list of instruction semantics.
      *
      *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
@@ -123,7 +115,7 @@ public:
      *
      *  This value is used for the result of a stack delta analysis stored in the instruction AST if the stack delta
      *  analysis was not run or did not produce a numeric result. */
-    static const int64_t INVALID_STACK_DELTA;
+    static const int64_t INVALID_STACK_DELTA;           // [Robb Matzke 2024-10-01]: deprecated; use an optional type instead
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -434,10 +426,24 @@ public:
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
 
+    /** Property: Stack pointer at start of instruction relative to start of instruction's function.
+     *
+     *  If the stack delta was not computed, or could not be computed, or is a non-numeric value then nothing is returned.
+     *
+     * @{ */
+    Sawyer::Optional<int64_t> stackDeltaIn() const;
+    void stackDeltaIn(const Sawyer::Optional<int64_t>&);
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Deprecated 2023-11
+    // Deprecated
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    // [Robb Matzke 2023-11-07]: deprecated
     const SgUnsignedCharList& get_raw_bytes() const ROSE_DEPRECATED("use get_rawBytes");
     void set_raw_bytes(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_rawBytes");
+
+    // [Robb Matzke 2024-10-01]: deprecated
+    int64_t get_stackDeltaIn() const ROSE_DEPRECATED("use stackDeltaIn");
+    void set_stackDeltaIn(int64_t) ROSE_DEPRECATED("use stackDeltaIn");
 };

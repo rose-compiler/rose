@@ -77,6 +77,7 @@ class CallSiteResults;
 
 namespace StackDelta {
 class Analysis;
+void initNamespace();
 } // namespace
 
 namespace Strings {
