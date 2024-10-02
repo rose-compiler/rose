@@ -37,10 +37,8 @@ class SgAsmOp;
 
 #include "Cxx_Grammar.h"
 
-
 #include "unparseLanguageIndependentConstructs.h"
 
-// using namespace std;
 class Unparser;
 
 class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
@@ -362,8 +360,6 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
       // virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
          virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
 
-         std::string unparse_register_name (SgInitializedName::asm_register_name_enum register_name);
-
        // DQ (2/29/2004): Added to support unparsing of template instantiations (similar to class declarations)
           virtual void unparseTemplateInstantiationDeclStmt               (SgStatement* stmt, SgUnparse_Info& info);
 
@@ -467,6 +463,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (9/23/2020): Output the SgPragma when it is associated with a SgScopeStatement.
           void unparsePragmaAttribute(SgScopeStatement* scope_stmt);
    };
+
+// Helpers
+
+std::string unparse_register_name (SgInitializedName::asm_register_name_enum register_name);
 
 #endif
 

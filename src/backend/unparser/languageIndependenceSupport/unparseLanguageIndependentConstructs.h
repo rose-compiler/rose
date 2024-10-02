@@ -276,6 +276,8 @@ class UnparseLanguageIndependentConstructs
 
       // DQ (11/13/2014): Detect when to unparse the leading and trailing edge tokens for attached CPP directives and comments.
          bool unparseAttachedPreprocessingInfoUsingTokenStream(SgLocatedNode* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
+
+         friend void unparse_alignas(SgInitializedName * decl_item, class Unparse_ExprStmt & unparser, SgUnparse_Info & info);
    };
 
 #endif

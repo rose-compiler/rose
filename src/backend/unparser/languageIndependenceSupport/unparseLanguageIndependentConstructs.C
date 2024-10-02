@@ -7111,72 +7111,6 @@ UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnp
         }
    }
 
-#if 0
-// Because of the details of Fortran string, this can't be language independent.
-void
-UnparseLanguageIndependentConstructs::unparseStringVal(SgExpression* expr, SgUnparse_Info &)
-   {
-     SgStringVal* str_val = isSgStringVal(expr);
-     ASSERT_not_null(str_val);
-
-  // Handle special case of macro specification (this is a temporary hack to permit us to
-  // specify macros within transformations)
-
-     int wrap = unp->u_sage->cur_get_linewrap();
-     unp->u_sage->cur_get_linewrap();
-
-#if 0
-  // const char* targetString = "ROSE-TRANSFORMATION-MACRO:";
-     const char* targetString = "ROSE-MACRO-EXPRESSION:";
-     int targetStringLength = strlen(targetString);
-  // if (str_val->get_value() == NULL)
-     if (str_val->get_value().empty() == true)
-        {
-          printf ("Found an pointer in SgStringVal = %p for value of string! \n",str_val);
-          str_val->get_file_info()->display("Called from unparseStringVal: debug");
-        }
-     ASSERT_not_null(str_val->get_value());
-     if (strncmp(str_val->get_value(),targetString,targetStringLength) == 0)
-        {
-       // unparse the string without the surrounding quotes and with a new line at the end
-          char* remainingString = str_val->get_value()+targetStringLength;
-          printf ("Specify a MACRO: remainingString = %s \n",remainingString);
-       // Put in a leading CR so that the macro will always be unparsed onto its own line
-       // Put in a trailing CR so that the trailing ";" will be unparsed onto its own line too!
-          curprint ( "\n" + remainingString + "\n");
-        }
-       else
-        {
-          curprint ( "\"" + str_val->get_value() + "\"");
-        }
-     ASSERT_not_null(str_val->get_value());
-#else
-  // DQ (3/25/2006): Finally we can use the C++ string class
-     string targetString = "ROSE-MACRO-CALL:";
-     int targetStringLength = targetString.size();
-     string stringValue = str_val->get_value();
-     string::size_type location = stringValue.find(targetString);
-     if (location != string::npos)
-        {
-       // unparse the string without the surrounding quotes and with a new line at the end
-          string remainingString = stringValue.replace(location,targetStringLength,"");
-       // printf ("Specify a MACRO: remainingString = %s \n",remainingString.c_str());
-          remainingString.replace(remainingString.find("\\\""),4,"\"");
-          curprint ( "\n" + remainingString + "\n");
-        }
-       else
-        {
-       // curprint ( "\"" + str_val->get_value() + "\"";
-          if (str_val->get_wcharString() == true)
-               curprint ( "L");
-          curprint ( "\"" + str_val->get_value() + "\"");
-        }
-#endif
-     unp->u_sage->cur_set_linewrap(wrap);
-   }
-#endif
-
-
 void
 UnparseLanguageIndependentConstructs::unparseUShortVal(SgExpression* expr, SgUnparse_Info &)
    {
@@ -7184,19 +7118,6 @@ UnparseLanguageIndependentConstructs::unparseUShortVal(SgExpression* expr, SgUnp
      ASSERT_not_null(ushort_val);
 
      curprint ( tostring(ushort_val->get_value()));
-#if 0
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
-  // There appears to not be a concept of "short" literal (even in hex or octal).
-  // So it may be that the unsigned short and short types are not even used!
-     if (ushort_val->get_valueString() == "")
-        {
-          curprint ( tostring(ushort_val->get_value()));
-        }
-       else
-        {
-          curprint ( ushort_val->get_valueString());
-        }
-#endif
    }
 
 

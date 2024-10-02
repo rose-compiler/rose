@@ -32,6 +32,8 @@ add_library (unparser OBJECT
   CxxCodeGeneration/unparseCxx_types.C
   CxxCodeGeneration/unparseCxx_expressions.C
   CxxCodeGeneration/unparseCxx_statements.C
+  CxxCodeGeneration/unparseVarDeclStmt.C
+  CxxCodeGeneration/helpers.C
   PHPCodeGeneration/unparsePHP.C
   astUnparseAttribute.C
   unparser.C

@@ -32,19 +32,6 @@ namespace ssa_unfiltered_cfg
         bool operator()(SgFunctionDeclaration * funcDecl)
         {
             ROSE_ASSERT(funcDecl != NULL);
-#if 0
-            //Exclude compiler generated functions, but keep template instantiations
-            if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
-                    && !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
-                return false;
-
-            //We don't process functions that don't have definitions
-            if (funcDecl->get_definingDeclaration() == NULL)
-                return false;
-
-            return true;
-#else
-         // DQ (8/30/2016): Reorganize this to allow it to be more easily debugged.
             bool returnValue = true;
 
             //Exclude compiler generated functions, but keep template instantiations
@@ -56,11 +43,7 @@ namespace ssa_unfiltered_cfg
             if (funcDecl->get_definingDeclaration() == NULL)
                 returnValue = false;
 
-            printf ("In FunctionFilter::operator(): funcDecl = %p = %s name = %s returnValue = %s \n",funcDecl,funcDecl->class_name().c_str(),funcDecl->get_name().str(),returnValue ? "true" : "false");
-
             return returnValue;
-#endif
-
         }
     };
 

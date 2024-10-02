@@ -2,7 +2,9 @@
 unparseCxxCodeGeneration_la_sources=\
 	$(cxxCodeGenerationPath)/unparseCxx_expressions.C \
 	$(cxxCodeGenerationPath)/unparseCxx_statements.C \
-	$(cxxCodeGenerationPath)/unparseCxx_types.C
+	$(cxxCodeGenerationPath)/unparseCxx_types.C \
+	$(cxxCodeGenerationPath)/unparseVarDeclStmt.C \
+	$(cxxCodeGenerationPath)/helpers.C
 
 
 unparseCxxCodeGeneration_includeHeaders=\

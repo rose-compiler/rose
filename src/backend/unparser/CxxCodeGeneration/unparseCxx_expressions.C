@@ -1743,95 +1743,6 @@ unparse_operand_constraint (SgAsmOp::asm_operand_constraint_enum constraint)
      return returnString;
    }
 
-string
-Unparse_ExprStmt::unparse_register_name (SgInitializedName::asm_register_name_enum register_name)
-   {
-  // DQ (7/22/2006): filescope array of char
-     static const char* asm_register_names[(int)SgInitializedName::e_last_register + 1] =
-   {
-  /* e_invalid_register */ "invalid",
-  /* e_memory_register */  "memory",
-  /* register_a */       "ax",
-  /* register_b */       "bx",
-  /* register_c */       "cx",
-  /* register_d */       "dx",
-  /* register_si */      "si",
-  /* register_di */      "di",
-  /* register_bp */      "bp",
-  /* register_sp */      "sp",
-  /* register_r8 */      "r8",
-  /* register_r9 */      "r9",
-  /* register_r10 */     "r10",
-  /* register_r11 */     "r11",
-  /* register_r12 */     "r12",
-  /* register_r13 */     "r13",
-  /* register_r14 */     "r14",
-  /* register_r15 */     "r15",
-  /* register_st0 */     "st(0)",
-  /* register_st1 */     "st(1)",
-  /* register_st2 */     "st(2)",
-  /* register_st3 */     "st(3)",
-  /* register_st4 */     "st(4)",
-  /* register_st5 */     "st(5)",
-  /* register_st6 */     "st(6)",
-  /* register_st7 */     "st(7)",
-  /* register_mm0 */     "mm0",
-  /* register_mm1 */     "mm1",
-  /* register_mm2 */     "mm2",
-  /* register_mm3 */     "mm3",
-  /* register_mm4 */     "mm4",
-  /* register_mm5 */     "mm5",
-  /* register_mm6 */     "mm6",
-  /* register_mm7 */     "mm7",
-  /* register_f0 */      "xmm0",
-  /* register_f1 */      "xmm1",
-  /* register_f2 */      "xmm2",
-  /* register_f3 */      "xmm3",
-  /* register_f4 */      "xmm4",
-  /* register_f5 */      "xmm5",
-  /* register_f6 */      "xmm6",
-  /* register_f7 */      "xmm7",
-  /* register_f8 */      "xmm8",
-  /* register_f9 */      "xmm9",
-  /* register_f10 */     "xmm10",
-  /* register_f11 */     "xmm11",
-  /* register_f12 */     "xmm12",
-  /* register_f13 */     "xmm13",
-  /* register_f14 */     "xmm14",
-  /* register_f15 */     "xmm15",
-  /* register_flags */   "flags",
-  /* register_fpsr */    "fpsr",
-  /* register_dirflag */ "dirflag",
-  /* register_f16 */     "xmm16",
-  /* register_f17 */     "xmm17",
-  /* register_f18 */     "xmm18",
-  /* register_f19 */     "xmm19",
-  /* register_f20 */     "xmm20",
-  /* e_unrecognized_register */ "unrecognized",
-  /* e_last_register */    "last"
-   };
-
-     string returnString = asm_register_names[register_name];
-
-#if (__x86_64 == 1 || __x86_64__ == 1 || __x86_32 == 1 || __x86_32__ == 1)
-  // DQ (12/12/2012): Fixup the name of the register so that we are refering to EAX instead of AX (on both 32 bit and 64 bit systems).
-     if (register_name >= SgInitializedName::e_register_a && register_name <= SgInitializedName::e_register_sp)
-        {
-       // Use the extended register name.
-          returnString = "e" + returnString;
-        }
-#endif
-
-  // DQ (12/12/2012): If this is an unrecognized register at least specify a simple register name.
-     if (register_name == SgInitializedName::e_unrecognized_register)
-        {
-          printf ("Error: register names not recognized on non-x86 architectures (putting out reference name: 'ax' \n");
-          returnString = "ax";
-        }
-
-     return returnString;
-   }
-
 void
 Unparse_ExprStmt::unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags)
    {
@@ -1930,20 +1841,6 @@ Unparse_ExprStmt::unparseAsmOp (SgExpression* expr, SgUnparse_Info& info)
 #endif
           curprint ( asmOp->get_constraintString() );
         }
-
-#if 0
-  // DQ (1/8/2009): Added support for case of asm operand handling with EDG RECORD_RAW_ASM_OPERAND_DESCRIPTIONS == TRUE
-  // (this case uses the constraintString instead of a constrant code)
-  // curprint ( unparse_operand_constraint(asmOp->get_constraint()));
-     if (asmOp->get_recordRawAsmOperandDescriptions() == false)
-        {
-          curprint ( unparse_operand_constraint(asmOp->get_constraint()));
-        }
-       else
-        {
-          curprint ( asmOp->get_constraintString() );
-        }
-#endif
 
   // This is usually a SgVarRefExp
      curprint ( "\"");
@@ -3313,155 +3210,46 @@ void remove_substrings(basic_string<T>& s, const basic_string<T>& p)
 #endif
    }
 
+#define DEBUG_unparseStringVal 0
 
-void
-Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info&)
+void Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info&)
    {
+#if DEBUG_unparseStringVal
+     printf ("Enter unparseStringVal():\n");
+     printf ("  expr = %p = %s\n", expr, expr->class_name().c_str());
+#endif
      SgStringVal* str_val = isSgStringVal(expr);
      ASSERT_not_null(str_val);
-
-#if 0
-     printf ("In unparseStringVal(): expr = %p = %s \n",expr,expr->class_name().c_str());
-#endif
-
-  // Handle special case of macro specification (this is a temporary hack to permit us to
-  // specify macros within transformations)
 
      int wrap = unp->u_sage->cur_get_linewrap();
      unp->u_sage->cur_get_linewrap();
 
 #ifndef CXX_IS_ROSE_CODE_GENERATION
-#if 0
-  // const char* targetString = "ROSE-TRANSFORMATION-MACRO:";
-     const char* targetString = "ROSE-MACRO-EXPRESSION:";
-     int targetStringLength = strlen(targetString);
-  // if (str_val->get_value() == NULL)
-     if (str_val->get_value().empty() == true)
-        {
-          printf ("Found an pointer in SgStringVal = %p for value of string! \n",str_val);
-          str_val->get_file_info()->display("Called from unparseStringVal: debug");
-        }
-     ASSERT_not_null(str_val->get_value());
-     if (strncmp(str_val->get_value(),targetString,targetStringLength) == 0)
-        {
-       // unparse the string without the surrounding quotes and with a new line at the end
-          char* remainingString = str_val->get_value()+targetStringLength;
-          printf ("Specify a MACRO: remainingString = %s \n",remainingString);
-       // Put in a leading CR so that the macro will always be unparsed onto its own line
-       // Put in a trailing CR so that the trailing ";" will be unparsed onto its own line too!
-          curprint ( "\n" + remainingString + "\n");
-        }
-       else
-        {
-          curprint ( "\"" + str_val->get_value() + "\"");
-        }
-     ASSERT_not_null(str_val->get_value());
-#else
-  // DQ (3/25/2006): Finally we can use the C++ string class
-     string targetString = "ROSE-MACRO-CALL:";
-     int targetStringLength = targetString.size();
-     string stringValue = str_val->get_value();
-     string::size_type location = stringValue.find(targetString);
-     if (location != string::npos)
-        {
-       // unparse the string without the surrounding quotes and with a new line at the end
-          string remainingString = stringValue.replace(location,targetStringLength,"");
-       // printf ("Specify a MACRO: remainingString = %s \n",remainingString.c_str());
-          remainingString.replace(remainingString.find("\\\""),4,"\"");
-          curprint("\n" + remainingString + "\n");
-        }
-       else
-        {
-          SgFile* file = TransformationSupport::getFile(str_val);
-#if 0
-          printf ("In unparseStringVal(): resolving file to be %p \n",file);
-#endif
-       // bool is_Cxx_Compiler = file->get_Cxx_only();
-          bool is_Cxx_Compiler = false;
-          if (file != NULL)
-             {
-               is_Cxx_Compiler = file->get_Cxx_only();
-             }
-            else
-             {
-               printf ("Warning: TransformationSupport::getFile(str_val) == NULL \n");
-             }
-       // bool is_C_Compiler   = file->get_C_only();
+     if (str_val->get_wcharString()) {
+       curprint("L");
+     } else if (str_val->get_is16bitString()) {
+       curprint("u");
+     } else if (str_val->get_is32bitString()) {
+       SgFile* file = TransformationSupport::getFile(str_val);
+       bool is_Cxx_Compiler = file ? file->get_Cxx_only() : false;
+       if (is_Cxx_Compiler) {
+         curprint("U");
+       } else {
+         curprint("L");
+       }
+     }
 
-       // curprint ( "\"" + str_val->get_value() + "\"";
-          if (str_val->get_wcharString() == true)
-             {
-               curprint("L");
-             }
-            else
-             {
-               if (str_val->get_is16bitString() == true)
-                  {
-                    curprint("u");
-                  }
-                 else
-                  {
-                    if (str_val->get_is32bitString() == true)
-                       {
-                      // curprint("U");
-                         if (is_Cxx_Compiler == true)
-                            {
-                              curprint("U");
-                            }
-                           else
-                            {
-                           // For C (C11) code.
-                              curprint("L");
-                            }
-                       }
-                      else
-                       {
-                      // This is the default, but "u8" would be a more explicit prefix.
-                       }
-                  }
-             }
-
-#if 1
-       // DQ (8/13/2014): Added support for C++11 raw string prefix values.
-          string s;
-          if (str_val->get_isRawString() == true)
-             {
-               curprint("R");
-
-            // DQ (2/21/2019): This is a problem for Cxx11_tets/test2019_180.C
-            // Note added delimiters.
-            // s = string("\"(") + str_val->get_raw_string_value() + string(")\"");
-               s = string("\"(") + str_val->get_value() + string(")\"");
-#if 0
-               printf ("Before remove substrings: s = %s \n",s.c_str());
+     std::string s;
+     if (str_val->get_isRawString()) {
+       curprint("R");
+       s = std::string("\"(") + str_val->get_value() + std::string(")\"");
+       std::string p = "\\000";
+       remove_substrings(s, p);
+     } else {
+       s = std::string("\"") + str_val->get_value() + std::string("\"");
+     }
+     curprint(s);
 #endif
-               string p = "\\000";
-               remove_substrings(s, p);
-#if 0
-               printf ("After remove substrings: s = %s \n",s.c_str());
-#endif
-             }
-            else
-             {
-               s = string("\"") + str_val->get_value() + string("\"");
-             }
-#else
-       // curprint("\"" + str_val->get_value() + "\"");
-          string s = string("\"") + str_val->get_value() + string("\"");
-#endif
-#if 0
-          printf ("In unparseStringVal(): str_val         = %p \n",str_val);
-          printf ("   --- str_val->get_value()            = %s \n",str_val->get_value().c_str());
-          printf ("   --- str_val->get_value().length()   = %" PRIuPTR " \n",str_val->get_value().length());
-          printf ("   --- output string: s                = %s \n",s.c_str());
-          printf ("   --- str_val->get_raw_string_value() = %s \n",str_val->get_raw_string_value().c_str());
-       // printf ("   --- str_val->get_valueString()      = %s \n",str_val->get_valueString().c_str());
-#endif
-          curprint(s);
-        }
-#endif
-#endif
-
      unp->u_sage->cur_set_linewrap(wrap);
    }
 
