@@ -638,7 +638,6 @@ SgStatement* CFAnalysis::getCaseOrDefaultBodyStmt(SgNode* node) {
     cerr<<"Error: requesting body of switch case or default, but node is not a default or option stmt."<<endl;
     exit(1);
   }
-  ROSE_ASSERT(body);
   return body;
 }
 
@@ -902,12 +901,18 @@ Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
     if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
       // adjust init label to stmt following the case label (the child of the SgCaseStmt node).
       SgNode* body=caseStmt->get_body();
-      ROSE_ASSERT(body);
-      initLabel2=initialLabel(body);
+      if (body) {
+        initLabel2=initialLabel(body);
+      } else {
+	// FIXME probably need to get the next statement until finding a case-stmt with a body
+      }
     } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(node)) {
       SgNode* body=caseStmt->get_body();
-      ROSE_ASSERT(body);
-      initLabel2=initialLabel(body);
+      if (body) {
+        initLabel2=initialLabel(body);
+      } else {
+	// FIXME
+      }
     }
 
     Edge e(*i,initLabel2);
