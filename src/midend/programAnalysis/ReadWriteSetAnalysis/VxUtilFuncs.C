@@ -251,7 +251,7 @@ std::string VxUtilFuncs::getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
   if(tempIDecl) {  //is template
     SgTemplateFunctionDeclaration* tempDecl = isSgTemplateFunctionDeclaration(tempIDecl->get_templateDeclaration());
     SgFunctionDeclaration* defFuncDecl = isSgTemplateFunctionDeclaration(tempDecl->get_definingDeclaration());
-    filepathStr = defFuncDecl->get_file_info()->get_filename();
+    filepathStr = defFuncDecl ? defFuncDecl->get_file_info()->get_filename() : tempDecl->get_file_info()->get_filename();
   } else if(tempIMDecl) { //is template member
     SgTemplateMemberFunctionDeclaration* tempDecl = isSgTemplateMemberFunctionDeclaration(tempIMDecl->get_templateDeclaration());
     SgFunctionDeclaration* defFuncDecl = isSgTemplateMemberFunctionDeclaration(tempDecl->get_definingDeclaration());
