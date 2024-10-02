@@ -103,8 +103,6 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
   bool print_ctor_name = unp->u_sage->printConstructorName(con_init);
   SgNode * pnode = con_init->get_parent();
   SgNode * ppnode = pnode ? pnode->get_parent() : nullptr;
-  SgNode * pppnode = ppnode ? ppnode->get_parent() : nullptr;
-  bool is_ctor_within_new = isSgNewExp(pppnode);
   bool arg_of_ctor_or_aggr = isSgConstructorInitializer(ppnode) || isSgAggregateInitializer(ppnode);
   bool nested_ctor_init_without_arg = ctor_without_args && arg_of_ctor_or_aggr;
   bool is_explicit_ctor = ctor_decl ? ctor_decl->get_functionModifier().isExplicit() : false;
@@ -114,12 +112,27 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
   printf ("  use_braces = %s\n", use_braces ? "true" : "false");
   printf ("  pnode = %p = %s\n", pnode, pnode ? pnode->class_name().c_str() : "");
   printf ("  ppnode = %p = %s\n", ppnode, ppnode ? ppnode->class_name().c_str() : "");
-  printf ("  pppnode = %p = %s\n", pppnode, pppnode ? pppnode->class_name().c_str() : "");
-  printf ("  is_ctor_within_new = %s\n", is_ctor_within_new ? "true" : "false");
   printf ("  nested_ctor_init_without_arg = %s\n", nested_ctor_init_without_arg ? "true" : "false");
   printf ("  is_explicit_ctor = %s\n", is_explicit_ctor ? "true" : "false");
   printf ("  iname_use_cpy_syntax = %s\n", iname_use_cpy_syntax ? "true" : "false");
   printf ("  explicit_ctor_with_cpy_syntax = %s\n", explicit_ctor_with_cpy_syntax ? "true" : "false");
+#endif
+ 
+  bool is_ctor_within_new = false;
+  while (ppnode != nullptr) {
+    ppnode = ppnode->get_parent();
+#if DEBUG__unparseCtorInit
+    printf ("  ppnode = %p = %s\n", ppnode, ppnode ? ppnode->class_name().c_str() : "");
+#endif
+    if (isSgNewExp(ppnode)) {
+      is_ctor_within_new = true;
+      break;
+    } else if ( !( isSgExprListExp(ppnode) || isSgAggregateInitializer(ppnode) || isSgConstructorInitializer(ppnode) ) ) {
+      break;
+    }
+  }
+#if DEBUG__unparseCtorInit
+  printf ("  is_ctor_within_new = %s\n", is_ctor_within_new ? "true" : "false");
 #endif
 
   bool need_name = con_init->get_need_name() && !is_ctor_within_new && ( nested_ctor_init_without_arg || con_init->get_is_explicit_cast() || explicit_ctor_with_cpy_syntax );
