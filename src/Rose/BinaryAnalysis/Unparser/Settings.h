@@ -77,6 +77,7 @@ struct Settings {
         struct {
             bool showingReachability;                   /**< Show code reachability in the basic block prologue area. */
         } reach;                                        /**< Reachability analysis results. */
+        bool showingPostBlock;                          /**< Show info about what happens after the last instruction. */
     } bblock;                                           /**< Settings for basic blocks. */
 
     struct {
@@ -103,6 +104,12 @@ struct Settings {
             size_t fieldWidth;                          /**< Min characters to use for the stack delta field. */
             Style style;                                /**< Style for the stack delta. */
         } stackDelta;                                   /**< Settings for stack deltas. */
+
+        struct {
+            bool showing;                               /**< Show frame pointer w.r.t. stack pointer. */
+            size_t fieldWidth;                          /**< Min characters to use for the frame delta field. */
+            Style style;                                /**< Style for the frame delta. */
+        } frameDelta;                                   /**< Settings for frame deltas. */
 
         struct {
             size_t fieldWidth;                          /**< Min characters to use for the instruction mnemonic. */

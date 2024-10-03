@@ -351,6 +351,7 @@ Partitioner::configureInsnPlainUnparser(const Unparser::Base::Ptr &unparser) con
     unparser->settings().insn.address.showing = false;
     unparser->settings().insn.bytes.showing = false;
     unparser->settings().insn.stackDelta.showing = false;
+    unparser->settings().insn.frameDelta.showing = false;
     unparser->settings().insn.mnemonic.fieldWidth = 1;
     unparser->settings().insn.comment.showing = false;
     unparser->settings().insn.semantics.showing = false;

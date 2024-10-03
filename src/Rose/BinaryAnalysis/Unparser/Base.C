@@ -313,6 +313,16 @@ State::nextInsnLabel(const std::string &label) {
     nextInsnLabel_ = label;
 }
 
+bool
+State::isPostInstruction() const {
+    return isPostInstruction_;
+}
+
+void
+State::isPostInstruction(bool b) {
+    isPostInstruction_ = b;
+}
+
 const RegisterNames&
 State::registerNames() const {
     return registerNames_;
@@ -532,6 +542,7 @@ Settings::Settings() {
     bblock.cfg.showingArrows = true;
     bblock.reach.showingReachability = true;
     bblock.cfg.arrowStyle.foreground = Color::HSV(0.58, 0.90, 0.3); // blue
+    bblock.showingPostBlock = true;
 
     dblock.showingSourceLocation = true;
 
@@ -546,6 +557,9 @@ Settings::Settings() {
     insn.stackDelta.showing = true;
     insn.stackDelta.fieldWidth = 2;
     insn.stackDelta.style.foreground = Color::HSV(0.9, 0.7, 0.4); // magenta
+    insn.frameDelta.showing = true;
+    insn.frameDelta.fieldWidth = 2;
+    insn.frameDelta.style.foreground = Color::HSV(0.8, 0.8, 0.4);
     insn.mnemonic.fieldWidth = 8;
     insn.mnemonic.semanticFailureMarker = "[!]";
     insn.mnemonic.semanticFailureStyle.foreground = Color::HSV(0, 1, 0.4); // red
@@ -592,6 +606,7 @@ Settings::minimal() {
     s.bblock.cfg.showingSharing = false;
     s.bblock.cfg.showingArrows = false;
     s.bblock.reach.showingReachability = false;
+    s.bblock.showingPostBlock = false;
 
     s.dblock.showingSourceLocation = false;
 
@@ -600,6 +615,7 @@ Settings::minimal() {
     s.insn.address.fieldWidth = 8;
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
+    s.insn.frameDelta.showing = false;
     s.insn.mnemonic.fieldWidth = 8;
     s.insn.operands.fieldWidth = 40;
     s.insn.operands.showingWidth = false;
@@ -694,6 +710,10 @@ commandLineSwitches(Settings &settings) {
                         "reachability analysis. If the unparser wasn't given any reachability analysis results then "
                         "nothing is shown.");
 
+    insertBooleanSwitch(sg, "bb-postblock", settings.bblock.showingPostBlock,
+                        "Show information following the block's final instruction, such as stack deltas and other things that "
+                        "would normally appear with the next instruction if there was one.");
+
     //----- Data blocks -----
 
     insertBooleanSwitch(sg, "db-source-location", settings.dblock.showingSourceLocation,
@@ -741,6 +761,15 @@ commandLineSwitches(Settings &settings) {
               .argument("nchars", positiveIntegerParser(settings.insn.stackDelta.fieldWidth))
               .doc("Minimum size of the stack delta field in characters if stack deltas are enabled with @s{insn-stack-delta}. "
                    "The default is " + boost::lexical_cast<std::string>(settings.insn.stackDelta.fieldWidth) + "."));
+
+    insertBooleanSwitch(sg, "insn-frame-delta", settings.insn.frameDelta.showing,
+                        "For each instruction, show the frame delta. This is the difference between the function call frame "
+                        "pointer and the stack pointer before the instruction executes.");
+
+    sg.insert(Switch("insn-frame-delta-width")
+              .argument("nchars", positiveIntegerParser(settings.insn.frameDelta.fieldWidth))
+              .doc("Minimum size of the frame delta field in characters if frame deltas are enabled with @s {insn-frame-delta}. "
+                   "The default is " + boost::lexical_cast<std::string>(settings.insn.frameDelta.fieldWidth) + "."));
 
     sg.insert(Switch("insn-mnemonic-width")
               .argument("nchars", positiveIntegerParser(settings.insn.mnemonic.fieldWidth))
@@ -1517,6 +1546,25 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
                 out <<"\n";
                 state.nextInsnLabel("");
             }
+
+            // Emit a line after the last instruction if we need to show anything that happens after that instruction.
+            if (settings().bblock.showingPostBlock && !bb->instructions().empty() &&
+                (settings().insn.stackDelta.showing || settings().insn.frameDelta.showing)) {
+                SgAsmInstruction *insn = bb->instructions().back();
+                std::ostringstream ss;
+                state.isPostInstruction(true);
+                emitInstruction(ss, insn, state);
+                state.isPostInstruction(false);
+                const bool hasNonSpace = [](const std::string &s) {
+                    for (char ch: s) {
+                        if (!isspace(ch))
+                            return true;
+                    }
+                    return false;
+                }(ss.str());
+                if (hasNonSpace)
+                    out <<ss.str() <<"\n";
+            }
         }
     }
 }
@@ -1902,7 +1950,10 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
 
         // Address or label or nothing.
         if (settings().insn.address.showing) {
-            if (settings().insn.address.useLabels) {
+            if (state.isPostInstruction()) {
+                // Addresses and labels appear only on the first line of the instruction
+                parts.push_back("");
+            } else if (settings().insn.address.useLabels) {
                 if (!state.nextInsnLabel().empty()) {
                     // Use the label that has been specified in the state
                     parts.push_back(state.nextInsnLabel() + ":");
@@ -1924,11 +1975,14 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             styles.push_back(std::make_pair(style.render(), style.restore()));
             fieldWidths.push_back(settings().insn.address.fieldWidth);
         }
-        state.nextInsnLabel("");
+        if (!state.isPostInstruction())
+            state.nextInsnLabel("");
 
         // Raw bytes
         if (settings().insn.bytes.showing) {
-            if (insn) {
+            if (state.isPostInstruction()) {
+                parts.push_back("");
+            } else if (insn) {
                 std::ostringstream ss;
                 state.frontUnparser().emitInstructionBytes(ss, insn, state);
                 parts.push_back(ss.str());
@@ -1954,8 +2008,25 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             styles.push_back(std::make_pair(style.render(), style.restore()));
         }
 
+        // Frame delta
+        if (settings().insn.frameDelta.showing) {
+            if (insn) {
+                std::ostringstream ss;
+                state.frontUnparser().emitInstructionFrameDelta(ss, insn, state);
+                parts.push_back(ss.str());
+            } else {
+                parts.push_back("");
+            }
+            fieldWidths.push_back(settings().insn.frameDelta.fieldWidth);
+            StyleGuard style(state.styleStack(), settings().insn.frameDelta.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
+        }
+
         // Mnemonic
-        if (insn) {
+        if (state.isPostInstruction()) {
+            parts.push_back("");
+            styles.push_back(std::make_pair(std::string(), std::string()));
+        } else if (insn) {
             std::ostringstream ss;
             state.frontUnparser().emitInstructionMnemonic(ss, insn, state);
             parts.push_back(ss.str());
@@ -1969,7 +2040,10 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
         fieldWidths.push_back(settings().insn.mnemonic.fieldWidth);
 
         // Operands
-        if (insn) {
+        if (state.isPostInstruction()) {
+            parts.push_back("");
+            styles.push_back(std::make_pair(std::string(), std::string()));
+        } else if (insn) {
             std::ostringstream ss;
             state.frontUnparser().emitInstructionOperands(ss, insn, state);
             parts.push_back(ss.str());
@@ -1984,9 +2058,13 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
 
         // Comment
         if (settings().insn.comment.showing) {
-            std::ostringstream ss;
-            state.frontUnparser().emitInstructionComment(ss, insn, state);
-            parts.push_back(ss.str());
+            if (state.isPostInstruction()) {
+                parts.push_back("");
+            } else {
+                std::ostringstream ss;
+                state.frontUnparser().emitInstructionComment(ss, insn, state);
+                parts.push_back(ss.str());
+            }
             fieldWidths.push_back(settings().insn.comment.fieldWidth);
             StyleGuard style(state.styleStack(), settings().comment.trailing.style);
             styles.push_back(std::make_pair(style.render(), style.restore()));
@@ -2055,7 +2133,10 @@ Base::emitInstructionStackDelta(std::ostream &out, SgAsmInstruction *insn, State
         if (P2::Function::Ptr function = state.currentFunction()) {
             const StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis();
             if (sdAnalysis.hasResults()) {
-                if (const auto delta = sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn))) {
+                const auto delta = state.isPostInstruction() ?
+                                   sdAnalysis.toInt(sdAnalysis.instructionOutputStackDeltaWrtFunction(insn)) :
+                                   sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn));
+                if (delta) {
                     if (*delta == 0) {
                         out <<" 00";
                     } else if (*delta > 0) {
@@ -2065,11 +2146,45 @@ Base::emitInstructionStackDelta(std::ostream &out, SgAsmInstruction *insn, State
                     }
                 } else {
                     out <<" ??";
-                    return;
                 }
             }
+        } else {
+            out <<"??";
         }
-        out <<"??";
+    }
+}
+
+void
+Base::emitInstructionFrameDelta(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+    ASSERT_not_null(insn);
+    if (nextUnparser()) {
+        nextUnparser()->emitInstructionFrameDelta(out, insn, state);
+    } else {
+        // Although SgAsmInstruction has frameDelta properties, they're not initialized or used when the instruction only exists
+        // inside a Partitioner2 object -- they're only initialized when a complete AST is created from the Partitioner2. Instead,
+        // we need to look at the enclosing function's stack delta analysis.  Since basic blocks can be shared among functions, this
+        // method prints the frame deltas from the perspective of the function we're emitting.
+        if (P2::Function::Ptr function = state.currentFunction()) {
+            const StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis();
+            if (sdAnalysis.hasResults()) {
+                const auto delta = state.isPostInstruction() ?
+                                   sdAnalysis.toInt(sdAnalysis.instructionOutputFrameDelta(insn)) :
+                                   sdAnalysis.toInt(sdAnalysis.instructionInputFrameDelta(insn));
+                if (delta) {
+                    if (*delta == 0) {
+                        out <<" 00";
+                    } else if (*delta > 0) {
+                        Diagnostics::mfprintf(out)("+%02x", (unsigned)*delta);
+                    } else {
+                        Diagnostics::mfprintf(out)("-%02x", (unsigned)(-*delta));
+                    }
+                } else {
+                    out <<" ??";
+                }
+            }
+        } else {
+            out <<"??";
+        }
     }
 }
 

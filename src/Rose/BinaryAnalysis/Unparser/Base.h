@@ -216,6 +216,7 @@ private:
     ArrowMargin globalBlockArrows_;                                   // user-defined global arrows to/from blocks
     bool cfgArrowsPointToInsns_;                                      // arrows point to insns? else predecessor/successor lines
     StyleStack styleStack_;                                           // styles
+    bool isPostInstruction_ = false;                                  // show extra information appearing after an instruction
 
 public:
     State(const Partitioner2::PartitionerConstPtr&, const Architecture::BaseConstPtr&, const Settings&, const Base &frontUnparser);
@@ -355,6 +356,9 @@ public:
 
     const AddrString& basicBlockLabels() const;
     AddrString& basicBlockLabels();
+
+    bool isPostInstruction() const;
+    void isPostInstruction(bool);
 
     /** First unparser in the chained list of unparsers. */
     const Base& frontUnparser() const;
@@ -571,6 +575,7 @@ public:
     virtual void emitInstructionAddress(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionBytes(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionStackDelta(std::ostream&, SgAsmInstruction*, State&) const;
+    virtual void emitInstructionFrameDelta(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionOperands(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionComment(std::ostream&, SgAsmInstruction*, State&) const;
