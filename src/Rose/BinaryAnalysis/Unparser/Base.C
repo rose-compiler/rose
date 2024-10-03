@@ -768,7 +768,7 @@ commandLineSwitches(Settings &settings) {
 
     sg.insert(Switch("insn-frame-delta-width")
               .argument("nchars", positiveIntegerParser(settings.insn.frameDelta.fieldWidth))
-              .doc("Minimum size of the frame delta field in characters if frame deltas are enabled with @s {insn-frame-delta}. "
+              .doc("Minimum size of the frame delta field in characters if frame deltas are enabled with @s{insn-frame-delta}. "
                    "The default is " + boost::lexical_cast<std::string>(settings.insn.frameDelta.fieldWidth) + "."));
 
     sg.insert(Switch("insn-mnemonic-width")
