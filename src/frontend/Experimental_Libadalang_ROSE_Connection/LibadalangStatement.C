@@ -702,19 +702,19 @@ namespace {
       typeview = (ada_node_is_null(&lal_type_def) == 0);
     }
 
+    //Get the type this points to
+    ada_base_entity lal_base_type_decl;
+    ada_base_type_decl_p_full_view(lal_element, &lal_base_type_decl);
+    ada_node_kind_enum lal_base_type_kind = ada_node_kind(&lal_base_type_decl);
+
     //TODO Needs more testing w/enums
 
-    if(!ada_node_is_null(&lal_type_def) && lal_type_def_kind == ada_derived_type_def){ //If it's derived, make an access
-      SgClassDeclaration& sgnode = mkRecordDecl(ident, scope);
-
-      if(typeview){
-        setParentRecordConstraintIfAvail(sgnode, &lal_type_def, ctx);
-      }
-
-      res = &sgnode;
+    if(lal_base_type_kind == ada_task_type_decl){
+      res = &mkAdaTaskTypeDecl(ident, nullptr /* no spec */, scope);
+    } else if(lal_base_type_kind == ada_protected_type_decl){
+      res = &mkAdaProtectedTypeDecl(ident, nullptr /* no spec */, scope);
     } else if(!typeview || lal_type_def_kind == ada_private_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
-      ada_base_entity lal_base_type_decl, lal_base_type_def;
-      ada_base_type_decl_p_full_view(lal_element, &lal_base_type_decl);
+      ada_base_entity lal_base_type_def;
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
       lal_type_def_kind = ada_node_kind(&lal_base_type_def);
 
@@ -3819,6 +3819,66 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ctx.appendStatement(sgnode);
 
         assocdecl = &sgnode;
+        break;
+      }
+    case ada_protected_type_decl:             // 9.4(2)
+      {
+        logKind("ada_protected_type_decl", kind);
+
+        //Get the name for this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_base_type_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+
+        //Get & hash the previous decl of this type, if it exists
+        ada_base_entity lal_previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
+        ada_base_type_decl_f_name(&lal_previous_decl, &lal_previous_decl);
+        int previous_hash = 0;
+        if(!ada_node_is_null(&lal_previous_decl)){
+           previous_hash = hash_node(&lal_previous_decl);
+        }
+
+        //Get the discriminants for this decl
+        ada_base_entity lal_discr;
+        ada_protected_type_decl_f_discriminants(lal_element, &lal_discr);
+
+        auto                        spec    = getProtectedSpecForProtectedType(lal_element, ctx);
+        int                         hash    = hash_node(&lal_defining_name);
+        std::string                 ident   = getFullName(&lal_identifier);
+        SgDeclarationStatement*     incomp  = findFirst(libadalangTypes(), previous_hash);
+        SgAdaProtectedTypeDecl*     nondef  = isSgAdaProtectedTypeDecl(incomp);
+        SgAdaDiscriminatedTypeDecl* discr   = createDiscriminatedDecl_opt(&lal_discr, 0, ctx);
+        SgScopeStatement*           parentScope = &ctx.scope();
+
+        if(discr){
+          parentScope = discr->get_discriminantScope();
+        }
+
+        SgAdaProtectedTypeDecl& sgdecl  = nondef ? mkAdaProtectedTypeDecl(*nondef, SG_DEREF(spec.first), *parentScope)
+                                                 : mkAdaProtectedTypeDecl(ident, spec.first,  *parentScope);
+
+        attachSourceLocation(sgdecl, lal_element, ctx);
+        privatize(sgdecl, isPrivate);
+
+        recordNode(libadalangTypes(), hash, sgdecl, nondef != nullptr);
+        recordNode(libadalangDecls(), hash, sgdecl);
+
+        if (!discr)
+        {
+          ctx.appendStatement(sgdecl);
+          assocdecl = &sgdecl;
+        }
+        else
+        {
+          completeDiscriminatedDecl(hash, lal_element, *discr, sgdecl, isPrivate, ctx);
+          assocdecl = discr;
+        }
+
+        //AstContext::PragmaContainer protectedPragmas = splitOfPragmas(pragmaVector, protectedDeclPragmas, ctx); //TODO pragmas
+
+        //spec.second(std::move(protectedPragmas)); // complete the body
+
         break;
       }
     case ada_task_type_decl:                  // 9.1(2)

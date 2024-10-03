@@ -348,6 +348,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_generic_package_renaming_decl:
       case ada_incomplete_type_decl:
       case ada_incomplete_tagged_type_decl:
+      case ada_protected_type_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
