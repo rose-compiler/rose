@@ -369,4 +369,18 @@ SgAsmInstruction::stackDeltaIn(const Sawyer::Optional<int64_t> &x) {
         StackDelta::setStackDelta(this, x);
     }
 }
+
+Sawyer::Optional<int64_t>
+SgAsmInstruction::frameDeltaIn() const {
+    return StackDelta::getFrameDelta(this);
+}
+
+void
+SgAsmInstruction::frameDeltaIn(const Sawyer::Optional<int64_t> &x) {
+    if (x && SgAsmInstruction::INVALID_STACK_DELTA == *x) {
+        StackDelta::setFrameDelta(this, Sawyer::Nothing());
+    } else {
+        StackDelta::setFrameDelta(this, x);
+    }
+}
 #endif

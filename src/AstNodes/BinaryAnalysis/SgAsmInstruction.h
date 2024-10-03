@@ -435,6 +435,30 @@ public:
     void stackDeltaIn(const Sawyer::Optional<int64_t>&);
     /** @} */
 
+    /** Property: Frame pointer w.r.t. stack pointer before the instruction executes. If either the frame pointer or stack pointer
+     *  is unknown or if the difference is not concrete, then nothing is returned.
+     *
+     *  Example: The stack delta is the top-of-stack address minus the top-of-stack address at the beginning of the function. For
+     *  stacks that grow down, the stack delta will usually be negative inside the function.  The frame delta is the address of the
+     *  call frame (usually stored in a "frame pointer" register) minus the top-of-stack address. The values shown here (and
+     *  returned by thse functions) represent the state of these registers before the instruction executes.
+     *
+     * @code
+     *  i386_function:             ; stack delta  ; frame delta ;
+     *      push ebp               ;           0  ;    unknown  ;
+     *      mov ebp, esp           ;          -4  ;    unknown  ;
+     *      push ebx               ;          -4  ;          0  ;
+     *      nop                    ;          -8  ;         +4  ;
+     * @endcode
+     *
+     *  The value of the frame pointer can be obtained by adding the function's initial top-of-stack address, the stack delta, and
+     *  the frame delta.
+     *
+     *  @{ */
+    Sawyer::Optional<int64_t> frameDeltaIn() const;
+    void frameDeltaIn(const Sawyer::Optional<int64_t>&);
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
