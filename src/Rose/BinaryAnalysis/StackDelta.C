@@ -74,13 +74,14 @@ Analysis::clearResults() {
     hasResults_ = didConverge_ = false;
     clearStackDeltas();
     clearStackPointers();
+    clearFramePointers();
 }
 
 void
 Analysis::clearStackDeltas() {
     functionDelta_ = BaseSemantics::SValue::Ptr();
     bblockDeltas_.clear();
-    insnDeltas_.clear();
+    insnSpDeltas_.clear();
 }
 
 void
@@ -88,6 +89,11 @@ Analysis::clearStackPointers() {
     functionStackPtrs_ = SValuePair();
     bblockStackPtrs_.clear();
     insnStackPtrs_.clear();
+}
+
+void
+Analysis::clearFramePointers() {
+    insnFramePtrs_.clear();
 }
 
 void
@@ -134,14 +140,28 @@ public:
             BaseSemantics::RiscOperators::Ptr ops = analysis_->cpu()->operators();
             ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
-            RegisterDescriptor SP = cpu()->stackPointerRegister();
+            const RegisterDescriptor SP = cpu()->stackPointerRegister();
+            const RegisterDescriptor FP = cpu()->stackFrameRegister(); // not all architectures have this
             BaseSemantics::SValue::Ptr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+            BaseSemantics::SValue::Ptr oldFp = FP ?
+                                               retval->peekRegister(FP, ops->undefined_(FP.nBits()), ops.get()) :
+                                               BaseSemantics::SValue::Ptr();
             for (SgAsmInstruction *insn: vertex->value().bblock()->instructions()) {
                 cpu()->processInstruction(insn);
+
+                // Stack and frame pointers after the instruction executes
                 BaseSemantics::SValue::Ptr newSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
-                BaseSemantics::SValue::Ptr delta = ops->subtract(newSp, oldSp);
-                analysis_->adjustInstruction(insn, oldSp, newSp, delta);
+                BaseSemantics::SValue::Ptr newFp = FP ?
+                                                   retval->peekRegister(FP, ops->undefined_(FP.nBits()), ops.get()) :
+                                                   BaseSemantics::SValue::Ptr();
+
+                // Stack delta is the net change to the stack pointer by this instruction.
+                BaseSemantics::SValue::Ptr spDelta = ops->subtract(newSp, oldSp);
+
+                // Save and update loop variables
+                analysis_->adjustInstruction(insn, oldSp, newSp, spDelta, oldFp, newFp);
                 oldSp = newSp;
+                oldFp = newFp;
             }
             return retval;
         }
@@ -157,6 +177,7 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"analyzeFunction(" <<function->printableName() <<")\n";
     clearResults();
+    const RegisterDescriptor SP = cpu_->stackPointerRegister();
 
     // Build the CFG used by the data-flow: dfCfg. The dfCfg includes only those vertices that are reachable from the entry
     // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
@@ -251,7 +272,6 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
             P2::BasicBlock::Ptr bblock = vertex.value().bblock();
             ASSERT_not_null(bblock);
             BaseSemantics::SValue::Ptr sp0, sp1;
-            RegisterDescriptor SP = cpu_->stackPointerRegister();
             if (BaseSemantics::State::Ptr state = dfEngine.getInitialState(vertex.id()))
                 sp0 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertex.id()))
@@ -267,11 +287,10 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
 
     // Functon stack delta is final stack pointer minus initial stack pointer.  This includes popping the return address from
     // the stack (if the function did that) and popping arguments (if the function did that).
-    const RegisterDescriptor REG_SP = cpu_->stackPointerRegister();
-    functionStackPtrs_.first = initialRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
+    functionStackPtrs_.first = initialRegState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SAWYER_MESG(debug) <<"  function initial stack pointer is " <<*functionStackPtrs_.first <<"\n";
     if (finalRegState) {
-        functionStackPtrs_.second = finalRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
+        functionStackPtrs_.second = finalRegState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
         functionDelta_ = ops->subtract(functionStackPtrs_.second, functionStackPtrs_.first);
         SAWYER_MESG(debug) <<"  function final stack pointer is " <<*functionStackPtrs_.second <<"\n";
         SAWYER_MESG(debug) <<"  function stack delta is " <<*functionDelta_ <<"\n";
@@ -323,16 +342,42 @@ Analysis::basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) c
 
 Analysis::SValuePair
 Analysis::instructionStackPointers(SgAsmInstruction *insn) const {
-    if (NULL == insn)
+    if (insn) {
+        return insnStackPtrs_.getOrDefault(insn->get_address());
+    } else {
         return SValuePair();
-    return insnStackPtrs_.getOrDefault(insn->get_address());
+    }
 }
 
 BaseSemantics::SValue::Ptr
 Analysis::instructionStackDelta(SgAsmInstruction *insn) const {
-    if (NULL == insn)
+    if (insn) {
+        return insnSpDeltas_.getOrDefault(insn->get_address());
+    } else {
         return BaseSemantics::SValue::Ptr();
-    return insnDeltas_.getOrDefault(insn->get_address());
+    }
+}
+
+BaseSemantics::SValue::Ptr
+Analysis::instructionInputFrameDelta(SgAsmInstruction *insn) const {
+    if (insn) {
+        BaseSemantics::SValue::Ptr initialSp = insnStackPtrs_.getOrDefault(insn->get_address()).first;
+        BaseSemantics::SValue::Ptr initialFp = insnFramePtrs_.getOrDefault(insn->get_address()).first;
+        if (initialSp && initialFp)
+            return cpu_->operators()->subtract(initialFp, initialSp);
+    }
+    return BaseSemantics::SValue::Ptr();
+}
+
+BaseSemantics::SValue::Ptr
+Analysis::instructionOutputFrameDelta(SgAsmInstruction *insn) const {
+    if (insn) {
+        BaseSemantics::SValue::Ptr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).second;
+        BaseSemantics::SValue::Ptr finalFp = insnFramePtrs_.getOrDefault(insn->get_address()).second;
+        if (finalSp && finalFp)
+            return cpu_->operators()->subtract(finalFp, finalSp);
+    }
+    return BaseSemantics::SValue::Ptr();
 }
 
 int64_t
@@ -432,7 +477,7 @@ Analysis::print(std::ostream &out) const {
     std::set<rose_addr_t> insnVas;
     for (rose_addr_t va: insnStackPtrs_.keys())
         insnVas.insert(va);
-    for (rose_addr_t va: insnDeltas_.keys())
+    for (rose_addr_t va: insnSpDeltas_.keys())
         insnVas.insert(va);
     for (rose_addr_t va: insnVas) {
         out <<"    Instruction " <<StringUtility::addrToString(va) <<":\n";
@@ -446,10 +491,20 @@ Analysis::print(std::ostream &out) const {
         } else {
             out <<"      Final stack pointer:   none\n";
         }
-        if (BaseSemantics::SValue::Ptr v = insnDeltas_.getOrDefault(va)) {
+        if (BaseSemantics::SValue::Ptr v = insnSpDeltas_.getOrDefault(va)) {
             out <<"      Stack delta:           " <<*v <<"\n";
         } else {
             out <<"      Stack delta:           none\n";
+        }
+        if (BaseSemantics::SValue::Ptr v = insnFramePtrs_.getOrDefault(va).first) {
+            out <<"      Initial frame pointer: " <<*v <<"\n";
+        } else {
+            out <<"      Initial frame pointer: none\n";
+        }
+        if (BaseSemantics::SValue::Ptr v = insnFramePtrs_.getOrDefault(va).second) {
+            out <<"      Final frame pointer:   " <<*v <<"\n";
+        } else {
+            out <<"      Final frame pointer:   none\n";
         }
     }
 }
@@ -479,10 +534,15 @@ Analysis::clearAstStackDeltas(SgNode *ast) {
 // internal
 void
 Analysis::adjustInstruction(SgAsmInstruction *insn, const BaseSemantics::SValue::Ptr &spIn,
-                            const BaseSemantics::SValue::Ptr &spOut, const BaseSemantics::SValue::Ptr &delta) {
+                            const BaseSemantics::SValue::Ptr &spOut, const BaseSemantics::SValue::Ptr &spDelta,
+                            const BaseSemantics::SValue::Ptr &fpIn, const BaseSemantics::SValue::Ptr &fpOut) {
     if (insn) {
-        insnStackPtrs_.insert(insn->get_address(), SValuePair(spIn, spOut));
-        insnDeltas_.insert(insn->get_address(), delta);
+        if (spIn || spOut)
+            insnStackPtrs_.insert(insn->get_address(), SValuePair(spIn, spOut));
+        if (spDelta)
+            insnSpDeltas_.insert(insn->get_address(), spDelta);
+        if (fpIn || fpOut)
+            insnFramePtrs_.insert(insn->get_address(), SValuePair(fpIn, fpOut));
     }
 }
 

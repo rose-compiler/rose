@@ -77,7 +77,8 @@ private:
     DeltasPerAddress bblockDeltas_;                     // Stack delta per basic block (net effect of BB on stack ptr)
 
     SValuePairPerAddress insnStackPtrs_;                // Per-instruction initial and final stack pointers
-    DeltasPerAddress insnDeltas_;                       // Stack delta per instruction (net effect of insn on stack ptr)
+    SValuePairPerAddress insnFramePtrs_;                // Per-instruction initial and final frame pointers if known
+    DeltasPerAddress insnSpDeltas_;                     // Stack delta per instruction (net effect of insn on stack ptr)
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -95,7 +96,9 @@ private:
         s & BOOST_SERIALIZATION_NVP(bblockStackPtrs_);
         s & BOOST_SERIALIZATION_NVP(bblockDeltas_);
         s & BOOST_SERIALIZATION_NVP(insnStackPtrs_);
-        s & BOOST_SERIALIZATION_NVP(insnDeltas_);
+        s & BOOST_SERIALIZATION_NVP(insnSpDeltas_);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(insnFramePtrs_);
     }
 
     template<class S>
@@ -199,6 +202,9 @@ public:
      *  Clears the stack pointer results but not the stack deltas. */
     void clearStackPointers();
 
+    /** Clear the frame pointers. */
+    void clearFramePointers();
+
     /** Clear stack deltas, not pointers.
      *
      *  Clears the stack delta results but not the stack pointers. */
@@ -269,6 +275,16 @@ public:
      *  instruction executes and the stack pointer before the instruction executes. */
     InstructionSemantics::BaseSemantics::SValuePtr instructionStackDelta(SgAsmInstruction*) const;
 
+    /** Frame delta for an instruction.
+     *
+     *  Returns the difference between the frame pointer and the stack pointer before or after the instruction executes, or returns
+     *  a null pointer if either value is unknown.
+     *
+     * @{ */
+    InstructionSemantics::BaseSemantics::SValuePtr instructionInputFrameDelta(SgAsmInstruction*) const;
+    InstructionSemantics::BaseSemantics::SValuePtr instructionOutputFrameDelta(SgAsmInstruction*) const;
+    /** @} */
+
     /** Stack delta for instruction w.r.t. function.
      *
      *  Returns the incoming or outgoing stack delta for an instruction with respect to the beginning of the function. Returns
@@ -315,9 +331,11 @@ public:
 public:
     // Used internally. Do not document with doxygen.
     void adjustInstruction(SgAsmInstruction*,
-                           const InstructionSemantics::BaseSemantics::SValuePtr &spIn,
-                           const InstructionSemantics::BaseSemantics::SValuePtr &spOut,
-                           const InstructionSemantics::BaseSemantics::SValuePtr &delta);
+                           const InstructionSemantics::BaseSemantics::SValuePtr &spIn,     // SP before execution
+                           const InstructionSemantics::BaseSemantics::SValuePtr &spOut,    // SP after execution
+                           const InstructionSemantics::BaseSemantics::SValuePtr &spDelta,  // spOut - spIn
+                           const InstructionSemantics::BaseSemantics::SValuePtr &fpIn,     // FP before execution
+                           const InstructionSemantics::BaseSemantics::SValuePtr &fpOut);   // FP after execution
 
 private:
     void init(const Disassembler::BasePtr&);
@@ -330,7 +348,7 @@ std::ostream& operator<<(std::ostream&, const Analysis&);
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::StackDelta::Analysis, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::StackDelta::Analysis, 2);
 
 #endif
 #endif
