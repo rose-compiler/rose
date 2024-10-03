@@ -26,6 +26,10 @@ namespace Libadalang_ROSE_Translation
       ParameterCompletion() = delete;
   };
 
+  /// finds the libadalang node that represents the final part of the name defined in the tree headed by /ref lal_element
+  /// E.g. if the tree is for "this.is.an'example", this function will return the node for "an"
+  void findBaseName(ada_base_entity* lal_element, ada_base_entity& lal_return_name);
+
   /// returns the declaration identified by \ref lal_element
   ///   if no record was found, nullptr is returned
   /// \note the function does not look up variables and exceptions, and built-in operators.

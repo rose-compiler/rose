@@ -523,11 +523,7 @@ namespace
   /// Gets the standard bool type from the current context
   SgType& boolType(AstContext ctx)
   {
-    ada_base_entity* lal_root = ctx.unit_root();
-    ada_base_entity ada_bool;
-    ada_ada_node_p_bool_type(lal_root, &ada_bool);
-    int hash = hash_node(&ada_bool);
-    return SG_DEREF(adaTypes().at(hash));
+    return SG_DEREF(adaTypesByName().at(AdaIdentifier{"BOOLEAN"}));
   }
 
   OperatorCallSupplement
@@ -763,8 +759,9 @@ namespace
       return nullptr;
     }
 
-    if (SgFunctionDeclaration* fndcl = findExistingOperator(name, scope, suppl))
+    if(SgFunctionDeclaration* fndcl = findExistingOperator(name, scope, suppl)){
       return &mkFunctionRefExp(*fndcl);
+    }
 
     std::string            opname   = si::Ada::roseOperatorPrefix + name;
 
@@ -792,6 +789,7 @@ namespace
     SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, scope, *suppl.result(), complete);
 
     operatorSupport()[{&scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
+
     return &mkFunctionRefExp(opdcl);
   }
 
@@ -801,7 +799,6 @@ namespace
   getOperator(ada_base_entity* lal_expr, OperatorCallSupplement suppl, bool unary, AstContext ctx)
   {
     // FYI https://en.wikibooks.org/wiki/Ada_Programming/All_Operators
-    //ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
     ada_node_kind_enum kind = ada_node_kind(lal_expr);
 
@@ -835,7 +832,7 @@ namespace
         SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
         return SG_DEREF(res);
-      }*/ //TODO Does Libadlang do def pointers?
+      }*/ //TODO Does Libadalang do def pointers?
 
       // PP 08/03/23
       // UNCLEAR_LINK_2
@@ -864,6 +861,7 @@ namespace
       ada_text_type denoted_value;
       ada_string_literal_p_denoted_value(lal_expr, &denoted_value);
       expr_name = "\"" + dot_ada_text_type_to_string(denoted_value) + "\"";
+      logInfo() << "In getOperator (for ada_string_literal), expr_name is " << expr_name << std::endl;
     }
 
     const char*                         expr_name_c = expr_name.c_str();
@@ -873,13 +871,15 @@ namespace
       AdaIdentifier                       fnname{expr_name_c+1, int(len)-2};
 
       // try to generate the operator
-      if (SgExpression* res = generateOperator(fnname, std::move(suppl), ctx))
+      if(SgExpression* res = generateOperator(fnname, std::move(suppl), ctx)){
         return *res;
+      }
     }
 
-    if (!pragmaProcessing(ctx))
+    if (!pragmaProcessing(ctx)){
       logWarn() << "Using first version generator as fallback to model operator " << expr_name
                 << std::endl;
+    }
 
     return getOperator_fallback(lal_expr, unary, ctx);
   }
@@ -1149,7 +1149,19 @@ namespace{
           ada_text_type denoted_value;
           ada_string_literal_p_denoted_value(lal_element, &denoted_value);
           std::string denoted_text = dot_ada_text_type_to_string(denoted_value);
-          if(denoted_text == "+" || denoted_text == "-" || denoted_text == "*"){ //If the string is for an op, call getOperator
+          if(   denoted_text == "+" 
+             || denoted_text == "-"
+             || denoted_text == "*"
+             || denoted_text == "/"
+             || denoted_text == "="
+             || denoted_text == "/="
+             || denoted_text == "<"
+             || denoted_text == "<="
+             || denoted_text == ">"
+             || denoted_text == ">="
+             || denoted_text == "abs")
+          {
+            //If the string is for an op, call getOperator
             res = &getOperator(lal_element, suppl, unary, ctx);
             break;
           }
@@ -1264,14 +1276,10 @@ namespace{
             //Find the correct decl in the defining name list
             for(int i = 0; i < defining_name_list->n; ++i){
               ada_base_entity defining_name = defining_name_list->items[i];
+              ada_base_entity lal_full_name;
+              ada_defining_name_f_name(&defining_name, &lal_full_name);
               ada_base_entity name_identifier;
-              ada_defining_name_f_name(&defining_name, &name_identifier);
-              ada_node_kind_enum name_identifier_kind = ada_node_kind(&name_identifier);
-              while(name_identifier_kind == ada_dotted_name){
-                //If this is a dotted_name, keep taking the suffix until we get something else
-                ada_dotted_name_f_suffix(&name_identifier, &name_identifier);
-                name_identifier_kind = ada_node_kind(&name_identifier);
-              }
+              findBaseName(&lal_full_name, name_identifier);
               const std::string test_name = canonical_text_as_string(&name_identifier);
               if(name == test_name){
                 hash = hash_node(&defining_name);
@@ -1374,18 +1382,21 @@ namespace{
         {
           logKind("A_Function_Call", kind);
 
-          //If this is an ada_call_expr, we might want to treat it like a_type_conversion instead
+          //If this is an ada_call_expr, we might want to treat it like a_type_conversion or an_indexed_component instead
           if(kind == ada_call_expr){
             //Get the f_name, and check if it is a type
+            ada_base_entity lal_full_name;
+            ada_call_expr_f_name(lal_element, &lal_full_name);
             ada_base_entity lal_name;
-            ada_call_expr_f_name(lal_element, &lal_name);
+            findBaseName(&lal_full_name, lal_name);
             ada_node_kind_enum name_kind = ada_node_kind(&lal_name);
             if(name_kind == ada_identifier){
+              //Check the decl to see if this name refers to a type
               ada_base_entity lal_decl;
               ada_expr_p_first_corresponding_decl(&lal_name, &lal_decl);
               ada_node_kind_enum decl_kind = ada_node_kind(&lal_decl);
-              if(decl_kind == ada_type_decl){
-                logInfo() << "This ada_call_expr corresponds to a_type_conversion.\n";
+              if(decl_kind == ada_type_decl || decl_kind == ada_subtype_decl){
+                logInfo() << " ^Actually a_type_conversion\n";
                 const bool isConv = true; //TODO A_Qualified_Expression?
 
                 //Get the expr
@@ -1407,11 +1418,45 @@ namespace{
                 }
                 break;
               }
+              //Check p_expression_type to see if this name is an array
+              ada_base_entity lal_expr_type;
+              ada_expr_p_expression_type(&lal_name, &lal_expr_type);
+              ada_node_kind_enum lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+              if(lal_expr_type_kind == ada_type_decl || lal_expr_type_kind == ada_anonymous_type_decl){ //TODO Add subtype support
+                //Get the type def to see if this type is an array
+                ada_base_entity lal_type_def;
+                ada_type_decl_f_type_def(&lal_expr_type, &lal_type_def);
+                if(ada_node_kind(&lal_type_def) == ada_array_type_def){
+                  logInfo() << " ^Actually an_indexed_component\n";
+
+                  //lal_name is the prefix, get the indexes
+                  ada_base_entity lal_index_list;
+                  ada_call_expr_f_suffix(lal_element, &lal_index_list);
+                  int count = ada_node_children_count(&lal_index_list);
+
+                  SgExpression&              prefix = getExpr(&lal_name, ctx);
+                  std::vector<SgExpression*> idxexpr;
+                  for(int i = 0; i < count; ++i){
+                    ada_base_entity lal_index;
+                    if(ada_node_child(&lal_index_list, i, &lal_index) != 0){
+                      //Check for ada_param_assoc, and get r_expr if we find it
+                      if(ada_node_kind(&lal_index) == ada_param_assoc){
+                        ada_param_assoc_f_r_expr(&lal_index, &lal_index);
+                      }
+                      idxexpr.push_back(&getExpr(&lal_index, ctx));
+                    }
+                  }
+                  SgExprListExp&             indices = mkExprListExp(idxexpr);
+
+                  res = &mkPntrArrRefExp(prefix, indices);
+
+                  break;
+                }
+              }
             }
           }
-          logInfo() << "Not a_type_conversion.\n";
 
-          //If this is an ada_bin_op, check if it is a short circuit
+          //If this is an ada_bin_op, check if it is a short circuit / a discrete range
           if(kind == ada_bin_op){
             ada_base_entity lal_op;
             ada_bin_op_f_op(lal_element, &lal_op);
@@ -1430,8 +1475,13 @@ namespace{
                 res = sb::buildAndOp_nfi(&lhs, &rhs);
               }
               break;
+            } else if(lal_op_kind == ada_op_double_dot){
+              logInfo() << " ^Actually a discrete range\n";
+              res = &getDiscreteRange(lal_element, ctx);
+              break;
             }
           }
+          logInfo() << "Finished all checks, corresponds to A_Function_Call.\n";
 
           std::vector<ada_base_entity*>  params;
           ada_base_entity                prefix;
@@ -1508,6 +1558,7 @@ namespace{
       case ada_op_rem:
       case ada_op_abs:
       case ada_op_not:
+      case ada_op_double_dot:
         {
           logKind("An_Operator_Symbol", kind);
 

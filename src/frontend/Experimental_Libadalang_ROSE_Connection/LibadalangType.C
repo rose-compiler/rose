@@ -755,6 +755,8 @@ namespace
     {
       case ada_type_decl:
       case ada_subtype_decl:
+      case ada_incomplete_type_decl:
+      case ada_incomplete_tagged_type_decl:
         {
           //Get and hash the defining name as well as the type decl
           ada_base_entity lal_defining_name;
@@ -841,7 +843,7 @@ namespace
         ada_subp_spec_f_subp_kind(&subp_spec, &subp_kind);
         ada_node_kind_enum subp_kind_kind = ada_node_kind(&subp_kind);
 
-        const bool isFuncAccess = ( subp_kind_kind == ada_subp_kind_function);
+        const bool isFuncAccess = (subp_kind_kind == ada_subp_kind_function);
 
         //Get has_protected
         ada_base_entity has_protected;
@@ -1113,6 +1115,20 @@ namespace
 
           break;
         }
+      case ada_mod_int_type_def:              // 3.5.4(4)
+        {
+          logKind("ada_mod_int_type_def", kind);
+
+          //Get the expression for this type
+          ada_base_entity lal_expr;
+          ada_mod_int_type_def_f_expr(lal_def, &lal_expr);
+
+          SgExpression& modexpr = getExpr(&lal_expr, ctx);
+
+          res.sageNode(mkAdaModularType(modexpr));
+
+          break;
+        }
       case ada_floating_point_def:            // 3.5.7(2)
         {
           logKind("ada_floating_point_def", kind);
@@ -1237,7 +1253,7 @@ namespace
   }
 
 /// Creates a ROSE representation for a type defined in the Ada standard package
-/// All types created are stored in 2 maps: 1 by hash (\ref map2), and 1 by name (\ref map2)
+/// All types created are stored in 2 maps: 1 by hash (\ref map1), and 1 by name (\ref map2)
 /// Types handled are: boolean, int, float, character, string, duration
 template<class MapT, class StringMap>
 void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspec, SgGlobal& global)

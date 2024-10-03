@@ -608,7 +608,7 @@ namespace {
      case ada_private_type_def:
        {
           logKind("ada_private_type_def", kind);
-          ada_base_entity lal_has_abstract, lal_has_limited;
+          ada_base_entity lal_has_abstract, lal_has_limited, lal_has_tagged;
 
           ada_private_type_def_f_has_abstract(lal_element, &lal_has_abstract);
           ada_node_kind_enum lal_has_abstract_kind = ada_node_kind(&lal_has_abstract);
@@ -618,7 +618,11 @@ namespace {
           ada_node_kind_enum lal_has_limited_kind = ada_node_kind(&lal_has_limited);
           bool has_limited = (lal_has_limited_kind == ada_limited_present);
 
-          setModifiers(dcl, has_abstract, has_limited, false);
+          ada_private_type_def_f_has_tagged(lal_element, &lal_has_tagged);
+          ada_node_kind_enum lal_has_tagged_kind = ada_node_kind(&lal_has_tagged);
+          bool has_tagged = (lal_has_tagged_kind == ada_tagged_present);
+
+          setModifiers(dcl, has_abstract, has_limited, has_tagged);
           break;
        }
      case ada_record_type_def:
@@ -686,19 +690,21 @@ namespace {
   SgDeclarationStatement&
   createOpaqueDecl(const std::string& ident, ada_base_entity* lal_element, AstContext ctx)
   {
-    SgScopeStatement&       scope = ctx.scope();
+    SgScopeStatement&       scope    = ctx.scope();
     bool                    typeview = false;
-    SgDeclarationStatement* res = nullptr;
+    SgDeclarationStatement* res      = nullptr;
 
     //Get the type def
     ada_base_entity lal_type_def;
     ada_type_decl_f_type_def(lal_element, &lal_type_def);
     ada_node_kind_enum lal_type_def_kind = ada_node_kind(&lal_type_def);
-    typeview = (ada_node_is_null(&lal_type_def) == 0);
+    if(ada_node_kind(lal_element) != ada_incomplete_type_decl && ada_node_kind(lal_element) != ada_incomplete_tagged_type_decl){
+      typeview = (ada_node_is_null(&lal_type_def) == 0);
+    }
 
-    //TODO Needs more testing w/enums, records
+    //TODO Needs more testing w/enums
 
-    if(lal_type_def_kind == ada_derived_type_def){ //If it's derived, make an access
+    if(!ada_node_is_null(&lal_type_def) && lal_type_def_kind == ada_derived_type_def){ //If it's derived, make an access
       SgClassDeclaration& sgnode = mkRecordDecl(ident, scope);
 
       if(typeview){
@@ -706,28 +712,21 @@ namespace {
       }
 
       res = &sgnode;
-    } else if(lal_type_def_kind == ada_private_type_def){ //If it isn't an access, we need to find the original type to see if it's a type or an enum
+    } else if(!typeview || lal_type_def_kind == ada_private_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
       ada_base_entity lal_base_type_decl, lal_base_type_def;
       ada_base_type_decl_p_full_view(lal_element, &lal_base_type_decl);
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
       lal_type_def_kind = ada_node_kind(&lal_base_type_def);
-      while(lal_type_def_kind == ada_derived_type_def){
-        //If this is a derived type, get the type it is derived from
-        ada_base_entity lal_subtype_indication;
-        ada_derived_type_def_f_subtype_indication(&lal_base_type_def, &lal_subtype_indication);
-        ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
-        if(ada_node_is_null(&lal_base_type_decl)){
-          logWarn() << "Cannot find base type in createOpaquedecl()\n";
-          //TODO This can happen for standard int, can it happen in any other case?
-          break;
-        }
-        ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
-        lal_type_def_kind = ada_node_kind(&lal_base_type_def);
-      }
 
       if(lal_type_def_kind == ada_enum_type_def){
         res = &mkEnumDecl(ident, scope);
-      } else {
+      } else if(lal_type_def_kind == ada_record_type_def){
+        SgClassDeclaration& sgnode = mkRecordDecl(ident, scope);
+        if(typeview){
+          setParentRecordConstraintIfAvail(sgnode, &lal_type_def, ctx);
+        }
+        res = &sgnode;
+      } else { //TODO not sure this will work for everything
         res = &mkTypeDecl(ident, mkOpaqueType(), scope);
       }
     } else {
@@ -739,9 +738,9 @@ namespace {
     // \todo put declaration tags on
     SgDeclarationStatement& resdcl = SG_DEREF(res);
 
-    if (typeview){
+    if(typeview){
       setTypeModifiers(resdcl, &lal_type_def);
-    } else if(true /*TODO decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration*/) {
+    } else if(ada_node_kind(lal_element) == ada_incomplete_tagged_type_decl) {
       setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
     }
 
@@ -857,9 +856,9 @@ namespace {
   SgAdaDiscriminatedTypeDecl*
   createDiscriminatedDecl_opt(ada_base_entity* primary, ada_base_entity* secondary, AstContext ctx)
   {
-    if (primary != nullptr && ada_node_is_null(primary))
+    if(primary == nullptr || ada_node_is_null(primary))
     {
-      if (secondary != nullptr && !ada_node_is_null(secondary)) logFlaw() << "Unexpected secondary discriminants" << std::endl;
+      if(secondary != nullptr && !ada_node_is_null(secondary)) logFlaw() << "Unexpected secondary discriminants" << std::endl;
 
       return nullptr;
     }
@@ -874,16 +873,22 @@ namespace {
                      AstContext ctx
                    )
   {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+
     //Get the name for this type
-    ada_base_entity lal_identifier;
-    ada_base_type_decl_f_name(lal_element, &lal_identifier);
-    ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-    std::string ident = canonical_text_as_string(&lal_identifier);
+    ada_base_entity lal_identifier, lal_defining_name;
+    ada_base_type_decl_f_name(lal_element, &lal_defining_name);
+    ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+    std::string ident = getFullName(&lal_identifier);
 
     //Get the discriminants
-    ada_base_entity             lal_discr;
-    ada_type_decl_f_discriminants(lal_element, &lal_discr);
-    ada_base_entity*            second_discr = secondaryDiscriminants(lal_element, &lal_discr, ctx);
+    ada_base_entity         lal_discr;
+    if(kind == ada_incomplete_type_decl || kind == ada_incomplete_tagged_type_decl){
+      ada_incomplete_type_decl_f_discriminants(lal_element, &lal_discr);
+    } else {
+      ada_type_decl_f_discriminants(lal_element, &lal_discr);
+    }
+    ada_base_entity*        second_discr = secondaryDiscriminants(lal_element, &lal_discr, ctx);
 
     //Get the type def
     ada_base_entity lal_type_def;
@@ -893,8 +898,7 @@ namespace {
     SgScopeStatement*       parentScope = &ctx.scope();
     SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDecl_opt(&lal_discr, second_discr, ctx);
 
-    if (discr)
-    {
+    if(discr) {
       parentScope = discr->get_discriminantScope();
     }
 
@@ -905,22 +909,21 @@ namespace {
     attachSourceLocation(sgdecl, lal_element, ctx);
     privatize(sgdecl, isPrivate);
     int hash = hash_node(lal_element);
+    int decl_hash = hash_node(&lal_defining_name);
     recordNode(libadalangTypes(), hash, sgdecl);
+    recordNode(libadalangTypes(), decl_hash, sgdecl);
 
-    if (!discr)
-    {
+    if(!discr) {
       ctx.appendStatement(sgdecl);
       assocdecl = &sgdecl;
-    }
-    else
-    {
+    } else {
       completeDiscriminatedDecl(hash, lal_element, *discr, sgdecl, isPrivate, ctx);
       assocdecl = discr;
     }
 
     //If this is a derived type, get the inherited elements
     //TODO Other lal_type_def_kinds may still inherit?
-    if(lal_type_def_kind == ada_derived_type_def){ 
+    if(!ada_node_is_null(&lal_type_def) && lal_type_def_kind == ada_derived_type_def){ 
       SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
 
       TypeData ty = getTypeFoundation(ident, &lal_type_def, ctx);
@@ -3032,7 +3035,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_null_subp_decl:             // 6.7
     case ada_subp_body:              // 6.3(2)
-    //case A_Procedure_Body_Declaration:             // 6.3(2)
       {
         logKind("ada_subp_body?", kind);
 
@@ -3993,7 +3995,47 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         break;
       }
-    case ada_type_decl:
+    case ada_incomplete_type_decl:           // 3.2.1(2):3.10(2)
+    case ada_incomplete_tagged_type_decl:     //  3.10.1(2)
+      {
+        logKind( kind == ada_incomplete_type_decl
+                        ? "ada_incomplete_type_decl"
+                        : "ada_incomplete_tagged_type_decl"
+               , kind
+               );
+
+        //Get the full definition of this type from later on, if it exists
+        ada_base_entity lal_full_decl;
+        ada_base_type_decl_p_full_view(lal_element, &lal_full_decl);
+
+        if(!ada_node_is_null(&lal_full_decl)){
+          // \todo handle pragmas in opaque types
+          assocdecl = &handleOpaqueTypes(lal_element, isPrivate, ctx);
+        }
+        else
+        {
+          // no definition is available, ... (e.g., in System)
+          //Get the name for this type
+          ada_base_entity lal_identifier, lal_defining_name;
+          ada_base_type_decl_f_name(lal_element, &lal_defining_name);
+          ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+
+          std::string             ident  = getFullName(&lal_identifier);
+          SgScopeStatement&       scope  = ctx.scope();
+          SgType&                 opaque = mkOpaqueType();
+          SgDeclarationStatement& sgnode = mkTypeDecl(ident, opaque, scope);
+          int                     hash   = hash_node(&lal_defining_name);
+
+          attachSourceLocation(sgnode, lal_element, ctx);
+          privatize(sgnode, isPrivate);
+          ctx.appendStatement(sgnode);
+          recordNode(libadalangTypes(), hash, sgnode);
+          assocdecl = &sgnode;
+        }
+
+        break;
+      }
+    case ada_type_decl:            //3.2.1(3)
       {
         logKind("ada_type_decl", kind);
         //Get the type definition
@@ -4169,6 +4211,22 @@ SgDeclarationStatement* typeDeclarationFromStandard(int hash1, int hash2){
   return nullptr;
 }
 
+void findBaseName(ada_base_entity* lal_element, ada_base_entity& lal_return_name){
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  lal_return_name = *lal_element;
+  if(kind == ada_attribute_ref){
+    //If we have an attribute ref, get the prefix
+    //The ada_attribute_ref should always be the top node of the tree, if it exists
+    ada_attribute_ref_f_prefix(&lal_return_name, &lal_return_name);
+    kind = ada_node_kind(&lal_return_name);
+  }
+  while(kind == ada_dotted_name){
+    //If we have a chain of dotted_names, iterate until we find a leaf suffix
+    ada_dotted_name_f_suffix(&lal_return_name, &lal_return_name);
+    kind = ada_node_kind(&lal_return_name);
+  }
+}
+
 [[noreturn]]
 bool useClauseFatalError(std::string name, AstContext ctx){
   logFatal() << "using unknown package/type: "
@@ -4182,18 +4240,9 @@ bool useClauseFatalError(std::string name, AstContext ctx){
 /// Creates a decl for a single package or type name in a use clause
 void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationStatement*>& m, AstContext ctx){ 
  //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
-  ada_base_entity lal_name = *lal_element;
-  ada_node_kind_enum kind = ada_node_kind(lal_element);
-  if(kind == ada_attribute_ref){
-    //If we've found an attribute ref, get the prefix
-    ada_attribute_ref_f_prefix(&lal_name, &lal_name);
-    kind = ada_node_kind(&lal_name);
-  }
-  while(kind == ada_dotted_name){
-    //If we have a chain of dotted_names, iterate until we find a leaf suffix
-    ada_dotted_name_f_suffix(&lal_name, &lal_name);
-    kind = ada_node_kind(&lal_name);
-  }
+  ada_base_entity lal_name;
+  findBaseName(lal_element, lal_name);
+
   SgDeclarationStatement*      used = nullptr;
   std::string             full_name = getFullName(lal_element); //TODO This might break for some ada_use_type_clauses
 
@@ -4253,7 +4302,9 @@ void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationState
 /// Creates an SgExpression node for a single name in a with clause
 SgExpression& createWithClause(ada_base_entity* lal_element, AstContext ctx){
   //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
-  ada_base_entity lal_name = *lal_element;
+  ada_base_entity lal_name;
+  findBaseName(lal_element, lal_name);
+
   ada_node_kind_enum kind = ada_node_kind(lal_element);
   while(kind == ada_dotted_name){
     ada_dotted_name_f_suffix(&lal_name, &lal_name);

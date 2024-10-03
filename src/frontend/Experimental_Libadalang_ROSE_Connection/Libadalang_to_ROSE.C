@@ -346,6 +346,8 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_subp_renaming_decl:
       case ada_generic_package_instantiation:
       case ada_generic_package_renaming_decl:
+      case ada_incomplete_type_decl:
+      case ada_incomplete_tagged_type_decl:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
@@ -393,6 +395,14 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_pragma_node:              // Asis.Elements
         {
           handlePragma(lal_element, nullptr, ctx);
+          break;
+        }
+
+      case ada_error_decl:              // If this node exists, the input code is malformed
+        {
+          //TODO Do we want the frontend to break on malformed code? This could just be a warning.
+          logFatal() << "ada_error_decl encountered!\n";
+          sg::report_error("ada_error_decl encountered!");
           break;
         }
 
