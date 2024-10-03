@@ -3,6 +3,7 @@
 set -e
 arg0="${0##*/}"
 dir0="${0%/*}"
+orig_command=("$@")
 
 # Defaults
 timeout=15m
@@ -450,6 +451,9 @@ if [ -n "$error" ]; then
 	    fi
 	) >>"$output_file"
     fi
+
+    # Save original test command
+    echo "ORIGINAL TEST COMMAND: $0" "${orig_command[@]}" >>$output_file
 fi    
 
 # Show output?
