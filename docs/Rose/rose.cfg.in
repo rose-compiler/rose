@@ -718,6 +718,8 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/SageIII/docs \
                          @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
+                         @top_srcdir@/src/frontend/SageIII/sageInterface/sageInterface.C \
+                         @top_srcdir@/src/frontend/SageIII/sageInterface/sageBuilder.C \
                          @top_srcdir@/src/frontend/SageIII/astFromString \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
@@ -1521,7 +1523,7 @@ MAN_LINKS              = NO
 # generate an XML file that captures the structure of
 # the code including all documentation.
 
-GENERATE_XML           = NO
+GENERATE_XML           = YES
 
 # The XML_OUTPUT tag is used to specify where the XML pages will be put.
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be
