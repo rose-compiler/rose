@@ -439,7 +439,6 @@ class ROSE_DLL_API CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
     bool showInstructionAddresses_;                     // if instructions are shown, show addresses too?
-    bool showInstructionStackDeltas_;                   // show stack deltas for instructions
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
     bool strikeNoopSequences_;                          // render no-op sequences in a different style
@@ -500,17 +499,6 @@ public:
      * @{ */
     bool showInstructionAddresses() const { return showInstructionAddresses_; }
     void showInstructionAddresses(bool b) { showInstructionAddresses_ = b; }
-    /** @} */
-
-    /** Property: show instruction stack deltas.
-     *
-     *  When true and basic block instructions are shown (@ref showInstructions), then each instruction will be preceeded by a
-     *  two-digit (or more) hexadecimal stack offset. The stack delta appears after the address (if any).  This property is
-     *  expected to be honored by the @ref vertexLabel virtual method.
-     *
-     * @{ */
-    bool showInstructionStackDeltas() const { return showInstructionStackDeltas_; }
-    void showInstructionStackDeltas(bool b) { showInstructionStackDeltas_ = b; }
     /** @} */
 
     /** Property: strike no-op sequences.
@@ -742,8 +730,7 @@ public:
     /** Detailed label for CFG vertex.
      *
      *  The detailed label can be a multi-line value and must include delimiting double quotes or angle brackets with proper
-     *  escaping of the content.  This method should honor the @ref showInstructionAddresses and @ref
-     *  showInstructionStackDeltas properties.
+     *  escaping of the content.  This method should honor the @ref showInstructionAddresses property.
      *
      *  @{ */
     virtual std::string vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator&) const;

@@ -32,7 +32,6 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 // These are initialized by calling Rose::initialize
 Sawyer::Message::Facility mlog;
-Sawyer::Attribute::Id ATTR_STACK_DELTA = Sawyer::Attribute::INVALID_ID;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Namespace-level functions
@@ -46,33 +45,6 @@ initDiagnostics() {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::StackDelta");
         mlog.comment("analyzing stack pointer behavior");
-    }
-}
-
-// Called from Rose::initialize
-void
-initNamespace() {
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, []() {
-        ATTR_STACK_DELTA = Sawyer::Attribute::declare("stack pointer w.r.t. beginning of function (i.e., stack delta)");
-    });
-}
-
-Sawyer::Optional<int64_t>
-getStackDelta(const SgAsmInstruction *insn) {
-    ASSERT_not_null(insn);
-    ASSERT_require2(ATTR_STACK_DELTA != Sawyer::Attribute::INVALID_ID, "ROSE library has not been initialized");
-    return insn->attributes().getAttributeMaybe<int64_t>(ATTR_STACK_DELTA);
-}
-
-void
-setStackDelta(SgAsmInstruction *insn, const Sawyer::Optional<int64_t> &delta) {
-    ASSERT_not_null(insn);
-    ASSERT_require2(ATTR_STACK_DELTA != Sawyer::Attribute::INVALID_ID, "ROSE library has not been initialized");
-    if (delta) {
-        insn->attributes().setAttribute<int64_t>(ATTR_STACK_DELTA, *delta);
-    } else {
-        insn->attributes().eraseAttribute(ATTR_STACK_DELTA);
     }
 }
 
@@ -396,13 +368,8 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
             BaseSemantics::SValue::Ptr sp0 = functionStackPtrs_.first;
             if (sp0 && ops) {
                 for (SgAsmBlock *block: AST::Traversal::findDescendantsTyped<SgAsmBlock>(function)) {
-                    if (BaseSemantics::SValue::Ptr blkAbs = basicBlockStackPointers(block->get_address()).second) {
+                    if (BaseSemantics::SValue::Ptr blkAbs = basicBlockStackPointers(block->get_address()).second)
                         block->set_stackDeltaOut(toInt(ops->subtract(blkAbs, sp0)).orElse(SgAsmInstruction::INVALID_STACK_DELTA));
-                        for (SgAsmInstruction *insn: AST::Traversal::findDescendantsTyped<SgAsmInstruction>(block)) {
-                            if (BaseSemantics::SValue::Ptr insnAbs = instructionStackPointers(insn).first)
-                                insn->stackDeltaIn(toInt(ops->subtract(insnAbs, sp0)));
-                        }
-                    }
                 }
             }
         }
@@ -505,8 +472,6 @@ Analysis::clearAstStackDeltas(SgNode *ast) {
             func->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
         } else if (SgAsmBlock *blk = isSgAsmBlock(node)) {
             blk->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-        } else if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
-            insn->stackDeltaIn(Sawyer::Nothing());
         }
     });
 }

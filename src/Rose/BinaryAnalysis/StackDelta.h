@@ -41,16 +41,6 @@ extern Sawyer::Message::Facility mlog;
  *  This is called from @ref Rose::initialize, and must be called before any other functions in this class are called. */
 void initNamespace();
 
-/** Get or set the stack delta for an instruction.
- *
- *  The instruction must not be a null pointer. The instruction's stack delta is removed from the attribute storage when set to
- *  an empty value.
- *
- * @{ */
-Sawyer::Optional<int64_t> getStackDelta(const SgAsmInstruction*);
-void setStackDelta(SgAsmInstruction*, const Sawyer::Optional<int64_t>&);
-/** @} */
-
 /** Stack delta anzalyzer.
  *
  *  Local variables within a function are generally found at constant offsets from a stack frame located on the stack. Some

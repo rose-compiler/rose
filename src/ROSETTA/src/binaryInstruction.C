@@ -43982,39 +43982,6 @@ public:
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
 
-    /** Property: Stack pointer at start of instruction relative to start of instruction's function.
-     *
-     *  If the stack delta was not computed, or could not be computed, or is a non-numeric value then nothing is returned.
-     *
-     * @{ */
-    Sawyer::Optional<int64_t> stackDeltaIn() const;
-    void stackDeltaIn(const Sawyer::Optional<int64_t>&);
-    /** @} */
-
-    /** Property: Frame pointer w.r.t. stack pointer before the instruction executes. If either the frame pointer or stack pointer
-     *  is unknown or if the difference is not concrete, then nothing is returned.
-     *
-     *  Example: The stack delta is the top-of-stack address minus the top-of-stack address at the beginning of the function. For
-     *  stacks that grow down, the stack delta will usually be negative inside the function.  The frame delta is the address of the
-     *  call frame (usually stored in a "frame pointer" register) minus the top-of-stack address. The values shown here (and
-     *  returned by thse functions) represent the state of these registers before the instruction executes.
-     *
-     * @code
-     *  i386_function:             ; stack delta  ; frame delta ;
-     *      push ebp               ;           0  ;    unknown  ;
-     *      mov ebp, esp           ;          -4  ;    unknown  ;
-     *      push ebx               ;          -4  ;          0  ;
-     *      nop                    ;          -8  ;         +4  ;
-     * @endcode
-     *
-     *  The value of the frame pointer can be obtained by adding the function's initial top-of-stack address, the stack delta, and
-     *  the frame delta.
-     *
-     *  @{ */
-    Sawyer::Optional<int64_t> frameDeltaIn() const;
-    void frameDeltaIn(const Sawyer::Optional<int64_t>&);
-    /** @} */
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44022,10 +43989,6 @@ public:
     // [Robb Matzke 2023-11-07]: deprecated
     const SgUnsignedCharList& get_raw_bytes() const ROSE_DEPRECATED("use get_rawBytes");
     void set_raw_bytes(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_rawBytes");
-
-    // [Robb Matzke 2024-10-01]: deprecated
-    int64_t get_stackDeltaIn() const ROSE_DEPRECATED("use stackDeltaIn");
-    void set_stackDeltaIn(int64_t) ROSE_DEPRECATED("use stackDeltaIn");
 public:
     /** Destructor. */
     virtual ~SgAsmInstruction();

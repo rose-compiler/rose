@@ -917,17 +917,6 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
     ast->set_stackDeltaOut(sdAnalysis.toInt(sdAnalysis.basicBlockOutputStackDeltaWrtFunction(bb->address()))
                            .orElse(SgAsmInstruction::INVALID_STACK_DELTA));
 
-    // Stack delta analysis results for each instruction in the context of the owning function.  Instructions are shared in the
-    // AST if their blocks are shared in the partitioner.  In the AST we share instructions instead of blocks because this
-    // makes it easier to attach analysis results to blocks without worrying about whether they're shared -- it's less likely
-    // that binary analysis results are attached to instructions.  The problem is that an instruction can have multiple stack
-    // deltas based on which function was analyzed. We must choose one function's stack deltas and we must make sure they're
-    // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
-    if (sdAnalysis.hasResults()) {
-        for (SgAsmInstruction *insn: insns)
-            insn->stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
-    }
-
     // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
     // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
     // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not

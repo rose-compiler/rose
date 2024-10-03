@@ -146,7 +146,7 @@ unsigned long CfgEmitter::versionDate_ = 0;
 
 CfgEmitter::CfgEmitter(const Partitioner::ConstPtr &partitioner)
     : BaseEmitter<ControlFlowGraph>(partitioner->cfg()), partitioner_(partitioner), useFunctionSubgraphs_(true),
-      showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
+      showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true),
       showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
@@ -157,7 +157,7 @@ CfgEmitter::CfgEmitter(const Partitioner::ConstPtr &partitioner)
 
 CfgEmitter::CfgEmitter(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &g)
     : BaseEmitter<ControlFlowGraph>(g), partitioner_(partitioner), useFunctionSubgraphs_(true),
-      showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
+      showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true),
       showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
@@ -696,22 +696,6 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
 
             if (showInstructionAddresses_)
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
-
-            if (showInstructionStackDeltas_) {
-                if (const auto delta = insn->stackDeltaIn()) {
-                    // Stack delta as a two-character hexadecimal, but show a '+' sign when it's positive and nothing when it's
-                    // negative (negative is the usual case for most architectures).
-                    char buf[64];
-                    if (*delta <= 0) {
-                        snprintf(buf, sizeof(buf), "%02" PRIx64 " ", -*delta);
-                    } else {
-                        snprintf(buf, sizeof(buf), "+%" PRIx64 " ", *delta);
-                    }
-                    s += buf;
-                } else {
-                    s += " ?? ";
-                }
-            }
 
             if (isPartOfNoopSequence[i]) {
                 if (versionDate_ >= 20130915) {

@@ -598,14 +598,8 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
 
 bool
 AsmUnparser::InsnStackDelta::operator()(bool enabled, const InsnArgs &args) {
-    static const int deltaWidth = 2;                    // min column width for delta digits
-    if (enabled) {
-        if (const auto delta = args.insn->stackDeltaIn()) {
-            mfprintf(args.output)("<sp%+-*" PRId64 ">", deltaWidth+1, *delta);
-        } else {
-            args.output <<std::string(deltaWidth+5, ' ');
-        }
-    }
+    // Stack deltas are no longer stored in the SgAsmInstruction, and this unparser shouldn't be used anyway. Use the one in
+    // Rose::BinaryAnalysis::Unparser instead.
     return enabled;
 }
 
