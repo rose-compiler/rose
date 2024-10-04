@@ -463,6 +463,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "MAXFLOATPRECISION")) {
      expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
    }
+
+   // MAXINT, MAXINTSIZE
+
    else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
      // ItemSize is required
      Sawyer::Optional<SgExpression*> size;
@@ -477,6 +480,10 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      }
      else return ATfalse;
    }
+   else if (ATmatch(term, "MAXINTSIZE")) {
+     expr = SageBuilder::buildVarRefExp("MAXINTSIZE", scope);
+   }
+
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
 
