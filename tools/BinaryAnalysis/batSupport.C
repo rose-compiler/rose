@@ -115,16 +115,16 @@ void
 PlainTextFormatter::frameRelative(std::ostream &out, const Variables::StackVariable &var, const Variables::OffsetInterval &i,
                                   FeasiblePath::IoMode ioMode) {
     std::string direction = boost::to_lower_copy(stringify::Rose::BinaryAnalysis::FeasiblePath::IoMode(ioMode, ""));
-    if (i.least() < var.frameOffset()) {
-        size_t distance = var.frameOffset() - i.least();
+    if (i.least() < var.stackOffset()) {
+        size_t distance = var.stackOffset() - i.least();
         out <<"  " <<direction <<" starts " <<Rose::StringUtility::plural(distance, "bytes") <<" before the variable\n";
     }
 
-    // We have to be careful because the var.maxSizeBytes() is unsigned and can be very large, but the frame offsets are
+    // We have to be careful because the var.maxSizeBytes() is unsigned and can be very large, but the stack offsets are
     // signed and have only half the possible magnitude. We'll do the arithmetic in software with signed 65-bit types.
     // The following code is equivalent to (modulo the types and hexadecimal output):
-    //    if (i.greatest() > var.frameOffset() + var.maxSizeBytes()) {
-    //        size_t distance = i.greatest() - (var.frameOffset() + var.maxSizeBytes()) + 1;
+    //    if (i.greatest() > var.stackOffset() + var.maxSizeBytes()) {
+    //        size_t distance = i.greatest() - (var.stackOffset() + var.maxSizeBytes()) + 1;
     //        out <<" " <<direction <<" ends " <<Rose::StringUtility::plural(distance, "bytes") <<" after the variable\n";
     //    }
     typedef Sawyer::Container::BitVector BV;
@@ -134,7 +134,7 @@ PlainTextFormatter::frameRelative(std::ostream &out, const Variables::StackVaria
     BV maxSizeBytes(65);
     maxSizeBytes.fromInteger(var.maxSizeBytes());
     BV endOffset(65);
-    endOffset.fromInteger((uint64_t)var.frameOffset());
+    endOffset.fromInteger((uint64_t)var.stackOffset());
     endOffset.signExtend(BV::BitRange::hull(0, 63), BV::BitRange::hull(0, 64));
     endOffset.add(maxSizeBytes);
     if (greatestAccess.compareSigned(endOffset) > 0) {
@@ -352,16 +352,16 @@ void
 YamlFormatter::frameRelative(std::ostream &out, const Variables::StackVariable &var, const Variables::OffsetInterval &i,
                                   FeasiblePath::IoMode ioMode) {
     std::string direction = boost::to_lower_copy(stringify::Rose::BinaryAnalysis::FeasiblePath::IoMode(ioMode, ""));
-    if (i.least() < var.frameOffset()) {
-        size_t distance = var.frameOffset() - i.least();
+    if (i.least() < var.stackOffset()) {
+        size_t distance = var.stackOffset() - i.least();
         writeln(out, "  before-variable:", Rose::StringUtility::plural(distance, "bytes"));
     }
 
-    // We have to be careful because the var.maxSizeBytes() is unsigned and can be very large, but the frame offsets are
+    // We have to be careful because the var.maxSizeBytes() is unsigned and can be very large, but the stack offsets are
     // signed and have only half the possible magnitude. We'll do the arithmetic in software with signed 65-bit types.
     // The following code is equivalent to (modulo the types and hexadecimal output):
-    //    if (i.greatest() > var.frameOffset() + var.maxSizeBytes()) {
-    //        size_t distance = i.greatest() - (var.frameOffset() + var.maxSizeBytes()) + 1;
+    //    if (i.greatest() > var.stackOffset() + var.maxSizeBytes()) {
+    //        size_t distance = i.greatest() - (var.stackOffset() + var.maxSizeBytes()) + 1;
     //        out <<" " <<direction <<" ends " <<Rose::StringUtility::plural(distance, "bytes") <<" after the variable\n";
     //    }
     typedef Sawyer::Container::BitVector BV;
@@ -371,7 +371,7 @@ YamlFormatter::frameRelative(std::ostream &out, const Variables::StackVariable &
     BV maxSizeBytes(65);
     maxSizeBytes.fromInteger(var.maxSizeBytes());
     BV endOffset(65);
-    endOffset.fromInteger((uint64_t)var.frameOffset());
+    endOffset.fromInteger((uint64_t)var.stackOffset());
     endOffset.signExtend(BV::BitRange::hull(0, 63), BV::BitRange::hull(0, 64));
     endOffset.add(maxSizeBytes);
     if (greatestAccess.compareSigned(endOffset) > 0) {

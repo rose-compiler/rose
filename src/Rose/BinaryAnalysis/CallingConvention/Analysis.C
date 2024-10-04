@@ -374,7 +374,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
         if (!inputStackParameters_.isEmpty()) {
             Variables::StackVariables vars = inputStackParameters();
             for (const Variables::StackVariable &var: vars.values())
-                out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
+                out <<" stack[" <<var.stackOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
         separator = multiLine ? "\n" : ", ";
@@ -389,7 +389,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
         if (!outputStackParameters_.isEmpty()) {
             Variables::StackVariables vars = outputStackParameters();
             for (const Variables::StackVariable &var: vars.values())
-                out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
+                out <<" stack[" <<var.stackOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
         separator = multiLine ? "\n" : ", ";
@@ -477,9 +477,9 @@ Analysis::match(const Definition::Ptr &cc) const {
                 // use.
                 int64_t normalizedEnd = 0; // one-past first-pushed argument normalized for downward-growing stack
                 for (const Variables::StackVariable &var: inputStackParameters_.values())
-                    normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
+                    normalizedEnd = std::max(normalizedEnd, (int64_t)(var.stackOffset() * normalization + var.maxSizeBytes()));
                 for (const Variables::StackVariable &var: outputStackParameters_.values())
-                    normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
+                    normalizedEnd = std::max(normalizedEnd, (int64_t)(var.stackOffset() * normalization + var.maxSizeBytes()));
                 if (normalizedStackDelta < normalizedEnd) {
                     SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
                     return false;

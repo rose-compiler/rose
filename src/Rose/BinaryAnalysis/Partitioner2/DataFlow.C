@@ -475,7 +475,7 @@ findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
     Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
     Variables::StackVariables retval;
     for (const Variables::StackVariable &var: vars.values()) {
-        if (var.frameOffset() < 0)
+        if (var.stackOffset() < 0)
             retval.insert(var.interval(), var);
     }
     return retval;
@@ -487,7 +487,7 @@ findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOp
     Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
     Variables::StackVariables retval;
     for (const Variables::StackVariable &var: vars.values()) {
-        if (var.frameOffset() >= 0)
+        if (var.stackOffset() >= 0)
             retval.insert(var.interval(), var);
     }
     return retval;

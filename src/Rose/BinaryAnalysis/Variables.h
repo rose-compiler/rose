@@ -224,7 +224,7 @@ public:
      *  This is the lowest address for a region of variables along with information about what instructions were used to define
      *  this boundary and what purpose the addresses immediately above this boundary serve. */
     struct Boundary {
-        int64_t frameOffset = 0;                        /**< Address of boundary with respect to frame pointer. */
+        int64_t stackOffset = 0;                        /**< Offset from function's initial stack pointer. */
         std::vector<InstructionAccess> definingInsns;   /**< Instructions that define this boundary. */
         Purpose purpose = Purpose::UNKNOWN;             /**< Purpose of addresses above this boundary. */
     };
@@ -233,8 +233,8 @@ public:
     using Boundaries = std::vector<Boundary>;
 
 private:
-    Partitioner2::FunctionPtr function_;            // function in which local variable exists
-    int64_t frameOffset_ = 0;                       // offset where variable is located in the function's stack frame
+    Partitioner2::FunctionPtr function_;                // Function in which local variable exists
+    int64_t stackOffset_ = 0;                           // Offset w.r.t. function's initial stack pointer
     Purpose purpose_ = Purpose::UNKNOWN;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -245,7 +245,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseVariable);
         s & BOOST_SERIALIZATION_NVP(function_);
-        s & BOOST_SERIALIZATION_NVP(frameOffset_);
+        s & BOOST_SERIALIZATION_NVP(stackOffset_);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(purpose_);
     }
@@ -258,7 +258,7 @@ public:
     StackVariable();
 
     /** Construct a variable descriptor. */
-    StackVariable(const Partitioner2::FunctionPtr&, int64_t frameOffset, rose_addr_t maxSizeBytes, Purpose,
+    StackVariable(const Partitioner2::FunctionPtr&, int64_t stackOffset, rose_addr_t maxSizeBytes, Purpose,
                   const std::vector<InstructionAccess> &definingInstructions = std::vector<InstructionAccess>(),
                   const std::string &name = "");
 
@@ -274,15 +274,14 @@ public:
     void function(const Partitioner2::FunctionPtr&);
     /** @} */
 
-    /** Property: Frame offset.
+    /** Property: Stack offset.
      *
-     *  This is the address of the variable relative to the function's start-of-frame. For multi-byte variables, this is the
-     *  lowest address of the variable.  Depending on the architecture, the start-of-frame could be higher or lower than the
-     *  variable, thus the return value is signed.
+     *  This is the address of the variable relative to the function's initial stack pointer. For multi-byte variables, this is the
+     *  lowest address of the variable. Depending on the architecture, this offset might be positive or negative.
      *
      * @{ */
-    int64_t frameOffset() const;
-    void frameOffset(int64_t offset);
+    int64_t stackOffset() const;
+    void stackOffset(int64_t offset);
     /** @} */
 
     /** Property: Purpose.
@@ -301,7 +300,7 @@ public:
 
     /** Compare two local variables.
      *
-     *  Local variables are equal if and only if they belong to the same function, have the same frame offset, and have the
+     *  Local variables are equal if and only if they belong to the same function, have the same stack offset, and have the
      *  same maximum size or both are default constructed.
      *
      * @{ */
@@ -317,8 +316,8 @@ public:
      *  The boundaries are assumed to be unsorted, and if a new boundary is inserted it is inserted at the end of the list.
      *
      * @{ */
-    static Boundary& insertBoundary(Boundaries& /*in,out*/, int64_t frameOffset, const InstructionAccess&);
-    static Boundary& insertBoundaryImplied(Boundaries&/*in,out*/, int64_t frameOffset);
+    static Boundary& insertBoundary(Boundaries& /*in,out*/, int64_t stackOffset, const InstructionAccess&);
+    static Boundary& insertBoundaryImplied(Boundaries&/*in,out*/, int64_t stackOffset);
     /** @} */
 
     /** Printing local variable.
@@ -347,7 +346,7 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&);
 };
 
-/** Collection of local variables organized by frame offsets. */
+/** Collection of local variables organized by stack offsets. */
 using StackVariables = Sawyer::Container::IntervalMap<OffsetInterval, StackVariable>;
 
 /** Print info about multiple local variables.
@@ -509,9 +508,8 @@ public:
     };
 
     Direction growthDirection = GROWS_DOWN;             /**< Direction that the stack grows when pushing a new frame. */
-    RegisterDescriptor framePointerRegister;            /**< Optional descriptor for register pointing to latest frame. */
-    Sawyer::Optional<int64_t> maxOffset;                /**< Maximum frame offset w.r.t. frame pointer. */
-    Sawyer::Optional<int64_t> minOffset;                /**< Minimum frame offset w.r.t. frame pointer. */
+    Sawyer::Optional<int64_t> maxOffset;                /**< Maximum frame offset w.r.t. function's initial stack pointer. */
+    Sawyer::Optional<int64_t> minOffset;                /**< Minimum frame offset w.r.t. function's initial stack pointer. */
     Sawyer::Optional<uint64_t> size;                    /**< Size of the frame in bytes if known. */
     std::string rule;                                   /**< Informal rule name used to detect frame characteristics. */
 };
@@ -617,17 +615,6 @@ public:
     void initializeFrameBoundaries(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                                    StackVariable::Boundaries &boundaries /*in,out*/);
 
-#if 0 // [Robb Matzke 2021-10-27]
-    /** Find frame location for address.
-     *
-     *  Given a symbolic address and size in bytes (presumabely from a memory read or write), calculate the part of the stack
-     *  frame that's referenced, if any.  Returns the part of the frame that's referenced, or an empty interval if the address
-     *  is outside the frame. */
-    OffsetInterval referencedFrameArea(const Partitioner2::Partitioner&,
-                                       const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
-                                       const SymbolicExpression::Ptr &address, size_t nBytes);
-#endif
-
     /** Find stack variable addresses.
      *
      *  Given an instruction, look for operand subexpressions that reference memory based from a stack frame pointer, such as
@@ -694,15 +681,6 @@ public:
      *
      *  Given an cell-based symbolic memory state, return all constants that appear in the cell addresses. */
     std::set<rose_addr_t> findAddressConstants(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
-
-#if 0 // [Robb Matzke 2021-10-27]
-    /** Return symbolic address of stack variable.
-     *
-     *  Given a stack variable, return the symbolic address where the variable is located. */
-    InstructionSemantics::BaseSemantics::SValuePtr
-    symbolicAddress(const Partitioner2::Partitioner&, const StackVariable&,
-                    const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
-#endif
 
     /** Remove boundaries that are outside a stack frame.
      *

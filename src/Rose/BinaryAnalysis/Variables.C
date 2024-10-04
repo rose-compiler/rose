@@ -270,10 +270,10 @@ BaseVariable::insertAccess(const Address address, const AccessFlags access) {
 
 StackVariable::StackVariable() {}
 
-StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t frameOffset, rose_addr_t maxSizeBytes,
+StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t stackOffset, rose_addr_t maxSizeBytes,
                              Purpose purpose, const std::vector<InstructionAccess> &definingInstructionVas,
                              const std::string &name)
-    : BaseVariable(maxSizeBytes, definingInstructionVas, name), function_(function), frameOffset_(frameOffset),
+    : BaseVariable(maxSizeBytes, definingInstructionVas, name), function_(function), stackOffset_(stackOffset),
       purpose_(purpose) {}
 
 StackVariable::StackVariable(const StackVariable&) = default;
@@ -291,13 +291,13 @@ StackVariable::function(const P2::Function::Ptr &f) {
 }
 
 int64_t
-StackVariable::frameOffset() const {
-    return frameOffset_;
+StackVariable::stackOffset() const {
+    return stackOffset_;
 }
 
 void
-StackVariable::frameOffset(int64_t offset) {
-    frameOffset_ = offset;
+StackVariable::stackOffset(int64_t offset) {
+    stackOffset_ = offset;
 }
 
 StackVariable::Purpose
@@ -312,10 +312,10 @@ StackVariable::purpose(Purpose p) {
 
 const std::string&
 StackVariable::setDefaultName() {
-    int64_t offset = frameOffset();
+    int64_t offset = stackOffset();
     std::string s;
 
-    // Depending on the architecture, local variables could be at negative or positive frame offsets, and arguments stored
+    // Depending on the architecture, local variables could be at negative or positive stack offsets, and arguments stored
     // on the stack are probably have the other sign. We'd like to be able to distinguish the two with different names.
     if (offset < 0)
         offset = -offset;
@@ -335,8 +335,8 @@ StackVariable::setDefaultName() {
         }
     }
 
-    // Negative frame offsets are more common, so add "y" to the uncommon cases.
-    if (frameOffset() >= 0)
+    // Negative stack offsets are more common, so add "y" to the uncommon cases.
+    if (stackOffset() >= 0)
         s += "y";
 
     name(s);
@@ -349,7 +349,7 @@ StackVariable::operator==(const StackVariable &other) const {
         return function_ == other.function_;
     } else {
         return function_->address() == other.function_->address() &&
-            frameOffset() == other.frameOffset() &&
+            stackOffset() == other.stackOffset() &&
             maxSizeBytes() == other.maxSizeBytes();
     }
 }
@@ -361,10 +361,10 @@ StackVariable::operator!=(const StackVariable &other) const {
 
 OffsetInterval
 StackVariable::interval() const {
-    // We need to watch for overflows.  The return type, OffsetInterval, has int64_t least and greatest values. The frame
+    // We need to watch for overflows.  The return type, OffsetInterval, has int64_t least and greatest values. The stack
     // offset is also int64_t. The maximum size in bytes however is uint64_t (i.e., rose_addr_t).  We may need to reduce the
     // maximum size in order to fit it into the interval return value.
-    int64_t least = frameOffset_;
+    int64_t least = stackOffset_;
     int64_t maxSizeSigned = maxSizeBytes() > boost::numeric_cast<uint64_t>(boost::integer_traits<int64_t>::const_max)
                             ? boost::integer_traits<int64_t>::const_max
                             : boost::numeric_cast<int64_t>(maxSizeBytes());
@@ -383,9 +383,9 @@ StackVariable::interval() const {
 
 // class method
 StackVariable::Boundary&
-StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t frameOffset, const InstructionAccess &definer) {
+StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t stackOffset, const InstructionAccess &definer) {
     for (size_t i = 0; i < boundaries.size(); ++i) {
-        if (boundaries[i].frameOffset == frameOffset) {
+        if (boundaries[i].stackOffset == stackOffset) {
 
             for (InstructionAccess &ia: boundaries[i].definingInsns) {
                 if (definer.address().isEqual(ia.address())) {
@@ -399,15 +399,15 @@ StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, const int64_t f
     }
 
     boundaries.push_back(Boundary());
-    boundaries.back().frameOffset = frameOffset;
+    boundaries.back().stackOffset = stackOffset;
     boundaries.back().definingInsns.push_back(definer);
     return boundaries.back();
 }
 
 // class method
 StackVariable::Boundary&
-StackVariable::insertBoundaryImplied(Boundaries &boundaries /*in,out*/, const int64_t frameOffset) {
-    return insertBoundary(boundaries, frameOffset, InstructionAccess(AccessFlags()));
+StackVariable::insertBoundaryImplied(Boundaries &boundaries /*in,out*/, const int64_t stackOffset) {
+    return insertBoundary(boundaries, stackOffset, InstructionAccess(AccessFlags()));
 }
 
 void
@@ -415,7 +415,7 @@ StackVariable::print(std::ostream &out) const {
     out <<"local-variable";
     if (!name().empty())
         out <<" \"" <<StringUtility::cEscape(name()) <<"\"";
-    out <<" (loc=fp" <<offsetStr(frameOffset()) <<", size=" <<sizeStr(maxSizeBytes())
+    out <<" (loc=sp" <<offsetStr(stackOffset()) <<", size=" <<sizeStr(maxSizeBytes())
         <<", type=" <<stringify::Rose::BinaryAnalysis::Variables::StackVariable::Purpose((int64_t)purpose_)
         <<")";
 }
@@ -568,7 +568,7 @@ typedef P2::Semantics::State State;
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public P2::Semantics::RiscOperators {
-    SymbolicExpression::Ptr base_;                      // value to subtract from each address to find stack variable offsets
+    SymbolicExpression::Ptr initialSp_;                 // value to subtract from each address to find stack variable offsets
     StackVariable::Boundaries &boundaries_;             // variable boundaries in the stack frame
 
 public:
@@ -592,15 +592,16 @@ public:
     static RiscOperators::Ptr instance(const StackFrame &frame, const P2::Partitioner::ConstPtr &partitioner,
                                      StackVariable::Boundaries &boundaries /*in,out*/) {
         ASSERT_not_null(partitioner);
-        RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
+        RegisterDictionary::Ptr regdict = partitioner->architecture()->registerDictionary();
         S2::BaseSemantics::SValue::Ptr protoval = SValue::instance();
         S2::BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
         S2::BaseSemantics::MemoryState::Ptr memory = P2::Semantics::MemoryMapState::instance(protoval, protoval);
         S2::BaseSemantics::State::Ptr state = State::instance(registers, memory);
         RiscOperators::Ptr retval = RiscOperators::Ptr(new RiscOperators(state, boundaries));
 
-        S2::BaseSemantics::SValue::Ptr dflt = protoval->undefined_(frame.framePointerRegister.nBits());
-        retval->base_ = SValue::promote(state->readRegister(frame.framePointerRegister, dflt, retval.get()))->get_expression();
+        const RegisterDescriptor SP = regdict->stackPointerRegister();
+        S2::BaseSemantics::SValue::Ptr dflt = protoval->undefined_(SP.nBits());
+        retval->initialSp_ = SValue::promote(state->readRegister(SP, dflt, retval.get()))->get_expression();
         return retval;
     }
 
@@ -649,6 +650,7 @@ public:
 
 private:
     void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal, const Access access) {
+#if 0 // [Robb Matzke 2024-10-03] FIXME
         ASSERT_not_null(base_);
         SymbolicExpression::Ptr addr = SValue::promote(addrSVal)->get_expression();
         Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -694,6 +696,7 @@ private:
                 }
             }
         }
+#endif
     }
 };
 
@@ -721,12 +724,11 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
     ASSERT_not_null(function);
     SgAsmInstruction *firstInsn = partitioner->instructionProvider()[function->address()];
     StackFrame frame;
-    frame.framePointerRegister = partitioner->instructionProvider().stackFrameRegister();
 
     if (isSgAsmX86Instruction(firstInsn)) {
         // See initializeFrameBoundaries for the visual representation of the stack frame
         frame.growthDirection = StackFrame::GROWS_DOWN;
-        frame.maxOffset = 2 * partitioner->instructionProvider().wordSize() - 1;
+        frame.maxOffset = -1;
         frame.rule = "x86: general";
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
@@ -736,7 +738,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
             // If this PowerPC function starts with "stwu r1, u32 [r1 - N]" then the frame size is N.
             static RegisterDescriptor REG_R1;
             if (REG_R1.isEmpty())
-                REG_R1 = partitioner->instructionProvider().registerDictionary()->findOrThrow("r1");
+                REG_R1 = partitioner->architecture()->registerDictionary()->findOrThrow("r1");
             SgAsmDirectRegisterExpression *firstRegister = isSgAsmDirectRegisterExpression(firstInsn->operand(0));
             SgAsmMemoryReferenceExpression *secondArg = isSgAsmMemoryReferenceExpression(firstInsn->operand(1));
             SgAsmBinaryAdd *memAddr = secondArg ? isSgAsmBinaryAdd(secondArg->get_address()) : NULL;
@@ -747,23 +749,22 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
                 firstRegister->get_descriptor() == REG_R1 && secondRegister->get_descriptor() == REG_R1) {
                 frame.size = -n;
 
-                // The frame pointer will point to the bottom (least address) of the frame.
-                frame.minOffset = 0;
-                frame.maxOffset = *frame.size - 1;
+                frame.maxOffset = -1;
+                frame.minOffset = -*frame.size;
                 frame.rule = "ppc: stwu r1, u32 [r1 - N]";
             }
 
         } else {
             frame.size = 8;
-            frame.minOffset = 0;
-            frame.maxOffset = 7;
+            frame.maxOffset = -1;
+            frame.minOffset = -8;
             frame.rule = "ppc: general";
         }
 
     } else if (auto m68k = isSgAsmM68kInstruction(firstInsn)) {
         frame.growthDirection = StackFrame::GROWS_DOWN;
 
-        const RegisterDescriptor REG_FP = partitioner->instructionProvider().stackFrameRegister();
+        const RegisterDescriptor REG_FP = partitioner->architecture()->registerDictionary()->stackFrameRegister();
 
         // If this m68k function starts with "link.w fp, -N" then the frame size is 4 + 4 + N since the caller has pushed the
         // return address and this function pushes the old frame pointer register r6 and then reserves N additional bytes in
@@ -776,14 +777,14 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
             isSgAsmIntegerValueExpression(m68k->operand(1))) {
             int64_t n = isSgAsmIntegerValueExpression(m68k->operand(1))->get_signedValue();
             ASSERT_require(n <= 0);
-            frame.size = 4 /* previously pushed return address */ + 4 /* pushed frame pointer */ + (-n);
-            frame.maxOffset = 7;                        // return address and frame pointer
-            frame.minOffset = n;                        // negative offset for space reserved by this insn
+            frame.size = 4 /*pushed frame pointer*/ + (-n);
+            frame.maxOffset = -1;
+            frame.minOffset = n;
             frame.rule = "m68k: link a6, N";
         } else {
             frame.size = 4 /* previously pushed return address */;
-            frame.maxOffset = 3;
-            frame.minOffset = 0;
+            frame.maxOffset = -1;
+            frame.minOffset = -4;
             frame.rule = "m68k: general";
         }
 
@@ -791,9 +792,9 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
     } else if (isSgAsmAarch32Instruction(firstInsn)) {
         frame.growthDirection = StackFrame::GROWS_DOWN;
 
-        const RegisterDescriptor REG_FP = partitioner->instructionProvider().registerDictionary()->findOrThrow("fp");
-        const RegisterDescriptor REG_SP = partitioner->instructionProvider().registerDictionary()->findOrThrow("sp");
-        const RegisterDescriptor REG_LR = partitioner->instructionProvider().registerDictionary()->findOrThrow("lr");
+        const RegisterDescriptor REG_FP = partitioner->architecture()->registerDictionary()->findOrThrow("fp");
+        const RegisterDescriptor REG_SP = partitioner->architecture()->registerDictionary()->findOrThrow("sp");
+        const RegisterDescriptor REG_LR = partitioner->architecture()->registerDictionary()->findOrThrow("lr");
 
         // If the first three instructions are:
         //   push fp, lr
@@ -831,7 +832,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
             // The frame pointer will point to one past the top (highest address) of the frame
             int64_t n = boost::numeric_cast<int64_t>(isSgAsmIntegerValueExpression(insns[2]->operand(2))->get_absoluteValue());
             frame.size = n + 8;
-            frame.maxOffset = 3;                        // lr_0 appears at the frame pointer, plus three bytes above the fp
+            frame.maxOffset = -1;
             frame.minOffset = -(n + 4);                 // entire frame except the lr_0 which appears on the stack at the fp
             // Note that the string "<saved-lr>" is important and used by initializeFrameBoundaries
             frame.rule = "aarch32: push fp, lr <saved-lr>; add fp, sp, 4; sub sp N";
@@ -867,13 +868,13 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
                    isSgAsmIntegerValueExpression(insns[2]->operand(2))) {
             int64_t n = boost::numeric_cast<int64_t>(isSgAsmIntegerValueExpression(insns[2]->operand(2))->get_absoluteValue());
             frame.size = n + 4;
-            frame.maxOffset = 3;
+            frame.maxOffset = -1;
             frame.minOffset = -(n + 4);
             frame.rule = "aarch32: str fp, u32 [sp (after sp -= 4)]; add fp, sp, 0; sub sp, sp N";
 
         } else {
             frame.size = 8;
-            frame.maxOffset = 3;
+            frame.maxOffset = -1;
             frame.minOffset = -4;
             frame.rule = "aarch32: general";
         }
@@ -889,7 +890,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
     ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
     SgAsmInstruction *firstInsn = partitioner->instructionProvider()[function->address()];
-    const size_t wordNBytes = partitioner->instructionProvider().wordSize() / 8;
+    const size_t wordNBytes = partitioner->architecture()->bytesPerWord();
 
     if (isSgAsmX86Instruction(firstInsn)) {
         //
@@ -897,17 +898,17 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                    :   (part of parent frame)  :
         //                    :                           :
         //                (2) | callee's actual arguments |  variable size, 1st arg at lowest address
-        //                    +---(current frame----------+
-        //                (1) | return address            |  1 word
+        //                    +---(current frame)---------+
+        //                (1) | return address            |  1 word   <--- initial SP points here
         // current_frame: (0) | addr of parent frame      |  1 word
         //                    | callee saved registers    |  optional, variable size, multiple of word size
         //                    :                           :
         //                    :                           :
-        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
-        parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
-
-        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, wordNBytes);
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
         returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
+
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, -wordNBytes);
+        parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
         // For powerpc, the stack is organized like this:
@@ -915,7 +916,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                    :   (part of parent frame)  :
         //                    :                           :
         //                (9) | LR saved                  |  4 bytes
-        // parent_frame:  (8) | addr of grandparent frame |  4 bytes
+        // parent_frame:  (8) | addr of grandparent frame |  4 bytes  <--- initial SP points here
         //                    +---(current frame)---------+
         //                (7) | saved FP register area    |  optional, variable size
         //                (6) | saved GP register area    |  optional, multiple of 4 bytes
@@ -931,6 +932,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         // other and from the non-variables around them. However, we don't know where these boundaries are because everything
         // is variable size. The best we can do is insert a boundary above line (1).
         if (frame.size) {
+#if 0 // FIXME[Robb Matzke 2024-10-03]
             StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
@@ -939,6 +941,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
 
             // Everything else is above this boundary
             StackVariable::insertBoundaryImplied(boundaries, 2*wordNBytes);
+#endif
         }
 
     } else if (isSgAsmM68kInstruction(firstInsn)) {
@@ -951,6 +954,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                (1) | return address            | 4 bytes
         // current_frame: (0) | addr of parent frame      | 4 bytes
         //                    :                           :
+#if 0 // FIXME[Robb Matzke 2024-10-03]
         StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
         parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
@@ -961,6 +965,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
             StackVariable::Boundary &bottom = StackVariable::insertBoundaryImplied(boundaries, *frame.minOffset);
             bottom.purpose = StackVariable::Purpose::UNKNOWN;
         }
+#endif
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
     } else if (isSgAsmAarch32Instruction(firstInsn)) {
@@ -974,6 +979,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //               (-1) | saved link register       | optional, 4 bytes
         //               (-2) | local variables           | variable size
         //                    +---------------------------+
+#if 0 // FIXME[Robb Matzke 2024-10-03]
         if (boost::contains(frame.rule, "<saved-lr>")) {
             // The "push fp, lr" pushes 8 bytes calculated from the stack pointer, so we don't want this eight
             // bytes to cross a frame variable boundary.
@@ -984,58 +990,28 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
         }
 #endif
-    }
-}
-
-#if 0 // [Robb Matzke 2021-10-27]
-OffsetInterval
-VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner, const S2::BaseSemantics::RiscOperators::Ptr &ops,
-                                    const SymbolicExpression::Ptr &address, size_t nBytes) {
-    // Return an empty interval if any information is missing
-    ASSERT_not_null(ops);
-    ASSERT_not_null(address);
-    static const OffsetInterval nothing;
-    if (0 == nBytes)
-        return nothing;
-    const RegisterDescriptor FRAME_PTR = frameOrStackPointer(partitioner);
-    if (FRAME_PTR.isEmpty())
-        return nothing;
-
-    // Calculate the address as an offset from the frame pointer.
-    S2::BaseSemantics::SValue::Ptr framePtrSval = ops->peekRegister(FRAME_PTR, ops->undefined_(FRAME_PTR.nBits()));
-    SymbolicExpression::Ptr framePtr = S2::SymbolicSemantics::SValue::promote(framePtrSval)->get_expression();
-    SymbolicExpression::Ptr diff = SymbolicExpression::makeAdd(SymbolicExpression::makeNegate(framePtr), address);
-
-    // The returned interval is in terms of the frame pointer offset and the size of the I/O operation.
-    Variables::OffsetInterval where;
-    if (Sawyer::Optional<int64_t> offset = diff->toSigned()) {
-        where = Variables::OffsetInterval::baseSize(*offset, nBytes);
-    } else if (diff->getOperator() == SymbolicExpression::OP_ADD) {
-        for (SymbolicExpression::Ptr child: diff->children()) {
-            if ((offset = child->toSigned())) {
-                where = Variables::OffsetInterval::baseSize(*offset, nBytes);
-                break;
-            }
-        }
-    }
-    return where;
-}
 #endif
+    }
+}
 
 std::set<int64_t>
 VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
     ASSERT_not_null(partitioner);
+#if 1                                                   // FIXME[Robb Matzke 2024-10-03]
+    ASSERT_not_implemented("[Robb Matzke 2024-10-03]");
+#else
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
     // Look for ARM AArch32 "sub DEST_REG, fp, N" where DEST_REG is not the stack pointer register
-    const RegisterDescriptor REG_SP = partitioner->instructionProvider().stackPointerRegister();
+    const RegisterDescriptor REG_SP = partitioner->architecture()->registerDictionary()->stackPointerRegister();
+    const RegisterDescriptor REG_FP = partitioner->architecture()->registerDictionary()->stackFrameRegister();
     if (isSgAsmAarch32Instruction(insn) &&
         isSgAsmAarch32Instruction(insn)->get_kind() == Aarch32InstructionKind::ARM_INS_SUB &&
         insn->nOperands() == 3 &&
         isSgAsmDirectRegisterExpression(insn->operand(0)) &&
         isSgAsmDirectRegisterExpression(insn->operand(0))->get_descriptor() != REG_SP &&
         isSgAsmDirectRegisterExpression(insn->operand(1)) &&
-        isSgAsmDirectRegisterExpression(insn->operand(1))->get_descriptor() == frame.framePointerRegister &&
+        isSgAsmDirectRegisterExpression(insn->operand(1))->get_descriptor() == REG_FP &&
         isSgAsmIntegerValueExpression(insn->operand(2))) {
         std::set<int64_t> offsets;
         offsets.insert(-isSgAsmIntegerValueExpression(insn->operand(2))->get_signedValue());
@@ -1069,11 +1045,12 @@ VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner:
         }
     });
     return offsets;
+#endif
 }
 
 static bool
 isSortedByOffset(const StackVariable::Boundary &a, const StackVariable::Boundary &b) {
-    return a.frameOffset < b.frameOffset;
+    return a.stackOffset < b.stackOffset;
 }
 
 void
@@ -1089,15 +1066,15 @@ VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner::C
         // Remove all boundaries that are below the bottom of the frame, but don't yet remove the greatest one that's below the
         // frame.
         size_t i = 0;
-        while (i+1 < boundaries.size() && boundaries[i+1].frameOffset < *frame.minOffset)
+        while (i+1 < boundaries.size() && boundaries[i+1].stackOffset < *frame.minOffset)
             ++i;
         boundaries.erase(boundaries.begin(), boundaries.begin() + i);
 
         // Adjust the lowest bounded area so it starts at the start of the frame unless there's already a boundary there (in
         // which case, remove it instead of moving it).
-        if (!boundaries.empty() && boundaries[0].frameOffset < *frame.minOffset) {
-            if (boundaries.size() == 1 || boundaries[1].frameOffset > *frame.minOffset) {
-                boundaries[0].frameOffset = *frame.minOffset;
+        if (!boundaries.empty() && boundaries[0].stackOffset < *frame.minOffset) {
+            if (boundaries.size() == 1 || boundaries[1].stackOffset > *frame.minOffset) {
+                boundaries[0].stackOffset = *frame.minOffset;
             } else {
                 boundaries.erase(boundaries.begin());
             }
@@ -1106,7 +1083,7 @@ VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner::C
 
     if (frame.maxOffset) {
         // Remove all boundaries that start above the top of the frame.
-        while (!boundaries.empty() && boundaries.back().frameOffset > *frame.maxOffset)
+        while (!boundaries.empty() && boundaries.back().stackOffset > *frame.maxOffset)
             boundaries.pop_back();
     }
 }
@@ -1190,7 +1167,7 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
     if (debug) {
         debug <<"  final stack boundaries:\n";
         for (const StackVariable::Boundary &boundary: boundaries) {
-            debug <<"    fp" <<offsetStr(boundary.frameOffset) <<" "
+            debug <<"    sp" <<offsetStr(boundary.stackOffset) <<" "
                   <<stringify::Rose::BinaryAnalysis::Variables::StackVariable::Purpose((int64_t)boundary.purpose) <<"\n";
         }
     }
@@ -1201,22 +1178,22 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
         const StackVariable::Boundary &boundary = boundaries[i];
 
         // We know the low offset of this variable, but what is the high offset.
-        int64_t maxOffset = boundary.frameOffset;
+        int64_t maxOffset = boundary.stackOffset;
         if (i + 1 < boundaries.size()) {
-            maxOffset = boundaries[i+1].frameOffset - 1;
+            maxOffset = boundaries[i+1].stackOffset - 1;
         } else if (frame.maxOffset) {
             maxOffset = *frame.maxOffset;
         } else {
-            maxOffset = (int64_t)BitOps::lowMask<uint64_t>(8*partitioner->instructionProvider().wordSize() - 1);
+            maxOffset = (int64_t)BitOps::lowMask<uint64_t>(partitioner->architecture()->bitsPerWord() - 1);
         }
 
         // Create the variable
-        ASSERT_require2(maxOffset >= boundary.frameOffset,
+        ASSERT_require2(maxOffset >= boundary.stackOffset,
                         "maxOffset=" + boost::lexical_cast<std::string>(maxOffset) +
-                        ", boundary.frameOffset=" + boost::lexical_cast<std::string>(boundary.frameOffset));
-        const OffsetInterval where = OffsetInterval::hull(boundary.frameOffset, maxOffset);
-        rose_addr_t varMaxSize = (uint64_t)maxOffset + 1u - (uint64_t)boundary.frameOffset;
-        StackVariable lvar(function, boundary.frameOffset, varMaxSize, boundary.purpose, boundary.definingInsns);
+                        ", boundary.stackOffset=" + boost::lexical_cast<std::string>(boundary.stackOffset));
+        const OffsetInterval where = OffsetInterval::hull(boundary.stackOffset, maxOffset);
+        rose_addr_t varMaxSize = (uint64_t)maxOffset + 1u - (uint64_t)boundary.stackOffset;
+        StackVariable lvar(function, boundary.stackOffset, varMaxSize, boundary.purpose, boundary.definingInsns);
         lvar.setDefaultName();
         lvars.insert(where, lvar);
     }
@@ -1228,19 +1205,6 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
     function->setAttribute(ATTR_LOCAL_VARS, lvars);
     return lvars;
 }
-
-#if 0 // [Robb Matzke 2021-10-27]
-S2::BaseSemantics::SValue::Ptr
-VariableFinder::symbolicAddress(const P2::Partitioner &partitioner, const StackVariable &var,
-                                const S2::BaseSemantics::RiscOperators::Ptr &ops) {
-    ASSERT_not_null(ops);
-    RegisterDescriptor baseReg = frameOrStackPointer(partitioner);
-    S2::BaseSemantics::SValue::Ptr base = ops->peekRegister(baseReg, ops->undefined_(baseReg.nBits()));
-    ASSERT_require(sizeof(var.frameOffset()) == sizeof(uint64_t));
-    S2::BaseSemantics::SValue::Ptr offset = ops->number_(baseReg.nBits(), var.frameOffset());
-    return ops->add(base, offset);
-}
-#endif
 
 P2::Function::Ptr
 VariableFinder::functionForInstruction(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
@@ -1582,7 +1546,7 @@ struct FindGlobalVariableVasMethod2Worker {
         AddressToAddresses partialResult;
 
         S2::SymbolicSemantics::RiscOperators::Ptr ops =
-            S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner->instructionProvider().registerDictionary());
+            S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner->architecture()->registerDictionary());
         S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
         ASSERT_not_null(cpu);
 
@@ -1764,7 +1728,7 @@ VariableFinder::findGlobalVariables(const P2::Partitioner::ConstPtr &partitioner
     typedef Sawyer::Container::IntervalMap<AddressInterval /*occupiedVas*/, rose_addr_t /*startingVa*/> GVars;
     GVars gvars;
     AddressToAddresses globalVariableVas = findGlobalVariableVas(partitioner);
-    static size_t wordSize = partitioner->instructionProvider().stackPointerRegister().nBits();
+    static size_t wordSize = partitioner->architecture()->bitsPerWord();
     for (AddressToAddresses::const_iterator iter = globalVariableVas.begin(); iter != globalVariableVas.end(); ++iter) {
 
         // This variable cannot overlap with the next variable
