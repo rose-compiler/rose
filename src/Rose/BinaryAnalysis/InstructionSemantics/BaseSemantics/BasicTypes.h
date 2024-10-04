@@ -62,6 +62,9 @@ typedef boost::shared_ptr<MemoryCell> MemoryCellPtr;
 /** Shared-ownership pointer to a semantic state. */
 typedef boost::shared_ptr<State> StatePtr;
 
+/** Shared-ownership pointer to a cell-based memory state. */
+typedef boost::shared_ptr<class MemoryCellState> MemoryCellStatePtr;
+
 /** Shared-ownership pointer to a RISC operators object. */
 typedef boost::shared_ptr<RiscOperators> RiscOperatorsPtr;
 

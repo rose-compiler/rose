@@ -272,7 +272,13 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Unparser/Null.C							\
 	BinaryAnalysis/Unparser/Powerpc.C						\
 	BinaryAnalysis/Unparser/X86.C							\
-	BinaryAnalysis/Variables.C							\
+	BinaryAnalysis/Variables/BaseVariable.C						\
+	BinaryAnalysis/Variables/BasicTypes.C						\
+	BinaryAnalysis/Variables/GlobalVariable.C					\
+	BinaryAnalysis/Variables/InstructionAccess.C					\
+	BinaryAnalysis/Variables/StackFrame.C						\
+	BinaryAnalysis/Variables/StackVariable.C					\
+	BinaryAnalysis/Variables/VariableFinder.C					\
 	BinaryAnalysis/Z3Solver.C							\
 	CodeGen/API.C									\
 	CodeGen/Driver.C								\

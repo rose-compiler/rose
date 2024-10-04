@@ -585,6 +585,13 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Unparser/X86.h						\
 	Rose/BinaryAnalysis/Utility.h							\
 	Rose/BinaryAnalysis/Variables.h							\
+	Rose/BinaryAnalysis/Variables/BaseVariable.h					\
+	Rose/BinaryAnalysis/Variables/BasicTypes.h					\
+	Rose/BinaryAnalysis/Variables/GlobalVariable.h					\
+	Rose/BinaryAnalysis/Variables/InstructionAccess.h				\
+	Rose/BinaryAnalysis/Variables/StackFrame.h					\
+	Rose/BinaryAnalysis/Variables/StackVariable.h					\
+	Rose/BinaryAnalysis/Variables/VariableFinder.h					\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\

@@ -16,9 +16,6 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-/** Shared-ownership pointer to a cell-based memory state. */
-typedef boost::shared_ptr<class MemoryCellState> MemoryCellStatePtr;
-
 /** Cell-based memory state.
  *
  *  This is the base class for cell-based memory states. */

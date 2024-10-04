@@ -10,6 +10,7 @@ add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
 add_subdirectory(Partitioner2)
 add_subdirectory(Unparser)
+add_subdirectory(Variables)
 
 add_library(roseBinaryAnalysis OBJECT
   AbstractLocation.C
@@ -61,7 +62,6 @@ add_library(roseBinaryAnalysis OBJECT
   SystemCall.C
   TaintedFlow.C
   ToSource.C
-  Variables.C
   Z3Solver.C)
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)

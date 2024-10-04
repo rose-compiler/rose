@@ -644,6 +644,7 @@ set(rose_LIB_OBJS
   roseBinaryAnalysisModelChecker
   roseBinaryAnalysisPartitioner2
   roseBinaryAnalysisUnparser
+  roseBinaryAnalysisVariables
   roseColor
   roseCommandLine
   roseDiagnostics

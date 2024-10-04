@@ -705,6 +705,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/ModelChecker \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Partitioner2 \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Unparser \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Variables \
 			 @top_srcdir@/src/Rose/CodeGen \
 			 @top_srcdir@/src/Rose/CommandLine \
 			 @top_srcdir@/src/Rose/Sarif \

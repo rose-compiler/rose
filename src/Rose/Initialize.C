@@ -60,6 +60,10 @@ public:
         Rose::CommandLine::versionString = "ROSE " PACKAGE_VERSION;
 #endif
 
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+        BinaryAnalysis::Variables::initNamespace();
+#endif
+
         isInitialized_ = true;
     }
 };

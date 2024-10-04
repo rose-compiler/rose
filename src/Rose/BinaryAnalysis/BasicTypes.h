@@ -116,15 +116,6 @@ class Visitor;
 } // namespace
 using SymbolicExpressionPtr = SymbolicExpression::Ptr;
 
-namespace Variables {
-class BaseVariable;
-class GlobalVariable;
-class StackFrame;
-class StackVariable;
-class VariableFinder;
-using VariableFinderPtr = Sawyer::SharedPointer<VariableFinder>; /**< Reference counting pointer. */
-} // namespace
-
 } // namespace
 } // namespace
 
@@ -140,5 +131,6 @@ using VariableFinderPtr = Sawyer::SharedPointer<VariableFinder>; /**< Reference 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Variables/BasicTypes.h>
 
 #endif
