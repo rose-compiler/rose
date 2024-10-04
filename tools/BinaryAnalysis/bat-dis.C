@@ -85,7 +85,7 @@ createSwitchParser(Settings &settings) {
 
 // Parses the command-line and returns the positional arguments that describe the binary specimen
 std::vector<std::string>
-parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
     if (specimen.empty())
         specimen.push_back("-");                        // read RBA file from standard input
@@ -179,7 +179,7 @@ main(int argc, char *argv[]) {
         settings.unparser = BinaryAnalysis::Unparser::Settings::minimal();
     Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
     auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings /*in,out*/);
+    const std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser);
 
     P2::Partitioner::Ptr partitioner;
     if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
