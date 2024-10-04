@@ -233,9 +233,9 @@ ATbool ATermToSageJovialTraversal::traverse_NullDeclaration(ATerm term)
 #endif
 
    if (ATmatch(term, "NullDeclaration()")) {
-      SgEmptyDeclaration* null_decl = SageBuilder::buildEmptyDeclaration();
+      SgEmptyDeclaration* null_decl = SB::buildEmptyDeclaration();
       setSourcePosition(null_decl, term);
-      SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
+      SI::appendStatement(null_decl, SB::topScopeStack());
    }
    else return ATfalse;
 
@@ -679,6 +679,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
       }
       else return ATfalse;
 
+      // ItemPreset is optional
       if (traverse_ItemPreset(t_preset, preset)) {
          // MATCHED ItemPreset
       } else return ATfalse;
@@ -758,7 +759,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
    }
    else if (traverse_Name(term, name)) {
       // MATCHED ItemTypeName
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      SgSymbol* symbol = SI::lookupSymbolInParentScopes(name, SB::topScopeStack());
 
       if (symbol == nullptr) {
          mlog[WARN] << "ERROR: ItemTypeDescription - symbol lookup failed for ItemTypeName " << name << "\n";
@@ -1032,7 +1033,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitItemDescription(ATerm term, SgTyp
 
    ATerm t_type_desc, t_size;
    Sawyer::Optional<SgExpression*> opt_size;
-   SgExpression* size = nullptr;
+   SgExpression* size{nullptr};
 
    type = nullptr;
 
@@ -1159,7 +1160,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpress
       // I think we don't have to worry about it here, perhaps only when using pointers?
 
       // Would be nice to have a lookupEnumFieldSymbol in SageInterface
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(constant_name, SageBuilder::topScopeStack());
+      SgSymbol* symbol = SI::lookupSymbolInParentScopes(constant_name, SB::topScopeStack());
       SgEnumFieldSymbol* enum_field_symbol = isSgEnumFieldSymbol(symbol);
       ASSERT_not_null(enum_field_symbol);
 
@@ -1362,7 +1363,6 @@ ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, S
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_PointerItemDescription: %s\n", ATwriteToString(term));
 #endif
-
    char* pntr;
    ATerm t_type_name;
    std::string type_name;
@@ -1387,7 +1387,6 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptTypeName: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_type_name;
 
    type = nullptr;
@@ -1399,7 +1398,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
    else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, type_name)) {
          // nullptr return is ok
-         type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
+         type = SI::lookupNamedTypeInParentScopes(type_name, SB::topScopeStack());
       }
       else return ATfalse;
    }
@@ -1482,7 +1481,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
         dim_info = nullptr;
       }
       else {
-        table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
+        table_type = SB::buildJovialTableType(table_type_name, base_type, dim_info, SB::topScopeStack());
       }
       type = table_type;
    }
@@ -1501,7 +1500,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
            table_type_name = unknown->get_type_name();
          }
       }
-      table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
+      table_type = SB::buildJovialTableType(table_type_name, base_type, dim_info, SB::topScopeStack());
       type = table_type;
    }
 
@@ -1580,7 +1579,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
      // If there is a preset, an initializer must be set now because it wasn't possible when
      // the variable was declared.
      if (preset) {
-       SgAssignInitializer* init_expr = SageBuilder::buildAssignInitializer_nfi(preset, type);
+       SgAssignInitializer* init_expr = SB::buildAssignInitializer_nfi(preset, type);
        SgInitializedName* init_name = var_decl->get_decl_item(table_var_name);
        ASSERT_not_null(init_name);
 
@@ -1659,7 +1658,7 @@ traverse_TableDescriptionName(ATerm term, std::string &type_name, SgType* &type,
       ROSE_ASSERT(type_name.length() > 0);
 
    // This type should have already been created by a type declaration statement
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(type_name, SageBuilder::topScopeStack());
+      SgSymbol* symbol = SI::lookupSymbolInParentScopes(type_name, SB::topScopeStack());
       if (symbol != nullptr) {
          type = symbol->get_type();
       }
@@ -2629,7 +2628,6 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
    SgType* type = nullptr;
    std::string type_name;
 
-
    if (ATmatch(term, "BlockDeclarationBodyPart(<term>,<term>,<term>)", &t_name, &t_alloc, &t_body)) {
       // TODO list
       // 1. need block type declaration ("named anonymous")
@@ -2678,7 +2676,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
       ROSE_ASSERT(block_type_name.length() > 0);
 
       // This type should have already been created by a type declaration statement
-      SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(block_type_name, SageBuilder::topScopeStack());
+      SgClassSymbol* class_symbol = SI::lookupClassSymbolInParentScopes(block_type_name, SB::topScopeStack());
       if (class_symbol != nullptr) {
          type = class_symbol->get_type();
       }
@@ -3272,7 +3270,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       } else return ATfalse;
 
    // This type should have already been created by a type declaration statement, find it
-      SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(table_type_name, SageBuilder::topScopeStack());
+      SgClassSymbol* class_symbol = SI::lookupClassSymbolInParentScopes(table_type_name, SB::topScopeStack());
       if (class_symbol != nullptr) {
          parent_type = isSgJovialTableType(class_symbol->get_type());
       }
@@ -3292,7 +3290,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
       // The sage builder function sets the parent of the base class to the inherited class
       // definition and adds the base class to its inheritances list.
-      SgBaseClass* base_class = SageBuilder::buildBaseClass(base_class_decl, derived_class_def, false, /*isDirect*/true);
+      SgBaseClass* base_class = SB::buildBaseClass(base_class_decl, derived_class_def, false, /*isDirect*/true);
       ASSERT_not_null(base_class);
    }
 
@@ -3483,7 +3481,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
             auto stringVal = SB::buildStringVal_nfi(name);
             labelDecls_.insert(std::make_pair(name, stringVal));
 
-            SageInterface::appendStatement(labelStmt, SageBuilder::topScopeStack());
+            SI::appendStatement(labelStmt, SB::topScopeStack());
          }
          else return ATfalse;
       }
@@ -3516,10 +3514,10 @@ ATbool ATermToSageJovialTraversal::traverse_DefineDeclaration(ATerm term)
 
    } else return ATfalse;
 
-   SgJovialDefineDeclaration* define_decl = SageBuilder::buildJovialDefineDeclaration_nfi(name, params, def_string);
+   SgJovialDefineDeclaration* define_decl = SB::buildJovialDefineDeclaration_nfi(name, params, def_string);
    setSourcePosition(define_decl, term);
 
-   SageInterface::appendStatement(define_decl, SageBuilder::topScopeStack());
+   SI::appendStatement(define_decl, SB::topScopeStack());
 
    return ATtrue;
 }
@@ -3944,7 +3942,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayElement(ATerm term, SgExpress
       overlay_element = spacer;
    }
    else if (traverse_Name(term, name)) {
-      data_name = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+      data_name = SB::buildVarRefExp(name, SB::topScopeStack());
       setSourcePosition(data_name, term);
       overlay_element = data_name;
    } else return ATfalse;
@@ -4813,7 +4811,7 @@ ATbool ATermToSageJovialTraversal::traverse_NullBlockStatement(ATerm term)
 
       SgNullStatement* null_block_stmt = SageBuilder::buildNullStatement();
       setSourcePosition(null_block_stmt, term);
-      SageInterface::appendStatement(null_block_stmt, SageBuilder::topScopeStack());
+      SI::appendStatement(null_block_stmt, SB::topScopeStack());
 
    // TODO - labels
    // stmt = convert_Labels(labels, locations, null_block_stmt);
@@ -5247,7 +5245,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
 
    // Create a basic block and push it on the scope stack so there is
    // a place for statements.
-   true_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
+   true_body = SB::buildBasicBlock_nfi(SB::topScopeStack());
    setSourcePosition(true_body, t_true, /*attach_comments*/true);
    SageBuilder::pushScopeStack(true_body);
 
@@ -5265,7 +5263,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
      sage_tree_builder.attachComments(true_body, before_else_comments, /*at_end*/true);
 
      // There is a false body
-     false_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
+     false_body = SB::buildBasicBlock_nfi(SB::topScopeStack());
      setSourcePosition(false_body, t_false, /*attach_comments*/true);
      SageBuilder::pushScopeStack(false_body);
 
@@ -5511,9 +5509,9 @@ ATbool ATermToSageJovialTraversal::traverse_CaseIndex(ATerm term, SgExpression* 
       } else return ATfalse;
 
    // Perhaps SgRangeExp should be used instead for the stride and then won't need to insert literal "1"
-      SgExpression* stride = SageBuilder::buildIntVal_nfi(std::string("1"));
+      SgExpression* stride = SB::buildIntVal_nfi(std::string("1"));
 
-      case_index = SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
+      case_index = SB::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
    }
    else return ATfalse;
 
@@ -6020,57 +6018,57 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   switch (op) {
     // Arithmetic operators
     case e_operator_add:
-      expr = SageBuilder::buildAddOp_nfi(lhs, rhs);
+      expr = SB::buildAddOp_nfi(lhs, rhs);
       break;
     case e_operator_subtract:
-      expr = SageBuilder::buildSubtractOp_nfi(lhs, rhs);
+      expr = SB::buildSubtractOp_nfi(lhs, rhs);
       break;
     case e_operator_multiply:
-      expr = SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
+      expr = SB::buildMultiplyOp_nfi(lhs, rhs);
       break;
     case e_operator_divide:
-      expr = SageBuilder::buildDivideOp_nfi(lhs, rhs);
+      expr = SB::buildDivideOp_nfi(lhs, rhs);
       break;
     case e_operator_exponentiate:
-      expr = SageBuilder::buildExponentiationOp_nfi(lhs, rhs);
+      expr = SB::buildExponentiationOp_nfi(lhs, rhs);
       break;
 
     // Relational operators
     case e_operator_less_than:
-      expr = SageBuilder::buildLessThanOp_nfi(lhs, rhs);
+      expr = SB::buildLessThanOp_nfi(lhs, rhs);
       break;
     case e_operator_greater_than:
-      expr = SageBuilder::buildGreaterThanOp_nfi(lhs, rhs);
+      expr = SB::buildGreaterThanOp_nfi(lhs, rhs);
       break;
     case e_operator_less_or_equal:
-      expr = SageBuilder::buildLessOrEqualOp_nfi(lhs, rhs);
+      expr = SB::buildLessOrEqualOp_nfi(lhs, rhs);
       break;
     case e_operator_greater_or_equal:
-      expr = SageBuilder::buildGreaterOrEqualOp_nfi(lhs, rhs);
+      expr = SB::buildGreaterOrEqualOp_nfi(lhs, rhs);
       break;
     case e_operator_equality:
-      expr = SageBuilder::buildEqualityOp_nfi(lhs, rhs);
+      expr = SB::buildEqualityOp_nfi(lhs, rhs);
       break;
     case e_operator_not_equal:
-      expr = SageBuilder::buildNotEqualOp_nfi(lhs, rhs);
+      expr = SB::buildNotEqualOp_nfi(lhs, rhs);
       break;
 
     // Logical operators
     case e_operator_and:
-      expr = SageBuilder::buildBitAndOp_nfi(lhs, rhs);
+      expr = SB::buildBitAndOp_nfi(lhs, rhs);
       break;
     case e_operator_or:
-      expr = SageBuilder::buildBitOrOp_nfi(lhs, rhs);
+      expr = SB::buildBitOrOp_nfi(lhs, rhs);
       break;
     case e_operator_xor:
-      expr = SageBuilder::buildBitXorOp_nfi(lhs, rhs);
+      expr = SB::buildBitXorOp_nfi(lhs, rhs);
       break;
     case e_operator_equiv:
-      expr = SageBuilder::buildBinaryExpression_nfi<SgBitEqvOp>(lhs, rhs);
+      expr = SB::buildBinaryExpression_nfi<SgBitEqvOp>(lhs, rhs);
       break;
 
     case e_operator_mod:
-      expr = SageBuilder::buildModOp_nfi(lhs, rhs);
+      expr = SB::buildModOp_nfi(lhs, rhs);
       break;
 
     default:
@@ -6119,7 +6117,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericConversion(ATerm term, SgExpr
       ASSERT_not_null(conv_type);
       ASSERT_not_null(cast_formula);
       //                                                      cast_enum? default? ctype? static? dynamic?
-      SgCastExp* cast_expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
+      SgCastExp* cast_expr = SB::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
@@ -6233,7 +6231,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       ASSERT_not_null(cast_formula);
 
       //                                      cast_enum? default? ctype? static? dynamic?
-      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      SgCastExp* cast_expr = SB::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
       expr = cast_expr;
    }
@@ -6295,7 +6293,7 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterFormula(ATerm term, SgExpre
       ASSERT_not_null(conv_type);
       ASSERT_not_null(cast_formula);
       //                                      cast_enum? default? ctype? static? dynamic?
-      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      SgCastExp* cast_expr = SB::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
@@ -6344,7 +6342,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusFormula(ATerm term, SgExpressi
       ASSERT_not_null(conv_type);
       ASSERT_not_null(cast_formula);
       //                                      cast_enum? default? ctype? static? dynamic?
-      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      SgCastExp* cast_expr = SB::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
@@ -6403,7 +6401,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
       ASSERT_not_null(castFormula);
 
       //                                       cast_enum? default? ctype? static? dynamic?
-      SgCastExp* castExpr = SageBuilder::buildCastExp(castFormula, convType, SgCastExp::e_default);
+      SgCastExp* castExpr = SB::buildCastExp(castFormula, convType, SgCastExp::e_default);
       ASSERT_not_null(castExpr);
       setSourcePosition(castExpr, term);
       expr = castExpr;
@@ -6420,12 +6418,11 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Variable: %s\n", ATwriteToString(term));
 #endif
-
-   char* name;
+   char* name{nullptr};
 
    // Look for a variable (or could be a function call because of ambiguities)
    if (ATmatch(term, "<str>" , &name)) {
-     SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name);
+     SgSymbol* symbol = SI::lookupSymbolInParentScopes(name);
 
      var = nullptr;
 
@@ -6543,57 +6540,75 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    char* name;
    std::vector<SgExpression*> subscript;
 
-   SgVarRefExp* var_ref = nullptr;
-   SgExprListExp* array_subscripts = nullptr;
-   SgExpression* deref_var = nullptr;
+   SgVarRefExp* varRef{nullptr};
+   SgExprListExp* arraySubscripts{nullptr};
+   SgExpression* derefVar{nullptr};
 
    var = nullptr;
 
    if (ATmatch(term, "TableItem(<term>,<term>,<term>)" , &t_name, &t_subscript, &t_tblderef)) {
    // Shall have a name
       if (ATmatch(t_name, "<str>", &name)) {
-         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-         ASSERT_not_null(var_ref);
-         setSourcePosition(var_ref, t_name);
+        // MATCHED name
       } else return ATfalse;
 
    // May have a subscript(s)
       if (traverse_Subscript(t_subscript, subscript)) {
          if (subscript.size() > 0) {
-            array_subscripts = SageBuilder::buildExprListExp_nfi();
-            setSourcePosition(array_subscripts, t_subscript);
+            arraySubscripts = SageBuilder::buildExprListExp_nfi();
+            setSourcePosition(arraySubscripts, t_subscript);
 
             for (SgExpression* expr : subscript) {
-               array_subscripts->get_expressions().push_back(expr);
-               expr->set_parent(array_subscripts);
+               arraySubscripts->get_expressions().push_back(expr);
+               expr->set_parent(arraySubscripts);
             }
          }
       }
 
    // Grammar could be better designed (Dereference is a TableDereference here (may have changed?))
-      if (traverse_TableDereference(t_tblderef, deref_var)) {
+      if (traverse_TableDereference(t_tblderef, derefVar)) {
          // MATCHED TableDereference
       }
-      else if (traverse_Dereference(t_tblderef, deref_var, false)) {
+      else if (traverse_Dereference(t_tblderef, derefVar, false)) {
          // MATCHED Dereference
       }
       else return ATfalse;
    }
    else return ATfalse;
 
-   ASSERT_not_null(var_ref);
+   // There may not be a symbol for the variable in this scope (name maybe from external CompoolModule)
+   auto scope{SageBuilder::topScopeStack()};
+   if (nullptr == SI::lookupVariableSymbolInParentScopes(name, scope)) {
+     // Look for symbol in the scope of the dereferenced variable
+     if (auto type = isSgPointerType(derefVar->get_type())) {
+       if (auto baseType = isSgJovialTableType(type->get_base_type())) {
+         if (auto decl = baseType->get_declaration()) {
+           // Don't actually need the symbol here as the scope of the deref'd
+           // variable will be used in the SB::buildVarRefExp() call below.
+           scope = decl->get_scope();
+         }
+       }
+     }
+   }
 
-   if (array_subscripts) {
-      var = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+   varRef = SageBuilder::buildVarRefExp(name, scope);
+   ASSERT_not_null(varRef);
+   setSourcePosition(varRef, t_name);
+
+   if (isSgTypeUnknown(varRef->get_type())) {
+     mlog[WARN] << "Type of a TableItem is unknown, may cause trouble downstream\n";
+   }
+
+   if (arraySubscripts) {
+      var = SageBuilder::buildPntrArrRefExp_nfi(varRef, arraySubscripts);
    }
    else {
-      var = var_ref;
+      var = varRef;
    }
 
-   if (deref_var) {
-      var = SageBuilder::buildAtOp_nfi(var, deref_var);
+   if (derefVar) {
+      var = SageBuilder::buildAtOp_nfi(var, derefVar);
    }
-
    setSourcePosition(var, term);
 
    return ATtrue;
@@ -6658,7 +6673,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
       if (ATmatch(t_name, "<str>", &name)) {
          // The right-hand side of a dereference (SgAtOp) may be a function call
          SgScopeStatement* scope = SageBuilder::topScopeStack();
-         fun_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,scope);
+         fun_symbol = SI::lookupFunctionSymbolInParentScopes(name,scope);
          if (!fun_symbol) {
            var_ref = SageBuilder::buildVarRefExp(name, scope);
            ASSERT_not_null(var_ref);
@@ -6704,17 +6719,16 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Dereference: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_deref;
-   char* name;
-   SgExpression* formula = nullptr;
+   char* name{nullptr};
+   SgExpression* formula{nullptr};
 
    expr = nullptr;
 
    if (ATmatch(term, "Dereference(<term>)", &t_deref)) {
       if (ATmatch(t_deref, "<str>", &name)) {
          // MATCHED PointerItemName
-         formula = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+         formula = SB::buildVarRefExp(name, SB::topScopeStack());
          setSourcePosition(formula, term);
       } else if (traverse_Formula(t_deref, formula)) {
          // MATCHED PointerFormula through Formula
@@ -6725,7 +6739,7 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
    ASSERT_not_null(formula);
 
    if (build_ptr_ref) {
-     expr = SageBuilder::buildPointerDerefExp(formula);
+     expr = SB::buildPointerDerefExp(formula);
    }
    else {
      expr = formula;
@@ -6799,11 +6813,11 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgEx
    else {
      // Note: _assume_ that the return type is an intrinsic bit type
      SgExpression* size = nullptr;
-     return_type = SageBuilder::buildJovialBitType(size);
+     return_type = SB::buildJovialBitType(size);
    }
    ASSERT_not_null(return_type);
 
-   func_call = SageBuilder::buildFunctionCallExp("BIT", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("BIT", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -6885,7 +6899,7 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
         new_length = SageBuilder::buildIntVal(length_val->get_value());
       }
       else {
-        new_length = isSgVarRefExp(SageInterface::deepCopyNode(length));
+        new_length = isSgVarRefExp(SI::deepCopyNode(length));
       }
       ASSERT_not_null(new_length);
 
@@ -6893,7 +6907,7 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
    }
    ASSERT_not_null(return_type);
 
-   func_call = SageBuilder::buildFunctionCallExp("BYTE", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("BYTE", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -6931,35 +6945,35 @@ ATbool ATermToSageJovialTraversal::traverse_RepFunctionVariable(ATerm term, SgEx
 
    if (ATmatch(t_name, "<str>", &name)) {
      // MATCHED NamedVariable
-     var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+     var_ref = SB::buildVarRefExp(name, SB::topScopeStack());
      setSourcePosition(var_ref, t_name);
    } else return ATfalse;
 
    if (has_subscript) {
      if (traverse_Subscript(t_subscript, subscript)) {
-       SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
+       SgExprListExp* array_subscripts = SB::buildExprListExp_nfi();
        setSourcePosition(array_subscripts, t_subscript);
        for (SgExpression* expr : subscript) {
           array_subscripts->get_expressions().push_back(expr);
           expr->set_parent(array_subscripts);
        }
-       var_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+       var_ref = SB::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
        setSourcePosition(var_ref, term); // source position too broad because of 'REP'
      } else return ATfalse;
    }
    ASSERT_not_null(var_ref);
 
    // build the parameter list
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
    params->append_expression(var_ref);
 
    // Create the return type. The language specifies the result is a bit string and
    // has an example assuming BITSINWORD is 16. Because WORD is mentioned it seems
    // that long is a good choice for a return type.
-   SgType* result_type = SageBuilder::buildLongType();
+   SgType* result_type = SB::buildLongType();
    ASSERT_not_null(result_type);
 
-   func_call = SageBuilder::buildFunctionCallExp("REP", result_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("REP", result_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7071,14 +7085,14 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // The symbol is used to disambiguate the design of the grammar.
 // For Jovial the symbol should be present, unfortuately this is not true for Fortran
 //
-   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   SgSymbol* symbol = SI::lookupSymbolInParentScopes(name, SB::topScopeStack());
 
 // No symbol exists yet (perhaps a table variable declared later)
 //
    if (!symbol && sage_tree_builder.isInitializationContext()) {
       // This will add a var ref to forward_var_refs_
       SgVarRefExp* var_ref = sage_tree_builder.buildVarRefExp_nfi(name);
-      expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list); // table/array reference
+      expr = SB::buildPntrArrRefExp_nfi(var_ref, expr_list); // table/array reference
    }
 
 // Look for function call
@@ -7161,7 +7175,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
             SgVarRefExp* var_ref = nullptr;
             sage_tree_builder.Enter(var_ref, name);
             sage_tree_builder.Leave(var_ref);
-            expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list);
+            expr = SB::buildPntrArrRefExp_nfi(var_ref, expr_list);
          }
          else {
             mlog[ERROR] << "UserDefinedFunctionCall - variable reference ambiguous "
@@ -7263,7 +7277,7 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
 
    if (ATmatch(term, "LocFunction(<term>)", &t_argument)) {
       if (traverse_Name(t_argument, locArgStr)) {
-         locArgExpr = SB::buildVarRefExp(locArgStr, SageBuilder::topScopeStack());
+         locArgExpr = SB::buildVarRefExp(locArgStr, SB::topScopeStack());
          ASSERT_not_null(locArgExpr);
       }
       else if (ATmatch(t_argument, "<str>" , &name)) {
@@ -7318,7 +7332,7 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
    }
    ASSERT_not_null(returnType);
 
-   funcCall = SageBuilder::buildFunctionCallExp("LOC", returnType, params, SageBuilder::topScopeStack());
+   funcCall = SB::buildFunctionCallExp("LOC", returnType, params, SB::topScopeStack());
    ASSERT_not_null(funcCall);
    setSourcePosition(funcCall, term);
 
@@ -7361,7 +7375,7 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionC
    params->append_expression(next_arg);
    params->append_expression(increment);
 
-   func_call = SageBuilder::buildFunctionCallExp("NEXT", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("NEXT", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7417,7 +7431,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunction(ATerm term, SgFunctionCa
    params->append_expression(first_bit);
    params->append_expression(length);
 
-   func_call = SageBuilder::buildFunctionCallExp("BIT", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("BIT", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7477,13 +7491,13 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
      new_length = SageBuilder::buildIntVal(length_val->get_value());
    }
    else {
-     new_length = isSgExpression(SageInterface::deepCopyNode(length));
+     new_length = isSgExpression(SI::deepCopyNode(length));
    }
    ASSERT_not_null(new_length);
 
-   SgType* return_type = SageBuilder::buildStringType(new_length);
+   SgType* return_type = SB::buildStringType(new_length);
 
-   func_call = SageBuilder::buildFunctionCallExp("BYTE", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("BYTE", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7529,11 +7543,11 @@ ATbool ATermToSageJovialTraversal::traverse_ShiftFunction(ATerm term, SgFunction
    } else return ATfalse;
 
    // build the parameter list
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
    params->append_expression(formula);
    params->append_expression(shift_count);
 
-   func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp(func_name, return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7567,10 +7581,10 @@ ATbool ATermToSageJovialTraversal::traverse_AbsFunction(ATerm term, SgFunctionCa
    } else return ATfalse;
 
    // build the parameter list
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
    params->append_expression(argument);
 
-   func_call = SageBuilder::buildFunctionCallExp("ABS", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("ABS", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7631,12 +7645,12 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionC
    } else return ATfalse;
 
    // build the parameter list
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
    params->append_expression(size_argument);
 
-   SgType* return_type = SageBuilder::buildUnsignedIntType();
+   SgType* return_type = SB::buildUnsignedIntType();
 
-   func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp(func_name, return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7678,11 +7692,11 @@ ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctio
    } else return ATfalse;
 
    // Find symbol and table name or table type name
-   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(table_or_type_name, SageBuilder::topScopeStack());
+   SgSymbol* symbol = SI::lookupSymbolInParentScopes(table_or_type_name, SB::topScopeStack());
    if (!symbol) {
       // could be anonymous type with variable declaration not seen yet
       std::string anon_type_name = std::string("_anon_typeof_") + table_or_type_name;
-      symbol = SageInterface::lookupSymbolInParentScopes(anon_type_name, SageBuilder::topScopeStack());
+      symbol = SI::lookupSymbolInParentScopes(anon_type_name, SB::topScopeStack());
       // Not done yet, this is not the correct path
       ROSE_ABORT();
    }
@@ -7702,12 +7716,12 @@ ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctio
       {
       case V_SgClassSymbol:
          {
-            table_arg = SageBuilder::buildTypeExpression(table_type);
+            table_arg = SB::buildTypeExpression(table_type);
             break;
          }
       case V_SgVariableSymbol:
          {
-            table_arg = SageBuilder::buildVarRefExp_nfi(isSgVariableSymbol(symbol));
+            table_arg = SB::buildVarRefExp_nfi(isSgVariableSymbol(symbol));
             break;
          }
       default: ROSE_ABORT();
@@ -7718,14 +7732,14 @@ ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctio
    setSourcePosition(table_arg, t_table_arg);
 
    // build the parameter list
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
    params->append_expression(table_arg);
    params->append_expression(dim_number);
 
 //TODO: Return type may be a status type depending on the declaration of the table
-   SgType* return_type = SageBuilder::buildSignedIntType();
+   SgType* return_type = SB::buildSignedIntType();
 
-   func_call = SageBuilder::buildFunctionCallExp(function_name, return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp(function_name, return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7754,7 +7768,7 @@ ATbool ATermToSageJovialTraversal::traverse_NwdsenFunction(ATerm term, SgFunctio
    } else return ATfalse;
 
    // Find symbol and jovial table type
-   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   SgSymbol* symbol = SI::lookupSymbolInParentScopes(name, SB::topScopeStack());
    ASSERT_not_null(symbol);
 
    SgJovialTableType* table_type = isSgJovialTableType(symbol->get_type());
@@ -7769,12 +7783,12 @@ ATbool ATermToSageJovialTraversal::traverse_NwdsenFunction(ATerm term, SgFunctio
       {
       case V_SgClassSymbol:
          {
-            table_arg = SageBuilder::buildTypeExpression(table_type);
+            table_arg = SB::buildTypeExpression(table_type);
             break;
          }
       case V_SgVariableSymbol:
          {
-            table_arg = SageBuilder::buildVarRefExp_nfi(isSgVariableSymbol(symbol));
+            table_arg = SB::buildVarRefExp_nfi(isSgVariableSymbol(symbol));
             break;
          }
       default: ROSE_ABORT();
@@ -7784,12 +7798,12 @@ ATbool ATermToSageJovialTraversal::traverse_NwdsenFunction(ATerm term, SgFunctio
    setSourcePosition(table_arg, t_argument);
 
    // build the parameter list
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
    params->append_expression(table_arg);
 
-   SgType* return_type = SageBuilder::buildSignedIntType();
+   SgType* return_type = SB::buildSignedIntType();
 
-   func_call = SageBuilder::buildFunctionCallExp("NWDSEN", return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp("NWDSEN", return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
    setSourcePosition(func_call, term);
 
@@ -7836,26 +7850,26 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
    else return ATfalse;
 
 // Build the parameter list and then the variable reference or type expression
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
 
 // The variable may be a status type
-   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
+   SgSymbol* symbol = SI::lookupSymbolInParentScopes(var_name, SB::topScopeStack());
    if (symbol) {
       SgEnumType* type = isSgEnumType(symbol->get_type());
       if (type) {
-         param = SageBuilder::buildTypeExpression(type);
+         param = SB::buildTypeExpression(type);
       }
    }
    if (!param) {
       // Parameter is not a type expression so it must be a variable
-      param  = SageBuilder::buildVarRefExp(var_name, SageBuilder::topScopeStack());
+      param  = SB::buildVarRefExp(var_name, SB::topScopeStack());
    }
    ASSERT_not_null(param);
    params->append_expression(param);
 
-   SgType* return_type = SageBuilder::buildIntType();
+   SgType* return_type = SB::buildIntType();
 
-   func_call = SageBuilder::buildFunctionCallExp(function_name, return_type, params, SageBuilder::topScopeStack());
+   func_call = SB::buildFunctionCallExp(function_name, return_type, params, SB::topScopeStack());
 
    ASSERT_not_null(func_call);
 
@@ -7886,25 +7900,25 @@ ATbool ATermToSageJovialTraversal::traverse_NentFunction(ATerm term, SgFunctionC
    else return ATfalse;
 
 // Build the parameter list and then the variable reference or type expression
-   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* params = SB::buildExprListExp_nfi();
 
 // The variable may be a table name or table type name
-   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
+   SgSymbol* symbol = SI::lookupSymbolInParentScopes(var_name, SB::topScopeStack());
    if (symbol) {
      if (SgVariableSymbol* var_sym = isSgVariableSymbol(symbol)) {
-       param  = SageBuilder::buildVarRefExp(var_name, SageBuilder::topScopeStack());
+       param  = SB::buildVarRefExp(var_name, SB::topScopeStack());
      }
      else if (SgJovialTableType* type = isSgJovialTableType(symbol->get_type())) {
        if (type) {
-         param = SageBuilder::buildTypeExpression(type);
+         param = SB::buildTypeExpression(type);
        }
      }
    }
    ASSERT_not_null(param);
    params->append_expression(param);
 
-   SgType* return_type = SageBuilder::buildIntType();
-   func_call = SageBuilder::buildFunctionCallExp(SgName("NENT"), return_type, params, SageBuilder::topScopeStack());
+   SgType* return_type = SB::buildIntType();
+   func_call = SB::buildFunctionCallExp(SgName("NENT"), return_type, params, SB::topScopeStack());
    ASSERT_not_null(func_call);
 
    return ATtrue;
@@ -7933,7 +7947,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgType* &t
       // MATCHED BitTypeConversionB
 
       SgExpression* size = nullptr;
-      type = SageBuilder::buildJovialBitType(size);
+      type = SB::buildJovialBitType(size);
 
    } else if (traverse_Name(term, bit_type_name)) {
       // MATCHED BitTypeName
@@ -8846,26 +8860,26 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
   SgFunctionCallExp* callExpr = nullptr;
 
   if (!params) {
-    params = SageBuilder::buildExprListExp_nfi();
+    params = SB::buildExprListExp_nfi();
   }
   if (!scope) {
-    scope = SageBuilder::topScopeStack();
+    scope = SB::topScopeStack();
   }
   ASSERT_not_null(params);
   ASSERT_not_null(scope);
 
   // Create a return type based on the intrinsic name
   if (name == "MAXINT") {
-    type = SageBuilder::buildIntType();
+    type = SB::buildIntType();
   }
   else {
-    type = SageBuilder::buildVoidType();
+    type = SB::buildVoidType();
   }
 
   if (type) {
-    callExpr = SageBuilder::buildFunctionCallExp(SgName(name), type, params, scope);
+    callExpr = SB::buildFunctionCallExp(SgName(name), type, params, scope);
     ASSERT_not_null(callExpr);
-    SageInterface::setSourcePosition(callExpr);
+    SI::setSourcePosition(callExpr);
   }
 
   return callExpr;

@@ -1121,31 +1121,23 @@ Enter(SgExprStatement* &stmt, const std::string &name,
 }
 
 void SageTreeBuilder::
-Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars)
+Enter(SgExprStatement* &assignStmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
    SgExpression* lhs{nullptr};
-   SgAssignOp* assign_op{nullptr};
-   SgEnumVal* old_val{isSgEnumVal(rhs)};
+   SgAssignOp* assignOp{nullptr};
+   SgEnumVal* oldVal{isSgEnumVal(rhs)};
 
    // For Jovial, the symbol table may have multiple enumerators with the same name. Check and
    // replace a Jovial status constant with the correct value based on the type of the variable.
-   if (old_val) {
-      SgEnumType* enum_type = nullptr;
-      SgJovialTableType* table_type = isSgJovialTableType(vars[0]->get_type());
-
-      if (table_type) {
-         SgEnumType* base_type = isSgEnumType(table_type->get_base_type());
-         if (base_type) {
-            enum_type = base_type;
-         }
-      } else {
-         enum_type = isSgEnumType(vars[0]->get_type());
+   if (oldVal) {
+      SgEnumType* enumType{isSgEnumType(vars[0]->get_type())};
+      if (auto tableType = isSgJovialTableType(vars[0]->get_type())) {
+         enumType = isSgEnumType(tableType->get_base_type());
       }
-
-      ASSERT_not_null(enum_type);
-      rhs = getEnumVal(enum_type, old_val);
+      ASSERT_not_null(enumType);
+      rhs = getEnumVal(enumType, oldVal);
    }
 
 // Jovial may have more than one variable in an assignment statement
@@ -1153,12 +1145,12 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
       lhs = vars[0];
    }
    else if (vars.size() > 1) {
-      lhs = SageBuilder::buildExprListExp_nfi(vars);
+      lhs = SB::buildExprListExp_nfi(vars);
    }
    ASSERT_not_null(lhs);
 
-   assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(lhs, rhs);
-   assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
+   assignOp = SB::buildBinaryExpression_nfi<SgAssignOp>(lhs, rhs);
+   assignStmt = SB::buildExprStatement_nfi(assignOp);
 }
 
 void SageTreeBuilder::
