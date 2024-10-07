@@ -1436,16 +1436,24 @@ namespace{
 
                   SgExpression&              prefix = getExpr(&lal_name, ctx);
                   std::vector<SgExpression*> idxexpr;
-                  for(int i = 0; i < count; ++i){
-                    ada_base_entity lal_index;
-                    if(ada_node_child(&lal_index_list, i, &lal_index) != 0){
-                      //Check for ada_param_assoc, and get r_expr if we find it
-                      if(ada_node_kind(&lal_index) == ada_param_assoc){
-                        ada_param_assoc_f_r_expr(&lal_index, &lal_index);
+
+                  //If the kind of lal_index_list is ada_bin_op, treat it like A_Slice instead
+                  if(ada_node_kind(&lal_index_list) != ada_bin_op){
+                    for(int i = 0; i < count; ++i){
+                      ada_base_entity lal_index;
+                      if(ada_node_child(&lal_index_list, i, &lal_index) != 0){
+                        //Check for ada_param_assoc, and get r_expr if we find it
+                        if(ada_node_kind(&lal_index) == ada_param_assoc){
+                          ada_param_assoc_f_r_expr(&lal_index, &lal_index);
+                        }
+                        idxexpr.push_back(&getExpr(&lal_index, ctx));
                       }
-                      idxexpr.push_back(&getExpr(&lal_index, ctx));
                     }
+                  } else {
+                    logInfo() << "  ^Actually a_slice\n";
+                    idxexpr.push_back(&getDiscreteRange(&lal_index_list, ctx));
                   }
+
                   SgExprListExp&             indices = mkExprListExp(idxexpr);
 
                   res = &mkPntrArrRefExp(prefix, indices);
@@ -1653,6 +1661,43 @@ namespace{
           logKind("ada_null_literal", kind);
 
           res = sb::buildNullptrValExp();
+          break;
+        }
+
+      case ada_membership_expr:                  // 4.4  Ada 2012
+        {
+          logKind("ada_membership_expr", kind);
+
+          //Get the op to tell if this is "in" or "not in"
+          ada_base_entity lal_op;
+          ada_membership_expr_f_op(lal_element, &lal_op);
+
+          const bool inTest = ada_node_kind(&lal_op) == ada_op_in;
+
+          //Get the expr that is being tested
+          ada_base_entity lal_test_expr;
+          ada_membership_expr_f_expr(lal_element, &lal_test_expr);
+
+          //Get the list of exprs that the test expr is being compared to
+          ada_base_entity lal_membership_expr_list;
+          ada_membership_expr_f_membership_exprs(lal_element, &lal_membership_expr_list);
+
+          std::vector<SgExpression*> choices;
+          //Call getExpr on each membership expr
+          int count = ada_node_children_count(&lal_membership_expr_list);
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_membership_expr;
+            if(ada_node_child(&lal_membership_expr_list, i, &lal_membership_expr) != 0){
+              choices.push_back(&getExpr(&lal_membership_expr, ctx));
+            }
+          }
+
+          SgExpression&              test = getExpr(&lal_test_expr, ctx);
+          SgExpression&              choiceexp = mkChoiceExpIfNeeded(std::move(choices));
+
+          res = inTest ? static_cast<SgExpression*>(sb::buildMembershipOp_nfi(&test, &choiceexp))
+                       : sb::buildNonMembershipOp_nfi(&test, &choiceexp)
+                       ;
           break;
         }
 

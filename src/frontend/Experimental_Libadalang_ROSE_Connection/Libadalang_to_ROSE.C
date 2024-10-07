@@ -345,6 +345,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_package_renaming_decl:
       case ada_subp_renaming_decl:
       case ada_generic_package_instantiation:
+      case ada_generic_subp_instantiation:
       case ada_generic_package_renaming_decl:
       case ada_incomplete_type_decl:
       case ada_incomplete_tagged_type_decl:
@@ -426,6 +427,7 @@ namespace{
     libadalangTypes().clear();
     libadalangBlocks().clear();
     adaTypes().clear();
+    adaTypesByName().clear();
     adaExcps().clear();
     adaPkgs().clear();
     adaVars().clear();

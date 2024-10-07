@@ -2530,6 +2530,13 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           handleClause(lal_stmt, ctx);
           return;
         }
+      case ada_error_stmt:              // If this node exists, the input code is malformed
+        {
+          //TODO Do we want the frontend to break on malformed code? This could just be a warning.
+          logFatal() << "ada_error_stmt encountered!\n";
+          sg::report_error("ada_error_stmt encountered!");
+          break;
+        }
       default:
         {
           logWarn() << "Unhandled statement " << kind << std::endl;
@@ -3724,27 +3731,44 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           logKind("ada_generic_package_instantiation", kind);
         } else {
           logKind("ada_generic_subp_instantiation", kind);
-          logError() << " ^This isn't implemented yet!\n";
         }
 
         //Get the name for this instantiation
         ada_base_entity lal_defining_name, lal_identifier;
-        ada_generic_package_instantiation_f_name(lal_element, &lal_defining_name);
+        if(kind == ada_generic_package_instantiation){
+          ada_generic_package_instantiation_f_name(lal_element, &lal_defining_name);
+        } else {
+          ada_generic_subp_instantiation_f_subp_name(lal_element, &lal_defining_name);
+        }
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
         std::string  ident = canonical_text_as_string(&lal_identifier);
         int           hash = hash_node(&lal_defining_name);
 
-        //Get the package we are instantiating off of
-        ada_base_entity lal_generic_package;
-        ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_package);
-        ada_generic_package_decl_f_package_decl(&lal_generic_package, &lal_generic_package);
-        ada_base_package_decl_f_package_name(&lal_generic_package, &lal_generic_package);
-        int base_decl_hash = hash_node(&lal_generic_package);
+        //Get the decl we are instantiating off of
+        ada_base_entity lal_generic_decl;
+        ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
+        //Get the kind of the decl, and use that to get its defining_name
+        ada_node_kind_enum lal_generic_decl_kind = ada_node_kind(&lal_generic_decl);
+        if(lal_generic_decl_kind == ada_generic_package_decl){
+          ada_generic_package_decl_f_package_decl(&lal_generic_decl, &lal_generic_decl);
+          ada_base_package_decl_f_package_name(&lal_generic_decl, &lal_generic_decl);
+        } else if(lal_generic_decl_kind == ada_generic_subp_decl){
+          ada_generic_subp_decl_f_subp_decl(&lal_generic_decl, &lal_generic_decl);
+          ada_generic_subp_internal_f_subp_spec(&lal_generic_decl, &lal_generic_decl);
+          ada_subp_spec_f_subp_name(&lal_generic_decl, &lal_generic_decl);
+        } else {
+          logError() << "Unhandled base decl kind: " << lal_generic_decl_kind << "!\n";
+        }
+        int base_decl_hash = hash_node(&lal_generic_decl);
         SgDeclarationStatement*   basedecl = findFirst(libadalangDecls(), base_decl_hash);
 
         //Get the params
         ada_base_entity lal_params;
-        ada_generic_package_instantiation_f_params(lal_element, & lal_params);
+        if(kind == ada_generic_package_instantiation){
+          ada_generic_package_instantiation_f_params(lal_element, & lal_params);
+        } else {
+          ada_generic_subp_instantiation_f_params(lal_element, &lal_params);
+        }
 
         if(basedecl == nullptr)
         {
