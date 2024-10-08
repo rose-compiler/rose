@@ -208,6 +208,11 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                     CXX_VERSION_MAJOR=15
                     CXX_VERSION_MINOR=0
                     CXX_VERSION_PATCH=0
+                elif test $XCODE_VERSION_MAJOR -eq 16; then
+                  # Rasmussen (10/08/2024): Updated results for clang --version 16.0.0
+                    CXX_VERSION_MAJOR=16
+                    CXX_VERSION_MINOR=0
+                    CXX_VERSION_PATCH=0
                 else
                     AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR")])
                 fi
