@@ -452,11 +452,6 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (1/21/2018): Added support for lambda function capture variables in annonymous compiler generated classes passed as template arguments
           bool isAnonymousClass(SgType* templateArgumentType);
 
-
-       // DQ (8/25/2020): Changed this to a static function so that it could be called from UnparseLanguageIndependentConstructs::unparseExprList().
-       // bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
-          static bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
-
        // DQ (1/8/2020): Refactors the output of base classes so that it can be supported in the unparseClassDefnStmt() and unparseClassType() functions.
           void unparseClassInheritanceList ( SgClassDefinition* classdefn_stmt, SgUnparse_Info& ninfo );
 

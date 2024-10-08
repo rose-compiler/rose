@@ -3,18 +3,18 @@
 #include "unparser.h"
 #include "rose_config.h"
 
-#define DEBUG_unparse_alignas 0
-#define DEBUG_setup_decl_item_type_unparse_infos 0
-#define DEBUG_build_decl_item_name 0
-#define DEBUG_build_decl_item_asm_register 0
-#define DEBUG_unparseVarDeclStmt 0
+#define DEBUG__unparse_alignas 0
+#define DEBUG__setup_decl_item_type_unparse_infos 0
+#define DEBUG__build_decl_item_name 0
+#define DEBUG__build_decl_item_asm_register 0
+#define DEBUG__unparseVarDeclStmt 0
 
 void unparse_alignas(
   SgInitializedName * decl_item,
   Unparse_ExprStmt & unparser,
   SgUnparse_Info & info
 ) {
-#if DEBUG_unparse_alignas
+#if DEBUG__unparse_alignas
   printf("Enter unparse_alignas()\n");
   printf("  decl_item = %p = %s\n", decl_item, decl_item->class_name().c_str());
 #endif
@@ -33,8 +33,8 @@ void unparse_alignas(
     }
     unparser.curprint(")");
   }
-#if DEBUG_unparse_alignas
-  printf("Leave DEBUG_build_decl_item_name()\n");
+#if DEBUG__unparse_alignas
+  printf("Leave DEBUG__build_decl_item_name()\n");
 #endif
 }
 
@@ -45,7 +45,7 @@ static bool setup_decl_item_type_unparse_infos(
   SgType * decl_type,
   std::string & unparse_str
 ) {
-#if DEBUG_setup_decl_item_type_unparse_infos
+#if DEBUG__setup_decl_item_type_unparse_infos
   printf("Enter setup_decl_item_type_unparse_infos()\n");
   printf("  vdecl     = %p = %s\n", vdecl,     vdecl->class_name().c_str());
   printf("  decl_item = %p = %s\n", decl_item, decl_item->class_name().c_str());
@@ -108,23 +108,23 @@ static bool setup_decl_item_type_unparse_infos(
       need_unparse = true;
     }
   }
-#if DEBUG_setup_decl_item_type_unparse_infos
+#if DEBUG__setup_decl_item_type_unparse_infos
   printf("  need_unparse = %s\n", need_unparse ? "true" : "false");
   printf("  unparse_str  = %s\n", unparse_str.c_str());
-  printf("Leave DEBUG_build_decl_item_name()\n");
+  printf("Leave DEBUG__build_decl_item_name()\n");
 #endif
   return need_unparse;
 }
 
 std::string build_decl_item_name(SgInitializedName * decl_item) {
   std::string decl_name = decl_item->get_name().getString();
-#if DEBUG_build_decl_item_name
+#if DEBUG__build_decl_item_name
   printf("Enter build_decl_item_name()\n");
   printf("  decl_item = %p = %s\n", decl_item, decl_item->class_name().c_str());
   printf("  decl_name = %s\n", decl_name.c_str());
 #endif
   bool is_anonymous = decl_name.size() == 0 || decl_name.find("__anonymous_0x") == 0;
-#if DEBUG_build_decl_item_name
+#if DEBUG__build_decl_item_name
   printf ("  is_anonymous = %s \n", is_anonymous ? "true" : "false");
 #endif
   std::string unparse_name{""};
@@ -134,15 +134,15 @@ std::string build_decl_item_name(SgInitializedName * decl_item) {
     }
     unparse_name += decl_name;
   }
-#if DEBUG_build_decl_item_name
+#if DEBUG__build_decl_item_name
   printf("  unparse_name = %s\n", unparse_name.c_str());
-  printf("Leave DEBUG_build_decl_item_name()\n");
+  printf("Leave DEBUG__build_decl_item_name()\n");
 #endif
   return unparse_name;
 }
 
 std::string build_decl_item_asm_register(SgInitializedName * decl_item) {
-#if DEBUG_build_decl_item_asm_register
+#if DEBUG__build_decl_item_asm_register
   printf("Enter build_decl_item_asm_register()\n");
   printf("  decl_item = %p = %s\n", decl_item, decl_item->class_name().c_str());
 #endif
@@ -168,14 +168,14 @@ std::string build_decl_item_asm_register(SgInitializedName * decl_item) {
       asm_register += decl_item->get_register_name_string();
     asm_register += "\")";
   }
-#if DEBUG_build_decl_item_asm_register
+#if DEBUG__build_decl_item_asm_register
   printf("  asm_register = %s\n", asm_register.c_str());
-  printf("Leave DEBUG_build_decl_item_name()\n");
+  printf("Leave DEBUG__build_decl_item_name()\n");
 #endif
   return asm_register;
 }
 
-#define DEBUG_need_assign_and_initializer_unparsed 0
+#define DEBUG__need_assign_and_initializer_unparsed 0
 
 static void need_assign_and_initializer_unparsed(
   SgInitializedName * decl_item,
@@ -185,7 +185,7 @@ static void need_assign_and_initializer_unparsed(
   bool inside_for_init_stmt
 ) {
   SgInitializer * decl_init = decl_item->get_initializer();
-#if DEBUG_need_assign_and_initializer_unparsed
+#if DEBUG__need_assign_and_initializer_unparsed
   printf("Enter need_assign_and_initializer_unparsed()\n");
   printf("  decl_item = %p = %s\n", decl_item, decl_item->class_name().c_str());
   printf("  decl_init = %p = %s\n", decl_init, decl_init ? decl_init->class_name().c_str() : "");
@@ -220,7 +220,7 @@ static void need_assign_and_initializer_unparsed(
       }
     }
   }
-#if DEBUG_need_assign_and_initializer_unparsed
+#if DEBUG__need_assign_and_initializer_unparsed
   printf("  need_assign_op   = %s\n", need_assign_op   ? "true" : "false");
   printf("  need_initializer = %s\n", need_initializer ? "true" : "false");
   printf("Leave need_assign_and_initializer_unparsed()\n");
@@ -236,7 +236,7 @@ static void need_assign_and_initializer_unparsed(
  *    void (*set_foo)()=doo
  */
 void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
-#if DEBUG_unparseVarDeclStmt
+#if DEBUG__unparseVarDeclStmt
      printf ("Enter unparseVarDeclStmt()\n");
      printf ("  stmt = %p = %s\n", stmt, stmt->class_name().c_str());
 #endif
@@ -245,7 +245,7 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
      ASSERT_not_null(vardecl_stmt);
      ROSE_ASSERT(vardecl_stmt->get_variables().size() > 0);
 
-#if DEBUG_unparseVarDeclStmt
+#if DEBUG__unparseVarDeclStmt
      auto & decl_mod = vardecl_stmt->get_declarationModifier();
      printf ("  - isStatic()  = %s \n", decl_mod.get_storageModifier().isStatic() ? "true" : "false");
      printf ("  - isExtern()  = %s \n", decl_mod.get_storageModifier().isExtern() ? "true" : "false");
@@ -257,7 +257,7 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
      SgUnparse_Info ninfo(info);
-#if DEBUG_unparseVarDeclStmt
+#if DEBUG__unparseVarDeclStmt
      printf ("  ninfo.SkipBaseType() = %s \n", ninfo.SkipBaseType() ? "true" : "false");
 #endif
      ninfo.set_declstatement_ptr(vardecl_stmt);
@@ -291,7 +291,7 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
        SgName decl_name = decl_item->get_name();
        SgInitializer * decl_init = decl_item->get_initializer();
 
-#if DEBUG_unparseVarDeclStmt
+#if DEBUG__unparseVarDeclStmt
        printf ("  - decl_item = %p = %s\n", decl_item, decl_item->class_name().c_str());
        printf ("    decl_type = %p = %s\n", decl_type, decl_type->class_name().c_str());
        printf ("    decl_name = %s\n", decl_name.str());
@@ -300,7 +300,7 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
        if (decl_item->get_auto_decltype() != nullptr)
          decl_type = decl_item->get_auto_decltype();
        ASSERT_not_null(decl_type);
-#if DEBUG_unparseVarDeclStmt
+#if DEBUG__unparseVarDeclStmt
        printf ("    decl_type = %p = %s\n", decl_type, decl_type->class_name().c_str());
 #endif
 
@@ -378,7 +378,7 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
        curprint(";");
      }
 
-#if DEBUG_unparseVarDeclStmt
+#if DEBUG__unparseVarDeclStmt
      printf ("Leaving unparseVarDeclStmt()\n");
 #endif
 }

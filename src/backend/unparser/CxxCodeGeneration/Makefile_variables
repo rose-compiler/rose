@@ -3,6 +3,12 @@ unparseCxxCodeGeneration_la_sources=\
 	$(cxxCodeGenerationPath)/unparseCxx_expressions.C \
 	$(cxxCodeGenerationPath)/unparseCxx_statements.C \
 	$(cxxCodeGenerationPath)/unparseCxx_types.C \
+	$(cxxCodeGenerationPath)/unparseAggrInit.C \
+	$(cxxCodeGenerationPath)/unparseAssnInit.C \
+	$(cxxCodeGenerationPath)/unparseBracedInit.C \
+	$(cxxCodeGenerationPath)/unparseCompInit.C \
+	$(cxxCodeGenerationPath)/unparseCtorInit.C \
+	$(cxxCodeGenerationPath)/unparseDesignatedInitializer.C \
 	$(cxxCodeGenerationPath)/unparseVarDeclStmt.C \
 	$(cxxCodeGenerationPath)/helpers.C
 

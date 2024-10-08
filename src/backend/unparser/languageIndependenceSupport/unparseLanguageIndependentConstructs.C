@@ -7606,6 +7606,35 @@ void UnparseLanguageIndependentConstructs::unparseMatrixExp(SgExpression *expr, 
   curprint("]");
 }
 
+// FIXME this should not be needed here!!!!
+#define DEBUG__isAssociatedWithCxx11_initializationList 0
+static bool isAssociatedWithCxx11_initializationList(SgConstructorInitializer * con_init) {
+  bool is_cxx11_initialization_list = false;
+#if DEBUG__isAssociatedWithCxx11_initializationList
+  printf ("Enter isAssociatedWithCxx11_initializationList()\n");
+#endif
+  if (con_init != NULL) {
+    SgMemberFunctionDeclaration * mfdecl = con_init->get_declaration();
+#if DEBUG__isAssociatedWithCxx11_initializationList
+    printf ("  mfdecl = %p = %s\n", mfdecl, mfdecl ? mfdecl->class_name().c_str() : "");
+#endif
+    if (mfdecl != NULL) {
+      std::string name = mfdecl->get_name();
+#if DEBUG__isAssociatedWithCxx11_initializationList
+      printf ("    ->name = %s\n",name.c_str());
+#endif
+      if (name == "initializer_list") {
+        is_cxx11_initialization_list = true;
+      }
+    }
+  }
+#if DEBUG__isAssociatedWithCxx11_initializationList
+  printf ("  is_cxx11_initialization_list = %s\n", is_cxx11_initialization_list ? "true" : "false");
+  printf ("Leave isAssociatedWithCxx11_initializationList()\n");
+#endif
+  return is_cxx11_initialization_list;
+}
+
 void
 UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -7670,8 +7699,7 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
                       needParen = true;
                     }
 
-                 // bool this_constructor_initializer_is_using_Cxx11_initializer_list = Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(constructorInitializer,info);
-                    bool this_constructor_initializer_is_using_Cxx11_initializer_list = Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(constructorInitializer,newinfo);
+                    bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(constructorInitializer);
 #if 0
                     printf ("Computed for argument: this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",this_constructor_initializer_is_using_Cxx11_initializer_list ? "true" : "false");
 #endif
