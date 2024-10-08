@@ -79,7 +79,9 @@ createSwitchParser(Settings &settings) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
-    parser.with(tool).with(Unparser::commandLineSwitches(settings.unparser)).with(Rose::CommandLine::genericSwitches());
+    parser.with(tool);
+    parser.with(BinaryAnalysis::Unparser::commandLineSwitches(settings.unparser));
+    parser.with(Rose::CommandLine::genericSwitches());
     return parser;
 }
 
