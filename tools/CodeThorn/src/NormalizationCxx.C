@@ -49,18 +49,10 @@ namespace
 
   ClassAnalysis* GlobalClassAnalysis::globalClassAnalysis = nullptr;
 
-  struct CxxTransformStats
-  {
-    int cnt = 0;
-  };
-
   std::ostream& operator<<(std::ostream& os, const CxxTransformStats& stat)
   {
     return os << stat.cnt;
   }
-
-  // internal use
-  void normalizeCtorDtor(SgNode* root, CxxTransformStats& stats);
 
   constexpr bool ERROR_TOLERANT = true;
 
@@ -3805,17 +3797,55 @@ namespace
               << std::endl;
   }
 
+} // anonymous namespace
 
-  // conveniance
+  //
+  // externally visible functions
+
   void normalizeCtorDtor(SgNode* root, CxxTransformStats& stats)
   {
     normalize(computeTransform<CxxCtorDtorGenerator>, root, stats);
   }
-} // anonymous namespace
 
+  void normalizeAllocInitSplit(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxAllocInitSplitGenerator>, root, stats);
+  }
 
-  //
-  // externally visible function
+  void normalizeDefaultArgument(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxDefaultArgumentGenerator>, root, stats);
+  }
+
+  void normalizeRVO(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxRVOGenerator>, root, stats);
+  }
+
+  void normalizeObjectDestruction(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxObjectDestructionGenerator>, root, stats);
+  }
+
+  void normalizeVirtualBaseCtorDtor(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxVirtualBaseCtorDtorGenerator>, root, stats);
+  }
+
+  void normalizeCleanCtorInitlist(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxCleanCtorInitlistGenerator>, root, stats);
+  }
+
+  void normalizeThisParameter(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxThisParameterGenerator>, root, stats);
+  }
+
+  void normalizationCheck(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxNormalizationCheck>, root, stats);
+  }
 
   void normalizeCxx1(Normalization& norm, SgNode* root)
   {
