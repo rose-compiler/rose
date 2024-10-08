@@ -4009,13 +4009,13 @@ baseType(const SgType* ty)
 }
 
 SgEnumDeclaration*
-baseEnumDeclaration(SgType& ty)
+baseEnumDeclaration(const SgType& ty)
 {
   return baseEnumDeclaration(&ty);
 }
 
 SgEnumDeclaration*
-baseEnumDeclaration(SgType* ty)
+baseEnumDeclaration(const SgType* ty)
 {
   SgDeclarationStatement* basedcl = associatedDeclaration_internal(ty, 0);
 

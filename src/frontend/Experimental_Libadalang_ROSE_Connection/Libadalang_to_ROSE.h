@@ -344,49 +344,71 @@ struct AstContext
     //~ Element_Struct*      elem;
 };
 
+inline
+std::string toString(const char* el)
+{
+  if (el == nullptr) return {};
+
+  return el;
+}
+
 /// Class that handles ada_text variables from Libadalang
 /// ada_text variables need to be destroyed using the ada_destroy_text func
 struct LibadalangText {
     LibadalangText()                                 = delete;
-    LibadalangText(LibadalangText&&)                 = default;
-    LibadalangText& operator=(LibadalangText&&)      = default;
-    LibadalangText(const LibadalangText&)            = default;
-    LibadalangText& operator=(const LibadalangText&) = default;
+    LibadalangText(LibadalangText&&)                 = delete;
+    LibadalangText& operator=(LibadalangText&&)      = delete;
+    LibadalangText(const LibadalangText&)            = delete;
+    LibadalangText& operator=(const LibadalangText&) = delete;
 
     //If init with ada_node_kind, call ada_kind_name to get the ada_text value
     LibadalangText(ada_node_kind_enum kind){
       ada_kind_name(kind, &internal_text);
       c_text = ada_text_to_locale_string(&internal_text);
-      cxx_text = std::string(c_text);
+      cxx_text = toString(c_text);
     }
 
     //If init with ada_symbol_type, call ada_symbol_text to get the ada_text value
     LibadalangText(ada_symbol_type* symbol){
       ada_symbol_text(symbol, &internal_text);
       c_text = ada_text_to_locale_string(&internal_text);
-      cxx_text = std::string(c_text);
+      cxx_text = toString(c_text);
     }
 
     //If init with ada_big_integer, call ada_big_integer_text to get the ada_text value
     LibadalangText(ada_big_integer big_int){
       ada_big_integer_text(big_int, &internal_text);
       c_text = ada_text_to_locale_string(&internal_text);
-      cxx_text = std::string(c_text);
+      cxx_text = toString(c_text);
     }
 
     //If init with ada_base_entity, call ada_node_image to get the ada_text value
     LibadalangText(ada_base_entity* lal_element){
       ada_node_image(lal_element, &internal_text);
       c_text = ada_text_to_locale_string(&internal_text);
-      cxx_text = std::string(c_text);
+      cxx_text = toString(c_text);
     }
 
     //If init with ada_text_type, use pointers to construct ada_text value
     LibadalangText(ada_text_type text_type){
-      internal_text.length = text_type->n;
-      internal_text.chars = text_type->items;
+      if (text_type != nullptr)
+      {
+        internal_text.length = text_type->n;
+        internal_text.chars  = text_type->items;
+
+        // do we need to set internal_text.is_allocated ?
+        //   setting to false, since the text should be freed
+        //   with text_type and not with internal_text
+        internal_text.is_allocated = false;
+      }
+      else
+      {
+        // \todo should this be an error?
+        internal_text = { nullptr, 0, false };
+      }
+
       c_text = ada_text_to_locale_string(&internal_text);
-      cxx_text = std::string(c_text);
+      cxx_text = toString(c_text);
     }
 
     //If init with ada_unbounded_text_type_array, use pointers to construct ada_text value from the entire array
@@ -396,7 +418,7 @@ struct LibadalangText {
         ada_symbol_type current_symbol = text_type_array->items[i];
         ada_symbol_text(&current_symbol, &internal_text);
         c_text = ada_text_to_locale_string(&internal_text);
-        cxx_text += std::string(c_text);
+        cxx_text += toString(c_text);
         if(i < text_type_array->n - 1){
           //destroy all but the last ada_text
           ada_destroy_text(&internal_text);
@@ -413,9 +435,9 @@ struct LibadalangText {
     std::string string_value() const { return cxx_text; }
 
   private:
-    ada_text     internal_text;
-    char*        c_text;
-    std::string  cxx_text;
+    ada_text     internal_text = { nullptr, 0, false };
+    char*        c_text        = nullptr;
+    std::string  cxx_text      = {};
 };
 
 //
@@ -464,7 +486,7 @@ void logKind(const char* kind, int elemID);
 /// Gets the p_canonical_text field for a node and returns it as a string
 std::string canonical_text_as_string(ada_base_entity* lal_element);
 
-/// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal) 
+/// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal)
 std::string getFullName(ada_base_entity* lal_element);
 
 void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate = false);

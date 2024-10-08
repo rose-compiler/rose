@@ -127,7 +127,7 @@ namespace
           SgExpression& index = getExpr(&lal_identifier, ctx);
           indicesSeq.push_back(&index);
         } else {
-          //Constrained arrays have a different format, so they need getDefinitionExpr 
+          //Constrained arrays have a different format, so they need getDefinitionExpr
           SgExpression& index = getDefinitionExpr(&lal_array_index, ctx);
           indicesSeq.push_back(&index);
         }
@@ -482,7 +482,7 @@ namespace
             SgAdaTypeConstraint& range = getConstraint(&subtype_constraint, ctx);
 
             res = &mkAdaSubtype(SG_DEREF(res), range);
-          } //TODO How do we get the constraint status here? 
+          } //TODO How do we get the constraint status here?
 
           ada_base_entity has_not_null;
           ada_subtype_indication_f_has_not_null(lal_def, &has_not_null);
@@ -731,7 +731,7 @@ namespace
     std::string word_to_hash = full_sloc + std::to_string(kind);
 
     //Generate the hash
-    int seed = 131; 
+    int seed = 131;
     unsigned int hash = 0;
     for(long unsigned int i = 0; i < word_to_hash.length(); ++i){
       hash = (hash * seed) + word_to_hash[i];
@@ -740,15 +740,16 @@ namespace
   }
 
   /// returns the ROSE type a Libadalang type decl corresponds to
+  /// \pre (lal_expr != nullptr && !ada_node_is_null(lal_expr))
   SgNode&
   getExprType(ada_base_entity* lal_expr, AstContext ctx)
   {
-    //Get the kind of this node
-    ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_expr);
-
     static constexpr bool findFirstOf = false;
 
+    ROSE_ASSERT(!ada_node_is_null(lal_expr));
+
+    //Get the kind of this node
+    ada_node_kind_enum kind = ada_node_kind(lal_expr);
     SgNode* res = nullptr;
 
     switch(kind)
@@ -785,8 +786,31 @@ namespace
           res = &getAttributeExpr(lal_expr, ctx);
           break;
         }
+
+      case ada_identifier:
+        {
+          // fallback case: if a declaration cannot be found,
+          //                the caller needs to pass in the
+          //                ada_identifier node instead.
+          // \todo is this the right place to handle incomplete information?
+          res = findFirst(adaTypesByName(), canonical_text_as_string(lal_expr));
+
+          if (res == nullptr)
+          {
+            logError() << "unable to find type " << canonical_text_as_string(lal_expr)
+                       << " as Ada Standard type."
+                       << std::endl;
+
+            res = &mkTypeUnknown();
+          }
+
+          break;
+        }
+
       default:
-        logFlaw() << "Unknown type expression: " << kind << std::endl;
+        logFlaw() << "Unknown type expression: " << kind
+                  << "\nhash: " << int(hash_node(lal_expr))
+                  << std::endl;
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
         res = &mkTypeUnknown();
     }
@@ -882,9 +906,7 @@ namespace
   getDeclType(ada_base_entity* lal_id, AstContext ctx)
   {
     //Get the kind of this node
-    ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_id);
-
+    ada_node_kind_enum kind = ada_node_kind(lal_id);
     ada_base_entity lal_declaration;
 
     if(kind == ada_subtype_indication){
@@ -907,7 +929,10 @@ namespace
     }
 
     if(ada_node_is_null(&lal_declaration)){
-      logError() << "getDeclType cannot find definition.\n";
+      logError() << "getDeclType cannot find definition. kind = " << kind
+                 << std::endl;
+
+      lal_declaration = *lal_id;
     }
 
     SgNode& basenode = getExprType(&lal_declaration, ctx);
@@ -1331,7 +1356,7 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
     ada_floating_point_def_f_num_digits(&float_def, &lal_num_digits);
     std::string name = canonical_text_as_string(&lal_num_digits);
     int num_digits = std::stoi(name);
-    
+
     ada_floating_point_def_f_range(&float_def, &lal_range);
     ada_range_spec_f_range(&lal_range, &lal_range);
     ada_bin_op_f_right(&lal_range, &lal_range);
@@ -1615,7 +1640,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   SgType& adaNaturalType            = SG_DEREF(adaTypesByName().at(AdaIdentifier{"NATURAL"}));
 
   SgType& adaRealType               = mkRealType();
-  
+
   //characters
   SgType& adaCharType               = SG_DEREF(adaTypesByName().at(AdaIdentifier{"CHARACTER"}));
   SgType& adaWideCharType           = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_CHARACTER"}));
@@ -1767,13 +1792,13 @@ getExceptionBase(ada_base_entity* lal_element, AstContext ctx)
     name = canonical_text_as_string(&lal_corresponding_decl);
     ada_expr_p_first_corresponding_decl(&lal_corresponding_decl, &lal_corresponding_decl);
   } else {
-    logError() << "Unhandled kind " << kind << " in getExceptionBase!\n"; 
+    logError() << "Unhandled kind " << kind << " in getExceptionBase!\n";
   }
 
   ada_ada_node_array defining_name_list;
   ada_basic_decl_p_defining_names(&lal_corresponding_decl, &defining_name_list);
   int decl_hash;
-          
+
   //Find the correct decl in the defining name list
   for(int i = 0; i < defining_name_list->n; ++i){
     ada_base_entity defining_name = defining_name_list->items[i];
@@ -1864,7 +1889,7 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
       {
         logKind("ada_index_constraint", kind);
 
-        //Get the constraint list 
+        //Get the constraint list
         ada_base_entity lal_constraint_list;
         ada_index_constraint_f_constraints(lal_constraint, &lal_constraint_list);
         int count = ada_node_children_count(&lal_constraint_list);

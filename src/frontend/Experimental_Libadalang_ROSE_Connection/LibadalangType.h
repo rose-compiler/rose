@@ -99,6 +99,11 @@ createExHandlerType(ada_base_entity* lal_exception_choices, AstContext ctx);
 SgType*
 getNumberDeclType(ada_base_entity* lal_element);
 
+/// returns a ROSE node representing the type indicated by \p lal_expr
+SgNode&
+getExprType(ada_base_entity* lal_expr, AstContext ctx);
+
+
 } //end Libadlang_ROSE_Translation namespace
 
 

@@ -1029,10 +1029,10 @@ namespace Ada
   ///    or a subtype.
   /// \{
   SgEnumDeclaration*
-  baseEnumDeclaration(SgType* ty);
+  baseEnumDeclaration(const SgType* ty);
 
   SgEnumDeclaration*
-  baseEnumDeclaration(SgType& ty);
+  baseEnumDeclaration(const SgType& ty);
   /// \}
 
   /// checks if the type is based on one of the Standard character types.

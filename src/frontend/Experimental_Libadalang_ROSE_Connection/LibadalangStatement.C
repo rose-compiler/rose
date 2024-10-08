@@ -295,7 +295,7 @@ namespace Libadalang_ROSE_Translation
     } else {
         //TODO
         logWarn() << "Unknown kind " << kind << " in completeRoutineBody!\n";
-    }    
+    }
 
     completeDeclarationsWithHandledBlock( &lal_decls,
                                           &lal_stmts, //lal_stmts sometimes breaks here??????????
@@ -687,6 +687,9 @@ namespace {
   }
 
   /// Creates a public forward decl for a private type/enum
+  // \note if the type is eventually an enum, we cannot use derived type for the
+  //       intermediate declarations. So before deciding what kind of node
+  //       shall be created we need to go to the bottom of derived type chains.
   SgDeclarationStatement&
   createOpaqueDecl(const std::string& ident, ada_base_entity* lal_element, AstContext ctx)
   {
@@ -718,9 +721,42 @@ namespace {
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
       lal_type_def_kind = ada_node_kind(&lal_base_type_def);
 
+      // if the ultimate base type is an enum, the derived type also shall be an enum.
+      // if not an enum, then an intermediate type decl is created.
+      // firstLevelIsDerived is set to indicate if the first level was a derived type
+      const bool firstLevelIsDerived = lal_type_def_kind == ada_derived_type_def;
+
+      while(lal_type_def_kind == ada_derived_type_def){
+        //If this is a derived type, get the type it is derived from
+        ada_base_entity lal_subtype_indication;
+        ada_derived_type_def_f_subtype_indication(&lal_base_type_def, &lal_subtype_indication);
+        ROSE_ASSERT(!ada_node_is_null(&lal_subtype_indication));
+
+        logTrace() << "kind = " << ada_node_kind(&lal_subtype_indication)
+                   << "   hash = " << hash_node(&lal_subtype_indication)
+                   << std::endl;
+
+        ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
+        if (!ada_node_is_null(&lal_base_type_decl)) {
+          ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
+          ROSE_ASSERT(!ada_node_is_null(&lal_base_type_def));
+
+          lal_type_def_kind = ada_node_kind(&lal_base_type_def);
+        } else {
+          ada_base_entity lal_name;
+
+          ada_subtype_indication_f_name(&lal_subtype_indication, &lal_name);
+          SgNode& tyrep = getExprType(&lal_name, ctx);
+
+          const bool isEnum = si::Ada::baseEnumDeclaration(isSgType(&tyrep)) != nullptr;
+
+          lal_type_def_kind = isEnum ? ada_enum_type_def : ada_private_type_def /* anything */;
+        }
+      }
+
       if(lal_type_def_kind == ada_enum_type_def){
         res = &mkEnumDecl(ident, scope);
-      } else if(lal_type_def_kind == ada_record_type_def){
+      } else if((lal_type_def_kind == ada_record_type_def) && !firstLevelIsDerived){
         SgClassDeclaration& sgnode = mkRecordDecl(ident, scope);
         if(typeview){
           setParentRecordConstraintIfAvail(sgnode, &lal_type_def, ctx);
@@ -923,7 +959,7 @@ namespace {
 
     //If this is a derived type, get the inherited elements
     //TODO Other lal_type_def_kinds may still inherit?
-    if(!ada_node_is_null(&lal_type_def) && lal_type_def_kind == ada_derived_type_def){ 
+    if(!ada_node_is_null(&lal_type_def) && lal_type_def_kind == ada_derived_type_def){
       SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
 
       TypeData ty = getTypeFoundation(ident, &lal_type_def, ctx);
@@ -1905,7 +1941,7 @@ queryDecl(ada_base_entity* lal_element, int defining_name_hash, AstContext /*ctx
 void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lblname)
   {
     //~using PragmaContainer = AstContext::PragmaContainer;
-    
+
     //Get the kind of this node
     ada_node_kind_enum kind = ada_node_kind(lal_stmt);
 
@@ -2290,7 +2326,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
             while(lal_exit_parent_kind != ada_loop_stmt && lal_exit_parent_kind != ada_for_loop_stmt && lal_exit_parent_kind != ada_while_loop_stmt){
               ada_ada_node_parent(&lal_exit_parent, &lal_exit_parent);
               lal_exit_parent_kind = ada_node_kind(&lal_exit_parent);
-            } 
+            }
             loop_hash = hash_node(&lal_exit_parent);
           } else {
             //Figure out which loop this name matches
@@ -2362,7 +2398,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
             }
 
             //Get the name of the call
-            ada_call_expr_f_name(&lal_call_expr, &lal_call_name);         
+            ada_call_expr_f_name(&lal_call_expr, &lal_call_name);
           } else if(lal_call_expr_kind == ada_dotted_name){
             //Get the arg (there can only be 1)
             lal_args.resize(1);
@@ -2559,7 +2595,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     }
 
     logKind("ada_exception_handler", kind);
-    
+
     //Get the name for this handler
     ada_base_entity lal_name;
     ada_exception_handler_f_exception_name(lal_element, &lal_name);
@@ -2631,7 +2667,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
   LibadalangText kind_name(kind);
   std::string kind_name_string = kind_name.string_value();
   logTrace()   << "handleDeclaration called on a " << kind_name_string << std::endl;
-  
+
   //std::vector<Element_ID> pragmaVector;
 
   //std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
@@ -2891,7 +2927,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get whether this is a func or a proc
         ada_base_entity lal_subp_spec, lal_subp_type;
         ada_generic_subp_decl_f_subp_decl(lal_element, &lal_subp_spec);
-        ada_generic_subp_internal_f_subp_spec(&lal_subp_spec, &lal_subp_spec); 
+        ada_generic_subp_internal_f_subp_spec(&lal_subp_spec, &lal_subp_spec);
         ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_type);
         ada_node_kind_enum lal_subp_type_kind = ada_node_kind(&lal_subp_type);
 
@@ -3168,7 +3204,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_subp_spec, lal_subp_type, lal_overriding;
         ada_generic_formal_f_decl(lal_element, &lal_subp_spec);
         ada_classic_subp_decl_f_overriding(&lal_subp_spec, &lal_overriding); //TODO overriding isn't needed?
-        ada_classic_subp_decl_f_subp_spec(&lal_subp_spec, &lal_subp_spec); 
+        ada_classic_subp_decl_f_subp_spec(&lal_subp_spec, &lal_subp_spec);
         ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_type);
         ada_node_kind_enum lal_subp_type_kind = ada_node_kind(&lal_subp_type);
 
@@ -4057,7 +4093,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         // the entry call links back to the declaration ID
         recordNode(libadalangDecls(), hash, sgnode);
-        
+
         assocdecl = &sgnode;
         break;
       }
@@ -4148,7 +4184,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_derived_type_def_f_has_with_private(&lal_type_def, &lal_has_with_private);
           ada_node_kind_enum lal_has_with_private_kind = ada_node_kind(&lal_has_with_private);
           if(lal_has_with_private_kind == ada_with_private_present){
-            has_with_private = true; 
+            has_with_private = true;
           }
 
           logTrace() << "  abstract: " << has_abstract
@@ -4322,7 +4358,7 @@ bool useClauseFatalError(std::string name, AstContext ctx){
 }
 
 /// Creates a decl for a single package or type name in a use clause
-void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationStatement*>& m, AstContext ctx){ 
+void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationStatement*>& m, AstContext ctx){
  //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
   ada_base_entity lal_name;
   findBaseName(lal_element, lal_name);
@@ -4604,5 +4640,5 @@ processInheritedSubroutines( SgNamedType& derivedType,
 
   ctx.storeDeferredUnitCompletion(std::move(deferredSubRoutineProcessing));
 }
- 
+
 } //end Libadalang_ROSE_Translation
