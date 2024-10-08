@@ -124,7 +124,7 @@ else()
   set(CMAKE_VERBOSE_MAKEFILE FALSE)
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_SHARED_LIBS "Build all libraries shared" FALSE)
@@ -877,7 +877,7 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
 endif()
 
 # Initialize variable that determines where to look for libquadmath.so 
-set(QUADMATH_SEARCH_PATHS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib /usr/lib/gcc/x86_64-redhat-linux/8)
+set(QUADMATH_SEARCH_PATHS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib /usr/lib/gcc/x86_64-redhat-linux/8 /usr/lib/gcc/x86_64-redhat-linux/11/32 )
 if(NOT WIN32) # try to find libm and libquadmath when not on Windows OS 
   find_library(M_LIB m)  
   message(STATUS "Looking for Quadmath in: ${QUADMATH_SEARCH_PATHS}")
