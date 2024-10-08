@@ -46,7 +46,17 @@ InstructionAccess::accessString() const {
 
 std::string
 InstructionAccess::toString() const {
-    return accessString() + (address() ? " at " + StringUtility::addrToString(*address()) : " implied");
+    if (address()) {
+        return accessString() + " at " + StringUtility::addrToString(*address());
+    } else {
+        return "implied variable";
+    }
+}
+
+std::ostream&
+operator<<(std::ostream &out, const InstructionAccess &ia) {
+    out <<ia.toString();
+    return out;
 }
 
 } // namespace

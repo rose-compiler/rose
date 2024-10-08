@@ -65,6 +65,8 @@ public:
     std::string toString() const;
 };
 
+std::ostream& operator<<(std::ostream&, const InstructionAccess&);
+
 } // namespace
 } // namespace
 } // namespace

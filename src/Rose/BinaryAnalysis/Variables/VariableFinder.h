@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Variables/GlobalVariable.h>
 #include <Rose/BinaryAnalysis/Variables/StackVariable.h>
 
@@ -103,30 +103,30 @@ public:
     bool isCached(const Partitioner2::FunctionPtr&);
 
     /** Figure out attributes describing the stack frame for the specified function. */
-    StackFrame detectFrameAttributes(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
+    StackFrame detectFrameAttributes(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
+                                     StackVariable::Boundaries&/*in,out*/);
 
-#if 0 // [Robb Matzke 2024-10-04]
-    /** Initilialize offsets for function prologue.
-     *
-     *  At the start of a function, we sometimes know where certain things are on the stack and their sizes. For instance, for
-     *  powerpc after the function prologue sets up the stack frame, we know that the stack frame header contain two 4-byte
-     *  quantities: the pointer to the parent frame, and the LR save area for callees and therefore we can add the three offsets
-     *  that delimit the boundaries of these two "variables". */
-    void initializeFrameBoundaries(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
-                                   StackVariable::Boundaries &boundaries /*in,out*/);
-
-    /** Find stack variable addresses.
-     *
-     *  Given an instruction, look for operand subexpressions that reference memory based from a stack frame pointer, such as
-     *  x86 "mov eax, [ebp - 12]". Returns the set of offsets from the frame pointer. */
-    std::set<int64_t> findFrameOffsets(const StackFrame&, const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
-
-    /** Function that owns an instruction.
-     *
-     *  Given an instruction, return one of the owning functions chosen arbitrarily.  This is the method used by the version
-     *  of @ref findStackVariables that takes an instruction argument. */
-    Partitioner2::FunctionPtr functionForInstruction(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
-
+//    /** Initilialize offsets for function prologue.
+//     *
+//     *  At the start of a function, we sometimes know where certain things are on the stack and their sizes. For instance, for
+//     *  powerpc after the function prologue sets up the stack frame, we know that the stack frame header contain two 4-byte
+//     *  quantities: the pointer to the parent frame, and the LR save area for callees and therefore we can add the three offsets
+//     *  that delimit the boundaries of these two "variables". */
+//    void initializeFrameBoundaries(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
+//                                   StackVariable::Boundaries &boundaries /*in,out*/);
+//
+//    /** Find stack variable addresses.
+//     *
+//     *  Given an instruction, look for operand subexpressions that reference memory based from a stack frame pointer, such as
+//     *  x86 "mov eax, [ebp - 12]". Returns the set of offsets from the frame pointer. */
+//    std::set<int64_t> findFrameOffsets(const StackFrame&, const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
+//
+//    /** Function that owns an instruction.
+//     *
+//     *  Given an instruction, return one of the owning functions chosen arbitrarily.  This is the method used by the version
+//     *  of @ref findStackVariables that takes an instruction argument. */
+//    Partitioner2::FunctionPtr functionForInstruction(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
+//
     /** Find global variable addresses.
      *
      *  Returns a list of addresses that are possibly the beginning of global variables. We're only able to find global
@@ -176,14 +176,12 @@ public:
      *
      *  Given a cell-based symbolic memory state, return all the memory addresses that appear in it. */
     std::set<SymbolicExpression::Ptr> getMemoryAddresses(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
-#endif
 
     /** Find constants in memory.
      *
      *  Given an cell-based symbolic memory state, return all constants that appear in the cell addresses. */
     std::set<Address> findAddressConstants(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
 
-#if 0 // [Robb Matzke 2024-10-04]
     /** Remove boundaries that are outside a stack frame.
      *
      *  If the frame's lowest address is known, then boundaries that begin before the frame are removed. Except if there is no
@@ -191,8 +189,7 @@ public:
      *  frame instead of being removed entirely.
      *
      *  If the frame's upper address is known, then any boundary above that address is removed from the list. */
-    void removeOutliers(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
-                        StackVariable::Boundaries &sortedBoundaries /*in,out*/);
+    void removeOutliers(const StackFrame&, StackVariable::Boundaries &sortedBoundaries /*in,out*/);
 
     /** True if memory region contains any decoded instructions. */
     static bool regionContainsInstructions(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
@@ -225,7 +222,6 @@ private:
 
     // Merge one set of addresses and their defining instructions into another.
     static void merge(AddressToAddresses&, const AddressToAddresses&);
-#endif
 };
 
 } // namespace

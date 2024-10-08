@@ -94,6 +94,7 @@ Analysis::clearStackPointers() {
 void
 Analysis::clearFramePointers() {
     insnFramePtrs_.clear();
+    hasConsistentFramePointer_ = false;
 }
 
 void
@@ -297,6 +298,29 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
     } else {
         SAWYER_MESG(debug) <<"  no final state, thus no stack delta\n";
     }
+
+    // Does this function use a frame pointer register consistently as if it were a frame pointer?
+    hasConsistentFramePointer_ = [this, &dfCfg]() {
+        Sawyer::Optional<int64_t> fpWrtFunctionSp;
+        for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
+            if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK) {
+                const P2::BasicBlock::Ptr bblock = vertex.value().bblock();
+                ASSERT_not_null(bblock);
+                for (SgAsmInstruction *insn: bblock->instructions()) {
+                    const Sawyer::Optional<int64_t> spDelta = toInt(instructionInputStackDeltaWrtFunction(insn));
+                    const Sawyer::Optional<int64_t> fpDelta = toInt(instructionInputFrameDelta(insn));
+                    if (spDelta && fpDelta) {
+                        if (!fpWrtFunctionSp) {
+                            fpWrtFunctionSp = *spDelta + *fpDelta;
+                        } else if (*fpWrtFunctionSp != *spDelta + *fpDelta) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }();
 
     hasResults_ = true;
     didConverge_ = converged;
@@ -517,6 +541,11 @@ Analysis::toInt(const BaseSemantics::SValue::Ptr &v) {
     } else {
         return Sawyer::Nothing();
     }
+}
+
+bool
+Analysis::hasConsistentFramePointer() const {
+    return hasConsistentFramePointer_;
 }
 
 // class method

@@ -154,6 +154,36 @@ StackVariable::insertBoundaryImplied(Boundaries &boundaries /*in,out*/, const in
     return insertBoundary(boundaries, stackOffset, InstructionAccess(AccessFlags()));
 }
 
+// class method
+void
+StackVariable::printBoundary(std::ostream &out, const Boundary &boundary, const std::string &prefix) {
+    switch (boundary.purpose) {
+        case Purpose::RETURN_ADDRESS:
+            out <<prefix <<"return address ";
+            break;
+        case Purpose::FRAME_POINTER:
+            out <<prefix <<"frame pointer ";
+            break;
+        case Purpose::SPILL_AREA:
+            out <<prefix <<"spill area ";
+            break;
+        case Purpose::NORMAL:
+            out <<prefix <<"variable ";
+            break;
+        case Purpose::UNKNOWN:
+            out <<prefix <<"unknown purpose ";
+            break;
+        case Purpose::OTHER:
+            out <<prefix <<"other data area ";
+            break;
+    }
+
+    out <<"at function stack offset " <<boundary.stackOffset <<"\n";
+
+    for (const InstructionAccess &ia: boundary.definingInsns)
+        out <<prefix <<"  " <<ia <<"\n";
+}
+
 void
 StackVariable::print(std::ostream &out) const {
     out <<"local-variable";

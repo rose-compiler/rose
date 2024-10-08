@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Variables/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Variables/GlobalVariable.h>
 #include <Rose/BinaryAnalysis/Variables/InstructionAccess.h>
+#include <Rose/BinaryAnalysis/Variables/StackFrame.h>
 #include <Rose/BinaryAnalysis/Variables/StackVariable.h>
 #include <Rose/BinaryAnalysis/Variables/VariableFinder.h>
 

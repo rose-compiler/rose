@@ -79,6 +79,7 @@ private:
     SValuePairPerAddress insnStackPtrs_;                // Per-instruction initial and final stack pointers
     SValuePairPerAddress insnFramePtrs_;                // Per-instruction initial and final frame pointers if known
     DeltasPerAddress insnSpDeltas_;                     // Stack delta per instruction (net effect of insn on stack ptr)
+    bool hasConsistentFramePointer_ = false;            // Arch has FP register that's used as a frame pointer for this function
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -97,8 +98,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(bblockDeltas_);
         s & BOOST_SERIALIZATION_NVP(insnStackPtrs_);
         s & BOOST_SERIALIZATION_NVP(insnSpDeltas_);
-        if (version >= 2)
+        if (version >= 2) {
             s & BOOST_SERIALIZATION_NVP(insnFramePtrs_);
+            s & BOOST_SERIALIZATION_NVP(hasConsistentFramePointer_);
+        }
     }
 
     template<class S>
@@ -324,6 +327,11 @@ public:
      *  Converts the specified symbolic value to a 64-bit signed stack delta.  If the symbolic value is a null pointer or is not an
      *  integer, or is wider than 64 bits, then nothing is returned. */
     static Sawyer::Optional<int64_t> toInt(const InstructionSemantics::BaseSemantics::SValuePtr&);
+
+    /** True if the function appears to have a frame pointer.
+     *
+     *  Returns true if the function has a frame pointer register that appears to be used as a frame pointer register. */
+    bool hasConsistentFramePointer() const;
 
     /** Print multi-line value to specified stream. */
     void print(std::ostream&) const;

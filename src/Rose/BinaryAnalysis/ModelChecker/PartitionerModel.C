@@ -815,7 +815,8 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
         {
             SAWYER_THREAD_TRAITS::LockGuard lock(variableFinderMutex_);
             lvars = variableFinder_unsync->findStackVariables(partitioner_, callee);
-            frameSize = variableFinder_unsync->detectFrameAttributes(partitioner_, callee).size;
+            Variables::StackVariable::Boundaries _;
+            frameSize = variableFinder_unsync->detectFrameAttributes(partitioner_, callee, _).size;
         }
         callStack.push(FunctionCall(callee, initialSp, returnVa, lvars));
         const std::string isa = partitioner_->instructionProvider().disassembler()->name();

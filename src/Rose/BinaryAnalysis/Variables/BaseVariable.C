@@ -2,6 +2,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Variables/BaseVariable.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Variables {
@@ -39,18 +44,17 @@ BaseVariable::instructionsAccessing(const std::vector<InstructionAccess> &ia) {
     insns_ = ia;
 }
 
-#if 0 // [Robb Matzke 2024-10-04]
-InstructionSemantics::BaseSemantics::InputOutputPropertySet
+BS::InputOutputPropertySet
 BaseVariable::ioProperties() const {
-    InstructionSemantics::BaseSemantics::InputOutputPropertySet retval;
+    BS::InputOutputPropertySet retval;
     for (const InstructionAccess &ia: insns_) {
         for (const Access access: ia.access().split()) {
             switch (access) {
                 case Access::READ:
-                    retval.insert(InstructionSemantics::BaseSemantics::IO_READ);
+                    retval.insert(BS::IO_READ);
                     break;
                 case Access::WRITE:
-                    retval.insert(InstructionSemantics::BaseSemantics::IO_WRITE);
+                    retval.insert(BS::IO_WRITE);
                     break;
                 default:
                     ASSERT_not_reachable("invalid access");
@@ -59,7 +63,6 @@ BaseVariable::ioProperties() const {
     }
     return retval;
 }
-#endif
 
 const std::string&
 BaseVariable::name() const {

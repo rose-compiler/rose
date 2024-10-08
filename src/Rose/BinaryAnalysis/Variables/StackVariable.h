@@ -130,6 +130,9 @@ public:
     static Boundary& insertBoundaryImplied(Boundaries&/*in,out*/, int64_t stackOffset);
     /** @} */
 
+    /** Print information about a boundary. */
+    static void printBoundary(std::ostream&, const Boundary&, const std::string &prefix = "");
+
     /** Printing local variable.
      *
      * @{ */
