@@ -11,10 +11,7 @@ if(ENABLE-ADA)
   add_subdirectory(Experimental_Ada_ROSE_Connection)
 endif() 
 
-if(ENABLE-JOVIAL OR ENABLE-ADA) 
+if(ENABLE-JOVIAL) 
   add_subdirectory(Experimental_General_Language_Support)
-endif() 
-
-if(ENABLE-JOVIAL)
   add_subdirectory(Experimental_Jovial_ROSE_Connection)
 endif() 
