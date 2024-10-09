@@ -10619,7 +10619,9 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
         {
           // move inner dangling  #endif, #if  etc to newStmt's after position, otherwise they got lost
 //A-B test here
-         moveUpInnerDanglingIfEndifDirective(newStmt);
+         // I think we should move up old statement's inner dangling directives
+         // later , we move directives from old statement to new statement
+         moveUpInnerDanglingIfEndifDirective(oldStmt);
 #if 0
           printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() changed to movePreprocessingInfo() \n");
 #endif
