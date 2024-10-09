@@ -485,12 +485,14 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
 
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
-     mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
-
-     // MATCHED BYTEPOS
-     if (traverse_Formula(t_formula, expr)) {
+     SgExpression* pp{nullptr};
+     if (traverse_Formula(t_formula, pp)) {
         // MATCHED CompileTimeNumericFormula
      } else return ATfalse;
+
+     auto params = SageBuilder::buildExprListExp_nfi();
+     params->append_expression(pp);
+     expr = buildIntrinsicFunctionCallExp_nfi(std::string{"BYTEPOS"}, params, scope);
    }
 
    //TODO: 'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
@@ -8876,8 +8878,11 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
   ASSERT_not_null(scope);
 
   // Create a return type based on the intrinsic name
-  if (name == "MAXINT") {
-    type = SB::buildIntType();
+  if (name == "BYTEPOS") {
+    type = SageBuilder::buildIntType();
+  }
+  else if (name == "MAXINT") {
+    type = SageBuilder::buildIntType();
   }
   else {
     type = SB::buildVoidType();
