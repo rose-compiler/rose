@@ -716,10 +716,10 @@ namespace {
       res = &mkAdaTaskTypeDecl(ident, nullptr /* no spec */, scope);
     } else if(lal_base_type_kind == ada_protected_type_decl){
       res = &mkAdaProtectedTypeDecl(ident, nullptr /* no spec */, scope);
-    } else if(!typeview || lal_type_def_kind == ada_private_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
+    } else if(!typeview || lal_type_def_kind == ada_private_type_def || lal_type_def_kind == ada_derived_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
       ada_base_entity lal_base_type_def;
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
-      lal_type_def_kind = ada_node_kind(&lal_base_type_def);
+      lal_type_def_kind = ada_node_kind(&lal_base_type_def); //TODO If this is ada_dervied_type_def, we might need to go further
 
       // if the ultimate base type is an enum, the derived type also shall be an enum.
       // if not an enum, then an intermediate type decl is created.
@@ -1771,6 +1771,99 @@ namespace {
     ifStmtCommonBranch(lal_path, ifStmt, ctx, &SgIfStmt::set_true_body);
   }
 
+  /// Set of functions to help with various parts of select stmts
+  /// @{
+  // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
+  // PP 10/12/2021 : modified code to eliminate the need for using scope_npc.
+  //                 A block will only be populated after the new node has been connected
+  //                 to the AST. This is achieved by returning a lambda function w/o parameters
+  //                 (DeferredBodyCompletion) that is invoked after the node has been connected
+  //                 to the AST.
+
+    /*void orAlternative(Path_Struct& path)
+    {
+      ADA_ASSERT (path.Path_Kind == An_Or_Path);
+
+      auto alt = commonAltStmt(path);
+
+      if (currOrPath == nullptr)
+      {
+        ADA_ASSERT (  (sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept)
+                   || (sgnode->get_select_type() == SgAdaSelectStmt::e_timed_entry)
+                   );
+
+        sg::linkParentChild(*sgnode, *(alt.first), &SgAdaSelectStmt::set_or_path);
+      }
+      else
+      {
+        ADA_ASSERT (sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept);
+
+        sg::linkParentChild(*currOrPath, *(alt.first), &SgAdaSelectAlternativeStmt::set_next);
+      }
+
+      currOrPath = alt.first;
+      alt.second();
+    }*/ //TODO What uses this?
+
+    void handleSelectAlternative(SgAdaSelectStmt& sgnode, ada_base_entity* lal_element, AstContext ctx){
+      // create body of alternative
+      SgBasicBlock* block = &mkBasicBlock();
+
+      //Get the guard
+      ada_base_entity lal_guard;
+      ada_select_when_part_f_cond_expr(lal_element, &lal_guard);
+      SgExpression& guard = getExpr_opt(&lal_guard, ctx);
+
+      // instantiate SgAdaSelectAlternativeStmt node and return it
+      SgAdaSelectAlternativeStmt& stmt = mkAdaSelectAlternativeStmt(guard, *block);
+
+      sg::linkParentChild(sgnode, stmt, &SgAdaSelectStmt::set_select_path);
+
+      //Get the list of stmts & handle them
+      ada_base_entity lal_stmt_list;
+      ada_select_when_part_f_stmts(lal_element, &lal_stmt_list);
+      int count = ada_node_children_count(&lal_stmt_list);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_stmt;
+        if(ada_node_child(&lal_stmt_list, i, &lal_stmt) != 0){
+          handleStmt(&lal_stmt, ctx.scope(*block));
+        }
+      }
+    }
+
+    void handleElseAlternative(SgAdaSelectStmt& sgnode, ada_base_entity* lal_element, AstContext ctx){
+
+      SgBasicBlock* block   = &mkBasicBlock();
+
+      sg::linkParentChild(sgnode, *block, &SgAdaSelectStmt::set_else_path);
+
+      //Handle the list of stmts
+      int count = ada_node_children_count(lal_element);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_stmt;
+        if(ada_node_child(lal_element, i, &lal_stmt) != 0){
+          handleStmt(&lal_stmt, ctx.scope(*block));
+        }
+      }
+    }
+
+    void handleAbortAlternative(SgAdaSelectStmt& sgnode, ada_base_entity* lal_element, AstContext ctx){
+      SgBasicBlock* block   = &mkBasicBlock();
+
+      sg::linkParentChild(sgnode, *block, &SgAdaSelectStmt::set_abort_path);
+
+      //Handle the list of stmts
+      int count = ada_node_children_count(lal_element);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_stmt;
+        if(ada_node_child(lal_element, i, &lal_stmt) != 0){
+          handleStmt(&lal_stmt, ctx.scope(*block));
+        }
+      }
+    }
+
+  ///@}
+
   /// Reformats a list of Type ptrs to an OperatorCallSupplement::ArgDescList by adding an empty string parameter to each
   OperatorCallSupplement::ArgDescList
   toArgDescList(const SgTypePtrList& typlist)
@@ -2510,6 +2603,27 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           assocstmt = &sgnode;
           break;
         }
+      case ada_requeue_stmt:                 // 9.5.4
+        {
+          logKind("ada_requeue_stmt", kind);
+
+          //Get the abort status for this stmt
+          ada_base_entity lal_has_abort;
+          ada_requeue_stmt_f_has_abort(lal_stmt, &lal_has_abort);
+          const bool withAbort = (ada_node_kind(&lal_has_abort) == ada_abort_present);
+
+          //Get the call name for this stmt
+          ada_base_entity lal_call_name;
+          ada_requeue_stmt_f_call_name(lal_stmt, &lal_call_name);
+
+          SgExpression&              expr   = getExpr(&lal_call_name, ctx);
+          SgProcessControlStatement& sgnode = mkRequeueStmt(expr, withAbort);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
       case ada_delay_stmt:             // 9.6
         {
           logKind("ada_delay_stmt", kind);
@@ -2552,6 +2666,78 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           assocstmt = &sgnode;
           break;
         }
+      case ada_select_stmt:    // 9.7.4
+        {
+          logKind("ada_select_stmt", kind);
+
+          //Get the various paths that can be taken
+          ada_base_entity lal_guard_list, lal_else_list, lal_abort_list;
+          ada_select_stmt_f_guards(lal_stmt, &lal_guard_list);
+          ada_select_stmt_f_else_stmts(lal_stmt, &lal_else_list);
+          ada_select_stmt_f_abort_stmts(lal_stmt, &lal_abort_list);
+
+
+          SgAdaSelectStmt& sgnode = mkAdaSelectStmt(SgAdaSelectStmt::e_asynchronous);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          //Traverse over each path, and call its respective handler
+          int count = ada_node_children_count(&lal_guard_list);
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_guard;
+            if(ada_node_child(&lal_guard_list, i, &lal_guard) != 0){
+              handleSelectAlternative(sgnode, &lal_guard, ctx);
+            }
+          }
+
+          if(!ada_node_is_null(&lal_else_list)){
+            handleElseAlternative(sgnode, &lal_else_list, ctx);
+          }
+
+          if(!ada_node_is_null(&lal_abort_list)){
+            handleAbortAlternative(sgnode, &lal_abort_list, ctx);
+          }
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_abort_stmt:                  // 9.8
+        {
+          logKind("ada_abort_stmt", kind);
+
+          //Get the list of tasks to abort
+          ada_base_entity lal_name_list;
+          ada_abort_stmt_f_names(lal_stmt, &lal_name_list);
+
+          std::vector<SgExpression*> aborted;
+          int count = ada_node_children_count(&lal_name_list);
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_aborted_name;
+            if(ada_node_child(&lal_name_list, i, &lal_aborted_name) != 0){
+              aborted.push_back(&getExpr(&lal_aborted_name, ctx));
+            }
+          }
+
+          SgExprListExp&             abortList = mkExprListExp(aborted);
+          SgProcessControlStatement& sgnode    = mkAbortStmt(abortList);
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
+      case ada_terminate_alternative:   // 9.7.1
+        {
+          logKind("ada_terminate_alternative", kind);
+
+          SgAdaTerminateStmt& sgnode = mkTerminateStmt();
+
+          completeStmt(sgnode, lal_stmt, ctx);
+
+          assocstmt = &sgnode;
+          break;
+        }
+
       //Declarations //TODO Add more decls?
       case ada_entry_body:
         {
@@ -2562,11 +2748,14 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
       case ada_with_clause:           // 10.1.2
       case ada_use_type_clause:       // 8.4
       case ada_use_package_clause:    // 8.4
+      case ada_attribute_def_clause:  // 13.3
+      case ada_record_rep_clause:     // 13.5.1
         {
           handleClause(lal_stmt, ctx);
           return;
         }
       case ada_error_stmt:              // If this node exists, the input code is malformed
+      case ada_error_decl:
         {
           //TODO Do we want the frontend to break on malformed code? This could just be a warning.
           logFatal() << "ada_error_stmt encountered!\n";
@@ -2575,7 +2764,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       default:
         {
-          logWarn() << "Unhandled statement " << kind << std::endl;
+          logWarn() << "Unhandled statement " << kind_name_string << std::endl;
           //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
         }
     }
@@ -3354,6 +3543,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity p_decl_part, lal_decl_defining_name;
         ada_body_node_p_decl_part(lal_element, 1, &p_decl_part);
         ada_node_kind_enum decl_kind = ada_node_kind(&p_decl_part);
+
         if(decl_kind == ada_single_task_decl){
           ada_single_task_decl_f_task_type(&p_decl_part, &lal_decl_defining_name);
           ada_base_type_decl_f_name(&lal_decl_defining_name, &lal_decl_defining_name);
@@ -3363,7 +3553,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           logError() << "ada_task_body has decl of unhandled kind: " << kind << "!\n";
         }
 
-        int                          hash = hash_node(lal_element);
+        int                     hash      = hash_node(lal_element);
         int                     decl_hash = hash_node(&lal_decl_defining_name);
         std::string             ident     = canonical_text_as_string(&lal_identifier);
         SgAdaTaskBody&          tskbody   = mkAdaTaskBody();
@@ -3373,7 +3563,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Task_Body_Stub, ctx);
         SgDeclarationStatement& tskdecl = lookupNode(libadalangDecls(), decl_hash); //TODO What is specID?
 
-        SgScopeStatement&       logicalScope = SG_DEREF(&ctx.scope());
+        SgScopeStatement&       logicalScope = ctx.scope();
         SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, nondef, tskbody, logicalScope);
 
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -3531,6 +3721,38 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         setAdaSeparate(sgnode, true /* separate */);
 
         int hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_task_body_stub:                         // 10.1.3(5)
+      {
+        logKind("ada_task_body_stub", kind);
+
+        //Get the name for this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_task_body_stub_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+
+        //Get the full decl
+        ada_base_entity lal_previous_decl;
+        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl); //TODO Is this always an ada_single_task_decl?
+        ada_single_task_decl_f_task_type(&lal_previous_decl, &lal_previous_decl);
+        ada_base_type_decl_f_name(&lal_previous_decl, &lal_previous_decl);
+
+        int               previous_hash = hash_node(&lal_previous_decl);
+        int                        hash = hash_node(&lal_defining_name);
+        std::string               ident = getFullName(&lal_identifier);
+        SgDeclarationStatement& tskdecl = lookupNode(libadalangDecls(), previous_hash);
+        SgScopeStatement&       logicalScope = ctx.scope();
+        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl_nondef(tskdecl, logicalScope);
+
+        setAdaSeparate(sgnode, true /* separate */);
+
         recordNode(libadalangDecls(), hash, sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -3754,6 +3976,37 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         sgnode.set_renamed_function(&renamedFun);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_generic_subp_renaming_decl: // 8.5.5(2)
+      {
+        // \todo consider folding the code into generic_package_renaming
+
+        logKind("ada_generic_subp_renaming_decl", kind);
+
+        //Get the name of this decl
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_generic_subp_renaming_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string  ident = getFullName(&lal_identifier);
+        int           hash = hash_node(&lal_defining_name);
+
+        //Get the renamed entity
+        ada_base_entity lal_renames;
+        ada_generic_subp_renaming_decl_f_renames(lal_element, &lal_renames);
+
+        SgExpression&           renamed = getExpr(&lal_renames, ctx);
+        SgScopeStatement&       scope   = ctx.scope();
+        SgType&                 pkgtype = mkTypeVoid();
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(ident, renamed, pkgtype, scope);
+
+        recordNode(libadalangDecls(), hash, sgnode);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
 
         assocdecl = &sgnode;
@@ -4438,6 +4691,89 @@ SgExpression& createWithClause(ada_base_entity* lal_element, AstContext ctx){
   return sgnode;
 }
 
+/// Creates an assign op for an enum value
+SgAssignOp& itemValuePair(ada_base_entity* lal_element, SgExpression& enumval, AstContext ctx)
+{
+  ada_base_entity lal_designator;
+  ada_node_child(lal_element, 0, &lal_designator);
+  SgExpression&  enumitem = getExpr(&lal_designator, ctx);
+
+  return SG_DEREF(sb::buildAssignOp(&enumitem, &enumval));
+}
+
+/// Used for ada_enum_rep_clause nodes
+/// Creates an assoc of 0 or 1 enum values to a constant
+SgExpression& createEnumValue(ada_base_entity* lal_element, AstContext ctx){
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  if(kind != ada_aggregate_assoc){
+    logError() << "createEnumValue given node kind " << kind << " (not an ada_aggregate_assoc)!\n";
+    return mkNullExpression();
+  }
+  logKind("ada_aggregate_assoc", kind);
+
+  //Get the expr for this assoc
+  ada_base_entity lal_expr;
+  ada_aggregate_assoc_f_r_expr(lal_element, &lal_expr);
+
+  //Get the list of designators for this assoc
+  ada_base_entity lal_designator_list;
+  ada_aggregate_assoc_f_designators(lal_element, &lal_designator_list);
+
+  int count = ada_node_children_count(&lal_designator_list);
+  //If there is more than one designator, something is wrong
+  if(count > 1 || count < 0){
+    logError() << "createEnumValue has " << count << " designators! Expected 0 or 1.\n";
+    return mkNullExpression();
+  }
+
+  SgExpression&              enumval = getExpr(&lal_expr, ctx);
+  SgExpression&              sgnode = count == 0
+                                    ? enumval
+                                    : itemValuePair(&lal_designator_list, enumval, ctx);
+                                    ;
+  attachSourceLocation(sgnode, lal_element, ctx);
+  return sgnode;
+}
+
+/// Handles an ada_component_clause node
+void createComponentClause(ada_base_entity* lal_element, AstContext ctx){
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+  if(kind != ada_component_clause){
+    logError() << "createComponentClause given node kind " << kind << " (not an ada_component_clause)!\n";
+    return;
+  }
+
+  logKind("ada_component_clause", kind);
+
+  //Get the name for this clause
+  ada_base_entity lal_name;
+  ada_component_clause_f_id(lal_element, &lal_name);
+
+  //Get the position for this clause
+  ada_base_entity lal_position;
+  ada_component_clause_f_position(lal_element, &lal_position);
+
+  //Get the range for this clause
+  ada_base_entity lal_range;
+  ada_component_clause_f_range(lal_element, &lal_range);
+  ada_range_spec_f_range(&lal_range, &lal_range);
+
+  // \todo use getQualName?
+  SgExpression&         field  = getExpr(&lal_name, ctx);
+  SgVarRefExp&          fldref = SG_DEREF(isSgVarRefExp(&field));
+  SgExpression&         ofs    = getExpr(&lal_position, ctx);
+  SgExpression&         rngexp = getDiscreteRange(&lal_range, ctx);
+  SgRangeExp*           range  = isSgRangeExp(&rngexp);
+  SgAdaComponentClause& sgnode = mkAdaComponentClause(fldref, ofs, SG_DEREF(range));
+
+  //~ recordNode(asisDecls(), el.ID, sgnode);
+  attachSourceLocation(sgnode, lal_element, ctx);
+
+  ctx.appendStatement(sgnode);
+}
+
+/// Handles a lal node that is a clause
+/// ada_component_clause is the exception, it is handled in createComponentClause
 void handleClause(ada_base_entity* lal_element, AstContext ctx)
 {
   //Get the kind of this node
@@ -4502,6 +4838,126 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
             createUseClause(&lal_use_name, typeClause ? libadalangTypes() : libadalangDecls(), ctx);
           }
         }
+
+        break;
+      }
+    case ada_record_rep_clause:           // 13.5.1
+      {
+        using SageRecordClause = SgAdaRepresentationClause;
+
+        logKind("ada_record_rep_clause", kind);
+
+        //Get the name of this clause
+        ada_base_entity lal_name;
+        ada_record_rep_clause_f_name(lal_element, &lal_name);
+
+        //Get the mod of this clause
+        ada_base_entity lal_mod;
+        ada_record_rep_clause_f_at_expr(lal_element, &lal_mod);
+
+        //Get the list of components for this clause
+        ada_base_entity lal_component_list;
+        ada_record_rep_clause_f_components(lal_element, &lal_component_list);
+
+        SgType&                 tyrec      = getDeclType(&lal_name, ctx);
+        SgExpression&           modexp     = getExpr_opt(&lal_mod, ctx);
+        SageRecordClause&       sgnode     = mkAdaRepresentationClause(tyrec, modexp);
+        SgBasicBlock&           components = SG_DEREF(sgnode.get_components());
+
+
+        // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        //Traverse the components
+        int count = ada_node_children_count(&lal_component_list);
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_component_clause;
+          if(ada_node_child(&lal_component_list, i, &lal_component_clause) != 0){
+            createComponentClause(&lal_component_clause, ctx.scope(components));
+          }
+        }
+
+        /*PragmaContainer pendingPragmas; //TODO Pragmas
+        AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
+
+        traverseIDs(range, elemMap(), ComponentClauseCreator{pragmaCtx.scope(components)});
+
+        processAndPlacePragmas(repclause.Pragmas, { &components }, pragmaCtx.scope(components));*/
+
+        break;
+      }
+    case ada_at_clause:                             // J.7
+      {
+        using SageRecordClause = SgAdaRepresentationClause;
+
+        logKind("ada_at_clause", kind);
+
+        //Get the name for this clause
+        ada_base_entity lal_name;
+        ada_at_clause_f_name(lal_element, &lal_name);
+
+        //Get the expr for this clause
+        ada_base_entity lal_expr;
+        ada_at_clause_f_expr(lal_element, &lal_expr);
+
+        // \todo Representation_Clause_Name may not refer to a type but to a variable
+        //       (e.g.,rep_sys_address.adb)
+        //       consider using expressions as base for AdaRepresentationClause...
+        SgType&           ty     = getDeclType(&lal_name, ctx);
+        SgExpression&     modexp = getExpr_opt(&lal_expr, ctx);
+        SageRecordClause& sgnode = mkAdaRepresentationClause(ty, modexp, true /* at-clause */);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        break;
+      }
+    case ada_attribute_def_clause:           // 13.3
+      {
+        logKind("ada_attribute_def_clause", kind);
+
+        //Get the attribute & expr for this clause
+        ada_base_entity lal_attribute, lal_expr;
+        ada_attribute_def_clause_f_attribute_expr(lal_element, &lal_attribute);
+        ada_attribute_def_clause_f_expr(lal_element, &lal_expr);
+
+        SgAdaAttributeExp&    lenattr = getAttributeExpr(&lal_attribute, ctx);
+        SgExpression&         lenexpr = getExpr(&lal_expr, ctx);
+        SgAdaAttributeClause& sgnode  = mkAdaAttributeClause(lenattr, lenexpr);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
+
+        break;
+      }
+    case ada_enum_rep_clause:     // 13.4
+      {
+        logKind("ada_enum_rep_clause", kind);
+
+        //Get the name for this clause
+        ada_base_entity lal_name;
+        ada_enum_rep_clause_f_type_name(lal_element, &lal_name);
+
+        //Get the list of associations
+        ada_base_entity lal_assoc_list;
+        ada_enum_rep_clause_f_aggregate(lal_element, &lal_assoc_list);
+        ada_base_aggregate_f_assocs(&lal_assoc_list, &lal_assoc_list);
+        std::vector<SgExpression*> assocs;
+        int count = ada_node_children_count(&lal_assoc_list);
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_assoc;
+          if(ada_node_child(&lal_assoc_list, i, &lal_assoc) != 0){
+            assocs.push_back(&createEnumValue(&lal_assoc, ctx));
+          }
+        }
+
+        SgType&                 enumty   = getDeclType(&lal_name, ctx);
+        SgExprListExp&          enumvals = mkExprListExp(assocs);
+        SgAdaEnumRepresentationClause& sgnode = mkAdaEnumRepresentationClause(enumty, enumvals);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        ctx.appendStatement(sgnode);
 
         break;
       }

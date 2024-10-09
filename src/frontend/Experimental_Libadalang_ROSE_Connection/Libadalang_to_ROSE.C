@@ -350,6 +350,8 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_incomplete_type_decl:
       case ada_incomplete_tagged_type_decl:
       case ada_protected_type_decl:
+      case ada_generic_subp_renaming_decl:
+      case ada_task_body_stub:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
@@ -358,6 +360,10 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_use_package_clause:          // Asis.Clauses
       case ada_use_type_clause:
       case ada_with_clause:
+      case ada_attribute_def_clause:
+      case ada_record_rep_clause:
+      case ada_enum_rep_clause:
+      case ada_at_clause:
         {
           handleClause(lal_element, ctx);
           break;

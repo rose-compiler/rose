@@ -264,6 +264,61 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
 
 namespace
 {
+/// Set of functions to handle ada_if_expr nodes
+/// @{
+  void ifExprCommonBranch(ada_base_entity* lal_path, SgConditionalExp* ifExpr, AstContext ctx, void (SgConditionalExp::*branchSetter)(SgExpression*))
+  {
+    SgExpression& thenExpr = getExpr(lal_path, ctx);
+
+    sg::linkParentChild(SG_DEREF(ifExpr), thenExpr, branchSetter);
+  }
+
+  void ifExprConditionedBranch(ada_base_entity* lal_condition, ada_base_entity* lal_path, SgConditionalExp* ifExpr, AstContext ctx)
+  {
+    SgExpression& condExpr = getExpr(lal_condition, ctx);
+
+    sg::linkParentChild(SG_DEREF(ifExpr), condExpr, &SgConditionalExp::set_conditional_exp);
+    ifExprCommonBranch(lal_path, ifExpr, ctx, &SgConditionalExp::set_true_exp);
+  }
+
+  SgExpression& createIfExpr(ada_base_entity* lal_element, AstContext ctx){
+    SgConditionalExp& sgnode = mkIfExpr();
+    SgConditionalExp* ifExpr = &sgnode;
+
+    //Get the first part of the if stmt (if x then y)
+    ada_base_entity lal_cond_expr, lal_then_expr;
+    ada_if_expr_f_cond_expr(lal_element, &lal_cond_expr);
+    ada_if_expr_f_then_expr(lal_element, &lal_then_expr);
+    ifExprConditionedBranch(&lal_cond_expr, &lal_then_expr, ifExpr, ctx);
+
+    //Get any elsifs
+    ada_base_entity lal_alternative_list;
+    ada_if_expr_f_alternatives(lal_element, &lal_alternative_list);
+    int count = ada_node_children_count(&lal_alternative_list);
+    for(int i = 0; i < count; ++i){
+      ada_base_entity lal_alternative;
+      if(ada_node_child(&lal_alternative_list, i, &lal_alternative) != 0){
+        ada_elsif_expr_part_f_cond_expr(&lal_alternative, &lal_cond_expr);
+        ada_elsif_expr_part_f_then_expr(&lal_alternative, &lal_then_expr);
+        SgConditionalExp& cascadingIf = mkIfExpr();
+        sg::linkParentChild( SG_DEREF(ifExpr),
+                             static_cast<SgExpression&>(cascadingIf),
+                             &SgConditionalExp::set_false_exp
+                           );
+        ifExpr = &cascadingIf;
+        ifExprConditionedBranch(&lal_cond_expr, &lal_then_expr, ifExpr, ctx);
+      }
+    }
+
+    //Get the else
+    ada_base_entity lal_else_expr;
+    ada_if_expr_f_else_expr(lal_element, &lal_else_expr);
+    ifExprCommonBranch(&lal_else_expr, ifExpr, ctx, &SgConditionalExp::set_false_exp);
+
+    return sgnode;
+  }
+/// @}
+
   struct AdaCallBuilder : sg::DispatchHandler<SgExpression*>
   {
       using base = sg::DispatchHandler<SgExpression*>;
@@ -1192,6 +1247,10 @@ namespace{
           //Get the text of this identifier
           const std::string name = canonical_text_as_string(lal_element);
 
+          //lal doesn't give definition directly, so go from the decl
+          ada_base_entity corresponding_decl;
+          ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
+
           //Check if this is an enum value instead of a variable
           //Get the expression type & check for ada_enum_type_def
           ada_base_entity lal_expr_type;
@@ -1213,8 +1272,10 @@ namespace{
           ada_bool lal_is_static_expr;
           ada_expr_p_is_static_expr(lal_element, 1, &lal_is_static_expr);
 
-          if(!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def && lal_is_static_expr){
-            logInfo() << "identifier " << name << " is being treated as an enum value (p_expr_type_def = ada_enum_type_def & p_is_static_expr = true).\n";
+          if( (!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def && lal_is_static_expr)
+              || (!ada_node_is_null(&corresponding_decl) && ada_node_kind(&corresponding_decl) == ada_enum_literal_decl))
+          {
+            logInfo() << "identifier " << name << " is being treated as an enum value.\n";
 
             //Get the hash for the decl
             ada_base_entity lal_first_corresponding_decl;
@@ -1247,9 +1308,6 @@ namespace{
 
           //Bool for if we found the corresponding decl
           bool found_decl = true;
-
-          ada_base_entity corresponding_decl; //lal doesn't give definition directly, so go from the decl
-          ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
 
           if(ada_node_is_null(&corresponding_decl)){
             //If first_corresponding_decl isn't there, try referenced_decl
@@ -1781,6 +1839,7 @@ namespace{
       case ada_others_designator:
         {
           logKind("ada_others_designator", kind);
+
           res = &mkAdaOthersExp();
           break;
         }
@@ -1790,6 +1849,14 @@ namespace{
           logKind("ada_box_expr", kind);
 
           res = &mkAdaBoxExp();
+          break;
+        }
+
+      case ada_if_expr:                          // Ada 2012
+        {
+          logKind("ada_if_expr", kind);
+
+          res = &createIfExpr(lal_element, ctx);
           break;
         }
 
@@ -1842,13 +1909,16 @@ namespace{
   {
     if(lal_expr == nullptr)
     {
-      logFlaw() << "uninitialized expression id " << lal_expr << std::endl;
+      logInfo() << "Nullptr given to getExpr_opt()\n";
       return mkNullExpression();
     }
 
-    return ada_node_is_null(lal_expr) ? mkNullExpression()
-                                      : getExpr(lal_expr, ctx, std::move(suppl))
-                                      ;
+    if(ada_node_is_null(lal_expr)){
+      logFlaw() << "Null node in getExpr_opt()\n";
+      return mkNullExpression();  
+    }
+
+    return getExpr(lal_expr, ctx, std::move(suppl));
   }
 
   /// Handles range definitions for specific nodes that getExpr won't do correctly
