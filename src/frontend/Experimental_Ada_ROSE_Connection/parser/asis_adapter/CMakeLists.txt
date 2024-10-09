@@ -5,7 +5,22 @@ if(NOT GPR_SRC)
 else() 
   message("GPR path: ${GPR_SRC}")
 endif()
-add_custom_target(asis_adapter ALL
-                  COMMAND sh -c "gprls -v"
-                  COMMAND sh -c "gprbuild -p -aP ${GPR_SRC}/../share/gpr -P${CMAKE_CURRENT_SOURCE_DIR}/asis_adapter.gpr -v --relocate-build-tree"
-                  COMMENT "building asis_adapter by gprbuild")
+
+# Define the output file from the gprbuild command
+set(ASIS_ADAPTER_LIB "${CMAKE_CURRENT_BINARY_DIR}/lib/libasis_adapter.so")
+
+# Use add_custom_command to produce the library
+add_custom_command(
+  OUTPUT ${ASIS_ADAPTER_LIB}
+  COMMAND sh -c "gprls -v"
+  COMMAND sh -c "gprbuild -p -aP ${GPR_SRC}/../share/gpr -P${CMAKE_CURRENT_SOURCE_DIR}/asis_adapter.gpr -v --relocate-build-tree"
+  COMMENT "building asis_adapter by gprbuild"
+  VERBATIM
+)
+
+# Create a custom target that depends on the library being built
+add_custom_target(asis_adapter ALL DEPENDS ${ASIS_ADAPTER_LIB})
+
+# Add rule for libasis_adapter.so when the user calls "make install" 
+install(FILES ${ASIS_ADAPTER_LIB} DESTINATION lib)
+

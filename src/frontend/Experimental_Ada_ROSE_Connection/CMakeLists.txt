@@ -29,32 +29,9 @@ if(ENABLE-ADA)
                         "${ADA_SRC_DIR}/parser/a_nodes/include")
   endif()
  
-  # Find libasis.so 
-  # find_library(ASIS_LIB NAMES asis
-  #             PATHS "$ENV{GNAT_HOME}/lib"
-  #             NO_DEFAULT_PATH) 
-  #if(ASIS_LIB) 
-  #  message(STATUS "Found libasis: ${ASIS_LIB}") 
-  #else() 
-  #  message(FATAL_ERROR "Did not find libasis") 
-  #endif() 
-
-  # Find libadalang.so 
-  #find_library(ADA_LIB NAMES adalang
-  #             PATHS "$ENV{GNAT_HOME}/lib"
-  #             NO_DEFAULT_PATH) 
-  #if(ADA_LIB) 
-  #  message(STATUS "Found libadalang.so: ${ADA_LIB}") 
-  #else() 
-  #  message(FATAL_ERROR "Did not find libadalang.so") 
-  #endif() 
-  # Finish checks
-  
-  add_library(experimentalRoseAda SHARED ${experimental_rose_ada_LIB_SRC})
+  add_library(experimentalRoseAda OBJECT ${experimental_rose_ada_LIB_SRC})
   target_include_directories(experimentalRoseAda PUBLIC ${ADA_SRC_DIR}/parser/asis_adapter/include ${ADA_SRC_DIR}/parser/a_nodes/include)
   add_dependencies(experimentalRoseAda sage3 asis_adapter)
   target_link_libraries(experimentalRoseAda PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/parser/asis_adapter/lib/libasis_adapter.so) 
-  #link_directories(CMAKE_BINARY_DIR/lib) 
-  #target_link_libraries(experimentalRoseAda PUBLIC ${ASIS_LIB} ${ADA_LIB} ${CMAKE_CURRENT_BINARY_DIR}/parser/asis_adapter/lib/libasis_adapter.so)
 endif()
  

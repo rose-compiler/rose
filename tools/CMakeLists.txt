@@ -6,8 +6,9 @@
 # RWSetGeneration has linking errors on Windows 
 
 if(NOT WIN32 AND ENABLE-C STREQUAL "ON") 
-  add_subdirectory(CodeThorn) 
-  add_subdirectory(ReadWriteSetGeneration)
-endif() 
-
+  if(NOT ENABLE-ADA) 
+    add_subdirectory(CodeThorn) 
+    add_subdirectory(ReadWriteSetGeneration)
+  endif() 
+endif()
 add_subdirectory(BinaryAnalysis)
