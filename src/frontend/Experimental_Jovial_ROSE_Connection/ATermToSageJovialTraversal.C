@@ -464,7 +464,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
    }
 
-   // MAXINT, MAXINTSIZE
+   // MAXINT, MAXINTSIZE, MININT
 
    else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
      // ItemSize is required
@@ -482,6 +482,20 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
    else if (ATmatch(term, "MAXINTSIZE")) {
      expr = SageBuilder::buildVarRefExp("MAXINTSIZE", scope);
+   }
+   else if (ATmatch(term, "MININT(<term>)", &t_formula)) {
+     // ItemSize is required
+     Sawyer::Optional<SgExpression*> size;
+     if (traverse_OptItemSize(t_formula, size)) {
+       // MATCHED OptItemSize
+     } else return ATfalse;
+
+     if (size) {
+       auto params = SageBuilder::buildExprListExp_nfi();
+       params->append_expression(*size);
+       expr = buildIntrinsicFunctionCallExp_nfi(std::string{"MININT"}, params, scope);
+     }
+     else return ATfalse;
    }
 
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
@@ -8882,6 +8896,9 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
     type = SageBuilder::buildIntType();
   }
   else if (name == "MAXINT") {
+    type = SageBuilder::buildIntType();
+  }
+  else if (name == "MININT") {
     type = SageBuilder::buildIntType();
   }
   else {
