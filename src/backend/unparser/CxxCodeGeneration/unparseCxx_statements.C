@@ -1524,39 +1524,33 @@ void
 Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
    {
      ASSERT_not_null(funcdecl_stmt);
-     SgTemplateInstantiationFunctionDecl * templateFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(funcdecl_stmt);
 #if DEBUG_unparse_helper
      printf ("In unparse_helper():\n");
      printf ("  funcdecl_stmt = %p = %s \n", funcdecl_stmt, funcdecl_stmt->class_name().c_str());
      printf ("    ->get_name() = %s\n", funcdecl_stmt->get_name().str());
      printf ("    ->get_firstNondefiningDeclaration() = %p \n", funcdecl_stmt->get_firstNondefiningDeclaration());
      printf ("    ->get_definingDeclaration()         = %p \n", funcdecl_stmt->get_definingDeclaration());
+     printf ("    ->decl_mod.isFriend() = %s\n", funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
 #endif
-     SgUnparse_Info ninfo(info);
-     bool isFirstDeclaration = funcdecl_stmt == funcdecl_stmt->get_firstNondefiningDeclaration();
-     if (funcdecl_stmt->get_declarationModifier().isFriend() == true && funcdecl_stmt->get_specialFunctionModifier().isOperator() == false && isFirstDeclaration == false )
-        {
-          ninfo.set_forceQualifiedNames();
-        }
 
-     SgUnparse_Info ninfoForFunctionName(ninfo);
-     ninfoForFunctionName.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length());
-     ninfoForFunctionName.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required());
-     if (isSgClassDefinition(funcdecl_stmt->get_parent()))
-        {
-          ninfoForFunctionName.set_SkipQualifiedNames();
-        }
-     SgName nameQualifier = funcdecl_stmt->get_qualified_name_prefix();
-  // nameQualifier = trimGlobalScopeQualifier ( nameQualifier.str() ).c_str();
-     curprint(nameQualifier.str());
+     bool is_friend = funcdecl_stmt->get_declarationModifier().isFriend();
+     bool is_1st_decl = funcdecl_stmt == funcdecl_stmt->get_firstNondefiningDeclaration();
+     bool need_qualifier = !(is_friend && is_1st_decl);
+     if (need_qualifier) {
+       SgName nameQualifier = funcdecl_stmt->get_qualified_name_prefix();
+#if DEBUG_unparse_helper
+       printf ("  nameQualifier = %s\n", nameQualifier.str());
+#endif
+       curprint(nameQualifier.str());
+     }
 
-     if (templateFunctionDeclaration != NULL)
+     SgTemplateInstantiationFunctionDecl * tpl_fdecl = isSgTemplateInstantiationFunctionDecl(funcdecl_stmt);
+     if (tpl_fdecl != NULL)
         {
 #if DEBUG_unparse_helper
-          printf ("  templateFunctionDeclaration->get_name()         = %s \n",templateFunctionDeclaration->get_name().str());
-          printf ("  templateFunctionDeclaration->get_templateName() = %s \n",templateFunctionDeclaration->get_templateName().str());
+          printf ("  tpl_fdecl->get_templateName() = %s \n", tpl_fdecl->get_templateName().str());
 #endif
-          unp->u_exprStmt->unparseTemplateFunctionName(templateFunctionDeclaration,info);
+          unp->u_exprStmt->unparseTemplateFunctionName(tpl_fdecl, info);
         }
        else
         {
@@ -1596,7 +1590,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
              }
         }
 
-#if 0
+#if DEBUG_unparse_helper
      printf ("Leaving unparse_helper()\n");
 #endif
    }
@@ -5893,15 +5887,16 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      auto const & mfuncdecl_mod = mfuncdecl_stmt->get_functionModifier();
      bool isDefaultedOrDeletedMemberFunction = mfuncdecl_mod.isMarkedDefault() || mfuncdecl_mod.isMarkedDelete();
+     SgFunctionDefinition * mfuncdefn = mfuncdecl_stmt->get_definition();
 #if DEBUG_unparseMFuncDeclStmt
      printf ("  mfuncdecl_stmt->isForward()        = %s\n", mfuncdecl_stmt->isForward()       ? "true" : "false");
-     printf ("  mfuncdecl_stmt->get_definition()   = %s\n", mfuncdecl_stmt->get_definition()  ? "true" : "false");
      printf ("  info.SkipFunctionDefinition()      = %s\n", info.SkipFunctionDefinition()     ? "true" : "false");
      printf ("  isDefaultedOrDeletedMemberFunction = %s\n",isDefaultedOrDeletedMemberFunction ? "true" : "false");
+     printf ("  mfuncdecl_stmt->get_definition()   = %p = %s\n", mfuncdefn, mfuncdefn ? mfuncdefn->class_name().c_str() : "");
 #endif
 
   // DQ (4/13/2019): If this is a defaulted constructor, then we don't want to unparse the body, so we want to treat it the same as a forward declaration.
-     if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !ninfo.SkipFunctionDefinition() && isDefaultedOrDeletedMemberFunction == false)
+     if ( !mfuncdecl_stmt->isForward() && mfuncdefn && !ninfo.SkipFunctionDefinition() && isDefaultedOrDeletedMemberFunction == false)
         {
           unparseStatement(mfuncdecl_stmt->get_definition(), info);
         }
@@ -5994,8 +5989,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
               if (initializer != NULL) {
                 SgAggregateInitializer   * aggr_init = isSgAggregateInitializer(initializer);
                 SgConstructorInitializer * ctor_init = isSgConstructorInitializer(initializer);
-                bool output_parenthesis = true;
-                if (ctor_init != nullptr) output_parenthesis = !ctor_init->get_need_parenthesis_after_name();
+                bool output_parenthesis = ctor_init == nullptr;
+                // if (ctor_init != nullptr) output_parenthesis = !ctor_init->get_need_parenthesis_after_name();
 
                 bool compiler_generated = initializer->get_startOfConstruct()->isCompilerGenerated();
 #if DEBUG_unparseMFuncDeclStmt

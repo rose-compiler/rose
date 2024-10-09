@@ -3,8 +3,8 @@
 #include "unparser.h"
 #include "rose_config.h"
 
-#define DEBUG__unparseCompInit 0
 #define DEBUG__isFromAnotherFile 0
+#define DEBUG__unparseCompInit 0
 
 static bool isFromAnotherFile (SgLocatedNode* lnode) {
   bool result = false;

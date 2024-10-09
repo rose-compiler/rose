@@ -77,6 +77,7 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
   printf ("Enter Unparse_ExprStmt::unparseCtorInit():\n");
   printf ("  info.inAggregateInitializer() = %s \n", info.inAggregateInitializer() ? "true" : "false");
   printf ("  expr = %p = %s\n", expr, expr->class_name().c_str());
+  printf ("    ->get_type() = %p = %s\n", expr->get_type(), expr->get_type()->class_name().c_str());
 #endif
 
   SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
@@ -96,28 +97,41 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
 #if DEBUG__unparseCtorInit
   printf ("  ctor_decl  = %p = %s = %s\n", ctor_decl,  ctor_decl  ? ctor_decl->class_name().c_str()  : "", ctor_decl  ? ctor_decl->get_name().str()  : "");
   printf ("  ctor_class = %p = %s = %s\n", ctor_class, ctor_class ? ctor_class->class_name().c_str() : "", ctor_class ? ctor_class->get_name().str() : "");
-  printf ("  ctor_type  = %p = %s\n",      ctor_type,  ctor_type  ? ctor_type->class_name().c_str()  : "", isSgNamedType(ctor_type) ? ((SgNamedType*)ctor_type)->get_name().str() : "");
+  printf ("  ctor_type  = %p = %s = %s\n",      ctor_type,  ctor_type  ? ctor_type->class_name().c_str()  : "", isSgNamedType(ctor_type) ? ((SgNamedType*)ctor_type)->get_name().str() : "");
+#endif
+
+  SgNode * pnode = con_init->get_parent();
+  SgNode * ppnode = pnode ? pnode->get_parent() : nullptr;
+#if DEBUG__unparseCtorInit
+  printf ("  pnode = %p = %s\n", pnode, pnode ? pnode->class_name().c_str() : "");
+  printf ("  ppnode = %p = %s\n", ppnode, ppnode ? ppnode->class_name().c_str() : "");
 #endif
 
   bool use_braces = con_init->get_is_braced_initialized();
-  bool print_ctor_name = unp->u_sage->printConstructorName(con_init);
-  SgNode * pnode = con_init->get_parent();
-  SgNode * ppnode = pnode ? pnode->get_parent() : nullptr;
-  bool arg_of_ctor_or_aggr = isSgConstructorInitializer(ppnode) || isSgAggregateInitializer(ppnode);
-  bool nested_ctor_init_without_arg = ctor_without_args && arg_of_ctor_or_aggr;
-  bool is_explicit_ctor = ctor_decl ? ctor_decl->get_functionModifier().isExplicit() : false;
-  bool iname_use_cpy_syntax = isSgInitializedName(pnode) ? ((SgInitializedName*)pnode)->get_using_assignment_copy_constructor_syntax() : false;
-  bool explicit_ctor_with_cpy_syntax = is_explicit_ctor && iname_use_cpy_syntax && !ctor_without_args && !use_braces;
 #if DEBUG__unparseCtorInit
   printf ("  use_braces = %s\n", use_braces ? "true" : "false");
-  printf ("  pnode = %p = %s\n", pnode, pnode ? pnode->class_name().c_str() : "");
-  printf ("  ppnode = %p = %s\n", ppnode, ppnode ? ppnode->class_name().c_str() : "");
-  printf ("  nested_ctor_init_without_arg = %s\n", nested_ctor_init_without_arg ? "true" : "false");
-  printf ("  is_explicit_ctor = %s\n", is_explicit_ctor ? "true" : "false");
-  printf ("  iname_use_cpy_syntax = %s\n", iname_use_cpy_syntax ? "true" : "false");
-  printf ("  explicit_ctor_with_cpy_syntax = %s\n", explicit_ctor_with_cpy_syntax ? "true" : "false");
 #endif
- 
+
+  bool iname_use_cpy_syntax = isSgInitializedName(pnode) ? ((SgInitializedName*)pnode)->get_using_assignment_copy_constructor_syntax() : false;
+  bool force_paren_because_risk_most_vexing_parse = isSgVariableDeclaration(ppnode) && con_init->get_need_parenthesis_after_name() && !iname_use_cpy_syntax;
+#if DEBUG__unparseCtorInit
+  printf ("  iname_use_cpy_syntax = %s\n", iname_use_cpy_syntax ? "true" : "false");
+  printf ("  force_paren_because_risk_most_vexing_parse = %s\n", force_paren_because_risk_most_vexing_parse ? "true" : "false");
+#endif
+
+  bool arg_of_ctor_or_aggr = isSgConstructorInitializer(ppnode) || isSgAggregateInitializer(ppnode);
+  bool is_explicit_ctor = ctor_decl ? ctor_decl->get_functionModifier().isExplicit() : false;
+  bool explicit_ctor_with_cpy_syntax = is_explicit_ctor && iname_use_cpy_syntax && !ctor_without_args && !use_braces;
+  bool nested_ctor_init_without_arg = ctor_without_args && arg_of_ctor_or_aggr;
+  bool is_top_of_init_within_ctor = isSgCtorInitializerList(ppnode);
+#if DEBUG__unparseCtorInit
+  printf ("  arg_of_ctor_or_aggr = %s\n", arg_of_ctor_or_aggr ? "true" : "false");
+  printf ("  is_explicit_ctor = %s\n", is_explicit_ctor ? "true" : "false");
+  printf ("  explicit_ctor_with_cpy_syntax = %s\n", explicit_ctor_with_cpy_syntax ? "true" : "false");
+  printf ("  nested_ctor_init_without_arg = %s\n", nested_ctor_init_without_arg ? "true" : "false");
+  printf ("  is_top_of_init_within_ctor = %s\n", is_top_of_init_within_ctor ? "true" : "false");
+#endif
+
   bool is_ctor_within_new = false;
   while (ppnode != nullptr) {
     ppnode = ppnode->get_parent();
@@ -135,6 +149,7 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
   printf ("  is_ctor_within_new = %s\n", is_ctor_within_new ? "true" : "false");
 #endif
 
+  bool print_ctor_name = unp->u_sage->printConstructorName(con_init);
   bool need_name = con_init->get_need_name() && !is_ctor_within_new && ( nested_ctor_init_without_arg || con_init->get_is_explicit_cast() || explicit_ctor_with_cpy_syntax );
 #if DEBUG__unparseCtorInit
   printf ("  print_ctor_name = %s\n", print_ctor_name ? "true" : "false");
@@ -183,7 +198,15 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
   } else {
     if (ctor_args->get_expressions().empty()) use_braces = false; // FIXME not sure why? That should be okay with modern C++
 
-    bool need_paren = need_name || use_braces || is_ctor_within_new || con_init->get_need_parenthesis_after_name(); // FIXME is need_name relevant here?
+    bool need_paren = need_name ||
+                      use_braces ||
+                      is_ctor_within_new ||
+                      (need_name && con_init->get_need_parenthesis_after_name()) ||
+                       is_top_of_init_within_ctor ||
+                      force_paren_because_risk_most_vexing_parse;
+#if DEBUG__unparseCtorInit
+    printf ("  need_paren   = %s \n", need_paren   ? "true" : "false");
+#endif
 
     if (print_ctor_name) {
       // FIXME looks like this tries to deal with initializer list but we have use_initlist (see next)
@@ -205,7 +228,8 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
 
     // FIXME should it simply be `info_for_args.set_context_for_added_parentheses(need_paren);`?
     //       and what about `use_braces` vs `con_init->get_is_braced_initialized()`
-    info_for_args.set_context_for_added_parentheses( con_init->get_is_braced_initialized() || (con_init->get_is_explicit_cast() && !use_braces) );
+    info_for_args.set_context_for_added_parentheses( need_paren && !use_braces );
+
     if (need_paren) curprint(use_braces ? "{" : "(");
     unparseExpression(ctor_args, info_for_args);
     if (need_paren) curprint(use_braces ? "}" : ")");

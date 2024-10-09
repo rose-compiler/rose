@@ -7635,122 +7635,69 @@ static bool isAssociatedWithCxx11_initializationList(SgConstructorInitializer * 
   return is_cxx11_initialization_list;
 }
 
-void
-UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnparse_Info& info)
+#define DEBUG__unparseExprList 0
+
+void UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnparse_Info& info)
    {
      SgExprListExp* expr_list = isSgExprListExp(expr);
      ASSERT_not_null(expr_list);
 
-#if 0
-     printf ("In unparseExprList(): expr = %p = %s \n",expr,expr->class_name().c_str());
-     curprint("/* output SgExprListExp */");
+#if DEBUG__unparseExprList
+     printf ("Enter unparseExprList():\n");
+     printf ("  expr = %p = %s\n", expr, expr->class_name().c_str());
+     printf ("    ->get_type() = %p = %s\n", expr->get_type(), expr->get_type()->class_name().c_str());
 #endif
 
      SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
 
      if (i != expr_list->get_expressions().end())
         {
-          while (true)
+          while (i != expr_list->get_expressions().end())
              {
+               SgExpression* argument_expr = *i;
+               SgType * argument_type = argument_expr->get_type();
+#if DEBUG__unparseExprList
+               printf ("  - argument_expr = %p = %s \n", argument_expr, argument_expr->class_name().c_str());
+               printf ("    argument_type = %p = %s \n", argument_type, argument_type->class_name().c_str());
+#endif
+               bool context_for_added_parentheses = info.get_context_for_added_parentheses();
+               bool needParen = isSgFunctionType(argument_type) && !context_for_added_parentheses;
+#if DEBUG__unparseExprList
+               printf ("    context_for_added_parentheses = %s\n", context_for_added_parentheses ? "true" : "false");
+               printf ("    needParen = %s\n", needParen ? "true" : "false");
+#endif
+               SgConstructorInitializer* ctor_init = isSgConstructorInitializer(argument_expr);
+               if (ctor_init != NULL)
+                  {
+                    SgInitializedName * ctor_init_parent_iname = isSgConstructorInitializer(expr_list->get_parent()) ? isSgInitializedName(expr_list->get_parent()->get_parent()) : nullptr;
+                    bool iname_use_cpy_syntax = ctor_init_parent_iname ? ctor_init_parent_iname->get_using_assignment_copy_constructor_syntax() : false;
+                    needParen = ctor_init_parent_iname && !iname_use_cpy_syntax;
+
+                    bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(ctor_init);
+#if DEBUG__unparseExprList
+                    printf ("  this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",this_constructor_initializer_is_using_Cxx11_initializer_list ? "true" : "false");
+                    printf ("  ctor_init->get_is_braced_initialized() = %s \n", ctor_init->get_is_braced_initialized() ? "true" : "false");
+#endif
+                    if (this_constructor_initializer_is_using_Cxx11_initializer_list) needParen = false;
+                    if (ctor_init->get_is_braced_initialized()) needParen = false;
+                  }
+#if DEBUG__unparseExprList
+               printf ("    needParen = %s\n", needParen ? "true" : "false");
+#endif
+
+               if (needParen) curprint("(");
                SgUnparse_Info newinfo(info);
                newinfo.set_SkipBaseType();
-
-#if 0
-            // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer
-            // (see Cxx11_tests/test2019_171.C).  I think this may be the wrong place for this.
-               SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(*i);
-               if (constructorInitializer != NULL)
-                  {
-                    if (constructorInitializer->isCompilerGenerated() == true)
-                       {
-                         printf ("In UnparseLanguageIndependentConstructs::unparseExprList(): Found compiler generated constructor initializer \n");
-                      // break out of this loop.
-                         break;
-                       }
-                  }
-#endif
-#if 0
-            // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
-               printf ("In unparseExprList(): *i = %p = %s type = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_type()->class_name().c_str());
-#endif
-            // DQ (8/24/2020): Added new data member to SgUnparse_Info.
-               bool context_for_added_parentheses = newinfo.get_context_for_added_parentheses();
-#if 0
-               printf ("In unparseExprList(): context_for_added_parentheses = %s \n",context_for_added_parentheses ? "true" : "false");
-#endif
-            // DQ (8/24/2020): Function types need an extra parenthesis, set Cxx_tests/test2020_44.C).
-               bool needParen = (isSgFunctionType((*i)->get_type()) != NULL);
-
-               needParen = needParen && (context_for_added_parentheses == false);
-
-            // DQ (8/25/2020): Chck if this argument is using the C++11 "{}" initializer, and if so skip the output of the extra parentheses.
-               SgExpression* argument_expr = *i;
-#if 0
-               printf ("In unparseExprList(): argument_expr = %p = %s \n",argument_expr,argument_expr->class_name().c_str());
-#endif
-               SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(argument_expr);
-               if (constructorInitializer != NULL)
-                  {
-
-                    // TV (10/04/2021): This adds parenthesis to prevent Most Vexing Parse. It adds them more often than needed.
-                    //                  Cxx_tests/typedef-ctor-with-tpl-variadic-causes-most-vexing-parse.C
-                    SgTypedefType * tdtype = isSgTypedefType(constructorInitializer->get_type());
-                    if (tdtype != nullptr) {
-                      needParen = true;
-                    }
-
-                    bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(constructorInitializer);
-#if 0
-                    printf ("Computed for argument: this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",this_constructor_initializer_is_using_Cxx11_initializer_list ? "true" : "false");
-#endif
-                    if (this_constructor_initializer_is_using_Cxx11_initializer_list == true)
-                       {
-#if 0
-                         printf ("In unparseExprList(): reset this_constructor_initializer_is_using_Cxx11_initializer_list == true \n");
-#endif
-                         needParen = false;
-                       }
-#if 0
-                    printf ("In unparseExprList(): constructorInitializer->get_is_braced_initialized() = %s \n",constructorInitializer->get_is_braced_initialized() ? "true" : "false");
-#endif
-                    if (constructorInitializer->get_is_braced_initialized() == true)
-                       {
-#if 0
-                         printf ("In unparseExprList(): reset needParen == false \n");
-#endif
-                         needParen = false;
-                       }
-
-                  }
-
-
-               if (needParen == true)
-                  {
-                    curprint("(");
-                  }
-
                unparseExpression(*i, newinfo);
-
-               if (needParen == true)
-                  {
-                    curprint(")");
-                  }
+               if (needParen) curprint(")");
 
                i++;
-               if (i != expr_list->get_expressions().end())
-                  {
-                    curprint ( ",");
-                  }
-                 else
-                  {
-                    break;
-                  }
+               if (i != expr_list->get_expressions().end()) curprint ( ",");
              }
         }
 
-#if 0
-     printf ("Leaving unparseExprList(): expr = %p = %s \n",expr,expr->class_name().c_str());
-     curprint("/* Leaving output SgExprListExp */");
+#if DEBUG__unparseExprList
+     printf ("Leaving unparseExprList()\n");
 #endif
    }
 
