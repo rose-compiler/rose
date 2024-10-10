@@ -7,10 +7,15 @@ unparseCxxCodeGeneration_la_sources=\
 	$(cxxCodeGenerationPath)/unparseAssnInit.C \
 	$(cxxCodeGenerationPath)/unparseBracedInit.C \
 	$(cxxCodeGenerationPath)/unparseCompInit.C \
+	$(cxxCodeGenerationPath)/unparseClassType.C \
 	$(cxxCodeGenerationPath)/unparseCtorInit.C \
 	$(cxxCodeGenerationPath)/unparseDesignatedInitializer.C \
+	$(cxxCodeGenerationPath)/unparseTemplateArgumentList.C \
+	$(cxxCodeGenerationPath)/unparseType.C \
 	$(cxxCodeGenerationPath)/unparseVarDeclStmt.C \
-	$(cxxCodeGenerationPath)/helpers.C
+	$(cxxCodeGenerationPath)/helpers_types.C \
+	$(cxxCodeGenerationPath)/helpers_stmts.C \
+	$(cxxCodeGenerationPath)/helpers_exprs.C
 
 
 unparseCxxCodeGeneration_includeHeaders=\

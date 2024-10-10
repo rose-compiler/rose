@@ -7,6 +7,7 @@
 #define DEBUG__setup_decl_item_type_unparse_infos 0
 #define DEBUG__build_decl_item_name 0
 #define DEBUG__build_decl_item_asm_register 0
+#define DEBUG__need_assign_and_initializer_unparsed 0
 #define DEBUG__unparseVarDeclStmt 0
 
 void unparse_alignas(
@@ -39,7 +40,7 @@ void unparse_alignas(
 }
 
 static bool setup_decl_item_type_unparse_infos(
-  SgUnparse_Info & ninfo_for_type,
+  SgUnparse_Info & info,
   SgVariableDeclaration * vdecl,
   SgInitializedName * decl_item,
   SgType * decl_type,
@@ -61,49 +62,49 @@ static bool setup_decl_item_type_unparse_infos(
       declStmt = declStmt->get_definingDeclaration();
     }
     if (vdecl->get_variableDeclarationContainsBaseTypeDefiningDeclaration()) {
-      ninfo_for_type.set_SkipQualifiedNames();
+      info.set_SkipQualifiedNames();
     } else {
-      ninfo_for_type.set_SkipDefinition();
+      info.set_SkipDefinition();
     }
   }
 
   if ( vdecl->skipElaborateType() && declStmt && !isSgTypedefDeclaration(declStmt) ) {
-    ninfo_for_type.set_SkipClassSpecifier();
+    info.set_SkipClassSpecifier();
   }
 
   if (decl_item->get_hasArrayTypeWithEmptyBracketSyntax()) {
-    ninfo_for_type.set_supressArrayBound();
+    info.set_supressArrayBound();
   }
 
   SgDeclarationStatement * base_type_defn_decl = vdecl->get_baseTypeDefiningDeclaration();
   if (isSgClassDeclaration(base_type_defn_decl) != NULL)  {
-    ninfo_for_type.set_useAlternativeDefiningDeclaration();
-    ninfo_for_type.set_declstatement_associated_with_type(base_type_defn_decl);
+    info.set_useAlternativeDefiningDeclaration();
+    info.set_declstatement_associated_with_type(base_type_defn_decl);
   }
 
   if (vdecl->get_requiresGlobalNameQualificationOnType()) {
-    ninfo_for_type.set_requiresGlobalNameQualification();
+    info.set_requiresGlobalNameQualification();
   }
-  ninfo_for_type.set_reference_node_for_qualification(decl_item);
-  ninfo_for_type.set_isTypeFirstPart();
-  ninfo_for_type.set_name_qualification_length(decl_item->get_name_qualification_length_for_type());
-  ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
-  ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
+  info.set_reference_node_for_qualification(decl_item);
+  info.set_isTypeFirstPart();
+  info.set_name_qualification_length(decl_item->get_name_qualification_length_for_type());
+  info.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
+  info.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
 
   if (vdecl->get_isAssociatedWithDeclarationList()) {
-    if (ninfo_for_type.SkipBaseType()) {
+    if (info.SkipBaseType()) {
       SgPointerType* pointerType = isSgPointerType(decl_type);
       SgPointerType* nested_pointerType = pointerType ? isSgPointerType(pointerType->get_base_type()) : nullptr;
       if (pointerType)        unparse_str += " *";
       if (nested_pointerType) unparse_str += " *";
     } else {
-      ninfo_for_type.set_PrintName();
+      info.set_PrintName();
       need_unparse = true;
     }
   } else {
-    if (!ninfo_for_type.SkipBaseType()) {
+    if (!info.SkipBaseType()) {
       if (decl_item->get_name_qualification_length() > 0) {
-        ninfo_for_type.set_reference_node_for_qualification(decl_item);
+        info.set_reference_node_for_qualification(decl_item);
       }
       need_unparse = true;
     }
@@ -111,6 +112,8 @@ static bool setup_decl_item_type_unparse_infos(
 #if DEBUG__setup_decl_item_type_unparse_infos
   printf("  need_unparse = %s\n", need_unparse ? "true" : "false");
   printf("  unparse_str  = %s\n", unparse_str.c_str());
+  printf("  info.isTypeFirstPart()     = %s\n", info.isTypeFirstPart()     ? "true" : "false");
+  printf("  info.isTypeSecondPart()    = %s\n", info.isTypeSecondPart()    ? "true" : "false");
   printf("Leave DEBUG__build_decl_item_name()\n");
 #endif
   return need_unparse;
@@ -174,8 +177,6 @@ std::string build_decl_item_asm_register(SgInitializedName * decl_item) {
 #endif
   return asm_register;
 }
-
-#define DEBUG__need_assign_and_initializer_unparsed 0
 
 static void need_assign_and_initializer_unparsed(
   SgInitializedName * decl_item,
@@ -326,6 +327,11 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
          SgUnparse_Info ninfo_for_type(ninfo);
          std::string unparse_str{""};
          if (setup_decl_item_type_unparse_infos(ninfo_for_type, vardecl_stmt, decl_item, decl_type, unparse_str)) {
+#if DEBUG__unparseVarDeclStmt
+           printf ("    FIRST PART\n");
+           printf("       ninfo_for_type.isTypeFirstPart()  = %s\n", ninfo_for_type.isTypeFirstPart()     ? "true" : "false");
+           printf("       ninfo_for_type.isTypeSecondPart() = %s\n", ninfo_for_type.isTypeSecondPart()    ? "true" : "false");
+#endif
            unp->u_type->unparseType(decl_type, ninfo_for_type);
          } else {
            curprint(unparse_str);
@@ -336,6 +342,11 @@ void Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
          curprint(build_decl_item_name(decl_item));
 
          ninfo_for_type.set_isTypeSecondPart();
+#if DEBUG__unparseVarDeclStmt
+         printf ("    SECOND PART\n");
+         printf("       ninfo_for_type.isTypeFirstPart()  = %s\n", ninfo_for_type.isTypeFirstPart()     ? "true" : "false");
+         printf("       ninfo_for_type.isTypeSecondPart() = %s\n", ninfo_for_type.isTypeSecondPart()    ? "true" : "false");
+#endif
          unp->u_type->unparseType(decl_type, ninfo_for_type);
 
          curprint(build_decl_item_asm_register(decl_item));

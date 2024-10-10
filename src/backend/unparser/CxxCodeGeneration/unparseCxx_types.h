@@ -85,4 +85,7 @@ class Unparse_Type
 
    };
 
+std::string get_type_name(SgType* t);
+std::vector<const char*> memberFunctionQualifiers(const SgMemberFunctionType* mfnFype, bool trailingSpace = false);
+
 #endif

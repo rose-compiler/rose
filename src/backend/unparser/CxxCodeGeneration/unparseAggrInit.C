@@ -3,6 +3,7 @@
 #include "unparser.h"
 #include "rose_config.h"
 
+#define DEBUG__unparseAggrInit 0
 
 static bool
 sharesSameStatement(SgExpression*, SgType* expressionType)
@@ -336,8 +337,6 @@ static bool uses_cxx11_initialization (SgNode* n) {
 
      return returnValue;
    }
-
-#define DEBUG__unparseAggrInit 0
 
 void Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
