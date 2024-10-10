@@ -163,16 +163,6 @@ DispatcherCil::stackPointerRegister() const {
     return REG_A[7];
 }
 
-RegisterDescriptor
-DispatcherCil::stackFrameRegister() const {
-    return RegisterDescriptor();
-}
-
-RegisterDescriptor
-DispatcherCil::callReturnRegister() const {
-    return RegisterDescriptor();
-}
-
 SValuePtr
 DispatcherCil::condition(CilInstructionKind, RiscOperators*) {
     ASSERT_not_implemented("DQ (10/8/2021): Not clear what if any CIL support may be required here.");

@@ -106,8 +106,6 @@ public:
     static DispatcherPowerpcPtr promote(const BaseSemantics::DispatcherPtr&);
 
     virtual RegisterDescriptor instructionPointerRegister() const override;
-    virtual RegisterDescriptor stackPointerRegister() const override;
-    virtual RegisterDescriptor stackFrameRegister() const override;
     virtual RegisterDescriptor callReturnRegister() const override;
 
     virtual int iprocKey(SgAsmInstruction *insn_) const override;

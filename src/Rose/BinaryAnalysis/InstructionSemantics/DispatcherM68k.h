@@ -114,8 +114,6 @@ public:
 
     virtual RegisterDescriptor instructionPointerRegister() const override;
     virtual RegisterDescriptor stackPointerRegister() const override;
-    virtual RegisterDescriptor stackFrameRegister() const override;
-    virtual RegisterDescriptor callReturnRegister() const override;
     virtual int iprocKey(SgAsmInstruction *insn_) const override;
     virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) override;
 

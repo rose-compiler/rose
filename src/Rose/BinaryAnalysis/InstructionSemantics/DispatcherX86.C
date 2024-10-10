@@ -4602,11 +4602,6 @@ DispatcherX86::stackFrameRegister() const {
     return REG_anyBP;
 }
 
-RegisterDescriptor
-DispatcherX86::callReturnRegister() const {
-    return RegisterDescriptor();
-}
-
 static bool
 isStatusRegister(RegisterDescriptor reg) {
     return reg.majorNumber()==x86_regclass_flags && reg.minorNumber()==x86_flags_status;

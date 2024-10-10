@@ -2035,11 +2035,6 @@ DispatcherAarch64::stackPointerRegister() const {
 }
 
 RegisterDescriptor
-DispatcherAarch64::stackFrameRegister() const {
-    return RegisterDescriptor();
-}
-
-RegisterDescriptor
 DispatcherAarch64::callReturnRegister() const {
     return REG_LR;
 }

@@ -3865,16 +3865,6 @@ DispatcherM68k::stackPointerRegister() const {
     return REG_A[7];
 }
 
-RegisterDescriptor
-DispatcherM68k::stackFrameRegister() const {
-    return RegisterDescriptor();
-}
-
-RegisterDescriptor
-DispatcherM68k::callReturnRegister() const {
-    return RegisterDescriptor();
-}
-
 SValue::Ptr
 DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
     switch (kind) {

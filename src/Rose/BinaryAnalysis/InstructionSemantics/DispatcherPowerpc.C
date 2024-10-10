@@ -2796,16 +2796,6 @@ DispatcherPowerpc::instructionPointerRegister() const {
 }
 
 RegisterDescriptor
-DispatcherPowerpc::stackPointerRegister() const {
-    return findRegister("r1");
-}
-
-RegisterDescriptor
-DispatcherPowerpc::stackFrameRegister() const {
-    return RegisterDescriptor();
-}
-
-RegisterDescriptor
 DispatcherPowerpc::callReturnRegister() const {
     return REG_LR;
 }
