@@ -106,6 +106,10 @@ if(ENABLE-BINARY-ANALYSIS)
   target_link_libraries(bat-prop bat ROSE_DLL)
   install(TARGETS bat-prop DESTINATION bin)
 
+  add_executable(bat-rwsets bat-rwsets.C)
+  target_link_libraries(bat-rwsets bat ROSE_DLL)
+  install(TARGETS bat-rwsets DESTINATION bin)
+
   add_executable(bat-scan-magic bat-scan-magic.C)
   target_link_libraries(bat-scan-magic bat ROSE_DLL)
   install(TARGETS bat-scan-magic DESTINATION bin)

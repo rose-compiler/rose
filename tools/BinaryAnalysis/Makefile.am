@@ -191,6 +191,13 @@ bat_prop_LDFLAGS = $(ROSE_RPATHS)
 bat_prop_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-prop.passed
 
+bin_PROGRAMS += bat-rwsets
+bat_rwsets_SOURCES = bat-rwsets.C
+bat_rwsets_CPPFLAGS = $(ROSE_INCLUDES)
+bat_rwsets_LDFLAGS = $(ROSE_RPATHS)
+bat_rwsets_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-rwsets.passed
+
 bin_PROGRAMS += bat-scan-magic
 bat_scan_magic_SOURCES = bat-scan-magic.C
 bat_scan_magic_CPPFLAGS = $(ROSE_INCLUDES)

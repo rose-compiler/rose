@@ -62,7 +62,7 @@ createSwitchParser(Settings &settings) {
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.with(sel).with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     return parser;
 }
 
@@ -122,4 +122,9 @@ main(int argc, char *argv[]) {
         Variables::StackVariables lvars = variableFinder->findStackVariables(partitioner, function);
         Variables::print(lvars, partitioner, std::cout, "  ");
     }
+
+    // Find and print global variables
+    std::cout <<"global variables:\n";
+    Variables::GlobalVariables gvars = variableFinder->findGlobalVariables(partitioner);
+    Variables::print(gvars, partitioner, std::cout, "  ");
 }

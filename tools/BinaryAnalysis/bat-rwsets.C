@@ -28,6 +28,7 @@ namespace Symbolic = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemanti
 struct Settings {
     std::set<std::string> functionNames;
     size_t maxIterations = 100;
+    ReadWriteSets::Settings rwsSettings;
 };
 
 static Sawyer::Message::Facility mlog;
@@ -54,121 +55,10 @@ buildSwitchParser(Settings &settings) {
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
     parser.errorStream(mlog[FATAL]);
     parser.with(tool);
+    parser.with(ReadWriteSets::commandLineSwitches(settings.rwsSettings));
     parser.with(Rose::CommandLine::genericSwitches());
     return parser;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Class for read/write sets
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#if 0 // [Robb Matzke 2024-09-24]
-class RwSetAnalysis {
-public:
-    using Cfg = P2::DataFlow::DfCfg;
-    using State = BS::State::Ptr;
-    using Transfer = P2::DataFlow::TransferFunction;
-    using Merge = DataFlow::SemanticsMerge;
-    using Engine = DataFlow::Engine<Cfg, State, Transfer, Merge>;
-    using SValue = P2::Semantics::SValue;
-
-private:
-    Cfg cfg_;
-
-private:
-    class InterproceduralPredicate: public P2::DataFlow::InterproceduralPredicate {
-    public:
-        bool operator()(const P2::ControlFlowGraph&, const P2::ControlFlowGraph::ConstEdgeIterator&, size_t depth) override {
-            return depth <= 2;
-        }
-    };
-
-public:
-    void analyze(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function, const size_t maxIterations) {
-        ASSERT_not_null(partitioner);
-        ASSERT_not_null(function);
-        const RegisterDescriptor REG_SP = partitioner->architecture()->registerDictionary()->stackPointerRegister();
-        const RegisterDescriptor REG_FP = partitioner->architecture()->registerDictionary()->stackFrameRegister();
-
-        InterproceduralPredicate ipPred;
-        cfg_ = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), partitioner->findPlaceholder(function->address()), ipPred);
-        dumpCfg();
-
-        // Build and initialize the data-flow engine
-        auto ops = Symbolic::RiscOperators::promote(partitioner->newOperators());
-        ops->computingDefiners(Symbolic::TRACK_ALL_DEFINERS);
-        auto cpu = partitioner->newDispatcher(ops);
-        ASSERT_always_require2(cpu, "instruction semantics not available for this instruction set");
-        Transfer transfer(cpu);
-        Merge merge(cpu);
-        Engine engine(cfg_, transfer, merge);
-        State initialState = transfer.initialState();
-        BS::SValue::Ptr initialSp = ops->undefined_(REG_SP.nBits());
-        initialState->registerState()->writeRegister(REG_SP, initialSp, ops.get());
-        engine.insertStartingVertex(0, initialState);
-
-        // Run the data-flow
-        bool completed = false;
-        for (size_t i = 0; i < maxIterations; ++i) {
-            DataFlow::mlog[DEBUG] <<std::string(80, '-') <<"\n"
-                                  <<"Step " <<i <<"\n";
-            if (!engine.runOneIteration()) {
-                completed = true;
-                break;
-            }
-        }
-        if (!completed)
-            mlog[WARN] <<"data-flow did not reach a fixed point for " <<function->printableName() <<"\n";
-
-        auto vf = Variables::VariableFinder::instance();
-        auto svars = vf->findStackVariables(partitioner, function);
-
-        class FindByAddress: public BS::MemoryCell::Predicate {
-            BS::SValue::Ptr addr_;
-        public:
-            FindByAddress() = delete;
-            explicit FindByAddress(const BS::SValue::Ptr &addr)
-                : addr_(addr) {}
-
-            bool operator()(const BS::MemoryCellPtr &cell) override {
-                return cell->address()->mayEqual(addr_);
-            }
-        };
-
-        if (State state = engine.getFinalState(6)) {
-            std::cout <<*state;
-            for (const Variables::StackVariable &stackVar: svars.values()) {
-                std::cout <<stackVar <<" in " <<stackVar.function()->printableName() <<"\n";
-                if (auto memory = BS::MemoryCellState::promote(state->memoryState())) {
-                    BS::SValue::Ptr fp = state->peekRegister(REG_FP, ops->undefined_(REG_FP.nBits()), ops.get());
-                    BS::SValue::Ptr varAddr = ops->add(fp, ops->number_(fp->nBits(), stackVar.frameOffset()));
-                    std::cout <<"  fp   = " <<*fp <<"\n";
-                    std::cout <<"  addr = " <<*varAddr <<"\n";
-
-                    FindByAddress finder(varAddr);
-                    std::vector<P2::BaseSemantics::MemoryCellPtr> cells = memory->matchingCells(finder);
-                    for (const P2::BaseSemantics::MemoryCellPtr &cell: cells) {
-                        std::cout <<"  cell:\n";
-                        for (Address writerAddr: cell->getWriters().values()) {
-                            std::cout <<"    writer at " <<StringUtility::addrToString(writerAddr) <<"\n";
-                        }
-
-                        for (BS::InputOutputProperty prop: cell->ioProperties().values()) {
-                            std::cout <<"    property: " <<stringify::Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::InputOutputProperty(prop, "") <<"\n";
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    void dumpCfg() const {
-        const boost::filesystem::path dotFileName = "x.dot";
-        std::ofstream dotFile(dotFileName.c_str());
-        P2::DataFlow::dumpDfCfg(dotFile, cfg_);
-    }
-};
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int
@@ -202,10 +92,8 @@ main(int argc, char *argv[]) {
 
     // Process each function
     for (const P2::Function::Ptr &function: functions) {
-#if 0 // [Robb Matzke 2024-09-24]
-        RwSetAnalysis().analyze(partitioner, function, settings.maxIterations);
-#endif
-        auto rw = ReadWriteSets::instance(partitioner);
-        rw->analyze(function);
+        auto rwSets = ReadWriteSets::instance(partitioner, settings.rwsSettings);
+        rwSets->analyze(function);
+        std::cout <<*rwSets;
     }
 }

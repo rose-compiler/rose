@@ -30,18 +30,23 @@ InstructionAccess::access() {
 }
 
 std::string
-InstructionAccess::accessString() const {
-    if (access_.isSet(Access::READ)) {
-        if (access_.isSet(Access::WRITE)) {
+InstructionAccess::accessString(const AccessFlags access) {
+    if (access.isSet(Access::READ)) {
+        if (access.isSet(Access::WRITE)) {
             return "read/write";
         } else {
             return "read";
         }
-    } else if (access_.isSet(Access::WRITE)) {
+    } else if (access.isSet(Access::WRITE)) {
         return "write";
     } else {
         return "no access";
     }
+}
+
+std::string
+InstructionAccess::accessString() const {
+    return accessString(access_);
 }
 
 std::string

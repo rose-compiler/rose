@@ -58,8 +58,12 @@ public:
 
     /** String describing access.
      *
-     *  Returns "read", "write", "read/write", or "no access". */
+     *  Returns "read", "write", "read/write", or "no access".
+     *
+     * @{ */
     std::string accessString() const;
+    static std::string accessString(AccessFlags);
+    /** @} */
 
     /** String representation of this object. */
     std::string toString() const;

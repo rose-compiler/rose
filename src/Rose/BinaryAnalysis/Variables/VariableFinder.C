@@ -58,53 +58,84 @@ public:
     using Ptr = RiscOperatorsPtr;
 
 private:
+    const RegisterDescriptor SP, FP;                    // stack pointer register and optional frame ptr reg
     const StackDelta::Analysis &stackDeltas_;           // stack delta information for a single function
-    SymbolicExpression::Ptr initialSp_;                 // stack pointer at start of analysis
-    SymbolicExpression::Ptr initialFp_;                 // frame pointer at start of analysis (if architecture has one)
+    BS::SValue::Ptr initialSp_;                         // stack pointer at start of analysis
     StackVariable::Boundaries &boundaries_;             // variable boundaries on the stack
+
+    // The `spOffset` is the value of the stack pointer at the start of the basic block that is to be processed
+    // by this semantic state. The `fpOffset` is the value of the frame pointer (if any) at the beginning of this
+    // basic block w.r.t. the value of the stack pointer at the beginning of this basic block.
+    Sawyer::Optional<int64_t> spOffset_;                // first known SP value w.r.t. beginning of function
+    Sawyer::Optional<int64_t> fpOffset_;                // first known FP value w.r.t. SP at same instruction
+
 
 protected:
     explicit RiscOperators(const BS::State::Ptr &state, const StackDelta::Analysis &stackDeltas,
-                           StackVariable::Boundaries &boundaries)
-        : Super(state, SmtSolverPtr()), stackDeltas_(stackDeltas), boundaries_(boundaries) {
-        ASSERT_require(blockStackDelta != SgAsmInstruction::INVALID_STACK_DELTA);
+                           const RegisterDictionary::Ptr &regdict, StackVariable::Boundaries &boundaries)
+        : Super(state, SmtSolverPtr()), SP(notnull(regdict)->stackPointerRegister()),
+          FP(notnull(regdict)->stackFrameRegister()), stackDeltas_(stackDeltas), boundaries_(boundaries) {
         (void) SValue::promote(state->protoval());      // runtime type check
+        initialSp_ = peekRegister(SP, undefined_(SP.nBits()));
     }
 
 public:
     static Ptr instance(const P2::Partitioner::ConstPtr &partitioner, const StackDelta::Analysis &stackDeltas,
                         StackVariable::Boundaries &boundaries /*in,out*/) {
-        ASSERT_not_null(partitoner);
+        ASSERT_not_null(partitioner);
 
         RegisterDictionary::Ptr regdict = partitioner->architecture()->registerDictionary();
         BS::SValue::Ptr protoval = SValue::instance();
         BS::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
         BS::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
         BS::State::Ptr state = State::instance(registers, memory);
-        Ptr ops = Ptr(new RiscOperators(state, stackDeltas, boundaries));
-
-        // Initialize the state and store the values for the stack and frame pointers
-        const RegisterDescriptor SP = regdict->stackPointerRegister();
-        ops->initialSp_ = notnull(expr(state->readRegister(SP, protoval->undefined_(SP.nBits()), ops.get())));
-        if (const RegisterDescriptor FP = regdict->stackFrameRegister())
-            ops->initialFp_ = notnull(expr(state->readRegister(FP, protoval->undefined_(FP.nBits()), ops.get())));
-
-        return ops;
+        return Ptr(new RiscOperators(state, stackDeltas, regdict, boundaries));
     }
 
 public:
     BS::RiscOperators::Ptr create(const BS::SValue::Ptr&/*protoval*/, const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
+        ASSERT_not_implemented("[Robb Matzke 2019-09-16]: not needed");
     }
 
     BS::RiscOperators::Ptr create(const BS::State::Ptr&, const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
+        ASSERT_not_implemented("[Robb Matzke 2019-09-16]: not needed");
     }
 
     static Ptr promote(const BS::RiscOperators::Ptr &x) {
         Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
+    }
+
+    // Initialize the SP and/or FP as soon as we know how it relates to the beginning of the function.
+    void startInstruction(SgAsmInstruction *insn) override {
+        if (!spOffset_) {
+            if ((spOffset_ = stackDeltas_.toInt(stackDeltas_.instructionInputStackDeltaWrtFunction(insn)))) {
+                // The stack pointer offset is w.r.t. the beginning of the function.
+                ASSERT_not_null(initialSp_);
+                const BS::SValue::Ptr adjustedSp = add(initialSp_, number_(SP.nBits(), *spOffset_));
+                writeRegister(SP, adjustedSp);
+                SAWYER_MESG(mlog[DEBUG]) <<"  adjusted stack pointer at insn " <<insn->toString() <<"\n"
+                                         <<"    original function stack pointer: " <<*initialSp_ <<"\n"
+                                         <<"    stack ptr offset w.r.t. function: " <<*spOffset_ <<"\n"
+                                         <<"    new stack pointer: " <<*adjustedSp <<"\n";
+            }
+        }
+
+        if (!fpOffset_ && FP) {
+            if ((fpOffset_ = stackDeltas_.toInt(stackDeltas_.instructionInputFrameDelta(insn)))) {
+                // The frame pointer offset is w.r.t. the stack pointer for the same instruction
+                const BS::SValue::Ptr sp = peekRegister(SP, undefined_(SP.nBits()));
+                const BS::SValue::Ptr adjustedFp = add(sp, number_(FP.nBits(), *fpOffset_));
+                writeRegister(FP, adjustedFp);
+                SAWYER_MESG(mlog[DEBUG]) <<"  adjusted frame pointer at insn " <<insn->toString() <<"\n"
+                                         <<"    old frame pointer at this insn: " <<peekRegister(FP, undefined_(FP.nBits())) <<"\n"
+                                         <<"    stack pointer at this insn: " <<*sp <<"\n"
+                                         <<"    frame ptr offset w.r.t. stack ptr: " <<*fpOffset_ <<"\n"
+                                         <<"    new frame pointer: " <<*adjustedFp <<"\n";
+            }
+        }
+        Super::startInstruction(insn);
     }
 
     BS::SValue::Ptr readMemory(const RegisterDescriptor segreg, const BS::SValue::Ptr &addr, const BS::SValue::Ptr &dflt,
@@ -173,32 +204,16 @@ private:
         const SymbolicExpression::Ptr absAddr = SValue::promote(addrSVal)->get_expression();
         SAWYER_MESG(mlog[DEBUG]) <<"    memory address: " <<*absAddr <<"\n";
 
-        // Compute a relative address by subtracting the initial stack pointer from when this RiscOperators object was created and
-        // adding in the stack delta for the current instruction. Equivalently, we can replace all occurrances of the initial stack
-        // pointer with the delta, which might be faster and more easily simplified by the symbolic expression layer.
-        if (findInExpr(initialSp_, absAddr)) {
-            if (const SymbolicExpression::Ptr spDelta = expr(stackDeltas_.instructionInputStackDeltaWrtFunction(insn))) {
-                SAWYER_MESG(mlog[DEBUG]) <<"    instruction incoming stack delta w.r.t. function: " <<*spDelta <<"\n";
-                SymbolicExpression::Ptr relAddr = absAddr->substitute(initialSp_, spDelta);
-                SAWYER_MESG(mlog[DEBUG]) <<"    offset w.r.t. function stack pointer: " <<*relAddr <<"\n";
-                if (const auto relAddrConcrete = relAddr->toSigned())
-                    StackVariable::insertBoundary(boundaries_, *relAddrConcrete, InstructionAccess(insn->get_address(), access));
-            }
-        }
-
-        // Similarly, find the relative address w.r.t. the frame pointer, but store it w.r.t. to the initial stack pointer.
-        if (initialFp_ && findInExpr(initialFp_, absAddr)) {
-            if (const SymbolicExpression::Ptr spDelta = expr(stackDeltas_.instructionInputStackDeltaWrtFunction(insn))) {
-                SAWYER_MESG(mlog[DEBUG]) <<"    instruction incoming stack delta w.r.t. function: " <<*spDelta <<"\n";
-                if (const SymbolicExpression::Ptr fpDelta = expr(stackDeltas_.instructionInputFrameDelta(insn))) {
-                    SAWYER_MESG(mlog[DEBUG]) <<"    instruction incoming frame delta w.r.t. stack pointer: " <<*fpDelta <<"\n";
-                    const auto delta = SymbolicExpression::makeAdd(spDelta, fpDelta);
-                    SAWYER_MESG(mlog[DEBUG]) <<"    relative frame pointer at this insn: " <<*delta <<"\n";
-                    SymbolicExpression::Ptr relAddr = absAddr->substitute(initialFp_, delta);
-                    SAWYER_MESG(mlog[DEBUG]) <<"    offset w.r.t function stack pointer: " <<*relAddr <<"\n";
-                    if (const auto relAddrConcrete = relAddr->toSigned())
-                        StackVariable::insertBoundary(boundaries_, *relAddrConcrete, InstructionAccess(insn->get_address(), access));
-                }
+        // Compute a relative address by subtracting the initial stack pointer from when this RiscOperators object was created.
+        // Equivalently, we can replace all occurrances of the original stack pointer with zero, which might be faster an more
+        // easily simplified by the symbolic expression layer.
+        if (findInExpr(expr(initialSp_), absAddr)) {
+            const SymbolicExpression::Ptr zero = SymbolicExpression::makeIntegerConstant(initialSp_->nBits(), 0);
+            const SymbolicExpression::Ptr relAddr = absAddr->substitute(expr(initialSp_), zero);
+            SAWYER_MESG(mlog[DEBUG]) <<"    address w.r.t. initial stack pointer: " <<*relAddr <<"\n";
+            if (const auto relAddrConcrete = relAddr->toSigned()) {
+                StackVariable::insertBoundary(boundaries_, *relAddrConcrete, InstructionAccess(insn->get_address(), access));
+                SAWYER_MESG(mlog[DEBUG]) <<"    concrete offset: " <<*relAddrConcrete <<"\n";
             }
         }
     }
@@ -218,6 +233,17 @@ VariableFinder::VariableFinder(const Settings &settings)
 VariableFinder::Ptr
 VariableFinder::instance(const Settings &settings) {
     return Ptr(new VariableFinder(settings));
+}
+
+Sawyer::CommandLine::SwitchGroup
+VariableFinder::commandLineSwitches(Settings &settings) {
+    Sawyer::CommandLine::SwitchGroup switches("Variable finder switches");
+    switches.name("var");
+    switches.doc("These switches control the analysis that finds local and/or global variables.\n\n"
+
+                 "There currently are no command-line switches for this analysis.");
+
+    return switches;
 }
 
 std::set<Address>
@@ -386,17 +412,17 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
         //                           :                           :
         //                           :   (part of parent frame)  :
         //                           :                           :
-        //        +1     +9          | LR saved                  |  4 bytes
-        //         0     +8          | addr of grandparent frame |  4 bytes  caller's frame pointer points here
+        //        +1     +9          | LR saved                  |  1 word
+        //         0     +8          | addr of grandparent frame |  1 word Caller's frame pointer points here
         //                           +---(current frame)---------+
         //        -1     +7          | saved FP register area    |  optional, variable size
-        //        -2     +6          | saved GP register area    |  optional, multiple of 4 bytes
-        //        -3     +5          | CR saved                  |  0 or 4 bytes
+        //        -2     +6          | saved GP register area    |  optional, multiple of 4/8 bytes
+        //        -3     +5          | CR saved                  |  0 or 1 word
         //        -4     +4          | Local variables           |  optional, variable size
         //        -5     +3          | Function parameter area   |  optional, variable size for callee args not fitting in registers
-        //        -6     +2          | Padding                   |  0 to 7, although I'm not sure when this is used
-        //        -7     +1          | LR saved by callees       |  4 bytes
-        //        -8      0          | addr of parent frame      |  4 bytes callees's frame pointer points here
+        //        -6     +2          | Padding                   |  0 to 7 bytes, although I'm not sure when this is used
+        //        -7     +1          | LR saved by callees       |  1 word
+        //        -8      0          | addr of parent frame      |  1 word callees's frame pointer points here
         //                           +---------------------------+
         //
         //-------------+-------------+---------------------------+---------------------------------------------------
@@ -430,16 +456,11 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
         }
 
         if (frame.size) {
-            // We'd like to define boundaries (offsets) to segregate the local variables from other things, but we don't know where
-            // these boundaries are because everything is variable size.
             StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, bytesPerWord);
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 2*bytesPerWord);
             returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
-
-            // Everything else is above this boundary
-            StackVariable::insertBoundaryImplied(boundaries, 2*bytesPerWord);
         }
     } else if (auto m68k = isSgAsmM68kInstruction(firstInsn)) {
         //-------------+-------------+---------------------------+---------------------------------------------------
@@ -609,11 +630,12 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
     }
 
     if (debug) {
-        debug <<"  frame initialization rule: ";
+        debug <<"  frame initialization rule: architecture \"" <<StringUtility::cEscape(partitioner->architecture()->name()) <<"\""
+              <<", rule ";
         if (!frame.rule.empty()) {
             debug <<"\"" <<StringUtility::cEscape(frame.rule) <<"\"\n";
         } else {
-            debug <<"unknown\n";
+            debug <<"unspecified\n";
         }
 
         switch (frame.growthDirection) {
@@ -626,15 +648,15 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
         }
 
         debug <<"  frame boundaries w.r.t initial function SP:\n";
-        debug <<"    mininum: ";
-        if (frame.minOffset) {
-            debug <<*frame.minOffset <<"\n";
-        } else {
-            debug <<"unknown\n";
-        }
         debug <<"    maximum: ";
         if (frame.maxOffset) {
             debug <<*frame.maxOffset <<"\n";
+        } else {
+            debug <<"unknown\n";
+        }
+        debug <<"    mininum: ";
+        if (frame.minOffset) {
+            debug <<*frame.minOffset <<"\n";
         } else {
             debug <<"unknown\n";
         }
@@ -658,7 +680,7 @@ void
 VariableFinder::removeOutliers(const StackFrame &frame, StackVariable::Boundaries &boundaries /*in,out,sorted*/) {
 #ifndef NDEBUG
     for (size_t i = 1; i < boundaries.size(); ++i)
-        ASSERT_require(boundaries[i-1].stackOffset < boundaries[i].backOffset);
+        ASSERT_require(boundaries[i-1].stackOffset < boundaries[i].stackOffset);
 #endif
 
     if (frame.minOffset) {

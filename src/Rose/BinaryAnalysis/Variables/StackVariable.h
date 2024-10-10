@@ -118,7 +118,9 @@ public:
     bool operator!=(const StackVariable &other) const;
     /** @} */
 
-    /** Location within the function stack frame. */
+    /** Location of variable w.r.t. function's stack.
+     *
+     *  Returns the concrete location of this local stack variable w.r.t. this function's initial stack pointer. */
     OffsetInterval interval() const;
 
     /** Insert a new boundary or adjust an existing boundary.

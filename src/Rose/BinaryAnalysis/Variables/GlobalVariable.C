@@ -6,6 +6,8 @@
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/NumberToString.h>
 
+using namespace Sawyer::Message::Common;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Variables {

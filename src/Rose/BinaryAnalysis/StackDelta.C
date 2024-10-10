@@ -143,11 +143,16 @@ public:
             ASSERT_not_null(vertex->value().bblock());
             const RegisterDescriptor SP = cpu()->stackPointerRegister();
             const RegisterDescriptor FP = cpu()->stackFrameRegister(); // not all architectures have this
+#if 1 // DEBUGGING [Robb Matzke 2024-10-09]
+            ASSERT_always_require2(FP, "no frame pointer register");
+#endif
             BaseSemantics::SValue::Ptr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             BaseSemantics::SValue::Ptr oldFp = FP ?
                                                retval->peekRegister(FP, ops->undefined_(FP.nBits()), ops.get()) :
                                                BaseSemantics::SValue::Ptr();
+            SAWYER_MESG(mlog[DEBUG]) <<"transfer function for " <<vertex->value().bblock()->printableName() <<"\n";
             for (SgAsmInstruction *insn: vertex->value().bblock()->instructions()) {
+                SAWYER_MESG(mlog[DEBUG]) <<"  executing " <<insn->toString() <<"\n";
                 cpu()->processInstruction(insn);
 
                 // Stack and frame pointers after the instruction executes
@@ -566,6 +571,20 @@ Analysis::adjustInstruction(SgAsmInstruction *insn, const BaseSemantics::SValue:
                             const BaseSemantics::SValue::Ptr &spOut, const BaseSemantics::SValue::Ptr &spDelta,
                             const BaseSemantics::SValue::Ptr &fpIn, const BaseSemantics::SValue::Ptr &fpOut) {
     if (insn) {
+        if (mlog[DEBUG]) {
+            Sawyer::Message::Stream debug(mlog[DEBUG]);
+            if (spIn)
+                debug <<"    incoming stack pointer:  " <<*spIn <<"\n";
+            if (spOut)
+                debug <<"    outgoing stack pointer:  " <<*spOut <<"\n";
+            if (spDelta)
+                debug <<"    change in stack pointer: " <<*spDelta <<"\n";
+            if (fpIn)
+                debug <<"    incoming frame pointer:  " <<*fpIn <<"\n";
+            if (fpOut)
+                debug <<"    outgoing frame pointer:  " <<*fpOut <<"\n";
+        }
+
         if (spIn || spOut)
             insnStackPtrs_.insert(insn->get_address(), SValuePair(spIn, spOut));
         if (spDelta)

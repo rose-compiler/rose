@@ -7,13 +7,17 @@
 #include <Rose/BinaryAnalysis/Variables/GlobalVariable.h>
 #include <Rose/BinaryAnalysis/Variables/StackVariable.h>
 
+#include <Sawyer/CommandLine.h>
+
 class SgAsmInstruction;
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Variables {
 
-/** Analysis to find variable locations. */
+/** Analysis to find variable locations.
+ *
+ *  See @ref Variables "namespace" for more information and caveats. */
 class VariableFinder {
 public:
     /** Settings that control this analysis. */
@@ -50,6 +54,12 @@ public:
     const Settings& settings() const { return settings_; }
     Settings& settings() { return settings_; }
     /** @} */
+
+    /** Command-line switches for analysis settings.
+     *
+     *  This function captures a reference to the specified settings so that when the command-line is parsed later, those settings
+     *  are modified. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
 
     /** Find local variables in a function.
      *
