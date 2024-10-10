@@ -460,6 +460,12 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "LOCSINWORD")) {
      expr = SageBuilder::buildVarRefExp("LOCSINWORD", scope);
    }
+
+   // FLOATPRECISION, MAXFLOATPRECISION
+
+   else if (ATmatch(term, "FLOATPRECISION")) {
+     expr = SageBuilder::buildVarRefExp("FLOATPRECISION", scope);
+   }
    else if (ATmatch(term, "MAXFLOATPRECISION")) {
      expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
    }
@@ -509,11 +515,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = buildIntrinsicFunctionCallExp_nfi(std::string{"BYTEPOS"}, params, scope);
    }
 
-   //TODO: 'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
-   //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
-   //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
-   //      'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
-
    else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
       mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
       // MATCHED IMPLFLOATPRECISION
@@ -531,6 +532,29 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
          // MATCHED FractionSpecifier
       } else return ATfalse;
    }
+
+   //TODO: 'FIXEDPRECISION'                          -> IntegerMachineParameter {cons("FIXEDPRECISION")}
+   //      'FLOATRADIX'                              -> IntegerMachineParameter {cons("FLOATRADIX")}
+   //      'INTPRECISION'                            -> IntegerMachineParameter {cons("INTPRECISION")}
+   //      'IMPLINTSIZE'    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
+   //      'MAXFIXEDPRECISION'                       -> IntegerMachineParameter {cons("MAXFIXEDPRECSION")}
+   //      'MAXBYTES'                                -> IntegerMachineParameter {cons("MAXBYTES")}
+   //      'MAXBITS'                                 -> IntegerMachineParameter {cons("MAXBITS")}
+   //      'MAXSIGNDIGITS'                           -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
+   //      'MAXSTOP'                                 -> IntegerMachineParameter {cons("MAXSTOP")}
+   //      'MAXTABLESIZE'                            -> IntegerMachineParameter {cons("MAXTABLESIZE")}
+   //      'MINSTOP'                                 -> IntegerMachineParameter {cons("MINSTOP")}
+   //      'MINFRACTION'    '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINFRACTION")}
+   //      'MINSIZE'        '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSIZE")}
+   //      'MINSCALE'       '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSCALE")}
+   //      'MINRELPRECISION''(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINRELPRECISION")}
+   //      'FLOATRELPRECISION' '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATRELPRECISION")}
+   //      'FLOATUNDERFLOW'    '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATUNDERFLOW")}
+   //      'MAXFLOAT'          '(' Precision ')'     -> FloatingMachineParameter {cons("MAXFLOAT")}
+   //      'MINFLOAT'          '(' Precision ')'     -> FloatingMachineParameter {cons("MINFLOAT")}
+   //      'MAXFIXED' '(' ScaleSpecifier',' FractionSpecifier ')'-> FixedMachineParameter {cons("MAXFIXED")}
+   //      'MINFIXED' '(' ScaleSpecifier ','FractionSpecifier ')'-> FixedMachineParameter    {cons("MINFIXED")}
+
    else return ATfalse;
 
    ASSERT_not_null(expr);
