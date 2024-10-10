@@ -1,4 +1,18 @@
 include_rules
 
-run $(librose_compile) unparseCxx_expressions.C unparseCxx_statements.C unparseCxx_types.C
-run $(public_header)   unparseCxx.h unparseCxx_types.h
+run $(librose_compile)				\
+    helpers.C					\
+    unparseAggrInit.C				\
+    unparseAssnInit.C				\
+    unparseBracedInit.C				\
+    unparseCompInit.C				\
+    unparseCtorInit.C				\
+    unparseCxx_expressions.C			\
+    unparseCxx_statements.C			\
+    unparseCxx_types.C				\
+    unparseDesignatedInitializer.C		\
+    unparseVarDeclStmt.C
+    
+run $(public_header)				\
+    unparseCxx.h				\
+    unparseCxx_types.h
