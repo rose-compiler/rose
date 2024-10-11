@@ -6130,7 +6130,9 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
                if (i->second != typeNameString)
                   {
                     i->second = typeNameString;
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                     mfprintf(mlog [ WARN ] ) ("In addToNameMap(): Allow this for replacement now! \n");
+#endif
                  }
              }
         }
