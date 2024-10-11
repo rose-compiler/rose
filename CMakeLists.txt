@@ -924,8 +924,9 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
 endif()
 
 # Initialize variable that determines where to look for libquadmath.so 
+set(INCLUDE_QUADMATH OFF CACHE BOOL "Search for a nonstandard quadmath or not")
 set(QUADMATH_SEARCH_PATHS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib /usr/lib/gcc/x86_64-redhat-linux/8 /usr/lib/gcc/x86_64-redhat-linux/11/32 )
-if(NOT WIN32) # try to find libm and libquadmath when not on Windows OS 
+if(NOT WIN32 AND ${INCLUDE_QUADMATH}) # try to find libm and libquadmath when not on Windows OS 
   find_library(M_LIB m)  
   message(STATUS "Looking for Quadmath in: ${QUADMATH_SEARCH_PATHS}")
   find_library(QUADMATH_LIBRARY 
@@ -938,7 +939,7 @@ if(NOT WIN32 AND NOT APPLE)
   find_library(RT_LIB rt)
 endif()
 
-if(NOT QUADMATH_LIBRARY)
+if(NOT QUADMATH_LIBRARY AND ${INCLUDE_QUADMATH})
   message(STATUS "libquadmath was not found in the following directories: ${QUADMATH_SEARCH_PATHS}") 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(WARNING "Defining the macro ROSE_USE_EDG_QUAD_FLOAT to 1 per the behavior of the legacy build system")
