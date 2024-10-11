@@ -923,8 +923,11 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
+cmake_dependent_option(INCLUDE_QUADMATH "Include the GNU quadmath library" OFF "NOT ${have_EDG_source}; NOT ${BINARY_EDG}" ON)
+if(NOT ${INCLUDE_QUADMATH})
+  message("Skipping quadmath...")
+endif()
 # Initialize variable that determines where to look for libquadmath.so 
-set(INCLUDE_QUADMATH OFF CACHE BOOL "Search for a nonstandard quadmath or not")
 set(QUADMATH_SEARCH_PATHS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib /usr/lib/gcc/x86_64-redhat-linux/8 /usr/lib/gcc/x86_64-redhat-linux/11/32 )
 if(NOT WIN32 AND ${INCLUDE_QUADMATH}) # try to find libm and libquadmath when not on Windows OS 
   find_library(M_LIB m)  
