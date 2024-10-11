@@ -1023,6 +1023,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
 endif() 
 
+set(ROSE_CXXFLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}" )
+
+
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${ACTUAL_CC}\n")
@@ -1031,7 +1034,7 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX          = ${AC
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX_PATH     = ${CMAKE_CXX_COMPILER}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${rose_config_installed_cppflags}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${ROSE_CXXFLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${ROSE_LIBDIRS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
