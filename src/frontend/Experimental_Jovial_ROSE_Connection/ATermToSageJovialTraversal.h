@@ -422,6 +422,7 @@ ATbool traverse_AlwaysDirective    (ATerm term);
 }; // class ATermToSageJovialTraversal
 
   // Specifically for Jovial intrinsic functions
+  SgVarRefExp* buildIntrinsicVarRefExp_nfi(const std::string &name, SgScopeStatement* scope);
   SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
                                                        SgExprListExp* params=nullptr,
                                                        SgScopeStatement* scope=nullptr);

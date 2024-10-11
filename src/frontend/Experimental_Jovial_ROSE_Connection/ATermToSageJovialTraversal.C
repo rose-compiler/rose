@@ -470,7 +470,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
    }
 
-   // MAXINT, MAXINTSIZE, MININT
+   // MAXINT, MAXINTSIZE, MININT, MINSTOP
 
    else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
      // ItemSize is required
@@ -502,6 +502,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
        expr = buildIntrinsicFunctionCallExp_nfi(std::string{"MININT"}, params, scope);
      }
      else return ATfalse;
+   }
+   else if (ATmatch(term, "MINSTOP")) {
+     expr = buildIntrinsicVarRefExp_nfi(std::string{"MINSTOP"}, scope);
    }
 
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
@@ -543,7 +546,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    //      'MAXSIGNDIGITS'                           -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
    //      'MAXSTOP'                                 -> IntegerMachineParameter {cons("MAXSTOP")}
    //      'MAXTABLESIZE'                            -> IntegerMachineParameter {cons("MAXTABLESIZE")}
-   //      'MINSTOP'                                 -> IntegerMachineParameter {cons("MINSTOP")}
    //      'MINFRACTION'    '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINFRACTION")}
    //      'MINSIZE'        '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSIZE")}
    //      'MINSCALE'       '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSCALE")}
@@ -8898,6 +8900,13 @@ setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref)
    else if (def_or_ref == e_storage_modifier_jovial_ref) {
       var_decl->get_declarationModifier().setJovialRef();
    }
+}
+
+SgVarRefExp* ATermSupport::
+buildIntrinsicVarRefExp_nfi(const std::string &name, SgScopeStatement* scope)
+{
+  // TODO: The type for the expression is SgUnknownType, make better
+  return SageBuilder::buildVarRefExp(name, scope);
 }
 
 SgFunctionCallExp* ATermSupport::
