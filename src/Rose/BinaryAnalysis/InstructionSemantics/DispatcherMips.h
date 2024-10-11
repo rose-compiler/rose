@@ -42,7 +42,7 @@ public:
      *  This register is cached so that there are not so many calls to look up registers by name.
      *
      * @{ */
-    const RegisterDescriptor REG_R0, REG_R1, REG_HI, REG_LO, REG_PC, REG_SP, REG_FP, REG_RA;
+    const RegisterDescriptor REG_R0, REG_R1, REG_HI, REG_LO, REG_PC, REG_SP, REG_FP, REG_RA, REG_ZERO;
     /** @} */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -87,6 +87,7 @@ public:
     // documented in the base class
     virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&) const override;
     virtual int iprocKey(SgAsmInstruction*) const override;
+    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t valueNBits = 0, size_t addrNBits = 0) override;
 
 private:
     // Initialize the dispatch table that handles each kind of instruction

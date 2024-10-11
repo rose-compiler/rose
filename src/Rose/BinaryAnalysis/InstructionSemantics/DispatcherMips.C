@@ -14,6 +14,7 @@
 
 #include <SgAsmExpression.h>
 #include <SgAsmBinaryAdd.h>
+#include <SgAsmDirectRegisterExpression.h>
 #include <SgAsmMemoryReferenceExpression.h>
 #include <SgAsmIntegerValueExpression.h>
 #include <SgAsmMipsInstruction.h>
@@ -1019,7 +1020,8 @@ DispatcherMips::DispatcherMips(const Architecture::Base::ConstPtr &arch, const R
       REG_PC(arch->registerDictionary()->findOrThrow("pc")),
       REG_SP(arch->registerDictionary()->findOrThrow("sp")),
       REG_FP(arch->registerDictionary()->findOrThrow("fp")),
-      REG_RA(arch->registerDictionary()->findOrThrow("ra")) {
+      REG_RA(arch->registerDictionary()->findOrThrow("ra")),
+      REG_ZERO(arch->registerDictionary()->findOrThrow("zero")) {
     initializeDispatchTable();
     initializeMemoryState();
 }
@@ -1181,6 +1183,18 @@ DispatcherMips::mergeRight(SValuePtr reg, SValuePtr mem) {
     result = ops->ite(take3, word, result);
 
     return result;
+}
+
+// Override Dispatcher::read so that if we read from the "zero" register we get zero.
+SValue::Ptr
+DispatcherMips::read(SgAsmExpression *e, const size_t valueNBits/*or zero*/, const size_t addrNBits/*or zero*/) {
+    ASSERT_not_null(e);
+    SValue::Ptr retval;
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        if (re->get_descriptor() == REG_ZERO)
+            return operators()->number_(valueNBits ? valueNBits : REG_ZERO.nBits(), 0);
+    }
+    return Dispatcher::read(e, valueNBits, addrNBits);
 }
 
 } // namespace
