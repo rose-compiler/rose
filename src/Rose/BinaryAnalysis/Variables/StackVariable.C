@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/Variables/StackVariable.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/StringUtility/Escape.h>
 
 #include <stringify.h>
 
@@ -163,6 +164,9 @@ StackVariable::printBoundary(std::ostream &out, const Boundary &boundary, const 
             break;
         case Purpose::FRAME_POINTER:
             out <<prefix <<"frame pointer ";
+            break;
+        case Purpose::STACK_POINTER:
+            out <<prefix <<"stack pointer";
             break;
         case Purpose::SPILL_AREA:
             out <<prefix <<"spill area ";

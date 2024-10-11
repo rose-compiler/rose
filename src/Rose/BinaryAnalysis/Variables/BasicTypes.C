@@ -10,6 +10,8 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <mutex>
+
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {

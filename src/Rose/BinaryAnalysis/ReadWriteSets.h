@@ -73,19 +73,26 @@ public:
      *  The function is analyzed (or re-analyzed if it was previously analyzed) and the results are saved in this object. */
     void analyze(const Partitioner2::FunctionPtr&);
 
+    /** Local variables.
+     *
+     *  Returns information about the local variables. The returned variables must have all the specified `required` flags and
+     *  none of the specified `forbidden` flags.
+     *
+     *  Example: To get information about all local variables that are both read and written, so something like this:
+     *
+     * @code
+     *  ReadWriteSets::Ptr rwsets = ...;
+     *  rwsets->localVariables(Variable::AccessFlags().set(Variable::Access::READ).set(Variable::Access::WRITE));
+     * @endcode
+     *
+     *  If called with the default argument, then returns information about all known local variables. */
+    std::vector<Variables::StackVariable> localVariables(Variables::AccessFlags required = Variables::AccessFlags(),
+                                                         Variables::AccessFlags forbidden = Variables::AccessFlags()) const;
+
     /** Print results.
      *
      *  The multi-line output is sent to the specified stream and each line of output is prefixed by the specified string. */
     void print(std::ostream&, const std::string &prefix = "") const;
-
-
-#if 0 // [Robb Matzke 2024-09-24]
-    /** Test whether a function was analyzed already. */
-    bool exists(const Partitioner2::FunctionPtr&) const;
-
-    /** Forget the results for the specified function. */
-    void erase(const Partitioner2::FunctionPtr&);
-#endif
 };
 
 /** Print a read-write set. */

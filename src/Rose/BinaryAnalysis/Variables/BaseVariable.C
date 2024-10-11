@@ -44,6 +44,14 @@ BaseVariable::instructionsAccessing(const std::vector<InstructionAccess> &ia) {
     insns_ = ia;
 }
 
+AccessFlags
+BaseVariable::accessFlags() const {
+    AccessFlags retval;
+    for (const InstructionAccess &ia: insns_)
+        retval.set(ia.access());
+    return retval;
+}
+
 BS::InputOutputPropertySet
 BaseVariable::ioProperties() const {
     BS::InputOutputPropertySet retval;

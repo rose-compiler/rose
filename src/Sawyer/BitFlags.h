@@ -139,6 +139,16 @@ public:
         return !isSet(e);
     }
 
+    /** True if all specified bits are clear. */
+    bool isAllClear(const BitFlags other) const {
+        return (~vector_ & other.vector_) == other.vector_;
+    }
+
+    /** True if any specified bit is clear. */
+    bool isAnyClear(const BitFlags other) const {
+        return (~vector_ & other.vector_) != 0;
+    }
+
     /** Set the specified bit. */
     BitFlags& set(Enum e) {
         vector_ |= Vector(e);

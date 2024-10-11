@@ -28,7 +28,7 @@ namespace Symbolic = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemanti
 struct Settings {
     std::set<std::string> functionNames;
     size_t maxIterations = 100;
-    ReadWriteSets::Settings rwsSettings;
+    ReadWriteSets::Settings rwSets;
 };
 
 static Sawyer::Message::Facility mlog;
@@ -55,7 +55,8 @@ buildSwitchParser(Settings &settings) {
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
     parser.errorStream(mlog[FATAL]);
     parser.with(tool);
-    parser.with(ReadWriteSets::commandLineSwitches(settings.rwsSettings));
+    parser.with(ReadWriteSets::commandLineSwitches(settings.rwSets));
+    parser.with(Variables::VariableFinder::commandLineSwitches(settings.rwSets.variableFinder));
     parser.with(Rose::CommandLine::genericSwitches());
     return parser;
 }
@@ -92,8 +93,30 @@ main(int argc, char *argv[]) {
 
     // Process each function
     for (const P2::Function::Ptr &function: functions) {
-        auto rwSets = ReadWriteSets::instance(partitioner, settings.rwsSettings);
+        std::cout <<"Variables for " <<function->printableName() <<"\n";
+        auto rwSets = ReadWriteSets::instance(partitioner, settings.rwSets);
         rwSets->analyze(function);
+
+#if 0 // [Robb Matzke 2024-10-10]
+        // Print everything about the rwsets
         std::cout <<*rwSets;
+#endif
+
+        // Print the variables that are read and written
+        std::cout <<"  local variables that are read and written:\n";
+        const auto rw = Variables::AccessFlags(Variables::Access::READ).set(Variables::Access::WRITE);
+        for (const Variables::StackVariable &svar: rwSets->localVariables(rw)) {
+            std::cout <<"    " <<svar <<"\n";
+            for (const Variables::InstructionAccess &ia: svar.instructionsAccessing())
+                std::cout <<"      " <<ia <<"\n";
+        }
+
+        // Print the variables that are written but not read
+        std::cout <<"  local variables that are written but never read:\n";
+        for (const Variables::StackVariable &svar: rwSets->localVariables(Variables::Access::WRITE, Variables::Access::READ)) {
+            std::cout <<"    " <<svar <<"\n";
+            for (const Variables::InstructionAccess &ia: svar.instructionsAccessing())
+                std::cout <<"      " <<ia <<"\n";
+        }
     }
 }

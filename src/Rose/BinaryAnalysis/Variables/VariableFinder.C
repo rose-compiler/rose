@@ -237,11 +237,13 @@ VariableFinder::instance(const Settings &settings) {
 
 Sawyer::CommandLine::SwitchGroup
 VariableFinder::commandLineSwitches(Settings &settings) {
-    Sawyer::CommandLine::SwitchGroup switches("Variable finder switches");
-    switches.name("var");
-    switches.doc("These switches control the analysis that finds local and/or global variables.\n\n"
+    using namespace Sawyer::CommandLine;
 
-                 "There currently are no command-line switches for this analysis.");
+    SwitchGroup switches("Variable finder switches");
+    switches.name("var");
+    switches.doc("These switches control the analysis that finds local and/or global variables.");
+
+    // The above switch group will be automatically suppressed in the man page until someone adds at least one switch here.
 
     return switches;
 }
@@ -392,7 +394,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
         //-------------+-------------+---------------------------+---------------------------------------------------
 
         frame.growthDirection = StackFrame::GROWS_DOWN;
-        frame.maxOffset = -1;                           // top of frame
+        frame.maxOffset = bytesPerWord-1;               // top of frame
         frame.minOffset = Sawyer::Nothing();            // bottom of frame is unknown
         frame.size = Sawyer::Nothing();                 // frame size is unknown
         frame.rule = "x86: general";
@@ -408,21 +410,29 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
         // Stack ptr   | Frame ptr   |  Stack contents           | Notes
         // word offset | word offset |                           |
         //-------------+-------------+---------------------------+---------------------------------------------------
-        //
+        // From documentation for PPC calling conventions:
         //                           :                           :
         //                           :   (part of parent frame)  :
         //                           :                           :
-        //        +1     +9          | LR saved                  |  1 word
-        //         0     +8          | addr of grandparent frame |  1 word Caller's frame pointer points here
+        //        +1      ?          | LR saved                  |  1 word
+        //         0      ?          | addr of grandparent frame |  1 word Caller's frame pointer points here
         //                           +---(current frame)---------+
-        //        -1     +7          | saved FP register area    |  optional, variable size
-        //        -2     +6          | saved GP register area    |  optional, multiple of 4/8 bytes
-        //        -3     +5          | CR saved                  |  0 or 1 word
-        //        -4     +4          | Local variables           |  optional, variable size
-        //        -5     +3          | Function parameter area   |  optional, variable size for callee args not fitting in registers
-        //        -6     +2          | Padding                   |  0 to 7 bytes, although I'm not sure when this is used
-        //        -7     +1          | LR saved by callees       |  1 word
-        //        -8      0          | addr of parent frame      |  1 word callees's frame pointer points here
+        //         ?      ?          | saved FP register area    |  optional, variable size
+        //         ?      ?          | saved GP register area    |  optional, multiple of 4/8 bytes
+        //         ?      ?          | CR saved                  |  0 or 1 word
+        //         ?      ?          | Local variables           |  optional, variable size
+        //         ?      ?          | Function parameter area   |  optional, variable size for callee args not fitting in registers
+        //         ?     +2          | Padding                   |  0 to 7 bytes, although I'm not sure when this is used
+        //         ?     +1          | LR saved by callees       |  1 word
+        //         ?      0          | addr of parent frame      |  1 word callees's frame pointer points here
+        //                           +---------------------------+
+        //
+        // From experience with GCC PowerPC-32 big-endian:
+        //                           +---(current frame)---------+
+        //         -1     ?          | saved link register       |
+        //          ?     ?          :                           :
+        //          ?     ?          :                           :
+        //          ?     0          | saved stack pointer       |
         //                           +---------------------------+
         //
         //-------------+-------------+---------------------------+---------------------------------------------------
@@ -455,12 +465,14 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
             frame.rule = "ppc: general";
         }
 
-        if (frame.size) {
-            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
+        if (frame.minOffset) {
+            // Saved link register is at the top of the frame
+            StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, -bytesPerWord);
             parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 2*bytesPerWord);
-            returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
+            // Saved stack register is at the bottom of the frame
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, *frame.minOffset);
+            returnPtr.purpose = StackVariable::Purpose::STACK_POINTER;
         }
     } else if (auto m68k = isSgAsmM68kInstruction(firstInsn)) {
         //-------------+-------------+---------------------------+---------------------------------------------------
@@ -472,8 +484,8 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
         //                           :   (part of parent frame)  :
         //                           :                           :
         //                           +---(current frame)---------+
-        //         +1            +1  | return address            | 4 bytes
-        //          0             0  | addr of parent frame      | 4 bytes
+        //          0            +1  | return address            | 4 bytes
+        //         -1             0  | addr of parent frame      | 4 bytes
         //                           :                           :
         //
         //-------------+-------------+---------------------------+---------------------------------------------------
@@ -496,16 +508,14 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partition
             frame.minOffset = n - 4;
             frame.rule = "m68k: link a6, N";
         } else {
-            frame.size = 4 /* previously pushed return address */;
             frame.maxOffset = 3;
-            frame.minOffset = 0;
             frame.rule = "m68k: general";
         }
 
-        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundaryImplied(boundaries, -bytesPerWord);
         parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
 
-        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 4);
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundaryImplied(boundaries, 0);
         returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
 
         if (frame.minOffset && *frame.minOffset < 0) {
@@ -727,7 +737,7 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
     SAWYER_MESG(debug) <<"searching for local variables semantically in " <<function->printableName() <<"\n";
     const StackDelta::Analysis &stackDeltas = function->stackDeltaAnalysis();
     if (!stackDeltas.hasResults()) {
-        SAWYER_MESG(debug) <<"  no stack delta information; variable synthesis skipped\n";
+        SAWYER_MESG(mlog[WARN]) <<"no stack delta information; variable synthesis skipped for " <<function->printableName() <<"\n";
         return {};
     }
     for (Address bblockVa: function->basicBlockAddresses()) {
@@ -739,10 +749,12 @@ VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner,
             try {
                 cpu->processInstruction(insn);
             } catch (const BS::Exception &e) {
-                debug <<"  semantic failure for " <<insn->toString() <<": " <<e.what() <<"\n";
+                if (!partitioner->architecture()->isUnknown(insn))
+                    debug <<"  semantic failure for " <<insn->toString() <<": " <<e.what() <<"\n";
                 break;
             } catch (...) {
-                debug <<"  semantic failure for " <<insn->toString() <<"\n";
+                if (!partitioner->architecture()->isUnknown(insn))
+                    debug <<"  semantic failure for " <<insn->toString() <<"\n";
             }
         }
     }
@@ -1007,7 +1019,8 @@ struct FindGlobalVariableVasMethod2Worker {
             try {
                 cpu->processInstruction(insn);
             } catch (...) {
-                SAWYER_MESG(mlog[WARN]) <<"semantics failed for " <<insn->toString() <<"\n";
+                if (!partitioner->architecture()->isUnknown(insn))
+                    SAWYER_MESG(mlog[WARN]) <<"semantics failed for " <<insn->toString() <<"\n";
             }
 
             // Find all constants that appear in memory address expressions.

@@ -67,6 +67,11 @@ public:
     void instructionsAccessing(const std::vector<InstructionAccess>&);
     /** @} */
 
+    /** Read/write status.
+     *
+     *  Returns bit flags describing whether the variable was read and/or written. */
+    AccessFlags accessFlags() const;
+
     /** Property: I/O properties.
      *
      *  This property is a set of flags that describe how the variable is accessed. */

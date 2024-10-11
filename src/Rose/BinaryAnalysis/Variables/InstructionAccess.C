@@ -40,7 +40,7 @@ InstructionAccess::accessString(const AccessFlags access) {
     } else if (access.isSet(Access::WRITE)) {
         return "write";
     } else {
-        return "no access";
+        return "implied access";
     }
 }
 
@@ -52,9 +52,11 @@ InstructionAccess::accessString() const {
 std::string
 InstructionAccess::toString() const {
     if (address()) {
-        return accessString() + " at " + StringUtility::addrToString(*address());
+        return accessString() + " at instruction " + StringUtility::addrToString(*address());
+    } else if (access_.isAnySet()) {
+        return "implied " + accessString(access_);
     } else {
-        return "implied variable";
+        return "implied access";
     }
 }
 

@@ -68,6 +68,15 @@ ReadWriteSets::analyze(const P2::Function::Ptr &function) {
     }
 }
 
+std::vector<Variables::StackVariable>
+ReadWriteSets::localVariables(const Variables::AccessFlags required, const Variables::AccessFlags forbidden) const {
+    std::vector<Variables::StackVariable> retval;
+    for (const Variables::StackVariable &var: stackVariables_.values())
+        if (var.accessFlags().isAllSet(required) && var.accessFlags().isAllClear(forbidden))
+            retval.push_back(var);
+    return retval;
+}
+
 void
 ReadWriteSets::print(std::ostream &out, const std::string &prefix) const {
     for (const Variables::StackVariable &var: stackVariables_.values()) {

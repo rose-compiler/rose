@@ -856,7 +856,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h line 158
+// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h line 157
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace DispatcherX86 {
     /** Convert Rose::BinaryAnalysis::InstructionSemantics::DispatcherX86::AccessMode enum constant to a string. */
     const char* AccessMode(int64_t);
@@ -892,7 +892,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h line 85
+// /src/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h line 88
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace BaseSemantics {
     /** Convert Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::InputOutputProperty enum constant to a string. */
     const char* InputOutputProperty(int64_t);
@@ -910,7 +910,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 160
+// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 159
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace DispatcherAarch32 {
     /** Convert Rose::BinaryAnalysis::InstructionSemantics::DispatcherAarch32::SrType enum constant to a string. */
     const char* SrType(int64_t);
@@ -928,7 +928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 161
+// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 160
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace DispatcherAarch32 {
     /** Convert Rose::BinaryAnalysis::InstructionSemantics::DispatcherAarch32::BranchType enum constant to a string. */
     const char* BranchType(int64_t);
@@ -2242,25 +2242,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 69
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables {
-    /** Convert Rose::BinaryAnalysis::Variables::Access enum constant to a string. */
-    const char* Access(int64_t);
-
-    /** Convert Rose::BinaryAnalysis::Variables::Access enum constant to a string. */
-    std::string Access(int64_t, const std::string &strip);
-
-    /** Return all Rose::BinaryAnalysis::Variables::Access member values as a vector. */
-    const std::vector<int64_t>& Access();
-}}}}
-
-namespace Rose {
-    std::string stringifyBinaryAnalysisVariablesAccess(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisVariablesAccess();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 213
+// /src/Rose/BinaryAnalysis/Variables/StackVariable.h line 23
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackVariable {
     /** Convert Rose::BinaryAnalysis::Variables::StackVariable::Purpose enum constant to a string. */
     const char* Purpose(int64_t);
@@ -2278,7 +2260,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 506
+// /src/Rose/BinaryAnalysis/Variables/StackFrame.h line 37
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackFrame {
     /** Convert Rose::BinaryAnalysis::Variables::StackFrame::Direction enum constant to a string. */
     const char* Direction(int64_t);
@@ -2293,6 +2275,24 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Vari
 namespace Rose {
     std::string stringifyBinaryAnalysisVariablesStackFrameDirection(int64_t n, const char *strip=NULL, bool canonic=false);
     const std::vector<int64_t>& stringifyBinaryAnalysisVariablesStackFrameDirection();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/Rose/BinaryAnalysis/Variables/BasicTypes.h line 47
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables {
+    /** Convert Rose::BinaryAnalysis::Variables::Access enum constant to a string. */
+    const char* Access(int64_t);
+
+    /** Convert Rose::BinaryAnalysis::Variables::Access enum constant to a string. */
+    std::string Access(int64_t, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::Variables::Access member values as a vector. */
+    const std::vector<int64_t>& Access();
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisVariablesAccess(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisVariablesAccess();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -6487,24 +6487,6 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace AsmU
 namespace Rose {
     std::string stringifyBinaryAnalysisAsmUnparserOrganization(int64_t n, const char *strip=NULL, bool canonic=false);
     const std::vector<int64_t>& stringifyBinaryAnalysisAsmUnparserOrganization();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 543
-namespace stringify { namespace Unparse_ExprStmt {
-    /** Convert Unparse_ExprStmt::token_sequence_position_enum_type enum constant to a string. */
-    const char* token_sequence_position_enum_type(int64_t);
-
-    /** Convert Unparse_ExprStmt::token_sequence_position_enum_type enum constant to a string. */
-    std::string token_sequence_position_enum_type(int64_t, const std::string &strip);
-
-    /** Return all Unparse_ExprStmt::token_sequence_position_enum_type member values as a vector. */
-    const std::vector<int64_t>& token_sequence_position_enum_type();
-}}
-
-namespace Rose {
-    std::string stringifyUnparse_ExprStmt_token_sequence_position_enum_type(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyUnparse_ExprStmt_token_sequence_position_enum_type();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -24163,9 +24145,6 @@ namespace stringify {
             namespace Prefix {
             }
         }
-    }
-    /** Stringification. */
-    namespace Unparse_ExprStmt {
     }
     /** Stringification. */
     namespace UnparseLanguageIndependentConstructs {

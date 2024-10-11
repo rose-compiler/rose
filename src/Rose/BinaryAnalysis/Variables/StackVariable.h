@@ -23,6 +23,7 @@ public:
     enum class Purpose {
         RETURN_ADDRESS,                                 /**< Possible or known return address. */
         FRAME_POINTER,                                  /**< Pointer to previous stack frame. */
+        STACK_POINTER,                                  /**< Saved stack pointer. */
         SPILL_AREA,                                     /**< Callee-saved registers. */
         NORMAL,                                         /**< Normal source code level variable. */
         UNKNOWN,                                        /**< Purpose is unknown. */

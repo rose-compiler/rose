@@ -9,6 +9,8 @@
 
 #include <Sawyer/CommandLine.h>
 
+#include <chrono>
+
 class SgAsmInstruction;
 
 namespace Rose {

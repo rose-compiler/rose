@@ -3370,7 +3370,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h line 158
+// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h line 157
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace DispatcherX86 {
     const char* AccessMode(int64_t i) {
         switch (i) {
@@ -3474,7 +3474,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h line 85
+// /src/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h line 88
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace BaseSemantics {
     const char* InputOutputProperty(int64_t i) {
         switch (i) {
@@ -3532,7 +3532,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 160
+// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 159
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace DispatcherAarch32 {
     const char* SrType(int64_t i) {
         switch (i) {
@@ -3588,7 +3588,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 161
+// /src/Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h line 160
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics { namespace DispatcherAarch32 {
     const char* BranchType(int64_t i) {
         switch (i) {
@@ -10374,66 +10374,17 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 69
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables {
-    const char* Access(int64_t i) {
-        switch (i) {
-            case 1L: return "READ";
-            case 2L: return "WRITE";
-            default: return "";
-        }
-    }
-
-    std::string Access(int64_t i, const std::string &strip) {
-        std::string s = Access(i);
-        if (s.empty())
-            s = "(Rose::BinaryAnalysis::Variables::Access)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& Access() {
-        static const int64_t values[] = {
-            1L,
-            2L
-        };
-        static const std::vector<int64_t> retval(values, values + 2);
-        return retval;
-    }
-
-}}}}
-
-namespace Rose {
-    std::string stringifyBinaryAnalysisVariablesAccess(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::Variables::Access(i);
-        if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::Variables::Access)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Rose::BinaryAnalysis::Variables::Access::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyBinaryAnalysisVariablesAccess() {
-        return stringify::Rose::BinaryAnalysis::Variables::Access();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 213
+// /src/Rose/BinaryAnalysis/Variables/StackVariable.h line 23
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackVariable {
     const char* Purpose(int64_t i) {
         switch (i) {
             case 0L: return "RETURN_ADDRESS";
             case 1L: return "FRAME_POINTER";
-            case 2L: return "SPILL_AREA";
-            case 3L: return "NORMAL";
-            case 4L: return "UNKNOWN";
-            case 5L: return "OTHER";
+            case 2L: return "STACK_POINTER";
+            case 3L: return "SPILL_AREA";
+            case 4L: return "NORMAL";
+            case 5L: return "UNKNOWN";
+            case 6L: return "OTHER";
             default: return "";
         }
     }
@@ -10454,9 +10405,10 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Vari
             2L,
             3L,
             4L,
-            5L
+            5L,
+            6L
         };
-        static const std::vector<int64_t> retval(values, values + 6);
+        static const std::vector<int64_t> retval(values, values + 7);
         return retval;
     }
 
@@ -10482,7 +10434,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Variables.h line 506
+// /src/Rose/BinaryAnalysis/Variables/StackFrame.h line 37
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables { namespace StackFrame {
     const char* Direction(int64_t i) {
         switch (i) {
@@ -10528,6 +10480,56 @@ namespace Rose {
 
     const std::vector<int64_t>& stringifyBinaryAnalysisVariablesStackFrameDirection() {
         return stringify::Rose::BinaryAnalysis::Variables::StackFrame::Direction();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/Rose/BinaryAnalysis/Variables/BasicTypes.h line 47
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Variables {
+    const char* Access(int64_t i) {
+        switch (i) {
+            case 1L: return "READ";
+            case 2L: return "WRITE";
+            default: return "";
+        }
+    }
+
+    std::string Access(int64_t i, const std::string &strip) {
+        std::string s = Access(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::Variables::Access)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& Access() {
+        static const int64_t values[] = {
+            1L,
+            2L
+        };
+        static const std::vector<int64_t> retval(values, values + 2);
+        return retval;
+    }
+
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisVariablesAccess(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Variables::Access(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::Variables::Access)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::Variables::Access::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyBinaryAnalysisVariablesAccess() {
+        return stringify::Rose::BinaryAnalysis::Variables::Access();
     }
 }
 
@@ -18643,6 +18645,8 @@ namespace stringify { namespace AstUtilInterface {
             case 4L: return "Decl";
             case 5L: return "Allocate";
             case 6L: return "Free";
+            case 7L: return "CallInput";
+            case 8L: return "CallOutput";
             default: return "";
         }
     }
@@ -18664,9 +18668,11 @@ namespace stringify { namespace AstUtilInterface {
             3L,
             4L,
             5L,
-            6L
+            6L,
+            7L,
+            8L
         };
-        static const std::vector<int64_t> retval(values, values + 7);
+        static const std::vector<int64_t> retval(values, values + 9);
         return retval;
     }
 
@@ -25302,64 +25308,6 @@ namespace Rose {
 
     const std::vector<int64_t>& stringifyBinaryAnalysisAsmUnparserOrganization() {
         return stringify::Rose::BinaryAnalysis::AsmUnparser::Organization();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 543
-namespace stringify { namespace Unparse_ExprStmt {
-    const char* token_sequence_position_enum_type(int64_t i) {
-        switch (i) {
-            case 0L: return "e_leading_whitespace_start";
-            case 1L: return "e_leading_whitespace_end";
-            case 2L: return "e_token_subsequence_start";
-            case 3L: return "e_token_subsequence_end";
-            case 4L: return "e_trailing_whitespace_start";
-            case 5L: return "e_trailing_whitespace_end";
-            default: return "";
-        }
-    }
-
-    std::string token_sequence_position_enum_type(int64_t i, const std::string &strip) {
-        std::string s = token_sequence_position_enum_type(i);
-        if (s.empty())
-            s = "(Unparse_ExprStmt::token_sequence_position_enum_type)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& token_sequence_position_enum_type() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L
-        };
-        static const std::vector<int64_t> retval(values, values + 6);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifyUnparse_ExprStmt_token_sequence_position_enum_type(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Unparse_ExprStmt::token_sequence_position_enum_type(i);
-        if (retval.empty()) {
-            retval = "(Unparse_ExprStmt::token_sequence_position_enum_type)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Unparse_ExprStmt::token_sequence_position_enum_type::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyUnparse_ExprStmt_token_sequence_position_enum_type() {
-        return stringify::Unparse_ExprStmt::token_sequence_position_enum_type();
     }
 }
 
