@@ -470,7 +470,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
    }
 
-   // MAXINT, MAXINTSIZE, MININT, MINSTOP
+   // MAXINT, MAXINTSIZE, MAXSTOP, MININT, MINSTOP
 
    else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
      // ItemSize is required
@@ -488,6 +488,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
    else if (ATmatch(term, "MAXINTSIZE")) {
      expr = SageBuilder::buildVarRefExp("MAXINTSIZE", scope);
+   }
+   else if (ATmatch(term, "MAXSTOP")) {
+     expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXSTOP"}, scope);
    }
    else if (ATmatch(term, "MININT(<term>)", &t_formula)) {
      // ItemSize is required
@@ -544,7 +547,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    //      'MAXBYTES'                                -> IntegerMachineParameter {cons("MAXBYTES")}
    //      'MAXBITS'                                 -> IntegerMachineParameter {cons("MAXBITS")}
    //      'MAXSIGNDIGITS'                           -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
-   //      'MAXSTOP'                                 -> IntegerMachineParameter {cons("MAXSTOP")}
    //      'MAXTABLESIZE'                            -> IntegerMachineParameter {cons("MAXTABLESIZE")}
    //      'MINFRACTION'    '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINFRACTION")}
    //      'MINSIZE'        '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSIZE")}
