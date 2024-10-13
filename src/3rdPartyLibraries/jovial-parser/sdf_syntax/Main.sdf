@@ -502,7 +502,7 @@ context-free syntax
   'IMPLINTSIZE'
     '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
   'MAXFLOATPRECISION'        -> IntegerMachineParameter {cons("MAXFLOATPRECISION")}
-  'MAXFIXEDPRECISION'        -> IntegerMachineParameter {cons("MAXFIXEDPRECSION")}
+  'MAXFIXEDPRECISION'        -> IntegerMachineParameter {cons("MAXFIXEDPRECISION")}
   'MAXINTSIZE'               -> IntegerMachineParameter {cons("MAXINTSIZE")}
   'MAXBYTES'                 -> IntegerMachineParameter {cons("MAXBYTES")}
   'MAXBITS'                  -> IntegerMachineParameter {cons("MAXBITS")}

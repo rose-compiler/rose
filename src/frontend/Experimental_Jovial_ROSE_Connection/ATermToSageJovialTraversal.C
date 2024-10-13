@@ -445,6 +445,8 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    // Consider creating an instrinsic Compool module for the parameters?
    auto scope = SageBuilder::getGlobalScopeFromScopeStack();
 
+   // BITSINBYTE, BITSINWORD, BITSINPOINTER, BYTEPOS, BYTESINWORD
+   //
    if (ATmatch(term, "BITSINBYTE")) {
      expr = SageBuilder::buildVarRefExp("BITSINBYTE", scope);
    }
@@ -454,31 +456,42 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "BITSINPOINTER")) {
      expr = SageBuilder::buildVarRefExp("BITSINPOINTER", scope);
    }
+   else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
+     SgExpression* pp{nullptr};
+     if (traverse_Formula(t_formula, pp)) {
+        // MATCHED CompileTimeNumericFormula
+     } else return ATfalse;
+     auto params = SageBuilder::buildExprListExp_nfi();
+     params->append_expression(pp);
+     expr = buildIntrinsicFunctionCallExp_nfi(std::string{"BYTEPOS"}, params, scope);
+   }
    else if (ATmatch(term, "BYTESINWORD")) {
      expr = SageBuilder::buildVarRefExp("BYTESINWORD", scope);
+   }
+
+   // FLOATPRECISION, LOCSINWORD
+   //
+   else if (ATmatch(term, "FLOATPRECISION")) {
+     expr = SageBuilder::buildVarRefExp("FLOATPRECISION", scope);
    }
    else if (ATmatch(term, "LOCSINWORD")) {
      expr = SageBuilder::buildVarRefExp("LOCSINWORD", scope);
    }
 
-   // FLOATPRECISION, MAXFLOATPRECISION
-
-   else if (ATmatch(term, "FLOATPRECISION")) {
-     expr = SageBuilder::buildVarRefExp("FLOATPRECISION", scope);
-   }
+   // MAXFLOATPRECISION, MAXFIXEDPRECISION, MAXINT, MAXINTSIZE, MAXSTOP
+   //
    else if (ATmatch(term, "MAXFLOATPRECISION")) {
      expr = SageBuilder::buildVarRefExp("MAXFLOATPRECISION", scope);
    }
-
-   // MAXINT, MAXINTSIZE, MAXSTOP, MININT, MINSTOP
-
+   else if (ATmatch(term, "MAXFIXEDPRECISION")) {
+     expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXFIXEDPRECISION"}, scope);
+   }
    else if (ATmatch(term, "MAXINT(<term>)", &t_formula)) {
      // ItemSize is required
      Sawyer::Optional<SgExpression*> size;
      if (traverse_OptItemSize(t_formula, size)) {
        // MATCHED OptItemSize
      } else return ATfalse;
-
      if (size) {
        auto params = SageBuilder::buildExprListExp_nfi();
        params->append_expression(*size);
@@ -492,13 +505,15 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "MAXSTOP")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXSTOP"}, scope);
    }
+
+   // MININT, MINSTOP
+   //
    else if (ATmatch(term, "MININT(<term>)", &t_formula)) {
      // ItemSize is required
      Sawyer::Optional<SgExpression*> size;
      if (traverse_OptItemSize(t_formula, size)) {
        // MATCHED OptItemSize
      } else return ATfalse;
-
      if (size) {
        auto params = SageBuilder::buildExprListExp_nfi();
        params->append_expression(*size);
@@ -508,17 +523,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
    else if (ATmatch(term, "MINSTOP")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"MINSTOP"}, scope);
-   }
-
-   else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
-     SgExpression* pp{nullptr};
-     if (traverse_Formula(t_formula, pp)) {
-        // MATCHED CompileTimeNumericFormula
-     } else return ATfalse;
-
-     auto params = SageBuilder::buildExprListExp_nfi();
-     params->append_expression(pp);
-     expr = buildIntrinsicFunctionCallExp_nfi(std::string{"BYTEPOS"}, params, scope);
    }
 
    else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
@@ -543,7 +547,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    //      'FLOATRADIX'                              -> IntegerMachineParameter {cons("FLOATRADIX")}
    //      'INTPRECISION'                            -> IntegerMachineParameter {cons("INTPRECISION")}
    //      'IMPLINTSIZE'    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
-   //      'MAXFIXEDPRECISION'                       -> IntegerMachineParameter {cons("MAXFIXEDPRECSION")}
    //      'MAXBYTES'                                -> IntegerMachineParameter {cons("MAXBYTES")}
    //      'MAXBITS'                                 -> IntegerMachineParameter {cons("MAXBITS")}
    //      'MAXSIGNDIGITS'                           -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
