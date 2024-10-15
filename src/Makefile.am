@@ -884,6 +884,388 @@ rose-config.cfg:
 		echo "ROSE_RPATHS       = $(ROSE_RPATHS)";			\
 		echo "ROSE_LINK_RPATHS  = $(ROSE_LINK_RPATHS)";			\
 	) >$@
+	@echo "# Automake configuration variables used within ROSE Tests" >> $@
+	@echo "## Enabled languages" >> $@
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+	@echo "AM_ROSE_BUILD_BINARY_ANALYSIS_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_BINARY_ANALYSIS_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_CXX_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_CXX_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_CUDA_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_CUDA_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_FORTAN_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_JAVA_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_JAVA_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_C_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_C_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+	@echo "AM_ROSE_BUILD_PHP_LANGUAGE_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_PHP_LANGUAGE_SUPPORT = false" >> $@
+endif
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+	@echo "AM_ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION = true" >> $@
+else
+	@echo "AM_ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION = false" >> $@
+endif
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	@echo "AM_ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION = true" >> $@
+else
+	@echo "AM_ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION = false" >> $@
+endif
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+	@echo "AM_ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION = true" >> $@
+else
+	@echo "AM_ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION = false" >> $@
+endif
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+	@echo "AM_ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION = true" >> $@
+else
+	@echo "AM_ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION = false" >> $@
+endif
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+	@echo "AM_ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION = true" >> $@
+else
+	@echo "AM_ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION = false" >> $@
+endif
+if OS_MACOSX
+	@echo "AM_OS_MACOSX = true" >> $@
+else
+	@echo "AM_OS_MACOSX = false" >> $@
+endif
+if OS_VENDOR_REDHAT_REL5
+	@echo "AM_OS_VENDOR_REDHAT_REL5 = true" >> $@
+else
+	@echo "AM_OS_VENDOR_REDHAT_REL5 = false" >> $@
+endif
+if OS_VENDOR_REDHAT_REL6
+	@echo "AM_OS_VENDOR_REDHAT_REL6 = true" >> $@
+else
+	@echo "AM_OS_VENDOR_REDHAT_REL6 = false" >> $@
+endif
+if OS_VENDOR_DEBIAN
+	@echo "AM_OS_VENDOR_DEBIAN = true" >> $@
+else
+	@echo "AM_OS_VENDOR_DEBIAN = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_4_4
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_4_4 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_4_4 = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_4_8 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_4_8 = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_4_9 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_4_9 = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_5_1
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_5_1 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_5_1 = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_6_0
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_6_0 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_6_0 = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_6_1
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_6_1 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_6_1 = false" >> $@
+endif
+if ROSE_USING_GCC_VERSION_LATER_10_1
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_10_1 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GCC_VERSION_LATER_10_1 = false" >> $@
+endif
+if ROSE_USING_GFORTRAN_VERSION_4_0
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_0 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_0 = false" >> $@
+endif
+if ROSE_USING_GFORTRAN_VERSION_4_1
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_1 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_1 = false" >> $@
+endif
+if ROSE_USING_GFORTRAN_VERSION_4_4
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_4 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_4 = false" >> $@
+endif
+if ROSE_USING_GFORTRAN_VERSION_4_5
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_5 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_4_5 = false" >> $@
+endif
+if ROSE_USING_GFORTRAN_VERSION_LATER_4_4
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_4 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_4 = false" >> $@
+endif
+if ROSE_USING_GFORTRAN_VERSION_LATER_4_5
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_5 = true" >> $@
+else
+	@echo "AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_5 = false" >> $@
+endif
+if ROSE_USING_BOOST_VERSION_1_35
+	@echo "AM_ROSE_USING_BOOST_VERSION_1_35 = true" >> $@
+else
+	@echo "AM_ROSE_USING_BOOST_VERSION_1_35 = false" >> $@
+endif
+if ROSE_USING_BOOST_VERSION_1_57
+	@echo "AM_ROSE_USING_BOOST_VERSION_1_57 = true" >> $@
+else
+	@echo "AM_ROSE_USING_BOOST_VERSION_1_57 = false" >> $@
+endif
+if ROSE_USING_BOOST_VERSION_1_62
+	@echo "AM_ROSE_USING_BOOST_VERSION_1_62 = true" >> $@
+else
+	@echo "AM_ROSE_USING_BOOST_VERSION_1_62 = false" >> $@
+endif
+if ROSE_USE_EDG_VERSION_5_0
+	@echo "AM_ROSE_USE_EDG_VERSION_5_0 = true" >> $@
+else
+	@echo "AM_ROSE_USE_EDG_VERSION_5_0 = false" >> $@
+endif
+if ROSE_USE_EDG_VERSION_6_0
+	@echo "AM_ROSE_USE_EDG_VERSION_6_0 = true" >> $@
+else
+	@echo "AM_ROSE_USE_EDG_VERSION_6_0 = false" >> $@
+endif
+if ROSE_USE_LONG_MAKE_CHECK_RULE
+	@echo "AM_ROSE_USE_LONG_MAKE_CHECK_RULE = true" >> $@
+else
+	@echo "AM_ROSE_USE_LONG_MAKE_CHECK_RULE = false" >> $@
+endif
+if ROSE_USE_SANITIZER
+	@echo "AM_ROSE_USE_SANITIZER = true" >> $@
+else
+	@echo "AM_ROSE_USE_SANITIZER = false" >> $@
+endif
+if USING_INTEL_COMPILER
+	@echo "AM_USING_INTEL_COMPILER = true" >> $@
+else
+	@echo "AM_USING_INTEL_COMPILER = false" >> $@
+endif
+if ROSE_HAVE_Z3
+	@echo "AM_ROSE_HAVE_Z3 = true" >> $@
+else
+	@echo "AM_ROSE_HAVE_Z3 = false" >> $@
+endif
+if ROSE_HAVE_LIBZ3
+	@echo "AM_ROSE_HAVE_LIBZ3 = true" >> $@
+else
+	@echo "AM_ROSE_HAVE_LIBZ3 = false" >> $@
+endif
+if ROSE_BUILD_OS_IS_CYGWIN
+	@echo "AM_ROSE_BUILD_OS_IS_CYGWIN = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_OS_IS_CYGWIN = false" >> $@
+endif
+if ROSE_USE_INTEL_PIN
+	@echo "AM_ROSE_USE_INTEL_PIN = true" >> $@
+else
+	@echo "AM_ROSE_USE_INTEL_PIN = false" >> $@
+endif
+if ROSE_USE_SQLITE_DATABASE
+	@echo "AM_ROSE_USE_SQLITE_DATABASE = true" >> $@
+else
+	@echo "AM_ROSE_USE_SQLITE_DATABASE = false" >> $@
+endif
+if ROSE_BUILD_OS_IS_OSX
+	@echo "AM_ROSE_BUILD_OS_IS_OSX = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_OS_IS_OSX = false" >> $@
+endif
+if ROSE_USE_SSL_SUPPORT
+	@echo "AM_ROSE_USE_SSL_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_USE_SSL_SUPPORT = false" >> $@
+endif
+if ROSE_HAVE_LIBDWARF
+	@echo "AM_ROSE_HAVE_LIBDWARF = true" >> $@
+else
+	@echo "AM_ROSE_HAVE_LIBDWARF = false" >> $@
+endif
+if USING_GNU_COMPILER
+	@echo "AM_USING_GNU_COMPILER = true" >> $@
+else
+	@echo "AM_USING_GNU_COMPILER = false" >> $@
+endif
+if ROSE_USE_CLANG_FRONTEND
+	@echo "AM_ROSE_USE_CLANG_FRONTEND = true" >> $@
+else
+	@echo "AM_ROSE_USE_CLANG_FRONTEND = false" >> $@
+endif
+if ROSE_USE_INSURE
+	@echo "AM_ROSE_USE_INSURE = true" >> $@
+else
+	@echo "AM_ROSE_USE_INSURE = false" >> $@
+endif
+if USING_CLANG_COMPILER
+	@echo "AM_USING_CLANG_COMPILER = true" >> $@
+else
+	@echo "AM_USING_CLANG_COMPILER = false" >> $@
+endif
+if ROSE_USING_ALTERNATE_BACKEND_C_COMPILER
+	@echo "AM_ROSE_USING_ALTERNATE_BACKEND_C_COMPILER = true" >> $@
+else
+	@echo "AM_ROSE_USING_ALTERNATE_BACKEND_C_COMPILER = false" >> $@
+endif
+if USING_XTENSA_BACKEND_COMPILER
+	@echo "AM_USING_XTENSA_BACKEND_COMPILER = true" >> $@
+else
+	@echo "AM_USING_XTENSA_BACKEND_COMPILER = false" >> $@
+endif
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	@echo "AM_ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11 = true" >> $@
+else
+	@echo "AM_ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11 = false" >> $@
+endif
+if ROSE_USE_VXWORKS
+	@echo "AM_ROSE_USE_VXWORKS = true" >> $@
+else
+	@echo "AM_ROSE_USE_VXWORKS = false" >> $@
+endif
+if ROSE_USE_GNAT
+	@echo "AM_ROSE_USE_GNAT = true" >> $@
+else
+	@echo "AM_ROSE_USE_GNAT = false" >> $@
+endif
+if ROSE_USE_MICROSOFT_EXTENSIONS
+	@echo "AM_ROSE_USE_MICROSOFT_EXTENSIONS = true" >> $@
+else
+	@echo "AM_ROSE_USE_MICROSOFT_EXTENSIONS = false" >> $@
+endif
+if ROSE_USE_WINDOWS_ANALYSIS_SUPPORT
+	@echo "AM_ROSE_USE_WINDOWS_ANALYSIS_SUPPORT = true" >> $@
+else
+	@echo "AM_ROSE_USE_WINDOWS_ANALYSIS_SUPPORT = false" >> $@
+endif
+if ROSE_USE_LCOV
+	@echo "AM_ROSE_USE_LCOV = true" >> $@
+else
+	@echo "AM_ROSE_USE_LCOV = false" >> $@
+endif
+if USE_VALGRIND
+	@echo "AM_USE_VALGRIND = true" >> $@
+else
+	@echo "AM_USE_VALGRIND = false" >> $@
+endif
+if USING_GCC_3_4_4_BACKEND_COMPILER
+	@echo "AM_USING_GCC_3_4_4_BACKEND_COMPILER = true" >> $@
+else
+	@echo "AM_USING_GCC_3_4_4_BACKEND_COMPILER = false" >> $@
+endif
+if ROSE_WITH_ATERM
+	@echo "AM_ROSE_WITH_ATERM = true" >> $@
+else
+	@echo "AM_ROSE_WITH_ATERM = false" >> $@
+endif
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "AM_ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION = true" >> $@
+else
+	@echo "AM_ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION = false" >> $@
+endif
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+	@echo "AM_ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT = true" >> $@
+else
+	@echo "AM_ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT = false" >> $@
+endif
+if AXXPXX_SPECIFIC_TESTS
+	@echo "AM_AXXPXX_SPECIFIC_TESTS = true" >> $@
+else
+	@echo "AM_AXXPXX_SPECIFIC_TESTS = false" >> $@
+endif
+if HAS_LIBRARY_CURL
+	@echo "AM_HAS_LIBRARY_CURL = true" >> $@
+else
+	@echo "AM_HAS_LIBRARY_CURL = false" >> $@
+endif
+if ROSE_USE_INDENT
+	@echo "AM_ROSE_USE_INDENT = true" >> $@
+else
+	@echo "AM_ROSE_USE_INDENT = false" >> $@
+endif
+if ROSE_HAVE_YICES
+	@echo "AM_ROSE_HAVE_YICES = true" >> $@
+else
+	@echo "AM_ROSE_HAVE_YICES = false" >> $@
+endif
+if USE_CUDA
+	@echo "AM_USE_CUDA = true" >> $@
+else
+	@echo "AM_USE_CUDA = false" >> $@
+endif
+if WITH_GOMP_OPENMP_LIB
+	@echo "AM_WITH_GOMP_OPENMP_LIB = true" >> $@
+else
+	@echo "AM_WITH_GOMP_OPENMP_LIB = false" >> $@
+endif
+if ROSE_USE_OMNI_OPENMP
+	@echo "AM_ROSE_USE_OMNI_OPENMP = true" >> $@
+else
+	@echo "AM_ROSE_USE_OMNI_OPENMP = false" >> $@
+endif
+if ROSE_USING_ROSE_CODE_GENERATION
+	@echo "AM_ROSE_USING_ROSE_CODE_GENERATION = true" >> $@
+else
+	@echo "AM_ROSE_USING_ROSE_CODE_GENERATION = false" >> $@
+endif
+if ROSE_BUILD_ROSEHPCT
+	@echo "AM_ROSE_BUILD_ROSEHPCT = true" >> $@
+else
+	@echo "AM_ROSE_BUILD_ROSEHPCT = false" >> $@
+endif
+if ROSE_HAVE_BOOST_SERIALIZATION_LIB
+	@echo "AM_ROSE_HAVE_BOOST_SERIALIZATION_LIB = true" >> $@
+else
+	@echo "AM_ROSE_HAVE_BOOST_SERIALIZATION_LIB = false" >> $@
+endif
+if ROSE_USE_PYTHON3
+	@echo "AM_ROSE_USE_PYTHON3 = true" >> $@
+else
+	@echo "AM_ROSE_USE_PYTHON3 = false" >> $@
+endif
+if ROSE_WITH_SPOT
+	@echo "AM_ROSE_WITH_SPOT = true" >> $@
+else
+	@echo "AM_ROSE_WITH_SPOT = false" >> $@
+endif
 
 MOSTLYCLEANFILES += rose-config.cfg
 
