@@ -1743,7 +1743,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_sequence_stmt(Token_t *label, Token_t *sequenceKeyword,
+    void c_action_sequence_stmt(Token_t* /*label*/, Token_t *sequenceKeyword,
             Token_t *eos)
     {
         // The sequence statement is really a type attribute, so we implement it as such in ROSE.
@@ -2281,7 +2281,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_binding_private_stmt(Token_t* /*label*/, Token_t* privateKeyword, Token_t* /*eos*/)
+    void c_action_binding_private_stmt(Token_t* /*label*/, Token_t* /*privateKeyword*/, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_binding_private_stmt() \n");
@@ -2548,8 +2548,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_end_enum_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* enumKeyword, Token_t* /*eos*/)
+    void c_action_end_enum_stmt(Token_t* label, Token_t* endKeyword, Token_t* /*enumKeyword*/, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_end_enum_stmt() label = %p id = %p \n", label,
@@ -10147,7 +10146,7 @@ void c_action_label(Token_t * lbl)
      * @param id Optional name for the loop. If you use this up front, you have to use it in the end, and vice versa.
      */
     void c_action_masked_elsewhere_stmt(Token_t* label, Token_t* elseKeyword,
-            Token_t* whereKeyword, Token_t* id, Token_t* /*eos*/)
+                                        Token_t* /*whereKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -10257,7 +10256,7 @@ void c_action_label(Token_t * lbl)
      * @param id Optional name for the loop. If you use this up front, you have to use it in the end, and vice versa.
      */
     void c_action_elsewhere_stmt(Token_t* label, Token_t* elseKeyword,
-            Token_t* whereKeyword, Token_t* id, Token_t* /*eos*/)
+                                 Token_t* /*whereKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In R750 c_action_elsewhere_stmt() label = %p id = %p = %s \n",
@@ -10342,9 +10341,7 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(astScopeStack.empty() == false);
         SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
-        ROSE_ASSERT(basicBlock != NULL);
-
-        // astScopeStack.pop_front();
+        ROSE_ASSERT(basicBlock != nullptr);
     }
 
     /** R751
@@ -10356,8 +10353,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label
      * @param id Optional name for the loop. If you use this up front, you have to use it in the end, and vice versa.
      */
-    void c_action_end_where_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* whereKeyword, Token_t* id, Token_t* /*eos*/)
+    void c_action_end_where_stmt(Token_t* label, Token_t* endKeyword, Token_t* /*whereKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In R751 c_action_end_where_stmt() label = %p id = %p = %s \n",
@@ -10383,8 +10379,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label
      * @param id Optional name for the forall loop. If you use this up front, you have to use it in the end, and vice versa.
      */
-    void c_action_forall_construct_stmt(Token_t *label, Token_t *id,
-            Token_t *forallKeyword, Token_t *eos)
+    void c_action_forall_construct_stmt(Token_t* label, Token_t* id, Token_t* forallKeyword, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -11589,8 +11584,7 @@ void c_action_case_value()
      * @param label The label.
      * @param id Identifier if present. Otherwise, null.
      */
-    void c_action_associate_stmt(Token_t* label, Token_t* id,
-            Token_t* associateKeyword, Token_t* /*eos*/)
+    void c_action_associate_stmt(Token_t* label, Token_t* id, Token_t* /*associateKeyword*/, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_associate_stmt(): label = %p id = %p \n", label, id);
@@ -11868,7 +11862,7 @@ void c_action_case_value()
      * @param selectConstructName Optional identifier immediately before end.
      */
     void c_action_type_guard_stmt(Token_t* /*label*/, Token_t* /*typeKeyword*/,
-            Token_t* /*isOrDefaultKeyword*/, Token_t* selectConstructName, Token_t* /*eos*/)
+            Token_t* /*isOrDefaultKeyword*/, Token_t* /*selectConstructName*/, Token_t* /*eos*/)
     {
     }
 
@@ -17730,19 +17724,17 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
      * @param eos T_EOS token.
      * @param hasGenericNameList True if has generic name list.
      */
-    void c_action_import_stmt(Token_t* label, Token_t* importKeyword, Token_t* /*eos*/,
+    void c_action_import_stmt(Token_t* /*label*/, Token_t* importKeyword, Token_t* /*eos*/,
             ofp_bool hasGenericNameList)
     {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_import_stmt(): importKeyword = %p = %s hasGenericNameList = %s \n",
-                importKeyword,
-                importKeyword != NULL ? importKeyword->text : "NULL",
-                hasGenericNameList ? "true" : "false");
+        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL) {
+          printf("In c_action_import_stmt(): importKeyword = %p = %s hasGenericNameList = %s \n",
+                 importKeyword,
+                 importKeyword != NULL ? importKeyword->text : "NULL",
+                 hasGenericNameList ? "true" : "false");
+        }
 
         SgImportStatement* importStatement = new SgImportStatement();
-
-        // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
         importStatement->set_definingDeclaration(importStatement);
         importStatement->set_firstNondefiningDeclaration(importStatement);
 
