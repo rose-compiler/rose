@@ -163,8 +163,7 @@ main(int argc, char *argv[]) {
     if(settings.rwSetsFilename == "" || settings.force_stdout) {
       std::cout << rwSetGen;
     }
-    if (settings.rwSetsFilename != "");
-    {
+    if (settings.rwSetsFilename != "") {
       rwSetGen.outputCache(settings.rwSetsFilename);
     }
 
