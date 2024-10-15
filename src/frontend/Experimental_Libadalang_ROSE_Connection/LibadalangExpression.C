@@ -1200,26 +1200,21 @@ namespace{
       case ada_string_literal:                          // 2.6
         {
           logKind("ada_string_literal", kind);
-          //Get the value of this string
-          ada_text_type denoted_value;
-          ada_string_literal_p_denoted_value(lal_element, &denoted_value);
-          std::string denoted_text = dot_ada_text_type_to_string(denoted_value);
-          if(   denoted_text == "+" 
-             || denoted_text == "-"
-             || denoted_text == "*"
-             || denoted_text == "/"
-             || denoted_text == "="
-             || denoted_text == "/="
-             || denoted_text == "<"
-             || denoted_text == "<="
-             || denoted_text == ">"
-             || denoted_text == ">="
-             || denoted_text == "abs")
-          {
+          //Get if this string is an operator name
+          ada_bool lal_is_operator_name;
+          ada_name_p_is_operator_name(lal_element, &lal_is_operator_name);
+
+          if(lal_is_operator_name){
             //If the string is for an op, call getOperator
             res = &getOperator(lal_element, suppl, unary, ctx);
             break;
           }
+
+          //Get the value of this string
+          ada_text_type denoted_value;
+          ada_string_literal_p_denoted_value(lal_element, &denoted_value);
+          std::string denoted_text = dot_ada_text_type_to_string(denoted_value);
+
           SgStringVal& sgnode = mkLocatedNode<SgStringVal>(denoted_text);
           sgnode.set_stringDelimiter('"');
           res = &sgnode;

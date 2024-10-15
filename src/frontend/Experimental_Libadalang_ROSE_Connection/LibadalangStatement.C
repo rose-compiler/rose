@@ -1780,30 +1780,40 @@ namespace {
   //                 (DeferredBodyCompletion) that is invoked after the node has been connected
   //                 to the AST.
 
-    /*void orAlternative(Path_Struct& path)
-    {
-      ADA_ASSERT (path.Path_Kind == An_Or_Path);
+    SgAdaSelectAlternativeStmt* handleOrAlternative(SgAdaSelectStmt& sgnode, SgAdaSelectAlternativeStmt* currOrPath, ada_base_entity* lal_element, AstContext ctx){
+      // create body of alternative
+      SgBasicBlock* block = &mkBasicBlock();
 
-      auto alt = commonAltStmt(path);
+      //Get the guard
+      ada_base_entity lal_guard;
+      ada_select_when_part_f_cond_expr(lal_element, &lal_guard);
+      SgExpression& guard = getExpr_opt(&lal_guard, ctx);
 
-      if (currOrPath == nullptr)
+      // instantiate SgAdaSelectAlternativeStmt node
+      SgAdaSelectAlternativeStmt& stmt = mkAdaSelectAlternativeStmt(guard, *block);
+
+      if(currOrPath == nullptr)
       {
-        ADA_ASSERT (  (sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept)
-                   || (sgnode->get_select_type() == SgAdaSelectStmt::e_timed_entry)
-                   );
-
-        sg::linkParentChild(*sgnode, *(alt.first), &SgAdaSelectStmt::set_or_path);
+        sg::linkParentChild(sgnode, stmt, &SgAdaSelectStmt::set_or_path);
       }
       else
       {
-        ADA_ASSERT (sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept);
-
-        sg::linkParentChild(*currOrPath, *(alt.first), &SgAdaSelectAlternativeStmt::set_next);
+        sg::linkParentChild(*currOrPath, stmt, &SgAdaSelectAlternativeStmt::set_next);
       }
 
-      currOrPath = alt.first;
-      alt.second();
-    }*/ //TODO What uses this?
+      //Get the list of stmts & handle them
+      ada_base_entity lal_stmt_list;
+      ada_select_when_part_f_stmts(lal_element, &lal_stmt_list);
+      int count = ada_node_children_count(&lal_stmt_list);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_stmt;
+        if(ada_node_child(&lal_stmt_list, i, &lal_stmt) != 0){
+          handleStmt(&lal_stmt, ctx.scope(*block));
+        }
+      }
+
+      return &stmt; //Return the stmt so it can be used as the parent for the next or path if necessary
+    }
 
     void handleSelectAlternative(SgAdaSelectStmt& sgnode, ada_base_entity* lal_element, AstContext ctx){
       // create body of alternative
@@ -1814,7 +1824,7 @@ namespace {
       ada_select_when_part_f_cond_expr(lal_element, &lal_guard);
       SgExpression& guard = getExpr_opt(&lal_guard, ctx);
 
-      // instantiate SgAdaSelectAlternativeStmt node and return it
+      // instantiate SgAdaSelectAlternativeStmt node
       SgAdaSelectAlternativeStmt& stmt = mkAdaSelectAlternativeStmt(guard, *block);
 
       sg::linkParentChild(sgnode, stmt, &SgAdaSelectStmt::set_select_path);
@@ -2676,25 +2686,32 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_select_stmt_f_else_stmts(lal_stmt, &lal_else_list);
           ada_select_stmt_f_abort_stmts(lal_stmt, &lal_abort_list);
 
-
-          SgAdaSelectStmt& sgnode = mkAdaSelectStmt(SgAdaSelectStmt::e_asynchronous);
+          //TODO This could also have 2 other values, how do we recognize them?
+          //e_selective_accept also works for e_timed_entry & e_conditional_entry, so we don't need to?
+          SgAdaSelectStmt& sgnode = ada_node_children_count(&lal_abort_list) ? mkAdaSelectStmt(SgAdaSelectStmt::e_asynchronous) : mkAdaSelectStmt(SgAdaSelectStmt::e_selective_accept);
 
           completeStmt(sgnode, lal_stmt, ctx);
 
           //Traverse over each path, and call its respective handler
           int count = ada_node_children_count(&lal_guard_list);
+          SgAdaSelectAlternativeStmt* currOrPath = nullptr;
           for(int i = 0; i < count; ++i){
             ada_base_entity lal_guard;
             if(ada_node_child(&lal_guard_list, i, &lal_guard) != 0){
-              handleSelectAlternative(sgnode, &lal_guard, ctx);
+              //The first child is a select alternative, the rest are or alternatives
+              if(i == 0){
+                handleSelectAlternative(sgnode, &lal_guard, ctx);
+              } else {
+                currOrPath = handleOrAlternative(sgnode, currOrPath, &lal_guard, ctx);
+              }
             }
           }
 
-          if(!ada_node_is_null(&lal_else_list)){
+          if(ada_node_children_count(&lal_else_list) != 0){
             handleElseAlternative(sgnode, &lal_else_list, ctx);
           }
 
-          if(!ada_node_is_null(&lal_abort_list)){
+          if(ada_node_children_count(&lal_abort_list) != 0){
             handleAbortAlternative(sgnode, &lal_abort_list, ctx);
           }
 
