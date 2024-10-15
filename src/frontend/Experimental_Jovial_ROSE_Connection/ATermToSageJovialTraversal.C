@@ -469,8 +469,11 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("BYTESINWORD", scope);
    }
 
-   // FLOATPRECISION, FLOATRADIX, LOCSINWORD
+   // FIXEDPRECISION, FLOATPRECISION, FLOATRADIX, LOCSINWORD
    //
+   else if (ATmatch(term, "FIXEDPRECISION")) {
+     expr = buildIntrinsicVarRefExp_nfi(std::string{"FIXEDPRECISION"}, scope);
+   }
    else if (ATmatch(term, "FLOATPRECISION")) {
      expr = SageBuilder::buildVarRefExp("FLOATPRECISION", scope);
    }
@@ -546,7 +549,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
       } else return ATfalse;
    }
 
-   //TODO: 'FIXEDPRECISION'                          -> IntegerMachineParameter {cons("FIXEDPRECISION")}
+   //TODO:
    //      'INTPRECISION'                            -> IntegerMachineParameter {cons("INTPRECISION")}
    //      'IMPLINTSIZE'    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
    //      'MAXBYTES'                                -> IntegerMachineParameter {cons("MAXBYTES")}
