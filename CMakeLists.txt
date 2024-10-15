@@ -270,6 +270,11 @@ if(Boost_THREAD_FOUND)
 endif()
 
 # Paths to install header, executable, and libraries
+# TODO: Prioritize using built-in CMake Variables instead if possible 
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT) # built-in variable in version 3.7.1
+  message(WARNING "Using default installation path: ${CMAKE_INSTALL_PREFIX}") 
+  message(STATUS "Define cmake .. -DCMAKE_INSTALL_PREFIX=</custom/path> to control where ROSE is installed")
+endif() 
 set(INCLUDE_INSTALL_DIR "include/rose")
 set(BIN_INSTALL_DIR     "bin")
 set(LIB_INSTALL_DIR     "${ROSE_LIB_DIR_NAME}")
