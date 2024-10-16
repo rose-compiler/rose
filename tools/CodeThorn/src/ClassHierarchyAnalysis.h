@@ -245,6 +245,21 @@ class ClassData
     bool                      hasAbstractMethods = false;
 };
 
+class ClassAnalysis;
+
+using ClassAnalysisInfoBase = std::tuple<const ClassAnalysis*, ClassKeyType>;
+
+struct ClassAnalysisInfo : ClassAnalysisInfoBase
+{
+  using base = ClassAnalysisInfoBase;
+  using base::base;
+
+  const ClassAnalysis* analysis() { return std::get<0>(*this); }
+  ClassKeyType         key()      { return std::get<1>(*this); }
+};
+
+std::ostream& operator<<(std::ostream&, ClassAnalysisInfo);
+
 /// holds data about all classes in a program
 class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
 {
@@ -308,6 +323,15 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     /// returns false if this class was built specifically to represent
     ///   the inheritance hierarchy of a single class.
     bool containsAllClasses() const { return completeTranslationUnit; }
+
+    /// returns a ClassAnalysisInfo object that can be used for writing information
+    ///   to a stream.
+    /// \begincode
+    /// ClassAnalysis classAnalysis = ...
+    /// ClassKeyType  somekey = ...
+    /// std::cout << classAnalysis.classInfo(someKey) << std::endl;
+    /// \endcode
+    ClassAnalysisInfo classInfo(ClassKeyType classKey) const;
 
   private:
     bool completeTranslationUnit = false;

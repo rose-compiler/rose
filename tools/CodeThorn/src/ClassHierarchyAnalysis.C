@@ -94,6 +94,46 @@ namespace
 namespace CodeThorn
 {
 
+ClassAnalysisInfo ClassAnalysis::classInfo(ClassKeyType classKey) const
+{
+  return { this, classKey };
+}
+
+std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
+{
+  const ClassAnalysis* analysis = cai.analysis();
+  ClassKeyType         classkey = cai.key();
+
+  if (analysis == nullptr)
+    return os << "ClassAnalysisInfo::analysis returns nullptr. Use a valid object."
+              << std::endl;
+
+  try
+  {
+    /*ClassData& cd =*/ analysis->at(cai.key());
+
+    os << "class " << typeNameOf(classkey) << " exists in class hierarchy analysis."
+       << std::endl;
+  }
+  catch (const std::out_of_range&)
+  {
+    os << "class " << typeNameOf(classkey) << " was not found in the class hierarchy analysis.\n";
+
+    if (!analysis->containsAllClasses())
+      os << "  - The class hierarchy analysis was built incrementally.\n"
+         << "    Possibly, " << typeNameOf(classkey) << " has not been seen."
+         << std::endl;
+
+    if (hasTemplateAncestor(classkey))
+      os << "  - The class has a templated ancestor.\n"
+         << "    Template are currently not handled."
+         << std::endl;
+  }
+
+  return os;
+}
+
+
 void
 ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ancestorKey, bool virtualEdge, bool directEdge)
 {
@@ -117,9 +157,9 @@ ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ance
     {
       --prnNumWarn;
 
-      logWarn() << "ignoring inheritance edge of inner classes (?) [requires full translation unit analysis]"
-                << (prnNumWarn ? "" : "...")
-                << std::endl;
+      logError() << "ignoring inheritance edge of inner classes (?) [requires full translation unit analysis]"
+                 << (prnNumWarn ? "" : "...")
+                 << std::endl;
     }
   }
 }

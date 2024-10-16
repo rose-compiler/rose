@@ -520,6 +520,25 @@ namespace
     res.push_back(cls);
     return res;
   }
+
+  bool fromTemplate(const SgNode* n);
+
+  struct FromTemplate : sg::DispatchHandler<bool>, ExcludeTemplates
+  {
+    FromTemplate()
+    : Base(true), ExcludeTemplates()
+    {}
+
+    using ExcludeTemplates::handle;
+
+    void handle(const SgNode& n)   { res = fromTemplate(n.get_parent()); }
+    void handle(const SgGlobal& n) { res = false; }
+  };
+
+  bool fromTemplate(const SgNode* n)
+  {
+    return n && sg::dispatch(FromTemplate{}, n);
+  }
 }
 
 namespace CodeThorn
@@ -527,7 +546,12 @@ namespace CodeThorn
 
 std::string typeNameOf(ClassKeyType key)
 {
-  return ::typeNameOf(SG_DEREF(key));
+  return key ? ::typeNameOf(*key) : "-class-without-name-";
+}
+
+bool hasTemplateAncestor(ClassKeyType key)
+{
+  return fromTemplate(key);
 }
 
 
