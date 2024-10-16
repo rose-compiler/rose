@@ -1,13 +1,14 @@
 # Non-recursive Makefile
 
 mauAstSupport_la_sources=\
-	$(mauAstSupportPath)/ProcessAstTree.C \
 	$(mauAstSupportPath)/StmtInfoCollect.C
 
 mauAstSupport_includeHeaders=\
 	$(mauAstSupportPath)/AnalysisInterface.h \
 	$(mauAstSupportPath)/ProcessAstTree.h \
+	$(mauAstSupportPath)/ProcessAstTree.C \
 	$(mauAstSupportPath)/StmtInfoCollect.h \
+	$(mauAstSupportPath)/StmtInfoCollect.C \
 	$(mauAstSupportPath)/LoopInfoInterface.h
 
 mauAstSupport_extraDist=\
