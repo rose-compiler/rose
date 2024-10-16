@@ -1743,13 +1743,11 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      */
-    void c_action_sequence_stmt(Token_t* /*label*/, Token_t *sequenceKeyword,
-            Token_t *eos)
+    void c_action_sequence_stmt(Token_t* /*label*/, Token_t* /*sequenceKeyword*/, Token_t* /*eos*/)
     {
         // The sequence statement is really a type attribute, so we implement it as such in ROSE.
-        SgClassDefinition* classDefinition = isSgClassDefinition(
-                astScopeStack.front());
-        ROSE_ASSERT(classDefinition != NULL);
+        SgClassDefinition* classDefinition = isSgClassDefinition(astScopeStack.front());
+        ASSERT_not_null(classDefinition);
         classDefinition->set_isSequence(true);
     }
 
