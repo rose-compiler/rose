@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/StringUtility/Convert.h>
 #include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/SplitJoin.h>
 
 #include <SgAsmFloatType.h>
 #include <SgAsmInstruction.h>
@@ -118,7 +119,20 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 
 void
 RiscOperators::comment(const std::string &comment) {
-    SAWYER_MESG(mlog[DEBUG]) <<StringUtility::prefixLines(comment, "// ") <<"\n";
+    if (mlog[DEBUG]) {
+        std::vector<std::string> lines = StringUtility::split('\n', comment);
+        while (!lines.empty() && lines.back().empty())
+            lines.pop_back();
+        if (SgAsmInstruction *insn = currentInstruction()) {
+            if (lines.size() == 1) {
+                lines[0] += " for instruction " + insn->toString();
+            } else {
+                lines.insert(lines.begin(), "for instruction " + insn->toString());
+            }
+        }
+        for (const std::string &line: lines)
+            mlog[DEBUG] <<"// " <<line <<"\n";
+    }
 }
 
 std::pair<SValue::Ptr /*low*/, SValue::Ptr /*high*/>

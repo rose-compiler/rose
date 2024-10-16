@@ -177,6 +177,19 @@ struct IP_andi: P {
     }
 };
 
+// Unconditional branch
+struct IP_b: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+
+        d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // Write new IP/PC
+        SValue::Ptr target = d->read(args[0]);
+        ops->writeRegister(d->instructionPointerRegister(), target);
+    }
+};
+
 // Breakpoint
 struct IP_break: P {
     void p(D, Ops ops, I insn, A args) {
@@ -926,6 +939,7 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_addu,  new Mips::IP_addu);
     iprocSet(mips_and,   new Mips::IP_and);
     iprocSet(mips_andi,  new Mips::IP_andi);
+    iprocSet(mips_b,     new Mips::IP_b);
     iprocSet(mips_break, new Mips::IP_break);
     iprocSet(mips_clo,   new Mips::IP_clo);
     iprocSet(mips_clz,   new Mips::IP_clz);

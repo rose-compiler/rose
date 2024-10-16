@@ -416,6 +416,13 @@ RiscOperators::currentInstruction() const
     return subdomain_->currentInstruction();
 }
 
+void
+RiscOperators::currentInstruction(SgAsmInstruction *insn) {
+    checkSubdomain();
+    subdomain_->currentInstruction(insn);
+    BaseSemantics::RiscOperators::currentInstruction(insn);
+}
+
 bool
 RiscOperators::isNoopRead() const {
     checkSubdomain();
@@ -461,9 +468,19 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 }
 
 void
-RiscOperators::comment(const std::string &cmt) {
+RiscOperators::comment(const std::string &comment) {
     if (shouldPrint()) {
-        for (const std::string &line: StringUtility::stringToList(cmt)) {
+        std::vector<std::string> lines = StringUtility::split('\n', comment);
+        while (!lines.empty() && lines.back().empty())
+            lines.pop_back();
+        if (SgAsmInstruction *insn = currentInstruction()) {
+            if (lines.size() == 1) {
+                lines[0] += " for instruction " + insn->toStringNoAddr();
+            } else {
+                lines.insert(lines.begin(), "for instruction " + insn->toStringNoAddr());
+            }
+        }
+        for (const std::string &line: lines) {
             linePrefix();
             stream_ <<"// " <<boost::trim_right_copy(line) <<"\n";
         }

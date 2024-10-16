@@ -168,6 +168,7 @@ Mips::nDelaySlots(MipsInstructionKind kind) {
     //   > forbidden slot. Release 6 unconditional compact branches have neither a delay slot nor a forbidden slot
     switch (kind) {
         // Original branch instructions
+        case mips_b:
         case mips_bc1f:
         case mips_bc1t:
         case mips_bc2f:
@@ -1018,10 +1019,14 @@ static struct Mips32_bc2tl: Mips::Decoder {
 static struct Mips32_beq: Mips::Decoder {
     Mips32_beq(): Mips::Decoder(Release1, sOP(004), mOP()) {}
     SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
-        return d->makeInstruction(insn_va, mips_beq,
-                                  d->makeRegister(insn_va, gR0(ib)),
-                                  d->makeRegister(insn_va, gR1(ib)),
-                                  d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
+        if (gR0(ib) == 0 && gR1(ib) == 0) {
+            return d->makeInstruction(insn_va, mips_b, d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
+        } else {
+            return d->makeInstruction(insn_va, mips_beq,
+                                      d->makeRegister(insn_va, gR0(ib)),
+                                      d->makeRegister(insn_va, gR1(ib)),
+                                      d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
+        }
     }
 } mips32_beq;
 

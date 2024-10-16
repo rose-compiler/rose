@@ -73,6 +73,7 @@ enum MipsInstructionKind {
     mips_alnv_ps,               // Floating point align variable pair of single precision.
     mips_and,                   // Bitwise logical AND.
     mips_andi,                  // Bitwise logical AND immediate.
+    mips_b,                     // Unconditional branch.
     mips_bc1f,                  // Branch on FP false.
     mips_bc1fl,                 // Branch on FP false likely.
     mips_bc1t,                  // Branch on FP true.

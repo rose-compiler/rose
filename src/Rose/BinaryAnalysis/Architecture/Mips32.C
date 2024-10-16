@@ -199,6 +199,7 @@ Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
         case mips_alnv_ps:              return "fp align variable pair of single precision";
         case mips_and:                  return "bitwise logical AND";
         case mips_andi:                 return "bitwise logical AND immediate";
+        case mips_b:                    return "unconditional branch";
         case mips_bc1f:                 return "branch on FP false";
         case mips_bc1fl:                return "branch on FP false likely";
         case mips_bc1t:                 return "branch on FP true";

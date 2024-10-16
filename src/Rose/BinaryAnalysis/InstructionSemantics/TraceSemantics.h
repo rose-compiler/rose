@@ -313,6 +313,7 @@ public:
     virtual size_t nInsns() const override;
     virtual void nInsns(size_t n) override;
     virtual SgAsmInstruction* currentInstruction() const override;
+    virtual void currentInstruction(SgAsmInstruction*) override;
     virtual bool isNoopRead() const override;
     virtual void isNoopRead(bool) override;
     virtual void startInstruction(SgAsmInstruction*) override;

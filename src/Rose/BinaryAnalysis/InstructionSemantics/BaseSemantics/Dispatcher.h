@@ -114,8 +114,21 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to process instructions
 public:
-    /** Process a single instruction. */
+    /** Process a single instruction.
+     *
+     *  This is the function that most users will call. */
     virtual void processInstruction(SgAsmInstruction *insn);
+
+    /** Process a delay slot.
+     *
+     *  This is called when one instruction must temporarily interrupt its own processing to process some other instruction. It can
+     *  be called recursively as often as needed, such as on architectures where there are multiple delay slots for some
+     *  instructions.  Users don't normally call this--it's intended to be called by the instruction semantics processing layers. */
+    virtual void processDelaySlot(SgAsmInstruction *delayInsn);
+
+protected:
+    // The part of processing instructions that's common to both `processInstruction` and `processDelaySlot`.
+    virtual void processCommon();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Instruction processor table operations

@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 
+#include <Rose/Affirm.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
@@ -33,6 +34,8 @@
 #include <sageInterface.h>
 
 #include <boost/scope_exit.hpp>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -157,13 +160,8 @@ Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
 }
 
 void
-Dispatcher::processInstruction(SgAsmInstruction *insn)
-{
-    operators()->startInstruction(insn);
-    BOOST_SCOPE_EXIT(this_) {
-        this_->operators()->currentInstruction(nullptr);
-    } BOOST_SCOPE_EXIT_END;
-
+Dispatcher::processCommon() {
+    SgAsmInstruction *insn = notnull(operators()->currentInstruction());
     InsnProcessor *iproc = iprocLookup(insn);
     try {
         if (!iproc)
@@ -176,7 +174,40 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
         e.insn->incrementSemanticFailure();
         throw;
     }
+}
+
+void
+Dispatcher::processInstruction(SgAsmInstruction *insn) {
+    operators()->startInstruction(insn);
+    BOOST_SCOPE_EXIT(this_) {
+        this_->operators()->currentInstruction(nullptr);
+    } BOOST_SCOPE_EXIT_END;
+
+    processCommon();
     operators()->finishInstruction(insn);
+}
+
+void
+Dispatcher::processDelaySlot(SgAsmInstruction *insn) {
+    if (insn) {
+        // Remember the outer instruction -- the one that we were previously processing and which has a delay slot. We'll eventually
+        // return to processing the outer instruction.
+        SgAsmInstruction *outerInsn = operators()->currentInstruction();
+        ASSERT_not_null(outerInsn);
+
+        // Execute the inner instruction -- this is the delay slot and is executing within the context of the outer instruction.
+        // Before returning (either normally or via exception) make sure we restore the outer instruction. In the case of an
+        // exception, the outer instruction might catch the exception from the inner instruction and resume its own processing.
+        operators()->comment("starting delay slot");
+        operators()->startInstruction(insn);
+        BOOST_SCOPE_EXIT(outerInsn, this_) {
+            this_->operators()->currentInstruction(outerInsn);
+            this_->operators()->comment("resuming after delay slot");
+        } BOOST_SCOPE_EXIT_END;
+
+        processCommon();
+        operators()->finishInstruction(insn);
+    }
 }
 
 InsnProcessor *
