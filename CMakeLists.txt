@@ -533,20 +533,21 @@ if(ENABLE-ADA)
   get_filename_component(USER_PATH $ENV{PATH} ABSOLUTE)               # retrieve USER_PATH  
   get_filename_component(USER_LD_PATH $ENV{LD_LIBRARY_PATH} ABSOLUTE) # retrieve USER_LD_PATH
   
-    # Ensure user has GNAT_HOME/bin in their path 
-  string(FIND "${USER_PATH}" "${GNAT_HOME}/bin" found_gnat_in_path) 
+  # Ensure user has GNAT_HOME/bin in their path 
+  string(FIND "${USER_PATH}" "$ENV{GNAT_HOME}/bin" found_gnat_in_path) 
   if(found_gnat_in_path EQUAL -1) 
     message(WARNING "GNAT_HOME/bin was not found in users path: ${USER_PATH}") 
   else() 
-    message(STATUS "Found GNAT_HOME/bin")
+    message(STATUS "Found $ENV{GNAT_HOME}/bin")
   endif()
 
   # Ensure user has GNAT_HOME/lib in their LD path 
-  string(FIND "${USER_LD_PATH}" "${GNAT_HOME}/lib" found_gnat_in_ld_path) 
+  string(FIND "${USER_LD_PATH}" "$ENV{GNAT_HOME}/lib" found_gnat_in_ld_path) 
+     
   if(found_gnat_in_ld_path EQUAL -1) 
-    message(WARNING "GNAT_HOME/lib was not found in users LD_LIBRARY_PATH: ${USER_LD_PATH}") 
+    message(WARNING "{GNAT_HOME}/lib was not found in users LD_LIBRARY_PATH: ${USER_LD_PATH}") 
   else() 
-    message(STATUS "Found GNAT_HOME/lib")
+    message(STATUS "Found $ENV{GNAT_HOME}/lib")
   endif()
 
   # Ensure user has GNAT_HOME/lib in their LD path 
@@ -554,7 +555,7 @@ if(ENABLE-ADA)
   if(found_boost_in_ld_path EQUAL -1) 
     message(WARNING "BOOST_HOME not found in users LD_LIBRARY_PATH: ${USER_LD_PATH}") 
   else() 
-    message(STATUS "Found BOOST_HOME/lib")
+    message(STATUS "Found $ENV{BOOST_HOME}/lib")
   endif()
 
   # Define macros for source code 
