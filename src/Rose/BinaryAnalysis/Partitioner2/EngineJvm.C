@@ -591,16 +591,21 @@ EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
         // This is strange construction a ByteCode::Class needs information from its ByteCode::Namespace, like name
         // Thus a cycle (is it more than strange, is it bad?)
         std::shared_ptr<ByteCode::Namespace> ns{};
+
+#if 0   // Rasmussen: Needs better usage of shared pointers [2024.10.16]
         auto jvmClass{std::make_shared<ByteCode::JvmClass>(ns, isSgAsmJvmFileHeader(header))};
         ns->append(jvmClass);
+#else
+        auto jvmClass{ByteCode::JvmClass(ns, isSgAsmJvmFileHeader(header))};
+#endif
 
         // Start discovering instructions and forming them into basic blocks and functions
         SAWYER_MESG(where) <<"discovering and populating functions\n";
-        jvmClass->partition(partitioner, functions_);
+        jvmClass.partition(partitioner, functions_);
 
         if (DEBUG_WITH_DUMP) {
-            jvmClass->dump();
-            jvmClass->digraph();
+            jvmClass.dump();
+            jvmClass.digraph();
         }
     }
 }
