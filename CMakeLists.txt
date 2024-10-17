@@ -550,8 +550,16 @@ if(ENABLE-ADA)
 
   # Define macros for source code 
   set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
-  #set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 1) 
-  #set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}")
+  # Autoconf sets this macro below as "no" when enable-ada-frontend=yes 
+  set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}") # if this causes errors, set to Autoconf default
+  message(WARNING "Ada Analysis may work and pass compile tests in this setup but one macro is still needed to be defined"
+                  "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION currently causes compilation errors")
+  # TODO: Define this 
+  # set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 1) 
+  
+  # TODO: Decide if setting these two variables to these two values is necessary  
+  # set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "$ENV{GNAT_HOME}/bin/g++")
+  # set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
 endif()
 
 # Jovial
