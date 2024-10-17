@@ -89,6 +89,20 @@ namespace
 
     return binop;
   }
+
+  template <class TClassAnalysis>
+  inline
+  auto
+  lookup(TClassAnalysis& m, const typename TClassAnalysis::key_type& key) -> decltype(*m.find(key))
+  {
+    auto pos = m.find(key);
+
+    if (pos != m.end())
+      return *pos;
+
+    logError() << m.classInfo(key) << std::endl;
+    throw std::out_of_range("Unable to find key in ClassAnalysis.");
+  }
 }
 
 namespace CodeThorn
@@ -112,7 +126,7 @@ std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
   {
     /*ClassData& cd =*/ analysis->at(cai.key());
 
-    os << "class " << typeNameOf(classkey) << " exists in class hierarchy analysis."
+    os << "class " << typeNameOf(classkey) << " exists in class hierarchy analysis. OK."
        << std::endl;
   }
   catch (const std::out_of_range&)
@@ -133,35 +147,34 @@ std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
   return os;
 }
 
+ClassAnalysis::mapped_type&
+ClassAnalysis::at(const ClassAnalysis::key_type& k)
+{
+  return lookup(*this, k).second;
+}
+
+const ClassAnalysis::mapped_type&
+ClassAnalysis::at(const ClassAnalysis::key_type& k) const
+{
+  return lookup(*this, k).second;
+}
+
+const ClassAnalysis::mapped_type&
+ClassAnalysis::at(const SgClassDefinition& clsdef) const
+{
+  return lookup(*this, &clsdef).second;
+}
+
 
 void
 ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ancestorKey, bool virtualEdge, bool directEdge)
 {
-  try
-  {
-    ClassKeyType descendantKey = descendantEntry.first;
-    ClassData&   descendant = descendantEntry.second;
-    ClassData&   ancestor = this->at(ancestorKey);
+  ClassData&   ancestor = this->at(ancestorKey);
+  ClassKeyType descendantKey = descendantEntry.first;
+  ClassData&   descendant = descendantEntry.second;
 
-    descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
-    ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
-  }
-  catch (const std::out_of_range&)
-  {
-    static int prnNumWarn = 3;
-
-    if (containsAllClasses())
-      throw;
-
-    if (prnNumWarn > 0)
-    {
-      --prnNumWarn;
-
-      logError() << "ignoring inheritance edge of inner classes (?) [requires full translation unit analysis]"
-                 << (prnNumWarn ? "" : "...")
-                 << std::endl;
-    }
-  }
+  descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
+  ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
 }
 
 void
@@ -240,18 +253,6 @@ ClassAnalysis::concreteDescendants(ClassKeyType classKey) const
 
 namespace
 {
-  template <class Map>
-  inline
-  auto
-  lookup(Map& m, const typename Map::key_type& key) -> decltype(*m.find(key))
-  {
-    auto pos = m.find(key);
-    assert(pos != m.end());
-
-    return *pos;
-  }
-
-
   using RelationAccessor = std::vector<InheritanceDesc>& (ClassData::*)();
   using RelationAccessorConst = const std::vector<InheritanceDesc>& (ClassData::*)() const;
 

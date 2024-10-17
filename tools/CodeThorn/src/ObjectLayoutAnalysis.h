@@ -72,7 +72,7 @@ class ObjectLayout : private std::vector<ObjectLayoutEntry>
 
 using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;
 
-/// computes a sample object layout table for classes in \ref all
+/// computes a sample object layout table for classes in \p all
 /// \param all                   the result of the class hierarchy analysis
 /// \param onlyClassesWithVTable if true, only classes the layout is only computed for classes with a vtable
 /// \details
@@ -254,7 +254,7 @@ class VTableLayout : private std::vector<VTableLayoutElement>
 
 using VTableLayoutContainer = std::unordered_map<ClassKeyType, VTableLayout>;
 
-/// computes a sample post-object construction virtual function table for classes in \ref all
+/// computes a sample post-object construction virtual function table for classes in \p all
 /// \param all the result of the class hierarchy analysis
 /// \param vfa result of virtual function analysis
 /// \details

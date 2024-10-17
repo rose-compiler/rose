@@ -219,15 +219,14 @@ class ClassData
     ///   a vtable is a common but not the only way to implement the C++ object model.
     bool hasVirtualTable() const;
 
-    /// returns true, iff the class \ref clazz directly or indirectly derives
-    /// from a class using virtual inheritance.
+    /// returns true, iff this class directly or indirectly uses virtual inheritance.
     bool hasVirtualInheritance() const;
 
-    /// returns true, iff the class \ref clazz or any of its base classes contain virtual functions.
+    /// returns true, iff this inherits or declares virtual functions.
     bool hasVirtualFunctions() const;
 
-    /// returns true, iff this is an abstract class
-    /// \note this information is taken from the frontend (AST)
+    /// property indicating that is an abstract class
+    /// \note the initial information is taken from the frontend (AST)
     ///       and not computed by the vtable generator.
     /// \{
     bool abstractClass()          const { return hasAbstractMethods; }
@@ -281,41 +280,46 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     using base::iterator;
     using base::const_iterator;
     using base::operator[];
-    using base::at;
     using base::emplace;
     using base::find;
     using base::size;
     using base::clear;
 
-    /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
+    /// replaces base::at with functions that can provide better diagnostics
+    ///   in case \p k is not known.
+    /// \{
+          mapped_type& at (const key_type& k);
+    const mapped_type& at (const key_type& k) const;
+    /// \}
+
+    /// convenience function to access the map using a SgClassDefinition&.
+    const mapped_type& at(const SgClassDefinition& clsdef) const;
+
+    /// adds an inheritance edge to both classes \p descendant and \p ancestorKey
     /// \param descendant the entry for the descendant class
     /// \param ancestorKey the key of the ancestor class
     /// \param isVirtual indicates if the inheritance is virtual
-    /// \param isDirect indicates if \ref descendant and \ref ancestorKey are child and parent
+    /// \param isDirect indicates if \p descendant and \p ancestorKey are child and parent
     void
     addInheritanceEdge(value_type& descendant, ClassKeyType ancestorKey, bool isVirtual, bool isDirect);
 
-    /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
-    ///   based on the information in \ref ancestor.
+    /// adds an inheritance edge to the \p descendant class and \p ancestor class.
     void
     addInheritanceEdge(value_type& descendant, const InheritanceDesc& ancestor);
 
-    /// returns true, iff \ref ancestorKey is a (direct or indirect) base class
-    /// of \ref descendantKey.
+    /// returns true, iff \p ancestorKey is a (direct or indirect) base class
+    /// of \p descendantKey.
     /// \details
     ///   returns false when ancestorKey == descendantKey
     bool
     isBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
 
-    /// returns true, iff \ref ancestorKey is a (direct or indirect) virtual base class
-    /// of \ref descendantKey.
+    /// returns true, iff \p ancestorKey is a (direct or indirect) virtual base class
+    /// of \p descendantKey.
     bool
     isVirtualBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
 
-    /// convenience function to access the map using a SgClassDefinition&.
-    const ClassData& at(const SgClassDefinition& clsdef) const { return this->at(&clsdef); }
-
-    /// returns a list of concrete descendant classes of \ref classkey (i.e., const SgClassDefinition*)
+    /// returns a list of concrete descendant classes of \p classkey (i.e., const SgClassDefinition*)
     std::vector<InheritanceDesc>
     concreteDescendants(ClassKeyType classKey) const;
 
@@ -467,8 +471,8 @@ analyzeVirtualFunctions(const ClassAnalysis& classes, bool normalizedSignature =
 
 /// implements a top down traversal of the class hierarchy
 /// \details
-///    calls \ref fn for each class in \ref all exactly once. Guarantees that \ref fn
-///    on a base class is called before \ref fn on a derived class.
+///    calls \p fn for each class in \p all exactly once. Guarantees that \p fn
+///    on a base class is called before \p fn on a derived class.
 /// \{
 void topDownTraversal  (ClassAnalysis& all, ClassAnalysisFn fn);
 void topDownTraversal  (const ClassAnalysis& all, ClassAnalysisConstFn fn);
@@ -476,8 +480,8 @@ void topDownTraversal  (const ClassAnalysis& all, ClassAnalysisConstFn fn);
 
 /// implements a bottom up traversal of the class hierarchy
 /// \details
-///    calls \ref fn for each class in \ref all exactly once. Guarantees that \ref fn
-///    on a derived class is called before \ref fn on a base class.
+///    calls \p fn for each class in \p all exactly once. Guarantees that \p fn
+///    on a derived class is called before \p fn on a base class.
 /// \{
 void bottomUpTraversal (ClassAnalysis& all, ClassAnalysisFn fn);
 void bottomUpTraversal (const ClassAnalysis& all, ClassAnalysisConstFn fn);
@@ -485,7 +489,7 @@ void bottomUpTraversal (const ClassAnalysis& all, ClassAnalysisConstFn fn);
 
 /// implements an unordered traversal of the class hierarchy
 /// \details
-///   \ref fn is called for each class exactly once
+///   \p fn is called for each class exactly once
 /// \{
 void unorderedTraversal(ClassAnalysis& all, ClassAnalysisFn fn);
 void unorderedTraversal(const ClassAnalysis& all, ClassAnalysisConstFn fn);
