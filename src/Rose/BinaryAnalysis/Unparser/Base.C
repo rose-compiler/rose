@@ -2586,7 +2586,16 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
         emitRegister(out, op->get_descriptor(), state);
 
     } else if (SgAsmIntegerValueExpression *op = isSgAsmIntegerValueExpression(expr)) {
-        comments = state.frontUnparser().emitSignedInteger(out, op->get_bitVector(), state);
+        Sawyer::Container::BitVector total = op->get_bitVector();
+
+        // Add the base value to the total
+        if (const uint64_t base = op->get_baseAddress()) {
+            Sawyer::Container::BitVector baseBv(total.size());
+            baseBv.fromInteger(base);
+            total.add(baseBv);
+        }
+
+        comments = state.frontUnparser().emitSignedInteger(out, total, state);
 
     } else if (SgAsmFloatValueExpression *op = isSgAsmFloatValueExpression(expr)) {
         out <<op->get_nativeValue();

@@ -317,7 +317,16 @@ X86::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         out <<s <<"(" <<rr->get_index() <<")";
 
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr)) {
-        comments = state.frontUnparser().emitSignedInteger(out, ival->get_bitVector(), state);
+        Sawyer::Container::BitVector total = ival->get_bitVector();
+
+        // Add the base value to the total
+        if (const uint64_t base = ival->get_baseAddress()) {
+            Sawyer::Container::BitVector baseBv(total.size());
+            baseBv.fromInteger(base);
+            total.add(baseBv);
+        }
+
+        comments = state.frontUnparser().emitSignedInteger(out, total, state);
 
     } else {
         ASSERT_not_implemented("invalid x86 expression: " + expr->class_name());
