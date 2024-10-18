@@ -316,7 +316,7 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner::ConstPtr &partitio
             P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa);
             if (bb && settings.showingInstructions) {
                 for (SgAsmInstruction *insn: bb->instructions())
-                    out <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
+                    out <<"      " <<insn->toString() <<"\n";
             }
 
             // Vertex properties

@@ -607,7 +607,7 @@ bool
 AsmUnparser::InsnBody::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled)
-        args.output <<"   " <<unparseInstruction(args.insn, &args.unparser->labels, args.unparser->get_registers());
+        args.output <<"   " <<args.insn->toStringNoAddr();
     return enabled;
 }
 

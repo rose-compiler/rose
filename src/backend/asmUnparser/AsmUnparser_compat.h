@@ -7,17 +7,20 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include "AsmUnparser.h"
 
-/** Returns the string representation of an assembly instruction, sans address. */
-ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels =nullptr);
+// [Robb Matzke 2024-10-18]: Deprecated
+ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels =nullptr)
+    ROSE_DEPRECATED("use SgAsmInstruction::toStringNoAddr instead");
 ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels,
-                                            const Rose::BinaryAnalysis::RegisterDictionaryPtr &registers);
-
-/** Returns the string representation of an assembly instruction with address. */
+                                            const Rose::BinaryAnalysis::RegisterDictionaryPtr &registers)
+    ROSE_DEPRECATED("use SgAsmInstruction::toStringNoAddr instead");
 ROSE_DLL_API std::string unparseInstructionWithAddress(SgAsmInstruction*,
-                                                       const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels = nullptr);
+                                                       const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels = nullptr)
+    ROSE_DEPRECATED("use SgAsmInstruction::toString instead");
 ROSE_DLL_API std::string unparseInstructionWithAddress(SgAsmInstruction*,
                                                        const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels,
-                                                       const Rose::BinaryAnalysis::RegisterDictionaryPtr &registers);
+                                                       const Rose::BinaryAnalysis::RegisterDictionaryPtr &registers)
+    ROSE_DEPRECATED("use SgAsmInstruction::toString instead");
+
 
 /** Returns a string representing the part of the assembly instruction before the first operand. */
 ROSE_DLL_API std::string unparseMnemonic(SgAsmInstruction*);

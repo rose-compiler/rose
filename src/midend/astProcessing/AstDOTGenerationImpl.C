@@ -58,7 +58,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
         // At the moment the mnemonic name is stored, but it could be computed in the 
         // future from the kind and the tostring() function.
 #if 1
-          string unparsedInstruction = unparseInstruction(genericInstruction);
+          string unparsedInstruction = genericInstruction->toString();
           string addressString       = Rose::StringUtility::numberToString( (void*) genericInstruction->get_address() );
         // string name = genericInstruction->get_mnemonic();
           string name = unparsedInstruction + "\\n address: " + addressString;

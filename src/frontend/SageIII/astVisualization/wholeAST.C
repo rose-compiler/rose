@@ -2042,7 +2042,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // Note that unparsing of instructions is inconsistant with the rest of ROSE.
             // string unparsedInstruction = asmInstruction->unparseToString();
 
-               string unparsedInstruction = unparseInstruction(asmInstruction);
+               string unparsedInstruction = asmInstruction->toString();
 
                string addressString       = StringUtility::numberToString( (void*) asmInstruction->get_address() );
 

@@ -22,7 +22,7 @@ Assembler::Exception::print(std::ostream &o) const
 {
     o <<what();
     if (insn)
-        o <<" while assembling [" <<unparseInstruction(insn) <<"]";
+        o <<" while assembling [" <<insn->toString() <<"]";
 }
 
 /* class method */

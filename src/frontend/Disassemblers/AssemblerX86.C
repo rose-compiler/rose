@@ -1669,7 +1669,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         hf.width = 16;
         hf.pad_numeric = hf.show_chars = false;
         hexdump(p_debug, insn->get_address(),  &(insn->get_rawBytes()[0]), insn->get_size(), hf);
-        fprintf(p_debug, " | %s\n", unparseInstruction(insn).c_str());
+        fprintf(p_debug, " | %s\n", insn->toString().c_str());
 #if 0 /*DEBUGGING*/
         fprintf(p_debug, "  baseSize=%d, operandSize=%d\n", 
                (x86_insnsize_16==insn->get_baseSize()?16:(x86_insnsize_32==insn->get_baseSize()?32:64)),

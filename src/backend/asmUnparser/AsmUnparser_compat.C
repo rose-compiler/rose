@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <Rose/Affirm.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
@@ -23,42 +24,28 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::Unparser;
 
-std::string unparseInstruction(SgAsmInstruction *insn, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels) {
-    return unparseInstruction(insn, labels, RegisterDictionary::Ptr());
+// [Robb Matzke 2024-10-18]: deprecated
+std::string unparseInstruction(SgAsmInstruction *insn, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*) {
+    return notnull(insn)->toStringNoAddr();
 }
 
-/* FIXME: this should be a SgAsmInstruction class method. */
-std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
-                               const RegisterDictionary::Ptr &registers) {
-    if (isSgAsmUserInstruction(insn))
+// [Robb Matzke 2024-10-18]: deprecated
+std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap*, const RegisterDictionary::Ptr&) {
+    return notnull(insn)->toStringNoAddr();
+}
+
+// [Robb Matzke 2024-10-18]: deprecated
+std::string unparseInstructionWithAddress(SgAsmInstruction *insn, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*) {
+    return notnull(insn)->toString();
+}
+
+// [Robb Matzke 2024-10-18]: deprecated
+std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnparser::LabelMap*, const RegisterDictionary::Ptr&) {
+    if (insn) {
         return insn->toString();
-
-    /* Mnemonic */
-    if (!insn) return "BOGUS:NULL";
-    std::string result = unparseMnemonic(insn);
-    result += std::string((result.size() >= 7 ? 1 : 7-result.size()), ' ');
-
-    /* Operands */
-    SgAsmOperandList* opList = insn->get_operandList();
-    const SgAsmExpressionPtrList& operands = opList->get_operands();
-    for (size_t i = 0; i < operands.size(); ++i) {
-        if (i != 0) result += ", ";
-        result += unparseExpression(operands[i], labels, registers);
+    } else {
+        return "BOGUS:NULL";
     }
-
-    return result;
-}
-
-std::string unparseInstructionWithAddress(SgAsmInstruction *insn,
-                                          const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels) {
-    return unparseInstructionWithAddress(insn, labels, RegisterDictionary::Ptr());
-}
-
-/* FIXME: This should be a SgAsmInstruction class method. */
-std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
-                                          const RegisterDictionary::Ptr &registers) {
-    if (!insn) return "BOGUS:NULL";
-    return StringUtility::addrToString(insn->get_address()) + ": " + unparseInstruction(insn, labels, registers);
 }
 
 /* FIXME: This should be a SgAsmInstruction class method. */
