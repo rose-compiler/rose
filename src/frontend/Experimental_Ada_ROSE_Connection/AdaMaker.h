@@ -31,8 +31,8 @@ namespace Ada_ROSE_Translation
   /*
   Sg_File_Info& mkFileInfo();
 
-  /// creates a file info object for file location given by \ref file,
-  /// \ref line, and \ref col
+  /// creates a file info object for file location given by \p file,
+  /// \p line, and \p col
   Sg_File_Info& mkFileInfo(const std::string& file, int line, int col);
   */
 
@@ -45,7 +45,7 @@ namespace Ada_ROSE_Translation
   void setDefaultFileInfo(SgLocatedNode& n);
   void setDefaultFileInfo(SgExpression& n);
 
-  /// sets the symbol table associated with \ref n to case insensitive
+  /// sets the symbol table associated with \p n to case insensitive
   void setSymbolTableCaseSensitivity(SgScopeStatement& n);
 
   /// creates a new node by calling new SageNode(args...)
@@ -86,14 +86,14 @@ namespace Ada_ROSE_Translation
   //
   // Type Makers
 
-  /// builds a range constraint from \ref range
+  /// builds a range constraint from \p range
   /// \details
-  ///   \ref range is typically of type SgRangeExp, or SgAdaRangeAttributeExp.
+  ///   \p range is typically of type SgRangeExp, or SgAdaRangeAttributeExp.
   ///        ?? may also be an SgTypeExpression for a full type range. ??
   SgAdaRangeConstraint&
   mkAdaRangeConstraint(SgExpression& range);
 
-  /// builds an index constraint from \ref ranges
+  /// builds an index constraint from \p ranges
   /// \param ranges a sequence of ranges.
   SgAdaIndexConstraint&
   mkAdaIndexConstraint(SgExpressionPtrList ranges);
@@ -114,20 +114,20 @@ namespace Ada_ROSE_Translation
   SgAdaDeltaConstraint&
   mkAdaDeltaConstraint(SgExpression& digits, bool isDecimal, SgAdaTypeConstraint* constraint_opt);
 
-  /// builds a discriminant constraint from \ref discriminants
+  /// builds a discriminant constraint from \p discriminants
   /// \param discriminants a sequence of discriminants.
   SgAdaDiscriminantConstraint&
   mkAdaDiscriminantConstraint(SgExpressionPtrList discriminants);
 
-  /// builds a subtype constraint by \ref constr
+  /// builds a subtype constraint by \p constr
   SgAdaSubtype&
   mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr, bool fromRoot = false);
 
-  /// builds a derived type from a \ref basetype
+  /// builds a derived type from a \p basetype
   SgAdaDerivedType&
   mkAdaDerivedType(SgType& basetype);
 
-  /// builds a range type of \ref basetype
+  /// builds a range type of \p basetype
   SgRangeType&
   mkRangeType(SgType& basetype);
 
@@ -135,11 +135,11 @@ namespace Ada_ROSE_Translation
   /// \todo this is a stop gap function and should not be in the final code
   SgType& mkQualifiedType(SgExpression& ref, SgType& base);
 
-  /// builds a modular integral type with mod expression \ref modexpr.
+  /// builds a modular integral type with mod expression \p modexpr.
   SgAdaModularType&
   mkAdaModularType(SgExpression& modexpr);
 
-  /// builds a float type with an optional range constraint \ref range_opt
+  /// builds a float type with an optional range constraint \p range_opt
   // \no longer used
   //SgAdaFloatType&
   //mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt);
@@ -191,21 +191,21 @@ namespace Ada_ROSE_Translation
   SgTypeTuple&
   mkTypeUnion(SgTypePtrList elemtypes);
 
-  /// creates a forward declaration with name \ref name in scope \ref scope.
+  /// creates a forward declaration with name \p name in scope \p scope.
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
 
-  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// creates an enumeration with name \p name in scope \p scope.
   /// \note uses builder function which looks up the forward declaration if one exists
   SgEnumDeclaration&
   mkEnumDefn(const std::string& name, SgScopeStatement& scope);
 
-  /// creates an ada access type with \ref base_type as the type being referenced.
+  /// creates an ada access type with \p base_type as the type being referenced.
   SgAdaAccessType&
   mkAdaAccessType(SgType& base_type, bool generalAccess = false, bool anonymous = false);
 
-  /// creates a new subroutine type with return type \ref retty
-  ///   and callback \ref complete, which fills in the argument names.
+  /// creates a new subroutine type with return type \p retty
+  ///   and callback \p complete, which fills in the argument names.
   // \todo not sure if this is the proper way for specifying subroutine types,
   //       because often ROSE types are shared across scopes, and this type cannot be...
   SgAdaSubroutineType&
@@ -221,8 +221,8 @@ namespace Ada_ROSE_Translation
   //       by a new IR node SgAdaEntryType
   // SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst);
 
-  /// creates an array type with index ranges \ref indices and component
-  /// type \ref comptype.
+  /// creates an array type with index ranges \p indices and component
+  /// type \p comptype.
   /// \param compType the component type
   /// \param dimInfo the dimension information (sets dim_info property)
   /// \param variableLength is true for unconstrained arrays, false otherwise
@@ -238,16 +238,16 @@ namespace Ada_ROSE_Translation
   /// creates the most general fixed type
   SgType& mkFixedType();
 
-  /// creates a constant type for \ref basety
+  /// creates a constant type for \p basety
   SgType& mkConstType(SgType& underType);
 
-  /// creates an aliased type for \ref basety
+  /// creates an aliased type for \p basety
   SgType& mkAliasedType(SgType& underType);
 
-  /// creates a not null type for \ref basety
+  /// creates a not null type for \p basety
   SgType& mkNotNullType(SgType& underType);
 
-  /// creates a function/procedure type with return type \ref returnType
+  /// creates a function/procedure type with return type \p returnType
   /// \todo add parameter list and ada parameter profiles (types + name)
   SgFunctionType& mkFunctionType(SgType& returnType);
 
@@ -263,11 +263,11 @@ namespace Ada_ROSE_Translation
   //
   // Statement Makers
 
-  /// wraps an \ref expr in an SgExprStatement
+  /// wraps an \p expr in an SgExprStatement
   SgExprStatement&
   mkExprStatement(SgExpression& expr);
 
-  /// builds a node representing raising exception \ref raised with optional message \ref what
+  /// builds a node representing raising exception \p raised with optional message \p what
   /// \param raised   an expression describing the exception, or a SgNullExpression in case of a re-raise
   /// \param what_opt an expression describing the optional message (i.e., string-expression)
   SgStatement&
@@ -277,15 +277,15 @@ namespace Ada_ROSE_Translation
   SgBasicBlock&
   mkBasicBlock();
 
-  /// creates a while statement with condition \ref cond and body \ref body.
+  /// creates a while statement with condition \p cond and body \p body.
   SgWhileStmt&
   mkWhileStmt(SgExpression& cond, SgBasicBlock& body);
 
-  /// creates a loop statement with body \ref body.
+  /// creates a loop statement with body \p body.
   SgAdaLoopStmt&
   mkAdaLoopStmt(SgBasicBlock& body);
 
-  /// creates a select statement of type \ref select_type
+  /// creates a select statement of type \p select_type
   SgAdaSelectStmt&
   mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type);
 
@@ -293,7 +293,7 @@ namespace Ada_ROSE_Translation
   SgAdaSelectAlternativeStmt&
   mkAdaSelectAlternativeStmt(SgExpression& guard, SgBasicBlock& body);
 
-  /// creates a for loop statement with body \ref body and an *empty*
+  /// creates a for loop statement with body \p body and an *empty*
   ///   loop header (i.e., init-stmt, test, and increment are nullptr).
   /// to complete an Ada for loop, the init-stmt needs to be set, and
   ///   the increment needs to set the direction (either ++i, --i).
@@ -313,8 +313,8 @@ namespace Ada_ROSE_Translation
   SgUsingDeclarationStatement&
   mkUseClause(SgDeclarationStatement& used);
 
-  /// creates an exit statement from loop \ref loop with condition \ref condition.
-  ///   \ref explicitLoopName is set if the loop was named and the loop name
+  /// creates an exit statement from loop \p loop with condition \p condition.
+  ///   \p explicitLoopName is set if the loop was named and the loop name
   ///   specified with the exit statement.
   SgAdaExitStmt&
   mkAdaExitStmt(SgStatement& loop, SgExpression& condition, bool explicitLoopName);
@@ -334,7 +334,7 @@ namespace Ada_ROSE_Translation
   SgCaseOptionStmt&
   mkWhenPath(SgExpression& cond, SgBasicBlock& blk);
 
-  /// builds a when others path with a body of \ref blk
+  /// builds a when others path with a body of \p blk
   /// \note adaic 5.4: A discrete_choice others, if present, shall
   ///                  appear alone and in the last discrete_choice_list.
   SgDefaultOptionStmt&
@@ -386,18 +386,20 @@ namespace Ada_ROSE_Translation
   //
   // Declaration Makers
 
-  /// creates a typedef declaration of type \ref ty and name \ref name
-  ///   in parent scope \ref scope.
+  /// creates a typedef declaration of type \p ty and name \p name
+  ///   in parent scope \p scope.
   SgTypedefDeclaration&
   mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope);
 
-  // creates a discriminated type decl with parent scope \ref scope.
+  // creates a discriminated type decl with parent scope \p scope
+  ///  and non-defining declaration \p nondef_opt.
   // The child discriminatedDecl remains undefined (i.e., null).
+  // \todo distinguish between defining and nondefining declarations
   SgAdaDiscriminatedTypeDecl&
-  mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope);
+  mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope, SgAdaDiscriminatedTypeDecl* nondef_opt);
 
-  /// creates a defining record declaration with name \ref name for record \ref def
-  ///   in scope \ref scope.
+  /// creates a defining record declaration with name \p name for record \p def
+  ///   in scope \p scope.
   ///   This function builds both the nondefining and defining declarations
   ///   and returns the defining declarations.
   SgClassDeclaration&
@@ -407,12 +409,12 @@ namespace Ada_ROSE_Translation
   SgClassDefinition&
   mkRecordBody();
 
-  /// creates a defining record declaration for the non-defining declaration \ref nondef,
-  ///   and the body \ref body in scope \ref scope.
+  /// creates a defining record declaration for the non-defining declaration \p nondef,
+  ///   and the body \p body in scope \p scope.
   SgClassDeclaration&
   mkRecordDecl(SgClassDeclaration& nondef, SgClassDefinition& body, SgScopeStatement& scope);
 
-  /// creates a non defining record decl with name \ref name
+  /// creates a non defining record decl with name \p name
   SgClassDeclaration&
   mkRecordDecl(const std::string& name, SgScopeStatement& scope);
 
@@ -695,7 +697,7 @@ namespace Ada_ROSE_Translation
   SgInitializedName&
   mkInitializedName(const std::string& name, SgType& ty, SgExpression* init_opt = nullptr);
 
-  /// creates a parameter declaration from a list of initialized names \ref parms.
+  /// creates a parameter declaration from a list of initialized names \p parms.
   /// \param parm      a list of individual parameters that get combined into a single parameter declaration
   /// \param parammode the parameter modifier (e.g., in, out)
   /// \param scope     the scope of the parameter list
@@ -725,15 +727,15 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
-  /// creates an enumerator declaration for \ref enumdef
-  ///   with name \ref ident, type \ref ty, and representative value \ref repval.
-  ///   A symbol for the enumerator is created in \ref enumdef.get_declarationScope().
+  /// creates an enumerator declaration for \p enumdef
+  ///   with name \p ident, type \p ty, and representative value \p repval.
+  ///   A symbol for the enumerator is created in \p enumdef.get_declarationScope().
   ///   An alias symbol is created in enumdef.get_scope().
   ///   The scope of the returned value is set to enumdef.get_declarationScope().
   SgInitializedName&
   mkEnumeratorDecl(SgEnumDeclaration& enumdef, const std::string& ident, SgType& ty, SgExpression& repval);
 
-  /// creates a SgBaseClass object for an Ada type \ref n
+  /// creates a SgBaseClass object for an Ada type \p n
   /// \param n a representation of the base type (often an SgClassType, but could be any type in principle.
   ///          e.g., often expression based, wrapped in an SgTypeExpression)
   /// \return  a node representing the base class (SgBaseClass when n is SgClassType, SgExpBaseClass otherwise).
@@ -760,21 +762,21 @@ namespace Ada_ROSE_Translation
   SgAdaComponentClause&
   mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range);
 
-  /// creates an Ada Record representation clause for \ref record aligned at \ref align.
+  /// creates an Ada Record representation clause for \p record aligned at \p align.
   /// \details
-  ///   the type of \ref record should be either SgClassType or SgTypedefType
+  ///   the type of \p record should be either SgClassType or SgTypedefType
   SgAdaRepresentationClause&
   mkAdaRepresentationClause(SgType& record, SgExpression& align, bool isAtClause = false);
 
-  /// creates an Ada Enum representation clause for \ref enumtype and
-  ///   enumerator initializations \ref initlst.
+  /// creates an Ada Enum representation clause for \p enumtype and
+  ///   enumerator initializations \p initlst.
   /// \pre isSgEnumType(enumtype) || isSgTypedefType(enumtype)
   /// \details
-  ///   the type of \ref enumtype should be either SgEnumType or SgTypedefType
+  ///   the type of \p enumtype should be either SgEnumType or SgTypedefType
   SgAdaEnumRepresentationClause&
   mkAdaEnumRepresentationClause(SgType& enumtype, SgExprListExp& initlst);
 
-  /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
+  /// creates an Ada length clause for attribute \p attr aligned and length \p size.
   SgAdaAttributeClause&
   mkAdaAttributeClause(SgAdaAttributeExp& attr, SgExpression& size);
 
@@ -852,34 +854,34 @@ namespace Ada_ROSE_Translation
   SgLabelRefExp&
   mkLabelRefExp(const SgLabelStatement& tgt);
 
-  /// Creates a reference to the exception object \ref exception
+  /// Creates a reference to the exception object \p exception
   SgExpression&
   mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope);
 
-  /// Creates a reference to a task \ref task
+  /// Creates a reference to a task \p task
   SgAdaTaskRefExp&
   mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
 
-  /// Creates a reference to a protected object \ref po
+  /// Creates a reference to a protected object \p po
   SgAdaProtectedRefExp&
   mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& task);
 
-  /// Creates a reference to a package \ref unit
+  /// Creates a reference to a package \p unit
   SgAdaUnitRefExp&
   mkAdaUnitRefExp(SgDeclarationStatement& unit);
 
-  /// Creates a reference to an Ada renaming declaration \ref decl
+  /// Creates a reference to an Ada renaming declaration \p decl
   SgAdaRenamingRefExp&
   mkAdaRenamingRefExp(SgAdaRenamingDecl& decl);
 
   /// creates a field selection expression for: prefix.selector
   /// \details
   ///    - when prefix is just a function name, insert a call expression.
-  ///      on top of \ref prefix.
+  ///      on top of \p prefix.
   ///      This works around an Asis representation issue
   ///      ASIS_FUNCTION_REF_ISSUE_1.
   ///    - inserts a compiler-generated pointer deref expression on top
-  ///      of \ref prefix if \ref prefix has an access type.
+  ///      of \p prefix if \p prefix has an access type.
   SgDotExp&
   mkDotExp(SgExpression& prefix, SgExpression& selector);
 
@@ -890,7 +892,7 @@ namespace Ada_ROSE_Translation
   /// creates an array index expression for: prefix(indices).
   /// \details
   ///    inserts a compiler-generated pointer deref expression on top
-  ///    of \ref prefix if \ref prefix has an access to array type.
+  ///    of \p prefix if \p prefix has an access to array type.
   /// \note
   ///    to attain a homogeneous representation, an SgExprListExp object
   ///    is required to represent the indices, even when only a single
@@ -901,18 +903,18 @@ namespace Ada_ROSE_Translation
   /// returns a combined expression representing an Ada choice
   /// \param choices a non-empty sequence of choices
   /// \return if multiple choices: a tree of expressions combined using SgCommaOpExp
-  ///         otherwise (exactly one choice): the expression in \ref choices
+  ///         otherwise (exactly one choice): the expression in \p choices
   SgExpression&
   mkChoiceExpIfNeeded(const SgExpressionPtrList& choices);
 
-  /// creates a type conversion of expression \ref expr to type \ref ty.
+  /// creates a type conversion of expression \p expr to type \p ty.
   SgCastExp&
   mkCastExp(SgExpression& expr, SgType& ty);
 
   /// creates a call for: target(arglist).
   /// \details
   ///    inserts a compiler-generated pointer deref expression on top
-  ///    of \ref target if \ref target has an access type
+  ///    of \p target if \p target has an access type
   ///    (\todo check for access to subroutine).
   /// \param target the expression denoting the callee
   /// \param arglist the arguments
@@ -924,7 +926,7 @@ namespace Ada_ROSE_Translation
   SgFunctionCallExp&
   mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax = false, bool usesObjectCallSyntax = false);
 
-  /// creates a qualified expression for \ref expr and type qualification \ref ty.
+  /// creates a qualified expression for \p expr and type qualification \p ty.
   /// \todo consider whether the explicit representation in code is necessary
   ///       or whether it can be reproduced by the backend.
   SgExpression&
@@ -939,7 +941,7 @@ namespace Ada_ROSE_Translation
   SgAdaAttributeExp&
   mkAdaAttributeExp(SgExpression& exp, const std::string& ident, SgExprListExp& args);
 
-  /// creates an increment/decrement of the variable \ref var
+  /// creates an increment/decrement of the variable \p var
   /// depending on whether the loop uses forward or backward iteration.
   /// \param forward iteration direction
   /// \param var the loop variable
@@ -951,11 +953,11 @@ namespace Ada_ROSE_Translation
   SgExprStatement&
   mkForLoopTest(SgVariableDeclaration& var);
 
-  /// creates an  expression list from \ref exprs
+  /// creates an  expression list from \p exprs
   SgExprListExp&
   mkExprListExp(const SgExpressionPtrList& exprs = {});
 
-  /// creates an expression wrapper for type \ref ty
+  /// creates an expression wrapper for type \p ty
   SgTypeExpression&
   mkTypeExpression(SgType& ty);
 
@@ -988,8 +990,8 @@ namespace Ada_ROSE_Translation
   //
   // special Ada symbols
 
-  /// creates a symbol for the inherited function \ref fn for inherited type \ref assocType.
-  ///   adds the symbol to the scope \ref scope of the derived type.
+  /// creates a symbol for the inherited function \p fn for inherited type \p assocType.
+  ///   adds the symbol to the scope \p scope of the derived type.
   /// \param basesym   the symbol from which the new symbol is derived from
   /// \param assocType the newly derived type that triggered the derivation
   /// \param scope     the scope where the new symbol needs to be inserted
@@ -1008,7 +1010,7 @@ namespace Ada_ROSE_Translation
   /// \tparam  V input value type
   /// \tparam  U return value type
   /// \param   val the value to be converted
-  /// \returns \ref val converted to type \ref U
+  /// \returns \p val converted to type \p U
   template <class U, class V>
   inline
   U conv(V& img)
@@ -1039,7 +1041,7 @@ namespace Ada_ROSE_Translation
   /// \}
 
 
-  /// creates a value representation of type \ref SageValue for the string \ref textrep.
+  /// creates a value representation of type \p SageValue for the string \p textrep.
   /// \tparam SageValue the AST node type to be created
   /// \pre SageValue is derived from SgValueExp
   template <class SageValue>

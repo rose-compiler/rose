@@ -1332,8 +1332,9 @@ getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstCo
   ADA_ASSERT(elem.Element_Kind == A_Definition);
   Definition_Struct&      def = elem.The_Union.Definition;
   ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
+  Element_ID              discID = decl.Discriminant_Part;
 
-  if (SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx))
+  if (SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(discID, 0, nullptr, ctx))
   {
     SgScopeStatement&       genericScope = ctx.scope();
     SgScopeStatement&       discScope = SG_DEREF(discr->get_discriminantScope());

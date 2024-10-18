@@ -172,7 +172,7 @@ namespace Ada
   extern const std::string durationTypeName;
   extern const std::string exceptionName;
 
-  /// tests if the declaration \ref dcl defines a public type that is completed
+  /// tests if the declaration \p dcl defines a public type that is completed
   ///   in a private section.
   /// \return true, iff dcl is public and completed in a private section.
   /// \pre dcl is not null and points to a first-nondefining declaration.
@@ -181,14 +181,14 @@ namespace Ada
   bool withPrivateDefinition(const SgDeclarationStatement& dcl);
   /// @}
 
-  /// tests if \ref ty is an unconstrained array
+  /// tests if \p ty is an unconstrained array
   /// \return true iff ty is unconstrained
   /// @{
   bool unconstrained(const SgArrayType* ty);
   bool unconstrained(const SgArrayType& ty);
   /// @}
 
-  /// tests if \ref ty is an anonymous access type
+  /// tests if \p ty is an anonymous access type
   /// \return true iff ty is an anonymous access type
   /// @{
   bool anonymousAccess(const SgType* ty);
@@ -202,7 +202,7 @@ namespace Ada
   /// \param   globalScope a reference to the global scope
   /// \param   mainfile    a reference to the main source file (name)
   /// \returns a range [first-in-sequence, limit-of-sequence) of
-  ///          global-scope level statements in \ref mainFile
+  ///          global-scope level statements in \p mainFile
   /// \details
   ///   In other words, the declarations in the with'ed packages are excluded from the returned range.
   /// \{
@@ -222,7 +222,7 @@ namespace Ada
   int firstLastDimension(SgExprListExp* args);
   /// \}
 
-  /// defines the result type for \ref getArrayTypeInfo
+  /// defines the result type for \p getArrayTypeInfo
   using FlatArrayTypeBase = std::tuple<SgArrayType*, std::vector<SgExpression*> >;
 
   struct FlatArrayType : FlatArrayTypeBase
@@ -237,19 +237,19 @@ namespace Ada
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
-  /// \return  iff \ref atype is not an arraytype, a pair <nullptr, empty vector> is returned
+  /// \return  iff \p atype is not an arraytype, a pair <nullptr, empty vector> is returned
   ///          otherwise a pair of a array pointer, and a vector of index ranges.
   ///          Index ranges can be specified in terms of a range (SgRangeExp), a type
   ///          attribute (SgAdaAttributeExp), or full type range (SgTypeExpression).
   ///          (the expressions are part of the AST and MUST NOT BE DELETED).
-  /// \pre     \ref atype is not null.
+  /// \pre     \p atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
   FlatArrayType getArrayTypeInfo(SgType& atype);
   /// @}
 
 
-  /// returns a type from the standard package with name \ref name.
+  /// returns a type from the standard package with name \p name.
   /// \param  the name of a type in the standard package
   /// \return a type representation
   /// \pre
@@ -320,18 +320,18 @@ namespace Ada
   SgExpression*
   underlyingExpr(const SgStatement* s);
 
-  /// returns a range for the range attribute \ref rangeAttribute.
+  /// returns a range for the range attribute \p rangeAttribute.
   /// \return a range if rangeAttribute is a range attribute and a range expression is in the AST;
   ///         nullptr otherwise.
   /// \throws a std::runtime_error if the rangeAttribute uses an index specification
   ///         that is not an integral constant expression.
-  /// \pre    \ref rangeAttribute is not null
+  /// \pre    \p rangeAttribute is not null
   /// @{
   SgRangeExp* range(const SgAdaAttributeExp* rangeAttribute);
   SgRangeExp* range(const SgAdaAttributeExp& rangeAttribute);
   /// @}
 
-  /// returns true if the expression \ref e denotes a range
+  /// returns true if the expression \p e denotes a range
   /// @{
   bool denotesRange(const SgExpression& e);
   bool denotesRange(const SgExpression* e);
@@ -397,7 +397,7 @@ namespace Ada
   SgStatementPtrList::const_iterator declarationLimit(const SgBasicBlock* block);
   /// @}
 
-  /// returns true iff \ref n is a try block following a declarative region
+  /// returns true iff \p n is a try block following a declarative region
   /// \note an ada try block is a function block, whose non-declarative
   ///       range includes exactly one try stmt. In this case, the unparser
   ///       can omit the separate begin and end statement.
@@ -407,7 +407,7 @@ namespace Ada
   /// @}
 
 
-  /// returns true iff \ref n is an Ada package try block
+  /// returns true iff \p n is an Ada package try block
   /// \note an ada try block is a function block, whose non-declarative
   ///       range includes exactly one try stmt. In this case, the unparser
   ///       can omit the separate begin and end statement.
@@ -417,7 +417,7 @@ namespace Ada
   /// @}
 
 
-  /// returns true iff \ref n has an unknown discriminant part
+  /// returns true iff \p n has an unknown discriminant part
   /// @{
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n);
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
@@ -502,7 +502,7 @@ namespace Ada
   /// Returns the SgAdaGenericDecl node that makes a declaration (either function/procedure or package)
   /// generic.
   /// \param n a declaration that is possibly part of a generic declaration.
-  /// \returns the generic declaration of \ref n, where \ref n is a either function/procedure or package
+  /// \returns the generic declaration of \p n, where \p n is a either function/procedure or package
   ///          that is declared directly under an SgAdaGenericDecl;
   ///          nullptr otherwise.
   /// \details
@@ -512,7 +512,7 @@ namespace Ada
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n);
   /// @}
 
-  /// returns true iff \ref n refers to a generic declaration from inside said declaration
+  /// returns true iff \p n refers to a generic declaration from inside said declaration
   ///         false otherwise (e.g., if n does not refer to a generic unit)
   /// @{
   bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp& n);
@@ -528,26 +528,26 @@ namespace Ada
   /// @}
 
 
-  /// returns the SgAdaDiscriminatedTypeDecl iff \ref n is discriminated
+  /// returns the SgAdaDiscriminatedTypeDecl iff \p n is discriminated
   ///         null otherwise
   /// @{
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement& n);
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n);
   /// @}
 
-  /// tests if the declaration \ref decl corresponds to a stub (aka separated unit)
+  /// tests if the declaration \p decl corresponds to a stub (aka separated unit)
   /// @{
   bool hasSeparatedBody(const SgDeclarationStatement& dcl);
   bool hasSeparatedBody(const SgDeclarationStatement* dcl);
   /// @}
 
-  /// returns true iff \ref n is a unit definition that has been separated
+  /// returns true iff \p n is a unit definition that has been separated
   /// @{
   bool isSeparatedBody(const SgDeclarationStatement& n);
   bool isSeparatedBody(const SgDeclarationStatement* n);
   /// @}
 
-  /// returns true iff \ref n is a separated function definition is separated
+  /// returns true iff \p n is a separated function definition is separated
   /// @{
   bool isSeparatedDefinition(const SgFunctionDeclaration& n);
   bool isSeparatedDefinition(const SgFunctionDeclaration* n);
@@ -634,8 +634,8 @@ namespace Ada
     std::size_t       argpos() const { return std::get<1>(*this); }
   };
 
-  /// returns the scope where an operator with name \ref opname and argument types
-  ///    in \ref argtypes shall be declared.
+  /// returns the scope where an operator with name \p opname and argument types
+  ///    in \p argtypes shall be declared.
   /// \param  opname   the operator name
   /// \param  argtypes a list of argument types
   /// \return a scope where the described operator shall be declared, and the argument position
@@ -644,7 +644,7 @@ namespace Ada
   operatorScope(const std::string& opname, const SgTypePtrList& argtypes);
 
 
-  /// returns the scope where an operator associated with type \ref ty
+  /// returns the scope where an operator associated with type \p ty
   ///    shall be declared.
   /// \param  opname   the operator name
   /// \param  ty       the type name
@@ -660,7 +660,7 @@ namespace Ada
   /// \}
 
 
-  /// returns the scope where type \ref ty has been declared
+  /// returns the scope where type \p ty has been declared
   /// \param  ty some type
   /// \return the scope where ty was declared
   /// \{
@@ -707,12 +707,12 @@ namespace Ada
 
   /// takes a function name as used in ROSE and converts it to a name in Ada
   ///   (i.e., '"' + operator_text + '"').
-  ///   if \ref nameInRose does not name an operator, then the name is returned as is.
+  ///   if \p nameInRose does not name an operator, then the name is returned as is.
   std::string convertRoseOperatorNameToAdaName(const std::string& nameInRose);
 
   /// takes a function name as used in ROSE and converts it to an operator in Ada
   ///   (i.e., operator_text).
-  ///   if \ref nameInRose does not name an operator, an empty string is returned
+  ///   if \p nameInRose does not name an operator, an empty string is returned
   std::string convertRoseOperatorNameToAdaOperator(const std::string& nameInRose);
 
   /// Details of expression aggregates
@@ -739,7 +739,7 @@ namespace Ada
     bool nullRecord() const { return begin() == end(); }
   };
 
-  /// returns the ancestor initializer, if \ref exp refers to an extension aggregate
+  /// returns the ancestor initializer, if \p exp refers to an extension aggregate
   ///         null otherwise
   /// @{
   AggregateInfo splitAggregate(const SgExprListExp& exp);
@@ -747,7 +747,7 @@ namespace Ada
   /// @}
 
 
-  /// returns a package spec decl if the declaration \ref n renames a package
+  /// returns a package spec decl if the declaration \p n renames a package
   /// returns nullptr otherwise
   /// @{
   SgAdaPackageSpecDecl* renamedPackage(const SgAdaRenamingDecl& n);
@@ -755,7 +755,7 @@ namespace Ada
   /// @}
 
 
-  /// returns true iff \ref ty refers to a function type (as opposed to procedure)
+  /// returns true iff \p ty refers to a function type (as opposed to procedure)
   /// @{
   bool isFunction(const SgFunctionType& ty);
   bool isFunction(const SgFunctionType* ty);
@@ -763,7 +763,7 @@ namespace Ada
   bool isFunction(const SgAdaSubroutineType* ty);
   /// @}
 
-  /// returns the static type of the function symbol \ref fnsy
+  /// returns the static type of the function symbol \p fnsy
   /// \note
   ///   The pointer based version returns nullptr if fnsy is nullptr.
   /// @{
@@ -772,13 +772,13 @@ namespace Ada
   /// @}
 
 
-  /// returns true iff \ref ty refers to an object renaming
+  /// returns true iff \p ty refers to an object renaming
   /// @{
   bool isObjectRenaming(const SgAdaRenamingDecl* dcl);
   bool isObjectRenaming(const SgAdaRenamingDecl& dcl);
   /// @}
 
-  /// returns true iff \ref ty refers to an exception renaming
+  /// returns true iff \p ty refers to an exception renaming
   /// @{
   bool isExceptionRenaming(const SgAdaRenamingDecl* dcl);
   bool isExceptionRenaming(const SgAdaRenamingDecl& dcl);
@@ -859,7 +859,7 @@ namespace Ada
   /// \}
 
 
-  /// returns \ref n or a pointer to \ref n if \ref n declares an exception type.
+  /// returns \p n or a pointer to \p n if \p n declares an exception type.
   /// \param  n an exception declaration candidate
   /// \return a pointer to a exception declaration or nullptr
   /// \{
@@ -946,12 +946,12 @@ namespace Ada
 
 
   /// returns the overriding scope of a primitive function based on the
-  ///   associated arguments as defined by the argument list \ref args and
-  ///   the primitive argument positions defined by \ref primitiveArgs.
+  ///   associated arguments as defined by the argument list \p args and
+  ///   the primitive argument positions defined by \p primitiveArgs.
   /// \return the scope of an overriding argument (incl. the original associated type);
   ///         nullptr if no such scope can be found.
   /// \note does not resolve conflicting scopes
-  /// \see also \ref primitiveParameterPositions
+  /// \see also \p primitiveParameterPositions
   /// @{
   SgScopeStatement*
   overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
@@ -960,14 +960,14 @@ namespace Ada
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
-  /// returns the canonical scope of some Ada scope \ref scope.
+  /// returns the canonical scope of some Ada scope \p scope.
   /// \details
   ///   The canonical scope of an entity is its declarative scope
   ///   e.g., The canonical scope of an SgAdaPackageBody is its spec, a SgAdaPackageSpec
   const SgScopeStatement* canonicalScope(const SgScopeStatement* scope);
   const SgScopeStatement& canonicalScope(const SgScopeStatement& scope);
 
-  /// tests if \ref lhs and \ref have the same canonical scope.
+  /// tests if \p lhs and \p have the same canonical scope.
   bool sameCanonicalScope(const SgScopeStatement* lhs, const SgScopeStatement* rhs);
 
   /// returns the logical parent scope of a scope @ref s.
@@ -989,7 +989,7 @@ namespace Ada
   ///   or nullptr if there is none.
   SgDeclarationStatement* associatedDeclaration(const SgSymbol& n);
 
-  /// returns the decl where \ref ty was defined
+  /// returns the decl where \p ty was defined
   ///   nullptr if no such declaration can be found.
   /// \todo remove after integrating functionality into SgType...
   /// \details
@@ -1000,7 +1000,7 @@ namespace Ada
   SgDeclarationStatement* associatedDeclaration(const SgType* ty);
   /// \}
 
-  /// returns the base type of a type \ref ty
+  /// returns the base type of a type \p ty
   /// \details
   ///   In the following type hierarchy baseTypes(Y) would return { X, S1, S2 } but not Integer.
   ///   \code
@@ -1020,7 +1020,7 @@ namespace Ada
   /// \}
 
 
-  /// finds the underlying enum declaration of a type \ref ty
+  /// finds the underlying enum declaration of a type \p ty
   /// \returns an enum declaration associated with ty
   ///          nullptr if no declaration can be found
   /// \details
@@ -1051,13 +1051,13 @@ namespace Ada
   /// \}
 
 
-  /// returns true, iff \ref fndef is the body of an explicit null procedure
+  /// returns true, iff \p fndef is the body of an explicit null procedure
   bool explicitNullProcedure(const SgFunctionDefinition& fndef);
 
-  /// returns true, iff \ref recdef is the body of an explicit null record
+  /// returns true, iff \p recdef is the body of an explicit null record
   bool explicitNullRecord(const SgClassDefinition& recdef);
 
-  /// returns true, iff \ref n is a reverse for loop; returns false otherwise
+  /// returns true, iff \p n is a reverse for loop; returns false otherwise
   /// \{
   bool isReverseForLoop(const SgForStatement* n);
   bool isReverseForLoop(const SgForStatement& n);
@@ -1085,7 +1085,7 @@ namespace Ada
   positionalArgumentLimit(const SgExprListExp* args);
   /// @}
 
-  /// checks if the block \ref blk is present in the Ada source code.
+  /// checks if the block \p blk is present in the Ada source code.
   /// \param  blk a reference or pointer to a ROSE basic block object.
   /// \return true  of the block is in the source code.
   ///         false if the block is ROSE artifact (or nullptr).
@@ -1108,19 +1108,19 @@ namespace Ada
                                const SgNamedType& dervTy
                              );
 
-  /// tests if \ref attr is an attribute with name \ref attrname.
+  /// tests if \p attr is an attribute with name \p attrname.
   bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname);
 
-  /// tests if \ref attr is an access attribute
+  /// tests if \p attr is an access attribute
   /// \details
   ///    either 'access, 'unchecked_access, or 'unrestricted_access.
   bool isAnyAccessAttribute(const SgAdaAttributeExp& attr);
 
-  /// tests if \ref prgdcl is a pragma with name \ref pragmaname.
+  /// tests if \p prgdcl is a pragma with name \p pragmaname.
   /// \param prgdcl     the pragma declaration
   /// \param pragmaname the name to test for
-  /// \param the pragmas argument list (possibly empty) if \ref prgdcl is
-  ///        a \ref pragmaname pragma;
+  /// \param the pragmas argument list (possibly empty) if \p prgdcl is
+  ///        a \p pragmaname pragma;
   ///        nullptr otherwise.
   SgExprListExp*
   isPragma(const SgPragmaDeclaration& prgdcl, const std::string& pragmaname);
@@ -1133,7 +1133,7 @@ namespace Ada
   /// \param root  a singular root node (all subtrees are traversed)
   /// \param roots a statement range of root nodes.
   /// \note
-  ///   \ref fn is typically a functor that collects all nodes that need to be
+  ///   \p fn is typically a functor that collects all nodes that need to be
   ///   converted in a first pass.
   ///   An update pass, triggered by fn's destructor carries out the
   ///   actual transformations of the collected nodes.
@@ -1210,13 +1210,13 @@ namespace Ada
   ///       (the namequalification already adds pkgStandard...)
   ScopePath pathToGlobal(const SgScopeStatement& n);
 
-  /// copies the source code location from \ref src to \ref tgt.
+  /// copies the source code location from \p src to \p tgt.
   /// \{
   void copyFileInfo(SgLocatedNode& tgt, const SgLocatedNode& src);
   // void copyFileInfo(SgExpression&  tgt, const SgExpression& src);
   /// \}
 
-  /// \brief sets source position in entire subtree of \ref n to compiler generated
+  /// \brief sets source position in entire subtree of \p n to compiler generated
   /// \note
   ///    compare with SageInterface::setSourcePositionAtRootAndAllChildren
   ///    the SageInterface does not implement setting the source position to
@@ -1241,7 +1241,7 @@ namespace Ada
   /// \param root                  the subtree is traversed to find operator calls (using the traversal mechanism)
   /// \param convertCallSyntax     false, only convert those calls where get_uses_operator_syntax() returns false
   ///                              true,  convert all calls (may result in invalid Ada)
-  /// \param convertNamedArguments not relevant, when \ref convertCallSyntax == false
+  /// \param convertNamedArguments not relevant, when \p convertCallSyntax == false
   ///                              true, named arguments are resolved
   ///                              false, named arguments are preserved
   // \todo mv into Ada to C++ converter

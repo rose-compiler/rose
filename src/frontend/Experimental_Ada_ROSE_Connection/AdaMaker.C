@@ -909,7 +909,7 @@ namespace
 }
 
 SgAdaDiscriminatedTypeDecl&
-mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
+mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope, SgAdaDiscriminatedTypeDecl* nondef_opt)
 {
   SgDeclarationScope&         dclscope = mkDeclarationScope(scope);
   SgAdaParameterList&         params   = mkAdaParameterList(dclscope);
@@ -917,7 +917,18 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 
   dclscope.set_parent(&sgnode);
   params.set_parent(&sgnode);
-  sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+  if (nondef_opt)
+  {
+    sgnode.set_firstNondefiningDeclaration(nondef_opt);
+    sgnode.set_definingDeclaration(&sgnode);
+    nondef_opt->set_definingDeclaration(&sgnode);
+  }
+  else
+  {
+    sgnode.set_firstNondefiningDeclaration(&sgnode);
+  }
+
   return sgnode;
 }
 

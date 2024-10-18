@@ -3280,7 +3280,11 @@ namespace
 
 
   SgAdaDiscriminatedTypeDecl&
-  createDiscriminatedDeclID(Element_Struct& elem, Element_Struct* secondary, AstContext ctx)
+  createDiscriminatedDeclID( Element_Struct& elem,
+                             Element_Struct* secondary,
+                             SgAdaDiscriminatedTypeDecl* nondefOpt,
+                             AstContext ctx
+                           )
   {
     ADA_ASSERT (elem.Element_Kind == A_Definition);
     logKind("A_Definition", elem.ID);
@@ -3289,7 +3293,7 @@ namespace
     // here we want to convert the rest that can appear in declarative context
 
     SgScopeStatement&           scope  = ctx.scope();
-    SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(scope);
+    SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(scope, nondefOpt);
     Definition_Struct&          def    = elem.The_Union.Definition;
 
     ctx.appendStatement(sgnode);
@@ -3338,7 +3342,11 @@ namespace
 #endif /* DEBUG_RECURSION */
       DefinitionDetails       defdata = queryDeclarationDetails(decl, ctx);
       SgScopeStatement*       parentScope = &ctx.scope();
-      SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx);
+      SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt( decl.Discriminant_Part,
+                                                                         0,
+                                                                         nullptr,
+                                                                         ctx
+                                                                       );
 
       if (discr)
       {
@@ -3503,7 +3511,11 @@ namespace
 } // anonymous
 
 SgAdaDiscriminatedTypeDecl*
-createDiscriminatedDeclID_opt(Element_ID primary, Element_ID secondary, AstContext ctx)
+createDiscriminatedDeclID_opt( Element_ID primary,
+                               Element_ID secondary,
+                               SgAdaDiscriminatedTypeDecl* nondefOpt,
+                               AstContext ctx
+                             )
 {
   if (primary == 0)
   {
@@ -3512,7 +3524,11 @@ createDiscriminatedDeclID_opt(Element_ID primary, Element_ID secondary, AstConte
     return nullptr;
   }
 
-  return &createDiscriminatedDeclID(retrieveElem(elemMap(), primary), retrieveElemOpt(elemMap(), secondary), ctx);
+  return &createDiscriminatedDeclID( retrieveElem(elemMap(), primary),
+                                     retrieveElemOpt(elemMap(), secondary),
+                                     nondefOpt,
+                                     ctx
+                                   );
 }
 
 SgScopeStatement&
@@ -4551,10 +4567,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         NameData                    adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
+        Element_ID                  id     = adaname.id();
+        SgDeclarationStatement*     nondef = findFirst(asisTypes(), id);
         SgScopeStatement*           parentScope = &ctx.scope();
         Element_ID                  declDisrElemID = decl.Discriminant_Part;
         Element_ID                  scndDisrElemID = secondaryDiscriminants(elem.ID, decl, ctx);
-        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(declDisrElemID, scndDisrElemID, ctx);
+        SgAdaDiscriminatedTypeDecl* parentDiscr = si::Ada::getAdaDiscriminatedTypeDecl(nondef);
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt( declDisrElemID,
+                                                                           scndDisrElemID,
+                                                                           parentDiscr,
+                                                                           ctx
+                                                                         );
 
         if (discr)
         {
@@ -4563,8 +4586,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgScopeStatement&       scope  = SG_DEREF(parentScope);
         TypeData                ty     = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
-        Element_ID              id     = adaname.id();
-        SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
         SgDeclarationStatement& sgdecl = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
@@ -4810,7 +4831,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT(!incomp || nondef);
 
         SgScopeStatement*           parentScope = &ctx.scope();
-        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx);
+        SgAdaDiscriminatedTypeDecl* parentDiscr = si::Ada::getAdaDiscriminatedTypeDecl(nondef);
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt( decl.Discriminant_Part,
+                                                                           0,
+                                                                           parentDiscr,
+                                                                           ctx
+                                                                         );
 
         if (discr)
         {
@@ -4875,7 +4901,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
         SgScopeStatement*           parentScope = &ctx.scope();
-        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx);
+        SgAdaDiscriminatedTypeDecl* parentDiscr = si::Ada::getAdaDiscriminatedTypeDecl(nondef);
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt( decl.Discriminant_Part,
+                                                                           0,
+                                                                           parentDiscr,
+                                                                           ctx
+                                                                         );
 
         if (discr)
         {
