@@ -662,27 +662,12 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
         {
-       // At the moment the mnemonic name is stored, but it could be computed in the
-       // future from the kind and the tostring() function.
-#if 1
-          string unparsedInstruction = genericInstruction->toString();
-          string addressString       = StringUtility::numberToString( (void*) genericInstruction->get_address() );
-       // string name = genericInstruction->get_mnemonic();
-          string name = unparsedInstruction + "\\n address: " + addressString;
-#else
-          string name = unparsedInstruction + "\\n" + addressString;
-#endif
+          string addressString       = StringUtility::addrToString(genericInstruction->get_address());
+          string name = genericInstruction->toStringNoAddr() + "\\n address: " + addressString;
+
           ROSE_ASSERT(name.empty() == false);
 
           nodelabel += string("\\n") + name;
-        }
-
-     SgAsmExpression* genericExpression = isSgAsmExpression(node);
-     if (genericExpression != NULL)
-        {
-          string name = unparseExpression(genericExpression, NULL, BinaryAnalysis::RegisterDictionary::Ptr());
-          if (!name.empty())
-              nodelabel += string("\\n") + name;
         }
 
      if (SgAsmRiscOperation *riscOp = isSgAsmRiscOperation(node)) {

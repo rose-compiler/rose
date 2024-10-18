@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
@@ -1111,15 +1112,20 @@ SgAsmGenericFile::dumpAll(const std::string &dump_name)
         sections[i]->dump(dumpFile, "  ", -1);
     }
 
-    /* Dump interpretations that point only to this file. */
+    // Dump interpretations that point only to this file.
+    //
+    // [Robb Matzke 2024-10-18]: There are better ways of getting an assembly listing (e.g., Rose::BinaryAnalysis::Unparser) but
+    // they don't naively traverse the AST like the old method that was here, or the method that is here now.
     SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
     ASSERT_not_null(binary);
     const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
     for (size_t i=0; i<interps.size(); i++) {
         SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
         if (interp_files.size()==1 && interp_files[0]==this) {
-            std::string assembly = unparseAsmInterpretation(interps[i]);
-            fputs(assembly.c_str(), dumpFile);
+            AST::Traversal::forwardPre<SgAsmInstruction>(interps[i], [&dumpFile](SgAsmInstruction *insn) {
+                const std::string assembly = insn->toString() + "\n";
+                fputs(assembly.c_str(), dumpFile);
+            });
         }
     }
 }

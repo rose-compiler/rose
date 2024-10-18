@@ -2053,16 +2053,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
              }
 
        // DQ (10/18/2009): Added support to provide more information in the generated graphs of the AST.
-          SgAsmExpression* asmExpression = isSgAsmExpression(node);
-          if (asmExpression != nullptr)
-             {
-               string unparsedExpression = unparseExpression(asmExpression, nullptr, BinaryAnalysis::RegisterDictionary::Ptr());
-
-               additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
-               labelWithSourceCode = "\\n  " + unparsedExpression + 
-                                     "\\n  (generated label: " +  StringUtility::numberToString(asmExpression) + ")  ";
-             }
-
+          // [Robb Matzke 2024-10-18]: the global `::unparseExpression` function has gone away and it never really made sense to
+          // unparse part of an expression. Expressions are unparsed in the context of an instruction.
+          if (SgAsmExpression* asmExpression = isSgAsmExpression(node)) {
+              additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+              labelWithSourceCode = "\\n  (generated label: " +  StringUtility::numberToString(asmExpression) + ")  ";
+          }
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);

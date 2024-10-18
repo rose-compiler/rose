@@ -8,6 +8,8 @@
 #include "keep_going.h"
 #include "rose_config.h"
 
+#include <Rose/AST/Traversal.h>
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
@@ -1341,51 +1343,40 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
         unparseAsmFile(files[i], info);
     }
 
-    /* Generate an ASCII dump of disassembled instructions for interpretations that we didn't already dump in
-     * unparseAsmFile(). In other words, dump interpretations that span multiple files. */
-    size_t nwritten=0;
+    // Generate an ASCII dump of disassembled instructions for interpretations that we didn't already dump in `uparseAsmFile`. In
+    // other words, dump interpretations that span multiple files.
+    //
+    // [Robb Matzke 2024-10-18]: There are better ways of producing assembly listings, but they don't generally work directly on an
+    // AST. See Rose::BinaryAnalysis::Unparser.
+    size_t nwritten = 0;
     const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
-    for (size_t i=0; i<interps.size(); i++) {
-        SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
-        if (interp_files.size()>1) {
-            char interp_name[64];
-            snprintf(interp_name, sizeof(interp_name), "interp-%03zu.dump", nwritten++);
-            FILE *interp_file = fopen(interp_name, "wb");
-            ASSERT_not_null(interp_file);
-            fprintf(interp_file, "Interpretation spanning these input files:\n");
-            for (size_t j=0; j<interp_files.size(); j++) {
-                fprintf(interp_file, "  %s\n", interp_files[j]->get_name().c_str());
-            }
-            fputs(unparseAsmInterpretation(interps[i]).c_str(), interp_file);
-            fclose(interp_file);
+    for (SgAsmInterpretation *interp: interps) {
+        SgAsmGenericFilePtrList interp_files = interp->get_files();
+        if (interp_files.size() > 1) {
+            const std::string interp_name = (boost::format("interp-%03zu.dump") % nwritten++).str();
+            std::ofstream output(interp_name.c_str());
+            ASSERT_require(output);
+            output <<"Interpretation spanning these input files:\n";
+            for (SgAsmGenericFile *interp_file: interp_files)
+                output <<"  " <<interp_file->get_name() <<"\n";
+            AST::Traversal::forwardPre<SgAsmInstruction>(interp, [&output](SgAsmInstruction *insn) {
+                output <<insn->toString() <<"\n";
+            });
         }
     }
 
     /* Generate the rose_*.s (get_unparse_output_filename()) assembly file. It will contain all the interpretations. */
-     if (binary->get_unparse_output_filename()!="")
-        {
-#if 0
-          printf ("In Unparser::unparseFile(SgBinaryComposite,SgUnparse_Info): opening file: %s \n",binary->get_unparse_output_filename().c_str());
-#endif
-          FILE *asm_file = fopen(binary->get_unparse_output_filename().c_str(), "wb");
-          if (asm_file!=nullptr)
-             {
-               for (size_t i=0; i<interps.size(); i++)
-                  {
-#if 1
-                 // Original code.
-                    fputs(unparseAsmInterpretation(interps[i]).c_str(), asm_file);
-#else
-                 // Debugging support.
-                    string s = unparseAsmInterpretation(interps[i]);
-                    printf ("In Unparser::unparseFile(SgBinaryComposite,SgUnparse_Info): output result from unparseAsmInterpretation(): \ns = %s \n",s.c_str());
-                    fputs(s.c_str(), asm_file);
-#endif
-                  }
-
-               fclose(asm_file);
-             }
+    // [Robb Matzke 2024-10-18]: There are better ways to make assembly listings, but you need a Partitioner object.
+    if (binary->get_unparse_output_filename() != "") {
+        std::ofstream asm_file(binary->get_unparse_output_filename().c_str());
+        if (asm_file) {
+            for (size_t i = 0; i < interps.size(); ++i) {
+                AST::Traversal::forwardPre<SgAsmInstruction>(interps[i], [&asm_file](SgAsmInstruction *insn) {
+                    asm_file <<insn->toString() <<"\n";
+                });
+            }
         }
+    }
 }
 
 void
