@@ -9,6 +9,7 @@
 #include "rosePublicConfig.h"
 #ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
+#include <boost/scope_exit.hpp>
 #endif
 
 using namespace Rose;
@@ -177,39 +178,30 @@ bool
 SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
 {
 #ifdef ROSE_HAVE_LIBGCRYPT
-    struct T1: public AstSimpleProcessing {
-        NodeSelector *selector;
-        gcry_md_hd_t md; // message digest
-        T1(NodeSelector *selector): selector(selector) {
-            gcry_error_t error __attribute__((unused)) = gcry_md_open(&md, GCRY_MD_SHA1, 0);
-            assert(GPG_ERR_NO_ERROR==error);
+    gcry_md_hd_t md; // message digest
+    gcry_error_t error = gcry_md_open(&md, GCRY_MD_SHA1, 0);
+    ASSERT_always_require(GPG_ERR_NO_ERROR == error);
+    BOOST_SCOPE_EXIT(md) {
+        gcry_md_close(md);
+    } BOOST_SCOPE_EXIT_END;
+
+    AST::Traversal::forwardPre<SgNode>(this, [selector, &md](SgNode *node) {
+        if (selector && !(*selector)(node)) {
+            return;
+        } else if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
+            SgUnsignedCharList buf = insn->get_rawBytes();
+            gcry_md_write(md, &buf[0], buf.size());
+        } else if (SgAsmStaticData *data = isSgAsmStaticData(node)) {
+            SgUnsignedCharList buf = data->get_rawBytes();
+            gcry_md_write(md, &buf[0], buf.size());
         }
-        ~T1() {
-            gcry_md_close(md);
-        }
-        void visit(SgNode *node) {
-            if (selector && !(*selector)(node))
-                return;
-            SgAsmInstruction *insn = isSgAsmInstruction(node);
-            SgAsmStaticData *data = isSgAsmStaticData(node);
-            if (insn) {
-                SgUnsignedCharList buf = insn->get_rawBytes();
-                gcry_md_write(md, &buf[0], buf.size());
-            } else if (data) {
-                SgUnsignedCharList buf = data->get_rawBytes();
-                gcry_md_write(md, &buf[0], buf.size());
-            }
-        }
-        void read(uint8_t digest[20]) {
-            assert(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
-            gcry_md_final(md);
-            unsigned char *d = gcry_md_read(md, GCRY_MD_SHA1);
-            assert(d!=NULL);
-            memcpy(digest, d, 20);
-        }
-    } t1(selector);
-    t1.traverse(this, preorder);
-    t1.read(digest);
+    });
+
+    ASSERT_require(gcry_md_get_algo_dlen(GCRY_MD_SHA1) == 20);
+    gcry_md_final(md);
+    unsigned char *d = gcry_md_read(md, GCRY_MD_SHA1);
+    ASSERT_not_null(d);
+    memcpy(digest, d, 20);
     return true;
 #else
     ROSE_UNUSED(selector);

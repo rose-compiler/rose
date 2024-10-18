@@ -223,6 +223,7 @@ libroseLibraries = \
    $(top_builddir)/src/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
+   $(top_builddir)/src/AstNodes/BinaryAnalysis/libroseAstNodesBinaryAnalysis.la \
    $(top_builddir)/src/AstNodes/Expression/libroseAstNodesExpression.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)

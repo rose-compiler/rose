@@ -626,6 +626,7 @@ set(rose_LIB_OBJS
   failsafe
   trans_tracking
   astRewriteMechanism
+  roseAstNodesBinaryAnalysis
   roseAstNodesExpression
   roseNamespace
   roseBinaryAnalysis

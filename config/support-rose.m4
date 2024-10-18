@@ -1993,6 +1993,7 @@ src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/AstNodes/Makefile
+src/AstNodes/BinaryAnalysis/Makefile
 src/AstNodes/Expression/Makefile
 src/Makefile
 src/Rose/Makefile
