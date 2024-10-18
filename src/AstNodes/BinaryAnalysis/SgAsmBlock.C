@@ -1,11 +1,19 @@
-// SgAsmBlock member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <SgAsmBlock.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
-#include "stringify.h"
+#include <Rose/StringUtility/Diagnostics.h>
+
+#include <stringify.h>
+
+#include <SgAsmFunction.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Rose;
 
@@ -109,13 +117,13 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
     target_va = return_va = INVALID_ADDR;;
     if (!isBasicBlock())
         return false;
-    std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(this);
+    std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(this);
     assert(!insns.empty()); // basic blocks must have instructions
 
     // Check that all the successors point to functions entry addresses (other functions or this block's function).  There
     // might be one edge that points to the fall-through address of this block, and that's ok.
-    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(this);
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
+    SgAsmFunction *func = AST::Traversal::findParentTyped<SgAsmFunction>(this);
+    SgAsmInterpretation *interp = AST::Traversal::findParentTyped<SgAsmInterpretation>(func);
     std::set<rose_addr_t> callee_vas;
     if (interp) {
         const BinaryAnalysis::InstructionMap &imap = interp->get_instructionMap();
@@ -123,7 +131,7 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
         for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = (*si)->get_absoluteValue();
             if (SgAsmInstruction *target_insn = imap.get_value_or(successor_va, NULL)) {
-                SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn);
+                SgAsmFunction *target_func = AST::Traversal::findParentTyped<SgAsmFunction>(target_insn);
                 if (successor_va==target_func->get_entryVa()) {
                     callee_vas.insert(successor_va); // branches to a function entry point
                 } else if (return_va!=INVALID_ADDR) {
@@ -175,7 +183,7 @@ SgAsmBlock::removeStatement( SgAsmStatement* statement )
 
 SgAsmFunction *
 SgAsmBlock::get_enclosingFunction() const {
-        return SageInterface::getEnclosingNode<SgAsmFunction>(this);
+    return AST::Traversal::findParentTyped<SgAsmFunction>(const_cast<SgAsmBlock*>(this));
 }
 
 bool

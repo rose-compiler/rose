@@ -1,12 +1,16 @@
-/* SgAsmInterpretation member definitions. Do not move them to src/ROSETTA/Grammar/BinaryInstructions.code (or any *.code
- * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmInterpretation.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
+#include <SgAsmGenericFile.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmInstruction.h>
+
+using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
 SgAsmGenericFilePtrList
@@ -16,7 +20,7 @@ SgAsmInterpretation::get_files() const
     std::set<SgAsmGenericFile*> files;
     for (size_t i=0; i<headers.size(); i++) {
         SgAsmGenericHeader *header = headers[i];
-        SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(header);
+        SgAsmGenericFile *file = AST::Traversal::findParentTyped<SgAsmGenericFile>(header);
         ROSE_ASSERT(file!=NULL);
         files.insert(file);
     }
@@ -33,15 +37,9 @@ SgAsmInterpretation::insert_instructions(InstructionMap &imap/*in,out*/)
 void
 SgAsmInterpretation::insertInstructions(InstructionMap &imap/*in,out*/)
 {
-    struct T: AstSimpleProcessing {
-        InstructionMap &imap;
-        T(InstructionMap &imap): imap(imap) {}
-        void visit(SgNode *node) {
-            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
-                imap[insn->get_address()] = insn;
-        }
-    } t(imap);
-    t.traverse(this, preorder);
+    AST::Traversal::forwardPre<SgAsmInstruction>(this, [&imap](SgAsmInstruction *insn) {
+        imap[insn->get_address()] = insn;
+    });
 }
 
 void
@@ -53,15 +51,9 @@ SgAsmInterpretation::erase_instructions(InstructionMap &imap/*in,out*/)
 void
 SgAsmInterpretation::eraseInstructions(InstructionMap &imap/*in,out*/)
 {
-    struct T: AstSimpleProcessing {
-        InstructionMap &imap;
-        T(InstructionMap &imap): imap(imap) {}
-        void visit(SgNode *node) {
-            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
-                imap.erase(insn->get_address());
-        }
-    } t(imap);
-    t.traverse(this, preorder);
+    AST::Traversal::forwardPre<SgAsmInstruction>(this, [&imap](SgAsmInstruction *insn) {
+        imap.erase(insn->get_address());
+    });
 }
 
 InstructionMap &

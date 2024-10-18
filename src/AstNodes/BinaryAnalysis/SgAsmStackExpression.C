@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <SgAsmStackExpression.h>
 
 int
 SgAsmStackExpression::get_stack_position() const {

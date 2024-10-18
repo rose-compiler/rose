@@ -1,6 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <SgAsmOperandList.h>
+
+#include <SgAsmExpression.h>
 
 void
 SgAsmOperandList::append_operand(SgAsmExpression* operand) {

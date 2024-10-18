@@ -1,12 +1,18 @@
-// SgAsmFunction member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmFunction.h>
+
+#include <Rose/AST/Traversal.h>
+#include <Rose/StringUtility/Diagnostics.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmInstruction.h>
+#include <SgAsmStaticData.h>
+#include <Cxx_GrammarDowncast.h>
 
 #include "stringify.h"
 #include <ROSE_UNUSED.h>
 
-#include "rosePublicConfig.h"
 #ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #include <boost/scope_exit.hpp>
@@ -127,51 +133,44 @@ SgAsmFunction::reasonString(bool do_pad, unsigned r)
 size_t
 SgAsmFunction::get_extent(AddressIntervalSet *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
 {
-    struct T1: public AstSimpleProcessing {
-        AddressIntervalSet *extents;
-        rose_addr_t *lo_addr, *hi_addr;
-        NodeSelector *selector;
-        size_t nnodes;
-        T1(AddressIntervalSet *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
-            : extents(extents), lo_addr(lo_addr), hi_addr(hi_addr), selector(selector), nnodes(0) {
-            if (lo_addr)
-                *lo_addr = 0;
-            if (hi_addr)
-                *hi_addr = 0;
-        }
-        void visit(SgNode *node) {
-            if (selector && !(*selector)(node))
-                return;
-            SgAsmInstruction *insn = isSgAsmInstruction(node);
-            SgAsmStaticData *data = isSgAsmStaticData(node);
-            rose_addr_t lo, hi;
-            if (insn) {
-                lo = insn->get_address();
-                hi = lo + insn->get_size();
-            } else if (data) {
-                lo = data->get_address();
-                hi = lo + data->get_size();
-            } else {
-                return;
-            }
+    if (lo_addr)
+        *lo_addr = 0;
+    if (hi_addr)
+        *hi_addr = 0;
+    size_t nnodes = 0;
 
-            if (0==nnodes++) {
-                if (lo_addr)
-                    *lo_addr = lo;
-                if (hi_addr)
-                    *hi_addr = hi;
-            } else {
-                if (lo_addr)
-                    *lo_addr = std::min(*lo_addr, lo);
-                if (hi_addr)
-                    *hi_addr = std::max(*hi_addr, hi);
-            }
-            if (extents && hi>lo)
-                extents->insert(AddressInterval::baseSize(lo, hi-lo));
+    AST::Traversal::forwardPre<SgNode>(this, [extents, lo_addr, hi_addr, selector, &nnodes](SgNode *node) {
+        if (selector && !(*selector)(node))
+            return;
+        SgAsmInstruction *insn = isSgAsmInstruction(node);
+        SgAsmStaticData *data = isSgAsmStaticData(node);
+        rose_addr_t lo, hi;
+        if (insn) {
+            lo = insn->get_address();
+            hi = lo + insn->get_size();
+        } else if (data) {
+            lo = data->get_address();
+            hi = lo + data->get_size();
+        } else {
+            return;
         }
-    } t1(extents, lo_addr, hi_addr, selector);
-    t1.traverse(this, preorder);
-    return t1.nnodes;
+
+        if (0==nnodes++) {
+            if (lo_addr)
+                *lo_addr = lo;
+            if (hi_addr)
+                *hi_addr = hi;
+        } else {
+            if (lo_addr)
+                *lo_addr = std::min(*lo_addr, lo);
+            if (hi_addr)
+                *hi_addr = std::max(*hi_addr, hi);
+        }
+        if (extents && hi>lo)
+            extents->insert(AddressInterval::baseSize(lo, hi-lo));
+    });
+
+    return nnodes;
 }
 
 bool

@@ -1,13 +1,15 @@
-// SgAsmPowerpcInstruction member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmPowerpcInstruction.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
-using namespace Rose;                                   // temporary until this lives in "rose"
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmOperandList.h>
+#include <Cxx_GrammarDowncast.h>
+
+using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
 // class method

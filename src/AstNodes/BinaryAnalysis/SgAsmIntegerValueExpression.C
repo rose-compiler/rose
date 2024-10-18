@@ -1,15 +1,28 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmIntegerValueExpression.h>
+
+#include <Rose/AST/Traversal.h>
+#include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/NumberToString.h>
+
+#include <SgAsmBlock.h>
+#include <SgAsmFunction.h>
+#include <SgAsmGenericSection.h>
+#include <SgAsmGenericString.h>
+#include <SgAsmGenericSymbol.h>
+#include <SgAsmPEImportItem.h>
+#include <SgAsmPERVASizePair.h>
+#include <SgAsmStatement.h>
+#include <SgAsmType.h>
+#include <Cxx_GrammarDowncast.h>
 
 #include "integerOps.h"
 #include "stringify.h"
-#include <Rose/Diagnostics.h>
+
 #include <Sawyer/BitVector.h>
 
 using namespace Rose;
-
-
 
 SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(uint64_t value, SgAsmType *type) {
     initializeProperties();
@@ -82,7 +95,7 @@ SgAsmIntegerValueExpression::get_label(bool /*quiet=false*/) const
     } else if (isSgAsmInstruction(node)) {
         refkind = "Insn";
     } else if (isSgAsmStaticData(node)) {
-        SgAsmBlock *blk = SageInterface::getEnclosingNode<SgAsmBlock>(node);
+        SgAsmBlock *blk = AST::Traversal::findParentTyped<SgAsmBlock>(node);
         if (blk && 0!=(blk->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
             refkind = "JumpTable";
         } else {

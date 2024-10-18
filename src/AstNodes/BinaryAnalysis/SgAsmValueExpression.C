@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmValueExpression.h>
 
 SgAsmValueExpression*
 SgAsmValueExpression::get_unfolded_expression_tree() const {

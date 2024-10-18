@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
+#include <SgAsmStaticData.h>
 
 const SgUnsignedCharList&
 SgAsmStaticData::get_raw_bytes() const {

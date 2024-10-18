@@ -1,8 +1,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmExpression.h>
 
-/** Width of expression in bits, according to its type. */
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmType.h>
+#include <Cxx_GrammarDowncast.h>
+
 size_t
 SgAsmExpression::get_nBits() const {
     SgAsmType *type = get_type();

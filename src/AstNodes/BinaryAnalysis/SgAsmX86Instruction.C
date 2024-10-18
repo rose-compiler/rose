@@ -1,21 +1,13 @@
-// SgAsmX86Instruction member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmX86Instruction.h>
 
-#include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
-#include "x86InstructionProperties.h"
+#include <Rose/StringUtility/NumberToString.h>
 
-using namespace Rose;                                   // temporary until this lives in "rose"
-using namespace Rose::Diagnostics;
+using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
 unsigned

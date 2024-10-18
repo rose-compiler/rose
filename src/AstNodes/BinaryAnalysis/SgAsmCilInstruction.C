@@ -1,8 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmCilInstruction.h>
 
-using namespace Rose;                                   // temporary until this lives in "rose"
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
+
+using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
 // Temporary enumeration of all possibilities

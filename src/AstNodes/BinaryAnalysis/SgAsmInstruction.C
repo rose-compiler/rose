@@ -1,8 +1,8 @@
-// SgAsmInstruction member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <SgAsmInstruction.h>
 
+#include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
@@ -10,7 +10,15 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Diagnostics.h>
 
-#include "AsmUnparser_compat.h"
+#include <SgAsmBinaryAdd.h>
+#include <SgAsmBinaryMultiply.h>
+#include <SgAsmBlock.h>
+#include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmIntegerValueExpression.h>
+#include <SgAsmInterpretation.h>
+#include <SgAsmMemoryReferenceExpression.h>
+#include <SgAsmOperandList.h>
+#include <Cxx_GrammarDowncast.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -109,7 +117,7 @@ SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &ins
 bool
 SgAsmInstruction::isFirstInBlock()
 {
-    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
+    SgAsmBlock *bb = AST::Traversal::findParentTyped<SgAsmBlock>(this);
     if (bb) {
         const SgAsmStatementPtrList &stmts = bb->get_statementList();
         for (size_t i=0; i<stmts.size(); ++i) {
@@ -123,7 +131,7 @@ SgAsmInstruction::isFirstInBlock()
 bool
 SgAsmInstruction::isLastInBlock()
 {
-    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
+    SgAsmBlock *bb = AST::Traversal::findParentTyped<SgAsmBlock>(this);
     if (bb) {
         const SgAsmStatementPtrList &stmts = bb->get_statementList();
         for (size_t i=stmts.size(); i>0; --i) {
@@ -171,7 +179,7 @@ bool
 SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool /*allow_branch=false*/,
                             bool relax_stack_semantics/*false*/)
 {
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(insns.front());
+    SgAsmInterpretation *interp = AST::Traversal::findParentTyped<SgAsmInterpretation>(insns.front());
     NoOperation analyzer = buildNopAnalyzer(interp);
 
     if (relax_stack_semantics) {
@@ -189,7 +197,7 @@ std::vector<std::pair<size_t,size_t> >
 SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool /*allow_branch=false*/,
                                        bool relax_stack_semantics/*false*/)
 {
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(insns.front());
+    SgAsmInterpretation *interp = AST::Traversal::findParentTyped<SgAsmInterpretation>(insns.front());
     NoOperation analyzer = buildNopAnalyzer(interp);
 
     if (relax_stack_semantics) {
@@ -220,55 +228,22 @@ bool SgAsmInstruction::isUnknown() const {
 
 std::string
 SgAsmInstruction::toString() const {
-    if (isSgAsmUserInstruction(this))
-        return architecture()->toString(this);
-
-    // Old backward-compatible stuff that we'd like to eventually remove
-    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
-    std::string retval = StringUtility::addrToString(get_address()) + ": " + unparseMnemonic(insn);
-    if (SgAsmOperandList *opList = insn->get_operandList()) {
-        const SgAsmExpressionPtrList &operands = opList->get_operands();
-        for (size_t i = 0; i < operands.size(); ++i) {
-            retval += i == 0 ? " " : ", ";
-            retval += StringUtility::trim(unparseExpression(operands[i], NULL, RegisterDictionary::Ptr()));
-        }
-    }
-    return retval;
+    return architecture()->toString(this);
 }
 
 std::string
 SgAsmInstruction::toStringNoAddr() const {
-    if (isSgAsmUserInstruction(this))
-        return architecture()->toStringNoAddr(this);
-
-    // Old backward-compatible stuff that we'd like to eventually remove
-    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
-    std::string retval = unparseMnemonic(insn);
-    if (SgAsmOperandList *opList = insn->get_operandList()) {
-        const SgAsmExpressionPtrList &operands = opList->get_operands();
-        for (size_t i = 0; i < operands.size(); ++i) {
-            retval += i == 0 ? " " : ", ";
-            retval += StringUtility::trim(unparseExpression(operands[i], NULL, RegisterDictionary::Ptr()));
-        }
-    }
-    return retval;
+    return architecture()->toStringNoAddr(this);
 }
 
 std::set<rose_addr_t>
 SgAsmInstruction::explicitConstants() const {
-    struct T1: AstSimpleProcessing {
-        std::set<rose_addr_t> values;
-        void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(node))
-                values.insert(ive->get_absoluteValue());
-        }
-    } t1;
-#if 0 // [Robb Matzke 2019-02-06]: ROSE API deficiency: cannot traverse a const AST
-    t1.traverse(this, preorder);
-#else
-    t1.traverse(const_cast<SgAsmInstruction*>(this), preorder);
-#endif
-    return t1.values;
+    std::set<rose_addr_t> values;
+    AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(const_cast<SgAsmInstruction*>(this),
+                                                            [&values](SgAsmIntegerValueExpression *ive) {
+                                                                values.insert(ive->get_absoluteValue());
+                                                            });
+    return values;
 }
 
 
