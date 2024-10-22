@@ -489,6 +489,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
    // MAXBYTES, MAXFLOATPRECISION, MAXFIXEDPRECISION, MAXINT, MAXINTSIZE, MAXSTOP
    //
+   else if (ATmatch(term, "MAXBITS")) {
+     expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXBITS"}, scope);
+   }
    else if (ATmatch(term, "MAXBYTES")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXBYTES"}, scope);
    }
@@ -557,7 +560,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
    //TODO:
    //      'IMPLINTSIZE'    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
-   //      'MAXBITS'                                 -> IntegerMachineParameter {cons("MAXBITS")}
    //      'MAXSIGNDIGITS'                           -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
    //      'MAXTABLESIZE'                            -> IntegerMachineParameter {cons("MAXTABLESIZE")}
    //      'MINFRACTION'    '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINFRACTION")}
