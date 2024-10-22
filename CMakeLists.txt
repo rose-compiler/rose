@@ -68,10 +68,15 @@ if(NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
                       "Or add -DBLT_SOURCE_DIR=/path/to/blt to your CMake command." )
 endif()
 
-# Default to C++14 if not set so GTest/GMock can build
-if(NOT BLT_CXX_STD)
+# If the user sets CMAKE_CXX_STANDARD, use that for BLT_CXX_STD as well
+if(CMAKE_CXX_STANDARD)
+  set(BLT_CXX_STD "c++${CMAKE_CXX_STANDARD}" CACHE STRING "")
+elseif(NOT BLT_CXX_STD)
+  # Default to C++14 if not set so GTest/GMock can build
   set(BLT_CXX_STD "c++14" CACHE STRING "")
+  set(CMAKE_CXX_STANDARD 14)
 endif()
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
 
@@ -123,9 +128,6 @@ else()
   set(QUIET TRUE)
   set(CMAKE_VERBOSE_MAKEFILE FALSE)
 endif()
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_SHARED_LIBS "Build all libraries shared" FALSE)
 
