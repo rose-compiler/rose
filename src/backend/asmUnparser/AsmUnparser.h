@@ -26,7 +26,8 @@ namespace Disassembler {
 class Base;
 } // namespace
 
-/** Unparses binary AST into text.
+// [Robb Matzke 2024-10-22]: Deprecated. Use Rose::BinaryAnalysis::Unparser
+/* Unparses binary AST into text.
  *
  *  This class operates on part of an AST corresponding to a binary file (executable, library, etc) and generates output. It is
  *  intended to be highly customizable and has been used to generate both assembly listings and Graphviz files.
@@ -257,18 +258,18 @@ class Base;
 class ROSE_DLL_API AsmUnparser {
 public:
     enum Organization {
-        ORGANIZED_BY_AST,               /**< Output follows the AST organization.  In other words, the instructions and data
+        ORGANIZED_BY_AST,               /*    Output follows the AST organization.  In other words, the instructions and data
                                          *    for a block appear consecutively, the blocks of a function appear consecutively,
                                          *    and the functions of an interpretation appear consecutively.  This is the default
                                          *    format since it provides the most information about the organization of the
                                          *    binary file. */
-        ORGANIZED_BY_ADDRESS            /**< Output of instructions and data are organized by address.  Specifically, in the
+        ORGANIZED_BY_ADDRESS            /*    Output of instructions and data are organized by address.  Specifically, in the
                                          *    case of overlapping instructions and/or data, the starting address is used to
                                          *    sort the output.  This organization is typical of more traditional
                                          *    disassemblers. */
     };
 
-    /** Control Flow Graph type.  The unparser supports the standard binary control flow graph data type.  This could be
+    /*  Control Flow Graph type.  The unparser supports the standard binary control flow graph data type.  This could be
      *  templatized, but we're planning to move to a non-template graph type in the near future [RPM 2012-04-18]. */
     typedef Rose::BinaryAnalysis::ControlFlow::Graph CFG;
     typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
@@ -279,71 +280,71 @@ public:
 
     class UnparserCallback {
     public:
-        /** Arguments common to all unparser callback lists. */
+        /*  Arguments common to all unparser callback lists. */
         struct GeneralArgs {
             GeneralArgs(AsmUnparser *unparser, std::ostream &output)
                 : unparser(unparser), output(output) {}
-            AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
-            std::ostream &output;       /**< Where output should be sent. */
+            AsmUnparser *unparser;      /* The object doing the unparsing, from which this callback is invoked. */
+            std::ostream &output;       /* Where output should be sent. */
         };
 
-        /** Arguments passed to instruction unparsing callbacks. */
+        /*  Arguments passed to instruction unparsing callbacks. */
         struct InsnArgs: public GeneralArgs {
             InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
                 : GeneralArgs(unparser, output), insn(insn), position_in_block(position_in_block) {}
-            SgAsmInstruction *get_node() const { return insn; } /**< Return the node being unparsed. */
-            SgAsmInstruction *insn;     /**< The instruction being unparsed. */
-            size_t position_in_block;   /**< The index position of the instruction within the basic block, or -1 if unknown. */
+            SgAsmInstruction *get_node() const { return insn; } /* Return the node being unparsed. */
+            SgAsmInstruction *insn;     /* The instruction being unparsed. */
+            size_t position_in_block;   /* The index position of the instruction within the basic block, or -1 if unknown. */
         };
 
-        /** Arguments passed to basic block unparsing callbacks. */
+        /*  Arguments passed to basic block unparsing callbacks. */
         struct BasicBlockArgs: public GeneralArgs {
             BasicBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
                            const std::vector<SgAsmInstruction*> &insns)
                 : GeneralArgs(unparser, output), block(block), insns(insns) {}
-            SgAsmBlock *get_node() const { return block; } /**< Return the node being unparsed. */
-            SgAsmBlock *block;          /**< The basic block being unparsed. */
-            const std::vector<SgAsmInstruction*> &insns; /**< The instructions contained in this basic block. */
+            SgAsmBlock *get_node() const { return block; } /* Return the node being unparsed. */
+            SgAsmBlock *block;          /* The basic block being unparsed. */
+            const std::vector<SgAsmInstruction*> &insns; /* The instructions contained in this basic block. */
         };
 
-        /** Arguments passed to data unparsing callbacks. */
+        /*  Arguments passed to data unparsing callbacks. */
         struct StaticDataArgs: public GeneralArgs {
             StaticDataArgs(AsmUnparser *unparser, std::ostream &output, SgAsmStaticData *data, size_t position_in_block)
                 : GeneralArgs(unparser, output), data(data), position_in_block(position_in_block) {}
-            SgAsmStaticData *get_node() const { return data; } /**< Return the node being unparsed. */
-            SgAsmStaticData *data;      /**< The data being unparsed. */
-            size_t position_in_block;   /**< The index position of the data within the data block, or -1 if unknown. */
+            SgAsmStaticData *get_node() const { return data; } /* Return the node being unparsed. */
+            SgAsmStaticData *data;      /* The data being unparsed. */
+            size_t position_in_block;   /* The index position of the data within the data block, or -1 if unknown. */
         };
 
-        /** Arguments passed to data block unparsing callbacks. */
+        /*  Arguments passed to data block unparsing callbacks. */
         struct DataBlockArgs: public GeneralArgs {
             DataBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
                           const std::vector<SgAsmStaticData*> &datalist)
                 : GeneralArgs(unparser, output), block(block), datalist(datalist) {}
-            SgAsmBlock *get_node() const { return block; } /**< Return the node being unparsed. */
-            SgAsmBlock *block;          /**< The block of data being unparsed. */
-            const std::vector<SgAsmStaticData*> &datalist; /**< The data items contained in this data block. */
+            SgAsmBlock *get_node() const { return block; } /* Return the node being unparsed. */
+            SgAsmBlock *block;          /* The block of data being unparsed. */
+            const std::vector<SgAsmStaticData*> &datalist; /* The data items contained in this data block. */
         };
 
-        /** Arguments passed to function unparsing callbacks. */
+        /*  Arguments passed to function unparsing callbacks. */
         struct FunctionArgs: public GeneralArgs {
             FunctionArgs(AsmUnparser *unparser, std::ostream &output, SgAsmFunction *func)
                 : GeneralArgs(unparser, output), func(func) {}
-            SgAsmFunction *get_node() const { return func; } /**< Return the node being unparsed. */
-            SgAsmFunction *func;        /**< The function being unparsed. */
+            SgAsmFunction *get_node() const { return func; } /* Return the node being unparsed. */
+            SgAsmFunction *func;        /* The function being unparsed. */
         };
 
-        /** Arguments passed to interpretation unparsing callbacks. */
+        /*  Arguments passed to interpretation unparsing callbacks. */
         struct InterpretationArgs: public GeneralArgs {
             InterpretationArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInterpretation *interp)
                 : GeneralArgs(unparser, output), interp(interp) {}
-            SgAsmInterpretation *get_node() const { return interp; } /**< Return the node being unparsed. */
-            SgAsmInterpretation *interp; /**< The interpretation being unparsed. */
+            SgAsmInterpretation *get_node() const { return interp; } /* Return the node being unparsed. */
+            SgAsmInterpretation *interp; /* The interpretation being unparsed. */
         };
         
         virtual ~UnparserCallback() {}
 
-        /** Default callbacks. The default is to abort, because if these are called it means one of three things:
+        /*  Default callbacks. The default is to abort, because if these are called it means one of three things:
          *  <ol>
          *     <li>The arguments are wrong in the subclass and the subclass therefore isn't providing an implementation
          *         when it thinks it is.</li>
@@ -359,14 +360,14 @@ public:
         virtual bool operator()(bool /*enabled*/, const DataBlockArgs&)      { abort(); return false; }
         virtual bool operator()(bool /*enabled*/, const FunctionArgs&)       { abort(); return false; }
         virtual bool operator()(bool /*enabled*/, const InterpretationArgs&) { abort(); return false; }
-        /** @} */
+        /* @} */
     };
 
     /**************************************************************************************************************************
      *                                  Instruction Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to print skip/back information when an instruction is entered. Skip/back information can be enabled/disabled
+    /*  Functor to print skip/back information when an instruction is entered. Skip/back information can be enabled/disabled
      *  across the entire unparser by calling the set_skipback_reporting() method. This callback can be removed per object type
      *  without confusing other objects that define a similar callbacks (for example, to disable skip/back reporting for
      *  instructions but leave it in place for static data). */
@@ -375,7 +376,7 @@ public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit basic block separation in output organized by address.  This does nothing if the output is organized by
+    /*  Functor to emit basic block separation in output organized by address.  This does nothing if the output is organized by
      *  AST since the basic block callbacks handle it in that case. */
     class InsnBlockSeparation: public UnparserCallback {
     public:
@@ -384,20 +385,20 @@ public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit function information at entry points.  This does nothing if the output is organized by AST since
+    /*  Functor to emit function information at entry points.  This does nothing if the output is organized by AST since
      * function callbacks will handle it in that case. */
     class InsnFuncEntry: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit instruction address. This isn't necessary if you use the InsnRawBytes functor. */
+    /*  Functor to emit instruction address. This isn't necessary if you use the InsnRawBytes functor. */
     class InsnAddress: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit instruction bytes. The output is similar to the hexdump utility. This callback emits its own line
+    /*  Functor to emit instruction bytes. The output is similar to the hexdump utility. This callback emits its own line
      *  prefix information via SgAsmExecutableFileFormat::hexdump() rather than using the format set with the unparser's
      *  set_prefix_format(). See class HexdumpFormat for how to configure the hex dumper. */
     class InsnRawBytes: public UnparserCallback {
@@ -410,50 +411,50 @@ public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit info about the first instruction of a block.  If the instruction is the first instruction of a block,
+    /*  Functor to emit info about the first instruction of a block.  If the instruction is the first instruction of a block,
      *  then certain information is printed.  The output for all instructions is always the same width so that things line up
      *  properly between instructions that are first in a block and those that aren't.  This callback is a no-op unless the
      *  output is organized by address. */
     class InsnBlockEntry: public UnparserCallback {
     public:
-        bool show_function;             /**< If true (the default) show entry address of function owning block. */
-        bool show_reasons;              /**< If true (the default) show block reason bits. */
+        bool show_function;             /* If true (the default) show entry address of function owning block. */
+        bool show_reasons;              /* If true (the default) show block reason bits. */
         InsnBlockEntry(): show_function(true), show_reasons(true) {}
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit the numeric stack delta at each instruction. */
+    /*  Functor to emit the numeric stack delta at each instruction. */
     class InsnStackDelta: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
     
-    /** Functor to emit the entire instruction.  Output includes the mnemonic, arguments, and comments. */
+    /*  Functor to emit the entire instruction.  Output includes the mnemonic, arguments, and comments. */
     class InsnBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit a note about instructions that have no effect.  If the instruction is part of a sequence of
+    /*  Functor to emit a note about instructions that have no effect.  If the instruction is part of a sequence of
      * instructions that has no effect, then this callback prints " !EFFECT" or something similar. */
     class InsnNoEffect: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit instruction comment, if any. */
+    /*  Functor to emit instruction comment, if any. */
     class InsnComment: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Functor to emit instruction line termination. */
+    /*  Functor to emit instruction line termination. */
     class InsnLineTermination: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
-    /** Update instruction end address for skip/back reporting.  This callback should probably not be removed if skip/back
+    /*  Update instruction end address for skip/back reporting.  This callback should probably not be removed if skip/back
      *  reporting is enabled and output is organized by address. Removing it could cause other object types to loose track of
      *  where we are in the address space and thus make incorrect skip/back reports. */
     class InsnSkipBackEnd: public UnparserCallback {
@@ -465,47 +466,47 @@ public:
      *                                  Basic Block Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to emit reasons this block is part of a function. */
+    /*  Functor to emit reasons this block is part of a function. */
     class BasicBlockReasons: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit control flow predecessor addresses.  This functor outputs a line containing the addresses of all known
+    /*  Functor to emit control flow predecessor addresses.  This functor outputs a line containing the addresses of all known
      *  predecessors according to the unparser's control flow graph. */
     class BasicBlockPredecessors: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to update unparser's is_noop array. */
+    /*  Functor to update unparser's is_noop array. */
     class BasicBlockNoopUpdater: public UnparserCallback {
     public:
-        bool debug;             /**< If set, then emit information about the no-op subsequences. */
+        bool debug;             /* If set, then emit information about the no-op subsequences. */
         BasicBlockNoopUpdater(): debug(false) {}
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit a warning if the block contains any no-effect sequences. */
+    /*  Functor to emit a warning if the block contains any no-effect sequences. */
     class BasicBlockNoopWarning: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit the instructions that belong to a basic block.  This is a no-op except when output is organized by
+    /*  Functor to emit the instructions that belong to a basic block.  This is a no-op except when output is organized by
      *  AST. */
     class BasicBlockBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit basic block outgoing stack delta. */
+    /*  Functor to emit basic block outgoing stack delta. */
     class BasicBlockOutgoingStackDelta: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
     
-    /** Functor to emit block successor list.  If the unparser's control flow graph is not empty, then we use it to find
+    /*  Functor to emit block successor list.  If the unparser's control flow graph is not empty, then we use it to find
      *  successors, otherwise we consult the successors cached in the AST.  The AST-cached successors were probably cached by
      *  the instruction partitioner (see Partitioner class), which does fairly extensive analysis -- certainly more than just
      *  looking at the last instruction of the block.  */
@@ -514,13 +515,13 @@ public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit a blank line after every basic block. */
+    /*  Functor to emit a blank line after every basic block. */
     class BasicBlockLineTermination: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to clean up after basic block.  This doesn't produce any output; it just resets some unparser state back to ane
+    /*  Functor to clean up after basic block.  This doesn't produce any output; it just resets some unparser state back to ane
      *  values. */
     class BasicBlockCleanup: public UnparserCallback {
     public:
@@ -531,7 +532,7 @@ public:
      *                                  Static Data Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to print skip/back information when a static data block is entered. Skip/back information can be
+    /*  Functor to print skip/back information when a static data block is entered. Skip/back information can be
      *  enabled/disabled across the entire unparser by calling the set_skipback_reporting() method. This callback can be
      *  removed per object type without confusing other objects that define a similar callbacks (for example, to disable
      *  skip/back reporting for static data blocks but leave it in place for instructions). */
@@ -540,7 +541,7 @@ public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit data block separation in output organized by address.  This does nothing if the output is organized by
+    /*  Functor to emit data block separation in output organized by address.  This does nothing if the output is organized by
      *  AST since the data block callbacks handle it in that case. */
     class StaticDataBlockSeparation: public UnparserCallback {
     public:
@@ -549,7 +550,7 @@ public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit the bytes of the data block. */
+    /*  Functor to emit the bytes of the data block. */
     class StaticDataRawBytes: public UnparserCallback {
     public:
         bool show_address;              /* Should we show the address in the left margin? */
@@ -567,37 +568,37 @@ public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit info about the first data node of a block.  If the node is the first data node of a data block,
+    /*  Functor to emit info about the first data node of a block.  If the node is the first data node of a data block,
      *  then certain information is printed.  The output for all nodes is always the same width so that things line up
      *  properly between nodes that are first in a block and those that aren't.  This callback is a no-op unless the
      *  output is organized by address. */
     class StaticDataBlockEntry: public UnparserCallback {
     public:
-        bool show_function;             /**< If true (the default) show entry address of function owning block. */
-        bool show_reasons;              /**< If true (the default) show block reason bits. */
+        bool show_function;             /* If true (the default) show entry address of function owning block. */
+        bool show_reasons;              /* If true (the default) show block reason bits. */
         StaticDataBlockEntry(): show_function(true), show_reasons(true) {}
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit details about static data. */
+    /*  Functor to emit details about static data. */
     class StaticDataDetails: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit optional static data comment. */
+    /*  Functor to emit optional static data comment. */
     class StaticDataComment: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit a blank line after every data block. */
+    /*  Functor to emit a blank line after every data block. */
     class StaticDataLineTermination: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Disassembles static data as if it were code.   This callback only does something if it is first initialized with a
+    /*  Disassembles static data as if it were code.   This callback only does something if it is first initialized with a
      *  disassembler. It can also be initialized with an unparser, but that is optional (the default unparser will be the same
      *  as a default-constructed AsmUnparser except that a pre-instruction callback is added to print the string "(data)" in
      *  front of every instruction as a reminder that the instruction came from what ROSE considered to be static data. */
@@ -623,7 +624,7 @@ public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Update static data end address for skip/back reporting.  This callback should probably not be removed if skip/back
+    /*  Update static data end address for skip/back reporting.  This callback should probably not be removed if skip/back
      *  reporting is enabled and output is organized by address. Removing it could cause other object types to loose track of
      *  where we are in the address space and thus make incorrect skip/back reports. */
     class StaticDataSkipBackEnd: public UnparserCallback {
@@ -635,19 +636,19 @@ public:
      *                                  Data Block Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to print some information at the beginning of a data block. */
+    /*  Functor to print some information at the beginning of a data block. */
     class DataBlockTitle: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
-    /** Functor to emit each data statement of the block.  This is a no-op except when output is organized by AST. */
+    /*  Functor to emit each data statement of the block.  This is a no-op except when output is organized by AST. */
     class DataBlockBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const DataBlockArgs &args);
     };
 
-    /** Functor to emit a blank line after every data block. */
+    /*  Functor to emit a blank line after every data block. */
     class DataBlockLineTermination: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const DataBlockArgs &args);
@@ -657,57 +658,57 @@ public:
      *                                  Function Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to emit function entry address. */
+    /*  Functor to emit function entry address. */
     class FunctionEntryAddress: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to emit function separator. */
+    /*  Functor to emit function separator. */
     class FunctionSeparator: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to emit function reasons. */
+    /*  Functor to emit function reasons. */
     class FunctionReasons: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to emit function name. */
+    /*  Functor to emit function name. */
     class FunctionName: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to emit function line termination. */
+    /*  Functor to emit function line termination. */
     class FunctionLineTermination: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to print function comments followed by a linefeed if necessary. */
+    /*  Functor to print function comments followed by a linefeed if necessary. */
     class FunctionComment: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to print caller addresses. Callers are only shown if a control flow graph is present (see
+    /*  Functor to print caller addresses. Callers are only shown if a control flow graph is present (see
      * add_control_flow_graph()). */
     class FunctionPredecessors: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to print callee addresses. Prints a list of functions called by this function.  Callees are only shown if a
+    /*  Functor to print callee addresses. Prints a list of functions called by this function.  Callees are only shown if a
      *  control flow graph is present (see add_control_flow_graph()). */
     class FunctionSuccessors: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to emit function attributes.  Attributes are emitted one per line and each line is prefixed with a user
+    /*  Functor to emit function attributes.  Attributes are emitted one per line and each line is prefixed with a user
      *  supplied string.  The string is a printf format string and may contain one integer specifier for the function entry
      *  address.   The default is "0x%08llx: ". */
     class FunctionAttributes: public UnparserCallback {
@@ -715,7 +716,7 @@ public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to unparse the function body.  This is a no-op except when output is organized by AST. */
+    /*  Functor to unparse the function body.  This is a no-op except when output is organized by AST. */
     class FunctionBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
@@ -725,13 +726,13 @@ public:
      *                                  Interpretation Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to emit interpretation name. */
+    /*  Functor to emit interpretation name. */
     class InterpName: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InterpretationArgs &args);
     };
 
-    /** Functor to emit the functions in an interpretation.  This is a no-op except when output is organized by AST. */
+    /*  Functor to emit the functions in an interpretation.  This is a no-op except when output is organized by AST. */
     class InterpBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InterpretationArgs &args);
@@ -742,7 +743,7 @@ public:
      * Don't forget to modify init() to actually add these to callback lists if desired.
      **************************************************************************************************************************/
 
-    /** @name Functors
+    /* @name Functors
      * 
      *  Functors used by the base class.  We declare these as public so users can have an address by which to search
      *  through the various callback lists.  For instance, if the user doesn't want to see instruction raw bytes, they just
@@ -799,46 +800,46 @@ public:
 
     InterpName interpName;
     InterpBody interpBody;
-    /** @} */
+    /* @} */
 
     /**************************************************************************************************************************
      *                                  Public methods
      **************************************************************************************************************************/
 
-    /** Constructor that intializes the "unparser" callback lists with some useful functors. */
-    AsmUnparser();
+    /*  Constructor that intializes the "unparser" callback lists with some useful functors. */
+    AsmUnparser() ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unparser");
     virtual ~AsmUnparser();
 
-    /** Get/set how output is organized.
+    /*  Get/set how output is organized.
      *
      *  The unparse() method organizes output by one of the methods described for the Organization enum.
      *
      *  @{ */
     virtual Organization get_organization() const { return organization; }
     virtual void set_organization(Organization organization) { this->organization = organization; }
-    /** @} */
+    /* @} */
 
-    /** Determines if a node can be unparsed.
+    /*  Determines if a node can be unparsed.
      *
      *  The AsmUnparser only handles certain node types, namely those that correspond to binary functions, blocks, and
      *  instructions.  This method should return true if the specified node is one that can be parsed.  See also,
      *  find_unparsable_node(). */
     virtual bool is_unparsable_node(SgNode *node);
 
-    /** Finds first unparsable node.
+    /*  Finds first unparsable node.
      *
      *  Traverses the specified AST to find a node that can be unparsed, and returns it.  The traversal is a depth-first
      *  traversal with pre-order visiting.  The traversal terminates as soon as a node is found.  Returns false if no suitable
      *  node can be found. */
     virtual SgNode *find_unparsable_node(SgNode *ast);
 
-    /** Finds top unparsable nodes.
+    /*  Finds top unparsable nodes.
      *
      *  Traverses the specified AST to find nodes that can be unparsed, and returns a vector of such nodes.  Once a node is
      *  discovered, the subtree rooted at that node is not searched. */
     virtual std::vector<SgNode*> find_unparsable_nodes(SgNode *ast);
 
-    /** Register dictionaries.
+    /*  Register dictionaries.
      *
      *  A register dictionary is used to convert register descriptors stored within instructions (via RegisterDescriptor) into
      *  names. The unparser keeps two register dictionaries: the user-specified register dictionary, and a dictionary obtained
@@ -850,9 +851,9 @@ public:
      * @{ */
     virtual RegisterDictionaryPtr get_registers() const;
     virtual void set_registers(const RegisterDictionaryPtr &registers);
-    /** @}*/
+    /* @}*/
     
-    /** Optional information about no-op sequences.
+    /*  Optional information about no-op sequences.
      *
      *  When a basic block is unparsed, the BasicBlockNoopUpdater callback (if present and enabled) will analyze its
      *  instructions and update the insn_is_noop vector.  The vector is indexed by position of instruction within the block and
@@ -862,7 +863,7 @@ public:
      *  BasicBlockCleanup callback. */
     std::vector<bool> insn_is_noop;
 
-    /** Unparse part of the AST.
+    /*  Unparse part of the AST.
      *
      *  This is the primary method for this class. It traverses the specified @p ast and prints some kind of assembly language
      *  output to the specified output stream.  The specifics of what is produced depend on how the AsmUnparser is configured.
@@ -872,14 +873,14 @@ public:
      *  R, such that is_unparsable_node(R) is true, and there exists no node C such that C is a proper ancestor of R and
      *  contained in the specified AST.  For output organized by address, it is the number of instructions and data objects
      *  unparsed.  In any case, a return value of zero means that nothing was unparsed and no output was produced. */
-    virtual size_t unparse(std::ostream&, SgNode *ast);
+    virtual size_t unparse(std::ostream&, SgNode *ast) ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unparser");
 
-    /** Unparse part of the AST into a string.
+    /*  Unparse part of the AST into a string.
      *
      * This is a wrapper around unparse() that returns a string rather than producing output on a stream. */
     std::string to_string(SgNode *ast);
 
-    /** Unparse a single node if possible.
+    /*  Unparse a single node if possible.
      *
      *  Tries to unparse the given AST node directly, without traversing the AST to find a starting point.  This is basically a
      *  big switch statement that calls one of the unparse_WHATEVER() methods.
@@ -887,32 +888,38 @@ public:
      *  Returns true if the node was unparsed, false otherwise. */
     virtual bool unparse_one_node(std::ostream&, SgNode*);
 
-    /** Unparse an object. These are called by unparse_one_node(), but might also be called by callbacks.
+    /*  Unparse an object. These are called by unparse_one_node(), but might also be called by callbacks.
      *
      *  @{ */
-    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=(size_t)-1);
-    virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*);
-    virtual bool unparse_staticdata(bool enabled, std::ostream&, SgAsmStaticData*, size_t position_in_block=(size_t)-1);
-    virtual bool unparse_datablock(bool enabled, std::ostream&, SgAsmBlock*);
-    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*);
-    virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*);
-    /** @} */
+    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=(size_t)-1)
+        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*)
+        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    virtual bool unparse_staticdata(bool enabled, std::ostream&, SgAsmStaticData*, size_t position_in_block=(size_t)-1)
+        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    virtual bool unparse_datablock(bool enabled, std::ostream&, SgAsmBlock*)
+        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*)
+        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*)
+        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    /* @} */
 
-    /** Maps integers to labels. */
+    /*  Maps integers to labels. */
     typedef std::map<uint64_t, std::string> LabelMap;
 
-    /** Adds function labels to the label map.  This method traverses the specified AST looking for function symbols, and adds
+    /*  Adds function labels to the label map.  This method traverses the specified AST looking for function symbols, and adds
      *  their address and name to the label map for the unparser.  The map is used by some callbacks to convert numeric values
      *  to more human friendly labels.   If integer values are relative to other AST nodes, then one doesn't need to populate
      *  the LabelMap (see documentation for the AsmUnparser::labels data member. */
     void add_function_labels(SgNode *ast);
 
-    /** Associates a control flow graph with this unparser.  If a control flow graph is present then certain output callbacks
+    /*  Associates a control flow graph with this unparser.  If a control flow graph is present then certain output callbacks
      *  will be able to use that information.  For instance, the basicBlockPredecessors will emit a list of all the
      *  predecessors of a block.  Passing an empty graph will remove control flow information. */
     void add_control_flow_graph(const Rose::BinaryAnalysis::ControlFlow::Graph &cfg);
 
-    /** Controls printing of skip/back messages during linear output.  Each callback that prints an object that occupies
+    /*  Controls printing of skip/back messages during linear output.  Each callback that prints an object that occupies
      *  address space should call start_of_object() and end_of_object() before and after printing the object.  If output is
      *  organized in the linear fashion and the start of an object does not coincide with the end of the previous object, and
      *  if skip/back reporting is enabled, then a message about skipping ahead or backward is inserted into the unparse
@@ -924,9 +931,9 @@ public:
     void reset_skipback() { skipback.triggered=false; skipback.va=0; }
     void start_of_object(rose_addr_t, std::ostream&);
     void end_of_object(rose_addr_t);
-    /** @} */
+    /* @} */
 
-    /** Controls printing of line prefixes.
+    /*  Controls printing of line prefixes.
      *
      *  Lines have an optional prefix area that tends to be the same regardless of the kind of object being printed. For
      *  instance, the default is for most lines to contain an address of some sort.  Sometimes we want the prefix area to be
@@ -946,19 +953,19 @@ public:
     virtual rose_addr_t get_prefix_address() const { return lineprefix.address; }
     virtual std::string line_prefix() const;
     virtual std::string blank_prefix() const { return std::string(line_prefix().size(), ' '); }
-    /** @} */
+    /* @} */
 
 public:
-    static void initDiagnostics();                      /**< Initialize diagnostic messages subsystem. */
-    static Sawyer::Message::Facility mlog;              /**< Diagnostic messages. */
+    static void initDiagnostics();                      /* Initialize diagnostic messages subsystem. */
+    static Sawyer::Message::Facility mlog;              /* Diagnostic messages. */
 
 protected:
     struct CallbackLists {
-        Callbacks::List<UnparserCallback> unparse;      /**< The main unparsing callbacks. */
-        Callbacks::List<UnparserCallback> pre;          /**< Callbacks invoked before 'unparse' callbacks. */
-        Callbacks::List<UnparserCallback> post;         /**< Callbacks invoked after 'unparse' callbacks. */
+        Callbacks::List<UnparserCallback> unparse;      /* The main unparsing callbacks. */
+        Callbacks::List<UnparserCallback> pre;          /* Callbacks invoked before 'unparse' callbacks. */
+        Callbacks::List<UnparserCallback> post;         /* Callbacks invoked after 'unparse' callbacks. */
 
-        /** Clears all the callback lists. */
+        /*  Clears all the callback lists. */
         void clear() {
             unparse.clear();
             pre.clear();
@@ -966,14 +973,14 @@ protected:
         }
     };
 
-    CallbackLists insn_callbacks;                       /**< Callbacks for instruction unparsing. */
-    CallbackLists basicblock_callbacks;                 /**< Callbacks for basic block unparsing. */
-    CallbackLists staticdata_callbacks;                 /**< Callbacks for static data unparsing. */
-    CallbackLists datablock_callbacks;                  /**< Callbacks for data block unparsing. */
-    CallbackLists function_callbacks;                   /**< Callbacks for function unparsing. */
-    CallbackLists interp_callbacks;                     /**< Callbacks for interpretation unparsing. */
+    CallbackLists insn_callbacks;                       /* Callbacks for instruction unparsing. */
+    CallbackLists basicblock_callbacks;                 /* Callbacks for basic block unparsing. */
+    CallbackLists staticdata_callbacks;                 /* Callbacks for static data unparsing. */
+    CallbackLists datablock_callbacks;                  /* Callbacks for data block unparsing. */
+    CallbackLists function_callbacks;                   /* Callbacks for function unparsing. */
+    CallbackLists interp_callbacks;                     /* Callbacks for interpretation unparsing. */
 
-    /** This map is consulted whenever a constant is encountered. If the constant is defined as a key of the map, then that
+    /*  This map is consulted whenever a constant is encountered. If the constant is defined as a key of the map, then that
      *  element's string is used as a label.  Populating this map is not as important as it once was, because now integers can
      *  be associated with other addressable AST nodes and labels are generated from them.  For example, if 0x08042000 is the
      *  entry address of a function named "init", then it can be added to the LabelMap and the unparser will generate this
@@ -994,43 +1001,43 @@ protected:
      * which isn't possible in general with the LabelMap mechanism. */
     LabelMap labels;
 
-    /** How output will be organized. */
+    /*  How output will be organized. */
     Organization organization;
 
-    /** Dictionaries used to convert register descriptors to register names. */
+    /*  Dictionaries used to convert register descriptors to register names. */
     RegisterDictionaryPtr user_registers;               // registers set by set_registers()
     RegisterDictionaryPtr interp_registers;             // registers obtained from the SgAsmInterpretation
 
-    /** Initializes the callback lists.  This is invoked by the default constructor. */
+    /*  Initializes the callback lists.  This is invoked by the default constructor. */
     virtual void init();
 
-    /** Control flow graph. If non-empty, then it is used for things like listing CFG predecessors of each basic block. */
+    /*  Control flow graph. If non-empty, then it is used for things like listing CFG predecessors of each basic block. */
     CFG cfg;
 
-    /** A mapping from SgAsmBlock to control flow graph vertex. This map is updated when the control flow graph is modified by
+    /*  A mapping from SgAsmBlock to control flow graph vertex. This map is updated when the control flow graph is modified by
      *  the add_control_flow_graph() method. */
     CFG_BlockMap cfg_blockmap;
 
-    /** Function call graph.  This graph is built from the control flow graph whenever add_control_flow_graph() is called. */
+    /*  Function call graph.  This graph is built from the control flow graph whenever add_control_flow_graph() is called. */
     CG cg;
 
-    /** A mapping from SgAsmFunction to call graph vertex.  This map is updated when the control flow graph is modified by the
+    /*  A mapping from SgAsmFunction to call graph vertex.  This map is updated when the control flow graph is modified by the
      *  add_control_flow_graph() method. */
     CG_FunctionMap cg_functionmap;
 
-    /** Details for skip/back reporting. See set_skipback_reporting(). */
+    /*  Details for skip/back reporting. See set_skipback_reporting(). */
     struct SkipBack {
         SkipBack(): active(true), triggered(false), va(0) {}
-        bool active;                    /**< Make reports? */
-        bool triggered;                 /**< Have we seen the first object yet? Is the 'va' member valid? */
-        rose_addr_t va;                 /**< Virtual address for previous end_of_object() call. */
+        bool active;                    /* Make reports? */
+        bool triggered;                 /* Have we seen the first object yet? Is the 'va' member valid? */
+        rose_addr_t va;                 /* Virtual address for previous end_of_object() call. */
     } skipback;
 
-    /** Details for line prefixes. See line_prefix(). */
+    /*  Details for line prefixes. See line_prefix(). */
     struct LinePrefix {
         LinePrefix(): format("0x%08" PRIx64 ": "), address(0) {}
-        std::string format;             /**< Printf-style format string. This may contain a format for a uint64_t address. */
-        rose_addr_t address;            /**< Address to use when generating a prefix string. */
+        std::string format;             /* Printf-style format string. This may contain a format for a uint64_t address. */
+        rose_addr_t address;            /* Address to use when generating a prefix string. */
     } lineprefix;
 };
 
