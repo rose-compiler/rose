@@ -4,6 +4,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = nostdinc subdir-objects
 
+# Automake adds "-I." and "-I$(srcdir)" to the compile commands. We don't want this because it hides violations of the ROSE policy
+# that headers are to be included by their paths w.r.t. the "src" directory. I.e., "#include <Rose/BinaryAnalysis/Foo.h>" rather
+# than "#include <Foo.h>".
+DEFAULT_INCLUDES =
+
 # -----  NOTICE  -------------------------------------------------------------------------------------------
 # DO NOT ADD Makefile.am FILES TO SUBDIRECTORIES. Doing so reduces parallelism for GNU make and causes
 # compile times to increase. Instead, add all your targets for compiling *.C files to this makefile, and add
