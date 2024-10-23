@@ -8,6 +8,7 @@
 #include <SgNode.h>
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
 #include <Rose/AST/Utility.h>
+#include <boost/serialization/list.hpp>
 
 namespace Rose {
 

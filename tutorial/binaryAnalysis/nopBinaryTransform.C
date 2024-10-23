@@ -1,9 +1,10 @@
 // This tutorial example show how to introduce 
 // transformations on the input binary exectutable.
 
-#include "rose.h"
+#include <rose.h>
 
-#include "sageInterfaceAsm.h"
+#include <sageInterfaceAsm.h>
+#include <SageBuilderAsm.h>
 
 #include "detectNopSequencesTraversal.h"
 

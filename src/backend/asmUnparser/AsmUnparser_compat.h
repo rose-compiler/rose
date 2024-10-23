@@ -8,7 +8,7 @@
 #include "AsmUnparser.h"
 
 // [Robb Matzke 2024-10-18]: Deprecated
-ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels =nullptr)
+ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels = nullptr)
     ROSE_DEPRECATED("use SgAsmInstruction::toStringNoAddr instead");
 ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels,
                                             const Rose::BinaryAnalysis::RegisterDictionaryPtr &registers)

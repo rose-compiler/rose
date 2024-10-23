@@ -24,7 +24,6 @@
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
 
-#include <AsmUnparser.h>                                // Rose::BinaryAnalysis::AsmUnparser
 #include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
 
 namespace Rose {
@@ -128,7 +127,6 @@ void initialize() {
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
         BinaryAnalysis::Architecture::initDiagnostics();
-        BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::BinaryLoader::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();

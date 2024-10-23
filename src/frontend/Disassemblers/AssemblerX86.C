@@ -1,14 +1,14 @@
 /* Documentation is in AssemblerX86.h */
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
-#include "AssemblerX86.h"
+#include <sage3basic.h>
+#include <AssemblerX86.h>
+#include <SageBuilderAsm.h>
 
 #include <Rose/BinaryAnalysis/Hexdump.h>
-#include "AsmUnparser_compat.h"
-#include "rose_getline.h"
+#include <rose_getline.h>
 #include <Rose/FileSystem.h>
-#include "x86InstructionProperties.h"
+#include <x86InstructionProperties.h>
 
 #include <Sawyer/MappedBuffer.h>
 
