@@ -14,6 +14,7 @@ endif()
 include_directories(. ${ROSE_INCLUDES} ${CMAKE_PREFIX_INSTALL}/include/rose ${CMAKE_BINARY_DIR}) 
 
 # all targets apply these flags 
+# TODO: Make this target-only flags 
 add_compile_options(
     -fopenmp
     $<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
@@ -74,4 +75,3 @@ install(TARGETS codethorn1
 ################################################################################
 # TOOL: LTLTHORN
 ################################################################################
-
