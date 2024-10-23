@@ -7,10 +7,6 @@
 #include "transformationTracking.h"
 #include "wholeAST.h"
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-   #include "AsmUnparser_compat.h"
-#endif
-
 // **********************************************************
 // **********************************************************
 //       Source code which can be more later

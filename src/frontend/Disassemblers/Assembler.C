@@ -5,7 +5,6 @@
 #include "Assembler.h"
 
 #include "AssemblerX86.h"
-#include "AsmUnparser_compat.h"
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -6,8 +6,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include "AsmUnparser_compat.h"
-
 namespace Rose {
 namespace BinaryAnalysis {                      // documented elsewhere
 

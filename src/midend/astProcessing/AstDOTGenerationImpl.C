@@ -14,10 +14,6 @@
 #  include "sageInterface.h"
 #endif
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#  include "AsmUnparser_compat.h"
-#endif
-
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>

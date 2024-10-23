@@ -3907,8 +3907,6 @@ Rose::BinaryAnalysis::A64SystemRegisters::arm_system_ttbr1	104
 Rose::BinaryAnalysis::A64SystemRegisters::arm_system_vbar	108
 Rose::BinaryAnalysis::A64SystemRegisters::arm_system_vtcr	112
 Rose::BinaryAnalysis::A64SystemRegisters::arm_system_vttbr	116
-Rose::BinaryAnalysis::AsmUnparser::Organization::ORGANIZED_BY_ADDRESS	1
-Rose::BinaryAnalysis::AsmUnparser::Organization::ORGANIZED_BY_AST	0
 Rose::BinaryAnalysis::Assembler::EncodingType::ET_LONGEST	1
 Rose::BinaryAnalysis::Assembler::EncodingType::ET_MATCHES	2
 Rose::BinaryAnalysis::Assembler::EncodingType::ET_SHORTEST	0

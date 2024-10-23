@@ -3,8 +3,6 @@
 
 # src/roseSupport/Makefile.am: roseSupport
 
-# src/backend/asmUnparser/Makefile.am: roseAsmUnparser
-
 # src/backend/unparser/Makefile.am: unparse
 
 # src/backend/unparser/FortranCodeGeneration/Makefile.am: unparseFortran

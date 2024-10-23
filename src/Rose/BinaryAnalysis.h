@@ -299,7 +299,6 @@ namespace Rose {
  *  ---MIWEF default enabled levels
  *  ---MIWEF Rose                                                    -- top-level ROSE diagnostics
  *  ---MIWEF Rose::BinaryAnalysis::Architecture                      -- defining hardware architectures
- *  ---MIWEF Rose::BinaryAnalysis::AsmUnparser                       -- generating assembly listings (vers 1)
  *  ---MIWEF Rose::BinaryAnalysis::Ast                               -- operating on binary abstract syntax trees
  *  ---MIWEF Rose::BinaryAnalysis::BestMapAddress                    -- computing mem mapping based on insns
  *  ---MIWEF Rose::BinaryAnalysis::BinaryLoader                      -- mapping files into virtual memory
@@ -354,7 +353,6 @@ namespace Rose {
  *  ------EF default enabled levels
  *  ------EF Rose                                                    -- top-level ROSE diagnostics
  *  ------EF Rose::BinaryAnalysis::Architecture                      -- defining hardware architectures
- *  ------EF Rose::BinaryAnalysis::AsmUnparser                       -- generating assembly listings (vers 1)
  *  ------EF Rose::BinaryAnalysis::Ast                               -- operating on binary abstract syntax trees
  *  ------EF Rose::BinaryAnalysis::BestMapAddress                    -- computing mem mapping based on insns
  *  ------EF Rose::BinaryAnalysis::BinaryLoader                      -- mapping files into virtual memory

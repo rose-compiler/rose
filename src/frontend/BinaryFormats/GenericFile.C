@@ -3,7 +3,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "AsmUnparser_compat.h"
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>

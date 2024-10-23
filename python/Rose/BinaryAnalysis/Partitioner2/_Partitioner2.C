@@ -1,7 +1,6 @@
 #include <sage3basic.h>
 #ifdef ROSE_ENABLE_PYTHON_API
 
-#include <AsmUnparser.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <boost/noncopyable.hpp>

@@ -22,10 +22,6 @@
 #undef TEMPLATE_IMPLEMENTATIONS
 #include "AstConsistencyTests.h"
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-   #include "AsmUnparser_compat.h"
-#endif
-
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file

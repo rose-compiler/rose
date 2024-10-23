@@ -1,6 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>                                 // needed for `::SageInterface` and `::AsmUnparser`
+#include <sage3basic.h>                                 // needed for `::SageInterface`
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
@@ -24,7 +24,6 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
-#include <AsmUnparser.h>                                // rose
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>

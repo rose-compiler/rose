@@ -10,10 +10,6 @@
 
 #include <Rose/AST/Traversal.h>
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-   #include "AsmUnparser_compat.h"
-#endif
-
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>

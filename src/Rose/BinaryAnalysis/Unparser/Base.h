@@ -38,7 +38,8 @@ void initDiagnostics();
 /** Constructs a string to describe the invalid register.
  *
  *  May also optionally emit a diagnostic message. */
-std::string invalidRegister(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionaryPtr&);
+std::string invalidRegister(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionaryPtr&)
+    ROSE_DEPRECATED("not called by anything");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Margins containing arrows
