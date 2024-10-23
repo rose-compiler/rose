@@ -3061,10 +3061,7 @@ Partitioner::edgeName(const ControlFlowGraph::ConstEdgeIterator &edge) const {
 
 void
 Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBlocks, bool computeProperties) const {
-    AsmUnparser unparser;
     const std::string insnPrefix = prefix + "    ";
-    unparser.insnRawBytes.fmt.prefix = insnPrefix.c_str();
-    unparser.set_registers(instructionProvider_->registerDictionary());
 
     // Sort the vertices according to basic block starting address.
     std::vector<ControlFlowGraph::ConstVertexIterator> sortedVertices;
@@ -3136,10 +3133,8 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                for (SgAsmInstruction *insn: bb->instructions()) {
-                    out <<insnPrefix;                   // hexdump does not prefix the first line
-                    unparser.unparse(out, insn);
-                }
+                for (SgAsmInstruction *insn: bb->instructions())
+                    out <<insnPrefix <<insn->toString() <<"\n";
             }
         }
 

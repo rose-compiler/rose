@@ -807,7 +807,7 @@ public:
      **************************************************************************************************************************/
 
     /*  Constructor that intializes the "unparser" callback lists with some useful functors. */
-    AsmUnparser() ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unparser");
+    AsmUnparser();
     virtual ~AsmUnparser();
 
     /*  Get/set how output is organized.
@@ -875,6 +875,9 @@ public:
      *  unparsed.  In any case, a return value of zero means that nothing was unparsed and no output was produced. */
     virtual size_t unparse(std::ostream&, SgNode *ast) ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unparser");
 
+    // Call this instead of `unparse` to avoid the deprecation warning (only used internally in the ROSE library)
+    size_t unparseNoDeprecationWarning(std::ostream&, SgNode*);
+
     /*  Unparse part of the AST into a string.
      *
      * This is a wrapper around unparse() that returns a string rather than producing output on a stream. */
@@ -891,18 +894,12 @@ public:
     /*  Unparse an object. These are called by unparse_one_node(), but might also be called by callbacks.
      *
      *  @{ */
-    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=(size_t)-1)
-        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
-    virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*)
-        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
-    virtual bool unparse_staticdata(bool enabled, std::ostream&, SgAsmStaticData*, size_t position_in_block=(size_t)-1)
-        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
-    virtual bool unparse_datablock(bool enabled, std::ostream&, SgAsmBlock*)
-        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
-    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*)
-        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
-    virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*)
-        ROSE_DEPRECATED("use Rose::BinaryAnalysis::Unaprser");
+    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=(size_t)-1);
+    virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*);
+    virtual bool unparse_staticdata(bool enabled, std::ostream&, SgAsmStaticData*, size_t position_in_block=(size_t)-1);
+    virtual bool unparse_datablock(bool enabled, std::ostream&, SgAsmBlock*);
+    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*);
+    virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*);
     /* @} */
 
     /*  Maps integers to labels. */

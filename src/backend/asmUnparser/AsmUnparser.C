@@ -327,13 +327,17 @@ std::string
 AsmUnparser::to_string(SgNode *ast)
 {
     std::ostringstream ss;
-    unparse(ss, ast);
+    unparseNoDeprecationWarning(ss, ast);
     return ss.str();
 }
 
 size_t
-AsmUnparser::unparse(std::ostream &output, SgNode *ast)
-{
+AsmUnparser::unparse(std::ostream &output, SgNode *ast) {
+    return unparseNoDeprecationWarning(output, ast);
+}
+
+size_t
+AsmUnparser::unparseNoDeprecationWarning(std::ostream &output, SgNode *ast) {
     size_t retval = 0;
 
     switch (get_organization()) {
@@ -1031,7 +1035,7 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
             SgAsmInstruction *insn = NULL;
             try {
                 insn = disassembler->disassembleOne(map, insn_va, NULL);
-                unparser->unparse(args.output, insn);
+                unparser->unparseNoDeprecationWarning(args.output, insn);
                 offset += insn->get_size();
                 SageInterface::deleteAST(insn);
             } catch (...) {
@@ -1217,7 +1221,7 @@ AsmUnparser::FunctionBody::operator()(bool enabled, const FunctionArgs &args)
     if (enabled && ORGANIZED_BY_AST==args.unparser->get_organization()) {
         const SgAsmStatementPtrList stmts = args.func->get_statementList();
         for (size_t i=0; i<stmts.size(); i++)
-            args.unparser->unparse(args.output, stmts[i]);
+            args.unparser->unparseNoDeprecationWarning(args.output, stmts[i]);
     }
     return enabled;
 }
@@ -1251,7 +1255,7 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
         if (global) {
             const SgAsmStatementPtrList stmts = global->get_statementList();
             for (size_t i=0; i<stmts.size(); ++i)
-                args.unparser->unparse(args.output, stmts[i]);
+                args.unparser->unparseNoDeprecationWarning(args.output, stmts[i]);
         }
     }
     return enabled;
