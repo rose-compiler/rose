@@ -197,8 +197,11 @@ namespace
     return sg::dispatch(DimRange{}, n);
   }
 
-  struct ArrayBounds : sg::DispatchHandler<std::vector<SgExpression*> >
+  struct ArrayBounds : sg::DispatchHandler<si::Ada::FlatArrayType>
   {
+      using base = sg::DispatchHandler<si::Ada::FlatArrayType>;
+      using base::base;
+
       static
       ReturnType
       find(SgType* n, SgArrayType* baseType);
@@ -235,15 +238,17 @@ namespace
         }
 
         // the first subtype must be an index constraint
-        SgAdaIndexConstraint& idx = SG_DEREF(isSgAdaIndexConstraint(constraint));
+        SgAdaIndexConstraint& idx    = SG_DEREF(isSgAdaIndexConstraint(constraint));
         SgExpressionPtrList&  idxlst = idx.get_indexRanges();
 
         for (size_t i = 0; i < idxlst.size(); ++i)
         {
           SgExpression* expr = idxlst[i];
 
-          res.push_back(&DimRange::find(expr));
+          res.dims().push_back(&DimRange::find(expr));
         }
+
+        res.constrained(true);
       }
 
       void handle(SgArrayType& n)
@@ -251,23 +256,27 @@ namespace
         SgExprListExp&        idx = SG_DEREF(n.get_dim_info());
         SgExpressionPtrList&  idxlst = idx.get_expressions();
 
-        res.insert(res.end(), idxlst.begin(), idxlst.end());
+        res.dims().insert(res.dims().end(), idxlst.begin(), idxlst.end());
+        res.constrained(n.get_is_variable_length_array());
       }
   };
 
+  // static
   ArrayBounds::ReturnType
   ArrayBounds::find(SgType* n, SgArrayType* baseType)
   {
     if (!baseType)
       return ArrayBounds::ReturnType{};
 
-    return sg::dispatch(ArrayBounds{}, n);
+    ArrayBounds::ReturnType res{baseType, {}, false};
+
+    return sg::dispatch(ArrayBounds{std::move(res)}, n);
   }
 
   ArrayBounds::ReturnType
   ArrayBounds::descend(SgType* n)
   {
-    return sg::dispatch(ArrayBounds{}, n);
+    return sg::dispatch(ArrayBounds{std::move(res)}, n);
   }
 
   struct IntegralValue : sg::DispatchHandler<long long int>
@@ -593,7 +602,7 @@ namespace Ada
   getArrayTypeInfo(SgType* atype)
   {
     if (atype == nullptr)
-      return { nullptr, {} };
+      return { nullptr, {}, false };
 
     return getArrayTypeInfo(*atype);
   }
@@ -601,9 +610,7 @@ namespace Ada
   FlatArrayType
   getArrayTypeInfo(SgType& atype)
   {
-    SgArrayType* restype = ArrayType::find(&atype);
-
-    return { restype, ArrayBounds::find(&atype, restype) };
+    return ArrayBounds::find(&atype, ArrayType::find(&atype));
   }
 
   namespace

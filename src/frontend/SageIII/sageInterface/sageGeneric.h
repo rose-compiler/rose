@@ -165,6 +165,12 @@ namespace sg
       // NotNull& operator(NotNull&&) = delete;
   };
 
+  template <class T, class U, bool = EnableConversion<U*,T*>::value || EnableConversion<T*,U*>::value>
+  bool operator<(NotNull<T> lhs, NotNull<U> rhs)
+  {
+    return lhs.pointer() < rhs.pointer();
+  }
+
 
 
 /**
@@ -1370,7 +1376,7 @@ namespace sg
     Pair res;
 
     AncestorTypeFinder()
-    : Base(), res(NULL, NULL)
+    : Base(), res(nullptr, nullptr)
     {}
 
     // handling of const SgProject is outsourced to DefaultHandler
@@ -1390,9 +1396,9 @@ namespace sg
   {
     using AncestorFinder = AncestorTypeFinder<AncestorNode, QualSgNode>;
 
-    typename AncestorFinder::Pair res(NULL, n.get_parent());
+    typename AncestorFinder::Pair res(nullptr, n.get_parent());
 
-    while (res.second != NULL)
+    while (res.second != nullptr)
     {
       res = (typename AncestorFinder::Pair) sg::dispatch(AncestorFinder(), res.second);
     }
@@ -1402,8 +1408,8 @@ namespace sg
 
 /// \brief   finds an ancestor node with a given type
 /// \details the function family comes in four variants:
-///          - SgNode*       -> AncestorNode*       ( result can be NULL )
-///          - const SgNode* -> const AncestorNode* ( result can be NULL )
+///          - SgNode*       -> AncestorNode*       ( result can be nullptr )
+///          - const SgNode* -> const AncestorNode* ( result can be nullptr )
 ///          - SgNode&       -> AncestorNode&       ( assert(false) when an ancestor of
 ///                                                   the specified type cannot be found )
 ///          - const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
@@ -1414,7 +1420,7 @@ namespace sg
   template <class AncestorNode>
   AncestorNode* ancestor(SgNode* n)
   {
-    if (n == NULL) return NULL;
+    if (n == nullptr) return nullptr;
 
     return _ancestor<AncestorNode>(*n);
   }
@@ -1423,7 +1429,7 @@ namespace sg
   template <class AncestorNode>
   const AncestorNode* ancestor(const SgNode* n)
   {
-    if (n == NULL) return NULL;
+    if (n == nullptr) return nullptr;
 
     return _ancestor<const AncestorNode>(*n);
   }
@@ -1457,7 +1463,7 @@ namespace sg
         typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
 
         TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
-        : res(NULL), loc(f), loc_ln(ln)
+        : res(nullptr), loc(f), loc_ln(ln)
         {}
 
         TypeRecoveryHandler(TypeRecoveryHandler&&)            = default;
@@ -1691,7 +1697,7 @@ namespace sg
   static inline
   std::string nodeType(const SgNode* n)
   {
-    if (n == NULL) return "<null>";
+    if (n == nullptr) return "<null>";
 
     return nodeType(*n);
   }
@@ -1710,7 +1716,7 @@ namespace sg
       ++cnt;
 
 #if 0
-      if (n == NULL)
+      if (n == nullptr)
       {
         std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;
         return;
@@ -1731,7 +1737,7 @@ namespace sg
   template <class GVisitor>
   static inline
   DispatchHelper<GVisitor>
-  dispatchHelper(GVisitor gv, SgNode* parent = NULL)
+  dispatchHelper(GVisitor gv, SgNode* parent = nullptr)
   {
     return DispatchHelper<GVisitor>(std::move(gv), parent);
   }
@@ -1759,7 +1765,7 @@ namespace sg
     child.set_parent(&parent);
   }
 
-  /// returns the same node \ref n upcasted to its base type
+  /// returns the same node \p n upcasted to its base type
   /// \note useful for calling an overloaded function
   /// \{
   template <class SageNode>

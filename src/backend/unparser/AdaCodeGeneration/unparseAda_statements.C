@@ -1231,7 +1231,7 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgAdaAcceptStmt& n)
+      void handle(SgAdaAcceptStmt& n)
     {
       prn("accept ");
       expr(n.get_entry());

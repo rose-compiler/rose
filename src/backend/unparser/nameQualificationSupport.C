@@ -1727,6 +1727,8 @@ namespace
   std::string
   AdaPreNameQualifier::nameQual(const SgNode& node, const SgScopeStatement* remote)
   {
+    //~ if (remote == nullptr)
+      //~ mlog[ERROR] << "@" << node.unparseToString() << std::endl;
     return nameQual(node, SG_DEREF(remote));
   }
 

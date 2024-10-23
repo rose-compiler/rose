@@ -223,26 +223,27 @@ namespace Ada
   /// \}
 
   /// defines the result type for \p getArrayTypeInfo
-  using FlatArrayTypeBase = std::tuple<SgArrayType*, std::vector<SgExpression*> >;
+  using FlatArrayTypeBase = std::tuple<SgArrayType*, SgExpressionPtrList, bool >;
 
   struct FlatArrayType : FlatArrayTypeBase
   {
     using base = FlatArrayTypeBase;
     using base::base;
 
-    SgArrayType*                      type() const { return std::get<0>(*this); }
-    std::vector<SgExpression*> const& dims() const { return std::get<1>(*this); }
-    std::vector<SgExpression*>&       dims()       { return std::get<1>(*this); }
+    SgArrayType*               type()        const { return std::get<0>(*this); }
+    SgExpressionPtrList const& dims()        const { return std::get<1>(*this); }
+    SgExpressionPtrList&       dims()              { return std::get<1>(*this); }
+    bool                       constrained() const { return std::get<2>(*this); }
+    void                       constrained(bool b) { std::get<2>(*this) = b; }
   };
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
   /// \return  iff \p atype is not an arraytype, a pair <nullptr, empty vector> is returned
-  ///          otherwise a pair of a array pointer, and a vector of index ranges.
+  ///          otherwise a pair of an array pointer, and a vector of index ranges.
   ///          Index ranges can be specified in terms of a range (SgRangeExp), a type
   ///          attribute (SgAdaAttributeExp), or full type range (SgTypeExpression).
   ///          (the expressions are part of the AST and MUST NOT BE DELETED).
-  /// \pre     \p atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
   FlatArrayType getArrayTypeInfo(SgType& atype);
@@ -1002,7 +1003,7 @@ namespace Ada
 
   /// returns the base type of a type \p ty
   /// \details
-  ///   In the following type hierarchy baseTypes(Y) would return { X, S1, S2 } but not Integer.
+  ///   In the following type hierarchy baseType(Y) -> S1 -> X but not Integer.
   ///   \code
   ///   type X is new Integer;
   ///   subtype S1 is X range 0..X'Last;
