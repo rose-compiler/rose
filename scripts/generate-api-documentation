@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e -o pipefail
 
 arg0="${0##*/}"
 dir0="${0%/*}"
@@ -272,3 +272,8 @@ env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version-short)" ROSE_VERSI
 for root_dir in $root_dirs; do
     fixup-html "$root_dir"
 done
+
+# Check for stuff we shouldn't release
+if find "$root_dir" -type f -print0 |xargs -0 grep Edison; then
+    die "possible contamination"
+fi

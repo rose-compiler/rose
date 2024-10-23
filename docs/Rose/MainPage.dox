@@ -23,16 +23,16 @@
  * </table>
  *
  * 
- * @section mainpage_goal Goal of Doxygen Docs
+ * @section mainpage_goal Goal of this document
  *
- * This Doxygen main page is deliberately kept minimal to simplify maintenance.
- * Only information that depends on Doxygen is included here.
+ * This page is deliberately kept minimal to simplify maintenance.
+ * Only ROSE version-specific information is included here.
  * 
  *  @li @ref ast_construction
- *  @li @ref binary_tutorial 
- *  @li @ref Rose::BinaryAnalysis
  *  @li @ref developer_docs
-
+ *
+ * User-oriented ROSE API documentation can also be found at the [ROSE Programming Manual](https://rpm.is/rose).
+ *
  * All other documentations of ROSE can be found at [github ROSE wiki](https://github.com/rose-compiler/rose/wiki) . 
  *
  *  <!-- Note: The ROSE web-page is listed here intentionally. Even if this Doxygen mainpage ever replaces the front page at
@@ -42,9 +42,4 @@
  *  The documentation you're currently viewing may be for a specific version of ROSE. Documentation for the lastest releases can be found
  *  at [http://doxygen.rosecompiler.org](http://doxygen.rosecompiler.org).
  *
- *  @todo The links to the "ROSE tutorial" (at least the source code part) and the "ROSE user manual" are to versions
- *        served from http://rosecompiler.org, which might not match this release of ROSE. A better approach might be to use
- *        relative linking: it would point to a version consistent with the documentation you're now reading, including the
- *        case when a user generates their own local copies and has no Internet connection. These documents may move into
- *        doxygen, in which case this is no longer an issue. [Robb P. Matzke 2015-09-25]
  */
