@@ -46,7 +46,7 @@ if(ENABLE-TUTORIAL-DIRECTORY)
   if(ENABLE-BINARY-ANALYSIS)
     list(APPEND tutorials
       binaryAttribute binaryCallGraph binaryFileRead
-      binaryFileWrite binaryHelloWorld binaryStrings binaryAnalysis_symbolTable)
+      binaryFileWrite binaryStrings binaryAnalysis_symbolTable)
   endif()
 
   if(HAVE_PTHREAD_H)

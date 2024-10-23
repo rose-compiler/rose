@@ -47,7 +47,6 @@ noinst_PROGRAMS +=				\
 	binaryCallGraph				\
 	binaryDominance				\
 	binaryFunctionCfg			\
-	binaryHelloWorld			\
 	binaryStrings
 
 SUBDIRS += binaryAnalysis
@@ -169,8 +168,6 @@ binaryFileWrite_SOURCES = binaryFileWrite.C
 binaryCallGraph_SOURCES = binaryCallGraph.C
 
 binaryFunctionCfg_SOURCES = binaryFunctionCfg.C
-
-binaryHelloWorld_SOURCES = binaryHelloWorld.C
 
 binaryStrings_SOURCES = binaryStrings.C
 
