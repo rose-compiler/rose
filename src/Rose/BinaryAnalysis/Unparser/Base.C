@@ -398,7 +398,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-ArrowMargin::render(Sawyer::Optional<EdgeArrows::VertexId> currentEntity) {
+ArrowMargin::render(Sawyer::Optional<EdgeArrows::EndpointId> currentEntity) {
     // Arrow output only starts after we've seen a START or END and we have our first pointable entity ID
     if (currentEntity && (flags.isSet(POINTABLE_ENTITY_START) || flags.isSet(POINTABLE_ENTITY_END)))
         latestEntity = *currentEntity;
@@ -1649,7 +1649,7 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
                 // The line were about to emit is the sharp end of the arrow--the arrow's target, and we're emitting arrows
                 // that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to the
                 // instructions of a basic block are handled elsewhere.
-                state.currentPredSuccId(EdgeArrows::cfgEdgeTargetEndpoint(edge->id()));
+                state.currentPredSuccId(EdgeArrows::edgeToTargetEndpoint(edge->id()));
                 state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START); // point end of arrow
             }
 
@@ -1704,7 +1704,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                 // The line we're about to emit is the nock end of the arrow--the arrow's origin, and we're emitting
                 // arrows that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to
                 // the instructions of a basic block are handled elsewhere.
-                state.currentPredSuccId(EdgeArrows::cfgEdgeSourceEndpoint(edge->id()));
+                state.currentPredSuccId(EdgeArrows::edgeToSourceEndpoint(edge->id()));
                 state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);// nock end of arrow
             }
 
@@ -2727,7 +2727,7 @@ Base::emitLinePrefix(std::ostream &out, State &state) const {
         StyleGuard style(state.styleStack(), settings().bblock.cfg.arrowStyle);
         out <<style.render();
 
-        Sawyer::Optional<EdgeArrows::VertexId> arrowVertexId;
+        Sawyer::Optional<EdgeArrows::EndpointId> arrowVertexId;
         if (state.currentBasicBlock())
             arrowVertexId = state.currentBasicBlock()->address();
         out <<state.globalBlockArrows().render(arrowVertexId);

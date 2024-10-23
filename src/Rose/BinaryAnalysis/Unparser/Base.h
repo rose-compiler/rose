@@ -70,7 +70,7 @@ public:
 
     EdgeArrows arrows;                                  /**< The arrows to be displayed. */
     BitFlags<Flags> flags;                              /**< Flags that hold and/or control the output state. */
-    Sawyer::Optional<EdgeArrows::VertexId> latestEntity;/**< Latest pointable entity that was encountered in the output. */
+    Sawyer::Optional<EdgeArrows::EndpointId> latestEntity; /**< Latest pointable entity that was encountered in the output. */
 
     /** Reset the marging arrow state.
      *
@@ -83,10 +83,10 @@ public:
 
     /** Generate the string to print in the margin.
      *
-     *  The @p currentEntity values are the vertex IDs used to initialize the @ref arrows method of this object. For
-     *  control flow graphs, that's usually the entry address of a basic block. However, the unparser doesn't really
-     *  care what kind of entities are being pointed at by the arrows. */
-    std::string render(Sawyer::Optional<EdgeArrows::VertexId> currentEntity);
+     *  The @p currentEntity values are the vertex IDs used to initialize the @ref arrows method of this object. For control flow
+     *  graphs, that's usually the entry address of a basic block. However, the unparser doesn't really care what kind of entities
+     *  are being pointed at by the arrows. */
+    std::string render(Sawyer::Optional<EdgeArrows::EndpointId> currentEntity);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ private:
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr currentBasicBlock_;
-    Sawyer::Optional<EdgeArrows::VertexId> currentPredSuccId_;
+    Sawyer::Optional<EdgeArrows::EndpointId> currentPredSuccId_;
     std::string nextInsnLabel_;
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
@@ -302,8 +302,8 @@ public:
      *  EdgeArrows::computeCfgEdgeLayout.
      *
      * @{ */
-    Sawyer::Optional<EdgeArrows::VertexId> currentPredSuccId() const { return currentPredSuccId_; }
-    void currentPredSuccId(Sawyer::Optional<EdgeArrows::VertexId> id) { currentPredSuccId_ = id; }
+    Sawyer::Optional<EdgeArrows::EndpointId> currentPredSuccId() const { return currentPredSuccId_; }
+    void currentPredSuccId(Sawyer::Optional<EdgeArrows::EndpointId> id) { currentPredSuccId_ = id; }
     /** @} */
 
     /** Property: Whether CFG margin arrows point to instructions.

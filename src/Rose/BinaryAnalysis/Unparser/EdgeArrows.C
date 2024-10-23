@@ -14,18 +14,35 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
+std::pair<size_t, size_t>
+EdgeArrows::minMaxRenderColumns() const {
+    return {minRenderColumns_, maxRenderColumns_};
+}
+
 void
-EdgeArrows::appendVertex(VertexId vertex) {
-    // Each vertex has three logical lines: first, middle, and end. There's also and inter-vertex line that separates
-    // each vertex. The first vertex starts at line 1 so it's convenient to get the prior inter-vertex line by always
-    // subtracting one from the first line of a vertex, or adding one to the last line of a vertex.
+EdgeArrows::minMaxRenderColumns(const size_t minCols, const size_t maxCols) {
+    ASSERT_require(minCols <= maxCols);
+    minRenderColumns_ = minCols;
+    maxRenderColumns_ = maxCols;
+}
+
+bool
+EdgeArrows::columnIsRendered(const size_t columnIdx) const {
+    return columnIdx < columns_.size() && columnIdx < maxRenderColumns_;
+}
+
+void
+EdgeArrows::appendEndpoint(EndpointId endpoint) {
+    // Each endpoint has three logical lines: first, middle, and end. There's also and inter-endpoint line that separates
+    // each endpoint. The first endpoint starts at line 1 so it's convenient to get the prior inter-endpoint line by always
+    // subtracting one from the first line of an endpoint, or adding one to the last line of an endpoint.
     OutputLocation location;
     if (outputHull_.isEmpty()) {
         location = OutputLocation::baseSize(1, 3);
     } else {
         location = OutputLocation::baseSize(outputHull_.greatest() + 2, 3);
     }
-    vertexLocations_.insert(vertex, location);
+    endpointLocations_.insert(endpoint, location);
     outputHull_ = outputHull_.hull(location);
 }
 
@@ -39,54 +56,55 @@ EdgeArrows::ascendingLength(const Arrow &a, const Arrow &b) {
 void
 EdgeArrows::reset() {
     outputHull_ = OutputLocation();
-    vertexLocations_.clear();
+    endpointLocations_.clear();
     columns_.clear();
 }
 
 void
-EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &ordered) {
-    // Locations for the ordered vertices.
-    for (VertexId v: ordered) {
-        if (!vertexLocations_.exists(v))
-            appendVertex(v);
+EdgeArrows::computeLayout(const Graph &graph, const std::vector<EndpointId> &ordered) {
+    // Locations for the ordered endpoints.
+    for (const EndpointId endpoint: ordered) {
+        if (!endpointLocations_.exists(endpoint))
+            appendEndpoint(endpoint);
     }
     
-    // Locations for the un-ordered vertices.
-    std::vector<VertexId> unordered;
-    for (VertexId v: graph.vertexValues()) {
-        if (!vertexLocations_.exists(v))
-            unordered.push_back(v);
+    // Locations for the un-ordered endpoints.
+    std::vector<EndpointId> unordered;
+    for (const EndpointId endpoint: graph.vertexValues()) {
+        if (!endpointLocations_.exists(endpoint))
+            unordered.push_back(endpoint);
     }
     std::sort(unordered.begin(), unordered.end());
     unordered.erase(std::unique(unordered.begin(), unordered.end()), unordered.end());
-    for (VertexId v: unordered)
-        appendVertex(v);
+    for (const EndpointId endpoint: unordered)
+        appendEndpoint(endpoint);
     
-    // Obtain info about each edge so we can sort them by length. We want to process small edges
-    // before large edges in order to pack them nicely into columns.
+    // Obtain info about each edge/arrow so we can sort them by length. We want to process small arrows before large arrows in order
+    // to pack them nicely into columns.
     std::vector<Arrow> arrows;
     arrows.reserve(graph.nEdges());
     for (const Graph::Edge &edge: graph.edges()) {
-        size_t srcLine = vertexLocations_[edge.source()->value()].greatest(); // edges leave from the last line
-        size_t dstLine = vertexLocations_[edge.target()->value()].least(); // and enter at the first line
+        size_t srcLine = endpointLocations_[edge.source()->value()].greatest(); // edges leave from the last line of the endpoint
+        size_t dstLine = endpointLocations_[edge.target()->value()].least();    // and enter at the first line of the endpoint
         OutputLocation lines = OutputLocation::hull(srcLine, dstLine);
-        arrows.push_back(Arrow(lines, srcLine < dstLine));
+        arrows.push_back(Arrow(lines, srcLine < dstLine, edge.value()));
     }
     std::sort(arrows.begin(), arrows.end(), ascendingLength);
 
-    // Process each arrow and assign it to the first layer where it fits (i.e., doesn't conflict with any other arrow). If
-    // there is no such layer, append a new layer.
-    for (const Arrow &arrow: arrows) {
+    // Process each arrow and assign it to the first column where it fits (i.e., doesn't conflict with any other arrow). If there is
+    // no such column, append a new column.
+    for (Arrow &arrow: arrows) {
         bool inserted = false;
         for (size_t i = 0; i < columns_.size() && !inserted; ++i) {
             if (!columns_[i].overlaps(arrow.location)) {
+                arrow.columnIdx = i;
                 columns_[i].insert(arrow.location, arrow);
                 inserted = true;
             }
         }
-
         if (!inserted) {
             columns_.push_back(Column());
+            arrow.columnIdx = columns_.size() - 1;
             columns_.back().insert(arrow.location, arrow);
         }
     }
@@ -97,9 +115,9 @@ EdgeArrows::computeCfgBlockLayout(const P2::Partitioner::ConstPtr &partitioner, 
     ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
 
-    // We use the basic block addresses as the arrow vertex names since the unparser will emit the basic blocks in order of
-    // their starting address.
-    Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
+    // We use the basic block addresses as the endpoint IDs since the unparser will emit the basic blocks in order of their starting
+    // address.
+    Graph graph;
     for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(sourceVa);
         ASSERT_require(vertex != partitioner->cfg().vertices().end());
@@ -107,25 +125,23 @@ EdgeArrows::computeCfgBlockLayout(const P2::Partitioner::ConstPtr &partitioner, 
             if (edge.target()->value().type() == P2::V_BASIC_BLOCK) {
                 rose_addr_t targetVa = edge.target()->value().address();
                 if (function->ownsBasicBlock(targetVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
-                    graph.insertEdgeWithVertices(sourceVa, targetVa);
+                    graph.insertEdgeWithVertices(sourceVa, targetVa, edge.id());
             }
         }
     }
-    computeLayout(graph);
+    computeLayout(graph, std::vector<EndpointId>());
 }
-
 
 void
 EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     ASSERT_not_null(function);
 
-    // Process basic blocks in the order they're emitted by the unparser (i.e., by increasing starting address), and for each
-    // block process it's incoming edges in the order the "predecessors" are emitted by the unparser.  After all incoming edges
-    // for the block, process the outgoing edges in the order of the "successors" emitted by the unparser. Each CFG edge has
-    // two endpoints that will be emitted by the unparser, so for the arrow graph, we use vertex IDs that are twice the CFG
-    // edge ID plus either 0 for targets or 1 for sources.  Of course not all CFG edges will appear in a single function; we
-    // only care about those whose source and target are both in this function.
-    std::vector<VertexId> edgeEndpointIds;              // order that CFG edge endpoints are emitted by the unparser
+    // Process basic blocks in the order they're emitted by the unparser (i.e., by increasing starting address), and for each block
+    // process it's incoming edges in the order the "predecessors" are emitted by the unparser.  After all incoming edges for the
+    // block, process the outgoing edges in the order of the "successors" emitted by the unparser. Each CFG edge has two endpoints
+    // that will be emitted by the unparser and the endpoint IDs are a function of the CFG edge ID.  Of course not all CFG edges
+    // will appear in a single function, and we only care about those whose source and target are both in this function.
+    std::vector<EndpointId> edgeEndpointIds;            // order that CFG edge endpoints are emitted by the unparser
     Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
 
     for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
@@ -135,33 +151,58 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, c
         // Incoming edges for the basic block (and we do the arrow at the same time)
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> inEdges = Unparser::Base::orderedBlockPredecessors(partitioner, bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator inEdge: inEdges) {
-            edgeEndpointIds.push_back(cfgEdgeTargetEndpoint(inEdge->id()));
+            edgeEndpointIds.push_back(edgeToTargetEndpoint(inEdge->id()));
 
             if (inEdge->target()->value().type() == P2::V_BASIC_BLOCK) {
                 rose_addr_t sourceVa = inEdge->source()->value().address();
                 if (function->ownsBasicBlock(sourceVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
-                    graph.insertEdgeWithVertices(cfgEdgeSourceEndpoint(inEdge->id()), cfgEdgeTargetEndpoint(inEdge->id()));
+                    graph.insertEdgeWithVertices(edgeToSourceEndpoint(inEdge->id()), edgeToTargetEndpoint(inEdge->id()),
+                                                 inEdge->id());
             }
         }
 
         // Followed by outgoing edges for the basic block
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> outEdges = Unparser::Base::orderedBlockSuccessors(partitioner, bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator outEdge: outEdges)
-            edgeEndpointIds.push_back(cfgEdgeSourceEndpoint(outEdge->id()));
+            edgeEndpointIds.push_back(edgeToSourceEndpoint(outEdge->id()));
     }
     computeLayout(graph, edgeEndpointIds);
 }
 
 // class method
-EdgeArrows::VertexId
-EdgeArrows::cfgEdgeSourceEndpoint(size_t edgeId) {
+EdgeArrows::EndpointId
+EdgeArrows::edgeToSourceEndpoint(const size_t edgeId) {
     return 2 * edgeId + 0;
 }
 
 // class method
-EdgeArrows::VertexId
-EdgeArrows::cfgEdgeTargetEndpoint(size_t edgeId) {
+EdgeArrows::EndpointId
+EdgeArrows::edgeToTargetEndpoint(const size_t edgeId) {
     return 2 * edgeId + 1;
+}
+
+// class method
+size_t
+EdgeArrows::edgeFromEndpoint(const EndpointId endpoint) {
+    return endpoint / 2;
+}
+
+// class method
+bool
+EdgeArrows::isSourceEndpoint(const EndpointId endpoint) {
+    return 0 == endpoint % 2;
+}
+
+// class method
+bool
+EdgeArrows::isTargetEndpoint(const EndpointId endpoint) {
+    return 1 == endpoint % 2;
+}
+
+// class method
+EdgeArrows::EndpointId
+EdgeArrows::otherEndpoint(const EndpointId endpoint) {
+    return isSourceEndpoint(endpoint) ? endpoint + 1 : endpoint - 1;
 }
 
 size_t
@@ -169,11 +210,16 @@ EdgeArrows::nArrowColumns() const {
     return columns_.size();
 }
 
+size_t
+EdgeArrows::nRenderColumns() const {
+    const size_t need = columns_.size();
+    return std::max(minRenderColumns_, std::min(need, maxRenderColumns_));
+}
 
 std::string
 EdgeArrows::renderBlank() const {
     std::string retval;
-    for (size_t i=0; i<columns_.size(); ++i)
+    for (size_t i = 0; i < nRenderColumns(); ++i)
         retval += arrowStyle_.blank;
     return retval;
 }
@@ -187,9 +233,9 @@ EdgeArrows::debug(std::ostream &out) const {
         out <<"lines [" <<outputHull_.least() <<", " <<outputHull_.greatest() <<"]\n";
     }
 
-    out <<"vertex locations:\n";
-    for (const VertexLocations::Node &node: vertexLocations_.nodes()) {
-        out <<"  vertex " <<node.key() <<" (" <<StringUtility::addrToString(node.key()) <<")"
+    out <<"endpoint locations:\n";
+    for (const EndpointLocations::Node &node: endpointLocations_.nodes()) {
+        out <<"  endpoint " <<node.key() <<" (" <<StringUtility::addrToString(node.key()) <<")"
             <<" at lines " <<node.value().least()
             <<" through " <<node.value().greatest() <<"\n";
     }
@@ -198,41 +244,72 @@ EdgeArrows::debug(std::ostream &out) const {
     for (size_t i=0; i<columns_.size(); ++i) {
         out <<"  column #" <<i <<":\n";
         for (const Arrow &arrow: columns_[i].values()) {
-            out <<"    " <<(arrow.isForward ? "forward" : "backward") <<" arrow "
+            ASSERT_require(arrow.columnIdx == i);
+            out <<"    " <<(arrow.isForward ? "forward" : "backward") <<" arrow id=" <<arrow.arrowId
                 <<" at lines " <<arrow.location.least()
                 <<" through " <<arrow.location.greatest() <<"\n";
         }
     }
 }
 
+bool
+EdgeArrows::exists(const EndpointId endpoint) const {
+    return endpointLocations_.exists(endpoint);
+}
+
+Sawyer::Optional<EdgeArrows::Arrow>
+EdgeArrows::findArrow(const ArrowId arrowId) const {
+    for (const Column &column: columns_) {
+        for (const auto &node: column.nodes()) {
+            if (node.value().arrowId == arrowId)
+                return node.value();
+        }
+    }
+    return {};
+}
+
 std::string
-EdgeArrows::render(VertexId v, OutputPart part) const {
+EdgeArrows::render(const EndpointId endpoint, const OutputPart part) const {
+    std::string retval;
+
     // Find the line number.
-    const OutputLocation &vertexLocation = vertexLocations_.getOrDefault(v);
-    if (vertexLocation.isEmpty())
+    const OutputLocation &endpointLocation = endpointLocations_.getOrDefault(endpoint);
+    if (endpointLocation.isEmpty())
         return renderBlank();                           // this is not a vertex we know about!
     size_t lineNumber = 0;
     switch (part) {
         case FIRST_LINE:
-            lineNumber = vertexLocation.least();
+            lineNumber = endpointLocation.least();
             break;
         case MIDDLE_LINE:
-            lineNumber = vertexLocation.least()+1;
+            lineNumber = endpointLocation.least()+1;
             break;
         case LAST_LINE:
-            lineNumber = vertexLocation.greatest();
+            lineNumber = endpointLocation.greatest();
             break;
         case INTER_LINE:
-            lineNumber = vertexLocation.greatest()+1;
+            lineNumber = endpointLocation.greatest()+1;
             break;
     }
 
-    // Render the arrow field across all the arrow columns.
-    std::string retval;
-    for (size_t i=0; i<columns_.size(); ++i) {
-        size_t colnum = arrowStyle_.pointsRight ? columns_.size() - (i+1) : i;
-        const Arrow &arrow = columns_[colnum].getOrDefault(lineNumber);
+    // Figure out which columns should be rendered, and the order in which to render them from left to right.
+    std::vector<size_t> columnsToRender;
+    for (size_t i = 0; i < columns_.size(); ++i) {
+        if (columnIsRendered(i))
+            columnsToRender.push_back(i);
+    }
+    if (arrowStyle_.pointsRight)
+        std::reverse(columnsToRender.begin(), columnsToRender.end());
 
+    // Emit extra blank columns at the beginning?
+    if (arrowStyle_.pointsRight) {
+        for (size_t i = columnsToRender.size(); i < minRenderColumns_; ++i)
+            retval += arrowStyle_.blank;
+    }
+
+    // Render the arrow field across all the arrow columns.
+    for (const size_t columnIdx: columnsToRender) {
+        const Arrow &arrow = columns_[columnIdx].getOrDefault(lineNumber);
         if (arrow.location.isEmpty()) {
             retval += arrowStyle_.blank;
 
@@ -258,18 +335,24 @@ EdgeArrows::render(VertexId v, OutputPart part) const {
         }
     }
 
+    // Emit extra Blank columns at the end?
+    if (!arrowStyle_.pointsRight) {
+        for (size_t i = columnsToRender.size(); i < minRenderColumns_; ++i)
+            retval += arrowStyle_.blank;
+    }
+
     return retval;
 }
 
 size_t
-EdgeArrows::nSources(VertexId v) const {
-    const OutputLocation &vertexLocation = vertexLocations_.getOrDefault(v);
-    if (vertexLocation.isEmpty())
+EdgeArrows::nSources(const EndpointId endpoint) const {
+    const OutputLocation &endpointLocation = endpointLocations_.getOrDefault(endpoint);
+    if (endpointLocation.isEmpty())
         return 0;
-    size_t lineNumber = vertexLocation.greatest();
+    const size_t lineNumber = endpointLocation.greatest();
 
     size_t retval = 0;
-    for (size_t i=0; i<columns_.size(); ++i) {
+    for (size_t i = 0; i < columns_.size(); ++i) {
         size_t colnum = arrowStyle_.pointsRight ? columns_.size() - (i+1) : i;
         const Arrow &arrow = columns_[colnum].getOrDefault(lineNumber);
         if (!arrow.location.isEmpty()) {
@@ -284,14 +367,14 @@ EdgeArrows::nSources(VertexId v) const {
 }
 
 size_t
-EdgeArrows::nTargets(VertexId v) const {
-    const OutputLocation &vertexLocation = vertexLocations_.getOrDefault(v);
-    if (vertexLocation.isEmpty())
+EdgeArrows::nTargets(const EndpointId endpoint) const {
+    const OutputLocation &endpointLocation = endpointLocations_.getOrDefault(endpoint);
+    if (endpointLocation.isEmpty())
         return 0;
-    size_t lineNumber = vertexLocation.least();
+    const size_t lineNumber = endpointLocation.least();
 
     size_t retval = 0;
-    for (size_t i=0; i<columns_.size(); ++i) {
+    for (size_t i = 0; i < columns_.size(); ++i) {
         size_t colnum = arrowStyle_.pointsRight ? columns_.size() - (i+1) : i;
         const Arrow &arrow = columns_[colnum].getOrDefault(lineNumber);
         if (!arrow.location.isEmpty()) {
