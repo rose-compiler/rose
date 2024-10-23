@@ -1044,6 +1044,7 @@ RiscOperators::assignRegion(const BS::SValue::Ptr &result_) {
                             case Variables::StackVariable::Purpose::RETURN_ADDRESS:
                             case Variables::StackVariable::Purpose::FRAME_POINTER:
                             case Variables::StackVariable::Purpose::SPILL_AREA:
+                            case Variables::StackVariable::Purpose::STACK_POINTER:
                                 // These types of stack areas don't really have hard-and-fast boundaries because the compiler
                                 // often generates code to compute these addresses as part of accessing other areas of the
                                 // stack frame.
