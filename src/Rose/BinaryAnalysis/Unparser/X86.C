@@ -92,11 +92,11 @@ X86::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
     }
 }
 
-void
+std::vector<std::string>
 X86::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
+        return nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
     } else {
         SgAsmX86Instruction *insn = AST::Traversal::findParentTyped<SgAsmX86Instruction>(expr);
         const bool isLea = insn && insn->get_kind() == x86_lea;
@@ -113,14 +113,16 @@ X86::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpres
         out <<"[";
         emitExpression(out, expr->get_address(), state);
         out <<"]";
+
+        return {};
     }
 }
 
-void
+std::vector<std::string>
 X86::emitIndirectRegisterExpression(std::ostream &out, SgAsmIndirectRegisterExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        nextUnparser()->emitIndirectRegisterExpression(out, expr, state);
+        return nextUnparser()->emitIndirectRegisterExpression(out, expr, state);
     } else {
         std::ostringstream ss;
         state.frontUnparser().emitRegister(ss, expr->get_descriptor(), state);
@@ -128,6 +130,7 @@ X86::emitIndirectRegisterExpression(std::ostream &out, SgAsmIndirectRegisterExpr
         if (boost::ends_with(s, "0"))
             boost::erase_tail(s, 1);
         out <<s <<"(" <<expr->get_index() <<")";
+        return {};
     }
 }
 

@@ -2546,20 +2546,138 @@ parensForPrecedence(int rootPrec, SgAsmExpression *subexpr) {
 void
 Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
-    std::vector<std::string> comments;
     ExpressionGuard push(state, expr);
+
+    std::vector<std::string> comments;
+    auto appendComments = [&comments](const std::vector<std::string> &v) {
+        for (const std::string &s: v) {
+            if (!s.empty())
+                comments.push_back(s);
+        }
+    };
 
     if (false) {
         // Subclasses must appear before base classes
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
     } else if (SgAsmAarch32Coprocessor *op = isSgAsmAarch32Coprocessor(expr)) {
-        out <<"p" <<op->coprocessor();
+        appendComments(state.frontUnparser().emitAarch32Coprocessor(out, op, state));
 #endif
 
 #ifdef ROSE_ENABLE_ASM_AARCH64
     } else if (SgAsmAarch64AtOperand *op = isSgAsmAarch64AtOperand(expr)) {
-        switch (op->operation()) {
+        appendComments(state.frontUnparser().emitAarch64AtOperand(out, op, state));
+
+    } else if (SgAsmAarch64PrefetchOperand *op = isSgAsmAarch64PrefetchOperand(expr)) {
+        appendComments(state.frontUnparser().emitAarch64PrefetchOperand(out, op, state));
+
+    } else if (auto op = isSgAsmAarch64PState(expr)) {
+        appendComments(state.frontUnparser().emitAarch64PState(out, op, state));
+
+    } else if (SgAsmAarch64SysMoveOperand *op = isSgAsmAarch64SysMoveOperand(expr)) {
+        appendComments(state.frontUnparser().emitAarch64SysMoveOperand(out, op, state));
+
+    } else if (SgAsmAarch64CImmediateOperand *op = isSgAsmAarch64CImmediateOperand(expr)) {
+        appendComments(state.frontUnparser().emitAarch64CImmediateOperand(out, op, state));
+
+    } else if (SgAsmAarch64BarrierOperand *op = isSgAsmAarch64BarrierOperand(expr)) {
+        appendComments(state.frontUnparser().emitAarch64BarrierOperand(out, op, state));
+#endif
+
+    } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
+        appendComments(state.frontUnparser().emitBinaryAdd(out, op, state));
+
+    } else if (SgAsmBinarySubtract *op = isSgAsmBinarySubtract(expr)) {
+        appendComments(state.frontUnparser().emitBinarySubtract(out, op, state));
+
+    } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(expr)) {
+        appendComments(state.frontUnparser().emitBinaryMultiply(out, op, state));
+
+    } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(expr)) {
+        appendComments(state.frontUnparser().emitBinaryPreupdate(out, op, state));
+
+    } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(expr)) {
+        appendComments(state.frontUnparser().emitBinaryPostupdate(out, op, state));
+
+    } else if (SgAsmMemoryReferenceExpression *op = isSgAsmMemoryReferenceExpression(expr)) {
+        appendComments(state.frontUnparser().emitMemoryReferenceExpression(out, op, state));
+
+    } else if (SgAsmDirectRegisterExpression *op = isSgAsmDirectRegisterExpression(expr)) {
+        appendComments(state.frontUnparser().emitDirectRegisterExpression(out, op, state));
+
+    } else if (SgAsmIndirectRegisterExpression *op = isSgAsmIndirectRegisterExpression(expr)) {
+        appendComments(state.frontUnparser().emitIndirectRegisterExpression(out, op, state));
+
+    } else if (SgAsmIntegerValueExpression *op = isSgAsmIntegerValueExpression(expr)) {
+        appendComments(state.frontUnparser().emitIntegerValueExpression(out, op, state));
+
+    } else if (SgAsmFloatValueExpression *op = isSgAsmFloatValueExpression(expr)) {
+        appendComments(state.frontUnparser().emitFloatValueExpression(out, op, state));
+
+    } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(expr)) {
+        appendComments(state.frontUnparser().emitUnaryUnsignedExtend(out, op, state));
+
+    } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(expr)) {
+        appendComments(state.frontUnparser().emitUnarySignedExtend(out, op, state));
+
+    } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(expr)) {
+        appendComments(state.frontUnparser().emitUnaryTruncate(out, op, state));
+
+    } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(expr)) {
+        appendComments(state.frontUnparser().emitBinaryAsr(out, op, state));
+
+    } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(expr)) {
+        appendComments(state.frontUnparser().emitBinaryRor(out, op, state));
+
+    } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(expr)) {
+        appendComments(state.frontUnparser().emitBinaryLsr(out, op, state));
+
+    } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(expr)) {
+        appendComments(state.frontUnparser().emitBinaryLsl(out, op, state));
+
+    } else if (SgAsmBinaryMsl *op = isSgAsmBinaryMsl(expr)) {
+        appendComments(state.frontUnparser().emitBinaryMsl(out, op, state));
+
+    } else if (SgAsmByteOrder *op = isSgAsmByteOrder(expr)) {
+        appendComments(state.frontUnparser().emitByteOrder(out, op, state));
+
+    } else if (SgAsmRegisterNames *op = isSgAsmRegisterNames(expr)) {
+        appendComments(state.frontUnparser().emitRegisterNames(out, op, state));
+
+    } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
+        appendComments(state.frontUnparser().emitBinaryConcat(out, op, state));
+
+    } else {
+        ASSERT_not_implemented(expr->class_name());
+    }
+
+    if (!expr->get_comment().empty())
+        comments.push_back(expr->get_comment());
+    if (!comments.empty())
+        out <<"<" + boost::join(comments, ",") <<">";
+}
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+std::vector<std::string>
+Base::emitAarch32Coprocessor(std::ostream &out, SgAsmAarch32Coprocessor *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch32Coprocessor(out, expr, state);
+    } else {
+        out <<"p" <<expr->coprocessor();
+        return {};
+    }
+}
+#endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64AtOperand(std::ostream &out, SgAsmAarch64AtOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64AtOperand(out, expr, state);
+    } else {
+        switch (expr->operation()) {
             case ARM64_AT_S1E1R:
                 out <<"s1e1r";
                 break;
@@ -2597,12 +2715,22 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
                 out <<"s1e3w";
                 break;
             default:
-                out <<"INVALID AT OPERAND " <<(unsigned)op->operation();
+                out <<"INVALID AT OPERAND " <<(unsigned)expr->operation();
                 break;
         }
+        return {};
+    }
+}
+#endif
 
-    } else if (SgAsmAarch64PrefetchOperand *op = isSgAsmAarch64PrefetchOperand(expr)) {
-        switch (op->operation()) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64PrefetchOperand(std::ostream &out, SgAsmAarch64PrefetchOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64PrefetchOperand(out, expr, state);
+    } else {
+        switch (expr->operation()) {
             case ARM64_PRFM_PLDL1KEEP:  out <<"pldl1keep"; break;
             case ARM64_PRFM_PLDL1STRM:  out <<"pldl1strm"; break;
             case ARM64_PRFM_PLDL2KEEP:  out <<"pldl2keep"; break;
@@ -2624,9 +2752,20 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
             default:
                 ASSERT_not_reachable("invalid prefetch command");
         }
+        return {};
+    }
+}
+#endif
 
-    } else if (auto op = isSgAsmAarch64PState(expr)) {
-        switch (op->pstate()) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64PState(std::ostream &out, SgAsmAarch64PState *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64PState(out, expr, state);
+    } else {
+
+        switch (expr->pstate()) {
             case ARM64_PSTATE_INVALID: out <<"invalid"; break;
             case ARM64_PSTATE_SPSEL:   out <<"spsel";   break;
             case ARM64_PSTATE_DAIFSET: out <<"daifset"; break;
@@ -2634,21 +2773,51 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
             default:
                 ASSERT_not_reachable("invalid pstate");
         }
+        return {};
+    }
+}
+#endif
 
-    } else if (SgAsmAarch64SysMoveOperand *op = isSgAsmAarch64SysMoveOperand(expr)) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64SysMoveOperand(std::ostream &out, SgAsmAarch64SysMoveOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64SysMoveOperand(out, expr, state);
+    } else {
         using namespace Rose::BitOps;
-        unsigned op0 = bit(op->access(), 14) ? 3 : 2;
-        unsigned op1 = bits(op->access(), 11, 13);
-        unsigned crn = bits(op->access(), 7, 10);
-        unsigned crm = bits(op->access(), 3, 6);
-        unsigned op2 = bits(op->access(), 0, 2);
+        unsigned op0 = bit(expr->access(), 14) ? 3 : 2;
+        unsigned op1 = bits(expr->access(), 11, 13);
+        unsigned crn = bits(expr->access(), 7, 10);
+        unsigned crm = bits(expr->access(), 3, 6);
+        unsigned op2 = bits(expr->access(), 0, 2);
         out <<"s" <<op0 <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
+        return {};
+    }
+}
+#endif
 
-    } else if (SgAsmAarch64CImmediateOperand *op = isSgAsmAarch64CImmediateOperand(expr)) {
-        out <<"c" <<op->immediate();
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64CImmediateOperand(std::ostream &out, SgAsmAarch64CImmediateOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64CImmediateOperand(out, expr, state);
+    } else {
+        out <<"c" <<expr->immediate();
+        return {};
+    }
+}
+#endif
 
-    } else if (SgAsmAarch64BarrierOperand *op = isSgAsmAarch64BarrierOperand(expr)) {
-        switch (op->operation()) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64BarrierOperand(std::ostream &out, SgAsmAarch64BarrierOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64BarrierOperand(out, expr, state);
+    } else {
+        switch (expr->operation()) {
             case ARM64_BARRIER_INVALID:
                 out <<"barrier invalid";
                 break;
@@ -2689,55 +2858,79 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
                 out <<"barrier sy";
                 break;
             default:
-                out <<"barrier " <<(unsigned)op->operation();
+                out <<"barrier " <<(unsigned)expr->operation();
                 break;
         }
+        return {};
+    }
+}
 #endif
 
-    } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
+std::vector<std::string>
+Base::emitBinaryAdd(std::ostream &out, SgAsmBinaryAdd *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryAdd(out, expr, state);
+    } else {
         // Print the "+" and RHS only if RHS is non-zero
-        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr->get_rhs());
         if (!ival || !ival->get_bitVector().isAllClear()) {
             int prec = operatorPrecedence(expr);
-            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            Parens parens = parensForPrecedence(prec, expr->get_lhs());
             out <<parens.left;
-            emitExpression(out, op->get_lhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
             out <<parens.right;
 
             out <<" + ";
 
-            parens = parensForPrecedence(prec, op->get_rhs());
+            parens = parensForPrecedence(prec, expr->get_rhs());
             out <<parens.left;
-            emitExpression(out, op->get_rhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
             out <<parens.right;
         } else {
-            emitExpression(out, op->get_lhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         }
+        return {};
+    }
+}
 
-    } else if (SgAsmBinarySubtract *op = isSgAsmBinarySubtract(expr)) {
+std::vector<std::string>
+Base::emitBinarySubtract(std::ostream &out, SgAsmBinarySubtract *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinarySubtract(out, expr, state);
+    } else {
         // Print the "-" and RHS only if RHS is non-zero
-        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr->get_rhs());
         if (!ival || !ival->get_bitVector().isAllClear()) {
             int prec = operatorPrecedence(expr);
-            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            Parens parens = parensForPrecedence(prec, expr->get_lhs());
             out <<parens.left;
-            emitExpression(out, op->get_lhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
             out <<parens.right;
 
             out <<" - ";
 
-            parens = parensForPrecedence(prec, op->get_rhs());
+            parens = parensForPrecedence(prec, expr->get_rhs());
             out <<parens.left;
-            emitExpression(out, op->get_rhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
             out <<parens.right;
         } else {
-            emitExpression(out, op->get_lhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         }
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(expr)) {
+std::vector<std::string>
+Base::emitBinaryMultiply(std::ostream &out, SgAsmBinaryMultiply *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryMultiply(out, expr, state);
+    } else {
         // Print the "*" and RHS only if RHS is not 1
-        bool isOne = [op]() {
-            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
+        bool isOne = [expr]() {
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr->get_rhs());
             if (!ival)
                 return false;
             Sawyer::Container::BitVector one(ival->get_bitVector().size());
@@ -2747,132 +2940,270 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
 
         if (!isOne) {
             int prec = operatorPrecedence(expr);
-            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            Parens parens = parensForPrecedence(prec, expr->get_lhs());
             out <<parens.left;
-            emitExpression(out, op->get_lhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
             out <<parens.right;
 
             out <<" * ";
 
-            parens = parensForPrecedence(prec, op->get_rhs());
+            parens = parensForPrecedence(prec, expr->get_rhs());
             out <<parens.left;
-            emitExpression(out, op->get_rhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
             out <<parens.right;
         } else {
-            emitExpression(out, op->get_lhs(), state);
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        }
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryPreupdate(std::ostream &out, SgAsmBinaryPreupdate *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryPreupdate(out, expr, state);
+    } else {
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<" (after ";
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<" = ";
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<")";
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryPostupdate(std::ostream &out, SgAsmBinaryPostupdate *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryPostupdate(out, expr, state);
+    } else {
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<" (then ";
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<" = ";
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<")";
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
+    } else {
+        state.frontUnparser().emitTypeName(out, expr->get_type(), state);
+        out <<" ";
+
+        if (expr->get_segment()) {
+            state.frontUnparser().emitExpression(out, expr->get_segment(), state);
+            out <<":";
         }
 
-    } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(expr)) {
-        emitExpression(out, op->get_lhs(), state);
-        out <<" (after ";
-        emitExpression(out, op->get_lhs(), state);
-        out <<" = ";
-        emitExpression(out, op->get_rhs(), state);
-        out <<")";
+        out <<"[";
+        state.frontUnparser().emitExpression(out, expr->get_address(), state);
+        out <<"]";
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(expr)) {
-        emitExpression(out, op->get_lhs(), state);
-        out <<" (then ";
-        emitExpression(out, op->get_lhs(), state);
-        out <<" = ";
-        emitExpression(out, op->get_rhs(), state);
-        out <<")";
-
-    } else if (SgAsmMemoryReferenceExpression *op = isSgAsmMemoryReferenceExpression(expr)) {
-        state.frontUnparser().emitMemoryReferenceExpression(out, op, state);
-
-    } else if (SgAsmDirectRegisterExpression *op = isSgAsmDirectRegisterExpression(expr)) {
-        int adjustment = op->get_adjustment();
+std::vector<std::string>
+Base::emitDirectRegisterExpression(std::ostream &out, SgAsmDirectRegisterExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitDirectRegisterExpression(out, expr, state);
+    } else {
+        int adjustment = expr->get_adjustment();
         if (adjustment < 0)
             out <<"--";
-        state.frontUnparser().emitRegister(out, op->get_descriptor(), state);
+        state.frontUnparser().emitRegister(out, expr->get_descriptor(), state);
         if (adjustment > 0)
             out <<"++";
+        return {};
+    }
+}
 
-    } else if (SgAsmIndirectRegisterExpression *op = isSgAsmIndirectRegisterExpression(expr)) {
-        state.frontUnparser().emitIndirectRegisterExpression(out, op, state);
+std::vector<std::string>
+Base::emitIndirectRegisterExpression(std::ostream &out, SgAsmIndirectRegisterExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitIndirectRegisterExpression(out, expr, state);
+    } else {
+        state.frontUnparser().emitRegister(out, expr->get_descriptor(), state);
+        out <<"(" <<expr->get_index() <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmIntegerValueExpression *op = isSgAsmIntegerValueExpression(expr)) {
-        Sawyer::Container::BitVector total = op->get_bitVector();
+std::vector<std::string>
+Base::emitIntegerValueExpression(std::ostream &out, SgAsmIntegerValueExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitIntegerValueExpression(out, expr, state);
+    } else {
+        Sawyer::Container::BitVector total = expr->get_bitVector();
 
         // Add the base value to the total
-        if (const uint64_t base = op->get_baseAddress()) {
+        if (const uint64_t base = expr->get_baseAddress()) {
             Sawyer::Container::BitVector baseBv(total.size());
             baseBv.fromInteger(base);
             total.add(baseBv);
         }
 
-        comments = state.frontUnparser().emitSignedInteger(out, total, state);
+        return state.frontUnparser().emitSignedInteger(out, total, state);
+    }
+}
 
-    } else if (SgAsmFloatValueExpression *op = isSgAsmFloatValueExpression(expr)) {
-        out <<op->get_nativeValue();
+std::vector<std::string>
+Base::emitFloatValueExpression(std::ostream &out, SgAsmFloatValueExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitFloatValueExpression(out, expr, state);
+    } else {
+        out <<expr->get_nativeValue();
+        return {};
+    }
+}
 
-    } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(expr)) {
+std::vector<std::string>
+Base::emitUnaryUnsignedExtend(std::ostream &out, SgAsmUnaryUnsignedExtend *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitUnaryUnsignedExtend(out, expr, state);
+    } else {
         out <<"uext(";
-        emitExpression(out, op->get_operand(), state);
-        out <<", " <<op->get_nBits() <<")";
+        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
+        out <<", " <<expr->get_nBits() <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(expr)) {
+std::vector<std::string>
+Base::emitUnarySignedExtend(std::ostream &out, SgAsmUnarySignedExtend *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitUnarySignedExtend(out, expr, state);
+    } else {
         out <<"sext(";
-        emitExpression(out, op->get_operand(), state);
-        out <<", " <<op->get_nBits() <<")";
+        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
+        out <<", " <<expr->get_nBits() <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(expr)) {
+std::vector<std::string>
+Base::emitUnaryTruncate(std::ostream &out, SgAsmUnaryTruncate *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitUnaryTruncate(out, expr, state);
+    } else {
         out <<"trunc(";
-        emitExpression(out, op->get_operand(), state);
-        out <<", " <<op->get_nBits() <<")";
+        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
+        out <<", " <<expr->get_nBits() <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(expr)) {
+std::vector<std::string>
+Base::emitBinaryAsr(std::ostream &out, SgAsmBinaryAsr *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryAsr(out, expr, state);
+    } else {
         out <<"asr(";
-        emitExpression(out, op->get_lhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         out <<", ";
-        emitExpression(out, op->get_rhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(expr)) {
+std::vector<std::string>
+Base::emitBinaryRor(std::ostream &out, SgAsmBinaryRor *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryRor(out, expr, state);
+    } else {
         out <<"ror(";
-        emitExpression(out, op->get_lhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         out <<", ";
-        emitExpression(out, op->get_rhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(expr)) {
+std::vector<std::string>
+Base::emitBinaryLsr(std::ostream &out, SgAsmBinaryLsr *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryLsr(out, expr, state);
+    } else {
         int prec = operatorPrecedence(expr);
-        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
         out <<parens.left;
-        emitExpression(out, op->get_lhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         out <<parens.right;
 
         out <<" >> ";
 
-        parens = parensForPrecedence(prec, op->get_rhs());
+        parens = parensForPrecedence(prec, expr->get_rhs());
         out <<parens.left;
-        emitExpression(out, op->get_rhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<parens.right;
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(expr)) {
+std::vector<std::string>
+Base::emitBinaryLsl(std::ostream &out, SgAsmBinaryLsl *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryLsl(out, expr, state);
+    } else {
         int prec = operatorPrecedence(expr);
-        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
         out <<parens.left;
-        emitExpression(out, op->get_lhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         out <<parens.right;
 
         out <<" << ";
 
-        parens = parensForPrecedence(prec, op->get_rhs());
+        parens = parensForPrecedence(prec, expr->get_rhs());
         out <<parens.left;
-        emitExpression(out, op->get_rhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<parens.right;
+        return {};
+    }
+}
 
-    } else if (SgAsmBinaryMsl *op = isSgAsmBinaryMsl(expr)) {
+std::vector<std::string>
+Base::emitBinaryMsl(std::ostream &out, SgAsmBinaryMsl *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryMsl(out, expr, state);
+    } else {
         out <<"msl(";
-        emitExpression(out, op->get_lhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         out <<", ";
-        emitExpression(out, op->get_rhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<")";
+        return {};
+    }
+}
 
-    } else if (SgAsmByteOrder *op = isSgAsmByteOrder(expr)) {
-        switch (op->byteOrder()) {
+std::vector<std::string>
+Base::emitByteOrder(std::ostream &out, SgAsmByteOrder *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitByteOrder(out, expr, state);
+    } else {
+        switch (expr->byteOrder()) {
             case ByteOrder::ORDER_MSB:
                 out <<"be";
                 break;
@@ -2880,69 +3211,50 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
                 out <<"le";
                 break;
             default:
-                ASSERT_not_reachable("invalid byte order " + boost::lexical_cast<std::string>(op->byteOrder()));
+                ASSERT_not_reachable("invalid byte order " + boost::lexical_cast<std::string>(expr->byteOrder()));
         }
+        return {};
+    }
+}
 
-    } else if (SgAsmRegisterNames *op = isSgAsmRegisterNames(expr)) {
-        for (size_t i = 0; i < op->get_registers().size(); ++i) {
+std::vector<std::string>
+Base::emitRegisterNames(std::ostream &out, SgAsmRegisterNames *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitRegisterNames(out, expr, state);
+    } else {
+        for (size_t i = 0; i < expr->get_registers().size(); ++i) {
             out <<(0 == i ? "{" : ", ");
-            emitExpression(out, op->get_registers()[i], state);
+            state.frontUnparser().emitExpression(out, expr->get_registers()[i], state);
         }
         out <<"}";
-        if (op->get_mask() != 0)
-            comments.push_back(StringUtility::toHex2(op->get_mask(), 16, false, false));
 
-    } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
+        if (expr->get_mask() != 0) {
+            return {StringUtility::toHex2(expr->get_mask(), 16, false, false)};
+        } else {
+            return {};
+        }
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryConcat(std::ostream &out, SgAsmBinaryConcat *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryConcat(out, expr, state);
+    } else {
         int prec = operatorPrecedence(expr);
-        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
         out <<parens.left;
-        emitExpression(out, op->get_lhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         out <<parens.right;
 
         out <<":";
-        parens = parensForPrecedence(prec, op->get_rhs());
+        parens = parensForPrecedence(prec, expr->get_rhs());
         out <<parens.left;
-        emitExpression(out, op->get_rhs(), state);
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<parens.right;
-
-    } else {
-        ASSERT_not_implemented(expr->class_name());
-    }
-
-    if (!expr->get_comment().empty())
-        comments.push_back(expr->get_comment());
-    if (!comments.empty())
-        out <<"<" + boost::join(comments, ",") <<">";
-}
-
-void
-Base::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpression *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
-    } else {
-        state.frontUnparser().emitTypeName(out, expr->get_type(), state);
-        out <<" ";
-
-        if (expr->get_segment()) {
-            emitExpression(out, expr->get_segment(), state);
-            out <<":";
-        }
-
-        out <<"[";
-        emitExpression(out, expr->get_address(), state);
-        out <<"]";
-    }
-}
-
-void
-Base::emitIndirectRegisterExpression(std::ostream &out, SgAsmIndirectRegisterExpression *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        nextUnparser()->emitIndirectRegisterExpression(out, expr, state);
-    } else {
-        state.frontUnparser().emitRegister(out, expr->get_descriptor(), state);
-        out <<"(" <<expr->get_index() <<")";
+        return {};
     }
 }
 

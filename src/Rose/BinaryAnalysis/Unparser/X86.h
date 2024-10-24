@@ -32,8 +32,8 @@ public:
 protected:
     void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
     void emitTypeName(std::ostream&, SgAsmType*, State&) const override;
-    void emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const override;
-    void emitIndirectRegisterExpression(std::ostream&, SgAsmIndirectRegisterExpression*, State&) const override;
+    std::vector<std::string> emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const override;
+    std::vector<std::string> emitIndirectRegisterExpression(std::ostream&, SgAsmIndirectRegisterExpression*, State&) const override;
 };
 
 } // namespace

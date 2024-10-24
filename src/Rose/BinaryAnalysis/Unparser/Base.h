@@ -593,8 +593,39 @@ public:
     virtual void emitOperandEpilogue(std::ostream&, SgAsmExpression*, State&) const;
 
     virtual void emitExpression(std::ostream&, SgAsmExpression*, State&) const;
-    virtual void emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const;
-    virtual void emitIndirectRegisterExpression(std::ostream&, SgAsmIndirectRegisterExpression*, State&) const;
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    virtual std::vector<std::string> emitAarch32Coprocessor(std::ostream&, SgAsmAarch32Coprocessor*, State&) const;
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    virtual std::vector<std::string> emitAarch64AtOperand(std::ostream&, SgAsmAarch64AtOperand*, State&) const;
+    virtual std::vector<std::string> emitAarch64PrefetchOperand(std::ostream&, SgAsmAarch64PrefetchOperand*, State&) const;
+    virtual std::vector<std::string> emitAarch64PState(std::ostream&, SgAsmAarch64PState*, State&) const;
+    virtual std::vector<std::string> emitAarch64SysMoveOperand(std::ostream&, SgAsmAarch64SysMoveOperand*, State&) const;
+    virtual std::vector<std::string> emitAarch64CImmediateOperand(std::ostream&, SgAsmAarch64CImmediateOperand*, State&) const;
+    virtual std::vector<std::string> emitAarch64BarrierOperand(std::ostream&, SgAsmAarch64BarrierOperand*, State&) const;
+#endif
+    virtual std::vector<std::string> emitBinaryAdd(std::ostream&, SgAsmBinaryAdd*, State&) const;
+    virtual std::vector<std::string> emitBinarySubtract(std::ostream&, SgAsmBinarySubtract*, State&) const;
+    virtual std::vector<std::string> emitBinaryMultiply(std::ostream&, SgAsmBinaryMultiply*, State&) const;
+    virtual std::vector<std::string> emitBinaryPreupdate(std::ostream&, SgAsmBinaryPreupdate*, State&) const;
+    virtual std::vector<std::string> emitBinaryPostupdate(std::ostream&, SgAsmBinaryPostupdate*, State&) const;
+    virtual std::vector<std::string> emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const;
+    virtual std::vector<std::string> emitDirectRegisterExpression(std::ostream&, SgAsmDirectRegisterExpression*, State&) const;
+    virtual std::vector<std::string> emitIndirectRegisterExpression(std::ostream&, SgAsmIndirectRegisterExpression*, State&) const;
+    virtual std::vector<std::string> emitIntegerValueExpression(std::ostream&, SgAsmIntegerValueExpression*, State&) const;
+    virtual std::vector<std::string> emitFloatValueExpression(std::ostream&, SgAsmFloatValueExpression*, State&) const;
+    virtual std::vector<std::string> emitUnaryUnsignedExtend(std::ostream&, SgAsmUnaryUnsignedExtend*, State&) const;
+    virtual std::vector<std::string> emitUnarySignedExtend(std::ostream&, SgAsmUnarySignedExtend*, State&) const;
+    virtual std::vector<std::string> emitUnaryTruncate(std::ostream&, SgAsmUnaryTruncate*, State&) const;
+    virtual std::vector<std::string> emitBinaryAsr(std::ostream&, SgAsmBinaryAsr*, State&) const;
+    virtual std::vector<std::string> emitBinaryRor(std::ostream&, SgAsmBinaryRor*, State&) const;
+    virtual std::vector<std::string> emitBinaryLsr(std::ostream&, SgAsmBinaryLsr*, State&) const;
+    virtual std::vector<std::string> emitBinaryLsl(std::ostream&, SgAsmBinaryLsl*, State&) const;
+    virtual std::vector<std::string> emitBinaryMsl(std::ostream&, SgAsmBinaryMsl*, State&) const;
+    virtual std::vector<std::string> emitByteOrder(std::ostream&, SgAsmByteOrder*, State&) const;
+    virtual std::vector<std::string> emitRegisterNames(std::ostream&, SgAsmRegisterNames*, State&) const;
+    virtual std::vector<std::string> emitBinaryConcat(std::ostream&, SgAsmBinaryConcat*, State&) const;
+
     virtual void emitRegister(std::ostream&, RegisterDescriptor, State&) const;
     virtual std::vector<std::string> emitUnsignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
