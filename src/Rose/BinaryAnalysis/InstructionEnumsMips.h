@@ -44,8 +44,9 @@ enum MipsInterruptMajor {
 
 // Minor interrupt numbers for RiscOperators::interrupt
 enum MipsInterruptMinor {
+    mips_breakpoint,
     mips_integer_overflow,
-    mips_breakpoint
+    mips_reserved_instruction
 };
 
 // MIPS data formats
@@ -74,6 +75,7 @@ enum MipsInstructionKind {
     mips_and,                   // Bitwise logical AND.
     mips_andi,                  // Bitwise logical AND immediate.
     mips_b,                     // Unconditional branch.
+    mips_bal,                   // Branch and link.
     mips_bc1f,                  // Branch on FP false.
     mips_bc1fl,                 // Branch on FP false likely.
     mips_bc1t,                  // Branch on FP true.

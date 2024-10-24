@@ -96,7 +96,6 @@ private:
     // Initialize memory state, such as the default byte order
     void initializeMemoryState();
 
-
     // Merge unaligned memory with contents of register
     BaseSemantics::SValuePtr mergeLeft(BaseSemantics::SValuePtr reg, BaseSemantics::SValuePtr mem);
     BaseSemantics::SValuePtr mergeRight(BaseSemantics::SValuePtr reg, BaseSemantics::SValuePtr mem);

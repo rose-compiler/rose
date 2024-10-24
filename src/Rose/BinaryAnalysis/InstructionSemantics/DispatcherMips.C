@@ -178,15 +178,113 @@ struct IP_andi: P {
 };
 
 // Unconditional branch
+// Branch and link (mips_bal, implemented by IP_b)
 struct IP_b: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
+        const size_t nBits = d->architecture()->bitsPerWord();
 
         d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // Link instructions
+        if (insn->get_kind() == mips_bal) {
+            // Place the return address link (PC + 8) in GPR 31.
+            SValue::Ptr link = ops->number_(nBits, insn->get_address());
+            link = ops->add(link, ops->number_(nBits, 8));
+            ops->writeRegister(d->REG_RA, link);
+        }
 
         // Write new IP/PC
         SValue::Ptr target = d->read(args[0]);
         ops->writeRegister(d->instructionPointerRegister(), target);
+    }
+};
+
+// Branch on equal
+// Branch on not equal (mips_bne, implemented by IP_beq)
+struct IP_beq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+
+        d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // Calculate new IP value based on comparison of rs and rt registers
+        SValue::Ptr compare;
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr rt = d->read(args[1]);
+        SValue::Ptr ipValue = ops->readRegister(d->instructionPointerRegister());
+
+        switch (insn->get_kind()) {
+          case mips_beq:
+            compare = ops->isEqual(rs, rt);
+            break;
+          case mips_bne:
+            compare = ops->isNotEqual(rs, rt);
+            break;
+          default:
+            break;
+        }
+
+        // Write new IP/PC
+        ipValue = ops->ite(compare, d->read(args[2]), ipValue);
+        ops->writeRegister(d->instructionPointerRegister(), ipValue);
+    }
+};
+
+// Branch on greater than or equal to zero (mips_bgez)
+// Branch on greater than or equal to zero and link (mips_bgezal, implemented by IP_bgez)
+// Branch on greater than zero (mips_bgtz, implemented by IP_bgez)
+// Branch on less than or equal to zero (mips_blez, implemented by IP_bgez)
+// Branch on less than zero (mips_bltz, implemented by IP_bgez)
+// Branch on less than or equal to zero and link (mips_bltzal, implemented by IP_bgez)
+struct IP_bgez: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t nBits = d->architecture()->bitsPerWord();
+
+        d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // Link instructions
+        switch (insn->get_kind()) {
+          case mips_bgezal:
+          case mips_bltzal: {
+            // Place the return address link (PC + 8) in GPR 31.
+            SValue::Ptr link = ops->number_(nBits, insn->get_address());
+            link = ops->add(link, ops->number_(nBits, 8));
+            ops->writeRegister(d->REG_RA, link);
+            break;
+          }
+          default:
+            break;
+        }
+
+        // Calculate new IP value based on evaluation of rs register
+        SValue::Ptr compare;
+        SValue::Ptr rs = d->read(args[0]);
+        SValue::Ptr ipValue = ops->readRegister(d->instructionPointerRegister());
+
+        switch (insn->get_kind()) {
+          case mips_bgez:
+          case mips_bgezal:
+            compare = ops->isSignedGreaterThanOrEqual(rs, ops->number_(nBits, 0));
+            break;
+          case mips_bgtz:
+            compare = ops->isSignedGreaterThan(rs, ops->number_(nBits, 0));
+            break;
+          case mips_blez:
+            compare = ops->isSignedLessThanOrEqual(rs, ops->number_(nBits, 0));
+            break;
+          case mips_bltz:
+          case mips_bltzal:
+            compare = ops->isSignedLessThan(rs, ops->number_(nBits, 0));
+            break;
+          default:
+            break;
+        }
+
+        // Write new IP/PC
+        ipValue = ops->ite(compare, d->read(args[1]), ipValue);
+        ops->writeRegister(d->instructionPointerRegister(), ipValue);
     }
 };
 
@@ -342,7 +440,7 @@ struct IP_lwr: P {
 // Load word indexed to floating point
 // TODO: Load doubleword indexed to floating point (reuse functions, is that what this is on?)
 struct IP_lwxc1: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr word = d->read(args[1]);
         // TODO: loaded to low word in FPR fd
@@ -940,6 +1038,15 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_and,   new Mips::IP_and);
     iprocSet(mips_andi,  new Mips::IP_andi);
     iprocSet(mips_b,     new Mips::IP_b);
+    iprocSet(mips_bal,   new Mips::IP_b);     // mips_bal shares common implementation mips_b
+    iprocSet(mips_beq,   new Mips::IP_beq);
+    iprocSet(mips_bgez,  new Mips::IP_bgez);
+    iprocSet(mips_bgezal,new Mips::IP_bgez);  // mips_bgezal shares common implementation mips_bgez
+    iprocSet(mips_bgtz,  new Mips::IP_bgez);  // mips_bgtz   shares common implementation mips_bgez
+    iprocSet(mips_blez,  new Mips::IP_bgez);  // mips_blez   shares common implementation mips_bgez
+    iprocSet(mips_bltz,  new Mips::IP_bgez);  // mips_bltz   shares common implementation mips_bgez
+    iprocSet(mips_bltzal,new Mips::IP_bgez);  // mips_bltzal shares common implementation mips_bgez
+    iprocSet(mips_bne,   new Mips::IP_beq);   // mips_bne    shares common implementation mips_beq
     iprocSet(mips_break, new Mips::IP_break);
     iprocSet(mips_clo,   new Mips::IP_clo);
     iprocSet(mips_clz,   new Mips::IP_clz);

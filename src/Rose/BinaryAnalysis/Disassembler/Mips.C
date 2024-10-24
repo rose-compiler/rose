@@ -169,6 +169,7 @@ Mips::nDelaySlots(MipsInstructionKind kind) {
     switch (kind) {
         // Original branch instructions
         case mips_b:
+        case mips_bal:
         case mips_bc1f:
         case mips_bc1t:
         case mips_bc2f:
@@ -1059,9 +1060,13 @@ static struct Mips32_bgezal: Mips::Decoder {
                             sOP(001)|sR1(021),
                             mOP()   |mR1()) {}
     SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
-        return d->makeInstruction(insn_va, mips_bgezal,
-                                  d->makeRegister(insn_va, gR0(ib)),
-                                  d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
+        if (gR0(ib) == 0) {
+            return d->makeInstruction(insn_va, mips_bal, d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
+        } else {
+            return d->makeInstruction(insn_va, mips_bgezal,
+                                      d->makeRegister(insn_va, gR0(ib)),
+                                      d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
+        }
     }
 } mips32_bgezal;
 

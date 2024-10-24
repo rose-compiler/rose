@@ -162,6 +162,11 @@ Base::instructionDescription(const SgAsmInstruction*) const {
 }
 
 bool
+Base::isControlTransfer(const SgAsmInstruction*) const {
+    return false;
+}
+
+bool
 Base::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) const {
     return false;
 }

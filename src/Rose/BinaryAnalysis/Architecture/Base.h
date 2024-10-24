@@ -233,6 +233,14 @@ public:
      *  Thread safety: Thread safe. */
     virtual bool isUnknown(const SgAsmInstruction*) const = 0;
 
+    /** Returns true if the specified instruction is a control transfer instruction.
+     *
+     *  A control transfer instruction (CTI) is an instruction that alters the normal sequential flow of execution in a program
+     *  by changing the value of the Program Counter (PC). Examples are branch and jump instructions.
+     *
+     *  Thread safety: Thread safe. */
+    virtual bool isControlTransfer(const SgAsmInstruction*) const;
+
     /** Determines whether the specified instruction normally terminates a basic block.
      *
      *  The analysis generally only looks at the individual instruction and therefore is not very sophisticated.  For instance, a

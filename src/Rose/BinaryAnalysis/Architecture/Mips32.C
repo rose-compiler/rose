@@ -137,8 +137,9 @@ Mips32::interruptDictionary() const {
 
     if (!interruptDictionary_.isCached()) {
         auto interrupts = RegisterDictionary::instance(name());
-        interrupts->insert("signal_exception.integer_overflow", mips_signal_exception, mips_integer_overflow,   0, 1);
-        interrupts->insert("signal_exception.breakpoint",       mips_signal_exception, mips_breakpoint,         0, 1);
+        interrupts->insert("signal_exception.breakpoint", mips_signal_exception, mips_breakpoint, 0, 1);
+        interrupts->insert("signal_exception.integer_overflow", mips_signal_exception, mips_integer_overflow, 0, 1);
+        interrupts->insert("signal_exception.reserved_instruction", mips_signal_exception, mips_reserved_instruction, 0, 1);
         interruptDictionary_ = interrupts;
     }
 
@@ -200,6 +201,7 @@ Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
         case mips_and:                  return "bitwise logical AND";
         case mips_andi:                 return "bitwise logical AND immediate";
         case mips_b:                    return "unconditional branch";
+        case mips_bal:                  return "branch and link";
         case mips_bc1f:                 return "branch on FP false";
         case mips_bc1fl:                return "branch on FP false likely";
         case mips_bc1t:                 return "branch on FP true";
@@ -509,10 +511,72 @@ Mips32::isUnknown(const SgAsmInstruction *insn_) const {
 }
 
 bool
+Mips32::isControlTransfer(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmMipsInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    // A control transfer instruction (CTI) is a branch, jump, or NAL, ERET, ERETNC, DERET, WAIT, and PAUSE
+    switch (insn->get_kind()) {
+        case mips_b:
+        case mips_bal:
+        case mips_bc1f:
+        case mips_bc1fl:
+        case mips_bc1t:
+        case mips_bc1tl:
+        case mips_bc2f:
+        case mips_bc2fl:
+        case mips_bc2t:
+        case mips_bc2tl:
+        case mips_beq:
+        case mips_beql:
+        case mips_bgez:
+        case mips_bgezal:
+        case mips_bgezall:
+        case mips_bgezl:
+        case mips_bgtz:
+        case mips_bgtzl:
+        case mips_blez:
+        case mips_blezl:
+        case mips_bltz:
+        case mips_bltzal:
+        case mips_bltzall:
+        case mips_bltzl:
+        case mips_bne:
+        case mips_bnel:
+     // case mips_deret:
+        case mips_eret:
+     // case mips_eretnc:
+        case mips_j:
+        case mips_jal:
+        case mips_jalr:
+        case mips_jalr_hb:
+        case mips_jalx:
+        case mips_jr:
+        case mips_jr_hb:
+     // case mips_nal:
+        case mips_pause:
+        case mips_wait:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
 Mips32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmMipsInstruction(insn_);
     ASSERT_not_null(insn);
     switch (insn->get_kind()) {
+        case mips_b:
+        case mips_bal:
+        case mips_bc1f:
+        case mips_bc1fl:
+        case mips_bc1t:
+        case mips_bc1tl:
+        case mips_bc2f:
+        case mips_bc2fl:
+        case mips_bc2t:
+        case mips_bc2tl:
         case mips_beq:
         case mips_beql:
         case mips_bgez:
@@ -533,6 +597,7 @@ Mips32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
         case mips_j:
         case mips_jal:
         case mips_jalr:
+        case mips_jalr_hb:
         case mips_jalx:
         case mips_jr:
         case mips_jr_hb:
@@ -609,6 +674,8 @@ Mips32::branchTarget(SgAsmInstruction *insn_) const {
 
     SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
     switch (insn->get_kind()) {
+        case mips_b:
+        case mips_bal:
         case mips_j:
         case mips_jal:
         case mips_jalx:
@@ -658,6 +725,8 @@ Mips32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
     AddressSet successors;
 
     switch (insn->get_kind()) {
+        case mips_b:
+        case mips_bal:
         case mips_break:
         case mips_j:
         case mips_jal:

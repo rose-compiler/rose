@@ -195,6 +195,13 @@ Dispatcher::processDelaySlot(SgAsmInstruction *insn) {
         SgAsmInstruction *outerInsn = operators()->currentInstruction();
         ASSERT_not_null(outerInsn);
 
+        // Raise an interrupt if an illegal (control transfer) instruction is found in the delay slot
+        SValue::Ptr raise{operators()->boolean_(false)};
+        if (architecture()->isControlTransfer(notnull(insn))) {
+            raise = operators()->boolean_(true);
+        }
+        operators()->raiseInterrupt(mips_signal_exception, mips_reserved_instruction, raise);
+
         // Execute the inner instruction -- this is the delay slot and is executing within the context of the outer instruction.
         // Before returning (either normally or via exception) make sure we restore the outer instruction. In the case of an
         // exception, the outer instruction might catch the exception from the inner instruction and resume its own processing.
