@@ -95,6 +95,9 @@ BoostSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class::
         }
     }
 
+    if (!c->userSerializerFunction.empty())
+        header <<THIS_LOCATION <<"        " <<c->userSerializerFunction <<"Boost(s);\n";
+
     if (usingRosetta)
         header <<THIS_LOCATION <<"        debugSerializationEnd(\"" <<c->name <<"\");\n";
     header <<"    }\n"

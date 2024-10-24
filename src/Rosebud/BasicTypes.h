@@ -92,6 +92,13 @@
  *  @li The `Rosebud::no_destructor` attribute [prevents the generation of a destructor so the user can define his own destructor
  *  (Sawyer)] [is ignored and a destructor is always generated (ROSETTA)].
  *
+ *  @li The `Rosebud::serialize` attribute takes a single argument which is a symbol that will form the first part of a user-defined
+ *  function to call in order to serialize or deserialize non-property, user-defined data members. The actual name of the function
+ *  is formed by appending the name of the serializer. For instance, if the argument is "userSerialize" then the function that is
+ *  called for the Boost::Serialization serializer is named "userSerializeBoost".  The arguments passed to the function depend on
+ *  the serializer, and are usually an input or output archive.  The default is that no user-defined serializer is called, but
+ *  serialization will still be performed for any properties that need it.
+ *
  *  @li The `Rosebud::small_header` attribute [is ignored since all headers are small (Sawyer)] [causes ROSETTA to generate a header
  *  file that contains only this single class definition (ROSETTA)].
  *

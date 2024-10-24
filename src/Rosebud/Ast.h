@@ -396,6 +396,10 @@ public:
     /** If non-empty, the qualified namespace in which this class is defined. */
     std::string qualifiedNamespace;
 
+    /** If non-empty, then the generated serialization functions will call a user-defined serialization function whose name is
+     *  formed from this base name. */
+    std::string userSerializerFunction;
+
 protected:
     /** Default constructor used only by derived classes. */
     Class();

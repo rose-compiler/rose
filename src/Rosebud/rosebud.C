@@ -44,6 +44,7 @@ static const std::vector<std::string> validClassAttrNames {
     "Rosebud::abstract",                                // class cannot be instantiated
     "Rosebud::no_constructors",                         // don't generate constructors
     "Rosebud::no_destructor",                           // don't generate the destructor
+    "Rosebud::serialize",                               // base name for user-serialization function template
     "Rosebud::small_header",                            // ROSETTA-style small header
     "Rosebud::suppress",                                // don't generate code for this type
     "Rosebud::tag"                                      // specify the tag string, 3rd arg of ROSETTA's NEW_TERMINAL_MACRO
@@ -629,6 +630,11 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
             // One argument which is the tag symbol, the 3rd argument of ROSETTA's NEW_TERMINAL_MACRO macro.
             if (checkNumberOfArguments(file, attr(), 1))
                 c->tag = attr->arguments->elmts[0]->string(file);
+
+        } else if ("Rosebud::serialize" == attr->fqName) {
+            // One argument, which is the base name of a user-defined serialization function for user-defined members.
+            if (checkNumberOfArguments(file, attr(), 1))
+                c->userSerializerFunction = attr->arguments->elmts[0]->string(file);
 
         } else {
             ASSERT_not_implemented("attribute = " + attr->fqName);
