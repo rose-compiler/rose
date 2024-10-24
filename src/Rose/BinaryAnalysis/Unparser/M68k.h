@@ -4,14 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
-
-std::string unparseM68kMnemonic(SgAsmM68kInstruction*);
-std::string unparseM68kExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
 /** %Settings specific to the M68k unparser. */
 struct M68kSettings: public Settings {};
@@ -33,13 +30,6 @@ public:
 
     const M68kSettings& settings() const override { return settings_; }
     M68kSettings& settings() override { return settings_; }
-
-protected:
-    void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const override;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
-
-private:
-    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
 };
 
 } // namespace

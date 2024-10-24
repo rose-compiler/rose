@@ -4,17 +4,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
-
-std::string unparseX86Mnemonic(SgAsmX86Instruction*);
-std::string unparseX86Register(SgAsmInstruction*, RegisterDescriptor, RegisterDictionaryPtr);
-std::string unparseX86Register(RegisterDescriptor, const RegisterDictionaryPtr&);
-std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&, bool leaMode);
-std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&);
 
 /** %Settings specific to the x86 unparser. */
 struct X86Settings: public Settings {};
@@ -39,11 +31,9 @@ public:
 
 protected:
     void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
     void emitTypeName(std::ostream&, SgAsmType*, State&) const override;
-
-private:
-    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
+    void emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const override;
+    void emitIndirectRegisterExpression(std::ostream&, SgAsmIndirectRegisterExpression*, State&) const override;
 };
 
 } // namespace

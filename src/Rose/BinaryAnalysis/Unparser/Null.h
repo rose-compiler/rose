@@ -28,9 +28,6 @@ public:
 
     const NullSettings& settings() const override { return settings_; }
     NullSettings& settings() override { return settings_; }
-
-protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
 };
 
 } // namespace

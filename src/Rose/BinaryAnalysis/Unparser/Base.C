@@ -20,12 +20,19 @@
 #include <stringify.h>                                  // rose
 
 #include <SgAsmAarch32Coprocessor.h>
+#include <SgAsmAarch64AtOperand.h>
+#include <SgAsmAarch64BarrierOperand.h>
+#include <SgAsmAarch64CImmediateOperand.h>
+#include <SgAsmAarch64PrefetchOperand.h>
+#include <SgAsmAarch64PState.h>
+#include <SgAsmAarch64SysMoveOperand.h>
 #include <SgAsmBinaryAdd.h>
 #include <SgAsmBinaryAsr.h>
 #include <SgAsmBinaryConcat.h>
 #include <SgAsmBinaryLsl.h>
 #include <SgAsmBinaryLsr.h>
 #include <SgAsmBinaryMsl.h>
+#include <SgAsmBinaryMultiply.h>
 #include <SgAsmBinaryPostupdate.h>
 #include <SgAsmBinaryPreupdate.h>
 #include <SgAsmBinaryRor.h>
@@ -35,6 +42,7 @@
 #include <SgAsmFloatType.h>
 #include <SgAsmFloatValueExpression.h>
 #include <SgAsmFunction.h>
+#include <SgAsmIndirectRegisterExpression.h>
 #include <SgAsmInstruction.h>
 #include <SgAsmIntegerType.h>
 #include <SgAsmIntegerValueExpression.h>
@@ -295,6 +303,16 @@ State::currentBasicBlock(const Partitioner2::BasicBlockPtr &bb) {
     currentBasicBlock_ = bb;
 }
 
+SgAsmExpression*
+State::currentExpression() const {
+    return currentExpression_;
+}
+
+void
+State::currentExpression(SgAsmExpression *expr) {
+    currentExpression_ = expr;
+}
+
 const std::string&
 State::nextInsnLabel() const {
     return nextInsnLabel_;
@@ -382,6 +400,20 @@ public:
     }
     ~BasicBlockGuard() {
         state.currentBasicBlock(prev);
+    }
+};
+
+class ExpressionGuard {
+    State &state;
+    SgAsmExpression *prev = nullptr;
+public:
+    ExpressionGuard(State &state, SgAsmExpression *expr)
+        : state(state) {
+        prev = state.currentExpression();
+        state.currentExpression(expr);
+    }
+    ~ExpressionGuard() {
+        state.currentExpression(prev);
     }
 };
 
@@ -2473,11 +2505,15 @@ operatorPrecedence(SgAsmExpression *expr) {
                isSgAsmBinarySubtract(expr)) {
         return 2;
 
-    } else if (isSgAsmBinaryConcat(expr)) {
+    } else if (isSgAsmBinaryMultiply(expr)) {
         return 3;
+
+    } else if (isSgAsmBinaryConcat(expr)) {
+        return 4;
 
     } else if (isSgAsmMemoryReferenceExpression(expr) ||
                isSgAsmDirectRegisterExpression(expr) ||
+               isSgAsmIndirectRegisterExpression(expr) ||
                isSgAsmIntegerValueExpression(expr) ||
                isSgAsmFloatValueExpression(expr) ||
                isSgAsmUnaryUnsignedExtend(expr) ||
@@ -2489,10 +2525,10 @@ operatorPrecedence(SgAsmExpression *expr) {
                isSgAsmAarch32Coprocessor(expr) ||
                isSgAsmByteOrder(expr) ||
                isSgAsmRegisterNames(expr)) {
-        return 4;
+        return 5;
 
     } else {
-        ASSERT_not_reachable("invalid operator for disassembly");
+        ASSERT_not_reachable("invalid operator for disassembly: " + expr->class_name());
     }
 }
 
@@ -2511,8 +2547,154 @@ void
 Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
+    ExpressionGuard push(state, expr);
 
-    if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
+    if (false) {
+        // Subclasses must appear before base classes
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    } else if (SgAsmAarch32Coprocessor *op = isSgAsmAarch32Coprocessor(expr)) {
+        out <<"p" <<op->coprocessor();
+#endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    } else if (SgAsmAarch64AtOperand *op = isSgAsmAarch64AtOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_AT_S1E1R:
+                out <<"s1e1r";
+                break;
+            case ARM64_AT_S1E1W:
+                out <<"s1e1w";
+                break;
+            case ARM64_AT_S1E0R:
+                out <<"s1e0r";
+                break;
+            case ARM64_AT_S1E0W:
+                out <<"s1e0w";
+                break;
+            case ARM64_AT_S1E2R:
+                out <<"s1e2r";
+                break;
+            case ARM64_AT_S1E2W:
+                out <<"s1e2w";
+                break;
+            case ARM64_AT_S12E1R:
+                out <<"s12e1r";
+                break;
+            case ARM64_AT_S12E1W:
+                out <<"s12e1w";
+                break;
+            case ARM64_AT_S12E0R:
+                out <<"s12e0r";
+                break;
+            case ARM64_AT_S12E0W:
+                out <<"s12e0w";
+                break;
+            case ARM64_AT_S1E3R:
+                out <<"s1e3r";
+                break;
+            case ARM64_AT_S1E3W:
+                out <<"s1e3w";
+                break;
+            default:
+                out <<"INVALID AT OPERAND " <<(unsigned)op->operation();
+                break;
+        }
+
+    } else if (SgAsmAarch64PrefetchOperand *op = isSgAsmAarch64PrefetchOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_PRFM_PLDL1KEEP:  out <<"pldl1keep"; break;
+            case ARM64_PRFM_PLDL1STRM:  out <<"pldl1strm"; break;
+            case ARM64_PRFM_PLDL2KEEP:  out <<"pldl2keep"; break;
+            case ARM64_PRFM_PLDL2STRM:  out <<"pldl2strm"; break;
+            case ARM64_PRFM_PLDL3KEEP:  out <<"pldl3keep"; break;
+            case ARM64_PRFM_PLDL3STRM:  out <<"pldl3strm"; break;
+            case ARM64_PRFM_PLIL1KEEP:  out <<"plil1keep"; break;
+            case ARM64_PRFM_PLIL1STRM:  out <<"plil1strm"; break;
+            case ARM64_PRFM_PLIL2KEEP:  out <<"plil2keep"; break;
+            case ARM64_PRFM_PLIL2STRM:  out <<"plil2strm"; break;
+            case ARM64_PRFM_PLIL3KEEP:  out <<"plil3keep"; break;
+            case ARM64_PRFM_PLIL3STRM:  out <<"plil3strm"; break;
+            case ARM64_PRFM_PSTL1KEEP:  out <<"pstl1keep"; break;
+            case ARM64_PRFM_PSTL1STRM:  out <<"pstl1strm"; break;
+            case ARM64_PRFM_PSTL2KEEP:  out <<"pstl2keep"; break;
+            case ARM64_PRFM_PSTL2STRM:  out <<"pstl2strm"; break;
+            case ARM64_PRFM_PSTL3KEEP:  out <<"pstl3keep"; break;
+            case ARM64_PRFM_PSTL3STRM:  out <<"pstl3strm"; break;
+            default:
+                ASSERT_not_reachable("invalid prefetch command");
+        }
+
+    } else if (auto op = isSgAsmAarch64PState(expr)) {
+        switch (op->pstate()) {
+            case ARM64_PSTATE_INVALID: out <<"invalid"; break;
+            case ARM64_PSTATE_SPSEL:   out <<"spsel";   break;
+            case ARM64_PSTATE_DAIFSET: out <<"daifset"; break;
+            case ARM64_PSTATE_DAIFCLR: out <<"daifclr"; break;
+            default:
+                ASSERT_not_reachable("invalid pstate");
+        }
+
+    } else if (SgAsmAarch64SysMoveOperand *op = isSgAsmAarch64SysMoveOperand(expr)) {
+        using namespace Rose::BitOps;
+        unsigned op0 = bit(op->access(), 14) ? 3 : 2;
+        unsigned op1 = bits(op->access(), 11, 13);
+        unsigned crn = bits(op->access(), 7, 10);
+        unsigned crm = bits(op->access(), 3, 6);
+        unsigned op2 = bits(op->access(), 0, 2);
+        out <<"s" <<op0 <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
+
+    } else if (SgAsmAarch64CImmediateOperand *op = isSgAsmAarch64CImmediateOperand(expr)) {
+        out <<"c" <<op->immediate();
+
+    } else if (SgAsmAarch64BarrierOperand *op = isSgAsmAarch64BarrierOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_BARRIER_INVALID:
+                out <<"barrier invalid";
+                break;
+            case ARM64_BARRIER_OSHLD:
+                out <<"barrier oshld";
+                break;
+            case ARM64_BARRIER_OSHST:
+                out <<"barrier oshst";
+                break;
+            case ARM64_BARRIER_OSH:
+                out <<"barrier osh";
+                break;
+            case ARM64_BARRIER_NSHLD:
+                out <<"barrier nshld";
+                break;
+            case ARM64_BARRIER_NSHST:
+                out <<"barrier nshst";
+                break;
+            case ARM64_BARRIER_NSH:
+                out <<"barrier nsh";
+                break;
+            case ARM64_BARRIER_ISHLD:
+                out <<"barrier ishld";
+                break;
+            case ARM64_BARRIER_ISHST:
+                out <<"barrier ishst";
+                break;
+            case ARM64_BARRIER_ISH:
+                out <<"barrier ish";
+                break;
+            case ARM64_BARRIER_LD:
+                out <<"barrier ld";
+                break;
+            case ARM64_BARRIER_ST:
+                out <<"barrier st";
+                break;
+            case ARM64_BARRIER_SY:
+                out <<"barrier sy";
+                break;
+            default:
+                out <<"barrier " <<(unsigned)op->operation();
+                break;
+        }
+#endif
+
+    } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
         // Print the "+" and RHS only if RHS is non-zero
         SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
         if (!ival || !ival->get_bitVector().isAllClear()) {
@@ -2552,6 +2734,34 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
             emitExpression(out, op->get_lhs(), state);
         }
 
+    } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(expr)) {
+        // Print the "*" and RHS only if RHS is not 1
+        bool isOne = [op]() {
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
+            if (!ival)
+                return false;
+            Sawyer::Container::BitVector one(ival->get_bitVector().size());
+            one.set(0);
+            return ival->get_bitVector().compare(one) == 0;
+        }();
+
+        if (!isOne) {
+            int prec = operatorPrecedence(expr);
+            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            out <<parens.left;
+            emitExpression(out, op->get_lhs(), state);
+            out <<parens.right;
+
+            out <<" * ";
+
+            parens = parensForPrecedence(prec, op->get_rhs());
+            out <<parens.left;
+            emitExpression(out, op->get_rhs(), state);
+            out <<parens.right;
+        } else {
+            emitExpression(out, op->get_lhs(), state);
+        }
+
     } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(expr)) {
         emitExpression(out, op->get_lhs(), state);
         out <<" (after ";
@@ -2569,13 +2779,18 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
         out <<")";
 
     } else if (SgAsmMemoryReferenceExpression *op = isSgAsmMemoryReferenceExpression(expr)) {
-        state.frontUnparser().emitTypeName(out, op->get_type(), state);
-        out <<" [";
-        emitExpression(out, op->get_address(), state);
-        out <<"]";
+        state.frontUnparser().emitMemoryReferenceExpression(out, op, state);
 
     } else if (SgAsmDirectRegisterExpression *op = isSgAsmDirectRegisterExpression(expr)) {
-        emitRegister(out, op->get_descriptor(), state);
+        int adjustment = op->get_adjustment();
+        if (adjustment < 0)
+            out <<"--";
+        state.frontUnparser().emitRegister(out, op->get_descriptor(), state);
+        if (adjustment > 0)
+            out <<"++";
+
+    } else if (SgAsmIndirectRegisterExpression *op = isSgAsmIndirectRegisterExpression(expr)) {
+        state.frontUnparser().emitIndirectRegisterExpression(out, op, state);
 
     } else if (SgAsmIntegerValueExpression *op = isSgAsmIntegerValueExpression(expr)) {
         Sawyer::Container::BitVector total = op->get_bitVector();
@@ -2656,9 +2871,6 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
         emitExpression(out, op->get_rhs(), state);
         out <<")";
 
-    } else if (SgAsmAarch32Coprocessor *op = isSgAsmAarch32Coprocessor(expr)) {
-        out <<"p" <<op->coprocessor();
-
     } else if (SgAsmByteOrder *op = isSgAsmByteOrder(expr)) {
         switch (op->byteOrder()) {
             case ByteOrder::ORDER_MSB:
@@ -2677,6 +2889,8 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
             emitExpression(out, op->get_registers()[i], state);
         }
         out <<"}";
+        if (op->get_mask() != 0)
+            comments.push_back(StringUtility::toHex2(op->get_mask(), 16, false, false));
 
     } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
         int prec = operatorPrecedence(expr);
@@ -2701,6 +2915,36 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
         out <<"<" + boost::join(comments, ",") <<">";
 }
 
+void
+Base::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
+    } else {
+        state.frontUnparser().emitTypeName(out, expr->get_type(), state);
+        out <<" ";
+
+        if (expr->get_segment()) {
+            emitExpression(out, expr->get_segment(), state);
+            out <<":";
+        }
+
+        out <<"[";
+        emitExpression(out, expr->get_address(), state);
+        out <<"]";
+    }
+}
+
+void
+Base::emitIndirectRegisterExpression(std::ostream &out, SgAsmIndirectRegisterExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        nextUnparser()->emitIndirectRegisterExpression(out, expr, state);
+    } else {
+        state.frontUnparser().emitRegister(out, expr->get_descriptor(), state);
+        out <<"(" <<expr->get_index() <<")";
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Line control

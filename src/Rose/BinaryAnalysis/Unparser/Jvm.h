@@ -31,13 +31,6 @@ public:
 
     const JvmSettings& settings() const override { return settings_; }
     JvmSettings& settings() override { return settings_; }
-
-protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
-
-private:
-    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
 };
 
 } // namespace

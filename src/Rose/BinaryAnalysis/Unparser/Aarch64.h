@@ -3,16 +3,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
-
-std::string unparseAarch64Mnemonic(SgAsmAarch64Instruction*);
-std::string unparseAarch64Expression(SgAsmExpression*, const LabelMap*);
 
 /** %Settings specific to the ARM AArch64 unparser. */
 struct Aarch64Settings: public Settings {};
@@ -37,28 +32,7 @@ public:
     Aarch64Settings& settings() override { return settings_; }
 
 protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
-
-protected:
-    static std::string unparseArmCondition(Aarch64InstructionCondition);
-    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
-    void outputRegister(std::ostream&, SgAsmRegisterReferenceExpression*, State&) const;
-
-private:
-    // Precedence for the sake of emitting expressions. Higher return value is higher precedence.
-    static int operatorPrecedence(SgAsmExpression*);
-
-    // Parentheses for emitting expressions with inverted precedences
-    struct Parens {
-        std::string left, right;
-        Parens() {}
-        Parens(const std::string &left, const std::string &right)
-            : left(left), right(right) {}
-    };
-
-    // What parens to use when the operator has rootPrec and the left or right operand is as specified.
-    static Parens parensForPrecedence(int rootPrec, SgAsmExpression*);
+    void emitRegister(std::ostream&, RegisterDescriptor, State&) const;
 };
 
 } // namespace

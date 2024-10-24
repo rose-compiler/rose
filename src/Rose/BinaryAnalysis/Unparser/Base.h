@@ -206,6 +206,7 @@ private:
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr currentBasicBlock_;
     Sawyer::Optional<EdgeArrows::EndpointId> currentPredSuccId_;
+    SgAsmExpression *currentExpression_;
     std::string nextInsnLabel_;
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
@@ -348,6 +349,9 @@ public:
 
     Partitioner2::BasicBlockPtr currentBasicBlock() const;
     void currentBasicBlock(const Partitioner2::BasicBlockPtr&);
+
+    SgAsmExpression* currentExpression() const;
+    void currentExpression(SgAsmExpression*);
 
     const std::string& nextInsnLabel() const;
     void nextInsnLabel(const std::string&);
@@ -589,6 +593,8 @@ public:
     virtual void emitOperandEpilogue(std::ostream&, SgAsmExpression*, State&) const;
 
     virtual void emitExpression(std::ostream&, SgAsmExpression*, State&) const;
+    virtual void emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const;
+    virtual void emitIndirectRegisterExpression(std::ostream&, SgAsmIndirectRegisterExpression*, State&) const;
     virtual void emitRegister(std::ostream&, RegisterDescriptor, State&) const;
     virtual std::vector<std::string> emitUnsignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;

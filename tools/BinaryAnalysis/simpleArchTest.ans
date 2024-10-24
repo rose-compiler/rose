@@ -35,7 +35,7 @@ L2:      add      r1, r0
 L3:      cmp      r1, r16
          load     1, r3
          add      r3, r1
-         blt      basic block L2
+         blt[!]   basic block L2
 
 L4:      pop      lr
          pop      fp

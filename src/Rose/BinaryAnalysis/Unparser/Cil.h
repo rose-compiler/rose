@@ -10,9 +10,6 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-std::string unparseCilMnemonic(SgAsmCilInstruction*);
-std::string unparseCilExpression(SgAsmExpression*, const LabelMap*);
-
 /** %Settings specific to the Cil unaprser. */
 struct CilSettings: public Settings {};
 
@@ -32,13 +29,6 @@ public:
 
     const CilSettings& settings() const override { return settings_; }
     CilSettings& settings() override { return settings_; }
-
-protected:
-    void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const override;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
-
-private:
-    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
 };
 
 } // namespace

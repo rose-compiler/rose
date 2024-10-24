@@ -4,8 +4,6 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 
-#include <SgAsmInstruction.h>
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
@@ -23,11 +21,6 @@ Null::instance(const Architecture::Base::ConstPtr &arch, const NullSettings &set
 Base::Ptr
 Null::copy() const {
     return instance(architecture(), settings());
-}
-
-void
-Null::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State&) const {
-    out <<insn->get_mnemonic();
 }
 
 } // namespace

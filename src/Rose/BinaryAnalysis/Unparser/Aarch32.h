@@ -3,8 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -34,29 +33,6 @@ public:
 
     const Aarch32Settings& settings() const override { return settings_; }
     Aarch32Settings& settings() override { return settings_; }
-
-protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
-
-protected:
-    void outputExpr(std::ostream&, SgAsmExpression*, State &) const;
-    void outputRegister(std::ostream&, SgAsmRegisterReferenceExpression*, State&) const;
-
-private:
-    // Precedence for the sake of emitting expressions. Higher return value is higher precedence.
-    static int operatorPrecedence(SgAsmExpression*);
-
-    // Parentheses for emitting expressions with inverted precedences
-    struct Parens {
-        std::string left, right;
-        Parens() {}
-        Parens(const std::string &left, const std::string &right)
-            : left(left), right(right) {}
-    };
-
-    // What parens to use when the operator has rootPrec and the left or right operand is as specified.
-    static Parens parensForPrecedence(int rootPrec, SgAsmExpression*);
 };
 
 } // namespace
