@@ -43568,6 +43568,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
         s & BOOST_SERIALIZATION_NVP(p_delaySlot);
+        userSerializeBoost(s);
         debugSerializationEnd("SgAsmInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -43981,6 +43982,17 @@ public:
      *
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    template<class S>
+    void userSerializeBoost(S &s) {
+        s & BOOST_SERIALIZATION_NVP(semanticFailure_);
+    }
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated
