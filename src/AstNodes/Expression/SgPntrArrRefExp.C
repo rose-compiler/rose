@@ -14,7 +14,33 @@ SgPntrArrRefExp::get_type() const
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
 
-     SgType* someType = get_lhs_operand()->get_type();
+  // (10/25/2024): In C and C++, E1[E2] is definitionally equivalent to *(E1+E2).
+  // Therefore, we can borrow the type inference code from SgBinaryOp.C to compute the type of E1+E2 before proceeding with type stripping.
+
+     SgType* lhsType = get_lhs_operand()->get_type();
+     ROSE_ASSERT(lhsType != NULL);
+
+     SgType* rhsType = get_rhs_operand()->get_type();
+     ROSE_ASSERT(rhsType != NULL);
+
+     SgType *lhsBase = SageInterface::getElementType(lhsType),
+            *rhsBase = SageInterface::getElementType(rhsType);
+
+     SgType* someType;
+
+     if (lhsBase != NULL && rhsBase == NULL)
+        {
+          someType = SgPointerType::createType(lhsBase);
+        }
+     else if (lhsBase == NULL && rhsBase != NULL)
+        {
+          someType = SgPointerType::createType(rhsBase);
+        }
+     else
+        {
+          someType = lhsType;
+        }
+
      ROSE_ASSERT(someType != NULL);
 
   // This code should be shared between the SgPntrArrRefExp and the SgPointerDerefExp IR nodes
