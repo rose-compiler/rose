@@ -693,9 +693,16 @@ if(ENABLE-ROSEHPCT)
   list(APPEND rose_LIB_OBJS roseExtensions)
 endif()
 
-# TODO Conditional either EDG or CLang or nothing
+# Cxx Frontend Conditional: either EDG or Clang or nothing
 if(ENABLE-CPP)
- list(APPEND rose_LIB_OBJS RoseCxxFrontendEDG)
+  if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
+    message(STATUS "ROSE will be using EDG for the CXX Frontend")
+    list(APPEND rose_LIB_OBJS RoseCxxFrontendEDG)
+  else()                         # USE CLANG
+    message(STATUS "ROSE will be using Clang for the CXX Frontend")
+    include(ClangFrontendChecks) # Checks User Env
+    list(APPEND rose_LIB_OBJS roseClangFrontend)
+  endif()
 endif()
 
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
