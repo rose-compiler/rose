@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e -o pipefail
+dir0="${0%/*}"
+
+# Run the rhel8-install script using only local source code (no Internet connection).
+#
+# The source code should be unpacked into the directories listed by the USE_* variables below.
+#
+# Other legal values for the USE_* variables are:
+#    "no"           - do not install the dependency and do not attempt to use it even if it's already installed.
+#    "yes"          - use the version that is already installed.
+#    VERSION        - download (if necessary) and install the specified version of a dependency
+#    FILE           - unpack the specified local archive file (e.g., *.tar.gz)
+#    DIRECTORY      - copy the specified local source directory (the directory is not modified in place)
+#    URL            - download the specified URL which can be a *.tar.gz or *.tar.bz2 file
+#    BRANCH@URL     - install the specified branch from the specified Git repository
+#
+# Note: if the URL contains an "@" then you MUST also specify the branch name.
+#
+# One way to get the downloads directory is to run rhel8-install without overriding any settings and then interrupt it
+# just after it finishes downloading things and before it starts building anything. Like this:
+#
+#    $ mkdir downloads
+#    $ cd downloads
+#    $ rhel8-install
+#    Ctrl-C
+#
+
+exec env \
+     USE_BOOST=downloads/boost \
+     USE_CYBERSHOT=downloads/cybershot \
+     USE_DLIB=downloads/dlib \
+     USE_ESCAPADE=downloads/escapade \
+     USE_MEGACHIROPTERAN=downloads/megachiropteran \
+     USE_MODELCHECKER=downloads/model-checker \
+     USE_ROSE=downloads/rose \
+     USE_SPOT=downloads/spot \
+     USE_Z3=downloads/z3 \
+     "$dir0/rhel8-install"

@@ -1,0 +1,1217 @@
+#!/bin/bash
+set -e -o pipefail
+arg0="${0##*/}"
+
+####################################################################################################################################
+# Purpose
+####################################################################################################################################
+
+# This script builds ROSE and ROSE-based tools on a RHEL-8 system that has limited packages installed. Another way is to build a
+# binary release on a system with a full set of packages and then install the binary release on the limited system, although such
+# an approach is not useful for determining the minimal set of dependencies and ensuring that only those dependencies are used.
+
+# To run this script, execute these commands or similar:
+#   dnf -y install openssh-clients
+#   scp matzke@wyoming.lan:rose-wip/rose/scripts/rhel8-install .
+#   chmod 755 rhel8-install
+#   ./rhel8-install
+
+# It doesn't matter what your CWD is when you run this script. It will build and install things under the CWD (except for ROSE,
+# which is installed in ~/rose-installed because the binary tools expect (but dont' require) it there by default.
+
+####################################################################################################################################
+# Settings
+####################################################################################################################################
+
+# These settings can be adjusted from the command-line (you shouldn't have to modify this script). For instance, to prevent the
+# system packages from being updated, set the UPDATE_SYSTEM environment variable to "no", which you can do locally for a single
+# command like this:
+#
+#    $ UPDATE_SYSTEM=no ./rhel8-install
+#
+# Some command shells might require additional work, such as prefixing the whole command with "env".
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Whether to update the system packages using the `dnf` tool.  The value should be "yes" or "no". As with the other settings, you
+# can override it from the command-line by saying, e.g. `UPDATE_SYSTEM=no rhel8-install`
+
+: ${UPDATE_SYSTEM:=yes}
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Whether to install some softare dependency. The value is one of the following:
+#    "no"           - do not install the dependency and do not attempt to use it even if it's already installed.
+#    "yes"          - use the version that is already installed.
+#    VERSION        - download (if necessary) and install the specified version.
+#    FILE           - unpack the specified local archive file (e.g., *.tar.gz)
+#    DIRECTORY      - copy the specified local source directory (the directory is not modified in place)
+#    URL            - download the specified URL which can be a *.tar.gz or *.tar.bz2 file
+#    BRANCH@URL     - install the specified branch from the specified Git repository
+#
+# Note: if the URL contains an "@" then you MUST also specify the branch name.
+#
+# Note: Spot is needed by Escapade but not any other tools or libraries.
+
+: ${USE_BOOST:=1.80.0}
+: ${USE_DLIB:=19.19.0}
+: ${USE_SPOT:=2.11.6}
+: ${USE_Z3:=4.8.17}
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Whether to install some ROSE software or a project that uses the ROSE library. The value is one of the following:
+#    "no"           - do not install the software, but leave alone if it's already installed
+#    "yes"          - use the ROSE library that's already installed in $HOME/rose-installed/latest
+#    "rebuild"      - rebuild the ROSE library from source code in the "rose" directory without downloading
+#    FILE           - unpack the specified local archive file (e.g., *.tar.gz)
+#    DIRECTORY      - copy the specified locl source directory (the directory is not modified in place)
+#    URL            - install the default branch from the specified Git repository
+#    BRANCH@URL     - install the specified branch from the specified Git repository
+#
+# Note that if the URL contains an "@" then you MUST also specify the branch name.
+
+: ${USE_ROSE=develop@https://github.com/rose-compiler/rose}
+if ping -c1 wyoming.lan.; then
+    # On Robb's network these are local because Internet access is restricted
+    : ${USE_MODELCHECKER=master@matzke@wyoming.lan.:rose-wip/model-checker}
+    : ${USE_MEGACHIROPTERAN=master@matzke@wyoming.lan.:rose-wip/megachiropteran}
+    : ${USE_ESCAPADE=master@matzke@wyoming.lan.:rose-wip/escapade}
+    : ${USE_CYBERSHOT=master@matzke@wyoming.lan.:rose-wip/cybershot}
+else
+    # For everyone else, these are probably the correct locations
+    : ${USE_MODELCHECKER=master@ssh://git@czgitlab.llnl.gov:7999/matzke/model-checker.git}
+    : ${USE_MEGACHIROPTERAN=master@ssh://git@czgitlab.llnl.gov:7999/matzke/megachiropteran.git}
+    : ${USE_ESCAPADE=master@ssh://git@rosecompiler2.llnl.gov:10022/main/binary-analysis/escapade.git}
+    : ${USE_CYBERSHOT=master@ssh://git@rosecompiler2.llnl.gov:10022/cybershot/cs-three.git}
+fi    
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Whether to run ROSE tests when installing ROSE. The value should be one of:
+#    "no"           - do not run any tests
+#    "rebuild"      - run the tests if they exist
+#    FILE           - unpack the specified local archive file (e.g., *.tar.gz)
+#    DIRECTORY      - copy the specified locl source directory (the directory is not modified in place)
+#    URL            - run the tests from the default branch of the specified Git URL
+#    BRANCH@URL     - run the tests from the specified branch and Git URL
+#
+# Note that if the URL contains an "@" then you MUST also specify the branch name.
+
+# BUG WORKAROUND: ROSE 0.11.145.164 on 2024-10-25: ROSE's CMake build system doesn't ever run any ROSE binary analysis
+# tests, so we don't even bother downloading them for now. The correct setting in order to prevent ROSE from being installed
+# when something's not working is "master@https://github.com/rose-compiler/rose-tests".
+
+: ${USE_ROSE_TESTS=no}
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Whether to build a binary release. The value should be one of:
+#    "no"           - do not build a binary release
+#    "yes"          - build a binary release called "rose-VERSION.sh" using the ROSE library version
+#    NAME           - build a binary release having the specified file name
+
+: ${BUILD_BINARY_RELEASE=yes}
+
+####################################################################################################################################
+# Supporting functions
+####################################################################################################################################
+
+# Exit status. Yes, shells are opposite what one expects.
+FALSE=1
+TRUE=0
+
+# Fail with an error message
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+# True if the specified argument is a decimal number
+is-decimal-number() {
+    local number="$1"
+    [ "$number" = "" ] && return $FALSE
+    while [ -n "$number" ]; do
+	case "$number" in
+	    [0-9]*)
+		number="${number:1}"
+		;;
+	    *)
+		return $FALSE
+		;;
+	esac
+    done
+    return $TRUE
+}
+    
+# Returns true if the specified argument looks like a version number.
+is-version-number() {
+    local version="$1"
+    local parts=(${version//./ })
+    [ "${#parts[*]}" -eq 0 ] && return $FALSE
+    for part in "${parts[@]}"; do
+	if ! is-decimal-number "$part"; then
+	    return $FALSE
+	fi
+    done
+    return $TRUE
+}
+
+# Compare two versions and return true if the first is less than the second.
+compare-versions-lt() {
+    local a="$1" b="$2"
+    if [ "$a" = "$b" ]; then
+	return $FALSE
+    elif [ "$a" = "" ]; then
+	return $TRUE
+    else
+	local aparts=(${a//./ })
+	local bparts=(${b//./ })
+	local anparts="${#aparts[*]}"
+	local bnparts="${#bparts[*]}"
+	local nparts=$anparts
+	if [ $bnparts -lt $anparts ]; then
+	    nparts=$bnparts
+	fi
+
+	local i=0
+	while [ $i -lt $nparts ]; do
+	    if [ "${aparts[$i]}" -lt "${bparts[$i]}" ]; then
+		return $TRUE
+	    elif [ "${aparts[$i]}" -gt "${bparts[$i]}" ]; then
+		return $FALSE
+	    else
+		i=$[i+1]
+	    fi
+	done
+
+	# "x.y" is considered less than "x.y.z" even if "z" is zero
+	if [ $anparts -lt $bnparts ]; then
+	    return $TRUE
+	else
+	    return $FALSE
+	fi
+    fi
+}
+
+# Unit tester for compare-versions-lt since it's a bit complicated
+test-compare-versions-lt() {
+    local expected="$1" a="$2" b="$3"
+    if [ $expected -eq $TRUE ]; then
+	if ! compare-versions-lt "$a" "$b"; then
+	    die "expected compare-versions-lt \"$a\" \"$b\" to be true"
+	fi
+    elif compare-versions-lt "$a" "$b"; then
+	die "expected compare-versions-lt \"$a\" \"$b\" to be false"
+    fi
+}
+
+test-compare-versions-lt $TRUE "" "0"              # empty is less than zero
+test-compare-versions-lt $TRUE "0" "1"             # zero is less than one
+test-compare-versions-lt $TRUE "2" "13"            # comparisons are numeric, not string
+test-compare-versions-lt $TRUE "1" "1.0"           # shorter is less when all else is equal
+test-compare-versions-lt $TRUE "001" "1.0"         # length is counted in version parts, not characters
+test-compare-versions-lt $TRUE "1.2" "1.3"         # second part is compared when first part is equal
+test-compare-versions-lt $TRUE "1.2.3" "1.2.3.4"   # similarly for more parts
+test-compare-versions-lt $TRUE "1.2.3" "2.2.3"     # first part less than
+test-compare-versions-lt $TRUE "1.2.3" "1.3.3"     # second part less than
+test-compare-versions-lt $TRUE "1.2.3" "1.2.4"     # third part less than
+test-compare-versions-lt $FALSE "" ""              # equal by string compare
+test-compare-versions-lt $FALSE "1" "1"            # equal by string compare
+test-compare-versions-lt $FALSE "1.2" "1.2"        # equal by string compare
+test-compare-versions-lt $FALSE "1.02" "1.2"       # equal by numeric compare
+test-compare-versions-lt $FALSE "2" "1"            # greater
+test-compare-versions-lt $FALSE "1.3" "1.2"        # greater in second part
+test-compare-versions-lt $FALSE "1.2" "1"          # greater in length (string)
+test-compare-versions-lt $FALSE "1.2" "001"        # greater in length (parts)
+
+# Execute a command after also printing it
+say() {
+    echo "+" "$@" >&2
+    "$@"
+}
+
+# Print a major section header in the output
+section() {
+    echo
+    echo
+    echo -n "##################################################################"
+    echo "##################################################################"
+    echo "##"
+    echo "##" "$@"
+    echo "##"
+    echo -n "##################################################################"
+    echo "##################################################################"
+}
+
+# Conditionally download something.
+maybe-download() {
+    local spec="$1" target_dir="$2"
+    [ -n "$target_dir" ] || die "target directory is required"
+
+
+    case "$spec" in
+	yes|no|rebuild)
+	    return $TRUE
+	    ;;
+	
+	*.tar.gz|*.tgz)
+	    # Compressed tar archive
+	    say rm -rf "$target_dir"
+	    mkdir "$target_dir"
+	    if [ -f "$spec" ]; then
+		tar xzf "$spec" -C "$target_dir"
+	    else
+		say wget -O - "$spec" | tar xzf - -C "$target_dir"
+	    fi
+	    ;;
+
+	*.tar.bz2)
+	    # Compressed tar archive
+	    say rm -rf "$target_dir"
+	    mkdir "$target_dir"
+	    if [ -f "$spec" ]; then
+		tar xjf "$spec" -C "$target_dir"
+	    else
+		say wget -O - "$spec" | tar xjf - -C "$target_dir"
+	    fi
+	    ;;
+
+	*@*)
+	    # Git archive with branch name
+	    local branch="${spec%%@*}"
+	    local url="${spec#*@}"
+	    say rm -rf "$target_dir"
+	    say git clone --depth=1 --no-tags -b "$branch" "$url" "$target_dir"
+	    ;;
+
+	*)
+	    if [ -d "$spec" ] && [ ! -d "$spec/.git" ]; then
+		# Local non-git directory
+		say rm -rf "$target_dir"
+		say cp -pdr "$spec" "$target_dir"
+	    else
+		# Probably a Git archive without a branch
+		say rm -rf "$target_dir"
+		say git clone --depth=1 --no-tags "$spec" "$target_dir"
+	    fi
+	    ;;
+    esac
+
+    # If the target directory contains only a single member which is a directory, and the member's name has the outer directory's
+    # name as a prefix, then move the contents of the member directory to the outer directory and delete the (now empty) member
+    # directory. This is to handle archives that unpack to a directory. E.g., if the target_dir is "boost" and the boost archive
+    # unpacked to "boost/boost_1.84.0" then everything in "boost/boost_1.84.0" is moved to "boost" and "boost/boost_1.84.0" is
+    # removed.
+    local members=($(shopt -s dotglob; cd "$target_dir"; echo *))
+    local target_base="${target_dir##*/}"
+    if [ "${#members[*]}" -eq 1 ]; then
+	local member="${members[0]}"
+	local suffix="${member#$target_base}"
+	if [ -d "$target_dir/$member/." ] && [ "$suffix" != "$member" ]; then
+	    (shopt -s dotglob; mv "$target_dir/$member/"* "$target_dir/.")
+	    rmdir "$target_dir/$member"
+	fi
+    fi
+}
+
+####################################################################################################################################
+# Update the system
+####################################################################################################################################
+
+section "Updating system packages"
+case "$UPDATE_SYSTEM" in
+    yes)
+	say dnf -y update
+
+	# Build-time (but not run-time) dependencies for all (or nearly all) packages, the ROSE library, and ROSE tools.  Running
+	# `scl load gcc-toolset-13` doesn't work ("Missing function scl in your enviornment!!!") and running `scl enable
+	# gcc-toolset-13 bash` isn't suitable for a shell script. Sourcing the "enable" file seems to work.
+	say dnf -y install gcc-toolset-13
+	. /opt/rh/gcc-toolset-13/enable
+
+	#-------- System dependencies specifically for running this shell script --------
+	say dnf -y install bzip2 git sed tar wget
+	say git config --global --add safe.directory '*'
+
+	#-------- Dependencies for installed packages --------
+	# The list of build-time and/or run-time dependencies for various packages we're installing can be found in the sections of
+	# this script that deals with installing those packages. Search for "dnf" if you're in a hurry.
+	;;
+
+    no)
+	# We still have to enable GCC 13. See also, comments for the "yes" case
+	. /opt/rh/gcc-toolset-13/enable
+	;;
+
+    *)
+	die "UPDATE_SYSTEM must be \"yes\" or \"no\" (got \"$UPDATE_SYSTEM\")"
+	;;
+esac
+
+
+####################################################################################################################################
+# Download ROSE and tools up front because they might require passwords. If we wait until later and a password is required, then
+# its very easy to miss the window of opportunity for entering the password and one must start over from the top of this script.
+####################################################################################################################################
+
+section "Downloading source code"
+
+if is-version-number "$USE_BOOST"; then
+    maybe-download "https://archives.boost.io/release/$USE_BOOST/source/boost_${USE_BOOST//./_}.tar.gz" boost
+else
+    maybe-download "$USE_BOOST" boost
+fi
+
+if is-version-number "$USE_DLIB"; then
+    maybe-download "http://dlib.net/files/dlib-${USE_DLIB%.*}.tar.bz2" dlib
+else
+    maybe-download "$USE_DLIB" dlib
+fi
+
+if is-version-number "$USE_SPOT"; then
+    maybe-download "https://www.lrde.epita.fr/dload/spot/spot-${USE_SPOT}.tar.gz" spot
+else
+    maybe-download "$USE_SPOT" spot
+fi
+
+if is-version-number "$USE_Z3"; then
+    maybe-download "z3-${USE_Z3}@https://github.com/Z3Prover/z3" z3
+else
+    maybe-download "$USE_Z3" z3
+fi
+
+maybe-download "$USE_ROSE" rose
+maybe-download "$USE_ROSE_TESTS" rose/tests
+maybe-download "$USE_MODELCHECKER" model-checker
+maybe-download "$USE_MEGACHIROPTERAN" megachiropteran
+maybe-download "$USE_ESCAPADE" escapade
+maybe-download "$USE_CYBERSHOT" cybershot
+
+####################################################################################################################################
+# Install boost
+####################################################################################################################################
+section "Installing Boost"
+
+# Given the boost installation root, return the boost version number or nothing.
+get-boost-version() {
+    local root="$1"
+    #             installed boost                     boost source code
+    for header in "${root}/include/boost/version.hpp" "${root}/boost/version.hpp"; do
+	if [ -r "$header" ]; then
+	    local vnum="$(sed -n 's/^#define BOOST_VERSION \([0-9]\+\).*/\1/p' "$header")"
+	    case "$vnum" in
+		[0-9][0-9][0-9][0-9][0-9][0-9])
+		    echo "$[vnum/100000].$[vnum/100%1000].$[vnum%100]"
+		    return $TRUE
+		    ;;
+	    esac
+	fi
+    done
+}
+
+# Find the best boost installation root
+find-boost-root() {
+    local best_version= best_root=
+    for root in "$(pwd)/boost-"[0-9]*; do
+	local cur_version="$(get-boost-version "$root")"
+	if compare-versions-lt "$best_version" "$cur_version"; then
+	    best_version="$cur_version"
+	    best_root="$root"
+	fi
+    done
+    echo "$best_root"
+}
+
+case "$USE_BOOST" in
+    no)
+	die "boost is required"
+	;;
+    yes)
+	# Use the version that we previously installed
+	BOOST_ROOT="$(find-boost-root)"
+	[ -n "$BOOST_ROOT" ] || die "cannot find an installed version of boost"
+	BOOST_VERSION="$(get-boost-version "$BOOST_ROOT")"
+        is-version-number "$BOOST_VERSION" || die "cannot determine version of boost installed at \"$BOOST_ROOT\""
+	echo "$arg0: using boost $BOOST_VERSION installed at $BOOST_ROOT"
+	;;
+    *)
+	# Use the source code already downloaded
+	[ -d boost ] || die "boost source code is not available"
+
+	# Build-time (but not run-time) system dependencies for Boost
+	: no additional dependencies
+
+	# Run-time (and build-time) system dependencies for Boost
+	if [ "$UPDATE_SYSTEM" = yes ]; then
+	    say dnf -y install zlib-devel
+	    ZLIB_VERSION="$(sed -n '/#define ZLIB_VERSION/ {s/.*"\(.*\)"/\1/; p}' /usr/include/zlib.h)"
+	    [ -n "$ZLIB_VERSION" ] || die "the zlib-devel package is required to build and use the Boost library"
+	    ZLIB_ROOT=/usr
+	    ZLIB_INCDIRS=/usr/include
+	    ZLIB_LIBDIRS=/usr/lib64
+	fi
+
+        BOOST_BUILD_PATH="$(pwd)/boost"
+	BOOST_VERSION="$(get-boost-version "$BOOST_BUILD_PATH")"
+	is-version-number "$BOOST_VERSION" || die "cannot obtain boost version from source code at $BOOST_BUILD_PATH"
+	BOOST_ROOT="$(pwd)/boost-${BOOST_VERSION}"
+        BOOST_LIBRARIES="atomic,chrono,date_time,filesystem,iostreams,program_options,random,regex,serialization,stacktrace,system"
+        BOOST_LIBRARIES="${BOOST_LIBRARIES},thread,wave"
+
+	say rm -rf "$BOOST_ROOT"
+
+        # Boost uses it's own configuration and build system called b2.  WARNING: white-space is significant in the echoed lines
+        (
+            GCC_VERSION="$(g++ --version |sed -n '1 s/.* \([0-9]\+\.[0-9]\+\.[0-9]\+\) .*/\1/p')"
+            echo "using gcc : $GCC_VERSION : $(type -p g++) ;"
+            echo "using zlib : $ZLIB_VERSION : <include>$ZLIB_INCDIRS <search>$ZLIB_LIBDIRS ;"
+        ) >"$BOOST_BUILD_PATH/user-config.jam"
+
+        (
+	    cd "$BOOST_BUILD_PATH"
+	    export BOOST_BUILD_PATH
+	    say ./bootstrap.sh --prefix="$BOOST_ROOT" --with-libraries="$BOOST_LIBRARIES" --with-toolset=gcc
+	)
+
+        # The generated project-config.jam file contains a duplicate "using intel-linux" line that messes things up.
+        sed --in-place '/^if/,/^}/ d' $BOOST_BUILD_PATH/project-config.jam
+
+        # Unclear from documentation whether b2 can build and install in a single command.
+        (
+	    cd "$BOOST_BUILD_PATH"
+	    export BOOST_BUILD_PATH
+	    say ./b2 --prefix="$BOOST_ROOT" \
+                toolset=gcc -s ZLIB_INCLUDE="$ZLIB_INCDIRS" -s ZLIB_LIBPATH="$ZLIB_LIBDIRS" -j $(nproc)
+	    say ./b2 --prefix="$BOOST_ROOT" \
+                toolset=gcc -s ZLIB_INCLUDE="$ZLIB_INCDIRS" -s ZLIB_LIBPATH="$ZLIB_LIBDIRS" -j $(nproc) install
+	)
+
+	# Test installation
+	[ "$(get-boost-version "$BOOST_ROOT")" = "$BOOST_VERSION" ] ||
+	    die "failed to install boost-$BOOST_VERSION"
+	echo "$arg0: installed boost $BOOST_VERSION at $BOOST_ROOT"
+	;;
+esac
+
+####################################################################################################################################
+# Install dlib
+####################################################################################################################################
+section "Installing Dlib"
+
+# Given the dlib installation root, return the dlib version number or nothing.
+get-dlib-version() {
+    local root="$1"
+    #             installed dlib                    dlib source code
+    for header in "${root}/include/dlib/revision.h" "${root}/dlib/revision.h"; do
+	if [ -r "$header" ]; then
+	    local major="$(sed -n 's/#define *DLIB_MAJOR_VERSION *\([0-9]\+\).*/\1/p' "$header")"
+	    local minor="$(sed -n 's/#define *DLIB_MINOR_VERSION *\([0-9]\+\).*/\1/p' "$header")"
+	    local patch="$(sed -n 's/#define *DLIB_PATCH_VERSION *\([0-9]\+\).*/\1/p' "$header")"
+	    if [ -n "$major" ] && [ -n "$minor" ] && [ -n "$patch" ]; then
+		echo "${major}.${minor}.${patch}"
+	    fi
+	fi
+    done
+}
+
+# Find the best dlib installation root
+find-dlib-root() {
+    local best_version= best_root=
+    for root in "$(pwd)/dlib-"[0-9]*; do
+	local cur_version="$(get-dlib-version "$root")"
+	if compare-versions-lt "$best_version" "$cur_version"; then
+	    best_version="$cur_version"
+	    best_root="$root"
+	fi
+    done
+    echo "$best_root"
+}
+
+case "$USE_DLIB" in
+    no)
+	# Don't use Dlib
+	DLIB_ROOT=
+	DLIB_VERSION=
+	;;
+
+    yes)
+	# Use a version already installed
+	DLIB_ROOT="$(find-dlib-root)"
+	[ -n "$DLIB_ROOT" ] || die "cannot find an installed version of dlib"
+	DLIB_VERSION="$(get-dlib-version "$DLIB_ROOT")"
+	is-version-number "$DLIB_VERSION" || die "cannot determine version of dlib installed at \"$DLIB_ROOT\""
+	echo "$arg0: using dlib $DLIB_VERSION installed at $DLIB_ROOT"
+	;;
+
+    *)
+	# Use source code already downloaded
+	[ -d dlib ] || die "dlib source code is not available"
+	
+	# Build-time (but not run-time) system dependencies for Dlib
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install cmake make
+
+	# Run-time (and build-time) system dependencies for Dlib
+	: no additional dependencies
+
+	DLIB_BUILD_PATH="$(pwd)/dlib"
+	DLIB_VERSION="$(get-dlib-version "$DLIB_BUILD_PATH")"
+	is-version-number "$DLIB_VERSION" || die "cannot obtain dlib version from source code at $DLIB_BUILD_PATH"
+	DLIB_ROOT="$(pwd)/dlib-${DLIB_VERSION}"
+	say rm -rf "$DLIB_ROOT"
+
+	(
+	    set -x
+	    mkdir "$DLIB_BUILD_PATH/_build"
+	    cd "$DLIB_BUILD_PATH/_build"
+	    cmake .. -DBUILD_SHARED_LIBS=YES -DCMAKE_INSTALL_PREFIX="$DLIB_ROOT"
+	    make -j$(nproc)
+	    make install
+	)
+
+	# Backward compatibility, but ROSE's mkinstaller doesn't support symlinks
+	if [ ! -d "$DLIB_ROOT/lib" ]; then
+	    (cd "$DLIB_ROOT" && cp -pdr lib64 lib)
+	fi
+	
+	# Test installation
+	[ "$(get-dlib-version "$DLIB_ROOT")" = "$DLIB_VERSION" ] ||
+	    die "failed to install dlib $DLIB_VERSION at $DLIB_ROOT"
+	echo "$arg0: installed dlib $DLIB_VERSION at $DLIB_ROOT"
+	;;
+esac
+
+####################################################################################################################################
+# Install z3
+####################################################################################################################################
+section "Installing Z3"
+
+# Given the z3 installation root, return the z3 version number or nothing.
+get-z3-version() {
+    local root="$1"
+
+    # Installed Z3
+    local header="${root}/include/z3_version.h"
+    if [ -r "$header" ]; then
+	sed -n 's/#define Z3_FULL_VERSION *"\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' "$header"
+	return $TRUE
+    fi
+
+    # Z3 source code
+    local file="${root}/scripts/release.yml"
+    if [ -r "$file" ]; then
+	sed -n "s/^ *ReleaseVersion: *'\\([\\.0-9]\\+\\)'.*/\\1/p" "$file"
+	return $TRUE
+    fi
+}
+
+# Find the best z3 installation root
+find-z3-root() {
+    local best_version= best_root=
+    for root in "$(pwd)/z3-"[0-9]*; do
+	local cur_version="$(get-z3-version "$root")"
+	if compare-versions-lt "$best_version" "$cur_version"; then
+	    best_version="$cur_version"
+	    best_root="$root"
+	fi
+    done
+    echo "$best_root"
+}
+
+case "$USE_Z3" in
+    no)
+	# Don't use Z3
+	Z3_ROOT=
+	Z3_VERSION=
+	;;
+    yes)
+	# Use a version already installed
+	Z3_ROOT="$(find-z3-root)"
+	[ -n "$Z3_ROOT" ] || die "cannot find installed version of Z3"
+	Z3_VERSION="$(get-z3-version "$Z3_ROOT")"
+	is-version-number "$Z3_VERSION" || die "cannot determine version of Z3 installed at \"$Z3_ROOT\""
+	echo "$arg0: using Z3 $Z3_VERSION installed at $Z3_ROOT"
+	;;
+    *)
+	# Use source code already downloaded
+	[ -d z3 ] || die "z3 source code is not available"
+
+	# Build-time (but not run-time) system dependencies for Z3
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install python3 cmake make
+	python_exe="$(type -p python3)"
+	PYTHON_ROOT="${python_exe%/python3}"
+	x="$(python3 --version)"
+	PYTHON_VERSION="${x/Python /}"
+	is-version-number "$PYTHON_VERSION" || die "the python3 package is required to build Z3"
+
+	# Run-time (and build-time) system dependencies for Z3
+	: no additional dependencies
+	
+	Z3_BUILD_PATH="$(pwd)/z3"
+	Z3_VERSION="$(get-z3-version "$Z3_BUILD_PATH")"
+	is-version-number "$Z3_VERSION" || die "cannot obtain z3 version from source code at $Z3_BUILD_PATH"
+	Z3_ROOT="$(pwd)/z3-${Z3_VERSION}"
+	say rm -rf "$Z3_ROOT"
+
+        (
+            set -x
+            mkdir "${Z3_BUILD_PATH}/_build"
+            cd "${Z3_BUILD_PATH}/_build"
+            cmake .. -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX="$Z3_ROOT" \
+                  -DBUILD_LIBZ_SHARED:BOOL=YES -DBUILD_PYTHON_BINDINGS:BOOL=NO -DBUILD_JAVA_BINDINGS:BOOL=NO \
+                  -DZ3_BUILD_LIBZ3_SHARED:BOOL=YES -DZ3_BUILD_PYTHON_BINDINGS:BOOL=NO -DZ3_BUILD_JAVA_BINDINGS:BOOL=NO \
+                  -DBUILD_DOCUMENTATION:BOOL=NO \
+                  -DZ3_BUILD_DOCUMENTATION:BOOL=NO
+            make -j$(nproc) --output-sync --silent
+            make install
+        )
+
+        # For backward compatibility. It would be nice to use a symlink here, but ROSE's mkinstaller doesn't support symlinks.
+        if [ ! -d "$Z3_ROOT/lib" ]; then
+            (cd "$Z3_ROOT" && cp -pdr lib64 lib)
+        fi
+
+	# Test installation
+	[ "$(get-z3-version "$Z3_ROOT")" = "$Z3_VERSION" ] ||
+	    die "failed to install Z3-$Z3_VERSION at $Z3_ROOT"
+	echo "$arg0: installed Z3 $Z3_VERSION at $Z3_ROOT"
+	;;
+esac
+
+####################################################################################################################################
+# Install SPOT
+####################################################################################################################################
+section "Installing SPOT"
+
+# Given the spot installation root, return the spot version number or nothing.
+get-spot-version() {
+    local root="$1"
+
+    # Spot source code
+    if [ -r "$root/configure" ]; then
+	sed -n "s/^PACKAGE_VERSION='\\(.*\\)'.*/\\1/p" "$root/configure"
+	return $TRUE
+    fi
+    
+    # Installed spot doesn't have a header file that has the version number, so ask one of the tools for its version number.
+    if [ -x "$root/bin/autfilt" ]; then
+	"$root/bin/autfilt" --version |sed -n 's/.*(spot) \([.0-9]\+\).*/\1/p'
+    fi
+}
+
+# Find the best spot installation root
+find-spot-root() {
+    local best_version= best_root=
+    for root in "$(pwd)/spot-"[0-9]*; do
+	local cur_version="$(get-spot-version "$root")"
+	if compare-versions-lt "$best_version" "$cur_version"; then
+	    best_version="$cur_version"
+	    best_root="$root"
+	fi
+    done
+    echo "$best_root"
+}
+
+case "$USE_SPOT" in
+    no)
+	SPOT_ROOT=
+	SPOT_VERSION=
+	;;
+    yes)
+	# Use a version already installed
+	SPOT_ROOT="$(find-spot-root)"
+	[ -n "$SPOT_ROOT" ] || die "cannot find installed version of SPOT"
+	SPOT_VERSION="$(get-spot-version "$SPOT_ROOT")"
+	is-version-number "$SPOT_VERSION" || die "cannot determine version of SPOT installed at \"$SPOT_ROOT\""
+	echo "arg0: using SPOT $SPOT_VERSION installed at $SPOT_ROOT"
+	;;
+    *)
+	# Use source code already downloaded
+	[ -d spot ] || die "spot source code is not available"
+	
+	# Build-time (but not run-time) system dependencies for SPOT
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install make
+
+	# Run-time (but not build-time) system dependencies for SPOT
+	: no additional dependencies
+
+	SPOT_BUILD_PATH="$(pwd)/spot"
+	SPOT_VERSION="$(get-spot-version "$SPOT_BUILD_PATH")"
+	is-version-number "$SPOT_VERSION" || die "cannot obtain spot version from source code at $SPOT_BUILD_PATH"
+	SPOT_ROOT="$(pwd)/spot-${SPOT_VERSION}"
+	say rm -rf "$SPOT_ROOT"
+
+	(
+	    set -x
+	    cd "$SPOT_BUILD_PATH"
+            ./configure --prefix="$SPOT_ROOT" --disable-python
+            make -j$(nproc)
+            make install
+	)
+
+	# Test installation
+	[ "$(get-spot-version "$SPOT_ROOT")" = "$SPOT_VERSION" ] ||
+	    die "failed to install SPOT $SPOT_VERSION at $SPOT_ROOT"
+	echo "$arg0: installed SPOT $SPOT_VERSION at $SPOT_ROOT"
+	;;
+esac
+
+####################################################################################################################################
+# Install ROSE
+####################################################################################################################################
+section "Installing ROSE"
+
+# Given the ROSE library installation root, return the ROSE library version number or nothing.
+get-rose-version() {
+    local root="$1"
+
+    # ROSE doesn't install the ROSE_VERSION file or a header file that contains the ROSE version number. The ROSE CMake build
+    # doesn't set the ROSE_VERSION variable in the installed rose-config.cfg file. Therefore, we'll try to get the ROSE version
+    # from one of the installed tools. The binary analysis tools all support a "--version" string, but the source tools don't.
+    local version="$("$root/bin/bat-ana" --version 2>&1)"
+    version="${version#ROSE }"
+    if is-version-number "$version"; then
+	echo "$version"
+	return $TRUE
+    fi
+
+    # ROSE source code version number is in a file
+    if [ -r "$root/ROSE_VERSION" ]; then
+	cat "$root/ROSE_VERSION"
+    fi
+}
+
+# Find the best ROSE library installation root or nothing
+find-rose-root() {
+    readlink "$HOME/rose-installed/latest" || true
+}
+
+case "$USE_ROSE" in
+    no)
+	ROSE_ROOT=
+	ROSE_VERSION=
+	echo "$arg0: no point continuing since we're not building or using the ROSE library"
+	exit 0
+	;;
+
+    yes)
+	# Use a ROSE library version already installed
+	ROSE_ROOT="$(find-rose-root)"
+	[ -n "$ROSE_ROOT" ] || die "cannot find installed version of ROSE library"
+	ROSE_VERSION="$(get-rose-version "$ROSE_ROOT")"
+	is-version-number "$ROSE_VERSION" || die "cannot determine version of ROSE library installed at \"$ROSE_ROOT\""
+	echo "$arg0: using ROSE library $ROSE_VERSION installed at $ROSE_ROOT"
+	;;
+
+    *)
+	# Use source code already downloaded
+	[ -d rose ] || die "ROSE source code is not available"
+
+	# Build-time (but not run-time) system dependencies for ROSE
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install cmake make file
+
+	# Run-time (and build-time) system dependencies for ROSE
+	: no additional dependencies
+
+	ROSE_BUILD_PATH="$(pwd)/rose"
+	ROSE_VERSION="$(get-rose-version "$ROSE_BUILD_PATH")"
+	is-version-number "$ROSE_VERSION" || die "cannot determine version of ROSE library from source code at \"$ROSE_BUILD_PATH\""
+	ROSE_ROOT="$HOME/rose-installed/rose-$ROSE_VERSION"
+	say rm -rf "$ROSE_ROOT"
+	
+	(
+	    say rm -rf "$ROSE_BUILD_PATH/_build"
+            say mkdir "$ROSE_BUILD_PATH/_build"
+            say cd rose/_build
+
+            RELEASE_TYPE="-fPIC -O3 -DNDEBUG -g"
+            WARNINGS="-Wall -Wno-attributes -Wno-unused-local-typedefs -Wno-misleading-indentation -Wno-nonnull-compare"
+            SECURITY="-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -Wl,-z,noexecstack"
+
+            say cmake .. \
+		  -DCMAKE_C_COMPILER=gcc \
+		  -DCMAKE_C_FLAGS="${RELEASE_TYPE} ${WARNINGS}" \
+		  -DCMAKE_CXX_COMPILER=g++ \
+		  -DCMAKE_CXX_FLAGS="-ftemplate-backtrace-limit=0 ${RELEASE_TYPE} ${WARNINGS} ${SECURITY} -Wno-terminate" \
+		  -DCMAKE_INSTALL_PREFIX="$ROSE_ROOT" \
+		  -DBOOST_ROOT="${BOOST_ROOT-no}" \
+		  -DENABLE-ADA=OFF \
+		  -DENABLE-BINARY-ANALYSIS=ON \
+		  -DENABLE-C=OFF \
+                  -DENABLE-COBOL=OFF \
+                  -DENABLE-CSHARP=OFF \
+                  -DENABLE-CUDA=OFF \
+                  -DENABLE-CXX=OFF \
+                  -DENABLE-FORTRAN=OFF \
+                  -DENABLE-JAVA=OFF \
+                  -DENABLE-JOVIAL=OFF \
+                  -DENABLE-MATLAB=OFF \
+                  -DENABLE-OFP=OFF \
+                  -DENABLE-OPENCL=OFF \
+                  -DENABLE-PHP=OFF \
+                  -DENABLE-PYTHON=OFF \
+                  -DASSERTION_BEHAVIOR='abort' \
+                  -DCAPSTONE_ROOT=no \
+                  -DCEREAL_ROOT=no \
+                  -DDLIB_ROOT=${DLIB_ROOT-no} \
+                  -DDWARF_ROOT=no \
+                  -DELF_ROOT=no \
+                  -DGCRYPT_ROOT=no \
+                  -DJAVA_ROOT=no \
+                  -DMAGIC_ROOT=no \
+                  -DPQXX_ROOT=no \
+                  -DQT_ROOT=no \
+                  -DRAJA_ROOT=no \
+                  -DREADLINE_ROOT=no \
+                  -DSPOT_ROOT=no \
+                  -DSQLITE3_ROOT=no \
+                  -DWT_ROOT=no \
+                  -DYAMLCPP_ROOT=no \
+                  -DYICES_ROOT=no \
+                  -DZ3_ROOT="${Z3_ROOT-no}" \
+                  /root/rose
+
+	    # Run tests before installing ROSE
+	    case "$USE_ROSE_TESTS" in
+		no)
+		    : nothing to do
+		    ;;
+		rebuild)
+		    if [ -d tests ]; then
+			say make -j$(nproc) --output-sync --silent check
+		    fi
+		    ;;
+		*)
+		    say make -j$(nproc) --output-sync --silent check
+		    ;;
+	    esac
+	    
+            say make -j$(nproc) --output-sync --silent install
+
+            # BUG WORKAROUND: CMake doesn't build or install the ROSE tools by default
+            say make -C tools -j$(nproc) --output-sync --silent install
+
+            # BUG WORKAROUND for ROSE 0.11.145.164 on 2024-10-25: ROSE is not installing <Rose/BinaryAnalysis/Variables/*.h> due to
+            # a typo, so do it by hand for now.
+            if [ -d "$ROSE_ROOT/include/rose/Rose/BinaryAnalysis/Vairables" ]; then
+		echo "$arg0: BUG: workaround applied for misspelled \"Vairables\""
+		mv "$ROSE_ROOT/include/rose/Rose/BinaryAnalysis/Vairables" "$ROSE_ROOT/include/rose/Rose/BinaryAnalysis/Variables"
+            fi
+
+            # BUG WORKAROUND for ROSE 0.11.145.164 on 2024-10-25: ROSE's CMake doesn't add Z3's include directory to the CPPFLAGS
+	    if [ -n "$Z3_ROOT" ]; then
+		if ! grep -q "^ROSE_CPPFLAGS.*$Z3_ROOT" "$ROSE_ROOT/lib/rose-config.cfg"; then
+		    echo "$arg0: BUG: workaround applied for missing Z3 include directory"
+		    sed -i "s%^ROSE_CPPFLAGS *= *%ROSE_CPPFLAGS = -I$Z3_ROOT/include %" "$ROSE_ROOT/lib/rose-config.cfg"
+		fi
+	    fi
+	    
+	    # BUG WORKAROUND for ROSE 0.11.145.166 on 2024-10-31: ROSE's CMake doesn't add Z3's library directory or the Z3 library
+	    # itself to ROSE_LDFLAGS.
+	    if [ -n "$Z3_ROOT" ]; then
+		if ! grep -q "ROSE_LDFLAGS.*$Z3_ROOT" "$ROSE_ROOT/lib/rose-config.cfg"; then
+		    echo "$arg0: BUG: workaround applied for missing Z3 library directory and Z3 library"
+		    sed -i "s%^\\(ROSE_LDFLAGS *= *\\)\\(.*\\)%\\1-L${Z3_ROOT}/lib -lz3 \\2%" "$ROSE_ROOT/lib/rose-config.cfg"
+		fi
+	    fi
+
+            # BUG WORKAROUND for ROSE 0.11.145.164 on 2024-10-25: ROSE's CMake adds Z3's library directory to ROSE_LDFLAGS, but
+            # doesn't add the Z3 library itself to that line.
+	    if [ -n "$Z3_ROOT" ]; then
+		if ! grep -q "ROSE_LDFLAGS.*-lz3" "$ROSE_ROOT/lib/rose-config.cfg"; then
+		    echo "$arg0: BUG: workaround applied for missing Z3 library"
+		    sed -i "s%^\\(ROSE_LDFLAGS *=.*-L$Z3_ROOT/lib\\)%\\1 -lz3 %" "$ROSE_ROOT/lib/rose-config.cfg"
+		fi
+            fi
+
+	    # BUG WORKAROUND for ROSE 0.11.145.166 on 2024-10-31: ROSE's CMake installs a rose-config.cfg file whose
+	    # ROSE_LINK_RPATHS value is just "-Wl,-rpath" which causes the next command-line argument to become the value for the
+	    # linker -rpath switch. For instance, if the next argument is -L$BOOST_ROOT then the correct boost libraries are not
+	    # found.
+	    rose_link_rpaths="$(sed -n 's/ROSE_LINK_RPATHS *= *//p' "$ROSE_ROOT/lib/rose-config.cfg" |sed 's/ *$//')"
+	    if [ "$rose_link_rpaths" = "-Wl,-rpath" ]; then
+		echo "$arg0: BUG: workaround applied for bad ROSE_LINK_RPATHS value"
+		sed -i "s/^ROSE_LINK_RPATHS *=.*/ROSE_LINK_RPATHS =/" "$ROSE_ROOT/lib/rose-config.cfg"
+	    fi
+
+	    # BUG WORKAROUND for ROSE 0.11.145.166 on 2024-10-31: ROSE's CMake installs a rose-config.cfg file that doesn't include
+	    # the Z3 library directory in list of ROSE_LINK_RPATHS switches.
+	    if [ -n "$Z3_ROOT" ]; then
+		if ! grep -q "ROSE_LINK_RPATHS.*-Wl,-rpath,$Z3_ROOT" "$ROSE_ROOT/lib/rose-config.cfg"; then
+		    echo "$arg0: BUG: workaround applied for missing Z3 library path in ROSE_LINK_RPATHS"
+		    sed -i "s%^\\(ROSE_LINK_RPATHS *=.*\\)%\\1 -Wl,-rpath,$Z3_ROOT/lib%" "$ROSE_ROOT/lib/rose-config.cfg"
+		fi
+	    fi
+
+	    # BUG WORKAROUND for ROSE 0.11.145.166 on 2024-10-31: ROSE's CMake installs a rose-config.cfg file that doesn't include
+	    # the ROSE library directory in the list of ROSE_LINK_RPATHS switches.
+	    if ! grep -q "ROSE_LINK_RPATHS.*-Wl,-rpath,$ROSE_ROOT" "$ROSE_ROOT/lib/rose-config.cfg"; then
+		echo "$arg0: BUG: workaround applied for missing ROSE library path in ROSE_LINK_RPATHS"
+		sed -i "s%^\\(ROSE_LINK_RPATHS *=.*\\)%\\1 -Wl,-rpath,$ROSE_ROOT/lib%" "$ROSE_ROOT/lib/rose-config.cfg"
+	    fi
+	    
+	    # BUG WORKAROUND for ROSE 0.11.145.166 on 2024-10-31: ROSE's CMake installs a rose-config.cfg file that doesn't include
+	    # the Boost library directory in the list of ROSE_LINK_RPATHS switches.
+	    if ! grep -q "ROSE_LINK_RPATHS.*-Wl,-rpath,$BOOST_ROOT" "$ROSE_ROOT/lib/rose-config.cfg"; then
+		echo "$arg0: BUG: workaround applied for missing boost library path in ROSE_LINK_RPATHS"
+		sed -i "s%^\\(ROSE_LINK_RPATHS *=.*\\)%\\1 -Wl,-rpath,$BOOST_ROOT/lib%" "$ROSE_ROOT/lib/rose-config.cfg"
+	    fi
+	    
+            # BUG WORKAROUND for ROSE 0.11.145.164 on 2024-10-25: ROSE's CMake doesn't install the `env` file to set up the ROSE
+            # environment, so we do it by hand. DO NOT SET THE "LD_LIBRARY_PATH" (it is broken by design); instead, the ROSE build
+            # system should set the correct rpath inside the installed libraries and tools.
+	    if [ ! -r "${ROSE_ROOT}/env" ]; then
+		echo "$arg0: BUG: workaround applied for missing \"env\" ROSE environment file"
+		(
+		    echo "case \":$PATH:\" in"
+		    echo "    *:\"${ROSE_ROOT}/bin\":*)"
+		    echo "        ;;"
+		    echo "    *)"
+		    echo "        export PATH=\"${ROSE_ROOT}/bin:$PATH\""
+		    echo "        ;;"
+		    echo "esac"
+		) >"${ROSE_ROOT}/env"
+	    fi
+
+	    # BUG WORKAROUND for ROSE 0.11.145.166 on 2024-11-01: ROSE's CMake doesn't install the tools for building ROSE binary
+	    # releases. These tools are sometimes needed after ROSE has been installed because users can use them to package their
+	    # own tools along with the ROSE library and its dependencies.
+	    if [ ! -x "$ROSE_ROOT/bin/mkinstaller" ]; then
+		echo "$arg0: BUG: workaround applied for mkinstaller scripts not being installed"
+		cp -p "$ROSE_BUILD_PATH/scripts/mkinstaller" "$ROSE_BUILD_PATH/scripts/tup/post-install-script" "$ROSE_ROOT/bin/."
+	    fi
+	)
+	
+	# ROSE is installed in a version-specific directory, but we also want a conventent "latest" link.
+        mkdir -p "$HOME/rose-installed"
+        (cd "$HOME/rose-installed" && rm -f latest && ln -s "$ROSE_ROOT" latest)
+
+	# Test installation
+	[ "$(get-rose-version "$ROSE_ROOT")" = "$ROSE_VERSION" ] ||
+	    die "failed to install ROSE-$ROSE_VERSION"
+	echo "$arg0: installed ROSE $ROSE_VERSION at $ROSE_ROOT"
+	;;
+esac
+
+####################################################################################################################################
+# Install various tools
+####################################################################################################################################
+
+# Binary analysis tools all print a version number. It takes one of these forms:
+#    "NAME-x.y.z using ROSE ..." for tools that have their own name and version and use the ROSE library
+#    "x.y.z using ROSE ..." for tools that have their own version number and use the ROSE library
+#    "ROSE a.b.c.d" for tools that simply use the ROSE library version number
+#    "x.y.z" for tools that don't use the ROSE library and have no specific name
+#
+# In other words, we return the first dotted numbers we find, and return nothing if the tool is not installed or didn't print a
+# recognized version number
+get-tool-version() {
+    local root="$1" exe="$2"
+    local raw_version="$("${root}/bin/${exe}" --version 2>&1)"
+    while [ -n "$raw_version" ]; do
+	case "$raw_version" in
+	    [0-9]*)
+		local version="$(echo "$raw_version" |sed -n 's/\(\([0-9]\+\.\)\+[0-9]\+\).*/\1/p')"
+		if is-version-number "$version"; then
+		    echo "$version"
+		    return $TRUE
+		fi
+		;;
+	    *)
+		raw_version="${raw_version:1}"
+		;;
+	esac
+    done
+}
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+section "Installing binary model checker"
+case "$USE_MODELCHECKER" in
+    no)
+	MODELCHECKER_ROOT=
+	MODELCHECKER_VERSION=
+	;;
+
+    yes)
+	# Use the version already installed
+	MODELCHECKER_ROOT="$ROSE_ROOT"
+	[ -n "$ROSE_ROOT" ] || die "model checker depends on the ROSE library that must be installed"
+	MODELCHECKER_VERSION="$(get-tool-version "$MODELCHECKER_ROOT" bat-modelchecker)"
+	is-version-number "$MODELCHECKER_VERSION" ||
+	    die "cannot determine model checker version installed at \"$MODELCHECKER_ROOT\""
+	echo "$arg0: using model checker $MODELCHECKER_VERSION installed at $MODELCHECKER_ROOT"
+	;;
+
+    *)
+	# Build-time (but not run-time) system dependencies for the model checker
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install make file chrpath
+	
+	# Build the version already downloaded
+	MODELCHECKER_BUILD_PATH="$(pwd)/model-checker"
+	MODELCHECKER_ROOT="$ROSE_ROOT"
+	say "$MODELCHECKER_BUILD_PATH/configure" --make "$ROSE_ROOT" install
+	MODELCHECKER_VERSION="$(get-tool-version "$MODELCHECKER_ROOT" bat-modelchecker)"
+	is-version-number "$MODELCHECKER_VERSION" || die "failed to install model checker"
+	echo "$arg0: installed model checker $($ROSE_ROOT/bin/bat-modelchecker --version 2>&1) at $MODELCHECKER_ROOT"
+	;;
+esac
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+section "Installing Megachiropteran tools"
+case "$USE_MEGACHIROPTERAN" in
+    no)
+	MEGACHIROPTERAN_ROOT=
+	MEGACHIROPTERAN_VERSION=
+	;;
+
+    yes)
+	# Use the version already installed
+	MEGACHIROPTERAN_ROOT="$ROSE_ROOT"
+	[ -n "$ROSE_ROOT" ] || die "megachiropteran depends on the ROSE library that must be installed"
+	MEGACHIROPTERAN_VERSION="$(get-tool-version "$MEGACHIROPTERAN_ROOT" bat-insert-call)"
+	is-version-number "$MEGACHIROPTERAN_VERSION" ||
+	    die "cannot determine megachiropteran version installed at \"$MEGACHIROPTERAN_ROOT\""
+	echo "$arg0: using megachiropteran $MEGACHIROPTERAN_VERSION installed at $MEGACHIROPTERAN_ROOT"
+	;;
+
+    *)
+	# Build-time (but not run-time) system dependencies for megachiropteran
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install make file chrpath
+
+	# Build the version already downloaded
+	MEGACHIROPTERAN_BUILD_PATH="$(pwd)/megachiropteran"
+	MEGACHIROPTERAN_ROOT="$ROSE_ROOT"
+	say "$MEGACHIROPTERAN_BUILD_PATH/configure" --make "$ROSE_ROOT" install
+	MEGACHIROPTERAN_VERSION="$(get-tool-version "$MEGACHIROPTERAN_ROOT" bat-insert-call)"
+	is-version-number "$MEGACHIROPTERAN_VERSION" || die "failed to install megachiropteran"
+	echo "$arg0: installed megachiropteran $($ROSE_ROOT/bin/bat-insert-call --version 2>&1) at $MEGACHIROPTERAN_ROOT"
+	;;
+esac
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+section "Installing Escapade"
+case "$USE_ESCAPADE" in
+    no)
+	ESCAPADE_ROOT=
+	ESCAPADE_VERSION=
+	;;
+    
+    yes)
+	# Use the version already installed
+	ESCAPADE_ROOT="$ROSE_ROOT"
+	[ -n "$ROSE_ROOT" ] || die "escapade depends on the ROSE library that must be installed"
+	ESCAPADE_VERSION="$(get-tool-version "$ESCAPADE_ROOT" bat-escapade)"
+	is-version-number "$ESCAPADE_VERSION" ||
+	    die "cannot determine escapade version installed at \"$ESCAPADE_ROOT\""
+	echo "$arg0: using escapade $ESCAPADE_VERSION installed at $ESCAPADE_ROOT"
+	;;
+
+    *)
+	# Build-time (but not run-time) system dependencies for Escapade
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install make file chrpath
+
+	# Build the version already downloaded
+	ESCAPADE_BUILD_PATH="$(pwd)/escapade"
+	ESCAPADE_ROOT="$ROSE_ROOT"
+	say "$ESCAPADE_BUILD_PATH/configure" --spot="$SPOT_ROOT" "$ROSE_ROOT" install
+	ESCAPADE_VERSION="$(get-tool-version "$ESCAPADE_ROOT" bat-escapade)"
+	is-version-number "$ESCAPADE_VERSION" || die "failed to install escapade"
+	echo "$arg0: installed escapade $($ROSE_ROOT/bin/bat-escapade --version 2>&1) at $ESCAPADE_ROOT"
+	;;
+esac
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+section "Installing Cyber Shot"
+case "$USE_CYBERSHOT" in
+    no)
+	CYBERSHOT_ROOT=
+	CYBERSHOT_VERSION=
+	;;
+
+    yes)
+	# Use the version already installed
+	CYBERSHOT_ROOT="$ROSE_ROOT"
+	[ -n "$ROSE_ROOT" ] || die "cybershot depends on the ROSE library that must be installed"
+	CYBERSHOT_VERSION="$(get-tool-version "$CYBERSHOT_ROOT" bat-sieve)"
+	is-version-number "$CYBERSHOT_VERSION" ||
+	    die "cannot determine cybershot version installed at \"$CYBERSHOT_ROOT\""
+	echo "$arg0: using cybershot $CYBERSHOT_VERSION installed at $CYBERSHOT_ROOT"
+	;;
+
+    *)
+	# Build-time (but not run-time) system dependencies for cyber shot
+	[ "$UPDATE_SYSTEM" = no ] || say dnf -y install make file chrpath
+
+	# Build the version already downloaded
+	CYBERSHOT_BUILD_PATH="$(pwd)/cybershot"
+	CYBERSHOT_ROOT="$ROSE_ROOT"
+	if grep -q -- "CPPFLAGS.*-DSIEVE_ENABLE_UI" "$CYBERSHOT_BUILD_PATH/Makefile"; then
+	    echo "$arg0: BUG: workaround to disable bat-sieve user interface"
+	    sed -i 's/-DSIEVE_ENABLE_UI/-USIEVE_ENABLE_UI/g' "$CYBERSHOT_BUILD_PATH/Makefile"
+	    sed -i 's/-lnotcurses[-_0-9a-zA-Z]*//g' "$CYBERSHOT_BUILD_PATH/Makefile"
+	fi
+	say "$CYBERSHOT_BUILD_PATH/configure" --make "$ROSE_ROOT" install
+	CYBERSHOT_VERSION="$(get-tool-version "$CYBERSHOT_ROOT" bat-sieve)"
+	is-version-number "$CYBERSHOT_VERSION" || die "failed to install cybershot"
+	echo "$arg0: installed cyber shot $($ROSE_ROOT/bin/bat-sieve --version 2>&1) at $CYBERSHOT_ROOT"
+	;;
+esac
+
+####################################################################################################################################
+# Build a binary release
+####################################################################################################################################
+
+section "Creating a binary release to install on another RHEL-8 system"
+make-binary-release() {
+    local target="$1"
+    [ -n "$target" ] || die "binary release target name must be specified"
+    local mkinstaller="$ROSE_ROOT/bin/mkinstaller"
+    local postinstall="$ROSE_ROOT/bin/post-install-script"
+    if [ ! -x "$mkinstaller" ]; then
+	[ -n "$ROSE_BUILD_PATH" ] || die "ROSE mkinstaller tool was not installed, and ROSE source code was not used this time"
+	mkinstaller="$ROSE_BUILD_PATH/scripts/mkinstaller"
+	postinstall="$ROSE_BUILD_PATH/scripts/post-install-script"
+    fi
+
+    # Gather the names of all the directories that need to be packaged. Some of these variables might be empty.
+    local dirs=()
+    for dir in $ROSE_ROOT $BOOST_ROOT $DLIB_ROOT $SPOT_ROOT $Z3_ROOT; do
+	dirs+=($dir/*)
+    done
+
+    (
+	# mkinstaller seems to need to run in an empty directory
+	set -x
+	rm -rf binary-release.tmp
+	mkdir binary-release.tmp
+	cd binary-release.tmp
+	"$mkinstaller" --create=binary-release.sh --project-name=ROSE --project-version="$ROSE_VERSION" \
+		       --postinstall-bin="$postinstall" --CC=gcc --CXX=g++ \
+		       "${dirs[@]}"
+    )
+    say mv binary-release.tmp/binary-release.sh "$target"
+    rm -rf binary-release.tmp
+}
+
+case "$BUILD_BINARY_RELEASE" in
+    no)
+	: do not build the release
+	;;
+
+    yes)
+	BUILD_BINARY_RELEASE="rose-${ROSE_VERSION}.sh"
+	make-binary-release "$BUILD_BINARY_RELEASE"
+	;;
+
+    *)
+	make-binary-release "$BUILD_BINARY_RELEASE"
+	;;
+esac
+
+####################################################################################################################################
+# Emit usage instructions
+####################################################################################################################################
+section "Usage information"
+echo "ROSE is installed."
+echo "  To use it run this command in your shell:"
+echo "    . $HOME/rose-installed/latest/env"
+if [ "$BUILD_BINARY_RELEASE" != no ]; then
+    echo "  To instal it on another machine, run this command on that machine:"
+    echo "    chmod u+rx ${BUILD_BINARY_RELEASE##*/}"
+    echo "    ${BUILD_BINARY_RELEASE##*/} --prefix=/desired/path/to/rose/installation"
+fi
