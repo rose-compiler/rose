@@ -1493,11 +1493,16 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 ########################################################################################################################
 # Ancillary ROSE components. These are things that are not part of the ROSE library.
 ########################################################################################################################
-add_custom_target(tools)                 # ie "make tools"  
-add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose 
-add_custom_target(install-tools          # ie "make install_tools" 
-  COMMAND ${CMAKE_COMMAND} --build . --target install
-)
+if(ENABLE-BINARY-ANALYSIS) # batSupport is part of tools, so if binary analysis is on, include tools
+  add_custom_target(tools)
+  add_subdirectory(tools)
+else()
+  add_custom_target(tools)                 # ie "make tools"  
+  add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose 
+  add_custom_target(install-tools          # ie "make install_tools" 
+    COMMAND ${CMAKE_COMMAND} --build . --target install
+  )
+endif()
 
 if(ENABLE-TESTS-DIRECTORY)
   enable_testing()
