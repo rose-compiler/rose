@@ -19,4 +19,4 @@ install(FILES
   StackVariable.h
   VariableFinder.h
 
-  DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/Vairables)
+  DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/Variables)
