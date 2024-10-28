@@ -833,6 +833,7 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
   SgAdaParameterList&         params   = mkAdaParameterList(dclscope);
   SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope, &params);
 
+  sgnode.set_scope(&scope);
   dclscope.set_parent(&sgnode);
   params.set_parent(&sgnode);
   sgnode.set_firstNondefiningDeclaration(&sgnode);

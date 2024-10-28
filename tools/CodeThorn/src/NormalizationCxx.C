@@ -782,6 +782,73 @@ namespace
     return SG_DEREF(sb::buildExprStatement(&call));
   }
 
+  SgVarRefExp& mkVarRefExp(SgInitializedName& var)
+  {
+    SgSymbol*         symbol = var.search_for_symbol_from_symbol_table();
+    SgVariableSymbol& varSym = SG_DEREF(isSgVariableSymbol(symbol));
+
+    return SG_DEREF(sb::buildVarRefExp(&varSym));
+  }
+
+    /// returns static_cast<Base*>(this)
+  SgThisExp&
+  mkThisExp(const SgClassDeclaration& clsdcl)
+  {
+    SgSymbol& clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
+
+    return SG_DEREF(sb::buildThisExp(&clssym));
+  }
+
+  SgExpression&
+  mkThisExpForBase(const SgClassDeclaration& clsdcl, const SgClassDeclaration& base, bool cst = false)
+  {
+    SgThisExp& self = mkThisExp(clsdcl);
+    SgType*    bseptr = base.get_type();
+
+    if (cst) bseptr = sb::buildConstType(bseptr);
+
+    bseptr = sb::buildPointerType(bseptr);
+
+    ROSE_ASSERT(bseptr);
+    return SG_DEREF(sb::buildCastExp(&self, bseptr, SgCastExp::e_static_cast));
+  }
+
+  /// returns static static_cast<const Base&>(var)
+  SgExpression&
+  mkVarRefForBase(SgInitializedName& var, const SgClassDeclaration& base, bool cst = false)
+  {
+    SgVarRefExp* varref = &mkVarRefExp(var);
+    SgType*      bseptr = base.get_type();
+
+    if (cst) bseptr = sb::buildConstType(bseptr);
+
+    bseptr = sb::buildReferenceType(bseptr);
+    ROSE_ASSERT(varref && bseptr);
+    return SG_DEREF(sb::buildCastExp(varref, bseptr, SgCastExp::e_static_cast));
+  }
+
+
+    /// returns this->fld
+  SgExpression& mkFieldAccess(const SgClassDeclaration& clsdcl, SgInitializedName& fld)
+  {
+    SgThisExp&   lhs = mkThisExp(clsdcl);
+    //~ SgVarRefExp& rhs = SG_DEREF(sb::buildVarRefExp(&fld, nullptr /* not used */));
+    SgVarRefExp& rhs = mkVarRefExp(fld);
+
+    return SG_DEREF(sb::buildArrowExp(&lhs, &rhs));
+  }
+
+  /// returns var.fld
+  SgExpression& mkFieldAccess(SgInitializedName& var, SgInitializedName& fld)
+  {
+    //~ SgVarRefExp& lhs = SG_DEREF(sb::buildVarRefExp(&var, nullptr /* unused */));
+    //~ SgVarRefExp& rhs = SG_DEREF(sb::buildVarRefExp(&fld, nullptr /* unused */));
+    SgVarRefExp& lhs = mkVarRefExp(var);
+    SgVarRefExp& rhs = mkVarRefExp(fld);
+
+    return SG_DEREF(sb::buildDotExp(&lhs, &rhs));
+  }
+
 
   SgStatement&
   createMemberCall( SgInitializedName& var,
@@ -790,9 +857,8 @@ namespace
                     bool virtualCall = false
                   )
   {
-    SgScopeStatement&       scope  = SG_DEREF(si::getEnclosingScope(&var));
-    SgVarRefExp&            varRef = SG_DEREF(sb::buildVarRefExp(&var, &scope));
-    SgType&                 varTy  = SG_DEREF(varRef.get_type());
+    SgVarRefExp& varRef = mkVarRefExp(var);
+    SgType&      varTy  = SG_DEREF(varRef.get_type());
 
     return createMemberCall(varRef, varTy, fnDcl, args, virtualCall);
   }
@@ -855,14 +921,17 @@ namespace
 
 
   SgExprStatement&
-  createAssignFromAssignInitializer(SgInitializedName& var, SgAssignInitializer& ini)
+  createMemberAssignFromAssignInitializer(SgInitializedName& var, SgAssignInitializer& ini)
   {
-    SgScopeStatement& scope   = SG_DEREF(si::getEnclosingScope(&var));
-    SgVarRefExp&      lhs     = SG_DEREF(sb::buildVarRefExp(&var, &scope));
-    SgExpression&     rhs     = SG_DEREF(si::deepCopy(ini.get_operand()));
-    SgExpression&     expr    = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
+    //~ SgSymbol*         sym = var.search_for_symbol_from_symbol_table();
+    //~ SgVariableSymbol& vsy = SG_DEREF(isSgVariableSymbol(sym));
+    //~ SgVarRefExp&      lhs = SG_DEREF(sb::buildVarRefExp(&vsy));
+    SgClassDeclaration& cls = sg::ancestor<SgClassDeclaration>(var);
+    SgExpression&       lhs = mkFieldAccess(cls, var);
+    SgExpression&       rhs = SG_DEREF(si::deepCopy(ini.get_operand()));
+    SgExpression&       exp = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
 
-    return SG_DEREF(sb::buildExprStatement(&expr));
+    return SG_DEREF(sb::buildExprStatement(&exp));
   }
 
 
@@ -876,7 +945,7 @@ namespace
   /// \note
   ///   the ast representation deviates from standard C++
   ///   struct S { S() {}; std::string s; };
-  ///   => struct S { S() { s.S(); }; std::string s; };
+  ///   => struct S { S() { s.string(); }; std::string s; };
   struct MemberVariableCtorTransformer
   {
       MemberVariableCtorTransformer(SgBasicBlock& where, SgInitializedName& what, SgInitializer* how)
@@ -906,7 +975,7 @@ namespace
           return &createMemberCallFromConstructorInitializer(var, *ctorInit);
 
         if (SgAssignInitializer* assignInit = isSgAssignInitializer(ini))
-          return &createAssignFromAssignInitializer(var, *assignInit);
+          return &createMemberAssignFromAssignInitializer(var, *assignInit);
 
         logError() << "Unknown initializer type: "
                    << typeid(*ini).name()
@@ -1409,65 +1478,6 @@ namespace
   };
 */
 
-  /// returns static_cast<Base*>(this)
-  SgThisExp&
-  mkThisExp(const SgClassDeclaration& clsdcl)
-  {
-    SgSymbol& clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
-
-    return SG_DEREF(sb::buildThisExp(&clssym));
-  }
-
-  SgExpression&
-  mkThisExpForBase(const SgClassDeclaration& clsdcl, const SgClassDeclaration& base, bool cst = false)
-  {
-    SgThisExp&          self = mkThisExp(clsdcl);
-    SgType*             bseptr = base.get_type();
-
-    if (cst) bseptr = sb::buildConstType(bseptr);
-
-    bseptr = sb::buildPointerType(bseptr);
-
-    ROSE_ASSERT(bseptr);
-    return SG_DEREF(sb::buildCastExp(&self, bseptr, SgCastExp::e_static_cast));
-  }
-
-  /// returns static static_cast<const Base&>(var)
-  SgExpression&
-  mkVarRefForBase(SgInitializedName& var, const SgClassDeclaration& base, bool cst = false)
-  {
-    SgVarRefExp* varref = sb::buildVarRefExp(&var, nullptr /* not used */);
-    SgType*      bseptr = base.get_type();
-
-    if (cst) bseptr = sb::buildConstType(bseptr);
-
-    bseptr = sb::buildReferenceType(bseptr);
-    ROSE_ASSERT(varref && bseptr);
-    return SG_DEREF(sb::buildCastExp(varref, bseptr, SgCastExp::e_static_cast));
-  }
-
-  /// returns this->fld
-  SgExpression& mkFieldAccess(const SgClassDeclaration& clsdcl, SgInitializedName& fld)
-  {
-    SgThisExp&   lhs = mkThisExp(clsdcl);
-    SgVarRefExp& rhs = SG_DEREF(sb::buildVarRefExp(&fld, nullptr /* not used */));
-
-    return SG_DEREF(sb::buildArrowExp(&lhs, &rhs));
-  }
-
-  /// returns var.fld
-  SgExpression& mkFieldAccess(SgInitializedName& var, SgInitializedName& fld)
-  {
-    SgVarRefExp& lhs = SG_DEREF(sb::buildVarRefExp(&var, nullptr /* unused */));
-    SgVarRefExp& rhs = SG_DEREF(sb::buildVarRefExp(&fld, nullptr /* unused */));
-
-    return SG_DEREF(sb::buildDotExp(&lhs, &rhs));
-  }
-
-
-
-
-
 
   struct CtorCallCreator
   {
@@ -1655,8 +1665,9 @@ namespace
         SgClassDefinition&           clsDef     = SG_DEREF(getClassDefOpt(clsTy));
 
         // build new statement
-        SgScopeStatement*            scope      = si::getEnclosingScope(&var);
-        SgExpression&                destructed = SG_DEREF(sb::buildVarRefExp(&var, scope));
+        //~ SgScopeStatement*            scope      = si::getEnclosingScope(&var);
+        //~ SgExpression&                destructed = SG_DEREF(sb::buildVarRefExp(&var, scope));
+        SgExpression&                destructed = mkVarRefExp(var);
         SgExprListExp&               args       = SG_DEREF(sb::buildExprListExp());
         SgMemberFunctionDeclaration& dtorDcl    = obtainGeneratableDtor(clsDef, args);
 
@@ -2292,14 +2303,15 @@ namespace
         SgCallExpression& call = SG_DEREF(isSgCallExpression(ini.get_operand()));
         SgExprListExp&    args = SG_DEREF(call.get_args());
 
-        SgScopeStatement& scope = sg::ancestor<SgScopeStatement>(var);
-        SgVarRefExp&      vref  = SG_DEREF(sb::buildVarRefExp(&var, &scope));
-        SgExpression&     vptr  = SG_DEREF(sb::buildAddressOfOp(&vref));
+        //~ SgScopeStatement& scope = sg::ancestor<SgScopeStatement>(var);
+        //~ SgVarRefExp&      vref  = SG_DEREF(sb::buildVarRefExp(&var, &scope));
+        SgVarRefExp&      vref = mkVarRefExp(var);
+        SgExpression&     vptr = SG_DEREF(sb::buildAddressOfOp(&vref));
 
         si::appendExpression(&args, &vptr);
 
-        SgExprStatement&  stmt  = SG_DEREF(sb::buildExprStatement(&call));
-        SgStatement&      prev  = sg::ancestor<SgStatement>(var);
+        SgExprStatement&  stmt = SG_DEREF(sb::buildExprStatement(&call));
+        SgStatement&      prev = sg::ancestor<SgStatement>(var);
 
         si::insertStatement(&prev, &stmt, false /* after */);
 
@@ -2552,16 +2564,9 @@ namespace
       {
         SgInitializedName& thisParam = findThisParam();
 
-        newThisExpr = sb::buildVarRefExp(&thisParam, memfn.get_definition());
-
-        //~ std::cerr << self.get_parent()->unparseToString()
-                  //~ << "\n   =>\n"
-                  //~ << std::flush;
-
-        replaceExpression(self, SG_DEREF(newThisExpr));
-
-        //~ std::cerr << newThisExpr->get_parent()->unparseToString()
-                  //~ << std::endl;
+        // was: newThisExpr = sb::buildVarRefExp(&thisParam, memfn.get_definition());
+        newThisExpr = &mkVarRefExp(thisParam);
+        replaceExpression(self, *newThisExpr);
       }
 
     private:

@@ -915,6 +915,7 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope, SgAdaDiscriminatedTypeDecl* 
   SgAdaParameterList&         params   = mkAdaParameterList(dclscope);
   SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope, &params);
 
+  sgnode.set_scope(&scope);
   dclscope.set_parent(&sgnode);
   params.set_parent(&sgnode);
 
@@ -1756,19 +1757,23 @@ namespace
 {
   /// adds initialized names to a variable declarations and sets declptr and parent nodes
   template <class FwdIterator>
-  void setInitializedNamesInDecl(FwdIterator aa, FwdIterator zz, SgVariableDeclaration& dcl)
+  void setInitializedNamesInDecl(FwdIterator beg, FwdIterator lim, SgVariableDeclaration& dcl)
   {
-    SgInitializedNamePtrList& names = dcl.get_variables();
+    auto fieldInitializer =
+            [&](SgInitializedName* ini) -> SgInitializedName*
+            {
+              ASSERT_not_null(ini);
 
-    std::for_each( aa, zz,
-                   [&](SgInitializedName* ini) -> void
-                   {
-                     ASSERT_require(ini);
-                     ini->set_declptr(&dcl);
-                     ini->set_parent(&dcl);
-                     names.push_back(ini);
-                   }
-                 );
+              ini->set_declptr(&dcl);
+              ini->set_parent(&dcl);
+              // ini->set_scope(dcl.get_scope()) -- set by fixVariableDeclaration
+              return ini;
+            };
+
+    std::transform( beg, lim,
+                    std::back_inserter(dcl.get_variables()),
+                    fieldInitializer
+                  );
   }
 
   template <class SageVariableDeclaration, class FwdIterator, class... Args>
@@ -1780,13 +1785,14 @@ namespace
     SageNode& vardcl = mkLocatedNode<SageNode>(std::forward<Args>(args)...);
     bool      isNullDecl = std::distance(aa, zz) == 0;
 
+    vardcl.set_parent(&scope);
+
     if (!isNullDecl)
     {
       setInitializedNamesInDecl(aa, zz, vardcl);
       si::fixVariableDeclaration(&vardcl, &scope);
     }
 
-    vardcl.set_parent(&scope);
     return vardcl;
   }
 
@@ -1963,6 +1969,24 @@ mkRecordParent(SgType& n)
 //
 // Expression Makers
 
+SgVarRefExp&
+mkVarRefExp(SgInitializedName& var)
+{
+  // the scope must be set for the builder interface to work as intended
+  ASSERT_not_null(var.get_scope());
+
+  return SG_DEREF(sb::buildVarRefExp(&var));
+}
+
+SgVarRefExp&
+mkVarRefExp(SgVariableDeclaration& var)
+{
+  ASSERT_require(var.get_variables().size() == 1);
+
+  return mkVarRefExp(SG_DEREF(var.get_variables().front()));
+}
+
+
 SgDesignatedInitializer&
 mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val)
 {
@@ -2113,9 +2137,9 @@ mkLabelRefExp(const SgLabelStatement& tgt)
 
 
 SgExpression&
-mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
+mkExceptionRef(SgInitializedName& exception, SgScopeStatement&)
 {
-  return SG_DEREF( sb::buildVarRefExp(&exception, &scope) );
+  return mkVarRefExp(exception);
 }
 
 SgDotExp&
@@ -2209,7 +2233,7 @@ mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
 {
   static constexpr SgUnaryOp::Sgop_mode mode = SgUnaryOp::prefix;
 
-  SgVarRefExp& varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgVarRefExp& varref = mkVarRefExp(var);
   SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildPlusPlusOp(&varref, mode))
                                 : sb::buildMinusMinusOp(&varref, mode)
                                 ;
@@ -2219,7 +2243,7 @@ mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
 SgExprStatement&
 mkForLoopTest(SgVariableDeclaration& var)
 {
-  SgVarRefExp&         varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgVarRefExp&         varref = mkVarRefExp(var);
   SgInitializedName&   inivar = SG_DEREF( var.get_variables().front() );
   SgAssignInitializer& iniini = SG_DEREF( isSgAssignInitializer(inivar.get_initializer()) );
   SgExpression&        range  = SG_DEREF( iniini.get_operand() );

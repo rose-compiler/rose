@@ -1379,7 +1379,8 @@ namespace
 
           if (SgInitializedName* var = findFirst(asisVars(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
           {
-            res = sb::buildVarRefExp(var, &ctx.scope());
+            //~ res = sb::buildVarRefExp(var, &ctx.scope());
+            res = &mkVarRefExp(*var);
           }
           else if (SgDeclarationStatement* dcl = queryDecl(expr, ctx))
           {
@@ -1404,11 +1405,12 @@ namespace
             }
             else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
             {
-              res = sb::buildVarRefExp(fld, &ctx.scope());
+              //~ res = sb::buildVarRefExp(fld, &ctx.scope());
+              res = &mkVarRefExp(*fld);
             }
             else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
             {
-              res = sb::buildVarRefExp(var, &ctx.scope());
+              res = &mkVarRefExp(*var);
             }
             else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
             {
@@ -1417,7 +1419,7 @@ namespace
 /*
             else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
             {
-              res = sb::buildVarRefExp(dsc, &ctx.scope());
+              res = &mkVarRefExp(*dsc);
             }
 */
             else

@@ -79,14 +79,13 @@ namespace
       // \}
 
       // others
-      void handle(SgInitializedName& n)          { set(&mkExprAsType(SG_DEREF(sb::buildVarRefExp(&n)))); }
+      void handle(SgInitializedName& n)          { set(&mkExprAsType(mkVarRefExp(n))); }
 
       void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
         set(&mkExprAsType(n));
       }
-
 
     private:
       Element_Struct& el;

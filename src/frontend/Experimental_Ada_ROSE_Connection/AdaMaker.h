@@ -795,6 +795,16 @@ namespace Ada_ROSE_Translation
   //
   // Expression Makers
 
+  /// creates a variable reference expression to the only! variable
+  ///   declared within the declaration of \p var.
+  SgVarRefExp&
+  mkVarRefExp(SgVariableDeclaration& var);
+
+  /// creates a variable reference expression to the variable
+  ///   identified by \p var.
+  SgVarRefExp&
+  mkVarRefExp(SgInitializedName& var);
+
   /// Creates a named aggregate initializer
   /// \param what the named components that will get initialized
   /// \param the initialized value

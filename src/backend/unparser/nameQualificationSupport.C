@@ -1550,7 +1550,10 @@ namespace
       {
         const SgDeclarationStatement& dcl = SG_DEREF(n.get_declaration());
 
-        //~ std::cerr << "nmt: " << n.get_name() << " " << &dcl << std::endl;
+        //~ std::cerr << "nmt: " << n.get_name() << " "
+                  //~ << &dcl << " "
+                  //~ << typeid(dcl).name()
+                  //~ << std::endl;
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
 

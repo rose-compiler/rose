@@ -2953,6 +2953,9 @@ Grammar::setUpStatements ()
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgAdaDiscriminatedType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0 /* NO_NAME */
      // the name is computed from the child
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgName", "name", "= \"\"",
