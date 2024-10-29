@@ -143,5 +143,43 @@ if(ENABLE-BINARY-ANALYSIS)
   install(TARGETS bat-xml-to-json DESTINATION bin)
 
   install(FILES batSupport.h DESTINATION ${INCLUDE_INSTALL_DIR})
+  
+  # Also include these targets to build under the `tools` custom target.
+  add_dependencies(tools
+  bat
+  bat-ana
+  bat-cc
+  bat-cfg
+  bat-cg
+  bat-check-execution
+  bat-container
+  bat-dataflow
+  bat-debug-semantics
+  bat-delta-bijection
+  bat-dis
+  bat-dwarf-lines
+  bat-entropy
+  bat-flir-ascribe
+  bat-flir-insert
+  bat-flir-lib
+  bat-insnfreq
+  bat-insnfreq-cmp
+  bat-lsb
+  bat-lsd
+  bat-lsf
+  bat-lsv
+  bat-mem
+  bat-native-trace
+  bat-pointers
+  bat-prop
+  bat-rwsets
+  bat-scan-magic
+  bat-similar-functions
+  bat-simplify
+  bat-stack-deltas
+  bat-to-c
+  bat-trace
+  bat-var
+  bat-xml-to-json)
 
 endif()
