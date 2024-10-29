@@ -1504,7 +1504,7 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 add_custom_target(tools)                 # ie "make tools"  
 add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose 
 add_custom_target(install-tools          # ie "make install_tools" 
-  COMMAND ${CMAKE_COMMAND} --build tools/ --target install
+  COMMAND + $(CMAKE_COMMAND) --build tools/ --target install
 )
 
 if(ENABLE-TESTS-DIRECTORY)
