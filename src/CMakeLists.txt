@@ -753,8 +753,8 @@ endif()
 ########################################################################################################################
 # Dependencies of the ROSE library. librose depends on additional libraries.
 ########################################################################################################################
-
-set(rose_library_dir_list "")
+# TODO This may not be needed for CMake 
+set(rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
 set(lib_dir "")
 macro(add_library_dependency lib)
   get_filename_component(lib_dir ${lib} DIRECTORY)
@@ -899,31 +899,16 @@ install(TARGETS rose-compiler DESTINATION bin)
 # rose-config.cfg -- text file that contains various settings for user-level makefiles.
 ########################################################################################################################
 
-#Build LDFLAGS for ROSE tools
+########## Build cppflags for ROSE tools ###############################################################################
 set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose ")
 
-list(APPEND rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
-list(APPEND rose_library_dir_list ${Boost_LIBRARY_DIRS})
+list(APPEND rose_library_dir_list "${rose_library_dir_list};${Boost_LIBRARY_DIRS}")
 if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
   if(NOT ${ATERM_LIBRARY} STREQUAL "")
     add_library_dependency(${ATERM_LIBRARY})
     set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${ATERM_LIBRARY_DIR}/../include")
   endif()
 endif()
-
-# Add quadmath to the libraries reported by rose-config if we did in fact link librose to it
-# see ${link_with_libraries} in the parent CMakeLists.txt file for what librose is being 
-# linked to 
-if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
-  if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
-    add_library_dependency(${QUADMATH_LIBRARY})
-  endif()
-endif()
-
-foreach(X IN LISTS rose_library_dir_list)
-  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${X}")
-endforeach()
-
 # Add -pthread if Threads_FOUND or Boost::thread is found to avoid rose-tool segfaults 
 if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -pthread")
@@ -936,54 +921,49 @@ if("${Boost_INCLUDE_DIRS}" MATCHES "^/")
 else()
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/${Boost_INCLUDE_DIRS}")
 endif() 
+########################################################################################################################
 
-# There must be a cleaner approach to report this to rose-config, but for now  
-set(rose_library_list "rose")
+########### Build ldflags for ROSE tools ###############################################################################
+#list(REMOVE_DUPLICATES rose_library_dir_list)   # cmake 3.12 req 
+#foreach(X IN LISTS rose_library_dir_list)
+#  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${X}")
+#endforeach()
+
+## ATTENTION:  This order matters, please be very careful if modifying  ## 
+set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}") #-L
+set(rose_library_list "rose") # -l 
+# ONLY REQUIRED DEPENDENCIES 
 set(rose_library_list "${rose_library_list};${Boost_LIBRARIES}")
-set(rose_library_list "${rose_library_list};m")
-if(NOT ${QUADMATH_LIBRARY} STREQUAL "QUADMATH_LIBRARY-NOTFOUND")
-  if(NOT ${QUADMATH_LIBRARY} STREQUAL "")
-    set(rose_library_list "${rose_library_list};${QUADMATH_LIBRARY}")
-  endif()
-endif() 
-
-# Set macro for EDG 6 and 6.5
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # Move this to src/frontend/CxxFrontend/EDG/EDG_6.5/src/CMakeLists.txt and edg_6.0
-  set(ROSE_USE_EDG_QUAD_FLOAT 1)
-endif() 
-
-# Add -pthread if Threads_FOUND or Boost::thread found to avoid rose-tool segfaults 
-if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
-  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -pthread")
-endif()
-
+set(rose_library_list "${rose_library_list};m;quadmath")
 foreach(X IN LISTS rose_library_list)
   # Dereference ${X} with "" to fix Windows CI/CD error 
-  get_filename_component(Y "${X}" NAME_WE)
-  
+  get_filename_component(Y "${X}" NAME_WE)  
   # If Y is empty, use X directly
   if(Y STREQUAL "") 
     set(Y "${X}")
   endif() 
-
   # Handle non-path library names appropriately
   string(REGEX REPLACE "^-l" "" Y "${Y}")  # Remove '-l' prefix if present
   string(REGEX REPLACE "^lib" "" Y "${Y}") # Remove 'lib' prefix if present
   string(REGEX REPLACE "^Boost::" "boost_" Y "${Y}") # Convert boost modules into ld-recognizeable libraries
-  
   # Avoid treating empty strings as library names
   if(NOT Y STREQUAL "")
     set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -l${Y}")
   endif()
 endforeach()
+# Add -ldl before -lm if HAVE_LIBDL
+if(HAVE_LIBDL)
+  string(REPLACE " -lm " " -ldl -lm " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
+endif()
+# Add -pthread to avoid rose-tool segfaults 
+if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
+  string(REPLACE " -lrose " " -lrose -pthread " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
+endif()
+# Add Boost dir before boost libs to maximize portability by making sure boost is only looked for in one location 
+string(REPLACE " -lboost_chrono " " -L${Boost_LIBRARY_DIRS} -lboost_chrono " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
+########################################################################################################################
 
- # Add -ldl before -lm if HAVE_LIBDL
- if(HAVE_LIBDL)
-   string(REPLACE " -lm " " -ldl -lm " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
- endif()
-
-# Function for rose-config    
+# Function for rose-config to ensure rose tools use correct compiler 
 function(resolve_compiler_names)
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(cc_name "gcc" PARENT_SCOPE)
@@ -1032,8 +1012,17 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
 endif() 
 
-set(ROSE_CXXFLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}" )
+# Set macro for EDG 6 and 6.5
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # Move this to src/frontend/CxxFrontend/EDG/EDG_6.5/src/CMakeLists.txt and edg_6.0
+  set(ROSE_USE_EDG_QUAD_FLOAT 1)
+endif() 
 
+# We should not set ROSE_CXXFLAGS to CXX_STANDARD below because:
+# - it breaks portability of tools 
+# - the autoconf system does not 
+# set(ROSE_CXXFLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}" )
+# uncommenting the line above will break most tools 
 
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
@@ -1043,12 +1032,12 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX          = ${AC
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX_PATH     = ${CMAKE_CXX_COMPILER}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${rose_config_installed_cppflags}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${ROSE_CXXFLAGS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${ROSE_LIBDIRS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = ${ROSE_LIBDIRS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = ${ROSE_LINK_RPATHS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n") # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS  
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")                      # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")  
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")               # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIR_DEBUG}\n")        # ONLY NEED BOOST HERE 
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
