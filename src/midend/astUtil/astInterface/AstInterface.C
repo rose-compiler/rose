@@ -931,9 +931,10 @@ NewMemberFunc( SgClassSymbol* c, const std::string& name, SgType*  rtype,
 std::string AstInterface::
 GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
   SgNode* scope = AstNodePtrImpl(_scope).get_ptr();
+  assert(scope != 0);
   std::string result = expname;
+  std::string scopename = expname;
   while (scope != 0 && scope->variantT() != V_SgGlobal) {
-       std::string scopename;
        if (IsBlock(scope, &scopename) && scopename != "" && result.find(scopename+"::") >= result.size()) {
             if (result == "") result = scopename;
             else {
@@ -950,6 +951,14 @@ GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
             }
        } 
        scope = AstInterfaceImpl::GetScope(scope);
+  }
+  if (scopename == "main") {
+    std::string filename = scope->get_file_info()->get_filenameString();
+    auto location = filename.rfind("/");
+    if (location < filename.size()) {
+       filename = filename.substr(location+1);
+    }
+    result = filename + "::" + result;
   }
   result.erase(std::remove_if(result.begin(), result.end(), ::isspace), result.end());
   return result;
@@ -1412,6 +1421,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  if (s == 0) return false;
   SgFunctionParameterList *l = 0;
   SgCtorInitializerList *ctor = 0;
   SgNode* d = s;
@@ -1578,6 +1588,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 bool AstInterfaceImpl::
 IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs) 
 { 
+  if (s == 0) return false;
   if (s->variantT() == V_SgInitializedName) {
         const SgNode* parent = s->get_parent();
         if (parent != 0 && parent->variantT() == V_SgCtorInitializerList) {
@@ -1641,6 +1652,7 @@ bool AstInterface::
 IsVariableDecl(const AstNodePtr& _s, AstNodeList* vars, AstNodeList* init)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
+  if (s == 0) return false;
    SgVariableDeclaration *decl = isSgVariableDeclaration(s);
    if (decl != 0) {
       if (vars == 0 && init == 0)
@@ -1730,6 +1742,7 @@ IsIOOutputStmt(const AstNodePtr&, AstNodeList*) {
 bool AstInterface::IsConstInt( const AstNodePtr& _exp, int *val) 
 { 
   SgNode* exp = SkipCasting(AstNodePtrImpl(_exp).get_ptr());
+  if (exp == 0) return false;
   if (exp->variantT() == V_SgIntVal) {
     if (val != 0) 
       *val = isSgIntVal(exp)->get_value();
@@ -1742,6 +1755,7 @@ bool AstInterface::
 IsConstant( const AstNodePtr& _exp, std::string* valtype, std::string *val)
 {
   SgNode* exp = SkipCasting(AstNodePtrImpl(_exp).get_ptr());
+  if (exp == 0) return false;
   switch (exp->variantT()) {
   case V_SgStringVal:
       if (valtype != 0) *valtype = "string";
@@ -1997,6 +2011,7 @@ IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, std::string* varname,
           AstNodePtr* scope, bool *isglobal, bool use_global_unique_name ) 
 { 
   SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
+  if (exp == 0) return false;
   SgType** _vartype = (vartype==0)? (SgType**)0 : (SgType**)&vartype->get_ptr();
   SgNode** _scope = (scope==0)? (SgNode**) 0 : (SgNode**)&scope->get_ptr();
   return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal, use_global_unique_name);
@@ -2277,6 +2292,7 @@ bool AstInterface::
 IsAddressOfOp( const AstNodePtr& _s)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  if (s == 0) return false;
   return (s->variantT() == V_SgAddressOfOp);  
 }
 
@@ -2349,6 +2365,7 @@ bool AstInterface::
 IsMemoryAccess( const AstNodePtr& _s)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  if (s == 0) return false;
   if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
   switch (s->variantT()) {
   case V_SgCastExp:
@@ -2438,6 +2455,8 @@ IsBinaryOp( const AstNodePtr& _exp, OperatorEnum* opr,
             AstNodePtr* opd1, AstNodePtr* opd2)
 { 
   SgNode* exp = AstNodePtrImpl(_exp).get_ptr();
+  if (exp == 0) return false;
+
   SgBinaryOp *op = isSgBinaryOp(exp);
   switch (exp->variantT()) {
     case V_SgEqualityOp:
@@ -2510,6 +2529,8 @@ bool AstInterface::
 IsUnaryOp( const AstNodePtr& _exp, OperatorEnum* opr, AstNodePtr* opd) 
 { 
   SgNode* exp = AstNodePtrImpl(_exp).get_ptr();
+  if (exp == 0) return false;
+
   switch (exp->variantT()) {
     case V_SgMinusOp: 
        if (opd != 0) *opd = AstNodePtrImpl(isSgMinusOp(exp)->get_operand()); 
@@ -2976,7 +2997,7 @@ AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
 {
   AstNodeTypeImpl type(__type);
   SgArrayType* t = isSgArrayType(type.get_ptr());
-  if (!t)
+  if (t == 0)
     return false;
 
   if (__base_type)
@@ -2999,6 +3020,7 @@ bool
 AstInterface::IsScalarType(const AstNodeType& __type)
 {
   AstNodeTypeImpl type(__type);
+  if (type.get_ptr() == 0) return false;
   switch(type->variantT()) {
   case V_SgTypeChar :
   case V_SgTypeSignedChar :
@@ -3064,6 +3086,7 @@ bool AstInterface::
 IsExpression( const AstNodePtr& _s, AstNodeType* exptype, AstNodePtr* strip_exp)
 {
   AstNodePtrImpl s(_s);
+  if (s.get_ptr() ==  0) return false; 
   {
    SgExprStatement* is_expstmt = isSgExprStatement(s.get_ptr());
    if (is_expstmt != 0) {
@@ -3103,6 +3126,7 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
         AstNodePtr* incr, AstNodePtr* body)
 {
   AstNodePtrImpl s(_s);
+  if (s.get_ptr() == 0) return false;
   switch (s->variantT()) {
   case V_SgForStatement:
     {
@@ -3172,6 +3196,7 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
 // The loop must be in the format: for (ivar=lb; ivar <= ub; ivar += step)
 bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** lb , SgNode** ub, SgNode** step, SgNode** body)
 { 
+  if (s == 0) return false;
   switch (s->variantT()) {
     case V_SgFortranDo:
     {
@@ -3265,6 +3290,7 @@ bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** 
 bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar , AstNodePtr* lb , AstNodePtr* ub, AstNodePtr* step, AstNodePtr* body)
 { 
   AstNodePtrImpl s(_s);
+  if (s.get_ptr() == 0) return false;
 
   SgNode **_ivar = (ivar == 0)? (SgNode**)0 : (SgNode**)&ivar->get_ptr();
   SgNode **_lb = (lb == 0)? (SgNode**)0 : (SgNode**)&lb->get_ptr();
@@ -3277,6 +3303,7 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar , AstNo
 bool AstInterface::IsPostTestLoop( const AstNodePtr& _s)
 {
   AstNodePtrImpl s(_s);
+  if (s.get_ptr() == 0) return false;
   switch (s->variantT()) {
   case V_SgDoWhileStmt:
     return true;

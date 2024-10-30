@@ -34,7 +34,8 @@ class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
   virtual void AppendVariableDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init) = 0; 
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod, 
                               const AstNodePtr& rhs = AstNodePtr()) = 0;
-  virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) = 0; 
+  virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read, 
+                              const AstNodePtr& lhs = 0) = 0; 
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) = 0; 
   virtual void AppendMemoryAllocate( AstInterface& /* fa */, const AstNodePtr& /* s */) {}
   virtual void AppendMemoryFree( AstInterface& /* fa */, const AstNodePtr& /* s */) {}
@@ -81,7 +82,8 @@ class StmtSideEffectCollect : public StmtInfoCollect, public SideEffectAnalysisI
     virtual void AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init) override;
     virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
-    virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) override;
+    virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read, 
+                              const AstNodePtr& lhs = 0) override;
     virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) override;
     virtual void AppendMemoryAllocate( AstInterface& /* fa */, const AstNodePtr& s) override;
     virtual void AppendMemoryFree( AstInterface& /* fa */, const AstNodePtr& s) override;
@@ -159,7 +161,8 @@ class StmtVarAliasCollect
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) override;
-  virtual void AppendReadLoc(AstInterface&, const AstNodePtr&)  override {}
+  virtual void AppendReadLoc(AstInterface&, const AstNodePtr&, 
+                              const AstNodePtr& lhs = 0)  override {}
  public:
   StmtVarAliasCollect( FunctionAliasInterface* a = 0) 
     : funcanal(a), hasunknown(false), hasresult(false) {}
@@ -190,7 +193,7 @@ class ModifyVariableMap : public StmtSideEffectCollect
          if (fa_.IsVarRef(mod_first,0, &varname)) {
              AstNodePtr l = fa_.GetParent(mod_first);
              VarModSet& cur = varmodInfo[varname];
-             for ( ; l != AST_NULL; l = fa_.GetParent(l)) {
+             for ( ; l != 0; l = fa_.GetParent(l)) {
                if (sel(fa_,l))
                   cur.insert(l);
              }
@@ -207,7 +210,7 @@ class ModifyVariableMap : public StmtSideEffectCollect
       { 
          typename VarModInfo::const_iterator p = varmodInfo.find(varname);
          if (p != varmodInfo.end()) {
-            if (l == AST_NULL)
+            if (l == 0)
                  return true;
             const VarModSet& cur = (*p).second;
             return cur.find(l) != cur.end();

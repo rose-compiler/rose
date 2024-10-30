@@ -16,21 +16,31 @@ DebugLog DebugLocalInfoCollect("-debuglocalinfocollect");
 void StmtInfoCollect::
 AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* callee)
 {
-  AstInterface::AstNodeList args;
+  AstInterface::AstNodeList args, params;
   AstInterface::AstNodePtr p_callee;
   if (!fa.IsFunctionCall(fc, &p_callee, &args))
       ROSE_ABORT();
   if (callee != 0) {
     *callee = AstNodePtrImpl(p_callee).get_ptr();
   }
+  std::string fname;
+  if (AstInterface::IsFunctionDefinition(fa.GetFunctionDefinition(p_callee), &fname, &params)) {
+    DebugLocalInfoCollect([&fname]() { return "static Function call to : " + fname; });
+  }
 
-  for (AstInterface::AstNodeList::const_iterator p1 = args.begin();
-       p1 != args.end(); ++p1) {
+  AstInterface::AstNodeList::const_iterator p2=params.begin();
+  for (AstInterface::AstNodeList::const_iterator p1 = args.begin(); p1 != args.end(); ++p1) {
     AstNodePtr c = AstNodePtrImpl(*p1).get_ptr();
     if ( c == AstNodePtr())
         continue;
     DebugLocalInfoCollect([&c]() { return "Function Argument: " + AstInterface::AstToString(c); } );
     operator()(fa, c);
+    // Correlate c with the function parameter it is passed to.
+    // Do not increment p2 if it is already empty.
+    if (p2 != params.end()) {
+       AppendReadLoc(fa, c, (*p2).get_ptr());
+       p2++;
+    }
   }
 }
 
@@ -164,7 +174,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
           if (mp == 0 || mp->find(s_ptr) == mp->end() || (*mp)[s_ptr].readlhs) {
-              AppendReadLoc(fa, s_ptr);
+              AppendReadLoc(fa, AstNodePtr(s_ptr));
           }
         }
         AstNodeList arglist;
@@ -308,11 +318,15 @@ AppendModLoc(AstInterface&, const AstNodePtr& mod, const AstNodePtr& rhs)
             (*modcollect)(mod, rhs);
     }
 void StmtSideEffectCollect::
-AppendReadLoc(AstInterface &/*fa*/, const AstNodePtr &read)
+AppendReadLoc(AstInterface &/*fa*/, const AstNodePtr &read, const AstNodePtr& lhs)
     {
       DebugLocalInfoCollect([&read](){ return "appending reading " + AstInterface::AstToString(read); });
       if (readcollect != 0) {          
-          (*readcollect)(read, curstmt);
+         if (lhs==0) {
+            (*readcollect)(read, curstmt);
+         } else {
+            (*readcollect)(read, lhs);
+         }
       }
     }
 
