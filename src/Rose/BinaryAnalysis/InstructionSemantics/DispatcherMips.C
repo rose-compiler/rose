@@ -342,6 +342,88 @@ struct IP_divu: P {
     }
 };
 
+// Jump
+// Jump and link (mips_jal, implemented by IP_j)
+// Jump and link exchange (mips_jalx, implemented by IP_j)
+struct IP_j: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        const size_t nBits = d->architecture()->bitsPerWord();
+
+        d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // Link instructions
+        if (insn->get_kind() == mips_jal || insn->get_kind() == mips_jalx) {
+            // Place the return address link (PC + 8) in GPR 31
+            SValue::Ptr link = ops->number_(nBits, insn->get_address());
+            link = ops->add(link, ops->number_(nBits, 8));
+            ops->writeRegister(d->REG_RA, link);
+        }
+
+        if (insn->get_kind() == mips_jalx) {
+            mlog[WARN] << "mips_jalx instruction needs to exchange ISAMode\n";
+        }
+
+        // Write target to IP/PC
+        SValue::Ptr target = d->read(args[0]);
+        ops->writeRegister(d->instructionPointerRegister(), target);
+    }
+};
+
+// Jump and link register
+// Jump and link register with hazard barrier (mips_jalr_hb, implemented by IP_jalr)
+struct IP_jalr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        const size_t nBits = d->architecture()->bitsPerWord();
+
+        if (insn->get_kind() == mips_jalr_hb) {
+            mlog[WARN] << "ClearHazards() (need implementation) must be called before delay slot is executed\n";
+        }
+
+        d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // Place the return address link (PC + 8) in link register
+        if (auto dre = isSgAsmDirectRegisterExpression(args[0])) {
+            // For pre-release 6 rd can be zero, if so use $ra for return address link
+            RegisterDescriptor reg = dre->get_descriptor();
+            if (reg.majorNumber() == 0 && reg.minorNumber() == 0) {
+                reg = d->REG_RA;
+            }
+            SValue::Ptr link = ops->number_(nBits, insn->get_address());
+            link = ops->add(link, ops->number_(nBits, 8));
+            ops->writeRegister(reg, link);
+        }
+
+        // R3 "hint" field must be zero for Release1
+
+        // Write new IP/PC
+        SValue::Ptr temp = d->read(args[1]);
+        ops->writeRegister(d->instructionPointerRegister(), temp);
+    }
+};
+
+// Jump register
+// Jump register with hazard barrier (mips_jr_hb, implemented by IP_jr)
+struct IP_jr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+
+        mlog[WARN] << "both mips_jr and mips_jr_hb instructions need to set ISAMode\n";
+        if (insn->get_kind() == mips_jr_hb) {
+            mlog[WARN] << "ClearHazards() (need implementation) must be called before delay slot is executed\n";
+        }
+
+        d->processDelaySlot(notnull(insn->get_delaySlot()));
+
+        // R3 "hint" field must be zero for Release1
+
+        // Write new IP/PC from address in register
+        SValue::Ptr temp = d->read(args[0]);
+        ops->writeRegister(d->instructionPointerRegister(), temp);
+    }
+};
+
 // Load byte
 // Load byte EVA (mips_lbe, implemented by IP_lb)
 struct IP_lb: P {
@@ -1052,6 +1134,13 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_clz,   new Mips::IP_clz);
     iprocSet(mips_div,   new Mips::IP_div);
     iprocSet(mips_divu,  new Mips::IP_divu);
+    iprocSet(mips_j,     new Mips::IP_j);
+    iprocSet(mips_jal,   new Mips::IP_j);   // mips_jal shares common implementation mips_j
+    iprocSet(mips_jalr,  new Mips::IP_jalr);
+    iprocSet(mips_jalr_hb,new Mips::IP_jalr); // mips_jalr_hb shares common implementation mips_jalr
+    iprocSet(mips_jalx,  new Mips::IP_j);   // mips_jalx shares common implementation mips_j
+    iprocSet(mips_jr,    new Mips::IP_jr);
+    iprocSet(mips_jr_hb, new Mips::IP_jr);  // mips_jr_hb shares common implementation mips_jr
     iprocSet(mips_lb,    new Mips::IP_lb);
     iprocSet(mips_lbe,   new Mips::IP_lb);  // mips_lbe shares common implementation mips_lb
     iprocSet(mips_lbu,   new Mips::IP_lbu);

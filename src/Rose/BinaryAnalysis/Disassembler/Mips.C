@@ -206,6 +206,7 @@ Mips::nDelaySlots(MipsInstructionKind kind) {
         case mips_jalr_hb:
         case mips_jalx:
         case mips_jr:
+        case mips_jr_hb:
             return 1;
 
         // Other instructions don't have a delay slot
