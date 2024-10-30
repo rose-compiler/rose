@@ -2,6 +2,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <SgAsmExpression.h>
 
+#include <Rose/AST/Traversal.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+
+#include <SgAsmInstruction.h>
 #include <SgAsmIntegerValueExpression.h>
 #include <SgAsmType.h>
 #include <Cxx_GrammarDowncast.h>
@@ -33,6 +37,15 @@ SgAsmExpression::asSigned() const {
         }
     }
     return Sawyer::Nothing();
+}
+
+std::string
+SgAsmExpression::toString() const {
+    if (SgAsmInstruction *insn = Rose::AST::Traversal::findParentTyped<SgAsmInstruction>(const_cast<SgAsmExpression*>(this))) {
+        return insn->architecture()->toString(this);
+    } else {
+        return "detached_expression";
+    }
 }
 
 #endif

@@ -666,6 +666,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + name;
         }
 
+     SgAsmExpression* genericExpression = isSgAsmExpression(node);
+     if (genericExpression != NULL)
+        {
+          string name = genericExpression->toString();
+          if (!name.empty())
+              nodelabel += string("\\n") + name;
+        }
+
      if (SgAsmRiscOperation *riscOp = isSgAsmRiscOperation(node)) {
          string name = stringifySgAsmRiscOperationRiscOperator(riscOp->get_riscOperator(), "OP_");
          if (!name.empty())

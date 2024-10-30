@@ -196,7 +196,7 @@ public:
     /** Unparse an instruction to a string.
      *
      *  The returned string is a simple, one-line string with no leading or trailing white space and no line termination. If the
-     *  instruction is null, then the word "null" is printed.
+     *  instruction is null, then the word "null" is returned.
      *
      *  Thread safety: Thread safe.
      *
@@ -204,6 +204,14 @@ public:
     virtual std::string toString(const SgAsmInstruction*) const;
     virtual std::string toStringNoAddr(const SgAsmInstruction*) const;
     /** @} */
+
+    /** Unparse an expression to a string.
+     *
+     *  The returned string is a simple, one-line string with no leading or trailing white space and no line termination. If the
+     *  expression is null, then the word "null" is returned.
+     *
+     *  Thread safety: Thread safe. */
+    virtual std::string toString(const SgAsmExpression*) const;
 
     /** Mnemonic for an instruction.
      *
@@ -352,6 +360,9 @@ public:
 protected:
     Ptr ptr();
     ConstPtr constPtr() const;
+
+    // Safely obtain a pointer to an unparser that's suitable for unparsing an instruction or expression.
+    virtual Unparser::BasePtr insnUnparser() const;
 };
 
 } // namespace

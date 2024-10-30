@@ -282,7 +282,7 @@ void
 State::printInterrupts(std::ostream &stream, const std::string &prefix) {
     Formatter fmt;
     fmt.set_line_prefix(prefix);
-    printInterrupts(stream, prefix);
+    printInterrupts(stream, fmt);
 }
 
 void

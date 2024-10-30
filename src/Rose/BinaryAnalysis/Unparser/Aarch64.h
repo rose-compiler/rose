@@ -32,7 +32,7 @@ public:
     Aarch64Settings& settings() override { return settings_; }
 
 protected:
-    void emitRegister(std::ostream&, RegisterDescriptor, State&) const;
+    void emitRegister(std::ostream&, RegisterDescriptor, State&) const override;
 };
 
 } // namespace

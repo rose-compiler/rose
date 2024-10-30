@@ -39,6 +39,7 @@
 #include <SgAsmBinarySubtract.h>
 #include <SgAsmByteOrder.h>
 #include <SgAsmDirectRegisterExpression.h>
+#include <SgAsmExprListExp.h>
 #include <SgAsmFloatType.h>
 #include <SgAsmFloatValueExpression.h>
 #include <SgAsmFunction.h>
@@ -48,6 +49,7 @@
 #include <SgAsmIntegerValueExpression.h>
 #include <SgAsmMemoryReferenceExpression.h>
 #include <SgAsmRegisterNames.h>
+#include <SgAsmRiscOperation.h>
 #include <SgAsmUnarySignedExtend.h>
 #include <SgAsmUnaryTruncate.h>
 #include <SgAsmUnaryUnsignedExtend.h>
@@ -881,6 +883,11 @@ Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner
 }
 
 void
+Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmExpression *expr) const {
+    unparse(out, partitioner, expr);
+}
+
+void
 Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) const {
     unparse(out, partitioner, bb);
 }
@@ -908,6 +915,11 @@ Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const Progress::P
 std::string
 Base::operator()(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) const {
     return unparse(partitioner, insn);
+}
+
+std::string
+Base::operator()(const P2::Partitioner::ConstPtr &partitioner, SgAsmExpression *expr) const {
+    return unparse(partitioner, expr);
 }
 
 std::string
@@ -945,6 +957,13 @@ Base::unparse(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *in
 }
 
 std::string
+Base::unparse(const P2::Partitioner::ConstPtr &partitioner, SgAsmExpression *expr) const {
+    std::ostringstream ss;
+    unparse(ss, partitioner, expr);
+    return ss.str();
+}
+
+std::string
 Base::unparse(const P2::Partitioner::ConstPtr &partitioner, const Partitioner2::BasicBlock::Ptr &bb) const {
     std::ostringstream ss;
     unparse(ss, partitioner, bb);
@@ -972,6 +991,13 @@ Base::unparse(SgAsmInstruction *insn) const {
     return ss.str();
 }
 
+std::string
+Base::unparse(SgAsmExpression *expr) const {
+    std::ostringstream ss;
+    unparse(ss, expr);
+    return ss.str();
+}
+
 void
 Base::unparse(std::ostream &out, const Partitioner2::Partitioner::ConstPtr &partitioner, const Progress::Ptr &progress) const {
     ASSERT_not_null(partitioner);
@@ -992,6 +1018,13 @@ Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, S
     State state(partitioner, architecture(), settings(), *this);
     initializeState(state);
     emitInstruction(out, insn, state);
+}
+
+void
+Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmExpression *expr) const {
+    State state(partitioner, architecture(), settings(), *this);
+    initializeState(state);
+    emitExpression(out, expr, state);
 }
 
 void
@@ -1020,6 +1053,13 @@ Base::unparse(std::ostream &out, SgAsmInstruction *insn) const {
     State state(P2::Partitioner::Ptr(), architecture(), settings(), *this);
     initializeState(state);
     emitInstruction(out, insn, state);
+}
+
+void
+Base::unparse(std::ostream &out, SgAsmExpression *expr) const {
+    State state(P2::Partitioner::Ptr(), architecture(), settings(), *this);
+    initializeState(state);
+    emitExpression(out, expr, state);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2647,6 +2687,12 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
     } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
         appendComments(state.frontUnparser().emitBinaryConcat(out, op, state));
 
+    } else if (SgAsmExprListExp *op = isSgAsmExprListExp(expr)) {
+        appendComments(state.frontUnparser().emitExprListExp(out, op, state));
+
+    } else if (SgAsmRiscOperation *op = isSgAsmRiscOperation(expr)) {
+        appendComments(state.frontUnparser().emitRiscOperation(out, op, state));
+
     } else {
         ASSERT_not_implemented(expr->class_name());
     }
@@ -2718,6 +2764,75 @@ Base::emitAarch64AtOperand(std::ostream &out, SgAsmAarch64AtOperand *expr, State
                 out <<"INVALID AT OPERAND " <<(unsigned)expr->operation();
                 break;
         }
+        return {};
+    }
+}
+#endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64BarrierOperand(std::ostream &out, SgAsmAarch64BarrierOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64BarrierOperand(out, expr, state);
+    } else {
+        switch (expr->operation()) {
+            case ARM64_BARRIER_INVALID:
+                out <<"barrier invalid";
+                break;
+            case ARM64_BARRIER_OSHLD:
+                out <<"barrier oshld";
+                break;
+            case ARM64_BARRIER_OSHST:
+                out <<"barrier oshst";
+                break;
+            case ARM64_BARRIER_OSH:
+                out <<"barrier osh";
+                break;
+            case ARM64_BARRIER_NSHLD:
+                out <<"barrier nshld";
+                break;
+            case ARM64_BARRIER_NSHST:
+                out <<"barrier nshst";
+                break;
+            case ARM64_BARRIER_NSH:
+                out <<"barrier nsh";
+                break;
+            case ARM64_BARRIER_ISHLD:
+                out <<"barrier ishld";
+                break;
+            case ARM64_BARRIER_ISHST:
+                out <<"barrier ishst";
+                break;
+            case ARM64_BARRIER_ISH:
+                out <<"barrier ish";
+                break;
+            case ARM64_BARRIER_LD:
+                out <<"barrier ld";
+                break;
+            case ARM64_BARRIER_ST:
+                out <<"barrier st";
+                break;
+            case ARM64_BARRIER_SY:
+                out <<"barrier sy";
+                break;
+            default:
+                out <<"barrier " <<(unsigned)expr->operation();
+                break;
+        }
+        return {};
+    }
+}
+#endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::vector<std::string>
+Base::emitAarch64CImmediateOperand(std::ostream &out, SgAsmAarch64CImmediateOperand *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitAarch64CImmediateOperand(out, expr, state);
+    } else {
+        out <<"c" <<expr->immediate();
         return {};
     }
 }
@@ -2797,75 +2912,6 @@ Base::emitAarch64SysMoveOperand(std::ostream &out, SgAsmAarch64SysMoveOperand *e
 }
 #endif
 
-#ifdef ROSE_ENABLE_ASM_AARCH64
-std::vector<std::string>
-Base::emitAarch64CImmediateOperand(std::ostream &out, SgAsmAarch64CImmediateOperand *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitAarch64CImmediateOperand(out, expr, state);
-    } else {
-        out <<"c" <<expr->immediate();
-        return {};
-    }
-}
-#endif
-
-#ifdef ROSE_ENABLE_ASM_AARCH64
-std::vector<std::string>
-Base::emitAarch64BarrierOperand(std::ostream &out, SgAsmAarch64BarrierOperand *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitAarch64BarrierOperand(out, expr, state);
-    } else {
-        switch (expr->operation()) {
-            case ARM64_BARRIER_INVALID:
-                out <<"barrier invalid";
-                break;
-            case ARM64_BARRIER_OSHLD:
-                out <<"barrier oshld";
-                break;
-            case ARM64_BARRIER_OSHST:
-                out <<"barrier oshst";
-                break;
-            case ARM64_BARRIER_OSH:
-                out <<"barrier osh";
-                break;
-            case ARM64_BARRIER_NSHLD:
-                out <<"barrier nshld";
-                break;
-            case ARM64_BARRIER_NSHST:
-                out <<"barrier nshst";
-                break;
-            case ARM64_BARRIER_NSH:
-                out <<"barrier nsh";
-                break;
-            case ARM64_BARRIER_ISHLD:
-                out <<"barrier ishld";
-                break;
-            case ARM64_BARRIER_ISHST:
-                out <<"barrier ishst";
-                break;
-            case ARM64_BARRIER_ISH:
-                out <<"barrier ish";
-                break;
-            case ARM64_BARRIER_LD:
-                out <<"barrier ld";
-                break;
-            case ARM64_BARRIER_ST:
-                out <<"barrier st";
-                break;
-            case ARM64_BARRIER_SY:
-                out <<"barrier sy";
-                break;
-            default:
-                out <<"barrier " <<(unsigned)expr->operation();
-                break;
-        }
-        return {};
-    }
-}
-#endif
-
 std::vector<std::string>
 Base::emitBinaryAdd(std::ostream &out, SgAsmBinaryAdd *expr, State &state) const {
     ASSERT_not_null(expr);
@@ -2895,29 +2941,96 @@ Base::emitBinaryAdd(std::ostream &out, SgAsmBinaryAdd *expr, State &state) const
 }
 
 std::vector<std::string>
-Base::emitBinarySubtract(std::ostream &out, SgAsmBinarySubtract *expr, State &state) const {
+Base::emitBinaryAsr(std::ostream &out, SgAsmBinaryAsr *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        return nextUnparser()->emitBinarySubtract(out, expr, state);
+        return nextUnparser()->emitBinaryAsr(out, expr, state);
     } else {
-        // Print the "-" and RHS only if RHS is non-zero
-        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr->get_rhs());
-        if (!ival || !ival->get_bitVector().isAllClear()) {
-            int prec = operatorPrecedence(expr);
-            Parens parens = parensForPrecedence(prec, expr->get_lhs());
-            out <<parens.left;
-            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-            out <<parens.right;
+        out <<"asr(";
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<", ";
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<")";
+        return {};
+    }
+}
 
-            out <<" - ";
+std::vector<std::string>
+Base::emitBinaryConcat(std::ostream &out, SgAsmBinaryConcat *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryConcat(out, expr, state);
+    } else {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<parens.right;
 
-            parens = parensForPrecedence(prec, expr->get_rhs());
-            out <<parens.left;
-            state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-            out <<parens.right;
-        } else {
-            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        }
+        out <<":";
+        parens = parensForPrecedence(prec, expr->get_rhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<parens.right;
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryLsl(std::ostream &out, SgAsmBinaryLsl *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryLsl(out, expr, state);
+    } else {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<parens.right;
+
+        out <<" << ";
+
+        parens = parensForPrecedence(prec, expr->get_rhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<parens.right;
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryLsr(std::ostream &out, SgAsmBinaryLsr *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryLsr(out, expr, state);
+    } else {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<parens.right;
+
+        out <<" >> ";
+
+        parens = parensForPrecedence(prec, expr->get_rhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<parens.right;
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryMsl(std::ostream &out, SgAsmBinaryMsl *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryMsl(out, expr, state);
+    } else {
+        out <<"msl(";
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<", ";
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<")";
         return {};
     }
 }
@@ -2991,22 +3104,64 @@ Base::emitBinaryPostupdate(std::ostream &out, SgAsmBinaryPostupdate *expr, State
 }
 
 std::vector<std::string>
-Base::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpression *expr, State &state) const {
+Base::emitBinaryRor(std::ostream &out, SgAsmBinaryRor *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        return nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
+        return nextUnparser()->emitBinaryRor(out, expr, state);
     } else {
-        state.frontUnparser().emitTypeName(out, expr->get_type(), state);
-        out <<" ";
+        out <<"ror(";
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<", ";
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<")";
+        return {};
+    }
+}
 
-        if (expr->get_segment()) {
-            state.frontUnparser().emitExpression(out, expr->get_segment(), state);
-            out <<":";
+std::vector<std::string>
+Base::emitBinarySubtract(std::ostream &out, SgAsmBinarySubtract *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinarySubtract(out, expr, state);
+    } else {
+        // Print the "-" and RHS only if RHS is non-zero
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr->get_rhs());
+        if (!ival || !ival->get_bitVector().isAllClear()) {
+            int prec = operatorPrecedence(expr);
+            Parens parens = parensForPrecedence(prec, expr->get_lhs());
+            out <<parens.left;
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+            out <<parens.right;
+
+            out <<" - ";
+
+            parens = parensForPrecedence(prec, expr->get_rhs());
+            out <<parens.left;
+            state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+            out <<parens.right;
+        } else {
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
         }
+        return {};
+    }
+}
 
-        out <<"[";
-        state.frontUnparser().emitExpression(out, expr->get_address(), state);
-        out <<"]";
+std::vector<std::string>
+Base::emitByteOrder(std::ostream &out, SgAsmByteOrder *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitByteOrder(out, expr, state);
+    } else {
+        switch (expr->byteOrder()) {
+            case ByteOrder::ORDER_MSB:
+                out <<"be";
+                break;
+            case ByteOrder::ORDER_LSB:
+                out <<"le";
+                break;
+            default:
+                ASSERT_not_reachable("invalid byte order " + boost::lexical_cast<std::string>(expr->byteOrder()));
+        }
         return {};
     }
 }
@@ -3023,6 +3178,34 @@ Base::emitDirectRegisterExpression(std::ostream &out, SgAsmDirectRegisterExpress
         state.frontUnparser().emitRegister(out, expr->get_descriptor(), state);
         if (adjustment > 0)
             out <<"++";
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitExprListExp(std::ostream &out, SgAsmExprListExp *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitExprListExp(out, expr, state);
+    } else {
+        out <<"{";
+        for (size_t i = 0; i <expr->get_expressions().size(); ++i) {
+            if (i > 0)
+                out <<", ";
+            state.frontUnparser().emitExpression(out, expr->get_expressions()[i], state);
+        }
+        out <<"}";
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitFloatValueExpression(std::ostream &out, SgAsmFloatValueExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitFloatValueExpression(out, expr, state);
+    } else {
+        out <<expr->get_nativeValue();
         return {};
     }
 }
@@ -3059,25 +3242,53 @@ Base::emitIntegerValueExpression(std::ostream &out, SgAsmIntegerValueExpression 
 }
 
 std::vector<std::string>
-Base::emitFloatValueExpression(std::ostream &out, SgAsmFloatValueExpression *expr, State &state) const {
+Base::emitMemoryReferenceExpression(std::ostream &out, SgAsmMemoryReferenceExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        return nextUnparser()->emitFloatValueExpression(out, expr, state);
+        return nextUnparser()->emitMemoryReferenceExpression(out, expr, state);
     } else {
-        out <<expr->get_nativeValue();
+        state.frontUnparser().emitTypeName(out, expr->get_type(), state);
+        out <<" ";
+
+        if (expr->get_segment()) {
+            state.frontUnparser().emitExpression(out, expr->get_segment(), state);
+            out <<":";
+        }
+
+        out <<"[";
+        state.frontUnparser().emitExpression(out, expr->get_address(), state);
+        out <<"]";
         return {};
     }
 }
 
 std::vector<std::string>
-Base::emitUnaryUnsignedExtend(std::ostream &out, SgAsmUnaryUnsignedExtend *expr, State &state) const {
+Base::emitRegisterNames(std::ostream &out, SgAsmRegisterNames *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        return nextUnparser()->emitUnaryUnsignedExtend(out, expr, state);
+        return nextUnparser()->emitRegisterNames(out, expr, state);
     } else {
-        out <<"uext(";
-        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
-        out <<", " <<expr->get_nBits() <<")";
+        for (size_t i = 0; i < expr->get_registers().size(); ++i) {
+            out <<(0 == i ? "{" : ", ");
+            state.frontUnparser().emitExpression(out, expr->get_registers()[i], state);
+        }
+        out <<"}";
+
+        if (expr->get_mask() != 0) {
+            return {StringUtility::toHex2(expr->get_mask(), 16, false, false)};
+        } else {
+            return {};
+        }
+    }
+}
+
+std::vector<std::string>
+Base::emitRiscOperation(std::ostream &out, SgAsmRiscOperation *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitRiscOperation(out, expr, state);
+    } else {
+        out <<stringify::SgAsmRiscOperation::RiscOperator(expr->get_riscOperator(), "OP_");
         return {};
     }
 }
@@ -3109,151 +3320,14 @@ Base::emitUnaryTruncate(std::ostream &out, SgAsmUnaryTruncate *expr, State &stat
 }
 
 std::vector<std::string>
-Base::emitBinaryAsr(std::ostream &out, SgAsmBinaryAsr *expr, State &state) const {
+Base::emitUnaryUnsignedExtend(std::ostream &out, SgAsmUnaryUnsignedExtend *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
-        return nextUnparser()->emitBinaryAsr(out, expr, state);
+        return nextUnparser()->emitUnaryUnsignedExtend(out, expr, state);
     } else {
-        out <<"asr(";
-        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        out <<", ";
-        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-        out <<")";
-        return {};
-    }
-}
-
-std::vector<std::string>
-Base::emitBinaryRor(std::ostream &out, SgAsmBinaryRor *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitBinaryRor(out, expr, state);
-    } else {
-        out <<"ror(";
-        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        out <<", ";
-        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-        out <<")";
-        return {};
-    }
-}
-
-std::vector<std::string>
-Base::emitBinaryLsr(std::ostream &out, SgAsmBinaryLsr *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitBinaryLsr(out, expr, state);
-    } else {
-        int prec = operatorPrecedence(expr);
-        Parens parens = parensForPrecedence(prec, expr->get_lhs());
-        out <<parens.left;
-        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        out <<parens.right;
-
-        out <<" >> ";
-
-        parens = parensForPrecedence(prec, expr->get_rhs());
-        out <<parens.left;
-        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-        out <<parens.right;
-        return {};
-    }
-}
-
-std::vector<std::string>
-Base::emitBinaryLsl(std::ostream &out, SgAsmBinaryLsl *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitBinaryLsl(out, expr, state);
-    } else {
-        int prec = operatorPrecedence(expr);
-        Parens parens = parensForPrecedence(prec, expr->get_lhs());
-        out <<parens.left;
-        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        out <<parens.right;
-
-        out <<" << ";
-
-        parens = parensForPrecedence(prec, expr->get_rhs());
-        out <<parens.left;
-        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-        out <<parens.right;
-        return {};
-    }
-}
-
-std::vector<std::string>
-Base::emitBinaryMsl(std::ostream &out, SgAsmBinaryMsl *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitBinaryMsl(out, expr, state);
-    } else {
-        out <<"msl(";
-        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        out <<", ";
-        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-        out <<")";
-        return {};
-    }
-}
-
-std::vector<std::string>
-Base::emitByteOrder(std::ostream &out, SgAsmByteOrder *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitByteOrder(out, expr, state);
-    } else {
-        switch (expr->byteOrder()) {
-            case ByteOrder::ORDER_MSB:
-                out <<"be";
-                break;
-            case ByteOrder::ORDER_LSB:
-                out <<"le";
-                break;
-            default:
-                ASSERT_not_reachable("invalid byte order " + boost::lexical_cast<std::string>(expr->byteOrder()));
-        }
-        return {};
-    }
-}
-
-std::vector<std::string>
-Base::emitRegisterNames(std::ostream &out, SgAsmRegisterNames *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitRegisterNames(out, expr, state);
-    } else {
-        for (size_t i = 0; i < expr->get_registers().size(); ++i) {
-            out <<(0 == i ? "{" : ", ");
-            state.frontUnparser().emitExpression(out, expr->get_registers()[i], state);
-        }
-        out <<"}";
-
-        if (expr->get_mask() != 0) {
-            return {StringUtility::toHex2(expr->get_mask(), 16, false, false)};
-        } else {
-            return {};
-        }
-    }
-}
-
-std::vector<std::string>
-Base::emitBinaryConcat(std::ostream &out, SgAsmBinaryConcat *expr, State &state) const {
-    ASSERT_not_null(expr);
-    if (nextUnparser()) {
-        return nextUnparser()->emitBinaryConcat(out, expr, state);
-    } else {
-        int prec = operatorPrecedence(expr);
-        Parens parens = parensForPrecedence(prec, expr->get_lhs());
-        out <<parens.left;
-        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
-        out <<parens.right;
-
-        out <<":";
-        parens = parensForPrecedence(prec, expr->get_rhs());
-        out <<parens.left;
-        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
-        out <<parens.right;
+        out <<"uext(";
+        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
+        out <<", " <<expr->get_nBits() <<")";
         return {};
     }
 }

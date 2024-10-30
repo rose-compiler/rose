@@ -20,6 +20,9 @@ ROSE_DLL_API std::string unparseInstructionWithAddress(SgAsmInstruction*,
                                                        const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels,
                                                        const Rose::BinaryAnalysis::RegisterDictionaryPtr &registers)
     ROSE_DEPRECATED("use SgAsmInstruction::toString instead");
+ROSE_DLL_API std::string unparseExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
+                                           const Rose::BinaryAnalysis::RegisterDictionaryPtr&)
+    ROSE_DEPRECATED("use SgAsmExpression::toString instead");
 
 #endif
 #endif

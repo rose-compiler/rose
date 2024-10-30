@@ -102,28 +102,40 @@ Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOp
     return {};
 }
 
+Unparser::Base::Ptr
+Base::insnUnparser() const {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+    if (!insnToString_.isCached()) {
+        auto settings = Unparser::Settings::minimal();
+        settings.insn.address.showing = true;
+        settings.insn.address.useLabels = false;
+        settings.insn.address.fieldWidth = 1;
+        settings.insn.bytes.showing = false;
+        settings.insn.stackDelta.showing = false;
+        settings.insn.mnemonic.fieldWidth = 1;
+        settings.insn.operands.fieldWidth = 1;
+        settings.insn.comment.showing = false;
+        settings.insn.semantics.showing = false;
+        insnToString_ = newUnparser();
+        insnToString_.get()->settings() = settings;
+    }
+    return insnToString_.get();
+}
+
 std::string
 Base::toString(const SgAsmInstruction *insn) const {
     if (insn) {
-        {
-            static SAWYER_THREAD_TRAITS::Mutex mutex;
-            SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-            if (!insnToString_.isCached()) {
-                auto settings = Unparser::Settings::minimal();
-                settings.insn.address.showing = true;
-                settings.insn.address.useLabels = false;
-                settings.insn.address.fieldWidth = 1;
-                settings.insn.bytes.showing = false;
-                settings.insn.stackDelta.showing = false;
-                settings.insn.mnemonic.fieldWidth = 1;
-                settings.insn.operands.fieldWidth = 1;
-                settings.insn.comment.showing = false;
-                settings.insn.semantics.showing = false;
-                insnToString_ = newUnparser();
-                insnToString_.get()->settings() = settings;
-            }
-        }
-        return insnToString_.get()->unparse(const_cast<SgAsmInstruction*>(insn));
+        return insnUnparser()->unparse(const_cast<SgAsmInstruction*>(insn));
+    } else {
+        return "null";
+    }
+}
+
+std::string
+Base::toString(const SgAsmExpression *expr) const {
+    if (expr) {
+        return insnUnparser()->unparse(const_cast<SgAsmExpression*>(expr));
     } else {
         return "null";
     }

@@ -40,7 +40,7 @@ public:
         return "test 1";
     }
 
-    bool operator()() {
+    bool operator()() override {
         mlog[DEBUG].enable();
         mlog[DEBUG] <<"test passed\n";
         return true;

@@ -168,7 +168,7 @@ Declaration::instance(const Definition::Ptr &cc, const std::string &sourceCode) 
     if (!tokens.matches(tokens[0], ")"))
         throw parseError("\")\" expected at end of argument list", tokens);
     tokens.consume();
-    if (!tokens[0].type() == TOK_EOF)
+    if (tokens[0].type() != TOK_EOF)
         throw parseError("extra text after end of argument list", tokens);
 
     decl->computeArgumentLocations();

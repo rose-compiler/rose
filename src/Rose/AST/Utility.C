@@ -30,7 +30,7 @@ showFailure(const std::vector<SgNode*> &path, std::ostream &out) {
         if (actualParent) {
             auto inPath = std::find(path.begin(), path.end(), actualParent);
             if (inPath != path.end()) {
-                out <<", parent = node #" <<(inPath - path.begin()) <<"\n";
+                out <<", parent = node #" <<(inPath - path.begin());
             } else {
                 out <<", parent = (" <<actualParent->class_name() <<"*)" <<actualParent;
             }

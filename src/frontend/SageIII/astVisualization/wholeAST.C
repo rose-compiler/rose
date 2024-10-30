@@ -2052,8 +2052,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           // [Robb Matzke 2024-10-18]: the global `::unparseExpression` function has gone away and it never really made sense to
           // unparse part of an expression. Expressions are unparsed in the context of an instruction.
           if (SgAsmExpression* asmExpression = isSgAsmExpression(node)) {
+              const std::string unparsedExpression = asmExpression->toString();
               additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
-              labelWithSourceCode = "\\n  (generated label: " +  StringUtility::numberToString(asmExpression) + ")  ";
+              labelWithSourceCode = "\\n" + unparsedExpression +
+                                    "\\n  (generated label: " +  StringUtility::numberToString(asmExpression) + ")  ";
           }
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);

@@ -48,4 +48,10 @@ std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnpar
     }
 }
 
+// [Robb Matzke 2024-10-18]: deprecated
+std::string unparseExpression(SgAsmExpression *expr, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
+                              const Rose::BinaryAnalysis::RegisterDictionaryPtr&) {
+    return notnull(expr)->toString();
+}
+
 #endif

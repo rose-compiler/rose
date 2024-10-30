@@ -58,6 +58,14 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
           nodelabel += string("\\n") + name;
         }
 
+        SgAsmExpression* genericExpression = isSgAsmExpression(node);
+        if (genericExpression != NULL)
+        {
+          string name = genericExpression->toString();
+          ROSE_ASSERT(name.empty() == false);
+          nodelabel += string("\\n") + name;
+        }
+
         // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
         // In generall there are long list of these IR nodes in the binary and this helps make some sense of 
         // the lists (sections, symbols, etc.).

@@ -44332,6 +44332,13 @@ public:
      *  If this expression is an integer expression with a constant that fits in a 64-bit signed type, then return it,
      *  otherwise return nothing. */
     Sawyer::Optional<int64_t> asSigned() const;
+
+    /** Converts an expression to a string.
+     *
+     *  The string is a single line with no leading or trailing white space. This expression must be a child of a @ref
+     *  SgAsmInstruction because the instruction set architecture might have an influence on the way the expression is displayed. Attempting
+     *  to call this method on a detached expression will return the string "detached_expression". */
+    virtual std::string toString() const;
 public:
     /** Destructor. */
     virtual ~SgAsmExpression();
