@@ -17,13 +17,6 @@ EXTRA_DIST =
 # you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
 SUBDIRS = LicenseInformation libltdl config src python
 
-if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-  SUBDIRS += tests/smoke
-if ROSE_USE_LONG_MAKE_CHECK_RULE
-  SUBDIRS += tests/nonsmoke
-endif
-endif
-
 if !ROSE_USE_CLANG_FRONTEND
 if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with
@@ -123,46 +116,10 @@ check-recursive:
 check-core:
 	$(MAKE) check -C $(top_builddir)/src
 
-check-smoke:
-	$(MAKE) check -C $(top_builddir)/tests/smoke
-
-check-nonsmoke:
-	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional
-
-check-java:
-	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional/CompileTests/Java_tests
-
-# The "check" target at this top makefile is what users will normally
-# run. This should only run tests that are portable and useful to
-# users.
-#
-# (Matzke: adding binary tests since they're portable and useful and
-# some of our users have come to expect them, and utility tests since
-# they're fundamental to ROSE operation).
-check:
-	$(MAKE) check-core
-	$(MAKE) check-smoke
-	$(MAKE) -C tests/nonsmoke/functional/BinaryAnalysis check
-	$(MAKE) -C tests/nonsmoke/functional/Utility check
-
-# The "check-hard" target is intended to run all tests for the ROSE
-# library proper, whether they are portable or not, but not tests for
-# things that are not the library (i.e., not project tests, tutorial
-# tests, tool tests, documentation tests). Ideally all tests are
-# portable but ROSE has a poor track record.
-check-hard:
-	$(MAKE) check-core
-	$(MAKE) check-smoke
-	$(MAKE) check-nonsmoke
-
 .PHONY: tools
 check-tools: tools
-	$(MAKE) check -C $(top_builddir)/tests/tools
 	$(MAKE) check -C $(top_builddir)/tools
 	$(MAKE) check -C $(top_builddir)/exampleTranslators
-if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
-	$(MAKE) check -C $(top_builddir)/tutorial
-endif
 
 # Install ONLY the library components (no examples, no tests, no projects). This is even more "core" than "core" but I'm
 # not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for
@@ -462,10 +419,6 @@ docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   $(MAKE) -Ctutorial docs && \
-           $(MAKE) -Ctests/nonsmoke/functional/testSupport check && \
-	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/astInterfaceTests check && \
-	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/ompLoweringTests check && \
-	   $(MAKE) -Ctests/nonsmoke/functional/CompileTests/UPC_tests check && \
 	   $(MAKE) -Cdocs docs; \
 	else \
 	   echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
@@ -559,8 +512,6 @@ NumberOfMakefiles:
 	@du -a $(srcdir)/src | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in projects directory: "
 	@du -a $(srcdir)/projects | $(FILTER_MAKEFILES) | wc -l
-	@echo "Number of Makefile.am files in tests directory: "
-	@du -a $(srcdir)/tests | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in exampleTranslators directory: "
 	@du -a $(srcdir)/exampleTranslators | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in tutorial directory: "
@@ -648,12 +599,6 @@ ProblemAreas:
 	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
 #	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
 #	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
-
-
-
-# Report the version number of the ROSE translator built.
-PrintRoseTranslatorVersion: $(top_builddir)/tests/nonsmoke/functional/testAnalysis
-	$(top_builddir)/tests/nonsmoke/functional/testAnalysis --version
 
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 

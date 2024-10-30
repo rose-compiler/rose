@@ -1,5 +1,4 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 # When debugging latex documentation skip using the --interaction=batchmode option
 # PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
