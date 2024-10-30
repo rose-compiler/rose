@@ -24,6 +24,7 @@ include $(srcdir)/astUtil/annotation/Makefile_variables
 include $(srcdir)/astUtil/astInterface/Makefile_variables
 include $(srcdir)/astUtil/astSupport/Makefile_variables
 include $(srcdir)/astUtil/symbolicVal/Makefile_variables
+include $(srcdir)/astUtil/dependenceTracking/Makefile_variables
 include $(srcdir)/programTransformation/Makefile_variables
 include $(srcdir)/programTransformation/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/programTransformation/finiteDifferencing/Makefile_variables
@@ -81,6 +82,7 @@ AM_CPPFLAGS=\
 	-I$(mAstUtilPath) \
 	-I$(mAstUtilPath)/astInterface \
 	-I$(mAstUtilPath)/symbolicVal \
+	-I$(mAstUtilPath)/dependenceTracking \
 	-I$(mAstUtilPath)/astSupport \
 	-I$(top_srcdir)/src/util \
 	-I$(top_srcdir)/src/util/support

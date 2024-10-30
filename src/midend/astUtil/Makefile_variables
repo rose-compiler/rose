@@ -8,6 +8,7 @@ mauAnnotationPath=$(mAstUtilPath)/annotation#
 mauAstInterfacePath=$(mAstUtilPath)/astInterface#
 mauAstSupportPath=$(mAstUtilPath)/astSupport#
 mauSymbolicValPath=$(mAstUtilPath)/symbolicVal#
+mauDependenceTrackingPath=$(mAstUtilPath)/dependenceTracking#
 
 # ------------------------------------------------------------------------------
 #  Library: astUtil.la
@@ -18,14 +19,16 @@ mAstUtil_la_sources=\
 	$(mauAnnotation_la_sources) \
 	$(mauAstInterface_la_sources) \
 	$(mauAstSupport_la_sources) \
-	$(mauSymbolicVal_la_sources)
+	$(mauSymbolicVal_la_sources) \
+	$(mauDependenceTracking_la_sources)
 
 mAstUtil_includeHeaders=\
 	$(mAstUtilPath)/AstUtilInterface.h \
 	$(mauAnnotation_includeHeaders) \
 	$(mauAstInterface_includeHeaders) \
 	$(mauAstSupport_includeHeaders) \
-	$(mauSymbolicVal_includeHeaders)
+	$(mauSymbolicVal_includeHeaders) \
+	$(mauDependenceTracking_includeHeaders) 
 
 mAstUtil_extraDist=\
 	$(mAstUtilPath)/AstUtilInterface.h \
@@ -33,19 +36,22 @@ mAstUtil_extraDist=\
 	$(mauAnnotation_extraDist) \
 	$(mauAstInterface_extraDist) \
 	$(mauAstSupport_extraDist) \
-	$(mauSymbolicVal_extraDist)
+	$(mauSymbolicVal_extraDist) \
+	$(mauDependenceTracking_extraDist)
 
 mAstUtil_cleanLocal=\
 	rm AstUtilInterface.o; \
 	$(mauAnnotation_cleanLocal); \
 	$(mauAstInterface_cleanLocal); \
 	$(mauAstSupport_cleanLocal); \
-	$(mauSymbolicVal_cleanLocal)
+	$(mauSymbolicVal_cleanLocal) \
+	$(mauDependenceTracking_cleanLocal)
 
 mAstUtil_distCleanLocal=\
 	rm AstUtilInterface.o; \
 	$(mauAnnotation_distCleanLocal); \
 	$(mauAstInterface_distCleanLocal); \
 	$(mauAstSupport_distCleanLocal); \
-	$(mauSymbolicVal_distCleanLocal)
+	$(mauSymbolicVal_distCleanLocal) \
+	$(mauDependenceTracking_distCleanLocal)
 

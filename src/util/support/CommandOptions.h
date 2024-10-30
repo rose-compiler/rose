@@ -2,6 +2,7 @@
 #define COMMAND_OPTIONS_H
 #include <string>
 #include <vector>
+#include <assert.h>
 #include <iostream>
 #include "rosedll.h"
 #include <functional>
@@ -37,6 +38,15 @@ class DebugLog {
          r = -1;
     }
     return r ==1;
+   }
+   void push(std::string msg) {
+    if (operator()()) {
+      std::cerr << msg << "\n";
+    }
+   }
+   void fatal(std::string msg) {
+     std::cerr << msg << "\n";
+     assert(false);
    }
    bool operator()(std::function<std::string()> to_print) {
     if (operator()()) {

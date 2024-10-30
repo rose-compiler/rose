@@ -1,0 +1,22 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../astInterface -I$(top_srcdir)/src/util -I$(top_srcdir)/src/util/support
+
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
+libdependenceTrackingSources = \
+   dependence_table.C dependence_analysis.C
+
+noinst_LTLIBRARIES = libdependenceTracking.la
+libdependenceTracking_la_SOURCES = $(libdependenceTrackingSources)
+
+clean-local:
+	rm -rf Templates.DB ii_files ti_files cxx_templates
+
+distclean-local:
+	rm -rf Templates.DB
+
+include_HEADERS =  dependence_table.h dependence_analysis.h
+
+
+EXTRA_DIST = CMakeLists.txt

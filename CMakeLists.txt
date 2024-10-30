@@ -1251,6 +1251,7 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astSupport
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/symbolicVal
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/dependenceTracking
   ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis
   ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/dataflowanalyses
   ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/graph

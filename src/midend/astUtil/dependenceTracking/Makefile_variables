@@ -1,0 +1,24 @@
+# Non-recursive Makefile
+
+mauDependenceTracking_la_sources=\
+	$(mauDependenceTrackingPath)/dependence_analysis.C \
+	$(mauDependenceTrackingPath)/dependence_table.C
+
+mauDependenceTracking_includeHeaders=\
+	$(mauDependenceTrackingPath)/dependence_table.h \
+	$(mauDependenceTrackingPath)/dependence_analysis.h 
+
+mauDependenceTracking_extraDist=\
+	$(mauDependenceTrackingPath)/CMakeLists.txt
+
+mauDependenceTracking_cleanLocal=\
+	rm -rf \
+		$(mauDependenceTrackingPath)/cxx_templates \
+		$(mauDependenceTrackingPath)/ii_files \
+		$(mauDependenceTrackingPath)/ti_files \
+		$(mauDependenceTrackingPath)/Templates.DB
+
+mauDependenceTracking_distCleanLocal=\
+	rm -rf \
+		$(mauDependenceTrackingPath)/Templates.DB
+

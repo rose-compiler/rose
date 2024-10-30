@@ -742,6 +742,7 @@ lcov:
 -d src/midend/astUtil/astInterface/.libs \
 -d src/midend/astUtil/astSupport/.libs \
 -d src/midend/astUtil/symbolicVal/.libs \
+-d src/midend/astUtil/dependenceTracking/.libs \
 -d src/backend/.libs \
 --output-file coverage.info
 

@@ -203,3 +203,4 @@ bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
    }   
    return false;
 }
+

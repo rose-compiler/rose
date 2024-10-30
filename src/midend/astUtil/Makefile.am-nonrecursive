@@ -12,12 +12,14 @@ include $(srcdir)/annotation/Makefile_variables
 include $(srcdir)/astInterface/Makefile_variables
 include $(srcdir)/astSupport/Makefile_variables
 include $(srcdir)/symbolicVal/Makefile_variables
+include $(srcdir)/dependenceTracking/Makefile_variables
 
 
 mauAnnotationPath=$(srcdir)/annotation#
 mauAstInterfacePath=$(srcdir)/astInterface#
 mauAstSupportPath=$(srcdir)/astSupport#
 mauSymbolicValPath=$(srcdir)/symbolicVal#
+mauDependenceTrackingPath=$(srcdir)/dependenceTracking#
 
 ###############################################################################
 
@@ -26,7 +28,8 @@ INCLUDES=\
 	$(mauAnnotation_includes) \
 	$(mauAstInterface_includes) \
 	$(mauAstSupport_includes) \
-	$(mauSymbolicVal_includes)
+	$(mauSymbolicVal_includes) \
+	$(mauDependenceTracking_includes)
 
 
 noinst_LTLIBRARIES=\
@@ -39,14 +42,16 @@ libastUtil_la_SOURCES=\
 	$(mauAnnotation_la_sources) \
 	$(mauAstInterface_la_sources) \
 	$(mauAstSupport_la_sources) \
-	$(mauSymbolicVal_la_sources)
+	$(mauSymbolicVal_la_sources) \
+	$(mauDependenceTracking_la_sources)
 
 
 include_HEADERS=\
 	$(mauAnnotation_includeHeaders) \
 	$(mauAstInterface_includeHeaders) \
 	$(mauAstSupport_includeHeaders) \
-	$(mauSymbolicVal_includeHeaders)
+	$(mauSymbolicVal_includeHeaders) \
+	$(mauDependenceTracking_includeHeaders)
 
 
 EXTRA_DIST=\
@@ -54,7 +59,8 @@ EXTRA_DIST=\
 	$(mauAnnotation_extraDist) \
 	$(mauAstInterface_extraDist) \
 	$(mauAstSupport_extraDist) \
-	$(mauSymbolicVal_extraDist)
+	$(mauSymbolicVal_extraDist) \
+	$(mauDependenceTracking_extraDist)
 
 
 clean-local:
@@ -62,6 +68,7 @@ clean-local:
 	$(mauAstInterface_cleanLocal)
 	$(mauAstSupport_cleanLocal)
 	$(mauSymbolicVal_cleanLocal)
+	$(mauDependenceTracking_cleanLocal)
 
 
 distclean-local:
@@ -69,6 +76,7 @@ distclean-local:
 	$(mauAstInterface_distCleanLocal)
 	$(mauAstSupport_distCleanLocal)
 	$(mauSymbolicVal_distCleanLocal)
+	$(mauDependenceTracking_distCleanLocal)
 
 
 

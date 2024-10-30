@@ -416,10 +416,12 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/astMatching \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/astRewriteMechanism \
+     -I$(top_srcdir)/src/midend/astUtil \
      -I$(top_srcdir)/src/midend/astUtil/annotation \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/src/midend/astUtil/astSupport \
      -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+     -I$(top_srcdir)/src/midend/astUtil/dependenceTracking \
      -I$(top_srcdir)/src/midend/BinaryAnalysis \
      -I$(top_srcdir)/src/midend/BinaryAnalysis/dataflowanalyses \
      -I$(top_srcdir)/src/midend/BinaryAnalysis/instructionSemantics \
