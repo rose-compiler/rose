@@ -257,7 +257,7 @@ namespace
         SgExpressionPtrList&  idxlst = idx.get_expressions();
 
         res.dims().insert(res.dims().end(), idxlst.begin(), idxlst.end());
-        res.constrained(n.get_is_variable_length_array());
+        res.constrained(!n.get_is_variable_length_array());
       }
   };
 

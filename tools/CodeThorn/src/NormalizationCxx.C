@@ -3438,6 +3438,7 @@ namespace
 
         descend(n);
 
+        // \todo fix
         recordScopeDestructors(n, *currBlk, destructionLimit(enclosingScope(&n)));
       }
 
