@@ -16,6 +16,21 @@ namespace si = SageInterface;
 namespace ct = CodeThorn;
 namespace adapt = boost::adaptors;
 
+namespace
+{
+  SgScopeStatement&
+  enclosingScope(SgNode& n)
+  {
+    return SG_DEREF(si::getEnclosingScope(&n));
+  }
+
+  SgScopeStatement&
+  enclosingScope(sg::NotNull<SgNode> n)
+  {
+    return enclosingScope(*n);
+  }
+}
+
 namespace CodeThorn
 {
 namespace
@@ -64,7 +79,7 @@ namespace
     : info(n.get_file_info())
     {}
 
-    Sg_File_Info* info;
+    sg::NotNull<Sg_File_Info> info;
   };
 
   std::ostream& operator<<(std::ostream& os, SrcLoc el)
@@ -135,7 +150,7 @@ namespace
   {
     const SgInitializedNamePtrList& lst = n.get_variables();
 
-    ROSE_ASSERT(lst.size() == 1 && lst[0]);
+    ASSERT_require(lst.size() == 1 && lst[0]);
     return *lst[0];
   }
 
@@ -393,7 +408,7 @@ namespace
 
     static
     std::pair<bool, SgMemberFunctionDeclaration*>
-    check(SgClassDefinition* n);
+    check(sg::NotNull<SgClassDefinition> n);
   };
 
   bool
@@ -534,18 +549,14 @@ namespace
   }
 
   std::pair<bool, SgMemberFunctionDeclaration*>
-  TriviallyDestructible::check(SgClassDefinition* def)
+  TriviallyDestructible::check(sg::NotNull<SgClassDefinition> def)
   {
-    ROSE_ASSERT(def);
-
     bool trivial_class = true;
 
     // this loop checks if all members are trivially destructable
     //   and if the class has a declared destructor
-    for (SgDeclarationStatement* mem : def->get_members())
+    for (sg::NotNull<SgDeclarationStatement> mem : def->get_members())
     {
-      ROSE_ASSERT(mem);
-
       if (!(TriviallyDestructibleDecl::check(mem).first))
         trivial_class = false;
 
@@ -557,10 +568,8 @@ namespace
 
     if (!trivial_class) return std::make_pair(false, nullptr);
 
-    for (SgBaseClass* baseclass : def->get_inheritances())
+    for (sg::NotNull<SgBaseClass> baseclass : def->get_inheritances())
     {
-      ROSE_ASSERT(baseclass);
-
       if (  baseclass->get_isDirectBaseClass()
          && (!(TriviallyDestructibleDecl::check(baseclass).first))
          )
@@ -579,9 +588,8 @@ namespace
     : name(var.get_name())
     {}
 
-    bool operator()(SgInitializedName* cand)
+    bool operator()(sg::NotNull<SgInitializedName> cand)
     {
-      ROSE_ASSERT(cand);
       return cand->get_name() == name;
     }
 
@@ -605,7 +613,7 @@ namespace
     : base(what), initname(ini)
     {}
 
-    SgInitializedName* initname;
+    SgInitializedName* initname = nullptr;
   };
 
   struct SameClassDef
@@ -622,7 +630,7 @@ namespace
           throw ConstructorInitializerListError("unusual constructor list element", cand);
         }
 
-        ROSE_ASSERT(cand && cand->get_initializer());
+        ASSERT_require(cand && cand->get_initializer());
         SgConstructorInitializer* ctorini = isSgConstructorInitializer(cand->get_initializer());
 
         // if it is not a base class initialization, it must be member variable initialization
@@ -714,7 +722,7 @@ namespace
     SgInitializer&         varini  = SG_DEREF( sb::buildAssignInitializer(&start, start.get_type()) );
     SgVariableDeclaration& var     = SG_DEREF( sb::buildVariableDeclaration(varname, sb::buildIntType(), &varini, &sgnode) );
 
-    ROSE_ASSERT(sgnode.get_for_init_stmt() != nullptr);
+    ASSERT_not_null(sgnode.get_for_init_stmt());
     sgnode.append_init_stmt(&var);
 
     // test
@@ -802,14 +810,13 @@ namespace
   SgExpression&
   mkThisExpForBase(const SgClassDeclaration& clsdcl, const SgClassDeclaration& base, bool cst = false)
   {
-    SgThisExp& self = mkThisExp(clsdcl);
-    SgType*    bseptr = base.get_type();
+    SgThisExp&          self = mkThisExp(clsdcl);
+    sg::NotNull<SgType> bseptr = base.get_type();
 
     if (cst) bseptr = sb::buildConstType(bseptr);
 
     bseptr = sb::buildPointerType(bseptr);
 
-    ROSE_ASSERT(bseptr);
     return SG_DEREF(sb::buildCastExp(&self, bseptr, SgCastExp::e_static_cast));
   }
 
@@ -817,14 +824,13 @@ namespace
   SgExpression&
   mkVarRefForBase(SgInitializedName& var, const SgClassDeclaration& base, bool cst = false)
   {
-    SgVarRefExp* varref = &mkVarRefExp(var);
-    SgType*      bseptr = base.get_type();
+    SgVarRefExp&        varref = mkVarRefExp(var);
+    sg::NotNull<SgType> bseptr = base.get_type();
 
     if (cst) bseptr = sb::buildConstType(bseptr);
 
     bseptr = sb::buildReferenceType(bseptr);
-    ROSE_ASSERT(varref && bseptr);
-    return SG_DEREF(sb::buildCastExp(varref, bseptr, SgCastExp::e_static_cast));
+    return SG_DEREF(sb::buildCastExp(&varref, bseptr, SgCastExp::e_static_cast));
   }
 
 
@@ -980,7 +986,7 @@ namespace
         logError() << "Unknown initializer type: "
                    << typeid(*ini).name()
                    << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
 
       void execute(CxxTransformStats&)
@@ -1201,7 +1207,7 @@ namespace
   {
     typedef SgTemplateInstantiationMemberFunctionDecl TemplateMemberFunction;
 
-    ROSE_ASSERT(nondef.get_definingDeclaration() == nullptr);
+    ASSERT_require(nondef.get_definingDeclaration() == nullptr);
 
     SgName                       nm   = nondef.get_name();
     SgType&                      ty   = getReturnType(nondef);
@@ -1220,11 +1226,11 @@ namespace
     SgMemberFunctionDeclaration& dcl  = SG_DEREF(pdcl);
     SgFunctionParameterScope&    psc  = SG_DEREF(new SgFunctionParameterScope(dummyFileInfo()));
 
-    ROSE_ASSERT(dcl.get_parent() != nullptr);
-    ROSE_ASSERT(dcl.get_definition() != nullptr);
-    ROSE_ASSERT(dcl.get_CtorInitializerList() != nullptr);
-    ROSE_ASSERT(dcl.get_functionParameterScope() == nullptr);
-    ROSE_ASSERT(nondef.get_definingDeclaration() != nullptr);
+    ASSERT_require(dcl.get_functionParameterScope() == nullptr);
+    ASSERT_not_null(dcl.get_parent());
+    ASSERT_not_null(dcl.get_definition());
+    ASSERT_not_null(dcl.get_CtorInitializerList());
+    ASSERT_not_null(nondef.get_definingDeclaration());
 
     specialModifierSetter(dcl.get_specialFunctionModifier());
     dcl.set_functionParameterScope(&psc);
@@ -1256,7 +1262,7 @@ namespace
   SgMemberFunctionDeclaration&
   obtainGeneratableFunction(SgClassDefinition& clsdef, const std::string& n, SgExprListExp& ctorargs)
   {
-    ROSE_ASSERT(ctorargs.get_expressions().size() == 0); // \todo handle copy and move ctors
+    ASSERT_require(ctorargs.get_expressions().size() == 0); // \todo handle copy and move ctors
 
     FindFunction::result res = FindFunction::find(clsdef, n, ctorargs);
 
@@ -1411,10 +1417,8 @@ namespace
   }
 
   CopyAssign
-  copyAssignParam(const SgMemberFunctionDeclaration* memfn)
+  copyAssignParam(sg::NotNull<const SgMemberFunctionDeclaration> memfn)
   {
-    ROSE_ASSERT(memfn);
-
     return copyAssignParam(SG_DEREF(isSgMemberFunctionType(memfn->get_type())));
   }
 
@@ -1591,7 +1595,7 @@ namespace
   {
     static const std::string TRANSFORM = "transformation" ;
 
-    ROSE_ASSERT(n.get_file_info());
+    ASSERT_not_null(n.get_file_info());
 
     //~ std::cerr << n.unparseToString() << " @" << n.get_file_info()->get_filenameString()
               //~ << std::endl;
@@ -1781,9 +1785,9 @@ namespace
     //~ SgInitializedName&     parm   = SG_DEREF(sgnode.get_variables().at(0));
 
     // sgnode.set_parent(&scope);
-    ROSE_ASSERT(sgnode.get_parent() == &scope);
-    ROSE_ASSERT(sgnode.get_definingDeclaration() != nullptr);
-    ROSE_ASSERT(sgnode.get_firstNondefiningDeclaration() == nullptr);
+    ASSERT_require(sgnode.get_parent() == &scope);
+    ASSERT_not_null(sgnode.get_definingDeclaration());
+    ASSERT_not_null(sgnode.get_firstNondefiningDeclaration());
     return sgnode;
   }
 
@@ -1804,35 +1808,33 @@ namespace
 
         if (fndcl == nullptr)
         {
-          SgType* cnstRf    = sb::buildReferenceType(sb::buildConstType(&clsTy));
-          ROSE_ASSERT(cnstRf);
-          auto    signature = [cnstRf]
-                              (SgFunctionParameterList& lst, SgScopeStatement& scp) -> void
-                              {
-                                SgVariableDeclaration&    decl = mkParameter("that", *cnstRf, scp);
-                                SgInitializedNamePtrList& args = lst.get_args();
+          sg::NotNull<SgType> cnstRf    = sb::buildReferenceType(sb::buildConstType(&clsTy));
+          auto                signature =
+                [cnstRf](SgFunctionParameterList& lst, SgScopeStatement& scp) -> void
+                {
+                  SgVariableDeclaration&         decl = mkParameter("that", *cnstRf, scp);
+                  SgInitializedNamePtrList&      args = lst.get_args();
 
-                                ROSE_ASSERT(decl.get_variables().size() == 1);
-                                SgInitializedName*        parm = decl.get_variables().front();
-                                ROSE_ASSERT(parm);
+                  ASSERT_require(decl.get_variables().size() == 1);
+                  sg::NotNull<SgInitializedName> parm = decl.get_variables().front();
 
-                                parm->set_parent(&lst);
-                                args.push_back(parm);
-                              };
+                  parm->set_parent(&lst);
+                  args.push_back(parm);
+                };
 
           SgType& clsRf = SG_DEREF(sb::buildReferenceType(&clsTy));
 
           gendcl = fndcl = &mkMemfnDcl(clsdef, "operator=", clsRf, signature);
         }
 
-        ROSE_ASSERT(fndcl && fndcl->get_definingDeclaration() == nullptr);
+        ASSERT_require(fndcl && fndcl->get_definingDeclaration() == nullptr);
 
         gendef = &mkMemfnDef(clsdef, *fndcl);
 
         // traverse all sub-objects and call their operator= if needed
         const ::ct::ClassAnalysis& classes = GlobalClassAnalysis::get();
         SgInitializedNamePtrList&  parmlst = gendef->get_args();
-        ROSE_ASSERT(parmlst.size() == 1);
+        ASSERT_require(parmlst.size() == 1);
         SgInitializedName&         thatvar = SG_DEREF(parmlst.front());
         SgFunctionDefinition&      memdef = SG_DEREF(gendef->get_definition());
         SgBasicBlock&              body = SG_DEREF(memdef.get_body());
@@ -1875,7 +1877,7 @@ namespace
             subassign = sb::buildAssignStatement(&derefSelf, &thatbase);
           }
 
-          ROSE_ASSERT(subassign);
+          ASSERT_require(subassign);
           body.append_statement(subassign);
         }
 
@@ -1903,7 +1905,7 @@ namespace
             subassign = sb::buildAssignStatement(&thisfld, &thatfld);
           }
 
-          ROSE_ASSERT(subassign);
+          ASSERT_require(subassign);
           body.append_statement(subassign);
         }
       }
@@ -1992,10 +1994,8 @@ namespace
   {
     SgInitializedNamePtrList vars = variableList(n, posInScope);
 
-    for (SgInitializedName* var : adapt::reverse(vars))
+    for (sg::NotNull<SgInitializedName> var : adapt::reverse(vars))
     {
-      ROSE_ASSERT(var);
-
       if (!TriviallyDestructible::check(var->get_type()))
       {
         //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
@@ -2025,9 +2025,9 @@ namespace
         transformation_container transf;
 
         SgStatement* prev = pos;
-        for (SgScopeStatement* curr = blk; curr != limit; curr = si::getEnclosingScope(curr))
+        for (sg::NotNull<SgScopeStatement> curr = blk; curr != limit; curr = &enclosingScope(*curr))
         {
-          recordScopedDestructors(SG_DEREF(curr), *prev, *blk, *pos, transf);
+          recordScopedDestructors(*curr, *prev, *blk, *pos, transf);
 
           prev = curr;
         }
@@ -2040,9 +2040,9 @@ namespace
     private:
       ScopeDestructorTransformer() = delete;
 
-      SgStatement* const      pos;
-      SgBasicBlock* const     blk;
-      SgScopeStatement* const limit;
+      sg::NotNull<SgStatement>      const pos;
+      sg::NotNull<SgBasicBlock>     const blk;
+      sg::NotNull<SgScopeStatement> const limit;
   };
 
   bool isVirtualBase(SgBaseClass& base)
@@ -2106,7 +2106,7 @@ namespace
         if (varsym) return;
 
         // create new temporary variable
-        SgScopeStatement&      scope  = SG_DEREF(si::getEnclosingScope(&newexp));
+        SgScopeStatement&      scope  = enclosingScope(newexp);
         std::string            nm     = si::generateUniqueVariableName(&scope, "tmpnew");
         SgType&                ty     = SG_DEREF(newexp.get_type());
         SgInitializer*         ini    = nullptr; // set later
@@ -2115,7 +2115,7 @@ namespace
         // set varsym
         newAllocStmt = &vardcl;
         varsym       = isSgVariableSymbol(onlyName(vardcl).search_for_symbol_from_symbol_table());
-        ROSE_ASSERT(varsym);
+        ASSERT_not_null(varsym);
       }
 
       bool isPlacementNew() const
@@ -2187,7 +2187,7 @@ namespace
         // execute transformation
         if (newAllocStmt)
         {
-          ROSE_ASSERT(newNewExpr == nullptr);
+          ASSERT_require(newNewExpr == nullptr);
           si::replaceStatement(currentNewStmt, newAllocStmt, true /* move preproc info */);
 
           currentNewStmt = newAllocStmt;
@@ -2254,7 +2254,7 @@ namespace
     SgFunctionParameterList&  plst = SG_DEREF(fn.get_parameterList());
     SgInitializedNamePtrList& parms = plst.get_args();
 
-    ROSE_ASSERT(parms.size());
+    ASSERT_require(parms.size());
     return SG_DEREF(parms.back());
   }
 
@@ -2272,7 +2272,7 @@ namespace
                    << std::endl;
 
         SgInitializedName&        parm = returnParameter(fun);
-        ROSE_ASSERT(  SgNodeHelper::isPointerType(parm.get_type())
+        ASSERT_require(  SgNodeHelper::isPointerType(parm.get_type())
                    && (parm.get_name() == returnParameterName)
                    );
 
@@ -2339,14 +2339,12 @@ namespace
                    << std::endl;
 
         SgFunctionType& fnty  = SG_DEREF(fn.get_type());
-
-        SgInitializedName* parm =
+        sg::NotNull<SgInitializedName> parm =
            sb::buildInitializedName( RVOReturnStmtTransformer::returnParameterName,
                                      sb::buildPointerType(&ty),
                                      nullptr
                                    );
 
-        ROSE_ASSERT(parm);
         /*SgVariableSymbol* sym =*/ si::appendArg(fn.get_parameterList(), parm);
 
         fnty.set_return_type(sb::buildVoidType());
@@ -2387,7 +2385,8 @@ namespace
         SgClassDefinition&           clsdef  = getClassDef(ctordtor);
         const bool                   isConstructor = !isDtor(ctordtor);
 
-        SgMemberFunctionDeclaration* fulldclNondef = sb::buildNondefiningMemberFunctionDeclaration(
+        sg::NotNull<SgMemberFunctionDeclaration> fulldclNondef =
+                  sb::buildNondefiningMemberFunctionDeclaration(
                                                                  fullName,
                                                                  &getReturnType(ctordtor),
                                                                  si::deepCopy(ctordtor.get_parameterList()),
@@ -2398,13 +2397,12 @@ namespace
                                                                  nullptr /*templateArgumentsList*/
                                                                );
 
-        ROSE_ASSERT(fulldclNondef);
         clsdef.append_member(fulldclNondef);
 
         // create full ctor/dtor
         SgMemberFunctionDeclaration& fulldcl = mkCtorDtorDef(clsdef, *fulldclNondef, !isDtor(ctordtor));
         SgSymbol* sym = fulldcl.search_for_symbol_from_symbol_table();
-        ROSE_ASSERT(sym != ctordtor.search_for_symbol_from_symbol_table());
+        ASSERT_require(sym != ctordtor.search_for_symbol_from_symbol_table());
 
 
         // rename dtor/ctor
@@ -2424,8 +2422,7 @@ namespace
         //~ for (const SgClassDefinition* bsecls : adapt::reverse(virtualBases))
         for (int i = virtualBases.size(); i != 0; --i)
         {
-          const SgClassDefinition*  bsecls = virtualBases.at(i-1);
-          ROSE_ASSERT(bsecls);
+          sg::NotNull<const SgClassDefinition> bsecls = virtualBases.at(i-1);
 
           // create: static_cast<Base*>(this)->Base(args as needed);
           SgConstructorInitializer* ini = getBaseInitializer(*bsecls, ctorlst);
@@ -2556,7 +2553,7 @@ namespace
         SgInitializedNamePtrList& lst = memfn.get_args();
         SgInitializedName&        cand = SG_DEREF(lst.at(0)); // a member function must have at least one argument
 
-        ROSE_ASSERT(cand.get_name() == "This");
+        ASSERT_require(cand.get_name() == "This");
         return cand;
       }
 
@@ -2622,14 +2619,12 @@ namespace
       : call(callexp), pos(argnum), func(dcl)
       {}
 
-      SgExpression* defaultValue() const
+      sg::NotNull<SgExpression> defaultValue() const
       {
         SgFunctionParameterList& lst = SG_DEREF(func.get_parameterList());
         SgInitializedName&       prm = SG_DEREF(lst.get_args().at(pos));
-        SgExpression*            res = prm.get_initializer();
 
-        ROSE_ASSERT(res);
-        return res;
+        return prm.get_initializer();
       }
 
       void execute(CxxTransformStats&)
@@ -2674,10 +2669,8 @@ namespace
                      {
                        SgBaseClassPtrList res;
 
-                       for (SgBaseClass* cand : cls->get_inheritances())
+                       for (sg::NotNull<SgBaseClass> cand : cls->get_inheritances())
                        {
-                         ROSE_ASSERT(cand);
-
                          if (cand->get_isDirectBaseClass() && !isVirtualBase(*cand))
                            res.push_back(cand);
                        }
@@ -2691,10 +2684,8 @@ namespace
                      {
                        SgBaseClassPtrList res;
 
-                       for (SgBaseClass* cand : cls->get_inheritances())
+                       for (sg::NotNull<SgBaseClass> cand : cls->get_inheritances())
                        {
-                         ROSE_ASSERT(cand);
-
                          if (isVirtualBase(*cand))
                            res.push_back(cand);
                        }
@@ -2806,39 +2797,31 @@ namespace
     }
   }
 
+
   SgScopeStatement&
   destructionLimit(SgFunctionDefinition& n)
   {
-    SgScopeStatement* limit = si::getEnclosingScope(&n);
-    ROSE_ASSERT(limit);
+    sg::NotNull<SgScopeStatement> limit = &enclosingScope(n);
 
     // if n is a destructor include also the class' scope to destruct
     //   its data members.
     if (isDtor(n))
-    {
-      limit = si::getEnclosingScope(&n);
-      ROSE_ASSERT(isSgClassDefinition(limit));
-    }
+      return enclosingScope(*limit);
 
     return *limit;
   }
 
+  /// if n's parent is a function definition, compute limit for function destruction,
+  ///   otherwise return n.
   SgScopeStatement&
-  destructionLimit(SgScopeStatement& n)
+  destructionLimit(SgBasicBlock& n)
   {
-    SgFunctionDefinition* fundef = isSgFunctionDefinition(&n);
+    sg::NotNull<SgScopeStatement> limit = &enclosingScope(n);
 
-    // if n is a function definition, compute limit for function destruction,
-    //   otherwise return existing limit.
-    return fundef ? destructionLimit(*fundef) : n;
-  }
+    if (SgFunctionDefinition* fundef = isSgFunctionDefinition(limit))
+      return destructionLimit(*fundef);
 
-  SgScopeStatement&
-  enclosingScope(SgScopeStatement* n)
-  {
-    ROSE_ASSERT(n);
-
-    return SG_DEREF(si::getEnclosingScope(n));
+    return *limit;
   }
 
   struct GeneratorBase : ExcludeTemplates
@@ -3305,7 +3288,7 @@ namespace
                       //~ << "\n@" << sg::ancestor<SgFunctionDeclaration>(n).unparseToString()
                       //~ << std::endl;
 
-          ROSE_ASSERT(isSgConstructorInitializer(n.get_expression()));
+          ASSERT_not_null(isSgConstructorInitializer(n.get_expression()));
           record(RVOReturnStmtTransformer{n, *rvoFunc});
         }
       }
@@ -3368,6 +3351,7 @@ namespace
 
       // recursive tree traversal
       void descend(SgNode& n);
+      void descendWithCurrBlock(SgNode& n, SgBasicBlock*);
 
       void handle(SgNode& n)         { descend(n); }
 
@@ -3396,50 +3380,44 @@ namespace
 
       void handle(SgBreakStmt& n)
       {
-        ROSE_ASSERT(breakScope && currBlk);
+        ASSERT_not_null(breakScope);
+        ASSERT_not_null(currBlk);
 
         descend(n);
-
-        recordScopeDestructors(n, *currBlk, enclosingScope(breakScope));
+        recordScopeDestructors(n, *currBlk, enclosingScope(*breakScope));
       }
 
       void handle(SgContinueStmt& n)
       {
-        ROSE_ASSERT(continueScope && currBlk);
+        ASSERT_not_null(continueScope);
+        ASSERT_not_null(currBlk);
 
         descend(n);
-
-        recordScopeDestructors(n, *currBlk, enclosingScope(continueScope));
+        recordScopeDestructors(n, *currBlk, enclosingScope(*continueScope));
       }
 
       void handle(SgReturnStmt& n)
       {
-        ROSE_ASSERT(functionScope && currBlk);
+        ASSERT_not_null(functionScope);
+        ASSERT_not_null(currBlk);
 
         descend(n);
-
         recordScopeDestructors(n, *currBlk, destructionLimit(*functionScope));
       }
 
       void handle(SgGotoStatement& n)
       {
-        ROSE_ASSERT(currBlk);
+        ASSERT_not_null(currBlk);
 
         descend(n);
-
-        SgLabelStatement& tgt = SG_DEREF(n.get_label());
-
-        recordScopeDestructors(n, *currBlk, enclosingScope(tgt.get_scope()));
+        recordScopeDestructors(n, *currBlk, enclosingScope(SG_DEREF(n.get_label()).get_scope()));
       }
 
       void handle(SgBasicBlock& n)
       {
-        currBlk = &n;
+        descendWithCurrBlock(n, &n);
 
-        descend(n);
-
-        // \todo fix
-        recordScopeDestructors(n, *currBlk, destructionLimit(enclosingScope(&n)));
+        recordScopeDestructors(n, n, destructionLimit(n));
       }
 
     private:
@@ -3462,6 +3440,14 @@ namespace
   void CxxObjectDestructionGenerator::descend(SgNode& n)
   {
     ::ct::descend(*this, n);
+  }
+
+  void CxxObjectDestructionGenerator::descendWithCurrBlock(SgNode& n, SgBasicBlock* blk)
+  {
+    CxxObjectDestructionGenerator tmp(*this);
+
+    tmp.currBlk = blk;
+    ::ct::descend(std::move(tmp), n);
   }
 
   void CxxObjectDestructionGenerator::loop(SgScopeStatement& n)
@@ -3520,7 +3506,7 @@ namespace
       void handle(SgFunctionCallExp& n);
 
     private:
-      SgMemberFunctionDeclaration* memfn;
+      SgMemberFunctionDeclaration* memfn = nullptr;
   };
 
   void CxxThisParameterGenerator::descend(SgNode& n)
@@ -3593,7 +3579,7 @@ namespace
         const int  adj         = hasEllipsis ? 1 : 0;
         const int  len         = params.get_args().size();
 
-        ROSE_ASSERT(adj <= len);
+        ASSERT_require(adj <= len);
         return len-adj;
       }
 
@@ -3606,9 +3592,8 @@ namespace
 
       DeclarationSet& declarationSet(SgFunctionDeclaration& n)
       {
-        SgFunctionDeclaration* key = isSgFunctionDeclaration(n.get_firstNondefiningDeclaration());
+        sg::NotNull<SgFunctionDeclaration> key = isSgFunctionDeclaration(n.get_firstNondefiningDeclaration());
 
-        ROSE_ASSERT(key);
         return funcs[key];
       }
 
@@ -3682,7 +3667,7 @@ namespace
 
       if (candidates.size() == 0) reportNone(numargs, callee, declSet);
       if (candidates.size() > 1)  reportAmbiguity(numargs, candidates);
-      ROSE_ASSERT(candidates.size());
+      ASSERT_require(candidates.size());
 
       record(DefaultArgumentTransformer{n, numargs, *candidates.back()});
     }

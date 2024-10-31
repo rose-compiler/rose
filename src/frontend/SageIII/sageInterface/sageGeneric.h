@@ -171,8 +171,6 @@ namespace sg
     return lhs.pointer() < rhs.pointer();
   }
 
-
-
 /**
  * struct DispatchHandler
  *
