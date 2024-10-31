@@ -527,8 +527,16 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXSIGNDIGITS"}, scope);
    }
 
-   // MININT, MINSTOP
+   // MINFRACTION, MININT, MINSTOP
    //
+   else if (ATmatch(term, "MINFRACTION(<term>)", &t_formula)) {
+      if (traverse_Formula(t_formula, expr)) {
+         // MATCHED CompileTimeNumericFormula
+      } else return ATfalse;
+      auto params = SageBuilder::buildExprListExp_nfi();
+      params->append_expression(expr);
+      expr = buildIntrinsicFunctionCallExp_nfi(std::string{"MINFRACTION"}, params, scope);
+   }
    else if (ATmatch(term, "MININT(<term>)", &t_formula)) {
      // ItemSize is required
      Sawyer::Optional<SgExpression*> size;
@@ -566,7 +574,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
    //TODO:
    //      'IMPLINTSIZE'    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
-   //      'MINFRACTION'    '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINFRACTION")}
    //      'MINSIZE'        '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSIZE")}
    //      'MINSCALE'       '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSCALE")}
    //      'MINRELPRECISION''(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINRELPRECISION")}
