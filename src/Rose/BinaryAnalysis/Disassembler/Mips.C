@@ -2452,7 +2452,7 @@ static struct Mips32_movn: Mips::Decoder {
         return d->makeInstruction(insn_va, mips_movn,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
-                                  d->makeRegister(insn_va, gR2(ib)));
+                                  d->makeRegister(insn_va, gR1(ib)));
     }
 } mips32_movn;
 

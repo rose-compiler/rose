@@ -618,20 +618,32 @@ struct IP_mfc2: P {
 };
 
 // Move word from hi register
+// Move word to hi register (mips_mthi, implemented by IP_mfhi)
 // Note: removed in release 6
 struct IP_mfhi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        d->write(args[0], ops->readRegister(d->REG_HI));
+        if (insn->get_kind() == mips_mfhi) {
+            d->write(args[0], ops->readRegister(d->REG_HI));
+        }
+        else if (insn->get_kind() == mips_mthi) {
+            ops->writeRegister(d->REG_HI, d->read(args[0]));
+        }
     }
 };
 
 // Move word from lo register
+// Move word to lo register (mips_mtlo, implemented by IP_mflo)
 // Note: removed in release 6
 struct IP_mflo: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        d->write(args[0], ops->readRegister(d->REG_LO));
+        if (insn->get_kind() == mips_mflo) {
+            d->write(args[0], ops->readRegister(d->REG_LO));
+        }
+        else if (insn->get_kind() == mips_mtlo) {
+            ops->writeRegister(d->REG_LO, d->read(args[0]));
+        }
     }
 };
 
@@ -665,6 +677,7 @@ struct IP_mov_ps: P {
 };
 
 // Move conditional on floating point false
+// Move conditional on floating point true (mips_movt, implemented by IP_movf)
 // Note: removed in release 6
 struct IP_movf: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -672,7 +685,15 @@ struct IP_movf: P {
         SValue::Ptr rs = d->read(args[1]);
         SValue::Ptr cc = d->read(args[2]);
         SValue::Ptr oldRd = d->read(args[0]);
-        SValue::Ptr result = ops->ite(ops->equalToZero(cc), rs, oldRd);
+
+        // Predicate for the result is based on instruction kind
+        SValue::Ptr result;
+        if (insn->get_kind() == mips_movf) {
+            result = ops->ite(ops->equalToZero(cc), rs, oldRd);
+        }
+        else if (insn->get_kind() == mips_movt) {
+            result = ops->ite(ops->equalToZero(cc), oldRd, rs);
+        }
         d->write(args[0], result);
     }
 };
@@ -714,9 +735,33 @@ struct IP_movf_ps: P {
     }
 };
 
-// Move conditional on zero
-// TODO:
-//struct IP_movz: P {
+// Move conditional on not zero
+// Move conditional on zero (mips_movz, implemented by IP_movn)
+// Note: removed in release 6
+struct IP_movn: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValue::Ptr rt = d->read(args[2]);
+        SValue::Ptr rs = d->read(args[1]);
+        SValue::Ptr oldRd = d->read(args[0]);
+
+        // Predicate for the result is based on instruction kind
+        SValue::Ptr result;
+        if (insn->get_kind() == mips_movz) {
+            result = ops->ite(ops->equalToZero(rt), rs, oldRd);
+        }
+        else if (insn->get_kind() == mips_movn) {
+            result = ops->ite(ops->equalToZero(rt), oldRd, rs);
+        }
+        d->write(args[0], result);
+    }
+};
+
+// Move conditional on floating point true (mips_movt, implemented by IP_movf)
+// Note: removed in release 6
+
+// Move conditional on zero (mips_movz, implemented by IP_movn)
+// Note: removed in release 6
 
 // Floating point move conditional on zero
 // TODO:
@@ -753,6 +798,12 @@ struct IP_msub_su: P {
         ops->writeRegister(d->REG_LO, loBits);
     }
 };
+
+// Move word to hi register (mips_mthi, implemented by IP_mfhi)
+// Note: removed in release 6
+
+// Move word to lo register (mips_mtlo, implemented by IP_mflo)
+// Note: removed in release 6
 
 // Multiply word to GPR
 struct IP_mul: P {
@@ -834,6 +885,15 @@ struct IP_ori: P {
         SValue::Ptr imm = ops->unsignedExtend(d->read(args[2]), nBits);
         SValue::Ptr result = ops->or_(rs, imm);
         d->write(args[0], result);
+    }
+};
+
+// Read hardware register
+struct IP_rdhwr: P {
+    void p(D d, Ops /*ops*/, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValue::Ptr hwr = d->read(args[1]);
+        d->write(args[0], hwr);
     }
 };
 
@@ -1172,8 +1232,16 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_movf_d,  new Mips::IP_movf_d);
     iprocSet(mips_movf_ps, new Mips::IP_movf_ps);
 
+    iprocSet(mips_movn,    new Mips::IP_movn);
+    iprocSet(mips_movt,    new Mips::IP_movf);  // mips_movt  shares common implementation IP_movf
+    iprocSet(mips_movz,    new Mips::IP_movn);  // mips_movz  shares common implementation IP_movn
+
     iprocSet(mips_msub,  new Mips::IP_msub_su); // mips_msub  shares common implementation IP_msub_su
     iprocSet(mips_msubu, new Mips::IP_msub_su); // mips_msubu shares common implementation IP_msub_su
+
+    iprocSet(mips_mthi,  new Mips::IP_mfhi);    // mips_mthi shares common implementation IP_mfhi
+    iprocSet(mips_mtlo,  new Mips::IP_mflo);    // mips_mtlo shares common implementation IP_mflo
+
     iprocSet(mips_mul,   new Mips::IP_mul);
     iprocSet(mips_mult,  new Mips::IP_mult_su); // mips_mult  shares common implementation IP_mult_su
     iprocSet(mips_multu, new Mips::IP_mult_su); // mips_multu shares common implementation IP_mult_su
@@ -1181,6 +1249,7 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_nor,   new Mips::IP_nor);
     iprocSet(mips_or,    new Mips::IP_or);
     iprocSet(mips_ori,   new Mips::IP_ori);
+    iprocSet(mips_rdhwr, new Mips::IP_rdhwr);
     iprocSet(mips_rotr,  new Mips::IP_rotate);  // mips_rotr  shares common implementation IP_rotate
     iprocSet(mips_rotrv, new Mips::IP_rotate);  // mips_rotrv shares common implementation IP_rotate
     iprocSet(mips_sb,    new Mips::IP_store);   // mips_sb    shares common implementation IP_store
