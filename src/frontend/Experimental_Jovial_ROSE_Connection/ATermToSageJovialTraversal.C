@@ -480,6 +480,19 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "FLOATRADIX")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"FLOATRADIX"}, scope);
    }
+
+   // IMPLINTSIZE, INTPRECISION
+   //
+   else if (ATmatch(term, "IMPLINTSIZE(<term>)", &t_formula)) {
+     // ItemSize is required
+     Sawyer::Optional<SgExpression*> size;
+     if (traverse_OptItemSize(t_formula, size)) {
+       // MATCHED OptItemSize
+     } else return ATfalse;
+     auto params = SageBuilder::buildExprListExp_nfi();
+     params->append_expression(*size);
+     expr = buildIntrinsicFunctionCallExp_nfi(std::string{"IMPLINTSIZE"}, params, scope);
+   }
    else if (ATmatch(term, "INTPRECISION")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"INTPRECISION"}, scope);
    }
@@ -573,7 +586,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
 
    //TODO:
-   //      'IMPLINTSIZE'    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
    //      'MINSIZE'        '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSIZE")}
    //      'MINSCALE'       '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSCALE")}
    //      'MINRELPRECISION''(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINRELPRECISION")}
@@ -8955,7 +8967,13 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
   if (name == "BYTEPOS") {
     type = SageBuilder::buildIntType();
   }
+  else if (name == "IMPLINTSIZE") {
+    type = SageBuilder::buildIntType();
+  }
   else if (name == "MAXINT") {
+    type = SageBuilder::buildIntType();
+  }
+  else if (name == "MINFRACTION") {
     type = SageBuilder::buildIntType();
   }
   else if (name == "MININT") {
