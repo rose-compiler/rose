@@ -1713,16 +1713,6 @@ static struct Mips32_divu: Mips::Decoder {
     }
 } mips32_divu;
 
-// EHB -- execution hazard barrier
-static struct Mips32_ehb: Mips::Decoder {
-    Mips32_ehb(): Mips::Decoder(Release2,
-                         sOP(000)|sR0(000)|sR1(000)|sR2(000)|sR3(003)|sFN(000),
-                         mOP()   |mR0()   |mR1()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
-        return d->makeInstruction(insn_va, mips_ehb);
-    }
-} mips32_ehb;
-
 // EI -- enable interrupts
 // The "EI" form is the same as "EI r0"
 static struct Mips32_ei: Mips::Decoder {
@@ -3362,6 +3352,7 @@ static struct Mips32_she: Mips::Decoder {
 // SLL -- shift word left logical
 // NOP -- no operation (when "SSL r0, r0, 0"); an assembly macro
 // SSNOP -- superscalar no operation (when "SLL r0, r0, 1")
+// EHB -- execution hazard barrier (when "SLL r0, r0, 3")
 static struct Mips32_sll: Mips::Decoder {
     Mips32_sll(): Mips::Decoder(Release1,
                          sOP(000)|sR0(000)|sFN(000),
@@ -3371,6 +3362,8 @@ static struct Mips32_sll: Mips::Decoder {
             return d->makeInstruction(insn_va, mips_nop);
         if (gR1(ib)==0 && gR2(ib)==0 && gR3(ib)==1)
             return d->makeInstruction(insn_va, mips_ssnop);
+        if (gR1(ib)==0 && gR2(ib)==0 && gR3(ib)==3)
+            return d->makeInstruction(insn_va, mips_ehb);
         return d->makeInstruction(insn_va, mips_sll,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -4137,7 +4130,6 @@ Mips::init()
     insert_idis(&mips32_div_s);
     insert_idis(&mips32_div_d);
     insert_idis(&mips32_divu);
-    insert_idis(&mips32_ehb);
     insert_idis(&mips32_ei);
     insert_idis(&mips32_eret);
     insert_idis(&mips32_ext);

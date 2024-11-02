@@ -342,6 +342,13 @@ struct IP_divu: P {
     }
 };
 
+// Execution hazard barrier
+struct IP_ehb: P {
+    void p(D, Ops, I insn, A args) {
+        assert_args(insn, args, 0);
+    }
+};
+
 // Jump
 // Jump and link (mips_jal, implemented by IP_j)
 // Jump and link exchange (mips_jalx, implemented by IP_j)
@@ -1194,6 +1201,7 @@ DispatcherMips::initializeDispatchTable() {
     iprocSet(mips_clz,   new Mips::IP_clz);
     iprocSet(mips_div,   new Mips::IP_div);
     iprocSet(mips_divu,  new Mips::IP_divu);
+    iprocSet(mips_ehb,   new Mips::IP_ehb);
     iprocSet(mips_j,     new Mips::IP_j);
     iprocSet(mips_jal,   new Mips::IP_j);   // mips_jal shares common implementation mips_j
     iprocSet(mips_jalr,  new Mips::IP_jalr);
