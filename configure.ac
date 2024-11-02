@@ -7,6 +7,9 @@ dnl shell variable.
 AC_INIT([ROSE], [0.11.145.169])
 AC_PREREQ([2.59])
 
+# A new definition to tweak code for Autoconf 
+AC_DEFINE([USE_AUTOCONF], [1], [Define if using Autoconf])
+
 # This one should perhaps be named ROSE_VERSION_STR instead of ROSE_SCM_VERSION_ID since it is not the SCM system's version
 # and it is not an identifier but rather a string literal.
 AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID], ["$(cat $srcdir/ROSE_VERSION)"],      [Set SCM version information to ROSE version.])

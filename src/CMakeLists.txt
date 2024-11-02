@@ -934,7 +934,6 @@ set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${CMAKE_IN
 set(rose_library_list "rose") # -l 
 # ONLY REQUIRED DEPENDENCIES 
 set(rose_library_list "${rose_library_list};${Boost_LIBRARIES}")
-set(rose_library_list "${rose_library_list};m;quadmath")
 foreach(X IN LISTS rose_library_list)
   # Dereference ${X} with "" to fix Windows CI/CD error 
   get_filename_component(Y "${X}" NAME_WE)  
@@ -1010,12 +1009,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "rose_library_dir_list: ${rose_library_dir_list}")
   message(STATUS "ROSE_LIBDIRS: ${ROSE_LIBDIRS}")
   message(STATUS "ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
-endif() 
-
-# Set macro for EDG 6 and 6.5
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # Move this to src/frontend/CxxFrontend/EDG/EDG_6.5/src/CMakeLists.txt and edg_6.0
-  set(ROSE_USE_EDG_QUAD_FLOAT 1)
 endif() 
 
 # We should not set ROSE_CXXFLAGS to CXX_STANDARD below because:

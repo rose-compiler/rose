@@ -288,7 +288,7 @@ set(INSTALL_TARGETS_DEFAULT_ARGS
   COMPONENT Devel)
 
 # A new definition to tweak code for cmake
-set(USE_CMAKE 1)
+set(USE_CMAKE ON CACHE BOOL "Define if using CMake")
 
 # ROSE configuration variables for Boost
 set(HAVE_BOOST ${Boost_FOUND})
@@ -931,41 +931,28 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
-cmake_dependent_option(INCLUDE_QUADMATH "Include the GNU quadmath library" OFF "NOT ${have_EDG_source}; NOT ${BINARY_EDG}" ON)
-message("include_qm: ${INCLUDE_QUADMATH}") 
-if(NOT ${INCLUDE_QUADMATH})
-  message("Skipping quadmath...")
-endif()
-# Initialize variable that determines where to look for libquadmath.so 
-# TODO: Dont use searchpaths for GCC 
-# if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU") 
-set(QUADMATH_SEARCH_PATHS /usr/local/lib64 /usr/local/lib /usr/lib64 /usr/lib /lib64 /lib /usr/lib/gcc/x86_64-redhat-linux/11/32 )
-if(NOT WIN32 AND ${INCLUDE_QUADMATH}) # try to find libm and libquadmath when not on Windows OS 
-  find_library(M_LIB m)  
-  message(STATUS "Looking for Quadmath in: ${QUADMATH_SEARCH_PATHS}")
-  find_library(QUADMATH_LIBRARY 
-               NAMES quadmath "libquadmath.so.0" "libquadmath.so.0.0.0"  
-               PATHS ${QUADMATH_SEARCH_PATHS} 
-               NO_DEFAULT_PATH)
-endif() 
+# Only use quadmath if we can 
+set(TEST_SOURCE "
+  #include <quadmath.h>
+  int main() { return 0; }")
 
-if(NOT WIN32 AND NOT APPLE)
-  find_library(RT_LIB rt)
-endif()
+# Perform the compile test
+check_cxx_source_compiles("${TEST_SOURCE}" HAVE_QUADMATH_COMPILE)
 
-if(NOT QUADMATH_LIBRARY AND ${INCLUDE_QUADMATH})
-  message(STATUS "libquadmath was not found in the following directories: ${QUADMATH_SEARCH_PATHS}") 
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message(WARNING "Defining the macro ROSE_USE_EDG_QUAD_FLOAT to 1 per the behavior of the legacy build system")
-    message(WARNING "Will attempt to link to lquadmath to satisfy gnu/edg/librose dependency")
+# Check for the function we depend on 
+include(CheckCXXSymbolExists)
+check_cxx_symbol_exists(quadmath_snprintf quadmath.h HAVE_QUADMATH_SYMBOL)
+
+# Determine whether quadmath is usable
+if(HAVE_QUADMATH_COMPILE AND HAVE_QUADMATH_SYMBOL AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
     set(ROSE_USE_EDG_QUAD_FLOAT 1)
-    set(QUADMATH_LIBRARY -lquadmath) 
-  endif()
-else() 
-  message(STATUS "Found QUADMATH_LIBRARY: ${QUADMATH_LIBRARY}")
-  message(STATUS "Defining the macro ROSE_USE_EDG_QUAD_FLOAT to 1")  
-  set(ROSE_USE_EDG_QUAD_FLOAT 1)
-endif() 
+    set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath") 
+    message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
+else()
+    set(ROSE_USE_EDG_QUAD_FLOAT 0)
+    # This will no longer cause an issue for gcc or clang 
+    message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
+endif()
 
 # This is essential to find the right include path from either build or installation tree for a translator
 if(HAVE_DLFCN_H)
@@ -1025,12 +1012,6 @@ if(NOT WIN32)
   if(NOT APPLE)
     list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
     # Each library appended above should do this check to enhance portability
-    if(QUADMATH_LIBRARY)
-      message(STATUS "librose will link to QUADMATH located at ${QUADMATH_LIBRARY}") 
-      list(APPEND link_with_libraries ${QUADMATH_LIBRARY})
-    else()
-      message(WARNING "librose will not link to libquadmath since it was not located") 
-    endif()
   else()
     list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
   endif()
@@ -1200,7 +1181,6 @@ if(VERBOSE)
   message(STATUS "CMAKE_AR:                           ${CMAKE_AR}")
   message(STATUS "CMAKE_RANLIB:                       ${CMAKE_RANLIB}")
 
-  message(STATUS "QUADMATH_LIBRARY:                   ${QUADMATH_LIBRARY}")
 endif()
 
 
