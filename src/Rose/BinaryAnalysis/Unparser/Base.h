@@ -613,10 +613,12 @@ public:
     virtual std::vector<std::string> emitBinaryAdd(std::ostream&, SgAsmBinaryAdd*, State&) const;
     virtual std::vector<std::string> emitBinaryAsr(std::ostream&, SgAsmBinaryAsr*, State&) const;
     virtual std::vector<std::string> emitBinaryConcat(std::ostream&, SgAsmBinaryConcat*, State&) const;
+    virtual std::vector<std::string> emitBinaryDivide(std::ostream&, SgAsmBinaryDivide*, State&) const;
     virtual std::vector<std::string> emitBinaryLsl(std::ostream&, SgAsmBinaryLsl*, State&) const;
     virtual std::vector<std::string> emitBinaryLsr(std::ostream&, SgAsmBinaryLsr*, State&) const;
     virtual std::vector<std::string> emitBinaryMsl(std::ostream&, SgAsmBinaryMsl*, State&) const;
     virtual std::vector<std::string> emitBinaryMultiply(std::ostream&, SgAsmBinaryMultiply*, State&) const;
+    virtual std::vector<std::string> emitBinaryMod(std::ostream&, SgAsmBinaryMod*, State&) const;
     virtual std::vector<std::string> emitBinaryPreupdate(std::ostream&, SgAsmBinaryPreupdate*, State&) const;
     virtual std::vector<std::string> emitBinaryPostupdate(std::ostream&, SgAsmBinaryPostupdate*, State&) const;
     virtual std::vector<std::string> emitBinaryRor(std::ostream&, SgAsmBinaryRor*, State&) const;
@@ -630,6 +632,9 @@ public:
     virtual std::vector<std::string> emitMemoryReferenceExpression(std::ostream&, SgAsmMemoryReferenceExpression*, State&) const;
     virtual std::vector<std::string> emitRegisterNames(std::ostream&, SgAsmRegisterNames*, State&) const;
     virtual std::vector<std::string> emitRiscOperation(std::ostream&, SgAsmRiscOperation*, State&) const;
+    virtual std::vector<std::string> emitStackExpression(std::ostream&, SgAsmStackExpression*, State&) const;
+    virtual std::vector<std::string> emitUnaryMinus(std::ostream&, SgAsmUnaryMinus*, State&) const;
+    virtual std::vector<std::string> emitUnaryPlus(std::ostream&, SgAsmUnaryPlus*, State&) const;
     virtual std::vector<std::string> emitUnarySignedExtend(std::ostream&, SgAsmUnarySignedExtend*, State&) const;
     virtual std::vector<std::string> emitUnaryTruncate(std::ostream&, SgAsmUnaryTruncate*, State&) const;
     virtual std::vector<std::string> emitUnaryUnsignedExtend(std::ostream&, SgAsmUnaryUnsignedExtend*, State&) const;

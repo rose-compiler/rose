@@ -29,8 +29,10 @@
 #include <SgAsmBinaryAdd.h>
 #include <SgAsmBinaryAsr.h>
 #include <SgAsmBinaryConcat.h>
+#include <SgAsmBinaryDivide.h>
 #include <SgAsmBinaryLsl.h>
 #include <SgAsmBinaryLsr.h>
+#include <SgAsmBinaryMod.h>
 #include <SgAsmBinaryMsl.h>
 #include <SgAsmBinaryMultiply.h>
 #include <SgAsmBinaryPostupdate.h>
@@ -50,6 +52,9 @@
 #include <SgAsmMemoryReferenceExpression.h>
 #include <SgAsmRegisterNames.h>
 #include <SgAsmRiscOperation.h>
+#include <SgAsmStackExpression.h>
+#include <SgAsmUnaryMinus.h>
+#include <SgAsmUnaryPlus.h>
 #include <SgAsmUnarySignedExtend.h>
 #include <SgAsmUnaryTruncate.h>
 #include <SgAsmUnaryUnsignedExtend.h>
@@ -2545,7 +2550,9 @@ operatorPrecedence(SgAsmExpression *expr) {
                isSgAsmBinarySubtract(expr)) {
         return 2;
 
-    } else if (isSgAsmBinaryMultiply(expr)) {
+    } else if (isSgAsmBinaryMultiply(expr) ||
+               isSgAsmBinaryDivide(expr) ||
+               isSgAsmBinaryMod(expr)) {
         return 3;
 
     } else if (isSgAsmBinaryConcat(expr)) {
@@ -2559,6 +2566,9 @@ operatorPrecedence(SgAsmExpression *expr) {
                isSgAsmUnaryUnsignedExtend(expr) ||
                isSgAsmUnarySignedExtend(expr) ||
                isSgAsmUnaryTruncate(expr) ||
+               isSgAsmUnaryMinus(expr) ||
+               isSgAsmUnaryPlus(expr) ||
+               isSgAsmUnaryPlus(expr) ||
                isSgAsmBinaryAsr(expr) ||
                isSgAsmBinaryRor(expr) ||
                isSgAsmBinaryMsl(expr) ||
@@ -2630,8 +2640,14 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
     } else if (SgAsmBinarySubtract *op = isSgAsmBinarySubtract(expr)) {
         appendComments(state.frontUnparser().emitBinarySubtract(out, op, state));
 
+    } else if (SgAsmBinaryMod *op = isSgAsmBinaryMod(expr)) {
+        appendComments(state.frontUnparser().emitBinaryMod(out, op, state));
+
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(expr)) {
         appendComments(state.frontUnparser().emitBinaryMultiply(out, op, state));
+
+    } else if (SgAsmBinaryDivide *op = isSgAsmBinaryDivide(expr)) {
+        appendComments(state.frontUnparser().emitBinaryDivide(out, op, state));
 
     } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(expr)) {
         appendComments(state.frontUnparser().emitBinaryPreupdate(out, op, state));
@@ -2663,6 +2679,12 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
     } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(expr)) {
         appendComments(state.frontUnparser().emitUnaryTruncate(out, op, state));
 
+    } else if (SgAsmUnaryMinus *op = isSgAsmUnaryMinus(expr)) {
+        appendComments(state.frontUnparser().emitUnaryMinus(out, op, state));
+
+    } else if (SgAsmUnaryPlus *op = isSgAsmUnaryPlus(expr)) {
+        appendComments(state.frontUnparser().emitUnaryPlus(out, op, state));
+
     } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(expr)) {
         appendComments(state.frontUnparser().emitBinaryAsr(out, op, state));
 
@@ -2692,6 +2714,9 @@ Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) con
 
     } else if (SgAsmRiscOperation *op = isSgAsmRiscOperation(expr)) {
         appendComments(state.frontUnparser().emitRiscOperation(out, op, state));
+
+    } else if (SgAsmStackExpression *op = isSgAsmStackExpression(expr)) {
+        appendComments(state.frontUnparser().emitStackExpression(out, op, state));
 
     } else {
         ASSERT_not_implemented(expr->class_name());
@@ -2977,6 +3002,42 @@ Base::emitBinaryConcat(std::ostream &out, SgAsmBinaryConcat *expr, State &state)
 }
 
 std::vector<std::string>
+Base::emitBinaryDivide(std::ostream &out, SgAsmBinaryDivide *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryDivide(out, expr, state);
+    } else {
+        // Print the "/" and RHS only if RHS is not 1
+        bool isOne = [expr]() {
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr->get_rhs());
+            if (!ival)
+                return false;
+            Sawyer::Container::BitVector one(ival->get_bitVector().size());
+            one.set(0);
+            return ival->get_bitVector().compare(one) == 0;
+        }();
+
+        if (!isOne) {
+            int prec = operatorPrecedence(expr);
+            Parens parens = parensForPrecedence(prec, expr->get_lhs());
+            out <<parens.left;
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+            out <<parens.right;
+
+            out <<" / ";
+
+            parens = parensForPrecedence(prec, expr->get_rhs());
+            out <<parens.left;
+            state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+            out <<parens.right;
+        } else {
+            state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        }
+        return {};
+    }
+}
+
+std::vector<std::string>
 Base::emitBinaryLsl(std::ostream &out, SgAsmBinaryLsl *expr, State &state) const {
     ASSERT_not_null(expr);
     if (nextUnparser()) {
@@ -3031,6 +3092,28 @@ Base::emitBinaryMsl(std::ostream &out, SgAsmBinaryMsl *expr, State &state) const
         out <<", ";
         state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
         out <<")";
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitBinaryMod(std::ostream &out, SgAsmBinaryMod *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitBinaryMod(out, expr, state);
+    } else {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, expr->get_lhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_lhs(), state);
+        out <<parens.right;
+
+        out <<" % ";
+
+        parens = parensForPrecedence(prec, expr->get_rhs());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_rhs(), state);
+        out <<parens.right;
         return {};
     }
 }
@@ -3289,6 +3372,48 @@ Base::emitRiscOperation(std::ostream &out, SgAsmRiscOperation *expr, State &stat
         return nextUnparser()->emitRiscOperation(out, expr, state);
     } else {
         out <<stringify::SgAsmRiscOperation::RiscOperator(expr->get_riscOperator(), "OP_");
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitStackExpression(std::ostream &out, SgAsmStackExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitStackExpression(out, expr, state);
+    } else {
+        Sawyer::Container::BitVector bv(8*sizeof(expr->get_stackPosition()));
+        bv.fromInteger(expr->get_stackPosition());
+        return state.frontUnparser().emitSignedInteger(out, bv, state);
+    }
+}
+
+std::vector<std::string>
+Base::emitUnaryMinus(std::ostream &out, SgAsmUnaryMinus *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitUnaryMinus(out, expr, state);
+    } else {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, expr->get_operand());
+        out <<"-" <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
+        out <<parens.right;
+        return {};
+    }
+}
+
+std::vector<std::string>
+Base::emitUnaryPlus(std::ostream &out, SgAsmUnaryPlus *expr, State &state) const {
+    ASSERT_not_null(expr);
+    if (nextUnparser()) {
+        return nextUnparser()->emitUnaryPlus(out, expr, state);
+    } else {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, expr->get_operand());
+        out <<parens.left;
+        state.frontUnparser().emitExpression(out, expr->get_operand(), state);
+        out <<parens.right;
         return {};
     }
 }
