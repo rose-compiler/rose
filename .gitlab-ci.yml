@@ -128,17 +128,24 @@ Deploy-Blocker:
 Policy-Checker:
     extends: .develop-base
     stage: Policy
+    tags:
+        - policy-check
     before_script:
         - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone -b $TEST_SCRIPTS_BRANCH $TEST_SCRIPTS $TEST_DIRECTORY ; fi
     script:
         - ./$TEST_DIRECTORY/util/policy_check.sh
 
-RHEL8-Full:
+RHEL8-Main:
     extends: .develop-base
     tags:
-        - workpool:large
+        - workpool:large:rhel9
 
-RHEL7-Full:
+RHEL9-Main:
+    extends: .develop-base
+    tags:
+        - workpool:large:rhel9
+
+RHEL7-Main:
     extends: .develop-base
     tags:
         - workpool:large
@@ -146,7 +153,7 @@ RHEL7-Full:
 CMake-Build:
     extends: .develop-base
 
-Intel-Full:
+Intel-Main:
     extends: .develop-base
     tags:
         - workpool:large
@@ -361,6 +368,11 @@ OMP-Runtime:
 GPU:
     extends: .release-base 
     
+Klocwork:
+    extends: .release-base 
+    tags:
+        - klocwork
+
 Plumhall-CVS:
     extends: .release-base 
     script:
