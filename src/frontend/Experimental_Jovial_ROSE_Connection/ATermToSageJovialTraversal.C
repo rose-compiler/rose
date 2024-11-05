@@ -540,7 +540,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = buildIntrinsicVarRefExp_nfi(std::string{"MAXSIGNDIGITS"}, scope);
    }
 
-   // MINFRACTION, MININT, MINSIZE, MINSTOP
+   // MINFRACTION, MININT, MINSCALE, MINSIZE, MINSTOP
    //
    else if (ATmatch(term, "MINFRACTION(<term>)", &t_formula)) {
       if (traverse_Formula(t_formula, expr)) {
@@ -562,6 +562,14 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
        expr = buildIntrinsicFunctionCallExp_nfi(std::string{"MININT"}, params, scope);
      }
      else return ATfalse;
+   }
+   else if (ATmatch(term, "MINSCALE(<term>)", &t_formula)) {
+      if (traverse_Formula(t_formula, expr)) {
+         // MATCHED CompileTimeNumericFormula
+      } else return ATfalse;
+      auto params = SageBuilder::buildExprListExp_nfi();
+      params->append_expression(expr);
+      expr = buildIntrinsicFunctionCallExp_nfi(std::string{"MINSCALE"}, params, scope);
    }
    else if (ATmatch(term, "MINSIZE(<term>)", &t_formula)) {
       if (traverse_Formula(t_formula, expr)) {
@@ -594,7 +602,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
 
    //TODO:
-   //      'MINSCALE'       '(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINSCALE")}
    //      'MINRELPRECISION''(' CompileTimeNumericFormula ')'    -> IntegerMachineParameter {cons("MINRELPRECISION")}
    //      'FLOATRELPRECISION' '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATRELPRECISION")}
    //      'FLOATUNDERFLOW'    '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATUNDERFLOW")}
@@ -8984,6 +8991,9 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
     type = SageBuilder::buildIntType();
   }
   else if (name == "MININT") {
+    type = SageBuilder::buildIntType();
+  }
+  else if (name == "MINSCALE") {
     type = SageBuilder::buildIntType();
   }
   else if (name == "MINSIZE") {
