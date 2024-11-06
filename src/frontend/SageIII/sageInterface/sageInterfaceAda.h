@@ -1126,6 +1126,10 @@ namespace Ada
   SgExprListExp*
   isPragma(const SgPragmaDeclaration& prgdcl, const std::string& pragmaname);
 
+  /// returns a container of children nodes that are relevant for unparsing.
+  SgNodePtrList unparsedChildren(SgNode& n);
+
+
   /// Traverses all AST nodes in an unspecified order.
   /// \details
   ///   Only traverses edges that are commonly traversed by ROSE's standard

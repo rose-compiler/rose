@@ -1601,6 +1601,91 @@ namespace sg
     swap_parent(lhs_child, rhs_child);
   }
 
+  template <class GVisitor>
+  struct DispatchHelper
+  {
+    explicit
+    DispatchHelper(GVisitor gv)
+    : gvisitor(std::move(gv))
+    {}
+
+    void operator()(SgNode* n)
+    {
+      if (n != nullptr) gvisitor = sg::dispatch(std::move(gvisitor), n);
+    }
+
+    operator GVisitor()&& { return std::move(gvisitor); }
+
+    GVisitor gvisitor;
+  };
+
+
+  template <class GVisitor>
+  static inline
+  DispatchHelper<GVisitor>
+  dispatchHelper(GVisitor gv)
+  {
+    return DispatchHelper<GVisitor>(std::move(gv));
+  }
+
+  struct DefaultTraversalSuccessors
+  {
+    SgNodePtrList operator()(SgNode& n) const
+    {
+      return n.get_traversalSuccessorContainer();
+    }
+  };
+
+  template <class GVisitor, class SuccessorGenerator = DefaultTraversalSuccessors>
+  static inline
+  GVisitor traverseChildren( GVisitor gv, SgNode& n, SuccessorGenerator gen = {} )
+  {
+    SgNodePtrList const successors = gen(n);
+
+    return std::for_each( successors.begin(), successors.end(),
+                          dispatchHelper(std::move(gv))
+                        );
+  }
+
+  template <class GVisitor>
+  static inline
+  GVisitor traverseChildren(GVisitor gv, SgNode* n)
+  {
+    return traverseChildren(gv, sg::deref(n));
+  }
+
+  template <class SageParent, class SageChild>
+  void linkParentChild(SageParent& parent, SageChild& child, void (SageParent::*setter)(SageChild*))
+  {
+    (parent.*setter)(&child);
+    child.set_parent(&parent);
+  }
+
+  /// returns the same node \p n upcasted to its base type
+  /// \note useful for calling an overloaded function
+  /// \{
+  template <class SageNode>
+  typename SageNode::base_node_type&
+  asBaseType(SageNode& n) { return n; }
+
+  template <class SageNode>
+  const typename SageNode::base_node_type&
+  asBaseType(const SageNode& n) { return n; }
+
+  template <class SageNode>
+  typename SageNode::base_node_type*
+  asBaseType(SageNode* n) { return n; }
+
+  template <class SageNode>
+  const typename SageNode::base_node_type*
+  asBaseType(const SageNode* n) { return n; }
+  /// \}
+}
+#endif /* _SAGEGENERIC_H */
+
+
+#if OBSOLETE_CODE
+
 
 /// \brief executes a functor for a specific node type
 /// \details internal use
@@ -1699,88 +1784,6 @@ namespace sg
 
     return nodeType(*n);
   }
-#endif
+#endif /* !NDEBUG */
 
-  template <class GVisitor>
-  struct DispatchHelper
-  {
-    explicit
-    DispatchHelper(GVisitor gv, SgNode* p)
-    : gvisitor(std::move(gv)), parent(p), cnt(0)
-    {}
-
-    void operator()(SgNode* n)
-    {
-      ++cnt;
-
-#if 0
-      if (n == nullptr)
-      {
-        std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;
-        return;
-      }
-#endif
-
-      if (n != nullptr) gvisitor = sg::dispatch(std::move(gvisitor), n);
-    }
-
-    operator GVisitor()&& { return std::move(gvisitor); }
-
-    GVisitor gvisitor;
-    SgNode*  parent;
-    size_t   cnt;
-  };
-
-
-  template <class GVisitor>
-  static inline
-  DispatchHelper<GVisitor>
-  dispatchHelper(GVisitor gv, SgNode* parent = nullptr)
-  {
-    return DispatchHelper<GVisitor>(std::move(gv), parent);
-  }
-
-  template <class GVisitor>
-  static inline
-  GVisitor traverseChildren(GVisitor gv, SgNode& n)
-  {
-    std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
-
-    return std::for_each(successors.begin(), successors.end(), dispatchHelper(std::move(gv), &n));
-  }
-
-  template <class GVisitor>
-  static inline
-  GVisitor traverseChildren(GVisitor gv, SgNode* n)
-  {
-    return traverseChildren(gv, sg::deref(n));
-  }
-
-  template <class SageParent, class SageChild>
-  void linkParentChild(SageParent& parent, SageChild& child, void (SageParent::*setter)(SageChild*))
-  {
-    (parent.*setter)(&child);
-    child.set_parent(&parent);
-  }
-
-  /// returns the same node \p n upcasted to its base type
-  /// \note useful for calling an overloaded function
-  /// \{
-  template <class SageNode>
-  typename SageNode::base_node_type&
-  asBaseType(SageNode& n) { return n; }
-
-  template <class SageNode>
-  const typename SageNode::base_node_type&
-  asBaseType(const SageNode& n) { return n; }
-
-  template <class SageNode>
-  typename SageNode::base_node_type*
-  asBaseType(SageNode* n) { return n; }
-
-  template <class SageNode>
-  const typename SageNode::base_node_type*
-  asBaseType(const SageNode* n) { return n; }
-  /// \}
-}
-#endif /* _SAGEGENERIC_H */
+#endif /* OBSOLETE_CODE */

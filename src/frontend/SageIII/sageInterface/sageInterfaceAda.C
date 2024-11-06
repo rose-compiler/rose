@@ -2518,7 +2518,140 @@ namespace Ada
     return quotes + op + quotes;
   }
 
+  // Model after Ada unparser: 05/11/2024
+  struct UnparsedChildren : sg::DispatchHandler<SgNodePtrList>
+  {
+    void add(SgNode* n)     { res.push_back(n); }
+    void add_opt(SgNode* n) { if (n) add(n); }
 
+    template <class SageNode>
+    void handleWithGetType(SageNode& n)
+    {
+      handle(sg::asBaseType(n));
+
+      add(n.get_type());
+    }
+
+    void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
+
+    // expressions with types
+    void handle(SgExpression& n)          { res = n.get_traversalSuccessorContainer(); }
+    void handle(SgCastExp& n)             { handleWithGetType(n); }
+    void handle(SgTypeExpression& n)      { handleWithGetType(n); }
+
+    void handle(SgNewExp& n)
+    {
+      handle(sg::asBaseType(n));
+
+      add(n.get_specified_type());
+    }
+
+    // statements/declarations with types
+    void handle(SgStatement& n)            { res = n.get_traversalSuccessorContainer(); }
+    void handle(SgAdaRenamingDecl& n)      { handleWithGetType(n); }
+    void handle(SgFunctionDeclaration&& n) { handleWithGetType(n); }
+
+    void handle(SgAdaRepresentationClause& n)
+    {
+      handle(sg::asBaseType(n));
+
+      add(n.get_recordType());
+    }
+
+    void handle(SgAdaEnumRepresentationClause& n)
+    {
+      handle(sg::asBaseType(n));
+
+      add(n.get_enumType());
+    }
+
+    void handle(SgVariableDeclaration& n)
+    {
+      ASSERT_require(n.get_variables().size() > 0);
+
+      handle(sg::asBaseType(n));
+
+      add(SG_DEREF(n.get_variables().front()).get_type());
+    }
+
+    void handle(SgTypedefDeclaration& n)
+    {
+      handle(sg::asBaseType(n));
+
+      add(n.get_base_type());
+    }
+
+    void handle(SgAdaFormalTypeDecl& n)
+    {
+      handle(sg::asBaseType(n));
+
+      add(SG_DEREF(n.get_type()).get_formal_type());
+    }
+
+    // types
+
+    void handle(SgType&)              { /* do nothing */ }
+
+    void handle(SgAdaDerivedType& n)  { add(n.get_base_type()); }
+    void handle(SgAdaModularType& n)  { add(n.get_modexpr()); }
+    void handle(SgDeclType& n)        { add(n.get_base_expression()); }
+    void handle(SgFunctionType& n)    { add(n.get_return_type()); }
+    void handle(SgRangeType& n)       { add(n.get_base_type()); }
+    void handle(SgAdaAccessType& n)   { add(n.get_base_type()); }
+    void handle(SgPointerType& n)     { add(n.get_base_type()); } // \todo remove
+
+    void handle(SgAdaSubtype& n)
+    {
+      add(n.get_base_type());
+      add_opt(n.get_constraint());
+    }
+
+    void handle(SgTypeTuple& n)
+    {
+      SgTypePtrList& lst = n.get_types();
+
+      std::copy( lst.begin(), lst.end(), std::back_inserter(res) );
+    }
+
+    void handle(SgArrayType& n)
+    {
+      add(n.get_dim_info());
+      add(n.get_base_type());
+    }
+
+
+    // other nodes
+
+    void handle(SgLocatedNodeSupport& n) { res = n.get_traversalSuccessorContainer(); }
+
+    void handle(SgAdaRangeConstraint& n) { res.push_back(n.get_range()); }
+
+    void handle(SgAdaDigitsConstraint& n)
+    {
+      add(n.get_digits());
+      add_opt(n.get_subConstraint());
+    }
+
+    void handle(SgAdaDeltaConstraint& n)
+    {
+      add(n.get_delta());
+      add_opt(n.get_subConstraint());
+    }
+
+    void handle(SgAdaIndexConstraint& n)
+    {
+      SgExpressionPtrList& lst = n.get_indexRanges();
+
+      std::copy( lst.begin(), lst.end(), std::back_inserter(res) );
+    }
+
+    void handle(SgAdaDiscriminantConstraint& n)
+    {
+      SgExpressionPtrList& lst = n.get_discriminants();
+
+      std::copy( lst.begin(), lst.end(), std::back_inserter(res) );
+    }
+  };
 
 
   struct SimpleTraversal : AstSimpleProcessing
@@ -3430,6 +3563,11 @@ namespace Ada
     }
 
     return res;
+  }
+
+  SgNodePtrList unparsedChildren(SgNode& n)
+  {
+    return sg::dispatch(UnparsedChildren{}, &n);
   }
 
   void simpleTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
