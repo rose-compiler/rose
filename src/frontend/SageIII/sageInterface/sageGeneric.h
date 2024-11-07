@@ -1238,6 +1238,38 @@ namespace sg
 
 #undef GEN_VISIT
 
+#if 0
+  constexpr
+  auto nullptrHandlerTest(...) -> std::false_type;
+
+  template <class RoseVisitor>
+  constexpr
+  auto nullptrHandlerTest(RoseVisitor&&) -> decltype(std::declval<RoseVisitor>().handle(nullptr), std::true_type{});
+
+  template <class T>
+  struct NullHandler
+  {
+    template <class RoseVisitor>
+    static RoseVisitor handle(RoseVisitor&& rv)
+    {
+      rv.handle(nullptr);
+      return rv;
+    }
+  };
+
+  template <>
+  struct NullHandler<std::false_type>
+  {
+    template <class RoseVisitor>
+    static
+    RoseVisitor handle(RoseVisitor&& rv)
+    {
+      ASSERT_not_null(nullptr);
+      return rv;
+    }
+  };
+#endif
+
   template <class RoseVisitor>
   inline
   typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
@@ -1247,6 +1279,9 @@ namespace sg
     using RoseHandler      = typename std::remove_const<RoseVisitorNoref>::type;
 
     ASSERT_not_null(n);
+    //~ if (n == nullptr)
+      //~ return NullHandler<decltype(nullptrHandlerTest(std::declval<RoseVisitor>()))>
+                 //~ ::handle(std::forward<RoseVisitor>(rv));
 
     VisitDispatcher<RoseHandler> vis( std::forward<RoseVisitor>(rv),
                                       std::is_lvalue_reference<RoseVisitor>()
@@ -1565,7 +1600,7 @@ namespace sg
   /// \}
 
 
-/// \brief swaps the parent pointer of two nodes
+/// swaps the parent pointer of two nodes
 /// \note  internal use
   static inline
   void swap_parent(SgNode* lhs, SgNode* rhs)
@@ -1582,7 +1617,7 @@ namespace sg
   static inline
   void swap_parent(void*, void*) {}
 
-/// \brief  swaps children (of equal kind) between two ancestor nodes of the same type
+/// swaps children (of equal kind) between two ancestor nodes of the same type
 /// \tparam SageNode the parent node type
 /// \tparam SageChild the child node type
 /// \param  lhs one parent node
@@ -1602,6 +1637,8 @@ namespace sg
     swap_parent(lhs_child, rhs_child);
   }
 
+  /// prevents the dispatch handler being called on nullptr.
+  /// \{
   template <class GVisitor>
   struct DispatchHelper
   {
@@ -1629,6 +1666,9 @@ namespace sg
     return DispatchHelper<GVisitor>(std::move(gv));
   }
 
+  /// \}
+
+  /// \private
   struct DefaultTraversalSuccessors
   {
     SgNodePtrList operator()(SgNode& n) const
@@ -1637,6 +1677,10 @@ namespace sg
     }
   };
 
+  /// Dispatches all children of \p n to the generic vistor \p gv. The children
+  ///   are computed using a customizable generator. By default n.get_traversalSuccessorContainer()
+  ///   is invoked.
+  /// \{
   template <class GVisitor, class SuccessorGenerator = DefaultTraversalSuccessors>
   static inline
   GVisitor traverseChildren( GVisitor gv, SgNode& n, SuccessorGenerator gen = {} )
@@ -1652,9 +1696,13 @@ namespace sg
   static inline
   GVisitor traverseChildren(GVisitor gv, SgNode* n)
   {
-    return traverseChildren(gv, sg::deref(n));
+    return traverseChildren(std::move(gv), sg::deref(n));
   }
+  /// \}
 
+
+  /// Links parent node \p parent to child node \p child using the setter method \p setter.
+  /// Also sets the parent link from \p child to \p parent.
   template <class SageParent, class SageChild>
   void linkParentChild(SageParent& parent, SageChild& child, void (SageParent::*setter)(SageChild*))
   {

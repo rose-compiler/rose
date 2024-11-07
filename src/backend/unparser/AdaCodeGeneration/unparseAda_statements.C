@@ -362,6 +362,9 @@ namespace
     void handle(const SgAdaProtectedTypeDecl& n)   { usetype(n.get_name(), n); }
     void handle(const SgClassDeclaration& n)       { usetype(n.get_name(), n); }
     void handle(const SgEnumDeclaration& n)        { usetype(n.get_name(), n); }
+    void handle(const SgAdaFormalTypeDecl& n)      { usetype(n.get_name(), n); }
+
+
 /*
  *  PP EXPERIMENT_IMPORT_1
     void handle(const SgImportStatement& n)

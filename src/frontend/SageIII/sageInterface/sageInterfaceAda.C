@@ -784,7 +784,10 @@ namespace Ada
   SgRangeExp*
   range(const SgAdaAttributeExp* n)
   {
-    return range(SG_DEREF(n));
+    if (n == nullptr)
+      return nullptr;
+
+    return range(*n);
   }
 
   bool denotesRange(const SgExpression* e)
@@ -3325,15 +3328,14 @@ namespace Ada
     SgExpression&
     getInitializerExpr(const SgInitializedName* var)
     {
-      ASSERT_require(var);
+      ASSERT_not_null(var);
 
       SgExpression* res = var->get_initializer();
 
       if (SgAssignInitializer* init = isSgAssignInitializer(res))
         res = init->get_operand();
 
-      ASSERT_require(res);
-      return *res;
+      return SG_DEREF(res);
     }
   }
 
@@ -4501,7 +4503,7 @@ isPragma(const SgPragmaDeclaration& prgdcl, const std::string& prgname)
     return nullptr;
 
   SgExprListExp* res = pragma->get_args();
-  ASSERT_require(res);
+  ASSERT_not_null(res);
   return res;
 }
 
