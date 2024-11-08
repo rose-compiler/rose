@@ -1,17 +1,19 @@
 static const char *purpose = "info about the ELF/PE container";
 static const char *description =
-    "Given a BAT state for a binary specimen, print all information about the ELF or PE container.\n\n"
+    "Given a binary specimen, print all information about the ELF or PE container.";
 
-    "This tool reads the binary analysis state file provided as a command-line positional argument, or standard input if "
-    "the name is \"-\" (a single hyphen) no file name is specified. The standard input mode works only on those operating "
-    "systems whose standard input is opened in binary mode, such as Unix-like systems.";
-
-#include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <rose.h>                                       // Needed only for `#include <sageInterface.h>` below
 
 #include <batSupport.h>
-#include <Sawyer/Stopwatch.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Initialize.h>
+
+#include <sageInterface.h>                              // ROSE
+
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -19,26 +21,32 @@ using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
-SerialIo::Format stateFormat = SerialIo::BINARY;
 
-// Parses the command-line and returns the name of the input file if any (the ROSE binary state).
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[]) {
+struct Settings {
+    SerialIo::Format stateFormat = SerialIo::BINARY;
+};
+
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
-    gen.insert(Bat::stateFileFormatSwitch(stateFormat));
+    gen.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.with(gen);
-    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-    return input.empty() ? boost::filesystem::path("-") : input[0];
+    return parser;
+}
+
+// Parses the command-line and returns the positional arguments describing the specimen.
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
+    return specimen;
 }
 
 int
@@ -49,15 +57,27 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
-    }
+    // Parse command-line
+    Settings settings;
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser);
 
+    // Ingest specimen
+    P2::Partitioner::Ptr partitioner;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
+    }
+    ASSERT_not_null(partitioner);
+
+    // Print the AST
     for (SgFile *file: SageInterface::generateFileList()) {
         if (SgBinaryComposite *binComp = isSgBinaryComposite(file)) {
             if (SgAsmGenericFileList *genFileList = binComp->get_genericFileList()) {

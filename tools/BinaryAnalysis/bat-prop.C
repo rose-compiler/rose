@@ -1,18 +1,16 @@
 static const char *purpose = "print some property of the RBA file";
 static const char *description =
-    "Given a BAT state for a binary specimen, print the specified property."
+    "Given a BAT state for a binary specimen, print the specified property.";
 
-    "This tool reads the binary analysis state file provided as a command-line positional argument, or standard input if "
-    "the name is \"-\" (a single hyphen) or not specified. The standard input mode works only on those operating systems "
-    "whose standard input is opened in binary mode, such as Unix-like systems.";
-
-#include <rose.h>
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
+#include <Rose/Initialize.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -22,7 +20,10 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace {
 
 Sawyer::Message::Facility mlog;
-SerialIo::Format stateFormat = SerialIo::BINARY;
+
+struct Settings {
+    SerialIo::Format stateFormat = SerialIo::BINARY;
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Property definitions
@@ -207,32 +208,49 @@ public:
 // Command-line parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Parses the command-line and returns the positional arguments, the first of which is always present and is the name of the
-// RBA file.
-std::vector<std::string>
-parseCommandLine(int argc, char *argv[], const Properties &properties) {
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings, Properties &properties) {
     using namespace Sawyer::CommandLine;
 
     //---------- Generic Switches ----------
     SwitchGroup generic = Rose::CommandLine::genericSwitches();
-    generic.insert(Bat::stateFileFormatSwitch(stateFormat));
+    generic.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
     //---------- Parsing -----------
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{rba-state} @v{properies}...");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} [--] @v{properies}...");
     parser.doc("Properties", properties.doc());
+    return parser;
+}
 
-    std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
-    if (args.empty()) {
+std::vector<std::vector<std::string>>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::vector<std::string>> groups = parser.regroupArgs(parser.parse(argc, argv).apply().unreachedArgs());
+
+    // If one group, then the first arg is the specimen and the rest are property names
+    if (groups.size() == 1) {
+        groups.push_back(std::vector<std::string>());
+        if (!groups[0].empty()) {
+            std::swap(groups[0], groups[1]);
+            groups[0].push_back(groups[1][0]);
+            groups[1].erase(groups[1].begin());
+        }
+    }
+
+    if (groups.size() != 2 || groups[0].empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
-    } else if (args.size() == 1) {
-        mlog[WARN] <<"no properties requested; only checking whether RBA loads\n";
     }
-    
-    return args;
+
+    if (groups[0].empty())
+        groups[0].push_back("-");
+
+    if (groups[1].empty())
+        mlog[WARN] <<"no properties requested; only checking whether RBA loads\n";
+
+    return groups;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,25 +273,38 @@ main(int argc, char *argv[]) {
     properties.define(new InsnCountProperty);
     properties.define(new IsaNameProperty);
 
-    std::vector<std::string> args = parseCommandLine(argc, argv, properties);
-    boost::filesystem::path inputFileName = args[0];
-    args.erase(args.begin());
-    if (!properties.check(args, mlog[FATAL]))
-        exit(1);
-    size_t showAllProperties = std::count(args.begin(), args.end(), "all");
+    // Parse command-line
+    Settings settings;
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings, properties);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    const std::vector<std::vector<std::string>> groups = parseCommandLine(argc, argv, switchParser);
+    ASSERT_require(groups.size() == 2);
+    const std::vector<std::string> specimen = groups[0];
+    ASSERT_forbid(specimen.empty());
+    const std::vector<std::string> propNames = groups[1];
 
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    // Ingest specimen
+    P2::Partitioner::ConstPtr partitioner;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
+
+    if (!properties.check(propNames, mlog[FATAL]))
+        exit(1);
+    size_t showAllProperties = std::count(propNames.begin(), propNames.end(), "all");
 
     if (showAllProperties) {
         properties.evalAll(partitioner);
     } else {
-        for (const std::string &property: args)
+        for (const std::string &property: propNames)
             properties.eval(property, partitioner);
     }
 

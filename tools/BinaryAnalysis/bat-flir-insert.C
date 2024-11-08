@@ -4,7 +4,7 @@
 static const char *gPurpose = "insert into fast library identification and recognition database";
 static const char *gDescription =
     "Inserts function information into a database for fast library identification and recognition (FLIR). "
-    "If a ROSE Binary Analysis (*.rba) file is specified as the source, then that specimen's functions are hashed "
+    "If a binary specimen is specified as the source, then that specimen's functions are hashed "
     "and added to the specified database. If a FLIR database URL is specified (see \"Databases\"), then function information "
     "is copied from the source database to the destination database. In either case, only functions that satisfy the "
     "function selection criteria are inserted.";
@@ -13,12 +13,13 @@ static const char *gDescription =
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/filesystem.hpp>
 
 using namespace Sawyer::Message::Common;
 using namespace Rose;
@@ -39,8 +40,8 @@ struct Settings {
     Flir::Settings flir;                                // settings for fast library identification and recognition
 };
 
-static std::string
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     // Generic switches
@@ -92,23 +93,29 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.with(tool);
     parser.with(Flir::commandLineSwitches(settings.flir));
     parser.with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}|@v{source_datbase}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}|@v{source_datbase}]");
     parser.doc("Databases", Sawyer::Database::Connection::uriDocString());
 
+    return parser;
+}
+
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
     std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
+    if (input.empty())
+        input.push_back("-");
+
     if (settings.connectUrl.empty() && settings.createUrl.empty()) {
         mlog[FATAL] <<"a database name must be specified with --database/-D or --create/-C\n";
         exit(1);
     }
+
     if (!settings.connectUrl.empty() && !settings.createUrl.empty()) {
         mlog[FATAL] <<"the @s{database} and @s{create} switches are mutually exclusive\n";
         exit(1);
     }
-    return input.empty() ? "-" : input[0];
+
+    return input;
 }
 
 static std::string
@@ -120,14 +127,8 @@ hashLibrary(const MemoryMap::Ptr &map) {
 }
 
 static void
-copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(rbaName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(rbaName) <<"\": " <<e.what() <<"\n";
-        exit(1);
-    }
+copyFromSpecimen(const Settings &settings, Flir &dst, const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
 
     std::string libraryHash = settings.libraryHash;
     if (libraryHash.empty()) {
@@ -177,8 +178,11 @@ main(int argc, char *argv[]) {
 
     // Command-line parsing
     Settings settings;
-    std::string inputName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> args = parseCommandLine(argc, argv, switchParser, settings);
 
+    // Create or open the destination database
     Flir flir;
     flir.settings(settings.flir);
     if (!settings.connectUrl.empty()) {
@@ -187,18 +191,29 @@ main(int argc, char *argv[]) {
         flir.createDatabase(settings.createUrl);
     }
 
-    // Input file is either an RBA file or another database. If it's a database, then the specified functions
-    // and libraries are copied from the source database into the destination database.
-    if (boost::ends_with(inputName, ".rba")) {
-        copyFromRba(settings, flir, inputName);
-    } else if (boost::contains(inputName, "://") || boost::ends_with(inputName, ".db")) {
-        copyFromDatabase(settings, flir, inputName);
-    } else {
-        try {
-            copyFromDatabase(settings, flir, inputName);
-        } catch (...) {
-            copyFromRba(settings, flir, inputName);
+    // Copy from the specimen, RBA file, or source database to the destination database
+    if (args.size() == 1) {
+        if (boost::contains(args[0], "://") || boost::ends_with(args[0], ".db")) {
+            copyFromDatabase(settings, flir, args[0]);
+        } else if (args[0] == "-" || boost::ends_with(args[0], ".rba")) {
+            try {
+                auto partitioner = P2::Partitioner::instanceFromRbaFile(args[0], settings.stateFormat);
+                copyFromSpecimen(settings, flir, partitioner);
+            } catch (const std::exception &e) {
+                mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(args[0]) <<"\": " <<e.what() <<"\n";
+                exit(1);
+            }
+        } else {
+            try {
+                copyFromDatabase(settings, flir, args[0]);
+            } catch (...) {
+                auto partitioner = engine->partition(args);
+                copyFromSpecimen(settings, flir, partitioner);
+            }
         }
+    } else {
+        auto partitioner = engine->partition(args);
+        copyFromSpecimen(settings, flir, partitioner);
     }
 }
 

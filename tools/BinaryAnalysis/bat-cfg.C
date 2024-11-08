@@ -1,29 +1,21 @@
 static const char *purpose = "emits control flow graphs";
 static const char *description =
-    "Given a BAT state for a binary specimen, generates GraphViz or text files representing control flow graphs. The BAT state "
-    "file is a file created by another BAT tool, such as bat-ana. If the state file name is \"-\" (a single hyphen) or not "
-    "specified then the state is read from standard input.";
+    "Given a binary specimen, generate GraphViz or text files representing control flow graphs.";
 
-#include <rose.h>
+#include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 
-#include <rose_strtoull.h>                              // rose
+#include <SgAsmInstruction.h>
 
-#include <batSupport.h>
-#include <boost/filesystem.hpp>
-#include <fstream>
-#include <iostream>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/GraphIteratorMap.h>
-#include <Sawyer/Stopwatch.h>
-#include <string>
-#include <stringify.h>
-#include <vector>
+#include <stringify.h>                                  // ROSE
+
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -32,50 +24,48 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace {
 
-enum OutputFormat { FORMAT_GRAPHVIZ, FORMAT_TEXT };
-enum Mode { GLOBAL_CFG, FUNCTION_CFG };
+enum class OutputFormat { GRAPHVIZ, TEXT };
+enum class Mode { GLOBAL_CFG, FUNCTION_CFG, UNSPECIFIED };
 
 struct Settings {
-    OutputFormat outputFormat;                          // whether to generate GraphViz or plain text
-    Mode mode;                                          // type of graph output to produce
-    std::string outputPrefix;                           // string to add to each output file name
-    bool usingSubgraphs;                                // group vertices into functions
-    bool showingInstructions;                           // show instructions in each vertex
-    bool showingReturnEdges;                            // show function return edges
+    OutputFormat outputFormat = OutputFormat::TEXT;     // whether to generate GraphViz or plain text
+    Mode mode = Mode::UNSPECIFIED;                      // type of graph output to produce
+    std::string outputPrefix = "-";                     // string to add to each output file name
+    bool usingSubgraphs = true;                         // group vertices into functions
+    bool showingInstructions = true;                    // show instructions in each vertex
+    bool showingReturnEdges = false;                    // show function return edges
     std::set<std::string> functionNames;                // restrict output to these function names, addresses
-    SerialIo::Format stateFormat;
-
-    Settings()
-        : outputFormat(FORMAT_TEXT), mode(GLOBAL_CFG), outputPrefix("-"), usingSubgraphs(true),
-          showingInstructions(true), showingReturnEdges(false), stateFormat(SerialIo::BINARY) {}
+    SerialIo::Format stateFormat = SerialIo::BINARY;
 };
 
 Sawyer::Message::Facility mlog;
 
-// Parses the command-line and returns the name of the input file, if any.
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+// Build a command-line switch parser bound to the specified settings.
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
+    //---------- Generic switches ----------
     SwitchGroup generic = Rose::CommandLine::genericSwitches();
     generic.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
+    //---------- Output switches ----------
     SwitchGroup cfg("Control flow graph switches");
     cfg.name("cfg");
 
     cfg.insert(Switch("format")
                .argument("m", enumParser(settings.outputFormat)
-                         ->with("gv", FORMAT_GRAPHVIZ)
-                         ->with("text", FORMAT_TEXT))
+                         ->with("gv", OutputFormat::GRAPHVIZ)
+                         ->with("text", OutputFormat::TEXT))
                .doc("Determines which format of output to produce. The choices are:"
                     "@named{gv}{Produce a GraphViz file.}"
                     "@named{text}{Produce a text file.}"
-                    "The default is \"" + std::string(FORMAT_GRAPHVIZ==settings.outputFormat?"gv":"text") + "\"."));
+                    "The default is \"" + std::string(OutputFormat::GRAPHVIZ==settings.outputFormat?"gv":"text") + "\"."));
 
     cfg.insert(Switch("mode")
                .argument("graph-type", enumParser(settings.mode)
-                         ->with("global", GLOBAL_CFG)
-                         ->with("function", FUNCTION_CFG))
+                         ->with("global", Mode::GLOBAL_CFG)
+                         ->with("function", Mode::FUNCTION_CFG))
                .doc("Specifies the type of control flow graphs to emit. The choices are:"
                     "@named{global}{Generate a single global control flow graph.}"
                     "@named{function}{Generate one control flow graph per function.}"
@@ -138,7 +128,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.errorStream(mlog[FATAL]);
     parser.with(cfg);
     parser.with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.doc("Output",
                "If only a single graph is created, it can be sent to standard output by specifying \"@s{prefix} -\". Otherwise "
                "output will be written to files which are truncated if they previously existed.\n\n"
@@ -151,25 +141,30 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
                "For global control flow graphs, the output file is named \"@v{prefix}cfg-global.dot\".");
 
-    ParserResult cmdline = parser.parse(argc, argv).apply();
+    return parser;
+}
 
-    // Positional args
-    std::vector<std::string> input = cmdline.unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
+// Parses the command-line and returns the name of the specimen to be analyzed.
+std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
+
+    // Values for optional args
+    if (Mode::UNSPECIFIED == settings.mode) {
+        if (settings.functionNames.empty()) {
+            settings.mode = Mode::GLOBAL_CFG;
+        } else {
+            settings.mode = Mode::FUNCTION_CFG;
+        }
+    } else if (!settings.functionNames.empty()) {
+        mlog[FATAL] <<"--function and --mode=global are mutually exclusive\n";
         exit(1);
     }
 
-    // Values for optional args
-    if (!settings.functionNames.empty()) {
-        if (GLOBAL_CFG == settings.mode && cmdline.have("mode")) {
-            mlog[FATAL] <<"--function and --mode=global are mutually exclusive\n";
-            exit(1);
-        }
-        settings.mode = FUNCTION_CFG;
-    }
-
-    return input.empty() ? std::string("-") : input[0];
+    ASSERT_forbid(settings.mode == Mode::UNSPECIFIED);
+    return specimen;
 }
 
 // Replaces characters that can't appear in a file name component with underscores.  If the whole return string would be
@@ -359,15 +354,25 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
+    // Parse command-line
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings /*in,out*/);
+
+    // Ingest specimen
     P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
 
     // Get a list of functions
     std::vector<P2::Function::Ptr> selectedFunctions = partitioner->functions();
@@ -379,7 +384,7 @@ main(int argc, char *argv[]) {
 
     // Generate output
     bool hadErrors = false;
-    if (FUNCTION_CFG == settings.mode) {
+    if (Mode::FUNCTION_CFG == settings.mode) {
         if (selectedFunctions.size() > 1 && settings.outputPrefix == "-") {
             mlog[FATAL] <<"refusing to send " <<selectedFunctions.size() <<" GraphViz objects to standard output\n"
                         <<"use the --prefix switch instead to specify output file names.\n";
@@ -399,10 +404,10 @@ main(int argc, char *argv[]) {
             }
             std::ostream &out = file.is_open() ? file : std::cout;
             switch (settings.outputFormat) {
-                case FORMAT_GRAPHVIZ:
+                case OutputFormat::GRAPHVIZ:
                     emitGraphVizFunctionCfg(out, partitioner, function, settings);
                     break;
-                case FORMAT_TEXT:
+                case OutputFormat::TEXT:
                     emitTextFunctionCfg(out, partitioner, function, settings);
                     break;
                 default:
@@ -410,7 +415,7 @@ main(int argc, char *argv[]) {
             }
         }
     } else {
-        ASSERT_require(GLOBAL_CFG == settings.mode);
+        ASSERT_require(Mode::GLOBAL_CFG == settings.mode);
         boost::filesystem::path fileName = makeGraphVizFileName(settings.outputPrefix, "cfg-global");
         std::ofstream file;
         if (fileName != "-") {
@@ -423,10 +428,10 @@ main(int argc, char *argv[]) {
         }
         std::ostream &out = file.is_open() ? file : std::cout;
         switch (settings.outputFormat) {
-            case FORMAT_GRAPHVIZ:
+            case OutputFormat::GRAPHVIZ:
                 emitGraphVizGlobalCfg(out, partitioner, settings);
                 break;
-            case FORMAT_TEXT:
+            case OutputFormat::TEXT:
                 emitTextGlobalCfg(out, partitioner, settings);
                 break;
             default:

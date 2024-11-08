@@ -2,20 +2,17 @@ static const char *purpose = "debug data flow";
 static const char *description =
     "Runs a simple data-flow analysis on the specified function and shows the machine state along the way.";
 
-#include <rose.h>
+#include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 
-#include <batSupport.h>
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/Message.h>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -32,8 +29,8 @@ struct Settings {
     size_t maxIterations = 100;
 };
 
-static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -59,14 +56,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.with(tool).with(gen);
-    std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
-    if (args.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-    return args.empty() ? boost::filesystem::path("-") : args[0];
+    return parser;
+}
+
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
+    return specimen;
 }
 
 static void
@@ -131,14 +131,22 @@ main(int argc, char *argv[]) {
     DataFlow::mlog[DEBUG].enable();
 
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser);
+
     P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
 
     const std::vector<P2::Function::Ptr> functions = [&settings, &partitioner]() {
         if (settings.functionNames.empty()) {

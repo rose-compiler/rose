@@ -1,5 +1,6 @@
 static const char *purpose = "demonstrate read/write sets";
-static const char *description = "To be written.";
+static const char *description =
+    "Calculate and show read/write sets for stack variables in functions.";
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
@@ -37,7 +38,7 @@ struct Settings {
 static Sawyer::Message::Facility mlog;
 
 static Sawyer::CommandLine::Parser
-buildSwitchParser(Settings &settings) {
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
 
@@ -82,7 +83,7 @@ public:
 
         // Create a command-line for testing
         Settings settings;
-        Sawyer::CommandLine::Parser parser = buildSwitchParser(settings);
+        Sawyer::CommandLine::Parser parser = createSwitchParser(settings);
         std::array<char*, 6> args;
         args[0] = strdup("bat-rwsets-self-test");
         args[1] = strdup("--threads=1");
@@ -698,7 +699,7 @@ main(int argc, char *argv[]) {
     // Parse command-line
     Rose::CommandLine::insertSelfTest<SelfTest>();
     Settings settings;
-    Sawyer::CommandLine::Parser parser = buildSwitchParser(settings);
+    Sawyer::CommandLine::Parser parser = createSwitchParser(settings);
     P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser /*in,out*/);
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
     mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";

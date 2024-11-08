@@ -52,7 +52,7 @@ struct Settings {
 
 // Build a command line parser without running it
 Sawyer::CommandLine::Parser
-buildSwitchParser(Settings &settings) {
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup tool("Tool specific switches");
@@ -150,7 +150,7 @@ main(int argc, char *argv[]) {
         // Build command line parser (without any knowledge of engine settings), choose the appropriate partitioner engine type, and
         // parse and apply the command-line to the settings, engine, etc. using the appropriately modified command-line parser.
         Settings settings;
-        auto parser = buildSwitchParser(settings);
+        auto parser = createSwitchParser(settings);
         P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
         std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
         mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";

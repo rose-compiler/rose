@@ -2,22 +2,23 @@ static const char *purpose = "lists static data blocks";
 static const char *description =
     "Given a BAT state for a binary specimen, list information about all of the static data blocks.";
 
-#include <rose.h>
+#include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 
-#include <batSupport.h>
+#include <SgAsmType.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/filesystem.hpp>
 #include <fstream>
 #include <iostream>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/Stopwatch.h>
 #include <string>
 #include <vector>
 
@@ -31,21 +32,18 @@ Sawyer::Message::Facility mlog;
 Rose::BinaryAnalysis::SerialIo::Format format = Rose::BinaryAnalysis::SerialIo::BINARY;
 
 struct Settings {
-    bool printingData;                                  // print the actual data
-
-    Settings()
-        : printingData(true) {}
+    bool printingData = true;                           // print the actual data
 };
 
-// Parses the command-line and returns the name of the input file, if any.
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
     gen.insert(Bat::stateFileFormatSwitch(format));
 
     SwitchGroup tool("Tool-specific switches");
+    tool.name("tool");
     CommandLine::insertBooleanSwitch(tool, "data", settings.printingData,
                                      "Output the data represented by the static data block.");
 
@@ -53,14 +51,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.errorStream(mlog[FATAL]);
     parser.with(tool);
     parser.with(gen);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
+    return parser;
+}
 
-    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-    return input.empty() ? std::string("-") : input[0];
+std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
+    return specimen;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,14 +75,23 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, format);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    const std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser);
+
+    P2::Partitioner::ConstPtr partitioner;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], format);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
+
 
     P2::AddressUsers allUsers = partitioner->aum().overlapping(partitioner->aum().hull());
     for (const P2::AddressUser &user: allUsers.addressUsers()) {

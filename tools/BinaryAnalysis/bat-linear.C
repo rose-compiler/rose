@@ -71,7 +71,7 @@ createSwitchParser(Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.with(tool).with(gen);
 
     return parser;

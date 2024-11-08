@@ -1,23 +1,23 @@
 static const char *purpose = "show memory map";
 static const char *description =
-    "Given a BAT state for a binary specimen, show the memory map on standard output.\n\n"
+    "Given a BAT state for a binary specimen, show the memory map on standard output.";
 
-    "This tool reads the binary analysis state file provided as a command-line positional argument, or standard input if "
-    "the name is \"-\" (a single hyphen) or not specified. The standard input mode works only on those operating systems "
-    "whose standard input is opened in binary mode, such as Unix-like systems.";
+#include <batSupport.h>
 
-#include <rose.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/CommandLine.h>
-#include <Sawyer/Stopwatch.h>
+#include <Rose/Initialize.h>
 
 #include <BinaryVxcoreParser.h>                         // rose
 
-#include <batSupport.h>
+#include <Sawyer/Stopwatch.h>
+
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -43,11 +43,7 @@ Sawyer::CommandLine::Parser
 createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    //---------- Generic Switches ----------
-    SwitchGroup generic = Rose::CommandLine::genericSwitches();
-    generic.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
-
-    //---------- Output Switches ----------
+    //---------- Output switches ----------
     SwitchGroup output("Output Switches");
     output.name("out");
 
@@ -106,6 +102,10 @@ createSwitchParser(Settings &settings) {
                   .doc("Specifies the addresses that should be dumped. The default is to dump all mapped addresses. " +
                        P2::AddressIntervalParser::docString() + "  The specified interval may include addresses "
                        "that aren't mapped and which are silently ignored. This switch may appear more than once."));
+
+    //---------- Generic switches ----------
+    SwitchGroup generic = Rose::CommandLine::genericSwitches();
+    generic.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
     //---------- Parsing -----------
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);

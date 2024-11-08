@@ -3,12 +3,12 @@ static const char *description =
     "Reads symbolic expressions from standard input, one per line, and processes them through ROSE's simplification "
     "layer, printing the result. Command-line switches cause other tests to also be performed.";
 
-#include <rose.h>
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 #include <Sawyer/Optional.h>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -157,8 +157,6 @@ main(int argc, char *argv[]) {
                 std::cerr <<"    input: " <<*line <<"\n"
                           <<"    here---" <<std::string(e.columnNumber, '-') <<"^\n\n";
             }
-        } catch (const Rose::FailedAssertion &e) {
-            std::cerr <<"\n"; // message has already been printed.
         }
     }
 }

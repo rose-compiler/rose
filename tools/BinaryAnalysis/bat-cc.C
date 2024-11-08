@@ -1,15 +1,15 @@
-static const char *purpose = "shows calling conventions";
+static const char *purpose = "calling convention information";
 static const char *description =
-    "To be written.";
+    "Computes and/or shows information about calling conventions.";
 
-#include <rose.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Analysis.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/FormattedTable.h>
+#include <Rose/Initialize.h>
 
 #include <batSupport.h>
 #include <boost/range/adaptor/reversed.hpp>
@@ -50,13 +50,10 @@ struct Settings {
 
 // Build a command-line switch parser bound to the specified settings.
 Sawyer::CommandLine::Parser
-makeSwitchParser(Settings &settings) {
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
-    parser.errorStream(mlog[FATAL]);
-
+    //---------- Generic switches ----------
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
 
     gen.insert(Switch("output", 'o')
@@ -68,6 +65,7 @@ makeSwitchParser(Settings &settings) {
 
     gen.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
+    //---------- Selection switches ----------
     SwitchGroup sel("Selection switches");
     sel.name("sel");
 
@@ -81,7 +79,7 @@ makeSwitchParser(Settings &settings) {
                     "treated as an address. This switch may occur multiple times and multiple comma-separated values may "
                     "be specified per occurrence."));
 
-
+    //---------- Calling convention switches ----------
     SwitchGroup cc("Calling convention switches");
     cc.name("cc");
 
@@ -112,10 +110,13 @@ makeSwitchParser(Settings &settings) {
                                            "results. This is intended to be used with the @s{output} switch to remove "
                                            "analysis results from a state file.");
 
-    return parser
-        .with(sel)
-        .with(cc)
-        .with(gen);
+    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
+    parser.errorStream(mlog[FATAL]);
+    parser.with(sel);
+    parser.with(cc);
+    parser.with(gen);
+    return parser;
 }
 
 // Parses the command-line and returns the name of the input file, if any.
@@ -208,8 +209,9 @@ show(const CountDefNames &cdns) {
     table.print(std::cout);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 } // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
 main(int argc, char *argv[]) {
@@ -220,7 +222,7 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    Sawyer::CommandLine::Parser parser = makeSwitchParser(settings);
+    Sawyer::CommandLine::Parser parser = createSwitchParser(settings);
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, parser, settings);
     
     // Read the state file

@@ -5,7 +5,6 @@ static const char *purpose = "show instructions executed natively";
 static const char *description =
     "Runs the specimen in a debugger and prints each instruction that is executed.";
 
-#include <rose.h>
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -15,9 +14,13 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
+
+#include <SgAsmInstruction.h>
+
+#include <Sawyer/CommandLine.h>
 
 #include <boost/filesystem.hpp>
-#include <Sawyer/CommandLine.h>
 
 static const bool WITH_INSTRUCTION_PROVIDER = true;
 
@@ -72,7 +75,7 @@ struct Settings {
 };
 
 static Sawyer::CommandLine::Parser
-makeSwitchParser(Settings &settings) {
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup out("Output switches");
@@ -105,13 +108,17 @@ main(int argc, char *argv[]) {
 
     // Parse command-line
     Settings settings;
-    Sawyer::CommandLine::Parser switchParser = makeSwitchParser(settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
     auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/, P2::Engine::FirstPositionalArguments(1));
     std::vector<std::string> args = parseCommandLine(argc, argv, switchParser);
     if (args.empty()) {
         ::mlog[FATAL] <<"no specimen supplied on command-line; see --help\n";
         exit(1);
+    } else if (args.size() == 1 && (args[0] == "-" || boost::ends_with(args[0], ".rba"))) {
+        ::mlog[FATAL] <<"RBA files are not supported by this tool\n";
+        exit(1);
     }
+
     Debugger::Linux::Specimen specimen(args);
     specimen.randomizedAddresses(false);
     specimen.flags().set(Debugger::Linux::Flag::CLOSE_FILES);

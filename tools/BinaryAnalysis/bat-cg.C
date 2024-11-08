@@ -1,24 +1,17 @@
 static const char *purpose = "emits a function call graph";
 static const char *description =
-    "Given a BAT state for a binary specimen, generate a GraphViz or text function call graph on standard output. The BAT "
-    "state file is a file created by another BAT tool, such as bat-ana. If the state file name is \"-\" (a single hyphen) "
-    "or not specified then the state is read from standard input.";
-
-#include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <rose_strtoull.h>                              // rose
+    "Given a binary specimen, generate a GraphViz or text function call graph on standard output.";
 
 #include <batSupport.h>
-#include <boost/filesystem.hpp>
-#include <fstream>
-#include <iostream>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/Stopwatch.h>
-#include <string>
-#include <vector>
+
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/Initialize.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -27,42 +20,41 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace {
 
-enum OutputFormat { FORMAT_GRAPHVIZ, FORMAT_TEXT, FORMAT_GEXF };
+enum class OutputFormat { GRAPHVIZ, TEXT, GEXF, UNSPECIFIED };
 
 struct Settings {
-    OutputFormat outputFormat;                          // style of output
-    bool inliningImports;                               // inline imported functions when creating GraphViz output
+    OutputFormat outputFormat = OutputFormat::UNSPECIFIED; // style of output
+    bool inliningImports = false;                          // inline imported functions when creating GraphViz output
     std::set<std::string> functionNames;                // restrict output to these function names, addresses,...
     std::set<rose_addr_t> addresses;                    // ...and/or these functions
-    SerialIo::Format stateFormat;
-
-    Settings()
-        : outputFormat(FORMAT_TEXT), inliningImports(false), stateFormat(SerialIo::BINARY) {}
+    SerialIo::Format stateFormat = SerialIo::BINARY;
 };
 
 Sawyer::Message::Facility mlog;
 
-// Parses the command-line and returns the name of the input file, if any.
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+// Build a command-line switch parser bound to the specified settings.
+Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
+    //---------- Generic switches ----------
     SwitchGroup generic = Rose::CommandLine::genericSwitches();
     generic.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
+    //---------- Function call graph switches ----------
     SwitchGroup cg("Function call graph switches");
     cg.name("cg");
 
     cg.insert(Switch("format")
               .argument("m", enumParser(settings.outputFormat)
-                        ->with("gv", FORMAT_GRAPHVIZ)
-                        ->with("gexf", FORMAT_GEXF)
-                        ->with("text", FORMAT_TEXT))
+                        ->with("gv", OutputFormat::GRAPHVIZ)
+                        ->with("gexf", OutputFormat::GEXF)
+                        ->with("text", OutputFormat::TEXT))
               .doc("Determines which format of output to produce. The choices are:"
                    "@named{gv}{Produce a GraphViz file.}"
                    "@named{gexf}{Produce a Graph Exchange XML Format file.}"
                    "@named{text}{Produce a text file.}"
-                   "The default is \"" + std::string(FORMAT_GRAPHVIZ==settings.outputFormat?"gv":"text") + "\"."));
+                   "The default is \"" + std::string(OutputFormat::GRAPHVIZ==settings.outputFormat?"gv":"text") + "\"."));
 
     cg.insert(Switch("inline-imports")
               .intrinsicValue(true, settings.inliningImports)
@@ -97,27 +89,27 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.errorStream(mlog[FATAL]);
     parser.with(cg);
     parser.with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{BAT-input}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
+    return parser;
+}
 
-    ParserResult cmdline = parser.parse(argc, argv).apply();
-    
-    // Positional args
-    std::vector<std::string> input = cmdline.unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
+// Parses the command-line and returns the name of the specimen to be analyzed.
+std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
 
     // Optional args
-    if (!settings.functionNames.empty()) {
-        if (FORMAT_GRAPHVIZ == settings.outputFormat && cmdline.have("format")) {
-            mlog[FATAL] <<"--function and --format=gv are mutually exclusive\n";
-            exit(1);
-        }
-        settings.outputFormat = FORMAT_TEXT;
+    if (OutputFormat::UNSPECIFIED == settings.outputFormat) {
+        settings.outputFormat = OutputFormat::TEXT;
+    } else if (OutputFormat::GRAPHVIZ == settings.outputFormat && !settings.functionNames.empty()) {
+        mlog[FATAL] <<"--function and --format=gv are mutually exclusive\n";
+        exit(1);
     }
+    ASSERT_forbid(OutputFormat::UNSPECIFIED == settings.outputFormat);
 
-    return input.empty() ? std::string("-") : input[0];
+    return specimen;
 }
 
 void
@@ -214,21 +206,31 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
+    // Parse command-line
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings /*in,out*/);
+
+    // Ingest specimen
     P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
 
     switch (settings.outputFormat) {
-        case FORMAT_GRAPHVIZ:
+        case OutputFormat::GRAPHVIZ:
             emitGraphViz(partitioner, settings);
             break;
-        case FORMAT_TEXT: {
+        case OutputFormat::TEXT: {
             std::vector<P2::Function::Ptr> selectedFunctions = partitioner->functions();
             if (!settings.functionNames.empty() || !settings.addresses.empty()) {
                 selectedFunctions = Bat::selectFunctionsByNameOrAddress(selectedFunctions, settings.functionNames, mlog[WARN]);
@@ -242,7 +244,7 @@ main(int argc, char *argv[]) {
             emitText(partitioner, selectedFunctions, settings);
             break;
         }
-        case FORMAT_GEXF:
+        case OutputFormat::GEXF:
             emitGexf(partitioner, settings);
             break;
         default:

@@ -7,14 +7,18 @@ static const char *gDescription =
     "the output. The first positional command-line argument is the name of a ROSE Binary Analysis and the remaining arguments "
     "are the URLs for the databases.";
 
+#include <batSupport.h>
+
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 
-#include <batSupport.h>
-#include <boost/filesystem.hpp>
 #include <Sawyer/ThreadWorkers.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Sawyer::Message::Common;
 using namespace Rose;
@@ -35,8 +39,8 @@ struct Settings {
     Flir::Settings flir;
 };
 
-static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     // Generic switches
@@ -60,16 +64,24 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.with(tool);
     parser.with(Flir::commandLineSwitches(settings.flir));
     parser.with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{RBA} @v{databases}...");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} -- @v{databases}...");
     parser.doc("Databases", Sawyer::Database::Connection::uriDocString());
+    return parser;
+}
 
+static std::vector<std::vector<std::string>>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
     std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
-    if (args.size() < 2) {
+    std::vector<std::vector<std::string>> groups = parser.regroupArgs(args);
+    if (groups.size() != 2) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
 
-    return args;
+    if (groups[0].empty())
+        groups[0].push_back("-");
+
+    return groups;
 }
 
 static size_t
@@ -126,25 +138,34 @@ main(int argc, char *argv[]) {
 
     // Command-line parsing
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-    ASSERT_require(args.size() >= 2);
-    std::string rbaFileName = args.front();
-    args.erase(args.begin(), args.begin()+1);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/, P2::Engine::GroupedPositionalArguments());
+    std::vector<std::vector<std::string>> argGroups = parseCommandLine(argc, argv, switchParser);
+    ASSERT_require(argGroups.size() == 2);
+    const std::vector<std::string> &specimen = argGroups[0];
+    const std::vector<std::string> &databases = argGroups[1];
+    ASSERT_forbid(specimen.empty());
+
     P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(rbaFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(rbaFileName) <<"\": " <<e.what() <<"\n";
-        exit(1);
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(specimen[0]) <<"\": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
 
     // Match each function against the databases. It's fastest to open each database just once.
     SAWYER_THREAD_TRAITS::Mutex resultMutex;            // guards 'functions' and 'libraries' as they're being initialized
     Functions functions;                                // specimen functions and the corresponding database functions
     Libraries libraries;
 
-    Sawyer::ProgressBar<size_t> progress(args.size() * partitioner->nFunctions(), mlog[MARCH]);
-    for (const std::string &dbName: args) {
+    Sawyer::ProgressBar<size_t> progress(databases.size() * partitioner->nFunctions(), mlog[MARCH]);
+    for (const std::string &dbName: databases) {
         Sawyer::Container::Graph<P2::Function::Ptr> work;
         for (const P2::Function::Ptr &function: partitioner->functions())
             work.insertVertex(function);

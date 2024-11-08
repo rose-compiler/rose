@@ -3,15 +3,17 @@ static const char *description =
     "Scans the memory regions marked as executable and does a linear disassembly. The instruction mnemonics are listed along "
     "with the number of times they occur.";
 
-#include <rose.h>
+#include <batSupport.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/Initialize.h>
 
-#include <batSupport.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-#include <Sawyer/CommandLine.h>
 
 using namespace Bat;
 using namespace Rose;
@@ -20,32 +22,41 @@ using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
-static SerialIo::Format stateFormat = SerialIo::BINARY;
-static boost::filesystem::path saveAs, augmentFrom;
 
-static std::vector<boost::filesystem::path>
-parseCommandLine(int argc, char *argv[]) {
+struct Settings {
+    SerialIo::Format stateFormat = SerialIo::BINARY;
+    boost::filesystem::path saveAs, augmentFrom;
+};
+
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup generic = Rose::CommandLine::genericSwitches();
-    generic.insert(Bat::stateFileFormatSwitch(stateFormat));
+    generic.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
     generic.insert(Switch("output", 'o')
-                   .argument("file", anyParser(saveAs))
+                   .argument("file", anyParser(settings.saveAs))
                    .doc("Save output in the specified file, overwriting the file if it already existed. The default "
                         "is to print the output as a textual table to standard output."));
 
     generic.insert(Switch("input", 'i')
-                   .argument("file", anyParser(augmentFrom))
+                   .argument("file", anyParser(settings.augmentFrom))
                    .doc("Initialize the histogram with data from the specified file. This can be used to accumulate "
                         "instruction frequencies across multiple specimens."));
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.with(generic);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba_files}...]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}...]");
+    return parser;
+}
 
-    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    return std::vector<boost::filesystem::path>(input.begin(), input.end());
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
+    return specimen;
 }
 
 int
@@ -55,12 +66,17 @@ main(int argc, char *argv[]) {
     mlog.comment("instruction frequencies");
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
-    std::vector<boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv);
+
+    // Parse the command-line
+    Settings settings;
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser);
 
     // Initialize the histogram.
     InsnHistogram histogram;
-    if (!augmentFrom.empty()) {
-        if (!boost::filesystem::exists(augmentFrom) && augmentFrom == saveAs) {
+    if (!settings.augmentFrom.empty()) {
+        if (!boost::filesystem::exists(settings.augmentFrom) && settings.augmentFrom == settings.saveAs) {
             // As a special case, it's not an error if the augment-from file does not exist but would be created as the output
             // of this tool. This is so that this tool can be used in a shell "for" loop like:
             //    rm result.dat
@@ -69,7 +85,7 @@ main(int argc, char *argv[]) {
             //    done
         } else {
             try {
-                histogram = loadInsnHistogram(augmentFrom);
+                histogram = loadInsnHistogram(settings.augmentFrom);
             } catch (const SerialIo::Exception &e) {
                 mlog[FATAL] <<e.what() <<"\n";
                 exit(1);
@@ -77,23 +93,28 @@ main(int argc, char *argv[]) {
         }
     }
 
-    // Compute the histogram
-    for (const boost::filesystem::path &rbaFile: rbaFiles) {
-        P2::Partitioner::Ptr partitioner;
+    // Ingest the specimen
+    P2::Partitioner::ConstPtr partitioner;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
         try {
-            partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, stateFormat);
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
         } catch (const std::exception &e) {
-            mlog[FATAL] <<"cannot load partitioner from " <<rbaFile <<": " <<e.what() <<"\n";
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
             exit(1);
         }
-        MemoryMap::Ptr map = partitioner->memoryMap();
-        ASSERT_not_null(map);
-        mergeInsnHistogram(histogram, computeInsnHistogram(partitioner->instructionProvider(), map));
+    } else {
+        partitioner = engine->partition(specimen);
     }
-    
+    ASSERT_not_null(partitioner);
+
+    // Compute the histogram
+    MemoryMap::Ptr map = partitioner->memoryMap();
+    ASSERT_not_null(map);
+    mergeInsnHistogram(histogram, computeInsnHistogram(partitioner->instructionProvider(), map));
+
     // Emit results
-    if (!saveAs.empty()) {
-        saveInsnHistogram(histogram, saveAs);
+    if (!settings.saveAs.empty()) {
+        saveInsnHistogram(histogram, settings.saveAs);
     } else {
         printInsnHistogram(histogram, std::cout);
     }

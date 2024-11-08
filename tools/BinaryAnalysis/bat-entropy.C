@@ -3,13 +3,15 @@ static const char *description =
     "Slides a window across virtual memory and computes the entropy at each position. Command-line switches control "
     "the size of the window, the number of bytes per symbol, and the amount by which to shift the window at each step.";
 
-#include <rose.h>
+#include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
+#include <Rose/Initialize.h>
 
-#include <batSupport.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
 
 using namespace Rose;
@@ -21,24 +23,19 @@ static Sawyer::Message::Facility mlog;
 static const char *OVERFLOW_SUFFIX = "+++";
 
 struct Settings {
-    SerialIo::Format stateFormat;
-    size_t symbolSize;                                  // size of each symbol in bytes
-    size_t windowSize;                                  // size of each window in symbols
-    size_t translation;                                 // window translation at each step in symbols
-    rose_addr_t alignment;                              // how to align the first window in bytes; 0 means same as symbolSize
-    AddressInterval where;                              // what part of memory to examine
-    size_t barLength;                                   // for bar charts, total number of columns
-    size_t nBuckets;                                    // number of buckets for histograms
-    double scale;
-
-    Settings()
-        : stateFormat(SerialIo::BINARY), symbolSize(1), windowSize(1024), translation(1),
-          alignment(0), where(AddressInterval::whole()), barLength(0), nBuckets(0), scale(1.0) {}
+    SerialIo::Format stateFormat = SerialIo::BINARY;
+    size_t symbolSize = 1;                              // size of each symbol in bytes
+    size_t windowSize = 1024;                           // size of each window in symbols
+    size_t translation = 1;                             // window translation at each step in symbols
+    rose_addr_t alignment = 0;                          // how to align the first window in bytes; 0 means same as symbolSize
+    AddressInterval where = AddressInterval::whole();   // what part of memory to examine
+    size_t barLength = 0;                               // for bar charts, total number of columns
+    size_t nBuckets = 0;                                // number of buckets for histograms
+    double scale = 1.0;
 };
 
-// Parse the command-line and return the name of the input file if any (the ROSE binary state).
-static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -96,9 +93,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.with(tool).with(gen);
-    std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
+    return parser;
+}
+
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
 
     if (0 == settings.symbolSize) {
         mlog[FATAL] <<"invalid symbol size: 0 bytes\n";
@@ -127,12 +131,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                    <<"possible symbols is " <<possibleSymbols <<"\n";
     }
 
-    if (args.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-
-    return args.empty() ? boost::filesystem::path("-") : args[0];
+    return specimen;
 }
 
 class Window {
@@ -306,14 +305,22 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser, settings);
+
     P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
     MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 

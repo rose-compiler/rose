@@ -4,7 +4,7 @@ static const char *description =
     "throughout the execution of a function, and how the frame pointer (if any) varies with respect to the stack "
     "pointer.";
 
-#include <rose.h>
+#include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
@@ -13,13 +13,10 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Initialize.h>
 
-#include <batSupport.h>
-#include <boost/filesystem.hpp>
 #include <fstream>
 #include <iostream>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/Stopwatch.h>
 #include <string>
 #include <vector>
 

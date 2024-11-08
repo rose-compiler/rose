@@ -4,7 +4,7 @@
 static const char *purpose = "finds similar functions";
 static const char *description =
     "This tool attempts to correlate functions in one binary specimen with related functions in the other specimen. "
-    "The two specimens are specified as ROSE binary analysis (RBA) files. It computes a syntactic distance between all "
+    "It computes a syntactic distance between all "
     "pairs of functions using a specified distance metric (see @s{metric}) to create an edge-weighted, bipartite graph. "
     "Finally, a minimum weight perfect matching is found using the Kuhn-Munkres algorithm.  The answer is output as a "
     "list of function correlations and their distance from each other.  The specimens need not have the same number of "
@@ -14,13 +14,16 @@ static const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/FormattedTable.h>
+#include <Rose/Initialize.h>
 
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -65,9 +68,8 @@ struct Settings {
     SerialIo::Format stateFormat = SerialIo::BINARY;
 };
 
-// Parse command-line and apply to settings. Return the two RBA file names.
-static std::pair<boost::filesystem::path, boost::filesystem::path>
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -113,15 +115,30 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{RBA-1} @v{RBA-2}");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen-1} [--] @v{specimen-2}");
     parser.with(tool).with(gen);
-    std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
-    if (args.size() != 2) {
+    return parser;
+}
+
+// Returns two specimens
+static std::pair<std::vector<std::string>, std::vector<std::string>>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::vector<std::string>> groups = parser.regroupArgs(parser.parse(argc, argv).apply().unreachedArgs());
+    if (groups.size() == 1) {
+        if (groups[0].size() == 2) {
+            return {std::vector<std::string>{groups[0][0]}, std::vector<std::string>{groups[0][1]}};
+        } else if (groups[0].size() > 2) {
+            mlog[FATAL] <<"a \"--\" command-line argument must separate the first specimen from the second\n";
+            exit(1);
+        }
+    }
+
+    if (groups.size() != 2) {
         mlog[FATAL] <<"inccorect usage; see --help\n";
         exit(1);
     }
 
-    return std::make_pair(args[0], args[1]);
+    return {groups[0], groups[1]};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -397,12 +414,28 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::vector<SgAsmFunction*>
-loadFunctions(const boost::filesystem::path rbaName, const P2::Engine::Ptr &engine) {
+loadFunctions(const std::vector<std::string> &specimen, const P2::Engine::Ptr &engine, const Settings &settings) {
     ASSERT_not_null(engine);
-    engine->reset();                                           // clear all but config properties
-    engine->settings().partitioner.doingPostAnalysis = false;  // not needed for this tool
-    SgAsmBlock *gblock = engine->buildAst(rbaName.string());   // parse, load, link, disassemble, partition, build AST
-    return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
+    ASSERT_forbid(specimen.empty());
+
+    P2::Partitioner::ConstPtr partitioner;
+    if (specimen.size() == 1 && boost::ends_with(specimen[0], ".rba")) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+
+    } else {
+        engine->reset();                                          // clear all but config properties
+        engine->settings().partitioner.doingPostAnalysis = false; // not needed for this tool
+        partitioner = engine->partition(specimen);
+    }
+    ASSERT_not_null(partitioner);
+
+    SgAsmBlock *gblock = P2::Modules::buildAst(partitioner, partitioner->interpretation(), engine->settings().astConstruction);
+    return AST::Traversal::findDescendantsTyped<SgAsmFunction>(gblock);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -418,15 +451,16 @@ main(int argc, char *argv[]) {
     Stream info(mlog[INFO]);
 
     // Parse command-line
-    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     Settings settings;
-    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/, P2::Engine::GroupedPositionalArguments());
+    const auto specimens = parseCommandLine(argc, argv, switchParser);
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 
-    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, engine);
-    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, engine);
+    std::vector<SgAsmFunction*> functions1 = loadFunctions(specimens.first, engine, settings);
+    std::vector<SgAsmFunction*> functions2 = loadFunctions(specimens.second, engine, settings);
     info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
     info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())

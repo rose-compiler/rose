@@ -2,18 +2,18 @@ static const char *purpose = "find pointer variables";
 static const char *description =
     "Detects variables that are used as pointers.";
 
-#include <rose.h>
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 #include <Rose/CommandLine.h>
+#include <Rose/Initialize.h>
 
 #include <Sawyer/ThreadWorkers.h>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/filesystem.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -28,9 +28,8 @@ struct Settings {
     SerialIo::Format stateFormat = SerialIo::BINARY;
 };
 
-// Parses the command-line and returns the name of the input file if any (the ROSE binary state).
-static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static Sawyer::CommandLine::Parser
+createSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -58,14 +57,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{rba-state}]");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.with(sel).with(gen);
-    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
-    if (input.size() > 1) {
-        mlog[FATAL] <<"incorrect usage; see --help\n";
-        exit(1);
-    }
-    return input.empty() ? boost::filesystem::path("-") : input[0];
+    return parser;
+}
+
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimen.empty())
+        specimen.push_back("-");
+    return specimen;
 }
 
 static void
@@ -117,14 +119,23 @@ main(int argc, char *argv[]) {
 
     // Parse command-line
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner::Ptr partitioner;
-    try {
-        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
-    } catch (const std::exception &e) {
-        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
-        exit(1);
+    Sawyer::CommandLine::Parser switchParser = createSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/);
+    const std::vector<std::string> specimen = parseCommandLine(argc, argv, switchParser);
+
+    // Ingest specimen
+    P2::Partitioner::ConstPtr partitioner;
+    if (specimen.size() == 1 && (specimen[0] == "-" || boost::ends_with(specimen[0], ".rba"))) {
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(specimen[0], settings.stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<specimen[0] <<": " <<e.what() <<"\n";
+            exit(1);
+        }
+    } else {
+        partitioner = engine->partition(specimen);
     }
+    ASSERT_not_null(partitioner);
 
     // Select functions to analyze
     std::vector<P2::Function::Ptr> selectedFunctions;
