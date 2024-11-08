@@ -153,11 +153,6 @@ RHEL7-Main:
 CMake-Build:
     extends: .develop-base
 
-Intel-Main:
-    extends: .develop-base
-    tags:
-        - workpool:large
-
 WINE:
     extends: .develop-base
 
