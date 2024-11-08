@@ -232,8 +232,7 @@ std::pair<BasePtr, size_t> findBestByInterpretation(SgAsmInterpretation*);
  *  in header files that try to include a minimal number of type definitions. If the argument is a null architecture or invalid
  *  registration ID, then an empty name is returned.
  *
- *  Returns a null pointer if the argument is a null
- *  pointer.
+ *  Returns an empty string if the argument is a null pointer.
  *
  * @{ */
 const std::string& name(const BaseConstPtr&);

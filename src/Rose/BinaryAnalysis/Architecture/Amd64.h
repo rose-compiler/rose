@@ -10,8 +10,8 @@ namespace Architecture {
 
 /** Architecture-specific information for x86-64, x86_64, x64, amd64, Intel 64.
  *
- *  x86-64 (also known as x64, x86_64, AMD64, and Intel 64) is a 64-bit version of the x86 instruction set, first announced in
- *  1999. It introduced two new modes of operation, 64-bit mode and compatibility mode, along with a new 4-level paging mode.
+ *  x86-64 (also known as x64, x86_64, AMD64, and Intel 64) is a 64-bit version of the x86 instruction set, announced in 1999. It
+ *  introduced two new modes of operation, 64-bit mode and compatibility mode, along with a new 4-level paging mode.
  *
  *  With 64-bit mode and the new paging mode, it supports vastly larger amounts of virtual memory and physical memory than was
  *  possible on its 32-bit predecessors, allowing programs to store larger amounts of data in memory. x86-64 also expands
