@@ -1085,8 +1085,10 @@ buildAst(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp/*
         fixupAstPointers(global, interp);
         fixupAstCallingConventions(partitioner, global);
         if (interp) {
-            if (SgAsmBlock *oldGlobalBlock = interp->get_globalBlock())
-                oldGlobalBlock->set_parent(NULL);
+            if (SgAsmBlock *oldGlobalBlock = interp->get_globalBlock()) {
+                interp->set_globalBlock(nullptr);
+                oldGlobalBlock->set_parent(nullptr);
+            }
             interp->set_globalBlock(global);
             global->set_parent(interp);
         }
