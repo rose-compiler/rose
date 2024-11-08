@@ -334,17 +334,17 @@ current_rpath() {
 		echo "$arg0: error: patchelf or chrpath required but not found."
 		echo "   The patchelf or chrpath program is needed in order to rewrite the rpath info"
 		echo "   in executables that use dynamic linking. The rpath mechanism allows the"
-		echo "   executable to find shared librar for this project when that library is"
+		echo "   executable to find the shared library for this project when that library is"
 		echo "   not installed in a standard, system-wide location.  These ELF tools are often"
 		echo "   available in your system package manager (e.g., Debian/Ubuntu/Mint users can"
 		echo "   run \"sudo apt-get install patchelf\").  If you would rather skip the rpath"
 		echo "   rewriting step and use some other method (such as LD_LIBRARY_PATH) then"
 		echo "   export \"rpath_changer=skip\" when doing this install. Note that the method"
-		echo "   of using LD_LIBRARY_PATH is not recommended for project's programs that"
+		echo "   of using LD_LIBRARY_PATH is not recommended for a project's programs that"
 		echo "   run non-project sub-programs because it can adversely affect the behavior of"
 		echo "   the sub-program."
 		echo
-		echo "$arg0: instalation aborted."
+		echo "$arg0: installation aborted."
 	    ) >&2
 	    exit 1
 	    ;;
