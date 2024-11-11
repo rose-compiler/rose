@@ -10186,14 +10186,14 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
 
 //! Relocate comments and CPP directives from one statement to another.
 void
-SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const vector<int> & indexList, SgStatement* targetStatement , bool surroundingStatementPreceedsTargetStatement)
+SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const vector<int> & indexList, SgStatement* destinationStatement , bool destinationStatementProceedsSourceStatement)
    {
      AttachedPreprocessingInfoType* comments = sourceStatement->getAttachedPreprocessingInfo();
 
 #if REMOVE_STATEMENT_DEBUG || 0
-     printf ("In moveCommentsToNewStatement(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
+     printf ("In moveCommentsToNewStatement(): destinationStatementProceedsSourceStatement = %s \n",destinationStatementProceedsSourceStatement ? "true" : "false");
      printf (" --- sourceStatement = %p = %s name = %s \n",sourceStatement,sourceStatement->class_name().c_str(),get_name(sourceStatement).c_str());
-     printf (" --- targetStatement = %p = %s name = %s \n",targetStatement,targetStatement->class_name().c_str(),get_name(targetStatement).c_str());
+     printf (" --- destinationStatement = %p = %s name = %s \n",destinationStatement,destinationStatement->class_name().c_str(),get_name(destinationStatement).c_str());
 #endif
      // Liao 2024/1/24
      // There is a corner case: #if #endif may span very wide in the code. The lead #if may be moved without the matching #endif being found.
@@ -10204,8 +10204,8 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 #if REMOVE_STATEMENT_DEBUG
      printf ("Output the comments attached to sourceStatement: \n");
      printOutComments(sourceStatement);
-     printf ("Output the comments attached to targetStatement: \n");
-     printOutComments(targetStatement);
+     printf ("Output the comments attached to destinationStatement: \n");
+     printOutComments(destinationStatement);
 #endif
 
   // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
@@ -10214,12 +10214,12 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
      while (j != indexList.end())
         {
        // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
-          ROSE_ASSERT(targetStatement->get_file_info() != NULL);
+          ROSE_ASSERT(destinationStatement->get_file_info() != NULL);
 #if REMOVE_STATEMENT_DEBUG || 0
-          printf ("Attaching comments to targetStatement = %p = %s on file = %s line %d \n",
-               targetStatement,targetStatement->class_name().c_str(),
-               targetStatement->get_file_info()->get_filenameString().c_str(),
-               targetStatement->get_file_info()->get_line());
+          printf ("Attaching comments to destinationStatement = %p = %s on file = %s line %d \n",
+               destinationStatement,destinationStatement->class_name().c_str(),
+               destinationStatement->get_file_info()->get_filenameString().c_str(),
+               destinationStatement->get_file_info()->get_line());
 
           printf ("(*comments)[*j]->getRelativePosition() = %s \n",PreprocessingInfo::relativePositionName((*comments)[*j]->getRelativePosition()).c_str());
 #endif
@@ -10233,7 +10233,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
           // because the comments of source statement would be attached to ::after of SgGlobal and
           // all comments will show up in the end of the file.
           // The ::inside location relies on the unparser to properly handle them later.
-          if (surroundingStatementPreceedsTargetStatement == true || isSgGlobal(targetStatement) != NULL )
+          if (destinationStatementProceedsSourceStatement == true || isSgGlobal(destinationStatement) != NULL )
              {
                  // dest
                  // src // comments to be moved up: all before positions become after position
@@ -10256,10 +10256,14 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   }
 
                 // special handling of inside position
-                if (isSgGlobal(targetStatement))
+		// The surrounding statement will accept the comments. It also preceeds the source statement providing the comments. 
+		// If it is an enclosing scope statement, the comments should be attached to inside position, not before nor after.
+                // if (  isSgGlobal(destinationStatement) ||  isSgBasicBlock(destinationStatement) )  
+		// Handle all SgScopeStatement variants. 
+		if (SageInterface::isAncestor(destinationStatement, sourceStatement)) 
                   (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside);
 
-                targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
+                destinationStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
 
              }
             else // the target statement is after the source statment: we want to move comments from src to target
@@ -10279,7 +10283,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                     ASSERT_require((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
                   }
-               AttachedPreprocessingInfoType* targetInfoList = targetStatement->getAttachedPreprocessingInfo();
+               AttachedPreprocessingInfoType* targetInfoList = destinationStatement->getAttachedPreprocessingInfo();
                // source stmt has a list of comments c1, c2, c3
                // we want to keep their order and prepend to target stmt's existing comments
                // The solution is to define an anchor comment in target stmt
@@ -10289,7 +10293,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                if (targetInfoList==NULL)
                {
                    // we can just use append to the end. the same effect.
-                   targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
+                   destinationStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
                }
                else
                {
@@ -10299,12 +10303,12 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   {
                      PreprocessingInfo * origFirstTargetComment  = *(targetInfoList->begin());
                      // insert before this original first one
-                     targetStatement->insertToAttachedPreprocessingInfo((*comments)[*j],origFirstTargetComment,false);
+                     destinationStatement->insertToAttachedPreprocessingInfo((*comments)[*j],origFirstTargetComment,false);
                   }
                   else
                   {
                    // now we have non null prev comment from target statement. insert after it!
-                   targetStatement->insertToAttachedPreprocessingInfo((*comments)[*j],prevTargetAnchorComment ,true);
+                   destinationStatement->insertToAttachedPreprocessingInfo((*comments)[*j],prevTargetAnchorComment ,true);
                   }
                }
 

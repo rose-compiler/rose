@@ -2288,7 +2288,7 @@ ROSE_DLL_API void moveToSubdirectory ( std::string directoryName, SgFile* file )
 ROSE_DLL_API SgStatement* findSurroundingStatementFromSameFile(SgStatement* targetStmt, bool & surroundingStatementPreceedsTargetStatement);
 
 //! Relocate comments and CPP directives from one statement to another.
-ROSE_DLL_API void moveCommentsToNewStatement(SgStatement* sourceStatement, const std::vector<int> & indexList, SgStatement* targetStatement, bool surroundingStatementPreceedsTargetStatement);
+ROSE_DLL_API void moveCommentsToNewStatement(SgStatement* sourceStatement, const std::vector<int> & indexList, SgStatement* destinationStatement, bool destinationStatementPreceedsSourceStatement);
 
 // DQ (7/19/2015): This is required to support general unparsing of template instantations for the GNU g++
 // compiler which does not permit name qualification to be used to support the expression of the namespace
