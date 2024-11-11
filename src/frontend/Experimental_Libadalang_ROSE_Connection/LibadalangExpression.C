@@ -1425,7 +1425,7 @@ namespace{
               if(name == test_name){
                 hash = hash_node(&defining_name);
                 ada_node_kind_enum def_kind = ada_node_kind(&defining_name);
-                logInfo() << "Found definition for ada_identifier " << name << ", kind = " << def_kind << std::endl;
+                logInfo() << "Found definition for ada_identifier " << name << ", kind = " << def_kind << ", hash = " << hash << std::endl;
                 break;
               }
             }

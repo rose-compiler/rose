@@ -570,22 +570,6 @@ namespace{
 
     if (processUnit)
     {
-
-     //Get the name of the file this unit comes from
-     /*ada_text_type file_name;
-     ada_ada_node_full_sloc_image(&unit_body, &file_name);
-     std::string file_name_string = dot_ada_text_type_to_string(file_name);
-     std::string::size_type pos = file_name_string.find(':');
-     if(pos != std::string::npos){
-         file_name_string = file_name_string.substr(0, pos);
-     }
-
-      ada_unbounded_text_type_array p_syntactic_fully_qualified_name;
-      int result = ada_compilation_unit_p_syntactic_fully_qualified_name(lal_unit, &p_syntactic_fully_qualified_name);
-
-      std::string                             unitFile = dot_ada_unbounded_text_type_to_string(p_syntactic_fully_qualified_name);*/
-      //TODO Find a way to get the full file path for the unit from the root node
-
       std::string                             unitFile = src_file_name;
       AstContext::PragmaContainer             pragmalist;
       AstContext::DeferredCompletionContainer compls;
@@ -1869,7 +1853,7 @@ namespace{
   }
 } //end anonymous namespace
 
-void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file, std::vector<std::string> file_paths)
+void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file)
 {
   //ADA_ASSERT(file);
 
@@ -1891,12 +1875,26 @@ void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* 
   //std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
   // define the package standard
-  //   as we are not able to read it out from Asis
   initializePkgStandard(astScope, roots.at(0));
 
+  //list of all units we have already handled (by hash of the root node)
+  std::vector<int> previously_seen_units;
+
   // translate all units
-  for(long unsigned int i = 0; i < roots.size(); ++i){
-    handleUnit(roots.at(i), AstContext{}.scope(astScope), file_paths.at(i));
+  for(int i = roots.size() - 1; i >= 0; --i){
+    //Make sure this is the first time we've processed this unit
+    int hash = hash_node(roots.at(i));
+    if(std::find(previously_seen_units.begin(), previously_seen_units.end(), hash) == previously_seen_units.end()){
+      previously_seen_units.push_back(hash);
+      //Get the name of this unit
+      ada_analysis_unit lal_unit;
+      ada_ada_node_unit(roots.at(i), &lal_unit);
+      char* c_filename = ada_unit_filename(lal_unit);
+      std::string cxx_filename = c_filename;
+      free(c_filename);
+
+      handleUnit(roots.at(i), AstContext{}.scope(astScope), cxx_filename);
+    }
   }
   // post processing
   replaceNullptrWithNullExpr();

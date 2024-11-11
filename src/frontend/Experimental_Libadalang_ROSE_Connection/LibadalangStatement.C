@@ -2562,6 +2562,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_base_entity params;
           ada_accept_stmt_f_params(lal_stmt, &params);
           ada_entry_completion_formal_params_f_params(&params, &params);
+          ada_params_f_params(&params, &params);
           SgFunctionParameterList& paramlst = SG_DEREF(sgnode.get_parameterList());
           AstContext               parmctx  = ctx.scope(SG_DEREF(sgnode.get_parameterScope()));
 

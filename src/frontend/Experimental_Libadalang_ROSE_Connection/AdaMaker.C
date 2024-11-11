@@ -1311,7 +1311,7 @@ namespace
 
     SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
 
-    //ADA_ASSERT(sgnode.get_type() != nullptr);
+    ASSERT_require(sgnode.get_type() != nullptr);
 
     checkParamTypes(lst.get_args(), sgnode.get_type()->get_arguments());
 
@@ -1319,7 +1319,7 @@ namespace
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
-    //~ logError() << "P " << nm << " " << sgnode.get_scope() << std::endl;
+
     return sgnode;
   }
 }
@@ -1557,13 +1557,13 @@ SgAdaAcceptStmt&
 mkAdaAcceptStmt(SgExpression& ref, SgExpression& idx)
 {
   SgAdaAcceptStmt&          sgnode = mkScopeStmt<SgAdaAcceptStmt>();
-  SgFunctionParameterScope& psc    = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
+  SgFunctionParameterScope& psc    = mkScopeStmt<SgFunctionParameterScope>();
   SgFunctionParameterList&  lst    = mkFunctionParameterList();
 
-  //ADA_ASSERT(sgnode.get_parameterScope() == nullptr);
+  ASSERT_require(sgnode.get_parameterScope() == nullptr);
   sg::linkParentChild(sgnode, psc, &SgAdaAcceptStmt::set_parameterScope);
 
-  //ADA_ASSERT(sgnode.get_parameterList() == nullptr);
+  ASSERT_require(sgnode.get_parameterList() == nullptr);
   sg::linkParentChild(sgnode, lst, &SgAdaAcceptStmt::set_parameterList);
 
   sg::linkParentChild(sgnode, ref, &SgAdaAcceptStmt::set_entry);

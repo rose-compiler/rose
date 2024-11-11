@@ -466,7 +466,7 @@ extern Sawyer::Message::Facility mlog;
 /// \param roots          entry points to the Libadalang tree
 /// \param file           the ROSE root for the translation unit
 /// \param file_paths     path to reach each of the files for the translation units
-void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file, std::vector<std::string> file_paths);
+void convertLibadalangToROSE(std::vector<ada_base_entity*> roots, SgSourceFile* file);
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.

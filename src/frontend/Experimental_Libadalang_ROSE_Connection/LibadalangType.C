@@ -1653,12 +1653,6 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
   SgType& adaWideStringType         = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_STRING"}));
   SgType& adaWideWideStringType     = SG_DEREF(adaTypesByName().at(AdaIdentifier{"WIDE_WIDE_STRING"}));
 
-  // Ada standard exceptions
-  //SgInitializedName& adaConstraintError    = declareException("Constraint_Error", exceptionType, stdspec);
-  //SgInitializedName& adaProgramError       = declareException("Program_Error",    exceptionType, stdspec);
-  //SgInitializedName& adaStorageError       = declareException("Storage_Error",    exceptionType, stdspec);
-  //SgInitializedName& adaTaskingError       = declareException("Tasking_Error",    exceptionType, stdspec);
-
   // added packages
   adaPkgs()[pkg_hash]             = &stdpkg;
 
