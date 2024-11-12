@@ -931,27 +931,25 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
-# Only use quadmath if we can 
-set(TEST_SOURCE "
+# Only use quadmath if C/C++ is enable and it is available (also exclude windows)
+if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+  set(COMPILE_TEST_SOURCE "
   #include <quadmath.h>
   int main() { return 0; }")
 
-# Perform the compile test
-check_cxx_source_compiles("${TEST_SOURCE}" HAVE_QUADMATH_COMPILE)
+  # Perform the compile test
+  check_cxx_source_compiles("${COMPILE_TEST_SOURCE}" HAVE_QUADMATH_COMPILE)
 
-# Check for the function we depend on 
-include(CheckCXXSymbolExists)
-check_cxx_symbol_exists(quadmath_snprintf quadmath.h HAVE_QUADMATH_SYMBOL)
-
-# Determine whether quadmath is usable
-if(HAVE_QUADMATH_COMPILE AND HAVE_QUADMATH_SYMBOL AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+  # Determine whether quadmath is usable
+  if(HAVE_QUADMATH_COMPILE)
     set(ROSE_USE_EDG_QUAD_FLOAT 1)
-    set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath") 
+    set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath")
     message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
-else()
+  else()
     set(ROSE_USE_EDG_QUAD_FLOAT 0)
     # This will no longer cause an issue for gcc or clang 
     message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
+  endif()
 endif()
 
 # This is essential to find the right include path from either build or installation tree for a translator

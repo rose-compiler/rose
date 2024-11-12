@@ -924,11 +924,6 @@ endif()
 ########################################################################################################################
 
 ########### Build ldflags for ROSE tools ###############################################################################
-#list(REMOVE_DUPLICATES rose_library_dir_list)   # cmake 3.12 req 
-#foreach(X IN LISTS rose_library_dir_list)
-#  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${X}")
-#endforeach()
-
 ## ATTENTION:  This order matters, please be very careful if modifying  ## 
 set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}") #-L
 set(rose_library_list "rose") # -l 
@@ -960,6 +955,10 @@ if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
 endif()
 # Add Boost dir before boost libs to maximize portability by making sure boost is only looked for in one location 
 string(REPLACE " -lboost_chrono " " -L${Boost_LIBRARY_DIRS} -lboost_chrono " rose_config_installed_ldflags "${rose_config_installed_ldflags}")
+# Add libquadmath if needed for EDG
+if(SUPPORT_FLOAT128)
+  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -lquadmath")
+endif()
 ########################################################################################################################
 
 # Function for rose-config to ensure rose tools use correct compiler 
