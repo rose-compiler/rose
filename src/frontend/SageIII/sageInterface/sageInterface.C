@@ -10256,13 +10256,16 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   }
 
                 // special handling of inside position
-		// The surrounding statement will accept the comments. It also preceeds the source statement providing the comments. 
-		// If it is an enclosing scope statement, the comments should be attached to inside position, not before nor after.
+		          // The surrounding statement will accept the comments. It also preceeds the source statement providing the comments. 
+		          // If it is an enclosing scope statement, the comments should be attached to inside position, not before nor after.
                 // if (  isSgGlobal(destinationStatement) ||  isSgBasicBlock(destinationStatement) )  
-		// Handle all SgScopeStatement variants. 
-		if (SageInterface::isAncestor(destinationStatement, sourceStatement)) 
-                  (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside);
-
+		          // Handle all SgScopeStatement variants. 
+                // We do this only for C/C++ language. Otherwise the code may break Jovial and other languages.
+                if (is_C_language() || is_C99_language() || is_Cxx_language() )
+                {
+                  if (SageInterface::isAncestor(destinationStatement, sourceStatement)) 
+                    (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside);
+                }
                 destinationStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
 
              }
