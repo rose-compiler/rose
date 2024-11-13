@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/Emulation.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
@@ -72,7 +73,7 @@ RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const
 
 RiscOperators::Ptr
 RiscOperators::promote(const BS::RiscOperators::Ptr &x) {
-    RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    RiscOperators::Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -379,7 +380,7 @@ Dispatcher::operators() const {
 // class method
 RiscOperators::Ptr
 Dispatcher::unwrapEmulationOperators(const BS::RiscOperators::Ptr &ops) {
-    if (IS::TraceSemantics::RiscOperators::Ptr trace = boost::dynamic_pointer_cast<IS::TraceSemantics::RiscOperators>(ops))
+    if (IS::TraceSemantics::RiscOperators::Ptr trace = as<IS::TraceSemantics::RiscOperators>(ops))
         return RiscOperators::promote(trace->subdomain());
     return RiscOperators::promote(ops);
 }

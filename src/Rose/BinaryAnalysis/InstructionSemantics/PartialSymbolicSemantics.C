@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
@@ -109,7 +110,7 @@ SValue::create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const 
 
 SValue::Ptr
 SValue::promote(const BaseSemantics::SValue::Ptr &v) {
-    SValue::Ptr retval = v.dynamicCast<SValue>();
+    SValue::Ptr retval = as<SValue>(v);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -244,7 +245,7 @@ State::clone() const {
 
 State::Ptr
 State::promote(const BaseSemantics::State::Ptr &x) {
-    State::Ptr retval = boost::dynamic_pointer_cast<State>(x);
+    State::Ptr retval = as<State>(x);
     ASSERT_not_null(x);
     return retval;
 }
@@ -318,7 +319,7 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }

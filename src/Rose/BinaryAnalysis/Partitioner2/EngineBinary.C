@@ -3,6 +3,7 @@
 #include <sage3basic.h>                                 // needed for `::SgProject`
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 
+#include <Rose/As.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
@@ -1426,10 +1427,10 @@ EngineBinary::createTunedPartitioner() {
 
 
     Disassembler::Base::Ptr decoder = architecture()->newInstructionDecoder();
-    if (decoder.dynamicCast<Disassembler::M68k>())
+    if (as<Disassembler::M68k>(decoder))
         partitioner->basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
 
-    if (decoder.dynamicCast<Disassembler::X86>()) {
+    if (as<Disassembler::X86>(decoder)) {
         partitioner->basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(partitioner,
                                                                                             settings().partitioner.syscallHeader));
         partitioner->basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
@@ -1842,7 +1843,7 @@ EngineBinary::makeInterruptVectorFunctions(const Partitioner::Ptr &partitioner, 
     }    
     if (!disassembler) {
         throw std::runtime_error("cannot decode interrupt vector without architecture information");
-    } else if (disassembler.dynamicCast<Disassembler::M68k>()) {
+    } else if (as<Disassembler::M68k>(disassembler)) {
         for (const Function::Ptr &f: ModulesM68k::findInterruptFunctions(partitioner, interruptVector.least()))
             insertUnique(functions, partitioner->attachOrMergeFunction(f), sortFunctionsByAddress);
     } else if (1 == interruptVector.size()) {

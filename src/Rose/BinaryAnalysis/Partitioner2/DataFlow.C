@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -711,8 +712,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
         CallingConvention::Definition::Ptr ccDefn;
         Function::Ptr callee = vertex->value().callee();
-        BaseSemantics::RegisterStateGeneric::Ptr genericRegState =
-            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
+        auto genericRegState = as<BaseSemantics::RegisterStateGeneric>(retval->registerState());
         BaseSemantics::SValue::Ptr origStackPtr = ops->peekRegister(STACK_POINTER_REG);
 
         BaseSemantics::SValue::Ptr stackDelta;            // non-null if a stack delta is known for the callee

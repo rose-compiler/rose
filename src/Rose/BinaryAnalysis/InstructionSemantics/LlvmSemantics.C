@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
@@ -73,7 +74,7 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }

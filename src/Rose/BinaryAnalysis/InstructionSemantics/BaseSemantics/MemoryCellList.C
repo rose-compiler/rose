@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
@@ -124,7 +125,7 @@ MemoryCellList::mergeWithAliasing(const MemoryState::Ptr &other_, RiscOperators 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
 
-    MemoryCellList::Ptr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
+    MemoryCellList::Ptr other = as<MemoryCellList>(other_);
     ASSERT_not_null(other);
     bool changed = false;
 
@@ -227,7 +228,7 @@ MemoryCellList::mergeNoAliasing(const MemoryState::Ptr &other_, RiscOperators *a
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
 
-    MemoryCellList::Ptr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
+    MemoryCellList::Ptr other = as<MemoryCellList>(other_);
     ASSERT_not_null(other);
     bool changed = false;
 

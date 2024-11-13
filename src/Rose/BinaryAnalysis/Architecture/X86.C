@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Architecture/X86.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/CallingConvention/StoragePool.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/InstructionMap.h>
@@ -495,7 +496,7 @@ X86::functionPrologueMatchers(const Partitioner2::Engine::Ptr &engine) const {
     retval.push_back(Partitioner2::ModulesX86::MatchAbbreviatedPrologue::instance());
     retval.push_back(Partitioner2::ModulesX86::MatchEnterPrologue::instance());
     if (engine->settings().partitioner.findingThunks) {
-        if (auto engineBinary = engine.dynamicCast<Partitioner2::EngineBinary>())
+        if (auto engineBinary = as<Partitioner2::EngineBinary>(engine))
             retval.push_back(Partitioner2::Modules::MatchThunk::instance(engineBinary->functionMatcherThunks()));
     }
     retval.push_back(Partitioner2::ModulesX86::MatchRetPadPush::instance());

@@ -5,6 +5,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
@@ -61,7 +62,7 @@ public:
      *
      *  Converts @p x to a SymbolicMemoryPtr and asserts that it is non-null. */
     static SymbolicMemoryPtr promote(const MemoryStatePtr &x) {
-        SymbolicMemoryPtr retval = boost::dynamic_pointer_cast<SymbolicMemory>(x);
+        SymbolicMemoryPtr retval = as<SymbolicMemory>(x);
         ASSERT_not_null(retval);
         return retval;
     }

@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
@@ -116,7 +117,7 @@ MemoryCellMap::isAllPresent(const SValue::Ptr &address, size_t nBytes, RiscOpera
 
 bool
 MemoryCellMap::merge(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
-    MemoryCellMap::Ptr other = boost::dynamic_pointer_cast<MemoryCellMap>(other_);
+    MemoryCellMap::Ptr other = as<MemoryCellMap>(other_);
     ASSERT_not_null(other);
     bool changed = false;
     unsigned otherBasePosition = this->lastPosition();

@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
 namespace Rose {
@@ -172,7 +173,7 @@ public:
 public:
     /** Promote a base value to a TaintSemantics value.  The value @p v must have a TaintSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
+        SValuePtr retval = as<SValue>(v);
         ASSERT_not_null(retval);
         return retval;
     }

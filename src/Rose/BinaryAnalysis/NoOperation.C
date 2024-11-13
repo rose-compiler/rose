@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/NoOperation.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
@@ -104,8 +105,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::Dispatcher::Ptr &cpu
     }
 
     // Get the memory state, cloning the state if not done so above.
-    BaseSemantics::MemoryCellState::Ptr mem =
-        boost::dynamic_pointer_cast<BaseSemantics::MemoryCellState>(state->memoryState());
+    BaseSemantics::MemoryCellState::Ptr mem = as<BaseSemantics::MemoryCellState>(state->memoryState());
     if (mem && !isCloned) {
         state = state->clone();
         isCloned = true;

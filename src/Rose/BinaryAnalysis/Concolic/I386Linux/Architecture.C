@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
@@ -459,7 +460,7 @@ SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
     // done once, so be careful!
     hello("linux i386 base class", ctx);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    auto i386 = ctx.architecture.dynamicCast<Architecture>();
+    auto i386 = as<Architecture>(ctx.architecture);
     ASSERT_not_null(i386);
     const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
     penultimateReturnEvent_ = latestReturnEvent_;
@@ -672,7 +673,7 @@ void
 SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
     hello("syscall-return-constraint", ctx);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    auto i386 = ctx.architecture.dynamicCast<Architecture>();
+    auto i386 = as<Architecture>(ctx.architecture);
     ASSERT_not_null(i386);
     const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
     showRecentReturnValues(debug, ctx);
@@ -1011,7 +1012,7 @@ Architecture::matchFactory(const Yaml::Node &config) const {
 Debugger::Linux::Ptr
 Architecture::debugger() const {
     ASSERT_not_null(Super::debugger());
-    auto retval = Super::debugger().dynamicCast<Debugger::Linux>();
+    auto retval = as<Debugger::Linux>(Super::debugger());
     ASSERT_not_null(retval);
     return retval;
 }

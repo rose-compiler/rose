@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_ASM_AARCH64
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -1840,7 +1841,7 @@ DispatcherAarch64::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
 
 DispatcherAarch64::Ptr
 DispatcherAarch64::promote(const BaseSemantics::Dispatcher::Ptr &d) {
-    Ptr retval = boost::dynamic_pointer_cast<DispatcherAarch64>(d);
+    Ptr retval = as<DispatcherAarch64>(d);
     ASSERT_not_null(retval);
     return retval;
 }

@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
@@ -67,7 +68,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
 
     if (auto va = retval.ip->toUnsigned()) {
         retval.addresses.insert(*va);
-    } else if (IS::SymbolicSemantics::SValue::Ptr ipSymbolic = retval.ip.dynamicCast<IS::SymbolicSemantics::SValue>()) {
+    } else if (IS::SymbolicSemantics::SValue::Ptr ipSymbolic = as<IS::SymbolicSemantics::SValue>(retval.ip)) {
         SymbolicExpression::Ptr expr = ipSymbolic->get_expression();
         if (SymbolicExpression::OP_ITE == expr->getOperator()) {
             if (auto va = expr->child(1)->toUnsigned()) {

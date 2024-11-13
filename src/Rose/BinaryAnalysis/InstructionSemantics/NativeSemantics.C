@@ -2,6 +2,7 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS) && defined(ROSE_ENABLE_DEBUGGER_LINUX)
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -55,7 +56,7 @@ RegisterState::clone() const {
 
 RegisterState::Ptr
 RegisterState::promote(const BaseSemantics::RegisterState::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RegisterState>(x);
+    Ptr retval = as<RegisterState>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -125,7 +126,7 @@ MemoryState::clone() const {
 
 MemoryState::Ptr
 MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+    Ptr retval = as<MemoryState>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -199,7 +200,7 @@ RiscOperators::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const SmtS
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }

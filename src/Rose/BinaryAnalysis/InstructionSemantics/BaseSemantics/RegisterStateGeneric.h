@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
@@ -257,7 +258,7 @@ public:
     /** Run-time promotion of a base register state pointer to a RegisterStateGeneric pointer. This is a checked conversion--it
      *  will fail if @p from does not point to a RegisterStateGeneric object. */
     static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
-        RegisterStateGenericPtr retval = boost::dynamic_pointer_cast<RegisterStateGeneric>(from);
+        RegisterStateGenericPtr retval = as<RegisterStateGeneric>(from);
         ASSERT_not_null(retval);
         return retval;
     }

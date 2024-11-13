@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 
+#include <Rose/As.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
@@ -118,7 +119,7 @@ public:
 
 public:
     static RiscOperators::Ptr promote(const S2::BaseSemantics::RiscOperators::Ptr &x) {
-        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        RiscOperators::Ptr retval = as<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }

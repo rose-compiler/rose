@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
@@ -144,7 +145,7 @@ SValue::copy(size_t new_width) const {
 
 SValue::Ptr
 SValue::promote(const BaseSemantics::SValuePtr &v) {
-    SValuePtr retval = v.dynamicCast<SValue>();
+    SValuePtr retval = as<SValue>(v);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -159,7 +160,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const Base
                             const SmtSolverPtr &solver) const {
     SValue::Ptr other = SValue::promote(other_);
     ASSERT_require(nBits() == other->nBits());
-    Merger::Ptr merger = merger_.dynamicCast<Merger>();
+    Merger::Ptr merger = as<Merger>(merger_);
     bool changed = false;
     unsigned mergedFlags = get_expression()->flags() | other->get_expression()->flags();
     SValue::Ptr retval = SValue::promote(copy());
@@ -453,7 +454,7 @@ MemoryListState::clone() const {
 
 MemoryListState::Ptr
 MemoryListState::promote(const BaseSemantics::MemoryState::Ptr &x) {
-    MemoryListState::Ptr retval = boost::dynamic_pointer_cast<MemoryListState>(x);
+    MemoryListState::Ptr retval = as<MemoryListState>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -702,7 +703,7 @@ MemoryMapState::clone() const {
 
 MemoryMapState::Ptr
 MemoryMapState::promote(const BaseSemantics::MemoryState::Ptr &x) {
-    MemoryMapState::Ptr retval = boost::dynamic_pointer_cast<MemoryMapState>(x);
+    MemoryMapState::Ptr retval = as<MemoryMapState>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -728,8 +729,7 @@ RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const S
     reinterpretMemoryReads_(true), reinterpretRegisterReads_(true) {
     name("Symbolic");
     ASSERT_always_not_null(protoval);
-    ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
-                            "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
+    ASSERT_always_not_null2(as<SValue>(protoval), "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
 }
 
 RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
@@ -739,10 +739,10 @@ RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSo
     name("Symbolic");
     ASSERT_always_not_null(state);
     ASSERT_always_not_null(state->registerState());
-    ASSERT_always_not_null2(boost::dynamic_pointer_cast<RegisterState>(state->registerState()),
+    ASSERT_always_not_null2(as<RegisterState>(state->registerState()),
                             "SymbolicSemantics supports only RegisterStateGeneric or derivatives thereof");
     ASSERT_always_not_null(state->protoval());
-    ASSERT_always_not_null2(state->protoval().dynamicCast<SValue>(),
+    ASSERT_always_not_null2(as<SValue>(state->protoval()),
                             "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
 }
 
@@ -779,7 +779,7 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1877,8 +1877,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (computingMemoryWriters() != TRACK_NO_WRITERS) {
             if (SgAsmInstruction *insn = currentInstruction()) {
-                if (BaseSemantics::MemoryCellList::Ptr cellList =
-                    boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
+                if (BaseSemantics::MemoryCellList::Ptr cellList = as<BaseSemantics::MemoryCellList>(mem)) {
                     if (BaseSemantics::MemoryCell::Ptr cell = cellList->latestWrittenCell()) {
                         switch (computingMemoryWriters()) {
                             case TRACK_NO_WRITERS:
@@ -1891,8 +1890,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
                                 break;
                         }
                     }
-                } else if (BaseSemantics::MemoryCellMap::Ptr cellMap =
-                           boost::dynamic_pointer_cast<BaseSemantics::MemoryCellMap>(mem)) {
+                } else if (BaseSemantics::MemoryCellMap::Ptr cellMap = as<BaseSemantics::MemoryCellMap>(mem)) {
                     if (BaseSemantics::MemoryCell::Ptr cell = cellMap->latestWrittenCell()) {
                         switch (computingMemoryWriters()) {
                             case TRACK_NO_WRITERS:

@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_ASM_AARCH32
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
+#include <Rose/As.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
@@ -3027,7 +3028,7 @@ DispatcherAarch32::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
 
 DispatcherAarch32::Ptr
 DispatcherAarch32::promote(const BaseSemantics::Dispatcher::Ptr &d) {
-    Ptr retval = boost::dynamic_pointer_cast<DispatcherAarch32>(d);
+    Ptr retval = as<DispatcherAarch32>(d);
     ASSERT_not_null(retval);
     return retval;
 }

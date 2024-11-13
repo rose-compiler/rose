@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/DataFlowSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/Diagnostics.h>
 
 namespace Rose {
@@ -72,7 +73,7 @@ public:
 public:
     /** Promote a base value to a value of this type.  The value @p v must have an appropriate dynamic type. */
     static SValue::Ptr promote(const BaseSemantics::SValue::Ptr &v) { // hot
-        SValue::Ptr retval = v.dynamicCast<SValue>();
+        SValue::Ptr retval = as<SValue>(v);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -201,7 +202,7 @@ public:
     /** Run-time promotion of a base RiscOperators pointer to operators for this domain. This is a checked conversion--it
      *  will fail if @p x does not point to an object with appropriate dynamic type. */
     static InnerRiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
-        InnerRiscOperators::Ptr retval = boost::dynamic_pointer_cast<InnerRiscOperators>(x);
+        InnerRiscOperators::Ptr retval = as<InnerRiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }

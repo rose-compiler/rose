@@ -1,12 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedPointer.h>
@@ -89,9 +91,9 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         return retval;
     }
     BaseSemantics::MemoryState::Ptr mem = cpu->operators()->currentState()->memoryState();
-    if (Semantics::MemoryListState::Ptr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+    if (Semantics::MemoryListState::Ptr ml = as<Semantics::MemoryListState>(mem)) {
         ml->enabled(false);
-    } else if (Semantics::MemoryMapState::Ptr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+    } else if (Semantics::MemoryMapState::Ptr mm = as<Semantics::MemoryMapState>(mem)) {
         mm->enabled(false);
     }
     StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis() = StackDelta::Analysis(cpu);

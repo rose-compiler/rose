@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
@@ -118,7 +119,7 @@ public:
     /** Run-time promotion of a base RiscOperators pointer to operators for this domain. This is a checked conversion--it
      *  will fail if @p x does not point to an object with appropriate dynamic type. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        RiscOperatorsPtr retval = as<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }

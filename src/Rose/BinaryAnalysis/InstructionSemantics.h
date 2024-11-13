@@ -271,7 +271,7 @@ namespace BinaryAnalysis {
  *          // Define the checking dynamic pointer cast.
  *      public:
  *          static MyThingPtr promomte(const BaseSemantics::ThingPtr &obj) {
- *              MyThingPtr retval = boost::dynamic_pointer_cast<MyThingPtr>(obj);
+ *              MyThingPtr retval = as<MyThingPtr>(obj);
  *              assert(retval!=NULL);
  *              return NULL;
  *          }

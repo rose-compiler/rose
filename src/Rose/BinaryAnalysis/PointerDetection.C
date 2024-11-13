@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
@@ -177,7 +178,7 @@ public:
     }
 
     static Ptr promote(const BaseSemantics::State::Ptr &x) {
-        Ptr retval = boost::dynamic_pointer_cast<State>(x);
+        Ptr retval = as<State>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -252,7 +253,7 @@ public:
     }
 
     static RiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
-        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        RiscOperators::Ptr retval = as<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }

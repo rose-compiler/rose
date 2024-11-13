@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
@@ -798,7 +799,7 @@ RegisterStateGeneric::findProperties(const InputOutputPropertySet &required, con
 bool
 RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, RiscOperators *ops) {
     ASSERT_not_null(ops);
-    RegisterStateGeneric::Ptr other = boost::dynamic_pointer_cast<RegisterStateGeneric>(other_);
+    RegisterStateGeneric::Ptr other = as<RegisterStateGeneric>(other_);
     ASSERT_not_null(other);
     using Interval = Sawyer::Container::Interval<size_t>;
     using IntervalSet = Sawyer::Container::IntervalSet<Interval>;

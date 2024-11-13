@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
@@ -119,7 +120,7 @@ public:
     }
 
     static Ptr promote(const BaseSemantics::State::Ptr &x) {
-        Ptr retval = boost::dynamic_pointer_cast<State>(x);
+        Ptr retval = as<State>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -245,7 +246,7 @@ public:
 
 public:
     static RiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
-        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        RiscOperators::Ptr retval = as<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -634,7 +635,7 @@ hasVirtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
 static RiscOperators::Ptr
 fpOperators(BaseSemantics::RiscOperators::Ptr ops) {
     ASSERT_not_null(ops);
-    if (TraceSemantics::RiscOperators::Ptr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(ops)) {
+    if (TraceSemantics::RiscOperators::Ptr traceOps = as<TraceSemantics::RiscOperators>(ops)) {
         ops = traceOps->subdomain();
     }
     ASSERT_not_null(RiscOperators::promote(ops));
@@ -993,22 +994,22 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner::ConstPtr &partitioner, cons
         Disassembler::Base::Ptr dis = partitioner->instructionProvider().disassembler();
         ASSERT_not_null(dis);
         RegisterDescriptor r;
-        if (dis.dynamicCast<Disassembler::X86>()) {
+        if (as<Disassembler::X86>(dis)) {
             if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax")))
                 REG_RETURN_ = r;
-        } else if (dis.dynamicCast<Disassembler::M68k>()) {
+        } else if (as<Disassembler::M68k>(dis)) {
             if ((r = registers_->find("d0")))
                 REG_RETURN_ = r;                        // m68k also typically has other return registers
-        } else if (dis.dynamicCast<Disassembler::Powerpc>()) {
+        } else if (as<Disassembler::Powerpc>(dis)) {
             if ((r = registers_->find("r3")))
                 REG_RETURN_ = r;                        // PowerPC also returns via r4
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        } else if (dis.dynamicCast<Disassembler::Aarch32>()) {
+        } else if (as<Disassembler::Aarch32>(dis)) {
             if ((r = registers_->find("r0")))
                 REG_RETURN_ = r;
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        } else if (dis.dynamicCast<Disassembler::Aarch64>()) {
+        } else if (as<Disassembler::Aarch64>(dis)) {
             if ((r = registers_->find("r0")))
                 REG_RETURN_ = r;
 #endif
@@ -1035,7 +1036,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner::ConstPtr &partitioner, cons
 
     // More return value stuff, continued from above
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherAarch64>(cpu)) {
+    if (as<InstructionSemantics::DispatcherAarch64>(cpu)) {
         REG_RETURN_ = registers_->find("x0");
     }
 #endif
@@ -1185,15 +1186,14 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         ops->writeRegister(REG_RETURN_, retval);
 
         // Simulate function returning to caller
-        if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherPowerpc>(cpu)) {
+        if (as<InstructionSemantics::DispatcherPowerpc>(cpu)) {
             // PowerPC calling convention stores the return address in the link register (LR)
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
             BaseSemantics::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherX86>(cpu) ||
-                   boost::dynamic_pointer_cast<InstructionSemantics::DispatcherM68k>(cpu)) {
+        } else if (as<InstructionSemantics::DispatcherX86>(cpu) || as<InstructionSemantics::DispatcherM68k>(cpu)) {
             // x86, amd64, and m68k store the return address at the top of the stack
             const RegisterDescriptor SP = cpu->stackPointerRegister();
             ASSERT_forbid(SP.isEmpty());
@@ -1210,7 +1210,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             stackPointer = ops->add(stackPointer, ops->number_(stackPointer->nBits(), sd));
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherAarch64>(cpu)) {
+        } else if (as<InstructionSemantics::DispatcherAarch64>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
@@ -1218,7 +1218,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherAarch32>(cpu)) {
+        } else if (as<InstructionSemantics::DispatcherAarch32>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());

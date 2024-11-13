@@ -4,6 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
@@ -55,7 +56,7 @@ public:
     void check_type(const FromPtr &x, const std::string &what_failed) {
         typedef typename ToPtr::element_type To;
         nonnull(x, what_failed);
-        ToPtr y = boost::dynamic_pointer_cast<To>(x);
+        ToPtr y = as<To>(x);
         if (y==NULL)
             throw Exception("wrong pointer type: "+what_failed);
     }

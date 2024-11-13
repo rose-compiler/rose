@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
@@ -3532,7 +3533,7 @@ DispatcherM68k::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
 
 DispatcherM68k::Ptr
 DispatcherM68k::promote(const BaseSemantics::Dispatcher::Ptr &d) {
-    Ptr retval = boost::dynamic_pointer_cast<DispatcherM68k>(d);
+    Ptr retval = as<DispatcherM68k>(d);
     ASSERT_not_null(retval);
     return retval;
 }

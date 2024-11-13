@@ -14,6 +14,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
@@ -770,9 +771,9 @@ Partitioner::newOperators(SemanticMemoryParadigm memType) const {
     Semantics::RiscOperators::Ptr ops =
         Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver, memType);
     BaseSemantics::MemoryState::Ptr mem = ops->currentState()->memoryState();
-    if (Semantics::MemoryListState::Ptr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+    if (Semantics::MemoryListState::Ptr ml = as<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(memoryMap_);
-    } else if (Semantics::MemoryMapState::Ptr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+    } else if (Semantics::MemoryMapState::Ptr mm = as<Semantics::MemoryMapState>(mem)) {
         mm->memoryMap(memoryMap_);
     }
     return ops;

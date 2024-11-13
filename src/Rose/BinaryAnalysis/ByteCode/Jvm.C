@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 
@@ -86,7 +87,7 @@ JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
   rose_addr_t va{classAddr_ + code_.offset()};
   rose_addr_t endVa{va + code_.size()};
 
-  auto disassemblerJvm{disassembler.dynamicCast<Disassembler::Jvm>()};
+  auto disassemblerJvm{as<Disassembler::Jvm>(disassembler)};
   disassemblerJvm->codeOffset(va);
 
   MemoryMap::Ptr map = MemoryMap::instance();

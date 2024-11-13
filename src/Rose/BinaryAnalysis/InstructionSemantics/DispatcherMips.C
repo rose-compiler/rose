@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherMips.h>
 
 #include <Rose/Affirm.h>
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
@@ -1330,7 +1331,7 @@ DispatcherMips::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
 
 DispatcherMips::Ptr
 DispatcherMips::promote(const BaseSemantics::Dispatcher::Ptr &d) {
-    Ptr retval = boost::dynamic_pointer_cast<DispatcherMips>(d);
+    Ptr retval = as<DispatcherMips>(d);
     ASSERT_not_null(retval);
     return retval;
 }

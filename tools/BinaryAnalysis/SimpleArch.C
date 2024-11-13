@@ -1,6 +1,7 @@
 // Shows how to define a new architecture outside of the ROSE library
 #include <rose.h>                                       // must be first
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/CallingConvention/Definition.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
@@ -684,7 +685,7 @@ public:
     }
 
     static Ptr promote(const BS::Dispatcher::Ptr &d) {
-        Ptr retval = boost::dynamic_pointer_cast<SimpleDispatcher>(d);
+        Ptr retval = Rose::as<SimpleDispatcher>(d);
         ASSERT_not_null(retval);
         return retval;
     }

@@ -8,6 +8,7 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/AddressInterval.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -148,9 +149,9 @@ static IS::BaseSemantics::RiscOperators::Ptr
 newOperators(const Architecture::Base::ConstPtr &arch, const MemoryMap::Ptr &map) {
     auto ops = P2::Semantics::RiscOperators::instance(arch->registerDictionary());
     IS::BaseSemantics::MemoryState::Ptr mem = ops->currentState()->memoryState();
-    if (auto ml = boost::dynamic_pointer_cast<P2::Semantics::MemoryListState>(mem)) {
+    if (auto ml = as<P2::Semantics::MemoryListState>(mem)) {
         ml->memoryMap(map);
-    } else if (auto mm = boost::dynamic_pointer_cast<P2::Semantics::MemoryMapState>(mem)) {
+    } else if (auto mm = as<P2::Semantics::MemoryMapState>(mem)) {
         mm->memoryMap(map);
     }
     return ops;

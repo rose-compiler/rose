@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
@@ -122,7 +123,7 @@ public:
      *  not point to an object of our class. */
     static Ptr
     promote(const InstructionSemantics::BaseSemantics::MemoryStatePtr &x) {
-        Ptr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+        Ptr retval = as<MemoryState>(x);
         assert(x!=NULL);
         return retval;
     }

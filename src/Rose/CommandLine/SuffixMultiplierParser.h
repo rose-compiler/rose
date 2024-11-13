@@ -1,6 +1,7 @@
 #ifndef ROSE_CommandLine_SuffixMultiplierParser_H
 #define ROSE_CommandLine_SuffixMultiplierParser_H
 
+#include <Rose/As.h>
 #include <Rose/StringUtility/Escape.h>
 #include <rose_strtoull.h>
 
@@ -76,7 +77,7 @@ public:
      * @{ */
     Ptr with(const std::string &suffix, T multiplier, Preferred preferred = Preferred::YES) {
         suffixes_[suffix] = Suffix{.multiplier = multiplier, .preferred = preferred};
-        return sharedFromThis().template dynamicCast<SuffixMultiplierParser>();
+        return as<SuffixMultiplierParser>(sharedFromThis());
     }
 
     Ptr with(const std::string &suffix, T multiplier, const std::string &alias1, const std::string &alias2 = "",
@@ -90,7 +91,7 @@ public:
             suffixes_[alias3] = Suffix{multiplier, Preferred::NO};
         if (!alias4.empty())
             suffixes_[alias4] = Suffix{multiplier, Preferred::NO};
-        return sharedFromThis().template dynamicCast<SuffixMultiplierParser>();
+        return as<SuffixMultiplierParser>(sharedFromThis());
     }
     /** @} */
 
@@ -115,7 +116,7 @@ public:
     }
     Ptr extendedSyntax(bool b) {
         extendedSyntax_ = b;
-        return sharedFromThis().template dynamicCast<SuffixMultiplierParser>();
+        return as<SuffixMultiplierParser>(sharedFromThis());
     }
     /** @} */
 

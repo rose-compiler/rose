@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 
+#include <Rose/As.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
@@ -4075,7 +4076,7 @@ DispatcherX86::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
 
 DispatcherX86::Ptr
 DispatcherX86::promote(const BaseSemantics::Dispatcher::Ptr &d) {
-    Ptr retval = boost::dynamic_pointer_cast<DispatcherX86>(d);
+    Ptr retval = as<DispatcherX86>(d);
     ASSERT_not_null(retval);
     return retval;
 }

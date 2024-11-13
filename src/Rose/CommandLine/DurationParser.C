@@ -1,4 +1,6 @@
 #include <Rose/CommandLine/DurationParser.h>
+
+#include <Rose/As.h>
 #include <Rose/StringUtility/Escape.h>
 #include <rose_strtoull.h>
 

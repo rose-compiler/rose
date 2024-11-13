@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/CommandLine.h>
@@ -1458,7 +1459,7 @@ Interior::idempotent(const SmtSolver::Ptr &solver) {
         Interior *inode = new Interior(type(), getOperator(), newArgs, comment(), 0);
         return InteriorPtr(inode);
     } else {
-        return sharedFromThis().dynamicCast<Interior>();
+        return as<Interior>(sharedFromThis());
     }
 }
 

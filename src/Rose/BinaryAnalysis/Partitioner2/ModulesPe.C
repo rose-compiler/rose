@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
 
+#include <Rose/As.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -180,10 +181,10 @@ makeMemoryWritable(const MemoryMap::Ptr &mem, const AddressIntervalSet &where) {
     for (const AddressInterval &interval: where.intervals()) {
         const auto node = mem->find(interval.least());
         if (node != mem->intervals().end()) {
-            if (const auto existingBuffer = node->value().buffer().dynamicCast<MemoryMap::StaticBuffer>()) {
+            if (const auto existingBuffer = as<MemoryMap::StaticBuffer>(node->value().buffer())) {
                 if (existingBuffer->isReadOnly())
                     insertIatMemory(mem, interval);
-            } else if (const auto existingBuffer = node->value().buffer().dynamicCast<MemoryMap::AllocatingBuffer>()) {
+            } else if (const auto existingBuffer = as<MemoryMap::AllocatingBuffer>(node->value().buffer())) {
                 // these buffers are always writable
             } else {
                 // not sure about these, so map new buffers

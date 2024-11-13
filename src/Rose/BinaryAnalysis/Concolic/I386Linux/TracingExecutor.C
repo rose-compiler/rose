@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingExecutor.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Concolic.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
@@ -93,7 +94,7 @@ TracingExecutor::execute(const TestCase::Ptr &testCase) {
     for (TestCaseId otherId: database()->testCases()) {
         TestCase::Ptr other = database()->object(otherId);
         if (other != testCase) {
-            if (auto otherResult = database()->readConcreteResult(otherId).dynamicCast<TracingResult>()) {
+            if (auto otherResult = as<TracingResult>(database()->readConcreteResult(otherId))) {
                 if (result->executedVas() == otherResult->executedVas()) {
                     result->isInteresting(false);
                     break;
@@ -108,14 +109,14 @@ TracingExecutor::execute(const TestCase::Ptr &testCase) {
 
 int
 TracingExecutor::exitStatus(const ConcreteResult::Ptr &result_) {
-    auto result = result_.dynamicCast<TracingResult>();
+    auto result = as<TracingResult>(result_);
     ASSERT_not_null(result);
     return result->exitStatus();
 }
 
 const AddressSet&
 TracingExecutor::executedVas(const ConcreteResult::Ptr &result_) {
-    auto result = result_.dynamicCast<TracingResult>();
+    auto result = as<TracingResult>(result_);
     ASSERT_not_null(result);
     return result->executedVas();
 }

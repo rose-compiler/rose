@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/StringUtility/NumberToString.h>
 
@@ -89,7 +90,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &/*other*/, const B
 
 SValue::Ptr
 SValue::promote(const BaseSemantics::SValue::Ptr &v) {
-    SValuePtr retval = v.dynamicCast<SValue>();
+    SValuePtr retval = as<SValue>(v);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -192,7 +193,7 @@ MemoryState::clone() const {
 
 MemoryState::Ptr
 MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
-    MemoryState::Ptr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+    MemoryState::Ptr retval = as<MemoryState>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -402,7 +403,7 @@ RiscOperators::svalueNumber(const Sawyer::Container::BitVector &bits) {
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }

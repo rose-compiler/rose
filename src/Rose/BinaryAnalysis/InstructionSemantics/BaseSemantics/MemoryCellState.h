@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
@@ -59,7 +60,7 @@ public:
     /** Promote a base memory state pointer to a BaseSemantics::MemoryCellState pointer.  The memory state @p m must have a
      *  BaseSemantics::MemoryCellState dynamic type. */
     static MemoryCellStatePtr promote(const BaseSemantics::MemoryStatePtr &m) {
-        MemoryCellStatePtr retval = boost::dynamic_pointer_cast<MemoryCellState>(m);
+        MemoryCellStatePtr retval = as<MemoryCellState>(m);
         ASSERT_not_null(retval);
         return retval;
     }

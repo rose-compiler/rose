@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 
+#include <Rose/As.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -77,7 +79,7 @@ RiscOperators::instance(const InstructionSemantics::BaseSemantics::StatePtr &sta
 
 RiscOperators::Ptr
 RiscOperators::promote(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -88,9 +90,9 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(currentState()->memoryState());
 
     BaseSemantics::MemoryState::Ptr mem = currentState()->memoryState();
-    if (MemoryListState::Ptr ml = boost::dynamic_pointer_cast<MemoryListState>(mem)) {
+    if (MemoryListState::Ptr ml = as<MemoryListState>(mem)) {
         ml->addressesRead().clear();
-    } else if (MemoryMapState::Ptr mm = boost::dynamic_pointer_cast<MemoryMapState>(mem)) {
+    } else if (MemoryMapState::Ptr mm = as<MemoryMapState>(mem)) {
         mm->addressesRead().clear();
     }
     SymbolicSemantics::RiscOperators::startInstruction(insn);

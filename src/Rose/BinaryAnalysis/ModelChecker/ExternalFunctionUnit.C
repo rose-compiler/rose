@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
@@ -219,26 +220,26 @@ ExternalFunctionUnit::clearReturnValues(const BS::Dispatcher::Ptr &cpu) {
         }
     } else {
         std::vector<RegisterDescriptor> retRegs;
-        if (boost::dynamic_pointer_cast<IS::DispatcherX86>(cpu)) {
+        if (as<IS::DispatcherX86>(cpu)) {
             RegisterDescriptor r;
             if ((r = regDict->find("rax")) || (r = regDict->find("eax")) || (r = regDict->find("ax")))
                 retRegs.push_back(r);
-        } else if (boost::dynamic_pointer_cast<IS::DispatcherM68k>(cpu)) {
+        } else if (as<IS::DispatcherM68k>(cpu)) {
             // FIXME[Robb Matzke 2021-04-15]: m68k also typically has other return registers
             if (RegisterDescriptor r = regDict->find("d0"))
                 retRegs.push_back(r);
-        } else if (boost::dynamic_pointer_cast<IS::DispatcherPowerpc>(cpu)) {
+        } else if (as<IS::DispatcherPowerpc>(cpu)) {
             if (RegisterDescriptor r = regDict->find("r3"))
                 retRegs.push_back(r);
             if (RegisterDescriptor r = regDict->find("r4"))
                 retRegs.push_back(r);
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        } else if (boost::dynamic_pointer_cast<IS::DispatcherAarch32>(cpu)) {
+        } else if (as<IS::DispatcherAarch32>(cpu)) {
             if (RegisterDescriptor r = regDict->find("r0"))
                 retRegs.push_back(r);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        } else if (boost::dynamic_pointer_cast<IS::DispatcherAarch64>(cpu)) {
+        } else if (as<IS::DispatcherAarch64>(cpu)) {
             if (RegisterDescriptor r = regDict->find("x0"))
                 retRegs.push_back(r);
 #endif
@@ -263,15 +264,14 @@ ExternalFunctionUnit::simulateReturn(const BS::Dispatcher::Ptr &cpu) {
     // FIXME[Robb Matzke 2021-04-02]: dynamic casting the CPU to each known architecture is certainly not the right
     // way to do this! These operations should be abstracted in the BaseSemantics::Dispatcher class as virtual functions.
     // Most of this has been copied from the FeasiblePath class.
-    if (boost::dynamic_pointer_cast<IS::DispatcherPowerpc>(cpu)) {
+    if (as<IS::DispatcherPowerpc>(cpu)) {
         // PowerPC calling convention stores the return address in the link register (LR)
         const RegisterDescriptor LR = cpu->callReturnRegister();
         ASSERT_forbid(LR.isEmpty());
         BS::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-    } else if (boost::dynamic_pointer_cast<IS::DispatcherX86>(cpu) ||
-               boost::dynamic_pointer_cast<IS::DispatcherM68k>(cpu)) {
+    } else if (as<IS::DispatcherX86>(cpu) || as<IS::DispatcherM68k>(cpu)) {
         // x86, amd64, and m68k store the return address at the top of the stack
         const RegisterDescriptor SP = cpu->stackPointerRegister();
         ASSERT_forbid(SP.isEmpty());
@@ -283,7 +283,7 @@ ExternalFunctionUnit::simulateReturn(const BS::Dispatcher::Ptr &cpu) {
         stackPointer = ops->add(stackPointer, ops->number_(stackPointer->nBits(), stackPointer->nBits()/8));
         ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    } else if (boost::dynamic_pointer_cast<IS::DispatcherAarch64>(cpu)) {
+    } else if (as<IS::DispatcherAarch64>(cpu)) {
         // Return address is in the link register, lr
         const RegisterDescriptor LR = cpu->callReturnRegister();
         ASSERT_forbid(LR.isEmpty());
@@ -291,7 +291,7 @@ ExternalFunctionUnit::simulateReturn(const BS::Dispatcher::Ptr &cpu) {
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    } else if (boost::dynamic_pointer_cast<IS::DispatcherAarch32>(cpu)) {
+    } else if (as<IS::DispatcherAarch32>(cpu)) {
         // Return address is in the link register, lr
         const RegisterDescriptor LR = cpu->callReturnRegister();
         ASSERT_forbid(LR.isEmpty());

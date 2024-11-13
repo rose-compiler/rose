@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
 #include <Rose/BinaryAnalysis/Architecture/X86.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
@@ -250,10 +251,10 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
         // Create the vector containing the encoded instructions
         std::vector<uint8_t> nops;
         nops.reserve(interval.size());
-        if (std::dynamic_pointer_cast<const Architecture::X86>(partitioner_->architecture())) {
+        if (as<const Architecture::X86>(partitioner_->architecture())) {
             nops.resize(interval.size(), 0x90);
 
-        } else if (std::dynamic_pointer_cast<const Architecture::NxpColdfire>(partitioner_->architecture())) {
+        } else if (as<const Architecture::NxpColdfire>(partitioner_->architecture())) {
             // Although coldfire instructions are normally a multiple of 2 bytes, there is one exception: a bad instruction can
             // be an odd number of bytes. Therefore we could be asked to fill an odd number of bytes with NOP instructions. If
             // that happens, we fill even addresses with the first half of the NOP and odd addresses with the second half, this
@@ -294,8 +295,7 @@ std::vector<uint8_t>
 CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     std::vector<uint8_t> retval;
-    std::string isa = partitioner_->instructionProvider().disassembler()->name();
-    if (std::dynamic_pointer_cast<const Architecture::X86>(partitioner_->architecture())) {
+    if (as<const Architecture::X86>(partitioner_->architecture())) {
         // For now, just use a jump with a 4-byte operand.
         rose_addr_t delta = tgtVa - (srcVa + 5);
         retval.push_back(0xe9);
@@ -304,7 +304,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
         retval.push_back((delta >> 16) & 0xff);
         retval.push_back((delta >> 24) & 0xff);
 
-    } else if (std::dynamic_pointer_cast<const Architecture::NxpColdfire>(partitioner_->architecture())) {
+    } else if (as<const Architecture::NxpColdfire>(partitioner_->architecture())) {
         rose_addr_t delta = tgtVa - (srcVa + 2);
         retval.push_back(0x60);                         // bra.l
         retval.push_back(0xff);

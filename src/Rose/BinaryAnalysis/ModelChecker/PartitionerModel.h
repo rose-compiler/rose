@@ -3,11 +3,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Variables.h>
+
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stack.h>
 
@@ -220,7 +222,7 @@ public:
      *
      *  The value @p v must have a MemoryRegionSemantics::SValue dynamic type. */
     static Ptr promote(const InstructionSemantics::BaseSemantics::SValuePtr &v) { // hot
-        Ptr retval = v.dynamicCast<SValue>();
+        Ptr retval = as<SValue>(v);
         ASSERT_not_null(retval);
         return retval;
     }

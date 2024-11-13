@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -129,7 +130,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr&, const BaseSemanti
 
 SValue::Ptr
 SValue::promote(const BaseSemantics::SValue::Ptr &v) { // hot
-    SValue::Ptr retval = v.dynamicCast<SValue>();
+    SValue::Ptr retval = as<SValue>(v);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -258,7 +259,7 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }

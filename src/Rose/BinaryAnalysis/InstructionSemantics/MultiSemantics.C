@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h>
 
+#include <Rose/As.h>
+
 #include <SgAsmFloatType.h>
 
 namespace Rose {
@@ -28,7 +30,7 @@ SValue::instance() {
 
 SValue::Ptr
 SValue::promote(const BaseSemantics::SValue::Ptr &v) { // hot
-    SValue::Ptr retval = v.dynamicCast<SValue>();
+    SValue::Ptr retval = as<SValue>(v);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -413,9 +415,8 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
 }
 
 RiscOperators::Ptr
-RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &ops)
-{
-    RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(ops);
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &ops) {
+    RiscOperators::Ptr retval = as<RiscOperators>(ops);
     ASSERT_not_null(retval);
     return retval;
 }

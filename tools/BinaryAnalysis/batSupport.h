@@ -2,6 +2,7 @@
 #define ROSE_BatSupport_H
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
@@ -506,7 +507,7 @@ public:
     template<class T>
     std::shared_ptr<T> findPredicate() const {
         for (auto predicate: predicates) {
-            if (auto retval = std::dynamic_pointer_cast<T>(predicate))
+            if (auto retval = Rose::as<T>(predicate))
                 return retval;
         }
         return {};

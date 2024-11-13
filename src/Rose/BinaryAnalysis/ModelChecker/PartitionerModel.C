@@ -15,6 +15,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -484,7 +485,7 @@ State::clone() const {
 
 State::Ptr
 State::promote(const BS::State::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<State>(x);
+    Ptr retval = as<State>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -560,10 +561,10 @@ RiscOperators::create(const BS::State::Ptr&, const SmtSolver::Ptr&) const {
 RiscOperators::Ptr
 RiscOperators::promote(const BS::RiscOperators::Ptr &x) {
     Ptr retval;
-    if (auto traceOps = boost::dynamic_pointer_cast<IS::TraceSemantics::RiscOperators>(x)) {
-        retval = boost::dynamic_pointer_cast<RiscOperators>(traceOps->subdomain());
+    if (auto traceOps = as<IS::TraceSemantics::RiscOperators>(x)) {
+        retval = as<RiscOperators>(traceOps->subdomain());
     } else {
-        retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        retval = as<RiscOperators>(x);
     }
     ASSERT_not_null(retval);
     return retval;

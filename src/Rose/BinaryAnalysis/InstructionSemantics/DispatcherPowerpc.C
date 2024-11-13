@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
@@ -2509,7 +2510,7 @@ DispatcherPowerpc::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
 
 DispatcherPowerpc::Ptr
 DispatcherPowerpc::promote(const BaseSemantics::Dispatcher::Ptr &d) {
-    Ptr retval = boost::dynamic_pointer_cast<DispatcherPowerpc>(d);
+    Ptr retval = as<DispatcherPowerpc>(d);
     ASSERT_not_null(retval);
     return retval;
 }

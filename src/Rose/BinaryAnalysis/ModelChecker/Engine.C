@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
@@ -450,7 +451,7 @@ Engine::finishPath(const BS::RiscOperators::Ptr &ops) {
     inProgress_.erase(boost::this_thread::get_id());
 
     IS::SymbolicSemantics::RiscOperators::Ptr symbolicOps;
-    if (auto traceSemantics = boost::dynamic_pointer_cast<IS::TraceSemantics::RiscOperators>(ops)) {
+    if (auto traceSemantics = as<IS::TraceSemantics::RiscOperators>(ops)) {
         symbolicOps = IS::SymbolicSemantics::RiscOperators::promote(traceSemantics->subdomain());
     } else {
         symbolicOps = IS::SymbolicSemantics::RiscOperators::promote(ops);
@@ -927,11 +928,11 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     }
     out <<prefix <<(boost::format("%-45s %1.2f%% estimated\n") % "portion of execution tree explored:" % percentExplored);
     out <<prefix <<"(estimates can be wildly incorrect for small sample sizes)\n";
-    if (auto p = std::dynamic_pointer_cast<WorkPredicate>(explorationPredicate())) {
+    if (auto p = as<WorkPredicate>(explorationPredicate())) {
         out <<prefix <<"paths terminated due to length limit:         " <<p->kLimitReached() <<"\n";
         out <<prefix <<"paths terminated due to time limit:           " <<p->timeLimitReached() <<"\n";
     }
-    if (auto s = std::dynamic_pointer_cast<PartitionerModel::SemanticCallbacks>(semantics())) {
+    if (auto s = as<PartitionerModel::SemanticCallbacks>(semantics())) {
         out <<prefix <<"paths terminated at duplicate states:         " <<s->nDuplicateStates() <<"\n";
         out <<prefix <<"paths terminated for solver failure:          " <<s->nSolverFailures() <<" (including timeouts)\n";
     }

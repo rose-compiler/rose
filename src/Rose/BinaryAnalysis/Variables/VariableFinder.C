@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Variables/VariableFinder.h>
 
+#include <Rose/As.h>
 #include <Rose/Affirm.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -102,7 +103,7 @@ public:
     }
 
     static Ptr promote(const BS::RiscOperators::Ptr &x) {
-        Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        Ptr retval = as<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -188,7 +189,7 @@ private:
 
     // Return a symbolic expression from a symbolic svalue if possible, otherwise nullptr.
     static SymbolicExpression::Ptr expr(const BS::SValue::Ptr &svalue) {
-        if (const auto ssv = svalue.dynamicCast<IS::SymbolicSemantics::SValue>()) {
+        if (const auto ssv = as<IS::SymbolicSemantics::SValue>(svalue)) {
             return ssv->get_expression();
         } else {
             return {};

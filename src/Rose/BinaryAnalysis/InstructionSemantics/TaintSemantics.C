@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -129,7 +130,7 @@ RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const S
     : Super(protoval, solver) {
     name("Taint");
     ASSERT_always_not_null(protoval);
-    ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
+    ASSERT_always_not_null2(as<SValue>(protoval),
                             "TaintSemantics supports only TaintSemantics::SValue types or derivatives thereof");
 }
 
@@ -138,10 +139,10 @@ RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSo
     name("Taint");
     ASSERT_always_not_null(state);
     ASSERT_always_not_null(state->registerState());
-    ASSERT_always_not_null2(boost::dynamic_pointer_cast<RegisterState>(state->registerState()),
+    ASSERT_always_not_null2(as<RegisterState>(state->registerState()),
                             "TaintSemantics supports only RegisterStateGeneric or derivatives thereof");
     ASSERT_always_not_null(state->protoval());
-    ASSERT_always_not_null2(state->protoval().dynamicCast<SValue>(),
+    ASSERT_always_not_null2(as<SValue>(state->protoval()),
                             "TaintSemantics supports only TaintSemantics::SValue types or derivatives thereof");
 }
 
@@ -178,7 +179,7 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
 
 RiscOperators::Ptr
 RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
-    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    Ptr retval = as<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }

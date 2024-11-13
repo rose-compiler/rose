@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Combinatorics.h>                              // rose
@@ -24,10 +25,10 @@ namespace BaseSemantics {
 // This is leftover for compatibility with an older API.  The old API had code like this:
 //    User::SValue user_svalue = BaseSemantics::dynamic_pointer_cast<User::SValue>(base_svalue);
 // Which can be replaced now with
-//    User::SValue user_svalue = base_svalue.dynamicCast<User::SValue>();
+//    User::SValue user_svalue = as<User::SValue>(base_svalue);
 template<class To, class From>
 Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From> &from) {
-    return from.template dynamicCast<To>();
+    return as<To>(from);
 }
 
 /** Base class for semantic values.

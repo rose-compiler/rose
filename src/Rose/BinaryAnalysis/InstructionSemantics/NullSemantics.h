@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
@@ -92,7 +93,7 @@ public:
 public:
     /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = v.dynamicCast<SValue>();
+        SValuePtr retval = as<SValue>(v);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -182,7 +183,7 @@ public:
     }
     
     static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from) {
-        RegisterStatePtr retval = boost::dynamic_pointer_cast<RegisterState>(from);
+        RegisterStatePtr retval = as<RegisterState>(from);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -257,7 +258,7 @@ public:
 
 public:
     static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+        MemoryStatePtr retval = as<MemoryState>(x);
         ASSERT_not_null(x);
         return retval;
     }

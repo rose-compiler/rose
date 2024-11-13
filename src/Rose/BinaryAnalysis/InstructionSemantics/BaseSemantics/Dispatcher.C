@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 
 #include <Rose/Affirm.h>
+#include <Rose/As.h>
 #include <Rose/AST/Traversal.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
@@ -148,8 +149,7 @@ Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     size_t nBits = ipReg.nBits();
     BaseSemantics::SValue::Ptr ipValue;
     if (!autoResetInstructionPointer_ && operators()->currentState() && operators()->currentState()->registerState()) {
-        BaseSemantics::RegisterStateGeneric::Ptr grState =
-            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators()->currentState()->registerState());
+        auto grState = as<BaseSemantics::RegisterStateGeneric>(operators()->currentState()->registerState());
         if (grState && grState->is_partly_stored(ipReg))
             ipValue = operators()->readRegister(ipReg);
     }
