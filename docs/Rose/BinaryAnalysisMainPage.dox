@@ -8,132 +8,134 @@
 
 /** @mainpage notitle
  *
- *  @note This documentation is intentionally incomplete. It will be extended and improved as we review and fix existing
- *  documentation.  Therefore, it is best to use this documentation in conjunction with the API documentation hosted at [Rose
- *  Compiler](http://rosecompiler.org).
+ *  @note This documentation is intentionally incomplete. We plan to extend and improve it as we review and fix existing
+ *  documentation.  Therefore, one should read this documentation in conjunction with the developer-oriented API documentation
+ *  hosted at [Rose Compiler](http://rosecompiler.org).
  *
  *  @section mainpage_intro The ROSE library
- * 
- *  Developed at [Lawrence Livermore National Laboratory](https://llnl.gov) (LLNL), ROSE is an open source compiler infrastructure
- *  to build source-to-source program transformation and analysis tools for large-scale C (C89 and C98), C++ (C++98 and C++11), UPC,
- *  Fortran (77, 95, 2003), OpenMP, Java, Python, PHP, and Binary applications.  ROSE users range from experienced compiler
- *  researchers to library and tool developers who may have minimal compiler experience. ROSE is particularly well suited for
- *  building custom tools for static analysis, program optimization, arbitrary program transformation, domain-specific
- *  optimizations, complex loop optimizations, performance analysis, and cyber-security.
  *
- *  The ROSE system as a whole is spelled in all capital letters although it is not an acronym; the main @ref Rose "namespace" in
- *  the ROSE library is spelled "Rose" because ROSE naming conventions use PascalCase for namespaces; and command-line tools spell
- *  it as "rose" because ROSE uses kabob-case for command-lines.
+ *  The ROSE compiler infrastructure provides an open-source library that users can use to build tools that analyze and transform
+ *  large-scale programs. These tools use the ROSE library to perform static analysis, program and domain-specific optimizations,
+ *  arbitrary transformations, cyber-security checks, and more.  The library can analyze and transform source code written in C,
+ *  C++, UPC, Fortran, OpenMP, Java, Python, Ada, Jovial, or PHP, and it can analyze binaries that employ the Intel x86, PowerPC,
+ *  ARM, MIPS, M68k, JVM, or CIL instruction sets.
+ *
+ *  In prose, one spells ROSE in all capital letters. The ROSE naming conventions dictate the use of PascalCase for namespaces and
+ *  types, and kebab-case for command lines, thus one spells the main @ref Rose "namespace" "Rose" and command-line tools use
+ *  "rose".
  *
  *  @section mainpage_audience Audience
  *
- *  This documentation is intended for users who are writing ROSE-based tools with an emphasis on binary analysis. In particular
- *  this is not geared toward ROSE core developers who need to see more internal details.
+ *  This documentation is intended for users who write ROSE-based analysis or transformation tools that link with an installed
+ *  version of the ROSE library. This document places an emphasis on parts of the ROSE library particularly suited to binary
+ *  analysis. The ROSE core developers have other developer-specific documentation available to them.
  *
- *  Some goals of this documentation are:
+ *  Some goals of this documentation:
  *
- *  @li To document all library entities that are used by users in a way that is useful to users. In other words, we strive to
- *  provide complete and correct documentation.
+ *  @li To document all library entities in a way that users find useful. In other words, we strive to provide complete and correct
+ *  documentation.
  *
- *  @li To exclude entities that are only used internally. Although such entities are useful to ROSE core developers, they are not
- *  useful to end users writing tools based on a pre-built, installed copy of the ROSE library and its tools.
+ *  @li To exclude entities that users who write tools don't find useful. In other words, we exclude documentation for entities
+ *  that serve only an internal purpose.
  *
- *  @li To exclude entities that are not documented. All entities have names and we strive for names that clearly convey the
- *  entity's purpose. However, a name by itself, no matter how well chosen, does not provide complete documentation and can
- *  therefore be even less useful (as in easy to misuse or misconvey its meaning) than not being present at all. Also, not including
- *  undocumented entities encourages their authors to provide the user with more adequate documentation.
+ *  @li To exclude undocumented entities. All entities have names and we strive for names that clearly convey the entity's
+ *  purpose. However, a name by itself, no matter how well chosen, does not provide complete documentation and can mislead a user.
+ *  Excluding undocumented entities has the added benefit of encouraging their authors to write more adequate documentation.
  *
- *  @li To exclude entities that do not yet follow ROSE's naming conventions. Such violations are confusing to users, they promote
- *  proliferation of these bad practices, and by omitting them from the user documentation we encourage authors to fix them.
+ *  @li To exclude entities that do not yet follow ROSE's naming conventions. Such entities not only confuse users by being
+ *  exceptions to a rule, but their inclusion in the documentation encourages the ROSE core team to continue to violate the ROSE
+ *  naming conventions.
  *
- *  @li To generated the consumable documentation formats (e.g., HTML) without any warnings or errors. It has been our experience in
- *  the past that if warnings and errors are tolerated, they accumulate until it's painful for even a conscientious author to
- *  maintain correct documentation.
+ *  @li To generate the consumable documentation formats (e.g., HTML) without any warnings or errors. Experience shows that when
+ *  we tolerate warnings they accumulate until it becomes painful for a conscientious author to maintain correct documentation.
  *
  *  @section mainpage_naming Naming conventions
  *
  *  @subsection mainpage_naming_namespaces The Rose namespace
  *
- *  All parts of the ROSE library exist inside the @ref Rose namespace unless they are useful outside ROSE (such as @ref
- *  Sawyer). All entities that are useful for binary analysis exist inside the @ref Rose::BinaryAnalysis namespace. Namespaces
- *  are capitalized the same as ROSE types using [PascalCase](https://en.wikipedia.org/wiki/Camel_case), which is why the top
- *  namespace is spelled "Rose" instead of "ROSE".
+ *  All parts of the ROSE library exist inside the @ref Rose namespace. ROSE does include some third-party libraries that use other
+ *  top-level namespaces, such as @ref Sawyer. Entities used to analyze binaries exist inside the @ref Rose::BinaryAnalysis
+ *  namespace.  The ROSE naming convention requires that namespaces use [PascalCase](https://en.wikipedia.org/wiki/Camel_case),
+ *  which is why we spell the top-level namespace "Rose" instead of "ROSE".
  *
  *  @note At this time, many ROSE library symbols pollute the root namespace or appear in other non-Rose namespaces. These violate
- *  the naming convention and will eventually be renamed. As such, they will not appear in this document until they are fixed.
+ *  the naming convention and we plan to eventually rename them. As such, with a few exceptions, they do not appear in this
+ *  document.
  *
  *  @subsection mainpage_naming_capitalization Capitalization of C++ symbols
  *
- *  <b>Symbol names:</b> Namespaces and types (e.g., classes) that are part of the ROSE public API use
+ *  Namespaces and types (e.g., classes) that are part of the ROSE public API use
  *  [PascalCase](https://en.wikipedia.org/wiki/Camel_case); macros begin with the string "ROSE_" and use uppercase letters with
- *  words separated by underscores; everything else that's part of the public API uses lower camel case (a.k.a., dromedary
- *  case).
+ *  words separated by underscores; everything else that's part of the public API uses lower camel case (a.k.a., dromedary case).
  *
- *  Acronyms and abbreviations are usually spelled out in full unless they are extremely common in the ROSE source code and are in
- *  standard use in the compiler field. When acronyms and abbreviations are used, they are treated as words for the purpose of
- *  capitalization in C++ symbols, except that API, AST, CFG, and IO are all upper-case when they appear *alone* as a C++
- *  symbol. For instance, the correct spelling for a function that converts an AST to a PDF is "astToPdf", not "ASTToPDF".
+ *  We usually spell out acronyms and abbreviations in full unless they are extremely common in the ROSE source code and in standard
+ *  use in the compiler field. When we use acronyms and abbreviations, we treat them as words for the purpose of capitalization in
+ *  C++ symbols, except that API, AST, CFG, and IO are all upper-case when they appear *alone* as a C++ symbol. For instance, the
+ *  correct spelling for a function that converts an AST to a PDF is "astToPdf", not "ASTToPDF".
  *
- *  @note At this time, many ROSE symbols that are part of the public API violate this convention by using inconsistent
- *  capitalization and/or word separation. Many of them will not appear in this documentation until they are fixed.
+ *  @note At this time, many symbols in the ROSE public API violate this convention by using inconsistent capitalization and/or word
+ *  separation. We continue to exclude many of them from this documentation until we fix them.
  *
  *  @subsection mainpage_headers Header files
  *
- *  ROSE header files are installed and included using @c @#include with path names beginning with "Rose" and mirroring the
- *  namespace hierarchy. The base names of public include files match the C++ symbol they primarily define and always end with a
- *  ".h" extension. Base names and path components are capitalized the same as the C++ symbols (described above). For instance, the
- *  header file for the @ref Rose::CommandLine::SelfTest class is included as <code>@#include <Rose/CommandLine/SelfTest.h></code>.
- *  To support file systems that are not POSIX compliant with regard to case sensitivity, no ROSE include directory will contain two
- *  header files whose names are identical when converted to lower case.
+ *  The ROSE build system installs header files with path names that mirror the namespace hierarchy. The user should include these
+ *  headers using <code>@#include <Rose/....h></code>. The base names of public include files match the C++ symbol they primarily
+ *  define and always end with a ".h" extension. Base names and path components use the same capitalization as the C++ symbols
+ *  (described above). For instance, one includes the header file for the @ref Rose::CommandLine::SelfTest class as <code>@#include
+ *  <Rose/CommandLine/SelfTest.h></code>.  To support file systems that are not POSIX compliant with regard to case sensitivity, no
+ *  ROSE include directory ever contains two header files whose names are identical when converted to lower case.
  *
  *  Each namespace has a header file that recursively includes all header files under that namespace. Although users find this
- *  convenient, the ROSE library itself should not include these namespace headers into its own compilation units because doing so
- *  increases build times.
+ *  convenient, the ROSE library itself does not include these namespace headers into its own compilation units because doing so
+ *  can substantially increase build times.
  *
- *  Each namespace also has a header file named "BasicTypes.h" that declares entities that are most useful to other header
- *  files. They mostly declare class names (forward class declarations) and incomplete shared pointer types (names ending with
+ *  Each namespace also has a header file named "BasicTypes.h" that declares entities that other header files find most useful.
+ *  They mostly declare class names (forward class declarations) and incomplete shared pointer types (names ending with
  *  "Ptr"), but may also declare commonly used constants, enums, small classes, etc. The "BasicTypes.h" header files recursively
  *  include all "BasicTypes.h" header files for child namespaces.
  *
- *  ROSE header files can be included in any order. They can also be included more than once without any ill effect.
+ *  One can include ROSE header files in any order. Including the same header file more than once has no ill effect since all header
+ *  files contain include-once guards. We strive to make header files deterministic, idempotent, specific, and minimally dependent
+ *  on other headers.
  *
- *  @note Many ROSE header files violate one or more of these policies and might not appear in this documentation until they are
- *  fixed. In particular, the legacy "rose.h" header file must be included before any other ROSE header file, and contributes
- *  negatively to compilation times.
+ *  @note Many ROSE header files violate one or more of these policies and might not appear in this documentation until we fix
+ *  them. In particular, some headers depend on a prior inclusion of "rose.h", and this practice contributes negatively to
+ *  compilation times.
  *
  *  @note The "Rose.h" namespace header does not yet exist. Eventually it will replace the "rose.h" header file that currently has
- *  a somewhat similar purpose.
+ *  a somewhat similar purpose--to recursively include all ROSE header files.
  *
  *  @if rosedoc2024
- *  @note This documentation may refer to headers under an "AstNodes" directory. These headers are actually inputs to the Rosebud
- *  code generation system for AST node types and should not be included into user programs. Instead, users should include the
- *  "rose.h" header, which automatically includes all AST node types.
+ *  @note This documentation may refer to headers under an "AstNodes" directory. These headers serve as inputs to the Rosebud code
+ *  generation system for AST node types and users should include them without the path.  For instance, if the documentation
+ *  mentions "AstNodes/BinaryAnalysis/SgAsmInstruction.h", the user should include "SgAsmInstruction.h" instead.
  *  @endif
-
+ *
  *  @section mainpage_binaryanalysis Binary analysis
  *
  *  Although ROSE has historically emphasized source code analysis and source-to-source transformations, binary analysis has become
- *  an important part of the ROSE ecosystem.  Binary analysis is the process of ingesting low-level, non-human oriented code like
+ *  an important part of the ROSE ecosystem.  Binary analysis progresses by ingesting low-level, non-human oriented code like
  *  machine code and byte code from executables, libraries, and memory dumps; parsing it and decoding its instructions; analyzing
  *  those instructions; and unparsing to more human-consumable formats like assembly listings.
  *
- *  All binary analysis in the ROSE library is located under the @ref Rose::BinaryAnalysis namespace, and that page should be your
+ *  The ROSE library locates all binary analysis under the @ref Rose::BinaryAnalysis namespace, and that page should be your
  *  next stop in this journey.
  *
  *  @section mainpage_resources Other resources
  *
- *  ROSE comes with a number of binary analysis tools, some useful and some that intend to demonstrate a particular
- *  capability. Additional tools are available to collaborators and sponsors in separate, private repositories. All of these tools
- *  can be run with the "--help" command-line switch to show their manpage-style documentation, some of which is quite extensive.
+ *  ROSE comes with a number of binary analysis tools, some useful and some that intend to demonstrate a particular capability. We
+ *  make additional tools available to collaborators and sponsors in separate, private repositories. All of these tools understand
+ *  a "--help" command-line switch to show their manpage-style documentation, some of which is quite extensive.
  *
- *  The full ROSE API, including source code portions, can be found at [ROSECompiler.org](http://rosecompiler.org).
+ *  One can find the full, developer-oriented API documentation, including stubs for undocumented entities, at
+ *  [ROSECompiler.org](http://rosecompiler.org).
  *
- *  Source code and installation instructions are hosted at [GitHub](https://github.com/rose-compiler/rose) for external
+ *  [GitHub](https://github.com/rose-compiler/rose) hosts the source code and installation instructions for external
  *  users. Internal developers should use the team's [internal GitLab](https://rosecompiler2.llnl.gov/gitlab) deployment.
  *
  *  @section mainpage_generation Documentation generation
  *
- *  This documentation was generated by [Doxygen](https://www.doxygen.nl) on the date shown on the bottom of this page for the ROSE
+ *  The [Doxygen](https://www.doxygen.nl) tool generated this document on the date shown on the bottom of this page for the ROSE
  *  version shown at the top of this page. You can generate a local copy of this documentation by running the
  *  `generate-api-documentation` found in the "scripts" directory at the top of the ROSE source code. You should use Doxygen version
  *  1.9 or later. */
