@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 
+#include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -13,6 +15,8 @@
 #include <SgAsmInstruction.h>
 
 #include <Cxx_GrammarDowncast.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -240,17 +244,16 @@ void
 CodeInserter::fillWithNops(const AddressIntervalSet &where) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    std::string isa = partitioner_->instructionProvider().disassembler()->name();
     for (const AddressInterval &interval: where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with no-op instructions\n";
 
         // Create the vector containing the encoded instructions
         std::vector<uint8_t> nops;
         nops.reserve(interval.size());
-        if ("i386" == isa || "amd64" == isa) {
+        if (std::dynamic_pointer_cast<const Architecture::X86>(partitioner_->architecture())) {
             nops.resize(interval.size(), 0x90);
 
-        } else if ("coldfire" == isa) {
+        } else if (std::dynamic_pointer_cast<const Architecture::NxpColdfire>(partitioner_->architecture())) {
             // Although coldfire instructions are normally a multiple of 2 bytes, there is one exception: a bad instruction can
             // be an odd number of bytes. Therefore we could be asked to fill an odd number of bytes with NOP instructions. If
             // that happens, we fill even addresses with the first half of the NOP and odd addresses with the second half, this
@@ -259,7 +262,7 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
                 nops.push_back(i % 2 == 0 ? 0x4e : 0x71);
 
         } else {
-            TODO("no-op insertion for " + isa + " is not implemented yet");
+            TODO("no-op insertion for " + partitioner_->architecture()->name() + " is not implemented yet");
         }
 
         // Write the vector to memory
@@ -274,7 +277,6 @@ void
 CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    std::string isa = partitioner_->instructionProvider().disassembler()->name();
     for (const AddressInterval &interval: where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with random data\n";
         std::vector<uint8_t> data;
@@ -293,7 +295,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     std::vector<uint8_t> retval;
     std::string isa = partitioner_->instructionProvider().disassembler()->name();
-    if ("i386" == isa || "amd64" == isa) {
+    if (std::dynamic_pointer_cast<const Architecture::X86>(partitioner_->architecture())) {
         // For now, just use a jump with a 4-byte operand.
         rose_addr_t delta = tgtVa - (srcVa + 5);
         retval.push_back(0xe9);
@@ -302,7 +304,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
         retval.push_back((delta >> 16) & 0xff);
         retval.push_back((delta >> 24) & 0xff);
 
-    } else if ("coldfire" == isa) {
+    } else if (std::dynamic_pointer_cast<const Architecture::NxpColdfire>(partitioner_->architecture())) {
         rose_addr_t delta = tgtVa - (srcVa + 2);
         retval.push_back(0x60);                         // bra.l
         retval.push_back(0xff);
@@ -312,7 +314,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
         retval.push_back((delta >>  0) & 0xff);
 
     } else {
-        TODO("jump encoding for " + isa + " is not implemented yet");
+        TODO("jump encoding for " + partitioner_->architecture()->name() + " is not implemented yet");
     }
 
     if (debug) {

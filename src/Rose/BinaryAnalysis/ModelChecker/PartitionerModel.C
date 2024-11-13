@@ -820,7 +820,7 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
         }
         callStack.push(FunctionCall(callee, initialSp, returnVa, lvars));
         const std::string isa = partitioner_->instructionProvider().disassembler()->name();
-        if ("a32" == isa || "t32" == isa || "a64" == isa || "coldfire" == isa) {
+        if ("arm-a32" == isa || "arm-t32" == isa || "arm-a64" == isa || "nxp-coldfire" == isa) {
             callStack[0].framePointerDelta(-4);
         } else if (frameSize) {
             callStack[0].framePointerDelta(-*frameSize);
@@ -877,7 +877,7 @@ RiscOperators::popCallStack() {
     if (poppedInitialSp) {
         rose_addr_t stackBoundary = *poppedInitialSp;
         const std::string isaName = partitioner_->instructionProvider().disassembler()->name();
-        if ("i386" == isaName) {
+        if (boost::starts_with(isaName, "intel-")) {
             // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
             stackBoundary += 4;
         } else if ("amd64" == isaName) {
@@ -885,9 +885,9 @@ RiscOperators::popCallStack() {
             stackBoundary += 8;
         } else if (boost::starts_with(isaName, "ppc32") || boost::starts_with(isaName, "ppc64")) {
             // PowerPC function calls don't push a return value.
-        } else if ("a32" == isaName || "t32" == isaName || "a64" == isaName) {
+        } else if ("arm-a32" == isaName || "arm-t32" == isaName || "arm-a64" == isaName) {
             // ARM AArch32 and AArch64 function calls don't push a return value
-        } else if ("coldfire" == isaName) {
+        } else if ("nxp-coldfire" == isaName) {
             // m68k pops the return value from the stack
             stackBoundary += 4;
         } else {
