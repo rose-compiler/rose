@@ -676,7 +676,7 @@ option(ENABLE-BINARY-ANALYSIS-TESTS "Enable tests of ROSE binary analysis code" 
 option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
 option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
 
-if(NOT ENABLE-TESTS-DIRECTORY AND EXISTS "${PROJECT_SOURCE_DIR}/tests/Readme.md")
+if(NOT ENABLE-TESTS-DIRECTORY AND EXISTS "${PROJECT_SOURCE_DIR}/tests/README.md")
   set(ENABLE-TESTS-DIRECTORY ON CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
 endif()
 
