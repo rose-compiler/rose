@@ -104,13 +104,20 @@ BasicBlockUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::
     out <<prefix1 <<"steps:\n";
     std::string prefix(prefix1.size(), ' ');
 
+    Unparser::Base::Ptr unparser;
+
     std::vector<SgAsmInstruction*> insns = bblock_->instructions();
     SourceLocation prevLoc;
     for (size_t i = 0; i < insns.size() && maxSteps > 0; ++i, --maxSteps) {
         SgAsmInstruction *insn = insns[i];
         ASSERT_not_null(insn);
 
-        out <<prefix <<"  - instruction: " <<StringUtility::yamlEscape(insns[i]->toString()) <<"\n";
+        if (!unparser) {
+            unparser = insns[i]->architecture()->newInstructionUnparser();
+            unparser->settings().colorization.enabled = Color::Enabled::OFF;
+        }
+
+        out <<prefix <<"  - instruction: " <<StringUtility::yamlEscape(unparser->unparse(insns[i])) <<"\n";
 
         if (SourceLocation sloc = partitioner_->sourceLocations().get(insn->get_address())) {
             if (sloc != prevLoc) {
@@ -132,6 +139,8 @@ BasicBlockUnit::toSarif(size_t maxSteps) const {
     std::vector<Sarif::Location::Ptr> retval;
     std::vector<SgAsmInstruction*> insns = bblock_->instructions();
     SourceLocation prevLoc;
+    Unparser::Base::Ptr unparser;
+
     for (size_t i = 0; i < insns.size() && maxSteps > 0; ++i, --maxSteps) {
         const std::string name = [this]() {
             if (auto map = partitioner_->memoryMap()) {
@@ -142,9 +151,15 @@ BasicBlockUnit::toSarif(size_t maxSteps) const {
             return std::string("file:///proc/self/mem");
         }();
 
+        if (!unparser) {
+            unparser = insns[i]->architecture()->newInstructionUnparser();
+            unparser->settings().colorization.enabled = Color::Enabled::OFF;
+        }
+
+        const std::string insnStr = unparser->unparse(insns[i]);
         retval.push_back(Sarif::Location::instance(name,
                                                    AddressInterval::baseSize(insns[i]->get_address(), insns[i]->get_size()),
-                                                   insns[i]->toString()));
+                                                   insnStr));
 
         if (SourceLocation sloc = partitioner_->sourceLocations().get(insns[i]->get_address())) {
             if (sloc != prevLoc)

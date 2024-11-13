@@ -159,8 +159,31 @@ public:
      *
      *  An unparser is responsible for generating pseudo assembly listings.
      *
-     *  Thread safety: Thread safe. */
+     *  The @ref newUnparser returns a default configured unparser suitable for unparsing instructions in the context of an assembly
+     *  listing. The @ref newInstructionUnparser returns a parser configured to show individual instructions showing only the
+     *  instruction address, the instruction mnemonic, and the operands.
+     *
+     *  Example: The default instruction unparser uses color by default. If you want to turn off the color, you must create
+     *  a new unparser, configure it to disable color, and then use it to unparse the instruction.
+     *
+     *  @code
+     *  SgAsmInstruction *insn = ...;
+     *
+     *  // Produce colored output
+     *  std::cout <<insn->toString() <<"\n";
+     *
+     *  // Produce monochrome output
+     *  auto unparser = notnull(insn->architecture()->newInstructionUnparser());
+     *  unparser->settings().colorization.enabled = Color::Enabled::OFF;
+     *  std::cout <<unparser->unparse(insn) <<"\n";
+     *  @endcode
+     *
+     *  Thread safety: Thread safe.
+     *
+     * @{ */
     virtual Unparser::BasePtr newUnparser() const = 0;
+    virtual Unparser::BasePtr newInstructionUnparser() const;
+    /** @} */
 
     /** Construct and return a new instruction dispatcher.
      *

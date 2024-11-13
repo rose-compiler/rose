@@ -123,6 +123,11 @@ Base::insnUnparser() const {
     return insnToString_.get();
 }
 
+Unparser::Base::Ptr
+Base::newInstructionUnparser() const {
+    return insnUnparser()->copy();
+}
+
 std::string
 Base::toString(const SgAsmInstruction *insn) const {
     if (insn) {

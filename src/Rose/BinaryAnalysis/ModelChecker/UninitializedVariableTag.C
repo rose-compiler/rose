@@ -2,8 +2,10 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
 #include <Rose/StringUtility/Escape.h>
@@ -102,8 +104,11 @@ UninitializedVariableTag::toYaml(std::ostream &out, const std::string &prefix1) 
             break;
     }
 
-    if (insn_)
-        out <<prefix <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
+    if (insn_) {
+        Unparser::Base::Ptr unparser = insn_->architecture()->newInstructionUnparser();
+        unparser->settings().colorization.enabled = Color::Enabled::OFF;
+        out <<prefix <<"instruction: " <<StringUtility::yamlEscape(unparser->unparse(const_cast<SgAsmInstruction*>(insn_))) <<"\n";
+    }
 
     out <<prefix <<"memory-address: " <<StringUtility::yamlEscape(boost::lexical_cast<std::string>(*addr_)) <<"\n";
 

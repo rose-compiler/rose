@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
@@ -9,6 +10,8 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/Color.h>
 #include <Rose/Sarif/Location.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/NumberToString.h>
@@ -76,7 +79,10 @@ void
 InstructionUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix1, size_t /*stepOrigin*/,
                              size_t maxSteps) const {
     if (maxSteps > 0) {
-        out <<prefix1 <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
+        Unparser::Base::Ptr unparser = insn_->architecture()->newInstructionUnparser();
+        unparser->settings().colorization.enabled = Color::Enabled::OFF;
+        const std::string insnStr = unparser->unparse(insn_);
+        out <<prefix1 <<"instruction: " <<StringUtility::yamlEscape(insnStr) <<"\n";
 
         if (sourceLocation()) {
             std::string prefix(prefix1.size(), ' ');
@@ -92,9 +98,12 @@ std::vector<Sarif::Location::Ptr>
 InstructionUnit::toSarif(const size_t maxSteps) const {
     std::vector<Sarif::Location::Ptr> retval;
     if (maxSteps > 0) {
+        Unparser::Base::Ptr unparser = insn_->architecture()->newInstructionUnparser();
+        unparser->settings().colorization.enabled = Color::Enabled::OFF;
+        const std::string insnStr = unparser->unparse(insn_);
+
         retval.push_back(Sarif::Location::instance("file:///proc/self/mem",
-                                                   AddressInterval::baseSize(insn_->get_address(), insn_->get_size()),
-                                                   insn_->toString()));
+                                                   AddressInterval::baseSize(insn_->get_address(), insn_->get_size()), insnStr));
         if (const auto sloc = sourceLocation())
             retval.push_back(Sarif::Location::instance(sloc));
     }
