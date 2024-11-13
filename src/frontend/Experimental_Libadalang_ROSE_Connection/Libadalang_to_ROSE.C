@@ -2,7 +2,11 @@
 
 #include <type_traits>
 #include <algorithm>
+#include <numeric>
+#include <memory>
 #include <deque>
+#include <locale>
+#include <codecvt>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -83,12 +87,104 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() 
 std::vector<SgExpression*>&                                     operatorExprs() { return operatorExprsVector; }
 map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;  }
 
+namespace
+{
+  struct BigIntegerText : ada_text
+  {
+    explicit
+    BigIntegerText(ada_big_integer big_int)
+    {
+      ada_big_integer_text(big_int, this);
+    }
+
+    ~BigIntegerText()
+    {
+      ada_destroy_text(this);
+    }
+
+    operator std::string()
+    {
+      std::unique_ptr<const char> cstr(ada_text_to_locale_string(this));
+
+      return std::string(cstr.get());
+    }
+  };
+}
+
+std::string bigIntegerToString(ada_big_integer bigInt)
+{
+  return BigIntegerText{bigInt};
+}
+
+
+
+std::string toString(ada_text_type text_type)
+{
+  // \todo does there exist a libadalang function to convert UTF32 to Unicode???
+  // If not, it would be preferable to use built in C++ mechanisms for the
+  // conversion of UTF32 to Unicode as supported by C++ strings.
+  // For some reason, the code below does not generate linkable files as
+  // the instantiation of std::codecvt_utf8<uint32_t, 0x10ffff, (std::codecvt_mode)0>
+  // remains missing. Even with the added explicit instantiation, many
+  // member functions remain missing.
+  //
+  //~ template std::codecvt_utf8<uint32_t, 0x10ffff, (std::codecvt_mode)0>;
+  //~ using Utf32Converter = std::codecvt_utf8<uint32_t, 0x10ffff, (std::codecvt_mode)0>;
+
+  //~ if (text_type == nullptr || text_type->items == nullptr) return {};
+
+  //~ std::wstring_convert<Utf32Converter, uint32_t> convert;
+  //~ return convert.to_bytes(text_type->items, text_type->items + text_type->n);
+  //
+  // => use handcrafted conversion for now.
+  struct AppendUTF32ToString
+  {
+    // see also: https://stackoverflow.com/questions/42012563/convert-unicode-code-points-to-utf-8-and-utf-32
+    std::string operator()(std::string s, uint32_t code) const
+    {
+      if (code <= 0x7F) {
+        s.append(1, code);
+      } else if (code <= 0x7FF) {
+        s.append(1, 0xC0 | (code >> 6));            /* 110xxxxx */
+        s.append(1, 0x80 | (code & 0x3F));          /* 10xxxxxx */
+      } else if (code <= 0xFFFF) {
+        s.append(1, 0xE0 | (code >> 12));          /* 1110xxxx */
+        s.append(1, 0x80 | ((code >> 6) & 0x3F));  /* 10xxxxxx */
+        s.append(1, 0x80 | (code & 0x3F));         /* 10xxxxxx */
+      } else if (code <= 0x10FFFF) {
+        s.append(1, 0xF0 | (code >> 18));          /* 11110xxx */
+        s.append(1, 0x80 | ((code >> 12) & 0x3F)); /* 10xxxxxx */
+        s.append(1, 0x80 | ((code >> 6) & 0x3F));  /* 10xxxxxx */
+        s.append(1, 0x80 | (code & 0x3F));         /* 10xxxxxx */
+      } else {
+        logError() << "Unknown unicode codepoint: " << code << std::endl;
+      }
+
+      return s;
+    }
+  };
+
+  if (text_type == nullptr)
+  {
+    logWarn() << "text_type = nullptr" << std::endl;
+    return std::string{};
+  }
+
+  const int N = text_type->n;
+
+  return std::accumulate( text_type->items, text_type->items+N,
+                          std::string{},
+                          AppendUTF32ToString{}
+                        );
+}
+
+
+
 /// Function to turn an ada_text_type into a string
 std::string dot_ada_text_type_to_string(ada_text_type input_text){
     //ada_text_type does not have a func to convert to string,
     // so we convert to ada_text using LibadalangText
-    LibadalangText value_text(input_text);
-    return value_text.string_value();
+    return toString(input_text);
 }
 
 /// Function to turn an ada_unbounded_text_type_array into a string
@@ -101,14 +197,21 @@ std::string dot_ada_unbounded_text_type_to_string(ada_unbounded_text_type_array 
 
 /// Function to get the source location of an ada node as a string
 std::string dot_ada_full_sloc(ada_base_entity *node){
-    ada_text_type file_name;
+    ASSERT_not_null(node);
+
     ada_source_location_range line_numbers;
 
     //Get the location of the text corresponding to this node
     ada_node_sloc_range(node, &line_numbers);
     //Get the file name this node is from
-    ada_ada_node_full_sloc_image(node, &file_name);
-    std::string file_name_string = dot_ada_text_type_to_string(file_name);
+    // If no sloc exists ada_ada_node_full_sloc_image returns 0, in this
+    //   case use the node's internal address to make the string unique.
+    ada_text_type file_name;
+    const int     success = ada_ada_node_full_sloc_image(node, &file_name);
+    std::string   file_name_string =
+                    success ? dot_ada_text_type_to_string(file_name)
+                            : std::to_string(reinterpret_cast<std::intptr_t>(node->node));
+
     std::string::size_type pos = file_name_string.find(':');
     if(pos != std::string::npos){
         file_name_string = file_name_string.substr(0, pos);
@@ -142,7 +245,7 @@ std::string canonical_text_as_string(ada_base_entity* lal_element){
   std::string canonical_text_string = ada_canonical_text.string_value();
   return canonical_text_string;
 }
-/// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal) 
+/// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal)
 std::string getFullName(ada_base_entity* lal_element){
   ada_node_kind_enum kind = ada_node_kind(lal_element);
   switch(kind){
@@ -169,7 +272,7 @@ std::string getFullName(ada_base_entity* lal_element){
     default:
       logError() << "Unhandled kind " << kind << " in getFullName()!\n";
       return "nameError";
-  } 
+  }
 }
 void logKind(const char* kind, int elemID)
 {
@@ -476,7 +579,7 @@ namespace{
      if(pos != std::string::npos){
          file_name_string = file_name_string.substr(0, pos);
      }
-      
+
       ada_unbounded_text_type_array p_syntactic_fully_qualified_name;
       int result = ada_compilation_unit_p_syntactic_fully_qualified_name(lal_unit, &p_syntactic_fully_qualified_name);
 
@@ -536,7 +639,7 @@ namespace{
           ada_subunit_f_body(&unit_body, &unit_declaration);
           privateDecl = false; //TODO I don't think subunits can be private?
       }
-      
+
       //Call handleElement on the main body of the unit
       handleElement(&unit_declaration, ctx, privateDecl);
 

@@ -97,6 +97,9 @@ namespace Libadalang_ROSE_Translation
                                    SgExpression* initexpr
                                  );
 
+  /// returns the ROSE scope of an already converted Asis element \ref elem.
+  SgScopeStatement&
+  queryScopeOf(int declHash, AstContext);
 }
 
 

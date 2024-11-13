@@ -2902,6 +2902,10 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int hash = hash_node(&lal_defining_name);
         recordNode(libadalangDecls(), hash, sgnode);
 
+        // \todo check w/ AS that adding extra hashlinks is OK.
+        int hash0 = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash0, sgnode);
+
         privatize(sgnode, isPrivate);
         //~ attachSourceLocation(pkgspec, lal_element, ctx);
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -5113,5 +5117,107 @@ processInheritedSubroutines( SgNamedType& derivedType,
 
   ctx.storeDeferredUnitCompletion(std::move(deferredSubRoutineProcessing));
 }
+
+namespace {
+
+  /// retrieves the scope of a declaration node
+  struct ScopeQuery : sg::DispatchHandler<SgScopeStatement*>
+  {
+    template <class SageDecl>
+    void def(SageDecl& n) { res = n.get_definition(); }
+
+    template <class SageDecl>
+    void def(SageDecl* n) { if (n) def(*n); }
+
+    void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+
+    // declarations
+    void handle(SgAdaPackageSpecDecl& n)     { def(n); }
+    void handle(SgAdaPackageBodyDecl& n)     { def(n); }
+    void handle(SgFunctionDeclaration& n)    { def(isSgFunctionDeclaration(n.get_definingDeclaration())); }
+
+    void handle(SgAdaGenericDecl& n)
+    {
+      //~ SgDeclarationStatement* dcl = n.get_declaration();
+
+      //~ if (isSgFunctionDeclaration(dcl)) // \todo correct?
+        //~ return def(n);
+
+      //~ res = find(dcl);
+      res = find(n.get_declaration());
+    }
+
+    void handle(SgAdaGenericInstanceDecl& n)
+    {
+      SgBasicBlock&       scope   = SG_DEREF(isSgBasicBlock(n.get_instantiatedScope()));
+      SgStatementPtrList& stmts   = scope.get_statements();
+      SgStatement*        dclstmt = stmts.at(0);
+
+      res = find(dclstmt);
+    }
+
+    // renamings
+    void handle(SgAdaRenamingDecl& n) { res = find(n.get_renamed()); }
+    void handle(SgAdaUnitRefExp& n)   { res = find(n.get_decl()); }
+
+    // others
+    void handle(SgBasicBlock& n)      { res = &n; }
+
+    // \todo add handlers as needed
+    // ...
+
+    static
+    ReturnType find(SgNode*);
+  };
+
+  ScopeQuery::ReturnType
+  ScopeQuery::find(SgNode* n)
+  {
+    return sg::dispatch(ScopeQuery{}, n);
+  }
+
+} // end anonymous namespace
+
+
+
+  /// returns the ROSE scope of an already converted Asis element \ref elem.
+  SgScopeStatement&
+  queryScopeOf(int declHash, AstContext)
+  {
+    if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), declHash))
+      return SG_DEREF(ScopeQuery::find(dcl));
+
+/*
+    ADA_ASSERT (elem.Element_Kind == An_Expression);
+
+    Expression_Struct& expr = elem.The_Union.Expression;
+
+    if (expr.Expression_Kind == A_Selected_Component)
+      return queryScopeOfID(expr.Selector, ctx);
+
+    if (expr.Expression_Kind != An_Identifier)
+      logError() << "unexpected identifier: " << expr.Expression_Kind;
+
+    ADA_ASSERT (expr.Expression_Kind == An_Identifier);
+    logKind("An_Identifier", elem.ID);
+
+    SgNode* dcl = queryCorrespondingAstNode(expr, ctx);
+
+    if (dcl == nullptr)
+    {
+      logFatal() << "Unable to find scope/declaration for " << expr.Name_Image
+                 << std::endl;
+      ADA_ASSERT(false);
+    }
+
+    return SG_DEREF(ScopeQuery::find(dcl));
+*/
+    logError() << "unable to retrive scope for node. hash = " << declHash
+               << "\n  falling back to Standard package."
+               << std::endl;
+
+    return *si::Ada::pkgStandardScope(); // that IS WRONG
+  }
+
 
 } //end Libadalang_ROSE_Translation

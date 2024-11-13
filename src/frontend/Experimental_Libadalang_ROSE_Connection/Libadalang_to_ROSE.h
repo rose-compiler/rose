@@ -236,7 +236,6 @@ struct LabelAndLoopManager
 ///   contains context that is passed top-down
 struct AstContext
 {
-
     using StatementHandler            = std::function<void(AstContext, SgStatement&)>;
     using PragmaContainer             = std::vector<ExtendedPragmaID>;
     using DeferredCompletion          = std::function<void()>;
@@ -352,6 +351,14 @@ std::string toString(const char* el)
   return el;
 }
 
+// special non-overlaoded function to convert big integers to string
+//   the function is non-overloaded because libadalang defines ada_big_integer
+//   as void* and thus would take any pointer as input.
+std::string bigIntegerToString(ada_big_integer);
+
+std::string toString(ada_text_type text_type);
+
+
 /// Class that handles ada_text variables from Libadalang
 /// ada_text variables need to be destroyed using the ada_destroy_text func
 struct LibadalangText {
@@ -375,12 +382,14 @@ struct LibadalangText {
       cxx_text = toString(c_text);
     }
 
+#if 0
     //If init with ada_big_integer, call ada_big_integer_text to get the ada_text value
     LibadalangText(ada_big_integer big_int){
       ada_big_integer_text(big_int, &internal_text);
       c_text = ada_text_to_locale_string(&internal_text);
       cxx_text = toString(c_text);
     }
+#endif
 
     //If init with ada_base_entity, call ada_node_image to get the ada_text value
     LibadalangText(ada_base_entity* lal_element){
@@ -390,6 +399,7 @@ struct LibadalangText {
     }
 
     //If init with ada_text_type, use pointers to construct ada_text value
+#if 0
     LibadalangText(ada_text_type text_type){
       if (text_type != nullptr)
       {
@@ -410,9 +420,11 @@ struct LibadalangText {
       c_text = ada_text_to_locale_string(&internal_text);
       cxx_text = toString(c_text);
     }
+#endif
 
     //If init with ada_unbounded_text_type_array, use pointers to construct ada_text value from the entire array
     LibadalangText(ada_unbounded_text_type_array text_type_array){
+      std::cerr << "xx 5" << std::endl;
       cxx_text = "";
       for(int i = 0; i < text_type_array->n; i++){
         ada_symbol_type current_symbol = text_type_array->items[i];

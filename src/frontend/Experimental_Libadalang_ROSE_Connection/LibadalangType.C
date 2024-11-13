@@ -720,6 +720,9 @@ namespace
   //Function to hash a unique int from a node using the node's kind and location.
   //The kind and location can be provided, but if not they will be determined in the function
   int hash_node(ada_base_entity *node, int kind, std::string full_sloc){
+    // alternative using node address
+    // return reinterpret_cast<std::intptr_t>(node->node);
+
     //Get the kind/sloc if they weren't provided
     if(kind == -1){
       kind = ada_node_kind(node);
@@ -1528,8 +1531,7 @@ void handleAsciiPkg(MapT& m, ada_base_entity* lal_decl, SgAdaPackageSpec& stdspe
         //Get the value of the int literal
         ada_big_integer denoted_value;
         ada_int_literal_p_denoted_value(&lal_int_literal, &denoted_value);
-        LibadalangText value_text(denoted_value);
-        std::string denoted_text = value_text.string_value();
+        std::string denoted_text = bigIntegerToString(denoted_value);
         cval = char(stoi(denoted_text));
       } else {
         logFlaw() << "Unhandled default expr kind in handleAsciiPkg: " << lal_default_expr_kind << std::endl;

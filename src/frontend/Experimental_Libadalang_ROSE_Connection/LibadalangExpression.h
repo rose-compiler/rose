@@ -21,14 +21,16 @@ namespace Libadalang_ROSE_Translation
     SgType*            type() const { return std::get<1>(*this); }
   };
 
-  struct OperatorCallSupplement : std::tuple< std::vector<ArgDesc>, SgType*, int>
+  using OperatorCallSupplementBase = std::tuple< std::vector<ArgDesc>, SgType*, boost::optional<int> >;
+
+  struct OperatorCallSupplement : OperatorCallSupplementBase
   {
-    using ArgDescList = std::vector<ArgDesc>;
+    using ArgDescList = std::tuple_element<0, OperatorCallSupplementBase>::type;
+    using OptionalID  = std::tuple_element<2, OperatorCallSupplementBase>::type;
 
-    using base = std::tuple<ArgDescList, SgType*, int>;
+    using base = OperatorCallSupplementBase;
 
-    // explicit
-    OperatorCallSupplement(ArgDescList arglst = {}, SgType* resty = nullptr, int prefix = -1)
+    OperatorCallSupplement(ArgDescList arglst = {}, SgType* resty = nullptr, OptionalID prefix = {})
     : base(std::move(arglst), resty, prefix)
     {}
 
@@ -38,8 +40,8 @@ namespace Libadalang_ROSE_Translation
     SgType* result() const        { return std::get<1>(*this); }
     void    result(SgType* resty) { std::get<1>(*this) = resty; }
 
-    int        scopeId() const     { return std::get<2>(*this); }
-    void       scopeId(int prefix) { std::get<2>(*this) = prefix; }
+    boost::optional<int> scopeId() const     { return std::get<2>(*this); }
+    void                 scopeId(int prefix) { std::get<2>(*this) = prefix; }
 
     bool args_valid() const { return args().size() > 0; }
     bool valid()      const { return args_valid() && result() != nullptr; }

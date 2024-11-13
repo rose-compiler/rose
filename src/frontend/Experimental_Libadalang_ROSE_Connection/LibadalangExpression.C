@@ -576,7 +576,7 @@ namespace
   }
 
   /// Gets the standard bool type from the current context
-  SgType& boolType(AstContext ctx)
+  SgType& boolType(AstContext /*ctx*/)
   {
     return SG_DEREF(adaTypesByName().at(AdaIdentifier{"BOOLEAN"}));
   }
@@ -771,23 +771,113 @@ namespace
     return res;
   }
 
+
   /// if \ref id is valid, lookup scope from translation context
   ///   otherwise use si::Ada::operatorScope to find an appropriate scope
   si::Ada::OperatorScopeInfo
-  operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, int id, AstContext ctx)
+  operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, boost::optional<int> id, AstContext ctx)
   {
-    /*if (id < 1)*/ return si::Ada::operatorScope(name, std::move(argTypes));
+    if (!id) return si::Ada::operatorScope(name, std::move(argTypes));
 
-    /*SgScopeStatement&        scope = queryScopeOf(id, ctx);
-    si::Ada::DominantArgInfo dom = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
+    SgScopeStatement&        scope = queryScopeOf(*id, ctx);
+    si::Ada::DominantArgInfo dom   = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
 
-    return { &scope, dom.pos() };*/ //TODO How does id work????
+    return { &scope, dom.pos() };
   }
 
   bool pragmaProcessing(const AstContext& ctx)
   {
     return isSgPragmaDeclaration(ctx.pragmaAspectAnchor());
   }
+
+    struct ScopeDetails : std::tuple<std::string, bool>
+  {
+    using base = std::tuple<std::string, bool>;
+    using base::base;
+
+    std::string const& name()        const { return std::get<0>(*this); }
+    bool               qualBarrier() const { return std::get<1>(*this); }
+    // \todo consider renaming qualBarrier to compilerGenerated and set for all nodes
+  };
+
+/*
+  ScopeDetails
+  scopeName(const SgStatement* n);
+
+  struct ScopeName : sg::DispatchHandler<ScopeDetails>
+  {
+      // records the scope name, and if the scope is a qualification barrier.
+      // \note a qualification barrier is an unnamed block; as it does not
+      //       allow its elements being fully prefixed from global to inner scope.
+      void withName(const std::string& name, bool actsAsBarrier = false);
+
+      // a scope whose name does not appear in the scope qualification list.
+      //   this does not introduce a qualification barrier.
+      void withoutName() {}
+
+      void checkParent(const SgScopeStatement& n);
+
+      void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+
+      // default for all scopes and declarations
+      void handle(const SgStatement&)              { withoutName(); }
+
+      // void handle(const SgGlobal&)               { withName("Standard"); } // \todo
+
+      // scopes that may have names
+      // \todo do we also need named loops?
+      void handle(const SgAdaTaskSpec& n)          { checkParent(n); }
+      void handle(const SgAdaTaskBody& n)          { checkParent(n); }
+      void handle(const SgAdaProtectedSpec& n)     { checkParent(n); }
+      void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
+      void handle(const SgAdaPackageBody& n)       { checkParent(n); }
+      void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
+      void handle(const SgFunctionDefinition& n)   { checkParent(n); }
+
+      // generics and discriminated declarations do not have names per se.
+      //   Instead they provide binding-context to some other declaration.
+      //   e.g., package, subroutine (generics); record, task, protected object, .. (discriminated types)
+
+      // parent handlers
+      void handle(const SgDeclarationStatement&)   { withoutName(); }
+
+      void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
+      void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
+      void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
+      void handle(const SgAdaProtectedBodyDecl& n) { withName(n.get_name()); }
+      void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
+      void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
+      void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
+      void handle(const SgFunctionDeclaration& n)  { withName(n.get_name()); }
+
+      void handle(const SgBasicBlock& n)
+      {
+        const std::string blockName     = n.get_string_label();
+        const bool        qualBarrier   = blockName.empty() && si::Ada::blockExistsInSource(n);
+
+        withName(blockName, qualBarrier);
+      }
+  };
+
+  void ScopeName::withName(const std::string& s, bool actsAsBarrier)
+  {
+    res = {s, actsAsBarrier};
+  }
+
+  void ScopeName::checkParent(const SgScopeStatement& n)
+  {
+    // get the name
+    res = sg::dispatch(ScopeName{}, n.get_parent());
+  }
+
+  ScopeDetails
+  scopeName(const SgStatement* n)
+  {
+    if (n == nullptr) return {};
+
+    return sg::dispatch(ScopeName{}, n);
+  }
+*/
 
   SgExpression*
   generateOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
@@ -844,7 +934,6 @@ namespace
     SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, scope, *suppl.result(), complete);
 
     operatorSupport()[{&scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
-
     return &mkFunctionRefExp(opdcl);
   }
 
@@ -860,7 +949,7 @@ namespace
     std::string expr_name;
     if(kind != ada_string_literal){ //Strings won't work for this section, need to use a different method
       //Get the hash of the first corresponding declaration
-      ada_base_entity corresponding_decl; 
+      ada_base_entity corresponding_decl;
       ada_expr_p_first_corresponding_decl(lal_expr, &corresponding_decl);
       bool decl_exists = true;
       int decl_hash = 0;
@@ -898,14 +987,12 @@ namespace
       //    to avoid the case described by UNCLEAR_LINK_1, test if the operator declaration has
       //    the same name as used for the call.
       if(decl_exists){
-        if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash))
-        {
+        if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash)) {
           const std::string dclname = si::Ada::convertRoseOperatorNameToAdaName(si::get_name(dcl));
           const bool        sameOperatorName = boost::iequals(dclname, expr_name);
           logInfo() << "dclname is " << dclname <<", lal_expr name is " << expr_name << std::endl;
 
-          if (sameOperatorName)
-          {
+          if (sameOperatorName) {
             SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
             return SG_DEREF(res);
@@ -915,20 +1002,21 @@ namespace
     } else {
       ada_text_type denoted_value;
       ada_string_literal_p_denoted_value(lal_expr, &denoted_value);
-      expr_name = "\"" + dot_ada_text_type_to_string(denoted_value) + "\"";
+      expr_name = dot_ada_text_type_to_string(denoted_value);
       logInfo() << "In getOperator (for ada_string_literal), expr_name is " << expr_name << std::endl;
     }
 
-    const char*                         expr_name_c = expr_name.c_str();
-    const std::size_t                   len = strlen(expr_name_c);
-    if((len > 2) && (expr_name_c[0] == '"') && (expr_name_c[len-1] == '"')){
+    const std::size_t                   len = expr_name.size();
+    if((len > 2) && (expr_name[0] == '"') && (expr_name[len-1] == '"')){
       // do not use leading and trailing '"'
-      AdaIdentifier                       fnname{expr_name_c+1, int(len)-2};
+      AdaIdentifier fnname{expr_name.c_str()+1, int(len)-2};
 
       // try to generate the operator
       if(SgExpression* res = generateOperator(fnname, std::move(suppl), ctx)){
         return *res;
       }
+    } else if(SgExpression* res = generateOperator(expr_name, std::move(suppl), ctx)) {
+      return *res;
     }
 
     if (!pragmaProcessing(ctx)){
@@ -1325,7 +1413,7 @@ namespace{
           if(decl_kind >= ada_abstract_state_decl && decl_kind <= ada_single_task_decl){ //62 - 121
             ada_ada_node_array defining_name_list;
             ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
-          
+
             //Find the correct decl in the defining name list
             for(int i = 0; i < defining_name_list->n; ++i){
               ada_base_entity defining_name = defining_name_list->items[i];
@@ -1634,7 +1722,12 @@ namespace{
           ada_base_entity lal_prefix, lal_suffix;
           ada_dotted_name_f_prefix(lal_element, &lal_prefix);
           ada_dotted_name_f_suffix(lal_element, &lal_suffix);
-          int prefix_hash = hash_node(&lal_prefix);
+
+          ROSE_ASSERT(!ada_node_is_null(&lal_prefix));
+          ada_base_entity lal_refd_decl;
+          ada_name_p_referenced_decl(&lal_prefix, 1, &lal_refd_decl);
+
+          int prefix_hash = hash_node(&lal_refd_decl);
 
           suppl.scopeId(prefix_hash);
 
@@ -1871,7 +1964,7 @@ namespace{
   {
     //Check the kind
     ada_node_kind_enum kind = ada_node_kind(lal_element);
-  
+
     LibadalangText kind_name(kind);
     std::string kind_name_string = kind_name.string_value();
     logTrace() << "getExpr called on a " << kind_name_string << std::endl;
@@ -1910,7 +2003,7 @@ namespace{
 
     if(ada_node_is_null(lal_expr)){
       logFlaw() << "Null node in getExpr_opt()\n";
-      return mkNullExpression();  
+      return mkNullExpression();
     }
 
     return getExpr(lal_expr, ctx, std::move(suppl));
@@ -2162,7 +2255,7 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
   ada_expr_p_first_corresponding_decl(lal_identifier, &corresponding_decl);
   ada_ada_node_array defining_name_list;
   ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
-          
+
   //Find the correct decl in the defining name list
   for(int i = 0; i < defining_name_list->n; ++i){
     ada_base_entity defining_name = defining_name_list->items[i];
