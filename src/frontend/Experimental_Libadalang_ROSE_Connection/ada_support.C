@@ -52,7 +52,6 @@ void find_ada_files(std::string dir, std::vector<std::string>& ada_files){
 ///   Checks the prelude for ada_with_clause & the body for ada_subunit
 void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_context& ctx, std::vector<ada_base_entity>& comp_units_storage){
   using Libadalang_ROSE_Translation::mlog;
-  mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
   std::vector<ada_analysis_unit> units_to_check;
 
@@ -149,6 +148,21 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
       continue;
     }
 
+    //TODO Some system files cause infinite include loops with the current setup. I've removed them for now, but this is a hack fix.
+    std::string cxx_file_name_string = file_name_string;
+    if(    cxx_file_name_string.find("s-soflin.ads") != std::string::npos
+        || cxx_file_name_string.find("s-soflin.adb") != std::string::npos
+      ){
+      free(file_name_string);
+      continue;
+    }
+
+    ada_text_type file_name;
+    //Get the file name this node is from
+    ada_ada_node_full_sloc_image(lal_root, &file_name);
+    std::string current_unit_name = Libadalang_ROSE_Translation::dot_ada_text_type_to_string(file_name);
+    mlog[Sawyer::Message::INFO] << "From unit " << current_unit_name << ":\n";
+
     ada_base_entity lal_new_root;
     ada_unit_root(unit_to_check, &lal_new_root);
     if(!ada_node_is_null(&lal_new_root) && ada_node_kind(&lal_new_root) == ada_compilation_unit){
@@ -159,6 +173,8 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
   }
 
   int new_units_end = comp_units_storage.size();
+
+
   //Call find_additional_compilation_units on any newly added comp units
   for(int i = new_units_start; i < new_units_end; i++){
      find_additional_compilation_units(&comp_units_storage.at(i), ctx, comp_units_storage);
@@ -250,7 +266,6 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
      ada_analysis_context ctx;
      std::vector<boostfs::path::string_type> source_files;
      std::vector<ada_analysis_unit> analysis_units;
-     int num_source_files = 0;
 
      {
        typedef boostfs::path::string_type string_type;
@@ -287,23 +302,8 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
          find_ada_files(includePath, includeFiles);
        }
 
-       //Add the srcFile to the list of files to analyze
-       source_files.push_back(srcFile);
 
-       //Check if this is a .adb file
-       size_t suffix_pos = srcFile.find(".adb");
-       if(suffix_pos != string_type::npos){
-         mlog[Sawyer::Message::INFO] << "  file is a .adb\n";
-         string_type srcFile_ads = srcFile.substr(0, suffix_pos) + ".ads";
-         mlog[Sawyer::Message::INFO] << "  searching for " << srcFile_ads << std::endl;
-         //Check if there is a corresponding .ads file
-         if(boostfs::exists(srcFile_ads)){
-           mlog[Sawyer::Message::INFO] << "  found it\n";
-           source_files.push_back(srcFile_ads);
-         }
-       }
 
-       num_source_files = source_files.size();
 
        char* cstring_Args = const_cast<char*>(ASISArgs.c_str());
 
@@ -333,24 +333,59 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
        }
        mlog[Sawyer::Message::INFO] << "Calling ada_get_analysis_unit_from_file on " << srcFile
                                    << std::endl;
-       analysis_units.resize(num_source_files);
-       for(int i = 0 ; i < num_source_files; i++){
-         char* cstring_SrcFile = const_cast<char*>(source_files.at(i).c_str());
-         analysis_units.at(i) = ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, nullptr, 0, ada_default_grammar_rule);
-         //Check if we got any diagnostics for this unit
+
+       //Get the comp unit from the source file
+       char* cstring_SrcFile = const_cast<char*>(srcFile.c_str());
+       analysis_units.push_back(ada_get_analysis_unit_from_file(ctx, cstring_SrcFile, nullptr, 0, ada_default_grammar_rule));
+
+       //Check if the source is a .adb file with a corresponding .ads
+       size_t suffix_pos = srcFile.find(".adb");
+       if(suffix_pos != string_type::npos){
+         mlog[Sawyer::Message::INFO] << "Input file is a .adb\n";
+         string_type srcFileStem = srcFile.substr(pos + 1, suffix_pos - pos - 1);
+         mlog[Sawyer::Message::INFO] << "Attempting to add " << srcFileStem << ".ads" << std::endl;
+         //Check if there is a corresponding .ads file
+         uint32_t ads_name_chars[srcFileStem.size()];
+         for(int i = 0; i < srcFileStem.size(); i++){
+           //Handle the difference between how parent packages are prepended (i.e. package parent.child will be in file parent-child)
+           char current_char = srcFileStem[i];
+           if(current_char == '-'){
+             ads_name_chars[i] = '.';
+           } else {
+             ads_name_chars[i] = current_char;
+           }
+         }
+
+         //Make an ada_text for the ads name
+         ada_text ads_name = { ads_name_chars, srcFileStem.size(), true };
+
+         //Get the .ads (if it exists)
+         analysis_units.push_back(ada_get_analysis_unit_from_provider(ctx, &ads_name, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
+       }
+
+       //Check if we got any diagnostics for the units
+       for(int i = 0; i < analysis_units.size(); ++i){
          unsigned int diagnostic_count = ada_unit_diagnostic_count(analysis_units.at(i));
          if(diagnostic_count > 0){
-           //Print the diagnostics, then exit
-           mlog[Sawyer::Message::FATAL] << "Got " << diagnostic_count << " diagnostic(s) while trying to init " << source_files.at(i) << ":\n";
-           for(unsigned int i = 0; i < diagnostic_count; i++){
+           //Print the diagnostics
+           char* file_name_string = ada_unit_filename(analysis_units.at(i));
+           mlog[Sawyer::Message::WARN] << "Got " << diagnostic_count << " diagnostic(s) while trying to init " << file_name_string << ":\n";
+           free(file_name_string);
+           for(unsigned int j = 0; j < diagnostic_count; j++){
              ada_diagnostic current_diagnostic;
-             ada_unit_diagnostic(analysis_units.at(i), i, &current_diagnostic);
+             ada_unit_diagnostic(analysis_units.at(i), j, &current_diagnostic);
              ada_source_location_range sloc = current_diagnostic.sloc_range;
              char* diagnostic_message = ada_text_to_locale_string(&(current_diagnostic.message));
-             mlog[Sawyer::Message::FATAL] << "  " << sloc.start.line << ":" << sloc.start.column << " .. " << sloc.end.line << ":" << sloc.end.column;
-             mlog[Sawyer::Message::FATAL] << " - " << diagnostic_message << std::endl;
+             mlog[Sawyer::Message::WARN] << "  " << sloc.start.line << ":" << sloc.start.column << " .. " << sloc.end.line << ":" << sloc.end.column;
+             mlog[Sawyer::Message::WARN] << " - " << diagnostic_message << std::endl;
              free(diagnostic_message);
            }
+           if(i == 0){
+             mlog[Sawyer::Message::FATAL] << "Input file could not be converted to a compilation unit\n";
+           }
+           //Remove this unit from the vector
+           //This would break if the vector was ever more than 2 elements
+           analysis_units.erase(analysis_units.begin() + i);
          }
        }
      }
@@ -358,13 +393,12 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
      mlog[Sawyer::Message::TRACE] << "END." << std::endl;
 
      //Create a set of vectors for all of the compilation units we've found
+     int num_source_files = analysis_units.size();
      std::vector<ada_base_entity> root_storage(num_source_files);
-     //std::vector<ada_base_entity*> roots(num_source_files);
 
      //Add the initial compilation units to the vectors, then recursively add any dependencies
      for(int i = 0; i < num_source_files; ++i){
        ada_unit_root(analysis_units.at(i), &root_storage.at(i));
-       //roots.at(i) = &root_storage.at(i);
      }
 
      for(int i = 0; i < num_source_files; ++i){

@@ -90,7 +90,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
 
-  if(name == "range" || name == "first" || name == "last" || name == "img")
+  if(name == "range" || name == "first" || name == "last" || name == "img" || name == "length")
     {
       //Get the list of args
       ada_base_entity lal_arg_list;
@@ -231,7 +231,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Max_Alignment_For_Allocation_Attribute:
     case An_Overlaps_Storage_Attribute:
     //  |A2012 end*/
-    else if(name == "access" || name == "class" || name == "val" || name == "size")
+    else if(name == "access" || name == "address" || name == "class" || name == "digits" || name == "pos" || name == "size" || name == "val")
       {
         logInfo() << "untested attribute created: " << name
                   << std::endl;
