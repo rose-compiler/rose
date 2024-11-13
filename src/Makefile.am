@@ -268,6 +268,7 @@ pkginclude_HEADERS = \
 # a C++ namespace, then DO NOT put the header file in this list.
 nobase_pkginclude_HEADERS=								\
 	Rose/Affirm.h									\
+	Rose/As.h									\
 	Rose/AST.h									\
 	Rose/AST/Checker.h								\
 	Rose/AST/cmdline.h								\

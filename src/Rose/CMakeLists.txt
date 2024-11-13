@@ -32,6 +32,7 @@ add_dependencies(roseNamespace rosetta_generated)
 # Public header files for the ::Rose namespace (see top comment)
 install(FILES
   Affirm.h
+  As.h
   BasicTypes.h
   BinaryAnalysis.h
   BitFlags.h

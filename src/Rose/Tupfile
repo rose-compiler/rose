@@ -9,6 +9,7 @@ run $(librose_compile)				\
 
 run $(public_header) -o include/rose/Rose	\
     Affirm.h					\
+    As.h					\
     AST.h					\
     BasicTypes.h     				\
     BinaryAnalysis.h				\
