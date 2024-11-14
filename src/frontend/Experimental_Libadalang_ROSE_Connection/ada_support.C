@@ -297,13 +297,37 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
        std::string srcDir = srcFile.substr(0, pos);
        find_ada_files(srcDir, includeFiles);
 
+       //Also grab the system include files
+       //TODO this should get GNAT_HOME/lib/gcc/x86_64-pc-linux-gnu/10.3.1/rts-native/adainclude/ for GNAT 2021, but "x86_64-pc-linux-gnu" & "10.3.1" might change between installations
+       boostfs::path systemIncludeDir = {std::string(gnat_home) + "/lib/gcc"};
+       for(auto& subDir : boost::make_iterator_range(boostfs::directory_iterator(systemIncludeDir), {})){
+         //If this is a directory, add it to the path and break
+         if(boostfs::is_directory(subDir)){
+           systemIncludeDir = subDir.path();
+           break;
+         }
+       }
+
+       for(auto& subDir : boost::make_iterator_range(boostfs::directory_iterator(systemIncludeDir), {})){
+         //If this is a directory, add it to the path and break
+         if(boostfs::is_directory(subDir)){
+           systemIncludeDir = subDir.path();
+           break;
+         }
+       }
+
+       systemIncludeDir /= "rts-native/adainclude";
+       if(boostfs::is_directory(systemIncludeDir)){
+         find_ada_files(systemIncludeDir.string(), includeFiles);
+       } else {
+         mlog[Sawyer::Message::ERROR] << "Could not find system includes at: " << systemIncludeDir.string() << std::endl;
+         mlog[Sawyer::Message::ERROR] << "Check that GNAT_HOME is set correctly\n";
+       }
+
        //Also check for ada files on any include paths
        for(std::string includePath : includePaths){
          find_ada_files(includePath, includeFiles);
        }
-
-
-
 
        char* cstring_Args = const_cast<char*>(ASISArgs.c_str());
 

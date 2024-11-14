@@ -90,7 +90,11 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
 
-  if(name == "range" || name == "first" || name == "last" || name == "img" || name == "length")
+  if(name == "range"
+  || name == "first"
+  || name == "last"
+  || name == "img"
+  || name == "length")
     {
       //Get the list of args
       ada_base_entity lal_arg_list;
@@ -231,7 +235,15 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     case A_Max_Alignment_For_Allocation_Attribute:
     case An_Overlaps_Storage_Attribute:
     //  |A2012 end*/
-    else if(name == "access" || name == "address" || name == "class" || name == "digits" || name == "pos" || name == "size" || name == "val")
+    else if(name == "access"
+         || name == "address"
+         || name == "class"
+         || name == "digits"
+         || name == "pos"
+         || name == "read"
+         || name == "size"
+         || name == "val"
+         || name == "write")
       {
         logInfo() << "untested attribute created: " << name
                   << std::endl;
@@ -1946,6 +1958,53 @@ namespace{
 
           res = &createIfExpr(lal_element, ctx);
           break;
+        }
+
+      case ada_target_name: //Ada 2022
+        {
+          logKind("ada_target_name", kind);
+
+          //Get the ada_identifier this node references, then call getExpr on that
+          ada_base_entity lal_relative_name;
+          ada_name_p_relative_name(lal_element, &lal_relative_name);
+          //TODO This does not preserve the target name symbol, even though it does preserve the intent
+          //  i.e. int1 := @ + 1; becomes int1 := int1 + 1; Same meaning, different syntax
+
+          if(!ada_node_is_null(&lal_relative_name)){
+            res = &getExpr(&lal_relative_name, ctx);
+          } else {
+            logFlaw() << "Could not handle ada_target_name\n";
+            res = sb::buildIntVal();
+          }
+          break;
+        }
+
+      case ada_quantified_expr: //Ada 2012
+        {
+          logKind("ada_quantified_expr", kind);
+          logFlaw() << "ada_quantified_expr has not been implemented!\n";
+          res = sb::buildIntVal();
+          break;
+
+          //Get whether this is a "for all" or a "for some" quantifier
+          ada_base_entity lal_quantifier;
+          ada_quantified_expr_f_quantifier(lal_element, &lal_quantifier);
+          bool for_all_quantifier = (ada_node_kind(&lal_quantifier) == ada_quantifier_all);
+
+          //Get the spec for the range of elements to evaluate
+          ada_base_entity lal_loop_spec;
+          ada_quantified_expr_f_loop_spec(lal_element, &lal_loop_spec);
+
+          //Get the expr to evaluate the elements with
+          ada_base_entity lal_expr;
+          ada_quantified_expr_f_expr(lal_element, &lal_expr);
+          SgExpression& eval_expr = getExpr(&lal_expr, ctx);
+
+          //Get the range of elements
+          ada_base_entity lal_iter_expr;
+          ada_for_loop_spec_f_iter_expr(&lal_loop_spec, &lal_iter_expr);
+          SgExpression& range = getDefinitionExpr(&lal_iter_expr, ctx);
+
         }
 
       default:

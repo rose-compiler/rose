@@ -3950,7 +3950,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         //Get the list of params
         ada_base_entity lal_subp_params;
-        ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_params);
+        ada_subp_spec_f_subp_params(&lal_subp_spec, &lal_subp_params);
 
         //Get the overriding status
         ada_base_entity lal_overriding;
