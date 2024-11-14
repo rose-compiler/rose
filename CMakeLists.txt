@@ -938,7 +938,7 @@ if(NOT WIN32 AND NOT APPLE)
     find_library(C_LIB c REQUIRED) 
     # libm.so 
     find_library(M_LIB m)
-    # Find Quadmath, prioritize ${GCC_LIB_DIRS}
+    # Find libquadmath.so, prioritize ${GCC_LIB_DIRS}
     file(GLOB GCC_LIB_DIRS "/usr/lib/gcc/x86_64-redhat-linux/*") 
     find_library(QM_LIB 
                  NAMES quadmath libquadmath.so.0 libquadmath.so.0.0.0 libquadmath.so
@@ -952,13 +952,13 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 # Only use quadmath if C/C++ is enable and it is available (also exclude windows)
-if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
-  
+if(ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+  # A C++ program that we will use to test if we can compile quadmath.h with our cxx compiler
   set(COMPILE_TEST_SOURCE "
   #include <quadmath.h>
   int main() { return 0; }")
 
-  # Perform the compile test
+  # Test if we can compile quadmath.h with our cxx compiler
   check_cxx_source_compiles("${COMPILE_TEST_SOURCE}" HAVE_QUADMATH_COMPILE)
 
   # Determine whether quadmath is usable
@@ -967,11 +967,11 @@ if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
     set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath")
     message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
   else()
-    # Comment this line below out for issues with clang 
+    # EDG hard codes this either way right now, TODO: redo make quadmath modular 
     set(ROSE_USE_EDG_QUAD_FLOAT 0)
     # This will no longer cause an issue for gcc or clang 
     message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
-  endif()
+  endif() 
 endif()
 
 # This is essential to find the right include path from either build or installation tree for a translator
@@ -989,6 +989,11 @@ endif()
 ########################################################################################################################
 # Back-end compilers
 ########################################################################################################################
+if(ENABLE-ADA)# set BACKEND_CXX_COMPILER to the gcc from the gnu translator path 
+  set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "$ENV{GNAT_HOME}/bin/g++")
+  set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
+endif() 
+
 set(WITH-ALT-BACKEND-CXX-COMPILER "" CACHE STRING "Specify an alternative C++ back-end compiler")
 if(WITH-ALT-BACKEND-CXX-COMPILER)
   if(EXISTS ${WITH-ALT-BACKEND-CXX-COMPILER})
@@ -1034,8 +1039,8 @@ list(APPEND link_with_libraries ${Boost_LIBRARIES})
 # Linux dependencies
 if(NOT WIN32 AND NOT APPLE)
   # Conditionally append libc.so to list of libraries rose will link to 
-  if(M_LIB AND NOT M_LIB STREQUAL "M_LIB-NOTFOUND")
-    list(APPEND link_with_libraries ${M_LIB})
+  if(C_LIB AND NOT C_LIB STREQUAL "C_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${C_LIB})
   endif()
   # Conditionally append libm.so to list of libraries rose will link to 
   if(M_LIB AND NOT M_LIB STREQUAL "M_LIB-NOTFOUND")
@@ -1056,7 +1061,7 @@ if(NOT WIN32 AND NOT APPLE)
   # Conditionally append Pthreads to list of libraries rose will link to  
   list(APPEND link_with_libraries ${CMAKE_THREAD_LIBS_INIT})
 endif() 
-message("link_with_libs: ${link_with_libraries}") 
+message("link_with_libraries: ${link_with_libraries}") 
 
 # Mac OS dependencies 
 if(APPLE)

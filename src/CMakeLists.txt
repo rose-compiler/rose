@@ -1030,6 +1030,6 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${CM
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")                      # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")  
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")               # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${Boost_LIBRARY_DIR_DEBUG}\n")        # ONLY NEED BOOST HERE 
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${CMAKE_INSTALL_PREFIX}/lib -Wl,-rpath ${Boost_LIBRARY_DIRS}\n") # SHOULD ONLY NEED BOOST HERE 
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
