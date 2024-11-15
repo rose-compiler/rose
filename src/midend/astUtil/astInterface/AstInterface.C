@@ -4295,7 +4295,7 @@ SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
            loc = loc->get_parent();
            r = isSgMemberFunctionDeclaration(loc);
         }
-        return r->get_class_scope();
+        return (r == 0)? 0 : r->get_class_scope();
      }
      if (loc->get_parent() != 0 && loc->get_parent()->variantT() == V_SgLambdaCapture) {
         // Go up to the expression chain to the enclosing statement.
