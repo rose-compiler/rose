@@ -2,7 +2,13 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/As.h>
+#include <Rose/BinaryAnalysis/Architecture/Amd64.h>
+#include <Rose/BinaryAnalysis/Architecture/ArmAarch32.h>
+#include <Rose/BinaryAnalysis/Architecture/ArmAarch64.h>
+#include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
+#include <Rose/BinaryAnalysis/Architecture/Powerpc.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Exception.h>
@@ -820,8 +826,18 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
             frameSize = variableFinder_unsync->detectFrameAttributes(partitioner_, callee, _).size;
         }
         callStack.push(FunctionCall(callee, initialSp, returnVa, lvars));
-        const std::string isa = partitioner_->instructionProvider().disassembler()->name();
-        if ("arm-a32" == isa || "arm-t32" == isa || "arm-a64" == isa || "nxp-coldfire" == isa) {
+        const Architecture::Base::ConstPtr arch = partitioner_->architecture();
+
+        if (false) {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        } else if (as<const Architecture::ArmAarch32>(arch)) {
+            callStack[0].framePointerDelta(-4);
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        } else if (as<const Architecture::ArmAarch64>(arch)) {
+            callStack[0].framePointerDelta(-4);
+#endif
+        } else if (as<const Architecture::NxpColdfire>(arch)) {
             callStack[0].framePointerDelta(-4);
         } else if (frameSize) {
             callStack[0].framePointerDelta(-*frameSize);
@@ -877,22 +893,28 @@ RiscOperators::popCallStack() {
     // return value pushed by the caller.
     if (poppedInitialSp) {
         rose_addr_t stackBoundary = *poppedInitialSp;
-        const std::string isaName = partitioner_->instructionProvider().disassembler()->name();
-        if (boost::starts_with(isaName, "intel-")) {
-            // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
-            stackBoundary += 4;
-        } else if ("amd64" == isaName) {
+        const Architecture::Base::ConstPtr arch = partitioner_->architecture();
+        if (as<const Architecture::Amd64>(arch)) {
             // x86-64 "call" pushes an 8-byte return address that's popped when the function returns. Stack grows down.
             stackBoundary += 8;
-        } else if (boost::starts_with(isaName, "ppc32") || boost::starts_with(isaName, "ppc64")) {
+        } else if (as<const Architecture::X86>(arch)) {
+            // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
+            stackBoundary += 4;
+        } else if (as<const Architecture::Powerpc>(arch)) {
             // PowerPC function calls don't push a return value.
-        } else if ("arm-a32" == isaName || "arm-t32" == isaName || "arm-a64" == isaName) {
-            // ARM AArch32 and AArch64 function calls don't push a return value
-        } else if ("nxp-coldfire" == isaName) {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        } else if (as<const Architecture::ArmAarch32>(arch)) {
+            // ARM AArch32 function calls don't push a return value
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        } else if (as<const Architecture::ArmAarch64>(arch)) {
+            // ARM AArch64 function calls don't push a return value
+#endif
+        } else if (as<const Architecture::Motorola>(arch)) {
             // m68k pops the return value from the stack
             stackBoundary += 4;
         } else {
-            ASSERT_not_implemented("isaName = " + isaName);
+            ASSERT_not_implemented("architecture = " + arch->name());
         }
 
         const size_t wordSize = partitioner_->instructionProvider().stackPointerRegister().nBits();
