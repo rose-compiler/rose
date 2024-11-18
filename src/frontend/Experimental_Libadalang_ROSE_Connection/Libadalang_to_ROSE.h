@@ -424,7 +424,6 @@ struct LibadalangText {
 
     //If init with ada_unbounded_text_type_array, use pointers to construct ada_text value from the entire array
     LibadalangText(ada_unbounded_text_type_array text_type_array){
-      std::cerr << "xx 5" << std::endl;
       cxx_text = "";
       for(int i = 0; i < text_type_array->n; i++){
         ada_symbol_type current_symbol = text_type_array->items[i];

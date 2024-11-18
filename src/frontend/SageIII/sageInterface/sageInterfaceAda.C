@@ -4274,13 +4274,11 @@ isReverseForLoop(const SgForInitStatement* n)
 boost::optional<bool>
 booleanConstant(const SgExpression* e)
 {
-  using ResultType = boost::optional<bool>;
-
   if (const SgEnumVal* enumval = isSgEnumVal(e))
     if (isBooleanType(enumval->get_type()))
-      return ResultType{stringeq(enumval->get_name().getString(), "True")}; // spelling in AdaType.C
+      return stringeq(enumval->get_name().getString(), "True"); // spelling in AdaType.C
 
-  return ResultType{};
+  return boost::none; // std::nullopt;
 }
 
 boost::optional<bool>

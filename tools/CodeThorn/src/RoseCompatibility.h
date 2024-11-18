@@ -174,7 +174,10 @@ std::ostream& operator<<(std::ostream& os, const CastWriterDbg&);
 std::string typeNameOf(ClassKeyType key);
 
 /// tests if \p key has a templated ancestor
-bool hasTemplateAncestor(ClassKeyType key);
+/// \param  key the class key (SgClassDefinition*)
+/// \return a string representation of the templated ancestor (if found)
+boost::optional<std::string>
+hasTemplateAncestor(ClassKeyType key);
 
 
 /// calls the callback function \p fn(derived, base, isvirtual)

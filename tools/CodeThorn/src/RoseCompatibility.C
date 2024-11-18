@@ -521,23 +521,42 @@ namespace
     return res;
   }
 
-  bool fromTemplate(const SgNode* n);
+  using TemplateAncestorBase = std::tuple<bool, const SgNode*>;
+  struct TemplateAncestor : TemplateAncestorBase
+  {
+    using base = TemplateAncestorBase;
+    using base::base;
 
-  struct FromTemplate : sg::DispatchHandler<bool>, ExcludeTemplates
+    bool          hasTemplateAncestor() const { return std::get<0>(*this); }
+    const SgNode* templateAncestor()    const { return std::get<1>(*this); }
+  };
+
+  TemplateAncestor fromTemplate(const SgNode* n);
+
+  // uses the same exclusion criteria as the AST traversal to identify whether a node is a template or not
+  struct FromTemplate : sg::DispatchHandler<TemplateAncestor>, ExcludeTemplates
   {
     FromTemplate()
-    : Base(true), ExcludeTemplates()
+    : Base({ true, nullptr }), ExcludeTemplates()
     {}
 
     using ExcludeTemplates::handle;
 
     void handle(const SgNode& n)   { res = fromTemplate(n.get_parent()); }
-    void handle(const SgGlobal& n) { res = false; }
+    void handle(const SgGlobal& n) { res = { false, nullptr }; }
   };
 
-  bool fromTemplate(const SgNode* n)
+  TemplateAncestor
+  fromTemplate(const SgNode* n)
   {
-    return n && sg::dispatch(FromTemplate{}, n);
+    if (n == nullptr) return { false, nullptr };
+
+    TemplateAncestor res = sg::dispatch(FromTemplate{}, n);
+
+    if (res.hasTemplateAncestor() && (res.templateAncestor() == nullptr))
+      return { true, n };
+
+    return res;
   }
 }
 
@@ -546,12 +565,26 @@ namespace CodeThorn
 
 std::string typeNameOf(ClassKeyType key)
 {
-  return key ? ::typeNameOf(*key) : "-class-without-name-";
+  return key ? ::typeNameOf(*key) : "-classdef-is-null-";
 }
 
-bool hasTemplateAncestor(ClassKeyType key)
+boost::optional<std::string>
+hasTemplateAncestor(ClassKeyType key)
 {
-  return fromTemplate(key);
+  TemplateAncestor res = fromTemplate(key);
+
+  if (!res.hasTemplateAncestor())
+    return boost::none; // std::nullopt
+
+  ASSERT_not_null(res.templateAncestor());
+
+  std::ostringstream os;
+
+  os << "ancestor sage-node type: " << res.templateAncestor()->class_name()
+     << "\n  SageInterface::get_name(n) = " << si::get_name(res.templateAncestor())
+     << std::endl;
+
+  return os.str();
 }
 
 

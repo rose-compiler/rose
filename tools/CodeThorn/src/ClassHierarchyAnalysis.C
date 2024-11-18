@@ -122,27 +122,24 @@ std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
     return os << "ClassAnalysisInfo::analysis returns nullptr. Use a valid object."
               << std::endl;
 
-  try
-  {
-    /*ClassData& cd =*/ analysis->at(cai.key());
+  auto pos = analysis->find(cai.key());
+  if (pos != analysis->end())
+    return os << "class " << typeNameOf(classkey) << " exists in class hierarchy analysis. OK."
+              << std::endl;
 
-    os << "class " << typeNameOf(classkey) << " exists in class hierarchy analysis. OK."
+  os << "class " << typeNameOf(classkey) << " was not found in the class hierarchy analysis.\n";
+
+  if (!analysis->containsAllClasses())
+    os << "  - The class hierarchy analysis was built incrementally.\n"
+       << "    Possibly, " << typeNameOf(classkey) << " has not been seen."
        << std::endl;
-  }
-  catch (const std::out_of_range&)
-  {
-    os << "class " << typeNameOf(classkey) << " was not found in the class hierarchy analysis.\n";
 
-    if (!analysis->containsAllClasses())
-      os << "  - The class hierarchy analysis was built incrementally.\n"
-         << "    Possibly, " << typeNameOf(classkey) << " has not been seen."
-         << std::endl;
-
-    if (hasTemplateAncestor(classkey))
-      os << "  - The class has a templated ancestor.\n"
-         << "    Template are currently not handled."
-         << std::endl;
-  }
+  if (auto opt = hasTemplateAncestor(classkey))
+    os << "  - The class has a templated ancestor.\n"
+       << "    Templates are currently not supported by the class hierarchy analysis.\n"
+       << "  - ancestor info\n"
+       << *opt
+       << std::endl;
 
   return os;
 }
