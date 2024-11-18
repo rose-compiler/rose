@@ -1010,26 +1010,140 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
 endif() 
 
-# We should not set ROSE_CXXFLAGS to CXX_STANDARD below because:
-# - it breaks portability of tools 
-# - the autoconf system does not 
+# CMake should handle this for us by default with CMAKE_CXX_STANDARD 
 # set(ROSE_CXXFLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}" )
-# uncommenting the line above will break most tools 
+# uncommenting the line above MAY break some tools
 
-file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
-file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${ACTUAL_CC}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CCPATH       = ${CMAKE_C_COMPILER}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX          = ${ACTUAL_CXX}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX_PATH     = ${CMAKE_CXX_COMPILER}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${rose_config_installed_cppflags}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n") # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS  
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")                      # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")  
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")               # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LINK_RPATHS  = -Wl,-rpath ${CMAKE_INSTALL_PREFIX}/lib -Wl,-rpath ${Boost_LIBRARY_DIRS}\n") # SHOULD ONLY NEED BOOST HERE 
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
-install(FILES ${CMAKE_BINARY_DIR}/src/rose-config.cfg DESTINATION ${ROSE_LIB_DIR_NAME})
+set(ROSE_CONFIG_FILE "${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg") 
+file(REMOVE ${ROSE_CONFIG_FILE})
+file(WRITE  ${ROSE_CONFIG_FILE} "# Things that the 'rose-config' tool can report\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CC           = ${ACTUAL_CC}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CCPATH       = ${CMAKE_C_COMPILER}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CXX          = ${ACTUAL_CXX}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CXX_PATH     = ${CMAKE_CXX_COMPILER}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CPPFLAGS     = ${rose_config_installed_cppflags}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n") # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS  
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")                      # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
+file(APPEND ${ROSE_CONFIG_FILE} "# Additional items useful to include in Makefiles\n")  
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")               # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LINK_RPATHS  = -Wl,-rpath ${CMAKE_INSTALL_PREFIX}/lib -Wl,-rpath ${Boost_LIBRARY_DIRS}\n") # SHOULD ONLY NEED BOOST HERE 
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
+install(FILES ${ROSE_CONFIG_FILE} DESTINATION ${ROSE_LIB_DIR_NAME})
+
+########### Code for new testing interface #############################################################################
+# Initialize counters for macro below (only for debugging purposes)
+set(TRUE_COUNT 0)   # New variables written to rose config.cfg
+set(FALSE_COUNT 0)  # New variables processed but not written to rose config.cfg
+set(TOTAL_COUNT 0)  # Total new variables that could be written to rose config.cfg
+
+# Macro to append boolean configuration values to rose_config.cfg
+macro(append_bool_config VAR_NAME VAR_VALUE)
+  math(EXPR TOTAL_COUNT "${TOTAL_COUNT} + 1")     # Increment total count (for debugging) 
+  if(${VAR_VALUE})
+    file(APPEND ${ROSE_CONFIG_FILE} "${VAR_NAME} = true\n")
+    math(EXPR TRUE_COUNT "${TRUE_COUNT} + 1")   # Increment true count  (for debugging)
+  else()
+    file(APPEND ${ROSE_CONFIG_FILE} "${VAR_NAME} = false\n")
+    math(EXPR FALSE_COUNT "${FALSE_COUNT} + 1") # Increment false count (for debugging)
+  endif()
+endmacro()
+
+# Append AM variable to rose-config.cfg if CMake variable is true at config time 
+append_bool_config("AM_ROSE_BUILD_BINARY_ANALYSIS_SUPPORT" ROSE_BUILD_BINARY_ANALYSIS_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_CXX_LANGUAGE_SUPPORT" ROSE_BUILD_CXX_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_CUDA_LANGUAGE_SUPPORT" ROSE_BUILD_CUDA_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT" ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_JAVA_LANGUAGE_SUPPORT" ROSE_BUILD_JAVA_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT" ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT" ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_C_LANGUAGE_SUPPORT" ROSE_BUILD_C_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_BUILD_PHP_LANGUAGE_SUPPORT" ROSE_BUILD_PHP_LANGUAGE_SUPPORT)
+append_bool_config("AM_ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION" ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION" ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION" ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION" ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION" ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_USE_SANITIZER" AM_ROSE_USE_SANITIZER)
+append_bool_config("AM_ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION" AM_ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_USING_GFORTRAN_VERSION_4_0" AM_ROSE_USING_GFORTRAN_VERSION_4_0)
+append_bool_config("AM_ROSE_USING_GFORTRAN_VERSION_4_1" AM_ROSE_USING_GFORTRAN_VERSION_4_1)
+append_bool_config("AM_ROSE_USING_GFORTRAN_VERSION_4_4" AM_ROSE_USING_GFORTRAN_VERSION_4_4)
+append_bool_config("AM_ROSE_USING_GFORTRAN_VERSION_4_5" AM_ROSE_USING_GFORTRAN_VERSION_4_5)
+append_bool_config("AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_4" AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_4)
+append_bool_config("AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_5" AM_ROSE_USING_GFORTRAN_VERSION_LATER_4_5)
+append_bool_config("AM_ROSE_USING_BOOST_VERSION_1_35" AM_ROSE_USING_BOOST_VERSION_1_35)
+append_bool_config("AM_ROSE_USING_BOOST_VERSION_1_57" AM_ROSE_USING_BOOST_VERSION_1_57)
+append_bool_config("AM_ROSE_USING_BOOST_VERSION_1_62" AM_ROSE_USING_BOOST_VERSION_1_62)
+append_bool_config("AM_ROSE_USE_EDG_VERSION_5_0" AM_ROSE_USE_EDG_VERSION_5_0)
+append_bool_config("AM_ROSE_USE_EDG_VERSION_6_0" AM_ROSE_USE_EDG_VERSION_6_0)
+append_bool_config("AM_ROSE_USE_LONG_MAKE_CHECK_RULE" AM_ROSE_USE_LONG_MAKE_CHECK_RULE)
+append_bool_config("AM_ROSE_BUILD_OS_IS_CYGWIN" AM_ROSE_BUILD_OS_IS_CYGWIN)
+append_bool_config("AM_ROSE_USE_INTEL_PIN" AM_ROSE_USE_INTEL_PIN)
+append_bool_config("AM_ROSE_USE_SQLITE_DATABASE" AM_ROSE_USE_SQLITE_DATABASE)
+append_bool_config("AM_ROSE_BUILD_OS_IS_OSX" AM_ROSE_BUILD_OS_IS_OSX)
+append_bool_config("AM_ROSE_USE_CLANG_FRONTEND" AM_ROSE_USE_CLANG_FRONTEND)
+append_bool_config("AM_ROSE_USE_INSURE" AM_ROSE_USE_INSURE)
+append_bool_config("AM_ROSE_USING_ALTERNATE_BACKEND_C_COMPILER" AM_ROSE_USING_ALTERNATE_BACKEND_C_COMPILER)
+append_bool_config("AM_USING_XTENSA_BACKEND_COMPILER" AM_USING_XTENSA_BACKEND_COMPILER)
+append_bool_config("AM_ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11" AM_ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11)
+append_bool_config("AM_ROSE_USE_VXWORKS" AM_ROSE_USE_VXWORKS)
+append_bool_config("AM_ROSE_USE_GNAT" AM_ROSE_USE_GNAT)
+append_bool_config("AM_ROSE_USE_MICROSOFT_EXTENSIONS" AM_ROSE_USE_MICROSOFT_EXTENSIONS)
+append_bool_config("AM_ROSE_USE_WINDOWS_ANALYSIS_SUPPORT" AM_ROSE_USE_WINDOWS_ANALYSIS_SUPPORT)
+append_bool_config("AM_ROSE_USE_LCOV" AM_ROSE_USE_LCOV)
+append_bool_config("AM_USE_VALGRIND" AM_USE_VALGRIND)
+append_bool_config("AM_USING_GCC_3_4_4_BACKEND_COMPILER" AM_USING_GCC_3_4_4_BACKEND_COMPILER)
+append_bool_config("AM_ROSE_WITH_ATERM" AM_ROSE_WITH_ATERM)
+append_bool_config("AM_ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION" AM_ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION)
+append_bool_config("AM_ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT" AM_ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT)
+append_bool_config("AM_AXXPXX_SPECIFIC_TESTS" AM_AXXPXX_SPECIFIC_TESTS)
+append_bool_config("AM_HAS_LIBRARY_CURL" AM_HAS_LIBRARY_CURL)
+append_bool_config("AM_ROSE_USE_INDENT" AM_ROSE_USE_INDENT)
+append_bool_config("AM_ROSE_HAVE_YICES" AM_ROSE_HAVE_YICES)
+append_bool_config("AM_WITH_GOMP_OPENMP_LIB" AM_WITH_GOMP_OPENMP_LIB)
+append_bool_config("AM_ROSE_USE_OMNI_OPENMP" AM_ROSE_USE_OMNI_OPENMP)
+append_bool_config("AM_ROSE_USING_ROSE_CODE_GENERATION" AM_ROSE_USING_ROSE_CODE_GENERATION)
+append_bool_config("AM_ROSE_BUILD_ROSEHPCT" AM_ROSE_BUILD_ROSEHPCT)
+append_bool_config("AM_ROSE_HAVE_BOOST_SERIALIZATION_LIB" AM_ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+append_bool_config("AM_ROSE_USE_PYTHON3" AM_ROSE_USE_PYTHON3)
+append_bool_config("AM_ROSE_WITH_SPOT" AM_ROSE_WITH_SPOT)
+
+# MacOS specific check
+append_bool_config("AM_OS_MACOSX" AM_OS_MACOSX)
+
+# Linux RHEL distribution checks
+append_bool_config("AM_OS_VENDOR_REDHAT_REL5" OS_VENDOR_REDHAT_REL5)
+append_bool_config("AM_OS_VENDOR_REDHAT_REL6" OS_VENDOR_REDHAT_REL6)
+append_bool_config("AM_OS_VENDOR_DEBIAN" OS_VENDOR_DEBIAN)
+
+# TODO: Add Windows macro check here 
+
+# GCC version checks (May not need these) 
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_4_4" ROSE_USING_GCC_VERSION_LATER_4_4)
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_4_8" ROSE_USING_GCC_VERSION_LATER_4_8)
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_4_9" ROSE_USING_GCC_VERSION_LATER_4_9)
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_5_1" ROSE_USING_GCC_VERSION_LATER_5_1)
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_6_0" ROSE_USING_GCC_VERSION_LATER_6_0)
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_6_1" ROSE_USING_GCC_VERSION_LATER_6_1)
+append_bool_config("AM_ROSE_USING_GCC_VERSION_LATER_10_1" ROSE_USING_GCC_VERSION_LATER_10_1)
+
+# Additional compiler checks
+append_bool_config("AM_USING_INTEL_COMPILER" USING_INTEL_COMPILER)
+append_bool_config("AM_USING_GNU_COMPILER" USING_GNU_COMPILER)
+append_bool_config("AM_USING_CLANG_COMPILER" USING_CLANG_COMPILER)
+
+# We can add more configuration checks as needed (Boost, Z3, CUDA, etc.)
+append_bool_config("AM_ROSE_HAVE_Z3" ROSE_HAVE_Z3)
+append_bool_config("AM_ROSE_HAVE_LIBZ3" ROSE_HAVE_LIBZ3)
+append_bool_config("AM_USE_CUDA" USE_CUDA)
+append_bool_config("AM_ROSE_USE_SSL_SUPPORT" ROSE_USE_SSL_SUPPORT)
+append_bool_config("AM_ROSE_HAVE_LIBDWARF" ROSE_HAVE_LIBDWARF)
+
+# Print 
+message(STATUS "Added new variables to: ${ROSE_CONFIG_FILE}")
+message(STATUS "Total New variables processed: ${TOTAL_COUNT}")
+message(STATUS "Total New variables that were written: ${TRUE_COUNT}")
+message(STATUS "False variables: ${FALSE_COUNT}")
