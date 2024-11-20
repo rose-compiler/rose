@@ -469,7 +469,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("BYTESINWORD", scope);
    }
 
-   // FIXEDPRECISION, FLOATPRECISION, FLOATRADIX, INTPRECISION, LOCSINWORD
+   // FIXEDPRECISION, FLOATPRECISION, FLOATRADIX, FLOATRELPRECISION, INTPRECISION, LOCSINWORD
    //
    else if (ATmatch(term, "FIXEDPRECISION")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"FIXEDPRECISION"}, scope);
@@ -479,6 +479,15 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
    else if (ATmatch(term, "FLOATRADIX")) {
      expr = buildIntrinsicVarRefExp_nfi(std::string{"FLOATRADIX"}, scope);
+   }
+   else if (ATmatch(term, "FLOATRELPRECISION(<term>)", &t_formula)) {
+     SgExpression* precision{nullptr};
+     if (traverse_Formula(t_formula, precision)) {
+        // MATCHED FloatingMachineParameter
+     } else return ATfalse;
+     auto params = SageBuilder::buildExprListExp_nfi();
+     params->append_expression(precision);
+     expr = buildIntrinsicFunctionCallExp_nfi(std::string{"FLOATRELPRECISION"}, params, scope);
    }
 
    // IMPLINTSIZE, INTPRECISION
@@ -610,7 +619,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
 
    //TODO:
-   //      'FLOATRELPRECISION' '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATRELPRECISION")}
    //      'FLOATUNDERFLOW'    '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATUNDERFLOW")}
    //      'MAXFLOAT'          '(' Precision ')'     -> FloatingMachineParameter {cons("MAXFLOAT")}
    //      'MINFLOAT'          '(' Precision ')'     -> FloatingMachineParameter {cons("MINFLOAT")}
@@ -9009,6 +9017,12 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
   else if (name == "MINSIZE") {
     type = SageBuilder::buildIntType();
   }
+
+  // Create double return type (Note: assumes double for max float)
+  else if (name == "FLOATRELPRECISION") {
+    type = SageBuilder::buildDoubleType();
+  }
+
   else {
     type = SB::buildVoidType();
   }
