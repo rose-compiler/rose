@@ -5,7 +5,7 @@
 #include <set>
 #include <string>
 
-#define NO_LABEL_ID std::numeric_limits<size_t>::max()
+static constexpr std::size_t NO_LABEL_ID = std::numeric_limits<std::size_t>::max();
 
 namespace CodeThorn {
   /*!
@@ -46,7 +46,7 @@ namespace CodeThorn {
     LabelSet& operator+=(LabelSet& s2);
     LabelSet operator-(LabelSet& s2);
     LabelSet& operator-=(LabelSet& s2);
-    
+
     std::string toString();
     bool isElement(Label lab);
   };
@@ -54,5 +54,18 @@ namespace CodeThorn {
   typedef std::set<LabelSet> LabelSetSet;
 
 } // end namespace
+
+
+// support hashing labels (PP 20/11/24)
+namespace std {
+
+  /// Add hash specialization for Labels
+  template <>
+  struct hash<CodeThorn::Label> {
+    std::size_t operator()(CodeThorn::Label lbl) const noexcept {
+      return std::hash<decltype(CodeThorn::Label{}.getId())>{}(lbl.getId());
+    }
+  };
+}
 
 #endif

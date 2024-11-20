@@ -1,6 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "FunctionNormalization.h"
+#include "ROSE_FALLTHROUGH.h"
+
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -68,7 +70,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
        // list of Declaration structures, one structure per function call
           DeclarationPtrList declarations;
           bool variablesDefined = false;
-             
+
        // list of function calls, in correnspondence with the inForTest list below
           list<SgNode*> functionCallExpList;
           list<bool> inForTest;
@@ -116,7 +118,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
            {
              cout << "--------------------------------------\nStatement ";
              cout << stm->unparseToString() << "\n";;
-             
+
              // traverse the list of function calls in the current statement, generate a structure  Declaration for each call
              // put these structures in a list to be inserted in the code later
              for ( list<SgNode *>::iterator i = functionCallExpList.begin(); i != functionCallExpList.end(); i++ )
@@ -126,7 +128,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
                  // get function call exp
                  SgFunctionCallExp *exp = isSgFunctionCallExp( *i );
                  ROSE_ASSERT ( exp );
-                 
+
                  // get type of expression, generate unique variable name
                  SgType *expType = exp->get_type();
                  ROSE_ASSERT ( expType );
@@ -227,7 +229,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
                      assignOp = new SgAssignOp( assignLoc, varRefExp, addressOp, ptrType );
                      assignStmt = new SgExprStatement( assignLoc, assignOp );
                      ROSE_ASSERT ( assignStmt &&  nonInitVarDeclaration );
-           
+
                      // we don't need initialized declarations in this case
                      initVarDeclaration = NULL;
 
@@ -279,7 +281,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 
          SgScopeStatement *scope = stm->get_scope();
          ROSE_ASSERT ( scope );
-         
+
          // insert function bindings to variables; each 'declaration' structure in the list
          // corresponds to one function call
          for ( DeclarationPtrList::iterator i = declarations.begin(); i != declarations.end(); i++ )
@@ -344,6 +346,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
                        d->assignment->set_parent( body );
                        body->get_statements().push_back( d->assignment );
                      }
+                     ROSE_FALLTHROUGH;
 
                      // SgForInitStatement has scope SgForStatement, move declarations before the for loop;
                      // same thing if the enclosing scope is an If, or Switch statement
@@ -399,7 +402,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
                    }
                }
            }
-         
+
          // once we have inserted all variable declarations, we need to replace top-level calls in the original statement
          if ( variablesDefined )
            {
@@ -442,7 +445,7 @@ has the AST:
   / \
  f  fc2
     / \
-   g  fc3 
+   g  fc3
       / \
      h   i
 where fc? represents an SgFunctionCallExpression. Order of function evaluation is h(i), g(_), f(_).
@@ -481,7 +484,7 @@ FunctionCallNormalization::replaceFunctionCallsInExpression( SgNode *root,
                {
                  SgFunctionCallExp *call = isSgFunctionCallExp( crt );
                  ROSE_ASSERT ( call );
-                 
+
                  map<SgFunctionCallExp *, SgExpression *>::iterator mapIter;
                  mapIter = fct2Var.find( call );
                  if ( mapIter == fct2Var.end() )
@@ -525,12 +528,12 @@ FunctionCallNormalization::BFSQueryForNodes( SgNode *root, VariantT type )
       SgNode *crt = toVisit.front();
       if ( crt->variantT() == type )
         retList.push_back( crt );
-      
+
       vector<SgNode *> succ = ( crt )->get_traversalSuccessorContainer();
       for ( vector<SgNode *>::iterator succIt = succ.begin(); succIt != succ.end(); succIt++ )
         if ( isSgNode ( *succIt ) )
           toVisit.push_back( *succIt );
-      
+
       toVisit.pop_front();
     }
   return retList;
@@ -586,5 +589,5 @@ FunctionCallNormalization::createTraversalList( SgNode *root )
                }
            retList.push_back( root );
          }
-     return retList;       
+     return retList;
    }

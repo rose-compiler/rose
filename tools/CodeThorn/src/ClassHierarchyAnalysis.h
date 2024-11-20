@@ -424,20 +424,6 @@ struct AnalysesTuple : std::tuple<ClassAnalysis, CastAnalysis>
   const CastAnalysis& castAnalysis() const { return std::get<1>(*this); }
 };
 
-#if NOT_NEEDED
-/// A tuple for both ClassAnalysis and CastAnalysis
-struct ClassAndVirtualFunctionAnalysis : std::tuple<ClassAnalysis, VirtualFunctionAnalysis>
-{
-  using base = std::tuple<ClassAnalysis, VirtualFunctionAnalysis>;
-  using base::base;
-
-  ClassAnalysis&       classAnalysis()       { return std::get<0>(*this); }
-  const ClassAnalysis& classAnalysis() const { return std::get<0>(*this); }
-
-  VirtualFunctionAnalysis& virtualFunctionAnalysis()             { return std::get<1>(*this); }
-  const VirtualFunctionAnalysis& virtualFunctionAnalysis() const { return std::get<1>(*this); }
-};
-#endif /* NOT_NEEDED */
 
 
 /// collects the class hierarchy and all casts from a project

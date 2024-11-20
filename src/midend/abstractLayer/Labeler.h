@@ -162,7 +162,7 @@ class Labeler {
 
   // checks that id range is correct
   virtual bool isValidLabelIdRange(Label lab);
-  
+
   virtual
   Label getFunctionCallReturnLabelFromCallLabel(Label callLabel) = 0;
 

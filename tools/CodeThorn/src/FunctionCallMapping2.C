@@ -280,7 +280,7 @@ namespace
 
 void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
-  using map_entry_t         = std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type;
+  using map_entry_t         = std::unordered_map<Label, FunctionCallTargetSet>::mapped_type;
   using FunctionTypeMap     = std::multimap<std::string, SgFunctionDeclaration*>;
   using FnSet               = std::unordered_set<SgFunctionDeclaration*>;
   using MemFnSet            = std::unordered_set<SgMemberFunctionDeclaration*>;

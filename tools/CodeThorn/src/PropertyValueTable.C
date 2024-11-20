@@ -27,8 +27,8 @@ PropertyValueTable::PropertyValueTable(size_t size) : _maximumId(size - 1) {
 void PropertyValueTable::init(size_t size) {
   ROSE_ASSERT(_propertyValueTable.size() == 0);
   for(size_t i=0;i<size;i++) {
-    _propertyValueTable[i] = PROPERTY_VALUE_UNKNOWN; 
-    _formulas[i] = ""; 
+    _propertyValueTable[i] = PROPERTY_VALUE_UNKNOWN;
+    _formulas[i] = "";
     _counterexamples[i] = "";
   }
 }
@@ -82,7 +82,7 @@ void PropertyValueTable::append(PropertyValueTable& toBeAppended) {
   idsOfSecondTable = NULL;
 }
 
-// TODO: check that every property with known result in "other" also exists in "*this" 
+// TODO: check that every property with known result in "other" also exists in "*this"
 void PropertyValueTable::addResults(PropertyValueTable& other) {
   list<int>* idsOfSecondTable = other.getPropertyNumbers();
   for (list<int>::iterator i=idsOfSecondTable->begin(); i!=idsOfSecondTable->end(); i++) {
@@ -91,7 +91,7 @@ void PropertyValueTable::addResults(PropertyValueTable& other) {
       strictUpdatePropertyValue(*i, other.getPropertyValue(*i));
       setCounterexample(*i, other.getCounterexample(*i));
       if (other.getAnnotation(*i) != "") {
-	setAnnotation(*i, other.getAnnotation(*i));
+  setAnnotation(*i, other.getAnnotation(*i));
       }
     }
   }
@@ -107,10 +107,11 @@ void PropertyValueTable::nonReachable(size_t num) {
 }
 
 void PropertyValueTable::updatePropertyValue(size_t num, PropertyValue value) {
-  assert(num>=0 && num<_propertyValueTable.size());
+  ROSE_ASSERT(num>=0 && num<_propertyValueTable.size());
   switch(getPropertyValue(num)) {
   case PROPERTY_VALUE_UNKNOWN:
     setPropertyValue(num,value);
+    break; // PP (20/11/24)
   case PROPERTY_VALUE_YES:
     if(value!=PROPERTY_VALUE_YES)
       throw CodeThorn::Exception("Error: property value table: reset of YES.");
@@ -268,7 +269,7 @@ int PropertyValueTable::entriesWithValue(PropertyValue v) {
       result++;
     }
   }
-  return result; 
+  return result;
 }
 
 void PropertyValueTable::writeFile(const char* filename, bool onlyyesno, int offset) {
@@ -283,8 +284,8 @@ void PropertyValueTable::writeFile(const char* filename, bool onlyyesno, int off
     if(onlyyesno && (_propertyValueTable[i]!=PROPERTY_VALUE_YES && _propertyValueTable[i]!=PROPERTY_VALUE_NO))
       continue;
     myfile<<i+offset<<","<<reachToString(_propertyValueTable[i]);
-    if (withCounterexamples && 
-       	    (_propertyValueTable[i]== PROPERTY_VALUE_NO || _propertyValueTable[i]== PROPERTY_VALUE_YES) ) {
+    if (withCounterexamples &&
+            (_propertyValueTable[i]== PROPERTY_VALUE_NO || _propertyValueTable[i]== PROPERTY_VALUE_YES) ) {
       myfile<<","<<_counterexamples[i];
     }
     myfile<<endl;
@@ -315,11 +316,11 @@ void PropertyValueTable::write2012File(const char* filename, bool onlyyesno) {
 }
 
 void PropertyValueTable::printLtlResults() {
-  printResults("YES (verified)", "NO (falsified)", "ltl_property_"); 
+  printResults("YES (verified)", "NO (falsified)", "ltl_property_");
 }
 
 void PropertyValueTable::printResults() {
-  printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_"); 
+  printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_");
 }
 
 void PropertyValueTable::printResults(string yesAnswer, string noAnswer, string propertyName, bool withCounterexample) {
@@ -328,7 +329,7 @@ void PropertyValueTable::printResults(string yesAnswer, string noAnswer, string 
     size_t i = k->first;
     cout<<color("white")<<propertyName<<i<<": ";
     switch(_propertyValueTable[i]) {
-    case PROPERTY_VALUE_UNKNOWN: cout <<color("magenta")<<"UNKNOWN"; break; 
+    case PROPERTY_VALUE_UNKNOWN: cout <<color("magenta")<<"UNKNOWN"; break;
     case PROPERTY_VALUE_YES:
       {
       cout <<color("green")<< yesAnswer;
@@ -376,14 +377,14 @@ string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotati
     if (withResults) {
       PropertyValue val = _propertyValueTable[i->first];
       if (val == PROPERTY_VALUE_YES) {
-	propertiesRersFormat << "\t true";
+  propertiesRersFormat << "\t true";
       } else if (val == PROPERTY_VALUE_NO) {
-	propertiesRersFormat << "\t false";
+  propertiesRersFormat << "\t false";
       } else if (val == PROPERTY_VALUE_UNKNOWN) {
-	propertiesRersFormat << "\t unknown";
+  propertiesRersFormat << "\t unknown";
       } else {
-	cerr << "ERROR: Unknown PropertyValue detected." << endl;
-	ROSE_ASSERT(0);
+  cerr << "ERROR: Unknown PropertyValue detected." << endl;
+  ROSE_ASSERT(0);
       }
     }
     if (withAnnotations) {
@@ -421,7 +422,7 @@ void PropertyValueTable::shuffle() {
     int indexNotCopiedIter = 0;
     while (indexNotCopiedIter < indexNotCopied || copied[(*iter).first]) {
       if (!copied[(*iter).first]) {
-	++indexNotCopiedIter;
+  ++indexNotCopiedIter;
       }
       ++iter;
       ROSE_ASSERT(iter != _formulas.end());
@@ -433,7 +434,7 @@ void PropertyValueTable::shuffle() {
     formulas[i] = _formulas[index];
     idByFormula[formulas[i]] = i;
     counterexamples[i] = _counterexamples[index];
-    annotations[i] = _annotations[index];    
+    annotations[i] = _annotations[index];
     // update the information on already copied properties
     ++numCopied;
     copied[index] = true;
@@ -455,18 +456,18 @@ string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnot
     if (withResults) {
       PropertyValue val = _propertyValueTable[i->first];
       if (val == PROPERTY_VALUE_YES) {
-	propertiesSpinSyntax << "\t /* true */";
+  propertiesSpinSyntax << "\t /* true */";
       } else if (val == PROPERTY_VALUE_NO) {
-	propertiesSpinSyntax << "\t /* false */";
+  propertiesSpinSyntax << "\t /* false */";
       } else if (val == PROPERTY_VALUE_UNKNOWN) {
-	propertiesSpinSyntax << "\t /* unknown */";
+  propertiesSpinSyntax << "\t /* unknown */";
       } else {
-	cerr << "ERROR: Unknown PropertyValue detected." << endl;
-	ROSE_ASSERT(0);
+  cerr << "ERROR: Unknown PropertyValue detected." << endl;
+  ROSE_ASSERT(0);
       }
     }
     if (withAnnotations) {
-      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */"; 
+      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */";
     }
     propertiesSpinSyntax << endl;
   }

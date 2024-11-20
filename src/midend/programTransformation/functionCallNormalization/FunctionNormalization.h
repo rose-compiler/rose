@@ -1,7 +1,6 @@
 #ifndef FUNCTION_CALL_NORMALIZATION_H
 #define FUNCTION_CALL_NORMALIZATION_H
 
-#include <AstInterface.h>
 #include <sstream>
 #include <iostream>
 #include <string>
@@ -31,7 +30,7 @@ class FunctionCallNormalization : public SgSimpleProcessing
    std::list<SgNode *> FEOQueryForNodes( SgNode *root, VariantT type );
 
    std::list<SgNode *> createTraversalList( SgNode *root );
-      
+
 };
 
 #endif

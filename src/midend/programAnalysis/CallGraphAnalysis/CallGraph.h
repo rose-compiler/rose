@@ -2,7 +2,6 @@
 #ifndef CALL_GRAPH_H
 #define CALL_GRAPH_H
 
-#include <AstInterface.h>
 #include <GraphDotOutput.h>
 #include <VirtualGraphCreate.h>
 
@@ -16,22 +15,17 @@
 #include <boost/foreach.hpp>
 #include <boost/unordered_map.hpp>
 
-class FunctionData;
+#include "ClassHierarchyGraph.h"
 
-typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
-typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
+class FunctionData;
 
 // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
 // extern SgFunctionTypeTable Sgfunc_type_table;
-// This header has to be here since it uses type SgFunctionDeclarationPtrList 
-#include "ClassHierarchyGraph.h"
-
+// This header has to be here since it uses type SgFunctionDeclarationPtrList
 
 //AS(090707) Added the CallTargetSet namespace to replace the CallGraphFunctionSolver class
 namespace CallTargetSet
 {
-  typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
-  typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
   /**
    * CallTargetSet::solveFunctionPointerCall
    *
@@ -41,7 +35,7 @@ namespace CallTargetSet
    * try very hard at it.  When asked to resolve a function pointer call, it simply
    * finds all functions that match that type in the memory pool a returns a list of them.
    *
-   * @param[in] pointerDerefExp : A function pointer dereference.  
+   * @param[in] pointerDerefExp : A function pointer dereference.
    * @return: A vector of all functionDeclarations that match the type of the function dereferenced in pointerDerefExp
    **/
   std::vector<SgFunctionDeclaration*> solveFunctionPointerCall ( SgPointerDerefExp *);
@@ -58,22 +52,22 @@ namespace CallTargetSet
    * a functiondeclaration (or template instantiation) of type functionType.
    * If it does, it is added to a functionList and returned.  So function list can
    * have at most 1 entry.
-   * 
+   *
    * @param[in] node : The node we are checking.  It must be an SgFunctionDeclaration
-   * @param[in] functionType : The function type being checked.  
+   * @param[in] functionType : The function type being checked.
    * @return: If node matched functionType, it is added on functionList and returned.  Otherwise functionList is empty.
    **/
   Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType );
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( 
+  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall (
           SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool , bool includePureVirtualFunc = false );
 
   //! Returns the list of all constructors that may get called via an initialization.
   std::vector<SgFunctionDeclaration*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
-  // Populates functionList with Properties of all functions that may get called.
+  //! Populates \p propList with all function declarations that may get called by \p exp
   ROSE_DLL_API void getPropertiesForExpression(SgExpression* exp,
                                                ClassHierarchyWrapper* classHierarchy,
                                                Rose_STL_Container<SgFunctionDeclaration*>& propList,
@@ -95,17 +89,17 @@ namespace CallTargetSet
                                     bool includePureVirtualFunc = false);
 
   // Gets a vector of SgExpressions that are associated with the current SgFunctionDefinition.
-  // This functionality is necessary for virtual, interprocedural control flow graphs. However, 
+  // This functionality is necessary for virtual, interprocedural control flow graphs. However,
   // it is costly and should be used infrequently (or optimized!).
-  void getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
+  void getExpressionsForDefinition(SgFunctionDefinition* targetDef,
                                    ClassHierarchyWrapper* classHierarchy,
                                    Rose_STL_Container<SgExpression*>& exps);
-  
+
   // Gets the latest implementation of the member function from the ancestor hierarchy
-  SgFunctionDeclaration * getFirstVirtualFunctionDefinitionFromAncestors(SgClassType *crtClass, 
-                                   SgMemberFunctionDeclaration *memberFunctionDeclaration, 
+  SgFunctionDeclaration * getFirstVirtualFunctionDefinitionFromAncestors(SgClassType *crtClass,
+                                   SgMemberFunctionDeclaration *memberFunctionDeclaration,
                                    ClassHierarchyWrapper *classHierarchy);
-  
+
 };
 
 class ROSE_DLL_API FunctionData
@@ -114,7 +108,7 @@ class ROSE_DLL_API FunctionData
 
     bool hasDefinition;
 
-    bool isDefined (); 
+    bool isDefined ();
 
     FunctionData(SgFunctionDeclaration* functionDeclaration, SgProject *project, ClassHierarchyWrapper * );
 
@@ -132,7 +126,7 @@ struct dummyFilter
 {
   using result_type = bool;
   result_type operator() (SgFunctionDeclaration* node) const; // always return true
-}; 
+};
 
 //! A function object to filter out builtin functions in a call graph (only non-builtin functions will be considered)
 // Liao, 6/17/2012
@@ -140,7 +134,7 @@ struct ROSE_DLL_API builtinFilter
 {
   using result_type = bool;
   result_type operator() (SgFunctionDeclaration* node) const;
-}; 
+};
 
 class ROSE_DLL_API CallGraphBuilder
 {
@@ -152,7 +146,7 @@ class ROSE_DLL_API CallGraphBuilder
     template<typename Predicate>
       void buildCallGraph(Predicate pred);
     //! Grab the call graph built
-    SgIncidenceDirectedGraph *getGraph(); 
+    SgIncidenceDirectedGraph *getGraph();
     //void classifyCallGraph();
 
     //We map each function to the corresponding graph node
@@ -171,8 +165,8 @@ class ROSE_DLL_API CallGraphBuilder
     GraphNodes graphNodes;
 
 };
-//! Generate a dot graph named 'fileName' from a call graph 
-//TODO this function is    not defined? If so, need to be removed. 
+//! Generate a dot graph named 'fileName' from a call graph
+//TODO this function is    not defined? If so, need to be removed.
 // AstDOTGeneration::writeIncidenceGraphToDOTFile() is used instead in the tutorial. Liao 6/17/2012
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
 

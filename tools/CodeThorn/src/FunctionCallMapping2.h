@@ -8,30 +8,16 @@
 #include "FunctionCallTarget.h"
 #include "ClassHierarchyAnalysis.h"
 
+/*!
+ * \author Peter Pirkelbauer
+ * \date 2022-2024
+ */
 
 namespace CodeThorn {
-
-  // \todo when ROSE allows C++11, move this to Labeler.h as std::hash<CodeThorn::Label> ...
-  //       C++11 and newer allow template specializations for user defined
-  //       types to be made within namespace std.
-  struct HashLabel
-  {
-    std::size_t operator()(Label lbl) const noexcept
-    {
-      std::hash<decltype(std::declval<Label>().getId())> hashFun;
-
-      return hashFun(lbl.getId());
-    }
-  };
-
   /// tests if n occurs as part of a template
   // \todo consider only labeling non-template code..
   bool insideTemplatedCode(const SgNode* n);
 
-  /*!
-   * \author Markus Schordan
-   * \date 2019.
-   */
   class FunctionCallMapping2 {
   public:
     FunctionCallMapping2(Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions)
@@ -70,7 +56,7 @@ namespace CodeThorn {
     // static void initDiagnostics(); \use CodeThorn diagnostics
 
   protected:
-    std::unordered_map<Label, FunctionCallTargetSet, HashLabel> mapping;
+    std::unordered_map<Label, FunctionCallTargetSet> mapping;
     Labeler* _labeler;
     ClassAnalysis* _classAnalysis;
     VirtualFunctionAnalysis* _virtualFunctions;

@@ -15,6 +15,7 @@
 
 // context sensitive transfer functions for function calls are only provided by Solver 18. This is explicitly checked.
 #include "Solver18.h"
+#include "ROSE_FALLTHROUGH.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -183,7 +184,7 @@ namespace CodeThorn {
     }
     PState::combineInPlace1st(es1->pstate(),es2->pstate());
   }
-  
+
   EState EStateTransferFunctions::combine(EStatePtr es1, EStatePtr es2) {
     ROSE_ASSERT(es1->label()==es2->label());
     //ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
@@ -528,7 +529,7 @@ namespace CodeThorn {
       }
     }
   }
-  
+
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
 
@@ -553,7 +554,7 @@ namespace CodeThorn {
         SAWYER_MESG(logger[TRACE])<<"transfer functioncallreturn: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->getCallString().toString()<<" : pathfeasibility:"<<resultPair.first<<" : ";
         if(resultPair.first) SAWYER_MESG(logger[TRACE])<<resultPair.second.toString()<<endl;
         else SAWYER_MESG(logger[TRACE])<<"infeasible"<<endl;
-          
+
         if(resultPair.first) {
           // set new, possibly shorter, callstring
           cs=resultPair.second;
@@ -707,7 +708,7 @@ namespace CodeThorn {
     ROSE_ASSERT(_analyzer);
     return _analyzer->isRegisterAddress(memLoc);
   }
-  
+
   void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName) {
     if(_analyzer->getOptionsRef().status) {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
@@ -855,7 +856,7 @@ namespace CodeThorn {
       pstate->writeTopToAllPotentialMemoryLocations();
     }
   }
-  
+
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
     CallString cs=currentEState->getCallString();
@@ -971,7 +972,7 @@ namespace CodeThorn {
         }
       }
 
-      //evaluateFunctionCallArguments(edge,funCall,currentEState,false); // evaluate for side-effects. transferForkFunction 
+      //evaluateFunctionCallArguments(edge,funCall,currentEState,false); // evaluate for side-effects. transferForkFunction
       if(isFunctionCallWithAssignmentFlag) {
         // here only the specific format x=f(...) can exist
         SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
@@ -1203,7 +1204,7 @@ namespace CodeThorn {
     return newEState;
   }
 
-  
+
   list<EStatePtr> EStateTransferFunctions::transferFailedAssert(Edge edge, EStatePtr estate) {
     return elistify(reInitFailedAssertEState(estate,edge.target()));
   }
@@ -1405,19 +1406,19 @@ namespace CodeThorn {
       // only create string in state with variable as pointer-address if it is an array (not for the case it is a char* pointer)
       // in the case of char* it is handled as a pointer initializer (and the string-pointer is already available in state)
       if(SgStringVal* stringValNode=isSgStringVal(assignInitializer->get_operand())) {
-	if(isSgArrayType(initName->get_type())) {
-	  // handle special cases such as: char a[5]="abc";
-	  SAWYER_MESG(logger[TRACE])<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
-	  if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==-1) {
-	    VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
-	    size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
-	    getVariableIdMapping()->setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
-	    SAWYER_MESG(logger[TRACE])<<"Determined size of array from literal string memory region size: "<<stringLiteralMemoryRegionSize<<endl;
-	  } else {
-	    SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<getVariableIdMapping()->getNumberOfElements(initDeclVarId)<<endl;
-	  }
-	  //setElementSize(initDeclVarId,variableType); // set when VIM is created
-	  CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
+  if(isSgArrayType(initName->get_type())) {
+    // handle special cases such as: char a[5]="abc";
+    SAWYER_MESG(logger[TRACE])<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
+    if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==-1) {
+      VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
+      size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
+      getVariableIdMapping()->setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
+      SAWYER_MESG(logger[TRACE])<<"Determined size of array from literal string memory region size: "<<stringLiteralMemoryRegionSize<<endl;
+    } else {
+      SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<getVariableIdMapping()->getNumberOfElements(initDeclVarId)<<endl;
+    }
+    //setElementSize(initDeclVarId,variableType); // set when VIM is created
+    CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
           string stringVal=stringValNode->get_value();
           CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
           PStatePtr newPState=currentEState->pstate();
@@ -1433,18 +1434,18 @@ namespace CodeThorn {
             initializeMemoryLocation(label,newPState,newArrayElementAddr,stringVal[i]);
           }
 
-	  // handle case that string is shorter than allocated memory
-	  if(stringLen<=memRegionNumElements) {
-	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
-	    for(CodeThorn::TypeSize  i=0;i<numDefaultValuesToAdd;i++) {
-	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1) /* element size */);
-	      // set default init value for past string elements of reserved array
-	      initializeMemoryLocation(label,newPState,newArrayElementAddr,AbstractValue(0));
-	    }
+    // handle case that string is shorter than allocated memory
+    if(stringLen<=memRegionNumElements) {
+      CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
+      for(CodeThorn::TypeSize  i=0;i<numDefaultValuesToAdd;i++) {
+        AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1) /* element size */);
+        // set default init value for past string elements of reserved array
+        initializeMemoryLocation(label,newPState,newArrayElementAddr,AbstractValue(0));
+      }
 
-	  }
-	  return reInitEState(currentEState,targetLabel,cs,newPState);
-	}
+    }
+    return reInitEState(currentEState,targetLabel,cs,newPState);
+  }
       }
       // set type info for initDeclVarId
       //getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
@@ -1490,7 +1491,7 @@ namespace CodeThorn {
       exit(1);
     }
   }
-      
+
   EStatePtr EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
     CallString cs=currentEState->getCallString();
     Label label=currentEState->label();
@@ -1704,11 +1705,11 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::initializeArbitraryMemory(EStatePtr estate) {
     ROSE_ASSERT(getVariableIdMapping());
-    AbstractValue memAddr=createNewMemoryRegionIdAndPointerToIt("$arbitraryMemory",-1); // arbitrary memory is of arbitrary size 
+    AbstractValue memAddr=createNewMemoryRegionIdAndPointerToIt("$arbitraryMemory",-1); // arbitrary memory is of arbitrary size
     AbstractValue::setPointerToArbitraryMemory(memAddr);
     estate->pstate()->initializeArbitraryMemory(memAddr,AbstractValue::createUndefined()); // arbitrary memory has arbitrary values
   }
-  
+
   VariableId EStateTransferFunctions::globalVarIdByName(std::string varName) {
     return globalVarName2VarIdMapping[varName];
   }
@@ -2003,7 +2004,7 @@ namespace CodeThorn {
   void EStateTransferFunctions::transferFunctionCallReturnContextInPlaceOld(CallString& cs, Label lab) {
     if(cs.isLastLabel(lab)) {
       cs.removeLastLabel();
-    } 
+    }
   }
 
   bool EStateTransferFunctions::isFeasiblePathContextOld(CallString& cs,Label callLabel) {
@@ -2044,11 +2045,11 @@ namespace CodeThorn {
     auto topSortLabelPos=topSort->getLabelPosition(lab);
     return topSortLabelPos;
   }
-  
+
   string EStateTransferFunctions::labelPosInfoToString(Label lab) {
     return std::to_string(topSortLabelPos(lab))+":"+"L"+lab.toString();
   }
-    
+
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     stringstream ss;
     ss<<"transfer: "<<labelPosInfoToString(edge.source())<<"=>"<<labelPosInfoToString(edge.target())
@@ -2338,6 +2339,7 @@ namespace CodeThorn {
         ss<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val;
         fatalErrorExit(valueExp,ss.str());
       }
+      ROSE_FALLTHROUGH; // PP (20/11/24)
     }
     default:
       return AbstractValue::createTop();
@@ -3343,10 +3345,10 @@ namespace CodeThorn {
   // returns true if it is definitely a null pointer
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, EStatePtr estate) {
     if(derefOperandValue.isTop()||derefOperandValue.isPointerToArbitraryMemory()) {
-      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
+      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);
       return false;
     } else if(derefOperandValue.isNullPtr()) {
-      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
+      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);
       // definitely null pointer
       return true;
     }
