@@ -2009,6 +2009,22 @@ SgType* getNumberDeclType(ada_base_entity* lal_element){
         return getNumberDeclType(&lal_expr);
         break;
       }
+    case ada_dotted_name:
+      {
+        //Get the suffix
+        ada_base_entity lal_suffix;
+        ada_dotted_name_f_suffix(&lal_expr, &lal_suffix);
+        return getNumberDeclType(&lal_suffix);
+        break;
+      }
+    case ada_un_op:
+      {
+        //Get the expr
+        ada_base_entity lal_un_expr;
+        ada_un_op_f_expr(&lal_expr, &lal_un_expr);
+        return getNumberDeclType(&lal_un_expr);
+        break;
+      }
     case ada_identifier:
       {
         ada_base_entity lal_first_decl;

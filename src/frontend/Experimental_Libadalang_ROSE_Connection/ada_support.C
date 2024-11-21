@@ -84,8 +84,10 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
 
             ada_text package_name_text = { full_package_name_chars, full_package_name_length, true };
 
-            //Get the parent unit (we can't know whether it's .ads or .adb, so try both)
-            units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, NULL, 0));
+            //Get the withed unit (if this isn't a system include, get both .adb and .ads)
+            if(full_package_name.rfind("ada.", 0) != 0 && full_package_name.rfind("gnat.", 0) != 0 && full_package_name.rfind("system.", 0) != 0){
+              units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, NULL, 0));
+            }
             units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
           }
         }
@@ -145,15 +147,6 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
         mlog[Sawyer::Message::INFO] << " - " << diagnostic_message << std::endl;
         free(diagnostic_message);
       }
-      continue;
-    }
-
-    //TODO Some system files cause infinite include loops with the current setup. I've removed them for now, but this is a hack fix.
-    std::string cxx_file_name_string = file_name_string;
-    if(    cxx_file_name_string.find("s-soflin.ads") != std::string::npos
-        || cxx_file_name_string.find("s-soflin.adb") != std::string::npos
-      ){
-      free(file_name_string);
       continue;
     }
 

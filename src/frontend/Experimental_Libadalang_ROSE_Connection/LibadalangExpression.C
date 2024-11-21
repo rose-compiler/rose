@@ -237,6 +237,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     //  |A2012 end*/
     else if(name == "access"
          || name == "address"
+         || name == "base"
          || name == "class"
          || name == "digits"
          || name == "pos"

@@ -738,10 +738,21 @@ namespace {
 
         ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
         if (!ada_node_is_null(&lal_base_type_decl)) {
+          //Found a case in standard (s-osinte.ads) where the designated_type_decl points to the parent in an infinite loop
+          //  So, check to make sure the new base_type_def isn't the same as the old
+          int old_type_def_hash = hash_node(&lal_base_type_def);
           ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
           ROSE_ASSERT(!ada_node_is_null(&lal_base_type_def));
 
-          lal_type_def_kind = ada_node_kind(&lal_base_type_def);
+          if(hash_node(&lal_base_type_def) == old_type_def_hash){
+            SgNode& tyrep = getExprType(&lal_base_type_decl, ctx);
+
+            const bool isEnum = si::Ada::baseEnumDeclaration(isSgType(&tyrep)) != nullptr;
+
+            lal_type_def_kind = isEnum ? ada_enum_type_def : ada_private_type_def /* anything */;
+          } else {
+            lal_type_def_kind = ada_node_kind(&lal_base_type_def);
+          }
         } else {
           ada_base_entity lal_name;
 
