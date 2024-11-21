@@ -110,6 +110,7 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup
 genericSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup gen("General switches");
+    gen.name("general");
 
     gen.insert(Switch("help", 'h')
                .doc("Show this documentation.")
