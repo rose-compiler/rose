@@ -14,6 +14,7 @@
 #include "cmdline.h"
 #include <Rose/FileSystem.h>
 #include <Rose/CommandLine.h>
+#include <ROSE_UNUSED.h>
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #   include "FortranModuleInfo.h"
@@ -385,12 +386,8 @@ whatTypeOfFileIsThis( const string & name )
      vector<string> commandLineVector;
      commandLineVector.push_back("file -b " + name);
 
-  // printf ("Unknown file: %s ",name.c_str());
      printf ("Error: unknown file type: ");
      flush(cout);
-
-  // I could not make this work!
-  // systemFromVector (commandLineVector);
 
   // Use "-b" for brief mode!
      string commandLine = "file " + name;
@@ -640,8 +637,6 @@ isLibraryArchiveFile ( string sourceFilename )
 void
 SgFile::initializeSourcePosition( const std::string & sourceFilename )
    {
-     ASSERT_not_null(this);
-
      Sg_File_Info* fileInfo = new Sg_File_Info(sourceFilename,1,1);
      ASSERT_not_null(fileInfo);
 
@@ -1570,7 +1565,6 @@ int
 SgProject::RunFrontend()
 {
   TimingPerformance timer ("AST (SgProject::RunFrontend()):");
-  ASSERT_not_null(this);
 
   int status_of_function = Rose::Frontend::Run(this);
   this->set_frontendErrorCode(status_of_function);
@@ -1581,7 +1575,8 @@ SgProject::RunFrontend()
 int
 SgProject::parse()
    {
-     int errorCode = 0;
+  // volatile used as a work around for warning: variable might be clobbered by 'longjmp' or 'vfork'
+     volatile int errorCode = 0;
 
 #define DEBUG_PARSE 0
 
@@ -1692,7 +1687,9 @@ SgProject::parse()
   // is relevant where the AstPostProcessing mechanism must first mark nodes
   // to be output before preprocessing information is attached.
      SgFilePtrList & files = get_fileList();
-     bool unparse_using_tokens = false;
+
+  // volatile used as a work around for warning: variable might be clobbered by 'longjmp' or 'vfork'
+     volatile bool unparse_using_tokens = false;
 
      for (SgFile* file : files)
         {
@@ -1719,7 +1716,9 @@ SgProject::parse()
                if (file != nullptr)
                   {
                     file->set_frontendErrorCode(100);
-                    errorCode = std::max(100, errorCode);
+
+                    int save_volatile_variable = errorCode;
+                    errorCode = std::max(100, save_volatile_variable);
                   }
                  else
                   {
@@ -1729,7 +1728,6 @@ SgProject::parse()
                          << std::endl;
                  // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.
                     exit(1);
-                 // return std::max(100, errorCode);
                   }
              }
             else
@@ -3421,7 +3419,8 @@ Rose::Frontend::Run(SgProject* project)
 int
 Rose::Frontend::RunSerial(SgProject* project)
 {
-  int status_of_function = 0;
+  // volatile used as a work around for warning: variable might be clobbered by 'longjmp' or 'vfork'
+  volatile int status_of_function = 0;
 
   if (SgProject::get_verbose() > 0) {
     mlog[INFO] << "[Frontend] Running in serial mode\n";
@@ -3443,9 +3442,9 @@ Rose::Frontend::RunSerial(SgProject* project)
 
               if (file != nullptr)
               {
+                  int save_volatile_variable = status_of_function;
                   file->set_frontendErrorCode(100);
-                  status_of_function =
-                      std::max(100, status_of_function);
+                  status_of_function = std::max(100, save_volatile_variable);
               }
               else
               {
@@ -3458,12 +3457,6 @@ Rose::Frontend::RunSerial(SgProject* project)
           }
           else
           {
-#if 0
-           // DQ (9/5/2014): I sometimes need to avoid the try catch mechanism for debugging
-           // (allows better use of gdb since traces on exceptions are not supported).
-              printf ("In Rose::Frontend::RunSerial(): Skipping try...catch mechanism in call to file->runFrontend(status_of_file); \n");
-              file->runFrontend(status_of_file);
-#else
               //-----------------------------------------------------------
               // Pass File to Frontend. Avoid using try/catch/re-throw if not necessary because it interferes with debugging
               // the exception (it makes it hard to find where the exception was originally thrown).  Also, no need to print a
@@ -3472,8 +3465,9 @@ Rose::Frontend::RunSerial(SgProject* project)
               //-----------------------------------------------------------
               if (Rose::KeepGoing::g_keep_going) {
                   try {
-                      file->runFrontend(status_of_file);
-                      status_of_function = max(status_of_file, status_of_function);
+                      int save_volatile_variable = status_of_function;
+                      file->runFrontend(status_of_file); // status_of_file is modified as a side effect
+                      status_of_function = max(status_of_file, save_volatile_variable);
                   } catch (...) {
                       if (file != nullptr) {
                          file->set_frontendErrorCode(100);
@@ -3489,13 +3483,13 @@ Rose::Frontend::RunSerial(SgProject* project)
               } else {
                   // Same thing but without the try/catch because we want the exception to be propagated all the way to the
                   // user without us re-throwing it and interfering with debugging.
-                  file->runFrontend(status_of_file);
-                  status_of_function = max(status_of_file, status_of_function);
+                  int save_volatile_variable = status_of_function;
+                  file->runFrontend(status_of_file); // status_of_file is modified as a side effect
+                  status_of_function = max(status_of_file, save_volatile_variable);
               }
-#endif
           }
       }
-  }//all_files->callFrontEnd
+  } //all_files->callFrontEnd
 
   ASSERT_not_null(project);
 
@@ -4336,6 +4330,7 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> /*inputCommandL
      return frontendErrorLevel;
 
 #else
+     ROSE_UNUSED(argv);
      mlog[ERROR] << "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined."
                  << std::endl;
      return 0;
@@ -5192,7 +5187,8 @@ SgProject::compileOutput()
           printf ("\n\nIn Project::compileOutput(): Compiling numberOfFiles() = %d \n",numberOfFiles());
 #endif
 
-          bool multifile_support_compile_only_flag = false;
+       // volatile used as a work around for warning: variable might be clobbered by 'longjmp' or 'vfork'
+          volatile bool multifile_support_compile_only_flag = false;
 
        // case 2: compilation  for each file
        // Typical case

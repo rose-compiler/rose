@@ -11809,7 +11809,7 @@ void c_action_case_value()
      * @param id Identifier if present. Otherwise, null.
      */
     void c_action_end_associate_stmt(Token_t* label, Token_t* endKeyword,
-            Token_t* associateKeyword, Token_t* id, Token_t* /*eos*/)
+                                     Token_t* /*associateKeyword*/, Token_t* id, Token_t* /*eos*/)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_end_associate_stmt(): label = %p id = %p = %s \n",
