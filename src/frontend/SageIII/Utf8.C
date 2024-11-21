@@ -54,8 +54,9 @@ int Utf8::getCharSize(int val) {
     //
     // The base Ascii characters
     //
-    if (c >= 0 && c < 0x80)
+    if (c < 0x80) {
         return 1;
+    }
 
     //
     // A character with a bit sequence in the range:

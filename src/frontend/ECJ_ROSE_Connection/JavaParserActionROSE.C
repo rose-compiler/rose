@@ -38,7 +38,7 @@ using namespace Rose::Frontend::Java;
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionParenthesizedExpression(JNIEnv *env, jclass, jint java_parentheses_count) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParenthesizedExpression(JNIEnv* /*env*/, jclass, jint java_parentheses_count) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionParenthesizedExpression\n");
 
@@ -57,7 +57,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParenthesizedExpression(JNIEnv *en
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionSetupSourceFilename(JNIEnv *env, jclass xxx, jstring java_full_file_name) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionSetupSourceFilename(JNIEnv *env, jclass, jstring java_full_file_name) {
     string full_file_name = convertJavaStringToCxxString(env, java_full_file_name);
     ::currentSourceFile = isSgSourceFile((*::project)[full_file_name]);
 // TODO: Remove this!
@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSetupSourceFilename(JNIEnv *env, j
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionClearSourceFilename(JNIEnv *env, jclass xxx) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionClearSourceFilename(JNIEnv* /*env*/, jclass) {
 // TODO: Remove this!
 //if (::currentSourceFile != NULL){
 //cout << "*+* Leaving source file " << ::currentSourceFile -> getFileName() << endl;
@@ -82,7 +82,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionClearSourceFilename(JNIEnv *env, j
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassStart(JNIEnv *env, jclass xxx, jstring java_string, jboolean is_interface, jboolean is_enum, jboolean is_anonymous, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassStart(JNIEnv *env, jclass, jstring java_string, jboolean is_interface, jboolean is_enum, jboolean /*is_anonymous*/, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_string);
 
     if (SgProject::get_verbose() > 0)
@@ -143,30 +143,22 @@ cout.flush();
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass, jstring java_string, jobject /*jToken*/) {
     SgName name = convertJavaStringToCxxString(env, java_string);
 
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionInsertClassEnd: %s \n", name.str());
 
-    ROSE_ASSERT(! astJavaScopeStack.empty());
-
-    SgClassDefinition *class_definition = astJavaScopeStack.popClassDefinition();
-
- // DQ (3/25/2017): Eliminate Clang warning for unused variable (define a valid usage).
-    ROSE_ASSERT(class_definition != NULL);
+    ASSERT_require(! astJavaScopeStack.empty());
+    astJavaScopeStack.popClassDefinition();
 }
 
 
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_user_defined_class, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass, jstring java_name, jstring /*java_external_name*/, jboolean /*java_user_defined_class*/, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_name);
-//    SgName external_name = convertJavaStringToCxxString(env, java_external_name);
-
- // DQ (3/25/2017): Eliminate Clang warning for unused variable.
- // bool user_defined_class = java_user_defined_class;
 
     bool is_interface = java_is_interface;
     bool is_enum = java_is_enum;
@@ -336,7 +328,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildTypeParameterSupport(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_name, jint num_bounds, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildTypeParameterSupport(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint /*method_index*/, jstring java_name, jint num_bounds, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Build an Type Parameter \n");
 
@@ -432,7 +424,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePushMethodParameterScope(JNIEnv *env, jclass, int method_index, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePushMethodParameterScope(JNIEnv* /*env*/, jclass, int method_index, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Push a Type Parameter scope\n");
 
@@ -455,7 +447,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePushMethodParameterScope(JNI
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateTypeParameterSupport(JNIEnv *env, jclass, jstring java_name, int method_index, jint num_bounds, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateTypeParameterSupport(JNIEnv *env, jclass, jstring java_name, int /*method_index*/, jint num_bounds, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Update an Type Parameter \n");
 
@@ -502,10 +494,7 @@ cout << "Could not locate type "
     // Take care of the super types, if any.
     //
     SgBaseClassPtrList& bases = parameter_definition -> get_inheritances();
-
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
- // ROSE_ASSERT(bases.size() == num_bounds);
-    ROSE_ASSERT(bases.size() == (size_t)num_bounds);
+    ASSERT_require(bases.size() == (size_t)num_bounds);
 
     string type_parameter_bounds_name = "";
     for (int i = 0, k = num_bounds - 1; i < num_bounds; i++, k--) {
@@ -541,7 +530,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePopMethodParameterScope(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePopMethodParameterScope(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Pop a Type Parameter scope\n");
 
@@ -553,7 +542,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePopMethodParameterScope(JNIE
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(JNIEnv *env, jclass xxx, jint java_num_type_parameters, jboolean java_has_super_class, jint java_num_interfaces, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(JNIEnv *env, jclass, jint java_num_type_parameters, jboolean java_has_super_class, jint java_num_interfaces, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport()\n");
 
@@ -693,7 +682,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstring java_string, jint num_class_members, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, jclass, jstring java_string, jint num_class_members, jobject /*jToken*/) {
     SgName class_name = convertJavaStringToCxxString(env, java_string);
 
     if (SgProject::get_verbose() > 0)
@@ -782,7 +771,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, 
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateClassSupportEnd(JNIEnv *env, jclass xxx, jstring java_name, jboolean has_super_class, jint num_interfaces, jint num_class_members, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateClassSupportEnd(JNIEnv *env, jclass, jstring java_name, jboolean has_super_class, jint num_interfaces, jint num_class_members, jobject /*jToken*/) {
     SgName class_name = convertJavaStringToCxxString(env, java_name);
 
     if (SgProject::get_verbose() > 0)
@@ -823,8 +812,6 @@ cout.flush();
 
     SgBaseClassPtrList &super_type_list = class_definition -> get_inheritances();
 
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
- // if (super_type_list.size() != num_super_types)
     if (super_type_list.size() != (size_t)num_super_types)
        {
          cout << "Completing processing of class " << class_definition -> get_qualified_name().getString()
@@ -834,15 +821,11 @@ cout.flush();
               << num_super_types
               << endl;
 
-      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
-      // for (int i = 0; i < super_type_list.size(); i++)
          for (size_t i = 0; i < super_type_list.size(); i++)
               cout << "    -> " << super_type_list[i] -> get_base_class() -> get_qualified_name() << endl;
          cout.flush();
        }
 
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
- // ROSE_ASSERT(super_type_list.size() == num_super_types);
     ROSE_ASSERT(super_type_list.size() == (size_t)num_super_types);
 
     std::list<SgNode *> extension_list;
@@ -879,14 +862,8 @@ cout.flush();
         }
     }
 
-    //
-    //
-    //
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("extensions");
-    ROSE_ASSERT(attribute);
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
- // TODO: Remove this!
- // if (attribute -> size() != extension_list.size()) 
+    ASSERT_not_null(attribute);
     if ((size_t)(attribute -> size()) != extension_list.size()) 
        {
          cout << "attribute -> size() = "
@@ -897,8 +874,6 @@ cout.flush();
          cout.flush();
        }
 
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
- // ROSE_ASSERT(attribute -> size() == extension_list.size());
     ROSE_ASSERT((size_t)(attribute -> size()) == extension_list.size());
 
     int k = 0;
@@ -924,7 +899,7 @@ cout.flush();
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildInnerTypeSupport(JNIEnv *env, jclass,
                                                                     jstring java_package_name,
                                                                     jstring java_type_name,
-                                                                    jobject jToken)
+                                                                    jobject /*jToken*/)
 {
     if (SgProject::get_verbose() > 0)
         printf ("cactionBuildInnerTypeSupport(...)\n");
@@ -949,7 +924,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildInnerTypeSupport(JNIEnv *env,
 JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateInnerTypeSupport(JNIEnv *env, jclass,
                                                                      jstring java_package_name,
                                                                      jstring java_type_name,
-                                                                     jobject jToken)
+                                                                     jobject /*jToken*/)
 {
     if (SgProject::get_verbose() > 0)
         printf ("cactionUpdateInnerTypeSupport(...)\n");
@@ -1027,8 +1002,8 @@ cout.flush();
 JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateMethodSupportStart(JNIEnv *env, jclass,
                                                                        jstring java_name,
                                                                        jint method_index,
-                                                                       jint num_formal_parameters,
-                                                                       jobject method_location) {
+                                                                       jint /*num_formal_parameters*/,
+                                                                       jobject /*method_location*/) {
     SgName name = convertJavaStringToCxxString(env, java_name);
 
     if (SgProject::get_verbose() > 1)
@@ -1299,9 +1274,6 @@ cout.flush();
 //cout << "The type is a " << (isSgClassType(argument_type) ? isSgClassType(argument_type) -> get_qualified_name().getString() : argument_type -> class_name()) << endl;
         ROSE_ASSERT(array_type);
 
-     // DQ (3/25/2017): Eliminate Clang warning for unused variable.
-     // SgType *element_type = array_type -> get_base_type();
-
         alias_name -> setAttribute("var_args", new AstRegExAttribute(""));
         alias_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(element_type) + "..."));
     }
@@ -1348,7 +1320,7 @@ cout.flush();
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env, jclass xxx,
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupportEnd(JNIEnv *env, jclass,
                                                                     jstring java_string,
                                                                     jint method_index,
                                                                     jboolean java_is_constructor,
@@ -1470,12 +1442,12 @@ cout << ")" << endl;
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateMethodSupportEnd(JNIEnv *env, jclass xxx,
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateMethodSupportEnd(JNIEnv *env, jclass,
                                                                      jstring java_string,
                                                                      jint method_index,
                                                                      jboolean is_compiler_generated,
                                                                      jint number_of_parameters,
-                                                                     jobject args_location,
+                                                                     jobject /*args_location*/,
                                                                      jobject method_location) {
     SgName method_name = convertJavaStringToCxxString(env, java_string);
 
@@ -1627,7 +1599,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildInitializerSupport(JNIEnv *en
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildFieldSupport(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildFieldSupport(JNIEnv *env, jclass, jstring java_string, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionBuildFieldSupport (variable declaration for field) \n");
 
@@ -1675,7 +1647,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateFieldSupport(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateFieldSupport(JNIEnv *env, jclass, jstring java_string, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionUpdateFieldSupport (variable declaration for field) \n");
 
@@ -1729,7 +1701,7 @@ JNIEXPORT jboolean JNICALL Java_JavaParser_cactionIsSpecifiedSourceFile(JNIEnv *
     return ((*::project)[full_file_name] != NULL);
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTest(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTest(JNIEnv* /*env*/, jclass) {
     cout << "Ok, The JNI connection was made !!!" << endl;
     cout.flush();
 }
@@ -1754,7 +1726,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedPackageOnDemand(JNIE
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedTypeOnDemand(JNIEnv *env, jclass, jstring java_package_name,  jstring java_type_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedTypeOnDemand(JNIEnv *env, jclass, jstring java_package_name,  jstring java_type_name, jobject /*jToken*/) {
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name);
 
@@ -1782,9 +1754,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedTypeOnDemand(JNIEnv 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedType(JNIEnv *env, jclass, jstring java_package_name,  jstring java_type_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedType(JNIEnv *env, jclass, jstring java_package_name,  jstring java_type_name, jobject /*jToken*/) {
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name);
+
+
+
+
 
 // TODO: Remove this
 //cout << "Here 4" << endl;
@@ -1806,7 +1782,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedType(JNIEnv *env, jc
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedStaticField(JNIEnv *env, jclass, jstring java_variable_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertImportedStaticField(JNIEnv *env, jclass, jstring java_variable_name, jobject /*jToken*/) {
     SgName variable_name = convertJavaStringToCxxString(env, java_variable_name);
 
     SgNamedType *type = isSgNamedType(astJavaComponentStack.popType());
@@ -1868,7 +1844,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePushPackage(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPopPackage(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPopPackage(JNIEnv* /*env*/, jclass) {
     ROSE_ASSERT(isSgClassDefinition(astJavaScopeStack.top()) && isSgJavaPackageDeclaration(isSgClassDefinition(astJavaScopeStack.top()) -> get_declaration()));
 
     astJavaScopeStack.popClassDefinition();
@@ -1897,7 +1873,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPushTypeScope(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPopTypeScope(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPopTypeScope(JNIEnv* /*env*/, jclass) {
     SgScopeStatement *scope;
     do {
         scope = astJavaScopeStack.pop(); // Pop the enclosing type
@@ -1905,7 +1881,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPopTypeScope(JNIEnv *env, jclass) 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPushTypeParameterScope(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPushTypeParameterScope(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject /*jToken*/) {
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name);
 
@@ -1923,13 +1899,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPushTypeParameterScope(JNIEnv *env
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPopTypeParameterScope(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPopTypeParameterScope(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     SgScopeStatement *type_space = isSgScopeStatement(astJavaScopeStack.pop());  // Pop a type parameters scope from the stack.
     ROSE_ASSERT(type_space);
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv* /*env*/, jclass) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
 
@@ -1976,7 +1952,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitListEnd(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitListEnd(JNIEnv* /*env*/, jclass) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitListEnd() \n");
 
@@ -1993,7 +1969,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitListEnd(JNIEnv *env
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSetupBasicTypes(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionSetupBasicTypes(JNIEnv* /*env*/, jclass) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionSetupObject\n");
 
@@ -2054,7 +2030,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSetupBasicTypes(JNIEnv *env, jclas
         printf ("Leaving Java_JavaParser_cactionSetupObject\n");
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPackageAnnotations(JNIEnv *env, jclass, int num_annotations, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPackageAnnotations(JNIEnv* /*env*/, jclass, int num_annotations, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionPackageAnnotations(): %d annotations\n", num_annotations);
 
@@ -2160,7 +2136,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
 
@@ -2229,7 +2205,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEcjFatalCompilationErrors(JNIEnv *
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationError(JNIEnv *env, jclass, jstring java_error_message, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationError(JNIEnv *env, jclass, jstring java_error_message, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
 
@@ -2332,7 +2308,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
                                                               jboolean java_is_protected,
                                                               jboolean java_is_static,
                                                               jboolean java_is_strictfp,
-                                                              jobject jToken)
+                                                              jobject /*jToken*/)
 {
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgClassDeclaration \n");
@@ -2484,7 +2460,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
 */
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgClassDeclaration (cactionTypeDeclarationEnd) \n");
 
@@ -2574,7 +2550,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration(JNIEnv *env, jclass, jstring java_string, jint constructor_index, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration(JNIEnv *env, jclass, jstring java_string, jint constructor_index, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
 
@@ -2610,8 +2586,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
                                                                            jboolean java_is_public,
                                                                            jboolean java_is_protected,
                                                                            jboolean java_is_private,
-                                                                           jint java_numberOfTypeParameters,
-                                                                           jint java_numberOfArguments,
+                                                                           jint /*java_numberOfTypeParameters*/,
+                                                                           jint /*java_numberOfArguments*/,
                                                                            jint java_numberOfThrownExceptions,
                                                                            jobject jToken) {
     if (SgProject::get_verbose() > 0)
@@ -2624,10 +2600,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
 
     // DQ (7/31/2011): Add more precise handling of the statement stack.
     // This does not count (include) explicit constructor calls...
-
- // DQ (3/25/2017): Eliminate Clang warning for unused variable.
- // int number_of_type_parameters = java_numberOfTypeParameters;
- // int numberOfArguments = java_numberOfArguments;
 
     int numberOfThrownExceptions = java_numberOfThrownExceptions;
 
@@ -2652,9 +2624,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
         exceptions += getTypeName(exception_list[i]);
     }
 
-    //
-    //
-    //
     SgFunctionDefinition *constructor_definition = isSgFunctionDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(constructor_definition -> get_body() != NULL);
     astJavaScopeStack.push(constructor_definition -> get_body());
@@ -2698,7 +2667,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *env, jclass, jint num_annotations, jint num_statements, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv* /*env*/, jclass, jint num_annotations, jint num_statements, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("End of SgMemberFunctionDeclaration (constructor) \n");
 
@@ -2739,7 +2708,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
         printf ("Build a explicit constructor function call \n");
@@ -2749,7 +2718,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall(JNIEnv *en
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv *env, jclass,
-                                                                         jboolean java_is_implicit_super,
+                                                                         jboolean /*java_is_implicit_super*/,
                                                                          jboolean java_is_super,
                                                                          jboolean java_has_qualification,
                                                                          jstring java_package_name,
@@ -2761,9 +2730,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
         printf ("Build a explicit constructor function call END \n");
-
- // DQ (3/25/2017): Eliminate Clang warning for unused variable.
- // bool is_implicit_super = java_is_implicit_super;
 
     bool is_super = java_is_super;
     bool has_qualification = java_has_qualification;
@@ -2916,7 +2882,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration(JNIEnv *env, jclass, jstring java_string, jint method_index, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration(JNIEnv *env, jclass, jstring java_string, jint method_index, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgMemberFunctionDeclaration for method with index %d\n", method_index);
 
@@ -2971,8 +2937,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
                                                                       jboolean java_is_protected,
                                                                       jboolean java_is_private,
                                                                       jboolean java_is_strictfp,
-                                                                      jint java_numberOfTypeParameters,
-                                                                      jint java_numberOfArguments,
+                                                                      jint /*java_numberOfTypeParameters*/,
+                                                                      jint /*java_numberOfArguments*/,
                                                                       jint java_numberOfThrownExceptions,
                                                                       jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_string);
@@ -2989,10 +2955,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     bool isProtected    = java_is_protected;
     bool isPrivate      = java_is_private;
     bool isStrictfp     = java_is_strictfp;
-
- // DQ (3/25/2017): Eliminate Clang warning for unused variable.
- // int number_of_type_parameters = java_numberOfTypeParameters;
- // int numberOfArguments         = java_numberOfArguments;
 
     int numberOfThrownExceptions  = java_numberOfThrownExceptions;
 
@@ -3082,7 +3044,6 @@ cout.flush();
         method_declaration -> get_declarationModifier().setFinal();
     }
 
-    // DQ (8/13/2011): Added more modifiers.
     if (isSynchronized) {
         if (SgProject::get_verbose() > 2)
             printf ("Setting modifier as Synchronized \n");
@@ -3167,7 +3128,7 @@ Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv*, jclass, jsize num_annotatio
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_type_parameter_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint method_index, jstring java_type_parameter_name, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside cactionTypeParameterReference\n");
 
@@ -3263,7 +3224,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside cactionTypeReference\n");
 
@@ -3293,7 +3254,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside cactionQualifiedTypeReference\n");
 
@@ -3349,7 +3310,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgument(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgument(JNIEnv *env, jclass, jstring java_argument_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgument(JNIEnv* /*env*/, jclass, jstring /*java_argument_name*/, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
@@ -3428,7 +3389,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgumentEnd(JNIEnv *env, jcla
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jint num_annotations, jstring java_argument_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jint num_annotations, jstring java_argument_name, jobject j/*Token*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
@@ -3469,7 +3430,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jc
 */
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jclass, jint java_num_dimensions, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv* /*env*/, jclass, jint java_num_dimensions, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a array type \n");
 
@@ -3485,14 +3446,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jc
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd(JNIEnv* /*env*/, jclass, jstring /*java_name*/, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a array type \n");
 
     // Nothing to do !!!
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jstring java_function_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend(JNIEnv* /*env*/, jclass, jstring /*java_package_name*/, jstring /*java_type_name*/, jstring /*java_function_name*/, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function call (Message Send) \n");
 
@@ -3822,7 +3783,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionAllocationExpression() \n");
 
@@ -3884,7 +3845,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *en
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionANDANDExpression() \n");
 
@@ -3902,7 +3863,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv *env, jclass, jstring java_string, jint method_index, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv* /*env*/, jclass, jstring /*java_string*/, jint /*method_index*/, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering Java_JavaParser_cactionAnnotationMethodDeclaration() \n");
 
@@ -3913,7 +3874,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclarationEnd(JNIEnv *env, jclass, jstring java_string, jint method_index, jint num_annotations, jboolean has_default, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclarationEnd(JNIEnv *env, jclass, jstring java_string, jint method_index, jint num_annotations, jboolean has_default, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering Java_JavaParser_cactionAnnotationMethodDeclarationEnd() \n");
 
@@ -3952,7 +3913,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclarationEnd(JNI
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // NOTHING TO DO !!!
 }
 
@@ -4028,7 +3989,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpressionEnd(JNIEn
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializer(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializer(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do
 }
 
@@ -4062,7 +4023,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializerEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReference(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReference(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionArrayReference() \n");
 
@@ -4070,7 +4031,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReference(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReferenceEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReferenceEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionArrayReferenceEnd() \n");
 
@@ -4078,7 +4039,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReferenceEnd(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatement(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatement(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
          printf ("Inside of Java_JavaParser_cactionAssertStatement() \n");
     // Nothing to do.
@@ -4103,7 +4064,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatementEnd(JNIEnv *env, jc
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAssignment(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAssignment(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Build an assignement statement (expression?) \n");
 
@@ -4122,7 +4083,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // I don't think we need this function.
 }
 
@@ -4274,7 +4235,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jclass, jint java_numberOfStatements, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv* /*env*/, jclass, jint java_numberOfStatements, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Pop the current SgBasicBlock scope off the scope stack...\n");
 
@@ -4344,7 +4305,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatementEnd(JNIEnv *env, jclass, jboolean hasCaseExpression, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatementEnd(JNIEnv* /*env*/, jclass, jboolean hasCaseExpression, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionCaseStatementEnd() \n");
 
@@ -4363,12 +4324,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatementEnd(JNIEnv *env, jcla
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpression(JNIEnv * /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpressionEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpressionEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionCastExpressionEnd() \n");
 
@@ -4401,7 +4362,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCharLiteral(JNIEnv *env, jclass, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionClassLiteralAccess(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionClassLiteralAccess(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do
 }
 
@@ -4432,17 +4393,17 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionClinit(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionClinit(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionConditionalExpressionEnd() \n");
 
@@ -4475,7 +4436,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignment(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignment(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do
 }
 
@@ -4565,7 +4526,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatement(JNIEnv *env, jclass, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionDoStatementEnd() \n");
 
@@ -4604,7 +4565,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionDoubleLiteral(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionEmptyStatement(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionEmptyStatement(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do;
 }
 
@@ -4617,7 +4578,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEmptyStatementEnd(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionEqualExpression() \n");
     // Nothing to do !
@@ -4681,7 +4642,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExtendedStringLiteral(JNIEnv *env,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     SgExpression *expression = SageBuilder::buildBoolValExp(false);
     astJavaComponentStack.push(expression);
 }
@@ -4809,7 +4770,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jclass, jstring java_field, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv* /*env*/, jclass, jstring /*java_field*/, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionFieldReference() \n");
 
@@ -5036,7 +4997,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatement(JNIEnv *env, jcla
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatementEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatementEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionForEachStatementEnd() \n");
 
@@ -5047,7 +5008,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatementEnd(JNIEnv *env, j
     // Build the final Foreach Statement
     SgJavaForEachStatement *foreach_statement = astJavaScopeStack.popJavaForEachStatement();
 
-    // DQ (9/3/2011): Change API as suggested by Philippe.
     foreach_statement -> set_element(variable_declaration);
     variable_declaration -> set_parent(foreach_statement);
 
@@ -5061,7 +5021,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatementEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionForStatement() \n");
 
@@ -5082,7 +5042,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jclass, 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jclass, jint num_initializations, jboolean has_condition, jint num_increments, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv* /*env*/, jclass, jint num_initializations, jboolean has_condition, jint num_increments, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionForStatementEnd() \n");
 
@@ -5108,8 +5068,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jclas
     for (int i = 0; i < num_initializations; i++) {
         for_init_statement -> prepend_init_stmt(astJavaComponentStack.popStatement());
     }
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
- // ROSE_ASSERT(init_statements.size() == num_initializations);
     ROSE_ASSERT(init_statements.size() == (size_t)num_initializations);
 
     for_statement -> set_test(test_statement);
@@ -5147,7 +5105,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jclas
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jclass, jboolean has_false_body, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jclass, jboolean /*has_false_body*/, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionIfStatement() \n");
 
@@ -5303,11 +5261,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, jboolean java_is_static, jstring java_string, jint initializer_index, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, jboolean /*java_is_static*/, jstring java_string, jint initializer_index, jobject /*jToken*/) {
     SgName name = convertJavaStringToCxxString(env, java_string);
-
- // DQ (3/25/2017): Eliminate Clang warning for unused variable.
- // bool isStatic = java_is_static;
 
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
@@ -5318,16 +5273,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, j
     // start by pushing a VOID return type to make it look like a method.
     //
     //    astJavaComponentStack.push(SgTypeVoid::createType()); 
-
-#if 0
- // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=comment.
-    SgMemberFunctionDeclaration *method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, name, 0 /* no arguments */);
-    ROSE_ASSERT(method_declaration != NULL);
-
-    // This is not a defining function declaration so we can't identify the SgFunctionDefinition and push it's body onto the astJavaScopeStack.
-    SgFunctionDefinition *method_definition = method_declaration -> get_definition();
-    ROSE_ASSERT(method_definition != NULL);
-#endif
 
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
     ROSE_ASSERT(attribute);
@@ -5346,7 +5291,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInitializerEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInitializerEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("End of SgMemberFunctionDeclaration (method) \n");
 
@@ -5364,7 +5309,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInitializerEnd(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionInstanceOfExpression() \n");
 
@@ -5372,7 +5317,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionInstanceOfExpressionEnd() \n");
 
@@ -5540,7 +5485,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jcla
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionLabelStatementEnd() \n");
 
@@ -5707,7 +5652,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePairEnd(JNIEnv *env, jc
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     ROSE_ASSERT(! "yet support string concatenation operation");
 }
 
@@ -5735,7 +5680,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotationEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv* env, jclass, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build support for null literal \n");
 
@@ -5746,7 +5691,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv *env, jclass, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionORORExpression() \n");
 
@@ -5764,7 +5709,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReference(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReference(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionParameterizedTypeReference() \n");
 
@@ -5772,7 +5717,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReference(JNIEnv 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jboolean has_type_arguments, int java_num_type_arguments, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jboolean has_type_arguments, int java_num_type_arguments, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering Java_JavaParser_cactionParameterizedTypeReferenceEnd() \n");
 
@@ -5810,7 +5755,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIE
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_type_name, jboolean has_type_arguments, int java_num_type_arguments, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_type_name, jboolean has_type_arguments, int java_num_type_arguments, jobject /*jToken*/) {
     SgName type_name = convertJavaStringToCxxString(env, java_type_name);
 
     if (SgProject::get_verbose() > 0)
@@ -5869,7 +5814,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing To Do !!!
 }
 
@@ -5916,7 +5861,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
      // Nothing to do !!!
 }
 
@@ -5964,7 +5909,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing To Do !!!
 }
 
@@ -6079,7 +6024,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceEnd(JNIEnv 
 }
 */
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
         printf ("Build a Qualified Super Reference\n");
@@ -6125,7 +6070,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReference(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReference(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Build a member function call...
     if (SgProject::get_verbose() > 0)
         printf ("Build a Qualified This Reference\n");
@@ -6162,7 +6107,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do !!!
 }
 
@@ -6316,7 +6261,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     SgClassDefinition *class_definition = getCurrentTypeDefinition();
     ROSE_ASSERT(class_definition && class_definition -> get_declaration());
 
@@ -6361,7 +6306,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatement(JNIEnv *env, jclas
     astJavaScopeStack.push(switchStatement);
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jclass, jint numCases, jboolean hasDefaultCase, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv* /*env*/, jclass, jint numCases, jboolean hasDefaultCase, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionSwitchStatementEnd() \n");
 
@@ -6412,7 +6357,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jc
     astJavaComponentStack.push(switch_statement);
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing To Do !!!
 }
 
@@ -6433,7 +6378,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatementEnd(JNIEnv *e
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     SgClassDefinition *class_definition = getCurrentTypeDefinition();
     ROSE_ASSERT(class_definition);
 
@@ -6470,7 +6415,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *en
 */
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     // Nothing to do !!!
 }
 
@@ -6490,13 +6435,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatementEnd(JNIEnv *env, jcl
     astJavaComponentStack.push(throwStatement);
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTrueLiteral(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTrueLiteral(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     SgExpression *expression = SageBuilder::buildBoolValExp(true);
     astJavaComponentStack.push(expression);
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCatchBlockEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCatchBlockEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionCatchBlockEnd() \n");
 
@@ -6511,7 +6456,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCatchBlockEnd(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv *env, jclass, jint numCatchBlocks, jboolean hasFinallyBlock, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv* /*env*/, jclass, jint /*numCatchBlocks*/, jboolean /*hasFinallyBlock*/, jobject /*jToken*/) {
     // Do Nothing!
 }
 
@@ -6570,7 +6515,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jclas
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpression(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpression(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Build an Unary Expression \n");
 }
@@ -6636,7 +6581,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatement(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionWhileStatementEnd() \n");
 
@@ -6657,7 +6602,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv* /*env*/, jclass, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside cactionWildcard \n");
 
@@ -6668,7 +6613,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jclass, jobj
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardEnd(JNIEnv *env, jclass, jboolean is_unbound, jboolean has_extends_bound, jboolean has_super_bound, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardEnd(JNIEnv* /*env*/, jclass, jboolean is_unbound, jboolean has_extends_bound, jboolean /*has_super_bound*/, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside cactionWildcardEnd \n");
 
@@ -6685,4 +6630,3 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardEnd(JNIEnv *env, jclass, j
     if (SgProject::get_verbose() > 2)
         printf ("Exiting cactionWildcardEnd \n");
 }
-
