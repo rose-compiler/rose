@@ -489,6 +489,15 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      params->append_expression(precision);
      expr = buildIntrinsicFunctionCallExp_nfi(std::string{"FLOATRELPRECISION"}, params, scope);
    }
+   else if (ATmatch(term, "FLOATUNDERFLOW(<term>)", &t_formula)) {
+     SgExpression* precision{nullptr};
+     if (traverse_Formula(t_formula, precision)) {
+        // MATCHED FloatingMachineParameter
+     } else return ATfalse;
+     auto params = SageBuilder::buildExprListExp_nfi();
+     params->append_expression(precision);
+     expr = buildIntrinsicFunctionCallExp_nfi(std::string{"FLOATUNDERFLOW"}, params, scope);
+   }
 
    // IMPLINTSIZE, INTPRECISION
    //
@@ -619,7 +628,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
 
    //TODO:
-   //      'FLOATUNDERFLOW'    '(' Precision ')'     -> FloatingMachineParameter {cons("FLOATUNDERFLOW")}
    //      'MAXFLOAT'          '(' Precision ')'     -> FloatingMachineParameter {cons("MAXFLOAT")}
    //      'MINFLOAT'          '(' Precision ')'     -> FloatingMachineParameter {cons("MINFLOAT")}
    //      'MAXFIXED' '(' ScaleSpecifier',' FractionSpecifier ')'-> FixedMachineParameter {cons("MAXFIXED")}
@@ -9020,6 +9028,9 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
 
   // Create double return type (Note: assumes double for max float)
   else if (name == "FLOATRELPRECISION") {
+    type = SageBuilder::buildDoubleType();
+  }
+  else if (name == "FLOATUNDERFLOW") {
     type = SageBuilder::buildDoubleType();
   }
 
