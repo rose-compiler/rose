@@ -580,8 +580,8 @@ hasTemplateAncestor(ClassKeyType key)
 
   std::ostringstream os;
 
-  os << "ancestor sage-node type: " << res.templateAncestor()->class_name()
-     << "\n  SageInterface::get_name(n) = " << si::get_name(res.templateAncestor())
+  os << "Type of the sage node in the ROSE AST: " << res.templateAncestor()->class_name()
+     << "\n    SageInterface::get_name(n) = " << si::get_name(res.templateAncestor())
      << std::endl;
 
   return os.str();

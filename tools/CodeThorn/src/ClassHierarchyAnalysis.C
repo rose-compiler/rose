@@ -135,10 +135,11 @@ std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
        << std::endl;
 
   if (auto opt = hasTemplateAncestor(classkey))
-    os << "  - The class has a templated ancestor.\n"
-       << "    Templates are currently not supported by the class hierarchy analysis.\n"
-       << "  - ancestor info\n"
-       << *opt
+    os <<   "  - The class is either a templated class or it has a templated ancestor node"
+       << "\n    in the ROSE AST. Thus, the class was not traversed by the class hierarchy analysis."
+       << "\n    (Templates are currently not supported by the class hierarchy analysis.)"
+       << "\n  - information on the templated AST node:"
+       << "\n    " << *opt
        << std::endl;
 
   return os;
