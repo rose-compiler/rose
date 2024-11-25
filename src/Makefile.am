@@ -886,8 +886,8 @@ rose-config.cfg:
 		echo "# Additional items useful to include in Makefiles";	\
 		echo "ROSE_RPATHS       = $(ROSE_RPATHS)";			\
 		echo "ROSE_LINK_RPATHS  = $(ROSE_LINK_RPATHS)";			\
-		echo "BACKEND_C_COMPILER = $(BACKEND_C_COMPILER)";		\
-		echo "BACKEND_CXX_COMPILER = $(BACKEND_CXX_COMPILER)";		\
+		echo "ROSE_BACKEND_C_COMPILER = $(BACKEND_C_COMPILER)";		\
+		echo "ROSE_BACKEND_CXX_COMPILER = $(BACKEND_CXX_COMPILER)";		\
 	) >$@
 	@echo "# Automake configuration variables used within ROSE Tests" >> $@
 	@echo "## Enabled languages" >> $@
@@ -1276,7 +1276,6 @@ if ROSE_WITH_SPOT
 else
 	@echo "AM_ROSE_WITH_SPOT = false" >> $@
 endif
-	@echo "BACKEND_C_COMPILER = " >> $@
 
 MOSTLYCLEANFILES += rose-config.cfg
 
