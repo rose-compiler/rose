@@ -7,7 +7,11 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/Yaml.h>
 
-#include <boost/process/child.hpp>
+#if BOOST_VERSION < 108600
+    #include <boost/process/child.hpp>
+#else
+    #include <boost/process/v1/child.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -940,6 +940,9 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
+public:
+    virtual ~Vertex() {}
+
 protected:
     virtual void destructorHelper() {}
     Vertex();

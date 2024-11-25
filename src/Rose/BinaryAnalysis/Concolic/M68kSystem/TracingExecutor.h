@@ -4,9 +4,14 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 
-#include <boost/filesystem.hpp>
-#include <boost/process/child.hpp>
 #include <Sawyer/Trace.h>
+
+#include <boost/filesystem.hpp>
+#if BOOST_VERSION < 108600
+    #include <boost/process/child.hpp>
+#else
+    #include <boost/process/v1/child.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {

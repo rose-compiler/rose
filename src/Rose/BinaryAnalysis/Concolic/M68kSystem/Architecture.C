@@ -22,7 +22,11 @@
 #include <SgAsmGenericHeaderList.h>
 #include <SgAsmInterpretation.h>
 
-#include <boost/process/search_path.hpp>
+#if BOOST_VERSION < 108600
+    #include <boost/process/search_path.hpp>
+#else
+    #include <boost/process/v1/search_path.hpp>
+#endif
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
