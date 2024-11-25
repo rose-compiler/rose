@@ -3,12 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 
 #include <Sawyer/Assert.h>
 #include <Sawyer/Graph.h>
@@ -81,57 +78,38 @@ private:
 
     // The normal C++ constructors; protected because this object is reference counted
 protected:
-    explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &userDomain)
-        : MultiSemantics::RiscOperators(MultiSemantics::SValue::instance(), SmtSolverPtr()) {
-        init(userDomain);
-    }
+    explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &userDomain);
 
 public:
     /** Static allocating constructor.
      *
      *  Constructs a semantic framework for discovering data flow. The caller provides a semantic domain that is used to
      *  identify memory locations.  Any domain can be used, but usually a SymbolicSemantics domain works best. */
-    static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &childOps) {
-        return RiscOperatorsPtr(new RiscOperators(childOps));
-    }
+    static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &childOps);
 
     // Virtual constructors inherited from the super class.  These are disabled because users are expected to create this
     // dataflow semantics framework only through the "instance" method. (But we still must override them.)
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &/*protoval*/,
-                                                   const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_reachable("should not be called by user code");
-#ifdef _MSC_VER
-        return BaseSemantics::RiscOperatorsPtr();
-#endif
-    }
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override;
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr&,
-                                                   const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_reachable("should not be called by user code");
-#ifdef _MSC_VER
-        return BaseSemantics::RiscOperatorsPtr();
-#endif
-    }
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override;
 
     // Dynamic pointer cast
 public:
     /** Run-time promotion of a base RiscOperators pointer to operators for this domain. This is a checked conversion--it
      *  will fail if @p x does not point to an object with appropriate dynamic type. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = as<RiscOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
 
 public:
     /** Clear dataflow graph.
      *
      *  Clears the dataflow graph without affecting the user-supplied virtual machine state. */
-    void clearGraph() { dflow_.clear(); }
+    void clearGraph();
 
     /** Return the dataflow graph. */
-    const DataFlowGraph& getGraph() const { return dflow_; }
+    const DataFlowGraph& getGraph() const;
 
 private:
     // Temporarily disables a subdomain, restoring it the its original state when this object is canceled or destroyed.
@@ -140,19 +118,9 @@ private:
         size_t id_;
         bool wasActive_, canceled_;
     public:
-        TemporarilyDeactivate(MultiSemantics::RiscOperators *ops, size_t id)
-            : ops_(ops), id_(id), wasActive_(ops->is_active(id)), canceled_(false) {
-            ops->set_active(id, false);
-        }
-        ~TemporarilyDeactivate() {
-            cancel();
-        }
-        void cancel() {
-            if (!canceled_) {
-                ops_->set_active(id_, wasActive_);
-                canceled_ = true;
-            }
-        }
+        TemporarilyDeactivate(MultiSemantics::RiscOperators*, size_t id);
+        ~TemporarilyDeactivate();
+        void cancel();
     };
 
     // Insert edges (and vertices if necessary) into the data flow graph, dgraph_

@@ -40,8 +40,42 @@ sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric:
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterStateGeneric::RegisterNotPresent
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterStateGeneric::RegisterNotPresent::RegisterNotPresent(const RegisterDescriptor reg)
+    : Rose::Exception("accessed register is not availablein register state"), desc_(reg) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterStateGeneric::RegStore
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterStateGeneric::RegStore::RegStore()
+    : majr(0), minr(0) {}
+
+RegisterStateGeneric::RegStore::RegStore(const RegisterDescriptor d)
+    : majr(d.majorNumber()), minr(d.minorNumber()) {}
+
+bool
+RegisterStateGeneric::RegStore::operator<(const RegStore &other) const {
+    return majr < other.majr || (majr == other.majr && minr < other.minr);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RegisterStateGeneric::RegPair
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterStateGeneric::RegPair::~RegPair() {}
+
+RegisterStateGeneric::RegPair::RegPair() {}
+
+RegisterStateGeneric::RegPair::RegPair(const RegisterDescriptor desc, const SValue::Ptr &value)
+    : desc(desc), value(value) {}
+
+RegisterStateGeneric::BitRange
+RegisterStateGeneric::RegPair::location() const {
+    return BitRange::baseSize(desc.offset(), desc.nBits());
+}
 
 SValue::Ptr
 RegisterStateGeneric::RegPair::get(RegisterDescriptor reg, RiscOperators *ops) const {
@@ -56,8 +90,99 @@ RegisterStateGeneric::RegPair::get(RegisterDescriptor reg, RiscOperators *ops) c
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterStateGeneric::AccessModifiesExistingLocationsGuard
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterStateGeneric::AccessModifiesExistingLocationsGuard::AccessModifiesExistingLocationsGuard(RegisterStateGeneric *rstate,
+                                                                                                 bool newValue)
+    : rstate_(rstate), savedValue_(rstate->accessModifiesExistingLocations()) {
+    rstate_->accessModifiesExistingLocations(newValue);
+}
+
+RegisterStateGeneric::AccessModifiesExistingLocationsGuard::~AccessModifiesExistingLocationsGuard() {
+    rstate_->accessModifiesExistingLocations(savedValue_);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterStateGeneric::AccessCreatesLocationsGuard
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterStateGeneric::AccessCreatesLocationsGuard::AccessCreatesLocationsGuard(RegisterStateGeneric *rstate, bool newValue)
+    : rstate_(rstate), savedValue_(rstate->accessCreatesLocations()) {
+    rstate_->accessCreatesLocations(newValue);
+}
+
+RegisterStateGeneric::AccessCreatesLocationsGuard::~AccessCreatesLocationsGuard() {
+    rstate_->accessCreatesLocations(savedValue_);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RegisterStateGeneric
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterStateGeneric::~RegisterStateGeneric() {}
+
+RegisterStateGeneric::RegisterStateGeneric()
+    : accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {}
+
+RegisterStateGeneric::RegisterStateGeneric(const SValue::Ptr &protoval, const RegisterDictionary::Ptr &regdict)
+    : RegisterState(protoval, regdict), accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {
+    clear();
+}
+
+RegisterStateGeneric::RegisterStateGeneric(const RegisterStateGeneric &other)
+    : RegisterState(other), properties_(other.properties_), writers_(other.writers_),
+      accessModifiesExistingLocations_(other.accessModifiesExistingLocations_),
+      accessCreatesLocations_(other.accessCreatesLocations_), registers_(other.registers_) {
+    deep_copy_values();
+}
+
+RegisterStateGeneric::Ptr
+RegisterStateGeneric::instance(const SValue::Ptr &protoval, const RegisterDictionary::Ptr &regdict) {
+    return Ptr(new RegisterStateGeneric(protoval, regdict));
+}
+
+RegisterStateGeneric::Ptr
+RegisterStateGeneric::instance(const RegisterStateGeneric::Ptr &other) {
+    return Ptr(new RegisterStateGeneric(*other));
+}
+
+RegisterState::Ptr
+RegisterStateGeneric::create(const SValue::Ptr &protoval, const RegisterDictionary::Ptr &regdict) const {
+    return instance(protoval, regdict);
+}
+
+RegisterState::Ptr
+RegisterStateGeneric::clone() const {
+    return Ptr(new RegisterStateGeneric(*this));
+}
+
+RegisterStateGeneric::Ptr
+RegisterStateGeneric::promote(const RegisterState::Ptr &from) {
+    Ptr retval = as<RegisterStateGeneric>(from);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+bool
+RegisterStateGeneric::accessModifiesExistingLocations() const {
+    return accessModifiesExistingLocations_;
+}
+
+void
+RegisterStateGeneric::accessModifiesExistingLocations(const bool b) {
+    accessModifiesExistingLocations_ = b;
+}
+
+bool
+RegisterStateGeneric::accessCreatesLocations() const {
+    return accessCreatesLocations_;
+}
+
+void
+RegisterStateGeneric::accessCreatesLocations(const bool b) {
+    accessCreatesLocations_ = b;
+}
 
 void
 RegisterStateGeneric::clear()
@@ -674,7 +799,7 @@ RegisterStateGeneric::hasWritersAll(RegisterDescriptor desc) const {
     return parts.contains(where);
 }
 
-RegisterStateGeneric::AddressSet
+AddressSet
 RegisterStateGeneric::getWritersUnion(RegisterDescriptor desc) const {
     if (!writers_.exists(desc))
         return AddressSet();
@@ -683,7 +808,7 @@ RegisterStateGeneric::getWritersUnion(RegisterDescriptor desc) const {
     return parts.getUnion(where);
 }
 
-RegisterStateGeneric::AddressSet
+AddressSet
 RegisterStateGeneric::getWritersIntersection(RegisterDescriptor desc) const {
     if (!writers_.exists(desc))
         return AddressSet();

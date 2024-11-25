@@ -391,6 +391,26 @@ public:
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RiscOperators::TemporarilyDeactivate
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RiscOperators::TemporarilyDeactivate::TemporarilyDeactivate(MultiSemantics::RiscOperators *ops, size_t id)
+    : ops_(ops), id_(id), wasActive_(ops->is_active(id)), canceled_(false) {
+    ops->set_active(id, false);
+}
+
+RiscOperators::TemporarilyDeactivate::~TemporarilyDeactivate() {
+    cancel();
+}
+
+void
+RiscOperators::TemporarilyDeactivate::cancel() {
+    if (!canceled_) {
+        ops_->set_active(id_, wasActive_);
+        canceled_ = true;
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Risc Operators
@@ -400,6 +420,49 @@ public:
 // RISC operators and semantic values only carry information about what abstract locations are used to define other abstract
 // locations (i.e., the data flow).
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RiscOperators::RiscOperators(const BaseSemantics::RiscOperators::Ptr &userDomain)
+    : MultiSemantics::RiscOperators(MultiSemantics::SValue::instance(), SmtSolver::Ptr()) {
+    init(userDomain);
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const BaseSemantics::RiscOperators::Ptr &childOps) {
+    return Ptr(new RiscOperators(childOps));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const SmtSolver::Ptr&) const {
+    ASSERT_not_reachable("should not be called by user code");
+#ifdef _MSC_VER                                         // microsoft can't figure out that ASSERT_not_reachable never returns
+    return BaseSemantics::RiscOperators::Ptr();
+#endif
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr&, const SmtSolver::Ptr&) const {
+    ASSERT_not_reachable("should not be called by user code");
+#ifdef _MSC_VER                                         // microsoft can't figure out that ASSERT_not_reachable never returns
+    return BaseSemantics::RiscOperatorsPtr();
+#endif
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    RiscOperatorsPtr retval = as<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+void
+RiscOperators::clearGraph() {
+    dflow_.clear();
+}
+
+const DataFlowGraph&
+RiscOperators::getGraph() const {
+    return dflow_;
+}
 
 void
 RiscOperators::init(const BaseSemantics::RiscOperators::Ptr &userDomain) {

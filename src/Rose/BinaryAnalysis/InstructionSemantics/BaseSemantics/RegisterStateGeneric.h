@@ -3,9 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
+#include <Rose/BinaryAnalysis/AddressSet.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
 #include <Rose/Exception.h>
 
@@ -54,14 +53,13 @@ public:
     class RegisterNotPresent: public Rose::Exception {
         RegisterDescriptor desc_;
     public:
-        explicit RegisterNotPresent(RegisterDescriptor)
-            : Rose::Exception("accessed register is not available in register state") {}
+        explicit RegisterNotPresent(RegisterDescriptor);
     };
 
     /** A range of bits indexes.
      *
      *  Represents of contiguous interval of bit indexes, such as all bits numbered zero through 15, inclusive. */
-    typedef Sawyer::Container::Interval<size_t> BitRange;
+    using BitRange = Sawyer::Container::Interval<size_t>;
 
     /** Register map keys.
      *
@@ -82,13 +80,9 @@ public:
 #endif
 
     public:
-        RegStore()                                      // for serialization
-            : majr(0), minr(0) {}
-        RegStore(RegisterDescriptor d) // implicit
-            : majr(d.majorNumber()), minr(d.minorNumber()) {}
-        bool operator<(const RegStore &other) const {
-            return majr<other.majr || (majr==other.majr && minr<other.minr);
-        }
+        RegStore();                                     // for serialization
+        RegStore(RegisterDescriptor);
+        bool operator<(const RegStore&) const;
     };
 
 
@@ -113,19 +107,20 @@ public:
 #endif
 
     public:
-        RegPair() {}                                    // for serialization
+        ~RegPair();
+        RegPair();                                      // for serialization
 
     public:
-        RegPair(RegisterDescriptor desc, const SValuePtr &value): desc(desc), value(value) {}
-        BitRange location() const { return BitRange::baseSize(desc.offset(), desc.nBits()); }
+        RegPair(RegisterDescriptor, const SValuePtr&);
+        BitRange location() const;
         SValuePtr get(RegisterDescriptor, RiscOperators*) const;
     };
 
     /** Vector of register/value pairs. */
-    typedef std::vector<RegPair> RegPairs;
+    using RegPairs = std::vector<RegPair>;
 
     /** Values for all registers. */
-    typedef Sawyer::Container::Map<RegStore, RegPairs> Registers;
+    using Registers = Sawyer::Container::Map<RegStore, RegPairs>;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,26 +132,23 @@ public:
      *  This container stores properties per bit of a major/minor register pair.  For instance, the x86 16-bit AX register
      *  might have different sets of properties for its different subregisters, AL and AH.  This container stores those sets
      *  per bit. */
-    typedef Sawyer::Container::IntervalSetMap<BitRange, InputOutputPropertySet> BitProperties;
+    using BitProperties = Sawyer::Container::IntervalSetMap<BitRange, InputOutputPropertySet>;
 
     /** Boolean properties for all registers.
      *
      *  This container is indexed by register major/minor pair, then by a bit number, and stores a set of properties. */
-    typedef Sawyer::Container::Map<RegStore, BitProperties> RegisterProperties;
+    using RegisterProperties = Sawyer::Container::Map<RegStore, BitProperties>;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Types for storing addresses
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Set of virtual addresses. */
-    typedef Sawyer::Container::Set<rose_addr_t> AddressSet;
-
     /** Virtual addresses per bit. */
-    typedef Sawyer::Container::IntervalSetMap<BitRange, AddressSet> BitAddressSet;
+    using BitAddressSet = Sawyer::Container::IntervalSetMap<BitRange, AddressSet>;
 
     /** Virtual addresses for all registers. */
-    typedef Sawyer::Container::Map<RegStore, BitAddressSet> RegisterAddressSet;
+    using RegisterAddressSet = Sawyer::Container::Map<RegStore, BitAddressSet>;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,22 +194,16 @@ private:
     //
     // These are protected because objects of this class are reference counted and always allocated on the heap.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    ~RegisterStateGeneric();
+
 protected:
-    RegisterStateGeneric()                              // for serialization
-        : accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {}
+    RegisterStateGeneric();                             // for serialization
 
-    explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict)
-        : RegisterState(protoval, regdict), accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {
-        clear();
-    }
 
-    RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), properties_(other.properties_), writers_(other.writers_),
-          accessModifiesExistingLocations_(other.accessModifiesExistingLocations_),
-          accessCreatesLocations_(other.accessCreatesLocations_), registers_(other.registers_) {
-        deep_copy_values();
-    }
+    RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionaryPtr&);
 
+    RegisterStateGeneric(const RegisterStateGeneric&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Static allocating constructors
@@ -229,27 +215,17 @@ public:
      *
      *  The register dictionary, @p regdict, describes the registers that can be stored by this register state, and should be
      *  compatible with the register dictionary used for other parts of binary analysis. */
-    static RegisterStateGenericPtr instance(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict) {
-        return RegisterStateGenericPtr(new RegisterStateGeneric(protoval, regdict));
-    }
+    static RegisterStateGenericPtr instance(const SValuePtr &protoval, const RegisterDictionaryPtr&);
 
     /** Instantiate a new copy of an existing register state. */
-    static RegisterStateGenericPtr instance(const RegisterStateGenericPtr &other) {
-        return RegisterStateGenericPtr(new RegisterStateGeneric(*other));
-    }
+    static RegisterStateGenericPtr instance(const RegisterStateGenericPtr &other);
 
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Virtual constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict) const override {
-        return instance(protoval, regdict);
-    }
-
-    virtual RegisterStatePtr clone() const override {
-        return RegisterStateGenericPtr(new RegisterStateGeneric(*this));
-    }
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionaryPtr&) const override;
+    virtual RegisterStatePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Dynamic pointer casts
@@ -257,12 +233,7 @@ public:
 public:
     /** Run-time promotion of a base register state pointer to a RegisterStateGeneric pointer. This is a checked conversion--it
      *  will fail if @p from does not point to a RegisterStateGeneric object. */
-    static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
-        RegisterStateGenericPtr retval = as<RegisterStateGeneric>(from);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-
+    static RegisterStateGenericPtr promote(const RegisterStatePtr &from);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Object properties
@@ -282,8 +253,8 @@ public:
      *  called as part of processing instruction semantics.
      *
      * @{ */
-    bool accessModifiesExistingLocations() const /*final*/ { return accessModifiesExistingLocations_; }
-    virtual void accessModifiesExistingLocations(bool b) { accessModifiesExistingLocations_ = b; }
+    bool accessModifiesExistingLocations() const /*final*/;
+    virtual void accessModifiesExistingLocations(bool);
     /** @} */
 
     /** Guards whether access can change set of existing locations.
@@ -294,13 +265,8 @@ public:
         RegisterStateGeneric *rstate_;
         bool savedValue_;
     public:
-        AccessModifiesExistingLocationsGuard(RegisterStateGeneric *rstate, bool newValue)
-            : rstate_(rstate), savedValue_(rstate->accessModifiesExistingLocations()) {
-            rstate_->accessModifiesExistingLocations(newValue);
-        }
-        ~AccessModifiesExistingLocationsGuard() {
-            rstate_->accessModifiesExistingLocations(savedValue_);
-        }
+        AccessModifiesExistingLocationsGuard(RegisterStateGeneric *rstate, bool newValue);
+        ~AccessModifiesExistingLocationsGuard();
     };
 
     /** Property: Whether access can create new locations.
@@ -310,8 +276,8 @@ public:
      *  is thrown.
      *
      * @{ */
-    bool accessCreatesLocations() const /*final*/ { return accessCreatesLocations_; }
-    virtual void accessCreatesLocations(bool b) { accessCreatesLocations_ = b; }
+    bool accessCreatesLocations() const /*final*/;
+    virtual void accessCreatesLocations(bool);
     /** @} */
 
     /** Guards whether access is able to create new locations.
@@ -322,13 +288,8 @@ public:
         RegisterStateGeneric *rstate_;
         bool savedValue_;
     public:
-        AccessCreatesLocationsGuard(RegisterStateGeneric *rstate, bool newValue)
-            : rstate_(rstate), savedValue_(rstate->accessCreatesLocations()) {
-            rstate_->accessCreatesLocations(newValue);
-        }
-        ~AccessCreatesLocationsGuard() {
-            rstate_->accessCreatesLocations(savedValue_);
-        }
+        AccessCreatesLocationsGuard(RegisterStateGeneric *rstate, bool newValue);
+        ~AccessCreatesLocationsGuard();
     };
 
 

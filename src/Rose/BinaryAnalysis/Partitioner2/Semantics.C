@@ -77,6 +77,16 @@ RiscOperators::instance(const InstructionSemantics::BaseSemantics::StatePtr &sta
     return Ptr(new RiscOperators(state, solver));
 }
 
+InstructionSemantics::BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const InstructionSemantics::BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instance(protoval, solver);
+}
+
+InstructionSemantics::BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const InstructionSemantics::BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instance(state, solver);
+}
+
 RiscOperators::Ptr
 RiscOperators::promote(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &x) {
     Ptr retval = as<RiscOperators>(x);

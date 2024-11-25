@@ -4,7 +4,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
 namespace Rose {
@@ -82,87 +81,57 @@ private:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
+public:
+    ~SValue();
+
 protected:
-    SValue() {}                                         // needed for serialization
+    SValue();                                           // needed for serialization
 
-    explicit SValue(size_t nbits): Super(nbits) {}
-
-    SValue(size_t nbits, uint64_t number): Super(nbits, number) {}
-
-    SValue(ExprPtr expr): Super(expr) {}
+    explicit SValue(size_t nbits);
+    SValue(size_t nbits, uint64_t number);
+    SValue(ExprPtr);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
-    }
+    static SValuePtr instance();
 
     /** Instantiate a new data-flow bottom value of specified width.
      *
      *  The symbolic value is what is set to bottom in this case. The taintedness is always set to bottom by all the static
      *  allocating constructors. If you need a different taintedness then you need to change it with the @ref taintedness
      *  property. */
-    static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
-    }
+    static SValuePtr instance_bottom(size_t nbits);
 
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
-    }
+    static SValuePtr instance_undefined(size_t nbits);
 
     /** Instantiate a new unspecified value of specified width. */
-    static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
-    }
+    static SValuePtr instance_unspecified(size_t nbits);
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
-    }
+    static SValuePtr instance_integer(size_t nbits, uint64_t value);
 
     /** Instantiate a new symbolic value. */
-    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value) {
-        ASSERT_not_null(value);
-        return SValuePtr(new SValue(value));
-    }
+    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
-        return instance_bottom(nbits);
-    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override;
 
     /*  Instantiate a new data-flow bottom value of specified width.
      *
      *  The symbolic value is what is set to bottom in this case. The taintedness is always set to bottom by all the static
      *  allocating constructors. If you need a different taintedness then you need to change it with the @ref taintedness
      *  property. */
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
-        return instance_undefined(nbits);
-    }
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override;
 
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
-        return instance_unspecified(nbits);
-    }
-
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
-        return instance_integer(nbits, value);
-    }
-
-    virtual BaseSemantics::SValuePtr boolean_(bool value) const override {
-        return instance_integer(1, value?1:0);
-    }
-
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override;
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
 
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
@@ -172,11 +141,7 @@ public:
     // Dynamic pointer casts
 public:
     /** Promote a base value to a TaintSemantics value.  The value @p v must have a TaintSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = as<SValue>(v);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...

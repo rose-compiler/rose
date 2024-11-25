@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/StringUtility/Convert.h>
 #include <Rose/StringUtility/NumberToString.h>
@@ -18,6 +19,135 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace TraceSemantics {
+
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
+    name("Trace");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
+    name("Trace");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::RiscOperators::Ptr &subdomain)
+    : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
+      subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
+    name("Trace");
+}
+
+RiscOperators::~RiscOperators() {
+    linePrefix();
+    stream_ <<"operators destroyed\n";
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return RiscOperatorsPtr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const BaseSemantics::RiscOperators::Ptr &subdomain) {
+    ASSERT_not_null(subdomain);
+    Ptr self = subdomain->currentState()!=NULL ?
+               Ptr(new RiscOperators(subdomain->currentState(), subdomain->solver())) :
+               Ptr(new RiscOperators(subdomain->protoval(), subdomain->solver()));
+    self->subdomain_ = subdomain;
+    return self;
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instance(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instance(state, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::RiscOperators::Ptr &subdomain) {
+    return instance(subdomain);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = as<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+const BaseSemantics::RiscOperators::Ptr&
+RiscOperators::subdomain() const {
+    return subdomain_;
+}
+
+void
+RiscOperators::subdomain(const BaseSemantics::RiscOperators::Ptr &subdomain) {
+    subdomain_ = subdomain;
+}
+
+void
+RiscOperators::checkSubdomain() const {
+    if (!subdomain_)
+        throw BaseSemantics::Exception("subdomain is not set; nothing to trace", nullptr);
+}
+
+Sawyer::Message::Stream&
+RiscOperators::stream() {
+    return stream_;
+}
+
+void
+RiscOperators::stream(Sawyer::Message::Stream &s) {
+    stream_ = s;
+}
+
+const std::string&
+RiscOperators::indentation() const {
+    return indentation_;
+}
+
+void
+RiscOperators::indentation(const std::string &s) {
+    indentation_ = s;
+}
+
+bool
+RiscOperators::showingSubdomain() const {
+    return showingSubdomain_;
+}
+
+void
+RiscOperators::showingSubdomain(const bool b) {
+    showingSubdomain_ = b;
+}
+
+bool
+RiscOperators::showingInstructionVa() const {
+    return showingInstructionVa_;
+}
+
+void
+RiscOperators::showingInstructionVa(const bool b) {
+    showingInstructionVa_ = b;
+}
+
+bool
+RiscOperators::onlyInstructions() const {
+    return onlyInstructions_;
+}
+
+void
+RiscOperators::onlyInstructions(const bool b) {
+    onlyInstructions_ = b;
+}
 
 bool
 RiscOperators::shouldPrint() const {

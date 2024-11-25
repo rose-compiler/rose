@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
@@ -9,6 +10,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
+
+MemoryCellState::MemoryCellState() {}
 
 MemoryCellState::MemoryCellState(const MemoryCell::Ptr &protocell)
     : MemoryState(protocell->address(), protocell->value()), protocell(protocell) {}
@@ -21,9 +24,26 @@ MemoryCellState::MemoryCellState(const MemoryCellState &other)
 
 MemoryCellState::~MemoryCellState() {}
 
+MemoryCellState::Ptr
+MemoryCellState::promote(const BaseSemantics::MemoryState::Ptr &m) {
+    Ptr retval = as<MemoryCellState>(m);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 MemoryCellState::clear() {
     latestWrittenCell_ = MemoryCell::Ptr();
+}
+
+MemoryCell::Ptr
+MemoryCellState::latestWrittenCell() const {
+    return latestWrittenCell_;
+}
+
+void
+MemoryCellState::latestWrittenCell(const MemoryCell::Ptr &cell) {
+    latestWrittenCell_ = cell;
 }
 
 void
@@ -44,6 +64,18 @@ void
 MemoryCellState::updateWriteProperties(const CellList &cells, InputOutputPropertySet properties) {
     for (const MemoryCell::Ptr &cell: cells)
         cell->ioProperties().insert(properties);
+}
+
+void
+MemoryCellState::eraseNonWritten() {
+    MemoryCell::NonWrittenCells p;
+    eraseMatchingCells(p);
+}
+
+std::vector<MemoryCell::Ptr>
+MemoryCellState::allCells() const {
+    MemoryCell::AllCells p;
+    return matchingCells(p);
 }
 
 } // namespace

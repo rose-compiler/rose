@@ -3,9 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/Diagnostics.h>
 
 namespace Rose {
@@ -58,30 +56,30 @@ namespace TraceSemantics {
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void SValue;
+using SValue = void;
 
 /** Shared-ownership pointer to trace-semantics values. */
-typedef boost::shared_ptr<void> SValuePtr;
+using SValuePtr = boost::shared_ptr<void>;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Register state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void RegisterState;
+using RegisterState = void;
 
 /** Shared-ownership pointer to trace-semantics register state. */
-typedef boost::shared_ptr<void> RegisterStatePtr;
+using RegisterStatePtr = boost::shared_ptr<void>;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void MemoryState;
+using MemoryState = void;
 
 /** Shared-ownership pointer to trace-semantics memory state. */
-typedef boost::shared_ptr<void> MemoryStatePtr;
+using MemoryStatePtr = boost::shared_ptr<void>;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +87,7 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Shared-ownership pointer to trace-semantics RISC operations. */
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
 
 /** Wraps RISC operators so they can be traced. */
 class RiscOperators: public BaseSemantics::RiscOperators {
@@ -112,111 +110,71 @@ private:
     // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
-        name("Trace");
-    }
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr());
 
     // use the version that takes a subdomain instead of this c'tor.
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
-        name("Trace");
-    }
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr());
 
-    explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
-          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
-        name("Trace");
-    }
+    explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain);
 
 public:
-    virtual ~RiscOperators() {
-        linePrefix();
-        stream_ <<"operators destroyed\n";
-    }
-    
+    virtual ~RiscOperators();
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors.
 public:
     /** Instantiates a new RiscOperators object.  This domain does not create any of its own values--it only wraps another
      *  domains RISC operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to
      *  construct the TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr& = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object.  This domain does not manage any state--it only wraps another domains RISC
      *  operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to construct the
      *  TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
-    
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr&, const SmtSolverPtr& = SmtSolverPtr());
+
     /** Instantiate a new RiscOperators object. The @p subdomain argument should be the RISC operators that we want to
      * trace. */
-    static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
-        ASSERT_not_null(subdomain);
-        RiscOperatorsPtr self = subdomain->currentState()!=NULL ?
-                                RiscOperatorsPtr(new RiscOperators(subdomain->currentState(), subdomain->solver())) :
-                                RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->solver()));
-        self->subdomain_ = subdomain;
-        return self;
-    }
+    static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override;
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override;
 
     /** Wraps a subdomain's RISC operators to add tracing. */
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::RiscOperatorsPtr &subdomain) {
-        return instance(subdomain);
-    }
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::RiscOperatorsPtr &subdomain);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Run-time promotion of a base RiscOperators pointer to trace operators. This is a checked conversion--it
      *  will fail if @p from does not point to a TraceSemantics::RiscOperators object. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = as<RiscOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-    
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
 public:
     /** Property: Subdomain to which operations are forwarded.
      *
      * @{ */
-    const BaseSemantics::RiscOperatorsPtr& subdomain() const { return subdomain_; }
-    void subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain) { subdomain_ = subdomain; }
+    const BaseSemantics::RiscOperatorsPtr& subdomain() const;
+    void subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain);
     /** @} */
 
-    /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception.
-     *
-     *  @{ */
-    void checkSubdomain() const {
-        if (subdomain_==NULL)
-            throw BaseSemantics::Exception("subdomain is not set; nothing to trace", NULL);
-    }
-    /** @} */
+    /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception. */
+    void checkSubdomain() const;
 
     /** Property: output stream to which tracing is emitted.  The default is the INFO stream of the
      * Rose::BinaryAnalysis::InstructionSemantics message facility. Output will only show up when this stream is enabled.
      *
      * @{ */
-    Sawyer::Message::Stream& stream() { return stream_; }
-    void stream(Sawyer::Message::Stream &s) { stream_ = s; }
+    Sawyer::Message::Stream& stream();
+    void stream(Sawyer::Message::Stream&);
     /** @} */
 
     /** Property: Line prefix string.
@@ -224,8 +182,8 @@ public:
      *  This string will be printed at the start of each line of output. It's usually used for indentation.
      *
      * @{ */
-    const std::string& indentation() const { return indentation_; }
-    void indentation(const std::string &s) { indentation_ = s; }
+    const std::string& indentation() const;
+    void indentation(const std::string&);
     /** @} */
 
     /** Property: Show subdomain name in output.
@@ -233,8 +191,8 @@ public:
      *  If true, then the subdomain name and object address is printed for each line of output.
      *
      * @{ */
-    bool showingSubdomain() const { return showingSubdomain_; }
-    void showingSubdomain(bool b) { showingSubdomain_ = b; }
+    bool showingSubdomain() const;
+    void showingSubdomain(bool);
     /** @} */
 
     /** Property: Show instruction in output.
@@ -242,8 +200,8 @@ public:
      *  If true, then each line of output will contain the instruction virtual address.
      *
      * @{ */
-    bool showingInstructionVa() const { return showingInstructionVa_; }
-    void showingInstructionVa(bool b) { showingInstructionVa_ = b; }
+    bool showingInstructionVa() const;
+    void showingInstructionVa(bool);
     /** @} */
 
     /** Property: Show only operations for instructions.
@@ -254,8 +212,8 @@ public:
      *  invoked without a current instruction.
      *
      * @{ */
-    bool onlyInstructions() const { return onlyInstructions_; }
-    void onlyInstructions(bool b) { onlyInstructions_ = b; }
+    bool onlyInstructions() const;
+    void onlyInstructions(bool);
     /** @} */
 
 protected:

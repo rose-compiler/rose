@@ -13,12 +13,29 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
+MemoryCellMap::~MemoryCellMap() {}
+
+MemoryCellMap::MemoryCellMap() {}
+
+MemoryCellMap::MemoryCellMap(const MemoryCell::Ptr &protocell)
+    : MemoryCellState(protocell) {}
+
+MemoryCellMap::MemoryCellMap(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval)
+    : MemoryCellState(addrProtoval, valProtoval) {}
+
 MemoryCellMap::MemoryCellMap(const MemoryCellMap &other)
     : MemoryCellState(other) {
     for (const MemoryCell::Ptr &cell: other.cells.values()) {
         cells.insert(other.generateCellKey(cell->address()), cell->clone());
         lastPosition_ = std::max(lastPosition_, cell->position());
     }
+}
+
+MemoryCellMap::Ptr
+MemoryCellMap::promote(const MemoryState::Ptr &x) {
+    Ptr retval = as<MemoryCellMap>(x);
+    ASSERT_not_null(retval);
+    return retval;
 }
 
 unsigned

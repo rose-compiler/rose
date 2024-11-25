@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
@@ -9,9 +10,251 @@ namespace BinaryAnalysis {                              // documented elsewhere
 namespace InstructionSemantics {                        // documented elsewhere
 namespace NullSemantics {                               // documented in the header
 
-/*******************************************************************************************************************************
- *                                      RISC operators
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SValue
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SValue::~SValue() {}
+
+SValue::SValue(const size_t nbits)
+    : BaseSemantics::SValue(nbits) {}
+
+SValue::Ptr
+SValue::instance() {
+    return Ptr(new SValue(1));
+}
+
+SValue::Ptr
+SValue::instance(const size_t nbits) {
+    return Ptr(new SValue(nbits));
+}
+
+SValue::Ptr
+SValue::instance(const size_t nbits, uint64_t /*number*/) {
+    return Ptr(new SValue(nbits));            // the number is not important in this domain
+}
+
+SValuePtr
+SValue::instance(const SValue::Ptr &other) {
+    return Ptr(new SValue(*other));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(const size_t nBits) const {
+    return instance(nBits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(const size_t nBits) const {
+    return instance(nBits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(const size_t nBits) const {
+    return instance(nBits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(const size_t nBits, const uint64_t number) const {
+    return instance(nBits, number);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(const size_t new_width) const {
+    Ptr retval(new SValue(*this));
+    if (new_width != 0 && new_width != retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
+Sawyer::Optional<BaseSemantics::SValue::Ptr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr&, const BaseSemantics::Merger::Ptr&, const SmtSolver::Ptr&) const {
+    return Sawyer::Nothing();
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) {
+    Ptr retval = as<SValue>(v);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+bool
+SValue::isBottom() const {
+    return false;
+}
+
+void
+SValue::print(std::ostream &stream, BaseSemantics::Formatter&) const {
+    stream <<"VOID[" <<nBits() <<"]";
+}
+
+void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    hasher.insert(0);                               // hash depends on number of SValues hashed, but not any content
+}
+
+bool
+SValue::is_number() const {
+    return false;
+}
+
+uint64_t
+SValue::get_number() const {
+    ASSERT_not_reachable("not a number");
+    uint64_t retval;
+    return retval;
+}
+
+bool
+SValue::may_equal(const BaseSemantics::SValue::Ptr&, const SmtSolver::Ptr&) const {
+    return true;
+}
+
+bool
+SValue::must_equal(const BaseSemantics::SValue::Ptr &other, const SmtSolver::Ptr&) const {
+    return this == getRawPointer(other); // must be equal if they're both the same object
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterState
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RegisterState::~RegisterState() {}
+
+RegisterState::RegisterState(const RegisterState &other)
+    : BaseSemantics::RegisterState(other) {}
+
+RegisterState::RegisterState(const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr &regdict)
+    : BaseSemantics::RegisterState(protoval, regdict) {}
+
+RegisterState::Ptr
+RegisterState::instance(const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr &regdict) {
+    return Ptr(new RegisterState(protoval, regdict));
+}
+
+BaseSemantics::RegisterState::Ptr
+RegisterState::create(const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr &regdict) const {
+    return instance(protoval, regdict);
+}
+
+BaseSemantics::RegisterState::Ptr
+RegisterState::clone() const {
+    return Ptr(new RegisterState(*this));
+}
+
+RegisterState::Ptr
+RegisterState::promote(const BaseSemantics::RegisterState::Ptr &from) {
+    Ptr retval = as<RegisterState>(from);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+bool
+RegisterState::merge(const BaseSemantics::RegisterState::Ptr&, BaseSemantics::RiscOperators*) {
+    return false;
+}
+
+void
+RegisterState::clear() {}
+
+void
+RegisterState::zero() {}
+
+BaseSemantics::SValue::Ptr
+RegisterState::readRegister(const RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &/*dflt*/,
+                            BaseSemantics::RiscOperators*) {
+    return protoval()->undefined_(reg.nBits());
+}
+
+BaseSemantics::SValue::Ptr
+RegisterState::peekRegister(const RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &/*dflt*/,
+                            BaseSemantics::RiscOperators*) {
+    return protoval()->undefined_(reg.nBits());
+}
+
+void
+RegisterState::writeRegister(const RegisterDescriptor, const BaseSemantics::SValue::Ptr&, BaseSemantics::RiscOperators*) {}
+
+void
+RegisterState::updateReadProperties(const RegisterDescriptor) {}
+
+void
+RegisterState::updateWriteProperties(const RegisterDescriptor, const BaseSemantics::InputOutputProperty) {}
+
+void
+RegisterState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const {}
+
+void
+RegisterState::print(std::ostream&, BaseSemantics::Formatter&) const {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MemoryState
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MemoryState::~MemoryState() {}
+
+MemoryState::MemoryState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval)
+    : BaseSemantics::MemoryState(addrProtoval, valProtoval) {}
+
+MemoryState::MemoryState(const MemoryState::Ptr &other)
+    : BaseSemantics::MemoryState(other) {}
+
+MemoryState::Ptr
+MemoryState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) {
+    return Ptr(new MemoryState(addrProtoval, valProtoval));
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::create(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::clone() const {
+    return Ptr(new MemoryState(*this));
+}
+
+MemoryState::Ptr
+MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+    Ptr retval = as<MemoryState>(x);
+    ASSERT_not_null(x);
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+MemoryState::readMemory(const BaseSemantics::SValue::Ptr &/*address*/, const BaseSemantics::SValue::Ptr &dflt,
+                        BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
+    return dflt->copy();
+}
+
+void
+MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &/*addr*/, const BaseSemantics::SValue::Ptr &/*value*/,
+                         BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {}
+
+BaseSemantics::SValue::Ptr
+MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &/*address*/, const BaseSemantics::SValue::Ptr &dflt,
+                        BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
+    return dflt->copy();
+}
+
+void
+MemoryState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators */*addrOps*/,
+                  BaseSemantics::RiscOperators */*valOps*/) const {}
+
+void
+MemoryState::print(std::ostream&, BaseSemantics::Formatter&) const {}
+
+bool
+MemoryState::merge(const BaseSemantics::MemoryState::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+                   BaseSemantics::RiscOperators */*valOps*/) {
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RiscOperators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
     : BaseSemantics::RiscOperators(protoval, solver) {
     name("Null");

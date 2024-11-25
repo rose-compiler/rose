@@ -3,8 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h>
 
 #include <Sawyer/Map.h>
@@ -62,14 +60,15 @@ private:
     }
 #endif
     
+public:
+    ~MemoryCellMap();
+
 protected:
-    MemoryCellMap() {}                                  // for serialization
+    MemoryCellMap();                                    // for serialization
 
-    explicit MemoryCellMap(const MemoryCellPtr &protocell)
-        : MemoryCellState(protocell) {}
+    explicit MemoryCellMap(const MemoryCellPtr &protocell);
 
-    MemoryCellMap(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryCellState(addrProtoval, valProtoval) {}
+    MemoryCellMap(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
 
     MemoryCellMap(const MemoryCellMap&);
 
@@ -79,11 +78,7 @@ private:
 public:
     /** Promote a base memory state pointer to a MemoryCellMap pointer. The memory state, @p x, must have a MemoryCellMap
      *  dynamic type. */
-    static MemoryCellMapPtr promote(const MemoryStatePtr &x) {
-        MemoryCellMapPtr retval = as<MemoryCellMap>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static MemoryCellMapPtr promote(const MemoryStatePtr&);
 
 public:
     /** Generate a cell lookup key.

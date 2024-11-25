@@ -64,7 +64,7 @@ public:
     // check SValue smart pointers
     void check_sval_type(const BaseSemantics::SValuePtr &x, const std::string &what_failed) {
         nonnull(x, what_failed);
-        SValuePtr y = BaseSemantics::dynamic_pointer_cast<SValue>(x);
+        SValuePtr y = as<SValue>(x);
         if (y==NULL)
             throw Exception("wrong pointer type: "+what_failed);
     }

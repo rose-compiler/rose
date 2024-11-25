@@ -3,7 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
@@ -23,7 +22,7 @@ namespace NullSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Shared-ownership pointer. */
-typedef Sawyer::SharedPointer<class SValue> SValuePtr;
+using SValuePtr = Sawyer::SharedPointer<class SValue>;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
 class SValue: public BaseSemantics::SValue {
@@ -36,82 +35,51 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors.
+public:
+    ~SValue();
+
 protected:
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {}
+    explicit SValue(size_t nbits);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical values. Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
-    }
+    static SValuePtr instance();
 
     /** Instantiate a new undefined value. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
-    }
+    static SValuePtr instance(size_t nbits);
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t /*number*/) {
-        return SValuePtr(new SValue(nbits)); // the number is not important in this domain
-    }
+    static SValuePtr instance(size_t nbits, uint64_t /*number*/);
 
     /** Instantiate a new copy of an existing value. */
-    static SValuePtr instance(const SValuePtr &other) {
-        return SValuePtr(new SValue(*other));
-    }
+    static SValuePtr instance(const SValuePtr &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nBits) const override {
-        return instance(nBits);
-    }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const override {
-        return instance(nBits);
-    }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nBits) const override {
-        return instance(nBits);
-    }
-    virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const override {
-        return instance(nBits, number);
-    }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->nBits())
-            retval->set_width(new_width);
-        return retval;
-    }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, const SmtSolverPtr&) const override {
-        return Sawyer::Nothing();
-    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nBits) const override;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nBits) const override;
+    virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const override;
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override;
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr&,
+                                                                           const BaseSemantics::MergerPtr&,
+                                                                           const SmtSolverPtr&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casting
 public:
     /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = as<SValue>(v);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SValuePtr promote(const BaseSemantics::SValuePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Implementations of functions inherited
 public:
-    virtual bool isBottom() const override {
-        return false;
-    }
-
-    virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const override {
-        stream <<"VOID[" <<nBits() <<"]";
-    }
-
-    virtual void hash(Combinatorics::Hasher &hasher) const override {
-        hasher.insert(0);                               // hash depends on number of SValues hashed, but not any content
-    }
+    virtual bool isBottom() const override;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
+    virtual void hash(Combinatorics::Hasher&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override legacy members. These now are called by the camelCase names in the base class. Eventually we'll switch the
@@ -119,27 +87,16 @@ public:
     // your own code so you know when we make the switch.
 public:
     // See isConcrete
-    virtual bool is_number() const override {
-        return false;
-    }
+    virtual bool is_number() const override;
 
     // See toUnsigned and toSigned
-    virtual uint64_t get_number() const override {
-        ASSERT_not_reachable("not a number");
-        uint64_t retval;
-        return retval;
-    }
+    virtual uint64_t get_number() const override;
 
     // See mayEqual
-    virtual bool may_equal(const BaseSemantics::SValuePtr&, const SmtSolverPtr& = SmtSolverPtr()) const override {
-        return true;
-    }
+    virtual bool may_equal(const BaseSemantics::SValuePtr&, const SmtSolverPtr& = SmtSolverPtr()) const override;
 
     // See mustEqual
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr& = SmtSolverPtr()) const override {
-        return this == getRawPointer(other); // must be equal if they're both the same object
-    }
-
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr& = SmtSolverPtr()) const override;
 };
 
 
@@ -148,7 +105,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Shared-ownership pointer. */
-typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
+using RegisterStatePtr = boost::shared_ptr<class RegisterState>;
 
 /** Null register state.
  *
@@ -161,58 +118,32 @@ public:
     /** Shared-ownership pointer. */
     using Ptr = RegisterStatePtr;
 
-protected:
-    RegisterState(const RegisterState &other)
-        : BaseSemantics::RegisterState(other) {}
+public:
+    ~RegisterState();
 
-    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr &regdict)
-        : BaseSemantics::RegisterState(protoval, regdict) {}
+protected:
+    RegisterState(const RegisterState &other);
+    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr&);
 
 public:
-    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr &regdict) {
-        return RegisterStatePtr(new RegisterState(protoval, regdict));
-    }
-
+    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr&);
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const RegisterDictionaryPtr &regdict) const override {
-        return instance(protoval, regdict);
-    }
+                                                   const RegisterDictionaryPtr &regdict) const override;
+    virtual BaseSemantics::RegisterStatePtr clone() const override;
+    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from);
 
-    virtual BaseSemantics::RegisterStatePtr clone() const override {
-        return RegisterStatePtr(new RegisterState(*this));
-    }
-    
-    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from) {
-        RegisterStatePtr retval = as<RegisterState>(from);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-
-    virtual bool merge(const BaseSemantics::RegisterStatePtr&, BaseSemantics::RiscOperators*) override {
-        return false;
-    }
-
-    virtual void clear() override {}
-    virtual void zero() override {}
-
-    virtual BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &/*dflt*/, BaseSemantics::RiscOperators*) override {
-        return protoval()->undefined_(reg.nBits());
-    }
-
-    virtual BaseSemantics::SValuePtr
-    peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &/*dflt*/, BaseSemantics::RiscOperators*) override {
-        return protoval()->undefined_(reg.nBits());
-    }
-    
-    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr&, BaseSemantics::RiscOperators*) override {}
-
-    virtual void updateReadProperties(RegisterDescriptor) override {}
-    virtual void updateWriteProperties(RegisterDescriptor, BaseSemantics::InputOutputProperty) override {}
-
-    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override {}
-
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override {}
+    virtual bool merge(const BaseSemantics::RegisterStatePtr&, BaseSemantics::RiscOperators*) override;
+    virtual void clear() override;
+    virtual void zero() override;
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &/*dflt*/,
+                                                  BaseSemantics::RiscOperators*) override;
+    virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &/*dflt*/,
+                                                  BaseSemantics::RiscOperators*) override;
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr&, BaseSemantics::RiscOperators*) override;
+    virtual void updateReadProperties(RegisterDescriptor) override;
+    virtual void updateWriteProperties(RegisterDescriptor, BaseSemantics::InputOutputProperty) override;
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 };
 
 
@@ -221,7 +152,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Shared-ownership pointer. */
-typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
+using MemoryStatePtr = boost::shared_ptr<class MemoryState>;
 
 /** Null memory.
  *
@@ -234,34 +165,23 @@ public:
     /** Shared-ownership pointer. */
     using Ptr = MemoryStatePtr;
 
-protected:
-    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryState(addrProtoval, valProtoval) {}
+public:
+    ~MemoryState();
 
-    MemoryState(const MemoryStatePtr &other)
-        : BaseSemantics::MemoryState(other) {}
+protected:
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
+    MemoryState(const MemoryStatePtr &other);
 
 public:
-    static MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
-    }
+    static MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval);
 
 public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
-
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
-        return MemoryStatePtr(new MemoryState(*this));
-    }
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override;
+    virtual BaseSemantics::MemoryStatePtr clone() const override;
 
 public:
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryStatePtr retval = as<MemoryState>(x);
-        ASSERT_not_null(x);
-        return retval;
-    }
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr&);
 
 public:
     virtual void clear() override {}
@@ -269,28 +189,22 @@ public:
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &/*address*/,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators */*addrOps*/,
-                                                BaseSemantics::RiscOperators */*valOps*/) override {
-        return dflt->copy();
-    }
+                                                BaseSemantics::RiscOperators */*valOps*/) override;
 
     virtual void writeMemory(const BaseSemantics::SValuePtr &/*addr*/, const BaseSemantics::SValuePtr &/*value*/,
-                             BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) override {}
+                             BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) override;
 
     virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &/*address*/, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators */*addrOps*/,
-                                                BaseSemantics::RiscOperators */*valOps*/) override {
-        return dflt->copy();
-    }
+                                                BaseSemantics::RiscOperators */*valOps*/) override;
 
     virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators */*addrOps*/,
-                      BaseSemantics::RiscOperators */*valOps*/) const override {}
+                      BaseSemantics::RiscOperators */*valOps*/) const override;
 
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override {}
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 
     virtual bool merge(const BaseSemantics::MemoryStatePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
-                       BaseSemantics::RiscOperators */*valOps*/) override {
-        return false;
-    }
+                       BaseSemantics::RiscOperators */*valOps*/) override;
 };
 
 
@@ -298,8 +212,8 @@ public:
 //                                      Complete state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef BaseSemantics::State State;
-typedef BaseSemantics::StatePtr StatePtr;
+using State = BaseSemantics::State;
+using StatePtr = BaseSemantics::StatePtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -307,7 +221,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Shared-ownership pointer. */
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */
 class RiscOperators: public BaseSemantics::RiscOperators {

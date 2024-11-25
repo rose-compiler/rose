@@ -3,7 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
@@ -190,26 +189,11 @@ public:
     static Ptr instanceSymbolic(const SymbolicExpression::Ptr &value);
 
 public:
-    virtual InstructionSemantics::BaseSemantics::SValuePtr bottom_(size_t nBits) const override {
-        return instanceBottom(nBits);
-    }
-
-    virtual InstructionSemantics::BaseSemantics::SValuePtr undefined_(size_t nBits) const override {
-        return instanceUndefined(nBits);
-    }
-
-    virtual InstructionSemantics::BaseSemantics::SValuePtr unspecified_(size_t nBits) const override {
-        return instanceUnspecified(nBits);
-    }
-
-    virtual InstructionSemantics::BaseSemantics::SValuePtr number_(size_t nBits, uint64_t value) const override {
-        return instanceInteger(nBits, value);
-    }
-
-    virtual InstructionSemantics::BaseSemantics::SValuePtr boolean_(bool value) const override {
-        return instanceInteger(1, value ? 1 : 0);
-    }
-
+    virtual InstructionSemantics::BaseSemantics::SValuePtr bottom_(size_t nBits) const override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr undefined_(size_t nBits) const override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr unspecified_(size_t nBits) const override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr number_(size_t nBits, uint64_t value) const override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr boolean_(bool value) const override;
     virtual InstructionSemantics::BaseSemantics::SValuePtr copy(size_t newNBits = 0) const override;
 
     virtual Sawyer::Optional<InstructionSemantics::BaseSemantics::SValuePtr>
@@ -221,11 +205,7 @@ public:
     /** Promote a base value to a MemoryRegionSemantics value.
      *
      *  The value @p v must have a MemoryRegionSemantics::SValue dynamic type. */
-    static Ptr promote(const InstructionSemantics::BaseSemantics::SValuePtr &v) { // hot
-        Ptr retval = as<SValue>(v);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static Ptr promote(const InstructionSemantics::BaseSemantics::SValuePtr&);
 
 public:
     /** Property: Optional memory region.
@@ -280,10 +260,8 @@ public:
 
     /** Virtual constructor. */
     virtual InstructionSemantics::BaseSemantics::StatePtr
-    create(const InstructionSemantics::BaseSemantics::RegisterStatePtr &registers,
-           const InstructionSemantics::BaseSemantics::MemoryStatePtr &memory) const override {
-        return instance(registers, memory);
-    }
+    create(const InstructionSemantics::BaseSemantics::RegisterStatePtr&,
+           const InstructionSemantics::BaseSemantics::MemoryStatePtr&) const override;
 
     /** Virtual copy constructor. */
     virtual InstructionSemantics::BaseSemantics::StatePtr clone() const override;

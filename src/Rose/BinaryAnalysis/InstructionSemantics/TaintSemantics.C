@@ -16,6 +16,83 @@ namespace TaintSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SValue::~SValue() {}
+
+SValue::SValue() {}
+
+SValue::SValue(const size_t nbits)
+    : Super(nbits) {}
+
+SValue::SValue(const size_t nbits, const uint64_t number)
+    : Super(nbits, number) {}
+
+SValue::SValue(const ExprPtr expr)
+    : Super(expr) {}
+
+SValue::Ptr
+SValue::instance() {
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
+}
+
+SValue::Ptr
+SValue::instance_bottom(const size_t nbits) {
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
+}
+
+SValue::Ptr
+SValue::instance_undefined(const size_t nbits) {
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
+}
+
+SValue::Ptr
+SValue::instance_unspecified(const size_t nbits) {
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
+}
+
+SValue::Ptr
+SValue::instance_integer(const size_t nbits, const uint64_t value) {
+    return Ptr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
+}
+
+SValue::Ptr
+SValue::instance_symbolic(const SymbolicExpression::Ptr &value) {
+    ASSERT_not_null(value);
+    return Ptr(new SValue(value));
+}
+
+BaseSemantics::SValue::Ptr
+SValue::bottom_(const size_t nbits) const {
+    return instance_bottom(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::undefined_(const size_t nbits) const {
+    return instance_undefined(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::unspecified_(const size_t nbits) const {
+    return instance_unspecified(nbits);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::number_(const size_t nbits, const uint64_t value) const {
+    return instance_integer(nbits, value);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::boolean_(const bool value) const {
+    return instance_integer(1, value?1:0);
+}
+
+BaseSemantics::SValue::Ptr
+SValue::copy(const size_t new_width) const {
+    Ptr retval(new SValue(*this));
+    if (new_width != 0 && new_width != retval->nBits())
+        retval->set_width(new_width);
+    return retval;
+}
+
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
 SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr &merger_,
                             const SmtSolverPtr &solver) const {
@@ -31,6 +108,13 @@ SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const Base
         promote(*retval)->taintedness(taintedness);
     }
 
+    return retval;
+}
+
+SValue::Ptr
+SValue::promote(const BaseSemantics::SValue::Ptr &v) { // hot
+    Ptr retval = as<SValue>(v);
+    ASSERT_not_null(retval);
     return retval;
 }
 
@@ -121,7 +205,7 @@ SValue::mergeTaintedness(Taintedness a, Taintedness b) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      RISC operators
+// RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RiscOperators::RiscOperators() {}

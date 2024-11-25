@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 
+#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/StringUtility/NumberToString.h>
@@ -10,6 +11,41 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
+
+SymbolicMemory::~SymbolicMemory() {}
+
+SymbolicMemory::SymbolicMemory(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval)
+    : MemoryState(addrProtoval, valProtoval) {
+    // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
+    mem_ = SymbolicExpression::makeMemoryVariable(32, 8);
+}
+
+SymbolicMemory::Ptr
+SymbolicMemory::instance(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval) {
+    return Ptr(new SymbolicMemory(addrProtoval, valProtoval));
+}
+
+MemoryState::Ptr
+SymbolicMemory::create(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+MemoryState::Ptr
+SymbolicMemory::clone() const {
+    return Ptr(new SymbolicMemory(*this));
+}
+
+SymbolicMemory::Ptr
+SymbolicMemory::promote(const MemoryState::Ptr &x) {
+    Ptr retval = as<SymbolicMemory>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+SymbolicExpression::Ptr
+SymbolicMemory::expression() const {
+    return mem_;
+}
 
 void
 SymbolicMemory::expression(const SymbolicExpression::Ptr &expr) {

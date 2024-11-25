@@ -3,10 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -45,7 +43,7 @@ private:
 #endif
 
 protected:
-    MemoryCellState() {}                                // for serialization
+    MemoryCellState();                                  // for serialization
 
     explicit MemoryCellState(const MemoryCellPtr &protocell);
 
@@ -59,11 +57,7 @@ public:
 public:
     /** Promote a base memory state pointer to a BaseSemantics::MemoryCellState pointer.  The memory state @p m must have a
      *  BaseSemantics::MemoryCellState dynamic type. */
-    static MemoryCellStatePtr promote(const BaseSemantics::MemoryStatePtr &m) {
-        MemoryCellStatePtr retval = as<MemoryCellState>(m);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static MemoryCellStatePtr promote(const BaseSemantics::MemoryStatePtr&);
 
 public:
     virtual void clear() override;
@@ -72,12 +66,8 @@ public:
     /** Property: Cell most recently written.
      *
      * @{ */
-    virtual MemoryCellPtr latestWrittenCell() const {
-        return latestWrittenCell_;
-    }
-    virtual void latestWrittenCell(const MemoryCellPtr &cell) {
-        latestWrittenCell_ = cell;
-    }
+    virtual MemoryCellPtr latestWrittenCell() const;
+    virtual void latestWrittenCell(const MemoryCellPtr&);
     /** @} */
 
     /** Writers for an address.
@@ -140,16 +130,10 @@ public:
     virtual void updateWriteProperties(const CellList&, InputOutputPropertySet);
 
     /** Erase cells that have no writers. */
-    void eraseNonWritten() {
-        MemoryCell::NonWrittenCells p;
-        eraseMatchingCells(p);
-    }
+    void eraseNonWritten();
 
     /** All cells. */
-    std::vector<MemoryCellPtr> allCells() const {
-        MemoryCell::AllCells p;
-        return matchingCells(p);
-    }
+    std::vector<MemoryCellPtr> allCells() const;
 };
 
 } // namespace

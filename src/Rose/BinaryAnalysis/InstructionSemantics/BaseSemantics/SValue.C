@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BitOps.h>
 
 #include <sstream>
@@ -12,9 +13,57 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SValue::WithFormatter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SValue::WithFormatter::WithFormatter(const SValue::Ptr &svalue, Formatter &fmt)
+    : obj(svalue), fmt(fmt) {}
+
+void
+SValue::WithFormatter::print(std::ostream &stream) const {
+    obj->print(stream, fmt);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SValue
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SValue::SValue()
+    : width(0) {}
+
+SValue::SValue(const size_t nbits)
+    : width(nbits) {}
+
+SValue::SValue(const SValue &other)
+    : Sawyer::SharedObject(other), width(other.width) {}
+
+SValue::~SValue() {}
+
+SValue::Ptr
+SValue::createMerged(const SValue::Ptr &other, const MergerPtr &merger, const SmtSolver::Ptr &solver) const {
+    return createOptionalMerge(other, merger, solver).orElse(copy());
+}
+
+SValue::Ptr
+SValue::promote(const SValue::Ptr &x) {
+    ASSERT_not_null(x);
+    return x;
+}
+
 size_t
 SValue::nBits() const {
     return get_width();
+}
+
+SValue::WithFormatter
+SValue::with_format(Formatter &fmt) {
+    return WithFormatter(SValuePtr(this), fmt);
+}
+
+SValue::WithFormatter
+SValue::operator+(Formatter &fmt) {
+    return with_format(fmt);
 }
 
 bool
@@ -107,6 +156,14 @@ SValue::toString() const {
     print(ss);
     return ss.str();
 }
+
+std::string
+SValue::get_comment() const {
+    return "";
+}
+
+void
+SValue::set_comment(const std::string&) const {};
 
 } // namespace
 } // namespace

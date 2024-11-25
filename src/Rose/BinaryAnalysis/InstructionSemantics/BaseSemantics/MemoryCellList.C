@@ -19,6 +19,60 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
+MemoryCellList::~MemoryCellList() {}
+
+MemoryCellList::MemoryCellList()
+    : occlusionsErased_(false) {}
+
+MemoryCellList::MemoryCellList(const MemoryCell::Ptr &protocell)
+    : MemoryCellState(protocell), occlusionsErased_(false) {}
+
+MemoryCellList::MemoryCellList(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval)
+    : MemoryCellState(addrProtoval, valProtoval), occlusionsErased_(false) {}
+
+MemoryCellList::MemoryCellList(const MemoryCellList &other)
+    : MemoryCellState(other), occlusionsErased_(other.occlusionsErased_) {
+    for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
+        cells.push_back((*ci)->clone());
+}
+
+MemoryCellList::Ptr
+MemoryCellList::instance(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval) {
+    return Ptr(new MemoryCellList(addrProtoval, valProtoval));
+}
+
+MemoryCellList::Ptr
+MemoryCellList::instance(const MemoryCell::Ptr &protocell) {
+    return Ptr(new MemoryCellList(protocell));
+}
+
+MemoryCellList::Ptr
+MemoryCellList::instance(const Ptr &other) {
+    return Ptr(new MemoryCellList(*other));
+}
+
+MemoryState::Ptr
+MemoryCellList::create(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval) const {
+    return instance(addrProtoval, valProtoval);
+}
+
+MemoryState::Ptr
+MemoryCellList::create(const MemoryCell::Ptr &protocell) const {
+    return instance(protocell);
+}
+
+MemoryState::Ptr
+MemoryCellList::clone() const {
+    return MemoryStatePtr(new MemoryCellList(*this));
+}
+
+MemoryCellList::Ptr
+MemoryCellList::promote(const BaseSemantics::MemoryState::Ptr &m) {
+    Ptr retval = as<MemoryCellList>(m);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 MemoryCellList::clear() {
     cells.clear();

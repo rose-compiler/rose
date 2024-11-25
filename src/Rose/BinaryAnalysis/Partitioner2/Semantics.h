@@ -26,22 +26,22 @@ namespace Partitioner2 {
 namespace Semantics {
 
 /** Semantic value in the partitioner. */
-typedef InstructionSemantics::SymbolicSemantics::SValue SValue;
+using SValue = InstructionSemantics::SymbolicSemantics::SValue;
 
 /** Reference counting pointer to semantic value. */
-typedef InstructionSemantics::SymbolicSemantics::SValuePtr SValuePtr;
+using SValuePtr = InstructionSemantics::SymbolicSemantics::SValuePtr;
 
 /** Register state for the partitioner. */
-typedef InstructionSemantics::BaseSemantics::RegisterStateGeneric RegisterState;
+using RegisterState = InstructionSemantics::BaseSemantics::RegisterStateGeneric;
 
 /** Reference counting pointer to register state. */
-typedef InstructionSemantics::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+using RegisterStatePtr = InstructionSemantics::BaseSemantics::RegisterStateGenericPtr;
 
 /** Total state (registers and memory) for the partitioner. */
-typedef InstructionSemantics::BaseSemantics::State State;
+using State = InstructionSemantics::BaseSemantics::State;
 
 /** Reference counting pointer to total state. */
-typedef InstructionSemantics::BaseSemantics::StatePtr StatePtr;
+using StatePtr = InstructionSemantics::BaseSemantics::StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Memory State
@@ -57,7 +57,7 @@ template<class Super = InstructionSemantics::SymbolicSemantics::MemoryListState>
 class MemoryState: public Super {
 public:
     /** Shared-ownership pointer to a @ref Semantics::MemoryState. See @ref heap_object_shared_ownership. */
-    typedef boost::shared_ptr<MemoryState> Ptr;
+    using Ptr = boost::shared_ptr<MemoryState>;
 
 private:
     MemoryMapPtr map_;
@@ -189,23 +189,23 @@ public:
 };
 
 /** Memory state using a chronological list of cells. */
-typedef MemoryState<InstructionSemantics::SymbolicSemantics::MemoryListState> MemoryListState;
+using MemoryListState = MemoryState<InstructionSemantics::SymbolicSemantics::MemoryListState>;
 
 /** Memory state indexed by hash of address expressions. */
-typedef MemoryState<InstructionSemantics::SymbolicSemantics::MemoryMapState> MemoryMapState;
+using MemoryMapState = MemoryState<InstructionSemantics::SymbolicSemantics::MemoryMapState>;
 
 /** Shared-ownership pointer to a @ref MemoryListState. See @ref heap_object_shared_ownership. */
-typedef boost::shared_ptr<MemoryListState> MemoryListStatePtr;
+using MemoryListStatePtr = boost::shared_ptr<MemoryListState>;
 
 /** Shared-ownership pointer to a @ref MemoryMapState. See @ref heap_object_shared_ownership. */
-typedef boost::shared_ptr<MemoryMapState> MemoryMapStatePtr;
+using MemoryMapStatePtr = boost::shared_ptr<MemoryMapState>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC Operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Shared-ownership pointer to the RISC operators object. See @ref heap_object_shared_ownership. */
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
 
 /** Semantic operators.
  *
@@ -269,15 +269,11 @@ public:
 public:
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+           const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::StatePtr &state,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+           const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts

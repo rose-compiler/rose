@@ -5,7 +5,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
@@ -15,7 +14,7 @@ namespace InstructionSemantics {
 namespace BaseSemantics {
 
 /** Shared-ownership pointer for symbolic memory state. */
-typedef boost::shared_ptr<class SymbolicMemory> SymbolicMemoryPtr;
+using SymbolicMemoryPtr = boost::shared_ptr<class SymbolicMemory>;
 
 /** Purely symbolic memory state.
  *
@@ -33,45 +32,34 @@ public:
 private:
     SymbolicExpression::Ptr mem_;
 
+public:
+    ~SymbolicMemory();
+
 protected:
     // All memory states should be heap allocated; use instance(), create(), or clone() instead.
-    explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryState(addrProtoval, valProtoval) {
-        // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
-        mem_ = SymbolicExpression::makeMemoryVariable(32, 8);
-    }
+    explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
 
 public:
     /** Instantiate a new empty memory state on the heap. */
-    static SymbolicMemoryPtr instance(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) {
-        return SymbolicMemoryPtr(new SymbolicMemory(addrProtoval, valProtoval));
-    }
+    static SymbolicMemoryPtr instance(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
 
 public:
     // documented in base class
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override;
 
     // documented in base class
-    virtual MemoryStatePtr clone() const override {
-        return SymbolicMemoryPtr(new SymbolicMemory(*this));
-    }
+    virtual MemoryStatePtr clone() const override;
 
     /** Convert pointer to a SymbolicMemory pointer.
      *
      *  Converts @p x to a SymbolicMemoryPtr and asserts that it is non-null. */
-    static SymbolicMemoryPtr promote(const MemoryStatePtr &x) {
-        SymbolicMemoryPtr retval = as<SymbolicMemory>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static SymbolicMemoryPtr promote(const MemoryStatePtr&);
 
 public:
     /** Property: the symbolic expression for the memory.
      *
      * @{ */
-    SymbolicExpression::Ptr expression() const { return mem_; }
+    SymbolicExpression::Ptr expression() const;
     void expression(const SymbolicExpression::Ptr &mem);
     /** @} */
 

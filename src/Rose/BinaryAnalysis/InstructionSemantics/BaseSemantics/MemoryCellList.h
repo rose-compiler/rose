@@ -3,7 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 
@@ -65,22 +64,18 @@ private:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
+public:
+    ~MemoryCellList();
+
 protected:
-    MemoryCellList()                                    // for serialization
-        : occlusionsErased_(false) {}
+    MemoryCellList();                                   // only used for deserialization
 
-    explicit MemoryCellList(const MemoryCellPtr &protocell)
-        : MemoryCellState(protocell), occlusionsErased_(false) {}
+    explicit MemoryCellList(const MemoryCellPtr &protocell);
 
-    MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryCellState(addrProtoval, valProtoval), occlusionsErased_(false) {}
+    MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
 
     // deep-copy cell list so that modifying this new state does not modify the existing state
-    MemoryCellList(const MemoryCellList &other)
-        : MemoryCellState(other), occlusionsErased_(other.occlusionsErased_) {
-        for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
-            cells.push_back((*ci)->clone());
-    }
+    MemoryCellList(const MemoryCellList &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
@@ -88,47 +83,30 @@ public:
     /** Instantiate a new prototypical memory state. This constructor uses the default type for the cell type (based on the
      *  semantic domain). The prototypical values are usually the same (addresses and stored values are normally the same
      *  type). */
-    static MemoryCellListPtr instance(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) {
-        return MemoryCellListPtr(new MemoryCellList(addrProtoval, valProtoval));
-    }
-    
+    static MemoryCellListPtr instance(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
+
     /** Instantiate a new memory state with prototypical memory cell. */
-    static MemoryCellListPtr instance(const MemoryCellPtr &protocell) {
-        return MemoryCellListPtr(new MemoryCellList(protocell));
-    }
+    static MemoryCellListPtr instance(const MemoryCellPtr &protocell);
 
     /** Instantiate a new copy of an existing memory state. */
-    static MemoryCellListPtr instance(const MemoryCellListPtr &other) {
-        return MemoryCellListPtr(new MemoryCellList(*other));
-    }
-
+    static MemoryCellListPtr instance(const MemoryCellListPtr &other);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override {
-        return instance(addrProtoval, valProtoval);
-    }
-    
-    /** Virtual allocating constructor. */
-    virtual MemoryStatePtr create(const MemoryCellPtr &protocell) const {
-        return instance(protocell);
-    }
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override;
 
-    virtual MemoryStatePtr clone() const override {
-        return MemoryStatePtr(new MemoryCellList(*this));
-    }
+    /** Virtual allocating constructor. */
+    virtual MemoryStatePtr create(const MemoryCellPtr &protocell) const;
+
+    virtual MemoryStatePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Promote a base memory state pointer to a BaseSemantics::MemoryCellList pointer. The memory state @p m must have
      *  a BaseSemantics::MemoryCellList dynamic type. */
-    static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m) {
-        MemoryCellListPtr retval = as<MemoryCellList>(m);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited

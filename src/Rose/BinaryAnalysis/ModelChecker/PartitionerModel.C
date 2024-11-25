@@ -421,6 +421,31 @@ SValue::instanceSymbolic(const SymbolicExpression::Ptr &value) {
     return Ptr(new SValue(value));
 }
 
+InstructionSemantics::BaseSemantics::SValue::Ptr
+SValue::bottom_(const size_t nBits) const {
+    return instanceBottom(nBits);
+}
+
+InstructionSemantics::BaseSemantics::SValue::Ptr
+SValue::undefined_(const size_t nBits) const {
+    return instanceUndefined(nBits);
+}
+
+InstructionSemantics::BaseSemantics::SValue::Ptr
+SValue::unspecified_(const size_t nBits) const {
+    return instanceUnspecified(nBits);
+}
+
+InstructionSemantics::BaseSemantics::SValue::Ptr
+SValue::number_(const size_t nBits, const uint64_t value) const {
+    return instanceInteger(nBits, value);
+}
+
+InstructionSemantics::BaseSemantics::SValue::Ptr
+SValue::boolean_(const bool value) const {
+    return instanceInteger(1, value ? 1 : 0);
+}
+
 BS::SValue::Ptr
 SValue::copy(size_t newWidth) const {
     Ptr retval(new SValue(*this));
@@ -432,6 +457,13 @@ SValue::copy(size_t newWidth) const {
 Sawyer::Optional<BS::SValue::Ptr>
 SValue::createOptionalMerge(const BS::SValue::Ptr &/*other*/, const BS::Merger::Ptr&, const SmtSolver::Ptr&) const {
     ASSERT_not_implemented("[Robb Matzke 2021-07-07]");
+}
+
+SValue::Ptr
+SValue::promote(const InstructionSemantics::BaseSemantics::SValue::Ptr &v) {
+    Ptr retval = as<SValue>(v);
+    ASSERT_not_null(retval);
+    return retval;
 }
 
 AddressInterval
@@ -482,6 +514,12 @@ State::Ptr
 State::instance(const Ptr &other) {
     ASSERT_not_null(other);
     return Ptr(new State(*other));
+}
+
+InstructionSemantics::BaseSemantics::State::Ptr
+State::create(const InstructionSemantics::BaseSemantics::RegisterState::Ptr &registers,
+              const InstructionSemantics::BaseSemantics::MemoryState::Ptr &memory) const {
+    return instance(registers, memory);
 }
 
 BS::State::Ptr

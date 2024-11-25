@@ -3,15 +3,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/As.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
-#include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Combinatorics.h>                              // rose
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Combinatorics.h>                              // ROSE
+
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SmallObject.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
-#include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -21,15 +21,6 @@ namespace BaseSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic Values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// This is leftover for compatibility with an older API.  The old API had code like this:
-//    User::SValue user_svalue = BaseSemantics::dynamic_pointer_cast<User::SValue>(base_svalue);
-// Which can be replaced now with
-//    User::SValue user_svalue = as<User::SValue>(base_svalue);
-template<class To, class From>
-Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From> &from) {
-    return as<To>(from);
-}
 
 /** Base class for semantic values.
  *
@@ -68,12 +59,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
 protected:
-    SValue(): width(0) {}                               // needed for serialization
-    explicit SValue(size_t nbits): width(nbits) {}      // hot
-    SValue(const SValue &other): Sawyer::SharedObject(other), width(other.width) {}
+    SValue();                                           // needed for serialization
+    explicit SValue(size_t nbits);                      // hot
+    SValue(const SValue &other);
 
 public:
-    virtual ~SValue() {}
+    virtual ~SValue();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Allocating static constructor.  None are needed--this class is abstract.
@@ -162,17 +153,12 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary one can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
-    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, const SmtSolverPtr &solver) const /*final*/ {
-        return createOptionalMerge(other, merger, solver).orElse(copy());
-    }
+    SValuePtr createMerged(const SValuePtr &other, const MergerPtr&, const SmtSolverPtr&) const /*final*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts. No-ops since this is the base class
 public:
-    static SValuePtr promote(const SValuePtr &x) {
-        ASSERT_not_null(x);
-        return x;
-    }
+    static SValuePtr promote(const SValuePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
@@ -277,8 +263,8 @@ public:
         SValuePtr obj;
         Formatter &fmt;
     public:
-        WithFormatter(const SValuePtr &svalue, Formatter &fmt): obj(svalue), fmt(fmt) {}
-        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+        WithFormatter(const SValuePtr&, Formatter&);
+        void print(std::ostream&) const;
     };
 
     /** Used for printing values with formatting. The usual way to use this is:
@@ -288,8 +274,8 @@ public:
      *  std::cout <<"The value is: " <<(*val+fmt) <<"\n";
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) { return WithFormatter(SValuePtr(this), fmt); }
-    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    WithFormatter with_format(Formatter&);
+    WithFormatter operator+(Formatter&);
     WithFormatter operator+(const std::string &linePrefix);
     /** @} */
     
@@ -322,8 +308,8 @@ public: // for backward compatibility for now, but assume protected
      *  all. Comments should not affect any computation (comparisons, hash values, etc), and therefore are allowed to be
      *  modified even for const objects.
      * @{ */
-    virtual std::string get_comment() const { return ""; }
-    virtual void set_comment(const std::string&) const {} // const is intended; cf. doxygen comment
+    virtual std::string get_comment() const;
+    virtual void set_comment(const std::string&) const; // const is intended; cf. doxygen comment
     /** @} */
 };
 
