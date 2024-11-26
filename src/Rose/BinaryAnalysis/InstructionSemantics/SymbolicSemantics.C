@@ -447,13 +447,13 @@ MemoryListState::create(const BaseSemantics::MemoryCell::Ptr &protocell) const {
     return instance(protocell);
 }
 
-BaseSemantics::MemoryState::Ptr
+BaseSemantics::AddressSpace::Ptr
 MemoryListState::clone() const {
-    return BaseSemantics::MemoryState::Ptr(new MemoryListState(*this));
+    return BaseSemantics::AddressSpace::Ptr(new MemoryListState(*this));
 }
 
 MemoryListState::Ptr
-MemoryListState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+MemoryListState::promote(const BaseSemantics::AddressSpace::Ptr &x) {
     MemoryListState::Ptr retval = as<MemoryListState>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -696,13 +696,13 @@ MemoryMapState::create(const BaseSemantics::MemoryCell::Ptr &protocell) const {
     return instance(protocell);
 }
 
-BaseSemantics::MemoryState::Ptr
+BaseSemantics::AddressSpace::Ptr
 MemoryMapState::clone() const {
-    return BaseSemantics::MemoryState::Ptr(new MemoryMapState(*this));
+    return Ptr(new MemoryMapState(*this));
 }
 
 MemoryMapState::Ptr
-MemoryMapState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+MemoryMapState::promote(const BaseSemantics::AddressSpace::Ptr &x) {
     MemoryMapState::Ptr retval = as<MemoryMapState>(x);
     ASSERT_not_null(retval);
     return retval;

@@ -1,6 +1,7 @@
 include_rules
 
 run $(librose_compile)				\
+    AddressSpace.C				\
     BaseSemantics.C				\
     Dispatcher.C				\
     Exception.C					\
@@ -19,6 +20,7 @@ run $(librose_compile)				\
     SymbolicMemory.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics	\
+    AddressSpace.h										\
     BasicTypes.h										\
     Dispatcher.h										\
     Exception.h											\

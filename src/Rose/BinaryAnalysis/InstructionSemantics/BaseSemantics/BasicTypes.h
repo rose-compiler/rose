@@ -26,20 +26,25 @@ namespace BaseSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Documented where they're defined.
+class AddressSpace;
+class AddressSpaceAddress;
+class Dispatcher;
 class Formatter;
-class Merger;
-class SValue;
-class RegisterState;
-class RegisterStateGeneric;
 class MemoryCell;
 class MemoryState;
-class State;
+class Merger;
+class RegisterState;
+class RegisterStateGeneric;
 class RiscOperators;
-class Dispatcher;
+class State;
+class SValue;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Shared-ownership pointers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared-ownership pointer for @ref AddressSpace objects. */
+using AddressSpacePtr = boost::shared_ptr<AddressSpace>;
 
 /** Shared-ownership pointer for @ref Merger classes. */
 typedef Sawyer::SharedPointer<Merger> MergerPtr;
@@ -72,8 +77,17 @@ typedef boost::shared_ptr<RiscOperators> RiscOperatorsPtr;
 typedef boost::shared_ptr<Dispatcher> DispatcherPtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// I/O Properties
+// Enums
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Purpose that an address space serves. */
+enum class AddressSpacePurpose {
+    REGISTERS,                                          /**< Stores register values indexed by @ref RegisterDescriptor. */
+    MEMORY,                                             /**< Stores memory values indexed by address. */
+    INTERRUPTS,                                         /**< Stores interrupt states indexed by interrupt. */
+    USER,                                               /**< User defined address space. */
+    UNSPECIFIED                                         /**< Purpose for default-constructed address spaces. */
+};
 
 /** Boolean properties related to I/O.
  *

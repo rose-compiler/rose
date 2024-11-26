@@ -2,12 +2,10 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_MemoryState_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
 
 #include <Rose/BinaryAnalysis/ByteOrder.h>
-#include <Combinatorics.h>                              // rose
 
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
@@ -24,7 +22,7 @@ namespace BaseSemantics {
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the
  *  Rose::BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit together.*/
-class MemoryState: public boost::enable_shared_from_this<MemoryState> {
+class MemoryState: public AddressSpace {
 public:
     /** Shared-ownership pointer. */
     typedef MemoryStatePtr Ptr;
@@ -44,6 +42,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AddressSpace);
         s & BOOST_SERIALIZATION_NVP(addrProtoval_);
         s & BOOST_SERIALIZATION_NVP(valProtoval_);
         s & BOOST_SERIALIZATION_NVP(byteOrder_);
@@ -77,13 +76,10 @@ public:
      *  although they will almost always be the same. */
     virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const = 0;
 
-    /** Virtual allocating copy constructor. Creates a new MemoryState object which is a copy of this object. */
-    virtual MemoryStatePtr clone() const = 0;
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
-    static MemoryStatePtr promote(const MemoryStatePtr&);
+    static MemoryStatePtr promote(const AddressSpacePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -128,11 +124,6 @@ public:
     void set_byteOrder(ByteOrder::Endianness);
     /** @} */
 
-    /** Merge memory states for data flow analysis.
-     *
-     *  Merges the @p other state into this state, returning true if this state changed. */
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) = 0;
-
     /** Read a value from memory.
      *
      *  Consults the memory represented by this MemoryState object and returns a semantic value. Depending on the semantic
@@ -175,52 +166,7 @@ public:
                              RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
 
-    /** Calculate a hash for this memory state.
-     *
-     *  This hashes the addresses and values stored in memory. The goal is to be able to identify when two memory states are
-     *  the "same". An analysis might be able to take shortcuts if it encounters a state that it has seen before. */
-    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const = 0;
-
-    /** Print a memory state to more than one line of output.
-     * @{ */
-    void print(std::ostream&, const std::string prefix = "") const;
-    virtual void print(std::ostream&, Formatter&) const = 0;
-    /** @} */
-
-    /** MemoryState with formatter. See with_formatter(). */
-    class WithFormatter {
-        MemoryStatePtr obj;
-        Formatter &fmt;
-    public:
-        ~WithFormatter();
-        WithFormatter() = delete;
-        WithFormatter(const MemoryStatePtr&, Formatter&);
-        void print(std::ostream&) const;
-    };
-
-    /** Used for printing memory states with formatting. The usual way to use this is:
-     * @code
-     *  MemoryStatePtr obj = ...;
-     *  Formatter fmt = ...;
-     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
-     * @endcode
-     *
-     * Since specifying a line prefix string for indentation purposes is such a common use case, the
-     * indentation can be given instead of a format, as in the following code that indents the
-     * prefixes each line of the expression with four spaces.
-     *
-     * @code
-     *  std::cout <<"Memory state:\n" <<*(obj + "    ");
-     * @endcode
-     * @{ */
-    WithFormatter with_format(Formatter&);
-    WithFormatter operator+(Formatter&);
-    WithFormatter operator+(const std::string &linePrefix);
-    /** @} */
 };
-
-std::ostream& operator<<(std::ostream&, const MemoryState&);
-std::ostream& operator<<(std::ostream&, const MemoryState::WithFormatter&);
 
 } // namespace
 } // namespace

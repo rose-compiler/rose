@@ -32,7 +32,7 @@ MemoryCellMap::MemoryCellMap(const MemoryCellMap &other)
 }
 
 MemoryCellMap::Ptr
-MemoryCellMap::promote(const MemoryState::Ptr &x) {
+MemoryCellMap::promote(const AddressSpace::Ptr &x) {
     Ptr retval = as<MemoryCellMap>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -133,7 +133,7 @@ MemoryCellMap::isAllPresent(const SValue::Ptr &address, size_t nBytes, RiscOpera
 }
 
 bool
-MemoryCellMap::merge(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellMap::merge(const AddressSpace::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     MemoryCellMap::Ptr other = as<MemoryCellMap>(other_);
     ASSERT_not_null(other);
     bool changed = false;

@@ -225,15 +225,15 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionaryPtr&) const override;
-    virtual RegisterStatePtr clone() const override;
+    virtual AddressSpacePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Dynamic pointer casts
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Run-time promotion of a base register state pointer to a RegisterStateGeneric pointer. This is a checked conversion--it
-     *  will fail if @p from does not point to a RegisterStateGeneric object. */
-    static RegisterStateGenericPtr promote(const RegisterStatePtr &from);
+    /** Run-time promotion of a base address space pointer to a RegisterStateGeneric pointer. This is a checked conversion--it will
+     *  fail if @p from does not point to a RegisterStateGeneric object. */
+    static RegisterStateGenericPtr promote(const AddressSpacePtr &from);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Object properties
@@ -303,8 +303,8 @@ public:
     virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) override;
     virtual void writeRegister(RegisterDescriptor, const SValuePtr &value, RiscOperators*) override;
     virtual void print(std::ostream&, Formatter&) const override;
-    virtual bool merge(const RegisterStatePtr &other, RiscOperators*) override;
-    virtual void hash(Combinatorics::Hasher&, RiscOperators*) const override;
+    virtual bool merge(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

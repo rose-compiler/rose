@@ -152,13 +152,13 @@ RegisterStateGeneric::create(const SValue::Ptr &protoval, const RegisterDictiona
     return instance(protoval, regdict);
 }
 
-RegisterState::Ptr
+AddressSpace::Ptr
 RegisterStateGeneric::clone() const {
-    return Ptr(new RegisterStateGeneric(*this));
+    return AddressSpace::Ptr(new RegisterStateGeneric(*this));
 }
 
 RegisterStateGeneric::Ptr
-RegisterStateGeneric::promote(const RegisterState::Ptr &from) {
+RegisterStateGeneric::promote(const AddressSpace::Ptr &from) {
     Ptr retval = as<RegisterStateGeneric>(from);
     ASSERT_not_null(retval);
     return retval;
@@ -922,8 +922,8 @@ RegisterStateGeneric::findProperties(const InputOutputPropertySet &required, con
 }
 
 bool
-RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, RiscOperators *ops) {
-    ASSERT_not_null(ops);
+RegisterStateGeneric::merge(const BaseSemantics::AddressSpace::Ptr &other_, RiscOperators*/*addrOps*/, RiscOperators *valOps) {
+    ASSERT_not_null(valOps);
     RegisterStateGeneric::Ptr other = as<RegisterStateGeneric>(other_);
     ASSERT_not_null(other);
     using Interval = Sawyer::Container::Interval<size_t>;
@@ -942,10 +942,10 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, Ris
         const RegPairs selfRegVals = overlappingRegisters(otherRegVal.desc); // copy since write (below) changes state
         for (const RegPair &selfRegVal: selfRegVals) {
             const RegisterDescriptor reg = otherRegVal.desc & selfRegVal.desc;
-            SValue::Ptr selfValue = selfRegVal.get(reg, ops);
-            SValue::Ptr otherValue = otherRegVal.get(reg, ops);
-            if (SValue::Ptr merged = selfValue->createOptionalMerge(otherValue, merger(), ops->solver()).orDefault()) {
-                writeRegister(reg, merged, ops);
+            SValue::Ptr selfValue = selfRegVal.get(reg, valOps);
+            SValue::Ptr otherValue = otherRegVal.get(reg, valOps);
+            if (SValue::Ptr merged = selfValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault()) {
+                writeRegister(reg, merged, valOps);
                 changed = true;
             }
 
@@ -958,8 +958,8 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, Ris
         for (const Interval &where: remaining.intervals()) {
             const RegisterDescriptor reg(otherRegVal.desc.majorNumber(), otherRegVal.desc.minorNumber(),
                                          where.least(), where.size());
-            SValue::Ptr otherValue = otherRegVal.get(reg, ops);
-            writeRegister(reg, otherValue, ops);
+            SValue::Ptr otherValue = otherRegVal.get(reg, valOps);
+            writeRegister(reg, otherValue, valOps);
             changed = true;
         }
     }
@@ -990,21 +990,21 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, Ris
 }
 
 void
-RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators *ops) const {
-    // This register state automatically concatenates and splits register parts as needed. For instance, it might store x86 EAX
-    // as a single 32-bit value, or two 16-bit values, or four 8-bit values, or any other combination. Some parts might even be
-    // missing, such as the high 32 bits of RAX if we ony ever wrote to the low 32 bits. This complicates hashing. We could
-    // simply hash exactly the parts that are stored, but a more useful hasher would return the same value whether a register
-    // was stored as a single piece or broken into multiple smaller pieces.
-    ASSERT_not_null(ops);
+RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators* /*addrOps*/, RiscOperators *valOps) const {
+    // This register state automatically concatenates and splits register parts as needed. For instance, it might store x86 EAX as a
+    // single 32-bit value, or two 16-bit values, or four 8-bit values, or any other combination. Some parts might even be missing,
+    // such as the high 32 bits of RAX if we ony ever wrote to the low 32 bits. This complicates hashing. We could simply hash
+    // exactly the parts that are stored, but a more useful hasher would return the same value whether a register was stored as a
+    // single piece or broken into multiple smaller pieces.
+    ASSERT_not_null(valOps);
     ASSERT_not_null(regdict);
     std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     for (RegisterDescriptor reg: regs) {
         ExtentMap parts = stored_parts(reg);
         for (const auto &node: parts) {
             RegisterDescriptor part(reg.majorNumber(), reg.minorNumber(), node.first.first(), node.first.size());
-            BaseSemantics::SValue::Ptr dflt = ops->undefined_(node.first.size());
-            BaseSemantics::SValue::Ptr value = const_cast<RegisterStateGeneric*>(this)->peekRegister(part, dflt, ops); // FIXME[Robb Matzke 2021-03-26]
+            BaseSemantics::SValue::Ptr dflt = valOps->undefined_(node.first.size());
+            BaseSemantics::SValue::Ptr value = const_cast<RegisterStateGeneric*>(this)->peekRegister(part, dflt, valOps);
             hasher.insert(part.majorNumber());
             hasher.insert(part.minorNumber());
             hasher.insert(part.offset());

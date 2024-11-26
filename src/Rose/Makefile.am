@@ -147,6 +147,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Hexdump.C							\
 	BinaryAnalysis/HotPatch.C							\
 	BinaryAnalysis/InstructionProvider.C						\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BaseSemantics.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\

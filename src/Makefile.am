@@ -412,6 +412,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionMap.h						\
 	Rose/BinaryAnalysis/InstructionProvider.h					\
 	Rose/BinaryAnalysis/InstructionSemantics.h					\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h		\

@@ -55,9 +55,9 @@ public:
     ~MemoryCellState();
 
 public:
-    /** Promote a base memory state pointer to a BaseSemantics::MemoryCellState pointer.  The memory state @p m must have a
+    /** Promote a base address space pointer to a BaseSemantics::MemoryCellState pointer.  The memory state @p m must have a
      *  BaseSemantics::MemoryCellState dynamic type. */
-    static MemoryCellStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+    static MemoryCellStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
 public:
     virtual void clear() override;

@@ -138,20 +138,20 @@ RegisterState::create(const BaseSemantics::SValue::Ptr &protoval, const Register
     return instance(protoval, regdict);
 }
 
-BaseSemantics::RegisterState::Ptr
+BaseSemantics::AddressSpace::Ptr
 RegisterState::clone() const {
     return Ptr(new RegisterState(*this));
 }
 
 RegisterState::Ptr
-RegisterState::promote(const BaseSemantics::RegisterState::Ptr &from) {
+RegisterState::promote(const BaseSemantics::AddressSpace::Ptr &from) {
     Ptr retval = as<RegisterState>(from);
     ASSERT_not_null(retval);
     return retval;
 }
 
 bool
-RegisterState::merge(const BaseSemantics::RegisterState::Ptr&, BaseSemantics::RiscOperators*) {
+RegisterState::merge(const BaseSemantics::AddressSpace::Ptr&, BaseSemantics::RiscOperators*, BaseSemantics::RiscOperators*) {
     return false;
 }
 
@@ -183,7 +183,7 @@ void
 RegisterState::updateWriteProperties(const RegisterDescriptor, const BaseSemantics::InputOutputProperty) {}
 
 void
-RegisterState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const {}
+RegisterState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*, BaseSemantics::RiscOperators*) const {}
 
 void
 RegisterState::print(std::ostream&, BaseSemantics::Formatter&) const {}
@@ -210,13 +210,13 @@ MemoryState::create(const BaseSemantics::SValuePtr &addrProtoval, const BaseSema
     return instance(addrProtoval, valProtoval);
 }
 
-BaseSemantics::MemoryState::Ptr
+BaseSemantics::AddressSpace::Ptr
 MemoryState::clone() const {
     return Ptr(new MemoryState(*this));
 }
 
 MemoryState::Ptr
-MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+MemoryState::promote(const BaseSemantics::AddressSpace::Ptr &x) {
     Ptr retval = as<MemoryState>(x);
     ASSERT_not_null(x);
     return retval;
@@ -246,7 +246,7 @@ void
 MemoryState::print(std::ostream&, BaseSemantics::Formatter&) const {}
 
 bool
-MemoryState::merge(const BaseSemantics::MemoryState::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+MemoryState::merge(const BaseSemantics::AddressSpace::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
                    BaseSemantics::RiscOperators */*valOps*/) {
     return false;
 }

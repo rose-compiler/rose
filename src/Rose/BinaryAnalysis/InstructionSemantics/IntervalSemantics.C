@@ -357,7 +357,7 @@ MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSe
     return instance(addrProtoval, valProtoval);
 }
 
-BaseSemantics::MemoryState::Ptr
+BaseSemantics::AddressSpace::Ptr
 MemoryState::clone() const {
     return MemoryState::Ptr(new MemoryState(*this));
 }

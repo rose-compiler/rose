@@ -525,14 +525,14 @@ public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override;
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual BaseSemantics::MemoryStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
      *  not have a run-time type that is a SymbolicSemantics::MemoryListState or subclass thereof. */
-    static MemoryListStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+    static MemoryListStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
@@ -660,14 +660,14 @@ public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const;
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual BaseSemantics::MemoryStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
      *  not have a run-time type that is a SymbolicSemantics::MemoryMapState or subclass thereof. */
-    static MemoryMapStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+    static MemoryMapStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from the super class (documented in the super class)

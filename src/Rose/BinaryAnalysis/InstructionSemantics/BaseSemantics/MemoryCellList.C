@@ -61,13 +61,13 @@ MemoryCellList::create(const MemoryCell::Ptr &protocell) const {
     return instance(protocell);
 }
 
-MemoryState::Ptr
+AddressSpace::Ptr
 MemoryCellList::clone() const {
-    return MemoryStatePtr(new MemoryCellList(*this));
+    return AddressSpace::Ptr(new MemoryCellList(*this));
 }
 
 MemoryCellList::Ptr
-MemoryCellList::promote(const BaseSemantics::MemoryState::Ptr &m) {
+MemoryCellList::promote(const BaseSemantics::AddressSpace::Ptr &m) {
     Ptr retval = as<MemoryCellList>(m);
     ASSERT_not_null(retval);
     return retval;
@@ -166,7 +166,7 @@ MemoryCellList::isAllPresent(const SValue::Ptr &address, size_t nBytes, RiscOper
 }
 
 bool
-MemoryCellList::merge(const MemoryState::Ptr &other, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::merge(const AddressSpace::Ptr &other, RiscOperators *addrOps, RiscOperators *valOps) {
     if (!merger() || merger()->memoryAddressesMayAlias()) {
         return mergeWithAliasing(other, addrOps, valOps);
     } else {
@@ -175,7 +175,7 @@ MemoryCellList::merge(const MemoryState::Ptr &other, RiscOperators *addrOps, Ris
 }
 
 bool
-MemoryCellList::mergeWithAliasing(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::mergeWithAliasing(const AddressSpace::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
 
@@ -278,7 +278,7 @@ MemoryCellList::mergeWithAliasing(const MemoryState::Ptr &other_, RiscOperators 
 }
 
 bool
-MemoryCellList::mergeNoAliasing(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::mergeNoAliasing(const AddressSpace::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
 

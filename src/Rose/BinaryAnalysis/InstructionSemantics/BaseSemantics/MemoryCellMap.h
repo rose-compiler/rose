@@ -76,9 +76,9 @@ private:
     MemoryCellMap& operator=(MemoryCellMap&) /*delete*/;
 
 public:
-    /** Promote a base memory state pointer to a MemoryCellMap pointer. The memory state, @p x, must have a MemoryCellMap
-     *  dynamic type. */
-    static MemoryCellMapPtr promote(const MemoryStatePtr&);
+    /** Promote a base address space pointer to a MemoryCellMap pointer. The memory state, @p x, must have a MemoryCellMap dynamic
+     *  type. */
+    static MemoryCellMapPtr promote(const AddressSpacePtr&);
 
 public:
     /** Generate a cell lookup key.
@@ -102,7 +102,7 @@ public:
 public:
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
     virtual void clear() override;
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
+    virtual bool merge(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,

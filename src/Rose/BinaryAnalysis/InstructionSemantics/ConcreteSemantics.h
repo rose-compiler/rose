@@ -196,14 +196,14 @@ public:
      *  Creates a new deep copy of this memory state. For efficiency purposes, the data buffers are not copied immediately but
      *  rather marked as copy-on-write.  However, the newly constructed memory map will have its own segments, which hold the
      *  segment names, access permissions, etc. */
-    virtual BaseSemantics::MemoryStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a concrete memory state. This is a checked cast that will fail if the specified pointer does
      *  not have a run-time type that is a ConcreteSemantics::MemoryState or subclass thereof. */
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+    static MemoryStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
@@ -226,7 +226,7 @@ public:
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) override;
 
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+    virtual bool merge(const BaseSemantics::AddressSpacePtr &other, BaseSemantics::RiscOperators *addrOps,
                        BaseSemantics::RiscOperators *valOps) override;
 
 protected:

@@ -86,6 +86,20 @@ public:
         return retval;
     }
 
+    /** Maximum possible major number. */
+    static unsigned maxMajor();
+
+    /** Maximum possible minor number. */
+    static unsigned maxMinor();
+
+    /** Maximum possible bit offset. */
+    static unsigned maxOffset();
+
+    /** Maximum possible size in bits.
+     *
+     *  Note that the offset and size cannot exceed the maximum size. */
+    static unsigned maxNBits();
+
     /** Property: Major number.
      *
      *  Each family of registers is identified by a major number. Major numbers are in the range 0 through 15, inclusive.

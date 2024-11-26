@@ -113,7 +113,7 @@ public:
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual InstructionSemantics::BaseSemantics::MemoryStatePtr
+    virtual InstructionSemantics::BaseSemantics::AddressSpacePtr
     clone() const override {
         return Ptr(new MemoryState(*this));
     }

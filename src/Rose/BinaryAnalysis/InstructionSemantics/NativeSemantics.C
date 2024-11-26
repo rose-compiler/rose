@@ -49,13 +49,13 @@ RegisterState::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const Regi
     ASSERT_not_implemented("not applicable for this class");
 }
 
-BaseSemantics::RegisterState::Ptr
+BaseSemantics::AddressSpace::Ptr
 RegisterState::clone() const {
     ASSERT_not_implemented("not applicable for this class");
 }
 
 RegisterState::Ptr
-RegisterState::promote(const BaseSemantics::RegisterState::Ptr &x) {
+RegisterState::promote(const BaseSemantics::AddressSpace::Ptr &x) {
     Ptr retval = as<RegisterState>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -80,7 +80,7 @@ RegisterState::writeRegister(RegisterDescriptor, const BaseSemantics::SValue::Pt
 }
 
 void
-RegisterState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const {
+RegisterState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*, BaseSemantics::RiscOperators*) const {
     ASSERT_not_implemented("[Robb Matzke 2021-03-26]: would require reading all registers");
 }
 
@@ -119,13 +119,13 @@ MemoryState::create(const BaseSemantics::SValue::Ptr &/*addrProtoval*/, const Ba
     ASSERT_not_implemented("not applicable for this class");
 }
 
-BaseSemantics::MemoryState::Ptr
+BaseSemantics::AddressSpace::Ptr
 MemoryState::clone() const {
     ASSERT_not_implemented("not applicable for this class");
 }
 
 MemoryState::Ptr
-MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+MemoryState::promote(const BaseSemantics::AddressSpace::Ptr &x) {
     Ptr retval = as<MemoryState>(x);
     ASSERT_not_null(retval);
     return retval;

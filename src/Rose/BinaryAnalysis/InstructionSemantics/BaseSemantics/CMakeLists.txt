@@ -1,4 +1,5 @@
 add_library(roseBinaryAnalysisInstructionSemanticsBaseSemantics OBJECT
+  AddressSpace.C								
   BaseSemantics.C
   Dispatcher.C
   Exception.C
@@ -20,6 +21,7 @@ add_library(roseBinaryAnalysisInstructionSemanticsBaseSemantics OBJECT
 add_dependencies(roseBinaryAnalysisInstructionSemanticsBaseSemantics rosetta_generated)
 
 install(FILES
+  AddressSpace.h
   BasicTypes.h
   Dispatcher.h
   Exception.h

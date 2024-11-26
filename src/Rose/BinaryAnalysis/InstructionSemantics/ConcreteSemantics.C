@@ -186,13 +186,13 @@ MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSe
     return instance(addrProtoval, valProtoval);
 }
 
-BaseSemantics::MemoryState::Ptr
+BaseSemantics::AddressSpace::Ptr
 MemoryState::clone() const {
-    return MemoryState::Ptr(new MemoryState(*this));
+    return Ptr(new MemoryState(*this));
 }
 
 MemoryState::Ptr
-MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+MemoryState::promote(const BaseSemantics::AddressSpace::Ptr &x) {
     MemoryState::Ptr retval = as<MemoryState>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -296,7 +296,7 @@ MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSema
 }
 
 bool
-MemoryState::merge(const BaseSemantics::MemoryState::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+MemoryState::merge(const BaseSemantics::AddressSpace::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
                    BaseSemantics::RiscOperators */*valOps*/) {
     throw BaseSemantics::NotImplemented("MemoryState merging for ConcreteSemantics is not supported", NULL);
 }

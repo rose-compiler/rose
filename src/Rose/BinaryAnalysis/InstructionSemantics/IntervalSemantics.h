@@ -209,7 +209,7 @@ public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override;
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
                                                  const BaseSemantics::SValuePtr &valProtoval) const override;
-    virtual BaseSemantics::MemoryStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited

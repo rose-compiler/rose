@@ -25,7 +25,7 @@ MemoryCellState::MemoryCellState(const MemoryCellState &other)
 MemoryCellState::~MemoryCellState() {}
 
 MemoryCellState::Ptr
-MemoryCellState::promote(const BaseSemantics::MemoryState::Ptr &m) {
+MemoryCellState::promote(const BaseSemantics::AddressSpace::Ptr &m) {
     Ptr retval = as<MemoryCellState>(m);
     ASSERT_not_null(retval);
     return retval;

@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_H
 
 // Includes all base semantics classes
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>

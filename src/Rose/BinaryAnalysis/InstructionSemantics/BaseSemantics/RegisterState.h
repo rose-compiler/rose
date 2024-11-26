@@ -4,11 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -27,7 +27,7 @@ namespace BaseSemantics {
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
  *  Rose::BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit together.*/
-class RegisterState: public boost::enable_shared_from_this<RegisterState> {
+class RegisterState: public AddressSpace {
 public:
     /** Shared-ownership pointer. */
     using Ptr = RegisterStatePtr;
@@ -48,6 +48,7 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         //s & merger_; -- not saved
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(AddressSpace);
         s & BOOST_SERIALIZATION_NVP(protoval_);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(regdict);
@@ -78,13 +79,10 @@ public:
      *  analysis objects in use. */
     virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict) const = 0;
 
-    /** Make a copy of this register state. */
-    virtual RegisterStatePtr clone() const = 0;
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts. No-op since this is the base class.
 public:
-    static RegisterStatePtr promote(const RegisterStatePtr&);
+    static RegisterStatePtr promote(const AddressSpacePtr&);
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,11 +128,6 @@ public:
     /** Set all registers to the zero. */
     virtual void zero() = 0;
 
-    /** Merge register states for data flow analysis.
-     *
-     *  Merges the @p other state into this state, returning true if this state changed. */
-    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) = 0;
-
     /** Read a value from a register.
      *
      *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
@@ -175,51 +168,7 @@ public:
      *  This should be called by all implementations of @ref BaseSemantics::RiscOperators::writeRegister. Depending on the
      *  domain, it usually adds the WRITE or INIT property to the bits of the rgister. */
     virtual void updateWriteProperties(RegisterDescriptor, InputOutputProperty) = 0;
-
-    /** Hash the register state.
-     *
-     *  Hashes the register state by appending its data to the specified hasher. */
-    virtual void hash(Combinatorics::Hasher&, RiscOperators*) const = 0;
-
-    /** Print the register contents. This emits one line per register and contains the register name and its value.
-     *  @{ */
-    void print(std::ostream &stream, const std::string prefix = "") const;
-    virtual void print(std::ostream&, Formatter&) const = 0;
-    /** @} */
-
-    /** RegisterState with formatter. See with_formatter(). */
-    class WithFormatter {
-        RegisterStatePtr obj;
-        Formatter &fmt;
-    public:
-        WithFormatter(const RegisterStatePtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
-        void print(std::ostream &stream) const { obj->print(stream, fmt); }
-    };
-
-    /** Used for printing register states with formatting. The usual way to use this is:
-     * @code
-     *  RegisterStatePtr obj = ...;
-     *  Formatter fmt = ...;
-     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
-     * @endcode
-     *
-     * Since specifying a line prefix string for indentation purposes is such a common use case, the
-     * indentation can be given instead of a format, as in the following code that indents the
-     * prefixes each line of the expression with four spaces.
-     *
-     * @code
-     *  std::cout <<"Register state:\n" <<*(obj + "    ");
-     * @endcode
-     * @{ */
-    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
-    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
-    WithFormatter operator+(const std::string &linePrefix);
-    /** @} */
-
 };
-
-std::ostream& operator<<(std::ostream&, const RegisterState&);
-std::ostream& operator<<(std::ostream&, const RegisterState::WithFormatter&);
 
 } // namespace
 } // namespace

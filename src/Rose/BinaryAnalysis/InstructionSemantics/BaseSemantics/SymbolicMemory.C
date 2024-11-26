@@ -30,13 +30,13 @@ SymbolicMemory::create(const SValue::Ptr &addrProtoval, const SValue::Ptr &valPr
     return instance(addrProtoval, valProtoval);
 }
 
-MemoryState::Ptr
+AddressSpace::Ptr
 SymbolicMemory::clone() const {
     return Ptr(new SymbolicMemory(*this));
 }
 
 SymbolicMemory::Ptr
-SymbolicMemory::promote(const MemoryState::Ptr &x) {
+SymbolicMemory::promote(const AddressSpace::Ptr &x) {
     Ptr retval = as<SymbolicMemory>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -105,7 +105,7 @@ SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &valu
 }
 
 bool
-SymbolicMemory::merge(const MemoryState::Ptr &other_, RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
+SymbolicMemory::merge(const AddressSpace::Ptr &other_, RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     SymbolicMemory::Ptr other = SymbolicMemory::promote(other_);
     TODO("[Robb P. Matzke 2015-08-10]");
 }

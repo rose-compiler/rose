@@ -7,16 +7,36 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+unsigned
+RegisterDescriptor::maxMajor() {
+    return 16;
+}
+
+unsigned
+RegisterDescriptor::maxMinor() {
+    return 1023;
+}
+
+unsigned
+RegisterDescriptor::maxOffset() {
+    return 511;
+}
+
+unsigned
+RegisterDescriptor::maxNBits() {
+    return 512;
+}
+
 void
 RegisterDescriptor::majorNumber(unsigned majr) {
-    ASSERT_require(majr < 16);
+    ASSERT_require(majr <= maxMajor());
     data_ &= 0x0fffffff;
     data_ |= (majr << 28);
 }
 
 void
 RegisterDescriptor::minorNumber(unsigned minr) {
-    ASSERT_require(minr < 1024);
+    ASSERT_require(minr <= maxMinor());
     data_ &= 0xf003ffff;
     data_ |= (minr << 18);
 }

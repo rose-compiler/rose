@@ -129,10 +129,11 @@ public:
     static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr&);
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
                                                    const RegisterDictionaryPtr &regdict) const override;
-    virtual BaseSemantics::RegisterStatePtr clone() const override;
-    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from);
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
+    static RegisterStatePtr promote(const BaseSemantics::AddressSpacePtr &from);
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr&, BaseSemantics::RiscOperators*) override;
+    virtual bool merge(const BaseSemantics::AddressSpacePtr&, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) override;
     virtual void clear() override;
     virtual void zero() override;
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &/*dflt*/,
@@ -142,7 +143,7 @@ public:
     virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr&, BaseSemantics::RiscOperators*) override;
     virtual void updateReadProperties(RegisterDescriptor) override;
     virtual void updateWriteProperties(RegisterDescriptor, BaseSemantics::InputOutputProperty) override;
-    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override;
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*, BaseSemantics::RiscOperators*) const override;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 };
 
@@ -178,10 +179,10 @@ public:
 public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
                                                  const BaseSemantics::SValuePtr &valProtoval) const override;
-    virtual BaseSemantics::MemoryStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
 public:
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+    static MemoryStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
 public:
     virtual void clear() override {}
@@ -203,8 +204,8 @@ public:
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
-                       BaseSemantics::RiscOperators */*valOps*/) override;
+    virtual bool merge(const BaseSemantics::AddressSpacePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) override;
 };
 
 

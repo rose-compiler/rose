@@ -183,7 +183,8 @@ public:
         return retval;
     }
 
-    virtual bool merge(const BaseSemantics::State::Ptr &other_, BaseSemantics::RiscOperators *ops) override {
+    virtual bool merge(const BaseSemantics::State::Ptr &other_, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) override {
         bool changed = false;
         Ptr other = State::promote(other_);
         for (const MemoryTransferMap::Node &otherNode: other->memoryTransfers_.nodes()) {
@@ -192,7 +193,7 @@ public:
                     changed = true;
             }
         }
-        if (Super::merge(other, ops))
+        if (Super::merge(other, addrOps, valOps))
             changed = true;
         return changed;
     }

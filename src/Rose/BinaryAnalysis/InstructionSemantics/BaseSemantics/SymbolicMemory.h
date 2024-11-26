@@ -48,12 +48,12 @@ public:
     virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override;
 
     // documented in base class
-    virtual MemoryStatePtr clone() const override;
+    virtual AddressSpacePtr clone() const override;
 
     /** Convert pointer to a SymbolicMemory pointer.
      *
      *  Converts @p x to a SymbolicMemoryPtr and asserts that it is non-null. */
-    static SymbolicMemoryPtr promote(const MemoryStatePtr&);
+    static SymbolicMemoryPtr promote(const AddressSpacePtr&);
 
 public:
     /** Property: the symbolic expression for the memory.
@@ -64,7 +64,7 @@ public:
     /** @} */
 
 public:
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
+    virtual bool merge(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
 
     virtual void clear() override;
 

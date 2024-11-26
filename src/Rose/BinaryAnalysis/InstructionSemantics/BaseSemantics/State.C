@@ -2,6 +2,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 
+#include <Rose/Affirm.h>
+#include <Rose/As.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
@@ -28,29 +31,38 @@ operator<<(std::ostream &o, const State::WithFormatter &x) {
 
 State::State() {}
 
-State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory, const RegisterState::Ptr &interrupts)
-    : registers_(registers), memory_(memory), interrupts_(interrupts) {
+State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory, const RegisterState::Ptr &interrupts) {
+    protoval_ = notnull(notnull(registers)->protoval());
+
     ASSERT_not_null(registers);
+    ASSERT_require(registers->purpose() == AddressSpace::Purpose::REGISTERS);
+    insertAddressSpace(registers);
+
     ASSERT_not_null(memory);
+    ASSERT_require(memory->purpose() == AddressSpace::Purpose::MEMORY);
+    insertAddressSpace(memory);
+
     ASSERT_not_null(interrupts);
-    protoval_ = registers->protoval();
-    ASSERT_not_null(protoval_);
+    ASSERT_require(interrupts->purpose() == AddressSpace::Purpose::INTERRUPTS);
+    insertAddressSpace(interrupts);
 }
 
-State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory)
-    : registers_(registers), memory_(memory) {
+State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory) {
+    protoval_ = notnull(notnull(registers)->protoval());
+
     ASSERT_not_null(registers);
+    ASSERT_require(registers->purpose() == AddressSpace::Purpose::REGISTERS);
+    insertAddressSpace(registers);
+
     ASSERT_not_null(memory);
-    protoval_ = registers->protoval();
-    ASSERT_not_null(protoval_);
+    ASSERT_require(memory->purpose() == AddressSpace::Purpose::MEMORY);
+    insertAddressSpace(memory);
 }
 
 State::State(const State &other)
     : boost::enable_shared_from_this<State>(other), protoval_(other.protoval_) {
-    registers_ = other.registers_->clone();
-    memory_ = other.memory_->clone();
-    if (other.interrupts_)
-        interrupts_ = other.interrupts_->clone();
+    for (const AddressSpace::Ptr &space: other.addressSpaces())
+        insertAddressSpace(space->clone());
 }
 
 State::~State() {}
@@ -93,44 +105,167 @@ State::protoval() const {
 }
 
 void
+State::insertAddressSpace(const AddressSpace::Ptr &space) {
+    ASSERT_not_null(space);
+    ASSERT_require2(std::find(addressSpaces_.begin(), addressSpaces_.end(), space) == addressSpaces_.end(),
+                    "an address space can only appear once per semantic state");
+
+    // Some address spaces need to be a particular type (at least for now)
+    ASSERT_require(space->purpose() != AddressSpace::Purpose::REGISTERS || as<RegisterState>(space));
+    ASSERT_require(space->purpose() != AddressSpace::Purpose::MEMORY || as<MemoryState>(space));
+    ASSERT_require(space->purpose() != AddressSpace::Purpose::INTERRUPTS || as<RegisterState>(space));
+
+    addressSpaces_.push_back(space);
+}
+
+const std::vector<AddressSpace::Ptr>&
+State::addressSpaces() const {
+    return addressSpaces_;
+}
+
+AddressSpace::Ptr
+State::findFirstAddressSpace(const AddressSpace::Purpose purpose) const {
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == purpose)
+            return space;
+    }
+    return {};
+}
+
+AddressSpace::Ptr
+State::findFirstAddressSpace(const AddressSpace::Purpose purpose, const std::string &name) const {
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == purpose && space->name() == name)
+            return space;
+    }
+    return {};
+}
+
+SValue::Ptr
+State::read(const AddressSpace::Ptr &space, const AddressSpaceAddress &addr, const SValue::Ptr &dflt,
+            RiscOperators &addrOps, RiscOperators &valOps) {
+    ASSERT_not_null(space);
+    ASSERT_forbid(addr.isEmpty());
+    ASSERT_not_null(dflt);
+    ASSERT_require(dflt->nBits() > 0);
+    return space->read(addr, dflt, addrOps, valOps);
+}
+
+SValue::Ptr
+State::peek(const AddressSpace::Ptr &space, const AddressSpaceAddress &addr, const SValue::Ptr &dflt,
+            RiscOperators &addrOps, RiscOperators &valOps) {
+    ASSERT_not_null(space);
+    ASSERT_forbid(addr.isEmpty());
+    ASSERT_not_null(dflt);
+    ASSERT_require(dflt->nBits() > 0);
+    return space->peek(addr, dflt, addrOps, valOps);
+}
+
+void
+State::write(const AddressSpace::Ptr &space, const AddressSpaceAddress &addr, const SValue::Ptr &dflt,
+             RiscOperators &addrOps, RiscOperators &valOps) {
+    ASSERT_not_null(space);
+    ASSERT_forbid(addr.isEmpty());
+    ASSERT_not_null(dflt);
+    ASSERT_require(dflt->nBits() > 0);
+    space->write(addr, dflt, addrOps, valOps);
+}
+
+bool
+State::merge(const State::Ptr &other, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(other);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+
+    bool changed = false;
+    for (const AddressSpace::Ptr &otherSpace: other->addressSpaces()) {
+        if (const AddressSpace::Ptr &thisSpace = findFirstAddressSpace(otherSpace->purpose(), otherSpace->name())) {
+            if (thisSpace->merge(otherSpace, addrOps, valOps))
+                changed = true;
+        } else {
+            insertAddressSpace(otherSpace->clone());
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+void
 State::clear() {
-    registers_->clear();
-    memory_->clear();
+    for (const AddressSpace::Ptr &space: addressSpaces())
+        space->clear();
 }
 
 void
 State::zeroRegisters() {
-    registers_->zero();
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == AddressSpace::Purpose::REGISTERS) {
+            if (auto regs = as<RegisterState>(space))
+                regs->zero();
+        }
+    }
 }
 
 void
 State::clearMemory() {
-    memory_->clear();
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == AddressSpace::Purpose::MEMORY) {
+            if (auto mem = as<MemoryState>(space))
+                space->clear();
+        }
+    }
 }
 
 RegisterState::Ptr
 State::registerState() const {
-    return registers_;
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == AddressSpace::Purpose::REGISTERS) {
+            if (auto retval = as<RegisterState>(space))
+                return retval;
+        }
+    }
+    return {};
 }
 
 MemoryState::Ptr
 State::memoryState() const {
-    return memory_;
-}
-
-bool
-State::hasInterruptState() const {
-    return interrupts_ != nullptr;
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == AddressSpace::Purpose::MEMORY) {
+            if (auto retval = as<MemoryState>(space))
+                return retval;
+        }
+    }
+    return {};
 }
 
 RegisterState::Ptr
 State::interruptState() const {
-    return interrupts_;
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == AddressSpace::Purpose::INTERRUPTS) {
+            if (auto retval = as<RegisterState>(space))
+                return retval;
+        }
+    }
+    return {};
 }
 
 void
 State::interruptState(const RegisterState::Ptr &x) {
-    interrupts_ = x;
+    for (auto space = addressSpaces_.begin(); space != addressSpaces_.end(); ++space) {
+        if ((*space)->purpose() == AddressSpace::Purpose::INTERRUPTS) {
+            if (x) {
+                *space = x;
+            } else {
+                addressSpaces_.erase(space);
+            }
+            return;
+        }
+    }
+}
+
+bool
+State::hasInterruptState() const {
+    return interruptState() != nullptr;
 }
 
 SValue::Ptr
@@ -138,7 +273,7 @@ State::readRegister(RegisterDescriptor desc, const SValue::Ptr &dflt, RiscOperat
     ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
-    return registers_->readRegister(desc, dflt, ops);
+    return notnull(registerState())->readRegister(desc, dflt, ops);
 }
 
 SValue::Ptr
@@ -146,7 +281,7 @@ State::peekRegister(RegisterDescriptor desc, const SValue::Ptr &dflt, RiscOperat
     ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
-    return registers_->peekRegister(desc, dflt, ops);
+    return notnull(registerState())->peekRegister(desc, dflt, ops);
 }
 
 void
@@ -154,7 +289,7 @@ State::writeRegister(RegisterDescriptor desc, const SValue::Ptr &value, RiscOper
     ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
-    registers_->writeRegister(desc, value, ops);
+    notnull(registerState())->writeRegister(desc, value, ops);
 }
 
 SValue::Ptr
@@ -163,7 +298,7 @@ State::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOpera
     ASSERT_not_null(dflt);
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
-    return memory_->readMemory(address, dflt, addrOps, valOps);
+    return notnull(memoryState())->readMemory(address, dflt, addrOps, valOps);
 }
 
 SValue::Ptr
@@ -172,7 +307,7 @@ State::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOpera
     ASSERT_not_null(dflt);
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
-    return memory_->peekMemory(address, dflt, addrOps, valOps);
+    return notnull(memoryState())->peekMemory(address, dflt, addrOps, valOps);
 }
 
 void
@@ -181,15 +316,15 @@ State::writeMemory(const SValue::Ptr &addr, const SValue::Ptr &value, RiscOperat
     ASSERT_not_null(value);
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
-    memory_->writeMemory(addr, value, addrOps, valOps);
+    notnull(memoryState())->writeMemory(addr, value, addrOps, valOps);
 }
 
 SValue::Ptr
 State::readInterrupt(unsigned major, unsigned minor, const SValue::Ptr &dflt, RiscOperators *ops) {
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
-    if (interrupts_) {
-        return interrupts_->readRegister(RegisterDescriptor(major, minor, 0, 1), dflt, ops);
+    if (auto interrupts = interruptState()) {
+        return interrupts->readRegister(RegisterDescriptor(major, minor, 0, 1), dflt, ops);
     } else {
         return {};
     }
@@ -199,8 +334,8 @@ SValue::Ptr
 State::peekInterrupt(unsigned major, unsigned minor, const SValue::Ptr &dflt, RiscOperators *ops) {
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
-    if (interrupts_) {
-        return interrupts_->peekRegister(RegisterDescriptor(major, minor, 0, 1), dflt, ops);
+    if (auto interrupts = interruptState()) {
+        return interrupts->peekRegister(RegisterDescriptor(major, minor, 0, 1), dflt, ops);
     } else {
         return {};
     }
@@ -210,8 +345,8 @@ bool
 State::writeInterrupt(unsigned major, unsigned minor, const SValue::Ptr &value, RiscOperators *ops) {
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
-    if (interrupts_) {
-        interrupts_->writeRegister(RegisterDescriptor(major, minor, 0, 1), value, ops);
+    if (auto interrupts = interruptState()) {
+        interrupts->writeRegister(RegisterDescriptor(major, minor, 0, 1), value, ops);
         return true;
     } else {
         return false;
@@ -263,7 +398,7 @@ State::printRegisters(std::ostream &stream, const std::string &prefix) {
 
 void
 State::printRegisters(std::ostream &stream, Formatter &fmt) const {
-    registers_->print(stream, fmt);
+    notnull(registerState())->print(stream, fmt);
 }
 
 void
@@ -275,7 +410,7 @@ State::printMemory(std::ostream &stream, const std::string &prefix) const {
 
 void
 State::printMemory(std::ostream &stream, Formatter &fmt) const {
-    memory_->print(stream, fmt);
+    notnull(memoryState())->print(stream, fmt);
 }
 
 void
@@ -287,23 +422,14 @@ State::printInterrupts(std::ostream &stream, const std::string &prefix) {
 
 void
 State::printInterrupts(std::ostream &stream, Formatter &fmt) const {
-    if (interrupts_)
-        interrupts_->print(stream, fmt);
-}
-
-bool
-State::merge(const State::Ptr &other, RiscOperators *ops) {
-    bool memoryChanged = memoryState()->merge(other->memoryState(), ops, ops);
-    bool registersChanged = registerState()->merge(other->registerState(), ops);
-    bool interruptsChanged = interruptState() && other->interruptState() && interruptState()->merge(other->interruptState(), ops);
-    return memoryChanged || registersChanged || interruptsChanged;
+    if (auto interrupts = interruptState())
+        interrupts->print(stream, fmt);
 }
 
 void
 State::hash(Combinatorics::Hasher &hasher, RiscOperators *addrOps, RiscOperators *valOps) const {
-    registerState()->hash(hasher, valOps);
-    memoryState()->hash(hasher, addrOps, valOps);
-    interruptState()->hash(hasher, valOps);
+    for (const AddressSpace::Ptr &space: addressSpaces())
+        space->hash(hasher, addrOps, valOps);
 }
 
 void
@@ -314,14 +440,13 @@ State::print(std::ostream &stream, const std::string &prefix) const {
 }
 
 void
-State::print(std::ostream &stream, Formatter &fmt) const
-{
+State::print(std::ostream &stream, Formatter &fmt) const {
     std::string prefix = fmt.get_line_prefix();
     Indent indent(fmt);
-    stream <<prefix <<"registers:\n" <<(*registers_+fmt)
-           <<prefix <<"memory:\n" <<(*memory_+fmt);
-    if (interrupts_)
-        stream <<prefix <<"interrupts:\n" <<(*interrupts_+fmt);
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        stream <<prefix <<space->printableName() <<":\n";
+        stream <<prefix <<(*space + fmt);
+    }
 }
 
 std::string

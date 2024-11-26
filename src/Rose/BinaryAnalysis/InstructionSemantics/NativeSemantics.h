@@ -78,13 +78,13 @@ public:
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
                                                    const RegisterDictionaryPtr&) const override;
 
-    virtual BaseSemantics::RegisterStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
     //----------------------------------------
     // Dynamic pointer casts
     //----------------------------------------
 public:
-    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr&);
+    static RegisterStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
     //----------------------------------------
     // Additional properties
@@ -103,7 +103,8 @@ public:
         TODO("[Robb Matzke 2019-09-05]");               // set all registers to zero
     }
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &/*other*/, BaseSemantics::RiscOperators*) override {
+    virtual bool merge(const BaseSemantics::AddressSpacePtr&, BaseSemantics::RiscOperators*,
+                       BaseSemantics::RiscOperators*) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
@@ -121,7 +122,7 @@ public:
     virtual void updateReadProperties(RegisterDescriptor) override {}
     virtual void updateWriteProperties(RegisterDescriptor, BaseSemantics::InputOutputProperty) override {}
 
-    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override;
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*, BaseSemantics::RiscOperators*) const override;
 
     virtual void print(std::ostream&, Formatter&) const override;
 };
@@ -176,13 +177,13 @@ public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
                                                  const BaseSemantics::SValuePtr &valProtoval) const override;
 
-    virtual BaseSemantics::MemoryStatePtr clone() const override;
+    virtual BaseSemantics::AddressSpacePtr clone() const override;
 
     //----------------------------------------
     // Dynamic pointer casts
     //----------------------------------------
 public:
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr&);
+    static MemoryStatePtr promote(const BaseSemantics::AddressSpacePtr&);
 
     //----------------------------------------
     // Additional properties
@@ -197,7 +198,7 @@ public:
 public:
     virtual void clear() override {}
 
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+    virtual bool merge(const BaseSemantics::AddressSpacePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
                        BaseSemantics::RiscOperators */*valOps*/) override {
         ASSERT_not_implemented("not applicable for this class");
     }

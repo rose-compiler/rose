@@ -99,20 +99,20 @@ public:
     /** Virtual allocating constructor. */
     virtual MemoryStatePtr create(const MemoryCellPtr &protocell) const;
 
-    virtual MemoryStatePtr clone() const override;
+    virtual AddressSpacePtr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
-    /** Promote a base memory state pointer to a BaseSemantics::MemoryCellList pointer. The memory state @p m must have
-     *  a BaseSemantics::MemoryCellList dynamic type. */
-    static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m);
+    /** Promote a base address space pointer to a BaseSemantics::MemoryCellList pointer. The memory state @p m must have a
+     *  BaseSemantics::MemoryCellList dynamic type. */
+    static MemoryCellListPtr promote(const BaseSemantics::AddressSpacePtr &m);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
     virtual void clear() override;
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
+    virtual bool merge(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual std::vector<MemoryCellPtr> matchingCells(MemoryCell::Predicate&) const override;
     virtual std::vector<MemoryCellPtr> leadingCells(MemoryCell::Predicate&) const override;
     virtual void eraseMatchingCells(MemoryCell::Predicate&) override;
@@ -154,13 +154,13 @@ public:
      *
      *  The @p other state is merged into this state without considering any aliasing. Returns true if this state changed,
      *  false otherwise. */
-    bool mergeNoAliasing(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
+    bool mergeNoAliasing(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
 
     /** Merge two states with aliasing.
      *
      *  The @p other state is merged into this state while considering any aliasing. Returns true if this state changed,
      *  false otherwise. */
-    bool mergeWithAliasing(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
+    bool mergeWithAliasing(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
 
     /** Predicate to determine whether all bytes are present.
      *

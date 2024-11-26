@@ -236,7 +236,7 @@ public:
                 return true;
             } else {
                 ops_->currentState(src);
-                return dst->merge(src, ops_.get());
+                return dst->merge(src, ops_.get(), ops_.get());
             }
         }
     };

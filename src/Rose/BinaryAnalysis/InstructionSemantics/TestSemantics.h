@@ -201,7 +201,7 @@ public:
         BaseSemantics::SValuePtr rs3v1 = rs3->protoval();
         check_sval_type(rs3v1, "RegisterState::protoval() after create()");
 
-        BaseSemantics::RegisterStatePtr rs4 = rs1->clone();
+        BaseSemantics::RegisterStatePtr rs4 = as<BaseSemantics::RegisterState>(rs1->clone());
         check_type<RegisterStatePtr>(rs4, "clone()");
         require(rs4 != rs1, "RegisterState::clone() must return a new object");
         require(rs4->registerDictionary()==rs1->registerDictionary(),
@@ -232,7 +232,7 @@ public:
         BaseSemantics::SValuePtr ms2v2 = ms2->get_val_protoval();
         check_sval_type(ms2v2, "MemoryState::get_val_protoval() after create");
 
-        BaseSemantics::MemoryStatePtr ms3 = ms1->clone();
+        BaseSemantics::MemoryStatePtr ms3 = as<MemoryState>(ms1->clone());
         require(ms3 != ms1, "MemoryState::clone must return a new state");
         check_type<MemoryStatePtr>(ms3, "MemoryState::clone()");
         BaseSemantics::SValuePtr ms3v1 = ms3->get_addr_protoval();
