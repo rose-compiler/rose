@@ -24,7 +24,7 @@ class AstNodePtr {
   AstNodePtr(BaseType* _repr=0) : repr_(_repr), nodetype_(SpecialAstType::SG_AST) 
     { if (_repr == 0) nodetype_ = SpecialAstType::NULL_AST;  }
   AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), nodetype_(that.nodetype_) {}
-  AstNodePtr(SpecialAstType t) : nodetype_(t), repr_(0) {
+  AstNodePtr(SpecialAstType t) : repr_(0), nodetype_(t) {
       switch (t) {
        case SpecialAstType::UNKNOWN_AST : 
        case SpecialAstType::NULL_AST : 
@@ -69,7 +69,7 @@ class AstNodeType {
   AstNodeType() : repr_(0), nodetype_(SpecialAstType::NULL_TYPE) { }
   AstNodeType(BaseType* repr) : repr_(repr), nodetype_(SpecialAstType::SG_TYPE) 
     { if (repr_ == 0) nodetype_ = SpecialAstType::NULL_TYPE; }
-  AstNodeType(AstNodeType::SpecialAstType t) : nodetype_(t), repr_(0) {
+  AstNodeType(AstNodeType::SpecialAstType t) : repr_(0), nodetype_(t) {
       switch (t) {
        case SpecialAstType::UNKNOWN_TYPE : 
        case SpecialAstType::NULL_TYPE : 
