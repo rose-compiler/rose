@@ -94,7 +94,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       return true;
    }
    else if (fa.IsStatement(s)) {
-      DebugLocalInfoCollect([&s]() { return "previsiting cur statement " + AstInterface::AstToString(s); }); 
+      DebugLocalInfoCollect([&s]() { return "previsiting cur statement " + AstInterface::AstToString(s); });
       curstmt = AstNodePtrImpl(s).get_ptr();
    }
    else  {
@@ -298,7 +298,7 @@ class CollectModRefWrap : public CollectReadRefWrap<AstNodePtr>
 
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
-AppendVariableDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init)
+AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init)
     {
      DebugLocalInfoCollect([&variable,&var_init](){ return "appending var decl " + AstInterface::AstToString(variable) + " = " + AstInterface::AstToString(var_init); });
      AstNodeType vartype;
@@ -357,14 +357,14 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 }
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
-AppendMemoryAllocate( AstInterface& fa, const AstNodePtr& s) {
+AppendMemoryAllocate( AstInterface& /* fa */, const AstNodePtr& s) {
    if (allocate_collect != 0 && AstInterface::IsMemoryAllocation(s)) {
       (*allocate_collect)(s, curstmt);
    }
 }
 template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
-AppendMemoryFree( AstInterface& fa, const AstNodePtr& s) {
+AppendMemoryFree( AstInterface& /* fa */, const AstNodePtr& s) {
    if (free_collect != 0) {
       (*free_collect)(s, curstmt);
    } else if (modcollect != 0) {
