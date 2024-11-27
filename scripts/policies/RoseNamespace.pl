@@ -156,17 +156,18 @@ my @policies = (
         'All #include directives MUST use angle brackets instead of quotes.',
 
         reason =>
-        'Although not stated in any C or C++ language standard, many compilers
-        treat the two forms of #include differently, such as adding an implicit
-        search path (e.g., "-I."). Not only would search paths be inconsistently
-        applied for ROSE headers that are included by a combination of angle
-        brackets and quotes, but the quotes may cause the compiler to look for
-        ROSE header files from the user\'s current working directory (in
-        addition to the ROSE installation directory) which is always incorrect
-        and could result in finding a user\'s header file instead of a ROSE
-        header file (although this is mostly of concern when a header file is
-        included using only its base name and the base name is a common name
-        like "version.h", "utility.h", "tree.h", "exception.h", etc.'
+	'The #include search paths are implementation defined. The standard
+	says that the quoted variety does extra things compared to the angle
+	bracket variety. C++ compilers do an assortment of extra things for the
+	quoted version, some of which are quite compilicated (e.g., MSVC).
+        A side effect of requiring bracket-includes is that we can check at
+	compile time that ROSE headers always include other ROSE headers by
+ 	using file paths that are relative to the installed "include" directory.
+	That is, we want to include Rose/BinaryAnalysis/Architecture/Powerpc.h
+	instead of Powerpc.h, or ../Powerpc.h, or Architecture/Powerpc.h, etc.
+	The former makes it clear to readers that Powerpc.h is a ROSE header
+	that defines something in the Rose::BinaryAnalysis::Architecture
+	namespace.'
     },
 
     #------------------------------------------------------------------------
