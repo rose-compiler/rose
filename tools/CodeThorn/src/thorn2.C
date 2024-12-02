@@ -323,6 +323,8 @@ struct Parameters
   std::string txtfile_vbaseclass      = opt_none;
   int         numCharsOfOriginalName  = -1;
   bool        withOverridden          = false;
+  bool        memoryPoolTraversal     = false;
+  bool        checkTraversalsFindings = false;
 
   static const std::string dot_output;
   static const std::string txt_vtable;
@@ -332,6 +334,8 @@ struct Parameters
   static const std::string txt_vbaseclass;
   static const std::string name_encoding;
   static const std::string vfun_overridden;
+  static const std::string trav_memorypool;
+  static const std::string chk_traversals;
 
   static const std::string opt_none;
 };
@@ -344,6 +348,8 @@ const std::string Parameters::txt_vfun("virtual_functions");
 const std::string Parameters::txt_vbaseclass("virtual_bases_txt");
 const std::string Parameters::name_encoding("original_name");
 const std::string Parameters::vfun_overridden("with_overriden");
+const std::string Parameters::trav_memorypool("from_memorypool");
+const std::string Parameters::chk_traversals("check_traversals");
 const std::string Parameters::opt_none("");
 
 
@@ -400,6 +406,14 @@ struct Acuity
       acuity.insert(scl::Switch(Parameters::vfun_overridden, 'o')
             .intrinsicValue(true, params.withOverridden)
             .doc("lists all overriding functions in derived classes."));
+
+      acuity.insert(scl::Switch(Parameters::trav_memorypool, 'm')
+            .intrinsicValue(true, params.memoryPoolTraversal)
+            .doc("obtain classes through memory pool traversal."));
+
+      acuity.insert(scl::Switch(Parameters::chk_traversals)
+            .intrinsicValue(true, params.checkTraversalsFindings)
+            .doc("computes the difference between the two supported class extraction methods."));
 
       scl::ParserResult cmdline = p.with(acuity).parse(args).apply();
 
@@ -480,6 +494,70 @@ struct Acuity
                                const ct::AnalysesTuple& analyses
                              );
 
+    ct::AnalysesTuple
+    invokeClassAndCastAnalyses(SgProject& n)
+    {
+      if (!params.memoryPoolTraversal)
+        return ct::analyzeClassesAndCasts(&n);
+
+      logInfo() << "Using memory pool traversal; no class cast analysis." << std::endl;
+      return { ct::analyzeClassesFromMemoryPool(), ct::CastAnalysis{} };
+    }
+
+    void printClassesDifferenceFoundByTraversal(SgProject& n)
+    {
+      using ClassSets = std::set<ClassKeyType>;
+
+      if (!params.checkTraversalsFindings) return;
+
+      ct::ClassAnalysis fromAst  = ct::analyzeClasses(&n);
+      ct::ClassAnalysis fromPool = ct::analyzeClassesFromMemoryPool();
+
+      ClassSets         astClasses;
+      ClassSets         poolClasses;
+      auto              extractClass =
+          [](ct::ClassAnalysis::value_type& el) -> const SgClassDefinition*
+          {
+            return el.first;
+          };
+
+      std::transform( fromAst.begin(),  fromAst.end(),
+                      std::inserter(astClasses, astClasses.begin()),
+                      extractClass
+                    );
+      std::transform( fromPool.begin(), fromPool.end(),
+                      std::inserter(poolClasses, poolClasses.begin()),
+                      extractClass
+                    );
+
+      ct::ClassNameFn           nameClasses = ct::RoseCompatibilityBridge{}.classNomenclator();
+      std::vector<ClassKeyType> diff;
+
+      std::set_difference( astClasses.begin(),  astClasses.end(),
+                           poolClasses.begin(), poolClasses.end(),
+                           std::back_inserter(diff)
+                         );
+
+      if (!diff.empty())
+        logWarn() << "The following classes are not found by the pool traversal: ";
+
+      for (ClassKeyType key : diff)
+        logWarn() << "\n  - " << nameClasses(key) << std::endl;
+
+      diff.clear();
+
+      std::set_difference( poolClasses.begin(), poolClasses.end(),
+                           astClasses.begin(),  astClasses.end(),
+                           std::back_inserter(diff)
+                         );
+
+      if (!diff.empty())
+        logWarn() << "The following classes are not found by the AST traversal: ";
+
+      for (ClassKeyType key : diff)
+        logWarn() << "\n  - " << nameClasses(key) << std::endl;
+    }
+
     // legacy interface
     void process(SgProject& project, ct::VariableIdMapping&, const ct::FunctionIdMapping&)
     {
@@ -493,9 +571,12 @@ struct Acuity
                 << " - " << params.txtfile_layout
                 << std::endl;
 
+      printClassesDifferenceFoundByTraversal(project);
+
       logInfo() << "getting all classes.. " << std::endl;
       ct::RoseCompatibilityBridge compatLayer;
-      ct::AnalysesTuple   analyses = ct::analyzeClassesAndCasts(compatLayer, &project);
+      ct::AnalysesTuple   analyses = invokeClassAndCastAnalyses(project);
+
       const ct::ClassAnalysis& allClasses = analyses.classAnalysis();
       const int           numClasses = allClasses.size();
       logInfo() << "getting all (" << numClasses << ") structs done. " << std::endl;

@@ -117,6 +117,9 @@ class RoseCompatibilityBridge
     /// extracts class and cast information under the root
     void extractFromProject(ClassAnalysis&, CastAnalysis&, ASTRootType) const;
 
+    /// extracts class information from the memory pool
+    void extractFromMemoryPool(ClassAnalysis&) const;
+
     /// extracts all classes and base classes of \p n and stores
     ///   the extracted data in \p n.
     void extractClassAndBaseClasses(ClassAnalysis& all, ClassKeyType n) const;
@@ -177,7 +180,7 @@ std::string typeNameOf(ClassKeyType key);
 /// \param  key the class key (SgClassDefinition*)
 /// \return a string representation of the templated ancestor (if found)
 boost::optional<std::string>
-hasTemplateAncestor(ClassKeyType key);
+missingDiagnostics(ClassKeyType key);
 
 
 /// calls the callback function \p fn(derived, base, isvirtual)

@@ -17,8 +17,6 @@
 namespace si = SageInterface;
 namespace ct = CodeThorn;
 
-using namespace CodeThorn;
-
 namespace
 {
   static constexpr bool firstDecisiveComparison = false; // syntactic sugar tag
@@ -53,19 +51,29 @@ namespace
   {
     return dcl.get_functionModifier().isPureVirtual();;
   }
-  bool isPureVirtual(FunctionKeyType fn)
+
+  bool isPureVirtual(ct::FunctionKeyType fn)
   {
     return isPureVirtual(SG_DEREF(fn));
   }
 
-  std::string functionName(FunctionKeyType fn)
+  std::string functionName(ct::FunctionKeyType fn)
   {
     return SG_DEREF(fn).get_name();
   }
 
-  const SgFunctionType& functionType(FunctionKeyType fn)
+  const SgFunctionType& functionType(ct::FunctionKeyType fn)
   {
     return SG_DEREF(SG_DEREF(fn).get_type());
+  }
+
+  bool isSecondaryClassDefinition(const SgClassDefinition& n)
+  {
+    SgClassDeclaration&     decl   = SG_DEREF(n.get_declaration());
+    SgDeclarationStatement* defdcl = decl.get_definingDeclaration();
+    SgClassDeclaration&     clsdef = SG_DEREF(isSgClassDeclaration(defdcl));
+
+    return &n != clsdef.get_definition();
   }
 
   struct NodeCollector : ExcludeTemplates
@@ -89,12 +97,8 @@ namespace
       // classes
       void handle(SgClassDefinition& n)
       {
-        SgClassDeclaration&     decl   = SG_DEREF(n.get_declaration());
-        SgDeclarationStatement* defdcl = decl.get_definingDeclaration();
-        SgClassDeclaration&     clsdef = SG_DEREF(isSgClassDeclaration(defdcl));
-
-        // exclude secondary declarations
-        if (clsdef.get_definition() != &n)
+        // exclude secondary definitions (AST merge?)
+        if (isSecondaryClassDefinition(n))
           return;
 
         auto emplaced = allClasses->emplace(&n, ct::ClassData{});
@@ -167,6 +171,111 @@ namespace
 
     sg::traverseChildren(this->withClass(cls), n);
   }
+
+  //
+  // memory pool traversal
+
+  struct CollectClassesFromMemoryPool : ROSE_VisitTraversal
+  {
+      explicit
+      CollectClassesFromMemoryPool(ct::ClassAnalysis& classes)
+      : allClasses(classes)
+      {}
+
+      bool underTemplatedAncestor(SgNode* n)
+      {
+        const bool isRegular  = (  (n == nullptr)
+                                || isSgGlobal(n)
+                                );
+
+        if (isRegular) return false;
+
+        const bool isTemplate = (  isSgTemplateClassDeclaration(n)
+                                || isSgTemplateFunctionDeclaration(n)
+                                || isSgTemplateMemberFunctionDeclaration(n)
+                                );
+
+        if (isTemplate) return true;
+
+        auto res = templatedAncestor.emplace(std::make_pair(n, true));
+
+        if (!res.second) return res.first->second;
+
+        const bool underTemplate = underTemplatedAncestor(n->get_parent());
+
+        res.first->second = underTemplate;
+        return underTemplate;
+      }
+
+      // Required traversal function
+      void visit (SgNode* node) override;
+
+      //~ ~ResetDefinitionsInNonDefiningClassDeclarationsOnMemoryPool() {}
+
+    private:
+      ct::ClassAnalysis&      allClasses;
+      std::map<SgNode*, bool> templatedAncestor;
+  };
+
+  void CollectClassesFromMemoryPool::visit (SgNode* node)
+  {
+    // For now we just do this for the SgClassDeclaration
+    SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
+    if (classDeclaration == nullptr) return;
+    if (underTemplatedAncestor(classDeclaration)) return;
+
+    SgClassDefinition* classDef = classDeclaration->get_definition();
+    if (classDef == nullptr) return;
+
+    auto emplaced = allClasses.emplace(classDef, ct::ClassData{});
+
+    ASSERT_require(emplaced.second);
+    emplaced.first->second.abstractClass(classDef->get_isAbstract());
+  }
+
+
+  void
+  collectMembers(ct::ClassAnalysis& classes)
+  {
+    ct::RoseCompatibilityBridge rcb;
+
+    for (ct::ClassAnalysis::value_type& entry : classes)
+    {
+      sg::NotNull<const SgClassDefinition> clsdef = entry.first;
+
+      for (SgDeclarationStatement* mem : clsdef->get_members())
+      {
+        if (SgMemberFunctionDeclaration* memfun = isSgMemberFunctionDeclaration(mem))
+        {
+          if (isVirtual(*memfun))
+            entry.second.virtualFunctions().emplace_back(rcb.functionId(memfun));
+        }
+        else if (SgVariableDeclaration* memvar = isSgVariableDeclaration(mem))
+        {
+          if (!si::isStatic(memvar))
+            entry.second.dataMembers().emplace_back(rcb.variableId(memvar));
+        }
+      }
+    }
+  }
+
+  void
+  collectClassesFromMemoryPool(ct::ClassAnalysis& classes)
+  {
+    // similar to DQ's memory pool traversal
+    // DQ (10/23/2024): This function collects all of the classDeclarations from the memory pool.
+    // I think that the list that we get from the query of the AST, is insufficent and that more
+    // are available in the memory pool.
+
+    // ResetTemplateNamesOnMemoryPool traversal;
+    CollectClassesFromMemoryPool traversal(classes);
+
+    SgClassDeclaration::traverseMemoryPoolNodes(traversal);
+    SgTemplateInstantiationDecl::traverseMemoryPoolNodes(traversal);
+
+    collectMembers(classes);
+  }
+
 
   template <class V>
   int cmpValue(const V& lhs, const V& rhs)
@@ -569,20 +678,41 @@ std::string typeNameOf(ClassKeyType key)
 }
 
 boost::optional<std::string>
-hasTemplateAncestor(ClassKeyType key)
+missingDiagnostics(ClassKeyType key)
 {
-  TemplateAncestor res = fromTemplate(key);
-
-  if (!res.hasTemplateAncestor())
-    return boost::none; // std::nullopt
-
-  ASSERT_not_null(res.templateAncestor());
-
+  bool               extra = false;
   std::ostringstream os;
 
-  os << "Type of the sage node in the ROSE AST: " << res.templateAncestor()->class_name()
-     << "\n    SageInterface::get_name(n) = " << si::get_name(res.templateAncestor())
-     << std::endl;
+  TemplateAncestor   res = fromTemplate(key);
+
+  if (res.hasTemplateAncestor())
+  {
+    ASSERT_not_null(res.templateAncestor());
+
+    extra = true;
+    os <<   "  - The class is either a templated class or it has a templated ancestor node"
+       << "\n    in the ROSE AST. Thus, the class was not traversed by the class hierarchy analysis."
+       << "\n    (Templates are currently not supported by the class hierarchy analysis.)"
+       << "\n  - information on the templated AST node:"
+       << "\n    Type of the sage node in the ROSE AST: " << res.templateAncestor()->class_name()
+       << "\n    SageInterface::get_name(n) = " << si::get_name(res.templateAncestor())
+       << std::endl;
+  }
+
+  if (key && isSecondaryClassDefinition(*key))
+  {
+    extra = true;
+    os <<   "  - This is a secondary class definition:"
+       << "\n    isSgClassDeclaration(classdef->get_declaration()->get_definingDeclaration())"
+       <<        "->get_definition != classdef"
+       << "\n    classdef = " << key
+       << "\n    classname = " << SG_DEREF(key->get_declaration()).get_name()
+       << "\n    from ASTMerge?"
+       << std::endl;
+  }
+
+  if (!extra)
+    return boost::none; // std::nullopt
 
   return os.str();
 }
@@ -1024,6 +1154,12 @@ RoseCompatibilityBridge::extractFromProject(ClassAnalysis& classes, CastAnalysis
   NodeCollector::NodeTracker visited;
 
   sg::dispatch(NodeCollector{visited, classes, casts, *this}, n);
+}
+
+void
+RoseCompatibilityBridge::extractFromMemoryPool(ClassAnalysis& classes) const
+{
+  collectClassesFromMemoryPool(classes);
 }
 
 void

@@ -134,11 +134,8 @@ std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
        << "    Possibly, " << typeNameOf(classkey) << " has not been seen."
        << std::endl;
 
-  if (auto opt = hasTemplateAncestor(classkey))
-    os <<   "  - The class is either a templated class or it has a templated ancestor node"
-       << "\n    in the ROSE AST. Thus, the class was not traversed by the class hierarchy analysis."
-       << "\n    (Templates are currently not supported by the class hierarchy analysis.)"
-       << "\n  - information on the templated AST node:"
+  if (auto opt = missingDiagnostics(classkey))
+    os
        << "\n    " << *opt
        << std::endl;
 
@@ -681,6 +678,12 @@ analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
   return AnalysesTuple{std::move(classes), std::move(casts)};
 }
 
+AnalysesTuple
+analyzeClassesAndCasts(ASTRootType n)
+{
+  return analyzeClassesAndCasts(RoseCompatibilityBridge{}, n);
+}
+
 ClassAnalysis
 analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n)
 {
@@ -691,6 +694,18 @@ ClassAnalysis
 analyzeClasses(ASTRootType n)
 {
   return analyzeClasses(RoseCompatibilityBridge{}, n);
+}
+
+ClassAnalysis
+analyzeClassesFromMemoryPool()
+{
+  ClassAnalysis classes{true /* full view of translation unit */};
+
+  RoseCompatibilityBridge{}.extractFromMemoryPool(classes);
+  inheritanceRelations(classes);
+  analyzeClassRelationships(classes);
+
+  return classes;
 }
 
 ClassAnalysis analyzeClass(ClassKeyType n)
@@ -710,3 +725,4 @@ ClassAnalysis analyzeClass(ClassKeyType n)
 
 
 }
+

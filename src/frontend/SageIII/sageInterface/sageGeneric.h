@@ -1452,6 +1452,7 @@ namespace sg
     return *res;
   }
 
+
   namespace
   {
 /// \private

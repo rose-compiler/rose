@@ -439,6 +439,9 @@ ClassAnalysis analyzeClasses(ASTRootType n);
 ClassAnalysis analyzeClass(ClassKeyType n);
 /// \}
 
+/// collects the class hierarchy from memory pools
+ClassAnalysis analyzeClassesFromMemoryPool();
+
 /// functions type that are used for the class hierarchy traversals
 /// \{
 using ClassAnalysisFn      = std::function<void(ClassAnalysis::value_type&)>;
