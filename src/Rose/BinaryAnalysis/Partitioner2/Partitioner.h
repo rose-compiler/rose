@@ -1897,9 +1897,14 @@ public:
      *  Analyses a function to determine characteristics of its calling convention, such as which registers are callee-saved,
      *  which registers and stack locations are input parameters, and which are output parameters.   The calling convention
      *  analysis itself does not define the entire calling convention--instead, the analysis results must be matched against a
-     *  dictionary of calling convention definitions. Each function has a @ref Function::callingConventionDefinition
-     *  "callingConventionDefinition" property that points to the best definition; if this method reanalyzes the calling
-     *  convention then the definition is reset to the null pointer.
+     *  dictionary of calling convention definitions.
+     *
+     *  Each function has a @ref Function::callingConventionDefinition "callingConventionDefinition" property that points to the
+     *  best definition. That property is reset to null if this method reanalyzes the calling convention for that function.
+     *  Assigning the best calling convention definition to a function is done by a global analysis that tries to chose the best
+     *  calling convention over the entire set of functions (since a particular function's behavior often matches multiple
+     *  definitions). This `functionCallingConvention` method doesn't make those global assignments, but @ref
+     *  allFunctionCallingConventionDefinition does.
      *
      *  Since this analysis is based on data-flow, which is based on a control flow graph, the function must be attached to the
      *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.
