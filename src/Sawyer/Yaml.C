@@ -1339,7 +1339,6 @@ private:
                     line.resize(line.size() - 1);
             }
 
-            
             first_unprintable = find_unprintable(line);
 
             if (first_unprintable < utf8_chars(line))
