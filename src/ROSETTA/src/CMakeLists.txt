@@ -86,12 +86,9 @@ set(GRAMMAR_SOURCE_FILES
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS})
 add_dependencies(CxxGrammarMetaProgram roseUtil)
 
-# build ROSETTA code generator
-set(link_libs ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-if(WIN32)
-  list(APPEND link_libs shlwapi.lib)
-endif()
-target_link_libraries(CxxGrammarMetaProgram ${link_libs} roseUtil)
+# Build ROSETTA code generator which is CxxGrammarMetaProgram
+# Link to what librose.so links on Windows, Mac, or Linux using link_with_libraries
+target_link_libraries(CxxGrammarMetaProgram ${link_with_libraries} roseUtil)
 
 # define a custom command to call the code generator and generate source/header files
 # Generate the edg-sage connection using ROSETTA

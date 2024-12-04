@@ -931,8 +931,29 @@ if((NOT FLEX_FOUND) AND (ENABLE-C))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
+# Find libm.so, libquadmath.so for C Support on Linux and find librt.so for Linux systems
+if(NOT WIN32 AND NOT APPLE)
+  if(ENABLE-C) 
+    # libc.so 
+    find_library(C_LIB c REQUIRED) 
+    # libm.so 
+    find_library(M_LIB m)
+    # Find Quadmath, prioritize ${GCC_LIB_DIRS}
+    file(GLOB GCC_LIB_DIRS "/usr/lib/gcc/x86_64-redhat-linux/*") 
+    find_library(QM_LIB 
+                 NAMES quadmath libquadmath.so.0 libquadmath.so.0.0.0 libquadmath.so
+                 HINTS ${GCC_LIB_DIRS})
+  endif()
+  # libdl.so 
+  find_library(DL_LIB dl REQUIRED) 
+  message(libdl: ${DL_LIB}) 
+  # librt.so, Linux/POSIX Timers and clocks
+  find_library(RT_LIB rt QUIET)
+endif()
+
 # Only use quadmath if C/C++ is enable and it is available (also exclude windows)
 if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+  
   set(COMPILE_TEST_SOURCE "
   #include <quadmath.h>
   int main() { return 0; }")
@@ -946,6 +967,7 @@ if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
     set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath")
     message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
   else()
+    # Comment this line below out for issues with clang 
     set(ROSE_USE_EDG_QUAD_FLOAT 0)
     # This will no longer cause an issue for gcc or clang 
     message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
@@ -1006,22 +1028,56 @@ endif()
 
 # Initialize an empty list to collect all common linked third-party libraries for rose
 set(link_with_libraries "") 
-if(NOT WIN32)
-  if(NOT APPLE)
-    list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
-    # Each library appended above should do this check to enhance portability
-  else()
-    list(APPEND link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
+# All OS platforms require boost 
+list(APPEND link_with_libraries ${Boost_LIBRARIES}) 
+
+# Linux dependencies
+if(NOT WIN32 AND NOT APPLE)
+  # Conditionally append libc.so to list of libraries rose will link to 
+  if(M_LIB AND NOT M_LIB STREQUAL "M_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${M_LIB})
   endif()
-else()
-  list(APPEND link_with_libraries ${Boost_LIBRARIES} shlwapi.lib psapi.lib)
+  # Conditionally append libm.so to list of libraries rose will link to 
+  if(M_LIB AND NOT M_LIB STREQUAL "M_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${M_LIB})
+  endif()
+  # Conditionally append libdl.so to list of libraries rose will link to 
+  if(M_LIB AND NOT DL_LIB STREQUAL "DL_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${DL_LIB})
+  endif()
+  # Conditionally append libquadmath.so to list of libraries rose will link to 
+  if(QM_LIB AND NOT QM_LIB STREQUAL "QM_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${QM_LIB})    
+  endif()
+  # Conditionally append librt.so to list of libraries rose will link to  
+  if(RT_LIB AND NOT RT_LIB STREQUAL "RT_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${RT_LIB})
+  endif()    
+  # Conditionally append Pthreads to list of libraries rose will link to  
+  list(APPEND link_with_libraries ${CMAKE_THREAD_LIBS_INIT})
+endif() 
+message("link_with_libs: ${link_with_libraries}") 
+
+# Mac OS dependencies 
+if(APPLE)
+  # Conditionally append MLIB
+  if(M_LIB AND NOT M_LIB STREQUAL "M_LIB-NOTFOUND")
+    list(APPEND link_with_libraries ${M_LIB})
+  endif()
+  list(APPEND link_with_libraries ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-CPP) 
-  list(APPEND link_with_libraries stdc++)
-endif() 
+# Windows dependencies 
+if(WIN32)
+  list(APPEND link_with_libraries shlwapi.lib psapi.lib)
+endif()
 
-message(STATUS "Rose will be linking to ${link_with_libraries}") 
+# Special Case for rose tool 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-CPP)
+  if(NOT ENABLE-C) 
+    list(APPEND link_with_libraries stdc++)
+  endif() 
+endif() 
 
 # Check compilers and version numbers. The module is located in src/cmake/modules.
 if(ENABLE-C)
