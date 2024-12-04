@@ -55,6 +55,36 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
 
   std::vector<ada_analysis_unit> units_to_check;
 
+  //Get the fully qualified name & check for any parent compilation units
+  ada_unbounded_text_type_array lal_fully_qualified_name;
+  ada_compilation_unit_p_syntactic_fully_qualified_name(lal_root, &lal_fully_qualified_name);
+  std::string fully_qualified_name = Libadalang_ROSE_Translation::dot_ada_unbounded_text_type_to_string(lal_fully_qualified_name);
+  int num_parents = lal_fully_qualified_name->n - 1;
+  if(num_parents > 0){
+     //If there is more than one part to the name for this unit (e.g. a.b.c), try to find the parents
+     std::size_t previous_layer_end = 0;
+     for(int i = 0; i < num_parents; i++){
+       previous_layer_end = fully_qualified_name.find(".", previous_layer_end + 1);
+       std::string parent_name = fully_qualified_name.substr(0, previous_layer_end);
+
+       //Make an ada_text for the full name
+       size_t parent_name_length = parent_name.size();
+       uint32_t parent_name_chars[parent_name_length];
+       for(int i = 0; i < parent_name_length; i++){
+         parent_name_chars[i] = parent_name.at(i);
+       }
+
+       ada_text parent_name_text = { parent_name_chars, parent_name_length, true };
+
+       //Get the parent unit (if this isn't a system include, get both .adb and .ads)
+       if(parent_name.rfind("ada.", 0) != 0 && parent_name.rfind("gnat.", 0) != 0 && parent_name.rfind("system.", 0) != 0){
+           units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, NULL, 0));
+       }
+       units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
+    }
+  }
+
+
   //Get the prelude, & check if it has a with clause
   ada_base_entity lal_prelude;
   ada_compilation_unit_f_prelude(lal_root, &lal_prelude);

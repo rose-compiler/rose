@@ -761,6 +761,7 @@ namespace
       case ada_subtype_decl:
       case ada_incomplete_type_decl:
       case ada_incomplete_tagged_type_decl:
+      case ada_task_type_decl:
         {
           //Get and hash the defining name as well as the type decl
           ada_base_entity lal_defining_name;

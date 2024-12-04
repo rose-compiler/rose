@@ -431,6 +431,8 @@ struct LibadalangText {
         c_text = ada_text_to_locale_string(&internal_text);
         cxx_text += toString(c_text);
         if(i < text_type_array->n - 1){
+          //Add a '.' between the different parts
+          cxx_text += ".";
           //destroy all but the last ada_text
           ada_destroy_text(&internal_text);
           free(c_text);

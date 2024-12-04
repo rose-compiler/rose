@@ -237,6 +237,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     //  |A2012 end*/
     else if(name == "access"
          || name == "address"
+         || name == "alignment"
          || name == "base"
          || name == "class"
          || name == "digits"
@@ -1124,9 +1125,10 @@ namespace
 
       std::string ident = canonical_text_as_string(lal_element);
 
-      if(!astnode)
+      if(!astnode){
         logTrace() << "Identifier '" << ident << "' has no corresponding node in ROSE."
                    << std::endl;
+      }
 
       return astnode == nullptr || sg::dispatch(RoseRequiresScopeQual{fromPrefix, ctx}, astnode);
     }
@@ -1138,6 +1140,7 @@ namespace
       ada_base_entity lal_prefix, lal_suffix;
       ada_dotted_name_f_prefix(lal_element, &lal_prefix);
       ada_dotted_name_f_suffix(lal_element, &lal_suffix);
+
       return    roseRequiresPrefix(&lal_prefix, true, ctx)
              || roseRequiresPrefix(&lal_suffix, fromPrefix, ctx);
     }
@@ -1147,7 +1150,7 @@ namespace
       logTrace() << "An_Indexed_Component?" << std::endl;
       // \todo should this always return true (like the cases below)?
       return roseRequiresPrefix(expr.Prefix, fromPrefix, ctx);
-    }*/ //TODO What is this node kind in lal?
+    }*/ //TODO This is probably ada_call_expr in lal, but I haven't seen an example
 
     if(kind == ada_explicit_deref)
     {
@@ -2313,6 +2316,10 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
 
   ada_base_entity corresponding_decl; //lal doesn't give definition directly, so go from the decl
   ada_expr_p_first_corresponding_decl(lal_identifier, &corresponding_decl);
+  if(ada_node_is_null(&corresponding_decl)){
+    //Instead use p_referenced_decl
+    ada_name_p_referenced_decl(lal_identifier, 1, &corresponding_decl);
+  }
   ada_ada_node_array defining_name_list;
   ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
 

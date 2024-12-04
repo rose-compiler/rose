@@ -3513,7 +3513,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the defining name of the decl
         ada_base_entity lal_defining_name;
         ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_defining_name);
-        ada_single_protected_decl_f_name(&lal_defining_name, &lal_defining_name);
+        if(ada_node_kind(&lal_defining_name) == ada_single_protected_decl){
+            ada_single_protected_decl_f_name(&lal_defining_name, &lal_defining_name);
+        } else {
+            ada_base_type_decl_f_name(&lal_defining_name, &lal_defining_name);
+        }
         int decl_hash = hash_node(&lal_defining_name);
 
         SgAdaProtectedBody&     pobody  = mkAdaProtectedBody();
@@ -3541,11 +3545,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_declarative_part_f_decls(&lal_decl_list, &lal_decl_list);
         int count = ada_node_children_count(&lal_decl_list);
 
-        //Call handleStmt on each decl
+        //Call handleElement on each decl
         for(int i = 0; i < count; ++i){
           ada_base_entity lal_decl;
           if(ada_node_child(&lal_decl_list, i, &lal_decl) != 0){
-            handleStmt(&lal_decl, ctx.scope(pobody));
+            handleElement(&lal_decl, ctx.scope(pobody));
           }
         }
 
@@ -3853,68 +3857,36 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         // assocdecl = &sgnode;
         break;
       }
-    case ada_package_renaming_decl:           // 8.5.3(2)
-      {
-        logKind("ada_package_renaming_decl", kind);
-
-        //Get the name for this decl
-        ada_base_entity lal_defining_name, lal_identifier;
-        ada_package_renaming_decl_f_name(lal_element, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
-        int hash = hash_node(&lal_defining_name);
-
-        //Get the renamed package
-        ada_base_entity lal_renames;
-        ada_package_renaming_decl_f_renames(lal_element, &lal_renames);
-        ada_renaming_clause_f_renamed_object(&lal_renames, &lal_renames);
-
-        //Check if the package we are renaming exists in the lal AST
-        ada_base_entity lal_renamed_package;
-        ada_package_renaming_decl_p_final_renamed_package(lal_element, &lal_renamed_package);
-
-        if(ada_node_is_null(&lal_renamed_package))
-        {
-          logWarn() << "skipping unknown package renaming: " << ident << std::endl;
-          return;
-        }
-
-/*
-        SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
-
-        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(aliased))
-          aliased = gendcl->get_declaration();
-*/
-        SgExpression&           renamed = getExpr(&lal_renames, ctx);
-        SgScopeStatement&       scope   = ctx.scope();
-        SgType&                 pkgtype = mkTypeVoid();
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(ident, renamed, pkgtype, scope);
-
-        recordNode(libadalangDecls(), hash, sgnode);
-
-        attachSourceLocation(sgnode, lal_element, ctx);
-        privatize(sgnode, isPrivate);
-        ctx.appendStatement(sgnode);
-
-        assocdecl = &sgnode;
-        break;
-      }
     case ada_generic_package_renaming_decl:   // 8.5.3(2)
-//    case A_Package_Renaming_Declaration:           // 8.5.3(2)
+    case ada_package_renaming_decl:           // 8.5.3(2)
       {
         logKind("ada_generic_package_renaming_decl?", kind);
 
         //Get the name for this decl
         ada_base_entity lal_defining_name, lal_identifier;
-        ada_generic_package_renaming_decl_f_name(lal_element, &lal_defining_name);
+        if(kind == ada_generic_package_renaming_decl){
+            ada_generic_package_renaming_decl_f_name(lal_element, &lal_defining_name);
+        } else {
+            ada_package_renaming_decl_f_name(lal_element, &lal_defining_name);
+        }
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
         std::string ident = getFullName(&lal_identifier);
         int          hash = hash_node(&lal_defining_name);
 
         //Get the package we are renaming
         ada_base_entity lal_renames, lal_renamed_object;
-        ada_generic_package_renaming_decl_f_renames(lal_element, &lal_renames);
-        ada_expr_p_first_corresponding_decl(&lal_renames, &lal_renamed_object);
+        if(kind == ada_generic_package_renaming_decl){
+            ada_generic_package_renaming_decl_f_renames(lal_element, &lal_renames);
+        } else {
+            ada_package_renaming_decl_f_renames(lal_element, &lal_renames);
+            ada_renaming_clause_f_renamed_object(&lal_renames, &lal_renames);
+        }
+
+        if(kind == ada_generic_package_renaming_decl){
+            ada_expr_p_first_corresponding_decl(&lal_renames, &lal_renamed_object);
+        } else {
+            ada_package_renaming_decl_p_final_renamed_package(lal_element, &lal_renamed_object);
+        }
 
         if(ada_node_is_null(&lal_renamed_object)) {
           logWarn() << "skipping unknown package renaming: " << ident << std::endl;
