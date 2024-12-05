@@ -45,16 +45,26 @@ bool AnalyzeStmtRefs( AstInterface& fa, const AstNodePtr& n,
                       CollectObject<AstNodePtr> &wRefs,
                       CollectObject<AstNodePtr> &rRefs)
 {
-  std::function<bool(AstNodePtr, AstNodePtr)> colw = [&wRefs]
+  bool has_unknown = false;
+  std::function<bool(AstNodePtr, AstNodePtr)> colw = [&wRefs, &has_unknown]
           (AstNodePtr mod_first, AstNodePtr /*mod_second*/) {
+               if (mod_first == AST_UNKNOWN) {
+                  has_unknown = true;
+                  return true; 
+               }
                   return wRefs(mod_first); };
-  std::function<bool(AstNodePtr, AstNodePtr)> colr = [&rRefs]
+  std::function<bool(AstNodePtr, AstNodePtr)> colr = [&rRefs, &has_unknown]
           (AstNodePtr read_first, AstNodePtr /*read_second*/) {
+               if (read_first == AST_UNKNOWN) {
+                  has_unknown = true;
+                  return true; 
+               }
                   return rRefs(read_first); };
-  StmtSideEffectCollect<AstNodePtr> op(fa, LoopTransformInterface::getSideEffectInterface());
+  StmtSideEffectCollect op(fa, LoopTransformInterface::getSideEffectInterface());
   op.set_modify_collect(colw);
   op.set_read_collect(colr);
-  return op(n);
+  op(n);
+  return !has_unknown;
 }
 
 std::string toString( std::vector<SymbolicVal> & analvec)

@@ -11,7 +11,6 @@
 #include <list>
 #include <sstream>
 
-template <class AstNodePtr>
 class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
 { 
  protected:
@@ -51,22 +50,20 @@ class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
 };
 
 class FunctionSideEffectInterface;
-template <class AstNodePtr>
-class StmtSideEffectCollect
-: public StmtInfoCollect<AstNodePtr>, public SideEffectAnalysisInterface<AstNodePtr>
+class StmtSideEffectCollect : public StmtInfoCollect, public SideEffectAnalysisInterface
 {
-  using SideEffectAnalysisInterface<AstNodePtr>::modcollect;
-  using SideEffectAnalysisInterface<AstNodePtr>::killcollect;
-  using SideEffectAnalysisInterface<AstNodePtr>::readcollect;
-  using SideEffectAnalysisInterface<AstNodePtr>::callcollect;
-  using SideEffectAnalysisInterface<AstNodePtr>::allocate_collect;
-  using SideEffectAnalysisInterface<AstNodePtr>::free_collect;
-  using SideEffectAnalysisInterface<AstNodePtr>::varcollect;
+  using SideEffectAnalysisInterface::modcollect;
+  using SideEffectAnalysisInterface::killcollect;
+  using SideEffectAnalysisInterface::readcollect;
+  using SideEffectAnalysisInterface::callcollect;
+  using SideEffectAnalysisInterface::allocate_collect;
+  using SideEffectAnalysisInterface::free_collect;
+  using SideEffectAnalysisInterface::varcollect;
  public:
   StmtSideEffectCollect(AstInterface& fa, FunctionSideEffectInterface* a=0) 
      : fa_(fa), modunknown(false), readunknown(false),funcanal(a) {} 
 
-  typedef typename SideEffectAnalysisInterface<AstNodePtr>::CollectObject  CollectObject;
+  typedef typename SideEffectAnalysisInterface::CollectObject  CollectObject;
 
   virtual bool get_side_effect(AstInterface& /*fa*/, const AstNodePtr& h) override {
       return operator() (h);
@@ -74,13 +71,13 @@ class StmtSideEffectCollect
 
   bool operator() (const AstNodePtr& h) {
       modunknown = readunknown = false;
-      StmtInfoCollect<AstNodePtr>::operator()(fa_, h);
+      StmtInfoCollect::operator()(fa_, h);
       return !modunknown && !readunknown;
     }
 
   protected:
-    using StmtInfoCollect<AstNodePtr>::AppendFuncCallArguments;
-    using StmtInfoCollect<AstNodePtr>::AppendFuncCallWrite;
+    using StmtInfoCollect::AppendFuncCallArguments;
+    using StmtInfoCollect::AppendFuncCallWrite;
     virtual void AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init) override;
     virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
@@ -90,7 +87,7 @@ class StmtSideEffectCollect
     virtual void AppendMemoryFree( AstInterface& /* fa */, const AstNodePtr& s) override;
     AstInterface& fa_;
   private:
-    using StmtInfoCollect<AstNodePtr>::curstmt;
+    using StmtInfoCollect::curstmt;
     bool modunknown, readunknown;
     FunctionSideEffectInterface* funcanal;
 };
@@ -136,7 +133,7 @@ class InterProcVariableUniqueRepr {
 class FunctionAliasInterface;
 // flow insensitive alias analysis for named variables only
 class StmtVarAliasCollect 
-: public StmtInfoCollect<AstNodePtr>, public AliasAnalysisInterface
+: public StmtInfoCollect, public AliasAnalysisInterface
 {
  public:
    class VarAliasMap {  // name -> disjoint-set ID, we only need to check if two variables belong to the same group
@@ -175,7 +172,7 @@ class StmtVarAliasCollect
 /* Support tracking modification of variables, by building a map from each variable name
  * to all the AST nodes where the variable is modified */
 template <class Select>
-class ModifyVariableMap : public StmtSideEffectCollect<AstNodePtr>
+class ModifyVariableMap : public StmtSideEffectCollect
 {
   class VarModSet : public std::set<AstNodePtr> {};
   typedef std::map <std::string, VarModSet, std::less<std::string> > VarModInfo;
@@ -200,11 +197,11 @@ class ModifyVariableMap : public StmtSideEffectCollect<AstNodePtr>
          }
          return true;
       };
-      StmtSideEffectCollect<AstNodePtr>::set_modify_collect(collect_modify);
+      StmtSideEffectCollect::set_modify_collect(collect_modify);
    }
    void Collect(const AstNodePtr& root)
      {
-      StmtSideEffectCollect<AstNodePtr>::get_side_effect(fa_, root);
+      StmtSideEffectCollect::get_side_effect(fa_, root);
      }
    bool Modify( const AstNodePtr& l, const std::string& varname) const
       { 
@@ -219,8 +216,5 @@ class ModifyVariableMap : public StmtSideEffectCollect<AstNodePtr>
            return false;
       }
 };
- 
-#define TEMPLATE_ONLY
-#include "StmtInfoCollect.C"
-#undef TEMPLATE_ONLY
-#endif
+
+#endif 

@@ -41,10 +41,10 @@ inline std::ostream& operator << (std::ostream& output, const DependenceEntry& e
         output << e.first_entry() << " : [ " << e.type_entry() << " ] " << e.second_entry();
         if (e.attr_entry() != "") {
            if (e.type_entry() == "modify") {
-             output << " <= " << e.attr_entry()  << " ;";
+             output << " <- " << e.attr_entry()  << " ;";
            }
            else if (e.type_entry() == "read") {
-             output << " => " << e.attr_entry()  << " ;";
+             output << " -> " << e.attr_entry()  << " ;";
            } else {
              output << " = " << e.attr_entry()  << " ;";
            }
@@ -65,7 +65,7 @@ class CollectDependences{
     DebugLog Log = DebugLog("-debug-dep-table");
     CollectDependences() {}
     // Read the system dependence table from an input file.
-    void CollectFromFile(std::ifstream& input_file);
+    void CollectFromFile(std::istream& input_file);
 };
 
 // Read and collect all the AST components that are tagged by a dependence name
@@ -183,6 +183,7 @@ class DependenceTable : public CollectDependences {
        NodeInfo() : out_no(0), in_no(0), rank(0) {}
     };
     std::map<std::string, NodeInfo> node_map_;
+ protected:
     virtual void save_dependence(const DependenceEntry& e) override {
       SaveDependence(DependenceEntry(e));
     }

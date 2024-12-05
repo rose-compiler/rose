@@ -8,6 +8,8 @@
 #include <string.h>
 #include <CommandOptions.h>
 #include <stdexcept>
+#include "OperatorAnnotation.h"
+
 
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
@@ -987,6 +989,8 @@ std::string AstInterface::unparseToString( const AstNodePtr& n)
 
 std::string AstInterface::AstToString( const AstNodePtr& n, bool withClassName)
 { 
+ if (n == AST_NULL) { return "_NULL_"; }
+ if (n == AST_UNKNOWN) { return "_UNKNOWN_"; }
   SgNode* s = (SgNode*)n.get_ptr();
   if (s == 0) return "";
   std::string res;
@@ -1071,9 +1075,6 @@ AstInterface::AstNodeList AstInterface :: GetChildrenList( const AstNodePtr &_n)
    }
   return childlist;
 }
-
-bool AstInterface::IsFortranLanguage()
-{ return IS_FORTRAN_LANGUAGE(); }
 
 void AstInterface :: SetParent(const AstNodePtr& n, const AstNodePtr& p)
 {
@@ -1728,7 +1729,7 @@ IsIOOutputStmt(const AstNodePtr&, AstNodeList*) {
 //! Check if $_exp$ is a single integer constant; if yes, return the constant value in $val$.
 bool AstInterface::IsConstInt( const AstNodePtr& _exp, int *val) 
 { 
-  SgNode* exp = AstNodePtrImpl(_exp).get_ptr();
+  SgNode* exp = SkipCasting(AstNodePtrImpl(_exp).get_ptr());
   if (exp->variantT() == V_SgIntVal) {
     if (val != 0) 
       *val = isSgIntVal(exp)->get_value();
@@ -1740,7 +1741,7 @@ bool AstInterface::IsConstInt( const AstNodePtr& _exp, int *val)
 bool AstInterface::
 IsConstant( const AstNodePtr& _exp, std::string* valtype, std::string *val)
 {
-  SgNode* exp = AstNodePtrImpl(_exp).get_ptr();
+  SgNode* exp = SkipCasting(AstNodePtrImpl(_exp).get_ptr());
   switch (exp->variantT()) {
   case V_SgStringVal:
       if (valtype != 0) *valtype = "string";
@@ -2174,6 +2175,9 @@ CreateVarRef(std::string varname, SgNode* loc)
 AstNodePtr AstInterface::
 CreateVarRef(std::string varname, const AstNodePtr& loc) 
    {
+      if (varname == "_UNKNOWN_") {
+         return AST_UNKNOWN;
+      }
       SgNode *loc1 = AstNodePtrImpl(loc).get_ptr();
       int hasdot = varname.rfind(".", varname.size()-1);
       if (hasdot > 0) {
@@ -2232,7 +2236,7 @@ AstNodeType AstInterface::GetType(const std::string& name)
 AstNodeType
 AstInterface::GetArrayType(const AstNodeType& base, const AstNodeList& index)
 {
-  if (IsFortranLanguage()) {
+  if (IS_FORTRAN_LANGUAGE()) {
     SgType* btype = AstNodeTypeImpl(base).get_ptr();
     SgArrayType* atype = new SgArrayType(btype);
 
@@ -3634,7 +3638,7 @@ CreateArrayAccess( const AstNodePtr& arr, const AstNodePtr& index)
   SgExpression* r = isSgExpression(AstNodePtrImpl(arr).get_ptr());
   SgExpression *e2 = isSgExpression((SgNode*)index.get_ptr());
   assert(r);
-  if (IsFortranLanguage()) {
+  if (IS_FORTRAN_LANGUAGE()) {
     AstNodePtr arr_ref;
     AstList arr_index;
     arr_index.push_back(e2); //QY: prepend the new dimension now
@@ -4326,5 +4330,84 @@ SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
      }
      return stmt;
     }
+}
+
+std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
+    if (_variable == AST_NULL) return "_NULL_";
+    if (_variable == AST_UNKNOWN) return "_UNKNOWN_";
+    SgNode* variable = _variable.get_ptr();
+    assert(variable != 0);
+    SgType* variable_is_type = isSgType(variable);
+    if (variable_is_type != 0) {
+        std::string variable_name;
+        AstInterface::GetTypeInfo(variable_is_type, &variable_name, 0, 0, true);
+        return variable_name;
+    }
+    switch (variable->variantT()) {
+     case V_SgNamespaceDeclarationStatement:
+          return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
+     case V_SgUsingDirectiveStatement:
+          return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
+     case V_SgTypedefDeclaration:
+     case V_SgTemplateTypedefDeclaration:
+          return "typedef_" + AstInterface::GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString());
+     case V_SgStaticAssertionDeclaration:
+          return OperatorDeclaration::operator_signature(variable);
+     default: break;
+    }
+    if (AstInterface::IsFunctionDefinition(variable)) {
+        return OperatorDeclaration::operator_signature(variable);
+    } 
+    {
+      std::string value;
+      if (AstInterface::IsConstant(variable, 0, &value)) {
+         return value;
+      }
+    }
+    {
+    AstNodePtr f;
+    AstNodeList args;
+    if (AstInterface::IsFunctionCall(variable, &f, &args)) {
+       std::string result = GetVariableSignature(f.get_ptr()) + "(";
+       bool is_first = true;
+       for (auto x : args) {
+         if (!is_first) { result = result + ","; }
+         else { is_first = false; }
+         result = result + GetVariableSignature(x.get_ptr());
+       }
+       return result + ")";
+    }
+    }
+    // An empty string will be returned AstInterface::IsVarRef(variable) returns false.
+    std::string name = AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);
+    if (name == "") {
+        name = "_UNKNOWN_";
+    }
+    DebugVariable([&variable,&name](){ return "variable is " + AstInterface::AstToString(variable) + " name is " + name; });
+    return name;
+}
+
+bool AstInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
+   std::string scope_name;
+   if (! AstInterface::IsBlock(scope, &scope_name)) {
+     return false;
+   }
+   DebugVariable([&ref,&scope_name](){ return "IsLocalRef invoked: var is " + AstInterface::AstToString(ref) + "; scope is " + scope_name; });
+   AstNodePtr _cur_scope;
+   if (!AstInterface::IsVarRef(ref, 0, 0, &_cur_scope)) {
+      return false;
+   }  
+   SgNode* cur_scope = AstNodePtrImpl(_cur_scope).get_ptr(); 
+   std::string cur_scope_name;
+   while (cur_scope != 0 && cur_scope->variantT() != V_SgGlobal) {
+         if (AstInterface::IsBlock(cur_scope, &cur_scope_name) &&  
+              (cur_scope == scope || cur_scope_name == scope_name)) {
+             return true;
+         }
+         DebugVariable([&cur_scope](){ return "IsLocalRef current scope:" + cur_scope->class_name(); });
+         SgNode* n = AstInterfaceImpl::GetScope(cur_scope);
+         cur_scope = n;
+   }   
+   return false;
 }
 

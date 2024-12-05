@@ -183,11 +183,16 @@ class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
   OperatorSideEffectDescriptor* get_modify_descriptor( AstInterface& fa, const AstNodePtr& fc, bool insert_if_missing = false) { 
       return modInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); 
    }
+  OperatorSideEffectDescriptor* get_modify_descriptor( const std::string& signature, bool insert_if_missing = false) { 
+      return modInfo.get_annot_descriptor(OperatorDeclaration(signature), insert_if_missing); 
+   }
   bool get_modify( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) override
   { return modInfo.CollectAnnotation(fa, fc, collect); }
 
   OperatorSideEffectDescriptor* get_read_descriptor( AstInterface& fa, const AstNodePtr& fc, bool insert_if_missing = false)
   { return readInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); }
+  OperatorSideEffectDescriptor* get_read_descriptor( const std::string& signature, bool insert_if_missing = false)
+  { return readInfo.get_annot_descriptor(OperatorDeclaration(signature), insert_if_missing); }
   bool get_read( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) override
   { return readInfo.CollectAnnotation(fa, fc, collect); }
 
@@ -200,6 +205,8 @@ class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
   { return killInfo.get_annot_descriptor(OperatorDeclaration(fa, fc), insert_if_missing); }
   virtual bool get_kill( AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect = 0) 
   { return killInfo.CollectAnnotation(fa, fc, collect); }
+
+  
 
   void add_modify(const OperatorDeclaration& op, OperatorSideEffectDescriptor& d) {
     modInfo.add_annot( op, d); 

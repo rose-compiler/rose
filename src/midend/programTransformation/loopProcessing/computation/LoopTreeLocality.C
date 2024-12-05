@@ -247,7 +247,7 @@ void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
            LoopTreeNode* curstmt = stmts.Current();
            assert(stmtmap.find(curstmt) == stmtmap.end());
            stmtmap[curstmt] = stmtnum; 
-           StmtSideEffectCollect<AstNodePtr> effect(fa, LoopTransformInterface::getSideEffectInterface());
+           StmtSideEffectCollect effect(fa, LoopTransformInterface::getSideEffectInterface());
            effect.set_modify_collect(modcollect);
            effect.set_read_collect(readcollect);
            effect(curstmt->GetOrigStmt());

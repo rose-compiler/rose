@@ -69,6 +69,7 @@ class OperatorDeclaration : public TypeDescriptor {
   ParameterDeclaration pars; // parameter names and types
 public:
   OperatorDeclaration() {}
+  OperatorDeclaration(const std::string& signature) : TypeDescriptor(signature) {}
   OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast, AstInterface::AstNodeList* argp = 0);
   
   std::string get_signiture () const { return TypeDescriptor::get_string(); }
@@ -76,6 +77,7 @@ public:
                                  AstInterface::AstNodeList* argp = 0,
                                  AstInterface::AstTypeList* paramp = 0); 
   const ParameterDeclaration& get_param_info() const { return pars; }
+  void add_param( const std::string& type, const std::string& name) { pars.add_param(type, name); }
   OperatorDeclaration& read( std::istream& in);
 };
 

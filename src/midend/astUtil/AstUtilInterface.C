@@ -2,58 +2,81 @@
 #include "StmtInfoCollect.h"
 #include "AstInterface_ROSE.h"
 #include "annotation/OperatorAnnotation.h"
+#include "dependenceTracking/dependence_analysis.h"
 #include "CommandOptions.h"
 #include "SymbolicVal.h"
 
 DebugLog DebugAstUtil("-debugastutil");
 
-bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
-              std::function<bool(SgNode*, SgNode*, AstUtilInterface::OperatorSideEffect)>& collect) {
+void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
+              std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)>& collect,
+              WholeProgramDependenceAnalysis* add_to_dep_analysis) {
     AstInterfaceImpl astImpl(scope);
     AstInterface fa(&astImpl);
 
     OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
     assert(funcAnnot != 0);
     DebugAstUtil([&ast](){ return "ComputeAstSideEffect: " + AstInterface::AstToString(ast); });
+    // Should we add annotation? (do_annot)? Have we added any annotation? (done_annot)
+    bool do_annot = false, done_annot_modify=false, done_annot_read = false, done_annot_call=0;
+    AstInterface::AstNodePtr body;
+    if (AstInterface::IsFunctionDefinition(ast, 0, 0, 0, &body)) {
+      // Add empty annotations for this function. Details of the side effects will be added later
+      // while the body of the function is being analyzed.
+      std::cerr << "Saving side effects for :" << AstInterface::AstToString(ast) << "\n";
+      do_annot = true;
+    }
 
-    StmtSideEffectCollect<SgNode*> collect_operator(fa, funcAnnot);
-    std::function<bool(SgNode*, SgNode*)> save_mod = [&collect, &ast] (SgNode* first, SgNode* second) {
-      if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
-         AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Modify);
+    StmtSideEffectCollect collect_operator(fa, funcAnnot);
+    std::function<bool(AstNodePtr, AstNodePtr)> save_mod = [&collect, &ast, do_annot, &done_annot_modify, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
+      if (do_annot && !IsLocalRef(first.get_ptr(), body.get_ptr())) {
+         done_annot_modify = true;
+         if (add_to_dep_analysis != 0) {
+            add_to_dep_analysis->SaveOperatorSideEffect(ast, first, OperatorSideEffect::Modify, second.get_ptr()); 
+         } else {
+             AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Modify);
+         }
       }
       DebugAstUtil([&first](){ return "save modify:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Modify);
     };
-    std::function<bool(SgNode*, SgNode*)> save_read = [&collect,&ast] (SgNode* first, SgNode* second) {
-      if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
-         AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Read);
+    std::function<bool(AstNodePtr, AstNodePtr)> save_read = [&collect,&ast, do_annot, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
+      if (do_annot && !IsLocalRef(first.get_ptr(), body.get_ptr())) {
+         done_annot_read = true;
+         if (add_to_dep_analysis != 0) {
+            add_to_dep_analysis->SaveOperatorSideEffect(ast, first, OperatorSideEffect::Read, 0) ;
+         } else {
+            AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Read);
+         }
       }
       DebugAstUtil([&first](){ return "save read:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Read);
     };
-    std::function<bool(SgNode*, SgNode*)> save_kill = [&collect,&ast] (SgNode* first, SgNode* second) {
-      if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
-         AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Kill);
-      }
+    std::function<bool(AstNodePtr, AstNodePtr)> save_kill = [&collect,&ast] (AstNodePtr first, AstNodePtr second) {
       DebugAstUtil([&first](){ return "save kill:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Kill);
     };
-    std::function<bool(SgNode*, SgNode*)> save_call = [&collect,&ast] (SgNode* first, SgNode* second) {
-      if (AstInterface::IsFunctionDefinition(ast) && !IsLocalRef(first, ast)) {
-         AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Call);
+    std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, do_annot, &done_annot_call, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
+      if (do_annot && !IsLocalRef(first.get_ptr(), body.get_ptr())) {
+         done_annot_call = true;
+         if (add_to_dep_analysis != 0) {
+            add_to_dep_analysis->SaveOperatorSideEffect(ast, first, OperatorSideEffect::Call, second.get_ptr()); 
+         } else {
+            AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Call);
+         }
       }
       DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Call);
     };
-    std::function<bool(SgNode*, SgNode*)> save_decl = [&collect,&ast] (SgNode* var, SgNode* init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_decl = [&collect,&ast] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save new decl:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Decl);
     };
-    std::function<bool(SgNode*, SgNode*)> save_allocate = [&collect,&ast] (SgNode* var, SgNode* init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_allocate = [&collect,&ast] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save allocate:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Allocate);
     };
-    std::function<bool(SgNode*, SgNode*)> save_free = [&collect,&ast] (SgNode* var, SgNode* init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect,&ast] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save free:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Free);
     };
@@ -64,16 +87,38 @@ bool AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
     collect_operator.set_new_var_collect(save_decl);
     collect_operator.set_allocate_collect(save_allocate);
     collect_operator.set_free_collect(save_free);
-    return collect_operator(ast);
+    collect_operator(ast);
+    // Add empty annot if no annotations have been inserted.
+    if (do_annot && add_to_dep_analysis != 0) {
+       if (!done_annot_modify) {
+          add_to_dep_analysis->SaveOperatorSideEffect(ast, AST_NULL, OperatorSideEffect::Modify, 0) ;
+        }
+        if (!done_annot_read) {
+          add_to_dep_analysis->SaveOperatorSideEffect(ast, AST_NULL, OperatorSideEffect::Read, 0) ;
+        }
+        if (!done_annot_call) {
+           add_to_dep_analysis->SaveOperatorSideEffect(ast, AST_NULL, OperatorSideEffect::Call, 0) ;
+        }
+    } 
 }
 
-void AstUtilInterface::ReadAnnotations(std::istream& input) {
-  ReadAnnotation::get_inst()->read(input);
+void AstUtilInterface::ReadAnnotations(std::istream& input, WholeProgramDependenceAnalysis* use_dep_analysis) {
+  if (use_dep_analysis != 0) {
+     use_dep_analysis->CollectPastResults(input);
+  }
+  else {
+     ReadAnnotation::get_inst()->read(input);
+  }
 }
 
-void AstUtilInterface::OutputOperatorSideEffectAnnotations(std::ostream& output) {
+void AstUtilInterface::OutputOperatorSideEffectAnnotations(std::ostream& output, WholeProgramDependenceAnalysis* use_dep_analysis) {
+  if (use_dep_analysis != 0) {
+     use_dep_analysis->OutputDependences(output);
+  }
+  else {
     OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
     funcAnnot->write(output);
+  }
 }
 
 void AstUtilInterface::RegisterOperatorSideEffectAnnotation() {
@@ -83,9 +128,10 @@ void AstUtilInterface::RegisterOperatorSideEffectAnnotation() {
 
 std::pair<std::string, std::string>
 AstUtilInterface::AddOperatorSideEffectAnnotation(
-              SgNode* op_ast, SgNode* var, AstUtilInterface::OperatorSideEffect relation)
+              SgNode* op_ast, const AstNodePtr& var, AstUtilInterface::OperatorSideEffect relation)
 {
-  DebugAstUtil([&relation, &var](){ return "Adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "var is : " + AstInterface::AstToString(var); });
+  std::string varname = GetVariableSignature(var);
+  DebugAstUtil([&relation, &varname](){ return "Adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "var is : " + varname; });
   std::string op_name;
   AstInterface::AstNodeList op_params;
   if (!AstInterface::IsFunctionDefinition(op_ast, &op_name, &op_params)) {
@@ -116,9 +162,7 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
         std::cerr << "Unexpected relation: " << relation << "\n";
         assert(0);
   }
-  std::string varname = GetVariableSignature(var);
-  DebugAstUtil([&varname](){ return "Variable name is :" + varname; });
-  if (desc != 0) {
+  if (desc != 0 && varname != "_NULL_") {
      if (varname == "_UNKNOWN_" || varname == "") {
        desc->set_has_unknown(true);  
      } else {
@@ -128,79 +172,11 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
   return std::pair<std::string, std::string>(GetVariableSignature(op_ast), varname);
 } 
 
-std::string AstUtilInterface:: GetVariableSignature(SgNode* variable) {
-    if (variable == 0) return "_UNKNOWN_";
-    SgType* variable_is_type = isSgType(variable);
-    if (variable_is_type != 0) {
-        std::string variable_name;
-        AstInterface::GetTypeInfo(variable_is_type, &variable_name, 0, 0, true);
-        return variable_name;
-    }
-    switch (variable->variantT()) {
-     case V_SgNamespaceDeclarationStatement:
-          return isSgNamespaceDeclarationStatement(variable)->get_name().getString();
-     case V_SgUsingDirectiveStatement:
-          return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
-     case V_SgTypedefDeclaration:
-     case V_SgTemplateTypedefDeclaration:
-          return "typedef_" + AstInterface::GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString());
-     case V_SgStaticAssertionDeclaration:
-          return OperatorDeclaration::operator_signature(variable);
-     default: break;
-    }
-    if (AstInterface::IsFunctionDefinition(variable)) {
-        return OperatorDeclaration::operator_signature(variable);
-    } 
-    {
-      std::string value;
-      if (AstInterface::IsConstant(variable, 0, &value)) {
-         return value;
-      }
-    }
-    {
-    AstNodePtr f;
-    AstNodeList args;
-    if (AstInterface::IsFunctionCall(variable, &f, &args)) {
-       std::string result = GetVariableSignature(f.get_ptr()) + "(";
-       bool is_first = true;
-       for (auto x : args) {
-         if (!is_first) { result = result + ","; }
-         else { is_first = false; }
-         result = result + GetVariableSignature(x.get_ptr());
-       }
-       return result + ")";
-    }
-    }
-    // An empty string will be returned AstInterface::IsVarRef(variable) returns false.
-    std::string name = AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);
-    if (name == "") {
-        name = "_UNKNOWN_";
-    }
-    DebugAstUtil([&variable,&name](){ return "variable is " + AstInterface::AstToString(variable) + " name is " + name; });
-    return name;
-}
 
 bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
-   std::string scope_name;
-   if (! AstInterface::IsBlock(scope, &scope_name)) {
-     return false;
-   }
-   DebugAstUtil([&ref,&scope_name](){ return "IsLocalRef invoked: var is " + AstInterface::AstToString(ref) + "; scope is " + scope_name; });
-   AstNodePtr _cur_scope;
-   if (!AstInterface::IsVarRef(ref, 0, 0, &_cur_scope)) {
-      return false;
-   }  
-   SgNode* cur_scope = AstNodePtrImpl(_cur_scope).get_ptr(); 
-   std::string cur_scope_name;
-   while (cur_scope != 0 && cur_scope->variantT() != V_SgGlobal) {
-         if (AstInterface::IsBlock(cur_scope, &cur_scope_name) &&  
-              (cur_scope == scope || cur_scope_name == scope_name)) {
-             return true;
-         }
-         DebugAstUtil([&cur_scope](){ return "IsLocalRef current scope:" + cur_scope->class_name(); });
-         SgNode* n = AstInterfaceImpl::GetScope(cur_scope);
-         cur_scope = n;
-   }   
-   return false;
+   return AstInterface::IsLocalRef(ref, scope);
 }
 
+std::string AstUtilInterface::GetVariableSignature(const AstNodePtr&  variable) {
+  return AstInterface::GetVariableSignature(variable);
+}

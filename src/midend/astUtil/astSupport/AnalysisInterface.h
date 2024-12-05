@@ -37,7 +37,6 @@ class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
   virtual ~NoFunctionSideEffectAnalysis() {}
 };
 
-template <class AstNodePtr>
 class SideEffectAnalysisInterface 
 {
  public:

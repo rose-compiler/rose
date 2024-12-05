@@ -7,13 +7,15 @@
 #include "sage3basic.h"
 #include "AstInterface.h"
 #include "AstInterface_ROSE.h"
+#include "OperatorDescriptors.h"
+#include "OperatorAnnotation.h"
 
 
 namespace AstUtilInterface {
 
-void WholeProgramDependenceAnalysis::CollectPastResults(std::ifstream& input_file) {
+void WholeProgramDependenceAnalysis::CollectPastResults(std::istream& input_file) {
     Log.push("Collect past results of dependence analysis");
-    deptable.CollectFromFile(input_file);
+    DependenceTable::CollectFromFile(input_file);
     Log.push("Done collecting past results of dependence analysis");
 }
 
@@ -23,13 +25,12 @@ WholeProgramDependenceAnalysis:: WholeProgramDependenceAnalysis(int argc, const 
   sageProject = new SgProject (argvList);
 }
 
-bool WholeProgramDependenceAnalysis:: ComputeDependences() {
+void WholeProgramDependenceAnalysis:: ComputeDependences() {
   Log.push("Compute dependences.");
   if (sageProject == 0) {
-    return false;
+    return;
   }
   int filenum = sageProject->numberOfFiles();
-  bool succ = true;
   for (int i = 0; i < filenum; ++i) {
     SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
     ROSE_ASSERT(sageFile != NULL);
@@ -50,24 +51,21 @@ bool WholeProgramDependenceAnalysis:: ComputeDependences() {
          continue;
       } 
       Log.push("Analyzing declaration " + func->unparseToString() + " in " + fname);
-      if (!ComputeDependences(func, root)) {
-         succ = false;
-      }
+      ComputeDependences(func, root);
     }
   }
-  return succ;
 }
 
 void WholeProgramDependenceAnalysis:: OutputDependences(std::ostream& output) { 
   if (CmdOptions::GetInstance()->HasOption("-data")) {
-     deptable.OutputDataDependences(output);
+     DependenceTable::OutputDataDependences(output);
   } else {
-     deptable.OutputDependences(output); 
+     DependenceTable::OutputDependences(output); 
   }
 }
 
 bool WholeProgramDependenceAnalysis::
-     SaveOperatorSideEffect(SgNode* op, SgNode* varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details) {
+     SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details) {
   std::string prefix, attr;
   switch (relation) {
     case AstUtilInterface::OperatorSideEffect::Modify: prefix = "modify"; break;
@@ -88,62 +86,76 @@ bool WholeProgramDependenceAnalysis::
   }
   DependenceEntry e(op_save.first, op_save.second, prefix, attr); 
   Log.push("saving dependence: " + e.to_string());
-  deptable.SaveDependence(e);
+  DependenceTable::SaveDependence(e);
   return true;
 }
 
-bool WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* root) {
+void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* root) {
   DebugLog DebugSaveDep("-debugdep");
   std::string function_name;
   AstInterface::AstNodeList children;
   AstNodePtr body;
   if (AstInterface::IsFunctionDefinition(input, &function_name, 0, 0, &body, 0, 0,/*use_global_name*/true) && body != 0) {
     Log.push("Computing dependences for " + input->unparseToString());
-    std::function<bool(SgNode*, SgNode*, AstUtilInterface::OperatorSideEffect)> save_dep = 
-        [this,input,body,&DebugSaveDep] (SgNode* first, SgNode* second, AstUtilInterface::OperatorSideEffect relation) {
+    std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)> save_dep = 
+        [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr& second, AstUtilInterface::OperatorSideEffect relation) {
         DebugSaveDep([&relation](){return "saving for:" + AstUtilInterface::OperatorSideEffectName(relation); });
+        SgNode* details = second.get_ptr();
         switch (relation) {
           case AstUtilInterface::OperatorSideEffect::Decl: 
           case AstUtilInterface::OperatorSideEffect::Allocate: 
           case AstUtilInterface::OperatorSideEffect::Free:  {
                SgType* t = AstInterface::GetExpressionType(first).get_ptr();
                assert(t != 0);
-               second = t;
+               details = t;
                break;
           }
           case AstUtilInterface::OperatorSideEffect::Read:  {
                // If the detail is the surrounding statment, skip.
                if (AstInterface::IsStatement(second)) {
-                 second = 0;
+                 details = 0;
                }
-               if (!AstInterface::IsVarRef(first) || (AstUtilInterface::IsLocalRef(first, body.get_ptr()) && second == 0)) {
+               if (!AstInterface::IsVarRef(first) || (AstUtilInterface::IsLocalRef(first.get_ptr(), body.get_ptr()) && details == 0)) {
                  return true;
                } 
                break; 
            }
           case AstUtilInterface::OperatorSideEffect::Kill: 
-               second = 0; break; 
+               details = 0; break; 
           default: break;
         }
-        DebugSaveDep([&first,&second](){return "saving side effect for:" + AstInterface::AstToString(first) + " = " + AstInterface::AstToString(second); });
-        if (!SaveOperatorSideEffect(input, first, relation, second)) {
+        DebugSaveDep([&first,details](){return "saving side effect for:" + AstInterface::AstToString(first) + " = " + AstInterface::AstToString(details); });
+        if (!SaveOperatorSideEffect(input, first.get_ptr(), relation, details)) {
            DebugSaveDep([](){return "Did not save dependene" ; });
         } 
         return true;
       };
-    return AstUtilInterface::ComputeAstSideEffects(input, root, save_dep);
+     AstUtilInterface::ComputeAstSideEffects(input, root, save_dep);
   }
-  bool succ = true;
   if (AstInterface::IsBlock(input, 0, &children)) {
     for (AstInterface::AstNodeList::const_iterator p = children.begin(); p != children.end(); ++p) {
       AstNodePtr current = *p;
-      if (!ComputeDependences(AstNodePtrImpl(current).get_ptr(), root)) {
-        succ = false;
-      }
+      ComputeDependences(AstNodePtrImpl(current).get_ptr(), root);
     }
   }
-  return succ;
 }
 
+void WholeProgramDependenceAnalysis:: save_dependence(const DependenceEntry& e) {
+  // Save inside the dependence table (base class).
+  DependenceTable::SaveDependence(DependenceEntry(e));
+
+  // Save into annotation  if necessary.
+  if (e.type_entry() == "modify") {
+    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+    OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+    SymbolicVal var = new SymbolicVar(e.second_entry(), AST_NULL);
+    desc->push_back(var);
+  } else if (e.type_entry() == "read") {
+    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+    OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
+    SymbolicVal var = new SymbolicVar(e.second_entry(), AST_NULL);
+    desc->push_back(var);
+  }
+}
 
 };

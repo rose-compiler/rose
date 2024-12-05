@@ -2,12 +2,13 @@
 
 namespace AstUtilInterface {
 
-void CollectDependences::CollectFromFile(std::ifstream& input_file) {
+void CollectDependences::CollectFromFile(std::istream& input_file) {
     Log.push("Constructing DependenceTable");
     while (input_file.good()) {
         std::string next_string;
         // Each line starts with the name of a component in the software.
         if (input_file >> next_string) {
+            Log.push("reading " + next_string);
             std::string dest = next_string;
             input_file >> next_string;
             if (next_string != ":") {
@@ -33,7 +34,7 @@ void CollectDependences::CollectFromFile(std::ifstream& input_file) {
                     if (!(input_file >> next_string).good() || next_string != "]") {
                        Log.fatal("Expecting \"]\" but get " + next_string);
                     }
-                } else if (next_string == "<=" || next_string == "=>" || next_string == "=") {
+                } else if (next_string == "<-" || next_string == "->" || next_string == "=") {
                     if (!(input_file >> next_string).good()) {
                        Log.fatal("Expecting strings after `=' but get " + next_string);
                     }

@@ -1309,6 +1309,7 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/midend/astMatching
   ${ROSE_TOP_SRC_DIR}/src/midend/astQuery
   ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/annotation
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astSupport

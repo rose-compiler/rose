@@ -7,6 +7,7 @@
 #include <CompSliceDepGraph.h>
 #include <GraphGroup.h>
 #include <ROSE_ASSERT.h>
+#include <CommandOptions.h>
 
 CompSliceDepGraphCreate ::
 CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,

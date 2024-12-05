@@ -388,7 +388,11 @@ public:
     return p;
   }
 
-  static bool IsFortranLanguage();
+  //! Returns whether the given ref reaches only local data within scope. 
+  static bool IsLocalRef(SgNode* ref, SgNode* scope); 
+
+  //! Returns a string that uniquely identifies the given variable.
+  static std::string GetVariableSignature(const AstNodePtr& variable);
 };
 
 typedef AstInterface::AstList AstNodeList;

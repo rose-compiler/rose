@@ -8,8 +8,10 @@
 
 class SgNode;
 class SgFunctionDeclaration;
+class AstNodePtr;
 namespace AstUtilInterface{
 
+   class WholeProgramDependenceAnalysis;
    enum OperatorSideEffect {
      Modify, Read, Kill, Call, Decl, Allocate, Free, CallInput, CallOutput
    };
@@ -32,10 +34,10 @@ namespace AstUtilInterface{
    }
    //! Returns the collection of memory references modified, read, and invoked (as 
    //! function calls) as potential side effects of running the given ast, inside the
-   //! given scope. The functtion returns true if the collection is known to be
-   //! accurate (no unknowns); it returns false otherwise.
-    bool ComputeAstSideEffects(SgNode* ast, SgNode* scope,
-                   std::function<bool(SgNode*, SgNode*, OperatorSideEffect)>& collect);
+   //! given scope. 
+    void ComputeAstSideEffects(SgNode* ast, SgNode* scope,
+                   std::function<bool(const AstNodePtr&, const AstNodePtr&, OperatorSideEffect)>& collect,
+                   WholeProgramDependenceAnalysis* add_to_dep_analysis = 0);
 
     //! Instruct the compiler to collect operator side effect annotation. The 
     //! annotations will be stored internally to be used later to assist program 
@@ -45,18 +47,20 @@ namespace AstUtilInterface{
    //! Read annotation from the given file. The annotations will be stored internally 
    //! to be used later to assist program analysis within the compiler.
    //! Only annotations supported by those already registered can be parsed correctly.
-    void ReadAnnotations(std::istream& input); 
+   //! Use the given dependence analysis if it is not 0.
+    void ReadAnnotations(std::istream& input, WholeProgramDependenceAnalysis* use_dep_analysis = 0); 
 
    //! Write annotation to the given file. The annotations are those stored internally 
    //! collected through other annotation-related calls of this interface.
-    void OutputOperatorSideEffectAnnotations(std::ostream& output); 
+   //! Use the given dependence analysis if it is not 0.
+    void OutputOperatorSideEffectAnnotations(std::ostream& output, WholeProgramDependenceAnalysis* use_dep_analysis = 0); 
 
     //! Record that op_ast references the given variable with the given relation:
     //! (modify, read, or call). Returns the string representation of the operator and variable.
-    std::pair<std::string, std::string>  AddOperatorSideEffectAnnotation(SgNode* op_ast, SgNode* var, OperatorSideEffect relation);
+    std::pair<std::string, std::string>  AddOperatorSideEffectAnnotation(SgNode* op_ast, const AstNodePtr& var, OperatorSideEffect relation);
 
     //! Returns a string that uniquely identifies the given variable.
-    std::string GetVariableSignature(SgNode* variable);
+    std::string GetVariableSignature(const AstNodePtr& variable);
 
     //! Returns whether the given ref reaches only local data within scope. 
     bool IsLocalRef(SgNode* ref, SgNode* scope);

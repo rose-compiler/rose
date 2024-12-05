@@ -16,6 +16,8 @@ add_library(midend_util OBJECT
   annotation/AnnotExpr.C
   annotation/TypeAnnotation.C
   astSupport/StmtInfoCollect.C
+  dependenceTracking/dependence_analysis.C
+  dependenceTracking/dependence_table.C
   AstUtilInterface.C)
 add_dependencies(midend_util rosetta_generated)
 
@@ -23,3 +25,4 @@ add_subdirectory(astInterface)
 add_subdirectory(astSupport)
 add_subdirectory(symbolicVal)
 add_subdirectory(annotation)
+add_subdirectory(dependenceTracking)

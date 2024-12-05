@@ -49,7 +49,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
 {
   std::vector <Node*> defvec;
   const ReachingDefinitionGenerator* g = r.get_generator();
-  StmtSideEffectCollect<AstNodePtr> collect(fa, f);
+  StmtSideEffectCollect collect(fa, f);
 
   std::map<AstNodePtr, Node*> defmap;
   const ReachingDefinitionBase& base = g->get_base();
