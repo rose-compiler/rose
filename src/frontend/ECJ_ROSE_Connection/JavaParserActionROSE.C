@@ -238,7 +238,7 @@ cout.flush();
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionUpdateClassSupportStart(JNIEnv* env, jclass /*xxx*/, jstring java_name, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_name);
 
     if (SgProject::get_verbose() > 0)
@@ -542,7 +542,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUpdatePopMethodParameterScope(JNIE
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(JNIEnv *env, jclass, jint java_num_type_parameters, jboolean java_has_super_class, jint java_num_interfaces, jobject /*jToken*/) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(JNIEnv* /*env*/, jclass, jint java_num_type_parameters, jboolean java_has_super_class, jint java_num_interfaces, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport()\n");
 
@@ -3389,7 +3389,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgumentEnd(JNIEnv *env, jcla
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jint num_annotations, jstring java_argument_name, jobject j/*Token*/) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv* env, jclass, jint num_annotations, jstring java_argument_name, jobject /*jToken*/) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
