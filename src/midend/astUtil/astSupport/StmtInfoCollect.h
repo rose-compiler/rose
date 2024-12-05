@@ -81,7 +81,7 @@ class StmtSideEffectCollect
   protected:
     using StmtInfoCollect<AstNodePtr>::AppendFuncCallArguments;
     using StmtInfoCollect<AstNodePtr>::AppendFuncCallWrite;
-    virtual void AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init);
+    virtual void AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init) override;
     virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
     virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) override;
