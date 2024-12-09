@@ -245,6 +245,7 @@ std::string canonical_text_as_string(ada_base_entity* lal_element){
   std::string canonical_text_string = ada_canonical_text.string_value();
   return canonical_text_string;
 }
+
 /// Handles getting the name for any node that comes from an ada_defining_name_f_name (ada_char_literal, ada_dotted_name, ada_identifier, ada_string_literal)
 std::string getFullName(ada_base_entity* lal_element){
   ada_node_kind_enum kind = ada_node_kind(lal_element);
@@ -274,6 +275,7 @@ std::string getFullName(ada_base_entity* lal_element){
       return "nameError";
   }
 }
+
 void logKind(const char* kind, int elemID)
 {
   if (!traceKind(kind)) return;

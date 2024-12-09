@@ -652,6 +652,14 @@ mangleQualifiersToString (const SgScopeStatement* scope)
   // ROSE_ASSERT(mangled_name.find('<') == string::npos);
      ROSE_ASSERT(SageInterface::hasTemplateSyntax(mangled_name) == false);
 
+  // AS (12/09/2024) Added loop to replace '.' with "_dot_" (for the Libadalang frontend)
+     std::size_t dot_loc = mangled_name.find('.');
+     while(dot_loc != std::string::npos)
+     {
+         mangled_name = mangled_name.substr(0, dot_loc) + "_dot_" + mangled_name.substr(dot_loc + 1); 
+         dot_loc = mangled_name.find('.');
+     }
+
 #if 0
      printf ("Leaving mangleQualifiersToString(): scope = %p = %s returning mangled_name = %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
 #endif

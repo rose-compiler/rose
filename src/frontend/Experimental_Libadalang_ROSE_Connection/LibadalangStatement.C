@@ -3906,6 +3906,10 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         recordNode(libadalangDecls(), hash, sgnode);
 
+        //Also record this node by the package_decl's hash
+        hash = hash_node(lal_element);
+        recordNode(libadalangDecls(), hash, sgnode);
+
         attachSourceLocation(sgnode, lal_element, ctx);
         privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
@@ -4648,6 +4652,12 @@ void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationState
       decl_name_hash = hash_node(&lal_first_defining_name);
     } else if(decl_kind >= ada_discrete_base_subtype_decl && decl_kind <= ada_synth_anonymous_type_decl){
       ada_base_type_decl_f_name(&lal_first_decl, &lal_first_defining_name);
+      decl_name_hash = hash_node(&lal_first_defining_name);
+    } else if(decl_kind == ada_package_renaming_decl){
+      ada_package_renaming_decl_f_name(&lal_first_decl, &lal_first_defining_name);
+      decl_name_hash = hash_node(&lal_first_defining_name);
+    } else if(decl_kind == ada_generic_package_renaming_decl){
+      ada_generic_package_renaming_decl_f_name(&lal_first_decl, &lal_first_defining_name);
       decl_name_hash = hash_node(&lal_first_defining_name);
     } else {
       logWarn() << "Could not find defining_name for decl kind " << decl_kind << " in createUseClause()\n";
