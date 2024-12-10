@@ -952,13 +952,13 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 # Only use quadmath if C/C++ is enable and it is available (also exclude windows)
-if(ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
-  # A C++ program that we will use to test if we can compile quadmath.h with our cxx compiler
+if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+  
   set(COMPILE_TEST_SOURCE "
   #include <quadmath.h>
   int main() { return 0; }")
 
-  # Test if we can compile quadmath.h with our cxx compiler
+  # Perform the compile test
   check_cxx_source_compiles("${COMPILE_TEST_SOURCE}" HAVE_QUADMATH_COMPILE)
 
   # Determine whether quadmath is usable
@@ -967,7 +967,7 @@ if(ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
     set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath")
     message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
   else()
-    # EDG hard codes this either way right now, TODO: redo make quadmath modular 
+    # Comment this line out for issues with clang 
     set(ROSE_USE_EDG_QUAD_FLOAT 0)
     # This will no longer cause an issue for gcc or clang 
     message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
