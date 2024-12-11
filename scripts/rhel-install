@@ -6,15 +6,16 @@ arg0="${0##*/}"
 # Purpose
 ####################################################################################################################################
 
-# This script builds ROSE and ROSE-based tools on a RHEL-8 system that has limited packages installed. Another way is to build a
-# binary release on a system with a full set of packages and then install the binary release on the limited system, although such
-# an approach is not useful for determining the minimal set of dependencies and ensuring that only those dependencies are used.
+# This script builds ROSE and ROSE-based tools on a Red Hat Enterprise Linux compabible system that has limited packages
+# installed. Another way is to build a binary release on a system with a full set of packages and then install the binary release on
+# the limited system, although such an approach is not useful for determining the minimal set of dependencies and ensuring that only
+# those dependencies are used.
 
 # To run this script, execute these commands or similar:
 #   dnf -y install openssh-clients
-#   scp matzke@wyoming.lan:rose-wip/rose/scripts/rhel8-install .
-#   chmod 755 rhel8-install
-#   ./rhel8-install
+#   scp matzke@wyoming.lan:devel/rose/scripts/rhel-install .
+#   chmod 755 rhel-install
+#   ./rhel-install
 
 # It doesn't matter what your CWD is when you run this script. It will build and install things under the CWD (except for ROSE,
 # which is installed in ~/rose-installed because the binary tools expect (but dont' require) it there by default.
@@ -69,12 +70,12 @@ arg0="${0##*/}"
 # Note that if the URL contains an "@" then you MUST also specify the branch name.
 
 : ${USE_ROSE=develop@https://github.com/rose-compiler/rose}
-if ping -c1 wyoming.lan.; then
+if ping -c1 wyoming; then
     # On Robb's network these are local because Internet access is restricted
-    : ${USE_MODELCHECKER=master@matzke@wyoming.lan.:rose-wip/model-checker}
-    : ${USE_MEGACHIROPTERAN=master@matzke@wyoming.lan.:rose-wip/megachiropteran}
-    : ${USE_ESCAPADE=master@matzke@wyoming.lan.:rose-wip/escapade}
-    : ${USE_CYBERSHOT=master@matzke@wyoming.lan.:rose-wip/cybershot}
+    : ${USE_MODELCHECKER=master@matzke@wyoming.lan:devel/model-checker}
+    : ${USE_MEGACHIROPTERAN=master@matzke@wyoming.lan:devel/megachiropteran}
+    : ${USE_ESCAPADE=master@matzke@wyoming.lan:devel/escapade}
+    : ${USE_CYBERSHOT=master@matzke@wyoming.lan:devel/cybershot}
 else
     # For everyone else, these are probably the correct locations
     : ${USE_MODELCHECKER=master@ssh://git@czgitlab.llnl.gov:7999/matzke/model-checker.git}
@@ -309,6 +310,49 @@ maybe-download() {
 	fi
     fi
 }
+
+# Returns the operating system name like if possible, nothing otherwise.
+#    "ubuntu"
+#    "almalinux"
+#    "rhel"
+os-name() {
+    if [ -r /etc/os-release ]; then
+	(
+	    . /etc/os-release
+	    echo "$ID"
+	)
+    fi
+}
+
+# Returns the operating system version number like "9.3" if possible, nothing otherwise.
+os-version() {
+    if [ -r /etc/os-release ]; then
+	(
+	    . /etc/os-release
+	    echo "$VERSION_ID"
+	)
+    fi
+}
+
+####################################################################################################################################
+# Check that we're running on a supported system
+####################################################################################################################################
+
+case "$(os-name)" in
+    rhel|almalinux)
+	case "$(os-version)" in
+	    8.*|9.*)
+		: ok
+		;;
+	    *)
+		die "this script does not support $(os-name)-$(os-version)"
+		;;
+	esac
+	;;
+    *)
+	die "this script does not support $(os-name)-$(os-version)"
+	;;
+esac
 
 ####################################################################################################################################
 # Update the system
@@ -818,6 +862,12 @@ case "$USE_ROSE" in
 	    say rm -rf "$ROSE_BUILD_PATH/_build"
             say mkdir "$ROSE_BUILD_PATH/_build"
             say cd rose/_build
+
+            # BUG WORKAROUND for ROSE 0.11.145.188 on 2024-12-03: Boost libraries depend on -ldl but that's not added by CMake
+            if ! grep -q 'Boost_LIBRARIES.* -ldl' ../CMakeLists.txt; then
+		echo "$arg0: BUG: workaround applied for missing -ldl in link commands"
+		sed -i '/# Paths to install header/ iset(Boost_LIBRARIES ${Boost_LIBRARIES} -ldl)\n' ../CMakeLists.txt
+            fi
 
             RELEASE_TYPE="-fPIC -O3 -DNDEBUG -g"
             WARNINGS="-Wall -Wno-attributes -Wno-unused-local-typedefs -Wno-misleading-indentation -Wno-nonnull-compare"

@@ -36,4 +36,4 @@ exec env \
      USE_ROSE=downloads/rose \
      USE_SPOT=downloads/spot \
      USE_Z3=downloads/z3 \
-     "$dir0/rhel8-install"
+     "$dir0/rhel-install"
