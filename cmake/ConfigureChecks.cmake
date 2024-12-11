@@ -91,6 +91,6 @@ if(HAVE_SYS_TIME_H)
 endif()
 
 if(HAVE_DLFCN_H)
-  check_library_exists(dl dlopen "/lib64;/usr/lib;/lib;/usr/local/lib;/usr/pkg/lib" HAVE_LIBDL)
-  check_library_exists(dl dladdr "/lib64;/usr/lib;/lib;/usr/local/lib;/usr/pkg/lib" HAVE_DLADDR)
+  check_library_exists(dl dlopen "/lib;/lib64;/usr/lib;/usr/lib64;/usr/local/lib;/usr/local/lib64;/usr/pkg/lib;/usr/pkg/lib64" HAVE_LIBDL)
+  check_library_exists(dl dladdr "/lib;/lib64;/usr/lib;/usr/lib64;/usr/local/lib;/usr/local/lib64;/usr/pkg/lib;/usr/pkg/lib64" HAVE_DLADDR)
 endif() 

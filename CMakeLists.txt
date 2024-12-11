@@ -1083,6 +1083,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-CPP)
     list(APPEND link_with_libraries stdc++)
   endif() 
 endif() 
+if(HAVE_LIBDL)
+  list(APPEND link_with_libraries dl)
+endif()
 
 # Check compilers and version numbers. The module is located in src/cmake/modules.
 if(ENABLE-C)
