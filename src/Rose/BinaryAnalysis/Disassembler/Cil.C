@@ -49,7 +49,9 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
     // Copy instruction from the memory map
     uint8_t buf[BUF_SIZE]; // largest possible instruction (other than switch)
     size_t nbytes = map->at(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf).size();
-    
+    if (0 == nbytes)
+        throw Exception("short read", va);
+
     // Clear remaining buffer bytes
     for (size_t i = nbytes; i < sizeof buf; ++i) buf[i] = 0;
 

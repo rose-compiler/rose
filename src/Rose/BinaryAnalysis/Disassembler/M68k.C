@@ -966,7 +966,7 @@ M68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet
     size_t nbytes = map->at(start_va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf).size();
     state.niwords = nbytes / sizeof(state.iwords[0]);
     if (0==state.niwords)
-        throw Exception("short read from memory map", start_va);
+        throw Exception("short read", start_va);
     for (size_t i=0; i<state.niwords; ++i)
         state.iwords[i] = ByteOrder::beToHost(*(uint16_t*)(buf+2*i));
     state.niwords_used = 1;

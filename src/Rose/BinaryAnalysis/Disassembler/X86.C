@@ -147,6 +147,8 @@ X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet 
         throw Exception("instruction pointer not aligned", start_va);
     unsigned char temp[16];
     size_t tempsz = map->at(start_va).limit(sizeof temp).require(MemoryMap::EXECUTABLE).read(temp).size();
+    if (0 == tempsz)
+        throw Exception("short read", start_va);
 
     /* Disassemble the instruction */
     State state;
