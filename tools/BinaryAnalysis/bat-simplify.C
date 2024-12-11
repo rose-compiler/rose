@@ -95,13 +95,10 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
 
     parseCommandLine(argc, argv);
-    unsigned lineNumber = 0;
 
     SmtSolver::Ptr smtSolver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     while (auto line = readInput()) {
-        ++lineNumber;
-
         // Parse the expression
         try {
             SymbolicExpressionParser symbolicParser(smtSolver);

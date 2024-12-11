@@ -505,7 +505,8 @@ SAWYER_EXPORT std::string thisExecutableName();
 # define SAWYER_STATIC_INIT __attribute__((init_priority(101)))
 
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
-    TYPE NAME[SIZE]; memset(NAME, 0, (SIZE)*sizeof(TYPE))
+    TYPE *NAME = (TYPE*)alloca((SIZE) * sizeof(TYPE)); memset(NAME, 0, (SIZE)*sizeof(TYPE))
+
 
 #endif
 
