@@ -2448,7 +2448,6 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableBody(ATerm term)
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedTableBody: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_table_option_list;
 
    if (ATmatch(term, "SpecifiedTableBody(<term>)", &t_table_option_list)) {
@@ -2464,6 +2463,10 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableBody(ATerm term)
          } else return ATfalse;
       }
    }
+   else if (traverse_SpecifiedTableItemDeclaration(term)) {
+      // MATCHED SpecifiedTableItemDeclaration
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
