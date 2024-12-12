@@ -197,10 +197,74 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
 
   int new_units_end = comp_units_storage.size();
 
-
   //Call find_additional_compilation_units on any newly added comp units
   for(int i = new_units_start; i < new_units_end; i++){
      find_additional_compilation_units(&comp_units_storage.at(i), ctx, comp_units_storage);
+  }
+}
+
+//Find the compilation unit for 6 child packages based on the parent_package_name, and insert them behind the parent package's position in comp_units_store
+//  The 6 child units do not include any additional units themselves, so we do not need to call find_additional_compilation_units on them
+void add_text_io_subpackages(const std::string& parent_package_name, int position, std::vector<ada_base_entity>& comp_units_store, ada_analysis_context& ctx){
+  using Libadalang_ROSE_Translation::mlog;
+
+  std::vector<std::string> child_names = {".modular_io",
+                                          ".fixed_io",
+                                          ".float_io",
+                                          ".enumeration_io",
+                                          ".integer_io",
+                                          ".decimal_io"
+                                         };
+
+  for(int i = 0; i < child_names.size(); i++){
+    //Get the analysis unit for the child package
+    std::string full_package_name = parent_package_name + child_names.at(i);
+
+    //Make an ada_text for the full name
+    size_t full_package_name_length = full_package_name.size();
+    uint32_t full_package_name_chars[full_package_name_length];
+    for(int i = 0; i < full_package_name_length; i++){
+      full_package_name_chars[i] = full_package_name.at(i);
+    }
+
+    ada_text package_name_text = { full_package_name_chars, full_package_name_length, true };
+
+    //Get the child unit
+    ada_analysis_unit child_unit = ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0);
+
+    if(child_unit == nullptr || ada_unit_diagnostic_count(child_unit) > 0){
+      mlog[Sawyer::Message::ERROR] << "Could not get compilation unit for " << full_package_name << std::endl;
+    }
+
+    ada_base_entity lal_child_root;
+    ada_unit_root(child_unit, &lal_child_root);
+
+    //Insert the root node of the child package at position
+    comp_units_store.insert(comp_units_store.begin() + position, std::move(lal_child_root));
+  }
+}
+
+//Ada '95 treats some packages as subpackages to maintain compatibility with Ada '83, but GNAT 2021 treats these packages as child packages instead
+//  This results in some Ada '95 code using functions from subpackages that aren't actually included by default (because they aren't subpackages in GNAT 2021, and are instead child packages).
+//  To fix this, we look through the list of included packages, and add in the child packages that Ada '95 expects to be subpackages if we find their parent packages
+//  The child packages are added exactly once, before the first instance of their respective parent
+void add_unincluded_subpackages(std::vector<ada_base_entity>& comp_units_store, ada_analysis_context& ctx){
+  //AS: As far as I know, these 3 packages are the only ones with children that used to be subpackages
+  bool found_ada_text_io = false, found_ada_wide_text_io = false, found_ada_wide_wide_text_io = false;
+
+  for(int i = comp_units_store.size() - 1; i >= 0; --i){
+    //Get the sloc of this base node
+    std::string full_sloc = Libadalang_ROSE_Translation::dot_ada_full_sloc(&comp_units_store.at(i));
+    if(!found_ada_text_io && full_sloc.find("a-textio.ads") != std::string::npos){
+      add_text_io_subpackages("ada.text_io", i, comp_units_store, ctx);
+      found_ada_text_io = true;
+    } else if(!found_ada_wide_text_io && full_sloc.find("a-witeio.ads") != std::string::npos){
+      add_text_io_subpackages("ada.wide_text_io", i, comp_units_store, ctx);
+      found_ada_wide_text_io = true;
+    } else if(!found_ada_wide_wide_text_io && full_sloc.find("a-ztexio.ads") != std::string::npos){
+      add_text_io_subpackages("ada.wide_wide_text_io", i, comp_units_store, ctx);
+      found_ada_wide_wide_text_io = true;
+    }
   }
 }
 
@@ -451,6 +515,9 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
      for(int i = 0; i < num_source_files; ++i){
        find_additional_compilation_units(&root_storage.at(i), ctx, root_storage);
      }
+
+     //Handle any child packages that are represented as subpackages in Ada '95
+     add_unincluded_subpackages(root_storage, ctx);
 
      std::vector<ada_base_entity*> roots(root_storage.size());
      //Reset the roots to make sure they point to root_storage

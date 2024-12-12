@@ -86,7 +86,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     /*case A_First_Attribute:            // 3.5(12), 3.6.2(3), K(68), K(70)
     case A_Length_Attribute:           // 3.6.2(9), K(117)
     case An_Unknown_Attribute:          // Unknown to ASIS
-    case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M
+    case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M //TODO How can we recognize impl attributes in lal?
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
 
@@ -237,10 +237,13 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
     //  |A2012 end*/
     else if(name == "access"
          || name == "address"
+         || name == "aft"
          || name == "alignment"
          || name == "base"
          || name == "class"
          || name == "digits"
+         || name == "fore"
+         || name == "image"
          || name == "pos"
          || name == "read"
          || name == "size"

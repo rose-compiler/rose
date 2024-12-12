@@ -4063,7 +4063,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the params
         ada_base_entity lal_params;
         if(kind == ada_generic_package_instantiation){
-          ada_generic_package_instantiation_f_params(lal_element, & lal_params);
+          ada_generic_package_instantiation_f_params(lal_element, &lal_params);
         } else {
           ada_generic_subp_instantiation_f_params(lal_element, &lal_params);
         }
@@ -4071,6 +4071,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         if(basedecl == nullptr)
         {
           logFlaw() << "Could not find base decl for ada_generic_package_instantiation!\n";
+          logFlaw() << "  lal_generic_decl_kind = " << lal_generic_decl_kind << "\n";
         }
 
         // PP (2/2/22): the base decl can also be a renamed generic declaration
@@ -4659,6 +4660,9 @@ void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationState
     } else if(decl_kind == ada_generic_package_renaming_decl){
       ada_generic_package_renaming_decl_f_name(&lal_first_decl, &lal_first_defining_name);
       decl_name_hash = hash_node(&lal_first_defining_name);
+    } else if(decl_kind == ada_generic_package_instantiation){
+      ada_generic_package_instantiation_f_name(&lal_first_decl, &lal_first_defining_name);
+      decl_name_hash = hash_node(&lal_first_defining_name);
     } else {
       logWarn() << "Could not find defining_name for decl kind " << decl_kind << " in createUseClause()\n";
       decl_name_hash = 0;
@@ -4703,6 +4707,7 @@ SgExpression& createWithClause(ada_base_entity* lal_element, AstContext ctx){
 
   // store source location of the fully qualified name
   attachSourceLocation(sgnode, lal_element, ctx);
+
   return sgnode;
 }
 
