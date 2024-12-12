@@ -182,7 +182,17 @@ PodMarkup::emit(const std::string &doc) {
     tmpFile.stream() <<(*this)(doc);
     tmpFile.stream().close();
 
-    std::string cmd = "env LESSCHARSET=utf-8 perldoc"
+    std::string lessOptions = []() {
+        if (const char *less = ::getenv("LESS")) {
+            return less;
+        } else {
+            return "";
+        }
+    }();
+
+    std::string cmd = "env LESSCHARSET=utf-8"
+                      " LESS=" + escapeSingleQuoted(lessOptions + "R") +
+                      " perldoc"
                       " -o man"
                       " -w 'center:" + escapeSingleQuoted(chapterTitleOrDefault()) + "'"
                       " -w 'date:" + escapeSingleQuoted(versionDateOrDefault()) + "'"
