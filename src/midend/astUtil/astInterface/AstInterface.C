@@ -2713,7 +2713,8 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
   }
   { AstNodePtr lhs1, lhs2, rhs1, rhs2;
     if (IsAssignment(_first, &lhs1, &rhs1) && IsAssignment(_second, &lhs2, &rhs2)) {
-      return AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type) && AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type);
+      return ( (lhs1 == _first && lhs2 == _second) || AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type)) && 
+             ( (rhs1 == _first && rhs2 == _second) || AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type));
     }
   }
   { AstNodePtr lhs1, lhs2, rhs1, rhs2;
