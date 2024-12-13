@@ -18,6 +18,13 @@ struct Style {
     Sawyer::Optional<Color::HSV> foreground;            /**< Optional foreground color. */
     Sawyer::Optional<Color::HSV> background;            /**< Optional background color. */
 
+    /** Construct an empty style using default colors. */
+    Style() {}
+
+    /** Construct a new style with the specified foreground and background colors. */
+    Style(const Sawyer::Optional<Color::HSV> &fg, const Sawyer::Optional<Color::HSV> &bg = Sawyer::Nothing())
+        : foreground(fg), background(bg) {}
+
     /** Generate the ANSI escape for the style. */
     std::string ansiStyle() const;
 };
@@ -131,6 +138,7 @@ struct Settings {
             std::string pre;                            /**< String to introduce a comment. */
             std::string post;                           /**< String to terminate a comment. */
             size_t fieldWidth;                          /**< Min characters to use for the comment field. */
+            // Style style;                             // see `comment.trailing.style` above
         } comment;                                      /**< Settings for instruction comments. */
 
         struct {

@@ -553,6 +553,7 @@ Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<
 Settings::Settings() {
     // All colors listed here are assumed to be dark foreground colors on a light background.
     comment.line.style.foreground = Color::HSV(0.0, 0.0, 0.6);
+    comment.trailing.style.foreground = comment.line.style.foreground;
 
     function.separatorStyle.foreground = Color::HSV(0.33, 1.0, 0.3);
     function.titleStyle.foreground = Color::HSV(0.33, 1.0, 0.3);
@@ -594,7 +595,7 @@ Settings::Settings() {
     insn.mnemonic.fieldWidth = 8;
     insn.mnemonic.semanticFailureMarker = "[!]";
     insn.mnemonic.semanticFailureStyle.foreground = Color::HSV(0, 1, 0.4); // red
-    insn.mnemonic.style.foreground = Color::HSV(0.17, 1.00, 0.4); // yellow
+    insn.mnemonic.style.foreground = Color::HSV(0.17, 1.00, 0.2); // yellow
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
     insn.operands.showingWidth = false;
