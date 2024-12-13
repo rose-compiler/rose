@@ -542,7 +542,8 @@ struct Acuity
         logWarn() << "The following classes are not found by the pool traversal: ";
 
       for (ClassKeyType key : diff)
-        logWarn() << "\n  - " << nameClasses(key) << std::endl;
+        logWarn() << "\n  - " << nameClasses(key) << ct::dbgInfo(key)
+                  << std::endl;
 
       diff.clear();
 
@@ -555,7 +556,8 @@ struct Acuity
         logWarn() << "The following classes are not found by the AST traversal: ";
 
       for (ClassKeyType key : diff)
-        logWarn() << "\n  - " << nameClasses(key) << std::endl;
+        logWarn() << "\n  - " << nameClasses(key) << dbgInfo(key, 6)
+                  << std::endl;
     }
 
     // legacy interface

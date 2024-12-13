@@ -718,6 +718,45 @@ missingDiagnostics(ClassKeyType key)
 }
 
 
+std::string dbgInfo(ClassKeyType key, std::size_t numParents)
+{
+  const SgNode*      curr = key;
+  std::ostringstream os;
+
+  while (numParents && curr)
+  {
+    os << " -> " << typeid(*curr).name();
+    if (const SgDeclarationStatement* dcl = isSgDeclarationStatement(curr))
+      os << "[" << si::get_name(dcl) << "]";
+
+    const SgNode* prev = curr;
+
+    curr = curr->get_parent();
+
+    if (curr)
+    {
+      std::vector<SgNode*> succ = const_cast<SgNode*>(curr)->get_traversalSuccessorContainer();
+
+      if (std::find(succ.begin(), succ.end(), prev) == succ.end())
+        os << "!";
+    }
+
+    --numParents;
+  }
+
+  if (curr)
+  {
+    os << " -> " << typeid(*curr).name();
+    if (const SgDeclarationStatement* dcl = isSgDeclarationStatement(curr))
+      os << "[" << si::get_name(dcl) << "]";
+  }
+  else
+    os << " -> nullptr";
+
+  return os.str();
+}
+
+
 void inheritanceEdges( const SgClassDefinition* def,
                        std::function<void(const SgClassDefinition*, const SgClassDefinition*, bool)> fn
                      )

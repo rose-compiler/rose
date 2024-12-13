@@ -182,6 +182,9 @@ std::string typeNameOf(ClassKeyType key);
 boost::optional<std::string>
 missingDiagnostics(ClassKeyType key);
 
+/// produces a string with additional debug output
+std::string dbgInfo(ClassKeyType key, std::size_t numParents = 3);
+
 
 /// calls the callback function \p fn(derived, base, isvirtual)
 ///   for all direct base classes of \p clkey
