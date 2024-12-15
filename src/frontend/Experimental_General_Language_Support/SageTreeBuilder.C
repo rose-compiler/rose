@@ -360,65 +360,9 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
    scope = isSgGlobal(SageBuilder::topScopeStack());
    ASSERT_not_null(scope);
 
-// Clear any dangling forward references
+// Clear dangling forward references
    if (!forward_var_refs_.empty()) {
-     std::map<const std::string, SgVarRefExp*>::iterator it = forward_var_refs_.begin();
-     while (it != forward_var_refs_.end()) {
-       if (SgFunctionSymbol* func_sym = SageInterface::lookupFunctionSymbolInParentScopes(it->first, scope)) {
-         SgVarRefExp* prev_var_ref = it->second;
-         SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
-         ASSERT_not_null(prev_var_sym);
-
-         SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
-         SgNode* prev_parent = prev_var_ref->get_parent();
-
-      // There may be more options but only three are known so far
-         if (isSgUnaryOp(prev_parent) || isSgBinaryOp(prev_parent) || isSgExprStatement(prev_parent)) {
-           SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
-           SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
-           func_call->set_parent(prev_parent);
-
-           if (SgExprStatement* expr_stmt = isSgExprStatement(prev_parent)) {
-             expr_stmt->set_expression(func_call);
-           }
-           else if (SgUnaryOp* unary_op = isSgUnaryOp(prev_parent)) {
-             SgVarRefExp* var_ref = isSgVarRefExp(unary_op->get_operand());
-             if (var_ref == prev_var_ref) {
-               unary_op->set_operand(func_call);
-             }
-             ASSERT_require(var_ref == prev_var_ref);
-           }
-           else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
-             // Is this left or right operand
-             SgVarRefExp* var_ref = isSgVarRefExp(bin_op->get_rhs_operand());
-             if (var_ref == prev_var_ref) {
-               bin_op->set_rhs_operand(func_call);
-             }
-             else if ((var_ref = isSgVarRefExp(bin_op->get_lhs_operand()))) {
-               bin_op->set_lhs_operand(func_call);
-             }
-             ASSERT_require(var_ref == prev_var_ref);
-           }
-
-        // The dangling variable reference has been fixed
-           it = forward_var_refs_.erase(it);
-
-        // Delete the previous variable reference, symbol and initialized name
-           delete prev_init_name;
-           delete prev_var_sym;
-           delete prev_var_ref;
-         }
-         else {
-           // Unexpected previous parent node
-           mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
-           it++;
-         }
-       }
-       else {
-         mlog[WARN] << "{" << it->first << ": " << it->second << "}\n";
-         it++;
-       }
-     }
+     reset_forward_var_refs(scope);
    }
 
   // Some forward references can't be resolved until the global scope is reached
@@ -934,6 +878,11 @@ Leave(SgFunctionDeclaration* declaration, SgScopeStatement* param_scope)
 
    // Finished using the map for labels
    labels_.clear();
+
+   // Reset any dangling forward references to this function
+   if (!forward_var_refs_.empty()) {
+      reset_forward_var_refs(SageBuilder::topScopeStack());
+   }
 
    SageInterface::appendStatement(declaration, SageBuilder::topScopeStack());
 }
@@ -2403,7 +2352,75 @@ reset_forward_type_refs(const std::string &typeName, SgNamedType* type)
   if (present) {
     forward_type_refs_.erase(typeName);
   }
+}
 
+void SageTreeBuilder::
+reset_forward_var_refs(SgScopeStatement* scope)
+{
+   if (scope == nullptr) {
+      scope = SageBuilder::topScopeStack();
+   }
+
+// Clear any dangling forward references
+   if (!forward_var_refs_.empty()) {
+     std::map<const std::string, SgVarRefExp*>::iterator it = forward_var_refs_.begin();
+     while (it != forward_var_refs_.end()) {
+       if (SgFunctionSymbol* func_sym = SageInterface::lookupFunctionSymbolInParentScopes(it->first, scope)) {
+         SgVarRefExp* prev_var_ref = it->second;
+         SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
+         ASSERT_not_null(prev_var_sym);
+
+         SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
+         SgNode* prev_parent = prev_var_ref->get_parent();
+
+      // There may be more options but only three are known so far
+         if (isSgUnaryOp(prev_parent) || isSgBinaryOp(prev_parent) || isSgExprStatement(prev_parent)) {
+           SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+           SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
+           func_call->set_parent(prev_parent);
+
+           if (SgExprStatement* expr_stmt = isSgExprStatement(prev_parent)) {
+             expr_stmt->set_expression(func_call);
+           }
+           else if (SgUnaryOp* unary_op = isSgUnaryOp(prev_parent)) {
+             SgVarRefExp* var_ref = isSgVarRefExp(unary_op->get_operand());
+             if (var_ref == prev_var_ref) {
+               unary_op->set_operand(func_call);
+             }
+             ASSERT_require(var_ref == prev_var_ref);
+           }
+           else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
+             // Is this left or right operand
+             SgVarRefExp* var_ref = isSgVarRefExp(bin_op->get_rhs_operand());
+             if (var_ref == prev_var_ref) {
+               bin_op->set_rhs_operand(func_call);
+             }
+             else if ((var_ref = isSgVarRefExp(bin_op->get_lhs_operand()))) {
+               bin_op->set_lhs_operand(func_call);
+             }
+             ASSERT_require(var_ref == prev_var_ref);
+           }
+
+        // The dangling variable reference has been fixed
+           it = forward_var_refs_.erase(it);
+
+        // Delete the previous variable reference, symbol and initialized name
+           delete prev_init_name;
+           delete prev_var_sym;
+           delete prev_var_ref;
+         }
+         else {
+           // Unexpected previous parent node
+           mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
+           it++;
+         }
+       }
+       else {
+         mlog[WARN] << "{" << it->first << ": " << it->second << "}\n";
+         it++;
+       }
+     }
+   }
 }
 
 // Jovial TableItem and Block data members have visibility outside of their declarative class.

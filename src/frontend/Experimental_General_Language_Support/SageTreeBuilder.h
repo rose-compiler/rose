@@ -261,6 +261,9 @@ private:
    void setCommentPositionAndConsumeToken(PreprocessingInfo* info);
    void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 
+   /** Reset any dangling forward variable references */
+   void reset_forward_var_refs(SgScopeStatement*);
+
 public:
    bool is_Fortran_language() {return (language_ == LanguageEnum::Fortran);}
    bool is_Jovial_language()  {return (language_ == LanguageEnum::Jovial);}
