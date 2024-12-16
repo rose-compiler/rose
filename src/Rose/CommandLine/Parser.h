@@ -128,9 +128,14 @@ ROSE_DLL_API extern GenericSwitchArgs genericSwitchArgs;
  *  An alternative is to use a switch that takes a Boolean argument (e.g., "--foo=yes" or "--foo=no"), but this is more
  *  difficult for users to remember and type than just "--foo" and "--no-foo".
  *
- *  See also, @ref createEmptyParser, @ref createEmptyParserStage. */
+ *  See also, @ref createEmptyParser, @ref createEmptyParserStage.
+ *
+ * @{ */
 ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &switchName,
                                       bool &storageLocation, const std::string &documentation);
+ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &switchName,
+                                      Sawyer::Optional<bool> &storageLocation, const std::string &documentation);
+/** @} */
 
 } // namespace
 } // namespace

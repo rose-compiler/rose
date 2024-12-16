@@ -248,5 +248,24 @@ insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &swi
               .hidden(true));
 }
 
+ROSE_DLL_API void
+insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &switchName, Sawyer::Optional<bool> &storageLocation,
+                    const std::string &documentation) {
+    using namespace Sawyer::CommandLine;
+
+    ASSERT_forbid2(boost::starts_with(switchName, "-"), "specify only the name, not the prefix");
+
+    std::string defaults = " This can be disabled with @s{no-" + switchName + "}. The default is " +
+                           (storageLocation ? (*storageLocation ? "yes" : "no") : "unspecified") + ".";
+
+    sg.insert(Switch(switchName)
+              .intrinsicValue(Sawyer::Optional<bool>(true), storageLocation)
+              .doc(documentation + defaults));
+    sg.insert(Switch("no-"+switchName)
+              .key(switchName)
+              .intrinsicValue(Sawyer::Optional<bool>(false), storageLocation)
+              .hidden(true));
+}
+
 } // namespace
 } // namespace
