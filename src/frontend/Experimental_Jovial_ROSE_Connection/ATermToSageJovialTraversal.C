@@ -6529,6 +6529,10 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
          else if (isSgJovialBitVal(castFormula)) {
             convType = SB::buildJovialBitType(/*size*/nullptr);
          }
+         else {
+           // Don't have the type, punt and use nullptr
+           convType = SB::buildNullptrType();
+         }
       }
       ASSERT_not_null(convType);
       ASSERT_not_null(castFormula);

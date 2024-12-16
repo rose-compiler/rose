@@ -180,6 +180,9 @@ UnparseJovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            unparseType(type, info);
            break;
 
+        case V_SgTypeNullptr:
+           curprint("P");
+           break;
         case V_SgPointerType: {
            SgPointerType* pointer = isSgPointerType(type);
            if (SgTypedefType* typedef_type = isSgTypedefType(pointer->get_base_type())) {
