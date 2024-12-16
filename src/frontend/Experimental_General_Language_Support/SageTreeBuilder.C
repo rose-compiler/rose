@@ -2441,7 +2441,7 @@ injectAliasSymbol(const std::string &name)
       SgScopeStatement* decl_scope = table_decl->get_scope();
       ASSERT_not_null(decl_scope);
 
-      // Tables may be embedded in other tables or blocks, find outermost table/block declaration
+      // Tables may be embedded in other tables or blocks, find parent of outermost table/block declaration
       while (isSgClassDefinition(decl_scope)) {
         table_decl = isSgJovialTableStatement(decl_scope->get_parent());
         ASSERT_not_null(table_decl);
@@ -2467,6 +2467,35 @@ injectAliasSymbol(const std::string &name)
         ASSERT_not_null(scope);
         scope->insert_symbol(SgName(name), alias_sym);
       }
+   }
+}
+
+// Jovial TableItem and Block data members have visibility outside of their declarative class.
+// If an anonymous type is created because of a variable declaration, an alias to that type
+// should be placed in the symbol table for the namespace (or perhaps file scope).
+void SageTreeBuilder::
+injectAliasTypeSymbol(const std::string &name)
+{
+   auto scope = SB::topScopeStack();
+   auto symbol = SI::lookupSymbolInParentScopes(SgName{name}, scope);
+   ASSERT_not_null(symbol);
+
+   // Tables may be embedded in other tables or blocks, find parent of outermost table/block declaration
+   while (isSgClassDefinition(scope)) {
+     auto table_decl = isSgJovialTableStatement(scope->get_parent());
+     ASSERT_not_null(table_decl);
+     scope = table_decl->get_scope();
+   }
+   ASSERT_not_null(scope);
+
+   // Function parameter scopes are funky, don't go near them
+   if (!isSgFunctionParameterScope(scope)) {
+     // Don't need to inject symbols that already exist
+     if (!scope->symbol_exists(name)) {
+       SgAliasSymbol* alias_sym = new SgAliasSymbol(symbol);
+       ASSERT_not_null(alias_sym);
+       scope->insert_symbol(SgName(name), alias_sym);
+     }
    }
 }
 

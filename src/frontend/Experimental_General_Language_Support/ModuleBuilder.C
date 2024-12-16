@@ -247,8 +247,9 @@ void ModuleBuilder::loadTypeSymbol(SgType* type, SgSymbolTable* symbol_table, Sg
 {
   if (SgNamedType* named_type = isSgNamedType(type)) {
     SgName type_name = named_type->get_name();
-    // Ensure the symbol already exists, otherwise could lead to an infinite recursion
-    if (file_scope->symbol_exists(type_name) == false) {
+
+    // Ensure the symbol does not exist, otherwise could lead to an infinite recursion
+    if (!file_scope->symbol_exists(type_name)) {
       if (SgClassSymbol* class_symbol = symbol_table->find_class(type_name)) {
         insertSymbol(class_symbol, file_scope);
         loadSymbol(class_symbol, symbol_table, file_scope);

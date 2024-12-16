@@ -304,7 +304,7 @@ public:
 
 // Symbols (Jovial specific, should this go in SageInterface?)
    void injectAliasSymbol(const std::string &name);
-
+   void injectAliasTypeSymbol(const std::string &name);
 };
 
 // Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)

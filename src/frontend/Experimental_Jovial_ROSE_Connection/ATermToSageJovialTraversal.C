@@ -1688,6 +1688,11 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 // to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(table_var_name);
 
+   if (anon_type_name.size() > 0) {
+     // The table type should have a symbol also
+     sage_tree_builder.injectAliasTypeSymbol(anon_type_name);
+   }
+
    sage_tree_builder.Leave(var_decl);
 
 // Traverse the table description a second time (if required) to insert the table members
@@ -1849,13 +1854,10 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDescription(create table_decl phase): %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_struct_spec, t_entry_spec;
-
    table_decl = nullptr;
 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
-
    // Begin SageTreeBuilder
       RB::SourcePositionPair sources;
       sage_tree_builder.Enter(table_decl, type_name, sources);
@@ -2757,11 +2759,6 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
    std::string type_name;
 
    if (ATmatch(term, "BlockDeclarationBodyPart(<term>,<term>,<term>)", &t_name, &t_alloc, &t_body)) {
-      // TODO list
-      // 1. need block type declaration ("named anonymous")
-      // 2. need variable declaration
-      // 3. need source position information
-
       is_anon = true;
 
       if (traverse_Name(t_name, block_name)) {
