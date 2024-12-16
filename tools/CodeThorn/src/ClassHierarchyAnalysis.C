@@ -135,8 +135,7 @@ std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
        << std::endl;
 
   if (auto opt = missingDiagnostics(classkey))
-    os
-       << "\n    " << *opt
+    os << "\n    " << *opt
        << std::endl;
 
   return os;
@@ -228,7 +227,7 @@ ClassAnalysis::concreteDescendants(ClassKeyType classKey) const
               );
 
   std::sort( res.begin(), res.end(),
-             [](const InheritanceDesc& lhs, const InheritanceDesc& rhs)
+             [](const InheritanceDesc& lhs, const InheritanceDesc& rhs) -> bool
              {
                if (lhs.isDirect() != rhs.isDirect())
                  return lhs.isDirect();

@@ -111,9 +111,11 @@ struct OverrideDesc : std::tuple<FunctionKeyType, bool>
 
 using OverrideContainer = std::vector<OverrideDesc>;
 
-struct VirtualFunctionDesc : std::tuple<ClassKeyType, bool, OverrideContainer, OverrideContainer>
+using VirtualFunctionDescBase = std::tuple<ClassKeyType, bool, OverrideContainer, OverrideContainer>;
+
+struct VirtualFunctionDesc : VirtualFunctionDescBase
 {
-  using base = std::tuple<ClassKeyType, bool, OverrideContainer, OverrideContainer>;
+  using base = VirtualFunctionDescBase;
 
   VirtualFunctionDesc() = delete;
 

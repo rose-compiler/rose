@@ -2,19 +2,22 @@
 #include "sage3basic.h"
 #endif
 #include "IntraProcDataFlowAnalysis.h"
-          
+#include <Rose/Diagnostics.h>
+
 template<class Node, class Data>
 IntraProcDataFlowAnalysis<Node, Data>::IntraProcDataFlowAnalysis(SgNode *_head)
 {
     head = _head;
 }
+
 template<class Node, class Data>
 void IntraProcDataFlowAnalysis<Node, Data>::run() {
+  using Rose::Diagnostics::mlog;
 
   bool change = true;
   int iteration =0;
   while (change) {
-    change = false; 
+    change = false;
     iteration++;
     std::vector<Node *> nodes = getAllNodes();
     for (unsigned int index=0; index < nodes.size(); index++) {
@@ -29,27 +32,27 @@ void IntraProcDataFlowAnalysis<Node, Data>::run() {
         Node* pred = preds[p_index];
         Data predout = getCFGOutData(pred);
         in = meet_data(in, predout);
-      } 
+      }
       //Out[s]=Gen[s] Union (In[s]-Kill[s]), s is current node
       if (in != inOrig) //{
         setCFGInData(cur,in);
-          
+
       Data outOrig = getCFGOutData(cur);
-      applyCFGTransferFunction(cur); 
+      applyCFGTransferFunction(cur);
 
       if (outOrig != getCFGOutData(cur)) {
-          change = true; 
-      } 
+          change = true;
+      }
 
       /*
            std::stringstream ss;
-           ss << isSgFunctionDeclaration(head)->get_mangled_name().getString()<< "_" << iteration<< "_"<< index << ".dot";          
+           ss << isSgFunctionDeclaration(head)->get_mangled_name().getString()<< "_" << iteration<< "_"<< index << ".dot";
            std::string name;
             ss >> name;
-           getCFGOutData(cur).get()->toDot(name); 
+           getCFGOutData(cur).get()->toDot(name);
       */
     }
-    
+
   }
-  std::cout <<"Total IntraProcedural Iteration :" << iteration << std::endl;
+  mlog[Rose::Diagnostics::INFO] <<"Total IntraProcedural Iteration :" << iteration << std::endl;
 }

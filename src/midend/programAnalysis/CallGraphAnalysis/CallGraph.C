@@ -1,5 +1,7 @@
 #include <sage3basic.h>
 
+#include "AstDiagnostics.h"
+
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
@@ -389,7 +391,6 @@ struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*>
     }
 
     /// generic template routine to check for covariance
-    /// if @chw is null, the check tests for strict equality
     template <class T>
     ReturnType
     check(T& derivedTy)

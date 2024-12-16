@@ -3,16 +3,14 @@
 #define CALL_GRAPH_H
 
 #include <GraphDotOutput.h>
-#include <VirtualGraphCreate.h>
+//~ #include <VirtualGraphCreate.h>
 
-#include "AstDiagnostics.h"
+#include "Rose/Diagnostics.h"
 
-#include <sstream>
-#include <iostream>
+//~ #include <sstream>
+//~ #include <iostream>
 #include <string>
-#include <functional>
-#include <queue>
-#include <boost/foreach.hpp>
+//~ #include <functional>
 #include <boost/unordered_map.hpp>
 
 #include "ClassHierarchyGraph.h"
@@ -139,6 +137,7 @@ struct ROSE_DLL_API builtinFilter
 class ROSE_DLL_API CallGraphBuilder
 {
   public:
+    using GraphNodes = boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> ;
     CallGraphBuilder( SgProject *proj);
     //! Default builder filtering nothing in the call graph
     void buildCallGraph();
@@ -161,7 +160,6 @@ class ROSE_DLL_API CallGraphBuilder
     SgProject *project;
     SgIncidenceDirectedGraph *graph;
     //We map each function to the corresponding graph node
-    typedef boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> GraphNodes;
     GraphNodes graphNodes;
 
 };
@@ -180,6 +178,8 @@ template<typename Predicate>
 void
 CallGraphBuilder::buildCallGraph(Predicate pred)
 {
+  using Rose::Diagnostics::mlog;
+
     // Adds additional constraints to the predicate. It makes no sense to analyze non-instantiated templates.
     struct isSelected {
         Predicate &pred;
@@ -206,8 +206,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     graphNodes.clear();
     VariantVector vv(V_SgFunctionDeclaration);
     GetOneFuncDeclarationPerFunction defFunc;
-    std::vector<SgNode*> fdecl_nodes = NodeQuery::queryMemoryPool(defFunc, &vv);
-    BOOST_FOREACH(SgNode *node, fdecl_nodes) {
+    for(SgNode *node : NodeQuery::queryMemoryPool(defFunc, &vv)) {
         SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(node);
         SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
 #if 0 //debug
@@ -226,7 +225,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
             graphNode->set_SgNode(unique);
             graphNodes[unique] = graphNode;
             graph->addNode(graphNode);
-            printf("Added function %s %p\n", functionName.c_str(), unique);
+            mprintf("Added function %s %p\n", functionName.c_str(), unique);
           }
          else
           {
@@ -239,13 +238,13 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     }
 
     // Add edges to the graph
-    BOOST_FOREACH(FunctionData &currentFunction, callGraphData) {
+    for (FunctionData& currentFunction: callGraphData) {
         SgFunctionDeclaration* curFuncDecl = currentFunction.functionDeclaration;
         std::string curFuncName = curFuncDecl->get_qualified_name().getString();
         SgGraphNode * srcNode = hasGraphNodeFor(currentFunction.functionDeclaration);
         ROSE_ASSERT(srcNode != NULL);
         std::vector<SgFunctionDeclaration*> & callees = currentFunction.functionList;
-        BOOST_FOREACH(SgFunctionDeclaration * callee, callees) {
+        for (SgFunctionDeclaration* callee: callees) {
             if (isSelected(pred)(callee)) {
                 SgGraphNode * dstNode = getGraphNodeFor(callee); //getGraphNode here, see function comment
                 ROSE_ASSERT(dstNode != NULL);

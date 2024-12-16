@@ -1,27 +1,28 @@
 #include "sage3basic.h"
 #include "InterProcDataFlowAnalysis.h"
-#include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
+#include <Rose/Diagnostics.h>
 
 
-void InterProcDataFlowAnalysis::run () {
+void InterProcDataFlowAnalysis::run ()
+{
+  using Rose::Diagnostics::mlog;
 
-     bool change;
-     int iteration = 0;
-    do {
-            change = false;
-            
-            std::vector<SgFunctionDeclaration*> processingOrder;        
+  bool change = false;
+  int  iteration = 0;
 
-            getFunctionDeclarations(processingOrder);
-           
-            foreach (SgFunctionDeclaration* funcDecl, processingOrder) {
+  do
+  {
+    ++iteration;
+    change = false;
 
-                change |= runAndCheckIntraProcAnalysis(funcDecl);
-            
-            }
-            
-            iteration++;
-        } while (change);
-        std::cout << "Total Interprocedural iterations: " << iteration << std::endl;
+    std::vector<SgFunctionDeclaration*> processingOrder;
+
+    getFunctionDeclarations(processingOrder);
+
+    for (SgFunctionDeclaration* funcDecl : processingOrder) {
+      change |= runAndCheckIntraProcAnalysis(funcDecl);
+    }
+  } while (change);
+
+  mlog[Rose::Diagnostics::INFO] << "Total Interprocedural iterations: " << iteration << std::endl;
 }
