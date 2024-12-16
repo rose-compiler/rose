@@ -25,6 +25,12 @@ class ATermToSageJovialTraversal : public ATermTraversal
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
    void setSourcePosition(SgLocatedNode* node, ATerm term, bool attach_comments=true);
 
+   /** Create a mangled name for a StatusConstant */
+   std::string mangleStatusConstantName(const std::string &name);
+
+   /** Create a mangled name for an anonymous type */
+   std::string mangleAnonymousName(const std::string &name);
+
  public:
    ATermToSageJovialTraversal() = delete;
    ATermToSageJovialTraversal(SgSourceFile* source, std::istringstream &tokens)

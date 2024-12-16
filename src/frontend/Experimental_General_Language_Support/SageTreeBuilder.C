@@ -2472,13 +2472,15 @@ injectAliasSymbol(const std::string &name)
 
 // Jovial TableItem and Block data members have visibility outside of their declarative class.
 // If an anonymous type is created because of a variable declaration, an alias to that type
-// should be placed in the symbol table for the namespace (or perhaps file scope).
+// may need to be placed in the symbol table for the namespace (or perhaps file scope).
 void SageTreeBuilder::
 injectAliasTypeSymbol(const std::string &name)
 {
    auto scope = SB::topScopeStack();
    auto symbol = SI::lookupSymbolInParentScopes(SgName{name}, scope);
-   ASSERT_not_null(symbol);
+
+   // Return if not needed
+   if (!symbol) return;
 
    // Tables may be embedded in other tables or blocks, find parent of outermost table/block declaration
    while (isSgClassDefinition(scope)) {

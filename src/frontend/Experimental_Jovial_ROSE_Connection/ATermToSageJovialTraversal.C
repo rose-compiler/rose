@@ -54,6 +54,22 @@ ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl
    location_specifier->set_parent(var_decl);
 }
 
+/** Create a mangled name for a StatusConstant */
+std::string ATermToSageJovialTraversal::mangleStatusConstantName(const std::string &name)
+{
+  std::string lcname{name};
+  std::transform(name.begin(), name.end(), lcname.begin(), ::tolower);
+  return std::string{"_V_"} + lcname;
+}
+
+/** Create a mangled name for an anonymous type */
+std::string ATermToSageJovialTraversal::mangleAnonymousName(const std::string &name)
+{
+  std::string lcname{name};
+  std::transform(name.begin(), name.end(), lcname.begin(), ::tolower);
+  return std::string{"_anon_typeof_"} + lcname;
+}
+
 //========================================================================================
 // 1.1 Module
 //----------------------------------------------------------------------------------------
@@ -776,7 +792,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
       if (match_StatusItemDescription(t_type)) {
          // Build EnumDecl so that StatusItemDescription traversal has it to use
          is_anonymous = true;
-         std::string anon_type_name = std::string("_anon_typeof_") + name;
+         std::string anon_type_name = mangleAnonymousName(name);
 
       // Begin SageTreeBuilder
          sage_tree_builder.Enter(enum_decl, anon_type_name);
@@ -1242,10 +1258,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDec
    char* name;
 
    if (ATmatch(term, "StatusConstant(<str>)", &name)) {
-      std::string enum_name = name;
-
-      // The name is mangled as Jovial status constant name is V(name), thus _V_name
-      enum_name.insert(0, "_V_");
+      std::string enum_name{mangleStatusConstantName(name)};
 
    // Begin SageTreeBuilder
       SgEnumVal* enum_val = nullptr;
@@ -1276,10 +1289,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpress
    expr = nullptr;
 
    if (ATmatch(term, "StatusConstant(<str>)", &name)) {
-      std::string constant_name(name);
-
-      // The name is mangled as Jovial status constant name is V(name), thus _V_name
-      constant_name.insert(0, "_V_");
+      std::string constant_name{mangleStatusConstantName(name)};
 
       // An enumerator in Jovial is scoped! Therefore we have to worry about finding the correct one.
       // I think we don't have to worry about it here, perhaps only when using pointers?
@@ -1582,7 +1592,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    } else return ATfalse;
 
    table_var_name = std::string(name);
-   anon_type_name = std::string("_anon_typeof_") + table_var_name;
+   anon_type_name = mangleAnonymousName(table_var_name);
 
    if (!constant) {
       if (traverse_OptAllocationSpecifier(t_alloc, modifier_enum)) {
@@ -2219,7 +2229,7 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
          // This status variable declaration has an anonymous type declaration
          // TODO: test to see if this holds if a type name is used for the item/variable type
          is_anonymous = true;
-         std::string anon_type_name = std::string("_anon_typeof_") + name;
+         std::string anon_type_name = mangleAnonymousName(name);
 
       // Begin SageTreeBuilder for enum
          sage_tree_builder.Enter(enum_decl, anon_type_name);
@@ -2505,7 +2515,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
             Sawyer::Optional<SgExpression*> status_size;
 
          // This is an anonymous status type because not ItemTypeDescription so will have body
-            std::string enum_anon_name{"_anon_typeof_" + std::string(name)};
+            std::string enum_anon_name = mangleAnonymousName(name);
             is_anon = true;
             enum_decl = nullptr;
 
@@ -2663,7 +2673,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
       if (match_StatusItemDescription(t_type)) {
          // Build EnumDecl so that StatusItemDescription traversal has it to use
          isAnon = true;
-         std::string anonTypeName = std::string("_anon_typeof_") + name;
+         std::string anonTypeName = mangleAnonymousName(name);
 
          // Begin SageTreeBuilder for enum
          sage_tree_builder.Enter(enumDecl, anonTypeName);
@@ -2765,9 +2775,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
          // MATCHED BlockName
       } else return ATfalse;
 
-      // TODO: function to create anonymous name
-      block_type_name = "_anon_typeof_" + block_name;
-
+      block_type_name = mangleAnonymousName(block_name);
       type_name = block_type_name;
 
       // Begin SageTreeBuilder for type declaration
@@ -7820,7 +7828,7 @@ ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctio
    SgSymbol* symbol = SI::lookupSymbolInParentScopes(table_or_type_name, SB::topScopeStack());
    if (!symbol) {
       // could be anonymous type with variable declaration not seen yet
-      std::string anon_type_name = std::string("_anon_typeof_") + table_or_type_name;
+      std::string anon_type_name = mangleAnonymousName(table_or_type_name);
       symbol = SI::lookupSymbolInParentScopes(anon_type_name, SB::topScopeStack());
       // Not done yet, this is not the correct path
       ROSE_ABORT();
