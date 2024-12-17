@@ -2662,13 +2662,22 @@ bool AstInterface::IsBlock( const AstNodePtr& _n, std::string* blockname, AstNod
 }
 
 bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second, 
-                   std::function<bool(const AstNodeType& first, const AstNodeType& second)>* /*call_on_diff*/)
+                   std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff)
 {
+  if (_first == _second) { return true; }
   SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
+  if (first == 0 || second == 0) {
+     DebugDiff([](){ return "AST different: one of them is null."; });
+     return false;
+  }
   DebugDiff([&_first,&_second](){ return "Checking Type Identical:" + GetTypeName(_first) + " vs " + GetTypeName(_second); });
   if (first->unparseToString() == second->unparseToString()) {
     DebugDiff([](){ return "Ast Type is equivalent."; });
     return true;
+  }
+  if (call_on_diff != 0 && !(*call_on_diff)(_first, _second)) {
+         DebugDiff([&_first,&_second](){ return "AST considered the same with different variant due to caller intervention"; });
+         return true;
   }
   DebugDiff([](){ return "Ast Type is not equivalent."; });
   return false;
@@ -2737,9 +2746,11 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
     }
   }
   { AstNodePtr lhs1, lhs2, rhs1, rhs2;
-    if (IsAssignment(_first, &lhs1, &rhs1) && IsAssignment(_second, &lhs2, &rhs2)) {
-      return ( (lhs1 == _first && lhs2 == _second) || AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type)) && 
-             ( (rhs1 == _first && rhs2 == _second) || AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type));
+    if (IsAssignment(_first, &lhs1, &rhs1) && IsAssignment(_second, &lhs2, &rhs2) && 
+       /* Check assignment only for regular assignments. Not irregular ones such as +=, -=*/
+       lhs1 != _first && lhs2 != _second && rhs1 != _first && rhs2 != _second) {
+      return ( AstIdentical(lhs1, lhs2, call_on_diff, call_on_diff_type)) && 
+             ( AstIdentical(rhs1, rhs2, call_on_diff, call_on_diff_type));
     }
   }
   { AstNodePtr lhs1, lhs2, rhs1, rhs2;

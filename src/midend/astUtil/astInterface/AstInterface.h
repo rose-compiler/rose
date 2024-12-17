@@ -83,6 +83,16 @@ class AstNodeType {
   AstNodeType& operator = (const AstNodeType &that) 
       { repr_ = that.repr_; nodetype_ = that.nodetype_; return *this; }
   ~AstNodeType() {}
+  bool operator != (const AstNodeType &that) const
+    { return repr_ != that.repr_ || nodetype_ != that.nodetype_; }
+  bool operator == (const AstNodeType &that) const
+    { return repr_ == that.repr_ && nodetype_ == that.nodetype_; }
+  bool operator == (BaseType *p) const
+    { return repr_ == p; }
+  bool operator != (BaseType *p) const
+    { return repr_ != p; }
+  bool operator < (const AstNodeType &that) const
+    { return repr_ < that.repr_; }
   bool is_unknown() const { return nodetype_ == SpecialAstType::UNKNOWN_TYPE; }
   BaseType * get_ptr() const { return repr_; }
   BaseType *& get_ptr() { return repr_; }
