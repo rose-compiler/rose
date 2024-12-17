@@ -637,6 +637,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astProcessing \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astQuery \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astRewriteMechanism \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/annotation \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/astInterface \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/astSupport \
