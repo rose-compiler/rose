@@ -96,11 +96,10 @@ UnparseJovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
           default:
              {
                 SgExpression* size = type->get_type_kind();
-                if (size != NULL)
-                   {
-                      curprint(" ");
-                      unparseExpression(size,info);
-                   }
+                if (size != nullptr) {
+                   curprint(" ");
+                   unparseExpression(size,info);
+                }
              }
         }
    }
@@ -117,11 +116,10 @@ UnparseJovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
 
       curprint(" ");
       unparseExpression(scale, info);
-      if (fraction != NULL)
-         {
-            curprint(",");
-            unparseExpression(fraction, info);
-         }
+      if (fraction != nullptr) {
+         curprint(",");
+         unparseExpression(fraction, info);
+      }
    }
 
 void
@@ -130,11 +128,10 @@ UnparseJovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
       ASSERT_not_null(string_type);
 
       SgExpression* size = string_type->get_lengthExpression();
-      if (size != NULL)
-         {
-            curprint(" ");
-            unparseExpression(size,info);
-         }
+      if (size != nullptr) {
+         curprint(" ");
+         unparseExpression(size,info);
+      }
    }
 
 void
@@ -143,11 +140,10 @@ UnparseJovial::unparseTypeSize(SgJovialBitType* bit_type, SgUnparse_Info& info)
       ASSERT_not_null(bit_type);
 
       SgExpression* size = bit_type->get_size();
-      if (size != NULL)
-         {
-            curprint(" ");
-            unparseExpression(size,info);
-         }
+      if (size != nullptr) {
+         curprint(" ");
+         unparseExpression(size,info);
+      }
    }
 
 template <class T> void
@@ -261,10 +257,9 @@ UnparseJovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& 
 
   // Unparse dimension information first
      SgExprListExp* dim_info = table_type->get_dim_info();
-     if (dim_info != NULL)
-        {
-          unparseDimInfo(dim_info, info);
-        }
+     if (dim_info != nullptr) {
+        unparseDimInfo(dim_info, info);
+     }
 
   // OptStructureSpecifier
      using StructureSpecifier = SgJovialTableType::StructureSpecifier;
@@ -291,7 +286,7 @@ UnparseJovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& 
         {
           curprint(named_type->get_name());
         }
-     else if (base_type != NULL)
+     else if (base_type != nullptr)
         {
        // Unparse base type directly if present and not in a variable declaration context
           unparseType(base_type, info);
@@ -301,6 +296,6 @@ UnparseJovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& 
 void
 UnparseJovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info &)
   {
-     ROSE_ASSERT(type_def);
+     ASSERT_not_null(type_def);
      curprint(type_def->get_name());
   }

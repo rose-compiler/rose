@@ -1517,13 +1517,12 @@ ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, S
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & type, std::string & type_name)
+ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* &type, std::string &type_name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptTypeName: %s\n", ATwriteToString(term));
 #endif
    ATerm t_type_name;
-
    type = nullptr;
 
    if (ATmatch(term, "no-type-name()")) {
@@ -6783,12 +6782,13 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    printf("... traverse_TableDereference: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_deref, t_name, t_subscript;
+   ATerm t_deref, t_subscript, t_name_or_formula;
    char* name;
    std::vector<SgExpression*> subscript;
-   SgVarRefExp* var_ref = nullptr;
-   SgFunctionSymbol* fun_symbol = nullptr;
-   SgExprListExp* array_subscripts = nullptr;
+   SgVarRefExp* var_ref{nullptr};
+   SgFunctionSymbol* fun_symbol{nullptr};
+   SgExprListExp* array_subscripts{nullptr};
+   SgExpression* deref{nullptr};
 
    table_array_ref = nullptr;
 
@@ -6797,34 +6797,42 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
       return ATtrue;
    }
    else if (ATmatch(term, "TableDereference(<term>,<term>)", &t_deref, &t_subscript)) {
-      if (ATmatch(t_deref, "Dereference(<term>)", &t_name)) {
-         // MATCHED Dereference with a name
+      // There shall be a subscript
+      if (traverse_Subscript(t_subscript, subscript)) {
+         array_subscripts = SageBuilder::buildExprListExp_nfi();
+         setSourcePosition(array_subscripts, t_subscript);
+         for (SgExpression* expr : subscript) {
+            array_subscripts->get_expressions().push_back(expr);
+            expr->set_parent(array_subscripts);
+         }
+      } else return ATfalse;
+
+      // Handle the dereferencing part
+      if (ATmatch(t_deref, "Dereference(<term>)", &t_name_or_formula)) {
+         // MATCHED Dereference
+         if (traverse_PointerFormula(t_name_or_formula, deref)) {
+            // MATCHED PointerFormula
+            deref = SageBuilder::buildPointerDerefExp(deref);
+            ASSERT_not_null(deref);
+            setSourcePosition(deref, t_name_or_formula);
+            table_array_ref = SageBuilder::buildPntrArrRefExp_nfi(deref, array_subscripts);
+         }
       }
       else {
          // Grammar has been changed (for GL-394), this path unlikely (not preferred in grammar)
-         mlog[WARN] << "TableDereference with no Dereference to name, attempting to recover\n";
-         t_name = t_deref;
+         mlog[WARN] << "TableDereference with no Dereference to name, not attempting to recover\n";
          ROSE_ABORT();
       }
 
-      if (ATmatch(t_name, "<str>", &name)) {
+      if (ATmatch(t_name_or_formula, "<str>", &name)) {
          // The right-hand side of a dereference (SgAtOp) may be a function call
          SgScopeStatement* scope = SageBuilder::topScopeStack();
-         fun_symbol = SI::lookupFunctionSymbolInParentScopes(name,scope);
+         fun_symbol = SI::lookupFunctionSymbolInParentScopes(name, scope);
          if (!fun_symbol) {
            var_ref = SageBuilder::buildVarRefExp(name, scope);
            ASSERT_not_null(var_ref);
-           setSourcePosition(var_ref, t_name);
+           setSourcePosition(var_ref, t_name_or_formula);
          }
-      }
-   } else return ATfalse;
-
-   if (traverse_Subscript(t_subscript, subscript)) {
-      array_subscripts = SageBuilder::buildExprListExp_nfi();
-      setSourcePosition(array_subscripts, t_subscript);
-      for (SgExpression* expr : subscript) {
-         array_subscripts->get_expressions().push_back(expr);
-         expr->set_parent(array_subscripts);
       }
    } else return ATfalse;
 
@@ -6834,15 +6842,15 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    else if (fun_symbol && array_subscripts) {
      table_array_ref = SageBuilder::buildFunctionCallExp(fun_symbol, array_subscripts);
    }
-   else {
+   else if (!table_array_ref) {
      table_array_ref = var_ref;
    }
 
    ASSERT_not_null(table_array_ref);
    setSourcePosition(table_array_ref, term);
 
-   // There needs to be a dereference (for a function call?)
-   if (!fun_symbol) {
+   // There needs to be a dereference (if not already done)
+   if (!deref && !fun_symbol) {
      table_array_ref = SageBuilder::buildPointerDerefExp(table_array_ref);
      ASSERT_not_null(table_array_ref);
      setSourcePosition(table_array_ref, term);
