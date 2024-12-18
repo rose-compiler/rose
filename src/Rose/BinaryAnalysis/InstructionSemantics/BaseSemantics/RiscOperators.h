@@ -828,8 +828,8 @@ public:
 
     /** Reads a value from memory.
      *
-     *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
-     *  BaseSemantics::State::readMemory "readMemory" method.
+     *  The implementation (in subclasses) will typically delegate much of the work to the current state's
+     *  @ref InstructionSemantics::BaseSemantics::State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
      *  values must be eight bits".  However, the @ref readMemory should not have these constraints so that it can be called
@@ -852,8 +852,8 @@ public:
 
     /** Writes a value to memory.
      *
-     *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
-     *  BaseSemantics::State::writeMemory "writeMemory" method.
+     *  The implementation (in subclasses) will typically delegate much of the work to the current state's
+     *  @ref InstructionSemantics::BaseSemantics::State::writeMemory "writeMemory" method.
      *
      *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
      *  pass a default-constructed register descriptor whose is_valid() method returns false.

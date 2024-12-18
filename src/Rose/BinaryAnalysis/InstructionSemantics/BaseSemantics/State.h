@@ -249,8 +249,9 @@ public:
 
     /** Property: Memory state.
      *
-     *  Returns the first address space of type @ref BaseSemantics::MemoryState whose purpose is @ref AddressSpace::Purpose::MEMORY
-     *  from this state's list of address spaces. If there is no such address space then a null pointer is returned. */
+     *  Returns the first address space of type @ref BaseSemantics::MemoryState whose purpose is @ref AddressSpace::Purpose
+     *  "AddressSpace::Purpose::MEMORY" from this state's list of address spaces. If there is no such address space then a null
+     *  pointer is returned. */
     MemoryStatePtr memoryState() const;
 
     /** Property: Interrupt state.

@@ -288,9 +288,10 @@ namespace Rose {
  *  output to a file instead, you can do something like follows instead of the usual call to @ref Rose::Diagnostics::initAndRegister.
  *
  * @code
- *  std::ofstream output("tool-errors.txt"); // must remain open for duration of run
+ *  // double quotes are represented by &quote; to work around bugs in doxygen 1.9.8
+ *  std::ofstream output(&quote;tool-errors.txt&quote); // must remain open for duration of run
  *  Sawyer::Message::DestinationPtr destination = Sawyer::Message::StreamSink::instance(output, Rose::Diagnostics::mprefix);
- *  mlog = Facility("tool", destination); // your tool's global diagnostic facility
+ *  mlog = Facility(&quote;tool&quote;, destination); // your tool's global diagnostic facility
  *  Sawyer::Message::mfacilities.insertAndAdjust(mlog); // so it can be controled by ROSE's command-line processing
  * @endcode
  *

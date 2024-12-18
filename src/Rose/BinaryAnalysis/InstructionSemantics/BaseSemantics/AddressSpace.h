@@ -125,7 +125,7 @@ public:
      *
      *  Every address space has a purpose to describe what kind of data it stores. It is permissible for a semantic state to have
      *  multiple address spaces that have the same value for this property but have slightly different purposes. For instance, the
-     *  state might have two @ref Purpose::MEMORY address spaces where one is for the processor's main address bus and another is
+     *  state might have two @ref Purpose `MEMORY` address spaces where one is for the processor's main address bus and another is
      *  used internally to store temporary values.
      *
      *  Thread safety: It is safe to have multiple threads reading the purpose as long as none are modifying the purpose.

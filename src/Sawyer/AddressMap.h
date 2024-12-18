@@ -249,7 +249,7 @@ public:
         return retval;
     }
 
-    /** Require and prohibit certain access permissions. See @ref AddressMap::access. */
+    /** Require and prohibit certain access permissions. See `Sawyer::Container::AddressMap::access`. */
     AddressMapConstraints access(unsigned bits) const {
         return require(bits).prohibit(~bits);
     }

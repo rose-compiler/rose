@@ -119,7 +119,8 @@ namespace BinaryAnalysis {
  *      typedef boost::graph_traits<Rose::BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
  *      void operator()(std::ostream &output, const Vertex &v) {
  *          SgAsmBlock *block = get_ast_node(cfg, v);
- *          output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
+ *          // double quotes represented as &quote; on the next line in order to work around Doxygen 1.9.8 bug
+ *          output <<&quote;[ label=\&quote;&quote; <<StringUtility::addrToString(block->get_address()) <<&quote;\&quote; ]&quote;
  *      }
  *  };
  *
