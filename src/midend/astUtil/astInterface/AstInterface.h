@@ -47,6 +47,8 @@ class AstNodePtr {
     { return repr_ == p; }
   bool operator != (BaseType *p) const
     { return repr_ != p; }
+
+  // The < operator is required to allow AstNodePtr be stored in set containers. 
   bool operator < (const AstNodePtr &that) const
     { return repr_ < that.repr_; }
   BaseType* operator -> () const { return repr_; }
@@ -91,6 +93,7 @@ class AstNodeType {
     { return repr_ == p; }
   bool operator != (BaseType *p) const
     { return repr_ != p; }
+  // The < operator is required to allow AstNodeType be stored in set containers. 
   bool operator < (const AstNodeType &that) const
     { return repr_ < that.repr_; }
   bool is_unknown() const { return nodetype_ == SpecialAstType::UNKNOWN_TYPE; }

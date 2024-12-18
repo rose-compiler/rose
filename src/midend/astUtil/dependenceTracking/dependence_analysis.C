@@ -90,6 +90,12 @@ bool WholeProgramDependenceAnalysis::
   return true;
 }
 
+bool WholeProgramDependenceAnalysis::
+ClearOperatorSideEffect(SgNode* op) {
+  auto sig = AstUtilInterface::GetVariableSignature(op);
+  DependenceTable::ClearDependence(sig);
+}
+
 void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* root) {
   DebugLog DebugSaveDep("-debugdep");
   std::string function_name;

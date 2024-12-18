@@ -121,15 +121,19 @@ void CollectTransitiveDependences :: Compute(const std::vector<std::string>& inp
 
 void DependenceTable :: OutputDependences(std::ostream& output) {
     Log.push("Output results of dependence analysis");
-    for (DependenceEntry e : saved_dependences_) {
-       output << e << std::endl;
+    for (auto op : saved_dependences_sig_) {
+      for (auto e : saved_dependences_relation_[op]) {
+         output << e << std::endl;
+      }
     }
 }
 
 void DependenceTable :: OutputDataDependences(std::ostream& output) {
     Log.push("Output data dependences only.");
-    for (DependenceEntry e : saved_dependences_) {
+    for (auto op : saved_dependences_sig_) {
+      for (auto e : saved_dependences_relation_[op]) {
         e.output_data_dependence(output);
+      }
     }
 }
 
@@ -220,10 +224,12 @@ void DependenceTable :: OutputDependencesInGUI(std::ostream& output) {
     };
 
     output << "digraph {\n";
-    for (DependenceEntry e : saved_dependences_) {
+    for (auto op : saved_dependences_sig_) {
+      for (auto e : saved_dependences_relation_[op]) {
        setup_node(e.first_entry(), e); 
        setup_node(e.second_entry(), e); 
        output << "\"" << wrap_string(e.first_entry()) << "\" -> \"" << wrap_string(e.second_entry()) << "\"" <<  edge_to_string(e.type_entry()) << " ;\n";
+      }
     }
     // Make new clusters based on call relations recorded in cluster_map.
     if (!cluster_map.empty()) {

@@ -11,7 +11,7 @@
 
 namespace AstUtilInterface {
 
-// Type representing dependence information between two entities.
+// Representing dependence information between two entities.
 class DependenceEntry {
      private:
       std::string first_, second_, deptype_, attr_;
@@ -23,6 +23,9 @@ class DependenceEntry {
       std::string type_entry() const { return deptype_; }
       std::string attr_entry() const { return attr_; }
       std::string to_string() const { return first_ + " : " + " [ " + deptype_ + " ] " + second_ + " = " + attr_; }
+      bool operator == (const DependenceEntry& e2) const { 
+           return first_ == e2.first_ && second_ == e2.second_ && deptype_ == e2.deptype_; 
+       }
       bool operator < (const DependenceEntry& e2) const 
         { return first_ < e2.first_ || (first_ == e2.first_ && second_ < e2.second_) ||
                  (first_ == e2.first_ && second_ == e2.second_ && deptype_ < e2.deptype_); }
@@ -135,6 +138,7 @@ class CollectTransitiveDependences : public CollectDependences {
    }
 };
 
+//! Stores dependence entries in a table.
 class DependenceTable : public CollectDependences {
   public:
     DependenceTable() {}
@@ -144,36 +148,47 @@ class DependenceTable : public CollectDependences {
     void OutputDependencesInGUI(std::ostream& output);
     void OutputDataDependences(std::ostream& output);
     using CollectDependences::CollectFromFile;
-    bool SaveDependence(const DependenceEntry& e) {
-       if (saved_dependences_set_.find(e) == saved_dependences_set_.end()) {
-          saved_dependences_set_.insert(e);
-	  saved_dependences_.push_back(e);
-          node_map_[e.first_entry()].out_no ++;
-          node_map_[e.second_entry()].in_no ++;
-          int lower_rank = 0;
-          if (node_map_.find(e.second_entry()) == node_map_.end()) {
-             node_map_[e.second_entry()].rank = 0; // no incoming dependence yet.
-          } else {
-            lower_rank = node_map_[e.second_entry()].rank;
-          }
-          int higher_rank = lower_rank + 1;
-          if (node_map_.find(e.first_entry()) == node_map_.end()) {
-             node_map_[e.first_entry()].rank = higher_rank; // one outgoing dependence so far .
-          } else {
-            int current_rank = node_map_[e.first_entry()].rank;
-            if (current_rank < higher_rank) {
-                node_map_[e.first_entry()].rank = higher_rank; // increase existing rank.
-            }
-          }
-	  return true;
+    void ClearDependence(const std::string& sig) {
+        auto p = saved_dependences_relation_.find(sig);
+        if (p != saved_dependences_relation_.end()) {
+          saved_dependences_relation_[sig].clear();
+        }
+    }
+    void SaveDependence(const DependenceEntry& e) {
+       auto p = saved_dependences_relation_.find(e.first_entry());
+       if (p == saved_dependences_relation_.end()) {
+	  saved_dependences_sig_.push_back(e.first_entry());
        }
-       return false;
+       for (const auto& e1 : saved_dependences_relation_[e.first_entry()]) {
+          if (e1 == e) { // Duplicate entry.
+           return;
+          }
+       }
+       saved_dependences_relation_[e.first_entry()].push_back(e);
+       node_map_[e.first_entry()].out_no ++;
+       node_map_[e.second_entry()].in_no ++;
+       int lower_rank = 0;
+       if (node_map_.find(e.second_entry()) == node_map_.end()) {
+           node_map_[e.second_entry()].rank = 0; // no incoming dependence yet.
+       } else {
+            lower_rank = node_map_[e.second_entry()].rank;
+      }
+      int higher_rank = lower_rank + 1;
+      if (node_map_.find(e.first_entry()) == node_map_.end()) {
+         node_map_[e.first_entry()].rank = higher_rank; // one outgoing dependence so far .
+      } else {
+         int current_rank = node_map_[e.first_entry()].rank;
+         if (current_rank < higher_rank) {
+              node_map_[e.first_entry()].rank = higher_rank; // increase existing rank.
+         }
+      }
     }
 
 
   private:
-    std::vector<DependenceEntry> saved_dependences_;
-    std::set<DependenceEntry> saved_dependences_set_;
+    // The signatures of all dependence entities.
+    std::vector<std::string> saved_dependences_sig_;
+    std::map<std::string, std::vector<DependenceEntry> > saved_dependences_relation_;
     // Saves information about each node.
     struct NodeInfo {
        // Number of outgoing and incoming edges.

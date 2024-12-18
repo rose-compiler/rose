@@ -40,6 +40,9 @@ class WholeProgramDependenceAnalysis : public DependenceTable {
     
     //! The operator op accesses the given memory reference in nature of the given relation.
     bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0); 
+    //
+    //! Erase existing annotation for the given operator.
+    bool ClearOperatorSideEffect(SgNode* op); 
 
  protected:
     virtual void save_dependence(const DependenceEntry& e) override;

@@ -23,7 +23,10 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
     if (AstInterface::IsFunctionDefinition(ast, 0, 0, 0, &body)) {
       // Add empty annotations for this function. Details of the side effects will be added later
       // while the body of the function is being analyzed.
-      std::cerr << "Saving side effects for :" << AstInterface::AstToString(ast) << "\n";
+      DebugAstUtil([&ast](){ return "Saving side effects for :" + AstInterface::AstToString(ast) + "\n"; });
+      if (add_to_dep_analysis != 0) {
+          add_to_dep_analysis->ClearOperatorSideEffect(ast);
+      }
       do_annot = true;
     }
 
