@@ -179,9 +179,14 @@ namespace
 
       void handle(SgAdaSubtype& n)
       {
-        SgAdaRangeConstraint& range = SG_DEREF(isSgAdaRangeConstraint(n.get_constraint()));
+        if (SgAdaRangeConstraint* range = isSgAdaRangeConstraint(n.get_constraint()))
+        {
+          res = descend(range->get_range());
+          return;
+        }
 
-        res = descend(range.get_range());
+        ASSERT_not_null(isSgAdaNullConstraint(n.get_constraint()));
+        res = descend(n.get_base_type());
       }
   };
 
