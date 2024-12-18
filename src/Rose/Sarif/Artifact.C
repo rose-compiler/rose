@@ -54,7 +54,7 @@ Artifact::emit(std::ostream &out) {
             sep = ",";
         }
 
-        return "}";
+        out <<  "}";
         return true;
     }
 }
