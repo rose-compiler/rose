@@ -117,6 +117,7 @@ VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const Bas
             }
         }
     } else if (2 == settings_.version) {
+        MemoryMap::Ptr tempMemory = memory ? MemoryMap::instance() : MemoryMap::Ptr();
         while (true) {
             // Read the message header
             HeaderVersion2 header;
@@ -148,14 +149,20 @@ VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const Bas
                     throw Exception(inputName, headerOffset,
                                     (boost::format("short payload read (expected %1%, got only %2%) at %3%)")
                                      % header.payloadSize % nPayload % (headerOffset + sizeof header)).str());
-                } else if (memory) {
+                } else if (tempMemory) {
                     const auto where = AddressInterval::baseSize(header.addr, header.payloadSize);
                     SAWYER_MESG(debug) <<"vxcore: addresses " <<StringUtility::addrToString(where) <<" at " <<headerOffset <<"\n";
-                    memory->insert(where, MemoryMap::Segment::anonymousInstance(header.payloadSize, header.mapFlags, inputName));
-                    const size_t nCopied = memory->at(header.addr).limit(header.payloadSize).write(buf.data()).size();
+                    tempMemory->insert(where,
+                                       MemoryMap::Segment::anonymousInstance(header.payloadSize, header.mapFlags, inputName));
+                    const size_t nCopied = tempMemory->at(header.addr).limit(header.payloadSize).write(buf.data()).size();
                     ASSERT_always_require(nCopied == header.payloadSize);
                 }
             }
+        }
+        if (tempMemory) {
+            tempMemory->combineAdjacentSegments();
+            ASSERT_not_null(memory);
+            memory->linkTo(tempMemory, tempMemory->hull());
         }
     } else {
         ASSERT_not_implemented("vxcore version " + boost::lexical_cast<std::string>(settings_.version));

@@ -529,6 +529,14 @@ public:
      *  memory maps created by ROSE's binary specimen mappers. */
     bool shrinkUnshare();
 
+    /** Combine adjacent segments.
+     *
+     *  Combines adjacent segments that have the same accessibility and names by creating new buffers that hold all the data
+     *  from the combined segments.
+     *
+     *  Returns true the map changed, false if unchanged. */
+    bool combineAdjacentSegments();
+
     /** Read data into buffer. */
     size_t readQuick(void *buf, rose_addr_t startVa, size_t desired) const {
         return at(startVa).limit(desired).require(READABLE).read((uint8_t*)buf).size();

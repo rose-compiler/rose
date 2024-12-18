@@ -1224,6 +1224,53 @@ MemoryMap::shrinkUnshare() {
     return success;
 }
 
+bool
+MemoryMap::combineAdjacentSegments() {
+    bool changed = false;
+
+    // Figure out what segments can be combined to form the parts of the new map
+    std::vector<std::pair<AddressInterval, Segment*>> parts;
+    for (NodeIterator node = nodes().begin(); node != nodes().end(); ++node) {
+        if (!parts.empty() &&
+            node->key().least() == parts.back().first.greatest() + 1 &&
+            node->value().accessibility() == parts.back().second->accessibility() &&
+            node->value().name() == parts.back().second->name()) {
+            // Combine this node with the previous
+            parts.back().first = parts.back().first.hull(node->key());
+            changed = true;
+        } else {
+            parts.push_back(std::make_pair(node->key(), &node->value()));
+        }
+    }
+    if (!changed)
+        return false;
+
+    // Create a new map by combining things
+    std::array<uint8_t, 8192> buffer;
+    MemoryMap newmap;
+    for (const auto &part: parts) {
+        newmap.insert(part.first,
+                      MemoryMap::Segment::anonymousInstance(part.first.size(), part.second->accessibility(), part.second->name()));
+
+        AddressInterval remaining = part.first;
+        while (remaining) {
+            const size_t n = std::min(remaining.size(), buffer.size());
+            const AddressInterval read = this->at(remaining.least()).limit(n).read(buffer.data());
+            ASSERT_always_require(read.size() == n);
+            const AddressInterval write = newmap.at(remaining.least()).limit(n).write(buffer.data());
+            ASSERT_always_require(write.size() == n);
+            if (read.greatest() == remaining.greatest()) {
+                remaining = AddressInterval();
+            } else {
+                remaining = AddressInterval::hull(read.greatest() + 1, remaining.greatest());
+            }
+        }
+    }
+
+    std::swap(*this, newmap);
+    return true;
+}
+
 static AddressInterval
 alignInterval(const AddressInterval &src, rose_addr_t loAlignment, rose_addr_t hiAlignment) {
     if (src.greatest() >= AddressInterval::whole().greatest()) {
