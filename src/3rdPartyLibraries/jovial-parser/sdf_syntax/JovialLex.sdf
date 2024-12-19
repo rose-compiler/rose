@@ -290,7 +290,16 @@ exports
 
 %% 8.5 BLANKS
 %%
-  [\ \t\n\r]                -> LAYOUT
+%%[\ \t\n\r]               -> LAYOUT (covered by non-printable below)
+  [\ ]                     -> LAYOUT
+
+%% Non printable characters (octal)
+%%
+  [\00-\32]                 -> LAYOUT
+  [\34-\36]                 -> LAYOUT
+
+%%  [\33]                   -> LAYOUT (ESC, breaks gitlab-issue-370.jov)
+%%  [\37]                   -> LAYOUT (Unit Separator (US), breaks bit_conversion.jov)
 
 
   lexical restrictions
