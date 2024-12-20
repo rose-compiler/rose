@@ -266,6 +266,16 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
     return fa.CreateBinaryOP(AstInterface::BOP_PLUS, a1, a2);
  }
 
+SymbolicVal SymbolicValGenerator::
+GetSymbolicVal( const std::string& sig) {
+  if (sig == "_NULL_") {
+      return SymbolicVal();
+  } else if (sig == "_UNKNOWN_") {
+     return SymbolicVal(new SymbolicValImpl()); 
+  } else 
+     return SymbolicVal(new SymbolicVar(sig, NULL));
+}
+
 bool SymbolicValGenerator::
 IsFortranLoop(AstInterface& fa, const AstNodePtr& s, SymbolicVar* ivar ,
         SymbolicVal* lb , SymbolicVal* ub, SymbolicVal* step, AstNodePtr* body)

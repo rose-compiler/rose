@@ -1439,7 +1439,6 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       SgFunctionDeclaration *decl = isSgFunctionDeclaration(d);
       if (returntype != 0)
         *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
-   std::cerr << AstToString(decl) << "\n";
       if (name != 0) 
         *name =  std::string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 

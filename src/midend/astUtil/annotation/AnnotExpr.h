@@ -30,8 +30,8 @@ class SymbolicValDescriptor
 
   bool is_top() const;
   bool is_bottom() const;
-  static SymbolicConst get_bottom();
-  static SymbolicConst get_top();
+  static SymbolicVal get_bottom() { return SymbolicValGenerator::get_unknown(); }
+  static SymbolicVal get_top() { return SymbolicValGenerator::get_null(); }
 
   bool merge( const SymbolicValDescriptor& that);
   void replace_var( const std::string& varname, const SymbolicVal& val);

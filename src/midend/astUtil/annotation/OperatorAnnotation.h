@@ -7,6 +7,7 @@
 #include "AstInterface.h"
 #include <iostream>
 #include <list>
+#include "CommandOptions.h"
 
 template <class Descriptor>
 class OperatorAnnotCollection : 
@@ -42,13 +43,18 @@ class OperatorAnnotCollection :
   bool CollectAnnotation(AstInterface& fa, const AstNodePtr& fc,
                 CollectObject* collect_f,
                 Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen = 0) {
+    DebugLog debugAnnot("-debugannot");
     AstInterface::AstNodeList args;
     OperatorDeclaration op(fa, fc, &args);
     // QY: This is not supposed to happen, but skip this case for now.
     if (op.get_param_info().num_of_params() != args.size()) 
+    {
+      debugAnnot([](){return "Error: mismatching parameters and arguments."; });
       return false;
+    }
     Descriptor *annot = get_annot_descriptor(op);
     if (annot != 0) {
+       debugAnnot([&op](){return "Found recognized operation annotation:" + op.ToString(); });
        if (collect_f != 0) {
           annot->collect(fa, args, *collect_f, astcodegen);
        }
@@ -61,10 +67,12 @@ class OperatorAnnotCollection :
                        Descriptor* desc= 0, bool replpar = false,
                        Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) 
   {
+     DebugLog debugAnnot("-debugannot");
      AstInterface::AstNodeList args;
      OperatorDeclaration op( fa, exp, &args);
      Descriptor *original_descriptor = get_annot_descriptor(op);
      if (original_descriptor == 0) {
+       debugAnnot([&op](){return "Did not recognize operation:" + op.ToString(); });
        return false;
      }
      if (argp != 0)
@@ -75,9 +83,9 @@ class OperatorAnnotCollection :
            ReplaceParams repl = desc->GenReplaceParams( args, astcodegen);
            desc->replace_val( repl);
          }
-        return true;
      }
-     return false;
+     debugAnnot([&op](){return "Recognized operation:" + op.ToString(); });
+     return true;
    }
 };
 

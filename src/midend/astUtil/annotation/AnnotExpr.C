@@ -62,15 +62,6 @@ bool SymbolicValDescriptor:: is_bottom() const
   return val == get_bottom();
 }
 
-SymbolicConst SymbolicValDescriptor :: get_top()
-{
-  return SymbolicConst("", "top");
-}
-
-SymbolicConst SymbolicValDescriptor :: get_bottom()
-{
-  return SymbolicConst("", "bottom");
-}
 
 void SymbolicValDescriptor::
 replace_var( const string& varname, const SymbolicVal& n)

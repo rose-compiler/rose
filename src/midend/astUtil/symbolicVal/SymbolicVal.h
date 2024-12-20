@@ -10,6 +10,7 @@
 #include <vector>
 #include <ostream>
 
+class SymbolicValImpl;
 class SymbolicConst;
 class SymbolicVar;
 class SymbolicFunction;
@@ -25,11 +26,12 @@ class SymbolicVisitor
   virtual void VisitFunction(const SymbolicFunction&) { Default(); }
   virtual void VisitAstWrap(const SymbolicAstWrap&) { Default(); }
   virtual void VisitExpr(const SymbolicExpr&) { Default(); }
+  virtual void VisitUnknown( const SymbolicValImpl&) { Default(); }
   virtual ~SymbolicVisitor() {}
 };
 
 typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4, 
-              VAL_FUNCTION = 8, VAL_EXPR = 16}
+              VAL_FUNCTION = 8, VAL_EXPR = 16, VAL_UNKNOWN = 32}
       SymbolicValType;
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5} SymOpType;
@@ -39,15 +41,15 @@ class SymbolicValImpl
  protected:
   virtual ~SymbolicValImpl() {}
  public:
-  virtual std:: string toString() const { return ""; }
+  virtual std:: string toString() const { return "UNKNOWN"; }
   virtual void Dump() const;
 
   virtual SymOpType GetOpType() const { return SYMOP_NIL; }
-  virtual SymbolicValType GetValType() const { return VAL_BASE; }
+  virtual SymbolicValType GetValType() const { return VAL_UNKNOWN; }
   virtual std:: string GetTypeName() const { return "unknown"; }
-  virtual void Visit( SymbolicVisitor *op) const = 0;
-  virtual AstNodePtr  CodeGen(AstInterface &fa) const = 0;
-  virtual SymbolicValImpl* Clone() const = 0;
+  virtual void Visit( SymbolicVisitor *op) const { return op->VisitUnknown(*this); }
+  virtual AstNodePtr  CodeGen(AstInterface &fa) const { return AST_UNKNOWN; }
+  virtual SymbolicValImpl* Clone() const  { return new SymbolicValImpl(); }
 
  friend class CountRefHandle<SymbolicValImpl>;
 };
@@ -297,6 +299,9 @@ class SymbolicValGenerator
 {
  public:
  static SymbolicVal GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp);
+ static SymbolicVal GetSymbolicVal( const std::string& sig);
+ static SymbolicVal get_null() { return SymbolicVal(); }
+ static SymbolicVal get_unknown() { return new SymbolicValImpl(); }
  static bool IsFortranLoop(AstInterface& fa, const AstNodePtr& s, 
         SymbolicVar* ivar =0,
         SymbolicVal* lb =0, SymbolicVal* ub=0, SymbolicVal* step=0, AstNodePtr* body=0);

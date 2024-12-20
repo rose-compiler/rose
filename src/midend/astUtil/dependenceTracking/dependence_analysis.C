@@ -149,18 +149,21 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
 void WholeProgramDependenceAnalysis:: save_dependence(const DependenceEntry& e) {
   // Save inside the dependence table (base class).
   DependenceTable::SaveDependence(DependenceEntry(e));
+  DebugLog DebugSaveDep("-debugdep");
+  SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
 
   // Save into annotation  if necessary.
   if (e.type_entry() == "modify") {
     OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
     OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
-    SymbolicVal var = new SymbolicVar(e.second_entry(), AST_NULL);
     desc->push_back(var);
+    DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });
+    
   } else if (e.type_entry() == "read") {
     OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
     OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
-    SymbolicVal var = new SymbolicVar(e.second_entry(), AST_NULL);
     desc->push_back(var);
+    DebugSaveDep([&var](){ return "Saving read " + var.toString(); });
   }
 }
 
