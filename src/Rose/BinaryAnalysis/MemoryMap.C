@@ -991,6 +991,8 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
     insertProcessPid(pid, mapRecords);
 
 #else
+    mlog[WARN] <<"unused parameter 'pid'" << pid << "\n";
+    mlog[WARN] <<"unused parameter 'doAttach'" << doAttach << "\n";
     throw std::runtime_error("MemoryMap::insertProcess is not available on this system");
 #endif
 }
