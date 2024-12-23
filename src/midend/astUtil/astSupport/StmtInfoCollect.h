@@ -161,15 +161,13 @@ class StmtVarAliasCollect
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) override;
-  virtual void AppendReadLoc(AstInterface&, const AstNodePtr&, 
-                              const AstNodePtr& lhs = 0)  override {}
+  virtual void AppendReadLoc(AstInterface&, const AstNodePtr&, const AstNodePtr& /*lhs*/ = 0) override {}
  public:
   StmtVarAliasCollect( FunctionAliasInterface* a = 0) 
     : funcanal(a), hasunknown(false), hasresult(false) {}
-  virtual void analyze(AstInterface& fa, const AstNodePtr& funcdefinition);
+  virtual void analyze(AstInterface& fa, const AstNodePtr& funcdefinition) override;
   void operator()( AstInterface& fa, const AstNodePtr& funcdefinition);
-  bool may_alias(AstInterface& fa, const AstNodePtr& r1, 
-                 const AstNodePtr& r2);
+  bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) override;
 };
 
 /* Support tracking modification of variables, by building a map from each variable name

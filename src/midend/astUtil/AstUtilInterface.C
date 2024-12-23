@@ -55,7 +55,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       DebugAstUtil([&first](){ return "save read:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Read);
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_kill = [&collect,&ast] (AstNodePtr first, AstNodePtr second) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_kill = [&collect] (AstNodePtr first, AstNodePtr second) {
       DebugAstUtil([&first](){ return "save kill:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Kill);
     };
@@ -71,15 +71,15 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Call);
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_decl = [&collect,&ast] (AstNodePtr var, AstNodePtr init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_decl = [&collect] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save new decl:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Decl);
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_allocate = [&collect,&ast] (AstNodePtr var, AstNodePtr init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_allocate = [&collect] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save allocate:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Allocate);
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect,&ast] (AstNodePtr var, AstNodePtr init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save free:" + AstInterface::AstToString(var); });
       return collect(var, init, OperatorSideEffect::Free);
     };
