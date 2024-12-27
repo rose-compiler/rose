@@ -5,27 +5,17 @@
 
 using namespace std;
 
-// void fixupInitializersUsingIncludeFiles( SgNode* node )
 void fixupInitializersUsingIncludeFiles( SgProject* node )
    {
-  // DQ (3/11/2006): Introduce tracking of performance of ROSE.
      TimingPerformance timer1 ("Fixup known self-referential macros:");
 
   // This inherited attribute is used for all traversals (within the iterative approach we define)
      FixupInitializersUsingIncludeFilesInheritedAttribute inheritedAttribute;
-
      FixupInitializersUsingIncludeFilesTraversal astFixupTraversal;
 
   // I think the default should be preorder so that the interfaces would be more uniform
-#if 0
-  // DQ (8/27/2020): This is a more brutal test to make sure that we have 
-  // supported the more genereal cases of expresssions and scopes.
-     printf ("In fixupInitializersUsingIncludeFiles(): This is for testing only! \n");
-     astFixupTraversal.traverse(node,inheritedAttribute);
-#else
   // DQ (8/27/2020): We will only want to address files that we will unparse.
      astFixupTraversal.traverseInputFiles(node,inheritedAttribute);
-#endif
    }
 
 
@@ -52,22 +42,15 @@ FixupInitializersUsingIncludeFilesInheritedAttribute::FixupInitializersUsingIncl
 
 FixupInitializersUsingIncludeFilesSynthesizedAttribute::FixupInitializersUsingIncludeFilesSynthesizedAttribute()
    {
-#if 0
-     printf ("In FixupInitializersUsingIncludeFilesSynthesizedAttribute constructor: node = %p = %s \n",node,node->class_name().c_str());
-#endif
    }
 
-FixupInitializersUsingIncludeFilesSynthesizedAttribute::FixupInitializersUsingIncludeFilesSynthesizedAttribute( const FixupInitializersUsingIncludeFilesSynthesizedAttribute & X )
+FixupInitializersUsingIncludeFilesSynthesizedAttribute::FixupInitializersUsingIncludeFilesSynthesizedAttribute(const FixupInitializersUsingIncludeFilesSynthesizedAttribute &)
    {
    }
 
 
 FixupInitializersUsingIncludeFilesTraversal::FixupInitializersUsingIncludeFilesTraversal()
    {
-#if 0
-     printf ("In AddIncludeDirectivesTraversal constructor: include_file->get_filename() = %s \n",include_file->get_filename().str());
-#endif
-
    }
 
 
@@ -468,16 +451,11 @@ FixupInitializersUsingIncludeFilesTraversal::evaluateInheritedAttribute ( SgNode
 
 FixupInitializersUsingIncludeFilesSynthesizedAttribute
 FixupInitializersUsingIncludeFilesTraversal::evaluateSynthesizedAttribute (
-     SgNode* node,
-     FixupInitializersUsingIncludeFilesInheritedAttribute inheritedAttribute,
-     SubTreeSynthesizedAttributes synthesizedAttributeList )
+     SgNode* /*node*/,
+     FixupInitializersUsingIncludeFilesInheritedAttribute /*inheritedAttribute*/,
+     SubTreeSynthesizedAttributes /*synthesizedAttributeList*/ )
    {
-#if 0
-     printf ("In FixupInitializersUsingIncludeFilesTraversal::evaluateSynthesizedAttribute: node = %p = %s \n",node,node->class_name().c_str());
-#endif
-
      FixupInitializersUsingIncludeFilesSynthesizedAttribute return_attribute;
-
      return return_attribute;
    }
 
