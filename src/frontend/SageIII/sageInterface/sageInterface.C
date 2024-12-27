@@ -10362,6 +10362,9 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 
 
 //! Remove a statement: TODO consider side effects for symbol tables
+// This function is a helper function for SageInterface::removeStatement() to handle preprocessing info. 
+// It should find a suitable destination statement to which we can move the current stmt's preprocessing info to.
+// targetStmt of this function is the source statement to move preprocessing info first, before removing it. 
 SgStatement*
 SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, bool & surroundingStatementPreceedsTargetStatement)
    {
@@ -10399,7 +10402,9 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
             // This is a declaration from the wrong file so go to the next statement.
             // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
             // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
-               surroundingStatement = getPreviousStatement(surroundingStatement);
+	    // Liao, 12/26/2024. We should not climb out the current scope when finding the previous statement
+	    // Otherwise, preprocessingInfo may be moved from a child stmt to its parent stmt, causing errors in AST. 
+               surroundingStatement = getPreviousStatement(surroundingStatement, false);
 
 #if REMOVE_STATEMENT_DEBUG
                printf ("In loop: after getPreviousStatement(): surroundingStatement = %p = %s name = %s \n",surroundingStatement,
@@ -27770,14 +27775,19 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
         data.index = idx;
         data.depth = depth;
 
-        // put directives with before or inside location into the infoList
-        if (info->getRelativePosition () == PreprocessingInfo::before||
-            info->getRelativePosition () == PreprocessingInfo::inside)
+        // put directives with before location into the infoList
+        if (info->getRelativePosition () == PreprocessingInfo::before
+	   )
         {
           infoList.push_back (info);
           infoMap[info] = data;
         }
-        else if (info->getRelativePosition () == PreprocessingInfo::after)
+	// How about inside position?
+	// why it should be intepreted as the last one after all inner statment's preprocessingInfo?
+	// because if it should be unparsed before all of them,  it should have been attached to the first stmt's before location instead!
+        else if (info->getRelativePosition () == PreprocessingInfo::after
+              || info->getRelativePosition () == PreprocessingInfo::inside
+	        )
         {
           afterList.push_back (info); // if attached to be after, save to afterList
           infoMap[info] = data;
