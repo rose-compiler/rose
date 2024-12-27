@@ -23,7 +23,7 @@ public:
     }
     
 protected:
-    virtual void visit(SgNode * node) {
+    virtual void visit(SgNode* /*node*/) {
     }
     
 #define BLOCKIFY_ONE_BODY(type, access) \
