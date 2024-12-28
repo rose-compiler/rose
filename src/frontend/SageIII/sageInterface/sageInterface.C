@@ -10287,8 +10287,9 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   }
                  else
                   {
-                 // If is is not before, I hope it can only be after.
-                    ASSERT_require((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
+                 // If is is not before, I hope it can only be after. Sometimes it is end_of, e.g. gitlab-issue-186.jov
+                    ASSERT_require((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after||
+		                   (*comments)[*j]->getRelativePosition() == PreprocessingInfo::end_of);
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
                   }
                AttachedPreprocessingInfoType* targetInfoList = destinationStatement->getAttachedPreprocessingInfo();
