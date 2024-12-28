@@ -4767,7 +4767,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                  }
                else
                  {
-                   // Make sure this is not an expresion list
+                   // Make sure this is not an expression list
                    ASSERT_require(isSgExprListExp(expr) == nullptr);
                    // Output the left paren
                    curprint ("(");
@@ -9799,7 +9799,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
   // Rasmussen (3/25/2020): For unparsing of Jovial Conversion operators (casts)
      if (SageInterface::is_Jovial_language())
         {
-           if (isSgCastExp(expr) != nullptr) {
+           if (isSgCastExp(expr) || isSgPointerDerefExp(expr)) {
               return false;
            }
         }
