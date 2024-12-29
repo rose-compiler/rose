@@ -1,5 +1,3 @@
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
 #include "transformationSupport.h"
@@ -12,70 +10,6 @@ using namespace std;
 #undef mprintf
 #define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
 
-
-#if 0
-void
-TransformationSupport::insertDeclarations (
-     SgProject & globalProject,
-     SgNode* astNode, 
-     const SynthesizedAttributeBaseClassType & gatheredData,
-     string prefixString  )
-   {
-#if 1
-     printf ("Exiting before call to gatheredData.insertGatheredStringData() \n");
-     ROSE_ABORT();
-
-  // gatheredData.insertGatheredStringData(astNode);
-#else
-     list<string> variableDeclarationStrings =
-          gatheredData.variableDeclarationStrings.getSourceCodeStringList();
-
-  // list<string> variableDeclarationStrings =
-  //      gatheredData.transformationStrings.buildStringList(
-  //           SourceCodeStringType::LocalScope,
-  //           SourceCodeStringType::TopOfScope );
-
-     string tempString = StringUtility::listToString(variableDeclarationStrings);
-
-  // printf ("Case BASIC_BLOCK (before): tempString = \n%s\n",tempString.c_str());
-     string variableDeclarations = StringUtility::removePseudoRedundentSubstrings(tempString);
-
-  // printf ("Case BASIC_BLOCK: variableDeclarations = \n%s\n",variableDeclarations.c_str());
-
-     string globalDeclarationCodeString =
-          TransformationSupport::internalSupportingGlobalDeclarations( astNode, prefixString );
-     string localDeclarationCodeString = "";
-
-  // Need to mark declarations so that they can be extracted properly (but this should be done elsewhere)
-     string sourceCodeString      = "int VARIABLE_DECLARATIONS_MARKER_START; \n" + 
-                                    variableDeclarations +
-                                    "\nint VARIABLE_DECLARATIONS_MARKER_END;\n";
-
-#if 1
-     printf ("Case BASIC_BLOCK: globalDeclarationCodeString = \n%s\n",globalDeclarationCodeString.c_str());
-     printf ("Case BASIC_BLOCK: localDeclarationCodeString  = \n%s\n",localDeclarationCodeString.c_str());
-     printf ("Case BASIC_BLOCK: sourceCodeString            = \n%s\n",sourceCodeString.c_str());
-#endif
-
-#if 0
-     printf ("Exiting before call to basicBlock->insertSourceCode() \n");
-     ROSE_ABORT();
-#endif
-
-  // Push the variable declarations for all the transformations onto the top of the local scope
-     bool isADeclaration     = true;
-     bool insertAtTopOfBlock = true;
-     astNode->insertSourceCode (globalProject,
-                                sourceCodeString,
-                                localDeclarationCodeString,
-                                globalDeclarationCodeString,
-                                insertAtTopOfBlock,
-                                isADeclaration);
-#endif
-
-   }
-#endif
-
 string
 TransformationSupport::stringifyOperator (string name)
    {
@@ -84,18 +18,12 @@ TransformationSupport::stringifyOperator (string name)
   // overloaded operators element wise operators.
 
      string operatorString;
-
      int stringLength = name.length();
      ROSE_ASSERT (stringLength >= 3);
 
      char lastCharacter = name[stringLength-1];
-  // printf ("lastCharacter = %c \n",lastCharacter);
-
      char secondLastCharacter = name[stringLength-2];
-  // printf ("secondLastCharacter = %c \n",secondLastCharacter);
-
      char thirdLastCharacter = name[stringLength-3];
-  // printf ("thirdLastCharacter = %c \n",thirdLastCharacter);
 
   // Now turn the last character code into a string (we want to return a string instead of a character!)
      if (secondLastCharacter == 'r')
@@ -257,13 +185,8 @@ TransformationSupport::classifyOverloadedOperator ( string name, int numberOfPar
      ROSE_ASSERT (stringLength >= 3);
 
      char lastCharacter = name[stringLength-1];
-  // printf ("lastCharacter = %c \n",lastCharacter);
-
      char secondLastCharacter = name[stringLength-2];
-  // printf ("secondLastCharacter = %c \n",secondLastCharacter);
-
      char thirdLastCharacter = name[stringLength-3];
-  // printf ("thirdLastCharacter = %c \n",thirdLastCharacter);
 
   // Now turn the last character code into a string (we want to return a string instead of a character!)
      if (secondLastCharacter == 'r')
@@ -400,14 +323,8 @@ TransformationSupport::classifyOverloadedOperator ( string name, int numberOfPar
                   }
                default:
                     printf ("default reached in case secondLastCharacter != 'r' of identifyOperator() lastCharacter = %c \n",lastCharacter);
-                 // ROSE_ABORT();
              }
         }
-
-#if 0
-  // Temporary test (e.g. this would not be correct for cos(A) function)
-     ROSE_ASSERT (operatorCode != FUNCTION_CALL_OPERATOR_CODE);
-#endif
 
      return operatorCode;
    }
@@ -419,11 +336,8 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
   // This function defines the operator string used between 
   // the lhs and rhs for all binary operators. It supports
   // the assembly function below.
-
+     ASSERT_not_null(astNode);
      string operatorString;
-     ROSE_ASSERT (astNode != NULL);
-
-  // printf ("In TransformationSupport::buildOperatorString(): astNode->sage_class_name() = %s \n",astNode->sage_class_name());
 
      switch (astNode->variantT())
         {
@@ -456,51 +370,42 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
           case V_SgLshiftAssignOp: operatorString = "<<="; break;
           case V_SgRshiftAssignOp: operatorString = ">>="; break;
 
-       // ??? Since a SgMemberFunctionRefExp is derived from a SgFunctionCallExp we need only handle one case
+       // Since a SgMemberFunctionRefExp is derived from a SgFunctionCallExp we need only handle one case
        // case V_SgMemberFunctionRefExp:
           case V_SgFunctionCallExp:   // SgFunctionCallExp
              {
                SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
-               ROSE_ASSERT (functionCallExp != NULL);
+               ASSERT_not_null(functionCallExp);
 
                SgExpression* functionExpression = functionCallExp->get_function();
-               ROSE_ASSERT (functionExpression != NULL);
+               ASSERT_not_null(functionExpression);
 
                operatorString = buildOperatorString (functionExpression);
                break;
              }
-#if 1
           case V_SgMemberFunctionRefExp:
              {
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(astNode);
-               ROSE_ASSERT (memberFunctionRefExp != NULL);
+               ASSERT_not_null(memberFunctionRefExp);
 
                SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
-               ROSE_ASSERT (memberFunctionSymbol != NULL);
+               ASSERT_not_null(memberFunctionSymbol);
 
                operatorString = buildOperatorString (memberFunctionSymbol);
                break;
              }
-#endif
-
           case V_SgMemberFunctionSymbol:
             {
-              // AS (9/24/03) Was not implemented before.
-
                SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(astNode);
-               ROSE_ASSERT (memberFunctionSymbol != NULL);
+               ASSERT_not_null(memberFunctionSymbol);
 
                SgName name = memberFunctionSymbol->get_name();
-            // printf ("name = %s \n",name.str());
-            // string tempName = Rose::stringDuplicate(name.str());
                string tempName = name.str();
 
-            // int stringLength = strlen(tempName);
                int stringLength = tempName.length();
-               ROSE_ASSERT (stringLength >= 2);
+               ASSERT_require(stringLength >= 2);
 
                bool isAnOperator = false;
-            // if ( (stringLength >= 8) && (!strncmp (tempName,"operator",8)) )
                if ( (stringLength >= 8) && (!strncmp (tempName.c_str(),"operator",8)) )
                     isAnOperator = true;
 
@@ -519,19 +424,15 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
           case V_SgFunctionSymbol:
              {
                SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(astNode);
-               ROSE_ASSERT (functionSymbol != NULL);
+               ASSERT_not_null(functionSymbol);
 
                SgName name = functionSymbol->get_name();
-            // printf ("name = %s \n",name.str());
-            // string tempName = Rose::stringDuplicate(name.str());
                string tempName = name.str();
 
-            // int stringLength = strlen(tempName);
                int stringLength = tempName.length();
-               ROSE_ASSERT (stringLength >= 2);
+               ASSERT_require(stringLength >= 2);
 
                bool isAnOperator = false;
-            // if ( (stringLength >= 8) && (!strncmp (tempName,"operator",8)) )
                if ( (stringLength >= 8) && (!strncmp (tempName.c_str(),"operator",8)) )
                     isAnOperator = true;
 
@@ -550,9 +451,9 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
           case V_SgDotExp:  // SgDotExp
              {
                SgDotExp* dotExp = isSgDotExp(astNode);
-               ROSE_ASSERT (dotExp != NULL);
+               ASSERT_not_null(dotExp);
                SgExpression* rhs = dotExp->get_rhs_operand();
-               ROSE_ASSERT (rhs != NULL);
+               ASSERT_not_null(rhs);
 
                operatorString = buildOperatorString (rhs);
                break;
@@ -560,9 +461,9 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
           case V_SgFunctionRefExp: // SgFunctionRefExp
              {
                SgFunctionRefExp* functionReferenceExp = isSgFunctionRefExp(astNode);
-               ROSE_ASSERT (functionReferenceExp != NULL);
+               ASSERT_not_null(functionReferenceExp);
                SgFunctionSymbol* functionSymbol = functionReferenceExp->get_symbol();
-               ROSE_ASSERT (functionSymbol != NULL);
+               ASSERT_not_null(functionSymbol);
 
                operatorString = buildOperatorString (functionSymbol);
                break;
@@ -573,9 +474,6 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
                ROSE_ABORT();
         }
 
-  // printf ("operatorString = %s \n",operatorString);
-  // ROSE_ABORT();
-
      return operatorString;
    }
 
@@ -583,89 +481,70 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
 string
 TransformationSupport::getFunctionName ( SgFunctionCallExp* functionCallExp )
    {
-  // SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
-     ROSE_ASSERT (functionCallExp != NULL);
+     ASSERT_not_null(functionCallExp);
 
      SgExpression* expression = functionCallExp->get_function();
-     ROSE_ASSERT (expression != NULL);
+     ASSERT_not_null(expression);
 
      string returnNameString;
 
      SgDotExp* dotExp = isSgDotExp(expression);
-     if (dotExp != NULL)
+     if (dotExp != nullptr)
         {
-          ROSE_ASSERT (dotExp != NULL);
+          ASSERT_not_null(dotExp);
 
           SgExpression* rhsOperand = dotExp->get_rhs_operand();
-          ROSE_ASSERT (rhsOperand != NULL);
+          ASSERT_not_null(rhsOperand);
 
           SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
-          ROSE_ASSERT (memberFunctionRefExp != NULL);
+          ASSERT_not_null(memberFunctionRefExp);
 
           SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(memberFunctionRefExp->get_symbol());
-          ROSE_ASSERT (memberFunctionSymbol != NULL);
+          ASSERT_not_null(memberFunctionSymbol);
 
        // There will be a lot of different possible overloaded operators called
        // and "operator()" is just one of them (that we are debugging presently)
 
-       // returnNameString = Rose::stringDuplicate(memberFunctionSymbol->get_name().str());
           returnNameString = memberFunctionSymbol->get_name().str();
-          ROSE_ASSERT (returnNameString.length() > 0);
         }
 
      SgFunctionRefExp* functionReferenceExp = isSgFunctionRefExp(expression);
-     if (functionReferenceExp != NULL)
+     if (functionReferenceExp != nullptr)
        {
          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(functionReferenceExp->get_symbol());
-         ROSE_ASSERT (functionSymbol != NULL);
+         ASSERT_not_null(functionSymbol);
          
-         // returnNameString = Rose::stringDuplicate(functionSymbol->get_name().str());
          returnNameString = functionSymbol->get_name().str();
-         
-         // ROSE_ASSERT (returnNameString != NULL);
-         // printf ("SgFunctionRefExp case: returnNameString = %s \n",returnNameString);
-         
-         // printf ("Not implemented case in getFunctionName \n");
-         // ROSE_ABORT();
-         ROSE_ASSERT (returnNameString.length() > 0);
        }
 
      SgArrowExp* arrowExp = isSgArrowExp(expression);
-     if ( arrowExp != NULL)
+     if (arrowExp != nullptr)
        {
-         ROSE_ASSERT (arrowExp != NULL);
+         ASSERT_not_null(arrowExp);
          
          SgExpression* rhsOperand = arrowExp->get_rhs_operand();
-         ROSE_ASSERT (rhsOperand != NULL);
+         ASSERT_not_null(rhsOperand);
          
          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
-         ROSE_ASSERT (memberFunctionRefExp != NULL);
+         ASSERT_not_null(memberFunctionRefExp);
          
          SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(memberFunctionRefExp->get_symbol());
-         ROSE_ASSERT (memberFunctionSymbol != NULL);
+         ASSERT_not_null(memberFunctionSymbol);
          
          // There will be a lot of different possible overloaded operators called
          // and "operator()" is just one of them (that we are debugging presently)
          
-         // returnNameString = Rose::stringDuplicate(memberFunctionSymbol->get_name().str());
          returnNameString = memberFunctionSymbol->get_name().str();
-         ROSE_ASSERT (returnNameString.length() > 0);
        }
      
-     ROSE_ASSERT (returnNameString.length() > 0);
-     // printf ("returnNameString = %s \n",returnNameString.c_str());
-     
+     ASSERT_require(returnNameString.length() > 0);
      return returnNameString;
    }
 
-
-// DQ (3/18/2005): Improved version from Brian White (merged bugfix from Tom Epperly as well
 string
 TransformationSupport::getTypeName ( SgType* type )
    {
      string typeName;
-
-  // printf ("In TransformationSupport::getTypeName(): type->sage_class_name() = %s \n",type->sage_class_name());
 
      switch (type->variantT())
         {
@@ -678,12 +557,6 @@ TransformationSupport::getTypeName ( SgType* type )
           case V_SgTypeBool:
                typeName = "bool";
                break;
-#if 0
-          case V_SgEnumType:
-            // DQ (3/2/2005): This needs to be fixed, but Tom is going to send me the fix since I'm working on Kull presently.
-               typeName = "enum";
-               break;
-#endif
           case V_SgTypeChar:
                typeName = "char";
                break;
@@ -752,78 +625,77 @@ TransformationSupport::getTypeName ( SgType* type )
                break;
           case V_SgReferenceType: 
              {
-               ROSE_ASSERT ( isSgReferenceType(type)->get_base_type() != NULL );
+               ASSERT_not_null( isSgReferenceType(type)->get_base_type() );
                typeName = getTypeName(isSgReferenceType(type)->get_base_type()) + "&";
                break;
              }
           case V_SgPointerType:
              {
-               ROSE_ASSERT ( isSgPointerType(type)->get_base_type() != NULL );
+               ASSERT_not_null( isSgPointerType(type)->get_base_type() );
                typeName = getTypeName(isSgPointerType(type)->get_base_type()) + "*";
                break;
              }
           case V_SgModifierType:
              {
-               ROSE_ASSERT ( isSgModifierType(type)->get_base_type() != NULL );
+               ASSERT_not_null( isSgModifierType(type)->get_base_type() );
                SgModifierType *modifier = isSgModifierType(type);
                typeName = modifier->unparseToString();
-            // typeName = getTypeName(modifier->get_base_type());
                break;
              }
           case V_SgEnumType:
           case V_SgNamedType:
              {
                SgNamedType* sageNamedType = isSgNamedType(type);
-               ROSE_ASSERT( sageNamedType != NULL );
+               ASSERT_not_null(sageNamedType);
                typeName = sageNamedType->get_name().str();
                break;
              }
           case V_SgClassType:
              {
                SgClassType* sageClassType = isSgClassType(type);
-               ROSE_ASSERT( sageClassType != NULL );
+               ASSERT_not_null(sageClassType);
                typeName = sageClassType->get_name().str();
                break;
              }
           case V_SgTypedefType:
              {
                SgTypedefType* sageTypedefType = isSgTypedefType(type);
-               ROSE_ASSERT( sageTypedefType != NULL );
+               ASSERT_not_null(sageTypedefType);
                typeName = sageTypedefType->get_name().str();
                break;
              }
           case V_SgPointerMemberType:
              {
                SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
-               ROSE_ASSERT (pointerMemberType != NULL);
+               ASSERT_not_null(pointerMemberType);
                SgClassType* classType = isSgClassType(pointerMemberType->get_class_type()->stripTypedefsAndModifiers());
-               ROSE_ASSERT (classType != NULL);
+               ASSERT_not_null(classType);
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-               ROSE_ASSERT (classDeclaration != NULL);
+               ASSERT_not_null(classDeclaration);
                typeName = classDeclaration->get_name().str();
                break;
              }
           case V_SgArrayType: 
              {
-               ROSE_ASSERT ( isSgArrayType(type)->get_base_type() != NULL );
+               ASSERT_not_null( isSgArrayType(type)->get_base_type() );
                typeName = getTypeName(isSgArrayType(type)->get_base_type());
                break;
              }
           case V_SgFunctionType:
              {
                SgFunctionType* functionType = isSgFunctionType(type);
-               ROSE_ASSERT(functionType != NULL);
+               ASSERT_not_null(functionType);
                typeName = functionType->get_mangled_type().str();
                break;
              }
           case V_SgMemberFunctionType:
              {
                SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(type);
-               ROSE_ASSERT (memberFunctionType != NULL);
+               ASSERT_not_null(memberFunctionType);
                SgClassType* classType = isSgClassType(memberFunctionType->get_class_type()->stripTypedefsAndModifiers());
-               ROSE_ASSERT (classType != NULL);
+               ASSERT_not_null(classType);
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-               ROSE_ASSERT (classDeclaration != NULL);
+               ASSERT_not_null(classDeclaration);
                typeName = classDeclaration->get_name().str();
                break;
              }
@@ -842,9 +714,6 @@ TransformationSupport::getTypeName ( SgType* type )
              }
         }
 
-  // Fix for purify problem report
-  // typeName = Rose::stringDuplicate(typeName);
-
      return typeName;
    }
 
@@ -852,66 +721,46 @@ TransformationSupport::getTypeName ( SgType* type )
 string
 TransformationSupport::getFunctionTypeName ( SgFunctionCallExp* functionCallExpression )
    {
+     ASSERT_not_null(functionCallExpression);
      string associatedClassName;
 
-  // SgFunctionCallExp* functionCallExpression = isSgFunctionCallExp(astNode);
-     ROSE_ASSERT (functionCallExpression != NULL);
-
-  // string operatorName = TransformationSupport::getFunctionName ( functionCallExpression );
-  // ROSE_ASSERT (operatorName.c_str() != NULL);
-
      SgExpression* expression = functionCallExpression->get_function();
-     ROSE_ASSERT (expression != NULL);
+     ASSERT_not_null(expression);
 
      string functionTypeName;
      SgDotExp* dotExpression = isSgDotExp(expression);
      SgArrowExp* arrowExpression = isSgArrowExp(expression);
-     if (dotExpression != NULL)
+     if (dotExpression != nullptr)
         {
        // Get the class name associated with the member function
           SgExpression* rhsExpression = dotExpression->get_rhs_operand();
-          ROSE_ASSERT (rhsExpression != NULL);
+          ASSERT_not_null(rhsExpression);
           SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsExpression);
-          ROSE_ASSERT (memberFunctionRefExp != NULL);
+          ASSERT_not_null(memberFunctionRefExp);
+          ASSERT_not_null(memberFunctionRefExp->get_type());
 
-       // DQ (1/14/2006): Call get_type() instead of get_function_type() (part of work
-       // to remove the explicit storage of the type within expressions were possible).
-       // ROSE_ASSERT (memberFunctionRefExp->get_function_type() != NULL);
-          ROSE_ASSERT (memberFunctionRefExp->get_type() != NULL);
-
-       // DQ (1/14/2006): Call get_type() instead of get_function_type() (part of work
-       // to remove the explicit storage of the type within expressions were possible).
-       // SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(memberFunctionRefExp->get_function_type());
           SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(memberFunctionRefExp->get_type());
-
-          ROSE_ASSERT (memberFunctionType != NULL);
-       // functionTypeName = Rose::stringDuplicate(TransformationSupport::getTypeName ( memberFunctionType ));
+          ASSERT_not_null(memberFunctionType);
           functionTypeName = TransformationSupport::getTypeName ( memberFunctionType );
         }
-     else if ( arrowExpression != NULL )
+     else if (arrowExpression != nullptr)
         {
        // Get the class name associated with the member function
           SgExpression* rhsExpression = arrowExpression->get_rhs_operand();
-          ROSE_ASSERT (rhsExpression != NULL);
+          ASSERT_not_null(rhsExpression);
           SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsExpression);
-          ROSE_ASSERT (memberFunctionRefExp != NULL);
-
-       // DQ (1/14/2006): Call get_type() instead of get_function_type() (part of work
-       // to remove the explicit storage of the type within expressions were possible).
-       // ROSE_ASSERT (memberFunctionRefExp->get_function_type() != NULL);
-       // SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(memberFunctionRefExp->get_function_type());
-          ROSE_ASSERT (memberFunctionRefExp->get_type() != NULL);
+          ASSERT_not_null(memberFunctionRefExp);
+          ASSERT_not_null(memberFunctionRefExp->get_type());
           SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(memberFunctionRefExp->get_type());
 
-          ROSE_ASSERT (memberFunctionType != NULL);
-       // functionTypeName = Rose::stringDuplicate(TransformationSupport::getTypeName ( memberFunctionType ));
+          ASSERT_not_null(memberFunctionType);
           functionTypeName = TransformationSupport::getTypeName ( memberFunctionType );
        }
        else
         {
        // Get the class name associated with the friend function
           SgType* functionType    = functionCallExpression->get_type();
-          ROSE_ASSERT (functionType != NULL);
+          ASSERT_not_null(functionType);
           functionTypeName = TransformationSupport::getTypeName (functionType);
         }
 
@@ -928,16 +777,6 @@ TransformationSupport::buildMacro ( string s )
   // This function wraps the string representing a macro that we want to appear in a transformation
   // so that it can be precessed by the unparser.
 
-#if 0
-     char* returnString = Rose::stringDuplicate(s);
-     char* roseMacroMarkerString = "ROSE-TRANSFORMATION-MACRO:";
-     returnString = Rose::stringConcatinate (roseMacroMarkerString,returnString);
-
-  // Wrap the string into quotes for use as a C++ string expression
-     returnString = Rose::stringConcatinate ("\"",returnString);
-     returnString = Rose::stringConcatinate (returnString,"\";");
-     ROSE_ASSERT (returnString != NULL);
-#else
      string returnString = s;
      string roseMacroMarkerString = "ROSE-TRANSFORMATION-MACRO:";
      returnString = roseMacroMarkerString + returnString;
@@ -945,7 +784,6 @@ TransformationSupport::buildMacro ( string s )
   // Wrap the string into quotes for use as a C++ string expression
      returnString = "\"" + returnString;
      returnString = returnString + "\";";
-#endif
 
      return returnString;
    }
@@ -964,30 +802,21 @@ TransformationSupport::getTransformationOptions (
   // find all enclosing scopes until in reaches the global scope.  At each scope it searches for
   // variables of type ScopeBasedTransformationOptimization.
 
-  // printf ("######################### START OF TRANSFORMATION OPTION QUERY ######################## \n");
-
-     ROSE_ASSERT (astNode != NULL);
-     ROSE_ASSERT (identifingTypeName.c_str() != NULL);
-
-#if 0
-     printf ("In getTransformationOptions(): astNode->sage_class_name() = %s generatedList.size() = %d \n",
-          astNode->sage_class_name(),generatedList.size());
-#endif
+     ASSERT_not_null(astNode);
+     ASSERT_not_null(identifingTypeName.c_str());
 
      switch (astNode->variantT())
         {
           case V_SgProject:
              {
                SgProject* project = isSgProject(astNode);
-               ROSE_ASSERT (project != NULL);
+               ASSERT_not_null(project);
 
            //! Loop through all the files in the project and call the mainTransform function for each file
                int i = 0;
                for (i=0; i < project->numberOfFiles(); i++)
                   {
                     SgFile* file = &(project->get_file(i));
-
-                 // printf ("Calling Query::traverse(SgFile,QueryFunctionType,QueryAssemblyFunctionType) \n");
                     getTransformationOptions ( file, generatedList, identifingTypeName );
                   }
                break;
@@ -997,13 +826,9 @@ TransformationSupport::getTransformationOptions (
           case V_SgSourceFile:
              {
                SgSourceFile* file = isSgSourceFile(astNode);
-               ROSE_ASSERT (file != NULL);
-            // SgGlobal* globalScope = &(file->root());
+               ASSERT_not_null(file);
                SgGlobal* globalScope = file->get_globalScope();
-               ROSE_ASSERT (globalScope != NULL);
-
-            // DQ (9/5/2008): This test is pointless!
-            // ROSE_ASSERT (isSgGlobal(globalScope) != NULL);
+               ASSERT_not_null(globalScope);
 
                getTransformationOptions ( globalScope, generatedList, identifingTypeName );
                break;
@@ -1013,160 +838,77 @@ TransformationSupport::getTransformationOptions (
           case V_SgGlobal:
              {
                SgGlobal* globalScope = isSgGlobal(astNode);
-               ROSE_ASSERT (globalScope != NULL);
-
-#if 0
-               SgSymbolTable* symbolTable = globalScope->get_symbol_table();
-               ROSE_ASSERT (symbolTable != NULL);
-               getTransformationOptions ( symbolTable, generatedList, identifingTypeName );
-#else
+               ASSERT_not_null(globalScope);
             // DQ (5/21/2013): We now make this an error, but I think this code is not used any more.
                printf ("ERROR: access to symbol table is restricted from SgGlobal \n");
                ROSE_ABORT();
-#endif
-            // printf ("Processed global scope, exiting .. \n");
-            // ROSE_ABORT();
                break;
              }
 
           case V_SgSymbolTable:
              {
             // List the variable in each scope
-            // printf ("List all the variables in this symbol table! \n");
                SgSymbolTable* symbolTable = isSgSymbolTable(astNode);
-               ROSE_ASSERT (symbolTable != NULL);
+               ASSERT_not_null(symbolTable);
 
-            // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
-            // bool foundTransformationOptimizationSpecifier = false;
-
-            // printf ("Now print out the information in the symbol table for this scope: \n");
-            // symbolTable->print();
-
-#if 0
-            // I don't know when a SymbolTable is given a name!
-               printf ("SymbolTable has a name = %s \n",
-                    (symbolTable->get_no_name()) ? "NO: it has no name" : "YES: it does have a name");
-               if (!symbolTable->get_no_name())
-                    printf ("SymbolTable name = %s \n",symbolTable->get_name().str());
-                 else
-                    ROSE_ASSERT (symbolTable->get_name().str() == NULL);
-#endif
-
-               if (symbolTable->get_table() != NULL)
+               if (symbolTable->get_table() != nullptr)
                   {
-                 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
-                 // SgSymbolHashBase::iterator i = symbolTable->get_table()->begin();
                     SgSymbolTable::hash_iterator i = symbolTable->get_table()->begin();
 
-                    int counter = 0;
                     while (i != symbolTable->get_table()->end())
                        {
-                         ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
-
-                      // printf ("Initial info: number: %d pair.first (SgName) = %s pair.second (SgSymbol) sage_class_name() = %s \n",
-                      //      counter,(*i).first.str(),(*i).second->sage_class_name());
-
+                         ASSERT_not_null(isSgSymbol( (*i).second ));
                          SgSymbol* symbol = isSgSymbol((*i).second);
-                         ROSE_ASSERT ( symbol != NULL );
+                         ASSERT_not_null(symbol);
                          SgType* type = symbol->get_type();
-                         ROSE_ASSERT ( type != NULL );
+                         ASSERT_not_null(type);
 
                          SgNamedType* namedType = isSgNamedType(type);
                          string typeName;
-                         if (namedType != NULL)
+                         if (namedType != nullptr)
                             {
                               SgName n = namedType->get_name();
                               typeName = namedType->get_name().str();
-                           // char* nameString = namedType->get_name().str();
-                           // printf ("Type is: (named type) = %s \n",nameString);
-                              ROSE_ASSERT (identifingTypeName.c_str() != NULL);
-                           // ROSE_ASSERT (typeName != NULL);
-                           // if ( (typeName != NULL) && (Rose::isSameName(typeName,identifingTypeName) == true) )
+                              ASSERT_not_null(identifingTypeName.c_str());
                               if ( typeName == identifingTypeName )
                                  {
                                 // Now look at the parameter list to the constructor and save the
                                 // values into the list.
-
-                                // printf ("Now save the constructor arguments! \n");
-
                                    SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
 
-                                   if ( variableSymbol != NULL )
+                                   if (variableSymbol != nullptr)
                                       {
                                         SgInitializedName* initializedNameDeclaration = variableSymbol->get_declaration();
-                                        ROSE_ASSERT (initializedNameDeclaration != NULL);
+                                        ASSERT_not_null(initializedNameDeclaration);
 
                                         SgDeclarationStatement* declarationStatement = initializedNameDeclaration->get_declaration();
-                                        ROSE_ASSERT (declarationStatement != NULL);
+                                        ASSERT_not_null(declarationStatement);
 
                                         SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
-                                        ROSE_ASSERT (variableDeclaration != NULL);
+                                        ASSERT_not_null(variableDeclaration);
 
                                         getTransformationOptionsFromVariableDeclarationConstructorArguments(variableDeclaration,generatedList);
-
-                                      // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
-                                     // foundTransformationOptimizationSpecifier = true;
-
-                                     // printf ("Exiting after saving the constructor arguments! \n");
-                                     // ROSE_ABORT();
                                       }
-                                     else
-                                      {
-#if 0
-                                        printf ("Not a SgVariableSymbol: symbol->sage_class_name() = %s \n",
-                                             symbol->sage_class_name());
-#endif
-                                      }
-                                 }
-                                else
-                                 {
-#if 0
-                                // I don't think this should ever be NULL (but it is sometimes)
-                                   if (typeName != NULL)
-                                        printf ("typeName == NULL \n");
-#endif
                                  }
                             }
                            else
                             {
                               typeName = (char *)type->sage_class_name();
                             }
-#if 0
-                         printf ("Symbol number: %d pair.first (SgName) = %s pair.second (SgSymbol) sage_class_name() = %s type = %s \n",
-                              counter,(*i).first.str(),(*i).second->sage_class_name(),
-                              (typeName != NULL) ? typeName : "NULL TYPE NAME");
-#endif
                          i++;
-                         counter++;
                        }
                   }
-                 else
-                  {
-                 // printf ("Pointer to symbol table is NULL \n");
-                  }
-
-            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "true" : "false");
-
-            // SgSymbolTable objects don't have a parent node (specifically they lack a get_parent
-            // member function in the interface)!
                break;
              }
 
           case V_SgBasicBlock:
              {
             // List the variable in each scope
-            // printf ("List all the variables in this scope! \n");
                SgBasicBlock* basicBlock = isSgBasicBlock(astNode);
-               ROSE_ASSERT (basicBlock != NULL);
-#if 0
-               SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
-               ROSE_ASSERT (symbolTable != NULL);
-               getTransformationOptions ( symbolTable, generatedList, identifingTypeName );
-#else
+               ASSERT_not_null(basicBlock);
             // DQ (5/21/2013): We now make this an error, but I think this code is not used any more.
                printf ("ERROR: access to symbol table is restricted from SgBasicBlock \n");
                ROSE_ABORT();
-#endif
             // Next go (fall through this case) to the default case so that we traverse the parent
             // of the SgBasicBlock.
             // break;
@@ -1174,633 +916,62 @@ TransformationSupport::getTransformationOptions (
 
           default:
             // Most cases will be the default (this is by design)
-            // printf ("default in switch found in globalQueryGetListOperandStringFunction() (sage_class_name = %s) \n",astNode->sage_class_name());
-#if 1
             // Need to recursively backtrack through the parents until we reach the SgGlobal (global scope)
                SgStatement* statement = isSgStatement(astNode);
-               if (statement != NULL)
+               if (statement != nullptr)
                   {
-                 // SgStatement* parentStatement = statement->get_parent();
                     SgStatement* parentStatement = isSgStatement(statement->get_parent());
-                    ROSE_ASSERT (parentStatement != NULL);
-                 // printf ("Parent is a %s \n",parentStatement->sage_class_name());
+                    ASSERT_not_null(parentStatement);
 
                  // Call this function recursively (directly rather than through the query mechanism)
                     getTransformationOptions ( parentStatement, generatedList, identifingTypeName );
                   }
-                 else
-                  {
-                 // printf ("astNode is not a SgStatement! \n");
-                  }
-#else
-               printf ("Skipping the traversal of the parent node in the AST! \n");
-#endif
-
                break;
         }
-
-#if 0
-     printf ("In globalQueryGetOperandFunction(): astNode->sage_class_name() = %s size of generatedList = %d \n",
-          astNode->sage_class_name(),generatedList.size());
-#endif
-
-  // printf ("######################### END OF TRANSFORMATION OPTION QUERY ######################## \n");
    }
-
-
-#if 0
-
-// Code moved to Babel Directory to simplify development temporarily
-
-void
-TransformationSupport::getTransformationOptions (
-   SgNode* astNode,
-   list<OptionDeclaration> & generatedList,
-   string identifingTypeName )
-   {
-  // This function searches for variables of type ScopeBasedTransformationOptimization.  Variables
-  // of type ScopeBasedTransformationOptimization are used to communicate optimizations from the
-  // application to the preprocessor. If called from a project or file object it traverses down to
-  // the global scope of the file and searches only the global scope, if called from and other
-  // location within the AST it searches the current scope and then traverses the parent nodes to
-  // find all enclosing scopes until in reaches the global scope.  At each scope it searches for
-  // variables of type ScopeBasedTransformationOptimization.
-
-  // printf ("######################### START OF TRANSFORMATION OPTION QUERY ######################## \n");
-
-     ROSE_ASSERT (astNode != NULL);
-     ROSE_ASSERT (identifingTypeName.c_str() != NULL);
-
-#if 0
-     printf ("In getTransformationOptions(): astNode->sage_class_name() = %s generatedList.size() = %d \n",
-          astNode->sage_class_name(),generatedList.size());
-#endif
-
-     switch (astNode->variantT())
-        {
-          case V_SgProject:
-             {
-               SgProject* project = isSgProject(astNode);
-               ROSE_ASSERT (project != NULL);
-
-           //! Loop through all the files in the project and call the mainTransform function for each file
-               int i = 0;
-               for (i=0; i < project->numberOfFiles(); i++)
-                  {
-                    SgFile* file = &(project->get_file(i));
-
-                 // printf ("Calling Query::traverse(SgFile,QueryFunctionType,QueryAssemblyFunctionType) \n");
-                    getTransformationOptions ( file, generatedList, identifingTypeName );
-                  }
-               break;
-             }
-
-       // case V_SgFile:
-          case V_SgSourceFile:
-             {
-               SgFile* file = isSgFile(astNode);
-               ROSE_ASSERT (file != NULL);
-               SgGlobal* globalScope = &(file->root());
-               ROSE_ASSERT (globalScope != NULL);
-               ROSE_ASSERT (isSgGlobal(globalScope) != NULL);
-               getTransformationOptions ( globalScope, generatedList, identifingTypeName );
-               break;
-             }
-
-       // Global Scope
-          case V_SgGlobal:
-             {
-               SgGlobal* globalScope = isSgGlobal(astNode);
-               ROSE_ASSERT (globalScope != NULL);
-
-               SgSymbolTable* symbolTable = globalScope->get_symbol_table();
-               ROSE_ASSERT (symbolTable != NULL);
-               getTransformationOptions ( symbolTable, generatedList, identifingTypeName );
-
-            // printf ("Processed global scope, exiting .. \n");
-            // ROSE_ABORT();
-               break;
-             }
-
-          case V_SgSymbolTable:
-             {
-            // List the variable in each scope
-            // printf ("List all the variables in this symbol table! \n");
-               SgSymbolTable* symbolTable = isSgSymbolTable(astNode);
-               ROSE_ASSERT (symbolTable != NULL);
-
-               bool foundTransformationOptimizationSpecifier = false;
-
-            // printf ("Now print out the information in the symbol table for this scope: \n");
-            // symbolTable->print();
-
-#if 0
-            // I don't know when a SymbolTable is given a name!
-               printf ("SymbolTable has a name = %s \n",
-                    (symbolTable->get_no_name()) ? "NO: it has no name" : "YES: it does have a name");
-               if (!symbolTable->get_no_name())
-                    printf ("SymbolTable name = %s \n",symbolTable->get_name().str());
-                 else
-                    ROSE_ASSERT (symbolTable->get_name().str() == NULL);
-#endif
-
-               if (symbolTable->get_table() != NULL)
-                  {
-                 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
-                 // SgSymbolHashBase::iterator i = symbolTable->get_table()->begin();
-                    SgSymbolTable::hash_iterator i = symbolTable->get_table()->begin();
-
-                    int counter = 0;
-                    while (i != symbolTable->get_table()->end())
-                       {
-                         ROSE_ASSERT ( (*i).first.str() != NULL );
-                         ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
-
-                      // printf ("Initial info: number: %d pair.first (SgName) = %s pair.second (SgSymbol) sage_class_name() = %s \n",
-                      //      counter,(*i).first.str(),(*i).second->sage_class_name());
-
-                         SgSymbol* symbol = isSgSymbol((*i).second);
-                         ROSE_ASSERT ( symbol != NULL );
-                         SgType* type = symbol->get_type();
-                         ROSE_ASSERT ( type != NULL );
-
-                         SgNamedType* namedType = isSgNamedType(type);
-                         string typeName;
-                         if (namedType != NULL)
-                            {
-                              SgName n = namedType->get_name();
-                              typeName = namedType->get_name().str();
-                           // char* nameString = namedType->get_name().str();
-                           // printf ("Type is: (named type) = %s \n",nameString);
-                              ROSE_ASSERT (identifingTypeName.c_str() != NULL);
-                           // ROSE_ASSERT (typeName != NULL);
-                              printf ("In getTransformationOptions(): typeName = %s identifingTypeName = %s \n",typeName.c_str(),identifingTypeName.c_str());
-                           // if ( (typeName != NULL) && ( typeName == identifingTypeName) )
-                              if ( typeName == identifingTypeName )
-                                 {
-                                // Now look at the parameter list to the constructor and save the
-                                // values into the list.
-
-                                   printf ("Now save the constructor arguments! \n");
-
-                                   SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
-
-                                   if ( variableSymbol != NULL )
-                                      {
-                                        SgInitializedName* initializedNameDeclaration = variableSymbol->get_declaration();
-                                        ROSE_ASSERT (initializedNameDeclaration != NULL);
-
-                                        SgDeclarationStatement* declarationStatement = initializedNameDeclaration->get_declaration();
-                                        ROSE_ASSERT (declarationStatement != NULL);
-
-                                        SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
-                                        ROSE_ASSERT (variableDeclaration != NULL);
-
-                                        getTransformationOptionsFromVariableDeclarationConstructorArguments(variableDeclaration,generatedList);
-
-                                        foundTransformationOptimizationSpecifier = true;
-
-                                     // printf ("Exiting after saving the constructor arguments! \n");
-                                     // ROSE_ABORT();
-                                      }
-                                     else
-                                      {
-#if 0
-                                        printf ("Not a SgVariableSymbol: symbol->sage_class_name() = %s \n",
-                                             symbol->sage_class_name());
-#endif
-                                      }
-                                 }
-                                else
-                                 {
-#if 0
-                                // I don't think this should ever be NULL (but it is sometimes)
-                                   if (typeName != NULL)
-                                        printf ("typeName == NULL \n");
-#endif
-                                 }
-                            }
-                           else
-                            {
-                              typeName = (char *)type->sage_class_name();
-                            }
-#if 0
-                         printf ("Symbol number: %d pair.first (SgName) = %s pair.second (SgSymbol) sage_class_name() = %s type = %s \n",
-                              counter,(*i).first.str(),(*i).second->sage_class_name(),
-                              (typeName != NULL) ? typeName : "NULL TYPE NAME");
-#endif
-                         i++;
-                         counter++;
-                       }
-                  }
-                 else
-                  {
-                 // printf ("Pointer to symbol table is NULL \n");
-                  }
-
-            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "true" : "false");
-
-            // SgSymbolTable objects don't have a parent node (specifically they lack a get_parent
-            // member function in the interface)!
-               break;
-             }
-
-          case V_SgBasicBlock:
-             {
-            // List the variable in each scope
-            // printf ("List all the variables in this scope! \n");
-               SgBasicBlock* basicBlock = isSgBasicBlock(astNode);
-               ROSE_ASSERT (basicBlock != NULL);
-
-               SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
-               ROSE_ASSERT (symbolTable != NULL);
-               getTransformationOptions ( symbolTable, generatedList, identifingTypeName );
-
-            // Next go (fall through this case) to the default case so that we traverse the parent
-            // of the SgBasicBlock.
-            // break;
-             }
-
-          default:
-            // Most cases will be the default (this is by design)
-            // printf ("default in switch found in globalQueryGetListOperandStringFunction() (sage_class_name = %s) \n",astNode->sage_class_name());
-#if 1
-            // Need to recursively backtrack through the parents until we reach the SgGlobal (global scope)
-               SgStatement* statement = isSgStatement(astNode);
-               if (statement != NULL)
-                  {
-                    SgStatement* parentStatement = statement->get_parent();
-                    ROSE_ASSERT (parentStatement != NULL);
-                 // printf ("Parent is a %s \n",parentStatement->sage_class_name());
-
-                 // Call this function recursively (directly rather than through the query mechanism)
-                    getTransformationOptions ( parentStatement, generatedList, identifingTypeName );
-                  }
-                 else
-                  {
-                 // printf ("astNode is not a SgStatement! \n");
-                  }
-#else
-               printf ("Skipping the traversal of the parent node in the AST! \n");
-#endif
-
-               break;
-        }
-
-#if 0
-     printf ("In globalQueryGetOperandFunction(): astNode->sage_class_name() = %s size of generatedList = %d \n",
-          astNode->sage_class_name(),generatedList.size());
-#endif
-
-  // printf ("######################### END OF TRANSFORMATION OPTION QUERY ######################## \n");
-   }
-#endif
 
 void
 TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructorArguments (
    SgVariableDeclaration* variableDeclaration,
    list<int> & returnEnumValueList )
    {
-     ROSE_ASSERT (variableDeclaration != NULL);
+     ASSERT_not_null(variableDeclaration);
      SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
 
      for (SgInitializedNamePtrList::iterator i = variableList.begin(); i != variableList.end(); i++)
         {
-       // We don't care about the name
-       // SgName & name = (*i).get_name();
-
-          ROSE_ASSERT((*i) != NULL);
-          //if ((*i)->get_named_item() != NULL)
-          //   {
-          //     ROSE_ASSERT ((*i)->get_named_item() != NULL);
-          //     SgInitializer *initializerOther = (*i)->get_named_item()->get_initializer();
+               ASSERT_not_null((*i));
                SgInitializer *initializerOther = (*i)->get_initializer();
-
-            // This is not always a valid pointer
-            // ROSE_ASSERT (initializerOther != NULL);
-
-               if (initializerOther != NULL)
+               if (initializerOther != nullptr)
                   {
-                 // There are other things we could ask of the initializer
-                    ROSE_ASSERT (initializerOther != NULL);
-
-                 // printf ("Now print out the initializerOther (a SgExpression*) \n");
-                 // ROSE_ABORT();
-
+                    ASSERT_not_null(initializerOther);
                     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initializerOther);
-                    ROSE_ASSERT (constructorInitializer != NULL);
+                    ASSERT_not_null(constructorInitializer);
 
                     SgExprListExp* argumentList = constructorInitializer->get_args();
-                    ROSE_ASSERT (argumentList != NULL);
+                    ASSERT_not_null(argumentList);
 
                     SgExpressionPtrList & expressionPtrList = argumentList->get_expressions();
                     SgExpressionPtrList::iterator i = expressionPtrList.begin();
 
-                    int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                      // printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
-
                          SgEnumVal* enumVal = isSgEnumVal(*i);
-                         ROSE_ASSERT (enumVal != NULL);
+                         ASSERT_not_null(enumVal);
 
                          int enumValue = enumVal->get_value();
                          SgName enumName = enumVal->get_name();
-                      // printf ("Name = %s value = %d \n",enumName.str(),enumValue);
-                      // printf ("Name = %s \n",enumName.str());
-
-                      // string name ( Rose::stringDuplicate( enumName.str() ) );
-                      // char* name = Rose::stringDuplicate( enumName.str() );
 
                       // Put the value at the start of the list so that the list can be processed in
                       // consecutive order to establish options for consecutive scopes (root to
                       // child scope). Order is not important if we are only ORing the operands!
-                      // returnEnumValueList.push_front (name);
                          returnEnumValueList.push_front (enumValue);
 
                          i++;
-                         counter++;
                        }
                   }
-                 else
-                  {
-                 // printf ("initializerOther = NULL \n");
-                  }
-/*
-             }
-            else
-             {
-               printf ("Warning: In showSgDeclarationStatement case V_SgVariableDeclaration: (*i).get_named_item() = NULL \n");
-             }
-*/
         }
    }
-
-
-#if 0
-void
-TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructorArguments (
-   SgVariableDeclaration* variableDeclaration,
-   list<string> & returnEnumValueList )
-   {
-     ROSE_ASSERT (variableDeclaration != NULL);
-     SgInitializedNameList & variableList = variableDeclaration->get_variables();
-
-     for (SgInitializedNameList::iterator i = variableList.begin(); i != variableList.end(); i++)
-        {
-       // We don't care about the name
-       // SgName & name = (*i).get_name();
-
-          if ((*i).get_named_item() != NULL)
-             {
-               ROSE_ASSERT ((*i).get_named_item() != NULL);
-               SgInitializer *initializerOther = (*i).get_named_item()->get_initializer();
-
-            // This is not always a valid pointer
-            // ROSE_ASSERT (initializerOther != NULL);
-
-               if (initializerOther != NULL)
-                  {
-                 // There are other things we could ask of the initializer
-                    ROSE_ASSERT (initializerOther != NULL);
-
-                 // printf ("Now print out the initializerOther (a SgExpression*) \n");
-                 // ROSE_ABORT();
-
-                    SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initializerOther);
-                    ROSE_ASSERT (constructorInitializer != NULL);
-
-                    SgExprListExp* argumentList = constructorInitializer->get_args();
-                    ROSE_ASSERT (argumentList != NULL);
-
-                    SgExpressionPtrList & expressionPtrList = argumentList->get_expressions();
-                    SgExpressionPtrList::iterator i = expressionPtrList.begin();
-
-                    int counter = 0;
-                    while (i != expressionPtrList.end()) 
-                       {
-                      // printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
-
-                         SgEnumVal* enumVal = isSgEnumVal(*i);
-                         ROSE_ASSERT (enumVal != NULL);
-
-                      // int enumValue = enumVal->get_value();
-                         SgName enumName = enumVal->get_name();
-                      // printf ("Name = %s value = %d \n",enumName.str(),enumValue);
-                      // printf ("Name = %s \n",enumName.str());
-
-                         string name ( Rose::stringDuplicate( enumName.str() ) );
-                      // char* name = Rose::stringDuplicate( enumName.str() );
-
-                      // Put the value at the start of the list so that the list can be processed in
-                      // consecutive order to establish options for consecutive scopes (root to
-                      // child scope). Order is not important if we are only ORing the operands!
-                         returnEnumValueList.push_front (name);
-                      // returnEnumValueList.push_front (enumValue);
-
-                         i++;
-                         counter++;
-                       }
-                  }
-                 else
-                  {
-                 // printf ("initializerOther = NULL \n");
-                  }
-             }
-            else
-             {
-               printf ("Warning: In showSgDeclarationStatement case V_SgVariableDeclaration: (*i).get_named_item() = NULL \n");
-             }
-        }
-   }
-#endif
-
-#if 0
-void
-TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructorArguments (
-   SgVariableDeclaration* variableDeclaration,
-   list<OptionDeclaration> & returnEnumValueList )
-   {
-     ROSE_ASSERT (variableDeclaration != NULL);
-     SgInitializedNameList & variableList = variableDeclaration->get_variables();
-
-     for (SgInitializedNameList::iterator i = variableList.begin(); i != variableList.end(); i++)
-        {
-       // We don't care about the name
-       // SgName & name = (*i).get_name();
-
-          if ((*i).get_named_item() != NULL)
-             {
-               ROSE_ASSERT ((*i).get_named_item() != NULL);
-               SgInitializer *initializerOther = (*i).get_named_item()->get_initializer();
-
-            // This is not always a valid pointer
-            // ROSE_ASSERT (initializerOther != NULL);
-
-               if (initializerOther != NULL)
-                  {
-                 // There are other things we could ask of the initializer
-                    ROSE_ASSERT (initializerOther != NULL);
-
-                 // printf ("Now print out the initializerOther (a SgExpression*) \n");
-                 // ROSE_ABORT();
-
-                    SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initializerOther);
-                    ROSE_ASSERT (constructorInitializer != NULL);
-
-                    SgExprListExp* argumentList = constructorInitializer->get_args();
-                    ROSE_ASSERT (argumentList != NULL);
-
-                    SgExpressionPtrList & expressionPtrList = argumentList->get_expressions();
-                    SgExpressionPtrList::iterator i = expressionPtrList.begin();
-
-                 // First value is a char* identifying the option
-                    SgStringVal* charString = isSgStringVal(*i);
-                    ROSE_ASSERT (charString != NULL);
-
-
-#if 0
-                    int counter = 0;
-                    while (i != expressionPtrList.end()) 
-                       {
-                         printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
-
-                         SgEnumVal* enumVal = isSgEnumVal(*i);
-                         ROSE_ASSERT (enumVal != NULL);
-
-                      // int enumValue = enumVal->get_value();
-                         SgName enumName = enumVal->get_name();
-                      // printf ("Name = %s value = %d \n",enumName.str(),enumValue);
-                      // printf ("Name = %s \n",enumName.str());
-
-                         string name ( Rose::stringDuplicate( enumName.str() ) );
-                      // char* name = Rose::stringDuplicate( enumName.str() );
-
-                      // Put the value at the start of the list so that the list can be processed in
-                      // consecutive order to establish options for consecutive scopes (root to
-                      // child scope). Order is not important if we are only ORing the operands!
-                         returnEnumValueList.push_front (name);
-                      // returnEnumValueList.push_front (enumValue);
-
-                         i++;
-                         counter++;
-                       }
-#endif
-                  }
-                 else
-                  {
-                 // printf ("initializerOther = NULL \n");
-                  }
-             }
-            else
-             {
-               printf ("Warning: In showSgDeclarationStatement case V_SgVariableDeclaration: (*i).get_named_item() = NULL \n");
-             }
-        }
-   }
-#endif
-
-#if 0
-// DQ (3/26/2004): I don't think this is used any more experiment with removing this
-string
-TransformationSupport::internalSupportingGlobalDeclarations (
-     SgNode* astNode, string prefixString )
-   {
-  // This function generates a string that is used in the function which assembles the strings into
-  // code that is called internally with the front-end to generate an AST fragements (which is
-  // patched into the AST to introduce the transformation).
-
-  // NOTE: This extra code is required to allow the string representing the transformation to be
-  // compiled.  Once it is compiled, the AST is searched and only the AST fragment representing the
-  // transformation is extracted (not the AST framents representing any of the code specified in
-  // this function).
-
-     printf ("In TransformationSupport::internalSupportingGlobalDeclarations(): astNode->unparseToString() = \n%s\n",astNode->unparseToString().c_str());
-
-  // The use of a include file simplifies and shortens the 
-  // declaration section of the intermediate (generated) file
-     string staticStringSourceCodeTemplate = "\
-\n\
-$VARIABLE_DECLARATIONS\n\n\
-";
-
-     staticStringSourceCodeTemplate = prefixString + staticStringSourceCodeTemplate;
-
-  // We need to have a string built from dynamically allocated memory using 
-  // the C++ new operator since it will be deleted in the copyEdit() function
-  // This avoids a purify error (so we have to call stringDuplicate())
-     string sourceCodeTemplate = staticStringSourceCodeTemplate;
-
-  // Variable declarations will have this form
-     string staticVariableDeclarationString = "$TYPE_NAME $VARIABLE_NAME; \n";
-
-  // The start of the variable declaration section of code begins with the following comment (this
-  // string is appended with the actual variable declarations).
-     string variableDeclarationString =
-          "// Variables used in this transformation (automatically generated from simple dependence analysis of original code before transformation) \n";
-     
-     NameQuery::TypeOfQueryTypeOneParameter sageOneParameterEnumType = NameQuery::VariableTypeNames;
-  // Nested Query:
-  // Generate the list of types used within the target subtree of the AST
-     list<string> typeNameStringList = NameQuery::querySubTree( astNode, sageOneParameterEnumType);
-
-  // Loop over all the types and get list of variables of each type
-  // (so they can be declared properly when the transformation is compiled)
-     list<string>::iterator typeListStringElementIterator;
-     for (typeListStringElementIterator = typeNameStringList.begin();
-          typeListStringElementIterator != typeNameStringList.end();
-          typeListStringElementIterator++)
-        {
-       // printf ("Type = %s \n",(*typeListStringElementIterator).c_str());
-
-          
-       // Find a list of names of variable of type (*listStringElementIterator)
-          NameQuery::TypeOfQueryTypeTwoParameters sageTwoParametersEnumType = NameQuery::VariableNamesWithTypeName;
-          list<string> operandNameStringList =
-               NameQuery::querySubTree(astNode, *typeListStringElementIterator, sageTwoParametersEnumType );
-
-       // Loop over all the types and get list of variable of each type
-          list<string>::iterator variableListStringElementIterator;
-          for (variableListStringElementIterator = operandNameStringList.begin();
-               variableListStringElementIterator != operandNameStringList.end();
-               variableListStringElementIterator++)
-             {
-#if 0
-               printf ("Type = %s Variable = %s \n",
-                    (*typeListStringElementIterator).c_str(),
-                    (*variableListStringElementIterator).c_str());
-#endif
-
-               string variableName = Rose::stringDuplicate((*variableListStringElementIterator).c_str());
-               string typeName = Rose::stringDuplicate((*typeListStringElementIterator).c_str());
-               string localOperandDataTemplate =
-                    SgNode::copyEdit (staticVariableDeclarationString,"$VARIABLE_NAME",variableName);
-               localOperandDataTemplate =
-                    SgNode::copyEdit (localOperandDataTemplate,"$TYPE_NAME",typeName);
-
-            // Append the new variable declaration to the variableDeclarationString
-            // variableDeclarationString = Rose::stringConcatinate (variableDeclarationString,localOperandDataTemplate);
-               variableDeclarationString =  variableDeclarationString + localOperandDataTemplate;
-             }
-#if 0
-          printf ("Exiting in loop internalSupportingGlobalDeclarations (type = %s) ... \n",(*typeListStringElementIterator).c_str());
-          ROSE_ABORT();
-#endif
-        }
-
-#if 0
-     printf ("Exiting at base of internalSupportingGlobalDeclarations ... \n");
-     ROSE_ABORT();
-#endif
-
-  // Substitute the code fragment representing variable declaration into the generated source code
-  // representing the specification of the transformation.
-     string finalSourceCodeString = SgNode::copyEdit ( sourceCodeTemplate, "$VARIABLE_DECLARATIONS" , variableDeclarationString );
-
-     return finalSourceCodeString;
-   }
-#endif
-
 
 // ***********************************************
 // DQ (9/26/2003) Function that might be moved to SgNode (eventually)
@@ -1813,23 +984,21 @@ $VARIABLE_DECLARATIONS\n\n\
 SgProject*
 TransformationSupport::getProject( const SgNode* astNode )
    {
-     ROSE_ASSERT(astNode != NULL);
+     ASSERT_not_null(astNode);
 
      const SgNode* parentNode = astNode;
-  // printf ("Starting at parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
-     while (parentNode->get_parent() != NULL)
+     while (parentNode->get_parent() != nullptr)
         {
           parentNode = parentNode->get_parent();
-       // printf ("     parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
         }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgProject(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgProject(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-          if (astNode == NULL)
+          if (astNode == nullptr)
              {
                printf ("Warning: could not trace back to SgProject node. \n");
              }
@@ -1838,55 +1007,30 @@ TransformationSupport::getProject( const SgNode* astNode )
             // DQ (7/30/2010): This can be allowed for the expression in a SgArrayType!
                printf ("Warning: could not trace back to SgProject node from %s \n",astNode->class_name().c_str());
              }
-       // ROSE_ABORT();
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgProject from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
-#if 0
-        if (isSgProject(parentNode) == NULL &&
-                        dynamic_cast<const SgType*> (parentNode) == NULL &&
-                        dynamic_cast<const SgSymbol*> (parentNode) == NULL)
-        {
-                if (SgProject::get_verbose() > 0)
-                {
-                        if (astNode == NULL)
-                                printf("Warning: could not trace back to SgProject node. \n");
-                        else
-                                printf("Warning: could not trace back to SgProject node from %s \n",
-                                        astNode->class_name().c_str());
-                }
-        }
-        else
-        {
-                if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
-                {
-                        printf("Error: can't locate an associated SgProject from astNode = %p = %s parentNode = %p = %s \n", astNode, astNode->class_name().c_str(), parentNode, parentNode->class_name().c_str());
-                        return NULL;
-                }
-        }
-#endif
 
   // Make sure we have a SgProject node
      const SgProject* project = isSgProject(parentNode);
-     ROSE_ASSERT (project != NULL);
+     ASSERT_not_null(project);
 
-  // return project;
      return const_cast<SgProject*>(project);
    }
 
 SgDirectory*
 TransformationSupport::getDirectory( const SgNode* astNode )
    {
-     ROSE_ASSERT(astNode != NULL);
+     ASSERT_not_null(astNode);
 
      const SgNode* parentNode = astNode;
-     while ( (isSgDirectory(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgDirectory(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
@@ -1895,24 +1039,23 @@ TransformationSupport::getDirectory( const SgNode* astNode )
   // not associated with a primary AST can be used with this function!
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgDirectory(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgDirectory(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-       // printf ("Error: could not trace back to SgDirecoty node \n");
-       // ROSE_ASSERT(false);
+          // printf ("Error: could not trace back to SgDirecoty node \n");
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
             // DQ (9/2/2014): Only output this message if this is not in a SgArrayType.
-               if (isSgArrayType(parentNode) == NULL)
+               if (isSgArrayType(parentNode) == nullptr)
                  {
                 // DQ (3/6/2017): Converted to use message logging.
                    mprintf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
                  }
-               return NULL;
+               return nullptr;
              }
         }
 
@@ -1925,10 +1068,10 @@ TransformationSupport::getDirectory( const SgNode* astNode )
 SgFile*
 TransformationSupport::getFile( const SgNode* astNode )
    {
-     ROSE_ASSERT(astNode != NULL);
+     ASSERT_not_null(astNode);
 
      const SgNode* parentNode = astNode;
-     while ( (isSgFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgFile(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
@@ -1937,46 +1080,36 @@ TransformationSupport::getFile( const SgNode* astNode )
   // not associated with a primary AST can be used with this function!
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgFile(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgFile(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-       // printf ("Error: could not trace back to SgFile node \n");
-       // ROSE_ASSERT(false);
+          // printf ("Error: could not trace back to SgFile node \n");
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
-            // DQ (9/2/2014): Only output this message if this is not in a SgArrayType.
-               if (isSgArrayType(parentNode) == NULL)
+               if (isSgArrayType(parentNode) == nullptr)
                  {
-                // DQ (3/6/2017): Converted to use message logging.
                    mprintf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
                  }
-               return NULL;
+               return nullptr;
              }
         }
-
 
   // Make sure we have a SgFile node
      const SgFile* file = isSgFile(parentNode);
-
-  // DQ (8/2/2005): Allow to return NULL
-  // ROSE_ASSERT (file != NULL);
-
-  // return file;
      return const_cast<SgFile*>(file);
    }
 
-// DQ (9/3/2008): This used to use SgFile and was switched to use SgSourceFile.
 SgSourceFile*
 TransformationSupport::getSourceFile( const SgNode* astNode )
    {
-     ROSE_ASSERT(astNode != NULL);
+     ASSERT_not_null(astNode);
 
      const SgNode* parentNode = astNode;
-     while ( (isSgSourceFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgSourceFile(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
@@ -1985,46 +1118,38 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
   // not associated with a primary AST can be used with this function!
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgSourceFile(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgSourceFile(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-       // printf ("Error: could not trace back to SgSourceFile node \n");
-       // ROSE_ASSERT(false);
+          // printf ("Error: could not trace back to SgSourceFile node \n");
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
             // DQ (3/4/2009): This test will remove most of the instances of this warning (ignoring types).
-               if (isSgType(parentNode) == NULL)
+               if (isSgType(parentNode) == nullptr)
                   {
                     printf ("Warning: can't locate an associated SgSourceFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
                   }
-               return NULL;
+               return nullptr;
              }
         }
 
-
   // Make sure we have a SgSourceFile node
      const SgSourceFile* file = isSgSourceFile(parentNode);
-
-  // DQ (8/2/2005): Allow to return NULL
-  // ROSE_ASSERT (file != NULL);
-
-  // return file;
      return const_cast<SgSourceFile*>(file);
    }
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-// DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryComposite.
 SgBinaryComposite*
 TransformationSupport::getBinaryFile( const SgNode* astNode )
    {
-     ROSE_ASSERT(astNode != NULL);
+     ASSERT_not_null(astNode);
 
      const SgNode* parentNode = astNode;
-     while ( (isSgBinaryComposite(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgBinaryComposite(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
@@ -2033,30 +1158,24 @@ TransformationSupport::getBinaryFile( const SgNode* astNode )
   // not associated with a primary AST can be used with this function!
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgBinaryComposite(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgBinaryComposite(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-       // printf ("Error: could not trace back to SgBinaryComposite node \n");
-       // ROSE_ASSERT(false);
+          // printf ("Error: could not trace back to SgBinaryComposite node \n");
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgBinaryComposite from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
 
 
   // Make sure we have a SgBinaryComposite node
      const SgBinaryComposite* file = isSgBinaryComposite(parentNode);
-
-  // DQ (8/2/2005): Allow to return NULL
-  // ROSE_ASSERT (file != NULL);
-
-  // return file;
      return const_cast<SgBinaryComposite*>(file);
    }
 #endif
@@ -2064,192 +1183,106 @@ TransformationSupport::getBinaryFile( const SgNode* astNode )
 SgGlobal*
 TransformationSupport::getGlobalScope( const SgNode* astNode )
    {
-     ROSE_ASSERT(astNode != NULL);
-
+     ASSERT_not_null(astNode);
      const SgNode* parentNode = astNode;
 
-  // printf ("TransformationSupport::getGlobalScope(): Starting node: parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
-     while ( (isSgGlobal(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgGlobal(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
-       // printf ("parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
         }
-
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
 
   // DQ (7/24/2010): Handle the case of an expression in an array type.
-     if (isSgArrayType(parentNode) != NULL)
+     if (isSgArrayType(parentNode) != nullptr)
         {
-       // printf ("TransformationSupport::getGlobalScope(): Case of expression in SgArrayType \n");
-          return NULL;
+          return nullptr;
         }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgGlobal(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgGlobal(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {  //It is possible to find no SgGlobal during transformation, changed to warning.
-          if (astNode != NULL)
-             {
-            // DQ (7/30/2010): This can be allowed for the expression in a SgArrayType!
-            // printf ("Warning: could not trace back to SgGlobal node from %s (parentNode = %p = %s) \n",astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-             }
-            else
+          if (astNode == nullptr)
              {
                printf ("Warning: could not trace back to SgGlobal node\n ");
              }
-       // ROSE_ASSERT(false);
-          return NULL;
+          return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
-            // printf ("Error: can't locate an associated SgGlobal from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
-#if 0
-        if (isSgGlobal(parentNode) == NULL &&
-                        dynamic_cast<const SgType*> (parentNode) == NULL &&
-                        dynamic_cast<const SgSymbol*> (parentNode) == NULL)
-        {
-                //It is possible to find no SgGlobal during transformation, changed to warning.
-                if (SgProject::get_verbose() > 0)
-                {
-                        if (astNode != NULL)
-                                printf("Warning: could not trace back to SgGlobal node from %s \n",
-                                        astNode->class_name().c_str());
-                        else
-                                printf("Warning: could not trace back to SgGlobal node\n ");
-                }
-                return NULL;
-        }
-        else
-        {
-                if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
-                {
-                        // printf ("Error: can't locate an associated SgGlobal from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-                        return NULL;
-                }
-        }
-#endif
 
   // Make sure we have a SgGlobal node
      const SgGlobal* globalScope = isSgGlobal(parentNode);
-     ROSE_ASSERT (globalScope != NULL);
+     ASSERT_not_null(globalScope);
 
-  // return globalScope;
      return const_cast<SgGlobal*>(globalScope);
    }
 
 SgStatement*
 TransformationSupport::getStatement( const SgNode* astNode )
    {
-  // DQ (3/1/2009): Added assertion.
-     ROSE_ASSERT(astNode != NULL);
-
+     ASSERT_not_null(astNode);
      const SgNode* parentNode = astNode;
 
   // DQ (6/27/2007): These IR nodes are not contained in any statement
-     if (isSgProject(astNode) != NULL || isSgFile(astNode) != NULL)
-          return NULL;
-
-#if 0
-  // DQ (3/2/2022): Added debugging code.
-     printf ("In TransformationSupport::getStatement(): parentNode = %p \n",parentNode);
-     if (parentNode != NULL)
-        {
-          printf ("In TransformationSupport::getStatement(): parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
-          const SgLocatedNode* locatedNode = isSgLocatedNode(parentNode);
-          if (locatedNode != NULL)
-             {
-               string filename = locatedNode->get_file_info()->get_filename();
-               int line        = locatedNode->get_file_info()->get_line();
-               int column      = locatedNode->get_file_info()->get_col();
-
-               printf (" --- %s: line: %d column: %d \n",filename.c_str(),line,column);
-             }
-          printf ("parentNode->get_parent() = %p \n",parentNode->get_parent());
-          if (parentNode->get_parent() != NULL)
-             {
-               printf ("parentNode->get_parent() = %p = %s \n",parentNode->get_parent(),parentNode->get_parent()->class_name().c_str());
-             }
-        }
-#endif
+     if (isSgProject(astNode) != nullptr || isSgFile(astNode) != nullptr)
+          return nullptr;
 
   // DQ (7/24/2010): Handle the case of an expression in an array type.
-     if (parentNode->get_parent() != NULL && isSgArrayType(parentNode->get_parent()) != NULL)
+     if (parentNode->get_parent() != nullptr && isSgArrayType(parentNode->get_parent()) != nullptr)
         {
-       // printf ("TransformationSupport::getStatement(): Case of expression in SgArrayType \n");
-          return NULL;
+          return nullptr;
         }
 
-     while ( (isSgStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgStatement(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
 
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgStatement(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgStatement(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-          if (astNode == NULL)
+          if (astNode == nullptr)
              {
                printf ("Error: could not trace back to SgStatement node \n");
              }
-            else
-             {
-            // DQ (7/30/2010): This can be allowed for the expression in a SgArrayType!
-            // printf ("Warning: could not trace back to SgStatement node from %s (parentNode = %p = %s) \n",astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-             }
-
-       // ROSE_ABORT();
-          return NULL;
+          return nullptr;
         }
-#if 0
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL)
-        {
-                if (SgProject::get_verbose() > 0)
-                {
-                        if (astNode == NULL)
-                                printf("Error: could not trace back to SgStatement node \n");
-                        else
-                                printf("Warning: could not trace back to SgStatement node from %s \n", astNode->class_name().c_str());
-                }
-
-                return NULL;
-        }
-#endif
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
             // Test for SgArrayType since a value if often hidden there and it is not possible to traverse 
             // through a SgType along parent IR nodes.
-               if ( dynamic_cast<const SgArrayType*>(parentNode) != NULL )
+               if ( dynamic_cast<const SgArrayType*>(parentNode) != nullptr )
                   {
-                    return NULL;
+                    return nullptr;
                   }
 
             // DQ (11/10/2007): Note that for an AST fragment (e.g. expression) not connected to the AST, this function will return NULL.
 #if PRINT_DEVELOPER_WARNINGS
                printf ("Warning: can't locate an associated SgStatement from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
 #endif
-               return NULL;
+               return nullptr;
              }
         }
 
   // Make sure we have a SgStatement node
      const SgStatement* statement = isSgStatement(parentNode);
-     ROSE_ASSERT (statement != NULL);
+     ASSERT_not_null(statement);
 
-  // return statement;
      return const_cast<SgStatement*>(statement);
    }
 
@@ -2258,61 +1291,48 @@ SgType*
 TransformationSupport::getAssociatedType( const SgNode* astNode )
    {
   // DQ (8/19/2014): Iterate back through the parents and scopes to find the SgType that the current node is embedded into.
-
-     ROSE_ASSERT(astNode != NULL);
+     ASSERT_not_null(astNode);
 
      const SgNode* parentNode = astNode;
 
   // DQ (6/27/2007): These IR nodes are not contained in any statement
-     if (isSgProject(astNode) != NULL || isSgFile(astNode) != NULL)
-          return NULL;
+     if (isSgProject(astNode) != nullptr || isSgFile(astNode) != nullptr)
+          return nullptr;
 
   // DQ (7/24/2010): Handle the case of an expression in an array type.
      SgArrayType* arrayType = isSgArrayType(parentNode->get_parent());
-     if (parentNode->get_parent() != NULL && arrayType != NULL)
+     if (parentNode->get_parent() != nullptr && arrayType != nullptr)
         {
-#if 1
           printf ("TransformationSupport::getAssociatedType(): Case of expression in SgArrayType: arrayType = %p \n",arrayType);
-#endif
           return arrayType;
         }
 
-     while ( (isSgStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgStatement(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
-
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgStatement(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgStatement(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-          if (astNode == NULL)
+          if (astNode == nullptr)
              {
                printf ("Error: could not trace back to SgStatement node \n");
              }
-            else
-             {
-            // DQ (7/30/2010): This can be allowed for the expression in a SgArrayType!
-            // printf ("Warning: could not trace back to SgStatement node from %s (parentNode = %p = %s) \n",astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-             }
-
-       // ROSE_ABORT();
-          return NULL;
+          return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
             // Test for SgArrayType since a value if often hidden there and it is not possible to traverse 
             // through a SgType along parent IR nodes.
-               if ( dynamic_cast<const SgArrayType*>(parentNode) != NULL )
+               if ( dynamic_cast<const SgArrayType*>(parentNode) != nullptr )
                   {
-                 // const SgArrayType* arrayType = isSgArrayType(parentNode);
-                 // SgArrayType* arrayType = const_cast<SgArrayType*>(parentNode);
                     SgNode* tmp_node = const_cast<SgNode*>(parentNode);
                     SgArrayType* arrayType = isSgArrayType(tmp_node);
                     return arrayType;
@@ -2322,7 +1342,6 @@ TransformationSupport::getAssociatedType( const SgNode* astNode )
 #if PRINT_DEVELOPER_WARNINGS
                printf ("Warning: can't locate an associated SgStatement from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
 #endif
-            // SgType* possibleOtherType = isSgType(parentNode);
                SgNode* other_node = const_cast<SgNode*>(parentNode);
                SgType* possibleOtherType = isSgType(other_node);
                return possibleOtherType;
@@ -2331,12 +1350,9 @@ TransformationSupport::getAssociatedType( const SgNode* astNode )
 
   // Make sure we have a SgStatement node
      const SgStatement* statement = isSgStatement(parentNode);
-     ROSE_ASSERT (statement != NULL);
+     ASSERT_not_null(statement);
 
-  // DQ (8/19/2014): If we did find a statement then return NULL (since no SgType was found).
-  // return statement;
-  // return const_cast<SgStatement*>(statement);
-     return NULL;
+     return nullptr;
    }
 
 
@@ -2344,96 +1360,73 @@ SgFunctionDeclaration*
 TransformationSupport::getFunctionDeclaration( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
-     while ( (isSgFunctionDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgFunctionDeclaration(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgFunctionDeclaration(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgFunctionDeclaration(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-#if 0
-          if (astNode == NULL)
-               printf ("Error: could not trace back to SgFunctionDeclaration node \n");
-            else
-               printf ("Warning: could not trace back to SgFunctionDeclaration node from %s \n",astNode->class_name().c_str());
-          ROSE_ABORT();
-#endif
-
-       // DQ (12/27/2010): This should not be an error (OK to return NULL).
-          return NULL;
+          return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgFunctionDeclaration from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
 
-
   // Make sure we have a SgFunctionDeclaration node
      const SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parentNode);
-     ROSE_ASSERT (functionDeclaration != NULL);
+     ASSERT_not_null(functionDeclaration);
 
-  // return functionDeclaration;
      return const_cast<SgFunctionDeclaration*>(functionDeclaration);
    }
 
 SgFunctionDefinition*
 TransformationSupport::getFunctionDefinition( const SgNode* astNode)
    {
+     ASSERT_not_null(astNode);
      const SgNode* parentNode = astNode;
 
-     ROSE_ASSERT(astNode != NULL);
-#if 0
-     printf ("Note: astNode = %p = %s parent = %p \n",astNode,astNode->class_name().c_str(),astNode->get_parent());
-#endif
-
-     while ( (isSgFunctionDefinition(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgFunctionDefinition(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
-#if 0
-          printf ("Note: parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
-#endif
           parentNode = parentNode->get_parent();
         }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgFunctionDefinition(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgFunctionDefinition(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-          if(astNode==NULL)
-               printf ("Error: could not trace back to SgFunctionDefinition node \n");
-            else 
-               printf ("Warning: could not trace back to SgFunctionDefinition node from %s \n",astNode->class_name().c_str());
-#if 0
-          printf ("Error: could not trace back to SgFunctionDefinition node \n");
-          else 
-               printf ("Error: could not trace back to SgFunctionDefinition node from %s \n",astNode->class_name().c_str());
-#endif
-       // ROSE_ABORT();
+          if (astNode == nullptr) {
+            printf ("Error: could not trace back to SgFunctionDefinition node \n");
+          }
+          else {
+            printf ("Warning: could not trace back to SgFunctionDefinition node from %s \n",astNode->class_name().c_str());
+          }
           ROSE_ABORT();
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgFunctionDefinition from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
 
   // Make sure we have a SgStatement node
      const SgFunctionDefinition* returnFunctionScope = isSgFunctionDefinition(parentNode);
-     ROSE_ASSERT (returnFunctionScope != NULL);
+     ASSERT_not_null(returnFunctionScope);
 
-  // return class definition statement;
      return const_cast<SgFunctionDefinition*>(returnFunctionScope);
    }
 
@@ -2441,40 +1434,33 @@ SgClassDefinition*
 TransformationSupport::getClassDefinition( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
-     while ( (isSgClassDefinition(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgClassDefinition(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgClassDefinition(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgClassDefinition(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-#if 0
-          printf ("Error: could not trace back to SgClassDefinition node \n");
-          ROSE_ABORT();
-#else
        // DQ (12/11/2010): It is OK to return NULL from this function (used fortran_support.C
-       // SgFunctionRefExp* generateFunctionRefExp(Token_t* nameToken) for fortran support).
-          return NULL;
-#endif
+          return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgClassDefinition from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
 
   // Make sure we have a SgStatement node
      const SgClassDefinition* returnClassScope = isSgClassDefinition(parentNode);
-     ROSE_ASSERT (returnClassScope != NULL);
+     ASSERT_not_null(returnClassScope);
 
-  // return class definition statement;
      return const_cast<SgClassDefinition*>(returnClassScope);
    }
 
@@ -2484,75 +1470,63 @@ TransformationSupport::getModuleStatement( const SgNode* astNode)
   // DQ (11/24/2007): This function supports the unparsing of the PUBLIC, PRIVATE keywords (only permitted within modules)
   // The name of this function might change to getModuleDeclaration
      const SgNode* parentNode = astNode;
-     while ( (isSgModuleStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgModuleStatement(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
         }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgModuleStatement(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL)
+     if ( isSgModuleStatement(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr)
         {
                 if (SgProject::get_verbose() > 0)
                 {
                         printf("Warning: could not trace back to SgModuleStatement node \n");
                 }
-                return NULL;
+                return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgModuleStatement from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
 
   // Make sure we have a SgStatement node
      const SgModuleStatement* returnModuleDeclaration = isSgModuleStatement(parentNode);
-     ROSE_ASSERT (returnModuleDeclaration != NULL);
+     ASSERT_not_null(returnModuleDeclaration);
 
      return const_cast<SgModuleStatement*>(returnModuleDeclaration);
    }
 
-
-// SgTemplateDeclaration*
 SgDeclarationStatement*
 TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
 
-#if 0
-     printf ("In TransformationSupport::getTemplateDeclaration(): astNode = %p = %s \n",astNode,astNode != NULL ? astNode->class_name().c_str() : "NULL");
-#endif
-
-  // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
-  // while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
-     while ( (isSgTemplateDeclaration(parentNode) == NULL)         && (isSgTemplateClassDeclaration(parentNode) == NULL) && 
-             (isSgTemplateFunctionDeclaration(parentNode) == NULL) && (isSgTemplateMemberFunctionDeclaration(parentNode) == NULL) && 
-             (isSgTemplateVariableDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgTemplateDeclaration(parentNode) == nullptr)         && (isSgTemplateClassDeclaration(parentNode) == nullptr) &&
+             (isSgTemplateFunctionDeclaration(parentNode) == nullptr) && (isSgTemplateMemberFunctionDeclaration(parentNode) == nullptr) &&
+             (isSgTemplateVariableDeclaration(parentNode) == nullptr) && (parentNode->get_parent() != nullptr) )
         {
           parentNode = parentNode->get_parent();
-#if 0
-          printf ("In TransformationSupport::getTemplateDeclaration(): parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
-#endif
         }
 
   // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgTemplateDeclaration(parentNode) == NULL &&
-          isSgTemplateClassDeclaration(parentNode) == NULL &&
-          isSgTemplateFunctionDeclaration(parentNode) == NULL &&
-          isSgTemplateMemberFunctionDeclaration(parentNode) == NULL &&
-          isSgTemplateVariableDeclaration(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+     if ( isSgTemplateDeclaration(parentNode) == nullptr &&
+          isSgTemplateClassDeclaration(parentNode) == nullptr &&
+          isSgTemplateFunctionDeclaration(parentNode) == nullptr &&
+          isSgTemplateMemberFunctionDeclaration(parentNode) == nullptr &&
+          isSgTemplateVariableDeclaration(parentNode) == nullptr &&
+          dynamic_cast<const SgType*>(parentNode) == nullptr &&
+          dynamic_cast<const SgSymbol*>(parentNode) == nullptr )
         {
-#if 1
-          if (astNode == NULL)
+          if (astNode == nullptr)
              {
                printf ("Error: could not trace back to SgTemplateDeclaration node \n");
                ROSE_ABORT();
@@ -2560,89 +1534,22 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
             else
              {
                printf ("Warning: In TransformationSupport::getTemplateDeclaration(): could not trace back to template declaration node from %s \n",astNode->class_name().c_str());
-            // ROSE_ASSERT(false);
              }
-       // DQ (6/6/2013): commented this out since it is OK to return NULL (I think).
-       // ROSE_ASSERT(false);
-#endif
 
-       // DQ (12/27/2010): This should not be an error (OK to return NULL).
-          return NULL;
+          return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if ( dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr )
              {
                printf ("Error: can't locate an associated SgTemplateDeclaration from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
+               return nullptr;
              }
         }
 
   // Make sure we have a SgFunctionDeclaration node
-  // const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(parentNode);
      const SgDeclarationStatement* templateDeclaration = isSgDeclarationStatement(parentNode);
-     ROSE_ASSERT (templateDeclaration != NULL);
+     ASSERT_not_null(templateDeclaration);
 
-  // return const_cast<SgTemplateDeclaration*>(templateDeclaration);
      return const_cast<SgDeclarationStatement*>(templateDeclaration);
    }
-
-
-
-#if 0
-// DQ (11/24/2020): corrected this comment.
-// Moved to sageInterface.C file
-SgScopeStatement*
-TransformationSupport::getScope( const SgNode* astNode )
-   {
-
-#error "DEAD CODE!"
-
-  // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
-
-     const SgNode* parentNode = astNode;
-     while ( (isSgScopeStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
-        {
-          parentNode = parentNode->get_parent();
-        }
-
-#error "DEAD CODE!"
-
-  // Check to see if we made it back to the root (current root is SgProject).
-  // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgScopeStatement(parentNode) == NULL &&
-          dynamic_cast<const SgType*>(parentNode) == NULL &&
-          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
-        {
-          printf ("Error: In TransformationSupport::getScope(): could not trace back to SgScopeStatement node \n");
-          ROSE_ABORT();
-        }
-       else
-        {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
-             {
-               printf ("Error: can't locate an associated SgStatement from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-               return NULL;
-             }
-        }
-
-#error "DEAD CODE!"
-
-  // Make sure we have a SgStatement node
-     const SgScopeStatement* scopeStatement = isSgScopeStatement(parentNode);
-     ROSE_ASSERT (scopeStatement != NULL);
-
-  // return statement;
-     return const_cast<SgScopeStatement*>(scopeStatement);
-   }
-#endif
-
-
-
-
-
-
-
-
-
-
