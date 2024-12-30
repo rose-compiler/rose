@@ -7,12 +7,12 @@
 
 using namespace std;
 
-DebugLog DebugOperatorDescriptor("-debugopd");
+DebugLog DebugOperatorDescriptor("-debugannot");
 ReplaceParams::
 ReplaceParams ( const ParameterDeclaration& decl, const AstInterface::AstNodeList& args,
                 Map2Object<AstInterface*,AstNodePtr,AstNodePtr>* codegen)
 {
-  if (decl.get_params().size() != args.size()) {
+  if (decl.get_params().size() < args.size()) {
     std::cerr << "Error: mismatching numbers of parameters and arguments in annotation." 
             << decl.get_params().size() << " vs " << args.size() << "\n";
     assert(false);
@@ -27,6 +27,12 @@ ReplaceParams ( const ParameterDeclaration& decl, const AstInterface::AstNodeLis
     parmap[curpar] = curarg;
     partypemap[curpar] = decl.get_param_types()[index];
     DebugOperatorDescriptor([&curpar, &curarg](){ return "Operator parameter " + curpar + "->" + curarg.toString(); });
+  }
+  if (decl.get_params().size() > args.size()) {
+    std::cerr << "Error: mismatching numbers of parameters and arguments in annotation." 
+            << decl.get_params().size() << " vs " << args.size() << "\n";
+    assert(false);
+    throw MisMatchError();
   }
 }
 
@@ -60,6 +66,7 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
   v.replace_val( *this);
 }
 
+// Returns signature for exp. Modifies argp with parameter values if exp is a function call.
 std::string OperatorDeclaration::operator_signature( const AstNodePtr& exp, 
                                  AstInterface::AstNodeList* argp,
                                  AstInterface::AstTypeList* paramp) {
@@ -78,6 +85,12 @@ std::string OperatorDeclaration::operator_signature( const AstNodePtr& exp,
          AstInterface::IsFunctionDefinition(exp,&fname,argp,0,0, paramp, 0, /*use_globl_name=*/true)) { 
     } else {
       DebugOperatorDescriptor([&exp](){ return "Unexpected operator: not recognized:" + AstInterface::AstToString(exp) + ". Return empty name."; });
+      return "";
+    }
+    // paramp is guaranteed to not be null (see above).
+    if (argp != 0 && paramp->size() != argp->size()) {
+      DebugOperatorDescriptor([&exp](){ return "Unexpected operator: not recognized:" + AstInterface::AstToString(exp) + ". Return empty name."; });
+      return "";
     }
     return fname;
   }
@@ -88,8 +101,8 @@ OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast,
     AstInterface::AstNodeList args;
     if (argp == 0) { argp = &args; }
     TypeDescriptor::get_name() = operator_signature(op_ast, argp, &params);
-    if (TypeDescriptor::get_name() == "" || params.size() != argp->size()) {
-        DebugOperatorDescriptor([&op_ast](){ return "Error: Unknown operation: " + AstInterface::AstToString(op_ast) + ". Generatign empty declaration."; });
+    if (TypeDescriptor::get_name() == "") {
+        DebugOperatorDescriptor([&op_ast](){ return "Error: Unknown/inconsistent operation: " + AstInterface::AstToString(op_ast) + ". Generating empty declaration."; });
         return;
     } 
     AstInterface::AstNodeList::const_iterator p1 = argp->begin();
@@ -98,6 +111,12 @@ OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast,
        DebugOperatorDescriptor([&fa, &p1](){ return "Adding operator parameter:" + fa.GetVarName(*p1); });
        pars.add_param(fa.GetTypeName(*p2), AstInterface::GetVarName(*p1));
        ++p1; ++p2;
+    }
+    assert(params.size() == pars.num_of_params());
+    if (params.size() != argp->size()) {
+       std::cerr << "Error: mismatching numbers of parameters and arguments in annotation." 
+            << params.size() << " vs " << argp->size() << "\n";
+        assert(false);
     }
 }
 

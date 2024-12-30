@@ -307,7 +307,7 @@ public:
   bool IsIOOutputStmt( const AstNodePtr& s, AstList* explist = 0);
 
   bool IsAddressOfOp( const AstNodePtr& _s);
-  bool IsMemoryAccess( const AstNodePtr& s);
+  static bool IsMemoryAccess( const AstNodePtr& s);
   static bool IsMemoryAllocation( const AstNodePtr& s, AstNodeType* allocType = 0);
   static bool IsMemoryFree( const AstNodePtr& s, AstNodeType* freedType = 0, AstNodePtr* freedVariable=0);
 

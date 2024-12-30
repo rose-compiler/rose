@@ -42,7 +42,7 @@ class WholeProgramDependenceAnalysis : public DependenceTable {
     bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0); 
     //
     //! Erase existing annotation for the given operator.
-    bool ClearOperatorSideEffect(SgNode* op); 
+    void ClearOperatorSideEffect(SgNode* op); 
 
  protected:
     virtual void save_dependence(const DependenceEntry& e) override;

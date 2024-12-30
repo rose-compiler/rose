@@ -89,7 +89,7 @@ class OPDescriptorTemp : public BaseClass
   bool has_unknown_ = false;
  public:
   const ParameterDeclaration& get_param_decl() const { return decl; }
-  void set_param_decl(const ParameterDeclaration& d) { decl = d; }
+  ParameterDeclaration& get_param_decl() { return decl; }
 
   bool get_has_unknown() const { return has_unknown_; }
   void set_has_unknown(bool hasit = true) { has_unknown_ = hasit; }

@@ -26,18 +26,22 @@ class OperatorAnnotCollection :
      add_annot( target, d);
   }
   Descriptor* get_annot_descriptor(const OperatorDeclaration& op, bool insert_if_false = false) {
+      DebugLog debugAnnot("-debugannot");
       auto* result = known_type(op);
       if (result == 0 && insert_if_false) {
          Descriptor new_annot;
-         new_annot.set_param_decl(op.get_param_info());
+         new_annot.get_param_decl() = op.get_param_info();
          result = add_annot(op, new_annot);
-         assert(result != 0);
+         assert(result != 0 && result->get_param_decl().num_of_params() == op.get_param_info().num_of_params());
+      } else {
+         if (result != 0 && 
+             result->get_param_decl().num_of_params() < op.get_param_info().num_of_params()) {
+            debugAnnot([](){return "Unexpected Error: mismatching parameters and arguments in found annotation! Return 0 to be safe."; });
+            // Return 0 to be safe.
+            return 0;
+         }
       }
-      if (result != 0 && result->get_param_decl().num_of_params() == op.get_param_info().num_of_params()) {
-         return result;
-      } 
-      // QY: This is not supposed to happen, but ignore it for now.
-      return 0;
+      return result;
   }
   template <class CollectObject>
   bool CollectAnnotation(AstInterface& fa, const AstNodePtr& fc,

@@ -1,5 +1,7 @@
 #include "AstUtilInterface.h"
 #include "StmtInfoCollect.h"
+#include "sage3basic.h"
+#include "AstInterface.h"
 #include "AstInterface_ROSE.h"
 #include "annotation/OperatorAnnotation.h"
 #include "dependenceTracking/dependence_analysis.h"
@@ -20,20 +22,33 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
     // Should we add annotation? (do_annot)? Have we added any annotation? (done_annot)
     bool do_annot = false, done_annot_modify=false, done_annot_read = false, done_annot_call=0;
     AstInterface::AstNodePtr body;
-    if (AstInterface::IsFunctionDefinition(ast, 0, 0, 0, &body)) {
+    AstInterface::AstNodeList ast_params;
+    AstInterface::AstTypeList ast_param_types;
+    if (AstInterface::IsFunctionDefinition(ast, 0, &ast_params, 0, &body, &ast_param_types)) {
       // Add empty annotations for this function. Details of the side effects will be added later
       // while the body of the function is being analyzed.
       DebugAstUtil([&ast](){ return "Saving side effects for :" + AstInterface::AstToString(ast) + "\n"; });
       if (add_to_dep_analysis != 0) {
-          add_to_dep_analysis->ClearOperatorSideEffect(ast);
+         add_to_dep_analysis->ClearOperatorSideEffect(ast);
+         assert(ast_params.size() == ast_param_types.size());
+         auto pt = ast_param_types.begin();
+         for (const auto& p : ast_params) {
+            add_to_dep_analysis->SaveOperatorSideEffect(ast,p, OperatorSideEffect::Parameter, (*pt).get_ptr());
+            pt++;
+         }
       }
       do_annot = true;
     }
 
     StmtSideEffectCollect collect_operator(fa, funcAnnot);
     std::function<bool(AstNodePtr, AstNodePtr)> save_mod = [&collect, &ast, do_annot, &done_annot_modify, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
-      if (do_annot && !IsLocalRef(first.get_ptr(), body.get_ptr())) {
+      if (!AstInterface::IsMemoryAccess(first)) {
+          DebugAstUtil([&first](){ return "Do not save non-memory-access modify:" + AstInterface::AstToString(first); });
+          return true;
+      }
+      if (do_annot && (first == AST_UNKNOWN || !IsLocalRef(first.get_ptr(), body.get_ptr()))) {
          done_annot_modify = true;
+         DebugAstUtil([&first](){ return "save modify annotation:" + AstInterface::AstToString(first); });
          if (add_to_dep_analysis != 0) {
             add_to_dep_analysis->SaveOperatorSideEffect(ast, first, OperatorSideEffect::Modify, second.get_ptr()); 
          } else {
@@ -44,8 +59,13 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       return collect(first, second, OperatorSideEffect::Modify);
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_read = [&collect,&ast, do_annot, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
-      if (do_annot && !IsLocalRef(first.get_ptr(), body.get_ptr())) {
+      if (!AstInterface::IsMemoryAccess(first))  {
+          DebugAstUtil([&first](){ return "Do not save non-memory-access read:" + AstInterface::AstToString(first); });
+          return true;
+      }
+      if (do_annot && (first == AST_UNKNOWN || !IsLocalRef(first.get_ptr(), body.get_ptr()))) {
          done_annot_read = true;
+         DebugAstUtil([&first](){ return "save read annotation:" + AstInterface::AstToString(first); });
          if (add_to_dep_analysis != 0) {
             add_to_dep_analysis->SaveOperatorSideEffect(ast, first, OperatorSideEffect::Read, 0) ;
          } else {
@@ -56,11 +76,13 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
       return collect(first, second, OperatorSideEffect::Read);
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_kill = [&collect] (AstNodePtr first, AstNodePtr second) {
+      if (!AstInterface::IsMemoryAccess(first)) 
+          return true;
       DebugAstUtil([&first](){ return "save kill:" + AstInterface::AstToString(first); });
       return collect(first, second, OperatorSideEffect::Kill);
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, do_annot, &done_annot_call, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
-      if (do_annot && !IsLocalRef(first.get_ptr(), body.get_ptr())) {
+      if (do_annot && (first == AST_UNKNOWN || !IsLocalRef(first.get_ptr(), body.get_ptr()))) {
          done_annot_call = true;
          if (add_to_dep_analysis != 0) {
             add_to_dep_analysis->SaveOperatorSideEffect(ast, first, OperatorSideEffect::Call, second.get_ptr()); 
@@ -129,17 +151,14 @@ void AstUtilInterface::RegisterOperatorSideEffectAnnotation() {
   funcAnnot->register_annot();
 };
 
-std::pair<std::string, std::string>
-AstUtilInterface::AddOperatorSideEffectAnnotation(
+void AstUtilInterface::AddOperatorSideEffectAnnotation(
               SgNode* op_ast, const AstNodePtr& var, AstUtilInterface::OperatorSideEffect relation)
 {
   std::string varname = GetVariableSignature(var);
   DebugAstUtil([&relation, &varname](){ return "Adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "var is : " + varname; });
-  std::string op_name;
-  AstInterface::AstNodeList op_params;
-  if (!AstInterface::IsFunctionDefinition(op_ast, &op_name, &op_params)) {
+  if (!AstInterface::IsFunctionDefinition(op_ast)) {
      DebugAstUtil([&op_ast](){ return "Expecting an operator but getting " + AstInterface::AstToString(op_ast);});
-     return std::pair<std::string, std::string>("","");
+     return;
   }
   AstInterfaceImpl astImpl(op_ast);
   AstInterface fa(&astImpl);
@@ -172,7 +191,6 @@ AstUtilInterface::AddOperatorSideEffectAnnotation(
        desc->push_back(SymbolicValDescriptor(SymbolicValGenerator::GetSymbolicVal(fa, AstNodePtrImpl(var)), varname));
      }
   }
-  return std::pair<std::string, std::string>(GetVariableSignature(op_ast), varname);
 } 
 
 

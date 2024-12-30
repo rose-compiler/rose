@@ -48,8 +48,10 @@ void StmtInfoCollect::
 AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
 {
   AstInterface::AstNodeList args;
-  if (!fa.IsFunctionCall(fc, 0, 0, &args))
-      ROSE_ABORT();
+  if (!fa.IsFunctionCall(fc, 0, 0, &args)) {
+      // We can't figure out the arguments right now. Skip. It's OK b/c an unknown will also be returned.
+      return;
+  }
   for (AstInterface::AstNodeList::const_iterator p2 = args.begin();
        p2 != args.end(); ++p2) {
     AstNodePtr c = AstNodePtrImpl(*p2).get_ptr();

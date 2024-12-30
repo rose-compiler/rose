@@ -13,7 +13,7 @@ namespace AstUtilInterface{
 
    class WholeProgramDependenceAnalysis;
    enum OperatorSideEffect {
-     Modify, Read, Kill, Call, Decl, Allocate, Free, CallInput, CallOutput
+     Modify, Read, Kill, Call, Decl, Allocate, Free, Parameter, Return
    };
    inline std::string OperatorSideEffectName(OperatorSideEffect what) {
      switch (what) {
@@ -21,8 +21,8 @@ namespace AstUtilInterface{
       case OperatorSideEffect::Read: return "read";
       case OperatorSideEffect::Kill: return "kill";
       case OperatorSideEffect::Call: return "call";
-      case OperatorSideEffect::CallInput: return "call-input";
-      case OperatorSideEffect::CallOutput: return "call-output";
+      case OperatorSideEffect::Parameter: return "parameter";
+      case OperatorSideEffect::Return: return "return";
       case OperatorSideEffect::Decl: return "decl";
       case OperatorSideEffect::Allocate: return "allocate";
       case OperatorSideEffect::Free: return "free";
@@ -57,7 +57,7 @@ namespace AstUtilInterface{
 
     //! Record that op_ast references the given variable with the given relation:
     //! (modify, read, or call). Returns the string representation of the operator and variable.
-    std::pair<std::string, std::string>  AddOperatorSideEffectAnnotation(SgNode* op_ast, const AstNodePtr& var, OperatorSideEffect relation);
+    void AddOperatorSideEffectAnnotation(SgNode* op_ast, const AstNodePtr& var, OperatorSideEffect relation);
 
     //! Returns a string that uniquely identifies the given variable.
     std::string GetVariableSignature(const AstNodePtr& variable);

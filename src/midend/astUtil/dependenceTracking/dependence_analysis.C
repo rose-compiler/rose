@@ -67,10 +67,15 @@ void WholeProgramDependenceAnalysis:: OutputDependences(std::ostream& output) {
 bool WholeProgramDependenceAnalysis::
      SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details) {
   std::string prefix, attr;
+  bool save_annot = false;
   switch (relation) {
-    case AstUtilInterface::OperatorSideEffect::Modify: prefix = "modify"; break;
-    case AstUtilInterface::OperatorSideEffect::Read:  prefix = "read"; break;
+    case AstUtilInterface::OperatorSideEffect::Modify: prefix = "modify"; save_annot=true; break;
+    case AstUtilInterface::OperatorSideEffect::Read:  prefix = "read"; save_annot=true; break;
     case AstUtilInterface::OperatorSideEffect::Call:  prefix = "call"; break;
+    case AstUtilInterface::OperatorSideEffect::Parameter:  
+             prefix = "parameter"; break;
+    case AstUtilInterface::OperatorSideEffect::Return:  
+             prefix = "return"; break;
     case AstUtilInterface::OperatorSideEffect::Kill:  return false; 
     case AstUtilInterface::OperatorSideEffect::Decl:  prefix = "construct_destruct"; break;
     case AstUtilInterface::OperatorSideEffect::Allocate:  prefix = "allocate"; break;
@@ -79,18 +84,20 @@ bool WholeProgramDependenceAnalysis::
      std::cerr << "Unexpected case:" << relation << "\n";
      assert(0);
   }
-  Log.push("Adding annotation: " + prefix + op->unparseToString());
-  auto op_save = AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
+  if (save_annot) {
+     Log.push("Adding annotation: " + prefix + op->unparseToString());
+     AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
+  }
   if (details != 0) {
        attr = AstUtilInterface::GetVariableSignature(details);
   }
-  DependenceEntry e(op_save.first, op_save.second, prefix, attr); 
+  DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), prefix, attr); 
   Log.push("saving dependence: " + e.to_string());
   DependenceTable::SaveDependence(e);
   return true;
 }
 
-bool WholeProgramDependenceAnalysis::
+void WholeProgramDependenceAnalysis::
 ClearOperatorSideEffect(SgNode* op) {
   auto sig = AstUtilInterface::GetVariableSignature(op);
   DependenceTable::ClearDependence(sig);
@@ -99,10 +106,16 @@ ClearOperatorSideEffect(SgNode* op) {
 void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* root) {
   DebugLog DebugSaveDep("-debugdep");
   std::string function_name;
-  AstInterface::AstNodeList children;
+  AstInterface::AstNodeList params, children;
   AstNodePtr body;
-  if (AstInterface::IsFunctionDefinition(input, &function_name, 0, 0, &body, 0, 0,/*use_global_name*/true) && body != 0) {
+  if (AstInterface::IsFunctionDefinition(input, &function_name, &params, 0, &body, 0, 0,/*use_global_name*/true) && body != 0) {
     Log.push("Computing dependences for " + input->unparseToString());
+    for (const auto& p : params) {
+        DebugSaveDep([&p](){return "saving for function parameter:" + AstInterface::AstToString(p); });
+        if (!SaveOperatorSideEffect(input, p.get_ptr(), AstUtilInterface::OperatorSideEffect::Parameter, 0)) {
+           DebugSaveDep([](){return "Did not save dependene" ; });
+        }
+     }
     std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)> save_dep = 
         [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr& second, AstUtilInterface::OperatorSideEffect relation) {
         DebugSaveDep([&relation](){return "saving for:" + AstUtilInterface::OperatorSideEffectName(relation); });
@@ -150,18 +163,31 @@ void WholeProgramDependenceAnalysis:: save_dependence(const DependenceEntry& e) 
   // Save inside the dependence table (base class).
   DependenceTable::SaveDependence(DependenceEntry(e));
   DebugLog DebugSaveDep("-debugdep");
-  SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
 
   // Save into annotation  if necessary.
-  if (e.type_entry() == "modify") {
+  if (e.type_entry() == "parameter") {
+    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+    OperatorSideEffectDescriptor* desc1 = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+    assert(desc1 != 0);
+    desc1->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+    OperatorSideEffectDescriptor* desc2 = funcAnnot->get_read_descriptor(e.first_entry(), true);
+    assert(desc2 != 0);
+    desc2->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+    DebugSaveDep([&e](){ return "Saving parameter " + e.second_entry(); });
+  }
+  else if (e.type_entry() == "modify") {
     OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
     OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+    assert(desc != 0);
+    SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
     desc->push_back(var);
     DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });
     
   } else if (e.type_entry() == "read") {
     OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
     OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
+    assert(desc != 0);
+    SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
     desc->push_back(var);
     DebugSaveDep([&var](){ return "Saving read " + var.toString(); });
   }

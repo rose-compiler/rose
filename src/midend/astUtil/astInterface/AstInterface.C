@@ -2363,6 +2363,8 @@ IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
 bool AstInterface::
 IsMemoryAccess( const AstNodePtr& _s)
 {  
+  if (_s == AST_UNKNOWN) 
+    return true;
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s == 0) return false;
   if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
@@ -2874,12 +2876,9 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstTypeList* paramt
         if (t != 0 && t->variantT() == V_SgPointerType)
            t = static_cast<SgPointerType*>(t)->get_base_type();
         if (!AstInterface::IsFunctionType(_ftype, paramtypes, returntype)) {// not a function type
-           AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
-           if (fdecl == 0) {
-              DebugVariable([&s](){ return "Function has no decl: " +  AstInterface::AstToString(s); });
-              return false;
-           }
-        }
+            DebugVariable([&s](){ return "Non-function type called: " +  AstInterface::AstToString(s); });
+            return false;
+        } 
      }
  }
  if (func != 0)
