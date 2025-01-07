@@ -63,7 +63,7 @@ arg0="${0##*/}"
 #    "yes"          - use the ROSE library that's already installed in $HOME/rose-installed/latest
 #    "rebuild"      - rebuild the ROSE library from source code in the "rose" directory without downloading
 #    FILE           - unpack the specified local archive file (e.g., *.tar.gz)
-#    DIRECTORY      - copy the specified locl source directory (the directory is not modified in place)
+#    DIRECTORY      - copy the specified local source directory (the directory is not modified in place)
 #    URL            - install the default branch from the specified Git repository
 #    BRANCH@URL     - install the specified branch from the specified Git repository
 #
