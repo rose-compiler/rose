@@ -78,7 +78,7 @@ namespace Rose {
       virtual void process(SgProject*) {}; 
 
       /// \brief Parse the given plugin command line arguments.
-      virtual bool ParseArgs(const std::vector<std::string> &arg) {return true; };
+      virtual bool ParseArgs(const std::vector<std::string> & /*arg*/) {return true;};
       virtual ~PluginAction(){} // must have virtual destructor
   };
 
