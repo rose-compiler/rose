@@ -1,4 +1,3 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
 #include "checkIsModifiedFlag.h"
@@ -48,9 +47,6 @@
 #   include <sqlite3.h>
 #endif
 
-// DQ (10/11/2007): This is commented out to avoid use of this mechanism.
-// #include <copy_unparser.h>
-
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
@@ -66,7 +62,6 @@
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -151,12 +146,8 @@ void Rose::Options::set_backend_warnings(bool flag)
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
-
 // DQ (9/27/2018): We need to build multiple maps, one for each file (to support token based unparsing for multiple files,
 // such as what is required when using the unparsing header files feature).
-// DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-// std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
-// std::set<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*> > Rose::tokenSubsequenceMapSet;
 std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMaps;
 
 // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
@@ -167,35 +158,23 @@ std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Ro
 std::map<SgSourceFile*,std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > > Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
-// std::vector<FrontierNode*> Rose::frontierNodes;
-// std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
 std::map<int,std::map<SgStatement*,FrontierNode*>*> Rose::frontierNodesMapOfMaps;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-// std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
 std::map<int,std::map<SgNode*,PreviousAndNextNodeData*>*> Rose::previousAndNextNodeMapOfMaps;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-// std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
-// std::set<int> Rose::redundantTokenEndingsSet;
 std::map<int,std::multimap<int,SgStatement*>*> Rose::redundantlyMappedTokensToStatementMapOfMultimaps;
 std::map<int,std::set<int>*> Rose::redundantTokenEndingsMapOfSets;
 
 // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-// std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
 std::map<int,std::map<SgScopeStatement*,SgStatement*>*> Rose::representativeWhitespaceStatementMapOfMaps;
 
 // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-// std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
 std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfMaps;
 
 // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
-
-// DQ (5/8/2021): Added support for source file (header file) specific scope-based reporting on containsTransformation information.
-// This may or may not be required to be a multi-map.
-// std::map<SgIncludeFile*,std::map<SgScopeStatement*,bool>*> Rose::containsTransformationMap;
-
 
 // DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind()
 // and inlined via the SageInterface::is_<language kind>_language() functions.  See more details comment in
@@ -231,14 +210,11 @@ void Rose::initDiagnostics()
      if (!initialized)
         {
           initialized = true;
-       // printf ("In Rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
           ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", Rose::Diagnostics::destination);
           ir_node_mlog.comment("operating on ROSE internal representation nodes");
           Rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
-       // printf ("In Rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
         }
    }
-
 
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
 std::string edgVersionString()
@@ -251,9 +227,6 @@ std::string edgVersionString()
 #endif
      return edg_version;
    }
-
-
-
 
 // DQ (4/17/2010): Added OFP version number support.
 // DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
@@ -292,7 +265,6 @@ boostVersionString() {
             StringUtility::numberToString(BOOST_VERSION % 100));
 }
 
-// DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_message() {
     std::ostringstream ss;
 
@@ -368,17 +340,9 @@ std::string version_message() {
        <<BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER <<"." <<BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
        <<" (" <<BACKEND_C_COMPILER_NAME_WITH_PATH <<")\n";
 
-#if 0 // [Robb Matzke 2021-08-18] This line printed the same info as above originally, so now disabled.
-    ss <<"  ---   backend C compiler path (as specified at configure time): " <<BACKEND_C_COMPILER_NAME_WITH_PATH <<"\n";
-#endif
-
     ss <<"  ---   C++ back-end:             "
        <<BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER <<"." <<BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
        <<" (" <<BACKEND_CXX_COMPILER_NAME_WITH_PATH <<")\n";
-
-#if 0 // [Robb Matzke 2021-08-18]: No longer necessary since we print the full path above (used to print just the base name above).
-    ss <<"  ---   backend C++ compiler path (as specified at configure time): " <<BACKEND_CXX_COMPILER_NAME_WITH_PATH <<"\n";
-#endif
 #else
     ss <<"  --- C/C++ analysis:             disabled\n";
 #endif
@@ -396,10 +360,6 @@ std::string version_message() {
     ss <<"  ---   Fortran back-end:         "
        <<BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER <<"." <<BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER
        <<" (" <<BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH <<")\n";
-
-#if 0 // [Robb Matzke 2021-08-18]: No longer necessary since we print the full path above (used to print just the base name above).
-    ss <<"  ---   backend Fortran compiler path (as specified at configure time): " <<BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH <<"\n";
-#endif
 #else
     ss <<"  --- Fortran analysis:           disabled\n";
 #endif
@@ -619,7 +579,6 @@ std::string version_message() {
     return ss.str();
 }
 
-// DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_number()
    {
 #ifdef VERSION
@@ -698,9 +657,6 @@ outputPredefinedMacros()
     The commandline is processed and the return parameter is the generate SgProject object.
  */
 
-// #include "sageCommonSourceHeader.h"
-// extern an_il_header il_header;
-//
 SgProject*
 frontend (int argc, char** argv, bool frontendConstantFolding )
    {
@@ -873,14 +829,8 @@ frontendShell (const std::vector<std::string> &argv)
 int
 backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
-  // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (backend):");
-
      int finalCombinedExitStatus = 0;
-
-#if 0
-     printf ("Inside of backend(SgProject*) (from utility_functions.C) \n");
-#endif
 
      if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
         {
@@ -888,8 +838,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
         }
 
 #ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-  // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
-  // signal(SIG_DFL,NULL);
      signal(SIGABRT,SIG_DFL);
 #endif
      Rose::AST::cmdline::graphviz.backend.exec(project);
@@ -1027,7 +975,6 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
      language = project->get_Cxx_only()     ? e_cxx     : language;
      language = project->get_Fortran_only() ? e_fortran : language;
 
-  // ROSE_ASSERT(language != e_none);
      if (language == e_none)
         {
        // DQ (4/7/2010): Set the default language for ROSE to be C++
@@ -1100,7 +1047,6 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
        // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the
        // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and
        // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
-       // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
           {
               finalCombinedExitStatus = systemFromVector (commandLineToGenerateObjectFile);
@@ -1113,7 +1059,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
        // Note that commandLineToGenerateObjectFile is just the name of the backend compiler to use!
        // JL (03/15/2018) Put in ROSE_ASSERT to verify command line is just the linker
        //Thats all link is supposed to take
-            ROSE_ASSERT(commandLineToGenerateObjectFile.size() == 1);
+            ASSERT_require(commandLineToGenerateObjectFile.size() == 1);
             finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile[0]);
         }
 
@@ -1149,7 +1095,7 @@ backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project
 
 
 int
-copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
+copy_backend(SgProject* /*project*/, UnparseFormatHelp* /*unparseFormatHelp*/)
    {
   // This is part of the copy-based unparser (from Qing).
   // This function calls the unparseFile function with a
@@ -1161,25 +1107,9 @@ copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
   // The code above could be refactored to permit both backend function to more
   // readily have the same semantics later.
 
-#if 0
-  // DQ (10/11/2007): This mechanism has been replaced by a token based mechanism to support exact code generation.
-
-     for (int i=0; i < project->numberOfFiles(); ++i)
-        {
-          SgFile & file = project->get_file(i);
-
-       // Build this on the stack for each SgFile
-          CopyUnparser repl(file);
-
-       // DQ (3/18/2006): Modified to handle formating options
-          unparseFile(&file,unparseFormatHelp,&repl);
-        }
-#else
      printf ("Error: Inside of copy_backend(), the copy backend has been disabled in favor of a token based mechanism for unparsing. \n");
      ROSE_ABORT();
-#endif
 
-  // DQ (5/19/2005): I had to make up a return value since one was not previously specified
      return 0;
    }
 
@@ -1197,7 +1127,6 @@ generatePDF ( const SgProject & project )
      AstJSONGeneration jsontest;
      SgProject & nonconstProject = (SgProject &) project;
      jsontest.generateInputFiles(&nonconstProject);
-
 #endif
    }
 
