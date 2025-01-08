@@ -1135,18 +1135,13 @@ generateDOT ( const SgProject & project, std::string filenamePostfix, bool exclu
    {
   // DQ (7/4/2008): Added default parameter to support the filenamePostfix
   // mechanism in AstDOTGeneration
-
-  // DQ (6/14/2007): Added support for timing of the generateDOT() function.
      TimingPerformance timer ("ROSE generateDOT():");
-
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
 
-  // DQ (12/14/2018): The number of nodes is computed globally, but the graph is genereated only for the input file.
+  // DQ (12/14/2018): The number of nodes is computed globally, but the graph is generated only for the input file.
   // So this can suppress the generation of the graph when there are a large number of IR nodes from header files.
   // Multiplied the previous value by 10 to support building the smaller graph of the input file.
-  // DQ (2/18/2013): Generating a DOT file of over a million IR nodes is too much.
-  // int maxSize = 1000000;
      int maxSize = 10000000;
 
      int numberOfASTnodes = numberOfNodes();
@@ -1160,16 +1155,7 @@ generateDOT ( const SgProject & project, std::string filenamePostfix, bool exclu
        // Note that the use of generateInputFiles causes the graph to be generated
        // for only the input source file and not any included header files. The
        // result is a much smaller file (and generally a more useful one).
-#if 0
-       // This used to be the default, but it would output too much data (from include files).
-          astdotgen.generate(&nonconstProject);
-#else
-       // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes
-       // is not being processed (which appears to be a bug). This is because in the implementation
-       // of the generateInputFiles the function traverseInputFiles is called.
-       // astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
           astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix,excludeTemplateInstantiations);
-#endif
         }
        else
         {
@@ -1185,13 +1171,9 @@ generateDOT ( SgNode* node, std::string filename )
   // DQ (9/22/2017): This function is being provided to support the generation of a dot file from any subtree.
   // The more imediate use for this function is to support generation of dot files from trees built using the ROSE Untyped nodes.
 
-  // DQ (6/14/2007): Added support for timing of the generateDOT() function.
      TimingPerformance timer ("ROSE generateDOT():");
 
      AstDOTGeneration astdotgen;
-
-  // This used to be the default, but it would output too much data (from include files).
-  // std::string filenamePostfix = ".dot";
      std::string filenamePostfix = "";
      astdotgen.generate(node, filename, DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP, filenamePostfix);
    }
@@ -1208,20 +1190,9 @@ generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfi
   // Note that the use of generateInputFiles causes the graph to be generated
   // for only the input source file and not any included header files. The
   // result is a much smaller file (and generally a more useful one).
-#if 1
-  // This used to be the default, but it would output too much data (from include files).
-  // It is particularly useful when handling multiple files on the command line and
-  // traversing the files included from each file.
-  // astdotgen.generate(&nonconstProject);
-  // DOTGeneration::traversalType tt = TOPDOWNBOTTOMUP;
+
      AstDOTGeneration::traversalType tt = AstDOTGeneration::TOPDOWNBOTTOMUP;
      astdotgen.generate(&nonconstProject,tt,filenamePostfix);
-#else
-  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes
-  // is not being processed (which appears to be a bug). This is because in the implementation
-  // of the generateInputFiles the function traverseInputFiles is called.
-     astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
-#endif
    }
 
 void
@@ -1232,21 +1203,17 @@ generateDOTforMultipleFile ( const SgProject & project, std::string filenamePost
   // This is the best way to handle generation of DOT files where multiple files
   // are specified on the command line.  Later we may be able to filter out the
   // include files (but this is a bit difficult until generateInputFiles() can be
-  // implemetned to call the evaluation of inherited and synthesized attributes.
+  // implemented to call the evaluation of inherited and synthesized attributes.
      generateDOT_withIncludes(project,filenamePostfix);
    }
 
 void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix )
-// void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix, CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags)
    {
-  // DQ (6/14/2007): Added support for timing of the generateAstGraph() function.
      TimingPerformance timer ("ROSE generateAstGraph():");
 
   // Generate a name from all the files on the command line
      string filename = SageInterface::generateProjectName(project, /* supressSuffix = */ true );
-
      filename += "_WholeAST";
-
      filename += filenameSuffix;
 
      int numberOfASTnodes = numberOfNodes();
@@ -1257,10 +1224,7 @@ void generateAstGraph ( const SgProject* project, int maxSize, std::string filen
   // Compute the number of IR nodes for the AST
      if (numberOfASTnodes < maxSize)
         {
-       // generateWholeGraphOfAST(filename);
-
        // Added support to handle options to control filtering of Whole AST graphs.
-       // std::vector<std::string>  argvList (argv, argv+ argc);
           std::vector<std::string>  argvList = project->get_originalCommandLineArgumentList();
           CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags = new CustomMemoryPoolDOTGeneration::s_Filter_Flags(argvList);
 
@@ -1427,14 +1391,14 @@ int
 Rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
-     ROSE_ASSERT (locatedNodePointer != NULL);
+     ASSERT_not_null(locatedNodePointer);
      int lineNumber = -1;
   // Sometimes the locatedNode doesn't have a SgFile object
   // (likely because it is part of a parent statement object)
-     if (locatedNodePointer->get_file_info() != NULL)
+     if (locatedNodePointer->get_file_info() != nullptr)
         {
-          ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-          ROSE_ASSERT (locatedNodePointer->get_file_info()->get_filename() != NULL);
+          ASSERT_not_null(locatedNodePointer->get_file_info());
+          ASSERT_not_null(locatedNodePointer->get_file_info()->get_filename());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           lineNumber = fileInfo->get_line();
         }
@@ -1447,14 +1411,14 @@ int
 Rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
-     ROSE_ASSERT (locatedNodePointer != NULL);
+     ASSERT_not_null(locatedNodePointer);
      int columnNumber = -1;
   // Sometimes the locatedNode doesn't have a SgFile object
   // (likely because it is part of a parent statement object)
-     if (locatedNodePointer->get_file_info() != NULL)
+     if (locatedNodePointer->get_file_info() != nullptr)
         {
-          ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-          ROSE_ASSERT (locatedNodePointer->get_file_info()->get_filename() != NULL);
+          ASSERT_not_null(locatedNodePointer->get_file_info());
+          ASSERT_not_null(locatedNodePointer->get_file_info()->get_filename());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           columnNumber = fileInfo->get_col();
         }
@@ -1467,14 +1431,13 @@ std::string
 Rose::getFileName ( SgLocatedNode* locatedNodePointer )
    {
   // Get the filename from the Sage II statement object
-     ROSE_ASSERT (locatedNodePointer != NULL);
+     ASSERT_not_null(locatedNodePointer);
      std::string fileName = "NO NAME FILE";
   // Sometimes the locatedNode doesn't have a SgFile object
   // (likely because it is part of a parent statement object)
-     if (locatedNodePointer->get_file_info() != NULL)
+     if (locatedNodePointer->get_file_info() != nullptr)
         {
-          ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-       // printf ("In Rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
+          ASSERT_not_null(locatedNodePointer->get_file_info());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           fileName = fileInfo->get_filenameString();
         }
@@ -1497,10 +1460,9 @@ std::string
 Rose::getFileNameWithoutPath ( SgStatement* statementPointer )
    {
   // Get the filename from the Sage III statement object
-     ROSE_ASSERT (statementPointer != NULL);
-     ROSE_ASSERT (statementPointer->get_file_info() != NULL);
+     ASSERT_not_null(statementPointer);
+     ASSERT_not_null(statementPointer->get_file_info());
 
-  // char* fileName = getFileName(statementPointer);
      std::string fileName = statementPointer->get_file_info()->get_filenameString();
 
      return utility_stripPathFromFileName(fileName);
@@ -1608,16 +1570,11 @@ Rose::getWorkingDirectory ()
 string
 Rose::getWorkingDirectory ()
    {
-  // DQ (9/5/2006): Increase the buffer size
-  // const int maxPathNameLength = 1024;
      const unsigned int maxPathNameLength = 10000;
      char* currentDirectory = new char [maxPathNameLength+1];
 
-
   // CH (4/7/2010): In MSVC, the header file "direct.h" contains function 'getcwd'
-
-
-         const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
+     const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
 
      if (!getcwdResult) {
        perror("getcwd: ");
@@ -1625,7 +1582,7 @@ Rose::getWorkingDirectory ()
      }
      string returnString = getcwdResult;
      delete [] currentDirectory;
-     currentDirectory = NULL;
+     currentDirectory = nullptr;
      return returnString;
    }
 #endif
@@ -1658,36 +1615,31 @@ string
 Rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
    {
      string returnString;
-
-     ROSE_ASSERT (astNode != NULL);
+     ASSERT_not_null(astNode);
 
   // Make sure this is not a project node (since the SgFile exists below
   // the project and could not be found by a traversal of the parent list)
-     if (isSgProject(astNode) == NULL)
+     if (isSgProject(astNode) == nullptr)
         {
           const SgNode* parent = astNode;
-          while ( (parent != NULL) && (isSgFile(parent) == NULL) )
+          while ( (parent != nullptr) && (isSgFile(parent) == nullptr) )
              {
-            // printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
                parent = parent->get_parent();
              }
 
           if (!parent) {
             const SgLocatedNode* ln = isSgLocatedNode(astNode);
-            ROSE_ASSERT (ln);
+            ASSERT_not_null(ln);
             return ln->get_file_info()->get_filenameString();
           }
-          // ROSE_ASSERT (parent != NULL);
+
           const SgFile* file = isSgFile(parent);
-          ROSE_ASSERT (file != NULL);
-          if (file != NULL)
+          ASSERT_not_null(file);
+          if (file != nullptr)
              {
-            // returnString = Rose::getFileName(file);
                returnString = file->getFileName();
              }
-
-       // ROSE_ASSERT (returnString.length() > 0);
-          ROSE_ASSERT (returnString.empty() == false);
+          ASSERT_require(returnString.empty() == false);
         }
 
      return returnString;
@@ -1698,7 +1650,6 @@ void
 Rose::usage (int status)
    {
      SgFile::usage(status);
-  // exit(status);
    }
 
 int
@@ -1708,7 +1659,7 @@ Rose::containsString ( const std::string& masterString, const std::string& targe
    }
 
 void
-Rose::filterInputFile ( const string inputFileName, const string outputFileName ) // blame quinlan1
+Rose::filterInputFile(const string /*inputFileName*/, const string /*outputFileName*/) // blame quinlan1
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done
@@ -1720,26 +1671,21 @@ Rose::filterInputFile ( const string inputFileName, const string outputFileName 
 SgStatement*
 Rose::getNextStatement ( SgStatement *currentStatement )
    {
-     ROSE_ASSERT (currentStatement  != NULL);
+     ASSERT_not_null(currentStatement);
   // CI (1/3/2007): This used to be not implemented ,,, here is my try
   //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
 
-     SgStatement      *nextStatement = NULL;
+     SgStatement      *nextStatement = nullptr;
      SgScopeStatement *scope         = currentStatement->get_scope();
-     ROSE_ASSERT (scope != NULL);
+     ASSERT_not_null(scope);
 
   // DQ (9/18/2010): If we try to get the next statement from SgGlobal, then return NULL.
-     if (isSgGlobal(currentStatement) != NULL)
-          return NULL;
+     if (isSgGlobal(currentStatement) != nullptr)
+          return nullptr;
 
   // Make sure that we didn't get ourselves back from the get_scope()
   // function (previous bug fixed, but tested here).
-     ROSE_ASSERT (scope != currentStatement);
-
-#if 0
-     printf ("In ROSE::getNextStatement(): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-     printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
-#endif
+     ASSERT_require(scope != currentStatement);
 
      switch (currentStatement->variantT())
         {
@@ -1759,10 +1705,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
             {
               SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);
               nextStatement = lableStatement->get_statement();
-              ROSE_ASSERT(nextStatement != NULL);
-#if 0
-              printf ("In getNextStatement(): case V_SgLabelStatement: nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
-#endif
+              ASSERT_not_null(nextStatement);
               break;
             }
 
@@ -1777,7 +1720,6 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                     SgDeclarationStatementPtrList& declarationList = scope->getDeclarationList();
                     Rose_STL_Container<SgDeclarationStatement*>::iterator i;
                     for (i = declarationList.begin(); (i != declarationList.end() && (*i) != currentStatement); i++) {}
-                 // now i == currentStatement
 
                  // DQ (7/19/2015): Needed to add support for template instatiations that might not be
                  // located in there scope (because they would be name qualified).
