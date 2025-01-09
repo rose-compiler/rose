@@ -70,7 +70,6 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   SgMemberFunctionRefExp* CreateMethodRef(std::string classname, 
                            std::string fieldname, bool createIfNotFound);
 
-  SgFunctionSymbol* LookupFunction(const char* start) const;
   SgSymbol* CreateDeclarationStmts( const std:: string& _decl);
   SgClassSymbol* NewClass( const std:: string& name);
   SgClassSymbol* AddClass( SgClassDeclaration* d) ;
@@ -119,10 +118,13 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   /* save d for future insertion */
   void SaveVarDecl( SgVariableDeclaration *d, SgScopeStatement* curscope);
 
+  SgFunctionSymbol* LookupFunction(const char* start, SgScopeStatement* loc);
+  static SgNode* LookupNestedDeclaration(const std::string& name, SgStatement* loc); 
+  static SgVariableSymbol* LookupVar(const std:: string& name, SgScopeStatement* loc);
+  SgVariableSymbol* LookupVar(const std:: string& name) {
+      return LookupVar(name, scope);
+  }
   SgVariableSymbol* InsertVar(SgInitializedName *d, SgScopeStatement* curscope=0);
-  SgVariableSymbol* LookupVar(const std:: string& name, 
-                            SgScopeStatement* loc = 0);
-  SgVariableDeclaration* LookupVarDecl(const std:: string& varname, SgScopeStatement* loc = 0);
 
   SgVarRefExp* CreateVarRef(std::string varname, SgNode* loc=0);
 
