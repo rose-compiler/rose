@@ -47,7 +47,7 @@ if(CCACHE_EXECUTABLE)
   endforeach()
 endif()
 
-# TO DO: Only pass C and CXX if ENABLE_C=ONi, otherwise user can never turn it off  
+# TO DO: Only pass C and CXX if ENABLE_C=ON, otherwise user can never turn it off  
 project(ROSE CXX C)
 
 #-----------------------------------------------------------------------------------------------------------------------
