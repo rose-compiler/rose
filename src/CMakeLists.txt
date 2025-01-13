@@ -679,7 +679,7 @@ if(ENABLE-ADA)
   list(APPEND rose_LIB_OBJS experimentalRoseAda)
 endif() 
 
-if (ENABLE-PHP)
+if(ENABLE-PHP)
   list(APPEND rose_LIB_OBJS phpFrontend)
 endif()
 
@@ -826,7 +826,7 @@ if(ENABLE-FORTRAN)
   list(APPEND LINK_FILES roseFortran)
 endif()
 
-if (ENABLE-JAVA)
+if(ENABLE-JAVA)
   list(APPEND LINK_FILES ${JAVA_JVM_LIBRARY})
 endif()
 
@@ -844,11 +844,11 @@ if(ENABLE-ADA)
 endif()
 
 set(ROSE_TARGET_LINK ${LINK_FILES})
-if (WIN32)
+if(WIN32)
   target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} shlwapi.lib Ws2_32.lib)
 else ()
   target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} )
-endif ()
+endif()
 
 # If the C preprocessor is enabled, ROSE has some additional depenendencies
 if(ENABLE-CPP)
@@ -872,7 +872,6 @@ endif()
 ########################################################################################################################
 # testSharedRoseLib -- a basic test to make sure the ROSE library works
 ########################################################################################################################
-
 remove_definitions(-DROSE_DLL_EXPORTS)
 add_executable(testSharedRoseLib testRoseLib.C)
 target_link_libraries(testSharedRoseLib ROSE_DLL ${link_with_libraries})
@@ -880,7 +879,6 @@ target_link_libraries(testSharedRoseLib ROSE_DLL ${link_with_libraries})
 ########################################################################################################################
 # The rose-config tool (Deprecated; use the rose-config.cfg file directly instead)
 ########################################################################################################################
-
 add_definitions(-DLIBDIR="${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}") #LIB_INSTALL_DIR ?
 add_executable(rose-config rose-config.C)
 target_link_libraries(rose-config ROSE_DLL ${link_with_libraries})
@@ -889,11 +887,9 @@ install(TARGETS rose-config DESTINATION bin)
 ########################################################################################################################
 # The rose-compiler tool
 ########################################################################################################################
-
 add_executable(rose-compiler rose-compiler.C)
 target_link_libraries(rose-compiler ROSE_DLL ${link_with_libraries})
 install(TARGETS rose-compiler DESTINATION bin)
-
 
 ########################################################################################################################
 # rose-config.cfg -- text file that contains various settings for user-level makefiles.
@@ -1194,7 +1190,9 @@ append_bool_config("AM_ROSE_USE_SSL_SUPPORT" ROSE_USE_SSL_SUPPORT)
 append_bool_config("AM_ROSE_HAVE_LIBDWARF" ROSE_HAVE_LIBDWARF)
 
 # Print 
-message(STATUS "Added new variables to: ${ROSE_CONFIG_FILE}")
-message(STATUS "Total New variables processed: ${TOTAL_COUNT}")
-message(STATUS "Total New variables that were written: ${TRUE_COUNT}")
-message(STATUS "False variables: ${FALSE_COUNT}")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  message(STATUS "Added new variables to: ${ROSE_CONFIG_FILE}")
+  message(STATUS "Total New variables processed: ${TOTAL_COUNT}")
+  message(STATUS "Total New variables that were written: ${TRUE_COUNT}")
+  message(STATUS "False variables: ${FALSE_COUNT}")
+endif() 

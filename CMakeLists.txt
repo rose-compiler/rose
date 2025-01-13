@@ -47,8 +47,18 @@ if(CCACHE_EXECUTABLE)
   endforeach()
 endif()
 
-# TO DO: Only pass C and CXX if ENABLE_C=ON, otherwise user can never turn it off  
-project(ROSE CXX C)
+# Option for custom compilers 
+option(SKIP-ABI "Option to use custom CC/CXX" OFF) 
+if(SKIP-ABI) # turn off checks and abi 
+  set(CMAKE_C_ABI_COMPILED FALSE)
+  set(CMAKE_C_COMPILER_WORKS ON CACHE INTERNAL "")
+  set(CMAKE_C_STANDARD_LIBRARIES_INIT "")
+  set(CMAKE_CXX_ABI_COMPILED FALSE) 
+  set(CMAKE_CXX_COMPILER_WORKS ON CACHE INTERNAL "")
+  set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "")
+endif() 
+
+project(ROSE C CXX)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # BLT 
@@ -140,9 +150,8 @@ endif()
 
 if(WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-DBOOST_ALL_NO_LIB=1)
 endif()
-
-add_definitions(-DBOOST_ALL_NO_LIB=1)
 
 # FIXME: Why do we have to have a copy of some standard built-in modules inside rose?
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
@@ -249,9 +258,12 @@ endif()
 
 # Boost compiler-specific flags
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
-  # Compiler specific commands, not to be used with MSVC 
-  add_compile_options(-Wno-switch-default) # supress warnings coming from the boost library code itself 
-  add_compile_options(-Wno-deprecated)     # supress warnings coming from the boost library code itself 
+  # Do not supress boost warnings in debug mode  
+  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug") 
+    # Compiler specific commands, not to be used with MSVC 
+    add_compile_options(-Wno-switch-default) # supress warnings coming from the boost library code itself 
+    add_compile_options(-Wno-deprecated)     # supress warnings coming from the boost library code itself 
+  endif() 
 endif() 
 
 # If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or
@@ -268,24 +280,31 @@ if(Boost_THREAD_FOUND)
   #     set(_REENTRANT 1) 
   #  endif() 
   add_definitions(-pthread) # it seems we always want this  
-  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread") # TODO: What is this 
+  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")  
 endif()
+
+# Boost misconfiguration is often the cause of many issues
+message(STATUS "Boost_VERSION: ${Boost_VERSION}" )           # Report Boost version in all modes  
+message(STATUS "Boost_INCLUDE_DIRS:  ${Boost_INCLUDE_DIRS}") # Report Boost -I in all modes  
+message(STATUS "Boost_LIBRARY_DIRS:  ${Boost_LIBRARY_DIRS}") # Report Boost -L in all modes  
 
 # Paths to install header, executable, and libraries
 # TODO: Prioritize using built-in CMake Variables instead if possible 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT) # built-in variable in version 3.7.1
-  message(WARNING "Using default installation path: ${CMAKE_INSTALL_PREFIX}") 
-  message(STATUS "Define cmake .. -DCMAKE_INSTALL_PREFIX=</custom/path> to control where ROSE is installed")
+  message(WARNING "Using default installation path: ${CMAKE_INSTALL_PREFIX} \
+                   \nRun the command: cmake .. -DCMAKE_INSTALL_PREFIX=</custom/path> to control where ROSE is installed")
 endif() 
+
+# Directories where Rose executable, rose library, and rose headers will be installed 
 set(INCLUDE_INSTALL_DIR "include/rose")
 set(BIN_INSTALL_DIR     "bin")
 set(LIB_INSTALL_DIR     "${ROSE_LIB_DIR_NAME}")
 
 set(INSTALL_TARGETS_DEFAULT_ARGS
-  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-  LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-  ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-  COMPONENT Devel)
+    RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+    LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+    ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+    COMPONENT Devel)
 
 # A new definition to tweak code for cmake
 set(USE_CMAKE ON CACHE BOOL "Define if using CMake")
@@ -309,6 +328,16 @@ set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
 set(WITH_C_OPTIMIZE "-O2" CACHE STRING "Custom C optimization flags")
 set(WITH_CXX_OPTIMIZE "-O2" CACHE STRING "Custom C++ optimization flags")
 set(WITH_OPTIMIZE "-O2" CACHE STRING "Global optimization flags")
+
+# If CMAKE_BUILD_TYPE is empty, default to -O0 for WITH_OPTIMIZE
+if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+  set(WITH_OPTIMIZE "-O0" CACHE STRING "Global optimization flags" FORCE)
+endif()
+
+# If CMAKE_BUILD_TYPE is Release, default to -O3 for WITH_OPTIMIZE 
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(WITH_OPTIMIZE "-O3" CACHE STRING "Global optimization flags" FORCE)
+endif()
 
 if(WIN32)
   set(CMAKE_BUILD_TYPE Release)
@@ -340,8 +369,12 @@ if(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
 endif()
 if(NOT WIN32)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
+  
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(-w) 
+  endif() 
 
   # Extract and set C optimization flags
   if(CMAKE_C_COMPILER_ID STREQUAL "KCC")
@@ -942,25 +975,27 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 # Only use quadmath if C/C++ is enable and it is available (also exclude windows)
-if (ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
-  
+if(ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
   set(COMPILE_TEST_SOURCE "
   #include <quadmath.h>
   int main() { return 0; }")
-
+  
   # Perform the compile test
   check_cxx_source_compiles("${COMPILE_TEST_SOURCE}" HAVE_QUADMATH_COMPILE)
-
+  
   # Determine whether quadmath is usable
   if(HAVE_QUADMATH_COMPILE)
     set(ROSE_USE_EDG_QUAD_FLOAT 1)
     set(SUPPORT_FLOAT128 ON CACHE BOOL "Variable that will persist to EDG submodule telling it to include quadmath")
-    message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      message(STATUS "quadmath is available and usable, ROSE_USE_EDG_QUAD_FLOAT set to 1")
+    endif() 
   else()
     # Comment this line out for issues with clang 
     set(ROSE_USE_EDG_QUAD_FLOAT 0)
-    # This will no longer cause an issue for gcc or clang 
-    message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
+    endif()
   endif() 
 endif()
 
@@ -1418,13 +1453,17 @@ endif()
 if(NOT DEFINED CMAKE_INSTALL_RPATH)
   message(STATUS "Setting CMAKE_INSTALL_RPATH") 
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/bin;${Boost_LIBRARY_DIRS}")
-  message(STATUS "CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH}")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+    message(STATUS "CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH}")
+  endif() 
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH) 
   message(STATUS "Setting CMAKE_INSTALL_RPATH_USE_LINK_PATH")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) 
-  message(STATUS "CMAKE_INSTALL_RPATH_USE_LINK_PATH ${CMAKE_INSTALL_RPATH_USE_LINK_PATH}")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+    message(STATUS "CMAKE_INSTALL_RPATH_USE_LINK_PATH ${CMAKE_INSTALL_RPATH_USE_LINK_PATH}")
+  endif() 
 endif() 
 
 ########################################################################################################################
@@ -1432,7 +1471,6 @@ endif()
 ########################################################################################################################
 # Recursion in CMake is not automatic. We have to tell it where the other CMakeList.txt files are located rather than
 # letting it find them automatically.
-
 add_subdirectory(LicenseInformation)
 add_subdirectory(config)
 add_subdirectory(src)

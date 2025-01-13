@@ -3,7 +3,6 @@
 # on Windows Codethorn/src/ has some .h and .C files that require ifdef macros
 # If we want it to work on Windows in the future
 #
-
 if(NOT WIN32 AND ENABLE-C STREQUAL "ON")
   if(NOT ENABLE-ADA)
     if(NOT ENABLE_OPENMP)
@@ -11,18 +10,14 @@ if(NOT WIN32 AND ENABLE-C STREQUAL "ON")
       find_package(OpenMP QUIET)
       if(NOT OpenMP_FOUND)
         message(WARNING "Codethorn Requires OpenMP which was not found.")
-      else()
-        message(STATUS "OpenMP was found for codethorn")
       endif()
     endif()
-
     # all targets include these directories
     include_directories(. ${ROSE_INCLUDES} ${CMAKE_PREFIX_INSTALL}/include/rose
                         ${CMAKE_BINARY_DIR})
 
     # all targets apply these flags TODO: Make this target-only flags
-    add_compile_options(
-      -fopenmp $<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
+    add_compile_options(-fopenmp $<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
       $<$<NOT:$<BOOL:${ENABLE_ALL_WARNINGS}>>:-Wno-misleading-indentation> -O3)
 
     # ##########################################################################
@@ -30,8 +25,7 @@ if(NOT WIN32 AND ENABLE-C STREQUAL "ON")
     # ##########################################################################
     include(LibCodeThornSources.cmake) # source/header variables defined here
 
-    # Create the target codethorn (libcodethorn.so) "lib" is appended to the
-    # target name
+    # Create the target codethorn (libcodethorn.so) 
     add_library(codethorn SHARED ${CODETHORN_SOURCE_FILES})
 
     # Link libcodethorn.so to dependencies
@@ -75,7 +69,6 @@ if(NOT WIN32 AND ENABLE-C STREQUAL "ON")
     # ##########################################################################
     # TOOL: LTLTHORN
     # ##########################################################################
-
     # Now add these targets to the tools build target.
     add_dependencies(tools codethorn ltlthorn codethorn1)
   endif()
