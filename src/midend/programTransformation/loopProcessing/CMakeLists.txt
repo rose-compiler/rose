@@ -7,7 +7,7 @@ add_subdirectory(driver)
 add_subdirectory(prepostTransformation)
 
 if (NOT enable-internalFrontendDevelopment)
-  add_library( midend_loopproc OBJECT
+  add_library(midend_loopproc OBJECT
     prepostTransformation/PrivatizeScalar.C
     prepostTransformation/BreakupStmt.C
     prepostTransformation/LoopUnroll.C
@@ -49,4 +49,3 @@ if (NOT enable-internalFrontendDevelopment)
     depInfo/DepInfoAnal.C)
   add_dependencies(midend_loopproc rosetta_generated)
 endif()
-

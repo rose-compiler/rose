@@ -1,15 +1,15 @@
-
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
-
-########### next target ###############
-
-
-########### install files ###############
-
-install(FILES  CallGraph.h ClassHierarchyGraph.h DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
+########### header files to be installed ###############
+set(CALLGRAPHANALYSIS_HEADERS newCallGraph.h 
+                             CallGraph.h 
+                             ClassHierarchyGraph.h)
+# newCallGraph.h fails on windows, so we remove it in that case 
+if(WIN32)
+  list(REMOVE_ITEM CALLGRAPHANALYSIS_HEADERS newCallGraph.h)
+endif() 
+  
+install(FILES ${CALLGRAPHANALYSIS_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 #original Makefile.am contents follow:
 

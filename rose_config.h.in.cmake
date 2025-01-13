@@ -254,7 +254,10 @@
 #define ROSE_BOOST_PATH "${BOOST_ROOT}"
 
 /* Location of ROSE Compile Tree. */
-#define ROSE_COMPILE_TREE_PATH "${ROSE_TOP_BINARY_DIR}"
+#define ROSE_COMPILE_TREE_PATH "@ROSE_COMPILE_TREE_PATH@"
+
+/* Location of ROSE Source Tree. */
+#define ROSE_SOURCE_TREE_PATH "@ROSE_SOURCE_TREE_PATH@"
 
 /* PATH on Windows, LD_LIBRARY_PATH everywhere else. */
 #define ROSE_SHLIBPATH_VAR "${ROSE_SHLIBPATH_VAR}"

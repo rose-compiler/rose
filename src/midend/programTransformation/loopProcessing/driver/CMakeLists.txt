@@ -1,17 +1,15 @@
-
 include_directories(${CMAKE_SOURCE_DIR}/src/util/support ${CMAKE_SOURCE_DIR}/src/util/graphs ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport ${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
+########### headers to be installed  ###############
+set(DRIVER_HEADERS ArrayInterface.h BlockingAnal.h  InterchangeAnal.h  CopyArrayAnal.h LoopTransformOptions.h  
+                   LoopTransformInterface.h FusionAnal.h  ParallelizeLoop.h AutoTuningInterface.h)
 
-########### next target ###############
+# ArrayInterface.h fails on windows, so we remove it in that case 
+if(WIN32)
+  list(REMOVE_ITEM ${DRIVER_HEADERS} ArrayInterface.h)
+endif() 
 
-
-########### install files ###############
-
-install(FILES  BlockingAnal.h  InterchangeAnal.h  CopyArrayAnal.h
-LoopTransformOptions.h  LoopTransformInterface.h
-FusionAnal.h  ParallelizeLoop.h AutoTuningInterface.h   DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
+install(FILES ${DRIVER_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 #original Makefile.am contents follow:
 

@@ -130,3 +130,5 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/astFileIO/AstSpecificDataManagingClass.h
     ${ROSETTA_GENERATED_DEFINITIONS}
   DESTINATION ${INCLUDE_INSTALL_DIR})
+
+install(FILES ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Rose/Traits/generated.h DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/Traits) 

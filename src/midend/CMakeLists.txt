@@ -10,10 +10,9 @@ add_subdirectory(astUtil)
 add_subdirectory(BinaryAnalysis)
 add_subdirectory(programTransformation)
 if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+  # Warning: Some .c and .h files in programAnalysis/ depend on linux due to #include <sys/time.h>
   add_subdirectory(programAnalysis)
 endif()
-
-
 add_library(midend OBJECT
   midend_roseh_pch.cpp
   abstractMemoryObject/memory_object.cpp
@@ -29,5 +28,4 @@ add_library(midend OBJECT
   astQuery/nameQueryInheritedAttribute.C
   astQuery/nodeQuery.C
   astSnippet/Snippet.C)
-
 add_dependencies(midend rosetta_generated)

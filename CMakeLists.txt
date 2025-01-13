@@ -384,23 +384,6 @@ else()
   set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 4.8)
-       set(ROSE_USING_GCC_VERSION_LATER_4_8 1 CACHE INTERNAL "")
-    endif()
-endif()
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
-    set(ROSE_USING_GCC_VERSION_LATER_6_0 1 CACHE INTERNAL "")
-  endif()
-endif()
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.1)
-       set(ROSE_USING_GCC_VERSION_LATER_6_1 1 CACHE INTERNAL "")
-    endif()
-endif()
-
 ########################################################################################################################
 # Analyzable languages supported by ROSE
 ########################################################################################################################
@@ -674,12 +657,8 @@ find_package(Perl REQUIRED)
 ########################################################################################################################
 option(ENABLE-BINARY-ANALYSIS-TESTS "Enable tests of ROSE binary analysis code" OFF)
 option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
+# 1/8/25 we will most likely remove this enable-tests-directory option 
 option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
-
-if(NOT ENABLE-TESTS-DIRECTORY AND EXISTS "${PROJECT_SOURCE_DIR}/tests/README.md")
-  set(ENABLE-TESTS-DIRECTORY ON CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
-endif()
-
 option(ENABLE-TUTORIAL-DIRECTORY "Enable compilation and testing of the ROSE/tutorial directory" OFF)
 option(ENABLE-ADVANCED-WARNINGS "Support for an advanced uniform warning level for ROSE development" OFF)
 
@@ -1551,11 +1530,8 @@ add_custom_target(install-tools          # ie "make install_tools"
   COMMAND + $(CMAKE_COMMAND) --build tools/ --target install
 )
 
-if(ENABLE-TESTS-DIRECTORY)
-  enable_testing()
-  add_subdirectory(tests)
-  add_subdirectory(tutorial)
-endif()
+# add_subdirectory(tests)
+# add_subdirectory(tutorial)
 
 ########################################################################################################################
 # Miscellaneous final actions

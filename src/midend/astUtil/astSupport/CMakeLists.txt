@@ -1,15 +1,14 @@
-
 include_directories(${CMAKE_SOURCE_DIR}/src/util ${CMAKE_SOURCE_DIR}/src/util/support ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
+########### header files to be installed ###############
+set(ASTSUPPORT_HEADERS AnalysisInterface.h ProcessAstTree.h ProcessAstTree.C StmtInfoCollect.h LoopInfoInterface.h) 
 
-########### next target ###############
+# ProcessAstTree.C fails on windows, so we remove it in that case 
+if(WIN32)
+  list(REMOVE_ITEM ${ASTSUPPORT_HEADERS} ProcessAstTree.C)
+endif() 
 
-
-########### install files ###############
-
-install(FILES  AnalysisInterface.h  ProcessAstTree.h  StmtInfoCollect.h LoopInfoInterface.h DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
+install(FILES ${ASTSUPPORT_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 #original Makefile.am contents follow:
 
@@ -35,11 +34,3 @@ install(FILES  AnalysisInterface.h  ProcessAstTree.h  StmtInfoCollect.h LoopInfo
 #	rm -rf Templates.DB
 #
 #include_HEADERS =  AnalysisInterface.h  ProcessAstTree.h  StmtInfoCollect.h LoopInfoInterface.h
-#
-#
-#
-#
-#
-#
-#
-#

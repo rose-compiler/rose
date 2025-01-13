@@ -93,4 +93,10 @@ endif()
 if(HAVE_DLFCN_H)
   check_library_exists(dl dlopen "/lib;/lib64;/usr/lib;/usr/lib64;/usr/local/lib;/usr/local/lib64;/usr/pkg/lib;/usr/pkg/lib64" HAVE_LIBDL)
   check_library_exists(dl dladdr "/lib;/lib64;/usr/lib;/usr/lib64;/usr/local/lib;/usr/local/lib64;/usr/pkg/lib;/usr/pkg/lib64" HAVE_DLADDR)
-endif() 
+endif()
+
+# Set variables in rose_config.h used by rose-tests 
+set(ROSE_COMPILE_TREE_PATH "${CMAKE_BINARY_DIR}") 
+set(ROSE_SOURCE_TREE_PATH "${CMAKE_SOURCE_DIR}") 
+
+

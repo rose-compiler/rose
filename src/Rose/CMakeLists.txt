@@ -49,6 +49,7 @@ install(FILES
   Initialize.h
   Location.h
   Logger.h
+  metaprog.h 
   ParallelSort.h
   Progress.h
   RecursionCounter.h

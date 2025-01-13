@@ -20,7 +20,10 @@ add_library(midend_util OBJECT
   dependenceTracking/dependence_table.C
   AstUtilInterface.C)
 add_dependencies(midend_util rosetta_generated)
-
+if(NOT WIN32)
+  # AstUtilInterface breaks on Windows and is only installed for standalone tests on linux 
+  install(FILES AstUtilInterface.h DESTINATION ${INCLUDE_INSTALL_DIR})
+endif() 
 add_subdirectory(astInterface)
 add_subdirectory(astSupport)
 add_subdirectory(symbolicVal)
