@@ -370,22 +370,19 @@ protected:
 /** Disassembly and partitioning utility functions for JVM. */
 namespace ModulesJvm {
 
-/** True if named file is a Java class file.
+/** True if named file exists and is a Java class file.
  *
  *  Class files usually have names with a ".class" extension, although this function actually tries to open the file and parse
  *  the file header to make that determination. */
 bool isJavaClassFile(const boost::filesystem::path&);
 
-/** True if named file is a Java jar file.
+/** True if named file exists and is a Java jar file.
  *
  *  Jar files usually have names with a ".jar" extension, although this function actually tries to open the file and parse
  *  the file header to make that determination. */
 bool isJavaJarFile(const boost::filesystem::path&);
 
-/** Load class file from jars, if present. */
-bool loadClassFile(const std::string &, const std::vector<ModulesJvm::Zipper*> &, rose_addr_t);
-
-} // namespace
+} // namespace ModulesJvm
 
 } // namespace
 } // namespace

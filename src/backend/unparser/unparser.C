@@ -30,6 +30,9 @@
 // PP (1/9/24): added so the Ada unparser can access the Ada specific command line options (i.e., outputPath).
 #include "cmdline.h"
 
+// Rasmussen (1/6/2025): JVM unparsing
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h>
+
 using namespace std;
 using namespace Rose;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
@@ -1379,12 +1382,30 @@ void
 Unparser::unparseFile(SgJvmComposite* jvm, SgUnparse_Info &)
 {
   ASSERT_not_null(jvm);
+  std::vector<SgAsmGenericFile*> files{};
 
-  // TODO: jar files
-  SgAsmGenericFile* file = jvm->get_binaryFile();
+  // Make sure the files are in the file system and not a jar file
+  for (auto file : jvm->get_genericFileList()->get_files()) {
+    auto path = file->get_name();
+    if (boost::filesystem::exists(path)) {
+      if (!CommandlineProcessing::isJavaJarFile(path)) {
+        files.push_back(file);
+      }
+    }
+  }
 
-  /* Unparse the JVM file */
-  SgAsmExecutableFileFormat::unparseBinaryFormat(jvm->get_unparse_output_filename(), file);
+  /* Can only unparse one file at the moment */
+  // SgJvmComposite designed for multiple interpretations, not multiple files
+  ASSERT_require(files.size() < 2);
+
+  for (auto file : files) {
+    if (CommandlineProcessing::isJavaJarFile(jvm->get_unparse_output_filename())) {
+      // Don't unparse jar files (and can only unparse one file currently)
+      return;
+    }
+    // Note: jvm->get_unparse_output_filename() is problematic because may not match file's name
+    SgAsmExecutableFileFormat::unparseBinaryFormat(jvm->get_unparse_output_filename(), file);
+  }
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
@@ -1393,9 +1414,7 @@ string
 unparseStatementWithoutBasicBlockToString ( SgStatement* statement )
    {
       string statementString;
-
       ASSERT_not_null( statement);
-   // printf ("unparseStatementWithoutBasicBlockToString(): statement->sage_class_name() = %s \n",statement->sage_class_name());
 
    // Build a SgUnparse_Info object to represent formatting options for
    // this statement (use the default values).

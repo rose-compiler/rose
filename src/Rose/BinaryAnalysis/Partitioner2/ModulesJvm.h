@@ -143,8 +143,7 @@ struct FileStat {
   // delete constructors
   FileStat() = delete;
   FileStat& operator=(const FileStat&) = delete;
-  // Needed to copy into an std::vector
-  // FileStat(const FileStat&) = delete;
+  FileStat(const FileStat&) = default; // Needed to copy into an std::vector
 
 private:
 
@@ -175,8 +174,11 @@ struct Zipper {
 
   explicit Zipper(SgAsmGenericFile* gf);
 
+  bool present(const std::string &name) const;
   size_t fileSize(const std::string &name) const;
   size_t offset(const char* file) const;
+
+  uint8_t* decode(const std::string &name, size_t &nbytes);
 
 // TODO: probably need the following?
 // std::map<std::string,uint8_t*> classMap_/classDictionary/classes;

@@ -5930,35 +5930,20 @@ Zipper::LocalHeader::LocalHeader(const uint8_t* buf, size_t offset) {
 
 // Zipper class
 //--------------------------
+
+/** Return uncompressed file size for file/class with given name */
 size_t
 Zipper::fileSize(const std::string &name) const {
-  uint64_t srcLen{0}, destLen{0};
-  size_t offset{0};
-  unsigned char* dest{nullptr};
-  const unsigned char* src{nullptr};
-  int status{0};
+  uint64_t destLen{0};
 
   for (auto stat : files_) {
     if (name.compare(stat.filename()) == 0) {
-      std::cout << "found class file " << name << "\n";
-      srcLen = stat.compressedSize();
       destLen = stat.uncompressedSize();
       break;
     }
   }
 
-#if 0
-  if (srcLen > 0) {
-    dest = (unsigned char*) malloc(destLen);
-    src = &(gf_->get_data()[offset]);
-    status = uncompress(dest, &destLen, src, srcLen);
-  }
-#else
-  if (srcLen + destLen + offset) status = 0; // use unused variables
-  if (dest == nullptr && src == nullptr) status = 0;
-#endif
-
-  return status;
+  return destLen;
 }
 
 size_t
@@ -5968,18 +5953,65 @@ Zipper::offset(const char* file) const {
     return itr->second;
   }
   else {
-    std::cout << "offset for file " << file << " not found\n";
+    warn("offset for file not found");
   }
   return static_cast<size_t>(-1);
+}
+
+bool
+Zipper::present(const std::string &name) const {
+  auto itr = offsetMap_.find(name.c_str());
+  if (itr != offsetMap_.end()) {
+    return true;
+  }
+  return false;
+}
+
+uint8_t*
+Zipper::decode(const std::string &name, size_t &nbytes) {
+  unsigned char* uncompBuf{nullptr};
+  nbytes = 0;
+
+  // Can't decode the class if not in the jar/zipped file
+  if (!present(name)) return nullptr;
+
+  for (const FileStat &stat : files_) {
+    if (stat.filename() != name) continue;
+
+    size_t compSize{stat.compressedSize()};
+    size_t uncompSize{stat.uncompressedSize()};
+    size_t gfBufOffset{stat.offset() + MZ_ZIP_LOCAL_DIR_HEADER_SIZE + stat.filename().size()};
+
+    // Initialize decompressor/inflator
+    tinfl_decompressor decompressor{};
+    tinfl_init(&decompressor);
+
+    // gf has p_data with mapped buffer and nbytes size from SgAsmGenericFile::parse
+    // Contents of jar file
+    uint8_t* gfBuf = gf_->content().pool();
+
+    // users will delete, not free (see SgAsmGenericFile::parse())
+    uncompBuf = new unsigned char[uncompSize];
+    nbytes = uncompSize;
+
+    // TODO: flags copied from lldg: need something more "real"
+    int flags = 4; // WHERE_FROM
+
+    int status = tinfl_decompress(&decompressor, gfBuf + gfBufOffset, &compSize, uncompBuf, uncompBuf, &uncompSize, flags);
+    if (status != 0) warn("decode/decompress status not zero");
+    break;
+  }
+
+  if (!uncompBuf) {
+    throw std::runtime_error("could not allocate memory for binary file \"" + StringUtility::cEscape(name) + "\"");
+  }
+  return uncompBuf;
 }
 
 Zipper::Zipper(SgAsmGenericFile* gf) : gf_{gf}
 {
   // Find the central director record
   ZipEnd end{gf->content()};
-
-  // Temporarily track compressed and uncompressed size
-  size_t compSize{0}, uncompSize{0};
 
   // create mapping of files to local offsets from central director records
   size_t offset{end.cdirOffset()};
@@ -5988,35 +6020,6 @@ Zipper::Zipper(SgAsmGenericFile* gf) : gf_{gf}
     FileStat stat{gf->content().pool(), offset, i};
     offsetMap_[stat.filename()] = stat.offset();
     files_.push_back(stat);
-
-    compSize = stat.compressedSize();
-    uncompSize = stat.uncompressedSize();
-
-    if (stat.filename() == "fortran/ofp/FrontEnd.class") {
-      int status{0};
-      size_t gfBufOffset{stat.offset() + MZ_ZIP_LOCAL_DIR_HEADER_SIZE + stat.filename().size()};
-
-      std::cerr << "Zipper: comp and uncomp size: " << compSize << " " << uncompSize << "\n";
-      std::cerr << "\n\nWill attempt to decompress!!!!!\n\n";
-
-      // Initialize decompressor/inflator
-      tinfl_decompressor decompressor{};
-      tinfl_init(&decompressor);
-  
-      uint8_t* gfBuf = gf->content().pool();
-      uint8_t* buf = (uint8_t*) malloc(uncompSize);
-
-      // TODO: flags copied from lldg: need something more "real"
-      int flags = 4; // WHERE_FROM
-
-      status = tinfl_decompress(&decompressor, gfBuf + gfBufOffset, &compSize, buf, buf, &uncompSize, flags);
-
-      if (status > 0) warn("decompress status not zero");
-      // TODO: examine status
-      // TODO: where to put buf (uncompressed file buffer), need to parse it downstream
-      // TODO: Too much happening in constructor!
-      // TODO: zip.parse(classfile=="fortran/ofp/FrontEnd.class")
-    }
   }
 }
 

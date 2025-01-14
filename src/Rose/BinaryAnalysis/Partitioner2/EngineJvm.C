@@ -217,13 +217,7 @@ EngineJvm::parseContainers(const std::vector<std::string> &fileNames) {
 
 boost::filesystem::path
 EngineJvm::pathToClass(const std::string &className) {
-    boost::filesystem::path classPath{boost::filesystem::current_path().string() + "/" + className + ".class"};
-    if (!boost::filesystem::exists(classPath)) {
-        if (!ByteCode::JvmContainer::isJvmSystemReserved(className)) {
-            mlog[WARN] << "path to class " << className + ".class" << " does not exist\n";
-        }
-    }
-    return classPath;
+  return boost::filesystem::current_path().string() + "/" + className + ".class";
 }
 
 // Load jar file by opening its contents
@@ -265,43 +259,74 @@ EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGener
 
 rose_addr_t
 EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
-    // Check to see if class has already been processed
-    // TODO: make sure stem is appropriate, must use fully qualified class name
-    if (classes_.find(path.stem().string()) != classes_.end()) {
+    size_t nbytes{0};
+    unsigned char* classBytes{nullptr};
+
+    // Check to see if the class has already been processed
+    std::string className = path.parent_path().string() + std::string{"/"} + path.stem().string();
+    if (classes_.find(className) != classes_.end()) {
         return baseVa;
     }
 
+    // Look for the class in a jar file
     if (!boost::filesystem::exists(path)) {
-        // Is it in a jar file
-      if (!ModulesJvm::loadClassFile(path.string(), jars_, baseVa)) {
-        return baseVa;
-      }
+        for (ModulesJvm::Zipper* zip : jars_) {
+            classBytes = zip->decode(path.string(), nbytes);
+            if (classBytes) {
+                // Check class content for magic 0xCAFEBABE
+                ASSERT_require(nbytes >= 4);
+                bool magic = (classBytes[0] == 0xCA && classBytes[1] == 0xFE &&
+                              classBytes[2] == 0xBA && classBytes[3] == 0xBE);
+                if (!magic) {
+                  delete classBytes; classBytes = nullptr;
+                  throw std::runtime_error("magic number incorrect for class file contents");
+                }
+                break;
+            }
+        }
+        if (!classBytes) {
+            // class not in the file system nor found in a jar file
+            return baseVa;
+        }
     }
 
-    std::string fileName = path.string();
-    SAWYER_MESG(mlog[TRACE]) << "loading and parsing " << fileName <<"\n";
+    auto gf = new SgAsmGenericFile{};
 
-    auto file = new SgAsmGenericFile{};
-    file->parse(fileName); /* this loads file into memory, does no reading of file */
+    // Complete initialization of gf
+    if (classBytes) {
+        gf->set_name(path.string());
+        gf->set_data(SgFileContentList(classBytes, nbytes));
+    }
+    else {
+        // Load file by parsing from file system
+        gf->parse(path.string()); // this loads file into memory, does no reading of file
+    }
 
-    auto jfh = new SgAsmJvmFileHeader(file);
+    auto jfh = new SgAsmJvmFileHeader(gf);
     jfh->set_baseVa(baseVa);
 
     // Check AST
-    ASSERT_require(jfh == file->get_header(SgAsmGenericFile::FAMILY_JVM));
-    ASSERT_require(jfh->get_parent() == file);
+    ASSERT_require(jfh == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
+    ASSERT_require(jfh->get_parent() == gf);
 
     jfh->parse();
 
     auto pool = jfh->get_constant_pool();
-    std::string className = ByteCode::JvmClass::name(jfh->get_this_class(), pool);
-    classes_[className] = file;
 
-    fileList->get_files().push_back(file);
-    file->set_parent(fileList);
+    // Fix the class name now that it has been loaded
+    if (className != ByteCode::JvmClass::name(jfh->get_this_class(), pool)) {
+        className = ByteCode::JvmClass::name(jfh->get_this_class(), pool);
+        if (classes_.find(className) != classes_.end()) {
+            throw std::runtime_error("can't load class twice");
+        }
+    }
+    classes_[className] = gf;
+
+    fileList->get_files().push_back(gf);
+    gf->set_parent(fileList);
 
     // Increase base virtual address for the next class
-    baseVa += file->get_originalSize() + vaDefaultIncrement;
+    baseVa += gf->get_originalSize() + vaDefaultIncrement;
     baseVa -= baseVa % vaDefaultIncrement;
 
     // Decode instructions for usage downstream
@@ -380,23 +405,20 @@ EngineJvm::loadSuperClasses(const std::string &className, SgAsmGenericFileList* 
     // Load interfaces
     for (auto interface: jfh->get_interfaces()) {
         std::string interfaceName = ByteCode::JvmClass::name(interface, pool);
+        if (ByteCode::JvmContainer::isJvmSystemReserved(interfaceName)) continue; // ignore Java system files
+
         auto interfacePath = pathToClass(interfaceName);
-        if (boost::filesystem::exists(interfacePath)) {
-            baseVa = loadClassFile(interfacePath, fileList, baseVa);
+        if (!boost::filesystem::exists(interfacePath)) {
+            // Revert to interface name to check for class in a jar
+            interfacePath = interfaceName + ".class";
         }
+        baseVa = loadClassFile(interfacePath, fileList, baseVa);
     }
 
     std::string superName = ByteCode::JvmClass::name(jfh->get_super_class(), pool);
-    if (superName.substr(0,10) == "java/lang/") {
-        return baseVa;
-    }
+    if (ByteCode::JvmContainer::isJvmSystemReserved(superName)) return baseVa; // ignore Java system files
 
-    // Load super class
-    auto superPath = pathToClass(superName);
-    if (boost::filesystem::exists(superPath)) {
-        baseVa = loadClassFile(superPath, fileList, baseVa);
-    }
-    return baseVa;
+    return loadClassFile(pathToClass(superName), fileList, baseVa);
 }
 
 void
@@ -462,9 +484,15 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
     // Load class files starting at this virtual address
     rose_addr_t baseVa = 0;
 
-    // Load classes
-    for (auto path: paths) {
-        baseVa = loadClassFile(path, fileList, baseVa);
+    // Loop over all paths, loading jar files and classes
+    for (auto path : paths) {
+        if (ModulesJvm::isJavaJarFile(path.string())) {
+            loadJarFile(path.string());
+        }
+        else {
+            // Attempt to load class from file system or jar
+            baseVa = loadClassFile(path, fileList, baseVa);
+        }
     }
 
     // Scan instructions for classes
@@ -916,10 +944,10 @@ EngineJvm::isaName(const std::string &s) {
 /** Disassembly and partitioning utility functions for JVM. */
 namespace ModulesJvm {
 
-// Returns true if named file is a Java class file
+/** Returns true if named file exists and is a Java class file */
 bool isJavaClassFile(const boost::filesystem::path &file) {
   if (!boost::filesystem::exists(file)) {
-    return false; // file doesn't exist
+      return false; // file doesn't exist
   }
 
   MemoryMap::Ptr map = MemoryMap::instance();
@@ -937,7 +965,7 @@ bool isJavaClassFile(const boost::filesystem::path &file) {
   return false;
 }
 
-// Returns true if named file is a Java jar file
+/** Returns true if named file exists and is a Java jar file */
 bool isJavaJarFile(const boost::filesystem::path &file) {
   if (!boost::filesystem::exists(file)) {
     return false; // file doesn't exist
@@ -956,17 +984,7 @@ bool isJavaJarFile(const boost::filesystem::path &file) {
   }
   return false;
 }  
-
-/** Load class file from jars, if present. */
-bool loadClassFile(const std::string &file, const std::vector<ModulesJvm::Zipper*> &jars, rose_addr_t baseVa) {
-  for (auto zip : jars) {
-    size_t size = zip->fileSize(file);
-    if (size > 0) return true;
-  }
-  return false;
-}
-
-} // namespace
+} // namespace ModulesJvm
 
 
 } // namespace
