@@ -1956,20 +1956,8 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
   // printf ("@@@@@ In Rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
-#if 1 /* NEW_PREVIOUS_STATEMENT_IMPL */
-  // DQ (3/15/2024): This is the new version of this function.
-
      SgStatement* const parentStatement = isSgStatement(targetStatement->get_parent());
      ROSE_ASSERT (parentStatement != NULL);
-
-#if 0
-     if (parent_scope == NULL)
-       {
-         printf ("Warning: In Rose::getPreviousStatement(): parent_scope == NULL: targetStatement = %p = %s \n",targetStatement,targetStatement->class_name().c_str());
-         printf (" ----- parentStatement = %p = %s \n",parentStatement,parentStatement->class_name().c_str());
-       }
-  // ROSE_ASSERT (parent_scope != NULL);
-#endif
 
     // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
     // since getStatementList() is not defined for a if statement.
@@ -2006,34 +1994,17 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
              {
             // Examples of this case would be a SgBasicBlock, and some other scopes.
                ROSE_ASSERT(parent_scope->containsOnlyDeclarations() == false);
-
                previousStatement = getPreviousStatement_support_for_statement_list(parent_scope,targetStatement,climbOutScope);
-#if 0
-               printf ("ERROR: case of parent_scope->containsOnlyDeclarations() == false: parent_scope = %p = %s \n",parent_scope,parent_scope->class_name().c_str());
-               flush(cout);
-               ROSE_ASSERT(false);
-#endif
              }
         }
        else
         {
-       // Not clear what kinds of statements these should be.
-#if 0
-          printf ("In Rose::getPreviousStatement(): parent_scope == NULL: targetStatement = %p = %s name = %s \n",
-               targetStatement,targetStatement->class_name().c_str(),SageInterface::get_name(targetStatement).c_str());
-#endif
        // DQ (3/15/2024): Case of a classDefinition with a parent that is a declaration (SgJovialTableStatement, for Jovial, but could be classDeclaration for C++).
           if (climbOutScope)
              {
                previousStatement = parentStatement;
                ROSE_ASSERT (previousStatement != NULL);
              }
-
-#if 0
-          printf ("Error: parent_scope == NULL not handled... \n");
-          flush(cout);
-          ROSE_ASSERT(false);
-#endif
         }
 
 #if DEBUG_PREVIOUS_STATEMENT
@@ -2041,7 +2012,6 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      if (previousStatement != NULL)
         {
           printf ("@@@@@ previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
-       // printf ("@@@@@ previousStatement->unparseToString() = %s \n",previousStatement->unparseToString().c_str());
         }
 #endif
 
@@ -2049,221 +2019,6 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
         {
           ROSE_ASSERT (isSgGlobal(targetStatement) != NULL || previousStatement != NULL);
         }
-
-#else /* !NEW_PREVIOUS_STATEMENT_IMPL */
-  // DQ (3/15/2024): Old version of code, default case was using the scope instead of parent,
-  // which was incorrect for member functions and non-member functions declared in namespaces.
-
-#error "DEAD CODE!"
-
-     switch (targetStatement->variantT())
-        {
-          case V_SgFunctionParameterList:
-             {
-               if (climbOutScope)
-               {
-              // We define the previous statement in this case to be the function declaration
-                 previousStatement = isSgStatement(targetStatement->get_parent());
-                 ROSE_ASSERT (isSgFunctionDeclaration(previousStatement) != NULL);
-               }
-               break;
-             }
-
-          case V_SgForInitStatement:
-             {
-               if (climbOutScope)
-               {
-                 previousStatement = isSgStatement(targetStatement->get_parent());
-                 ROSE_ASSERT (isSgForStatement(previousStatement) != NULL);
-               }
-               break;
-             }
-
-          case V_SgBasicBlock:
-             {
-               if (climbOutScope)
-               {
-                 previousStatement = isSgStatement(targetStatement->get_parent());
-                 ROSE_ASSERT (previousStatement != NULL);
-               }
-               break;
-             }
-
-          case V_SgClassDefinition:
-          case V_SgFunctionDefinition:
-             {
-            // In the case of a definition we define the previous statement
-            // to be to one appearing before the associated declaration.
-               previousStatement = isSgStatement(targetStatement->get_parent());
-               ROSE_ASSERT (previousStatement != NULL);
-               break;
-             }
-
-       // DQ (3/14/2024): Added more declarations to be handled by this case.
-          case V_SgClassDeclaration:
-          case V_SgTemplateClassDeclaration:
-          case V_SgTemplateInstantiationDecl:
-
-       // DQ (3/12/2024): Liao's detected that these need to be handled specifically.
-       // Root cause of failing test for moving #endif for the unit test transformations.
-          case V_SgFunctionDeclaration:
-          case V_SgMemberFunctionDeclaration:
-          case V_SgTemplateFunctionDeclaration:
-          case V_SgTemplateMemberFunctionDeclaration:
-          case V_SgTemplateInstantiationFunctionDecl:
-          case V_SgTemplateInstantiationMemberFunctionDecl:
-             {
-            // In the case of a declaration we define the previous statement
-            // to be to one appearing before the associated declaration where
-            // it is located (using the parent pointer) instead of where it
-            // may be declared using the associated scope).
-#if 0
-               printf ("In Rose::getPreviousStatement(): handling case of SgFunctionDeclaration \n");
-#endif
-            // previousStatement = isSgStatement(targetStatement->get_parent());
-            // ROSE_ASSERT (previousStatement != NULL);
-
-               SgStatement* parentStatement = isSgStatement(targetStatement->get_parent());
-               ROSE_ASSERT (parentStatement != NULL);
-
-               SgScopeStatement* parent_scope = isSgScopeStatement(parentStatement);
-               ROSE_ASSERT (parent_scope != NULL);
-
-               if (parent_scope->containsOnlyDeclarations() == true)
-                  {
-                 // Examples of this case would be a SgGlobal, SgClassDefinition, and some other scopes.
-
-                 // Usually a global scope or class declaration scope
-                    SgDeclarationStatementPtrList & declarationList = parent_scope->getDeclarationList();
-
-                    Rose_STL_Container<SgDeclarationStatement*>::iterator targetIterator = find(declarationList.begin(),declarationList.end(),targetStatement);
-
-                    ROSE_ASSERT(targetStatement == *targetIterator);
-
-                    ROSE_ASSERT(targetIterator != declarationList.end());
-
-                    if (targetIterator == declarationList.begin())
-                       {
-                         if (climbOutScope)
-                            {
-                              previousStatement = isSgStatement(targetStatement->get_parent());
-                              ROSE_ASSERT (previousStatement != NULL);
-                            }
-                       }
-                      else
-                       {
-                         Rose_STL_Container<SgDeclarationStatement*>::iterator previousStatementIterator = --targetIterator;
-                         previousStatement = *previousStatementIterator;
-
-                      // DQ (3/12/2024): This should always be true.
-                         ROSE_ASSERT(previousStatement != targetStatement);
-                       }
-                  }
-                 else
-                  {
-                 // Examples of this case would be a SgBasicBlock, and some other scopes.
-                    printf ("ERROR: case of parent_scope->containsOnlyDeclarations() == false: parent_scope = %p = %s \n",parent_scope,parent_scope->class_name().c_str());
-                    ROSE_ASSERT(false);
-                  }
-
-            // DQ (3/12/2024): This should always be true.
-               ROSE_ASSERT(previousStatement != targetStatement);
-
-               break;
-             }
-
-          default:
-             {
-            // DQ (3/12/2024): NOTE: This default case is likely not correct for other kinds of declarations than functions (handled above).
-            // For example a variable declaration may appear in a namespace and also have a definition outside of the namespace.
-#if 1
-               printf ("@@@@@ In Rose::getPreviousStatement(): default case: targetStatement = %p = %s climbOutScope = %s \n",targetStatement,targetStatement->class_name().c_str(),climbOutScope ? "true" : "false");
-#endif
-            // We have to handle the cases of a SgStatementPtrList and a
-            // SgDeclarationStatementPtrList separately
-               if (scope->containsOnlyDeclarations() == true)
-                  {
-                 // Usually a global scope or class declaration scope
-                    SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
-                    Rose_STL_Container<SgDeclarationStatement*>::iterator i = declarationList.begin();
-                    Rose_STL_Container<SgDeclarationStatement*>::iterator previousStatementIterator =  declarationList.end();
-                    while ( ( i != declarationList.end() ) && ( (*i) != targetStatement ) )
-                       {
-                         previousStatementIterator = i++;
-                       }
-
-                    if ( previousStatementIterator != declarationList.end() )
-                       {
-                         previousStatement = *previousStatementIterator;
-                       }
-                  }
-                  // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
-                  // since getStatementList() is not defined for a if statement.
-                  // We define the previous statement of the true/false body to be the if statement
-                  // This is consistent with the later handling that when a statement is the first in a parent,
-                  // treat the parent as the previous statement
-                 else if (isSgIfStmt(scope))
-                  {
-                    if (climbOutScope)
-                    {
-                      previousStatement = isSgStatement(targetStatement->get_parent());
-                      ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
-                    }
-                  }
-                 else
-                  {
-                    SgStatementPtrList & statementList = scope->getStatementList();
-                    Rose_STL_Container<SgStatement*>::iterator i = statementList.begin();
-                    Rose_STL_Container<SgStatement*>::iterator previousStatementIterator =  statementList.end();
-                    while ( ( i != statementList.end() ) && ( (*i) != targetStatement ) )
-                       {
-                         previousStatementIterator = i++;
-                       }
-
-                    if ( previousStatementIterator != statementList.end() )
-                       {
-                         previousStatement = *previousStatementIterator;
-                       }
-                  }
-
-            // If the target statement was the first statement in a scope then
-               if ((previousStatement == NULL)&& climbOutScope)
-                  {
-                 // Then set the previous statement to be the scope containing the current statement
-                 // printf ("previousStatement == NULL: previous scope = %s \n",scope->unparseToString().c_str());
-                    switch (scope->variantT())
-                       {
-                         case V_SgBasicBlock:
-                            {
-                              previousStatement = getPreviousStatement(scope);
-                              break;
-                            }
-
-                         default:
-                            {
-                              previousStatement = scope;
-                              break;
-                            }
-                       }
-                  }
-               break;
-             }
-        }
-
-#if DEBUG_PREVIOUS_STATEMENT
-     printf ("@@@@@ previousStatement = %p \n",previousStatement);
-     if (previousStatement != NULL)
-        {
-          printf ("@@@@@ previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
-       // printf ("@@@@@ previousStatement->unparseToString() = %s \n",previousStatement->unparseToString().c_str());
-        }
-#endif
-
-     if (climbOutScope)
-        {
-          ROSE_ASSERT (isSgGlobal(targetStatement) != NULL || previousStatement != NULL);
-        }
-#endif /* NEW_PREVIOUS_STATEMENT_IMPL */
 
      return previousStatement;
    }
