@@ -291,13 +291,12 @@ SgNode* CreateAssignment(AstInterfaceImpl& fa, SgExpression* lhsexp, SgExpressio
   if (lhstype->variantT() == V_SgClassType) {
     SgClassType *lhstype1 = isSgClassType(lhstype);
     SgName classname = lhstype1->get_name();
-    SgClassSymbol *c = fa.GetClass( std::string(classname.str()));
+    SgClassDeclaration *c = isSgClassDeclaration(fa.LookupNestedDeclaration( std::string(classname.str()), fa.get_scope(lhsexp)));
     assert (c != 0);
     SgExpressionPtrList args;
     args.push_back( rhsexp);
     SgMemberFunctionSymbol *f = fa.GetMemberFunc(c, "operator=", &args);
     if (f != 0) {
-        GetClassDefn(c->get_declaration());
         SgMemberFunctionRefExp *NEW_MFUNCTION_REF(fr,f);
         SgExpression *NEW_BIN_OP(func, SgDotExp, lhsexp, fr);
         SgExprListExp *NEW_EXPR_LIST(argexp);
@@ -508,7 +507,7 @@ void AstInterface :: SetRoot( const AstNodePtr& root)
 { impl->set_top(AstNodePtrImpl(root).get_ptr()); }
 
 AstNodePtr AstInterface :: GetRoot() const 
-{ return AstNodePtrImpl(impl->get_top()); }
+{ return AstNodePtrImpl(impl->get_scope(0)); }
 
 void AstInterface :: AttachObserver( AstObserver* ob)
 {
@@ -606,10 +605,9 @@ SgSymbol* AddDecls( AstInterfaceImpl* scope, const SgDeclarationStatementPtrList
 */
 
 SgMemberFunctionSymbol * AstInterfaceImpl::
-GetMemberFunc( SgClassSymbol* c, 
+GetMemberFunc(SgClassDeclaration* decl, 
                const std::string& funcname, SgExpressionPtrList* args)
 {
-  SgClassDeclaration* decl = c->get_declaration();
   SgName classname = decl->get_name();
   SgClassDefinition * def = GetClassDefn(decl);
   if (def == 0) {
@@ -668,9 +666,8 @@ GetMemberFunc( SgClassSymbol* c,
   return 0;
 }
 
-void AstInterfaceImpl:: set_top( SgNode* _top) 
+void AstInterfaceImpl:: set_top( SgNode* top) 
   { 
-      top = _top; 
       global = 0;
       scope = 0;
       if (top != 0) {
@@ -713,21 +710,6 @@ SgFunctionSymbol* AstInterfaceImpl::LookupFunction(const char* start, SgScopeSta
         else 
            std::cerr << "exit with cur = " << cur->sage_class_name() << "\n";
      }
-     return f;
-    }
-
-SgClassSymbol* AstInterfaceImpl:: LookupClass(const char* start) 
-   {
-     SgScopeStatement *cur = scope;
-     assert(cur != 0);
-     SgClassSymbol* f = 0;
-     do {
-        f = cur->lookup_class_symbol(start);
-        if (cur->variantT() == V_SgGlobal)
-             break;
-        cur = cur->get_scope();
-     }
-     while ( cur != 0 && f == 0); 
      return f;
     }
 
@@ -844,25 +826,6 @@ NewFunc( const std::string& name, SgType*  rtype, const std::list<SgInitializedN
   return AddFunc(d);
 }
 
-SgClassSymbol* AstInterfaceImpl :: GetClass( const std::string& val, const char** start)
-{
-    std::string classname = "";
-    for ( size_t size = 0 ; size < val.size(); ++size) { 
-      if (val[size] == ' ' || val[size] == '&' || val[size] == ':')
-           break;
-      classname.push_back(val[size]);
-    }
-    if (start != 0) {
-      *start = strstr( val.c_str(), "::");
-      *start += 2;
-    }
-
-  SgClassSymbol* classSym = LookupClass(classname.c_str());
-  if (classSym != 0)
-       return classSym;
-  return 0;
-}
-
 SgClassSymbol* AstInterfaceImpl :: NewClass( const std::string& classname)
 {
  if (DebugSymbol())
@@ -873,10 +836,9 @@ SgClassSymbol* AstInterfaceImpl :: NewClass( const std::string& classname)
 }
 
 SgMemberFunctionSymbol * AstInterfaceImpl :: 
-NewMemberFunc( SgClassSymbol* c, const std::string& name, SgType*  rtype, 
+NewMemberFunc( SgClassDeclaration* classDecl, const std::string& name, SgType*  rtype, 
                const std::list<SgInitializedName*>& args)
 {
-  SgClassDeclaration* classDecl = c->get_declaration();
   const char * start = name.c_str();
   SgClassDefinition* classDefn = GetClassDefn(classDecl);
   if (classDefn == 0) {
@@ -2093,12 +2055,11 @@ void AstInterfaceImpl:: CopyNewVarDecls(SgBasicBlock* blk, bool clear)
 SgVarRefExp*
 AstInterfaceImpl:: CreateFieldRef(std::string name1, std::string name2)
 {
-   SgClassSymbol *c = GetClass(name1);
-   if (c == 0) {
+   SgClassDeclaration *decl = isSgClassDeclaration(LookupNestedDeclaration(name1, scope));
+   if (decl == 0) {
       std::cerr << "Error: cannot find class declaration for " << name1 << std::endl;
       ROSE_ABORT();
    }
-   SgClassDeclaration *decl = c->get_declaration(); assert( decl != 0);
    SgClassDefinition *def = GetClassDefn(decl); assert(def != 0);
    SgVariableSymbol *vs = LookupVar( name2, def);
    if (vs == 0) {
@@ -2117,7 +2078,7 @@ AstNodePtr AstInterface:: CreateFieldRef(std::string name1, std::string name2) {
 SgMemberFunctionRefExp* AstInterfaceImpl::
 CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFound)
 { 
-      SgClassSymbol *c = GetClass(classname);
+      SgClassDeclaration *c = isSgClassDeclaration(LookupNestedDeclaration(classname, scope));
       if (c == 0) {
          std::cerr << "Error: cannot find class declaration for " << classname << std::endl;
          ROSE_ABORT();
@@ -2231,13 +2192,13 @@ AstNodeType AstInterface::GetType(const std::string& name)
   else if (name == "bool")
         return AstNodeTypeImpl(new SgTypeBool());
   else {
-       SgClassSymbol *c = impl->GetClass(name);
+       SgClassDeclaration *c = isSgClassDeclaration(impl->LookupNestedDeclaration(name, impl->get_scope(0)));
        if (c == 0) {
           std::cerr << "Error: not recognize type name : " << name << std::endl;
           ROSE_ABORT();
        }
        else
-          return AstNodeTypeImpl(new SgClassType(c->get_declaration()));
+          return AstNodeTypeImpl(new SgClassType(c));
   }
 } 
 

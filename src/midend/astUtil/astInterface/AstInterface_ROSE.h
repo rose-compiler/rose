@@ -34,11 +34,11 @@ class SgScopeStatement;
 class SgBasicBlock;
 class SgGlobal;
 class SgSymbol;
+class SgClassSymbol;
 class SgMemberFunctionRefExp;
 class SgFunctionSymbol;
 class SgVariableSymbol;
 class SgStatement;
-class SgClassSymbol;
 class SgMemberFunctionSymbol;
 class SgClassDeclaration;
 class SgVariableDeclaration;
@@ -57,15 +57,16 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   typedef AstInterface::AstNodeList AstNodeList;
   typedef AstInterface::AstTypeList AstTypeList;
 
-  SgNode* get_top() const { return top; }  
+  SgScopeStatement* get_scope(SgNode* l) { 
+     if (scope == 0) 
+        set_top(l);
+     return scope; }  
   void set_top( SgNode* _top);
 
   static void GetTypeInfo( SgType* t, std:: string* name = 0, 
                            std:: string* stripname = 0, int* size = 0, bool use_global_unique_name=false);
   static SgType* GetTypeInt();
 
-  SgClassSymbol* LookupClass(const char* start);
-  SgClassSymbol* GetClass( const std:: string& name, const char** start = 0);
   SgVarRefExp* CreateFieldRef(std::string classname, std::string fieldname);
   SgMemberFunctionRefExp* CreateMethodRef(std::string classname, 
                            std::string fieldname, bool createIfNotFound);
@@ -98,12 +99,12 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
                     bool *isglobal = 0, bool use_global_unique_name = false) ;
 
   SgMemberFunctionSymbol* 
-  NewMemberFunc( SgClassSymbol *decl, const std:: string& name,
+  NewMemberFunc( SgClassDeclaration *decl, const std:: string& name,
                 SgType* rtype, const std:: list<SgInitializedName*>& args );
   SgMemberFunctionSymbol* AddMemberFunc( SgClassDefinition *def, 
                                       SgMemberFunctionDeclaration *d);
   /* Create a new member function if not found */
-  SgMemberFunctionSymbol* GetMemberFunc( SgClassSymbol* c, 
+  SgMemberFunctionSymbol* GetMemberFunc( SgClassDeclaration* c, 
                    const std::string& funcname, std::vector<SgExpression*>* args = 0);
 
   /*QY: if declDecl=true,variable declarations are saved for insertion later*/
@@ -136,7 +137,6 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   static SgScopeStatement* GetScope( SgNode* loc);
 
  private:
-  SgNode *top;
   SgGlobal* global;
   SgScopeStatement* scope;
   int newVarIndex;
