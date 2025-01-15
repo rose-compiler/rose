@@ -99,6 +99,7 @@ protected:
     RegisterDictionary(const std::string &name);
 
     RegisterDictionary(const RegisterDictionary& other);
+    RegisterDictionary& operator=(const RegisterDictionary&) = default;
 
 public:
     /** Allocating constructor for an empty dictionary. */
