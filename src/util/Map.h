@@ -38,6 +38,8 @@ public:
     Map(const Map& other)
         : map_type(other) {}
 
+    Map& operator=(const Map&) = default;
+
     /** Lookup and return a value or nothing.  This is similar to the operator[] defined for std::map, but does not add a new
      *  pair to the map when the key does not exist.  It returns a copy of the value that was found (if found). Here's an
      *  example of the usual way to use this:
