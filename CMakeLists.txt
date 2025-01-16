@@ -659,6 +659,10 @@ option(ENABLE-BINARY-ANALYSIS-TESTS "Enable tests of ROSE binary analysis code" 
 option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
 # 1/8/25 we will most likely remove this enable-tests-directory option 
 option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
+# 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged  
+if(NOT ENABLE-TESTS-DIRECTORY AND EXISTS "${PROJECT_SOURCE_DIR}/tests/README.md")
+  set(ENABLE-TESTS-DIRECTORY ON CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
+endif()
 option(ENABLE-TUTORIAL-DIRECTORY "Enable compilation and testing of the ROSE/tutorial directory" OFF)
 option(ENABLE-ADVANCED-WARNINGS "Support for an advanced uniform warning level for ROSE development" OFF)
 
@@ -925,7 +929,6 @@ if(NOT WIN32 AND NOT APPLE)
   endif()
   # libdl.so 
   find_library(DL_LIB dl REQUIRED) 
-  message(libdl: ${DL_LIB}) 
   # librt.so, Linux/POSIX Timers and clocks
   find_library(RT_LIB rt QUIET)
 endif()
@@ -1040,7 +1043,6 @@ if(NOT WIN32 AND NOT APPLE)
   # Conditionally append Pthreads to list of libraries rose will link to  
   list(APPEND link_with_libraries ${CMAKE_THREAD_LIBS_INIT})
 endif() 
-message("link_with_libraries: ${link_with_libraries}") 
 
 # Mac OS dependencies 
 if(APPLE)
@@ -1523,15 +1525,18 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 ########################################################################################################################
 # Ancillary ROSE components. These are things that are not part of the ROSE library.
 ########################################################################################################################
-
 add_custom_target(tools)                 # ie "make tools"  
 add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose 
 add_custom_target(install-tools          # ie "make install_tools" 
   COMMAND + $(CMAKE_COMMAND) --build tools/ --target install
 )
 
-# add_subdirectory(tests)
-# add_subdirectory(tutorial)
+# 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged  
+if(ENABLE-TESTS-DIRECTORY)
+  enable_testing()
+  add_subdirectory(tests)
+  add_subdirectory(tutorial)
+endif()
 
 ########################################################################################################################
 # Miscellaneous final actions
