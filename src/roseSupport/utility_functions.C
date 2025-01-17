@@ -1328,7 +1328,7 @@ Rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
        return fileNameWithPath;
      } else {
        return fileNameWithPath.substr(pos + 1);
-   }
+     }
    }
 #endif
 
@@ -1338,22 +1338,8 @@ Rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
    {
   // This function is not sophisticated enough to handle binaries with paths such as:
   //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
-#if 1
      size_t lastDotPos = fileNameWithSuffix.rfind('.');
      return fileNameWithSuffix.substr(0, lastDotPos);
-#else
-  // Handle the case of files where the filename does not have a suffix
-     size_t lastSlashPos = fileNameWithSuffix.rfind('/');
-     size_t lastDotPos   = fileNameWithSuffix.rfind('.');
-
-     string returnString;
-     if (lastDotPos < lastSlashPos)
-          returnString = fileNameWithSuffix;
-       else
-          returnString = fileNameWithSuffix.substr(0, lastDotPos);
-
-     return returnString;
-#endif
    }
 #endif
 
@@ -1374,12 +1360,6 @@ Rose::getPathFromFileName ( const string fileName )
 // Later I expect we will move these functions to be SgFile member functions
 
 #if 0
- //! get the source directory (requires an input string currently)
-char*
-Rose::getSourceDirectory ( char* fileNameWithPath )
-   {
-     return getPathFromFileName (fileNameWithPath);
-   }
 #else
  //! get the source directory (requires an input string currently)
 string
@@ -1390,32 +1370,6 @@ Rose::getSourceDirectory ( string fileNameWithPath )
 #endif
 
 #if 0
- //! get the current directory
-char*
-Rose::getWorkingDirectory ()
-   {
-     int i = 0;  // index variable declaration
-
-  // DQ (9/5/2006): Increase the buffer size
-  // const int maxPathNameLength = 1024;
-     const int maxPathNameLength = 10000;
-     char* currentDirectory = new char [maxPathNameLength];
-     for (i=0; i < maxPathNameLength; i++)
-          currentDirectory[i] = '\0';  // set to NULL string
-
-     char* returnString = getcwd(currentDirectory,maxPathNameLength);
-     ROSE_ASSERT (returnString != NULL);
-
-  // The semantics of the getcwd is that these should be the same (see if they are)
-  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",returnString);
-
-  // live with the possible memory leak for now
-  // delete currentDirectory;
-     currentDirectory = NULL;
-
-     return returnString;
-   }
 #else
  //! get the current directory
 string
@@ -1443,22 +1397,6 @@ Rose::concatenate ( const SgName & X, const SgName & Y )
    {
      return X + Y;
    }
-
-#if 0
-// DQ (9/5/2008): Try to remove this function!
-std::string
-Rose::getFileName ( const SgFile* file )
-   {
-  // Get the filename from the Sage II file object
-     ROSE_ASSERT (file != NULL);
-  // SgScopeStatement *globalScope = (SgScopeStatement *)(&(file->root()));
-     const SgScopeStatement *globalScope = file->get_globalScope();
-     ROSE_ASSERT (globalScope != NULL);
-     Sg_File_Info* fileInfo = globalScope->get_file_info();
-     ROSE_ASSERT (fileInfo != NULL);
-     return fileInfo->get_filenameString();
-   }
-#endif
 
 #if 1
 // DQ (9/5/2008): Try to remove this function!
@@ -1576,16 +1514,13 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                  // located in there scope (because they would be name qualified).
                     if (i == declarationList.end())
                        {
-#if 0
-                         printf ("Note: statement was not found in it's scope (happens for some template instantiations) \n");
-#endif
-                         nextStatement = NULL;
+                         nextStatement = nullptr;
                        }
                       else
                        {
                          i++;
                          if (declarationList.end() == i)
-                              nextStatement = NULL;
+                              nextStatement = nullptr;
                            else
                               nextStatement=*i;
                        }
@@ -1598,9 +1533,6 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                  // in its scope's statement list
                     for (i = statementList.begin(); (*i) != currentStatement && i != statementList.end(); i++)
                        {
-                      //  SgStatement* cur_stmt = *i;
-                      //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
-                      //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
                        }
 
                  // currentStatement is not found in the list
@@ -1612,9 +1544,6 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                          mlog[FATAL]<<currentStatement->get_file_info()->displayString()<<endl;
                          mlog[FATAL]<<"Its scope is "<<scope->class_name()<<endl;
                          mlog[FATAL]<<scope->get_file_info()->displayString()<<endl;
-#if 0
-                         currentStatement->get_file_info()->display("fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list: debug");
-#endif
                          ROSE_ASSERT("!ROSE::getNextStatement not found");
                        }
 
@@ -1788,16 +1717,6 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
         {
           return NULL;
         }
-#if 0
-  // DQ (3/15/2024): We don't need this test now.
-  // Make sure that we didn't get ourselves back from the get_scope()
-  // function (previous bug fixed, but tested here).
-     if (scope == targetStatement)
-        {
-          printf ("Error: targetStatement = %p = %s \n",targetStatement,targetStatement->class_name().c_str());
-        }
-     ROSE_ASSERT (scope != targetStatement);
-#endif
 
 #if DEBUG_PREVIOUS_STATEMENT
      printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement = %p = %s climbOutScope = %s \n",targetStatement,targetStatement->class_name().c_str(),climbOutScope ? "true" : "false");
