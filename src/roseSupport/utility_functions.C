@@ -1237,7 +1237,6 @@ void generateAstGraph ( const SgProject* project, int maxSize, std::string filen
         }
    }
 
-#if 1
 int
 Rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
    {
@@ -1256,8 +1255,7 @@ Rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
 
      return lineNumber;
    }
-#endif
-#if 1
+
 int
 Rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
    {
@@ -1276,8 +1274,7 @@ Rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
 
      return columnNumber;
    }
-#endif
-#if 1
+
 std::string
 Rose::getFileName ( SgLocatedNode* locatedNodePointer )
    {
@@ -1295,8 +1292,7 @@ Rose::getFileName ( SgLocatedNode* locatedNodePointer )
 
      return fileName;
    }
-#endif
-#if 1
+
 bool Rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 {
   bool result = false;
@@ -1305,7 +1301,6 @@ bool Rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
      result = fileInfo->get_isPartOfTransformation();
   return result;
 }
-#endif
 
 std::string
 Rose::getFileNameWithoutPath ( SgStatement* statementPointer )
@@ -1319,7 +1314,6 @@ Rose::getFileNameWithoutPath ( SgStatement* statementPointer )
      return utility_stripPathFromFileName(fileName);
    }
 
-#if 1
 std::string
 Rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
    {
@@ -1330,20 +1324,7 @@ Rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
        return fileNameWithPath.substr(pos + 1);
      }
    }
-#endif
 
-#if 0
-std::string
-Rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
-   {
-  // This function is not sophisticated enough to handle binaries with paths such as:
-  //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
-     size_t lastDotPos = fileNameWithSuffix.rfind('.');
-     return fileNameWithSuffix.substr(0, lastDotPos);
-   }
-#endif
-
-#if 1
 // DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
 string
 Rose::getPathFromFileName ( const string fileName )
@@ -1355,22 +1336,16 @@ Rose::getPathFromFileName ( const string fileName )
        return fileName.substr(0, pos);
      }
    }
-#endif
 
 // Later I expect we will move these functions to be SgFile member functions
 
-#if 0
-#else
  //! get the source directory (requires an input string currently)
 string
 Rose::getSourceDirectory ( string fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
-#endif
 
-#if 0
-#else
  //! get the current directory
 string
 Rose::getWorkingDirectory ()
@@ -1390,7 +1365,6 @@ Rose::getWorkingDirectory ()
      currentDirectory = nullptr;
      return returnString;
    }
-#endif
 
 SgName
 Rose::concatenate ( const SgName & X, const SgName & Y )
@@ -1398,7 +1372,6 @@ Rose::concatenate ( const SgName & X, const SgName & Y )
      return X + Y;
    }
 
-#if 1
 // DQ (9/5/2008): Try to remove this function!
 string
 Rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
@@ -1433,7 +1406,6 @@ Rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
 
      return returnString;
    }
-#endif
 
 void
 Rose::usage (int status)
@@ -1540,7 +1512,6 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                        {
                          mlog[FATAL]<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
                          mlog[FATAL]<<"current statement is "<<currentStatement->class_name()<<endl;
-                         //~ mlog[FATAL]<<"code: " << currentStatement->unparseToString()<<endl;
                          mlog[FATAL]<<currentStatement->get_file_info()->displayString()<<endl;
                          mlog[FATAL]<<"Its scope is "<<scope->class_name()<<endl;
                          mlog[FATAL]<<scope->get_file_info()->displayString()<<endl;
@@ -1627,7 +1598,6 @@ getPreviousStatement_support_for_declaration_list ( SgScopeStatement* parent_sco
      if (previousStatement != NULL)
         {
           printf ("@@@@@ previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
-       // printf ("@@@@@ previousStatement->unparseToString() = %s \n",previousStatement->unparseToString().c_str());
         }
 #endif
 
@@ -1683,10 +1653,9 @@ getPreviousStatement_support_for_statement_list ( SgScopeStatement* parent_scope
 
 #if DEBUG_PREVIOUS_STATEMENT
      printf ("@@@@@ previousStatement = %p \n",previousStatement);
-     if (previousStatement != NULL)
+     if (previousStatement != nullptr)
         {
           printf ("@@@@@ previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
-       // printf ("@@@@@ previousStatement->unparseToString() = %s \n",previousStatement->unparseToString().c_str());
         }
 #endif
 
@@ -1720,10 +1689,8 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
 
 #if DEBUG_PREVIOUS_STATEMENT
      printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement = %p = %s climbOutScope = %s \n",targetStatement,targetStatement->class_name().c_str(),climbOutScope ? "true" : "false");
-  // printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->class_name().c_str());
      printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
      printf ("@@@@@ In Rose::getPreviousStatement(): scope = %s \n",scope->class_name().c_str());
-  // printf ("@@@@@ In Rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
      SgStatement* const parentStatement = isSgStatement(targetStatement->get_parent());
