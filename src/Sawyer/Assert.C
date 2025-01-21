@@ -9,7 +9,12 @@
 #include <Sawyer/Message.h>
 #include <Sawyer/Sawyer.h>
 
-#if BOOST_VERSION >= 106500
+// Possibly emit stack traces?
+#if BOOST_VERSION >= 106500 && !defined(__APPLE__)
+#define SAWYER_ENABLE_STACK_TRACE
+#endif
+
+#ifdef SAWYER_ENABLE_STACK_TRACE
     #define BOOST_STACKTRACE_USE_ADDR2LINE
     #include <boost/stacktrace.hpp>
 #endif
@@ -39,39 +44,53 @@ fail(const char *mesg, const char *expr, const std::string &note, const char *fi
     if (!note.empty())
         *Message::assertionStream <<"  " <<note <<"\n";
 
-    // Print a stack trace
-#if BOOST_VERSION >= 106500
-    auto stack = boost::stacktrace::stacktrace();
-    static const size_t nSkip = 1;                      // number of frames to skip
-    static const size_t maxShow = 15;                   // maximum number of frames to show
-    if (stack.size() > nSkip) {
-        size_t frameIdx = 0;
-        *Message::assertionStream <<"  stack:\n";
-        for (boost::stacktrace::frame frame: stack) {
-            if (++frameIdx <= nSkip) {
-                // skip the first frames because they're not interesting. E.g., the first frame is this very function, which is part
-                // of the mechanism handling the failure and thus not of interest to a normal user.
-            } else if (frameIdx - nSkip > maxShow) {
-                *Message::assertionStream <<"    additional stack frames suppressed\n";
-                break;
+#ifdef SAWYER_ENABLE_STACK_TRACE
+    // Stack traces are enabled if the ROSE_BACKTRACE environment variable is set to anything but an empty string or the string "0".
+    const bool showBacktrace = []() {
+        if (const char *env = getenv("ROSE_BACKTRACE")) {
+            if (*env == '\0' || (*env == '0' && env[1] == '\0')) {
+                return false;
             } else {
-                *Message::assertionStream <<"    #" <<(frameIdx - nSkip) <<" at " <<frame.address() <<"\n";
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }();
 
-                const std::string name = frame.name();
-                if (!name.empty())
-                    *Message::assertionStream <<"      " <<name <<"\n";
+    if (showBacktrace) {
+        auto stack = boost::stacktrace::stacktrace();
+        static const size_t nSkip = 1;                      // number of frames to skip
+        static const size_t maxShow = 15;                   // maximum number of frames to show
+        if (stack.size() > nSkip) {
+            size_t frameIdx = 0;
+            *Message::assertionStream <<"  stack:\n";
+            for (boost::stacktrace::frame frame: stack) {
+                if (++frameIdx <= nSkip) {
+                    // skip the first frames because they're not interesting. E.g., the first frame is this very function, which is part
+                    // of the mechanism handling the failure and thus not of interest to a normal user.
+                } else if (frameIdx - nSkip > maxShow) {
+                    *Message::assertionStream <<"    additional stack frames suppressed\n";
+                    break;
+                } else {
+                    *Message::assertionStream <<"    #" <<(frameIdx - nSkip) <<" at " <<frame.address() <<"\n";
 
-                const std::string file = frame.source_file();
-                if (!file.empty())
-                    *Message::assertionStream <<"      " <<frame.source_file() <<":" <<frame.source_line() <<"\n";
+                    const std::string name = frame.name();
+                    if (!name.empty())
+                        *Message::assertionStream <<"      " <<name <<"\n";
 
-                if ("main" == name)
-                    break;                              // normal users think "main" is the start of their program
+                    const std::string file = frame.source_file();
+                    if (!file.empty())
+                        *Message::assertionStream <<"      " <<frame.source_file() <<":" <<frame.source_line() <<"\n";
+
+                    if ("main" == name)
+                        break;                              // normal users think "main" is the start of their program
+                }
             }
         }
+    } else {
+        *Message::assertionStream <<"  run with `ROSE_BACKTRACE=1` environment variable to display a backtrace\n";
     }
-#else
-    *Message::assertionStream <<"  stack: your compiler and Boost versions are too old to show a stack\n";
 #endif
 
 
