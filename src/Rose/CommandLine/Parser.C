@@ -71,7 +71,13 @@ createEmptyParser(const std::string &purpose, const std::string &description) {
                "Sawyer-based parser. The string is split at white space boundaries, but quotes can be used to protect "
                "white space from splitting. When setting the environment variable from a shell, you may need to protect "
                "the quotes from the shell itself with additional quoting. A common use of the environment variable is to "
-               "specify whether output should be colorized, and whether to use dark or light foreground colors.");
+               "specify whether output should be colorized, and whether to use dark or light foreground colors."
+
+               "\n\n"
+               "The SAWYER_DOC environment variable controls how man pages are generated. The default is \"pod,text\", which "
+               "means that the tools first tries the \"perldoc\" command, and if that fails, then tries to show plain-text "
+               "documentation. For more information, see the part of this man page describing the \"--help\" and/or \"-h\" "
+               "switches.");
 
     return parser;
 }
@@ -113,7 +119,21 @@ genericSwitches() {
     gen.name("general");
 
     gen.insert(Switch("help", 'h')
-               .doc("Show this documentation.")
+               .doc("Show the manpage-like documentation for this command (this documentation). The documentation is displayed "
+                    "using the first rendering method that succeeds. The rendering methods are specified with the \"SAWYER_DOC\" "
+                    "environment variable which defaults to \"pod,text\". The following rendering methods are understood:"
+
+                    "@named{pod}{Use the \"perldoc\" tool to generate and display documentation. This mechanism is able to "
+                    "display bold face and underlined text similar to how Unix man pages work. It uses the pager command "
+                    "specified in the \"PERLDOC_PAGER\", \"MANPAGER\", or \"PAGER\" environment variables before trying to "
+                    "find a pager on its own. Pagers in turn often consult their own environment variables which might need "
+                    "to be set in order to correctly display special formatting characters found in the perldoc output. For "
+                    "instance, the `less` pager consults the \"LESS\" environment variable and will typically need to turn on "
+                    "raw mode (with \"r\") and suppress binary file warnings with force mode (\"f\").}"
+
+                    "@named{text}{Render the man page as plain text and page it using the pager command found in the \"PAGER\" "
+                    "environment variable or using the `less` pager. Plain text man pages are more difficult to read because "
+                    "they don't support bold or underlined text (man pages typically used underlining to indicate variables).}")
                .action(showHelpAndExit(0)));
 
     gen.insert(Switch("color")

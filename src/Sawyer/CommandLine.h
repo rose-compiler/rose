@@ -3184,15 +3184,15 @@ public:
     std::string textDocumentation() const;
 
     /** Print documentation to standard output. Use a pager if possible. */
-    void emitDocumentationToPager() const;
+    bool emitDocumentationToPager() const;
 
     template<class Grammar>
-    void emitDocumentationToPager() const {
+    bool emitDocumentationToPager() const {
         Grammar grammar;
         initDocGrammar(grammar);
         grammar.title(programName(), boost::lexical_cast<std::string>(chapter().first), chapter().second);
         grammar.version(version().first, version().second);
-        grammar.emit(documentationMarkup());
+        return grammar.emit(documentationMarkup());
     }
 
     /** Property: How to order switch groups in documentation.  If the parser contains titled switch groups then switches will

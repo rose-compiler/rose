@@ -9,9 +9,11 @@
 #include <Sawyer/DocumentPodMarkup.h>
 #include <Sawyer/DocumentTextMarkup.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
 
 #include <algorithm>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -2596,16 +2598,53 @@ Parser::textDocumentation() const {
     return grammar(documentationMarkup());
 }
 
-SAWYER_EXPORT void
+SAWYER_EXPORT bool
 Parser::emitDocumentationToPager() const {
-    const char *evar = getenv("SAWYER_DOC");
-    if (evar != NULL) {
-        if (strcmp(evar, "pod") == 0)
-            return emitDocumentationToPager<Document::PodMarkup>();
-        if (strcmp(evar, "text") == 0)
-            return emitDocumentationToPager<Document::TextMarkup>();
+
+    // What renderers should we try, and in what order?
+    const std::vector<std::string> renderers = []() {
+        std::vector<std::string> retval;
+        if (const char *evar = getenv("SAWYER_DOC")) {
+            const std::string str(evar);
+            std::vector<std::string> words;
+            boost::split(words, str, boost::is_any_of(",:;"));
+
+            // Remove duplicates and empty strings
+            std::set<std::string> seen;
+            for (const std::string &renderer: words) {
+                if (!renderer.empty() && seen.insert(renderer).second)
+                    retval.push_back(renderer);
+            }
+        }
+
+        // Defaults
+        if (retval.empty()) {
+            retval.push_back("pod");
+            retval.push_back("text");
+        }
+
+        return retval;
+    }();
+
+    // Try each renderer in turn until one succeeds.
+    bool emittedError = false;
+    for (const std::string &renderer: renderers) {
+        if (renderer == "pod") {
+            if (emitDocumentationToPager<Document::PodMarkup>())
+                return true;
+        } else if (renderer == "text") {
+            if (emitDocumentationToPager<Document::TextMarkup>())
+                return true;
+        } else if (renderer.empty()) {
+            // ignored
+        } else if (!emittedError) {
+            Message::mlog[Message::ERROR] <<"SAWYER_DOC env var must be a list of renderers: \"pod\" and/or \"text\"\n";
+            emittedError = true;
+        }
     }
-    emitDocumentationToPager<Document::PodMarkup>();
+
+    // None of the specified renderers worked.
+    return false;
 }
 
 SAWYER_EXPORT void
