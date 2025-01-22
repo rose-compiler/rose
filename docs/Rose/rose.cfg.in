@@ -720,8 +720,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
                          @top_srcdir@/src/frontend/SageIII/sageInterface/sageInterface.C \
-                         @top_srcdir@/src/frontend/SageIII/sageInterface/sageInterface_type.C \
-                         @top_srcdir@/src/frontend/SageIII/sageInterface/sageInterfaceAda.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface/sageBuilder.C \
                          @top_srcdir@/src/frontend/SageIII/astFromString \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
@@ -1841,7 +1839,7 @@ INCLUDED_BY_GRAPH      = YES
 # the time of a run. So in most cases it will be better to enable call graphs
 # for selected functions only using the \callgraph command.
 
-CALL_GRAPH             = YES
+CALL_GRAPH             = NO
 
 # If the CALLER_GRAPH and HAVE_DOT tags are set to YES then
 # doxygen will generate a caller dependency graph for every global function
@@ -1849,7 +1847,7 @@ CALL_GRAPH             = YES
 # the time of a run. So in most cases it will be better to enable caller
 # graphs for selected functions only using the \callergraph command.
 
-CALLER_GRAPH           = YES
+CALLER_GRAPH           = NO
 
 # If the GRAPHICAL_HIERARCHY and HAVE_DOT tags are set to YES then doxygen
 # will generate a graphical hierarchy of all classes instead of a textual one.
@@ -1868,8 +1866,8 @@ DIRECTORY_GRAPH        = YES
 # If left blank png will be used. If you choose svg you need to set
 # HTML_FILE_EXTENSION to xhtml in order to make the SVG files
 # visible in IE 9+ (other browsers do not have this requirement).
-# originally set to png
-DOT_IMAGE_FORMAT       = svg
+
+DOT_IMAGE_FORMAT       = png
 
 # If DOT_IMAGE_FORMAT is set to svg, then this option can be set to YES to
 # enable generation of interactive SVG images that allow zooming and panning.
@@ -1878,7 +1876,7 @@ DOT_IMAGE_FORMAT       = svg
 # need to set HTML_FILE_EXTENSION to xhtml in order to make the SVG files
 # visible. Older versions of IE do not have SVG support.
 
-INTERACTIVE_SVG        = YES
+INTERACTIVE_SVG        = NO
 
 # The tag DOT_PATH can be used to specify the path where the dot tool can be
 # found. If left blank, it is assumed the dot tool can be found in the path.
@@ -1921,7 +1919,7 @@ DOT_GRAPH_MAX_NODES    = 200
 # children (previously this dropped children from the graph when the unlimited depth
 # caused more nodes in the graph than permitted by DOT_GRAPH_MAX_NODES (above)).
 # MAX_DOT_GRAPH_DEPTH    = 0
-MAX_DOT_GRAPH_DEPTH    = 2
+MAX_DOT_GRAPH_DEPTH    = 1
 
 # Set the DOT_TRANSPARENT tag to YES to generate images with a transparent
 # background. This is disabled by default, because dot on Windows does not
@@ -1936,7 +1934,7 @@ DOT_TRANSPARENT        = NO
 # makes dot run faster, but since only newer versions of dot (>1.8.10)
 # support this, this feature is disabled by default.
 
-DOT_MULTI_TARGETS      = YES
+DOT_MULTI_TARGETS      = NO
 
 # If the GENERATE_LEGEND tag is set to YES (the default) Doxygen will
 # generate a legend page explaining the meaning of the various boxes and
@@ -1948,4 +1946,4 @@ GENERATE_LEGEND        = YES
 # remove the intermediate dot files that are used to generate
 # the various graphs.
 
-DOT_CLEANUP            = NO
+DOT_CLEANUP            = YES
