@@ -700,6 +700,7 @@ SgJavaSynchronizedStatement
 SgJavaParameterizedType
 SgJavaWildcardType
 SgProcessControlStatement
+SgSignedCharVal
 SgSpecialFunctionModifier
 SgStatement
 SgStaticAssertionDeclaration

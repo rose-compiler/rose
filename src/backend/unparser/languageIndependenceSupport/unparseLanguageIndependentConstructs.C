@@ -6828,6 +6828,7 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgBoolValExp:             { unparseBoolVal(expr, info);         break; }
                case V_SgCharVal:                { unparseCharVal(expr, info);         break; }
                case V_SgShortVal:               { unparseShortVal(expr, info);        break; }
+               case V_SgSignedCharVal:          { unparseSCharVal(expr, info);        break; }
                case V_SgUnsignedCharVal:        { unparseUCharVal(expr, info);        break; }
                case V_SgWcharVal:               { unparseWCharVal(expr, info);        break; }
                case V_SgChar16Val:              { unparseChar16Val(expr, info);       break; }
@@ -7035,6 +7036,22 @@ UnparseLanguageIndependentConstructs::unparseCharVal(SgExpression* expr, SgUnpar
         {
        // Use the string representing the literal where it is available
           curprint ( char_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseSCharVal(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgSignedCharVal* schar_val = isSgSignedCharVal(expr);
+     ASSERT_not_null(schar_val);
+
+     if (schar_val->get_valueString() == "")
+        {
+          curprint ( tostring((int) schar_val->get_value()));
+        }
+       else
+        {
+          curprint ( schar_val->get_valueString());
         }
    }
 

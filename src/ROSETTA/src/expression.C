@@ -2354,6 +2354,23 @@ Grammar::setUpExpressions () {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // PL (1/21/2025): Despite C++ not having a signed char literal (only char and unsigned char literals), signed chars can come out of EDG when
+    // performing frontend constant folding. For example, an expression like `(signed char)0` can get constant folded into a signed char literal with
+    // value 0, despite there not being a syntactic construct in C++ that can directly generate such a node. We don't want to just emit an SgCharVal
+    // when encountering this, because the C++ standard does not specify the signedness of the native `char` type. We need to emit an SgSignedCharVal
+    // to enforce signedness.
+    //
+    // This solution was discussed with and agreed by DQ.
+    NEW_TERMINAL_MACRO (SignedCharVal,        "SignedCharVal",        "SIGNED_CHAR_VAL" );
+    SignedCharVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+    SignedCharVal.setDataPrototype ( "signed char", "value", "= 0",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    SignedCharVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    SignedCharVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+    SignedCharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeSignedChar" );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UnsignedCharVal,        "UnsignedCharVal",        "UNSIGNED_CHAR_VAL" );
     UnsignedCharVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     UnsignedCharVal.setDataPrototype ( "unsigned char", "value", "= 0",
@@ -2882,7 +2899,7 @@ Grammar::setUpExpressions () {
                             LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        |
                             DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
                             TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val       | Float80Val      |
-                            Float128Val          | VoidVal          | AdaFloatVal            |
+                            Float128Val          | VoidVal          | AdaFloatVal            | SignedCharVal   |
                             *lookupTerminal(terminalList, "JovialBitVal"),
                             "ValueExp","ValueExpTag", false);
 

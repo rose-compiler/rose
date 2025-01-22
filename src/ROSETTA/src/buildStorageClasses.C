@@ -953,6 +953,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "short" ) ||
                  ( varTypeString == "unsigned long int" ) ||
                  ( varTypeString == "char" ) ||
+                 ( varTypeString == "signed char" ) ||
                  ( varTypeString == "unsigned char" ) ||
                  ( varTypeString == "long int" ) ||
                  ( varTypeString == "long long int" ) ||

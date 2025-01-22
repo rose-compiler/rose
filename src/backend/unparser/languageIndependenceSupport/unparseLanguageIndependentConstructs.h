@@ -154,6 +154,7 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseBoolVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseShortVal                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseCharVal                 (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseSCharVal                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUCharVal                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
 

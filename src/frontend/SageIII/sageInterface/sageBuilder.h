@@ -500,6 +500,11 @@ ROSE_DLL_API SgUnsignedCharVal* buildUnsignedCharVal(unsigned char v = 0);
 ROSE_DLL_API SgUnsignedCharVal* buildUnsignedCharValHex(unsigned char v = 0);
 ROSE_DLL_API SgUnsignedCharVal* buildUnsignedCharVal_nfi(unsigned char v, const std::string& str);
 
+//! Build a signed char
+ROSE_DLL_API SgSignedCharVal* buildSignedCharVal(signed char v = 0);
+ROSE_DLL_API SgSignedCharVal* buildSignedCharValHex(signed char v = 0);
+ROSE_DLL_API SgSignedCharVal* buildSignedCharVal_nfi(signed char v, const std::string& str);
+
 //! Build an unsigned short integer
 ROSE_DLL_API SgUnsignedShortVal* buildUnsignedShortVal(unsigned short v = 0);
 ROSE_DLL_API SgUnsignedShortVal* buildUnsignedShortValHex(unsigned short v = 0);

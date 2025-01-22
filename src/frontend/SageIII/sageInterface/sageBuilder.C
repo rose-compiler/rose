@@ -4731,6 +4731,30 @@ SgUnsignedCharVal* SageBuilder::buildUnsignedCharVal_nfi(unsigned char v, const 
   return result;
 }
 
+SgSignedCharVal* SageBuilder::buildSignedCharVal(signed char v)
+{
+  SgSignedCharVal* result = new SgSignedCharVal(v,"");
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgSignedCharVal* SageBuilder::buildSignedCharValHex(signed char v)
+{
+  SgSignedCharVal* result = new SgSignedCharVal(v,StringUtility::intToHex(v));
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgSignedCharVal* SageBuilder::buildSignedCharVal_nfi(signed char v, const string& str)
+{
+  SgSignedCharVal* result = new SgSignedCharVal(v,str);
+  ASSERT_not_null(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgShortVal* SageBuilder::buildShortVal(short v)
 {
   SgShortVal* result = new SgShortVal(v,"");

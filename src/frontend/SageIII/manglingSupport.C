@@ -1256,6 +1256,9 @@ mangleValueExp (const SgValueExp* expr)
       case V_SgUnsignedCharVal:
         mangled_name = mangleSgValueExp<SgUnsignedCharVal> (isSgUnsignedCharVal (expr));
         break;
+      case V_SgSignedCharVal:
+        mangled_name = mangleSgValueExp<SgSignedCharVal> (isSgSignedCharVal (expr));
+        break;
       case V_SgUnsignedIntVal:
         mangled_name = mangleSgValueExp<SgUnsignedIntVal> (isSgUnsignedIntVal (expr));
         break;
