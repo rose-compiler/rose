@@ -1914,7 +1914,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::SValue);
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::MemoryListState);
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::MemoryMapState);

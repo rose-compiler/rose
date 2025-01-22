@@ -13,8 +13,11 @@
 #include <Rose/StringUtility/NumberToString.h>
 #include <Rose/StringUtility/SplitJoin.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#endif
+
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 

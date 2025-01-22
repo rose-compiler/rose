@@ -12,7 +12,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -132,7 +132,7 @@ struct AstConstructionSettings {
      *  parent pointer will always return the same basic block. */
     bool copyAllInstructions = true;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -277,7 +277,7 @@ struct LoaderSettings {
      *  contain at least one equal sign ("="), the first of which separates the variable name from its value. */
     std::vector<std::string> envInsert;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -301,7 +301,7 @@ struct DisassemblerSettings {
      *  that's chosen from the binary container(s) such as ELF or PE. */
     std::string isaName;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -354,7 +354,7 @@ struct BasePartitionerSettings {
      *  with additional undocumented co-processor instructions. */
     bool ignoringUnknownInsns = false;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -618,7 +618,7 @@ struct PartitionerSettings {
      *  format to a source language format. */
     bool demangleNames = true;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -643,7 +643,7 @@ struct EngineSettings {
      *  that exceptions are caught.  If a tool needs to perform its own error handling, then it should clear this property. */
     bool exitOnError = true;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);

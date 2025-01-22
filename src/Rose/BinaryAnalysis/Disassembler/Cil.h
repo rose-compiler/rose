@@ -7,8 +7,10 @@
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -54,7 +56,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

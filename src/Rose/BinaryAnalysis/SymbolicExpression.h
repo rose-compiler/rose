@@ -10,13 +10,17 @@
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/logic/tribool.hpp>
+#include <boost/unordered_map.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/unordered_map.hpp>
+#endif
+
 #include <cassert>
 #include <inttypes.h>
 #include <Sawyer/Attribute.h>
@@ -234,7 +238,7 @@ private:
     // and the type class (2 bits: 30 and 31).
     uint32_t fields_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -464,7 +468,7 @@ protected:
     mutable Hash hashval_;            /**< Optional hash used as a quick way to indicate that two expressions are different. */
     boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1079,7 +1083,7 @@ private:
     //--------------------------------------------------------
     // Serialization
     //--------------------------------------------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1245,7 +1249,7 @@ private:
     //--------------------------------------------------------
     // Serialization
     //--------------------------------------------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1667,7 +1671,7 @@ using SymbolicExpressionPtr = SymbolicExpression::Ptr;
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpression::Interior);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpression::Leaf);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::SymbolicExpression::Type, 1);

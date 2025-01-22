@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -52,7 +52,7 @@ public:
     RegisterDescriptor REG_AEXC_IOP, REG_AEXC_OVFL, REG_AEXC_UNFL, REG_AEXC_DZ, REG_AEXC_INEX;
     /** @} */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -160,7 +160,7 @@ public:
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::DispatcherM68k);
 #endif
 

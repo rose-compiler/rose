@@ -9,7 +9,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -64,7 +64,7 @@ private:
     std::vector<SValuePtr> addressesRead_;
     bool enabled_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -221,7 +221,7 @@ private:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);

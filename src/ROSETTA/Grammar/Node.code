@@ -7,12 +7,16 @@ HEADER_NODE_PREDECLARATION_START
 #include "setup.h"
 #include "Map.h"
 #include <boost/format.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/version.hpp>
+#endif
+
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Interval.h>
 #include <Sawyer/IntervalSet.h>

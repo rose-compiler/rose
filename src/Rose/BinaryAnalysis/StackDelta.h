@@ -8,8 +8,10 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Map.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -81,7 +83,7 @@ private:
     DeltasPerAddress insnSpDeltas_;                     // Stack delta per instruction (net effect of insn on stack ptr)
     bool hasConsistentFramePointer_ = false;            // Arch has FP register that's used as a frame pointer for this function
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -356,7 +358,9 @@ std::ostream& operator<<(std::ostream&, const Analysis&);
 } // namespace
 
 // Class versions must be at global scope
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::StackDelta::Analysis, 2);
+#endif
 
 #endif
 #endif

@@ -4025,7 +4025,7 @@ DispatcherAarch32::aarch32CallHypervisor(const SValue::Ptr &enabled, const SValu
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::DispatcherAarch32);
 #endif
 

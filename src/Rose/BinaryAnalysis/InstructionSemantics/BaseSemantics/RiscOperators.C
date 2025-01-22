@@ -588,6 +588,8 @@ RiscOperators::operator+(const std::string &linePrefix) {
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators);
+#endif
 
 #endif

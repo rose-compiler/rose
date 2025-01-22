@@ -69,7 +69,7 @@ public:
 protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -238,7 +238,7 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -357,7 +357,7 @@ private:
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::TaintSemantics::SValue);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::TaintSemantics::RiscOperators);
 #endif

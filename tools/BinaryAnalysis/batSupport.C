@@ -682,7 +682,9 @@ struct CheckRbaIo: Rose::CommandLine::SelfTest {
 
 void
 registerSelfTests() {
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     Rose::CommandLine::insertSelfTest<CheckRbaIo>();
+#endif
 }
 
 std::pair<std::string, std::string>

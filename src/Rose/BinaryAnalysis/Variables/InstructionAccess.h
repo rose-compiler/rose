@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Variables/BasicTypes.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -28,7 +28,7 @@ public:
     /** Constructor for variables created by an instruction. */
     InstructionAccess(const Address insnAddr, const AccessFlags);
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

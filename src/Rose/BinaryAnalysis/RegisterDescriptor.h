@@ -4,7 +4,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Sawyer/Interval.h>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -51,7 +54,7 @@ class RegisterDescriptor {
     static const uint32_t EMPTY_PATTERN     = 0x000005ff; // EMPTY_PATTERN & ~OFFSET_WIDTH_MASK == 0
     static const uint32_t OFFSET_WIDTH_MASK = 0x0003ffff; // 9-bit offset and 9-bit width
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

@@ -7,7 +7,10 @@
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/Location.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
+#endif
+
 #include <ostream>
 #include <Sawyer/Optional.h>
 #include <string>
@@ -38,7 +41,7 @@ private:
     Sawyer::Optional<uint64_t> va_;
     RegisterDictionaryPtr regdict_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned);
 #endif

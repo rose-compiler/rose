@@ -87,7 +87,7 @@ ifeq (@(ENABLE_TESTS),yes)
      #run $(test) simpleArchTest.sh -x simpleArch.asm.bin -x simpleArch.asm.rba
      run $(test) simpleArchTest.sh \
          -i simple-arch-assembler -i bat-ana -i bat-dis -i bat-dis-simple -i bat-mem -i simpleArch.asm -i libSimpleArch.so \
-	 -x simpleArch.asm.bin -x simpleArch.asm.rba \
+	 -x simpleArch.asm.bin \
 	 --answer=simpleArchTest.ans \
          ./simpleArchTest.sh simpleArch.asm
 endif

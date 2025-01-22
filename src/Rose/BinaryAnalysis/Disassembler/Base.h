@@ -15,9 +15,11 @@
 #include "integerOps.h"
 #include "Map.h"
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
+#endif
 
 // REG_SP possibly defined on __sun
 // REG_LINK possibly defined on Windows
@@ -68,7 +70,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -203,7 +205,9 @@ public:
 } // namespace
 
 // Class versions must be at global scope
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler::Base, 3);
+#endif
 
 #endif
 #endif

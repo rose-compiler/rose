@@ -14,7 +14,7 @@
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Synchronization.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -107,7 +107,7 @@ private:
     EdgeType type_;
     Confidence confidence_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S &s, const unsigned /*version*/);
@@ -208,7 +208,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serializeCommon(S&, const unsigned version);

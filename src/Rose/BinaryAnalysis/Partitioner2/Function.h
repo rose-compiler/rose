@@ -16,7 +16,7 @@
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -74,7 +74,7 @@ private:
         isNoop_.clear();
     }
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);

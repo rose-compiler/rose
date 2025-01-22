@@ -39,7 +39,7 @@ private:
         size_t n;
         SemanticFailure(): n(0) {}
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     private:
         friend class boost::serialization::access;
         template<class S>
@@ -430,7 +430,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     template<class S>
     void userSerializeBoost(S &s) {

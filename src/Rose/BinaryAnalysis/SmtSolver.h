@@ -14,8 +14,12 @@
 #include <boost/chrono.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+#include <boost/serialization/access.hpp>
+#endif
+
 #include <inttypes.h>
 #include <unordered_map>
 
@@ -327,7 +331,7 @@ public:
     static Sawyer::Message::Facility mlog;
 
 private:
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     friend class boost::serialization::access;
 
     template<class S>

@@ -84,6 +84,8 @@ MemoryState::set_byteOrder(ByteOrder::Endianness bo) {
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::MemoryState);
+#endif
 
 #endif

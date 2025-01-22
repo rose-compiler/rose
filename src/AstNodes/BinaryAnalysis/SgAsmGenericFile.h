@@ -10,6 +10,8 @@
 #include <SgAsmGenericHeaderList.h>
 #endif
 
+#include <sys/stat.h>
+
 /** Base class for binary files. */
 class SgAsmGenericFile: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

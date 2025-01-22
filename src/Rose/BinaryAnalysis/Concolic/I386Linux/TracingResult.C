@@ -2,7 +2,9 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingResult.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/export.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -46,6 +48,8 @@ TracingResult::executedVas() {
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::I386Linux::TracingResult);
+#endif
 
 #endif

@@ -10,9 +10,13 @@
 #include <Sawyer/Set.h>
 
 #include <boost/enable_shared_from_this.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/list.hpp>
+#endif
+
 #include <list>
 
 namespace Rose {
@@ -76,7 +80,7 @@ private:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -283,8 +287,10 @@ std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::MemoryCell);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::MemoryCell, 1);
+#endif
 
 #endif
 #endif

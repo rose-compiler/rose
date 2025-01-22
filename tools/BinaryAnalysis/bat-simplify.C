@@ -20,7 +20,7 @@ static const char *description =
 # include <rose_getline.h>
 #endif
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 # include <boost/archive/text_oarchive.hpp>
 # include <boost/archive/text_iarchive.hpp>
 #endif
@@ -42,7 +42,7 @@ parseCommandLine(int argc, char *argv[]) {
                                            "If enabled, then test the ROSE serialization mechanism by serializing each expression "
                                            "and deserializing to get a second expression. The two expressions are compared to ensure "
                                            "they are identical."
-#ifndef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
                                            " (Since ROSE was configured without serialization support, this switch is recognized but "
                                            "has no effect.)"
 #endif
@@ -126,7 +126,7 @@ main(int argc, char *argv[]) {
                 }
             }
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
             if (testSerialization) {
                 std::cout <<"Serializing\n";
                 std::ostringstream oss;

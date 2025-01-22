@@ -32,7 +32,7 @@ private:
     Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
     // Don't forget to update clearResults() and serialize() if you add more.
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

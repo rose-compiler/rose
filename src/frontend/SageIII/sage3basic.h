@@ -26,7 +26,7 @@
 // The boost::filesystem::path class has no serialization function, and boost::serialization doesn't provide a non-intrusive
 // implementation. Therefore ROSE needs to define one. This code must occur before including any headers that serialize
 // boost::filesystem::path, and specifically before defining AST node types.
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/filesystem.hpp>
 #include <boost/serialization/nvp.hpp>
 namespace boost {

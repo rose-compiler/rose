@@ -34,7 +34,7 @@ BoostSerializer::genPrologue(std::ostream &header, std::ostream&, const Ast::Cla
     if (generator.name() != "rosetta") {
         header <<"\n"
                <<THIS_LOCATION <<"#include <rosePublicConfig.h>\n"
-               <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+               <<"#ifdef ROSE_ENABLE_BOOST_SERIALIZATION\n"
                <<"#include <boost/serialization/access.hpp>\n"
                <<"#include <boost/serialization/base_object.hpp>\n"
                <<"#include <boost/serialization/map.hpp>\n"
@@ -55,7 +55,7 @@ BoostSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class::
 
     header <<"\n"
            <<THIS_LOCATION <<"    //----------------------- Boost serialization for " <<c->name <<" -----------------------\n"
-           <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+           <<"#ifdef ROSE_ENABLE_BOOST_SERIALIZATION\n"
            <<"private:\n"
            <<"    friend class boost::serialization::access;\n"
            <<"\n"
@@ -101,7 +101,7 @@ BoostSerializer::genBody(std::ostream &header, std::ostream&, const Ast::Class::
     if (usingRosetta)
         header <<THIS_LOCATION <<"        debugSerializationEnd(\"" <<c->name <<"\");\n";
     header <<"    }\n"
-           <<"#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB\n";
+           <<"#endif // ROSE_ENABLE_BOOST_SERIALIZATION\n";
 }
 
 void

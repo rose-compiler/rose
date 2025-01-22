@@ -13,7 +13,10 @@
 #include <Sawyer/Synchronization.h>
 
 #include <boost/filesystem.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
+#endif
 
 #include <set>
 #include <string>
@@ -38,7 +41,7 @@ private:
     SourceToAddress srcToAddr_;
 
 private:
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     friend class boost::serialization::access;
 
     template<class S>

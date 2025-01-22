@@ -11,7 +11,7 @@
 #include <Sawyer/Attribute.h>
 #include <Sawyer/SharedPointer.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -47,7 +47,7 @@ private:
     SourceLocation sourceLocation_;                     // optional location of data in source code
     
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -154,7 +154,9 @@ private:
 } // namespace
 
 // Class versions must be at global scope
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DataBlock, 3);
+#endif
 
 #endif
 #endif

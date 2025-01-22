@@ -174,7 +174,7 @@ class SgAsmX86Instruction: public SgAsmInstruction {
 #if defined(SgAsmX86Instruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmX86Instruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -192,7 +192,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_segmentOverride);
         debugSerializationEnd("SgAsmX86Instruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -341,7 +341,7 @@ class SgAsmVoidType: public SgAsmType {
 #if defined(SgAsmVoidType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmVoidType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -351,7 +351,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
         debugSerializationEnd("SgAsmVoidType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     static SgAsmVoidType* instance();
 
@@ -411,7 +411,7 @@ class SgAsmVectorType: public SgAsmType {
 #if defined(SgAsmVectorType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmVectorType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -423,7 +423,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elmtType);
         debugSerializationEnd("SgAsmVectorType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Number of elements in vector. 
@@ -502,7 +502,7 @@ class SgAsmUserInstruction: public SgAsmInstruction {
 #if defined(SgAsmUserInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUserInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -513,7 +513,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
         debugSerializationEnd("SgAsmUserInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -579,7 +579,7 @@ class SgAsmUnaryUnsignedExtend: public SgAsmUnaryExpression {
 #if defined(SgAsmUnaryUnsignedExtend_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnaryUnsignedExtend -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -589,7 +589,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         debugSerializationEnd("SgAsmUnaryUnsignedExtend");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -641,7 +641,7 @@ class SgAsmUnaryTruncate: public SgAsmUnaryExpression {
 #if defined(SgAsmUnaryTruncate_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnaryTruncate -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -651,7 +651,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         debugSerializationEnd("SgAsmUnaryTruncate");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -703,7 +703,7 @@ class SgAsmUnarySignedExtend: public SgAsmUnaryExpression {
 #if defined(SgAsmUnarySignedExtend_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnarySignedExtend -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -713,7 +713,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         debugSerializationEnd("SgAsmUnarySignedExtend");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -765,7 +765,7 @@ class SgAsmUnaryRrx: public SgAsmUnaryExpression {
 #if defined(SgAsmUnaryRrx_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnaryRrx -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -775,7 +775,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         debugSerializationEnd("SgAsmUnaryRrx");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -823,7 +823,7 @@ class SgAsmUnaryPlus: public SgAsmUnaryExpression {
 #if defined(SgAsmUnaryPlus_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnaryPlus -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -833,7 +833,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         debugSerializationEnd("SgAsmUnaryPlus");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -881,7 +881,7 @@ class SgAsmUnaryMinus: public SgAsmUnaryExpression {
 #if defined(SgAsmUnaryMinus_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnaryMinus -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -891,7 +891,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         debugSerializationEnd("SgAsmUnaryMinus");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -963,7 +963,7 @@ class SgAsmUnaryExpression: public SgAsmExpression {
 #if defined(SgAsmUnaryExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmUnaryExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -974,7 +974,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_operand);
         debugSerializationEnd("SgAsmUnaryExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Operand for a unary expression. 
@@ -1046,7 +1046,7 @@ class SgAsmSynthesizedFieldDeclaration: public SgAsmSynthesizedDeclaration {
 #if defined(SgAsmSynthesizedFieldDeclaration_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmSynthesizedFieldDeclaration -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1058,7 +1058,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_offset);
         debugSerializationEnd("SgAsmSynthesizedFieldDeclaration");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Name. 
@@ -1137,7 +1137,7 @@ class SgAsmSynthesizedDataStructureDeclaration: public SgAsmSynthesizedDeclarati
 #if defined(SgAsmSynthesizedDataStructureDeclaration_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmSynthesizedDataStructureDeclaration -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1147,7 +1147,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
         debugSerializationEnd("SgAsmSynthesizedDataStructureDeclaration");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 protected:
       SgAsmSynthesizedDeclarationPtrList p_declarationList;
 
@@ -1226,7 +1226,7 @@ class SgAsmStringStorage: public SgAsmExecutableFileFormat {
 #if defined(SgAsmStringStorage_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmStringStorage -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1239,7 +1239,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_offset);
         debugSerializationEnd("SgAsmStringStorage");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: String table holding the string. 
@@ -1325,7 +1325,7 @@ class SgAsmStoredString: public SgAsmGenericString {
 #if defined(SgAsmStoredString_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmStoredString -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1336,7 +1336,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_storage);
         debugSerializationEnd("SgAsmStoredString");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Storage area for this string. 
@@ -1439,7 +1439,7 @@ class SgAsmStaticData: public SgAsmStatement {
 #if defined(SgAsmStaticData_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmStaticData -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1450,7 +1450,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         debugSerializationEnd("SgAsmStaticData");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Raw bytes.
@@ -1526,7 +1526,7 @@ class SgAsmStackExpression: public SgAsmExpression {
 #if defined(SgAsmStackExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmStackExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1537,7 +1537,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_stackPosition);
         debugSerializationEnd("SgAsmStackExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Position of element referenced on the stack.
@@ -1627,7 +1627,7 @@ class SgAsmRiscOperation: public SgAsmExpression {
 #if defined(SgAsmRiscOperation_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmRiscOperation -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1639,7 +1639,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_operands);
         debugSerializationEnd("SgAsmRiscOperation");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1797,7 +1797,7 @@ class SgAsmRegisterNames: public SgAsmExpression {
 #if defined(SgAsmRegisterNames_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmRegisterNames -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1809,7 +1809,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_mask);
         debugSerializationEnd("SgAsmRegisterNames");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of registers.
@@ -1887,7 +1887,7 @@ class SgAsmPowerpcInstruction: public SgAsmInstruction {
 #if defined(SgAsmPowerpcInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPowerpcInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1898,7 +1898,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
         debugSerializationEnd("SgAsmPowerpcInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -1980,7 +1980,7 @@ class SgAsmPointerType: public SgAsmScalarType {
 #if defined(SgAsmPointerType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPointerType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -1991,7 +1991,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_subtype);
         debugSerializationEnd("SgAsmPointerType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmType * const& get_subtype() const;
@@ -2053,7 +2053,7 @@ class SgAsmPEStringSection: public SgAsmPESection {
 #if defined(SgAsmPEStringSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEStringSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2064,7 +2064,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_strtab);
         debugSerializationEnd("SgAsmPEStringSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: String table.
@@ -2124,7 +2124,7 @@ class SgAsmPESectionTable: public SgAsmGenericSection {
 #if defined(SgAsmPESectionTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2134,7 +2134,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         debugSerializationEnd("SgAsmPESectionTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     explicit SgAsmPESectionTable(SgAsmPEFileHeader*);
     virtual SgAsmPESectionTable* parse() override;
@@ -2249,7 +2249,7 @@ class SgAsmPESectionTableEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPESectionTableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPESectionTableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2268,7 +2268,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_flags);
         debugSerializationEnd("SgAsmPESectionTableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2498,7 +2498,7 @@ class SgAsmPERVASizePairList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPERVASizePairList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPERVASizePairList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2509,7 +2509,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_pairs);
         debugSerializationEnd("SgAsmPERVASizePairList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to other nodes. 
@@ -2586,7 +2586,7 @@ class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPERVASizePair_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPERVASizePair -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2599,7 +2599,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_section);
         debugSerializationEnd("SgAsmPERVASizePair");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2871,7 +2871,7 @@ class SgAsmPEImportSection: public SgAsmPESection {
 #if defined(SgAsmPEImportSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEImportSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2882,7 +2882,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_importDirectories);
         debugSerializationEnd("SgAsmPEImportSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of import directories.
@@ -2987,7 +2987,7 @@ class SgAsmPEImportItemList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEImportItemList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEImportItemList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -2998,7 +2998,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_vector);
         debugSerializationEnd("SgAsmPEImportItemList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to other nodes. 
@@ -3114,7 +3114,7 @@ class SgAsmPEImportItem: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEImportItem_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEImportItem -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -3132,7 +3132,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_iat_written);
         debugSerializationEnd("SgAsmPEImportItem");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Whether ordinal number is stored.
@@ -3301,7 +3301,7 @@ class SgAsmPEImportDirectoryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEImportDirectoryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEImportDirectoryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -3312,7 +3312,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_vector);
         debugSerializationEnd("SgAsmPEImportDirectoryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of nodes.
@@ -3442,7 +3442,7 @@ class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEImportDirectory_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEImportDirectory -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -3462,7 +3462,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_imports);
         debugSerializationEnd("SgAsmPEImportDirectory");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3944,7 +3944,7 @@ class SgAsmPEFileHeader: public SgAsmGenericHeader {
 #if defined(SgAsmPEFileHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEFileHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -3992,7 +3992,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_coffSymbolTable);
         debugSerializationEnd("SgAsmPEFileHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4654,7 +4654,7 @@ class SgAsmPEExportSection: public SgAsmPESection {
 #if defined(SgAsmPEExportSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEExportSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -4666,7 +4666,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_exports);
         debugSerializationEnd("SgAsmPEExportSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Export directory.
@@ -4787,7 +4787,7 @@ class SgAsmPESection: public SgAsmGenericSection {
 #if defined(SgAsmPESection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPESection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -4798,7 +4798,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_section_entry);
         debugSerializationEnd("SgAsmPESection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Section table entry.
@@ -4882,7 +4882,7 @@ class SgAsmPEExportEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEExportEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEExportEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -4893,7 +4893,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_exports);
         debugSerializationEnd("SgAsmPEExportEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to nodes. 
@@ -4976,7 +4976,7 @@ class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEExportEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEExportEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -4990,7 +4990,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_forwarder);
         debugSerializationEnd("SgAsmPEExportEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Name.
@@ -5174,7 +5174,7 @@ class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
 #if defined(SgAsmPEExportDirectory_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmPEExportDirectory -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5196,7 +5196,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
         debugSerializationEnd("SgAsmPEExportDirectory");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5412,7 +5412,7 @@ class SgAsmOperandList: public SgAsmNode {
 #if defined(SgAsmOperandList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmOperandList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5423,7 +5423,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_operands);
         debugSerializationEnd("SgAsmOperandList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Ordered list of instruction operands.
@@ -5486,7 +5486,7 @@ class SgAsmNullInstruction: public SgAsmInstruction {
 #if defined(SgAsmNullInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNullInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5496,7 +5496,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         debugSerializationEnd("SgAsmNullInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     // there's only one kind of null instruction
     enum Kind { null_unknown };
@@ -5549,7 +5549,7 @@ class SgAsmNEStringTable: public SgAsmGenericSection {
 #if defined(SgAsmNEStringTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNEStringTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5559,7 +5559,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         debugSerializationEnd("SgAsmNEStringTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
@@ -5629,7 +5629,7 @@ class SgAsmNESectionTable: public SgAsmGenericSection {
 #if defined(SgAsmNESectionTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5643,7 +5643,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_virtualSize);
         debugSerializationEnd("SgAsmNESectionTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     unsigned const& get_flags() const;
@@ -5738,7 +5738,7 @@ class SgAsmNESectionTableEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmNESectionTableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNESectionTableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5752,7 +5752,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_virtualSize);
         debugSerializationEnd("SgAsmNESectionTableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5893,7 +5893,7 @@ class SgAsmNESection: public SgAsmGenericSection {
 #if defined(SgAsmNESection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNESection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5905,7 +5905,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_relocationTable);
         debugSerializationEnd("SgAsmNESection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmNESectionTableEntry* const& get_sectionTableEntry() const;
@@ -5974,7 +5974,7 @@ class SgAsmNERelocTable: public SgAsmGenericSection {
 #if defined(SgAsmNERelocTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNERelocTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -5985,7 +5985,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmNERelocTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmNERelocEntryPtrList const& get_entries() const;
@@ -6090,7 +6090,7 @@ class SgAsmNERelocEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmNERelocEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNERelocEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -6109,7 +6109,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_osfixup);
         debugSerializationEnd("SgAsmNERelocEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6157,7 +6157,7 @@ public:
         unsigned    res1;           /* reserved */
         rose_addr_t tgt_offset;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(sect_idx);
@@ -6177,7 +6177,7 @@ public:
         unsigned    ordinal;
         rose_addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(modref);
@@ -6197,7 +6197,7 @@ public:
         unsigned    nm_off;         /* offset into import procedure names */
         rose_addr_t      addend;    /* value to add (only present for flags & RF_2EXTRA) */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(modref);
@@ -6216,7 +6216,7 @@ public:
         unsigned    type;
         unsigned    res3;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(type);
@@ -6329,7 +6329,7 @@ class SgAsmNENameTable: public SgAsmGenericSection {
 #if defined(SgAsmNENameTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNENameTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -6341,7 +6341,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_ordinals);
         debugSerializationEnd("SgAsmNENameTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgStringList const& get_names() const;
@@ -6427,7 +6427,7 @@ class SgAsmNEModuleTable: public SgAsmGenericSection {
 #if defined(SgAsmNEModuleTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNEModuleTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -6440,7 +6440,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_names);
         debugSerializationEnd("SgAsmNEModuleTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmNEStringTable* const& get_strtab() const;
@@ -6728,7 +6728,7 @@ class SgAsmNEFileHeader: public SgAsmGenericHeader {
 #if defined(SgAsmNEFileHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNEFileHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -6773,7 +6773,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entryTable);
         debugSerializationEnd("SgAsmNEFileHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7083,7 +7083,7 @@ class SgAsmNEEntryTable: public SgAsmGenericSection {
 #if defined(SgAsmNEEntryTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNEEntryTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7095,7 +7095,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmNEEntryTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgSizeTList const& get_bundle_sizes() const;
@@ -7175,7 +7175,7 @@ class SgAsmNEEntryPoint: public SgAsmExecutableFileFormat {
 #if defined(SgAsmNEEntryPoint_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNEEntryPoint -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7189,7 +7189,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sectionOffset);
         debugSerializationEnd("SgAsmNEEntryPoint");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7288,7 +7288,7 @@ class SgAsmMipsInstruction: public SgAsmInstruction {
 #if defined(SgAsmMipsInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmMipsInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7299,7 +7299,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
         debugSerializationEnd("SgAsmMipsInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -7374,7 +7374,7 @@ class SgAsmMemoryReferenceExpression: public SgAsmExpression {
 #if defined(SgAsmMemoryReferenceExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmMemoryReferenceExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7386,7 +7386,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_segment);
         debugSerializationEnd("SgAsmMemoryReferenceExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Memory address expression.
@@ -7475,7 +7475,7 @@ class SgAsmM68kInstruction: public SgAsmInstruction {
 #if defined(SgAsmM68kInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmM68kInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7487,7 +7487,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_dataFormat);
         debugSerializationEnd("SgAsmM68kInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -7558,7 +7558,7 @@ class SgAsmLESectionTable: public SgAsmGenericSection {
 #if defined(SgAsmLESectionTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7568,7 +7568,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         debugSerializationEnd("SgAsmLESectionTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
@@ -7655,7 +7655,7 @@ class SgAsmLESectionTableEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmLESectionTableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLESectionTableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7671,7 +7671,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_baseAddr);
         debugSerializationEnd("SgAsmLESectionTableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7832,7 +7832,7 @@ class SgAsmLESection: public SgAsmGenericSection {
 #if defined(SgAsmLESection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLESection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7843,7 +7843,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sectionTableEntry);
         debugSerializationEnd("SgAsmLESection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmLESectionTableEntry* const& get_sectionTableEntry() const;
@@ -7905,7 +7905,7 @@ class SgAsmLERelocTable: public SgAsmGenericSection {
 #if defined(SgAsmLERelocTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLERelocTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7916,7 +7916,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmLERelocTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmLERelocEntryPtrList const& get_entries() const;
@@ -7972,7 +7972,7 @@ class SgAsmLEPageTable: public SgAsmGenericSection {
 #if defined(SgAsmLEPageTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLEPageTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -7983,7 +7983,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmLEPageTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmLEPageTableEntryPtrList const& get_entries() const;
@@ -8052,7 +8052,7 @@ class SgAsmLEPageTableEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmLEPageTableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLEPageTableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -8064,7 +8064,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_flags);
         debugSerializationEnd("SgAsmLEPageTableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8167,7 +8167,7 @@ class SgAsmLENameTable: public SgAsmGenericSection {
 #if defined(SgAsmLENameTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLENameTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -8179,7 +8179,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_ordinals);
         debugSerializationEnd("SgAsmLENameTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgStringList const& get_names() const;
@@ -8569,7 +8569,7 @@ class SgAsmLEFileHeader: public SgAsmGenericHeader {
 #if defined(SgAsmLEFileHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLEFileHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -8632,7 +8632,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_relocationTable);
         debugSerializationEnd("SgAsmLEFileHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9024,7 +9024,7 @@ class SgAsmLEEntryTable: public SgAsmGenericSection {
 #if defined(SgAsmLEEntryTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLEEntryTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9036,7 +9036,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmLEEntryTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgSizeTList const& get_bundle_sizes() const;
@@ -9133,7 +9133,7 @@ class SgAsmLEEntryPoint: public SgAsmExecutableFileFormat {
 #if defined(SgAsmLEEntryPoint_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmLEEntryPoint -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9149,7 +9149,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entry_offset);
         debugSerializationEnd("SgAsmLEEntryPoint");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9276,7 +9276,7 @@ class SgAsmJvmStackMapVerificationType: public SgAsmJvmNode {
 #if defined(SgAsmJvmStackMapVerificationType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmStackMapVerificationType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9289,7 +9289,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_offset);
         debugSerializationEnd("SgAsmJvmStackMapVerificationType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     /** StackMapVerificationType tags.
      *
@@ -9464,7 +9464,7 @@ class SgAsmJvmStackMapTable: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmStackMapTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmStackMapTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9475,7 +9475,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmJvmStackMapTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9578,7 +9578,7 @@ class SgAsmJvmStackMapFrame: public SgAsmJvmNode {
 #if defined(SgAsmJvmStackMapFrame_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmStackMapFrame -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9592,7 +9592,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_offset_delta);
         debugSerializationEnd("SgAsmJvmStackMapFrame");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 private:
 public:
 public:
@@ -9754,7 +9754,7 @@ class SgAsmJvmSourceFile: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmSourceFile_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmSourceFile -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9765,7 +9765,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sourcefile_index);
         debugSerializationEnd("SgAsmJvmSourceFile");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: sourcefile_index
@@ -9841,7 +9841,7 @@ class SgAsmJvmSignature: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmSignature_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmSignature -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9852,7 +9852,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_signature_index);
         debugSerializationEnd("SgAsmJvmSignature");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: signature_index
@@ -9934,7 +9934,7 @@ class SgAsmJvmNestMembers: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmNestMembers_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmNestMembers -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -9945,7 +9945,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_classes);
         debugSerializationEnd("SgAsmJvmNestMembers");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: classes
@@ -10024,7 +10024,7 @@ class SgAsmJvmNestHost: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmNestHost_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmNestHost -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10035,7 +10035,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_host_class_index);
         debugSerializationEnd("SgAsmJvmNestHost");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: classes
@@ -10114,7 +10114,7 @@ class SgAsmJvmModuleMainClass: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmModuleMainClass_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmModuleMainClass -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10125,7 +10125,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_main_class_index);
         debugSerializationEnd("SgAsmJvmModuleMainClass");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: main_class_index
@@ -10202,7 +10202,7 @@ class SgAsmJvmMethodTable: public SgAsmGenericSection {
 #if defined(SgAsmJvmMethodTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmMethodTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10213,7 +10213,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_methods);
         debugSerializationEnd("SgAsmJvmMethodTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to methods. 
@@ -10297,7 +10297,7 @@ class SgAsmJvmMethodParameters: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmMethodParameters_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmMethodParameters -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10308,7 +10308,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_parameters);
         debugSerializationEnd("SgAsmJvmMethodParameters");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: parameters
@@ -10391,7 +10391,7 @@ class SgAsmJvmMethodParametersEntry: public SgAsmJvmNode {
 #if defined(SgAsmJvmMethodParametersEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmMethodParametersEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10403,7 +10403,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_access_flags);
         debugSerializationEnd("SgAsmJvmMethodParametersEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: name_index
@@ -10522,7 +10522,7 @@ class SgAsmJvmMethod: public SgAsmJvmNode {
 #if defined(SgAsmJvmMethod_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmMethod -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10537,7 +10537,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_instruction_list);
         debugSerializationEnd("SgAsmJvmMethod");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: access_flags
@@ -10658,7 +10658,7 @@ class SgAsmJvmLocalVariableTypeTable: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmLocalVariableTypeTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmLocalVariableTypeTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10669,7 +10669,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_local_variable_type_table);
         debugSerializationEnd("SgAsmJvmLocalVariableTypeTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: local_variable_table
@@ -10769,7 +10769,7 @@ class SgAsmJvmLocalVariableTypeEntry: public SgAsmJvmNode {
 #if defined(SgAsmJvmLocalVariableTypeEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmLocalVariableTypeEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10784,7 +10784,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_index);
         debugSerializationEnd("SgAsmJvmLocalVariableTypeEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: start_pc
@@ -10914,7 +10914,7 @@ class SgAsmJvmLocalVariableTable: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmLocalVariableTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmLocalVariableTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -10925,7 +10925,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_local_variable_table);
         debugSerializationEnd("SgAsmJvmLocalVariableTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: local_variable_table
@@ -11025,7 +11025,7 @@ class SgAsmJvmLocalVariableEntry: public SgAsmJvmNode {
 #if defined(SgAsmJvmLocalVariableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmLocalVariableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11040,7 +11040,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_index);
         debugSerializationEnd("SgAsmJvmLocalVariableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: start_pc
@@ -11170,7 +11170,7 @@ class SgAsmJvmLineNumberTable: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmLineNumberTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmLineNumberTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11181,7 +11181,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_line_number_table);
         debugSerializationEnd("SgAsmJvmLineNumberTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: line_number_table
@@ -11263,7 +11263,7 @@ class SgAsmJvmLineNumberEntry: public SgAsmJvmNode {
 #if defined(SgAsmJvmLineNumberEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmLineNumberEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11275,7 +11275,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_line_number);
         debugSerializationEnd("SgAsmJvmLineNumberEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: start_pc
@@ -11363,7 +11363,7 @@ class SgAsmJvmInstruction: public SgAsmInstruction {
 #if defined(SgAsmJvmInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11374,7 +11374,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
         debugSerializationEnd("SgAsmJvmInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -11452,7 +11452,7 @@ class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmInnerClasses_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmInnerClasses -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11463,7 +11463,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_classes);
         debugSerializationEnd("SgAsmJvmInnerClasses");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to InnerClasses attribute entry. 
@@ -11559,7 +11559,7 @@ class SgAsmJvmInnerClassesEntry: public SgAsmJvmNode {
 #if defined(SgAsmJvmInnerClassesEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmInnerClassesEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11573,7 +11573,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_inner_class_access_flags);
         debugSerializationEnd("SgAsmJvmInnerClassesEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: inner_class_info_index.
@@ -11740,7 +11740,7 @@ class SgAsmJvmFileHeader: public SgAsmGenericHeader {
 #if defined(SgAsmJvmFileHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmFileHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11760,7 +11760,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_attribute_table);
         debugSerializationEnd("SgAsmJvmFileHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Minor version.
@@ -11948,7 +11948,7 @@ class SgAsmJvmFieldTable: public SgAsmGenericSection {
 #if defined(SgAsmJvmFieldTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmFieldTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -11959,7 +11959,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_fields);
         debugSerializationEnd("SgAsmJvmFieldTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to fields. 
@@ -12060,7 +12060,7 @@ class SgAsmJvmField: public SgAsmJvmNode {
 #if defined(SgAsmJvmField_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmField -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12074,7 +12074,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_attribute_table);
         debugSerializationEnd("SgAsmJvmField");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: access_flags
@@ -12184,7 +12184,7 @@ class SgAsmJvmExceptionTable: public SgAsmJvmNode {
 #if defined(SgAsmJvmExceptionTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmExceptionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12195,7 +12195,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_handlers);
         debugSerializationEnd("SgAsmJvmExceptionTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to exceptions. 
@@ -12279,7 +12279,7 @@ class SgAsmJvmExceptions: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmExceptions_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmExceptions -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12290,7 +12290,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_exception_index_table);
         debugSerializationEnd("SgAsmJvmExceptions");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: exception_index_table
@@ -12385,7 +12385,7 @@ class SgAsmJvmExceptionHandler: public SgAsmJvmNode {
 #if defined(SgAsmJvmExceptionHandler_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmExceptionHandler -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12399,7 +12399,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_catch_type);
         debugSerializationEnd("SgAsmJvmExceptionHandler");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: start_pc
@@ -12516,7 +12516,7 @@ class SgAsmJvmEnclosingMethod: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmEnclosingMethod_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmEnclosingMethod -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12528,7 +12528,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_method_index);
         debugSerializationEnd("SgAsmJvmEnclosingMethod");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: class_index
@@ -12615,7 +12615,7 @@ class SgAsmJvmConstantValue: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmConstantValue_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmConstantValue -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12626,7 +12626,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_constantvalue_index);
         debugSerializationEnd("SgAsmJvmConstantValue");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: constantvalue_index
@@ -12703,7 +12703,7 @@ class SgAsmJvmConstantPool: public SgAsmGenericSection {
 #if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmConstantPool -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12714,7 +12714,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmJvmConstantPool");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of constant pool entries. 
@@ -12887,7 +12887,7 @@ class SgAsmJvmConstantPoolEntry: public SgAsmJvmNode {
 #if defined(SgAsmJvmConstantPoolEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmConstantPoolEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -12910,7 +12910,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_length);
         debugSerializationEnd("SgAsmJvmConstantPoolEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13317,7 +13317,7 @@ class SgAsmJvmCodeAttribute: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmCodeAttribute_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmCodeAttribute -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13333,7 +13333,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_code_offset);
         debugSerializationEnd("SgAsmJvmCodeAttribute");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: max_stack
@@ -13466,7 +13466,7 @@ class SgAsmJvmClass: public SgAsmJvmNode {
 #if defined(SgAsmJvmClass_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmClass -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13476,7 +13476,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         debugSerializationEnd("SgAsmJvmClass");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -13534,7 +13534,7 @@ class SgAsmJvmBootstrapMethods: public SgAsmJvmAttribute {
 #if defined(SgAsmJvmBootstrapMethods_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmBootstrapMethods -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13545,7 +13545,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_bootstrap_methods);
         debugSerializationEnd("SgAsmJvmBootstrapMethods");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13638,7 +13638,7 @@ class SgAsmJvmBootstrapMethod: public SgAsmJvmNode {
 #if defined(SgAsmJvmBootstrapMethod_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmBootstrapMethod -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13650,7 +13650,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_bootstrap_arguments);
         debugSerializationEnd("SgAsmJvmBootstrapMethod");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: bootstrap_method_ref.
@@ -13739,7 +13739,7 @@ class SgAsmJvmAttributeTable: public SgAsmGenericSection {
 #if defined(SgAsmJvmAttributeTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmAttributeTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13750,7 +13750,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_attributes);
         debugSerializationEnd("SgAsmJvmAttributeTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to attributes. 
@@ -13861,7 +13861,7 @@ class SgAsmJvmAttribute: public SgAsmJvmNode {
 #if defined(SgAsmJvmAttribute_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmAttribute -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13873,7 +13873,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_attribute_length);
         debugSerializationEnd("SgAsmJvmAttribute");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: attribute_name_index
@@ -13976,7 +13976,7 @@ class SgAsmJvmNode: public SgAsmNode {
 #if defined(SgAsmJvmNode_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmJvmNode -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -13986,7 +13986,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         debugSerializationEnd("SgAsmJvmNode");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Write node to a binary file. */
     virtual void unparse(std::ostream&) const;
@@ -14045,7 +14045,7 @@ class SgAsmInterpretationList: public SgAsmNode {
 #if defined(SgAsmInterpretationList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmInterpretationList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14056,7 +14056,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_interpretations);
         debugSerializationEnd("SgAsmInterpretationList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Interpretation list.
@@ -14153,7 +14153,7 @@ class SgAsmInterpretation: public SgAsmNode {
 #if defined(SgAsmInterpretation_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmInterpretation -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14169,7 +14169,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_percentageCoverage);
         debugSerializationEnd("SgAsmInterpretation");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: File headers.
@@ -14338,7 +14338,7 @@ class SgAsmIntegerValueExpression: public SgAsmConstantExpression {
 #if defined(SgAsmIntegerValueExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmIntegerValueExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14349,7 +14349,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_baseNode);
         debugSerializationEnd("SgAsmIntegerValueExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Base node associated with an integer.
@@ -14499,7 +14499,7 @@ class SgAsmIntegerType: public SgAsmScalarType {
 #if defined(SgAsmIntegerType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmIntegerType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14510,7 +14510,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_isSigned);
         debugSerializationEnd("SgAsmIntegerType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: whether the integral type is signed or unsigned.
@@ -14589,7 +14589,7 @@ class SgAsmInstructionList: public SgAsmNode {
 #if defined(SgAsmInstructionList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmInstructionList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14600,7 +14600,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_instructions);
         debugSerializationEnd("SgAsmInstructionList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of @ref SgAsmInstruction entries.
@@ -14695,7 +14695,7 @@ class SgAsmIndirectRegisterExpression: public SgAsmRegisterReferenceExpression {
 #if defined(SgAsmIndirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmIndirectRegisterExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14709,7 +14709,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_modulus);
         debugSerializationEnd("SgAsmIndirectRegisterExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
    /** Property: Register descriptor stride.
@@ -14815,7 +14815,7 @@ class SgAsmGenericSymbolList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericSymbolList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericSymbolList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14826,7 +14826,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmGenericSymbolList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of symbol nodes. 
@@ -14893,7 +14893,7 @@ class SgAsmGenericSectionList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericSectionList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericSectionList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14904,7 +14904,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sections);
         debugSerializationEnd("SgAsmGenericSectionList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of section pointers. 
@@ -14971,7 +14971,7 @@ class SgAsmGenericHeaderList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericHeaderList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericHeaderList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -14982,7 +14982,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_headers);
         debugSerializationEnd("SgAsmGenericHeaderList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of file header nodes. 
@@ -15088,7 +15088,7 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericFormat_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericFormat -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -15106,7 +15106,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_wordSize);
         debugSerializationEnd("SgAsmGenericFormat");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Family. 
@@ -15244,7 +15244,7 @@ class SgAsmGenericFileList: public SgAsmNode {
 #if defined(SgAsmGenericFileList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericFileList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -15255,7 +15255,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_files);
         debugSerializationEnd("SgAsmGenericFileList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of AST node pointers. 
@@ -15312,6 +15312,8 @@ DECLARE_HEADERS(AsmGenericFile);
 #include <SgAsmGenericSectionList.h>
 #include <SgAsmGenericHeaderList.h>
 #endif
+
+#include <sys/stat.h>
 #endif // SgAsmGenericFile_HEADERS
 
 #ifdef DOCUMENTATION
@@ -15389,7 +15391,7 @@ class SgAsmGenericFile: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericFile_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericFile -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -15409,7 +15411,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_neuter);
         debugSerializationEnd("SgAsmGenericFile");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15909,7 +15911,7 @@ class SgAsmGenericDLLList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericDLLList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericDLLList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -15920,7 +15922,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_dlls);
         debugSerializationEnd("SgAsmGenericDLLList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of AST node pointers. 
@@ -15994,7 +15996,7 @@ class SgAsmGenericDLL: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericDLL_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericDLL -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -16006,7 +16008,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmGenericDLL");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Name.
@@ -16181,7 +16183,7 @@ class SgAsmFunction: public SgAsmSynthesizedDeclaration {
 #if defined(SgAsmFunction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmFunction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -16203,7 +16205,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_callingConvention);
         debugSerializationEnd("SgAsmFunction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16625,7 +16627,7 @@ class SgAsmSynthesizedDeclaration: public SgAsmStatement {
 #if defined(SgAsmSynthesizedDeclaration_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmSynthesizedDeclaration -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -16635,7 +16637,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         debugSerializationEnd("SgAsmSynthesizedDeclaration");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -16686,7 +16688,7 @@ class SgAsmFloatValueExpression: public SgAsmConstantExpression {
 #if defined(SgAsmFloatValueExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmFloatValueExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -16698,7 +16700,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_nativeValueIsValid);
         debugSerializationEnd("SgAsmFloatValueExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     // This node stores its primary representation of the value in the p_bitVector of a parent class.  However, since we
     // often access the value as a native "double", and since converting to/from a bit vector is costly, we want to cache
@@ -16842,7 +16844,7 @@ class SgAsmFloatType: public SgAsmScalarType {
 #if defined(SgAsmFloatType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmFloatType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -16859,7 +16861,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_flags);
         debugSerializationEnd("SgAsmFloatType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Individual bit flags for this floating-point type. */
     enum Flag {
@@ -17024,7 +17026,7 @@ class SgAsmScalarType: public SgAsmType {
 #if defined(SgAsmScalarType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmScalarType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17038,7 +17040,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_nBits);
         debugSerializationEnd("SgAsmScalarType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
 
@@ -17139,7 +17141,7 @@ class SgAsmType: public SgAsmNode {
 #if defined(SgAsmType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17149,7 +17151,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         debugSerializationEnd("SgAsmType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;
 
@@ -17250,7 +17252,7 @@ class SgAsmExprListExp: public SgAsmExpression {
 #if defined(SgAsmExprListExp_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmExprListExp -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17261,7 +17263,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_expressions);
         debugSerializationEnd("SgAsmExprListExp");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Pointers to expressions.
@@ -17333,7 +17335,7 @@ class SgAsmElfSymverSection: public SgAsmElfSection {
 #if defined(SgAsmElfSymverSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17344,7 +17346,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of table entries.
@@ -17440,7 +17442,7 @@ class SgAsmElfSymverNeededSection: public SgAsmElfSection {
 #if defined(SgAsmElfSymverNeededSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverNeededSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17451,7 +17453,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverNeededSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries.
@@ -17555,7 +17557,7 @@ class SgAsmElfSymverNeededEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverNeededEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverNeededEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17566,7 +17568,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverNeededEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries. 
@@ -17647,7 +17649,7 @@ class SgAsmElfSymverNeededEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverNeededEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverNeededEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17660,7 +17662,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverNeededEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17796,7 +17798,7 @@ class SgAsmElfSymverNeededAuxList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverNeededAuxList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverNeededAuxList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17807,7 +17809,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverNeededAuxList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries. 
@@ -17893,7 +17895,7 @@ class SgAsmElfSymverNeededAux: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverNeededAux_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverNeededAux -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -17907,7 +17909,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
         debugSerializationEnd("SgAsmElfSymverNeededAux");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18052,7 +18054,7 @@ class SgAsmElfSymverEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18063,7 +18065,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of symbol version table entries. 
@@ -18122,7 +18124,7 @@ class SgAsmElfSymverEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18133,7 +18135,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_value);
         debugSerializationEnd("SgAsmElfSymverEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Value.
@@ -18209,7 +18211,7 @@ class SgAsmElfSymverDefinedSection: public SgAsmElfSection {
 #if defined(SgAsmElfSymverDefinedSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverDefinedSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18220,7 +18222,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverDefinedSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries.
@@ -18380,7 +18382,7 @@ class SgAsmElfSymverDefinedEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverDefinedEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverDefinedEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18391,7 +18393,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverDefinedEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of table entries. 
@@ -18483,7 +18485,7 @@ class SgAsmElfSymverDefinedEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverDefinedEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverDefinedEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18498,7 +18500,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverDefinedEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18650,7 +18652,7 @@ class SgAsmElfSymverDefinedAuxList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverDefinedAuxList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverDefinedAuxList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18661,7 +18663,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverDefinedAuxList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries. 
@@ -18729,7 +18731,7 @@ class SgAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymverDefinedAux_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymverDefinedAux -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18740,7 +18742,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
         debugSerializationEnd("SgAsmElfSymverDefinedAux");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18856,7 +18858,7 @@ class SgAsmElfSymbolSection: public SgAsmElfSection {
 #if defined(SgAsmElfSymbolSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymbolSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -18868,7 +18870,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmElfSymbolSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Whether this section represents dynamic linking symbols. 
@@ -18991,7 +18993,7 @@ class SgAsmElfSymbolList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSymbolList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymbolList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19002,7 +19004,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmElfSymbolList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Symbol list.
@@ -19097,7 +19099,7 @@ class SgAsmElfSymbol: public SgAsmGenericSymbol {
 #if defined(SgAsmElfSymbol_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSymbol -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19112,7 +19114,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
         debugSerializationEnd("SgAsmElfSymbol");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19321,7 +19323,7 @@ class SgAsmElfStrtab: public SgAsmGenericStrtab {
 #if defined(SgAsmElfStrtab_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfStrtab -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19331,7 +19333,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
         debugSerializationEnd("SgAsmElfStrtab");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Non-parsing constructor.
      *
@@ -19439,7 +19441,7 @@ class SgAsmElfStringSection: public SgAsmElfSection {
 #if defined(SgAsmElfStringSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfStringSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19450,7 +19452,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_strtab);
         debugSerializationEnd("SgAsmElfStringSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: String table.
@@ -19534,7 +19536,7 @@ class SgAsmElfSegmentTable: public SgAsmGenericSection {
 #if defined(SgAsmElfSegmentTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSegmentTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19544,7 +19546,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         debugSerializationEnd("SgAsmElfSegmentTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Constuct segment table linked into the AST. */
     explicit SgAsmElfSegmentTable(SgAsmElfFileHeader*);
@@ -19641,7 +19643,7 @@ class SgAsmElfSegmentTableEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSegmentTableEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSegmentTableEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19652,7 +19654,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSegmentTableEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Segment table entries.
@@ -19774,7 +19776,7 @@ class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSegmentTableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSegmentTableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -19794,7 +19796,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
         debugSerializationEnd("SgAsmElfSegmentTableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20066,7 +20068,7 @@ class SgAsmElfSectionTable: public SgAsmGenericSection {
 #if defined(SgAsmElfSectionTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -20076,7 +20078,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         debugSerializationEnd("SgAsmElfSectionTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Constructor creates section table within the AST. */
     explicit SgAsmElfSectionTable(SgAsmElfFileHeader*);
@@ -20233,7 +20235,7 @@ class SgAsmElfSectionTableEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfSectionTableEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSectionTableEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -20254,7 +20256,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
         debugSerializationEnd("SgAsmElfSectionTableEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20568,7 +20570,7 @@ class SgAsmElfRelocSection: public SgAsmElfSection {
 #if defined(SgAsmElfRelocSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfRelocSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -20581,7 +20583,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfRelocSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Whether entries in this section use the addend format. 
@@ -20692,7 +20694,7 @@ class SgAsmElfRelocEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfRelocEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfRelocEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -20703,7 +20705,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfRelocEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of relocation entries. 
@@ -20792,7 +20794,7 @@ class SgAsmElfRelocEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfRelocEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfRelocEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -20807,7 +20809,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
         debugSerializationEnd("SgAsmElfRelocEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21073,7 +21075,7 @@ class SgAsmElfNoteSection: public SgAsmElfSection {
 #if defined(SgAsmElfNoteSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfNoteSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -21084,7 +21086,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfNoteSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of note entries.
@@ -21165,7 +21167,7 @@ class SgAsmElfNoteEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfNoteEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfNoteEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -21176,7 +21178,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfNoteEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of ELF not entries. 
@@ -21256,7 +21258,7 @@ class SgAsmElfNoteEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfNoteEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfNoteEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -21269,7 +21271,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_payload);
         debugSerializationEnd("SgAsmElfNoteEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Type of note.
@@ -21484,7 +21486,7 @@ class SgAsmElfFileHeader: public SgAsmGenericHeader {
 #if defined(SgAsmElfFileHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfFileHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -21509,7 +21511,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_segmentTable);
         debugSerializationEnd("SgAsmElfFileHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21878,7 +21880,7 @@ class SgAsmElfEHFrameSection: public SgAsmElfSection {
 #if defined(SgAsmElfEHFrameSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfEHFrameSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -21889,7 +21891,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_ci_entries);
         debugSerializationEnd("SgAsmElfEHFrameSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: CI entries.
@@ -21987,7 +21989,7 @@ class SgAsmElfEHFrameEntryFDList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfEHFrameEntryFDList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfEHFrameEntryFDList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -21998,7 +22000,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfEHFrameEntryFDList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to error handling frame descriptor entries. 
@@ -22081,7 +22083,7 @@ class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfEHFrameEntryFD_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfEHFrameEntryFD -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -22095,7 +22097,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_instructions);
         debugSerializationEnd("SgAsmElfEHFrameEntryFD");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Beginning relative virtual address.
@@ -22207,7 +22209,7 @@ class SgAsmElfEHFrameEntryCIList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfEHFrameEntryCIList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfEHFrameEntryCIList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -22218,7 +22220,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfEHFrameEntryCIList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of pointers to ELF EH frame CI entries. 
@@ -22366,7 +22368,7 @@ class SgAsmElfEHFrameEntryCI: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfEHFrameEntryCI_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfEHFrameEntryCI -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -22390,7 +22392,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_fd_entries);
         debugSerializationEnd("SgAsmElfEHFrameEntryCI");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Version number.
@@ -22600,7 +22602,7 @@ class SgAsmElfDynamicSection: public SgAsmElfSection {
 #if defined(SgAsmElfDynamicSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfDynamicSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -22611,7 +22613,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfDynamicSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries.
@@ -22741,7 +22743,7 @@ class SgAsmElfSection: public SgAsmGenericSection {
 #if defined(SgAsmElfSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -22754,7 +22756,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_segmentEntry);
         debugSerializationEnd("SgAsmElfSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Linked section.
@@ -22931,7 +22933,7 @@ class SgAsmElfDynamicEntryList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfDynamicEntryList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfDynamicEntryList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -22942,7 +22944,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfDynamicEntryList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of entries. 
@@ -23026,7 +23028,7 @@ class SgAsmElfDynamicEntry: public SgAsmExecutableFileFormat {
 #if defined(SgAsmElfDynamicEntry_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmElfDynamicEntry -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23040,7 +23042,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
         debugSerializationEnd("SgAsmElfDynamicEntry");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23258,7 +23260,7 @@ class SgAsmDwarfWithStmt: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfWithStmt_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfWithStmt -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23268,7 +23270,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfWithStmt");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23317,7 +23319,7 @@ class SgAsmDwarfVolatileType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfVolatileType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfVolatileType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23327,7 +23329,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfVolatileType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23376,7 +23378,7 @@ class SgAsmDwarfVariantPart: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfVariantPart_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfVariantPart -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23386,7 +23388,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfVariantPart");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23435,7 +23437,7 @@ class SgAsmDwarfVariant: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfVariant_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfVariant -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23445,7 +23447,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfVariant");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23494,7 +23496,7 @@ class SgAsmDwarfVariable: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfVariable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfVariable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23504,7 +23506,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfVariable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23553,7 +23555,7 @@ class SgAsmDwarfUpcStrictType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUpcStrictType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUpcStrictType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23563,7 +23565,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfUpcStrictType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23612,7 +23614,7 @@ class SgAsmDwarfUpcSharedType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUpcSharedType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUpcSharedType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23622,7 +23624,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfUpcSharedType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23671,7 +23673,7 @@ class SgAsmDwarfUpcRelaxedType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUpcRelaxedType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUpcRelaxedType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23681,7 +23683,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfUpcRelaxedType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23730,7 +23732,7 @@ class SgAsmDwarfUnspecifiedType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUnspecifiedType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUnspecifiedType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23740,7 +23742,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfUnspecifiedType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23789,7 +23791,7 @@ class SgAsmDwarfUnspecifiedParameters: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUnspecifiedParameters_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUnspecifiedParameters -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23799,7 +23801,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfUnspecifiedParameters");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23848,7 +23850,7 @@ class SgAsmDwarfUnknownConstruct: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUnknownConstruct_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUnknownConstruct -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23858,7 +23860,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfUnknownConstruct");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -23920,7 +23922,7 @@ class SgAsmDwarfUnionType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfUnionType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfUnionType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23931,7 +23933,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfUnionType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -23985,7 +23987,7 @@ class SgAsmDwarfTypedef: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfTypedef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfTypedef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -23995,7 +23997,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfTypedef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24044,7 +24046,7 @@ class SgAsmDwarfTryBlock: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfTryBlock_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfTryBlock -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24054,7 +24056,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfTryBlock");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24103,7 +24105,7 @@ class SgAsmDwarfThrownType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfThrownType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfThrownType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24113,7 +24115,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfThrownType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24162,7 +24164,7 @@ class SgAsmDwarfTemplateValueParameter: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfTemplateValueParameter_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfTemplateValueParameter -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24172,7 +24174,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfTemplateValueParameter");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24221,7 +24223,7 @@ class SgAsmDwarfTemplateTypeParameter: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfTemplateTypeParameter_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfTemplateTypeParameter -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24231,7 +24233,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfTemplateTypeParameter");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24293,7 +24295,7 @@ class SgAsmDwarfSubroutineType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfSubroutineType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfSubroutineType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24304,7 +24306,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfSubroutineType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -24358,7 +24360,7 @@ class SgAsmDwarfSubrangeType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfSubrangeType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfSubrangeType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24368,7 +24370,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfSubrangeType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24430,7 +24432,7 @@ class SgAsmDwarfSubprogram: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfSubprogram_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfSubprogram -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24441,7 +24443,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfSubprogram");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -24508,7 +24510,7 @@ class SgAsmDwarfStructureType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfStructureType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfStructureType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24519,7 +24521,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfStructureType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -24573,7 +24575,7 @@ class SgAsmDwarfStringType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfStringType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfStringType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24583,7 +24585,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfStringType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24632,7 +24634,7 @@ class SgAsmDwarfSharedType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfSharedType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfSharedType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24642,7 +24644,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfSharedType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24691,7 +24693,7 @@ class SgAsmDwarfSetType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfSetType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfSetType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24701,7 +24703,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfSetType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24750,7 +24752,7 @@ class SgAsmDwarfRestrictType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfRestrictType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfRestrictType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24760,7 +24762,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfRestrictType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24809,7 +24811,7 @@ class SgAsmDwarfReferenceType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfReferenceType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfReferenceType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24819,7 +24821,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfReferenceType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24868,7 +24870,7 @@ class SgAsmDwarfPtrToMemberType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfPtrToMemberType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfPtrToMemberType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24878,7 +24880,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfPtrToMemberType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24927,7 +24929,7 @@ class SgAsmDwarfPointerType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfPointerType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfPointerType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24937,7 +24939,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfPointerType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -24986,7 +24988,7 @@ class SgAsmDwarfPartialUnit: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfPartialUnit_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfPartialUnit -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -24996,7 +24998,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfPartialUnit");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25045,7 +25047,7 @@ class SgAsmDwarfPackedType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfPackedType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfPackedType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25055,7 +25057,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfPackedType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25117,7 +25119,7 @@ class SgAsmDwarfNamespace: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfNamespace_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfNamespace -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25128,7 +25130,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfNamespace");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -25182,7 +25184,7 @@ class SgAsmDwarfNamelistItem: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfNamelistItem_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfNamelistItem -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25192,7 +25194,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfNamelistItem");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25241,7 +25243,7 @@ class SgAsmDwarfNamelist: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfNamelist_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfNamelist -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25251,7 +25253,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfNamelist");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25300,7 +25302,7 @@ class SgAsmDwarfMutableType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfMutableType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfMutableType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25310,7 +25312,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfMutableType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25359,7 +25361,7 @@ class SgAsmDwarfModule: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfModule_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfModule -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25369,7 +25371,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfModule");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25418,7 +25420,7 @@ class SgAsmDwarfMember: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfMember_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfMember -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25428,7 +25430,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfMember");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25488,7 +25490,7 @@ class SgAsmDwarfMacroList: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfMacroList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfMacroList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25499,7 +25501,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_macro_list);
         debugSerializationEnd("SgAsmDwarfMacroList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfMacroPtrList const& get_macro_list() const;
@@ -25552,7 +25554,7 @@ class SgAsmDwarfMacro: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfMacro_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfMacro -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25563,7 +25565,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_macro_string);
         debugSerializationEnd("SgAsmDwarfMacro");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     std::string const& get_macro_string() const;
@@ -25621,7 +25623,7 @@ class SgAsmDwarfLineList: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfLineList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfLineList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25632,7 +25634,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_line_list);
         debugSerializationEnd("SgAsmDwarfLineList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfLinePtrList const& get_line_list() const;
@@ -25725,7 +25727,7 @@ class SgAsmDwarfLine: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfLine_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfLine -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25739,7 +25741,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_column);
         debugSerializationEnd("SgAsmDwarfLine");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     uint64_t const& get_address() const;
@@ -25819,7 +25821,7 @@ class SgAsmDwarfLexicalBlock: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfLexicalBlock_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfLexicalBlock -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25830,7 +25832,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfLexicalBlock");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -25884,7 +25886,7 @@ class SgAsmDwarfLabel: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfLabel_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfLabel -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25894,7 +25896,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfLabel");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -25943,7 +25945,7 @@ class SgAsmDwarfInterfaceType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfInterfaceType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfInterfaceType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -25953,7 +25955,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfInterfaceType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26015,7 +26017,7 @@ class SgAsmDwarfInlinedSubroutine: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfInlinedSubroutine_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfInlinedSubroutine -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26026,7 +26028,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfInlinedSubroutine");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -26080,7 +26082,7 @@ class SgAsmDwarfInheritance: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfInheritance_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfInheritance -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26090,7 +26092,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfInheritance");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26139,7 +26141,7 @@ class SgAsmDwarfImportedUnit: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfImportedUnit_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfImportedUnit -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26149,7 +26151,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfImportedUnit");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26198,7 +26200,7 @@ class SgAsmDwarfImportedModule: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfImportedModule_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfImportedModule -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26208,7 +26210,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfImportedModule");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26257,7 +26259,7 @@ class SgAsmDwarfImportedDeclaration: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfImportedDeclaration_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfImportedDeclaration -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26267,7 +26269,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfImportedDeclaration");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26316,7 +26318,7 @@ class SgAsmDwarfFunctionTemplate: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfFunctionTemplate_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfFunctionTemplate -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26326,7 +26328,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfFunctionTemplate");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26375,7 +26377,7 @@ class SgAsmDwarfFriend: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfFriend_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfFriend -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26385,7 +26387,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfFriend");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26434,7 +26436,7 @@ class SgAsmDwarfFormatLabel: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfFormatLabel_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfFormatLabel -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26444,7 +26446,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfFormatLabel");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26493,7 +26495,7 @@ class SgAsmDwarfFormalParameter: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfFormalParameter_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfFormalParameter -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26503,7 +26505,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfFormalParameter");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26552,7 +26554,7 @@ class SgAsmDwarfFileType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfFileType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfFileType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26562,7 +26564,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfFileType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26611,7 +26613,7 @@ class SgAsmDwarfEnumerator: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfEnumerator_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfEnumerator -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26621,7 +26623,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfEnumerator");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26683,7 +26685,7 @@ class SgAsmDwarfEnumerationType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfEnumerationType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfEnumerationType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26694,7 +26696,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfEnumerationType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -26748,7 +26750,7 @@ class SgAsmDwarfEntryPoint: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfEntryPoint_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfEntryPoint -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26758,7 +26760,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfEntryPoint");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26807,7 +26809,7 @@ class SgAsmDwarfDwarfProcedure: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfDwarfProcedure_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfDwarfProcedure -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26817,7 +26819,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfDwarfProcedure");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26866,7 +26868,7 @@ class SgAsmDwarfConstType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfConstType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfConstType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26876,7 +26878,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfConstType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -26936,7 +26938,7 @@ class SgAsmDwarfConstructList: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfConstructList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfConstructList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -26947,7 +26949,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_list);
         debugSerializationEnd("SgAsmDwarfConstructList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructPtrList const& get_list() const;
@@ -26995,7 +26997,7 @@ class SgAsmDwarfConstant: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfConstant_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfConstant -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27005,7 +27007,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfConstant");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -27054,7 +27056,7 @@ class SgAsmDwarfCondition: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfCondition_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfCondition -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27064,7 +27066,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfCondition");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -27124,7 +27126,7 @@ class SgAsmDwarfCompilationUnitList: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfCompilationUnitList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfCompilationUnitList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27135,7 +27137,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_cu_list);
         debugSerializationEnd("SgAsmDwarfCompilationUnitList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfCompilationUnitPtrList const& get_cu_list() const;
@@ -27258,7 +27260,7 @@ class SgAsmDwarfCompilationUnit: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfCompilationUnit_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfCompilationUnit -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27279,7 +27281,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_macro_info);
         debugSerializationEnd("SgAsmDwarfCompilationUnit");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     std::string const& get_producer() const;
@@ -27373,7 +27375,7 @@ class SgAsmDwarfCommonInclusion: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfCommonInclusion_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfCommonInclusion -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27383,7 +27385,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfCommonInclusion");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -27445,7 +27447,7 @@ class SgAsmDwarfCommonBlock: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfCommonBlock_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfCommonBlock -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27456,7 +27458,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfCommonBlock");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -27523,7 +27525,7 @@ class SgAsmDwarfClassType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfClassType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfClassType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27534,7 +27536,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfClassType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -27588,7 +27590,7 @@ class SgAsmDwarfClassTemplate: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfClassTemplate_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfClassTemplate -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27598,7 +27600,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfClassTemplate");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -27647,7 +27649,7 @@ class SgAsmDwarfCatchBlock: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfCatchBlock_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfCatchBlock -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27657,7 +27659,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfCatchBlock");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -27706,7 +27708,7 @@ class SgAsmDwarfBaseType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfBaseType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfBaseType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27716,7 +27718,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfBaseType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -27778,7 +27780,7 @@ class SgAsmDwarfArrayType: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfArrayType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfArrayType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27789,7 +27791,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_body);
         debugSerializationEnd("SgAsmDwarfArrayType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
@@ -27843,7 +27845,7 @@ class SgAsmDwarfAccessDeclaration: public SgAsmDwarfConstruct {
 #if defined(SgAsmDwarfAccessDeclaration_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfAccessDeclaration -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -27853,7 +27855,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         debugSerializationEnd("SgAsmDwarfAccessDeclaration");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -28009,7 +28011,7 @@ class SgAsmDwarfConstruct: public SgAsmDwarfInformation {
 #if defined(SgAsmDwarfConstruct_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfConstruct -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -28024,7 +28026,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_source_position);
         debugSerializationEnd("SgAsmDwarfConstruct");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     // For now we will store the nesting level (just to support debugging), then it will be removed.
 public:
@@ -28122,7 +28124,7 @@ class SgAsmDwarfInformation: public SgAsmExecutableFileFormat {
 #if defined(SgAsmDwarfInformation_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDwarfInformation -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -28132,7 +28134,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         debugSerializationEnd("SgAsmDwarfInformation");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -28275,7 +28277,7 @@ class SgAsmDOSFileHeader: public SgAsmGenericHeader {
 #if defined(SgAsmDOSFileHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDOSFileHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -28301,7 +28303,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rm_section);
         debugSerializationEnd("SgAsmDOSFileHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28664,7 +28666,7 @@ class SgAsmGenericHeader: public SgAsmGenericSection {
 #if defined(SgAsmGenericHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -28681,7 +28683,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sections);
         debugSerializationEnd("SgAsmGenericHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: General info about the executable format. 
@@ -28968,7 +28970,7 @@ class SgAsmDOSExtendedHeader: public SgAsmGenericSection {
 #if defined(SgAsmDOSExtendedHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDOSExtendedHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -28987,7 +28989,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_lfanew);
         debugSerializationEnd("SgAsmDOSExtendedHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29158,7 +29160,7 @@ class SgAsmDirectRegisterExpression: public SgAsmRegisterReferenceExpression {
 #if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmDirectRegisterExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29168,7 +29170,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
         debugSerializationEnd("SgAsmDirectRegisterExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -29242,7 +29244,7 @@ class SgAsmRegisterReferenceExpression: public SgAsmExpression {
 #if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmRegisterReferenceExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29254,7 +29256,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_adjustment);
         debugSerializationEnd("SgAsmRegisterReferenceExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Descriptor for accessed register. 
@@ -29330,7 +29332,7 @@ class SgAsmControlFlagsExpression: public SgAsmExpression {
 #if defined(SgAsmControlFlagsExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmControlFlagsExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29341,7 +29343,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_bitFlags);
         debugSerializationEnd("SgAsmControlFlagsExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     unsigned long const& get_bitFlags() const;
@@ -29419,7 +29421,7 @@ class SgAsmConstantExpression: public SgAsmValueExpression {
 #if defined(SgAsmConstantExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmConstantExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29430,7 +29432,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_bitVector);
         debugSerializationEnd("SgAsmConstantExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Bits for constant.
@@ -29528,7 +29530,7 @@ class SgAsmValueExpression: public SgAsmExpression {
 #if defined(SgAsmValueExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmValueExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29541,7 +29543,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_bitSize);
         debugSerializationEnd("SgAsmValueExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Alternate expression without constant folding.
@@ -29651,7 +29653,7 @@ class SgAsmCommonSubExpression: public SgAsmExpression {
 #if defined(SgAsmCommonSubExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCommonSubExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29662,7 +29664,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_subexpression);
         debugSerializationEnd("SgAsmCommonSubExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     SgAsmExpression* const& get_subexpression() const;
@@ -29731,7 +29733,7 @@ class SgAsmCoffSymbolTable: public SgAsmGenericSection {
 #if defined(SgAsmCoffSymbolTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCoffSymbolTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29743,7 +29745,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmCoffSymbolTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: String table.
@@ -29821,7 +29823,7 @@ class SgAsmCoffSymbolList: public SgAsmExecutableFileFormat {
 #if defined(SgAsmCoffSymbolList_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCoffSymbolList -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29832,7 +29834,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmCoffSymbolList");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: List of symbol pointers. 
@@ -29932,7 +29934,7 @@ class SgAsmCoffSymbol: public SgAsmGenericSymbol {
 #if defined(SgAsmCoffSymbol_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCoffSymbol -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -29949,7 +29951,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_auxiliaryData);
         debugSerializationEnd("SgAsmCoffSymbol");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30159,7 +30161,7 @@ class SgAsmGenericSymbol: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericSymbol_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericSymbol -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -30176,7 +30178,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
         debugSerializationEnd("SgAsmGenericSymbol");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30325,7 +30327,7 @@ class SgAsmCoffStrtab: public SgAsmGenericStrtab {
 #if defined(SgAsmCoffStrtab_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCoffStrtab -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -30335,7 +30337,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
         debugSerializationEnd("SgAsmCoffStrtab");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section);
     void destructorHelper() override;
@@ -30439,7 +30441,7 @@ class SgAsmGenericStrtab: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericStrtab_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericStrtab -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -30454,7 +30456,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_numberFreed);
         debugSerializationEnd("SgAsmGenericStrtab");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30698,7 +30700,7 @@ class SgAsmCliHeader: public SgAsmGenericSection {
 #if defined(SgAsmCliHeader_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCliHeader -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -30720,7 +30722,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_managedNativeHeader);
         debugSerializationEnd("SgAsmCliHeader");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Cb
@@ -31069,7 +31071,7 @@ class SgAsmGenericSection: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericSection_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericSection -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -31098,7 +31100,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_mappedActualVa);
         debugSerializationEnd("SgAsmGenericSection");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31696,7 +31698,7 @@ class SgAsmCilUint8Heap: public SgAsmCilDataStream {
 #if defined(SgAsmCilUint8Heap_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilUint8Heap -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -31707,7 +31709,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Stream);
         debugSerializationEnd("SgAsmCilUint8Heap");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<uint8_t> const& get_Stream() const;
@@ -31771,7 +31773,7 @@ class SgAsmCilUint32Heap: public SgAsmCilDataStream {
 #if defined(SgAsmCilUint32Heap_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilUint32Heap -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -31782,7 +31784,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Stream);
         debugSerializationEnd("SgAsmCilUint32Heap");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<uint32_t> const& get_Stream() const;
@@ -31846,7 +31848,7 @@ class SgAsmCilTypeSpecTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilTypeSpecTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilTypeSpecTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -31857,7 +31859,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilTypeSpecTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilTypeSpec*> const& get_elements() const;
@@ -31912,7 +31914,7 @@ class SgAsmCilTypeSpec: public SgAsmCilMetadata {
 #if defined(SgAsmCilTypeSpec_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilTypeSpec -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -31923,7 +31925,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Signature);
         debugSerializationEnd("SgAsmCilTypeSpec");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Signature.
@@ -31988,7 +31990,7 @@ class SgAsmCilTypeRefTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilTypeRefTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilTypeRefTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -31999,7 +32001,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilTypeRefTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilTypeRef*> const& get_elements() const;
@@ -32066,7 +32068,7 @@ class SgAsmCilTypeRef: public SgAsmCilMetadata {
 #if defined(SgAsmCilTypeRef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilTypeRef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32079,7 +32081,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
         debugSerializationEnd("SgAsmCilTypeRef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: ResolutionScope.
@@ -32166,7 +32168,7 @@ class SgAsmCilTypeDefTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilTypeDefTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilTypeDefTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32177,7 +32179,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilTypeDefTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilTypeDef*> const& get_elements() const;
@@ -32262,7 +32264,7 @@ class SgAsmCilTypeDef: public SgAsmCilMetadata {
 #if defined(SgAsmCilTypeDef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilTypeDef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32278,7 +32280,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_MethodList);
         debugSerializationEnd("SgAsmCilTypeDef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Flags.
@@ -32398,7 +32400,7 @@ class SgAsmCilStandAloneSigTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilStandAloneSigTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilStandAloneSigTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32409,7 +32411,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilStandAloneSigTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilStandAloneSig*> const& get_elements() const;
@@ -32464,7 +32466,7 @@ class SgAsmCilStandAloneSig: public SgAsmCilMetadata {
 #if defined(SgAsmCilStandAloneSig_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilStandAloneSig -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32475,7 +32477,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Signature);
         debugSerializationEnd("SgAsmCilStandAloneSig");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Signature.
@@ -32540,7 +32542,7 @@ class SgAsmCilPropertyTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilPropertyTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilPropertyTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32551,7 +32553,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilPropertyTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilProperty*> const& get_elements() const;
@@ -32606,7 +32608,7 @@ class SgAsmCilPropertyMapTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilPropertyMapTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilPropertyMapTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32617,7 +32619,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilPropertyMapTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilPropertyMap*> const& get_elements() const;
@@ -32678,7 +32680,7 @@ class SgAsmCilPropertyMap: public SgAsmCilMetadata {
 #if defined(SgAsmCilPropertyMap_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilPropertyMap -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32690,7 +32692,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_PropertyList);
         debugSerializationEnd("SgAsmCilPropertyMap");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Parent.
@@ -32778,7 +32780,7 @@ class SgAsmCilProperty: public SgAsmCilMetadata {
 #if defined(SgAsmCilProperty_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilProperty -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32791,7 +32793,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Type);
         debugSerializationEnd("SgAsmCilProperty");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Flags.
@@ -32877,7 +32879,7 @@ class SgAsmCilParamTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilParamTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilParamTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32888,7 +32890,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilParamTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilParam*> const& get_elements() const;
@@ -32955,7 +32957,7 @@ class SgAsmCilParam: public SgAsmCilMetadata {
 #if defined(SgAsmCilParam_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilParam -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -32968,7 +32970,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Name);
         debugSerializationEnd("SgAsmCilParam");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Flags.
@@ -33053,7 +33055,7 @@ class SgAsmCilNestedClassTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilNestedClassTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilNestedClassTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33064,7 +33066,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilNestedClassTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilNestedClass*> const& get_elements() const;
@@ -33125,7 +33127,7 @@ class SgAsmCilNestedClass: public SgAsmCilMetadata {
 #if defined(SgAsmCilNestedClass_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilNestedClass -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33137,7 +33139,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_EnclosingClass);
         debugSerializationEnd("SgAsmCilNestedClass");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: NestedClass.
@@ -33213,7 +33215,7 @@ class SgAsmCilModuleTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilModuleTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilModuleTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33224,7 +33226,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilModuleTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilModule*> const& get_elements() const;
@@ -33279,7 +33281,7 @@ class SgAsmCilModuleRefTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilModuleRefTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilModuleRefTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33290,7 +33292,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilModuleRefTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilModuleRef*> const& get_elements() const;
@@ -33345,7 +33347,7 @@ class SgAsmCilModuleRef: public SgAsmCilMetadata {
 #if defined(SgAsmCilModuleRef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilModuleRef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33356,7 +33358,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Name);
         debugSerializationEnd("SgAsmCilModuleRef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Name.
@@ -33445,7 +33447,7 @@ class SgAsmCilModule: public SgAsmCilMetadata {
 #if defined(SgAsmCilModule_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilModule -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33460,7 +33462,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_EncBaseId);
         debugSerializationEnd("SgAsmCilModule");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Generation.
@@ -33568,7 +33570,7 @@ class SgAsmCilMethodSpecTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodSpecTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodSpecTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33579,7 +33581,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilMethodSpecTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilMethodSpec*> const& get_elements() const;
@@ -33640,7 +33642,7 @@ class SgAsmCilMethodSpec: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodSpec_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodSpec -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33652,7 +33654,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Instantiation);
         debugSerializationEnd("SgAsmCilMethodSpec");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Method.
@@ -33728,7 +33730,7 @@ class SgAsmCilMethodSemanticsTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodSemanticsTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodSemanticsTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33739,7 +33741,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilMethodSemanticsTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilMethodSemantics*> const& get_elements() const;
@@ -33806,7 +33808,7 @@ class SgAsmCilMethodSemantics: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodSemantics_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodSemantics -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33819,7 +33821,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Association);
         debugSerializationEnd("SgAsmCilMethodSemantics");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Semantics.
@@ -33905,7 +33907,7 @@ class SgAsmCilMethodImplTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodImplTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodImplTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33916,7 +33918,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilMethodImplTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilMethodImpl*> const& get_elements() const;
@@ -33983,7 +33985,7 @@ class SgAsmCilMethodImpl: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodImpl_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodImpl -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -33996,7 +33998,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_MethodDeclaration);
         debugSerializationEnd("SgAsmCilMethodImpl");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Class.
@@ -34083,7 +34085,7 @@ class SgAsmCilMethodDefTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodDefTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodDefTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -34094,7 +34096,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilMethodDefTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilMethodDef*> const& get_elements() const;
@@ -34215,7 +34217,7 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
 #if defined(SgAsmCilMethodDef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodDef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -34237,7 +34239,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_methodData);
         debugSerializationEnd("SgAsmCilMethodDef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: RVA.
@@ -34436,7 +34438,7 @@ class SgAsmCilMethodData: public SgAsmCilNode {
 #if defined(SgAsmCilMethodData_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMethodData -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -34449,7 +34451,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_clauses);
         debugSerializationEnd("SgAsmCilMethodData");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
   enum
   {
@@ -34596,7 +34598,7 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
 #if defined(SgAsmCilMetadataRoot_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMetadataRoot -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -34616,7 +34618,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Streams);
         debugSerializationEnd("SgAsmCilMetadataRoot");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Magic signature for physical metadata (always 0x424A5342) 
@@ -35112,7 +35114,7 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
 #if defined(SgAsmCilMetadataHeap_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMetadataHeap -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -35169,7 +35171,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_TypeSpecTable);
         debugSerializationEnd("SgAsmCilMetadataHeap");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: 4 reserved bytes. 
@@ -35705,7 +35707,7 @@ class SgAsmCilMemberRefTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilMemberRefTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMemberRefTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -35716,7 +35718,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilMemberRefTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilMemberRef*> const& get_elements() const;
@@ -35783,7 +35785,7 @@ class SgAsmCilMemberRef: public SgAsmCilMetadata {
 #if defined(SgAsmCilMemberRef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMemberRef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -35796,7 +35798,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Signature);
         debugSerializationEnd("SgAsmCilMemberRef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Class.
@@ -35883,7 +35885,7 @@ class SgAsmCilManifestResourceTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilManifestResourceTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilManifestResourceTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -35894,7 +35896,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilManifestResourceTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilManifestResource*> const& get_elements() const;
@@ -35967,7 +35969,7 @@ class SgAsmCilManifestResource: public SgAsmCilMetadata {
 #if defined(SgAsmCilManifestResource_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilManifestResource -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -35981,7 +35983,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Implementation);
         debugSerializationEnd("SgAsmCilManifestResource");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Offset.
@@ -36077,7 +36079,7 @@ class SgAsmCilInterfaceImplTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilInterfaceImplTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilInterfaceImplTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36088,7 +36090,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilInterfaceImplTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilInterfaceImpl*> const& get_elements() const;
@@ -36149,7 +36151,7 @@ class SgAsmCilInterfaceImpl: public SgAsmCilMetadata {
 #if defined(SgAsmCilInterfaceImpl_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilInterfaceImpl -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36161,7 +36163,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Interface);
         debugSerializationEnd("SgAsmCilInterfaceImpl");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Class.
@@ -36241,7 +36243,7 @@ class SgAsmCilInstruction: public SgAsmInstruction {
 #if defined(SgAsmCilInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36252,7 +36254,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
         debugSerializationEnd("SgAsmCilInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -36321,7 +36323,7 @@ class SgAsmCilImplMapTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilImplMapTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilImplMapTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36332,7 +36334,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilImplMapTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilImplMap*> const& get_elements() const;
@@ -36405,7 +36407,7 @@ class SgAsmCilImplMap: public SgAsmCilMetadata {
 #if defined(SgAsmCilImplMap_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilImplMap -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36419,7 +36421,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_ImportScope);
         debugSerializationEnd("SgAsmCilImplMap");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: MappingFlags.
@@ -36516,7 +36518,7 @@ class SgAsmCilGenericParamTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilGenericParamTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilGenericParamTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36527,7 +36529,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilGenericParamTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilGenericParam*> const& get_elements() const;
@@ -36600,7 +36602,7 @@ class SgAsmCilGenericParam: public SgAsmCilMetadata {
 #if defined(SgAsmCilGenericParam_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilGenericParam -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36614,7 +36616,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Name);
         debugSerializationEnd("SgAsmCilGenericParam");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Number.
@@ -36710,7 +36712,7 @@ class SgAsmCilGenericParamConstraintTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilGenericParamConstraintTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilGenericParamConstraintTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36721,7 +36723,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilGenericParamConstraintTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
@@ -36782,7 +36784,7 @@ class SgAsmCilGenericParamConstraint: public SgAsmCilMetadata {
 #if defined(SgAsmCilGenericParamConstraint_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilGenericParamConstraint -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36794,7 +36796,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Constraint);
         debugSerializationEnd("SgAsmCilGenericParamConstraint");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Owner.
@@ -36870,7 +36872,7 @@ class SgAsmCilFileTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilFileTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFileTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36881,7 +36883,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilFileTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilFile*> const& get_elements() const;
@@ -36948,7 +36950,7 @@ class SgAsmCilFile: public SgAsmCilMetadata {
 #if defined(SgAsmCilFile_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFile -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -36961,7 +36963,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_HashValue);
         debugSerializationEnd("SgAsmCilFile");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Flags.
@@ -37047,7 +37049,7 @@ class SgAsmCilFieldTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37058,7 +37060,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilFieldTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilField*> const& get_elements() const;
@@ -37113,7 +37115,7 @@ class SgAsmCilFieldRVATable: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldRVATable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldRVATable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37124,7 +37126,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilFieldRVATable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilFieldRVA*> const& get_elements() const;
@@ -37185,7 +37187,7 @@ class SgAsmCilFieldRVA: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldRVA_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldRVA -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37197,7 +37199,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Field);
         debugSerializationEnd("SgAsmCilFieldRVA");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: RVA.
@@ -37272,7 +37274,7 @@ class SgAsmCilFieldMarshalTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldMarshalTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldMarshalTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37283,7 +37285,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilFieldMarshalTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilFieldMarshal*> const& get_elements() const;
@@ -37344,7 +37346,7 @@ class SgAsmCilFieldMarshal: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldMarshal_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldMarshal -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37356,7 +37358,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_NativeType);
         debugSerializationEnd("SgAsmCilFieldMarshal");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Parent.
@@ -37432,7 +37434,7 @@ class SgAsmCilFieldLayoutTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldLayoutTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldLayoutTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37443,7 +37445,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilFieldLayoutTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilFieldLayout*> const& get_elements() const;
@@ -37504,7 +37506,7 @@ class SgAsmCilFieldLayout: public SgAsmCilMetadata {
 #if defined(SgAsmCilFieldLayout_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilFieldLayout -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37516,7 +37518,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Field);
         debugSerializationEnd("SgAsmCilFieldLayout");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Offset.
@@ -37603,7 +37605,7 @@ class SgAsmCilField: public SgAsmCilMetadata {
 #if defined(SgAsmCilField_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilField -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37616,7 +37618,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Signature);
         debugSerializationEnd("SgAsmCilField");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Flags.
@@ -37702,7 +37704,7 @@ class SgAsmCilExportedTypeTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilExportedTypeTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilExportedTypeTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37713,7 +37715,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilExportedTypeTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilExportedType*> const& get_elements() const;
@@ -37792,7 +37794,7 @@ class SgAsmCilExportedType: public SgAsmCilMetadata {
 #if defined(SgAsmCilExportedType_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilExportedType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37807,7 +37809,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Implementation);
         debugSerializationEnd("SgAsmCilExportedType");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: EventFlags.
@@ -37947,7 +37949,7 @@ class SgAsmCilExceptionData: public SgAsmCilNode {
 #if defined(SgAsmCilExceptionData_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilExceptionData -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -37963,7 +37965,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_classTokenOrFilterOffset);
         debugSerializationEnd("SgAsmCilExceptionData");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
   enum
   {
@@ -38060,7 +38062,7 @@ class SgAsmCilEventTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilEventTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilEventTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38071,7 +38073,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilEventTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilEvent*> const& get_elements() const;
@@ -38126,7 +38128,7 @@ class SgAsmCilEventMapTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilEventMapTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilEventMapTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38137,7 +38139,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilEventMapTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilEventMap*> const& get_elements() const;
@@ -38198,7 +38200,7 @@ class SgAsmCilEventMap: public SgAsmCilMetadata {
 #if defined(SgAsmCilEventMap_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilEventMap -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38210,7 +38212,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_EventList);
         debugSerializationEnd("SgAsmCilEventMap");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Parent.
@@ -38298,7 +38300,7 @@ class SgAsmCilEvent: public SgAsmCilMetadata {
 #if defined(SgAsmCilEvent_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilEvent -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38311,7 +38313,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_EventType);
         debugSerializationEnd("SgAsmCilEvent");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: EventFlags.
@@ -38397,7 +38399,7 @@ class SgAsmCilDeclSecurityTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilDeclSecurityTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilDeclSecurityTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38408,7 +38410,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilDeclSecurityTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilDeclSecurity*> const& get_elements() const;
@@ -38475,7 +38477,7 @@ class SgAsmCilDeclSecurity: public SgAsmCilMetadata {
 #if defined(SgAsmCilDeclSecurity_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilDeclSecurity -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38488,7 +38490,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_PermissionSet);
         debugSerializationEnd("SgAsmCilDeclSecurity");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Action.
@@ -38607,7 +38609,7 @@ class SgAsmCilDataStream: public SgAsmCilNode {
 #if defined(SgAsmCilDataStream_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilDataStream -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38621,7 +38623,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_NamePadding);
         debugSerializationEnd("SgAsmCilDataStream");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Start offset of the byte stream. 
@@ -38736,7 +38738,7 @@ class SgAsmCilCustomAttributeTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilCustomAttributeTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilCustomAttributeTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38747,7 +38749,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilCustomAttributeTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilCustomAttribute*> const& get_elements() const;
@@ -38814,7 +38816,7 @@ class SgAsmCilCustomAttribute: public SgAsmCilMetadata {
 #if defined(SgAsmCilCustomAttribute_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilCustomAttribute -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38827,7 +38829,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Value);
         debugSerializationEnd("SgAsmCilCustomAttribute");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Parent.
@@ -38914,7 +38916,7 @@ class SgAsmCilConstantTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilConstantTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilConstantTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -38925,7 +38927,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilConstantTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilConstant*> const& get_elements() const;
@@ -38998,7 +39000,7 @@ class SgAsmCilConstant: public SgAsmCilMetadata {
 #if defined(SgAsmCilConstant_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilConstant -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39012,7 +39014,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Value);
         debugSerializationEnd("SgAsmCilConstant");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Type.
@@ -39108,7 +39110,7 @@ class SgAsmCilClassLayoutTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilClassLayoutTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilClassLayoutTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39119,7 +39121,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilClassLayoutTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilClassLayout*> const& get_elements() const;
@@ -39186,7 +39188,7 @@ class SgAsmCilClassLayout: public SgAsmCilMetadata {
 #if defined(SgAsmCilClassLayout_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilClassLayout -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39199,7 +39201,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         debugSerializationEnd("SgAsmCilClassLayout");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: PackingSize.
@@ -39284,7 +39286,7 @@ class SgAsmCilAssemblyTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39295,7 +39297,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilAssemblyTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilAssembly*> const& get_elements() const;
@@ -39350,7 +39352,7 @@ class SgAsmCilAssemblyRefTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyRefTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyRefTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39361,7 +39363,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilAssemblyRefTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilAssemblyRef*> const& get_elements() const;
@@ -39416,7 +39418,7 @@ class SgAsmCilAssemblyRefProcessorTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyRefProcessorTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyRefProcessorTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39427,7 +39429,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilAssemblyRefProcessorTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilAssemblyRefProcessor*> const& get_elements() const;
@@ -39488,7 +39490,7 @@ class SgAsmCilAssemblyRefProcessor: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyRefProcessor_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyRefProcessor -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39500,7 +39502,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
         debugSerializationEnd("SgAsmCilAssemblyRefProcessor");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Processor.
@@ -39575,7 +39577,7 @@ class SgAsmCilAssemblyRefOSTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyRefOSTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyRefOSTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39586,7 +39588,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilAssemblyRefOSTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilAssemblyRefOS*> const& get_elements() const;
@@ -39659,7 +39661,7 @@ class SgAsmCilAssemblyRefOS: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyRefOS_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyRefOS -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39673,7 +39675,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_AssemblyRefOS);
         debugSerializationEnd("SgAsmCilAssemblyRefOS");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: OSPlatformID.
@@ -39816,7 +39818,7 @@ class SgAsmCilAssemblyRef: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyRef_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyRef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39835,7 +39837,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_HashValue);
         debugSerializationEnd("SgAsmCilAssemblyRef");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: MajorVersion.
@@ -39983,7 +39985,7 @@ class SgAsmCilAssemblyProcessorTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyProcessorTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyProcessorTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -39994,7 +39996,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilAssemblyProcessorTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilAssemblyProcessor*> const& get_elements() const;
@@ -40049,7 +40051,7 @@ class SgAsmCilAssemblyProcessor: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyProcessor_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyProcessor -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40060,7 +40062,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Processor);
         debugSerializationEnd("SgAsmCilAssemblyProcessor");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: Processor.
@@ -40123,7 +40125,7 @@ class SgAsmCilAssemblyOSTable: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyOSTable_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyOSTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40134,7 +40136,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_elements);
         debugSerializationEnd("SgAsmCilAssemblyOSTable");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     std::vector<SgAsmCilAssemblyOS*> const& get_elements() const;
@@ -40201,7 +40203,7 @@ class SgAsmCilAssemblyOS: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssemblyOS_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssemblyOS -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40214,7 +40216,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
         debugSerializationEnd("SgAsmCilAssemblyOS");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: OSPlatformID.
@@ -40345,7 +40347,7 @@ class SgAsmCilAssembly: public SgAsmCilMetadata {
 #if defined(SgAsmCilAssembly_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilAssembly -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40364,7 +40366,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Culture);
         debugSerializationEnd("SgAsmCilAssembly");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Property: HashAlgId.
@@ -40593,7 +40595,7 @@ class SgAsmCilMetadata: public SgAsmCilNode {
 #if defined(SgAsmCilMetadata_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilMetadata -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40603,7 +40605,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
         debugSerializationEnd("SgAsmCilMetadata");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -40664,7 +40666,7 @@ class SgAsmCilNode: public SgAsmNode {
 #if defined(SgAsmCilNode_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmCilNode -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40674,7 +40676,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         debugSerializationEnd("SgAsmCilNode");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -40723,7 +40725,7 @@ class SgAsmByteOrder: public SgAsmExpression {
 #if defined(SgAsmByteOrder_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmByteOrder -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40734,7 +40736,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(byteOrder_);
         debugSerializationEnd("SgAsmByteOrder");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     Rose::BinaryAnalysis::ByteOrder::Endianness byteOrder_;
@@ -40875,7 +40877,7 @@ class SgAsmBlock: public SgAsmStatement {
 #if defined(SgAsmBlock_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBlock -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -40893,7 +40895,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_stackDeltaOut);
         debugSerializationEnd("SgAsmBlock");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41194,7 +41196,7 @@ class SgAsmBinarySubtract: public SgAsmBinaryExpression {
 #if defined(SgAsmBinarySubtract_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinarySubtract -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41204,7 +41206,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinarySubtract");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41253,7 +41255,7 @@ class SgAsmBinaryRor: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryRor_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryRor -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41263,7 +41265,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryRor");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41315,7 +41317,7 @@ class SgAsmBinaryPreupdate: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryPreupdate_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryPreupdate -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41325,7 +41327,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryPreupdate");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41377,7 +41379,7 @@ class SgAsmBinaryPostupdate: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryPostupdate_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryPostupdate -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41387,7 +41389,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryPostupdate");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41436,7 +41438,7 @@ class SgAsmBinaryMultiply: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryMultiply_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryMultiply -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41446,7 +41448,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryMultiply");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41497,7 +41499,7 @@ class SgAsmBinaryMsl: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryMsl_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryMsl -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41507,7 +41509,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryMsl");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41556,7 +41558,7 @@ class SgAsmBinaryMod: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryMod_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryMod -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41566,7 +41568,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryMod");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41615,7 +41617,7 @@ class SgAsmBinaryLsr: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryLsr_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryLsr -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41625,7 +41627,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryLsr");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41674,7 +41676,7 @@ class SgAsmBinaryLsl: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryLsl_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryLsl -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41684,7 +41686,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryLsl");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41733,7 +41735,7 @@ class SgAsmBinaryDivide: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryDivide_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryDivide -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41743,7 +41745,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryDivide");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41792,7 +41794,7 @@ class SgAsmBinaryConcat: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryConcat_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryConcat -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41802,7 +41804,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryConcat");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41851,7 +41853,7 @@ class SgAsmBinaryAsr: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryAsr_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryAsr -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41861,7 +41863,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryAsr");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -41910,7 +41912,7 @@ class SgAsmBinaryAdd: public SgAsmBinaryExpression {
 #if defined(SgAsmBinaryAdd_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryAdd -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -41920,7 +41922,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         debugSerializationEnd("SgAsmBinaryAdd");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 
 public:
     /** Destructor. */
@@ -42006,7 +42008,7 @@ class SgAsmBinaryExpression: public SgAsmExpression {
 #if defined(SgAsmBinaryExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBinaryExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42018,7 +42020,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rhs);
         debugSerializationEnd("SgAsmBinaryExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Left-hand side operand. 
@@ -42092,7 +42094,7 @@ class SgAsmBasicString: public SgAsmGenericString {
 #if defined(SgAsmBasicString_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmBasicString -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42103,7 +42105,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_string);
         debugSerializationEnd("SgAsmBasicString");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     virtual std::string get_string(bool escape=false) const override;
@@ -42176,7 +42178,7 @@ class SgAsmGenericString: public SgAsmExecutableFileFormat {
 #if defined(SgAsmGenericString_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmGenericString -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42186,7 +42188,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         debugSerializationEnd("SgAsmGenericString");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Constant for addresses of unallocated strings. */
     static const rose_addr_t unallocated;
@@ -42320,7 +42322,7 @@ class SgAsmExecutableFileFormat: public SgAsmNode {
 #if defined(SgAsmExecutableFileFormat_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmExecutableFileFormat -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42330,7 +42332,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         debugSerializationEnd("SgAsmExecutableFileFormat");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42710,7 +42712,7 @@ class SgAsmAarch64SysMoveOperand: public SgAsmExpression {
 #if defined(SgAsmAarch64SysMoveOperand_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64SysMoveOperand -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42721,7 +42723,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(access_);
         debugSerializationEnd("SgAsmAarch64SysMoveOperand");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     unsigned access_;
@@ -42792,7 +42794,7 @@ class SgAsmAarch64PState: public SgAsmExpression {
 #if defined(SgAsmAarch64PState_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64PState -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42803,7 +42805,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(pstate_);
         debugSerializationEnd("SgAsmAarch64PState");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     Rose::BinaryAnalysis::Aarch64PState pstate_;
@@ -42874,7 +42876,7 @@ class SgAsmAarch64PrefetchOperand: public SgAsmExpression {
 #if defined(SgAsmAarch64PrefetchOperand_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64PrefetchOperand -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42885,7 +42887,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(operation_);
         debugSerializationEnd("SgAsmAarch64PrefetchOperand");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     Rose::BinaryAnalysis::Aarch64PrefetchOperation operation_;
@@ -42973,7 +42975,7 @@ class SgAsmAarch64Instruction: public SgAsmInstruction {
 #if defined(SgAsmAarch64Instruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64Instruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -42985,7 +42987,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_condition);
         debugSerializationEnd("SgAsmAarch64Instruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -43073,7 +43075,7 @@ class SgAsmAarch64CImmediateOperand: public SgAsmExpression {
 #if defined(SgAsmAarch64CImmediateOperand_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64CImmediateOperand -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -43084,7 +43086,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(immediate_);
         debugSerializationEnd("SgAsmAarch64CImmediateOperand");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     unsigned immediate_;
@@ -43155,7 +43157,7 @@ class SgAsmAarch64BarrierOperand: public SgAsmExpression {
 #if defined(SgAsmAarch64BarrierOperand_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64BarrierOperand -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -43166,7 +43168,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(operation_);
         debugSerializationEnd("SgAsmAarch64BarrierOperand");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     Rose::BinaryAnalysis::Aarch64BarrierOperation operation_;
@@ -43235,7 +43237,7 @@ class SgAsmAarch64AtOperand: public SgAsmExpression {
 #if defined(SgAsmAarch64AtOperand_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch64AtOperand -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -43246,7 +43248,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(operation_);
         debugSerializationEnd("SgAsmAarch64AtOperand");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     Rose::BinaryAnalysis::Aarch64AtOperation operation_;
@@ -43346,7 +43348,7 @@ class SgAsmAarch32Instruction: public SgAsmInstruction {
 #if defined(SgAsmAarch32Instruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch32Instruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -43361,7 +43363,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_writesToIp);
         debugSerializationEnd("SgAsmAarch32Instruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Instruction kind.
@@ -43552,7 +43554,7 @@ class SgAsmInstruction: public SgAsmStatement {
 #if defined(SgAsmInstruction_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmInstruction -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -43571,7 +43573,7 @@ private:
         userSerializeBoost(s);
         debugSerializationEnd("SgAsmInstruction");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43580,7 +43582,7 @@ private:
         size_t n;
         SemanticFailure(): n(0) {}
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     private:
         friend class boost::serialization::access;
         template<class S>
@@ -43986,7 +43988,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     template<class S>
     void userSerializeBoost(S &s) {
@@ -44079,7 +44081,7 @@ class SgAsmStatement: public SgAsmNode {
 #if defined(SgAsmStatement_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmStatement -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -44091,7 +44093,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_comment);
         debugSerializationEnd("SgAsmStatement");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Starting virtual address.
@@ -44157,7 +44159,7 @@ class SgAsmAarch32Coprocessor: public SgAsmExpression {
 #if defined(SgAsmAarch32Coprocessor_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmAarch32Coprocessor -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -44168,7 +44170,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(coprocessor_);
         debugSerializationEnd("SgAsmAarch32Coprocessor");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     int coprocessor_;
@@ -44282,7 +44284,7 @@ class SgAsmExpression: public SgAsmNode {
 #if defined(SgAsmExpression_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -44294,7 +44296,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_comment);
         debugSerializationEnd("SgAsmExpression");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 public:
     /** Property: Type of expression.
@@ -44336,8 +44338,12 @@ public:
     /** Converts an expression to a string.
      *
      *  The string is a single line with no leading or trailing white space. This expression must be a child of a @ref
-     *  SgAsmInstruction because the instruction set architecture might have an influence on the way the expression is displayed. Attempting
-     *  to call this method on a detached expression will return the string "detached_expression". */
+     *  SgAsmInstruction because the instruction set architecture might have an influence on the way the expression is
+     *  displayed. Attempting to call this method on a detached expression will return the string "detached_expression".
+     *
+     *  If this expression is not attached to an instruction, it can still be unparsed, just not with this member function. Instead,
+     *  obtain an instruction unparser from the @ref Rose::BinaryAnalysis::Architecture::Base "architecture" and use that unparser
+     *  to unparse this expression. */
     virtual std::string toString() const;
 public:
     /** Destructor. */
@@ -44410,7 +44416,7 @@ class SgAsmNode: public SgNode {
 #if defined(SgAsmNode_OTHERS) || defined(DOCUMENTATION)
 
     //----------------------- Boost serialization for SgAsmNode -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -44420,7 +44426,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
         debugSerializationEnd("SgAsmNode");
     }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
 private:
     Sawyer::Attribute::Storage<> attributes_;

@@ -16,13 +16,15 @@
 //    |// T.h
 //    |#include <Rose/BasicTypes.h>                     // forward decls for most common things
 //    |#include <P.h>                                   // expensive definition for `P`
+//    |#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 //    |#include <boost/serialization/access.hpp>
 //    |#include <boost/serialization/nvp.hpp>
+//    |#endif
 //    |
 //    |class T {
 //    |    PPtr p_;                                     // smart pointer to `P`
 //    |
-//    |#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+//    |#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 //    |private:
 //    |    friend class boost::serialization::access;
 //    |
@@ -41,14 +43,16 @@
 //    +-------------------------------------------------------------------------------------------
 //    |// T.h
 //    |#include <Rose/BasicTypes.h>                     // forward decls for most common things
+//    |#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 //    |#include <boost/serialization/access.hpp>
+//    |#endif
 //    |
 //    |class P;                                         // cheap declaration of `P`
 //    |
 //    |class T {
 //    |    PPtr p_;                                     // smart pointer to `P`
 //    |
-//    |#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+//    |#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 //    |private:
 //    |    friend class boost::serialization::access;
 //    |
@@ -101,6 +105,8 @@
 
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -110,8 +116,6 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/version.hpp>
-
-#ifdef ROSE_SUPPORTS_SERIAL_IO
 #include <fcntl.h>
 #include <fstream>
 #include <string.h>
@@ -237,7 +241,7 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
     if (isOpen())
         close();
 
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
     throw Exception("binary state files are not supported in this configuration");
 #else
     objectType(ERROR); // in case of exception
@@ -318,7 +322,7 @@ SerialOutput::saveAst(SgBinaryComposite *ast) {
 void
 SerialOutput::close() {
     if (isOpen() && objectType() != END_OF_DATA && objectType() != ERROR) {
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         throw Exception("binary state files are not supported in this configuration");
 #else
         Savable endMarker = END_OF_DATA;
@@ -363,7 +367,7 @@ SerialInput::open(const boost::filesystem::path &fileName) {
     if (isOpen())
         close();
 
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
     throw Exception("binary state files are not supported in this configuration");
 #else
     objectType(ERROR); // in case of exception
@@ -417,7 +421,7 @@ void
 SerialInput::advanceObjectType() {
     ASSERT_require(isOpen());
     Savable typeId = NO_OBJECT;
-#ifdef ROSE_SUPPORTS_SERIAL_IO
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     switch (format()) {
         case BINARY:
             *binary_archive_ >>typeId;
@@ -448,7 +452,7 @@ SerialInput::loadAst() {
 void
 SerialInput::close() {
     if (isOpen()) {
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         throw Exception("binary state files are not supported in this configuration");
 #else
         switch (format()) {
@@ -540,6 +544,7 @@ SerialInput::checkCompatibility(const std::string &fileVersion) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace CallingConvention {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void Definition::serialize(S &s, const unsigned /*version*/) {
     s & BOOST_SERIALIZATION_NVP(name_);
@@ -571,6 +576,7 @@ void Definition::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(Definition);
+#endif
 
 } // namespace
 
@@ -578,6 +584,7 @@ ROSE_SERIALIZATION_INSTANTIATE(Definition);
 // Rose::BinaryAnalysis::ConcreteLocation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 ConcreteLocation::serialize(S &s, const unsigned /*version*/) {
@@ -587,11 +594,13 @@ ConcreteLocation::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(ConcreteLocation);
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Rose::BinaryAnalysis::InstructionProvider
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 InstructionProvider::save(S &s, const unsigned /*version*/) const {
@@ -635,12 +644,14 @@ InstructionProvider::load(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE_SPLIT(InstructionProvider);
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Rose::BinaryAnalysis::Partitioner2::AddressUsageMap
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 AddressUsageMap::serialize(S &s, const unsigned /*version*/) {
@@ -648,6 +659,8 @@ AddressUsageMap::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(AddressUsageMap);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -655,6 +668,7 @@ ROSE_SERIALIZATION_INSTANTIATE(AddressUsageMap);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 AddressUser::serialize(S &s, const unsigned version) {
@@ -668,6 +682,8 @@ AddressUser::serialize(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(AddressUser);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -675,6 +691,7 @@ ROSE_SERIALIZATION_INSTANTIATE(AddressUser);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 AddressUsers::serialize(S &s, const unsigned /*version*/) {
@@ -682,6 +699,8 @@ AddressUsers::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(AddressUsers);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -689,6 +708,7 @@ ROSE_SERIALIZATION_INSTANTIATE(AddressUsers);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 AstConstructionSettings::serialize(S &s, unsigned /*version*/) {
@@ -699,6 +719,8 @@ AstConstructionSettings::serialize(S &s, unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(AstConstructionSettings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -706,6 +728,7 @@ ROSE_SERIALIZATION_INSTANTIATE(AstConstructionSettings);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 BasePartitionerSettings::serialize(S &s, const unsigned version) {
@@ -717,6 +740,8 @@ BasePartitionerSettings::serialize(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(BasePartitionerSettings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -724,6 +749,7 @@ ROSE_SERIALIZATION_INSTANTIATE(BasePartitionerSettings);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 BasicBlock::serializeCommon(S &s, const unsigned version) {
@@ -791,6 +817,8 @@ BasicBlock::load(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(BasicBlock);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -798,6 +826,7 @@ ROSE_SERIALIZATION_INSTANTIATE(BasicBlock);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 BasicBlockSuccessor::serialize(S &s, const unsigned /*version*/) {
@@ -807,6 +836,8 @@ BasicBlockSuccessor::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(BasicBlockSuccessor);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -814,6 +845,7 @@ ROSE_SERIALIZATION_INSTANTIATE(BasicBlockSuccessor);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 CfgEdge::serialize(S &s, const unsigned /*version*/) {
@@ -822,6 +854,8 @@ CfgEdge::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(CfgEdge);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -829,6 +863,7 @@ ROSE_SERIALIZATION_INSTANTIATE(CfgEdge);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 CfgVertex::serialize(S &s, const unsigned /*version*/) {
@@ -839,6 +874,8 @@ CfgVertex::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(CfgVertex);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -846,6 +883,7 @@ ROSE_SERIALIZATION_INSTANTIATE(CfgVertex);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 DataBlock::serialize(S &s, const unsigned version) {
@@ -871,6 +909,8 @@ DataBlock::serialize(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(DataBlock);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -878,6 +918,7 @@ ROSE_SERIALIZATION_INSTANTIATE(DataBlock);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 DisassemblerSettings::serialize(S &s, unsigned version) {
@@ -887,6 +928,8 @@ DisassemblerSettings::serialize(S &s, unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(DisassemblerSettings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -894,6 +937,7 @@ ROSE_SERIALIZATION_INSTANTIATE(DisassemblerSettings);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 Engine::Settings::serialize(S &s, unsigned /*version*/) {
@@ -905,6 +949,8 @@ Engine::Settings::serialize(S &s, unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(Engine::Settings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -912,6 +958,7 @@ ROSE_SERIALIZATION_INSTANTIATE(Engine::Settings);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 EngineSettings::serialize(S &s, unsigned /*version*/) {
@@ -920,6 +967,8 @@ EngineSettings::serialize(S &s, unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(EngineSettings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -927,6 +976,7 @@ ROSE_SERIALIZATION_INSTANTIATE(EngineSettings);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 Function::serialize(S &s, const unsigned version) {
@@ -950,6 +1000,8 @@ Function::serialize(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(Function);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -957,6 +1009,7 @@ ROSE_SERIALIZATION_INSTANTIATE(Function);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 LoaderSettings::serialize(S &s, unsigned version) {
@@ -982,6 +1035,8 @@ LoaderSettings::serialize(S &s, unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(LoaderSettings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -989,6 +1044,7 @@ ROSE_SERIALIZATION_INSTANTIATE(LoaderSettings);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 Partitioner::serializeCommon(S &s, const unsigned version) {
@@ -1073,6 +1129,8 @@ Partitioner::load(S &s, const unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE_SPLIT(Partitioner);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1080,6 +1138,7 @@ ROSE_SERIALIZATION_INSTANTIATE_SPLIT(Partitioner);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Partitioner2 {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 PartitionerSettings::serialize(S &s, unsigned version) {
@@ -1166,6 +1225,8 @@ PartitionerSettings::serialize(S &s, unsigned version) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(PartitionerSettings);
+#endif
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1174,6 +1235,7 @@ ROSE_SERIALIZATION_INSTANTIATE(PartitionerSettings);
 namespace Partitioner2 {
 namespace Semantics {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class Super>
 template<class S>
 void
@@ -1186,6 +1248,8 @@ MemoryState<Super>::serialize(S &s, const unsigned /*version*/) {
 
 ROSE_SERIALIZATION_INSTANTIATE(MemoryListState);        // MemoryState<IS::SymbolicSemantics::MemoryListState>
 ROSE_SERIALIZATION_INSTANTIATE(MemoryMapState);         // MemoryState<IS::SymbolicSemantics::MemoryMapState>
+#endif
+
 } // namespace
 } // namespace
 
@@ -1195,6 +1259,7 @@ ROSE_SERIALIZATION_INSTANTIATE(MemoryMapState);         // MemoryState<IS::Symbo
 namespace Partitioner2 {
 namespace Semantics {
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 template<class S>
 void
 RiscOperators::serialize(S &s, const unsigned /*version*/) {
@@ -1202,6 +1267,8 @@ RiscOperators::serialize(S &s, const unsigned /*version*/) {
 }
 
 ROSE_SERIALIZATION_INSTANTIATE(RiscOperators);
+#endif
+
 } // namespace
 } // namespace
 
@@ -1213,6 +1280,7 @@ ROSE_SERIALIZATION_INSTANTIATE(RiscOperators);
 // Class versions must be at global scope
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::AddressUser, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasePartitionerSettings, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 3);
@@ -1225,5 +1293,6 @@ BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 8);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
+#endif
 
 #endif

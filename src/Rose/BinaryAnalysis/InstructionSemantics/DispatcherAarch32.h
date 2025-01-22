@@ -7,10 +7,12 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -43,7 +45,7 @@ public:
     RegisterDescriptor REG_UNKNOWN;                     // special ROSE register
     /** @} */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -218,7 +220,7 @@ public:
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::DispatcherAarch32);
 #endif
 

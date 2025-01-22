@@ -1,14 +1,17 @@
 #ifndef ROSE_AstSerialization_H
 #define ROSE_AstSerialization_H
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 
 #include <Rose/Diagnostics.h>
 
 #include <SgNode.h>
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
 #include <Rose/AST/Utility.h>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/list.hpp>
+#endif
 
 namespace Rose {
 
@@ -26,7 +29,7 @@ namespace Rose {
  *  second, a @c serialize function template needs to be defined. The @c serialize function always looks the same, namely:
  *
  *  @code
- *  #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+ *  #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
  *  private:
  *      friend class boost::serialization::access;
  *
@@ -47,7 +50,7 @@ namespace Rose {
  *  Also, the class must have a default constructor, although that constructor may be protected if it's not suitable for end
  *  users.
  *
- *  The ROSE_HAVE_BOOST_SERIALIZATION_LIB protection is because some serialization templates might reference symbols from the
+ *  The ROSE_ENABLE_BOOST_SERIALIZATION protection is because some serialization templates might reference symbols from the
  *  optional boost_serialization library in a way that causes them to be required even if the template is never
  *  instantiated. This was seen only with Boost version 1.61, so it may have been a boost bug. */
 template<class Archive>

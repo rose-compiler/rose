@@ -28,7 +28,7 @@ class RelativeVirtualAddress {
     // section's preferred address.
     SgAsmGenericSection *section_ = nullptr;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

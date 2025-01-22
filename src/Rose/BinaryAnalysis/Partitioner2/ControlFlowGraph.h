@@ -14,7 +14,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -32,7 +32,7 @@ class CfgVertex {
     BasicBlockPtr bblock_;                              // basic block, or null if only a place holder
     FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
@@ -145,7 +145,7 @@ private:
     EdgeType type_;
     Confidence confidence_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);

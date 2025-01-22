@@ -5,7 +5,7 @@
 #include <RoseFirst.h>
 #include <Sawyer/Optional.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -18,7 +18,7 @@ private:
     uint64_t value_ = 1;
     size_t nBits_ = 64;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

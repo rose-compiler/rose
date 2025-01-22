@@ -170,6 +170,8 @@ SValue::set_comment(const std::string&) const {};
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValue);
+#endif
 
 #endif

@@ -9,10 +9,12 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include "BitPattern.h"
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -69,7 +71,7 @@ private:
     typedef std::vector<IdisList> IdisTable;
     IdisTable idis_table;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -246,7 +248,7 @@ private:
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Disassembler::M68k);
 #endif
 

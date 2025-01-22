@@ -46,7 +46,7 @@ public:
         unsigned    res1;           /* reserved */
         rose_addr_t tgt_offset;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(sect_idx);
@@ -66,7 +66,7 @@ public:
         unsigned    ordinal;
         rose_addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(modref);
@@ -86,7 +86,7 @@ public:
         unsigned    nm_off;         /* offset into import procedure names */
         rose_addr_t      addend;    /* value to add (only present for flags & RF_2EXTRA) */
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(modref);
@@ -105,7 +105,7 @@ public:
         unsigned    type;
         unsigned    res3;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(type);

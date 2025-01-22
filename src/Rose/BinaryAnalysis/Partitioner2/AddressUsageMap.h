@@ -10,7 +10,7 @@
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Optional.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -38,7 +38,7 @@ class AddressUser {
     std::vector<BasicBlockPtr> bblocks_;                // sorted and unique
     DataBlockPtr dblock_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, const unsigned version);
@@ -157,7 +157,7 @@ public:
 class AddressUsers {
     std::vector<AddressUser> users_;                    // sorted
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, const unsigned version);
@@ -372,7 +372,7 @@ class AddressUsageMap {
     using Map = Sawyer::Container::IntervalMap<AddressInterval, AddressUsers>;
     Map map_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, const unsigned version);

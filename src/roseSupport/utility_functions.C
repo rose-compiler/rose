@@ -371,7 +371,7 @@ std::string version_message() {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
     ss <<"  --- binary analysis:            enabled\n";
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     ss <<"  ---   object serialization:     enabled\n";
 #else
     ss <<"  ---   object serialization:     disabled\n";
@@ -414,7 +414,7 @@ std::string version_message() {
 #if BOOST_VERSION < 106400
     ss <<"          Boost library is too old\n";
 #endif
-#if !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#if !defined(ROSE_ENABLE_BOOST_SERIALIZATION)
     ss <<"          Boost serialization is not available\n";
 #endif
 #if !defined(ROSE_ENABLE_DEBUGGER_LINXU)

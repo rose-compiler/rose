@@ -10,7 +10,7 @@
 #include <Sawyer/HashMap.h>
 #include <Sawyer/SharedPointer.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -43,7 +43,7 @@ private:
     MemoryMapPtr memMap_;                               // optional map from which instructions are decoded if disassembler_
     mutable InsnMap insnMap_;                           // this is a cache
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -161,7 +161,9 @@ public:
 } // namespace
 
 // Class versions must be at global scope
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionProvider, 2);
+#endif
 
 #endif
 #endif

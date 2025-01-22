@@ -6,8 +6,10 @@
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#endif
 
 #include <string>
 

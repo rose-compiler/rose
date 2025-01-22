@@ -8,7 +8,7 @@
 
 #include <Sawyer/IntervalMap.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -48,7 +48,7 @@ private:
     int64_t stackOffset_ = 0;                           // Offset w.r.t. function's initial stack pointer
     Purpose purpose_ = Purpose::UNKNOWN;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -176,7 +176,9 @@ void print(const StackVariables&, const Partitioner2::PartitionerConstPtr&, std:
 } // namespace
 
 // Class versions must be at global scope
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Variables::StackVariable, 1);
+#endif
 
 #endif
 #endif

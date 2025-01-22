@@ -8,7 +8,9 @@
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -40,7 +42,7 @@ private:
     class MajorMinor {
         unsigned majr_, minr_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     private:
         friend class boost::serialization::access;
 
@@ -79,7 +81,7 @@ private:
     Map map_;
 
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

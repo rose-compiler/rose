@@ -4,10 +4,13 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/base_object.hpp>
+#endif
+
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedPointer.h>

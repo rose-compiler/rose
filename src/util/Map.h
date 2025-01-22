@@ -2,8 +2,11 @@
 #define ROSE_Map_H
 
 #include <boost/optional.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#endif
 
 #include <stdexcept>
 #include <map>
@@ -14,7 +17,7 @@ class Map: public std::map<Key, T, Compare, Alloc> {
 public:
     typedef std::map<Key, T, Compare, Alloc> map_type;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

@@ -294,7 +294,7 @@ MemoryCellMap::hash(Combinatorics::Hasher &hasher, RiscOperators*/*addrOps*/, Ri
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::MemoryCellMap);
 #endif
 

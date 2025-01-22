@@ -6,8 +6,10 @@
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -22,7 +24,7 @@ public:
     /** Reference counting pointer. */
     using Ptr = NullPtr;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

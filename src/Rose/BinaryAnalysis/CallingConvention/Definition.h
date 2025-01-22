@@ -12,7 +12,7 @@
 
 #include <Sawyer/Optional.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #endif
 
@@ -66,7 +66,7 @@ private:
     AllocatorPtr argumentValueAllocator_;
 
 protected:
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned);
 #endif

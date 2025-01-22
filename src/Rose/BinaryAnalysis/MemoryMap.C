@@ -35,7 +35,7 @@
 #endif
 
 // This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::MappedBuffer);
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::NullBuffer);

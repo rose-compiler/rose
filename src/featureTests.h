@@ -58,6 +58,18 @@
 // A more traditional name than ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #define ROSE_ENABLE_BINARY_ANALYSIS
 
+// Whether to enable Boost Serialization for saving and restoring ROSE internal analysis state.
+#if !defined(ROSE_ENABLE_BOOST_SERIALIZATION) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    #if defined(BOOST_WINDOWS)
+        // Lacks POSIX file system, so we can't monitor the I/O progress
+    #elif !defined(__clang__) && defined(__GNUC__) && \
+        __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
+        // GCC <= 4.2.4 gets segfaults compiling this file
+    #else
+        #define ROSE_ENABLE_BOOST_SERIALIZATION
+    #endif
+#endif
+
 // ARM AArch64 A64 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
 #if !defined(ROSE_ENABLE_ASM_AARCH64) && defined(ROSE_HAVE_CAPSTONE)
     #define ROSE_ENABLE_ASM_AARCH64
@@ -94,7 +106,7 @@
     defined(__linux__) && \
     (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
     BOOST_VERSION >= 106400 && \
-    defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB) && \
+    defined(ROSE_ENABLE_BOOST_SERIALIZATION) && \
     defined(ROSE_ENABLE_DEBUGGER_LINUX)
 #define ROSE_ENABLE_CONCOLIC_TESTING
 #endif

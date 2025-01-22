@@ -533,7 +533,7 @@ RiscOperators::reinterpret(const BaseSemantics::SValue::Ptr &a_, SgAsmType *retT
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::TaintSemantics::SValue);
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::TaintSemantics::RiscOperators);
 #endif

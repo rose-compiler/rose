@@ -6,7 +6,10 @@
 
 // Basic types needed by almost all other instruction semantics layers
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/shared_ptr.hpp>
+#endif
+
 #include <boost/shared_ptr.hpp>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Set.h>

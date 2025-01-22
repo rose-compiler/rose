@@ -10,12 +10,13 @@
 #include <string>
 #include <rose_serialize_path.h>
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#endif
+
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
-#endif
 
 #ifdef ROSE_HAVE_CEREAL
 #include <cereal/access.hpp>
@@ -79,7 +80,7 @@ class SourceLocation: public Location {
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     // protects the following static data members
     static FileNames fileNames_;
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

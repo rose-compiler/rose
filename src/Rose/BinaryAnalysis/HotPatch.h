@@ -8,9 +8,11 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Sawyer/Message.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -46,7 +48,7 @@ public:
         InstructionSemantics::BaseSemantics::SValuePtr newValue_; // replacement value
         Behavior behavior_;                             // whether to continue matching more records
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     private:
         friend class boost::serialization::access;
 
@@ -147,7 +149,7 @@ private:
     Records records_;
 
     // Serialization
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

@@ -17,7 +17,7 @@ namespace Variables {
 class GlobalVariable: public BaseVariable {
     Address address_ = 0;                               // starting (lowest) virtual address
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 

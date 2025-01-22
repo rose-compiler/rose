@@ -15,7 +15,9 @@
 #define ROSE_Z3 ""
 #endif
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -51,7 +53,7 @@ private:
 #endif
 
 private:
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     friend class boost::serialization::access;
 
     template<class S>
@@ -212,7 +214,7 @@ protected:
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Z3Solver);
 #endif
 

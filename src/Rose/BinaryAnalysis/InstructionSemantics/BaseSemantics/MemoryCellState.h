@@ -6,9 +6,11 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -30,7 +32,7 @@ protected:
     MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
     MemoryCellPtr latestWrittenCell_;                   // the cell whose value was most recently written to, if any
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -141,7 +143,7 @@ public:
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::MemoryCellState);
 #endif
 

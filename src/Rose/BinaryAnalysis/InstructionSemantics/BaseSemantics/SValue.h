@@ -9,9 +9,11 @@
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SmallObject.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -46,7 +48,7 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -321,7 +323,9 @@ std::ostream& operator<<(std::ostream&, const SValue::WithFormatter&);
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValue);
+#endif
 
 #endif
 #endif

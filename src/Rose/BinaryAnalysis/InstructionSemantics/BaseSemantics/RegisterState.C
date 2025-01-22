@@ -43,6 +43,8 @@ RegisterState::registerDictionary(const RegisterDictionary::Ptr &rd) {
 } // namespace
 } // namespace
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterState);
+#endif
 
 #endif

@@ -3,6 +3,12 @@
 
 static void
 binaryAnalysisFeatures() {
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+    std::cout <<"Boost serialization (ROSE_ENABLE_BOOST_SERIALIZATION)                  enabled\n";
+#else
+    std::cout <<"Boost serialization (ROSE_ENABLE_BOOST_SERIALIZATION)                  disabled\n";
+#endif
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
     std::cout <<"Binary analysis (ROSE_ENABLE_BINARY_ANALYSIS)                          enabled\n";
 #else

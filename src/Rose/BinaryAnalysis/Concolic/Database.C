@@ -2,10 +2,13 @@
 // The schema is not identical to that of the first implementation.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/archive/binary_iarchive.hpp>            // included before ROSE headers
 #include <boost/archive/binary_oarchive.hpp>            // included before ROSE headers
 #include <boost/archive/xml_iarchive.hpp>               // included before ROSE headers
 #include <boost/archive/xml_oarchive.hpp>               // included bofore ROSE headers
+#endif
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 
@@ -31,7 +34,10 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/nvp.hpp>
+#endif
 
 #include <Sawyer/FileSystem.h>
 

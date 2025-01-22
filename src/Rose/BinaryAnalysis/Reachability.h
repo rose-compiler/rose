@@ -14,8 +14,10 @@
 #include <Sawyer/Message.h>
 #include <Sawyer/Tracker.h>
 
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
+#endif
 
 #include <set>
 #include <string>
@@ -108,7 +110,7 @@ private:
     FunctionToVertexMap dfReferents_;                     // results from findImplicitFunctionReferents
     Sawyer::Container::Tracker<size_t> scannedVertexIds_; // vertex IDs that have been used for marking intrinsic reachability
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
 
@@ -416,7 +418,9 @@ private:
 } // namespace
 
 // Class versions must be at global scope
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Reachability, 1);
+#endif
 
 #endif
 #endif

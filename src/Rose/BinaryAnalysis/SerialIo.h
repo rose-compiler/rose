@@ -6,27 +6,8 @@
 // Define this if you need to debug SerialIo -- it causes everything to run in the calling thread and avoid catching exceptions.
 //#define ROSE_DEBUG_SERIAL_IO
 
-#if defined(BOOST_WINDOWS)
-    // Lacks POSIX file system, so we can't monitor the I/O progress
-    #undef ROSE_SUPPORTS_SERIAL_IO
-#elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
-    // Lacks Boost's serialization library, which is how we convert objects to bytes and vice versa
-    #undef ROSE_SUPPORTS_SERIAL_IO
-#elif defined(__clang__)
-    #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
-#elif defined(__GNUC__)
-    #if __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
-        // GCC <= 4.2.4 gets segfaults compiling this file
-        #undef ROSE_SUPPORTS_SERIAL_IO
-    #else
-        #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
-    #endif
-#else
-    #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
-#endif
-
 // These have to be included early, before the definitions of the ROSE classes that are serialized
-#ifdef ROSE_SUPPORTS_SERIAL_IO
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -273,7 +254,7 @@ public:
     using Ptr = SerialOutputPtr;
 
 private:
-#ifdef ROSE_SUPPORTS_SERIAL_IO
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     boost::iostreams::file_descriptor_sink device_;
     boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file_;
     boost::archive::binary_oarchive *binary_archive_;
@@ -282,7 +263,7 @@ private:
 #endif
 
 protected:
-#ifdef ROSE_SUPPORTS_SERIAL_IO
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     SerialOutput(): binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
 #else
     SerialOutput() {}
@@ -351,7 +332,7 @@ public:
         if (ERROR == objectType())
             throw Exception("cannot save object because stream is in error state");
 
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         throw Exception("binary state files are not supported in this configuration");
 #elif defined(ROSE_DEBUG_SERIAL_IO)
         std::string errorMessage;
@@ -388,7 +369,7 @@ private:
     template<class T>
     void asyncSave(Savable objectTypeId, const T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         ASSERT_not_reachable("not supported in this configuration");
 #else
 #if !defined(ROSE_DEBUG_SERIAL_IO)
@@ -442,7 +423,7 @@ public:
     using Ptr = SerialInputPtr;
 
 private:
-#ifdef ROSE_SUPPORTS_SERIAL_IO
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     size_t fileSize_;
     boost::iostreams::file_descriptor_source device_;
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file_;
@@ -452,7 +433,7 @@ private:
 #endif
 
 protected:
-#ifdef ROSE_SUPPORTS_SERIAL_IO
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     SerialInput(): fileSize_(0), binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
 #else
     SerialInput() {}
@@ -512,7 +493,7 @@ public:
         if (!isOpen())
             throw Exception("cannot load object when no file is open");
 
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         throw Exception("binary state files are not supported in this configuration");
 #else
         if (ERROR == objectType())
@@ -559,7 +540,7 @@ private:
     template<class T>
     void asyncLoad(T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
-#ifndef ROSE_SUPPORTS_SERIAL_IO
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         ASSERT_not_reachable("not supported in this configuration");
 #else
 #if !defined(ROSE_DEBUG_SERIAL_IO)

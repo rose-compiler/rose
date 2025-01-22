@@ -4,7 +4,11 @@
 
 #include <rosePublicConfig.h>
 #include <boost/format.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/access.hpp>
+#endif
+
 #include <Sawyer/Assert.h>
 #include <Sawyer/BitFlags.h>
 #include <vector>

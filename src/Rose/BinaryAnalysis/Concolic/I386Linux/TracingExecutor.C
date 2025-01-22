@@ -7,7 +7,11 @@
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
 #include <boost/filesystem.hpp>
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/export.hpp>
+#endif
+
 #include <memory.h>
 
 namespace Rose {

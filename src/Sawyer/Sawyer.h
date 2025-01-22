@@ -408,7 +408,7 @@ SAWYER_EXPORT std::string thisExecutableName();
 // Boost serialization
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define SAWYER_HAVE_BOOST_SERIALIZATION
-    #ifdef SAWYER_HAVE_BOOST_SERIALIZATION
+#ifdef SAWYER_HAVE_BOOST_SERIALIZATION
     #include <boost/serialization/access.hpp>
     #include <boost/serialization/nvp.hpp>
     #include <boost/serialization/split_member.hpp>

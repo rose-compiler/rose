@@ -4115,7 +4115,7 @@ DispatcherM68k::adjustFpConditionCodes(const SValue::Ptr &result, SgAsmFloatType
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics::DispatcherM68k);
 #endif
 
