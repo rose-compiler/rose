@@ -8,6 +8,10 @@
 #include <vector>
 #include <set>
 #include "CommandOptions.h"
+#include "AstUtilInterface.h"
+
+class SgNode;
+class AstNodePtr;
 
 namespace AstUtilInterface {
 
@@ -184,6 +188,12 @@ class DependenceTable : public CollectDependences {
       }
     }
 
+    //! Erase existing annotation for the given operator.
+    void ClearOperatorSideEffect(SgNode* op); 
+    //
+    //! The operator op accesses the given memory reference in nature of the given relation.
+    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0); 
+
 
   private:
     // The signatures of all dependence entities.
@@ -199,9 +209,7 @@ class DependenceTable : public CollectDependences {
     };
     std::map<std::string, NodeInfo> node_map_;
  protected:
-    virtual void save_dependence(const DependenceEntry& e) override {
-      SaveDependence(DependenceEntry(e));
-    }
+    virtual void save_dependence(const DependenceEntry& e) override; 
 };
 
 }; /* name space SelectiveTesting*/

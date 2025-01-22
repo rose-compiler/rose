@@ -1,4 +1,8 @@
 #include "dependence_table.h"
+#include "OperatorDescriptors.h"
+#include "OperatorAnnotation.h"
+#include "AstUtilInterface.h"
+#include "AstInterface_ROSE.h"
 
 namespace AstUtilInterface {
 
@@ -306,4 +310,77 @@ void DependenceTable :: OutputDependencesInGUI(std::ostream& output) {
     };
     output << "}";
 }
+
+void DependenceTable:: save_dependence(const DependenceEntry& e) {
+  // Save inside the dependence table (base class).
+  DebugLog DebugSaveDep("-debugdep");
+
+  // Save into annotation  if necessary.
+  if (e.type_entry() == "parameter") {
+    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+    OperatorSideEffectDescriptor* desc1 = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+    assert(desc1 != 0);
+    desc1->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+    OperatorSideEffectDescriptor* desc2 = funcAnnot->get_read_descriptor(e.first_entry(), true);
+    assert(desc2 != 0);
+    desc2->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+    DebugSaveDep([&e](){ return "Saving parameter " + e.second_entry(); });
+  }
+  else if (e.type_entry() == "modify") {
+    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+    OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+    assert(desc != 0);
+    SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
+    desc->push_back(var);
+    DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });
+
+  } else if (e.type_entry() == "read") {
+    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+    OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
+    assert(desc != 0);
+    SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
+    desc->push_back(var);
+    DebugSaveDep([&var](){ return "Saving read " + var.toString(); });
+  }
+  DependenceTable::SaveDependence(DependenceEntry(e));
+}
+
+void DependenceTable::
+ClearOperatorSideEffect(SgNode* op) {
+  auto sig = GetVariableSignature(op);
+  ClearDependence(sig);
+}
+
+bool DependenceTable::
+     SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details) {
+  std::string prefix, attr;
+  bool save_annot = false;
+  switch (relation) {
+    case AstUtilInterface::OperatorSideEffect::Modify: prefix = "modify"; save_annot=true; break;
+    case AstUtilInterface::OperatorSideEffect::Read:  prefix = "read"; save_annot=true; break;
+    case AstUtilInterface::OperatorSideEffect::Call:  prefix = "call"; break;
+    case AstUtilInterface::OperatorSideEffect::Parameter:  
+             prefix = "parameter"; break;
+    case AstUtilInterface::OperatorSideEffect::Return:  
+             prefix = "return"; break;
+    case AstUtilInterface::OperatorSideEffect::Kill:  return false; 
+    case AstUtilInterface::OperatorSideEffect::Decl:  prefix = "construct_destruct"; break;
+    case AstUtilInterface::OperatorSideEffect::Allocate:  prefix = "allocate"; break;
+    case AstUtilInterface::OperatorSideEffect::Free:  prefix = "free"; break;
+    default:
+     std::cerr << "Unexpected case:" << relation << "\n";
+     assert(0);
+  }
+  if (save_annot) {
+     AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
+  }
+  if (details != 0) {
+       attr = AstUtilInterface::GetVariableSignature(details);
+  }
+  DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), prefix, attr); 
+  Log.push("saving dependence: " + e.to_string());
+  SaveDependence(e);
+  return true;
+}
+
 };

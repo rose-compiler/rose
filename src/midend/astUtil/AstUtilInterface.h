@@ -10,6 +10,7 @@ class SgNode;
 class SgFunctionDeclaration;
 class AstNodePtr;
 namespace AstUtilInterface{
+class DependenceTable;
 
    class WholeProgramDependenceAnalysis;
    enum OperatorSideEffect {
@@ -37,7 +38,7 @@ namespace AstUtilInterface{
    //! given scope. 
     void ComputeAstSideEffects(SgNode* ast, SgNode* scope,
                    std::function<bool(const AstNodePtr&, const AstNodePtr&, OperatorSideEffect)>& collect,
-                   WholeProgramDependenceAnalysis* add_to_dep_analysis = 0);
+                   DependenceTable* add_to_dep_table = 0);
 
     //! Instruct the compiler to collect operator side effect annotation. The 
     //! annotations will be stored internally to be used later to assist program 
@@ -48,12 +49,12 @@ namespace AstUtilInterface{
    //! to be used later to assist program analysis within the compiler.
    //! Only annotations supported by those already registered can be parsed correctly.
    //! Use the given dependence analysis if it is not 0.
-    void ReadAnnotations(std::istream& input, WholeProgramDependenceAnalysis* use_dep_analysis = 0); 
+    void ReadAnnotations(std::istream& input, DependenceTable* use_dep_table = 0); 
 
    //! Write annotation to the given file. The annotations are those stored internally 
    //! collected through other annotation-related calls of this interface.
    //! Use the given dependence analysis if it is not 0.
-    void OutputOperatorSideEffectAnnotations(std::ostream& output, WholeProgramDependenceAnalysis* use_dep_analysis = 0); 
+    void OutputOperatorSideEffectAnnotations(std::ostream& output, DependenceTable* use_dep_analysis = 0); 
 
     //! Record that op_ast references the given variable with the given relation:
     //! (modify, read, or call). Returns the string representation of the operator and variable.

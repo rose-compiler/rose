@@ -12,7 +12,7 @@ DebugLog DebugAstUtil("-debugastutil");
 
 void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
               std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)>& collect,
-              WholeProgramDependenceAnalysis* add_to_dep_analysis) {
+              DependenceTable* add_to_dep_analysis) {
     AstInterfaceImpl astImpl(scope);
     AstInterface fa(&astImpl);
 
@@ -127,16 +127,16 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
     } 
 }
 
-void AstUtilInterface::ReadAnnotations(std::istream& input, WholeProgramDependenceAnalysis* use_dep_analysis) {
+void AstUtilInterface::ReadAnnotations(std::istream& input, DependenceTable* use_dep_analysis) {
   if (use_dep_analysis != 0) {
-     use_dep_analysis->CollectPastResults(input);
+     use_dep_analysis->CollectFromFile(input);
   }
   else {
      ReadAnnotation::get_inst()->read(input);
   }
 }
 
-void AstUtilInterface::OutputOperatorSideEffectAnnotations(std::ostream& output, WholeProgramDependenceAnalysis* use_dep_analysis) {
+void AstUtilInterface::OutputOperatorSideEffectAnnotations(std::ostream& output, DependenceTable* use_dep_analysis) {
   if (use_dep_analysis != 0) {
      use_dep_analysis->OutputDependences(output);
   }
