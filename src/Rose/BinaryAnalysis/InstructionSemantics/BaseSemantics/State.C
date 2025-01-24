@@ -445,7 +445,7 @@ State::print(std::ostream &stream, Formatter &fmt) const {
     Indent indent(fmt);
     for (const AddressSpace::Ptr &space: addressSpaces()) {
         stream <<prefix <<space->printableName() <<":\n";
-        stream <<prefix <<(*space + fmt);
+        stream <<(*space + fmt);
     }
 }
 
