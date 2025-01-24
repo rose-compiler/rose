@@ -550,6 +550,9 @@ public:
     Partitioner2::PartitionerConstPtr partitioner() const;
 
 public:
+    /** Return the settings for this model. */
+    const Settings& p2Settings() const;
+
     /** Cause this model to follow only one path through the specimen.
      *
      *  The path is provided as an ordered list of execution units. The initial execution unit will not appear in this list
@@ -676,6 +679,9 @@ public:
 
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr createRiscOperators() override;
 
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    configureRiscOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
+
     virtual void
     initializeState(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
@@ -709,6 +715,10 @@ public:
 
     virtual std::list<ExecutionUnitPtr>
     parsePath(const Yaml::Node&, const std::string &sourceName) override;
+
+protected:
+    Variables::VariableFinderPtr variableFinder() const;
+    Variables::GlobalVariables& globalVariables();
 
 private:
     // Records the state hash and returns true if we've seen it before.

@@ -111,6 +111,18 @@ public:
      *  API. */
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr createRiscOperators() = 0;
 
+    /** Configure RISC operators.
+     *
+     *  This is normally called by createRiscOperators in order to finish configuring the operators. It returns either the
+     *  configured object (the argument) or a new object. For instance, if RISC operators tracing is enabled, then it may
+     *  return a new tracing operators object that wraps the argument.
+     *
+     *  The default implementation simply returns the argument.
+     *
+     *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe API. */
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    configureRiscOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+
     /** Create model checker solver.
      *
      *  This solver will be used for model checker operations, but not for RISC operations (see @ref createRiscOperators). The

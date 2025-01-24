@@ -45,6 +45,11 @@ SemanticCallbacks::createInitialState() {
     return BS::State::instance(registers, memory);
 }
 
+BS::RiscOperators::Ptr
+SemanticCallbacks::configureRiscOperators(const BS::RiscOperators::Ptr &ops) {
+    return ops;
+}
+
 void
 SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr&) {}
 

@@ -1471,6 +1471,11 @@ SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const
     return Ptr(new SemanticCallbacks(mcSettings, settings, partitioner));
 }
 
+const Settings&
+SemanticCallbacks::p2Settings() const {
+    return settings_;
+}
+
 SmtSolver::Memoizer::Ptr
 SemanticCallbacks::smtMemoizer() const {
     return smtMemoizer_;
@@ -1564,6 +1569,12 @@ SemanticCallbacks::createInitialState() {
 BS::RiscOperators::Ptr
 SemanticCallbacks::createRiscOperators() {
     auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr(), variableFinder_, gvars_);
+    return configureRiscOperators(ops);
+}
+
+BS::RiscOperators::Ptr
+SemanticCallbacks::configureRiscOperators(const BS::RiscOperators::Ptr &ops_) {
+    auto ops = RiscOperators::promote(ops_);
     ops->trimThreshold(mcSettings()->maxSymbolicSize);      // zero means no limit
     ops->initialState(nullptr);
     ops->currentState(nullptr);
@@ -1679,6 +1690,16 @@ SemanticCallbacks::instructionPointer(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
     return ops->peekRegister(IP);
+}
+
+Variables::VariableFinder::Ptr
+SemanticCallbacks::variableFinder() const {
+    return variableFinder_;
+}
+
+Variables::GlobalVariables&
+SemanticCallbacks::globalVariables() {
+    return gvars_;
 }
 
 bool

@@ -729,6 +729,8 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const S
             if (insertWork(newPath))
                 ++nChildren;
         }
+        if (nextUnits.empty())
+            SAWYER_MESG(mlog[DEBUG]) <<"    no next execution units\n";
 
         // Path no longer needs its outgoing state since we copied it to the incoming state of each of the new
         // paths we created.
