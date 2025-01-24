@@ -183,14 +183,14 @@ public:
      *  it usually is owned by one or the other.
      *
      *  See also @ref peek, which has no side effects. */
-    SValuePtr read(const AddressSpacePtr&, const AddressSpaceAddress&, const SValuePtr &dflt,
-                   RiscOperators &addrOps, RiscOperators &valOps);
+    virtual SValuePtr read(const AddressSpacePtr&, const AddressSpaceAddress&, const SValuePtr &dflt,
+                           RiscOperators &addrOps, RiscOperators &valOps);
 
     /** Peek at a value in an address space.
      *
      *  This is similar to the @ref read method except it has no side effects. See that method for more complete documentation. */
-    SValuePtr peek(const AddressSpacePtr&, const AddressSpaceAddress&, const SValuePtr &dflt,
-                   RiscOperators &addrOps, RiscOperators &valOps);
+    virtual SValuePtr peek(const AddressSpacePtr&, const AddressSpaceAddress&, const SValuePtr &dflt,
+                           RiscOperators &addrOps, RiscOperators &valOps);
 
     /** Write a value to an address space.
      *
@@ -203,8 +203,8 @@ public:
      *
      *  The specified address space need not be an address space that's owned by either of the provided operator arguments, although
      *  it usually is owned by one or the other. */
-    void write(const AddressSpacePtr&, const AddressSpaceAddress&, const SValuePtr &value,
-               RiscOperators &addrOps, RiscOperators &valOps);
+    virtual void write(const AddressSpacePtr&, const AddressSpaceAddress&, const SValuePtr &value,
+                       RiscOperators &addrOps, RiscOperators &valOps);
 
     /** Merge operation for data flow analysis.
      *
