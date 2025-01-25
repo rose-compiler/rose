@@ -73,24 +73,22 @@ class MyTraversal
 // Functions required by the tree traversal mechanism
 MyInheritedAttribute
 MyTraversal::EVALUATE_INHERITED_ATTRIBUTE_FUNCTION (
-     SgNode* astNode,
-     MyInheritedAttribute inheritedAttribute )
+     SgNode* /*astNode*/,
+     MyInheritedAttribute /*inheritedAttribute*/ )
    {
   // Note that any constructor will do
      MyInheritedAttribute returnAttribute;
-
      return returnAttribute;
    }
 
 MySynthesizedAttribute
 MyTraversal::EVALUATE_SYNTHESIZED_ATTRIBUTE_FUNCTION (
-     SgNode* astNode,
-     MyInheritedAttribute inheritedAttribute,
-     SubTreeSynthesizedAttributes synthesizedAttributeList )
+     SgNode* /*astNode*/,
+     MyInheritedAttribute /*inheritedAttribute*/,
+     SubTreeSynthesizedAttributes /*synthesizedAttributeList*/ )
    {
   // Note that any constructor will do
      MySynthesizedAttribute returnAttribute;
-
      return returnAttribute;
    }
 
@@ -108,7 +106,6 @@ main ( int argc, char** argv )
      SgProject* project = frontend(argc,argv);
 
      MyTraversal treeTraversal;
-
      MyInheritedAttribute inheritedAttribute;
 
   // Ignore the return value since we don't need it
