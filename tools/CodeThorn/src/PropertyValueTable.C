@@ -107,7 +107,8 @@ void PropertyValueTable::nonReachable(size_t num) {
 }
 
 void PropertyValueTable::updatePropertyValue(size_t num, PropertyValue value) {
-  ROSE_ASSERT(num>=0 && num<_propertyValueTable.size());
+  // ASSERT_require(num>=0);
+  ASSERT_require(num<_propertyValueTable.size());
   switch(getPropertyValue(num)) {
   case PROPERTY_VALUE_UNKNOWN:
     setPropertyValue(num,value);
@@ -120,7 +121,7 @@ void PropertyValueTable::updatePropertyValue(size_t num, PropertyValue value) {
     if(value!=PROPERTY_VALUE_NO)
       throw CodeThorn::Exception("Error: property value table: reset of NO.");
     break;
-  default:assert(0);
+  default:ROSE_ABORT();
   }
 }
 

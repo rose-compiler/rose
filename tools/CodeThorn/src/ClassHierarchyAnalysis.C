@@ -1,10 +1,10 @@
+#include "ClassHierarchyAnalysis.h"
 
 #include <algorithm>
 #include <unordered_set>
 #include <cassert>
 #include <iterator>
 
-#include "ClassHierarchyAnalysis.h"
 
 namespace ct = CodeThorn;
 
@@ -90,6 +90,7 @@ namespace
     return binop;
   }
 
+  // TClassAnalysis = ClassAnalysis or const ClassAnalysis
   template <class TClassAnalysis>
   inline
   auto
@@ -100,7 +101,11 @@ namespace
     if (pos != m.end())
       return *pos;
 
-    logError() << m.classInfo(key) << std::endl;
+    msgError() << m.classInfo(key) << std::endl;
+
+    if (m.size() == 0)
+      msgError() << "\nNote, the class hierarchy database is empty." << std::endl;
+
     throw std::out_of_range("Unable to find key in ClassAnalysis.");
   }
 }
@@ -469,7 +474,8 @@ namespace
 
   void analyzeClassRelationships(ClassAnalysis& all)
   {
-    logTrace() << all.size() << std::endl;
+    SAWYER_MESG(msgTrace())
+              << all.size() << std::endl;
 
     auto propagateVirtualInheritance =
            [&all](ClassAnalysis::value_type& rep) -> void
@@ -574,7 +580,7 @@ struct ComputeVFunctionRelation
 
     if (rel == RoseCompatibilityBridge::unrelated)
     {
-      logError() << "oops, covariant return assertion failed: "
+      msgError() << "oops, covariant return assertion failed: "
                  << rcb.nameOf(bas) << " <> " << rcb.nameOf(drv)
                  << std::endl;
       return;

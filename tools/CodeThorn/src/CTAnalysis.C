@@ -10,7 +10,7 @@
 #include "CodeThornException.h"
 
 #include <unordered_set>
-#include <boost/bind.hpp>
+//~ #include <boost/bind.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
@@ -108,7 +108,7 @@ std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
 
   return ss.str();
 }
-  
+
 void CodeThorn::CTAnalysis::deleteAllStates() {
 
   if(getSolver()->getId()==18) {
@@ -118,8 +118,8 @@ void CodeThorn::CTAnalysis::deleteAllStates() {
 
   if(_ctOpt.status) {
     cout<<"STATUS: "<<hashSetConsistencyReport();
-  }      
-  
+  }
+
   EState::checkPointAllocationHistory();
   size_t numSetEStates=estateSet.size();
   if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";
@@ -405,7 +405,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
                     }
                   }
                   reachabilityResults.reachable(assertCode);
-                }	    // record failed assert
+                }     // record failed assert
               }
             } // end of failed assert handling
           } // end of if
@@ -430,7 +430,7 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
 }
 
 bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
-  // (1) if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  // (1) if code is unreachable no state is computed for it. In this case no entry is found for this label
   bool isUnreachable;
   if(getSolver()->getId()==18) {
     // solver 18 uses its own states
@@ -752,11 +752,11 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       switch(_ctOpt.abstractionMode) {
       case 0:
       case 1:
-	this->runSolver();
-	break;
+  this->runSolver();
+  break;
       default:
-	cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<< "(analysis phase 2)"<<endl;
-	exit(1);
+  cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<< "(analysis phase 2)"<<endl;
+  exit(1);
       }
     }
   } else {
@@ -771,7 +771,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
     }
     LabelSet reachableEntryLabels=callGraph->reachableNodes(startLabel);
     LabelSet startLabels=reachableEntryLabels;
-#else    
+#else
     LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
     setTotalNumberOfFunctions(entryLabels.size());
     LabelSet startLabels=entryLabels;
@@ -779,7 +779,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
 
     ROSE_ASSERT(estateWorkListCurrent);
     //if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
-    //			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
+    //        <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
     // intra-procedural analysis initial states
     ROSE_ASSERT(!getModeLTLDriven());
     eraseWorkList();
@@ -791,13 +791,13 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       getFlow()->setStartLabel(slab);
       // initialize intra-procedural analysis with all function entry points
       if(_ctOpt.status) {
-	SgNode* node=getLabeler()->getNode(slab);
-	string functionName=SgNodeHelper::getFunctionName(node);
-	string fileName=SgNodeHelper::sourceFilenameToString(node);
+  SgNode* node=getLabeler()->getNode(slab);
+  string functionName=SgNodeHelper::getFunctionName(node);
+  string fileName=SgNodeHelper::sourceFilenameToString(node);
 #pragma omp critical (STATUS_MESSAGES)
-	{
-	  SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
-	}
+  {
+    SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+  }
       }
       EStatePtr initialEStateObj=createInitialEState(this->_root,slab);
       initialEStateObj->setLabel(slab);
@@ -808,9 +808,9 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       addToWorkList(initialEState);
       this->runSolver();
       if(this->isIncompleteSTGReady()) {
-	_statsIntraUnfinishedFunctions++;
+  _statsIntraUnfinishedFunctions++;
       } else {
-	_statsIntraFinishedFunctions++;
+  _statsIntraFinishedFunctions++;
       }
 
     }
@@ -1259,7 +1259,7 @@ PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
 PStatePtr CodeThorn::CTAnalysis::processNew(PState* s) {
   return processNew(*s);
 }
-  
+
 PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNewOrExisting(s));
@@ -1424,7 +1424,7 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   PStatePtr initialPStateStored=processNewOrExisting(*initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[INFO])<< "INIT: initial pstate(stored): "<<initialPStateStored<<":"<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-  
+
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
@@ -1435,7 +1435,7 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
 
-  
+
   // initialize summary states map for abstract model checking mode
   initializeAbstractStates(initialPStateStored);
   estate->io.recordNone(); // ensure that extremal value is different to bot
@@ -1468,32 +1468,32 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
 #if 0
       LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
       getFlow()->setStartLabelSet(startLabels);
-      
+
       size_t numStartLabels=startLabels.size();
       printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
       long int fCnt=1;
       for(auto slab : startLabels) {
-	// initialize intra-procedural analysis with all function entry points
-	if(_ctOpt.status) {
-	  SgNode* node=getLabeler()->getNode(slab);
-	  string functionName=SgNodeHelper::getFunctionName(node);
-	  string fileName=SgNodeHelper::sourceFilenameToString(node);
+  // initialize intra-procedural analysis with all function entry points
+  if(_ctOpt.status) {
+    SgNode* node=getLabeler()->getNode(slab);
+    string functionName=SgNodeHelper::getFunctionName(node);
+    string fileName=SgNodeHelper::sourceFilenameToString(node);
 #pragma omp critical (STATUS_MESSAGES)
-	  {
-	    SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
-	  }
-	}
-	EState initialEStateObj=createInitialEState(root,slab);
-	initialEStateObj.setLabel(slab);
-	EStatePtr initialEState=processNewOrExisting(initialEStateObj);
-	ROSE_ASSERT(initialEState);
-	variableValueMonitor.init(initialEState);
-	addToWorkList(initialEState);
+    {
+      SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+    }
+  }
+  EState initialEStateObj=createInitialEState(root,slab);
+  initialEStateObj.setLabel(slab);
+  EStatePtr initialEState=processNewOrExisting(initialEStateObj);
+  ROSE_ASSERT(initialEState);
+  variableValueMonitor.init(initialEState);
+  addToWorkList(initialEState);
       }
 #endif
 
     } // end of if
-    
+
     if(_ctOpt.rers.rersBinary) {
       //initialize the global variable arrays in the linked binary version of the RERS problem
       SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _ctOpt.threads << " threads. " << endl;
@@ -1522,7 +1522,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
     logger[INFO]<<"Class hierarchy finished"<<endl; _virtualFunctions=Pass::createVirtualFunctionAnalysis(ctOpt, _classHierarchy, tc); // class hierarchy timer
     logger[INFO]<<"Virtual functions finished"<<endl;
   _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy,_virtualFunctions); // icfg constructino timer
-  
+
   tc.startTimer(); // initialization timer (stopped at end of function)
   resetInputSequenceIterator();
   RoseAst completeast(root);
@@ -1541,10 +1541,10 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
     if(_ctOpt.getInterProceduralFlag()) {
       _startFunRoot=completeast.findFunctionByName(startFunctionName);
       if(_startFunRoot==0) {
-	SAWYER_MESG(logger[ERROR]) << "Function '"<<startFunctionName<<"' not found.\n";
-	exit(1);
+  SAWYER_MESG(logger[ERROR]) << "Function '"<<startFunctionName<<"' not found.\n";
+  exit(1);
       } else {
-	SAWYER_MESG(logger[INFO])<< "Starting at function '"<<startFunctionName<<"'."<<endl;
+  SAWYER_MESG(logger[INFO])<< "Starting at function '"<<startFunctionName<<"'."<<endl;
       }
     } else {
       // should not be required
@@ -1570,7 +1570,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
     _estateTransferFunctions=etf;
   }
   _estateTransferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
-  
+
   if(_ctOpt.getInterProceduralFlag()) {
     // inter-procedural analysis: one start label
     Label slab2=getLabeler()->getLabel(_startFunRoot);
@@ -1618,7 +1618,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   setWorkLists(_explorationMode);
 
   //initializeSolverWithInitialEState(this->_root);
-  
+
   if(_ctOpt.status) cout<<"STATUS: analysis phase 1 finished."<<endl;
   tc.stopTimer(TimingCollector::init);
 
@@ -1652,8 +1652,8 @@ void CodeThorn::CTAnalysis::generateAstNodeInfo(SgNode* node) {
         attr->setInitialLabel(getCFAnalyzer()->initialLabel(*i));
         attr->setFinalLabels(getCFAnalyzer()->finalLabels(*i));
       } else if(SgInitializedName* iName=isSgInitializedName(*i)) {
-	attr->setVarName(iName->unparseToString());
-	attr->setVarType(iName->get_type()->unparseToString());
+  attr->setVarName(iName->unparseToString());
+  attr->setVarType(iName->get_type()->unparseToString());
       } else {
         (*i)->removeAttribute("info");
       }
@@ -1885,7 +1885,7 @@ int CodeThorn::CTAnalysis::reachabilityAssertCode(EStatePtr currentEStatePtr) {
 }
 
 void CodeThorn::CTAnalysis::setSkipUnknownFunctionCalls(bool flag) {
-  _skipSelectedFunctionCalls=flag; 
+  _skipSelectedFunctionCalls=flag;
   _estateTransferFunctions->setSkipUnknownFunctionCalls(flag);
 }
 
@@ -2034,7 +2034,7 @@ std::list<EStatePtr> CodeThorn::CTAnalysis::elistify(EState res) {
 void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
   switch(int argVal=ctOpt.functionResolutionMode) {
   case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
-  default: 
+  default:
     cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
     exit(1);
   }
@@ -2060,7 +2060,7 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Number of canceled functions  : "<<_statsIntraUnfinishedFunctions<<" (max time: "<<_ctOpt.maxTime<<" seconds)"<<endl;
     ss<<"Total number of functions     : "<<totalIntraFunctions<<" ("<<getTotalNumberOfFunctions()<<")"<<endl;
   } else {
-    ss<<"Inter-procedural analysis"<<endl;     
+    ss<<"Inter-procedural analysis"<<endl;
 
     ss<<"Cyclic call graph    : ";
     if(auto topSort=getTopologicalSort())

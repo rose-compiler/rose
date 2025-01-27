@@ -18,46 +18,6 @@
 
 using namespace CodeThorn;
 
-namespace
-{
-  //
-// logging
-
-#if 0
-
-inline
-auto logTrace() -> decltype(CodeThorn::logger[Sawyer::Message::TRACE])
-{
-  return CodeThorn::logger[Sawyer::Message::TRACE];
-}
-
-inline
-auto logInfo() -> decltype(CodeThorn::logger[Sawyer::Message::INFO])
-{
-  return CodeThorn::logger[Sawyer::Message::INFO];
-}
-
-inline
-auto logWarn() -> decltype(CodeThorn::logger[Sawyer::Message::WARN])
-{
-  return CodeThorn::logger[Sawyer::Message::WARN];
-}
-
-inline
-auto logError() -> decltype(CodeThorn::logger[Sawyer::Message::ERROR])
-{
-  return CodeThorn::logger[Sawyer::Message::ERROR];
-}
-
-inline
-auto logFatal() -> decltype(CodeThorn::logger[Sawyer::Message::FATAL])
-{
-  return CodeThorn::logger[Sawyer::Message::FATAL];
-}
-
-#endif
-
-}
 
 namespace CodeThorn
 {
@@ -87,7 +47,7 @@ struct CtxUnfoldTransfer : DFTransferFunctions
     else if (labeler.isFunctionCallLabel(src))
       mark = "call";
 
-    logTrace() << "Reaching edge"
+    msgTrace() << "Reaching edge"
               << "\n  from: " << labeler.getNode(src)->unparseToString() << "/" << src << "* " << mark
               << "\n    to: " << labeler.getNode(tgt)->unparseToString() << "/" << tgt << "*"
               << std::endl;
@@ -143,7 +103,7 @@ struct IsNotCalleeCaller
                              && (callctx.callerOf(retnctx, lbl))
                              );
 
-    //~ logTrace() << callctx << " calls " << retnctx << " (" << lbl << ")? " << res
+    //~ msgTrace() << callctx << " calls " << retnctx << " (" << lbl << ")? " << res
                //~ << std::endl;
     return res;
   }
@@ -177,7 +137,7 @@ struct IsCalleeCaller
 
 
 
-    //~ logTrace() << callctx << " calls " << retnctx << " (" << lbl << ")? " << res
+    //~ msgTrace() << callctx << " calls " << retnctx << " (" << lbl << ")? " << res
                //~ << std::endl;
     return !res;
   }
@@ -214,8 +174,8 @@ void expandEdges( CtxLabeler<ContextString>& ctxlabeler, Flow& ctxflow, Edge e,
   const ContextString& ctx    = mapping.first.second;
   Label                ctxtgt = ctxlabeler.getLabel(e.target(), ctx);
 
-  ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
-  ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
+  ASSERT_require(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
+  ASSERT_require(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
 
   //~ logWarn() << "Insert CF edge"
              //~ << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << ")"
@@ -232,14 +192,14 @@ void expandCallEdges( CtxLabeler<ContextString>& ctxlabeler, Flow& ctxflow, Edge
 {
   ContextString ctx    = mapping.first.second;
 
-  ROSE_ASSERT(mapping.first.first == e.source());
+  ASSERT_require(mapping.first.first == e.source());
   ctx.callInvoke(ctxlabeler.baseLabeler(), mapping.first.first /* original call label */);
 
   Label         ctxtgt = ctxlabeler.getLabel(e.target(), ctx);
   Label         ctxsrc = mapping.second;
 
-  ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
-  ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
+  ASSERT_require(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
+  ASSERT_require(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
 
   //~ logWarn() << "Insert CF call edge"
              //~ << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << " @" << mapping.first.second << ")"
@@ -257,7 +217,7 @@ void expandReturnEdges( CtxLabeler<ContextString>& ctxlabeler, Flow& ctxflow, Ed
   Label                ctxsrc = mapping.second;
   const ContextString& ctx    = mapping.first.second;
 
-  //~ logTrace() << "e: " << e.source() << " -> " << e.target()
+  //~ msgTrace() << "e: " << e.source() << " -> " << e.target()
             //~ << "\n  map: " << mapping.first.first << " / " << ctx << " = " << ctxsrc
             //~ << std::endl;
 
@@ -266,13 +226,13 @@ void expandReturnEdges( CtxLabeler<ContextString>& ctxlabeler, Flow& ctxflow, Ed
     //~ Label ctxtgt = ctxelem.second;
     Label ctxtgt = ctxlabeler.getLabel(e.target(), ctxelem.first.second);
 
-    //~ logTrace() << "Insert CF return edge"
+    //~ msgTrace() << "Insert CF return edge"
               //~ << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << ")"
               //~ << "\n    to: " << ctxlabeler.getNode(ctxtgt)->unparseToString() << "/" << ctxtgt << "(" << e.target() << ")"
               //~ << std::endl;
 
-    ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
-    ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
+    ASSERT_require(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
+    ASSERT_require(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
     ctxflow.insert(Edge(ctxsrc, e.types(), ctxtgt));
   }
 }
@@ -295,7 +255,7 @@ CtxUnfoldAnalysis::unfold()
   for (SgVariableDeclaration* var : globalVarDecls)
     ctxlabeler.copyProperty(labeler.getLabel(var), context_t());
 
-  logInfo() << "Generated " << ctxlabeler.numberOfLabels()
+  msgInfo() << "Generated " << ctxlabeler.numberOfLabels()
             << " global variables labels"
             << std::endl;
 
@@ -313,7 +273,7 @@ CtxUnfoldAnalysis::unfold()
       //~ logWarn() << " bot: " << lbl << " " << ctxlat.size() << std::endl;
   }
 
-  logInfo() << "Generated " << ctxlabeler.numberOfLabels()
+  msgInfo() << "Generated " << ctxlabeler.numberOfLabels()
             << " new labels from " << labeler.numberOfLabels()
             << std::endl;
 
@@ -322,7 +282,7 @@ CtxUnfoldAnalysis::unfold()
   {
     if (!flow.contains(mapping.first.first))
     {
-      //~ logTrace() << "NO Flow from " << mapping.first.first << std::endl;
+      //~ msgTrace() << "NO Flow from " << mapping.first.first << std::endl;
       continue;
     }
 
@@ -334,7 +294,7 @@ CtxUnfoldAnalysis::unfold()
     size_t num = 0;
     for (Edge e : flow.outEdges(mapping.first.first /* original label */))
     {
-      ROSE_ASSERT(e.source() == mapping.first.first /* original label */);
+      ASSERT_require(e.source() == mapping.first.first /* original label */);
 
       fnExpandEdges(ctxlabeler, *ctxflow.get(), e, mapping);
       ++num;
@@ -342,7 +302,7 @@ CtxUnfoldAnalysis::unfold()
 
     if (!num)
     {
-      logWarn() << "Zero Edges from " << mapping.first.first << std::endl;
+      msgWarn() << "Zero Edges from " << mapping.first.first << std::endl;
     }
   }
 
@@ -357,7 +317,7 @@ void printStats(CtxUnfoldAnalysis& analysis)
 
   CtxStats stats = analysis.latticeStats();
 
-  logInfo() << "avg(|callstring|) = "    << stats.avg
+  msgInfo() << "avg(|callstring|) = "    << stats.avg
             << "\n min(|callstring|) = " << stats.min
             << "\n max(|callstring|) = " << stats.max
             << "\n |isBot| = "           << stats.numBot
@@ -370,7 +330,7 @@ void printStats(CtxUnfoldAnalysis& analysis)
   for (Label botlbl : stats.bots)
   {
     SgNode&      sgbot   = SG_DEREF(labeler.getNode(botlbl));
-    logInfo() << "bot: " << sgbot.unparseToString()
+    msgInfo() << "bot: " << sgbot.unparseToString()
               << " (" << botlbl << "): "
               << labeler.labelToString(botlbl)
               << std::endl;
@@ -380,11 +340,11 @@ void printStats(CtxUnfoldAnalysis& analysis)
   SgNode&      sgnode  = SG_DEREF(labeler.getNode(stats.maxLbl));
   lattice_t&   maxLat  = dynamic_cast<lattice_t&>(SG_DEREF(stats.maxLat));
 
-  logInfo() << "max: " << sgnode.unparseToString()
+  msgInfo() << "max: " << sgnode.unparseToString()
             << " (" << stats.maxLbl << "): "
             << labeler.labelToString(stats.maxLbl)
             << std::endl;
-  dbgPrintCtx(logInfo(), *analysis.getLabeler(), maxLat);
+  dbgPrintCtx(msgInfo(), *analysis.getLabeler(), maxLat);
 }
 
 } // anonymous
@@ -411,7 +371,7 @@ foldResults( std::vector<Lattice*> results,
     const size_t     numFolded   = mapping.first.first.getId();
     const size_t     numUnfolded = mapping.second.getId();
     Lattice*         unfoldedLattice = results.at(numUnfolded);
-    ROSE_ASSERT(unfoldedLattice);
+    ASSERT_not_null(unfoldedLattice);
 
     if (unfoldedLattice->isBot()) continue;
 
@@ -425,7 +385,7 @@ foldResults( std::vector<Lattice*> results,
 
     Lattice*&        foldedLattice = (*entry)[mapping.first.second];
 
-    ROSE_ASSERT(foldedLattice == nullptr);
+    ASSERT_not_null(foldedLattice);
 
     foldedLattice = labelTranslation.renameLatticeLabels(std::unique_ptr<Lattice>{ unfoldedLattice }, dict);
   }
@@ -545,7 +505,7 @@ runUnfoldedAnalysis( ProgramAbstractionLayer& pal,
   typedef std::pair<ContextLabeler*, std::unique_ptr<Flow> > unfolded_t;
 
   unfolded_t                      unfolded{ unfoldCFG(pal, entryPoint)};
-  ROSE_ASSERT(unfolded.first);
+  ASSERT_not_null(unfolded.first);
 
   std::unique_ptr<ContextLabeler> labeler{unfolded.first};
   ProgramAbstractionLayer         unfoldedPal{pal};
@@ -597,7 +557,7 @@ bool eq(LabelProperty lhs, LabelProperty rhs)
   const bool res = lhs.toString() == rhs.toString();
 
   if (!res)
-    logError() << " x> " << lhs.toString() << "\n y> " << rhs.toString()
+    msgError() << " x> " << lhs.toString() << "\n y> " << rhs.toString()
                << std::endl;
 
   return res;
@@ -627,7 +587,7 @@ CtxLabeler<ContextString>::copyProperty(Label orig, const ContextString& ctx)
   registerLabel(original.getProperty(orig));
   auto         res = remapping.insert(RelabelValue(key, Label(num)));
 
-  ROSE_ASSERT(res.second);
+  ASSERT_require(res.second);
   allLabels.push_back(res.first);
 
   //~ ROSE_ASSERT(eq(original.getProperty(orig), getProperty(Label(num))));
@@ -676,8 +636,8 @@ CtxLabeler<ContextString>::getFunctionCallReturnLabelFromCallLabel(Label call)
                //~ << std::endl;
   //~ }
 
-  ROSE_ASSERT(retnIter != remapping.end());
-  ROSE_ASSERT(retnIter->second >= startlbl);
+  ASSERT_require(retnIter != remapping.end());
+  ASSERT_require(retnIter->second >= startlbl);
   return retnIter->second;
 }
 
@@ -711,15 +671,15 @@ CtxLabeler<ContextString>::returnLabelRange(Label origRetnLabel, const ContextSt
 
   if (!retnctx.isValidReturn(original, origRetnLabel))
   {
-    //~ logTrace() << "Invalid Return" << std::endl;
+    //~ msgTrace() << "Invalid Return" << std::endl;
     return ResultType(remapping.end(), remapping.end());
   }
 
-  ROSE_ASSERT(original.isFunctionCallReturnLabel(origRetnLabel));
+  ASSERT_require(original.isFunctionCallReturnLabel(origRetnLabel));
   Label         origCallLabel = original.getFunctionCallLabelFromReturnLabel(origRetnLabel);
   ContextString retnctxLowerBound{retnctx};
 
-  ROSE_ASSERT(original.isFunctionCallLabel(origCallLabel));
+  ASSERT_require(original.isFunctionCallLabel(origCallLabel));
   retnctxLowerBound.callReturn(original, origRetnLabel);
 
   KeyType       lbkey{origCallLabel, retnctxLowerBound};
@@ -741,7 +701,7 @@ CtxLabeler<ContextString>::returnLabelRange(Label origRetnLabel, const ContextSt
   //~ else
     //~ logWarn() << "  ub = zz" << std::endl;
 
-  //~ logInfo() << "Valid Returns: #" << std::distance(lb, ub) << std::endl;
+  //~ msgInfo() << "Valid Returns: #" << std::distance(lb, ub) << std::endl;
   return ResultType(lb, ub);
 }
 

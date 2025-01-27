@@ -47,31 +47,31 @@ namespace
   // auxiliary functions
 
   inline
-  auto logTrace() -> decltype(CodeThorn::logger[Sawyer::Message::TRACE])
+  auto msgTrace() -> decltype(CodeThorn::logger[Sawyer::Message::TRACE])
   {
     return CodeThorn::logger[Sawyer::Message::TRACE];
   }
 
   inline
-  auto logInfo() -> decltype(CodeThorn::logger[Sawyer::Message::INFO])
+  auto msgInfo() -> decltype(CodeThorn::logger[Sawyer::Message::INFO])
   {
     return CodeThorn::logger[Sawyer::Message::INFO];
   }
 
   inline
-  auto logWarn() -> decltype(CodeThorn::logger[Sawyer::Message::WARN])
+  auto msgWarn() -> decltype(CodeThorn::logger[Sawyer::Message::WARN])
   {
     return CodeThorn::logger[Sawyer::Message::WARN];
   }
 
   inline
-  auto logError() -> decltype(CodeThorn::logger[Sawyer::Message::ERROR])
+  auto msgError() -> decltype(CodeThorn::logger[Sawyer::Message::ERROR])
   {
     return CodeThorn::logger[Sawyer::Message::ERROR];
   }
 
   inline
-  auto logFatal() -> decltype(CodeThorn::logger[Sawyer::Message::FATAL])
+  auto msgFatal() -> decltype(CodeThorn::logger[Sawyer::Message::FATAL])
   {
     return CodeThorn::logger[Sawyer::Message::FATAL];
   }

@@ -1,6 +1,6 @@
+#include "ObjectLayoutAnalysis.h"
 
 #include <numeric>
-#include "ObjectLayoutAnalysis.h"
 #include "RoseCompatibility.h"
 
 namespace ct = CodeThorn;
@@ -136,7 +136,7 @@ namespace
         // the same overrider pair may exist for multiple inheritance
         if ((!status.second) && (status.first->second.function() != fn))
         {
-          logError() << ovrdsc.function()->get_name() << " overriden by " << fn->get_name()
+          msgError() << ovrdsc.function()->get_name() << " overriden by " << fn->get_name()
                      << " in class " << isSgClassDeclaration(clazz.first->get_parent())->get_name()
                      << std::endl;
         }
@@ -361,14 +361,14 @@ namespace
                         else if (res.function() != vtElem.function())
                         {
                           if (!rcb.isAutoGeneratable(vt.getClass(), res.function()))
-                            logError() << "No unique overrider for virtual inheritance!"
+                            msgError() << "No unique overrider for virtual inheritance!"
                                        << std::endl;
                         }
                       }
 
                       if (!res.getClass())
                       {
-                        logError() << "n=" << numFn << std::endl;
+                        msgError() << "n=" << numFn << std::endl;
                         ASSERT_not_null(res.getClass());
                       }
 

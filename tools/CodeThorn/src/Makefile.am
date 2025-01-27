@@ -61,6 +61,7 @@ CODETHORN_HEADER_FILES=\
   AstNodeInfo.h \
   BoolLattice.h \
   CallString.h \
+  CallGraphAnalysis.h \
   CFAnalysis.h \
   ClassHierarchyAnalysis.h \
   ClassHierarchyWriter.h \
@@ -180,6 +181,7 @@ CODETHORN_SOURCE_FILES=\
   ArrayElementAccessData.C \
   AstNodeInfo.C \
   BoolLattice.C \
+  CallGraphAnalysis.C \
   CallString.C \
   CFAnalysis.C \
   ClassHierarchyAnalysis.C \

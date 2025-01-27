@@ -87,7 +87,7 @@ namespace
   // logging
 
   inline
-  //~ auto logDbg() -> decltype(logInfo()) { return logInfo(); }
+  //~ auto logDbg() -> decltype(msgInfo()) { return msgInfo(); }
   //~ auto logDbg() -> decltype(logTrace()) { return logTrace(); }
   NoStream logDbg() { return NoStream(); }
 
@@ -331,10 +331,10 @@ CtxSolver0::runSolver()
   double              splitTime   = 0;
   InternalWorklist    worklist    = preprocessWorklist();
 
-  logInfo() << "CtxSolver0 started" << std::endl;
+  msgInfo() << "CtxSolver0 started" << std::endl;
 
   if (worklist.isEmpty())
-    logWarn() << "initial worklist size is empty." << std::endl;
+    msgWarn() << "initial worklist size is empty." << std::endl;
 
   solverTimer.start();
 
@@ -408,7 +408,7 @@ CtxSolver0::runSolver()
 
       splitTime = solverTimer.getTimeDurationAndKeepRunning().seconds();
 
-      logInfo() << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
+      msgInfo() << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
                 << nodeCounter << '/' << splitTime << '.'
                 << std::endl;
     }
@@ -416,7 +416,7 @@ CtxSolver0::runSolver()
 
   TimeDuration endTime = solverTimer.getTimeDurationAndStop();
 
-  logInfo() << "Solver 1 finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."
+  msgInfo() << "Solver 1 finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."
             << std::endl
             << "  " << nodeCounter << " nodes analyzed (" << static_cast<size_t>(nodeCounter / endTime.seconds())
             << " nodes/s)"

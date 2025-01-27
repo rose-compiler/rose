@@ -171,33 +171,38 @@ namespace sg
     return lhs.pointer() < rhs.pointer();
   }
 
-/**
- * struct DispatchHandler
- *
- * @brief Base class for any handlers passed to @ref dispatch
- *
- * This templated class should be used as a BaseClass for Handlers to
- * be passed to dispatch.  "handle" functions will have to be
- * implemented for each possible type to be handled.  @ref _ReturnType
- * holds any data that should be returned from the traversal.
- **/
+  /**
+   * struct DispatchHandler
+   *
+   * @brief Base class for any handlers passed to @ref dispatch
+   *
+   * This templated class should be used as a BaseClass for Handlers
+   * passed to dispatch.  "handle" functions will have to be
+   * implemented for each possible type to be handled.  @p _ReturnType
+   * holds any data that should be returned from the handlers.
+   **/
   template <class _ReturnType>
   struct DispatchHandler
   {
-      typedef _ReturnType                 ReturnType;
-      typedef DispatchHandler<ReturnType> Base;
+      using ReturnType = _ReturnType;
+      using Base = DispatchHandler<ReturnType>;
 
       DispatchHandler()
       : res()
       {}
-
-      explicit
+/*
       DispatchHandler(const ReturnType& defaultval)
       : res(defaultval)
       {}
 
       operator ReturnType() const { return res; }
+*/
+      explicit
+      DispatchHandler(ReturnType defaultval)
+      : res(std::move(defaultval))
+      {}
 
+      operator ReturnType() && { return std::move(res); }
     protected:
       ReturnType res;
   };
@@ -1494,7 +1499,7 @@ namespace sg
     template <class SageNode>
     struct TypeRecoveryHandler
     {
-        typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
+        using SageRootNode = typename ConstLike<SageNode, SgNode>::type;
 
         TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
         : res(nullptr), loc(f), loc_ln(ln)
@@ -1503,10 +1508,10 @@ namespace sg
         TypeRecoveryHandler(TypeRecoveryHandler&&)            = default;
         TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = default;
 
-        operator SageNode* ()&& { return res; }
+        operator SageNode* () && { return res; }
 
-        void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
-        void handle(SageNode& n)   { res = &n; }
+        void handle(SageRootNode& n) { unexpected_node(n, loc, loc_ln); }
+        void handle(SageNode& n)     { res = &n; }
 
       private:
         SageNode*   res;
@@ -1559,43 +1564,55 @@ namespace sg
     void handle(SgNode&)     { /* res = nullptr; */ }
     void handle(SageNode& n) { this->res = &n; }
   };
+}
 
-  /// \deprecated
-  template <class SageNode>
-  auto ancestor_path(const SgNode& n) -> SageNode*
+
+namespace
+{
+  template <class... SageNodes>
+  struct SageGenericLastType
   {
-    return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
+    using type = typename std::tuple_element<sizeof...(SageNodes)-1, std::tuple<SageNodes...>>::type;
+  };
+
+  struct SageGenericEndTag {};
+  struct SageGenericAnyTag {};
+
+  template <int> struct SageGenericSequenceTag    { using type = SageGenericAnyTag; };
+  template <>    struct SageGenericSequenceTag<0> { using type = SageGenericEndTag; };
+
+  template <class SageNode>
+  auto sageGenericConfirmPath(const SgNode& n, SageGenericEndTag) -> SageNode*
+  {
+    return dynamic_cast<SageNode*>(n.get_parent());
+    //~ return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
   }
 
-  /// \deprecated
   template <class SageNode, class... SageNodes>
-  auto ancestor_path(const SgNode& n) -> decltype(ancestor_path<SageNodes...>(n))
+  auto sageGenericConfirmPath(const SgNode& n, SageGenericAnyTag)
+    -> typename SageGenericLastType<SageNode, SageNodes...>::type*
   {
-    if (SageNode* parent = ancestor_path<SageNode>(n))
-      return ancestor_path<SageNodes...>(*parent);
+    if (SageNode* parent = sageGenericConfirmPath<SageNode>(n, SageGenericEndTag{}))
+    {
+      using SequenceTag = typename SageGenericSequenceTag<sizeof...(SageNodes)-1>::type;
+
+      return sageGenericConfirmPath<SageNodes...>(*parent, SequenceTag{});
+    }
 
     return nullptr;
   }
+}
 
-
+namespace sg
+{
   /// returns the last parent in an ancestor path
-  /// \{
-
-  // base case
-  template <class SageNode>
-  auto ancestorPath(const SgNode& n) -> SageNode*
-  {
-    return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
-  }
-
-  // general case
   template <class SageNode, class... SageNodes>
-  auto ancestorPath(const SgNode& n) -> decltype(ancestorPath<SageNodes...>(n))
+  auto ancestorPath(const SgNode& n)
+    -> typename SageGenericLastType<SageNode, SageNodes...>::type*
   {
-    if (SageNode* parent = ancestorPath<SageNode>(n))
-      return ancestorPath<SageNodes...>(*parent);
+    using SequenceTag = typename SageGenericSequenceTag<sizeof...(SageNodes)>::type;
 
-    return nullptr;
+    return sageGenericConfirmPath<SageNode, SageNodes...>(n, SequenceTag{});
   }
   /// \}
 
@@ -1652,7 +1669,7 @@ namespace sg
       if (n != nullptr) gvisitor = sg::dispatch(std::move(gvisitor), n);
     }
 
-    operator GVisitor()&& { return std::move(gvisitor); }
+    operator GVisitor() && { return std::move(gvisitor); }
 
     GVisitor gvisitor;
   };
@@ -1783,7 +1800,7 @@ namespace sg
       gvisitor = sg::dispatch(gvisitor, n);
     }
 
-    // GVisitor&& visitor() { return std::move(gvisitor); }
+    // GVisitor visitor() && { return std::move(gvisitor); }
     GVisitor visitor() { return gvisitor; }
 
     GVisitor gvisitor;
@@ -1834,5 +1851,22 @@ namespace sg
     return nodeType(*n);
   }
 #endif /* !NDEBUG */
+
+  /// \deprecated
+  template <class SageNode>
+  auto ancestor_path(const SgNode& n) -> SageNode*
+  {
+    return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
+  }
+
+  /// \deprecated
+  template <class SageNode, class... SageNodes>
+  auto ancestor_path(const SgNode& n) -> decltype(ancestor_path<SageNodes...>(n))
+  {
+    if (SageNode* parent = ancestor_path<SageNode>(n))
+      return ancestor_path<SageNodes...>(*parent);
+
+    return nullptr;
+  }
 
 #endif /* OBSOLETE_CODE */

@@ -204,8 +204,7 @@ namespace
 
   struct ArrayBounds : sg::DispatchHandler<si::Ada::FlatArrayType>
   {
-      using base = sg::DispatchHandler<si::Ada::FlatArrayType>;
-      using base::base;
+      using Base::Base; // use constructors in Base
 
       static
       ReturnType
@@ -309,11 +308,9 @@ namespace
 
   struct RangeExp : sg::DispatchHandler<SgRangeExp*>
   {
-      using base = sg::DispatchHandler<SgRangeExp*>;
-
       explicit
       RangeExp(size_t whichDimension)
-      : base(), dim(whichDimension)
+      : Base(), dim(whichDimension)
       {}
 
       static
@@ -702,7 +699,7 @@ namespace Ada
 
     appendAllVariableSymbols(rec, res);
 
-    if (const SgAdaDiscriminatedTypeDecl* disc = sg::ancestor_path<SgClassDeclaration, SgAdaDiscriminatedTypeDecl>(rec))
+    if (const SgAdaDiscriminatedTypeDecl* disc = sg::ancestorPath<SgClassDeclaration, SgAdaDiscriminatedTypeDecl>(rec))
     {
       appendAllVariableSymbols(SG_DEREF(disc->get_discriminantScope()), res);
       appendAllDiscriminantsFromParents(rec, res);
@@ -1457,11 +1454,9 @@ namespace Ada
   {
     struct TypeResolver : sg::DispatchHandler<bool>
     {
-        using base = sg::DispatchHandler<bool>;
-
         explicit
         TypeResolver(std::function<bool (const SgType&)> typetest)
-        : base(), checker(typetest)
+        : Base(), checker(typetest)
         {}
 
         bool descend(const SgType*);
@@ -2050,8 +2045,6 @@ namespace Ada
 
     struct DeclScopeFinder : sg::DispatchHandler<SgScopeStatement*>
     {
-        using base = sg::DispatchHandler<SgScopeStatement*>;
-
         static
         SgScopeStatement* find(const SgNode*);
 
@@ -2232,8 +2225,6 @@ namespace Ada
 
     struct ImportedUnit : sg::DispatchHandler<ImportedUnitResult>
     {
-        using base = sg::DispatchHandler<ImportedUnitResult>;
-
         void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
         void handle(const SgFunctionRefExp& n)
@@ -2674,7 +2665,7 @@ namespace Ada
     private:
       std::function<void(SgNode*)> fn;
 
-      SimpleTraversal()                                      = delete;
+      SimpleTraversal()                                  = delete;
       SimpleTraversal(const SimpleTraversal&)            = delete;
       SimpleTraversal(SimpleTraversal&&)                 = delete;
       SimpleTraversal& operator=(SimpleTraversal&&)      = delete;
@@ -3253,11 +3244,9 @@ namespace Ada
 
     struct AccessibleArgumentListFinder : sg::DispatchHandler<SgFunctionParameterList*>
     {
-        using base = sg::DispatchHandler<SgFunctionParameterList*>;
-
         explicit
         AccessibleArgumentListFinder(const SgFunctionCallExp& callexp)
-        : base(), call(&callexp)
+        : Base(), call(&callexp)
         {}
 
         void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }

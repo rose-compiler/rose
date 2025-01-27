@@ -108,8 +108,8 @@ int main( int argc, char * argv[] )
           cout<<"STATUS: created directory "<<ctOpt.reportFilePath<<endl;
       }
     }
-    
-    
+
+
     IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
@@ -146,13 +146,13 @@ int main( int argc, char * argv[] )
 
     errorCode = 0;
   } catch(const std::exception& e) {
-    logError() << "Error: " << e.what() << endl;
+    msgError() << "Error: " << e.what() << endl;
   } catch(char const* str) {
-    logError() << "Error: " << str << endl;
+    msgError() << "Error: " << str << endl;
   } catch(const std::string& str) {
-    logError() << "Error: " << str << endl;
+    msgError() << "Error: " << str << endl;
   } catch(...) {
-    logError() << "Error: Unknown exception raised." << endl;
+    msgError() << "Error: Unknown exception raised." << endl;
   }
 
   mfacilities.shutdown();

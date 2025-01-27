@@ -497,7 +497,7 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
     // suppress the warning if the two candidates unparse to the same string
     if (currstr != candstr)
     {
-      logWarn() << "two equally good initializers found\n"
+      msgWarn() << "two equally good initializers found\n"
                 << "      " << currstr << " [chosen]\n"
                 << "      " << candstr << " [ignored]"
                 << std::endl;

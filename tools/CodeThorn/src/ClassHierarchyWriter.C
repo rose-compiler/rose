@@ -1,10 +1,10 @@
+#include "ClassHierarchyWriter.h"
 
 //~ #include <sage3basic.h>
 //~ #include <sageGeneric.h>
 #include <cassert>
 
 #include "RoseCompatibility.h"
-#include "ClassHierarchyWriter.h"
 
 namespace ct = CodeThorn;
 
@@ -122,7 +122,7 @@ namespace
 
       if (!srcty.first)
       {
-        logWarn() << "cast from non class type to a class type."
+        msgWarn() << "cast from non class type to a class type."
                   << std::endl;
         continue;
       }

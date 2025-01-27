@@ -73,10 +73,8 @@ namespace
 
   struct CallTargetFinder : sg::DispatchHandler< std::vector<SgFunctionDeclaration*> >
   {
-      using base = sg::DispatchHandler< std::vector<SgFunctionDeclaration*> >;
-
       CallTargetFinder(ClassAnalysis& classAnalysis, VirtualFunctionAnalysis& vfuncs, SgCallExpression& call)
-      : base(), cha(classAnalysis), vfa(vfuncs), callexp(call)
+      : Base(), cha(classAnalysis), vfa(vfuncs), callexp(call)
       {}
 
       ReturnType
@@ -246,7 +244,7 @@ void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
 
   if (!defdcl)
   {
-    logWarn() << "unable to find definition for " << dcl->get_name()
+    msgWarn() << "unable to find definition for " << dcl->get_name()
               << (dcl->get_definition() ? "*" : "")
               << std::endl;
     return;
@@ -350,7 +348,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
            for (SgMemberFunctionDeclaration* fn : virtualFunctions)
              for (const OverrideDesc& ovr : vfa.at(fn).overriders())
-               candidates.insert(const_cast<SgMemberFunctionDeclaration*>(ovr.function()));
+               candidates.insert(const_cast<SgFunctionDeclaration*>(ovr.function()));
          }
 
          {
@@ -374,7 +372,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     if (SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node))
     {
       if (SgMemberFunctionDeclaration* memfn = isSgMemberFunctionDeclaration(funDecl))
-        memberFunDecls[memfn->get_type()].insert(&keyDecl(*memfn));
+        memberFunDecls[memfn->get_type()].insert(isSgMemberFunctionDeclaration(&keyDecl(*memfn)));
       else
         funDecls.emplace(funDecl->get_type()->get_mangled().getString(), funDecl);
     }
@@ -417,7 +415,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       {
         mapping.erase(lbl);
         ++unresolvedFunptrCall;
-        logWarn() << "unresolved pointer call (possibly no function with that type exists): "
+        msgWarn() << "unresolved pointer call (possibly no function with that type exists): "
                   << callinfo.callExpression()->unparseToString()
                   << std::endl;
       }
@@ -438,7 +436,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       if (tgts.size() == 0)
       {
         mapping.erase(lbl);
-        logWarn() << "unable to resolve target for calling: " << callexpr->unparseToString()
+        msgWarn() << "unable to resolve target for calling: " << callexpr->unparseToString()
                   << std::endl;
       }
     }
@@ -448,21 +446,21 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       if (SgFunctionDeclaration* ctor = ctorinit->get_declaration())
         addEntry(mapping[lbl], ctor);
       else // print the parent, b/c ctorinit may produce an empty string
-        logWarn() << "unable to resolve target for initializing: " << ctorinit->get_parent()->unparseToString()
+        msgWarn() << "unable to resolve target for initializing: " << ctorinit->get_parent()->unparseToString()
                   << std::endl;
     }
     else
     {
       // \todo handle implicit (ctor) calls
-      logError() << "unresolved call: "
-                  << callinfo.callExpression()->unparseToString()
-                  << std::endl;
+      msgError() << "unresolved call: "
+                 << callinfo.callExpression()->unparseToString()
+                 << std::endl;
     }
   }
 
   const int resolved = unresolvedFunptrCall + mapping.size();
 
-  logInfo() << "Resolved " << mapping.size() << " (" << percent(resolved, numCalls) << "%) function calls."
+  msgInfo() << "Resolved " << mapping.size() << " (" << percent(resolved, numCalls) << "%) function calls."
             << std::endl;
 }
 

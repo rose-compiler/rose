@@ -1,15 +1,16 @@
+#include "RoseCompatibility.h"
 
 #include <sage3basic.h>
 #include <sageInterface.h>
+#include <sageInterfaceAda.h>
 #include <sageGeneric.h>
+#include <nodeQuery.h>
 
 #include <tuple>
 #include <numeric>
 #include <unordered_set>
 
 #include "CodeThornLib.h"
-
-#include "RoseCompatibility.h"
 
 #include "ClassHierarchyAnalysis.h"
 
@@ -42,12 +43,12 @@ namespace
     //~ void handle(SgTemplateTypedefDeclaration&)        {} // may need some handling
   };
 
-  bool isVirtual(const SgMemberFunctionDeclaration& dcl)
+  bool isVirtual(const SgFunctionDeclaration& dcl)
   {
     return dcl.get_functionModifier().isVirtual();
   }
 
-  bool isPureVirtual(const SgMemberFunctionDeclaration& dcl)
+  bool isPureVirtual(const SgFunctionDeclaration& dcl)
   {
     return dcl.get_functionModifier().isPureVirtual();;
   }
@@ -329,14 +330,12 @@ namespace
   /// type comparator
   struct TypeComparator : sg::DispatchHandler<int>
   {
-      using base = sg::DispatchHandler<int>;
-
       explicit
       TypeComparator( const SgType& rhs_type,
                       bool arrayDecay = false,
                       bool ignoreFunctionReturn = false
                     )
-      : base(),
+      : Base(),
         rhs(rhs_type),
         withArrayToPointerDecay(arrayDecay),
         ignoreFunctionReturnType(ignoreFunctionReturn)
@@ -612,7 +611,7 @@ namespace
 
       if (!bsdcl)
       {
-        logError() << "base class declaration is not available "
+        msgError() << "base class declaration is not available "
                    << typeid(*bscls).name()
                    << std::endl;
 
@@ -775,7 +774,7 @@ void inheritanceEdges( const SgClassDefinition* def,
 
     if (!pdecl)
     {
-      logWarn() << "base class declaration is not available "
+      msgWarn() << "base class declaration is not available "
                 << typeid(base).name()
                 << std::endl;
 
@@ -924,11 +923,9 @@ namespace
 {
   struct CovarianceChecker : sg::DispatchHandler<RoseCompatibilityBridge::ReturnTypeRelation>
   {
-      using base = sg::DispatchHandler<RoseCompatibilityBridge::ReturnTypeRelation>;
-
       explicit
       CovarianceChecker(const ClassAnalysis& classAnalysis, const SgType& baseType)
-      : base(RoseCompatibilityBridge::unrelated), classes(classAnalysis), baseTy(&baseType)
+      : Base(RoseCompatibilityBridge::unrelated), classes(classAnalysis), baseTy(&baseType)
       {}
 
       // non class types are checked for type equality
@@ -986,7 +983,7 @@ namespace
           if (prnNumWarn > 0)
           {
             --prnNumWarn;
-            logWarn() << "assuming covariant return [requires full translation unit analysis]"
+            msgWarn() << "assuming covariant return [requires full translation unit analysis]"
                       << (prnNumWarn ? "" : "...")
                       << std::endl;
           }
@@ -1182,9 +1179,9 @@ RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes
 
 
 FunctionKeyType
-RoseCompatibilityBridge::functionId(const SgMemberFunctionDeclaration* fun) const
+RoseCompatibilityBridge::functionId(const SgFunctionDeclaration* fun) const
 {
-  return fun ? &keyDecl(*const_cast<SgMemberFunctionDeclaration*>(fun)) : fun;
+  return fun ? &keyDecl(*const_cast<SgFunctionDeclaration*>(fun)) : fun;
 }
 
 void
@@ -1252,7 +1249,7 @@ namespace
 
   /// returns iff the function signature would be a legal copy-assignment operator
   ///   in the class.
-  bool isCopyAssignIn(const SgMemberFunctionDeclaration*, const SgClassDefinition*)
+  bool isCopyAssignIn(const SgFunctionDeclaration*, const SgClassDefinition*)
   {
     return false;
   }
@@ -1267,7 +1264,7 @@ namespace
 
   /// returns iff the function signature would be a legal move-assignment operator
   ///   in the class.
-  bool isMoveAssignIn(const SgMemberFunctionDeclaration*, const SgClassDefinition*)
+  bool isMoveAssignIn(const SgFunctionDeclaration*, const SgClassDefinition*)
   {
     return false;
   }
@@ -1296,7 +1293,7 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
     res = (destructor(clkey) == nullptr);
   }
   else if (fnmod.isConstructor())
-    logError() << "RoseCompatibilityBridge::isAutoGeneratable does not yet support "
+    msgError() << "RoseCompatibilityBridge::isAutoGeneratable does not yet support "
                << "constructors: " << fnkey->get_name()
                << std::endl;
   else if (fnmod.isOperator())
@@ -1317,7 +1314,7 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
     else if (isMoveAssignIn(fnkey, clkey))
       res = (moveAssignConflicts(clkey).size() == 0);
     else
-      logError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
+      msgError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
                  << std::endl;
   }
 
@@ -1346,15 +1343,13 @@ SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n)
   return getClassDef(SG_DEREF(n.get_associatedClassDeclaration()));
 }
 
+
 SgClassDefinition* getClassDefOpt(const SgClassType& n)
 {
-  SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() );
-  SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
+  if (const SgClassDefinition* res = classDefinition_opt(n))
+    return const_cast<SgClassDefinition*>(res);
 
-  if (SgClassDeclaration* clsdcl = isSgClassDeclaration(defdcl))
-    return clsdcl->get_definition();
-
-  logWarn() << "class type without class declaration.." << std::endl;
+  msgWarn() << "class type without class declaration.." << std::endl;
   return nullptr;
 }
 
@@ -1392,13 +1387,278 @@ SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts)
 }
 
 
-SgMemberFunctionDeclaration& keyDecl(SgMemberFunctionDeclaration& memfn)
+SgFunctionDeclaration& keyDecl(SgFunctionDeclaration& fn)
 {
-  SgMemberFunctionDeclaration* fKey = isSgMemberFunctionDeclaration(memfn.get_firstNondefiningDeclaration());
-  SgMemberFunctionDeclaration* res  = fKey ? fKey : &memfn;
+  SgFunctionDeclaration* fKey = isSgFunctionDeclaration(fn.get_firstNondefiningDeclaration());
+  SgFunctionDeclaration* res  = fKey ? fKey : &fn;
 
-  ROSE_ASSERT(isVirtual(*res) == isVirtual(memfn));
+  ASSERT_require(isVirtual(*res) == isVirtual(fn));
   return *res;
 }
+
+namespace
+{
+  struct AnalyseCallExp : sg::DispatchHandler<CallData>
+  {
+      explicit
+      AnalyseCallExp(const SgExpression& ex)
+      : Base(), ref(&ex)
+      {}
+
+      CallData descend(const SgNode* n) const;
+
+      CallData normalCall(const SgFunctionRefExp& n) const;
+      CallData objectCall(const SgBinaryOp& n);
+      //~ CallData memPtrCall(const SgBinaryOp& n) const;
+      CallData memberCall(const SgMemberFunctionRefExp& n) const;
+      //~ CallData arrPtrCall(const SgPntrArrRefExp& n) const;
+      CallData unresolvable(const SgExpression& n) const;
+
+      void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+
+      void handle(const SgExpression& n)             { res = unresolvable(n); }
+
+      void handle(const SgCommaOpExp& n)             { res = descend(n.get_rhs_operand()); }
+
+      void handle(const SgDotStarOp& n)              { res = objectCall(n); }
+      void handle(const SgArrowStarOp& n)            { res = objectCall(n); }
+
+      void handle(const SgDotExp& n)                 { res = objectCall(n); }
+      void handle(const SgArrowExp& n)               { res = objectCall(n); }
+
+      void handle(const SgMemberFunctionRefExp& n)   { res = memberCall(n); }
+      void handle(const SgFunctionRefExp& n)         { res = normalCall(n); }
+
+      void handle(const SgCastExp& n)                { res = descend(n.get_operand()); }
+
+      //
+      // incomplete
+      //~ void handle(const SgConstructorInitializer& n) { res = castCall{n}; }
+
+      //~ void handle(const SgPointerDerefExp& n)        { res = pointerCall{n}; }
+      //~ void handle(const SgPntrArrRefExp& n)          { res = arrPtrCall{n}; }
+      //~ void handle(const SgCastExp& n)                { res = castCall{n}; }
+      //~ void handle(const SgFunctionCallExp& n)        { res = castCall{n}; }
+
+      //
+      // templates are not handled
+      //~ void handle(const SgNonrealRefExp& n)          { res = castCall{n}; }
+      //~ void handle(const SgTemplateMemberFunctionRefExp& n)          { res = castCall{n}; }
+      //~ void handle(const SgTemplateFunctionRefExp& n)          { res = castCall{n}; }
+
+    private:
+      const SgExpression*      ref                 = nullptr;
+      Optional<ClassKeyType>   receiverKey         = {};
+      bool                     polymorphicReceiver = false; // or Optional to distinguish between set/unset
+  };
+
+  CallData
+  AnalyseCallExp::normalCall(const SgFunctionRefExp& n) const
+  {
+    RoseCompatibilityBridge      rcb;
+    const SgFunctionDeclaration* fn = n.getAssociatedFunctionDeclaration();
+
+    ASSERT_require(!receiverKey);
+    return { rcb.functionId(fn), &n, receiverKey, ref, false };
+  }
+
+  CallData
+  AnalyseCallExp::objectCall(const SgBinaryOp& n)
+  {
+    // lhs is the receiver expression
+    sg::NotNull<const SgExpression> receiverExpr = n.get_lhs_operand();
+    sg::NotNull<const SgType>       receiverType = receiverExpr->get_type();
+    sg::NotNull<const SgClassType>  receiverClss = isSgClassType(receiverType->findBaseType());
+
+    receiverKey = classDefinition_opt(*receiverClss);
+    ASSERT_require(receiverKey && *receiverKey);
+
+    SgType* const                   receiverBaseType = receiverType->stripTypedefsAndModifiers();
+
+    polymorphicReceiver = (  isSgPointerType(receiverBaseType)
+                          || isSgReferenceType(receiverBaseType)
+                          || isSgRvalueReferenceType(receiverBaseType)
+                          || isSgArrayType(receiverBaseType)
+                          );
+
+    return descend(n.get_rhs_operand());
+  }
+
+  CallData
+  AnalyseCallExp::memberCall(const SgMemberFunctionRefExp& n) const
+  {
+    RoseCompatibilityBridge            rcb;
+    const SgMemberFunctionDeclaration* mfn = n.getAssociatedMemberFunctionDeclaration();
+    const bool                         virtualCall = (  polymorphicReceiver
+                                                     && (n.get_need_qualifier() == 0)
+                                                     );
+
+    ASSERT_require(receiverKey);
+    return { rcb.functionId(mfn), &n, receiverKey, ref, virtualCall };
+  }
+
+  CallData
+  AnalyseCallExp::unresolvable(const SgExpression& n) const
+  {
+    // virtualCall is conservative, as the runtime state of the
+    //   pointer used for dispatch could point to a non-virtual function.
+    return { {}, &n, receiverKey, ref, polymorphicReceiver };
+  }
+
+  CallData
+  AnalyseCallExp::descend(const SgNode* n) const
+  {
+    return sg::dispatch(*this, n);
+  }
+
+  CallData
+  analyseCallExp(const SgFunctionCallExp& n)
+  {
+    return sg::dispatch(AnalyseCallExp{n}, n.get_function());
+  }
+
+  CallData
+  analyseCallExp(const SgConstructorInitializer& n)
+  {
+    return sg::dispatch(AnalyseCallExp{n}, &n);
+  }
+
+  struct CallDataFinder : sg::DispatchHandler< std::vector<CallData> >
+  {
+      CallDataFinder(ReturnType vec, bool ignoreFunctionRefExp)
+      : Base(std::move(vec)),
+        ignoreFunctionRefs(ignoreFunctionRefExp)
+      {}
+
+      CallDataFinder()
+      : Base(), ignoreFunctionRefs(false)
+      {}
+
+
+      void descend(SgNode& n, bool ignoreFunctionRefExp = false);
+      void handleNode(SgNode* n, bool ignoreFunctionRefExp = false);
+      void handleFnRefExp( const SgFunctionDeclaration& dcl,
+                           SgExpression& n,
+                           Optional<ClassKeyType> typeBound,
+                           bool isVirtual
+                         );
+
+      template <class SageExpression>
+      void handleCallExp(SageExpression& n)
+      {
+        res.emplace_back(analyseCallExp(n));
+
+        descend(n, true);
+      }
+
+      void handle(SgNode& n)                   { descend(n); }
+
+      void handle(SgFunctionCallExp& n)        { handleCallExp(n); }
+      void handle(SgConstructorInitializer& n) { handleCallExp(n); }
+
+      void handle(SgFunctionRefExp& n)
+      {
+        sg::NotNull<SgFunctionDeclaration> dcl = n.getAssociatedFunctionDeclaration();
+
+        handleFnRefExp(*dcl, n, {}, false);
+      }
+
+      void handle(SgMemberFunctionRefExp& n)
+      {
+        sg::NotNull<SgMemberFunctionDeclaration> dcl = n.getAssociatedMemberFunctionDeclaration();
+        sg::NotNull<SgDeclarationStatement>      cls = dcl->get_associatedClassDeclaration();
+        ClassKeyType                             key = classDefinition_opt(*cls);
+
+        ASSERT_not_null(key);
+        handleFnRefExp(*dcl, n, key, isVirtual(*dcl));
+      }
+
+      void handle(SgCommaOpExp& n)
+      {
+        handleNode(n.get_lhs_operand(), true /* no effect on comma's lhs */);
+        handleNode(n.get_rhs_operand(), ignoreFunctionRefs);
+      }
+
+      void handle(SgAddressOfOp& n)
+      {
+        handleNode(n.get_operand(), ignoreFunctionRefs);
+      }
+
+    private:
+      bool ignoreFunctionRefs = false;
+  };
+
+  void
+  CallDataFinder::descend(SgNode& n, bool ignoreFunctionRefExp)
+  {
+    res = sg::traverseChildren( CallDataFinder{ std::move(res), ignoreFunctionRefExp },
+                                &n
+                              );
+  }
+
+  void
+  CallDataFinder::handleNode(SgNode* n, bool ignoreFunctionRefExp)
+  {
+    res = sg::dispatch( CallDataFinder{ std::move(res), ignoreFunctionRefExp },
+                        n
+                      );
+  }
+
+  void
+  CallDataFinder::handleFnRefExp(const SgFunctionDeclaration& dcl, SgExpression& n, Optional<ClassKeyType> typeBound, bool isVirtual)
+  {
+    if (ignoreFunctionRefs) return;
+
+    RoseCompatibilityBridge rcb;
+    FunctionKeyType         key = rcb.functionId(&dcl);
+
+    ASSERT_require(key);
+    res.emplace_back( key, &n, typeBound, nullptr, isVirtual );
+  }
+
+  std::vector<CallData>
+  functionRelations_internal(const SgFunctionDeclaration* fn)
+  {
+    SgFunctionDeclaration* fndef = isSgFunctionDeclaration(fn->get_definingDeclaration());
+    if (fndef == nullptr) return {};
+
+    return sg::dispatch(CallDataFinder{}, fndef);
+  }
+}
+
+std::vector<CallData>
+RoseCompatibilityBridge::functionRelations(FunctionKeyType fn) const
+{
+  return functionRelations_internal(fn);
+}
+
+std::vector<FunctionKeyType>
+RoseCompatibilityBridge::allFunctionKeys(ASTRootType n) const
+{
+  std::set<FunctionKeyType> fnkeys;
+  std::size_t               nc = 0;
+
+  auto collectFunctionKeys =
+         [&fnkeys, &nc](const SgNode* n) -> void
+         {
+           ++nc;
+           if (const SgFunctionDeclaration* fn = isSgFunctionDeclaration(n))
+             fnkeys.insert(RoseCompatibilityBridge{}.functionId(fn));
+         };
+
+  si::Ada::simpleTraversal(collectFunctionKeys, n);
+
+  SAWYER_MESG(msgInfo())
+            << "Traversed nodes/Unique functions " << nc << "/" << fnkeys.size()
+            << std::endl;
+
+  std::vector<FunctionKeyType> res;
+
+  res.reserve(fnkeys.size());
+  std::copy(fnkeys.begin(), fnkeys.end(), std::back_inserter(res));
+
+  return res;
+}
+
 
 }

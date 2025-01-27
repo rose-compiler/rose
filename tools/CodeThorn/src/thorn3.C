@@ -34,7 +34,7 @@ using namespace std;
 CodeThorn::CommandLineOptions CodeThorn::args;
 
 namespace {
-  
+
 } // anonymous namespace
 
 class Thorn3Parser
@@ -50,7 +50,7 @@ public:
     bool printVariantSet=false;
     bool checkCLanguage=false;
   };
-  
+
   /// sets the Thorn3Parser settings using the command line arguments
   /// \returns a list of unparsed arguments
   std::vector<std::string>
@@ -97,7 +97,7 @@ public:
       .doc("description",
            "This program generates AST files in term format. The same term format can be used in the AstMatcher as input for matching AST subtrees.");
     scl::ParserResult cmdline = p.with(thorn3Parser).parse(clArgs).apply();
-    
+
     return cmdline.unparsedArgs();
   }
 
@@ -167,7 +167,7 @@ int main( int argc, char * argv[] )
     //  cout<<"No output selected. Use at least one of --thorn3:ast-term --thorn3:ast-term-typed --thorn3:ast-term-indented --print-variants --print-variant-set"<<endl;
     //  return 0;
     //}
-      
+
     int thornArgc = unparsedArgsCStyle.size();
     char** thornArgv = unparsedArgsCStyle.firstCArg();
 
@@ -188,7 +188,7 @@ int main( int argc, char * argv[] )
 
     string fileNamePrefix=params.astTermFileNamePrefix;
     //cout<<"DEBUG: "<<fileNamePrefix<<":"<<params.astTerm<<params.typedAstTerm<<params.mlAstTerm<<endl;
-    
+
     if(params.printVariants) {
       LanguageRestrictor lang;
       LanguageRestrictor::VariantSet variantSet=lang.computeVariantSetOfProvidedAst(project);
@@ -241,16 +241,16 @@ int main( int argc, char * argv[] )
         cout<<"FAIL";
       cout<<endl;
     }
-    
+
     errorCode = 0;
   } catch(const std::exception& e) {
-    logError() << "Error: " << e.what() << endl;
+    msgError() << "Error: " << e.what() << endl;
   } catch(char const* str) {
-    logError() << "Error: " << str << endl;
+    msgError() << "Error: " << str << endl;
   } catch(const std::string& str) {
-    logError() << "Error: " << str << endl;
+    msgError() << "Error: " << str << endl;
   } catch(...) {
-    logError() << "Error: Unknown exception raised." << endl;
+    msgError() << "Error: Unknown exception raised." << endl;
   }
 
   mfacilities.shutdown();

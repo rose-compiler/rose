@@ -1,13 +1,13 @@
 #ifndef OBJECT_LAYOUT_ANALYSIS_H
 #define OBJECT_LAYOUT_ANALYSIS_H 1
 
-#include "RoseCompatibility.h"
-
-// with C++ 17
-// #include <variant>
 #include <boost/variant.hpp>
 
+#include "RoseCompatibility.h"
 #include "ClassHierarchyAnalysis.h"
+// with C++ 17
+// #include <variant>
+
 
 namespace CodeThorn
 {

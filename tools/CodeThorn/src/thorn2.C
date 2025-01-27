@@ -474,7 +474,8 @@ struct Acuity
       if (!printVtable && !printFunInf)
         return;
 
-      logInfo() << "computing virtual function information"
+      SAWYER_MESG(msgInfo())
+          << "computing virtual function information"
           << std::endl;
 
       ct::VirtualFunctionAnalysis vfa = analyzeVirtualFunctions(compatLayer, analyses.classAnalysis());
@@ -500,7 +501,9 @@ struct Acuity
       if (!params.memoryPoolTraversal)
         return ct::analyzeClassesAndCasts(&n);
 
-      logInfo() << "Using memory pool traversal; no class cast analysis." << std::endl;
+      SAWYER_MESG(msgInfo())
+                << "Using memory pool traversal; no class cast analysis." << std::endl;
+
       return { ct::analyzeClassesFromMemoryPool(), ct::CastAnalysis{} };
     }
 
@@ -539,10 +542,10 @@ struct Acuity
                          );
 
       if (!diff.empty())
-        logWarn() << "The following classes are not found by the pool traversal: ";
+        msgWarn() << "The following classes are not found by the pool traversal: ";
 
       for (ClassKeyType key : diff)
-        logWarn() << "\n  - " << nameClasses(key) << ct::dbgInfo(key)
+        msgWarn() << "\n  - " << nameClasses(key) << ct::dbgInfo(key)
                   << std::endl;
 
       diff.clear();
@@ -553,10 +556,10 @@ struct Acuity
                          );
 
       if (!diff.empty())
-        logWarn() << "The following classes are not found by the AST traversal: ";
+        msgWarn() << "The following classes are not found by the AST traversal: ";
 
       for (ClassKeyType key : diff)
-        logWarn() << "\n  - " << nameClasses(key) << dbgInfo(key, 6)
+        msgWarn() << "\n  - " << nameClasses(key) << dbgInfo(key, 6)
                   << std::endl;
     }
 
@@ -568,23 +571,28 @@ struct Acuity
 
     void process(SgProject& project)
     {
-      logInfo() << "Thorn 2: "
+      SAWYER_MESG(msgInfo())
+                << "Thorn 2: "
                 << params.dotfile_output
                 << " - " << params.txtfile_layout
                 << std::endl;
 
       printClassesDifferenceFoundByTraversal(project);
 
-      logInfo() << "getting all classes.. " << std::endl;
+      SAWYER_MESG(msgInfo())
+                << "getting all classes.. " << std::endl;
+
       ct::RoseCompatibilityBridge compatLayer;
       ct::AnalysesTuple   analyses = invokeClassAndCastAnalyses(project);
 
       const ct::ClassAnalysis& allClasses = analyses.classAnalysis();
       const int           numClasses = allClasses.size();
-      logInfo() << "getting all (" << numClasses << ") structs done. " << std::endl;
+      SAWYER_MESG(msgInfo())
+                << "getting all (" << numClasses << ") structs done. " << std::endl;
 
       IncludeInOutputSet  outset = buildOutputSet(allClasses);
-      logInfo() << "number of classes with virtual tables: " << outset.size() << std::endl;
+      SAWYER_MESG(msgInfo())
+                << "number of classes with virtual tables: " << outset.size() << std::endl;
 
       const int           maxlen = params.numCharsOfOriginalName;
       ct::ClassNameFn     clsNameGen = createNameGenerator(compatLayer.classNomenclator(), "Cl", maxlen);
@@ -622,7 +630,8 @@ Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLaye
   if (!printLayout)
     return;
 
-  logInfo() << "computing class layout"
+  SAWYER_MESG(msgInfo())
+            << "computing class layout"
             << std::endl;
 
   ct::ObjectLayoutContainer layouts = ct::computeObjectLayouts(analyses.classAnalysis());
@@ -632,14 +641,16 @@ Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLaye
     {
       if (filename == Parameters::opt_none) return;
 
-      logInfo() << "writing class layout file (" << filekind << "):" << filename << ".."
+      SAWYER_MESG(msgInfo())
+                << "writing class layout file (" << filekind << "):" << filename << ".."
                 << std::endl;
 
       std::ofstream outfile{filename};
 
       outfn(outfile, classNameFn, varNameFn, include, layouts);
 
-      logInfo() << "done writing layout." << std::endl;
+      SAWYER_MESG(msgInfo())
+                 << "done writing layout." << std::endl;
     };
 
   outputGen(params.txtfile_layout, "txt", classLayoutTxt);
@@ -659,7 +670,8 @@ Acuity::writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
 {
   using OutputGenFn = decltype(&vtableLayoutTxt);
 
-  logInfo() << "computing vtable layout"
+  SAWYER_MESG(msgInfo())
+            << "computing vtable layout"
             << std::endl;
 
   ct::VTableLayoutContainer layouts = ct::computeVTableLayouts(analyses.classAnalysis(), vfa, compatLayer);
@@ -669,14 +681,16 @@ Acuity::writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
     {
       if (filename == Parameters::opt_none) return;
 
-      logInfo() << "writing vtable layout file (" << filekind << "):" << filename << ".."
+      SAWYER_MESG(msgInfo())
+                << "writing vtable layout file (" << filekind << "):" << filename << ".."
                 << std::endl;
 
       std::ofstream outfile{filename};
 
       outfn(outfile, classNameFn, funcNameFn, include, layouts);
 
-      logInfo() << "done writing layout." << std::endl;
+      SAWYER_MESG(msgInfo())
+                << "done writing layout." << std::endl;
     };
 
   outputGen(params.txtfile_vtable, "txt", vtableLayoutTxt);
@@ -697,7 +711,8 @@ Acuity::writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
                          const ct::VirtualFunctionAnalysis& vfa
                        )
 {
-  logInfo() << "writing virtual function information file " << params.txtfile_vfun << ".."
+  SAWYER_MESG(msgInfo())
+            << "writing virtual function information file " << params.txtfile_vfun << ".."
             << std::endl;
 
   std::ofstream outfile{params.txtfile_vfun};
@@ -711,7 +726,8 @@ Acuity::writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
                        params.withOverridden
                      );
 
-  logInfo() << "writing virtual function information done" << std::endl;
+  SAWYER_MESG(msgInfo())
+            << "writing virtual function information done" << std::endl;
 }
 
 void
@@ -725,7 +741,7 @@ Acuity::writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLaye
   if (params.txtfile_vbaseclass == Parameters::opt_none)
     return;
 
-  logInfo() << "writing virtual base class initialization order file " << params.txtfile_vbaseclass << ".."
+  msgInfo() << "writing virtual base class initialization order file " << params.txtfile_vbaseclass << ".."
             << std::endl;
 
   std::ofstream outfile{params.txtfile_vbaseclass};
@@ -736,7 +752,7 @@ Acuity::writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLaye
                                 analyses.classAnalysis()
                               );
 
-  logInfo() << "writing virtual base class initialization order file done" << std::endl;
+  msgInfo() << "writing virtual base class initialization order file done" << std::endl;
 }
 
 
@@ -750,7 +766,7 @@ Acuity::writeDotFileIfRequested( const Parameters& params,
   if (params.dotfile_output == Parameters::opt_none)
     return;
 
-  logInfo() << "writing dot file " << params.dotfile_output << ".."
+  msgInfo() << "writing dot file " << params.dotfile_output << ".."
             << std::endl;
 
   std::ofstream outfile{params.dotfile_output};
@@ -762,7 +778,7 @@ Acuity::writeDotFileIfRequested( const Parameters& params,
                      analyses.castAnalysis()
                    );
 
-  logInfo() << "writing dot file done" << std::endl;
+  msgInfo() << "writing dot file done" << std::endl;
 }
 
 
@@ -835,7 +851,7 @@ int main( int argc, char * argv[] )
 
     //~ parseCommandLine(thornArgc, thornArgv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
     mfacilities.control(ctOpt.logLevel);
-    logTrace() << "Log level is " << ctOpt.logLevel << endl;
+    msgTrace() << "Log level is " << ctOpt.logLevel << endl;
     ct::TimingCollector      tc;
 
     //~ tc.startTimer();
@@ -843,7 +859,7 @@ int main( int argc, char * argv[] )
     ROSE_ASSERT(project);
     //~ tc.stopTimer();
 
-    logTrace() << "Parsing and creating AST finished."<<endl;
+    msgTrace() << "Parsing and creating AST finished."<<endl;
 
     if (LEGACY_MODE)
     {
@@ -862,13 +878,13 @@ int main( int argc, char * argv[] )
 
     errorCode = 0;
   } catch(const std::exception& e) {
-    logError() << "Error: " << e.what() << endl;
+    msgError() << "Error: " << e.what() << endl;
   } catch(char const* str) {
-    logError() << "Error: " << str << endl;
+    msgError() << "Error: " << str << endl;
   } catch(const std::string& str) {
-    logError() << "Error: " << str << endl;
+    msgError() << "Error: " << str << endl;
   } catch(...) {
-    logError() << "Error: Unknown exception raised." << endl;
+    msgError() << "Error: Unknown exception raised." << endl;
   }
 
   mfacilities.shutdown();

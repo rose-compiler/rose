@@ -17,13 +17,15 @@ constexpr
 unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
 
 
-using ClassKeyType        = const SgClassDefinition*;
-using FunctionTypeKeyType = const SgFunctionType*;
-using TypeKeyType         = const SgType*;
-using CastKeyType         = const SgCastExp*;
-using VariableKeyType     = const SgInitializedName*;
-using FunctionKeyType     = const SgMemberFunctionDeclaration*;
-using ASTRootType         = SgProject*;
+using ClassKeyType          = const SgClassDefinition*;
+using FunctionTypeKeyType   = const SgFunctionType*;
+using TypeKeyType           = const SgType*;
+using CastKeyType           = const SgCastExp*;
+using VariableKeyType       = const SgInitializedName*;
+// using MemberFunctionKeyType = const SgMemberFunctionDeclaration*;
+using FunctionKeyType       = const SgFunctionDeclaration*;
+using ExpressionKeyType     = const SgExpression*;
+using ASTRootType           = SgProject*;
 
 /// type of a class naming function
 using ClassNameFn   = std::function<std::string(ClassKeyType)>;
@@ -37,6 +39,29 @@ using VarNameFn     = std::function<std::string(VariableKeyType)>;
 
 class ClassAnalysis;
 class CastAnalysis;
+
+template <class T>
+using Optional = boost::optional<T>;
+
+using CallDataBase = std::tuple< Optional<FunctionKeyType>,
+                                 ExpressionKeyType,
+                                 Optional<ClassKeyType>,
+                                 ExpressionKeyType,
+                                 bool
+                               >;
+struct CallData : CallDataBase
+{
+  using base = CallDataBase;
+  using base::base;
+
+  /// if the call can be resolved, the return value contains a valid FunctionKeyType
+  Optional<FunctionKeyType> callee()      const { return std::get<0>(*this); }
+  ExpressionKeyType         calleeExpr()  const { return std::get<1>(*this); }
+  Optional<ClassKeyType>    typeBound()   const { return std::get<2>(*this); }
+  ExpressionKeyType         call()        const { return std::get<3>(*this); }
+  bool                      virtualCall() const { return std::get<4>(*this); }
+};
+
 
 /// a compatibility layer that abstracts functions and queries of
 ///   the AST and implements those capabilities for ROSE.
@@ -60,7 +85,7 @@ class RoseCompatibilityBridge
     /// \}
 
     /// returns the function-id for a (member) function \p fun
-    FunctionKeyType functionId(const SgMemberFunctionDeclaration* fun) const;
+    FunctionKeyType functionId(const SgFunctionDeclaration* fun) const;
 
     /// returns a string representation for \p vid
     std::string nameOf(VariableKeyType vid) const;
@@ -150,8 +175,21 @@ class RoseCompatibilityBridge
     bool
     isAutoGeneratable(ClassKeyType clkey, FunctionKeyType fnkey) const;
 
+    /// returns true if the class referenced by \p clkey is abstract.
     bool
     isAbstract(ClassKeyType clkey) const;
+
+    /// returns all callees (if known)
+    /// \param fn the function for which the result shall be computed
+    /// \param withFunctionAddressTaken if true, a taken function address
+    ///                                 will be included in the result
+    ///                                 even if it is not a call.
+    /// \return a set of functions called by \p fn
+    std::vector<CallData>
+    functionRelations(FunctionKeyType fn) const;
+
+    std::vector<FunctionKeyType>
+    allFunctionKeys(ASTRootType n) const;
 
   private:
     //~ RoseCompatibilityBridge()                                          = delete;
@@ -179,7 +217,7 @@ std::string typeNameOf(ClassKeyType key);
 /// tests if \p key has a templated ancestor
 /// \param  key the class key (SgClassDefinition*)
 /// \return a string representation of the templated ancestor (if found)
-boost::optional<std::string>
+Optional<std::string>
 missingDiagnostics(ClassKeyType key);
 
 /// produces a string with additional debug output
@@ -226,7 +264,7 @@ SgClassDefinition* getClassDefOpt(const SgClassType& n);
 SgClassDefinition* getClassDefOpt(const SgInitializedName& n);
 
 /// returns the representative declaration for \p memfn
-SgMemberFunctionDeclaration& keyDecl(SgMemberFunctionDeclaration& memfn);
+SgFunctionDeclaration& keyDecl(SgFunctionDeclaration& fn);
 
 }
 #endif /* ROSE_MAPPING */

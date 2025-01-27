@@ -108,7 +108,7 @@ namespace
   // logging
 
   inline
-  //~ auto logDbg() -> decltype(logInfo()) { return logInfo(); }
+  //~ auto logDbg() -> decltype(msgInfo()) { return msgInfo(); }
   //~ auto logDbg() -> decltype(logTrace()) { return logTrace(); }
   NoStream logDbg() { return NoStream(); }
 }
@@ -495,10 +495,10 @@ CtxPrioritySolver::runSolver()
                            true
                          );
 
-  logInfo() << "CtxPrioritySolver started" << std::endl;
+  msgInfo() << "CtxPrioritySolver started" << std::endl;
 
   if (worklist.isEmpty())
-    logWarn() << "initial worklist size is empty." << std::endl;
+    msgWarn() << "initial worklist size is empty." << std::endl;
 
   solverTimer.start();
 
@@ -569,7 +569,7 @@ CtxPrioritySolver::runSolver()
 
       splitTime = solverTimer.getTimeDurationAndKeepRunning().seconds();
 
-      logInfo() << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
+      msgInfo() << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
                 << nodeCounter << '/' << splitTime << '.'
                 << std::endl;
     }
@@ -577,7 +577,7 @@ CtxPrioritySolver::runSolver()
 
   TimeDuration endTime = solverTimer.getTimeDurationAndStop();
 
-  logInfo() << "CtxPrioritySolver finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."
+  msgInfo() << "CtxPrioritySolver finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."
             << std::endl
             << "  " << nodeCounter << " nodes analyzed (" << static_cast<size_t>(nodeCounter / endTime.seconds())
             << " nodes/s)"
@@ -702,10 +702,10 @@ SeqPrioritySolver::runSolver()
                            false
                          );
 
-  logInfo() << "PrioritySolver started" << std::endl;
+  msgInfo() << "PrioritySolver started" << std::endl;
 
   if (worklist.isEmpty())
-    logWarn() << "initial worklist size is empty." << std::endl;
+    msgWarn() << "initial worklist size is empty." << std::endl;
 
   solverTimer.start();
 
@@ -746,7 +746,7 @@ SeqPrioritySolver::runSolver()
 
       splitTime = solverTimer.getTimeDurationAndKeepRunning().seconds();
 
-      logInfo() << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
+      msgInfo() << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
                 << nodeCounter << '/' << splitTime << '.'
                 << std::endl;
     }
@@ -754,7 +754,7 @@ SeqPrioritySolver::runSolver()
 
   TimeDuration endTime = solverTimer.getTimeDurationAndStop();
 
-  logInfo() << "PrioritySolver finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."
+  msgInfo() << "PrioritySolver finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."
             << std::endl
             << "  " << nodeCounter << " nodes analyzed (" << static_cast<size_t>(nodeCounter / endTime.seconds())
             << " nodes/s)"
