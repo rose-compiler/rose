@@ -25,7 +25,7 @@ void CollectDependences::CollectFromFile(std::istream& input_file) {
                 if (next_string == ";") {
 		   if (source != "") {
                      save_dependence(DependenceEntry(dest, source, dep_type, attr));
-                     source = "";
+                     source = attr = "";
                      Log.push( source + "->" + dest + "[" + dep_type + "]");
                    }
                    break;
@@ -43,8 +43,10 @@ void CollectDependences::CollectFromFile(std::istream& input_file) {
                        Log.fatal("Expecting strings after `=' but get " + next_string);
                     }
                     attr = next_string;
-                } else {
+                } else if (attr == "") {
                    source = source + next_string;
+                } else {
+                   attr = attr + next_string;
                 }
             }
             if (next_string != ";") {
@@ -314,6 +316,7 @@ void DependenceTable :: OutputDependencesInGUI(std::ostream& output) {
 void DependenceTable:: save_dependence(const DependenceEntry& e) {
   // Save inside the dependence table (base class).
   DebugLog DebugSaveDep("-debugdep");
+  DebugSaveDep([&e](){ return "processing " + e.to_string(); });
 
   // Save into annotation  if necessary.
   if (e.type_entry() == "parameter") {
@@ -330,6 +333,7 @@ void DependenceTable:: save_dependence(const DependenceEntry& e) {
     OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
     OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
     assert(desc != 0);
+    DebugSaveDep([&e](){ return "processing " + e.second_entry(); });
     SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
     desc->push_back(var);
     DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });

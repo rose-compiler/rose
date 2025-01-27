@@ -5,6 +5,7 @@
 #include "SymbolicSelect.h"
 #include <ROSE_ABORT.h>
 #include <ROSE_ASSERT.h>
+#include "CommandOptions.h"
 
 #include <list>
 #include <stdio.h>
@@ -122,7 +123,7 @@ bool SymbolicFunction:: operator == (const SymbolicFunction& that) const
   return true;
 }
 
-AstNodePtr SymbolicFunction :: CodeGen( AstInterface &_fa) const
+AstNodePtr SymbolicFunction:: CodeGen( AstInterface &_fa) const
 {
   AstNodeList l;
   for (const_iterator i = args.begin(); i != args.end(); ++i) {
@@ -268,12 +269,20 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
 
 SymbolicVal SymbolicValGenerator::
 GetSymbolicVal( const std::string& sig) {
+  DebugLog debugval("-debugsym");
   if (sig == "_NULL_") {
       return SymbolicVal();
   } else if (sig == "_UNKNOWN_") {
      return SymbolicVal(new SymbolicValImpl()); 
-  } else 
+  } else if (sig[0] == '*') {
+     debugval([&sig]() { return "creating pointer deref:" + sig; });
+     auto r = GetSymbolicVal(sig.substr(1, sig.size()-1));
+     return new SymbolicFunction( AstInterface::UOP_DEREF, "*", r);
+ 
+  } else {
+     debugval([&sig]() { return "creating variable:" + sig; });
      return SymbolicVal(new SymbolicVar(sig, NULL));
+  }
 }
 
 bool SymbolicValGenerator::
@@ -313,9 +322,6 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   AstInterface::OperatorEnum opr = (AstInterface::OperatorEnum)0;
   if (fa.IsConstInt(exp, &val)) {
      return new SymbolicConst( val );
-  }
-  else if (fa.IsVarRef(exp, 0, &name, &scope)) {
-     return new SymbolicVar( name, scope, exp );
   }
   else if (fa.IsBinaryOp(exp, &opr, &s1, &s2)) {
      SymbolicVal v1 = GetSymbolicVal( fa, s1 ), v2 = GetSymbolicVal(fa, s2);
@@ -403,6 +409,9 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         }
         return new SymbolicFunction( AstInterface::OP_NONE, new SymbolicAstWrap(s1), args);
      }
+  }
+  else if (fa.IsVarRef(exp, 0, &name, &scope)) {
+     return new SymbolicVar( name, scope, exp );
   }
   return new SymbolicAstWrap(exp);
 }

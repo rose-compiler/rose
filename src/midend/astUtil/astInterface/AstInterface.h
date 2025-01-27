@@ -292,11 +292,13 @@ public:
   AstNodePtr CreateFunctionCall(const AstNodePtr& func, AstList::const_iterator args_begin, AstList::const_iterator args_end);
 
   AstNodePtr GetFunctionDefinition( const AstNodePtr &n, std::string* name=0);
+  static AstNodePtr GetFunctionDefinitionFromDeclaration( const AstNodePtr &decl);
   static bool IsFunctionDefinition(  const AstNodePtr& s, std::string* name = 0,
                     AstList* params = 0, AstList* outpars = 0,
                     AstNodePtr* body = 0,
                     AstTypeList* paramtypes = 0, AstNodeType* returntype=0,
-                    bool use_global_unique_name = false);
+                    bool use_global_unique_name = false,
+                    bool skip_function_declaration = false);
 
   static bool IsAssignment( const AstNodePtr& s, AstNodePtr* lhs = 0, 
                                AstNodePtr* rhs = 0, bool* readlhs = 0); 

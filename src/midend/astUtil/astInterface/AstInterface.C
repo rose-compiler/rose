@@ -354,12 +354,13 @@ LookupVar( const std::string& name, SgNode* loc) {
     AstNodePtr result = LookupNestedDeclaration(name, loc);
     SgInitializedName* initname = isSgInitializedName(result.get_ptr());
     if (initname != 0) {
-      SgVariableSymbol* result = isSgVariableSymbol(initname->search_for_symbol_from_symbol_table ());
-      if (result == 0) {
-         NEW_SYMBOL(result,SgVariableSymbol, initname->get_scope(),initname);
+      SgVariableSymbol* varsym = isSgVariableSymbol(initname->search_for_symbol_from_symbol_table ());
+      if (varsym == 0) {
+         NEW_SYMBOL(varsym,SgVariableSymbol, initname->get_scope(),initname);
       }
-      return result;
+      return varsym;
     }
+    return 0;
   }
   {
     SgNamedType* t = isSgNamedType(loc);
@@ -578,6 +579,19 @@ AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string
   return r;
 }
 
+AstNodePtr AstInterface::GetFunctionDefinitionFromDeclaration( const AstNodePtr &_decl) {
+  SgFunctionDeclaration* decl = isSgFunctionDeclaration(_decl.get_ptr()); 
+  SgFunctionDefinition* def = decl->get_definition();
+  if (def == 0) {
+      auto* decl1 = decl->get_definingDeclaration();
+      if (decl1 != 0) {
+         auto* def_decl = isSgFunctionDeclaration(decl1);
+         assert(def_decl != 0);
+         def = def_decl->get_definition();
+      }
+  }
+  return def;
+}
 
 class SageSetTransformation: public AstTopDownProcessing< AstNodePtrImpl >
 {
@@ -1391,7 +1405,7 @@ bool AstInterface::
 IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
                     AstNodeList* params, AstNodeList* outpars, AstNodePtr* body,
                     AstTypeList* paramtype, AstNodeType* returntype, 
-                    bool use_global_unique_name) 
+                    bool use_global_unique_name, bool skip_function_declaration) 
 
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
@@ -1399,25 +1413,32 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   SgFunctionParameterList *l = 0;
   SgCtorInitializerList *ctor = 0;
   SgNode* d = s;
-  SgFunctionDefinition *def =  0;
+  AstNodePtr def;
   if (s->variantT() ==  V_SgFunctionDefinition) 
     {
-      def =  isSgFunctionDefinition(s);
-      d = def->get_declaration();
-      ctor = def->get_CtorInitializerList();
+      auto* s_def =  isSgFunctionDefinition(s);
+      def = s_def;
+      d = s_def->get_declaration();
+      ctor = s_def->get_CtorInitializerList();
   }
   
   switch (d->variantT()) {
   case V_SgFunctionDeclaration: 
     { 
       SgFunctionDeclaration *decl = isSgFunctionDeclaration(d);
+      if (def == AST_NULL && skip_function_declaration && decl->get_definition() == 0) {
+           // Do non consider a function declaration as definition
+           return false;
+      }
       if (returntype != 0)
         *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
       if (name != 0) 
         *name =  std::string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
-      def = decl->get_definition();
+      if (def == AST_NULL) {
+         def = AstInterface::GetFunctionDefinitionFromDeclaration(decl);
+      }
       break;
     }
   case V_SgNonrealDecl: 
@@ -1459,6 +1480,10 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);
+      if (def == AST_NULL && skip_function_declaration && decl->get_definition() == 0) {
+           // Do non consider a function declaration as definition
+           return false;
+      }
       if (returntype != 0)
         *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
       if (name != 0) {
@@ -1477,7 +1502,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
             }
          }
       } 
-      def = decl->get_definition();
+      def = AstInterface::GetFunctionDefinitionFromDeclaration(decl);
       break;
     }
   // Liao, 11/18/2008: add support for instantiated template (member) function declarations  
@@ -1515,7 +1540,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   {
       SgInitializedName* var = isSgInitializedName(d);
       SgType* t = var->get_type();
-      if (IsFunctionType(AstNodeTypeImpl(t), paramtype, returntype)) {
+      if (IsFunctionType(AstNodeTypeImpl(t), paramtype, returntype) && !skip_function_declaration) {
          if (name != 0) {
             *name = var->get_name().str();
          } 
@@ -1539,7 +1564,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
     }
   }
   if (body != 0 && def != 0) {
-     *body = AstNodePtrImpl(def->get_body());
+     SgFunctionDefinition* f_def = isSgFunctionDefinition(def.get_ptr());
+     assert(f_def != 0);
+     *body = AstNodePtrImpl(f_def->get_body());
   }
   if (ctor != 0 && outpars != 0) {
     SgInitializedNamePtrList& names = ctor->get_ctors();
@@ -1912,7 +1939,7 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
     case V_SgPointerDerefExp:
        if (IsVarRef(isSgPointerDerefExp(exp)->get_operand(), vartype, varname, _scope, isglobal, use_global_unique_name)) {
           if (varname != 0) {
-            *varname = "*" + (*varname);
+             (*varname) = "*" + (*varname);
           }
           if (vartype != 0) {
             SgPointerType* ptype = isSgPointerType(AstNodeTypeImpl(*vartype).get_ptr());
@@ -2171,13 +2198,18 @@ CreateVarRef(std::string varname, SgNode* loc) {
          auto* NEW_THIS_EXP(p, decl1);
          return p;
     }
-    SgVariableSymbol *sym = LookupVar(varname, loc1_s);
+    std::string lookup_name = varname; 
+    while (lookup_name[0] == '*') lookup_name = lookup_name.substr(1,lookup_name.size()-1);
+    SgVariableSymbol *sym = LookupVar(lookup_name, loc1_s);
     if (sym == 0) {
          std::cerr << "Error : variable " << varname << " not found in scope " << loc1->class_name() << ", which is derived from " << ((loc==0)? "NULL" : loc->class_name()) << "\n";
          ROSE_ABORT();
-      }
-    SgVarRefExp *r = new SgVarRefExp( GetFileInfo(), sym);
-    r->set_endOfConstruct(r->get_file_info());
+    }
+    SgExpression *r = new SgVarRefExp( GetFileInfo(), sym);
+    while (varname[0] == '*') {
+       r = new SgPointerDerefExp( GetFileInfo(), r, r->get_type());
+       varname = lookup_name.substr(1,varname.size()-1);
+    }
     return r;
   }
 
@@ -3595,6 +3627,9 @@ CreateUnaryOP( OperatorEnum op, const AstNodePtr& _a0)
      break;
    case UOP_CAST:
      result = new SgCastExp( GetFileInfo(), e, e->get_type());
+     break;
+   case UOP_DEREF:
+     result = new SgPointerDerefExp( GetFileInfo(), e, e->get_type());
      break;
    default:
      std::cerr << "unexpected uop:" << op << "\n";

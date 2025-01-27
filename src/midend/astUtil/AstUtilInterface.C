@@ -24,7 +24,8 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
     AstInterface::AstNodePtr body;
     AstInterface::AstNodeList ast_params;
     AstInterface::AstTypeList ast_param_types;
-    if (AstInterface::IsFunctionDefinition(ast, 0, &ast_params, 0, &body, &ast_param_types)) {
+    if (AstInterface::IsFunctionDefinition(ast, 0, &ast_params, 0, &body, &ast_param_types, 0,
+                                         /*use_global_uniqu_name*/false, /*skip_pure_decl*/true) && body != AST_NULL) {
       // Add empty annotations for this function. Details of the side effects will be added later
       // while the body of the function is being analyzed.
       DebugAstUtil([&ast](){ return "Saving side effects for :" + AstInterface::AstToString(ast) + "\n"; });
@@ -188,7 +189,10 @@ void AstUtilInterface::AddOperatorSideEffectAnnotation(
      if (varname == "_UNKNOWN_" || varname == "") {
        desc->set_has_unknown(true);  
      } else {
-       desc->push_back(SymbolicValDescriptor(SymbolicValGenerator::GetSymbolicVal(fa, AstNodePtrImpl(var)), varname));
+       SymbolicValDescriptor val_desc(SymbolicValGenerator::GetSymbolicVal(fa, AstNodePtrImpl(var)), varname);
+       desc->push_back(val_desc);
+       DebugAstUtil([&relation, &val_desc](){ return "Done adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "annotation is : " + val_desc.toString(); });
+  
      }
   }
 } 
