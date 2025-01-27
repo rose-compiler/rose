@@ -67,7 +67,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
                            std:: string* stripname = 0, int* size = 0, bool use_global_unique_name=false);
   static SgType* GetTypeInt();
 
-  SgVarRefExp* CreateFieldRef(std::string classname, std::string fieldname);
+  SgVarRefExp* CreateFieldRef(SgNode* decl, std::string fieldname);
   SgMemberFunctionRefExp* CreateMethodRef(std::string classname, 
                            std::string fieldname, bool createIfNotFound);
 
@@ -120,14 +120,12 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   void SaveVarDecl( SgVariableDeclaration *d, SgScopeStatement* curscope);
 
   SgFunctionSymbol* LookupFunction(const char* start, SgScopeStatement* loc);
-  static SgNode* LookupNestedDeclaration(const std::string& name, SgStatement* loc); 
-  static SgVariableSymbol* LookupVar(const std:: string& name, SgScopeStatement* loc);
-  SgVariableSymbol* LookupVar(const std:: string& name) {
-      return LookupVar(name, scope);
-  }
+  static SgNode* LookupNestedDeclaration(const std::string& name, SgNode* loc); 
+  static SgVariableSymbol* LookupVar(const std:: string& name, SgNode* loc);
+  SgVariableSymbol* LookupVar(const std:: string& name);
   SgVariableSymbol* InsertVar(SgInitializedName *d, SgScopeStatement* curscope=0);
 
-  SgVarRefExp* CreateVarRef(std::string varname, SgNode* loc=0);
+  SgExpression* CreateVarRef(std::string varname, SgNode* loc=0);
 
 
   SgDotExp* CreateVarMemberRef(std::string varname, std::string field, 

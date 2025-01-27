@@ -139,7 +139,7 @@ AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
 
          string val = last_arg().toString(), valtype = last_arg().GetTypeName();
          CPPAstInterface fa2(fa);
-         AstNodePtr valast = (valtype == "field")? fa2.CreateFieldRef(objtypename, val) : fa2.CreateMethodRef(objtypename, val,true);
+         AstNodePtr valast = (valtype == "field")? fa.CreateFieldRef(objtypename, val) : fa2.CreateMethodRef(objtypename, val,true);
          return fa.CreateBinaryOP(AstInterface::BOP_DOT_ACCESS,obj, valast);
      }
 

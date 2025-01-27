@@ -20,9 +20,6 @@ class CPPAstInterface : public AstInterface
                              AstNodePtr* access = 0,
                              AstInterface::AstNodeList* args = 0);
 
-  AstNodePtr CreateFieldRef(std::string classname, std::string fieldname);
-  AstNodePtr CreateMethodRef(std::string classname, std::string methodname, bool addIfNotFound);
-
   AstNodePtr CreateFunctionCall( const AstNodePtr& func, 
                           const AstInterface::AstNodeList& args);
   //! Check whether $n$ is a pointer or reference variable reference.

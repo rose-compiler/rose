@@ -48,7 +48,7 @@ class SymbolicValImpl
   virtual SymbolicValType GetValType() const { return VAL_UNKNOWN; }
   virtual std:: string GetTypeName() const { return "unknown"; }
   virtual void Visit( SymbolicVisitor *op) const { return op->VisitUnknown(*this); }
-  virtual AstNodePtr  CodeGen(AstInterface &fa) const { return AST_UNKNOWN; }
+  virtual AstNodePtr  CodeGen(AstInterface &) const { return AST_UNKNOWN; }
   virtual SymbolicValImpl* Clone() const  { return new SymbolicValImpl(); }
 
  friend class CountRefHandle<SymbolicValImpl>;
@@ -77,7 +77,7 @@ class SymbolicConst : public SymbolicValImpl
   virtual void Dump() const { std:: cerr << val << "(" << type << ")"; }
   SymbolicValType GetValType() const { return VAL_CONST; }
   std:: string GetTypeName() const { return type; }
-  AstNodePtr  CodeGen(AstInterface &fa) const;
+  AstNodePtr  CodeGen(AstInterface &) const;
   void Visit( SymbolicVisitor *op) const { op->VisitConst(*this); }
   bool GetIntVal( int &val1, int &val2) const
           { 
@@ -106,7 +106,7 @@ class SymbolicVar : public SymbolicValImpl
   virtual std:: string toString() const;
   virtual void Dump() const { std:: cerr << varname; }
   SymbolicValType GetValType() const { return VAL_VAR; }
-  AstNodePtr  CodeGen( AstInterface &fa) const;
+  AstNodePtr  CodeGen( AstInterface &) const;
 
   std:: string GetVarName() const { return varname; }
   AstNodePtr GetVarScope() const  { return scope; }
@@ -134,7 +134,7 @@ class SymbolicAstWrap : public SymbolicValImpl
 
   SymbolicValType GetValType() const { return VAL_AST; }
   virtual std:: string GetTypeName() const { return "astwrap"; }
-  AstNodePtr CodeGen( AstInterface &fa) const ;
+  AstNodePtr CodeGen( AstInterface &) const ;
 
   void Visit( SymbolicVisitor *op) const { op->VisitAstWrap(*this); }
   bool operator == (const SymbolicAstWrap& that) const
@@ -243,7 +243,7 @@ class SymbolicFunction : public SymbolicValImpl
   virtual ~SymbolicFunction() {}
   virtual std:: string toString() const;
   SymbolicValType GetValType() const { return VAL_FUNCTION; }
-  AstNodePtr CodeGen( AstInterface &fa) const;
+  AstNodePtr CodeGen( AstInterface &) const;
   virtual void Visit( SymbolicVisitor *v) const { v->VisitFunction(*this); }
   bool operator == (const SymbolicFunction& that) const;
   SymbolicVal GetOp() const { return op; }
@@ -302,7 +302,7 @@ class SymbolicValGenerator
  static SymbolicVal GetSymbolicVal( const std::string& sig);
  static SymbolicVal get_null() { return SymbolicVal(); }
  static SymbolicVal get_unknown() { return new SymbolicValImpl(); }
- static bool IsFortranLoop(AstInterface& fa, const AstNodePtr& s, 
+ static bool IsFortranLoop(AstInterface& , const AstNodePtr& s, 
         SymbolicVar* ivar =0,
         SymbolicVal* lb =0, SymbolicVal* ub=0, SymbolicVal* step=0, AstNodePtr* body=0);
 };
@@ -343,7 +343,7 @@ class SymbolicCond
                                                                                           
   void Dump() const;
   std:: string toString () const;
-  AstNodePtr  CodeGen(AstInterface &fa) const;
+  AstNodePtr  CodeGen(AstInterface&) const;
 };
 
 struct SymbolicBound{

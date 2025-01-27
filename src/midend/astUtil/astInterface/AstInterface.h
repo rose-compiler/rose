@@ -302,6 +302,7 @@ public:
                                AstNodePtr* rhs = 0, bool* readlhs = 0); 
   AstNodePtr CreateAssignment( const AstNodePtr& lhs, const AstNodePtr& rhs);
   AstNodePtr CreateFieldRef(std::string name1, std::string name2);
+  AstNodePtr CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFound);
 
   bool IsIOInputStmt( const AstNodePtr& s, AstList* varlist = 0);
   bool IsIOOutputStmt( const AstNodePtr& s, AstList* explist = 0);
@@ -352,6 +353,7 @@ public:
   bool IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);
   static void GetTypeInfo( const AstNodeType& t, std::string* name = 0, 
                            std::string* stripname = 0, int* size = 0, bool use_global_unique_name = false);
+  static AstNodeType GetBaseType(const AstNodeType& t1);
   static std::string GetTypeName(const AstNodeType& t) 
      { std::string r; GetTypeInfo(t, &r); return r; }
   static std::string GetBaseTypeName(const AstNodeType& t) 

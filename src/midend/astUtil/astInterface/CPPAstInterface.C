@@ -43,14 +43,6 @@ IsMemberAccess( const AstNodePtr& _s,  AstNodePtr* obj, std::string* field)
 }
 
 AstNodePtr CPPAstInterface::
-CreateFieldRef(std::string classname, std::string fieldname)
-{ return AstNodePtrImpl(impl->CreateFieldRef(classname, fieldname));  }
-
-AstNodePtr CPPAstInterface::
-CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFound)
-{ return AstNodePtrImpl(impl->CreateMethodRef(classname,fieldname,createIfNotFound)); }
-
-AstNodePtr CPPAstInterface::
 CreateFunctionCall( const AstNodePtr& func, const AstNodeList& args)
 {
   return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), args.begin(), args.end()));
