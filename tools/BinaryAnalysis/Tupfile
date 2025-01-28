@@ -41,6 +41,7 @@ run $(tool_compile_linkexe) --install -I. bat-to-c.C              libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-trace.C             libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-var.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-xml-to-json.C	  libbatSupport
+run $(tool_compile_linkexe) --install -I. fake-vxworks-server.C   libbatSupport
 : bat-dis |> cp -p %f %o |> bat-dis-simple $(ROOT)/$(INSTALL_STAGING)/bin/<staging>
 
 # Tests

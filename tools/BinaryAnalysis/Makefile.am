@@ -254,6 +254,14 @@ bat_xml_to_json_LDFLAGS = $(ROSE_RPATHS)
 bat_xml_to_json_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-xml-to-json.passed
 
+bin_PROGRAMS += fake-vxworks-server
+fake_vxworks_server_SOURCES = fake-vxworks-server.C
+fake_vxworks_server_CPPFLAGS = $(ROSE_INCLUDES)
+fake_vxworks_server_LDFLAGS = $(ROSE_RPATHS)
+fake_vxworks_server_LDADD = libbatSupport.a $(ROSE_LIBS)
+# no test for this one
+
+
 $(tests): %.passed: %
 	@$(RTH_RUN)							\
 		TITLE="testing $* [$@]"					\

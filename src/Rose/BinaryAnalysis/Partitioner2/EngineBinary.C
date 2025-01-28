@@ -36,6 +36,7 @@
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/BinaryAnalysis/VxworksTerminal.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/Progress.h>
@@ -956,6 +957,10 @@ EngineBinary::specimenNameDocumentation() {
         "\"r\" (read), \"w\" (write), and \"x\" (execute) to specify the mapping permissions, defaulting to read, write, and "
         "execute. Version 2 has no memory attributes.}"
 
+        "@bullet{If the name begins with the string \"vxworks:\" then it is treated as a resource that adjusts a memory map "
+        "by downloading memory contents over TCP/IP from a VxWorks terminal over a telnet connection. " +
+        VxworksTerminal::locatorStringDocumentation(VxworksTerminal::Settings()) + "}"
+
         "@bullet{If the name begins with the string \"meta:\" then it adjusts meta information about the memory "
         "map, such as permissions. " + MemoryMap::adjustMapDocumentation() + "}"
 
@@ -988,7 +993,8 @@ EngineBinary::isNonContainer(const std::string &name) {
             boost::starts_with(name, "run:")  ||        // run a process in a debugger, then map into MemoryMap
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
             boost::ends_with(name, ".srec")   ||        // Motorola S-Record format
-            boost::starts_with(name, "vxcore:") ||      // Jim Lee's format of a VxWorks core dump
+            boost::starts_with(name, "vxcore:") ||      // Jim Leek's format of a VxWorks core dump
+            boost::starts_with(name, "vxworks:") ||     // use telnet to connect to a VxWorks terminal
             boost::starts_with(name, "meta:") ||        // Adjust meta information about the map
             isRbaFile(name));                           // ROSE Binary Analysis file
 }
@@ -1228,6 +1234,13 @@ EngineBinary::loadNonContainers(const std::vector<std::string> &fileNames) {
         if (boost::starts_with(fileName, "map:")) {
             std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
             map->insertFile(resource);
+        } else if (boost::starts_with(fileName, "vxworks:")) {
+            VxworksTerminal::Settings dflt;
+            dflt.where = AddressInterval::whole();      // indicates that addresses are required for parseLocatorString
+            auto vxworks = VxworksTerminal::instance(VxworksTerminal::parseLocatorString(fileName.substr(7), dflt).orThrow());
+            if (const auto error = vxworks->open())
+                throw Rose::Exception("open failed for \"" + StringUtility::cEscape(fileName) + "\": " + *error);
+            vxworks->download(map, "VxWorks " + vxworks->settings().host).orThrow<Rose::Exception>();
         } else if (boost::starts_with(fileName, "data:")) {
             std::string resource = fileName.substr(4);  // remove "data", leaving colon and the rest of the string
             map->insertData(resource);

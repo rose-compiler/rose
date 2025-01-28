@@ -23,6 +23,7 @@
 #include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
+#include <Rose/BinaryAnalysis/VxworksTerminal.h>
 
 #include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
 
@@ -163,6 +164,7 @@ void initialize() {
         BinaryAnalysis::Unparser::initDiagnostics();
         BinaryAnalysis::Variables::initDiagnostics();
         BinaryAnalysis::VxcoreParser::initDiagnostics();
+        BinaryAnalysis::VxworksTerminal::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif
         EditDistance::initDiagnostics();

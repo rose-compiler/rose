@@ -50,6 +50,7 @@ run $(librose_compile)				\
     SystemCall.C				\
     TaintedFlow.C				\
     ToSource.C					\
+    VxworksTerminal.C				\
     Z3Solver.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
@@ -131,4 +132,5 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Unparser.h							\
     Utility.h							\
     Variables.h							\
+    VxworksTerminal.h						\
     Z3Solver.h

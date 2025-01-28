@@ -12,7 +12,12 @@
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
+#include <Sawyer/Parse.h>
+#include <Sawyer/Result.h>
+
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -21,6 +26,7 @@
 #include <regex>
 
 #include <boost/config.hpp>
+
 #ifndef BOOST_WINDOWS
 # include <fcntl.h>                                     // for open()
 # include <sys/ptrace.h>                                // for ptrace()
@@ -50,20 +56,18 @@ namespace BinaryAnalysis {
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap &x) { x.print(o); return o; }
 
-/******************************************************************************************************************************
- *                                      Exceptions
- ******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                       Exceptions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-MemoryMap::Exception::leader(std::string dflt) const
-{
+MemoryMap::Exception::leader(std::string dflt) const {
     const char *s = what();
     return s && *s ? std::string(s) : dflt;
 }
 
 std::string
-MemoryMap::Exception::details(bool verbose) const
-{
+MemoryMap::Exception::details(bool verbose) const {
     std::ostringstream ss;
     if (verbose) {
         ss <<"\n";
@@ -74,32 +78,27 @@ MemoryMap::Exception::details(bool verbose) const
 }
 
 void
-MemoryMap::Exception::print(std::ostream &o, bool verbose) const
-{
+MemoryMap::Exception::print(std::ostream &o, bool verbose) const {
     o <<leader("problem") <<details(verbose);
 }
 
 void
-MemoryMap::Inconsistent::print(std::ostream &o, bool verbose) const
-{
+MemoryMap::Inconsistent::print(std::ostream &o, bool verbose) const {
     o <<leader("inconsistent mapping") <<" for " <<new_range <<" vs. " <<old_range <<details(verbose);
 }
 
 void
-MemoryMap::NotMapped::print(std::ostream &o, bool verbose) const
-{
+MemoryMap::NotMapped::print(std::ostream &o, bool verbose) const {
     o <<leader("no mapping") <<" at va " <<StringUtility::addrToString(va) <<details(verbose);
 }
 
 void
-MemoryMap::NoFreeSpace::print(std::ostream &o, bool verbose) const
-{
+MemoryMap::NoFreeSpace::print(std::ostream &o, bool verbose) const {
     o <<leader("no free space") <<" (nbytes=" <<size <<")" <<details(verbose);
 }
 
 void
-MemoryMap::SyntaxError::print(std::ostream &o, bool verbose) const
-{
+MemoryMap::SyntaxError::print(std::ostream &o, bool verbose) const {
     o <<leader("syntax error");
     if (!filename.empty()) {
         o <<" at " <<filename <<":" <<linenum;
@@ -109,9 +108,9 @@ MemoryMap::SyntaxError::print(std::ostream &o, bool verbose) const
     o <<details(verbose);
 }
 
-/******************************************************************************************************************************
- *                                      Buffer methods
- ******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                       Buffer methods
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
 MemoryMap::segmentTitle(const Segment &segment) {
@@ -143,9 +142,9 @@ MemoryMap::segmentTitle(const Segment &segment) {
     return s;
 }
 
-/******************************************************************************************************************************
- *                                      MemoryMap methods
- ******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                       MemoryMap methods
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const std::string&
 MemoryMap::name() const {
@@ -214,8 +213,8 @@ MemoryMap::insertFileDocumentation() {
             "If @v{vsize} is specified then exactly that many bytes are mapped by zero-padding the file data if necessary; "
             "otherwise, when @v{fsize} is specified then exactly @v{fsize} bytes are mapped by zero padding the file data "
             "that could be read; otherwise the file size (adjusted by @v{offset}) determines the mapped size. The numeric "
-            "properties can be specified in decimal, octal, or hexadecimal using the usual C syntax (leading \"0x\" for "
-            "hexadecimal, leading \"0\" for octal, otherwise decimal).");
+            "properties can be specified in decimal, hexadecimal, or binary using the usual C syntax (leading \"0x\" for "
+            "hexadecimal, leading \"0b\" for binary, otherwise decimal).");
 }
 
 // Insert file from a locator string of the form:
@@ -661,7 +660,7 @@ MemoryMap::insertDataDocumentation() {
             "zero or more of the characters \"r\" (readable), \"w\" (writable), and \"x\" (executable) in that order and "
             "defaulting to read, write, and execute.  No @v{data_properties} are defined at this time, so the "
             "@v{data_properties} string is always empty. The @v{data} is a space-separated list of byte values in "
-            "decimal, hexadecimal (0x), binary (0b), or octal (0) using the usual C syntax.  If the @v{vsize} is larger "
+            "decimal, hexadecimal (0x), or binary (0b) using the usual C syntax.  If the @v{vsize} is larger "
             "than the amount of @v{data} then the data will be zero-padded.");
 }
 
@@ -1367,6 +1366,118 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
 void
 MemoryMap::dump() const {
     dump(std::cout, "");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Locator string parsing functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Sawyer::Result<MemoryMap::AddrSizePerm, std::pair<std::string /*message*/, size_t /*index*/>>
+MemoryMap::parseAddrSizePerm(const std::string &input) {
+    std::regex addrRe("^(0x[0-9a-fA-F]+|0b[01]+|[0-9]+)");
+    std::regex sizeRe("^\\+(0x[0-9a-fA-F]+|0b[01]+|[0-9]+)");
+    std::regex permRe("^=([rwx]*)");
+
+    AddrSizePerm retval;
+    std::string remaining = input;
+    std::smatch found;
+    size_t at = 0;
+
+    // Address
+    if (std::regex_search(remaining, found, addrRe)) {
+        const std::string &number = found.str(1);
+        if (const auto parsed = Sawyer::parse<Address>(number)) {
+            retval.addr = *parsed;
+        } else {
+            return Sawyer::makeError(std::make_pair("address " + parsed.unwrapError(), 0));
+        }
+        at = found.str(0).size();
+        remaining = input.substr(at);
+    }
+
+    // Size
+    retval.sizeAt = at;
+    if (std::regex_search(remaining, found, sizeRe)) {
+        const std::string &number = found.str(1);
+        if (const auto parsed = Sawyer::parse<uint64_t>(number)) {
+            retval.size = *parsed;
+        } else {
+            return Sawyer::makeError(std::make_pair("size " + parsed.unwrapError(), at + 1));
+        }
+        at += found.str(0).size();
+        remaining = input.substr(at);
+    }
+
+    // Permissions
+    retval.permAt = at;
+    if (std::regex_search(remaining, found, permRe)) {
+        retval.perm = 0;
+        for (const char perm: found.str(1)) {
+            switch (perm) {
+                case 'r':
+                    retval.perm = *retval.perm | READABLE;
+                    break;
+                case 'w':
+                    retval.perm = *retval.perm | WRITABLE;
+                    break;
+                case 'x':
+                    retval.perm = *retval.perm | EXECUTABLE;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid permission character");
+            }
+        }
+        at += found.str(0).size();
+        if (!input.substr(at).empty())
+            return Sawyer::makeError(std::make_pair("illegal permission character", at));
+    }
+
+    if (!input.substr(at).empty())
+        return Sawyer::makeError(std::make_pair("syntax error", at));
+
+    return Sawyer::makeOk(retval);
+}
+
+std::tuple<std::vector<std::tuple<std::string /*name*/, std::string /*value*/, size_t /*start_idx*/>>,
+           std::string /*rest*/,
+           size_t /*rest_idx*/>
+MemoryMap::parseNameValuePairs(const std::string &input) {
+    std::tuple<std::vector<std::tuple<std::string, std::string, size_t>>, std::string, size_t> retval;
+
+    std::regex nameValueRe("^(,?)"                                                // comma separator (only after first item)
+                           "([a-zA-Z][a-zA-Z0-9]*(?:[-_][a-zA-Z][a-zA-Z0-9]*)*)=" // name
+                           "(\"(?:\\[\\\"'?abfnrtv]|\\[0-7]{1,3}|[^\"])*\""       // value is double-quoted
+                           "|'(?:\\[\\\"'?abfnrtv]|\\[0-7]{1,3}|[^'])*'"          // value is single-quoted
+                           "|[^:,\\\"']*)");                                      // value is unquoted
+
+    size_t at = 0;
+    std::string remaining = input;
+    std::smatch found;
+    while (std::regex_search(remaining, found, nameValueRe)) {
+        const bool isFirstPair = std::get<0>(retval).empty();
+        const bool hasLeadingComma = !found.str(1).empty();
+
+        // Leading comma must be present iff this is not the first pair.
+        if ((isFirstPair && hasLeadingComma) || (!isFirstPair && !hasLeadingComma))
+            break;
+
+        const std::string &name = found.str(2);
+        const std::string value = [](const std::string &s) {
+            if (boost::starts_with(s, "\"") || boost::starts_with(s, "'")) {
+                ASSERT_require(s.size() >= 2);          // at least the beginning and ending quotes
+                return s.substr(1, s.size()-2);
+            } else {
+                return s;
+            }
+        }(found.str(3));
+        std::get<0>(retval).push_back(std::make_tuple(name, value, at + 1));
+        at += found.str(0).size();
+        remaining = input.substr(at);
+    }
+
+    std::get<1>(retval) = input.substr(at);
+    std::get<2>(retval) = at;
+    return retval;
 }
 
 } // namespace

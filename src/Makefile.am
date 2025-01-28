@@ -596,6 +596,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Variables/StackFrame.h					\
 	Rose/BinaryAnalysis/Variables/StackVariable.h					\
 	Rose/BinaryAnalysis/Variables/VariableFinder.h					\
+	Rose/BinaryAnalysis/VxworksTerminal.h						\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\

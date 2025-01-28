@@ -62,6 +62,8 @@ class SRecord;
 class SymbolicExpresssionParser;
 class SystemCall;
 class TaintedFlow;
+class VxworksTerminal;
+using VxworksTerminalPtr = std::shared_ptr<VxworksTerminal>; /**< Reference counting pointer. */
 class Z3Solver;
 
 namespace PointerDetection {

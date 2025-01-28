@@ -62,6 +62,7 @@ add_library(roseBinaryAnalysis OBJECT
   SystemCall.C
   TaintedFlow.C
   ToSource.C
+  VxworksTerminal.C
   Z3Solver.C)
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)
@@ -145,6 +146,7 @@ install(FILES
   Unparser.h
   Utility.h
   Variables.h
+  VxworksTerminal.h
   Z3Solver.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis)

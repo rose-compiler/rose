@@ -248,7 +248,7 @@ public:
         friend std::ostream& operator<<(std::ostream&, const NoFreeSpace&);
         size_t size;
     };
-
+    
     /** Exception thrown by load() when there's a syntax error in the index file. */
     struct SyntaxError: public Exception {
         SyntaxError(const std::string &mesg, const MemoryMap::Ptr &map, const std::string &filename,
@@ -260,6 +260,27 @@ public:
         std::string filename;                   /**< Name of index file where error occurred. */
         unsigned linenum;                       /**< Line number (1 origin) where error occurred. */
         int colnum;                             /**< Optional column number (0-origin; negative if unknown). */
+    };
+
+    /** Exception thrown for an error in a locator string. */
+    class LocatorError: public Exception {
+    public:
+        LocatorError(const std::string &mesg, const std::string &locatorString, const size_t index)
+            : Exception(mesg + "\n" +
+                        "  locator string: \"" + locatorString + "\"\n"
+                        "  error at " + std::string(7 + index, '-') + "^",
+                        MemoryMap::Ptr()) {}
+        virtual ~LocatorError() throw() {}
+    };
+
+private:
+    // Address, size, and permissions parsed from "[ADDR][+SIZE][=PERM]".
+    struct AddrSizePerm {
+        Sawyer::Optional<Address> addr;                 // address if one was parsed at the beginning of the string
+        size_t sizeAt = 0;                              // string index where we tried to parse the size "+" character
+        Sawyer::Optional<uint64_t> size;                // size if one was parsed
+        size_t permAt = 0;                              // string index where we tried to parse the permission "=" character.
+        Sawyer::Optional<unsigned> perm;                // union of permissions if the leading "=" was present.
     };
 
 protected:
@@ -339,22 +360,22 @@ public:
      *  The fields between the first and second colon are parameters for virtual memory; the fields between the second and
      *  third colon are parameters for the file.  Their meanings are:
      *
-     * @li @c ADDR: The virtual address where the first byte of the file is mapped.  This can be specified in decimal,
-     *     octal, or hexadecimal using the usual C syntax.  If no address is specified then the file is mapped at the lowest
-     *     unmapped region which is large enough to hold the file.
+     * @li @c ADDR: The virtual address where the first byte of the file is mapped.  This can be specified in decimal, hexadecimal,
+     *     or binary using the usual C syntax.  If no address is specified then the file is mapped at the lowest unmapped region
+     *     which is large enough to hold the file.
      *
-     * @li @c VMSIZE: Size of virtual memory to map.  If VMSIZE is not specified then it is either the FSIZE (if specified) or
-     *     the file size.  On POSIX systems the file size is that which is reported by @p stat, and on other systems it is
-     *     the number of bytes that can be read from the file. The size can be specified as decimal, octal, or hexadecimal with
-     *     the usual C syntax.  If VMSIZE is greater than the specified or calculated FSIZE then the data from the file is
-     *     padded with zero bytes.
+     * @li @c VMSIZE: Size of virtual memory to map.  If VMSIZE is not specified then it is either the FSIZE (if specified) or the
+     *     file size.  On POSIX systems the file size is that which is reported by @p stat, and on other systems it is the number of
+     *     bytes that can be read from the file. The size can be specified as decimal, hexadecimal, or binary with the usual C
+     *     syntax.  If VMSIZE is greater than the specified or calculated FSIZE then the data from the file is padded with zero
+     *     bytes.
      *
      * @li @c PERM: Accessibility for the mapped segment.  If present, it should be any of the letters "r", "w", and/or "x" in
      *     that order to indicate readable, writable, and/or executable.  If not present, the accessibility of the segment is
      *     the same as the user's accessibility of the file (on POSIX systems; "rwx" on Windows systems).
      *
-     * @li @c OFFSET: Byte offset within file for first byte to map. If no offset is specified then zero is assumed. The size
-     *     can be decimal, octal, or hexadecimal in the usual C sytax.
+     * @li @c OFFSET: Byte offset within file for first byte to map. If no offset is specified then zero is assumed. The size can be
+     *     decimal, hexadecimal, or binary in the usual C sytax.
      *
      * @li @c FSIZE: Number of file bytes to map.  If not specified the entire readable content of the file is mapped beginning
      *     at the specified OFFSET but not exceeding a specified VMSIZE.  If this number of bytes cannot be read from the file
@@ -411,9 +432,9 @@ public:
      *  The fields between the first and second colon are parameters for virtual memory; the fields between the second and
      *  third colon are parameters for the data (none currently defined). Their meanings are:
      *
-     *  @li @c ADDR: The virtual address where the first byte of data is mapped. This can be specified in decimal, octal, or
-     *      hexadecimal using the usual C syntax. If no address is specified then the data is mapped at the lowest unmapped
-     *      region which is large enough to hold it.
+     *  @li @c ADDR: The virtual address where the first byte of data is mapped. This can be specified in decimal, hexadecimal, or
+     *      binary using the usual C syntax. If no address is specified then the data is mapped at the lowest unmapped region which
+     *      is large enough to hold it.
      *
      *  @li @c VMSIZE: Size in bytes of the virtual memory to map.  If VMSIZE is not specified then it is the same as the
      *      number of bytes of DATA. If VMSIZE is smaller than DATA then the DATA will be truncated; if VMSIZE is larger than
@@ -424,8 +445,8 @@ public:
      *      writable, and executable.
      *
      *  @li @c DATA: The byte values in ascending address order. The values should be separated from one another by white space
-     *      and all values must be in the range 0 through 255, inclusive.  Values can be specified in hexadecimal (leading
-     *      "0x"), binary (leading "0b"), octal (leading "0"), or decimal. */
+     *      and all values must be in the range 0 through 255, inclusive.  Values can be specified in decimal, hexadecimal, or
+     *      binary using the usual C syntax. */
     AddressInterval insertData(const std::string &locatorString);
 
     /** Documentation string for @ref insertData. */
@@ -666,6 +687,23 @@ public:
     static std::string segmentTitle(const Segment&);
 
     friend std::ostream& operator<<(std::ostream&, const MemoryMap&);
+
+    /** Parse input of the form "[ADDR][+SIZE][=[r][w][x]]".
+     *
+     *  If the string can be parsed then return the parsed information, otherwise return and error string and the index into the
+     *  string where the error was detected. */
+    static Sawyer::Result<AddrSizePerm, std::pair<std::string, size_t>> parseAddrSizePerm(const std::string&);
+
+    /** Parse comma-separated name=value pairs.
+     *
+     * Parse an input string that contains only zero or more comma-separated name=value pairs. Returns a vector of the parsed pairs
+     * and the `input` index where the pair started, and any remaining part of the input after the last parsed name=value pair.
+     *
+     * If the value contains any commas, colons, single or double quotes, or backslashes then it must be quoted with single or
+     * double quotes. The surrounding quotes are removed and only the part between them is returned. */
+    static std::tuple<std::vector<std::tuple<std::string /*name*/, std::string /*value*/, size_t /*input_idx*/>>,
+                      std::string /*following*/, size_t /*following_idx*/>
+    parseNameValuePairs(const std::string &input);
 };
 
 } // namespace

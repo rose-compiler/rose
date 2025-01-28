@@ -76,6 +76,7 @@
 #include <Rose/BinaryAnalysis/Unparser.h>
 #include <Rose/BinaryAnalysis/Utility.h>
 #include <Rose/BinaryAnalysis/Variables.h>
+#include <Rose/BinaryAnalysis/VxworksTerminal.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
 namespace Rose {
