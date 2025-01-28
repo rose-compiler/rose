@@ -254,7 +254,7 @@ public:
         return require(bits).prohibit(~bits);
     }
 
-    /** Require certain segment names. See @ref AddressMap::substr. */
+    /** Require certain segment names. See @ref Sawyer::Container::AddressMap::substr. */
     AddressMapConstraints substr(const std::string &s) const {
         ASSERT_require(nameSubstring_.empty() || nameSubstring_==s);// substring conjunction not supported
         AddressMapConstraints retval = *this;

@@ -212,30 +212,30 @@ Function::validateArgs(std::vector<std::string> &actuals /*in,out*/, TokenStream
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SAWYER_EXPORT std::string
-StaticContent::eval(const Grammar&, const std::vector<std::string> &args) {
+StaticContent::eval(Grammar&, const std::vector<std::string> &args) {
     ASSERT_always_require(args.empty());                // so args is always used
     return resultString_;
 }
 
 SAWYER_EXPORT std::string
-Error::eval(const Grammar&, const std::vector<std::string> &args) {
+Error::eval(Grammar&, const std::vector<std::string> &args) {
     ASSERT_require(args.size() == 1);
     throw SyntaxError(args[0]);
 }
 
 SAWYER_EXPORT std::string
-Quote::eval(const Grammar&, const std::vector<std::string> &args) {
+Quote::eval(Grammar&, const std::vector<std::string> &args) {
     return boost::join(args, "");
 }
 
 SAWYER_EXPORT std::string
-Eval::eval(const Grammar &grammar, const std::vector<std::string> &args) {
+Eval::eval(Grammar &grammar, const std::vector<std::string> &args) {
     std::string s = grammar.unescape(boost::join(args, ""));
     return grammar(s);
 }
 
 SAWYER_EXPORT std::string
-IfEq::eval(const Grammar &grammar, const std::vector<std::string> &args) {
+IfEq::eval(Grammar &grammar, const std::vector<std::string> &args) {
     ASSERT_require(args.size() == 4);
     std::string v1 = grammar.unescape(args[0]);
     std::string v2 = grammar.unescape(args[1]);
@@ -243,7 +243,7 @@ IfEq::eval(const Grammar &grammar, const std::vector<std::string> &args) {
 }
 
 SAWYER_EXPORT std::string
-Concat::eval(const Grammar &/*grammar*/, const std::vector<std::string> &args) {
+Concat::eval(Grammar &/*grammar*/, const std::vector<std::string> &args) {
     return boost::join(args, "");
 }
 
@@ -353,7 +353,7 @@ Grammar::with(const Function::Ptr &f) {
 }
 
 SAWYER_EXPORT std::string
-Grammar::operator()(const std::string &s) const {
+Grammar::operator()(const std::string &s) {
     static size_t callLevel = 0;
 
     struct CallLevel {
@@ -376,7 +376,7 @@ Grammar::operator()(const std::string &s) const {
 }
 
 SAWYER_EXPORT std::string
-Grammar::eval(TokenStream &tokens, ErrorLocation &eloc) const {
+Grammar::eval(TokenStream &tokens, ErrorLocation &eloc) {
     std::string retval;
     while (!tokens.atEof()) {
         retval += evalArgument(tokens, eloc, LEAVE);
@@ -436,7 +436,7 @@ Grammar::readArgument(TokenStream &tokens, ErrorLocation &/*eloc*/, bool require
 }
 
 SAWYER_EXPORT std::string
-Grammar::evalArgument(TokenStream &tokens, ErrorLocation &eloc, bool requireRight) const {
+Grammar::evalArgument(TokenStream &tokens, ErrorLocation &eloc, bool requireRight) {
     std::string retval, data;
     size_t depth = 0;
     while (!tokens.atEof()) {
@@ -468,7 +468,7 @@ Grammar::evalArgument(TokenStream &tokens, ErrorLocation &eloc, bool requireRigh
 }
 
 SAWYER_EXPORT std::string
-Grammar::evalFunction(TokenStream &tokens, ErrorLocation &eloc) const {
+Grammar::evalFunction(TokenStream &tokens, ErrorLocation &eloc) {
     ASSERT_require(tokens.isa(TOK_FUNCTION));
     std::string funcName = tokens.lexeme();
     ASSERT_require(funcName.size() >= 2 && '@' == funcName[0]);

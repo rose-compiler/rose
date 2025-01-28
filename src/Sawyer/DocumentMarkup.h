@@ -152,7 +152,7 @@ public:
     void validateArgs(std::vector<std::string> &actuals /*in,out*/, TokenStream&) const;
 
     /** How to evaluate this function or macro. */
-    virtual std::string eval(const Grammar&, const std::vector<std::string> &actuals) = 0;
+    virtual std::string eval(Grammar&, const std::vector<std::string> &actuals) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,7 +239,7 @@ public:
     static Ptr instance(const std::string &name, const std::string str) {
         return Ptr(new StaticContent(name, str));
     }
-    std::string eval(const Grammar&, const std::vector<std::string> &args);
+    std::string eval(Grammar&, const std::vector<std::string> &args) override;
 };
 
 /** Function that generates an error message.
@@ -254,7 +254,7 @@ public:
     static Ptr instance(const std::string &name, const std::string dfltMesg = "error") {
         return Ptr(new Error(name))->arg("message", dfltMesg);
     }
-    std::string eval(const Grammar&, const std::vector<std::string> &args);
+    std::string eval(Grammar&, const std::vector<std::string> &args) override;
 };
 
 /** Function that quotes its arguments.
@@ -269,7 +269,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new Quote(name))->ellipsis();
     }
-    std::string eval(const Grammar&, const std::vector<std::string> &args);
+    std::string eval(Grammar&, const std::vector<std::string> &args) override;
 };
 
 /** Evaluate arguments a second time.
@@ -285,7 +285,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new Eval(name))->ellipsis();
     }
-    std::string eval(const Grammar &grammar, const std::vector<std::string> &args);
+    std::string eval(Grammar &grammar, const std::vector<std::string> &args) override;
 };
 
 /** An "if" statement.
@@ -299,7 +299,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new IfEq(name))->arg("val1")->arg("val2")->arg("if_part")->arg("else_part", "");
     }
-    std::string eval(const Grammar &grammar, const std::vector<std::string> &args);
+    std::string eval(Grammar &grammar, const std::vector<std::string> &args) override;
 };
 
 /** No-operation.
@@ -312,7 +312,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new Concat(name))->ellipsis();
     }
-    std::string eval(const Grammar &grammar, const std::vector<std::string> &args);
+    std::string eval(Grammar &grammar, const std::vector<std::string> &args) override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -414,7 +414,7 @@ public:
     Grammar& with(const Function::Ptr&);
 
     /** Evaluate an entire string. */
-    virtual std::string operator()(const std::string &s) const;
+    virtual std::string operator()(const std::string &s);
 
     /** Expand escape sequences "@@", "@{" and "@}". */
     static std::string unescape(const std::string &s);
@@ -424,7 +424,7 @@ public:
     
 private:
     // Evaluate an entire token stream. Throws an exception if an error occurs.
-    std::string eval(TokenStream &tokens, ErrorLocation&) const;
+    std::string eval(TokenStream &tokens, ErrorLocation&);
 
     // Returns a string up to (and possibly including) the next CHAR_RIGHT that is not balanced by a CHAR_LEFT encountered
     // during the scanning.  The TOK_RIGHT is consumed if requireRight is set, and an error is thrown if that token is not
@@ -433,10 +433,10 @@ private:
 
     // Parse one argument by parsing up to (and possibly including) the next unbalanced TOK_RIGHT.  The TOK_RIGHT is consumed
     // if requireRight is set, and an error is thrown if that token is not found.
-    std::string evalArgument(TokenStream&, ErrorLocation&, bool requireRight) const;
+    std::string evalArgument(TokenStream&, ErrorLocation&, bool requireRight);
     
     // Parse one function.  The current token should be a TOK_FUNCTION.
-    std::string evalFunction(TokenStream&, ErrorLocation&) const;
+    std::string evalFunction(TokenStream&, ErrorLocation&);
 };
 
 } // namespace

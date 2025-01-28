@@ -2153,7 +2153,7 @@ public:
         self->arg("flags", "");
         return self;
     }
-    std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*override*/ {
+    std::string eval(Document::Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
         std::vector<std::string> words;
         boost::split_regex(words, args[1], boost::regex(",\\s*"));
@@ -2336,7 +2336,7 @@ public:
     void insert(const std::string &name, const std::string &content) {
         seeAlso_.insert(name, content);
     }
-    std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*override*/ {
+    std::string eval(Document::Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_always_require(args.empty()); // so args is always used
         std::vector<std::string> pages(seeAlso_.values().begin(), seeAlso_.values().end());
         return boost::join(pages, ", ");
@@ -2356,7 +2356,7 @@ public:
         self->arg("page")->arg("chapter", "1");
         return self;
     }
-    std::string eval(const Document::Markup::Grammar &grammar, const std::vector<std::string> &args) /*override*/ {
+    std::string eval(Document::Markup::Grammar &grammar, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
         std::string retval = grammar("@b{" + args[0] + "}") + "(" + args[1] + ")";
         seeAlso_->insert(args[0], retval);
@@ -2381,7 +2381,7 @@ public:
         values_.insert(key, value);
         return sharedFromThis().dynamicCast<PropTag>();
     }
-    virtual std::string eval(const Document::Markup::Grammar&, const std::vector<std::string> &args) /*overload*/ {
+    virtual std::string eval(Document::Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 1);
         std::string retval;
         if (values_.getOptional(args[0]).assignTo(retval))
@@ -2600,7 +2600,6 @@ Parser::textDocumentation() const {
 
 SAWYER_EXPORT bool
 Parser::emitDocumentationToPager() const {
-
     // What renderers should we try, and in what order?
     const std::vector<std::string> renderers = []() {
         std::vector<std::string> retval;

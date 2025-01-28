@@ -45,9 +45,10 @@ fail(const char *mesg, const char *expr, const std::string &note, const char *fi
         *Message::assertionStream <<"  " <<note <<"\n";
 
 #ifdef SAWYER_ENABLE_STACK_TRACE
-    // Stack traces are enabled if the ROSE_BACKTRACE environment variable is set to anything but an empty string or the string "0".
+    // Stack traces are enabled if the SAWYER_BACKTRACE environment variable is set to anything but an empty string or the string
+    // "0".
     const bool showBacktrace = []() {
-        if (const char *env = getenv("ROSE_BACKTRACE")) {
+        if (const char *env = getenv("SAWYER_BACKTRACE")) {
             if (*env == '\0' || (*env == '0' && env[1] == '\0')) {
                 return false;
             } else {
@@ -89,7 +90,7 @@ fail(const char *mesg, const char *expr, const std::string &note, const char *fi
             }
         }
     } else {
-        *Message::assertionStream <<"  run with `ROSE_BACKTRACE=1` environment variable to display a backtrace\n";
+        *Message::assertionStream <<"  run with `SAWYER_BACKTRACE=1` environment variable to display a backtrace\n";
     }
 #endif
 

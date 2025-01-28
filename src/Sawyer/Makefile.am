@@ -95,6 +95,7 @@ sawyerinclude_HEADERS =				\
 	NullBuffer.h				\
 	Optional.h				\
 	Parse.h					\
+        PartialResult.h				\
 	PoolAllocator.h				\
 	ProgressBar.h				\
 	Result.h				\

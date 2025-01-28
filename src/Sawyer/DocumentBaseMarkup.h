@@ -93,7 +93,7 @@ public:
     BaseMarkup& version(const std::string &versionString, const std::string &versionDate);
 
     /** Parse input to generate POD. */
-    virtual std::string operator()(const std::string&) /*override*/;
+    virtual std::string operator()(const std::string&) override;
 
     /** Emit documentation to output */
     virtual bool emit(const std::string &doc) = 0;

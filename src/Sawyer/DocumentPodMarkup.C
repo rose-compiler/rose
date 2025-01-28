@@ -48,7 +48,7 @@ public:
         return Ptr(new Section(name))->arg("title")->arg("body");
     }
 
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
 
         // Do not produce a section if the body would be empty.
@@ -70,7 +70,7 @@ public:
         return Ptr(new NamedItem(name))->arg("item")->arg("body");
     }
 
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
         return ("\n\n"
                 "=over\n\n"
@@ -92,7 +92,7 @@ public:
         return Ptr(new NumberedItem(name, format))->arg("body");
     }
 
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 1);
         return ("\n\n"
                 "=over\n\n"
@@ -112,7 +112,7 @@ public:
     static Ptr instance(const std::string &name, const std::string &format) {
         return Ptr(new InlineFormat(name, format))->arg("body"); 
     }
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 1);
         return format_ + "<" + podEscape(args[0]) + ">";
     }
@@ -127,7 +127,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new Link(name))->arg("url")->arg("title", "");
     }
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
         if (args[1].empty())
             return "[L<" + podEscape(args[0]) + ">]";
@@ -145,7 +145,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new Verbatim(name))->arg("content");
     }
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 1);
         std::string retval = "\n";
         std::vector<std::string> lines;

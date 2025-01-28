@@ -51,7 +51,7 @@ public:
         return Ptr(new Section(name))->arg("title")->arg("body");
     }
 
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
 
         // Do not produce a section if the body would be empty.
@@ -75,7 +75,7 @@ public:
         return Ptr(new NamedItem(name))->arg("item")->arg("body");
     }
 
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
         return ("\n\n"
                 "=over\n" +
@@ -100,7 +100,7 @@ public:
         return Ptr(new NumberedItem(name, format))->arg("body");
     }
 
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 1);
         return ("\n\n"
                 "=over\n"
@@ -121,7 +121,7 @@ public:
     static Ptr instance(const std::string &name, const std::string &left, const std::string &right) {
         return Ptr(new Surround(name, left, right))->arg("body");
     }
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 1);
         return left_ + args[0] + right_;
     }
@@ -136,7 +136,7 @@ public:
     static Ptr instance(const std::string &name) {
         return Ptr(new Link(name))->arg("url")->arg("title", "");
     }
-    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+    std::string eval(Markup::Grammar&, const std::vector<std::string> &args) override {
         ASSERT_require(args.size() == 2);
         if (args[1].empty())
             return "[" + args[0] + "]";
