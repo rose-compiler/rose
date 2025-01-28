@@ -7669,14 +7669,20 @@ void UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, S
                SgConstructorInitializer* ctor_init = isSgConstructorInitializer(argument_expr);
                if (ctor_init != NULL)
                   {
-                    SgInitializedName * ctor_init_parent_iname = isSgConstructorInitializer(expr_list->get_parent()) ? isSgInitializedName(expr_list->get_parent()->get_parent()) : nullptr;
+                    SgNode * p_expr_list = expr_list ? expr_list->get_parent() : nullptr;
+                    SgNode * pp_expr_list = p_expr_list ? p_expr_list->get_parent() : nullptr;
+#if DEBUG__unparseExprList
+                    printf ("    p_expr_list = %p = %s \n", p_expr_list, p_expr_list->class_name().c_str());
+                    printf ("    pp_expr_list = %p = %s \n", pp_expr_list, pp_expr_list->class_name().c_str());
+#endif
+                    SgInitializedName * ctor_init_parent_iname = isSgConstructorInitializer(p_expr_list) ? isSgInitializedName(pp_expr_list) : nullptr;
                     bool iname_use_cpy_syntax = ctor_init_parent_iname ? ctor_init_parent_iname->get_using_assignment_copy_constructor_syntax() : false;
-                    needParen = ctor_init_parent_iname && !iname_use_cpy_syntax;
+                    needParen |= ctor_init_parent_iname && !iname_use_cpy_syntax;
 
                     bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(ctor_init);
 #if DEBUG__unparseExprList
-                    printf ("  this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",this_constructor_initializer_is_using_Cxx11_initializer_list ? "true" : "false");
-                    printf ("  ctor_init->get_is_braced_initialized() = %s \n", ctor_init->get_is_braced_initialized() ? "true" : "false");
+                    printf ("    this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",this_constructor_initializer_is_using_Cxx11_initializer_list ? "true" : "false");
+                    printf ("    ctor_init->get_is_braced_initialized() = %s \n", ctor_init->get_is_braced_initialized() ? "true" : "false");
 #endif
                     if (this_constructor_initializer_is_using_Cxx11_initializer_list) needParen = false;
                     if (ctor_init->get_is_braced_initialized()) needParen = false;

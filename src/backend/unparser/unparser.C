@@ -2108,8 +2108,11 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 #endif
        // If no input parameter has been specified then allocate one
        // inheritedAttributeInfoPointer = new SgUnparse_Info (NO_UNPARSE_INFO);
+          bool prev_state = SgUnparse_Info::get_forceDefaultConstructorToTriggerError();
+          SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
           inheritedAttributeInfoPointer = new SgUnparse_Info();
           ASSERT_not_null(inheritedAttributeInfoPointer);
+          SgUnparse_Info::set_forceDefaultConstructorToTriggerError(prev_state);
 
        // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
           allocatedSgUnparseInfoObjectLocally = true;

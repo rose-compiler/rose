@@ -133,15 +133,28 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
 #endif
 
   bool is_ctor_within_new = false;
+  if (isSgConstructorInitializer(ppnode)) {
+    SgConstructorInitializer * pp_con_init = (SgConstructorInitializer*)ppnode;
+    if (pp_con_init->get_declaration() != nullptr) {
+      ppnode = nullptr;
+    }
+  }
   while (ppnode != nullptr) {
     ppnode = ppnode->get_parent();
 #if DEBUG__unparseCtorInit
     printf ("  ppnode = %p = %s\n", ppnode, ppnode ? ppnode->class_name().c_str() : "");
 #endif
-    if (isSgNewExp(ppnode)) {
+    bool is_new = isSgNewExp(ppnode);
+    bool stop_now = !isSgExprListExp(ppnode);
+    if (isSgAggregateInitializer(ppnode)) stop_now = false;
+    if (isSgConstructorInitializer(ppnode)) {
+      SgConstructorInitializer* pp_con_init = (SgConstructorInitializer*)ppnode;
+      stop_now = pp_con_init->get_declaration() != nullptr;
+    }
+    if (is_new) {
       is_ctor_within_new = true;
       break;
-    } else if ( !( isSgExprListExp(ppnode) || isSgAggregateInitializer(ppnode) || isSgConstructorInitializer(ppnode) ) ) {
+    } else if ( stop_now ) {
       break;
     }
   }
@@ -160,7 +173,13 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
     if (ctor_class || ctor_decl) {
       std::string qualifier = con_init->get_qualified_name_prefix().str();
       bool unparse_ctor_name = ctor_decl != nullptr ? trimCtorNameQual(qualifier) : true;
-      curprint(qualifier.c_str());
+#if DEBUG__unparseCtorInit
+      printf ("  unparse_ctor_name = %s\n", unparse_ctor_name ? "true" : "false");
+      printf ("  qualifier = %s\n", qualifier.c_str());
+#endif
+      if (ppnode != nullptr) {
+        curprint(qualifier.c_str());
+      }
 
       if (unparse_ctor_name) {
         SgTemplateInstantiationMemberFunctionDecl * tpl_ctor_decl = isSgTemplateInstantiationMemberFunctionDecl(ctor_decl);

@@ -32,6 +32,7 @@ add_library (unparser OBJECT
   CxxCodeGeneration/unparseCxx_types.C
   CxxCodeGeneration/unparseCxx_expressions.C
   CxxCodeGeneration/unparseCxx_statements.C
+  CxxCodeGeneration/unparseNewOp.C
   CxxCodeGeneration/unparseAggrInit.C
   CxxCodeGeneration/unparseAssnInit.C
   CxxCodeGeneration/unparseBracedInit.C
