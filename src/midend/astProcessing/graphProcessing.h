@@ -750,7 +750,7 @@ Input:
 template<class CFG>
 std::set<std::vector<int> >
 SgGraphTraversal<CFG>::
-uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<std::vector<int> > >& globalLoopPaths) {
+uTraversePath(int begin, int /*end*/, CFG*& g, bool loop, std::map<int, std::vector<std::vector<int> > >& globalLoopPaths) {
     //std::cout << "uTraverse" << std::endl;
     //int doubledpaths = 0;
     int newmil = 1;
@@ -1532,7 +1532,7 @@ SgGraphTraversal::getVertexPath
 template<class CFG>
 void
 SgGraphTraversal<CFG>::
-getVertexPath(std::vector<int> path, CFG*& g, std::vector<Vertex>& vertexPath) {
+getVertexPath(std::vector<int> path, CFG*&, std::vector<Vertex>& vertexPath) {
         for (unsigned int i = 0; i < path.size(); i++) {
                             vertexPath.push_back(intvertmap[path[i]]);
         }
