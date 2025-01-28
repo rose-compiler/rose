@@ -296,6 +296,7 @@ my @extra_words = qw/
     SValue                      # semantic value
     traversal                   # missing from dictionary
     unparser                    # missing from dictionary
+    VxWorks                     # real time operating system from Wind River Systems
     X86                         # Intel 8086 family
     YAML                        # Yet Another Markup Language
     Z3                          # a particular SMT solver
