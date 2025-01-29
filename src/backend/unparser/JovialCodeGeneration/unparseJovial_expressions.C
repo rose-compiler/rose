@@ -195,7 +195,7 @@ UnparseJovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
              curprint(named_type->get_name());
              curprint(" *)");
            }
-           else if (SgTypeUnknown* unknown_type = isSgTypeUnknown(pointer->get_base_type())) {
+           else if (isSgTypeUnknown(pointer->get_base_type())) {
              //TODO: This may have a name as well? Aborting will warn that this needs further consideration
              std::cout << "[WARN]: unparseExpression() is unimplemented for SgPointerType with type of SgTypeUnknown\n";
              ROSE_ABORT();
