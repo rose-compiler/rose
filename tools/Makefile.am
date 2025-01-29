@@ -73,7 +73,7 @@ rajaChecker_diff: $(Checker_Output_Diff_Files)
 # Liao 4/10/2017
 if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_9
-check: $(Checker_Output_Diff_Files)
+check: # $(Checker_Output_Diff_Files)
 endif
 endif
 

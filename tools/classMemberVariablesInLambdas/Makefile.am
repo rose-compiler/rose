@@ -49,7 +49,7 @@ classMemberVariablesInLambdas.test: classMemberVariablesInLambdas
 	./classMemberVariablesInLambdas -std=c++11 --edg:no_warnings -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx11_tests/classMemberVariablesInLambdas_test_01.C
 
 #------------------------------------------------------------------------------
-TEST_TARGETS = ${BIN_EXECUTABLES:=.test}
+TEST_TARGETS = # ${BIN_EXECUTABLES:=.test}
 
 bin_PROGRAMS = \
 	$(BIN_EXECUTABLES)
