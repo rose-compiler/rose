@@ -334,6 +334,7 @@ public:
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         throw Exception("binary state files are not supported in this configuration");
+        std::cerr << "using ojbectTypeId and object to avoid unused parameter warning: " << objectTypeId << &object << "\n";
 #elif defined(ROSE_DEBUG_SERIAL_IO)
         std::string errorMessage;
         asyncSave(objectTypeId, object, &errorMessage);
@@ -371,6 +372,7 @@ private:
         ASSERT_not_null(errorMessage);
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         ASSERT_not_reachable("not supported in this configuration");
+        std::cerr << "using ojbectTypeId and object to avoid unused parameter warning: " << objectTypeId << &object << "\n";
 #else
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
@@ -495,6 +497,7 @@ public:
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         throw Exception("binary state files are not supported in this configuration");
+        std::cerr << "using ojbectTypeId and object to avoid unused parameter warning: " << objectTypeId << &object << "\n";
 #else
         if (ERROR == objectType())
             throw Exception("cannot read object because stream is in error state");
@@ -542,6 +545,7 @@ private:
         ASSERT_not_null(errorMessage);
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         ASSERT_not_reachable("not supported in this configuration");
+        std::cerr << "using object variable to avoid unused parameter warning: " << &object << "\n";
 #else
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
