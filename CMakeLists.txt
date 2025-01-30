@@ -589,10 +589,6 @@ if(ENABLE-ADA)
                   "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION currently causes compilation errors")
   # TODO: Define this 
   # set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 1) 
-  
-  # TODO: Decide if setting these two variables to these two values is necessary  
-  # set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "$ENV{GNAT_HOME}/bin/g++")
-  # set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
 endif()
 
 # Jovial
@@ -797,6 +793,9 @@ if(ENABLE-PURIFY-LINKER)
 endif()
 
 option(ENABLE-ROSEHPCT "enable build of the ROSE-HPCT module" OFF)
+if(ENABLE-ROSEHPCT)
+  set(ROSE_BUILD_ROSEHPCT 1)
+endif()
 
 option(ENABLE-ROSE-OPENGL "enable openGL" OFF)
 if(ENABLE-ROSE-OPENGL)
@@ -1014,9 +1013,36 @@ endif()
 ########################################################################################################################
 # Back-end compilers
 ########################################################################################################################
-if(ENABLE-ADA)# set BACKEND_CXX_COMPILER to the gcc from the gnu translator path 
+# Set rose_config.h variables for ada 
+if(ENABLE-ADA) 
+  if(NOT DEFINED ENV{GNAT_HOME} OR "$ENV{GNAT_HOME}" STREQUAL "")
+    message(FATAL_ERROR "GNAT_HOME environment variable must be defined for ada support") 
+  endif()
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU") 
+    message(FATAL_ERROR "GCC/GNU is needed for ada support")  
+  endif() 
+  # BACKEND_CXX_COMPILER_WITH_PATH for rose_config.h
   set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "$ENV{GNAT_HOME}/bin/g++")
-  set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
+  # BACKEND_CXX_COMPILER_WITHOUT_PATH for rose_config.h
+  set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++") 
+endif()
+
+# Double check BACKEND_CXX_COMPILER_NAME_WITH_PATH and  BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH 
+if(ENABLE-CPP)
+ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITH_PATH) 
+    find_program(GXX_PATH NAMES g++ HINTS ENV PATH) 
+    if(GXX_PATH)
+      message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITH_PATH to ${GXX_PATH}") 
+      set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "${GXX_PATH}") 
+    endif()
+  endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
+    message(STATUS "Checking BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH") 
+    set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++") 
+  endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
+    set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "clang++") 
+  endif()
 endif() 
 
 set(WITH-ALT-BACKEND-CXX-COMPILER "" CACHE STRING "Specify an alternative C++ back-end compiler")
