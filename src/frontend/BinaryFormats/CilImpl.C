@@ -217,7 +217,7 @@ namespace // anonymous namespace for auxiliary functions
 
   template <class Reader>
   auto
-  readExpected(Reader rd, const std::vector<uint8_t>& buf, size_t& index, decltype(rd(buf, index)) expected) -> decltype(rd(buf, index))
+  readExpected(Reader rd, const std::vector<uint8_t>& buf, size_t& index, decltype(rd(buf, index)) expected, const char* msg) -> decltype(rd(buf, index))
   {
     using elem_type = decltype(rd(buf, index));
 
@@ -225,7 +225,7 @@ namespace // anonymous namespace for auxiliary functions
 
     if (res != expected)
     {
-      mlog[INFO] << "unexpected read: expected " << integerValue(expected)
+      mlog[INFO] << "unexpected read " << (msg ? msg : "") << ": expected " << integerValue(expected)
                  << ", got " << integerValue(res) << "."
                  << std::endl;
     }
@@ -249,9 +249,9 @@ namespace // anonymous namespace for auxiliary functions
     }
   }
 
-  uint8_t read8bitPadding(const std::vector<uint8_t>& buf, size_t& index, uint8_t expected)
+  uint8_t read8bitPadding(const std::vector<uint8_t>& buf, size_t& index, uint8_t expected, const char* msg)
   {
-    return readExpected(read8bitValue, buf, index, expected);
+    return readExpected(read8bitValue, buf, index, expected, msg);
   }
 
   void write8bitPadding(std::vector<uint8_t>& buf, size_t& index, uint8_t val, uint8_t expected)
@@ -552,8 +552,6 @@ namespace // anonymous namespace for auxiliary functions
 
 void SgAsmCilAssembly::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_HashAlgId = read32bitValue(buf,index);
   p_MajorVersion = read16bitValue(buf,index);
   p_MinorVersion = read16bitValue(buf,index);
@@ -580,8 +578,6 @@ void SgAsmCilAssembly::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilAssembly::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_HashAlgId(),buf,index);
   write16bitValue(get_MajorVersion(),buf,index);
   write16bitValue(get_MinorVersion(),buf,index);
@@ -637,10 +633,8 @@ SgAsmCilAssembly::get_Culture_string() const
 }
 
 
-void SgAsmCilAssemblyOS::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyOS::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_OSPlatformID = read32bitValue(buf,index);
   p_OSMajorVersion = read32bitValue(buf,index);
   p_OSMinorVersion = read32bitValue(buf,index);
@@ -653,10 +647,8 @@ void SgAsmCilAssemblyOS::parse(const std::vector<uint8_t>& buf, size_t& index, u
   }
 }
 
-void SgAsmCilAssemblyOS::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
+void SgAsmCilAssemblyOS::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_OSPlatformID(),buf,index);
   write32bitValue(get_OSMajorVersion(),buf,index);
   write32bitValue(get_OSMinorVersion(),buf,index);
@@ -674,10 +666,8 @@ void SgAsmCilAssemblyOS::dump(std::ostream& os) const
 
 
 
-void SgAsmCilAssemblyProcessor::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyProcessor::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Processor = read32bitValue(buf,index);
 
   if (TRACE_CONSTRUCTION)
@@ -686,10 +676,8 @@ void SgAsmCilAssemblyProcessor::parse(const std::vector<uint8_t>& buf, size_t& i
   }
 }
 
-void SgAsmCilAssemblyProcessor::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
+void SgAsmCilAssemblyProcessor::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_Processor(),buf,index);
 }
 
@@ -703,8 +691,6 @@ void SgAsmCilAssemblyProcessor::dump(std::ostream& os) const
 
 void SgAsmCilAssemblyRef::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_MajorVersion = read16bitValue(buf,index);
   p_MinorVersion = read16bitValue(buf,index);
   p_BuildNumber = read16bitValue(buf,index);
@@ -731,8 +717,6 @@ void SgAsmCilAssemblyRef::parse(const std::vector<uint8_t>& buf, size_t& index, 
 
 void SgAsmCilAssemblyRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_MajorVersion(),buf,index);
   write16bitValue(get_MinorVersion(),buf,index);
   write16bitValue(get_BuildNumber(),buf,index);
@@ -796,8 +780,6 @@ SgAsmCilAssemblyRef::get_HashValue_blob() const
 
 void SgAsmCilAssemblyRefOS::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_OSPlatformID = read32bitValue(buf,index);
   p_OSMajorVersion = read32bitValue(buf,index);
   p_OSMinorVersion = read32bitValue(buf,index);
@@ -814,8 +796,6 @@ void SgAsmCilAssemblyRefOS::parse(const std::vector<uint8_t>& buf, size_t& index
 
 void SgAsmCilAssemblyRefOS::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_OSPlatformID(),buf,index);
   write32bitValue(get_OSMajorVersion(),buf,index);
   write32bitValue(get_OSMinorVersion(),buf,index);
@@ -844,8 +824,6 @@ SgAsmCilAssemblyRefOS::get_AssemblyRefOS_object() const
 
 void SgAsmCilAssemblyRefProcessor::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Processor = read32bitValue(buf,index);
   p_AssemblyRef = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_assembly_ref);
 
@@ -858,8 +836,6 @@ void SgAsmCilAssemblyRefProcessor::parse(const std::vector<uint8_t>& buf, size_t
 
 void SgAsmCilAssemblyRefProcessor::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_Processor(),buf,index);
   writeValue(get_AssemblyRef(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_assembly_ref);
 }
@@ -882,8 +858,6 @@ SgAsmCilAssemblyRefProcessor::get_AssemblyRef_object() const
 
 void SgAsmCilClassLayout::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_PackingSize = read16bitValue(buf,index);
   p_ClassSize = read32bitValue(buf,index);
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
@@ -898,8 +872,6 @@ void SgAsmCilClassLayout::parse(const std::vector<uint8_t>& buf, size_t& index, 
 
 void SgAsmCilClassLayout::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_PackingSize(),buf,index);
   write32bitValue(get_ClassSize(),buf,index);
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
@@ -925,17 +897,15 @@ SgAsmCilClassLayout::get_Parent_object() const
 
 void SgAsmCilConstant::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Type = read8bitValue(buf,index);
-  p_Padding = read8bitPadding(buf,index,0);
+  p_Padding = read8bitPadding(buf,index,0,"[constant:padding]");
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_constant);
   p_Value = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
   if (TRACE_CONSTRUCTION)
   {
-    std::cerr << "p_Type = " << p_Type << std::endl;
-    std::cerr << "p_Padding = " << p_Padding << std::endl;
+    std::cerr << "p_Type = " << std::to_string(p_Type) << std::endl;
+    std::cerr << "p_Padding = " << std::to_string(p_Padding) << std::endl;
     std::cerr << "p_Parent = " << p_Parent << std::endl;
     std::cerr << "p_Value = " << p_Value << std::endl;
   }
@@ -943,8 +913,6 @@ void SgAsmCilConstant::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilConstant::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write8bitValue(get_Type(),buf,index);
   write8bitPadding(buf,index,get_Padding(),0);
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_constant);
@@ -979,8 +947,6 @@ SgAsmCilConstant::get_Value_blob() const
 
 void SgAsmCilCustomAttribute::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_custom_attribute);
   p_Type = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
   p_Value = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -995,8 +961,6 @@ void SgAsmCilCustomAttribute::parse(const std::vector<uint8_t>& buf, size_t& ind
 
 void SgAsmCilCustomAttribute::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_custom_attribute);
   writeValue(get_Type(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
   writeValue(get_Value(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1034,8 +998,6 @@ SgAsmCilCustomAttribute::get_Value_blob() const
 
 void SgAsmCilDeclSecurity::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Action = read16bitValue(buf,index);
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_decl_security);
   p_PermissionSet = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1050,8 +1012,6 @@ void SgAsmCilDeclSecurity::parse(const std::vector<uint8_t>& buf, size_t& index,
 
 void SgAsmCilDeclSecurity::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Action(),buf,index);
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_decl_security);
   writeValue(get_PermissionSet(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1083,8 +1043,6 @@ SgAsmCilDeclSecurity::get_PermissionSet_blob() const
 
 void SgAsmCilEvent::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_EventFlags = read16bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_EventType = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
@@ -1099,8 +1057,6 @@ void SgAsmCilEvent::parse(const std::vector<uint8_t>& buf, size_t& index, uint64
 
 void SgAsmCilEvent::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_EventFlags(),buf,index);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_EventType(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
@@ -1133,8 +1089,6 @@ SgAsmCilEvent::get_EventType_object() const
 
 void SgAsmCilEventMap::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_EventList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_event);
 
@@ -1147,8 +1101,6 @@ void SgAsmCilEventMap::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilEventMap::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   writeValue(get_EventList(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_event);
 }
@@ -1177,8 +1129,6 @@ SgAsmCilEventMap::get_EventList_object() const
 
 void SgAsmCilExportedType::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_EventFlags = read32bitValue(buf,index);
   p_TypeDefIdName = read32bitValue(buf,index);
   p_TypeName = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -1197,8 +1147,6 @@ void SgAsmCilExportedType::parse(const std::vector<uint8_t>& buf, size_t& index,
 
 void SgAsmCilExportedType::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_EventFlags(),buf,index);
   write32bitValue(get_TypeDefIdName(),buf,index);
   writeValue(get_TypeName(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -1244,8 +1192,6 @@ SgAsmCilExportedType::get_Implementation_object() const
 
 void SgAsmCilField::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Flags = read16bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1260,8 +1206,6 @@ void SgAsmCilField::parse(const std::vector<uint8_t>& buf, size_t& index, uint64
 
 void SgAsmCilField::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Flags(),buf,index);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_Signature(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1294,8 +1238,6 @@ SgAsmCilField::get_Signature_blob() const
 
 void SgAsmCilFieldLayout::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Offset = read32bitValue(buf,index);
   p_Field = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 
@@ -1308,8 +1250,6 @@ void SgAsmCilFieldLayout::parse(const std::vector<uint8_t>& buf, size_t& index, 
 
 void SgAsmCilFieldLayout::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_Offset(),buf,index);
   writeValue(get_Field(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 }
@@ -1332,8 +1272,6 @@ SgAsmCilFieldLayout::get_Field_object() const
 
 void SgAsmCilFieldMarshal::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_field_marshall);
   p_NativeType = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
@@ -1346,8 +1284,6 @@ void SgAsmCilFieldMarshal::parse(const std::vector<uint8_t>& buf, size_t& index,
 
 void SgAsmCilFieldMarshal::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_field_marshall);
   writeValue(get_NativeType(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 }
@@ -1376,8 +1312,6 @@ SgAsmCilFieldMarshal::get_NativeType_blob() const
 
 void SgAsmCilFieldRVA::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_RVA = read16bitValue(buf,index);
   p_Field = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 
@@ -1390,8 +1324,6 @@ void SgAsmCilFieldRVA::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilFieldRVA::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_RVA(),buf,index);
   writeValue(get_Field(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 }
@@ -1414,8 +1346,6 @@ SgAsmCilFieldRVA::get_Field_object() const
 
 void SgAsmCilFile::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Flags = read32bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_HashValue = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1430,8 +1360,6 @@ void SgAsmCilFile::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_
 
 void SgAsmCilFile::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_Flags(),buf,index);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_HashValue(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1464,8 +1392,6 @@ SgAsmCilFile::get_HashValue_blob() const
 
 void SgAsmCilGenericParam::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Number = read16bitValue(buf,index);
   p_Flags = read16bitValue(buf,index);
   p_Owner = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_or_method_def);
@@ -1482,8 +1408,6 @@ void SgAsmCilGenericParam::parse(const std::vector<uint8_t>& buf, size_t& index,
 
 void SgAsmCilGenericParam::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Number(),buf,index);
   write16bitValue(get_Flags(),buf,index);
   writeValue(get_Owner(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_or_method_def);
@@ -1519,8 +1443,6 @@ SgAsmCilGenericParam::get_Name_string() const
 
 void SgAsmCilGenericParamConstraint::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Owner = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_generic_param);
   p_Constraint = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 
@@ -1533,8 +1455,6 @@ void SgAsmCilGenericParamConstraint::parse(const std::vector<uint8_t>& buf, size
 
 void SgAsmCilGenericParamConstraint::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Owner(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_generic_param);
   writeValue(get_Constraint(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }
@@ -1563,8 +1483,6 @@ SgAsmCilGenericParamConstraint::get_Constraint_object() const
 
 void SgAsmCilImplMap::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_MappingFlags = read16bitValue(buf,index);
   p_MemberForwarded = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_member_forwarded);
   p_ImportName = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -1581,8 +1499,6 @@ void SgAsmCilImplMap::parse(const std::vector<uint8_t>& buf, size_t& index, uint
 
 void SgAsmCilImplMap::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_MappingFlags(),buf,index);
   writeValue(get_MemberForwarded(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_member_forwarded);
   writeValue(get_ImportName(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -1624,8 +1540,6 @@ SgAsmCilImplMap::get_ImportScope_object() const
 
 void SgAsmCilInterfaceImpl::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Class = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_Interface = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 
@@ -1638,8 +1552,6 @@ void SgAsmCilInterfaceImpl::parse(const std::vector<uint8_t>& buf, size_t& index
 
 void SgAsmCilInterfaceImpl::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Class(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   writeValue(get_Interface(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }
@@ -1668,8 +1580,6 @@ SgAsmCilInterfaceImpl::get_Interface_object() const
 
 void SgAsmCilManifestResource::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Offset = read32bitValue(buf,index);
   p_Flags = read32bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -1686,8 +1596,6 @@ void SgAsmCilManifestResource::parse(const std::vector<uint8_t>& buf, size_t& in
 
 void SgAsmCilManifestResource::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_Offset(),buf,index);
   write32bitValue(get_Flags(),buf,index);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -1723,8 +1631,6 @@ SgAsmCilManifestResource::get_Implementation_object() const
 
 void SgAsmCilMemberRef::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Class = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_member_ref_parent);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1739,8 +1645,6 @@ void SgAsmCilMemberRef::parse(const std::vector<uint8_t>& buf, size_t& index, ui
 
 void SgAsmCilMemberRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Class(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_member_ref_parent);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_Signature(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -1779,8 +1683,6 @@ SgAsmCilMemberRef::get_Signature_blob() const
 
 void SgAsmCilMethodDef::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_RVA = read32bitValue(buf,index);
   p_ImplFlags = read16bitValue(buf,index);
   p_Flags = read16bitValue(buf,index);
@@ -1801,8 +1703,6 @@ void SgAsmCilMethodDef::parse(const std::vector<uint8_t>& buf, size_t& index, ui
 
 void SgAsmCilMethodDef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_RVA(),buf,index);
   write16bitValue(get_ImplFlags(),buf,index);
   write16bitValue(get_Flags(),buf,index);
@@ -1850,8 +1750,6 @@ SgAsmCilMethodDef::get_ParamList_object() const
 
 void SgAsmCilMethodImpl::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Class = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_MethodBody = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
   p_MethodDeclaration = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
@@ -1866,8 +1764,6 @@ void SgAsmCilMethodImpl::parse(const std::vector<uint8_t>& buf, size_t& index, u
 
 void SgAsmCilMethodImpl::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Class(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   writeValue(get_MethodBody(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
   writeValue(get_MethodDeclaration(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
@@ -1905,8 +1801,6 @@ SgAsmCilMethodImpl::get_MethodDeclaration_object() const
 
 void SgAsmCilMethodSemantics::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Semantics = read16bitValue(buf,index);
   p_Method = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def);
   p_Association = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_semantics);
@@ -1921,8 +1815,6 @@ void SgAsmCilMethodSemantics::parse(const std::vector<uint8_t>& buf, size_t& ind
 
 void SgAsmCilMethodSemantics::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Semantics(),buf,index);
   writeValue(get_Method(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def);
   writeValue(get_Association(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_semantics);
@@ -1954,8 +1846,6 @@ SgAsmCilMethodSemantics::get_Association_object() const
 
 void SgAsmCilMethodSpec::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Method = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
   p_Instantiation = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
@@ -1968,8 +1858,6 @@ void SgAsmCilMethodSpec::parse(const std::vector<uint8_t>& buf, size_t& index, u
 
 void SgAsmCilMethodSpec::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Method(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
   writeValue(get_Instantiation(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 }
@@ -1998,8 +1886,6 @@ SgAsmCilMethodSpec::get_Instantiation_blob() const
 
 void SgAsmCilModule::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Generation = read16bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Mvid = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap);
@@ -2018,8 +1904,6 @@ void SgAsmCilModule::parse(const std::vector<uint8_t>& buf, size_t& index, uint6
 
 void SgAsmCilModule::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Generation(),buf,index);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_Mvid(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap);
@@ -2070,8 +1954,6 @@ SgAsmCilModule::get_EncBaseId_guid() const
 
 void SgAsmCilModuleRef::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
   if (TRACE_CONSTRUCTION)
@@ -2082,8 +1964,6 @@ void SgAsmCilModuleRef::parse(const std::vector<uint8_t>& buf, size_t& index, ui
 
 void SgAsmCilModuleRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 }
 
@@ -2104,8 +1984,6 @@ SgAsmCilModuleRef::get_Name_string() const
 
 void SgAsmCilNestedClass::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_NestedClass = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_EnclosingClass = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
 
@@ -2118,8 +1996,6 @@ void SgAsmCilNestedClass::parse(const std::vector<uint8_t>& buf, size_t& index, 
 
 void SgAsmCilNestedClass::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_NestedClass(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   writeValue(get_EnclosingClass(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
 }
@@ -2148,11 +2024,9 @@ SgAsmCilNestedClass::get_EnclosingClass_object() const
 
 void SgAsmCilParam::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Flags = read16bitValue(buf,index);
   p_Sequence = read16bitValue(buf,index);
-  p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
+  p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
   if (TRACE_CONSTRUCTION)
   {
@@ -2164,11 +2038,9 @@ void SgAsmCilParam::parse(const std::vector<uint8_t>& buf, size_t& index, uint64
 
 void SgAsmCilParam::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Flags(),buf,index);
   write16bitValue(get_Sequence(),buf,index);
-  writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
+  writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 }
 
 void SgAsmCilParam::dump(std::ostream& os) const
@@ -2183,16 +2055,14 @@ void SgAsmCilParam::dump(std::ostream& os) const
 
 
 const std::uint8_t*
-SgAsmCilParam::get_Name_blob() const
+SgAsmCilParam::get_Name_string() const
 {
-  return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Name();
+  return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
 }
 
 
 void SgAsmCilProperty::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Flags = read16bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Type = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -2207,8 +2077,6 @@ void SgAsmCilProperty::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilProperty::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write16bitValue(get_Flags(),buf,index);
   writeValue(get_Name(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_Type(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
@@ -2241,8 +2109,6 @@ SgAsmCilProperty::get_Type_blob() const
 
 void SgAsmCilPropertyMap::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_PropertyList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_property);
 
@@ -2255,8 +2121,6 @@ void SgAsmCilPropertyMap::parse(const std::vector<uint8_t>& buf, size_t& index, 
 
 void SgAsmCilPropertyMap::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Parent(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   writeValue(get_PropertyList(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_property);
 }
@@ -2285,8 +2149,6 @@ SgAsmCilPropertyMap::get_PropertyList_object() const
 
 void SgAsmCilStandAloneSig::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
   if (TRACE_CONSTRUCTION)
@@ -2297,8 +2159,6 @@ void SgAsmCilStandAloneSig::parse(const std::vector<uint8_t>& buf, size_t& index
 
 void SgAsmCilStandAloneSig::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Signature(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 }
 
@@ -2318,8 +2178,6 @@ SgAsmCilStandAloneSig::get_Signature_blob() const
 
 void SgAsmCilTypeDef::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Flags = read32bitValue(buf,index);
   p_TypeName = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_TypeNamespace = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -2340,8 +2198,6 @@ void SgAsmCilTypeDef::parse(const std::vector<uint8_t>& buf, size_t& index, uint
 
 void SgAsmCilTypeDef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   write32bitValue(get_Flags(),buf,index);
   writeValue(get_TypeName(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_TypeNamespace(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -2402,8 +2258,6 @@ SgAsmCilTypeDef::get_MethodList_object() const
 
 void SgAsmCilTypeRef::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_ResolutionScope = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_resolution_scope);
   p_TypeName = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_TypeNamespace = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -2418,8 +2272,6 @@ void SgAsmCilTypeRef::parse(const std::vector<uint8_t>& buf, size_t& index, uint
 
 void SgAsmCilTypeRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_ResolutionScope(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_resolution_scope);
   writeValue(get_TypeName(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   writeValue(get_TypeNamespace(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
@@ -2459,8 +2311,6 @@ SgAsmCilTypeRef::get_TypeNamespace_string() const
 
 void SgAsmCilTypeSpec::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
   if (TRACE_CONSTRUCTION)
@@ -2471,8 +2321,6 @@ void SgAsmCilTypeSpec::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilTypeSpec::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  ROSE_UNUSED(uses4byteIndexing);
-
   writeValue(get_Signature(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 }
 
@@ -2535,7 +2383,7 @@ const std::string SgAsmCilDataStream::ID_METADATA_HEAP{"#~"};
 namespace
 {
 const char*
-table_kind_to_string ( SgAsmCilMetadataHeap::TableKind e )
+asString ( SgAsmCilMetadataHeap::TableKind e )
 {
   const char* res = nullptr;
 
@@ -2588,6 +2436,48 @@ table_kind_to_string ( SgAsmCilMetadataHeap::TableKind e )
   ASSERT_not_null(res);
   return res;
 }
+
+const char*
+asString ( SgAsmCilMetadataHeap::ReferenceKind e )
+{
+  const char* res = nullptr;
+
+  switch (e)
+  {
+    case SgAsmCilMetadataHeap::e_ref_string_heap: res = "e_ref_string_heap"; break;
+    case SgAsmCilMetadataHeap::e_ref_guid_heap: res = "e_ref_guid_heap"; break;
+    case SgAsmCilMetadataHeap::e_ref_blob_heap: res = "e_ref_blob_heap"; break;
+    case SgAsmCilMetadataHeap::e_ref_assembly_ref: res = "e_ref_assembly_ref"; break;
+    case SgAsmCilMetadataHeap::e_ref_type_def: res = "e_ref_type_def"; break;
+    case SgAsmCilMetadataHeap::e_ref_event: res = "e_ref_event"; break;
+    case SgAsmCilMetadataHeap::e_ref_field: res = "e_ref_field"; break;
+    case SgAsmCilMetadataHeap::e_ref_generic_param: res = "e_ref_generic_param"; break;
+    case SgAsmCilMetadataHeap::e_ref_module_ref: res = "e_ref_module_ref"; break;
+    case SgAsmCilMetadataHeap::e_ref_method_def: res = "e_ref_method_def"; break;
+    case SgAsmCilMetadataHeap::e_ref_param: res = "e_ref_param"; break;
+    case SgAsmCilMetadataHeap::e_ref_property: res = "e_ref_property"; break;
+    case SgAsmCilMetadataHeap::e_ref_has_constant: res = "e_ref_has_constant"; break;
+    case SgAsmCilMetadataHeap::e_ref_has_custom_attribute: res = "e_ref_has_custom_attribute"; break;
+    case SgAsmCilMetadataHeap::e_ref_has_decl_security: res = "e_ref_has_decl_security"; break;
+    case SgAsmCilMetadataHeap::e_ref_has_field_marshall: res = "e_ref_has_field_marshall"; break;
+    case SgAsmCilMetadataHeap::e_ref_has_semantics: res = "e_ref_has_semantics"; break;
+    case SgAsmCilMetadataHeap::e_ref_method_def_or_ref: res = "e_ref_method_def_or_ref"; break;
+    case SgAsmCilMetadataHeap::e_ref_type_def_or_ref: res = "e_ref_type_def_or_ref"; break;
+    case SgAsmCilMetadataHeap::e_ref_implementation: res = "e_ref_implementation"; break;
+    case SgAsmCilMetadataHeap::e_ref_member_forwarded: res = "e_ref_member_forwarded"; break;
+    case SgAsmCilMetadataHeap::e_ref_member_ref_parent: res = "e_ref_member_ref_parent"; break;
+    case SgAsmCilMetadataHeap::e_ref_type_or_method_def: res = "e_ref_type_or_method_def"; break;
+    case SgAsmCilMetadataHeap::e_ref_custom_attribute_type: res = "e_ref_custom_attribute_type"; break;
+    case SgAsmCilMetadataHeap::e_ref_resolution_scope: res = "e_ref_resolution_scope"; break;
+    
+    default:
+      ROSE_ABORT();
+   }
+
+  ASSERT_not_null(res);
+  return res;
+}
+
 
 }
 
@@ -2789,7 +2679,8 @@ computeAccessPair( const std::vector<int8_t>& posInRowVector,
 {
   const std::vector<SgAsmCilMetadataHeap::TableKind>& tables = REF_TABLES.at(knd);
 
-  if (tables.size() == 1) return AccessTuple{ tables.front(), refcode };
+  if (tables.size() == 1) 
+    return AccessTuple{ tables.front(), refcode };
 
   const bool          uses4Bytes = uses4byteIndex(numberOfRows, posInRowVector, tables, knd) != 0;
   ROSE_ASSERT(uses4Bytes || (refcode < (1<<16)));
@@ -2819,19 +2710,19 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
 
   sgnode->set_parent(parent);
 
-  if (TRACE_CONSTRUCTION)
+  if (TRACE_CONSTRUCTION || true)
     std::cerr << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
   res.reserve(rows);
   for (size_t j=0; j < rows; ++j)
   {
     if (TRACE_CONSTRUCTION)
-      std::cerr << " --- processing row j = " << j << std::endl;
+      std::cerr << " --- processing row j = " << (j+1) << std::endl;
 
     res.push_back(parseAsmCilNode<CilMetadataType>(sgnode,buf,index,sizeFlags));
-
+    
     if (TRACE_CONSTRUCTION)
-      std::cerr << "DONE: processing row j = " << j << std::endl;
+      std::cerr << "DONE: processing row j = " << (j+1) << std::endl;
   }
 
   if (TRACE_CONSTRUCTION)
@@ -2874,6 +2765,10 @@ int traceRep(const std::vector<T>& vec) { return vec.size(); }
 void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   const uint32_t ofs = get_Offset();
+  
+  //~ for (std::size_t i = 0; i < buf.size(); ++i)
+    //~ if (buf[i] == 182) 
+      //~ std::cerr << i << std::endl;
 
   if (TRACE_CONSTRUCTION)
     printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf.data(),startOfMetaData,ofs);
@@ -2881,7 +2776,7 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
   size_t index = startOfMetaData + ofs;
 
 
-  p_ReservedAlwaysZero = readExpected(read32bitValue, buf, index, 0);
+  p_ReservedAlwaysZero = readExpected(read32bitValue, buf, index, 0, "[ReservedAlwaysZero]");
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "ReservedAlwaysZero = " << traceRep(p_ReservedAlwaysZero) << std::endl;
@@ -2897,7 +2792,7 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "HeapSizes = " << traceRep(p_HeapSizes) << std::endl;
-  p_ReservedAlwaysOne = readExpected(read8bitValue,buf,index,1);
+  p_ReservedAlwaysOne = readExpected(read8bitValue,buf,index,1, "[ReservedAlwaysOne]");
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "ReservedAlwaysOne = " << traceRep(p_ReservedAlwaysOne) << std::endl;
@@ -3047,7 +2942,7 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
         break;
       default:
         std::cerr << "default reached:\n"
-                  << "parsing not implemented for kind = " << kind << table_kind_to_string(SgAsmCilMetadataHeap::TableKind(kind))
+                  << "parsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
                   << std::endl;
         ROSE_ABORT();
         break;
@@ -3198,7 +3093,7 @@ void SgAsmCilMetadataHeap::unparse(std::vector<uint8_t>& buf, size_t startOfMeta
         break;
       default:
         std::cerr << "default reached:\n"
-                  << "unparsing not implemented for kind = " << kind << table_kind_to_string(SgAsmCilMetadataHeap::TableKind(kind))
+                  << "unparsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
                   << std::endl;
         ROSE_ABORT();
         break;
@@ -3285,6 +3180,10 @@ void SgAsmCilMetadataHeap::dump(std::ostream& os) const
 SgAsmCilMetadata*
 SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
 {
+  //~ if (index == 0) throw std::runtime_error{"SgAsmCilMetadataHeap::get_MetadataNode: index == 0"};
+  
+  ASSERT_require(index > 0);
+
   SgAsmCilMetadata* res = nullptr;
 
   switch (knd)
@@ -3450,12 +3349,37 @@ SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
 }
 
 
+template <class T>
+struct RangePrinter
+{
+  const std::vector<T>& r;
+};
+
+template <class T>
+std::ostream& operator<<(std::ostream& os, RangePrinter<T> rp)
+{
+  os << "{ ";
+  for (auto i: rp.r)
+    os << std::to_string(i) << ' ';
+
+  return os << "}";
+}
+
+
+
 SgAsmCilMetadata*
 SgAsmCilMetadataHeap::get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const
 {
   // FIXME: maybe cache result in static or in the object if this turns out to be slow
-  std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
-  const AccessTuple        access = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
+  const std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
+  const AccessTuple              access   = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
+  
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "table: " << asString(knd) << std::endl;
+
+  //~ std::cerr << "x@" << RangePrinter<std::int8_t>{posInRow} << "."
+            //~ << RangePrinter<unsigned>{get_NumberOfRows()} << "|" << refcode << "'" << asString(knd)
+            //~ << std::endl;
 
   return get_MetadataNode(access.index(), access.table());
 }
@@ -4221,7 +4145,7 @@ void SgAsmCilMetadataRoot::parse(const std::vector<uint8_t>& buf, size_t index)
     std::cerr << "Initialize the elements of the data structure" << std::endl;
 
 
-  p_Signature = readExpected(read32bitValue, buf, index, MAGIC_SIGNATURE);
+  p_Signature = readExpected(read32bitValue, buf, index, MAGIC_SIGNATURE, "[MAGIC_SIGNATURE]");
   if (TRACE_CONSTRUCTION)
     std::cerr << "Signature = " << p_Signature << std::endl;
   p_MajorVersion = read16bitValue(buf, index);
@@ -4230,7 +4154,7 @@ void SgAsmCilMetadataRoot::parse(const std::vector<uint8_t>& buf, size_t index)
   p_MinorVersion = read16bitValue(buf, index);
   if (TRACE_CONSTRUCTION)
     std::cerr << "MinorVersion = " << p_MinorVersion << std::endl;
-  p_Reserved0 = readExpected(read32bitValue, buf, index, 0);
+  p_Reserved0 = readExpected(read32bitValue, buf, index, 0, "[Reserved0]");
   if (TRACE_CONSTRUCTION)
     std::cerr << "Reserved0 = " << p_Reserved0 << std::endl;
   p_Length = read32bitValue(buf,index);
@@ -4242,7 +4166,7 @@ void SgAsmCilMetadataRoot::parse(const std::vector<uint8_t>& buf, size_t index)
   p_VersionPadding = readStringPadding(buf, index, p_Version.size(), get_Length());
   if (TRACE_CONSTRUCTION)
     std::cerr << "VersionPadding = " << p_VersionPadding << std::endl;
-  p_Flags = readExpected(read16bitValue, buf, index, 0);
+  p_Flags = readExpected(read16bitValue, buf, index, 0, "[Flags]");
   if (TRACE_CONSTRUCTION)
     std::cerr << "Flags = " << p_Flags << std::endl;
   p_NumberOfStreams = read16bitValue(buf, index);

@@ -42,7 +42,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -50,7 +50,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -32995,7 +32995,7 @@ public:
 public:
     /** Property: Name.
      *
-     *  An index into the Blob heap. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -33006,7 +33006,7 @@ public:
     void unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const;
     void dump(std::ostream&) const;
 
-    const std::uint8_t* get_Name_blob() const;
+    const std::uint8_t* get_Name_string() const;
 public:
     /** Destructor. */
     virtual ~SgAsmCilParam();
@@ -34149,7 +34149,7 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "ImplFlags", "= 0",
+        "uint16_t", "ImplFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34257,8 +34257,8 @@ public:
      *  A 2-byte bitmask of type MethodImplAttributes. 
      *  
      *  @{ */
-    uint32_t const& get_ImplFlags() const;
-    void set_ImplFlags(uint32_t const&);
+    uint16_t const& get_ImplFlags() const;
+    void set_ImplFlags(uint16_t const&);
     /** @} */
 
 public:

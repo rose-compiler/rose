@@ -12,7 +12,7 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
      *
      *  A 2-byte bitmask of type MethodImplAttributes. */
     [[using Rosebud: rosetta]]
-    uint32_t ImplFlags = 0;
+    uint16_t ImplFlags = 0;
 
     /** Property: Flags.
      *

@@ -856,7 +856,7 @@
           "Init": "read16bitValue(buf,index)",
           "Serial": "write16bitValue(get_`Name`(),buf,index)",
           "Name": "ImplFlags",
-          "Type": "uint32_t"
+          "Type": "uint16_t"
         },
         {
           "Doc": "A 2-byte bitmask of type MethodAttributes.",
@@ -1086,12 +1086,12 @@
           "Type": "uint16_t"
         },
         {
-          "Doc": "An index into the Blob heap.",
+          "Doc": "An index into the String heap.",
           "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Serial": "writeValue(get_`Name`(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_`RefKind`)",
           "Name": "Name",
           "Type": "uint32_t",
-          "RefKind": "blob_heap"
+          "RefKind": "string_heap"
         }
       ],
       "Name": "Param",

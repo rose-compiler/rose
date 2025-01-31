@@ -18,13 +18,13 @@ SgAsmCilMethodDef::set_RVA(uint32_t const& x) {
     set_isModified(true);
 }
 
-uint32_t const&
+uint16_t const&
 SgAsmCilMethodDef::get_ImplFlags() const {
     return p_ImplFlags;
 }
 
 void
-SgAsmCilMethodDef::set_ImplFlags(uint32_t const& x) {
+SgAsmCilMethodDef::set_ImplFlags(uint16_t const& x) {
     this->p_ImplFlags = x;
     set_isModified(true);
 }
