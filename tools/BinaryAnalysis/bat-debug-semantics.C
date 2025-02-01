@@ -298,7 +298,10 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &par
     BaseSemantics::SValue::Ptr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterState::Ptr rstate = makeRegisterState(settings, protoval, regdict);
     BaseSemantics::MemoryState::Ptr mstate = makeMemoryState(settings, partitioner, protoval, protoval, regdict);
+
     BaseSemantics::RegisterState::Ptr istate = makeRegisterState(settings, protoval, arch->interruptDictionary());
+    istate->purpose(BaseSemantics::AddressSpace::Purpose::INTERRUPTS);
+
     BaseSemantics::State::Ptr state = BaseSemantics::State::instance(rstate, mstate, istate);
 
     if (className == "concrete") {
