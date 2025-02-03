@@ -33,13 +33,7 @@ if(ENABLE-C)
     return()
   endif()
   
-  # Use the default C++ compiler if we haven't determined a backend C++ compiler
-  if(NOT BACKEND_C_COMPILER)
-    message(WARNING "Setting BACKEND_C_COMPILER -- CMakeDetermineCCompiler.cmake may not be working or needed") 
-    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
-  endif()
- 
-   # Ada Support  
+  # Ada Support  
   if(ENABLE-ADA) 
     # Ensure GNAT_HOME is defined
     if(NOT DEFINED ENV{GNAT_HOME} OR "$ENV{GNAT_HOME}" STREQUAL "")
@@ -58,8 +52,8 @@ if(ENABLE-C)
   get_minor_version("${CMAKE_C_COMPILER_VERSION}" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER) 
   get_patch_version("${CMAKE_C_COMPILER_VERSION}" BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER)
 
-  # Set With and Without Path For GNU 
-  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  # Set With and Without Path
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU") 
     # Set BACKEND_C_COMPILER_WITH_PATH for GNU 
     if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITH_PATH)
       find_program(GCC_PATH NAMES gcc HINTS ENV PATH)
@@ -71,6 +65,8 @@ if(ENABLE-C)
     # Set BACKEND_C_COMPILER_NAME_WITHOUT_PATH for GNU 
     if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
       set(BACKEND_C_COMPILER_NAME_WITHOUT_PATH "gcc") 
+      set(BACKEND_C_COMPILER "gcc")
+      set(ROSE_BACKEND_C_COMPILER "gcc") 
     endif() # end GNU for C 
   
   # Set With and Without Path for Clang
@@ -87,15 +83,24 @@ if(ENABLE-C)
     if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
       message(STATUS "Setting BACKEND_C_COMPILER_NAME_WITHOUT_PATH to clang")
       set(BACKEND_C_COMPILER_NAME_WITHOUT_PATH "clang")
-    endif()
+      set(BACKEND_C_COMPILER "clang")
+      set(ROSE_BACKEND_C_COMPILER "clang") 
+    endif() # end Clang for C 
     # Set Apple Case here  
-  endif() # end Clang for C  
+  endif() # end Set With and Without Path 
+  
+  if(NOT BACKEND_C_COMPILER)
+    message(WARNING "Setting BACKEND_C_COMPILER -- roseCMakeDetermineCCompiler.cmake may not be working or needed") 
+    # Use the default C compiler if we haven't determined a backend C compiler
+    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
+  endif() 
 
   if(VERBOSE)
     message(STATUS "BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER: ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}") 
     message(STATUS "BACKEND_C_COMPILER_MINOR_VERSION_NUMBER: ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}")
     message(STATUS "BACKEND_C_COMPILER_PATCH_VERSION_NUMBER: ${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER}")
     message(STATUS "BACKEND_C_COMPILER ${BACKEND_C_COMPILER}")
+    message(STATUS "ROSE_BACKEND_C_COMPILER ${ROSE_BACKEND_C_COMPILER}")
     message(STATUS "BACKEND_C_COMPILER_NAME_WITHOUT_PATH: ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}")
     message(STATUS "BACKEND_C_COMPILER_NAME_WITH_PATH: ${BACKEND_C_COMPILER_NAME_WITH_PATH}")
   endif() 
@@ -105,12 +110,6 @@ endif()
 if(ENABLE-CPP)
   include(roseCMakeDetermineCXXCompiler)
 
-  # Use the default C++ compiler if we haven't determined a backend C++ compiler
-  if(NOT BACKEND_CXX_COMPILER)
-    message(WARNING "Setting BACKEND_CXX_COMPILER  -- CMakeDetermineCCompiler.cmake may not be working or needed") 
-    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
-  endif()
- 
   # Ada Support  
   if(ENABLE-ADA) 
      # Ensure GNAT_HOME is defined
@@ -144,6 +143,8 @@ if(ENABLE-CPP)
     # Set BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH for GNU 
     if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
       set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
+      set(BACKEND_CXX_COMPILER "gcc")
+      set(ROSE_BACKEND_CXX_COMPILER "gcc") 
     endif() # end GNU for CXX  
 
   # Set With and Without Path for Clang++ 
@@ -160,15 +161,23 @@ if(ENABLE-CPP)
     if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
         message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH to clang++")
         set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "clang++")
-    endif()
-  # Set Apple Case here 
-  endif() # end Clang for CXX 
+        set(BACKEND_CXX_COMPILER "clang")
+       set(ROSE_BACKEND_CXX_COMPILER "clang") 
+    endif() # end Clang for CXX 
+  endif() # end Set With and Without 
+  # Can Set Apple Case here 
+  # Use the default C++ compiler if we haven't determined a backend C++ compiler
+  if(NOT BACKEND_CXX_COMPILER)
+    message(WARNING "Setting BACKEND_CXX_COMPILER  -- CMakeDetermineCCompiler.cmake may not be working or needed") 
+    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
+  endif() 
 
   if(VERBOSE)
     message(STATUS "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER: ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}")
     message(STATUS "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER: ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER}")
     message(STATUS "BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER: ${BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER}")
     message(STATUS "BACKEND_CXX_COMPILER: ${BACKEND_CXX_COMPILER}")
+    message(STATUS "ROSE_BACKEND_CXX_COMPILER: ${ROSE_BACKEND_CXX_COMPILER}")
     message(STATUS "BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH: ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
     message(STATUS "BACKEND_CXX_COMPILER_NAME_WITH_PATH: ${BACKEND_CXX_COMPILER_NAME_WITH_PATH}")
   endif() # end VERBOSE  
