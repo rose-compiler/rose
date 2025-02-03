@@ -509,7 +509,7 @@ public:
 
     std::string handlePrompt(const std::string&) {
         if (remaining) {
-            const size_t nBytes = std::min(terminal.settings().bytesPerRequest, remaining.size());
+            const size_t nBytes = std::min(terminal.settings().bytesPerRequest, (size_t)remaining.size());
             return (boost::format("d 0x%x, %u, 1\n") % remaining.least() % nBytes).str();
         } else {
             state = State::TERMINATE;

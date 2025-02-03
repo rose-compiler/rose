@@ -1255,7 +1255,7 @@ MemoryMap::combineAdjacentSegments() {
 
         AddressInterval remaining = part.first;
         while (remaining) {
-            const size_t n = std::min(remaining.size(), buffer.size());
+            const size_t n = std::min(remaining.size(), (std::uint64_t)buffer.size());
             const AddressInterval read = this->at(remaining.least()).limit(n).read(buffer.data());
             ASSERT_always_require(read.size() == n);
             const AddressInterval write = newmap.at(remaining.least()).limit(n).write(buffer.data());
