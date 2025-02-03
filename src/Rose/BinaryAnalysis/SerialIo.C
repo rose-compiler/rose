@@ -242,8 +242,8 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
         close();
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+    ROSE_UNUSED(fileName);
     throw Exception("binary state files are not supported in this configuration");
-    std::cerr << "using fileName variable to avoid unused parameter warning: " << &fileName << "\n";
 #else
     objectType(ERROR); // in case of exception
 
@@ -369,8 +369,8 @@ SerialInput::open(const boost::filesystem::path &fileName) {
         close();
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+    ROSE_UNUSED(fileName);
     throw Exception("binary state files are not supported in this configuration");
-    std::cerr << "using fileName variable to avoid unused parameter warning: " << &fileName << "\n";
 #else
     objectType(ERROR); // in case of exception
 

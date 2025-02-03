@@ -20,6 +20,7 @@
 
 #include <Rose/Progress.h>
 #include <Rose/Exception.h>
+#include <ROSE_UNUSED.h>
 
 #include <Sawyer/Message.h>
 #include <Sawyer/ProgressBar.h>
@@ -333,8 +334,9 @@ public:
             throw Exception("cannot save object because stream is in error state");
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+        ROSE_UNUSED(objectTypeId);
+        ROSE_UNUSED(object);
         throw Exception("binary state files are not supported in this configuration");
-        std::cerr << "using ojbectTypeId and object to avoid unused parameter warning: " << objectTypeId << &object << "\n";
 #elif defined(ROSE_DEBUG_SERIAL_IO)
         std::string errorMessage;
         asyncSave(objectTypeId, object, &errorMessage);
@@ -371,8 +373,9 @@ private:
     void asyncSave(Savable objectTypeId, const T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+        ROSE_UNUSED(objectTypeId);
+        ROSE_UNUSED(object);
         ASSERT_not_reachable("not supported in this configuration");
-        std::cerr << "using ojbectTypeId and object to avoid unused parameter warning: " << objectTypeId << &object << "\n";
 #else
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
@@ -496,8 +499,9 @@ public:
             throw Exception("cannot load object when no file is open");
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+        ROSE_UNUSED(objectTypeId);
+        ROSE_UNUSED(object);
         throw Exception("binary state files are not supported in this configuration");
-        std::cerr << "using ojbectTypeId and object to avoid unused parameter warning: " << objectTypeId << &object << "\n";
 #else
         if (ERROR == objectType())
             throw Exception("cannot read object because stream is in error state");
@@ -544,8 +548,8 @@ private:
     void asyncLoad(T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+        ROSE_UNUSED(object);
         ASSERT_not_reachable("not supported in this configuration");
-        std::cerr << "using object variable to avoid unused parameter warning: " << &object << "\n";
 #else
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
