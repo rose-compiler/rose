@@ -14,7 +14,12 @@
  * will not be copied (and cannot be since the conditions contain polluting symbols).
  * 
  * TSG (6/26/24) ConfigureChecks.cmake is used to assign the appropriate value for these variables.
- *               We don't wan't to hard code anything in here 
+ *               We don't wan't to hard code anything in here
+ * TSG (2/3/25)  It's best to not put logic in this file 
+ *               Almost always do this: #define MYMACRO "@MYMACRO@"
+ *               #cmakedefine01 for bool vars 
+ *               Almost never do this: #define MYMACRO ${DIFFERENT_CMAKE_VARIABLE} 
+ *               This creates potential mismatches and confusion
  */
 
 // VERSIONING 
@@ -171,42 +176,38 @@
 #cmakedefine ATERM_BIN_PATH "@ATERM_BIN_PATH@"
 #cmakedefine ATERM_INSTALL_PATH "@ATERM_INSTALL_PATH@"
 #cmakedefine ATERM_LIBRARY_PATH "@ATERM_LIBRARY_PATH@"
+
 // defines for jovial_support.C 
 #cmakedefine STRATEGO_BIN_PATH "@STRATEGO_BIN_PATH@"
+
 // defines for cmdline.C
 #cmakedefine BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH "@BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH@"
+
 // defines for sage_support.C, SageTreeBuilder.C, and utility_functions.C 
 #cmakedefine ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION 
 
 /* Define if building with Ada support */ 
 #cmakedefine BACKEND_ADA_COMPILER_NAME_WITH_PATH "@BACKEND_ADA_COMPILER_NAME_WITH_PATH@"
 #cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 
+
 /* Define this to "no" typically */ 
 #cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME@" 
-
-/* Is this a GNU compiler being used to compile ROSE generated code */
-#cmakedefine BACKEND_CXX_IS_GNU_COMPILER @BACKEND_CXX_IS_GNU_COMPILER@ 
-
-/* May or may not explicit include path; used to call backend */
-#define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${CMAKE_CXX_COMPILER}"
-
-/* Used to select code generation options */
-#define BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "@BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH@"
-
-/* Major version number of backend C++ compiler */
-#define BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}
-
-/* Minor version number of backend C++ compiler */
-#define BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER}
-
 #cmakedefine BACKEND_FORTRAN_IS_GNU_COMPILER @BACKEND_FORTRAN_IS_GNU_COMPILER@
 
-/* May or may not explicit include path; used to call backend */
-#define BACKEND_C_COMPILER_NAME_WITH_PATH "${CMAKE_C_COMPILER}"
-
-#define BACKEND_C_COMPILER_NAME_WITHOUT_PATH "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}"
-#define BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}
-#define BACKEND_C_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}
+/* Backend C and C++ (CXX) Macros */
+/* BACKEND CXX -- No quotes around major, minor version numbers */
+#cmakedefine BACKEND_CXX_IS_GNU_COMPILER @BACKEND_CXX_IS_GNU_COMPILER@ 
+#define BACKEND_CXX_COMPILER_NAME_WITH_PATH "@BACKEND_CXX_COMPILER_NAME_WITH_PATH@"
+#define BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "@BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH@"
+#define BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER @BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER@
+#define BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER @BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER@
+#define BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER @BACKEND_C_COMPILER_PATCH_VERSION_NUMBER@ 
+/* BACKEND C */ 
+#define BACKEND_C_COMPILER_NAME_WITH_PATH "@BACKEND_C_COMPILER_NAME_WITH_PATH@" 
+#define BACKEND_C_COMPILER_NAME_WITHOUT_PATH "@BACKEND_C_COMPILER_NAME_WITHOUT_PATH@"
+#define BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER @BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER@
+#define BACKEND_C_COMPILER_MINOR_VERSION_NUMBER @BACKEND_C_COMPILER_MINOR_VERSION_NUMBER@ 
+#define BACKEND_C_COMPILER_PATCH_VERSION_NUMBER @BACKEND_C_COMPILER_PATCH_VERSION_NUMBER@ 
 
 /* (May or may not explicit include path; used to call backend). */
 #define BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH "${CMAKE_Fortran_COMPILER}"

@@ -3,218 +3,215 @@
 # This is translated from config/choose-backend-compiler.m4
 #
 # use the results to setup rose_config.h later on
-# --------check C compiler -----------------------
-include (CMakeDetermineCCompiler)
+# TSG 2/3/25 Fixup -- Remove unnecessary code and add three functions 
+#            for getting major, minor, and patch version from compiler 
+#            Backend c/cxx compiler logic has been moved to this file              
 
-# Support for Visual Studio is handled in a separate file
-if(WIN32)
-  include(roseWindowsSupport)
-  return()
-endif()
+# Three Functions for returning MAJOR.MINOR.PATCH 
+function(get_major_version version output_variable)
+  string(REGEX MATCH "^[0-9]+" major_version ${version})
+  set(${output_variable} ${major_version} PARENT_SCOPE)
+endfunction()
 
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-  if(NOT BACKEND_C_COMPILER)
-    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
-  endif()
-  execute_process(
-    COMMAND ${BACKEND_C_COMPILER} -dumpversion
-    COMMAND cut -d. -f1
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER)
-  # for unknown reason, some tail control character will show up in OUTPUT_VARIABLE
-  # We use regex to fill out non numeric characters to get the right numbers
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER})
-  if(VERBOSE)
-    message("CMAKE_C_COMPILER= ${CMAKE_C_COMPILER}^")
-  endif()
+function(get_minor_version version output_variable)
+  string(REGEX MATCH "^[0-9]+\\.([0-9]+)" _match "${version}")
+  set(${output_variable} "${CMAKE_MATCH_1}" PARENT_SCOPE)
+endfunction()
 
-  execute_process(
-    COMMAND basename ${BACKEND_C_COMPILER}
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
-  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_C_COMPILER_NAME_WITHOUT_PATH ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH})
-  if(VERBOSE)
-    message("BACKEND_C_COMPILER_NAME_WITHOUT_PATH=${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}^")
-  endif()
+function(get_patch_version version output_variable)
+  string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.([0-9]+)" _match "${version}")
+  set(${output_variable} "${CMAKE_MATCH_1}" PARENT_SCOPE)
+endfunction()
+# End of functions for returning MAJOR.MINOR.PATCH 
 
-  execute_process(
-    COMMAND ${BACKEND_C_COMPILER} -dumpversion
-    COMMAND cut -d. -f2
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_MINOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER})
-  execute_process(
-    COMMAND ${BACKEND_C_COMPILER} -dumpversion
-    COMMAND cut -d. -f3
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER ${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER})
-
-elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-  if(NOT BACKEND_C_COMPILER)
-    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
-  endif()
-  execute_process(
-    COMMAND basename ${BACKEND_C_COMPILER}
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
-  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_C_COMPILER_NAME_WITHOUT_PATH ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH})
-  if(VERBOSE)
-    message("BACKEND_C_COMPILER_NAME_WITHOUT_PATH=${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}^")
-  endif()
-
-  execute_process(
-    COMMAND ${BACKEND_C_COMPILER} --version
-    COMMAND grep -Po "(?<=version )[^;]+"
-    COMMAND cut -d. -f1
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER})
-  execute_process(
-    COMMAND ${BACKEND_C_COMPILER} --version
-    COMMAND grep -Po "(?<=version )[^;]+"
-    COMMAND cut -d. -f2
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_MINOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER})
-elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
-  if(NOT BACKEND_C_COMPILER)
-    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
-  endif()
-  execute_process(
-    COMMAND basename ${BACKEND_C_COMPILER}
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
-  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_C_COMPILER_NAME_WITHOUT_PATH ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH})
-  if(VERBOSE)
-    message("BACKEND_C_COMPILER_NAME_WITHOUT_PATH=${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}^")
-  endif()
-
-  execute_process(
-    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMajorVersionNumber.sh
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER})
-  execute_process(
-    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMinorVersionNumber.sh
-    OUTPUT_VARIABLE BACKEND_C_COMPILER_MINOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER})
-endif()
-
-# --------check CXX compiler -----------------------
-include(roseCMakeDetermineCXXCompiler)
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if(NOT BACKEND_CXX_COMPILER)
-    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
-  endif()
-  execute_process(
-    COMMAND ${BACKEND_CXX_COMPILER} -dumpversion
-    COMMAND cut -d. -f1
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
-  # Fix definition of BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH when it is /usr/bin/c++ so that it reveals the vendor
-  if(NOT BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH STREQUAL "g++") 
-    execute_process(
-      COMMAND basename ${BACKEND_CXX_COMPILER}  
-      OUTPUT_VARIABLE BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
-     string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
-  endif() 
-  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER})
-  execute_process(
-    COMMAND basename ${BACKEND_CXX_COMPILER}  
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
-  if(VERBOSE)
-    message("BACKEND_CXX_COMPILER= ${BACKEND_CXX_COMPILER}")
-  endif()
-  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
-  if(VERBOSE)
-    message("BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH= ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
+# --------check Backend C compiler -----------------------
+if(ENABLE-C)
+  include(CMakeDetermineCCompiler)
+  # Support for Visual Studio is handled in a separate file
+  if(WIN32)
+    include(roseWindowsSupport)
+    return()
   endif()
   
-  execute_process(
-    COMMAND ${BACKEND_CXX_COMPILER} -dumpversion
-    COMMAND cut -d. -f2
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
+  # Use the default C++ compiler if we haven't determined a backend C++ compiler
+  if(NOT BACKEND_C_COMPILER)
+    message(WARNING "Setting BACKEND_C_COMPILER -- CMakeDetermineCCompiler.cmake may not be working or needed") 
+    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
+  endif()
+ 
+   # Ada Support  
+  if(ENABLE-ADA) 
+    # Ensure GNAT_HOME is defined
+    if(NOT DEFINED ENV{GNAT_HOME} OR "$ENV{GNAT_HOME}" STREQUAL "")
+      message(FATAL_ERROR "GNAT_HOME environment variable must be defined for Ada support")
+    endif()
+    # Ensure that GCC/GNU is the compiler
+    if(NOT CMAKE_C_COMPILER_ID STREQUAL "GNU")
+      message(FATAL_ERROR "GCC/GNU is needed for Ada support")
+    endif()
+    # Hard-set the compiler path/name needed for Ada support
+    set(BACKEND_C_COMPILER_NAME_WITH_PATH "$ENV{GNAT_HOME}/bin/gcc")
+    set(BACKEND_C_COMPILER_NAME_WITHOUT_PATH "gcc")
+  endif() # end Ada 
 
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  if(NOT BACKEND_CXX_COMPILER)
-    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
-  endif()
-  execute_process(
-    COMMAND basename ${BACKEND_CXX_COMPILER}  
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
+  get_major_version("${CMAKE_C_COMPILER_VERSION}" BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER) 
+  get_minor_version("${CMAKE_C_COMPILER_VERSION}" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER) 
+  get_patch_version("${CMAKE_C_COMPILER_VERSION}" BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER)
+
+  # Set With and Without Path For GNU 
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    # Set BACKEND_C_COMPILER_WITH_PATH for GNU 
+    if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITH_PATH)
+      find_program(GCC_PATH NAMES gcc HINTS ENV PATH)
+      if(GCC_PATH)
+        message(STATUS "Setting BACKEND_C_COMPILER_NAME_WITH_PATH to ${GCC_PATH}")
+        set(BACKEND_C_COMPILER_NAME_WITH_PATH "${GCC_PATH}")
+      endif()
+    endif()
+    # Set BACKEND_C_COMPILER_NAME_WITHOUT_PATH for GNU 
+    if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
+      set(BACKEND_C_COMPILER_NAME_WITHOUT_PATH "gcc") 
+    endif() # end GNU for C 
+  
+  # Set With and Without Path for Clang
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    # Set BACKEND_C_COMPILER_WITH_PATH for Clang
+    if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITH_PATH)
+      find_program(CLANG_PATH NAMES clang HINTS ENV PATH)
+      if(CLANG_PATH)
+        message(STATUS "Setting BACKEND_C_COMPILER_NAME_WITH_PATH to ${CLANG_PATH}")
+        set(BACKEND_C_COMPILER_NAME_WITH_PATH "${CLANG_PATH}")
+      endif()
+    endif()
+    # Set BACKEND_C_COMPILER_WITHOUT_PATH for Clang
+    if(NOT DEFINED BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
+      message(STATUS "Setting BACKEND_C_COMPILER_NAME_WITHOUT_PATH to clang")
+      set(BACKEND_C_COMPILER_NAME_WITHOUT_PATH "clang")
+    endif()
+    # Set Apple Case here  
+  endif() # end Clang for C  
+
   if(VERBOSE)
-    message("BACKEND_CXX_COMPILER= ${BACKEND_CXX_COMPILER}")
-  endif()
-  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
-  if(VERBOSE)
-    message("BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH= ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
-  endif()
-  execute_process(
-    COMMAND ${BACKEND_CXX_COMPILER} --version
-    COMMAND grep -Po "(?<=version )[^;]+"
-    COMMAND cut -d. -f1
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER})
-  execute_process(
-    COMMAND ${BACKEND_CXX_COMPILER} --version
-    COMMAND grep -Po "(?<=version )[^;]+"
-    COMMAND cut -d. -f2
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-  if(NOT BACKEND_CXX_COMPILER)
-    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
-  endif()
-  execute_process(
-    COMMAND basename ${BACKEND_CXX_COMPILER}  
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
-  if(VERBOSE)
-    message("BACKEND_CXX_COMPILER= ${BACKEND_CXX_COMPILER}")
-  endif()
-  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
-  if(VERBOSE)
-    message("BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH= ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
-  endif()
-  execute_process(
-    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMajorVersionNumber.sh
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER})
-  execute_process(
-    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMinorVersionNumber.sh
-    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
-  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
+    message(STATUS "BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER: ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}") 
+    message(STATUS "BACKEND_C_COMPILER_MINOR_VERSION_NUMBER: ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}")
+    message(STATUS "BACKEND_C_COMPILER_PATCH_VERSION_NUMBER: ${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER}")
+    message(STATUS "BACKEND_C_COMPILER ${BACKEND_C_COMPILER}")
+    message(STATUS "BACKEND_C_COMPILER_NAME_WITHOUT_PATH: ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}")
+    message(STATUS "BACKEND_C_COMPILER_NAME_WITH_PATH: ${BACKEND_C_COMPILER_NAME_WITH_PATH}")
+  endif() 
 endif()
 
-if(ENABLE-FORTRAN)
-  # --------check Fortran compiler -----------------------
-  # CMakeDetermineFortranCompiler does not recognize gfortran first
-  # we use a slightly modified CMakeDetermineFortranCompiler.cmake to put gfortran to the highest priority
-  # Pei-Hung (04/08/21) allowed gfortran* for homebrew gfortran with suffix name
-  include(roseCMakeDetermineFortranCompiler)
-  if("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran.*$")
-    if(VERBOSE)
-      message("find gfortran compiler ${CMAKE_Fortran_COMPILER}")
-    endif()
-    if(NOT BACKEND_FORTRAN_COMPILER)
-      set (BACKEND_FORTRAN_COMPILER  ${CMAKE_Fortran_COMPILER})
-    endif()
+# --------check Backend CXX compiler -----------------------
+if(ENABLE-CPP)
+  include(roseCMakeDetermineCXXCompiler)
 
-    execute_process(
+  # Use the default C++ compiler if we haven't determined a backend C++ compiler
+  if(NOT BACKEND_CXX_COMPILER)
+    message(WARNING "Setting BACKEND_CXX_COMPILER  -- CMakeDetermineCCompiler.cmake may not be working or needed") 
+    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
+  endif()
+ 
+  # Ada Support  
+  if(ENABLE-ADA) 
+     # Ensure GNAT_HOME is defined
+    if(NOT DEFINED ENV{GNAT_HOME} OR "$ENV{GNAT_HOME}" STREQUAL "")
+      message(FATAL_ERROR "GNAT_HOME environment variable must be defined for Ada support")
+    endif()
+    # Ensure that GCC/GNU is the compiler
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      message(FATAL_ERROR "GCC/GNU is needed for Ada support")
+    endif()
+    # Hard-set the compiler path/name needed for Ada support
+    set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "$ENV{GNAT_HOME}/bin/g++")
+    set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
+  endif() # end Ada 
+
+  # Extract major, minor, and patch version from CMAKE_CXX_COMPILER_VERSION
+  get_major_version("${CMAKE_CXX_COMPILER_VERSION}" BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
+  get_minor_version("${CMAKE_CXX_COMPILER_VERSION}" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
+  get_patch_version("${CMAKE_CXX_COMPILER_VERSION}" BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER)
+
+  # Set With and Without Path For GNU 
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Set BACKEND_CXX_COMPILER_WITH_PATH for GNU 
+    if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITH_PATH)
+      find_program(GXX_PATH NAMES g++ HINTS ENV PATH)
+      if(GXX_PATH)
+        message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITH_PATH to ${GXX_PATH}")
+        set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "${GXX_PATH}")
+      endif()
+    endif()
+    # Set BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH for GNU 
+    if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
+      set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
+    endif() # end GNU for CXX  
+
+  # Set With and Without Path for Clang++ 
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Set BACKEND_CXX_COMPILER_WITH_PATH for Clang++
+    if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITH_PATH)
+      find_program(CLANGXX_PATH NAMES clang++ HINTS ENV PATH)
+      if(CLANGXX_PATH)
+        message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITH_PATH to ${CLANGXX_PATH}")
+        set(BACKEND_CXX_COMPILER_NAME_WITH_PATH "${CLANGXX_PATH}")
+      endif()
+    endif()
+    # Set BACKEND_CXX_COMPILER_WITHOUT_PATH for Clang++ 
+    if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
+        message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH to clang++")
+        set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "clang++")
+    endif()
+  # Set Apple Case here 
+  endif() # end Clang for CXX 
+
+  if(VERBOSE)
+    message(STATUS "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER: ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}")
+    message(STATUS "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER: ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER}")
+    message(STATUS "BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER: ${BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER}")
+    message(STATUS "BACKEND_CXX_COMPILER: ${BACKEND_CXX_COMPILER}")
+    message(STATUS "BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH: ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
+    message(STATUS "BACKEND_CXX_COMPILER_NAME_WITH_PATH: ${BACKEND_CXX_COMPILER_NAME_WITH_PATH}")
+  endif() # end VERBOSE  
+endif() # end ENABLE-CPP 
+
+# TO DO: Remove redundancies where appropriate  
+if(ENABLE-FORTRAN)
+# --------check Fortran compiler -----------------------
+# CMakeDetermineFortranCompiler does not recognize gfortran first
+# we use a slightly modified CMakeDetermineFortranCompiler.cmake to put gfortran to the highest priority
+# Pei-Hung (04/08/21) allowed gfortran* for homebrew gfortran with suffix name
+include(roseCMakeDetermineFortranCompiler)
+if("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran.*$")
+  if(VERBOSE)
+    message("find gfortran compiler ${CMAKE_Fortran_COMPILER}")
+  endif()
+  if(NOT BACKEND_FORTRAN_COMPILER)
+    set (BACKEND_FORTRAN_COMPILER  ${CMAKE_Fortran_COMPILER})
+  endif()
+  execute_process(
       COMMAND ${BACKEND_FORTRAN_COMPILER} --version
       COMMAND head -1
       COMMAND cut -f2 -d\)
       COMMAND tr -d \ # must have a space
       COMMAND cut -d. -f1
       OUTPUT_VARIABLE BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER)
-    string(REGEX MATCH "[0-9]+" BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER})
-    execute_process(
-      COMMAND basename ${BACKEND_FORTRAN_COMPILER}
-      OUTPUT_VARIABLE BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH)
-    string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH ${BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH})
-
-    execute_process(
-      COMMAND ${BACKEND_FORTRAN_COMPILER} --version
-      COMMAND head -1
-      COMMAND cut -f2 -d\)
-      COMMAND tr -d \ # must have a space
-      COMMAND cut -d. -f2
-      OUTPUT_VARIABLE BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER)
-    string(REGEX MATCH "[0-9]+" BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER})
+  string(REGEX MATCH "[0-9]+" BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER})
+  execute_process(
+    COMMAND basename ${BACKEND_FORTRAN_COMPILER}
+    OUTPUT_VARIABLE BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH)
+  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH ${BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH})
+  execute_process(
+    COMMAND ${BACKEND_FORTRAN_COMPILER} --version
+    COMMAND head -1
+    COMMAND cut -f2 -d\)
+    COMMAND tr -d \ # must have a space
+    COMMAND cut -d. -f2
+    OUTPUT_VARIABLE BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER)
+  string(REGEX MATCH "[0-9]+" BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER})
   endif()
 endif()
 
+# Set BACKEND_CXX_IS_<>_COMPILER macro for rose_config.h 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
   set(BACKEND_CXX_IS_CLANG_COMPILER 1)
