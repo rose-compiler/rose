@@ -22,6 +22,8 @@ add_library(util_sawyer OBJECT
   DocumentPodMarkup.C DocumentTextMarkup.C GraphTraversal.C LineVector.C
   Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C Time.C Yaml.C)
 
+add_dependencies(util_sawyer generate_rosePublicConfig)
+
 add_compile_definitions(util_sawyer PRIVATE COMPILING_ROSE) 
 
 target_link_libraries(util_sawyer PRIVATE $<$<BOOL:${Threads_FOUND}>:Threads::Threads> ${Boost_LIBRARIES}) 
