@@ -2,8 +2,8 @@
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
 //          https://gitlab.com/charger7534/sawyer.git.
 
-
-
+#ifndef Sawyer_ThreadWorkers_H
+#define Sawyer_ThreadWorkers_H
 
 #include <Sawyer/Exception.h>
 #include <Sawyer/Graph.h>
@@ -331,3 +331,5 @@ workInParallel(const DependencyGraph &dependencies, size_t nWorkers, Functor fun
 
 
 } // namespace
+
+#endif
