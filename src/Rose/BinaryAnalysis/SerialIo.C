@@ -509,7 +509,7 @@ SerialInput::checkCompatibility(const std::string &fileVersion) {
         (fileParts[2] <= roseParts[2] ||
          (fileParts[2] == roseParts[2] && fileParts[3] <= roseParts[3]))) {
         if (fileVersion != roseVersion)
-            mlog[WARN] <<"RBA file version " <<fileVersion <<" is being read by ROSE verion " <<roseVersion <<"\n";
+            mlog[WARN] <<"RBA file version " <<fileVersion <<" is being read by ROSE version " <<roseVersion <<"\n";
     } else {
         throw Exception("ROSE library " + roseVersion + " cannot read file version " + fileVersion);
     }
