@@ -4421,14 +4421,26 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
      TimingPerformance timer ("AST Object Code Generation (compile output):");
      ASSERT_require(fileNameIndex == 0);
 
+     // Flags for debug and command line options output
+     // Preprocessing variable was being used for debugging.
+     // Changed to variable so that output could be shared if either was true.
+     bool debugProjectCompileCommandLineWithArgs = false;
+     bool showBackendCommandLine                 = SgProject::get_showBackendCommandLine();
+
+  // Keep this macro for debugging some parts, if more familiar.
 #define DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS 0
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
-     printf ("\n\n***************************************************** \n");
-     printf ("Inside of SgFile::compileOutput() \n");
-     printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
-     printf ("***************************************************** \n\n\n");
+     debugProjectCompileCommandLineWithArgs = true;
 #endif
+
+     if ( debugProjectCompileCommandLineWithArgs || showBackendCommandLine )
+        {
+           printf ("\n\n***************************************************** \n");
+           printf ("Inside of SgFile::compileOutput() \n");
+           printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
+           printf ("***************************************************** \n\n\n");
+	}
 
   // This function does the final compilation of the unparsed file
   // Remaining arguments from the original compile time are used as well
@@ -4481,17 +4493,19 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
           SgProject* project = TransformationSupport::getProject(this);
           if (project != nullptr)
              {
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
-               printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
-#endif
-               if (project->get_unparse_in_same_directory_as_input_file() == true)
-                  {
-                    outputFilename = Rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+                if ( debugProjectCompileCommandLineWithArgs )
+                   {
+                      printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",
+	              project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+		   }
+                if (project->get_unparse_in_same_directory_as_input_file() == true)
+                   {
+                      outputFilename = Rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
-                    printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+                      printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 
-                    set_unparse_output_filename(outputFilename);
-                  }
+                      set_unparse_output_filename(outputFilename);
+                   }
              }
             else
              {
@@ -4632,18 +4646,22 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
                        }
                   }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
-               printf ("addCompileOnlyFlag = %s \n",addCompileOnlyFlag ? "true" : "false");
-#endif
+               if ( debugProjectCompileCommandLineWithArgs )
+                  {
+                     printf ("In SgFile::compileOutput():  addCompileOnlyFlag = %s \n", 
+		        addCompileOnlyFlag ? "true" : "false");
+		  }
+
                if (addCompileOnlyFlag == true)
                   {
                  // We might want to check if "-c" is already present so we don't add it redundantly.
                     compilerCmdLine.push_back("-c");
                   }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
-               printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
-#endif
+               if ( debugProjectCompileCommandLineWithArgs )
+                  {
+                     printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+		  }
              }
 
           if (get_Java_only() == true)
@@ -4664,9 +4682,10 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
              }
 
        // DQ (3/11/2024): Turn this on for debugging the generated code for unit testing.
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
-          printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
-#endif
+       if ( debugProjectCompileCommandLineWithArgs || showBackendCommandLine )
+          {
+             printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+	  }
 
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine

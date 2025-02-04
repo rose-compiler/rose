@@ -6217,6 +6217,9 @@ HEADER_APPLICATION_PROJECT_START
 	//! global to tell mangler to turn off short mangled name optimization. Default is false. (ie, by default short name mangling is enabled)
           static bool p_mangled_noshortname;
 
+	//! global to output the command line that goes to the backend compiler. Default is false.
+          static bool p_showBackendCommandLine;
+
        // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
       //! global concept of verbose level which controls useful output from the unparse headers feature (values greater than zero increase output level)
           static int p_unparseHeaderFilesDebug;
@@ -6230,8 +6233,11 @@ HEADER_APPLICATION_PROJECT_START
           static int get_verbose (void);
           static void set_verbose (int);
 
-	  static bool get_mangled_noshortname (void);
+          static bool get_mangled_noshortname (void);
           static void set_mangled_noshortname ( bool noshortname );
+
+          static bool get_showBackendCommandLine (void);
+          static void set_showBackendCommandLine ( bool show );
 
       //! Jim Leek 2023/03/17: Modified to check that the application root is sane
          std::string get_applicationRootDirectory() const;
@@ -15446,6 +15452,9 @@ int SgProject::p_verbose = 0;
 //! global to tell mangler to turn off short mangled name optimization. Default is false. (ie, by default short name mangling is enabled)
 bool SgProject::p_mangled_noshortname = false;
 
+//! global to output the command line that goes to the backend compiler. Default is false.
+bool SgProject::p_showBackendCommandLine = false;
+
 // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
 int SgProject::p_unparseHeaderFilesDebug = 0;
 
@@ -15726,6 +15735,18 @@ void
 SgProject::set_mangled_noshortname ( bool x )
    {
      p_mangled_noshortname = x;
+   }
+
+bool
+SgProject::get_showBackendCommandLine (void)
+   {
+     return p_showBackendCommandLine;
+   }
+
+void
+SgProject::set_showBackendCommandLine ( bool show )
+   {
+     p_showBackendCommandLine = show;
    }
 
 

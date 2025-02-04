@@ -3072,6 +3072,8 @@ SgFile::usage ( int status )
 "     -rose:plugin_arg_<act_name>  <option>\n"
 "                             Specify one option to be passed to a plugin named act_name\n"
 "                             This option can repeat multiple times to provide multiple options to a plugin \n"
+"     -rose:showBackendCommandLine\n"
+"                             Show the command line that is passed to the backend compiler\n"
 "\n"
 "GNU g++ options recognized:\n"
 "     -ansi                   equivalent to -rose:strict\n"
@@ -4574,7 +4576,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
-  // skip_unparse option: if analysis only (without transformatio is required, then this can significantly
+  // skip_unparse option: if analysis only (without transformation is required, then this can significantly
   // improve the performance since it will also skip the backend compilation, as I recall)
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_unparse)",true) == true )
@@ -4582,6 +4584,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("option -rose:skip_unparse found \n");
           set_skip_unparse(true);
+        }
+
+  // showBackendCommandLine: Outputs the command line passed to the backend compiler
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(showBackendCommandLine)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:showBackendCommandLine found \n");
+          SgProject::set_showBackendCommandLine(true);
         }
 
   // mangled:noshortname option: Turns off the optimization that
@@ -5148,6 +5159,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(wave)",1);
      optionCount = sla(argv, "-rose:", "($)", "(negative_test)",1);
      optionCount = sla(argv, "-rose:", "($)", "(mangled:noshortname)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(showBackendCommandLine)",1);
      integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(embedColorCodesInGeneratedCode)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(generateSourcePositionCodes)", &integerOption, 1);
