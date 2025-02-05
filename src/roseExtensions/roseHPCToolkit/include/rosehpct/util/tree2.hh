@@ -114,7 +114,7 @@ namespace Trees
   }
 
   template <class VT, class IT>
-  Tree<VT, IT>::Tree (const Tree<VT, IT>& tree)
+  Tree<VT, IT>::Tree (const Tree<VT, IT>& /*tree*/)
   {
   }
 
@@ -130,7 +130,7 @@ namespace Trees
     for (iterator i = beginChild (); i != endChild (); ++i)
       {
         delete i->second;
-        i->second = NULL;
+        i->second = nullptr;
       }
   }
 
@@ -139,13 +139,13 @@ namespace Trees
   Tree<VT, IT>::clone (void) const
   {
     Tree<VT, IT>* root = new Tree (value);
-    if (root == NULL) // out of memory
-      return NULL;
+    if (root == nullptr) // out of memory
+      return nullptr;
 
     for (const_iterator i = beginChild (); i != endChild (); ++i)
       {
         const Tree<VT, IT>* orig_subtree = i->second;
-        if (orig_subtree != NULL)
+        if (orig_subtree != nullptr)
           {
             Tree<VT, IT>* subtree = orig_subtree->clone ();
             root->setSubtree (i->first, subtree);
@@ -194,7 +194,7 @@ namespace Trees
   Tree<VT, IT>::setChildValue (const IndParam_t i, const ValParam_t v)
   {
     Tree<VT, IT>* child_node = getSubtree (i);
-    if (child_node == NULL)
+    if (child_node == nullptr)
       {
         child_node = new Tree<VT, IT> (v);
         setSubtree (i, child_node);
@@ -209,7 +209,7 @@ namespace Trees
   Tree<VT, IT>::getChildValue (const IndParam_t i) const
   {
     Tree<VT, IT>* subtree = getSubtree (i);
-    if (subtree == NULL)
+    if (subtree == nullptr)
       return VT (0);
     else
       return subtree->value;
@@ -220,7 +220,7 @@ namespace Trees
   Tree<VT, IT>::getSubtree (const IndParam_t i) const
   {
     const_iterator iter = children_.find (i);
-    return (iter != endChild ()) ? iter->second : NULL;
+    return (iter != endChild ()) ? iter->second : nullptr;
   }
 
   template <class VT, class IT>
@@ -229,7 +229,7 @@ namespace Trees
                             Tree<VT, IT>* subtree)
   {
     deleteSubtree (i);
-    if (subtree != NULL && isValidSubtree (subtree))
+    if (subtree != nullptr && isValidSubtree (subtree))
       children_[i] = subtree;
   }
 
@@ -353,7 +353,7 @@ namespace Trees
   void
   PreTraversal<TreeType, isConst>::traverse (TreeParamPtr_t tree)
   {
-    if (tree == NULL)
+    if (tree == nullptr)
       return;
 
     this->visit (tree);
@@ -367,7 +367,7 @@ namespace Trees
   void
   PostTraversal<TreeType, isConst>::traverse (TreeParamPtr_t tree)
   {
-    if (tree == NULL)
+    if (tree == nullptr)
       return;
 
     this->descending ();
