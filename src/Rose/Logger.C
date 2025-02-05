@@ -52,11 +52,11 @@ void Logger::display(Level const lvl, std::string const & message) {
   } else {
     bool indentable = indent.size() > 0 && depth > 0;
     if (indent_first && indentable)
-      for (size_t i = 0; i < depth; i++)
+      for (int i = 0; i < depth; i++)
         std::cerr << indent;
     std::cerr << level_to_string(lvl);
     if (!indent_first && indentable)
-      for (size_t i = 0; i < depth; i++)
+      for (int i = 0; i < depth; i++)
         std::cerr << indent;
     std::cerr << message << std::endl;
   }
