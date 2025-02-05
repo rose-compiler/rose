@@ -32,9 +32,7 @@ $Id: sage.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
 #include <iostream>
 #include <string>
 #include <vector>
-
 #include <rosehpct/sage/collectors.hh>
-// #include "rose.h"
 
 namespace RoseHPCT
 {
@@ -66,9 +64,9 @@ namespace RoseHPCT
 
 
     // Liao, 12/3/2007, add support for AST_FILE_IO
-     // must provide this, otherwise, base class's unpacked_data() will be used
+    // must provide this, otherwise, base class's unpacked_data() will be used
+    using AstAttribute::constructor; // make base class function visible to fix warning
     MetricAttr * constructor() {return new MetricAttr();}
-  //  std::string attribute_class_name() { return "MetricAttr"; }
 
     virtual int packed_size()
     {

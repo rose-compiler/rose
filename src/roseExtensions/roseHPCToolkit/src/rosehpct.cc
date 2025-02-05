@@ -27,19 +27,15 @@ using namespace RoseHPCT;
 
 //! Default command-line prefix for ROSE options
 // Liao, follow Jeremiah's transition from char* to string
-//static const char* OPTION_PREFIX_ROSE = "-rose:";
 static const string OPTION_PREFIX_ROSE("-rose:");
 
 //! Default command-option separator tag
 static const string OPTION_VALUE_SEPARATOR("$^");
-//static const char* OPTION_VALUE_SEPARATOR = "$^";
 
 //! ROSE-HPCT profile option
-//static const string OPTION_HPCTPROF ("*hpct:prof");
 static const char* OPTION_HPCTPROF = "*hpct:prof";
 
 //! ROSE-HPCT equivalent-path option
-//static const string OPTION_HPCTEQPATH = ("*hpct:eqpath");
 static const char* OPTION_HPCTEQPATH = "*hpct:eqpath";
 
 //! Wrapper around the SLA string option processing routine.
