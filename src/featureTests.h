@@ -69,6 +69,7 @@
         #define ROSE_ENABLE_BOOST_SERIALIZATION
     #endif
 #endif
+#undef ROSE_ENABLE_BOOST_SERIALIZATION
 
 // ARM AArch64 A64 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
 #if !defined(ROSE_ENABLE_ASM_AARCH64) && defined(ROSE_HAVE_CAPSTONE)
