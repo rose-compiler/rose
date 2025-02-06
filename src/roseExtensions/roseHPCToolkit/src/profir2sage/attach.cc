@@ -28,7 +28,7 @@
 #include <string>
 #include <algorithm>
 #include "rosehpct/rosehpct.hh"
-//#include "rosehpct/profir2sage/profir2sage.hh"
+#include "src/util/ROSE_UNUSED.h"
 
 /* ---------------------------------------------------------------- */
 namespace RoseHPCT
@@ -52,22 +52,11 @@ static
 bool doFilenamesMatch(const SgLocatedNode* node, const std::string& filename)
 {
     using std::string;
-#if 1
+
     string sg_fullpath = RoseHPCT::getFilename(node);
     int suffixLength = sg_fullpath.length() - filename.length();
     string suffix = suffixLength >= 0? sg_fullpath.substr(suffixLength): "";
     return suffix == filename;
-
-#else
-    string sg_fullpath = RoseHPCT::getFilename(node);
-    string sg_dir = GenUtil::getDirname(sg_fullpath);
-    string sg_file = GenUtil::getBaseFilename(sg_fullpath);
-
-    string target_dir = GenUtil::getDirname(filename);
-    string target_file = GenUtil::getBaseFilename(filename);
-
-    return sg_dir == target_dir && sg_file == target_file;
-#endif
 }
 
 //! Check if the code portions specified by Sage Node and PROF ir'S located node [b-start, b_end]
@@ -76,7 +65,6 @@ bool doFilenamesMatch(const SgLocatedNode* node, const std::string& filename)
 //      ROSE AST has both start and end line information.
 static
 bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
-//                size_t b_start, size_t b_end)
 {
     ROSE_ASSERT(plnode);
     if (node == NULL
@@ -102,17 +90,12 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     // DXN: see DXN's comment in doFilenamesMatch.
     if (plnode->getFileNode())
     {
-#if 1
         std::string plnodeFileName = plnode->getFileNode()->getName();
         std::string info_startFileName = info_start->get_filenameString();
         int suffixLength = info_startFileName.length() - plnodeFileName.length();
         std::string suffix = suffixLength >= 0? info_startFileName.substr(suffixLength): "";
         if (plnodeFileName != suffix)
             return false;
-#else
-        if (plnode->getFileNode()->getName() != info_start->get_filename())
-            return false;
-#endif
     }
     // Then check for line numbers
     size_t a_start = (size_t) info_start->get_line();
@@ -125,9 +108,7 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     // This is generally risky for ROSE, but should work for ROSE-HPCT
     // since the HPCToolkit generates metrics specified with beginning line only
     // Liao, 2/2/2009
-#if 1    //
-    //if ((a_end < a_start) || (isSgStatement(node) && !(isSgScopeStatement(node))))
-    //Liao 1/25/2013: we have better file info now, supposlly
+
     if (a_end < a_start) 
     {
         a_end = a_start;
@@ -136,15 +117,10 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     if (b_end < b_start)
     {
         b_end = b_start;
-        //ROSE_ASSERT(false); // Some metrics location information from HPCToolkit are buggy
     }
-#endif
+
     return (b_start <= a_start && a_end <= b_end) // SgNode's file portion is a subset of Profile's information
     || (a_start <= b_start && b_end <= a_end); // Profile's info is a subset of SgNode's portion
-//    || (a_start <= b_start && b_end <= a_end)  // redundant condition? TODO should be partial overlap
-//     like (b_start <= a_start && b_end <= a_end)
-//    || (b_start <= a_start && a_end <= b_end);
-//    // or (a_start <= b_start && a_end <= b_end);??
 }
 
 /* ---------------------------------------------------------------- */
@@ -183,8 +159,6 @@ protected:
 
     virtual void visit(TreeParamPtr_t tree);
 
-#if 1
-
     /*! \brief Handles File nodes. */
     virtual void visit(RoseHPCT::File* node);
     /*! \brief Handles Procedure nodes. */
@@ -200,26 +174,6 @@ protected:
     /*! \brief Check if the target node is a shadow node of
      * the previously matched nodes to a profile node */
     bool isShadowNode(RoseHPCT::IRNode* profNode) const;
-
-#else
-
-    /*! \brief Handles File nodes. */
-    virtual void visit (const RoseHPCT::File* node);
-    /*! \brief Handles Procedure nodes. */
-    virtual void visit (const RoseHPCT::Procedure* node);
-    /*! \brief Handles Loop nodes. */
-    virtual void visit (const RoseHPCT::Loop* node);
-    /*! \brief Handles Statement nodes. */
-    virtual void visit (const RoseHPCT::Statement* node);
-
-    bool doLinesOverlap (const RoseHPCT::Located* l) const;
-    //bool doLinesOverlap (size_t a, size_t b) const;
-
-    /*! \brief Check if the target node is a shadow node of
-     * the previously matched nodes to a profile node */
-    bool isShadowNode(const RoseHPCT::IRNode* profNode) const;
-
-#endif
 
 private:
     const SgLocatedNode* target_; //!< Node to find
@@ -263,10 +217,7 @@ public:
     //note that a profile IR node may corresponding multiple AST nodes(a code range)
     typedef std::map<const RoseHPCT::IRNode *, SgLocNodeSet_t> AttachedNodes_t;
     AttachedNodes_t& getAttachedNodes(void);
-#if 0  
-    std::set<const RoseHPCT::IRNode *>& getProfFileNodes (void);
-    std::set<const RoseHPCT::IRNode *>& getProfStmtNodes (void);
-#endif  
+
     //! Insert the metrics info. into source as comments, mostly for debugging
     void annotateSourceCode(void);
 protected:
@@ -276,10 +227,6 @@ protected:
 private:
     const RoseHPCT::IRTree_t* hpc_root_; //!< Root of profiling data tree
     AttachedNodes_t attached_; //!< Lists of attached nodes
-#if 0  
-    std::set<const RoseHPCT::IRNode *> files_; //!< set of all profir file nodes
-    std::set<const RoseHPCT::IRNode *> stmts_;//!< set of all profir statement nodes
-#endif  
     bool verbose_; //!< Enable verbose messaging
 };
 
@@ -298,13 +245,6 @@ MetricFinder::MetricFinder(void) :
 MetricFinder::MetricFinder(const SgLocatedNode* target, std::map<const RoseHPCT::IRNode *, SgLocNodeSet_t> * historyRecord) :
         target_(target), verbose_(false), prune_branch_(false), nonscope_stmt_target_(0), historyRecord_(historyRecord)
 {
-#if 0  // not in use since it messes up metrics normalization by leaving a metric gap in AST
-    //! SgForInitStatement is special, it is not under scope statement but should be
-    //Liao, 2/2/2009
-    if (dynamic_cast<const SgForInitStatement*> (target_))
-    nonscope_stmt_target_ = 0;
-    else
-#endif    
     if (!dynamic_cast<const SgScopeStatement *>(target_))
     {
         nonscope_stmt_target_ = dynamic_cast<const SgStatement *>(target_);
@@ -370,18 +310,7 @@ MetricFinder::getMatches(void) const
 {
     return matches_;
 }
-#if 0
-const MetricFinder::MatchSet_t&
-MetricFinder::getFiles(void) const
-{
-    return files_;
-}
-const MetricFinder::MatchSet_t&
-MetricFinder::getStmts(void) const
-{
-    return stmts_;
-}
-#endif
+
 bool MetricFinder::isTargetSgGlobal(void) const
 {
     return target_ ? (target_->variantT() == V_SgGlobal) : false;
@@ -390,27 +319,6 @@ bool MetricFinder::isTargetSgGlobal(void) const
 bool MetricFinder::isTargetSgProcedure(void) const
 {
      return target_ ? (target_->variantT() == V_SgFunctionDefinition) : false;
-#if 0    //
-    // Liao 1/25/2013
-    // In ROSE using EDG 4.4, SgFunctionDefinition has more accurate file location info, which matches the locations of  { }
-    // But the profiling info has file locations for functions which match the first line of the function declaration.
-    // So we have to use SgFunctionDeclaration now.
-    bool rt = false; 
-    //rt = target_ ? (target_->variantT() == V_SgFunctionDeclaration) : false;
-    if (target_ == NULL)
-      rt = false;
-    else
-    {
-      const SgFunctionDeclaration* fdecl = isSgFunctionDeclaration (target_);
-      if (fdecl != NULL)
-      {
-        // Only try to match defining declaration, not prototypes
-        if (fdecl->get_definingDeclaration() == fdecl)
-          rt = true;
-      }
-    }
-    return rt; 
-#endif    
 }
 
 bool MetricFinder::isTargetSgLoop(void) const
@@ -433,15 +341,9 @@ bool MetricFinder::isTargetSgStatementNonScope(void) const
     return nonscope_stmt_target_ != 0;
 }
 
-#if 1
 bool MetricFinder::doLinesOverlap(RoseHPCT::Located * l) const
-#else
-        bool
-        MetricFinder::doLinesOverlap (const RoseHPCT::Located * l) const
-#endif
 {
     return ::doLinesOverlap(target_, l);
-    //return ::doLinesOverlap (target_, a, b);
 }
 
 //! Check if the target SgNode is a shadow node of a previously  matched 
@@ -473,12 +375,7 @@ bool MetricFinder::doLinesOverlap(RoseHPCT::Located * l) const
 // TODO A final top-down propagation phase may be needed to attribute the top level metric further
 // down the children and grandchildren nodes. But We don't see the need yet right now.
 // Liao, 2/3/2009
-#if 1
 bool MetricFinder::isShadowNode(RoseHPCT::IRNode* profNode) const
-#else
-        bool
-        MetricFinder::isShadowNode(const RoseHPCT::IRNode* profNode) const
-#endif
 {
     ROSE_ASSERT(historyRecord_!=NULL);
     ROSE_ASSERT(profNode!=NULL);
@@ -510,17 +407,8 @@ void MetricFinder::visit(TreeParamPtr_t tree)
         visit(dynamic_cast<File *>(tree->value));
 }
 
-#if 1
 void MetricFinder::visit(File* f)
-#else
-void
-MetricFinder::visit (const File* f)
-#endif
 {
-#if 0  // moved to pathFinder traversal   
-        //take advantage of this traversal to accumulate file nodes
-        RoseHPCT::profFileNodes_.insert(f);
-#endif    
         if (!doFilenamesMatch(target_, f->getName()))
             prune_branch_ = false; //  DXN
         else // match file name
@@ -532,12 +420,7 @@ MetricFinder::visit (const File* f)
         }
 }
 
-#if 1
 void MetricFinder::visit(Procedure* p)
-#else
-void
-MetricFinder::visit (const Procedure* p)
-#endif
 {
     if (doLinesOverlap(p))
     {
@@ -547,12 +430,7 @@ MetricFinder::visit (const Procedure* p)
     }
 }
 
-#if 1
 void MetricFinder::visit(Loop* l)
-#else
-void
-MetricFinder::visit (const Loop* l)
-#endif
 {
     if (doLinesOverlap(l))
     {
@@ -562,22 +440,9 @@ MetricFinder::visit (const Loop* l)
     }
 }
 
-#if 1
 void MetricFinder::visit(Statement* s)
-#else
-MetricFinder::visit (const Statement* s) // try to match target_ AST node with s profile node
-#endif
 {
-#if 0    
-  if ((target_->get_file_info()->get_line()==15) && (isSgExprStatement(target_)) && s->getFirstLine()==15)
-    cout<<endl;
-  //cout<<"found a statement prof IR node:"<<s->toString()<<endl;
-  //  take advantage of this traversal to accumulate statement nodes
-  //  This traversal can abort once a match is found so one execution will not collect all stmt nodes.
-  RoseHPCT::profStmtNodes_.insert(s);
-#endif    
             if (doLinesOverlap(s))
-            //if (doLinesOverlap (s->getFirstLine (), s->getLastLine ()))
             {
                 if (!isShadowNode(s))
                 // We only consider shadow SgNodes for statement profile results for now
@@ -719,6 +584,10 @@ void attachPostScopeStatement(SgScopeStatement* loop, const MetricAttr* attr_sag
         if (body != NULL)
         attachOne (body, attr_sage->getName (), attr_sage->clone (), verbose);
     }
+#else
+    ROSE_UNUSED(loop);
+    ROSE_UNUSED(attr_sage);
+    ROSE_UNUSED(verbose);
 #endif
 }
 
@@ -744,21 +613,9 @@ MetricAttachTraversal::getAttachedNodes(void)
 {
     return attached_;
 }
-#if 0
-std::set<const RoseHPCT::IRNode *>&
-MetricAttachTraversal::getProfFileNodes(void)
-{
-    return files_;
-}
-std::set<const RoseHPCT::IRNode *>&
-MetricAttachTraversal::getProfStmtNodes(void)
-{
-    return stmts_;
-}
-#endif
+
 void MetricAttachTraversal::visit(SgNode* n)
 {
-    static int exe_counter = 0; // used to collect file nodes of profir only once
     SgLocatedNode* n_loc = isSgLocatedNode(n);
     if (n_loc)
     {
@@ -767,7 +624,6 @@ void MetricAttachTraversal::visit(SgNode* n)
         // for current SgNode, find matching prof ir nodes
         finder.traverse(hpc_root_);
         // for collecting File nodes of profile IR
-        exe_counter++;
         if (finder.found())
         {
             if (enable_debug)
@@ -821,19 +677,6 @@ void MetricAttachTraversal::annotateSourceCode(void)
             text += " -> " + string(node->sage_class_name()) + " " + o.str() + " */\n";
             // attach the text before the node (node is e_after the text)
             SageInterface::addTextForUnparser(node, text, AstUnparseAttribute::e_after);
-#if 0
-            // Not all SgLocatedNode can have comments, so we use arbitrary text support instead
-            if ((isSgForInitStatement(node))||isSgTypedefSeq(node)||isSgCtorInitializerList(node))
-            {
-                cerr<<"Warning: annotation for the following Node is not allowed"<<endl;
-                cerr<<profileNode->toString()<<endl;
-                cerr<<node->sage_class_name()<<node->unparseToString()<<endl;
-            }
-            else
-            {
-                SageInterface::attachComment(node, text);
-            }
-#endif      
         }
     }
 }
@@ -875,22 +718,13 @@ void normalizeMetrics(SgProject* sage_root, MetricAttachTraversal::AttachedNodes
         const IRNode* i = ir_node->first;
         SgLocNodeSet_t& sg_nodes = ir_node->second;
 
-//        cout<<"==============================================="<<endl;
-//        cout<<"Debug:                    profile IR node:     "<<endl;
-//        cout<<i->toString()<<endl;
-//        cout<<"==============================================="<<endl;
         // Build a map, depth_map[k] == # of nodes at depth k
         using std::map;
         map<size_t, size_t> depth_map; //typedef std::set<SgLocatedNode *> SgLocNodeSet_t;
-//        cout<<"Debug:                     matched AST nodes:  "<<endl;
         for (SgLocNodeSet_t::iterator np = sg_nodes.begin(); np != sg_nodes.end(); ++np)
         {
           size_t depth = getTreeDepthAttr(*np);
           depth_map[depth]++;
-//          cout<<"-----------------------------------------------"<<endl;
-//          cout<<(*np)<<" "<<(*np)->class_name()<<" depth="<<depth<<endl;
-//          cout<<(*np)->unparseToString()<<endl;
-//          cout<<"-----------------------------------------------"<<endl;
         }
 
         // Normalize attributes stored in the profiling IR node: for each metric attached to the profiling IR
@@ -964,7 +798,7 @@ class MetricFixupTraversal: public AstSimpleProcessing
 {
 public:
     MetricFixupTraversal(const MetricNames_t& names, bool verbose = false);
-    void setVerbose(bool enable = false)
+    void setVerbose(bool /*enable*/ = false)
     {
         verbose_ = false;
     }
@@ -1022,21 +856,6 @@ void RoseHPCT::attachMetrics(const IRTree_t* hpc_root, SgProject* sage_root, boo
     {
         attacher.annotateSourceCode();
     }
-#if 0 // We use namespace level variables to accumulate them now
-    // Accumulate file metrics, used to find hot files later on
-    std::set<const RoseHPCT::IRNode *>&files = attacher.getProfFileNodes();
-    std::set<const RoseHPCT::IRNode *>::iterator iter= files.begin();
-    for (;iter!=files.end(); iter++)
-    profFileNodes_.insert(*iter);
-    // Accumulate non-scope stmt metrics, used to find hot stmts later on
-    std::set<const RoseHPCT::IRNode *>&stmts= attacher.getProfStmtNodes();
-    std::set<const RoseHPCT::IRNode *>::iterator iter2= stmts.begin();
-    cout<<"Store stmt prof IR nodes of count="<<stmts.size()<<endl;
-    for (;iter2!=stmts.end(); iter2++)
-    {
-        profStmtNodes_.insert(*iter2);
-    }
-#endif
 
     MetricAttachTraversal::AttachedNodes_t& attached = attacher.getAttachedNodes();
     // divide shared metrics up for each AST nodes: 100/2=500 for two nodes matching the same profile ir node
