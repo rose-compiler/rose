@@ -380,10 +380,10 @@ POETCode* FuseLoopInfo::toPOET(HandleMap&, const FuseLoopInfo&)
   ROSE_ABORT();
 }
 
-BlockSpec::BlockSpec(HandleMap& _handleMap,
+BlockSpec::BlockSpec(HandleMap& /*_handleMap*/,
                      LocalVar*, LoopTreeNode*, LoopBlocking*,
                      const std::vector<FuseLoopInfo>*)
-    : OptSpec(0, ""), handleMap(_handleMap)
+  : OptSpec(0, "") /*, handleMap(_handleMap)*/ // compiler warning: private field 'handleMap' is not used
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();

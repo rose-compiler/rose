@@ -242,7 +242,7 @@ class BlockSpec : public OptSpec
    std::vector<LoopInfo> loopVec; /*QY: the loops to block */ 
    /* POETCode* nonperfect; */ /*QY: the non-perfect loops*/ //warning: private fields not used
    /* LocalVar* blockPar, *ujPar; */ //warning: private fields not used
-   HandleMap& handleMap; // warning: private field 'handleMap' is not used
+   /* HandleMap& handleMap; */ // warning: private field 'handleMap' is not used
    unsigned loopnum;
 
    /*QY: compute the blocking dimension configuration */
