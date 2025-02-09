@@ -40,7 +40,6 @@ namespace AbstractMemoryObject
       bool operator < (const ObjSet& other) const ;
   };
 
-
   class LabeledAggregate_Impl : public LabeledAggregate
   {
     public:
@@ -76,7 +75,6 @@ namespace AbstractMemoryObject
       bool operator < (const ObjSet& other) const ;
   };
 
-
   //! A set of index values, could only have constant integer values or unknown values in this implementation.
   class IndexSet
   {
@@ -102,7 +100,6 @@ namespace AbstractMemoryObject
       Index_type type;
   };
 
-  
   // we reuse the ConstIndexSet if the value is the same
   class ConstIndexSet: public IndexSet
   {
@@ -131,11 +128,11 @@ namespace AbstractMemoryObject
     public:
       static UnknownIndexSet* get_inst();
       // unknown index may equal to other
-      bool operator== (const IndexSet & other) const {return true; };  // may be equal to any others
-      bool mayEqual (const IndexSet & other) const {return true; };  
-      bool mustEqual (const IndexSet & other) const {return false; }; 
+      bool operator== (const IndexSet & /*other*/) const { return true; };  // may be equal to any others
+      bool mayEqual (const IndexSet & /*other*/) const { return true; };
+      bool mustEqual (const IndexSet & /*other*/) const { return false; };
 
-      bool operator != (const IndexSet & other) const {return true; };  
+      bool operator != (const IndexSet & /*other*/) const { return true; };
       std::string toString() {return "[unknown]" ;};
     private:
       UnknownIndexSet (): IndexSet(Unknown_type) { }
@@ -177,7 +174,6 @@ namespace AbstractMemoryObject
       ObjSet* field; // this should be a named obj 
       LabeledAggregate* parent; 
   };
-
 
   // The connection to the ROSE AST, all concrete type, size , etc. information come from this side
   // -----------------------------------------------------------------------------------------------
@@ -231,7 +227,6 @@ namespace AbstractMemoryObject
       SgSymbol* getSymbol() {return anchor_symbol;}
 
       std::string getName() {return anchor_symbol->get_name().getString(); }
-
       std::string toString(); 
 
       bool operator== (const NamedObj& o2) const;
@@ -265,7 +260,6 @@ namespace AbstractMemoryObject
       bool mustEqual (const ObjSet& o2) const; 
   };
 
-
   //Derived classes for each kind of each category
   // expression object ------------------------------
   class ScalarExprObj: public Scalar_Impl, public ExprObj
@@ -297,7 +291,6 @@ namespace AbstractMemoryObject
       std::string toString();
   };
 
-  
   class LabeledAggregateExprObj: public LabeledAggregate_Impl, public ExprObj
   {
     public:
@@ -322,7 +315,6 @@ namespace AbstractMemoryObject
       bool mayEqual (const ObjSet& o2) const; 
       bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
-
   };
 
   class PointerExprObj: public Pointer_Impl, public ExprObj
@@ -364,7 +356,7 @@ namespace AbstractMemoryObject
     public:
 
       // simple constructor, a function symbol is enough
-      FunctionNamedObj (SgSymbol* s): NamedObj (s,s->get_type(), NULL, NULL) {}
+      FunctionNamedObj (SgSymbol* s): NamedObj (s,s->get_type(), nullptr, nullptr) {}
       // I am not sure when a function can be used as a child and an array element. But this is
       // provided just in case
       FunctionNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) {}
@@ -375,7 +367,6 @@ namespace AbstractMemoryObject
       bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
   };
-
 
   class LabeledAggregateNamedObj: public LabeledAggregate_Impl, public NamedObj
   {
@@ -405,7 +396,6 @@ namespace AbstractMemoryObject
 
       // number of dimensions of the array
       virtual size_t getNumDims();
-
 
   // rare case that an array is dereferenced, treated as array[0]
       ObjSet* getDereference () ;
@@ -458,20 +448,14 @@ namespace AbstractMemoryObject
       bool mayEqual (const ObjSet& o2) const; 
       bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
-
   };
-
 
   class LabeledAggregateAliasedObj : public  LabeledAggregate_Impl, public AliasedObj
   {
     public:
       LabeledAggregateAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
-      //TODO
-      // size_t fieldCount();
-      // std::list<LabeledAggregateField*> getElements() const;
       bool operator == (const ObjSet& o2) const; 
-
       bool mayEqual (const ObjSet& o2) const; 
       bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
@@ -482,14 +466,7 @@ namespace AbstractMemoryObject
     public:
       ArrayAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
-
-      //TODO
-      // ObjSet* getElements();
-      //  ObjSet* getElements(AbstractIndex* ai);
-      //  getNumDims();
-
       bool operator == (const ObjSet& o2) const; 
-
       bool mayEqual (const ObjSet& o2) const; 
       bool mustEqual (const ObjSet& o2) const; 
       std::string toString();
@@ -500,7 +477,6 @@ namespace AbstractMemoryObject
     public:
       PointerAliasedObj (SgType* t): AliasedObj(t){}
       ObjSet* getDereference ();
-      // ObjSet * getElements() const;
       bool equalPoints(Pointer & that);
       std::set<SgType*> getType();
       bool operator == (const ObjSet& o2) const; 
@@ -519,7 +495,6 @@ namespace AbstractMemoryObject
   ObjSet* createNamedOrAliasedObjSet(SgVarRefExp* r); // create NamedObjSet or AliasedObjSet (for pointer type) from a variable reference 
   ObjSet* createNamedObjSet(SgPntrArrRefExp* r); // create NamedObjSet from an array element access
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t); 
-  // ObjSet* createObjSet(SgNode*); // top level catch all case, declared in memory_object.h
 
   // Helper functions 
   // --------------------------------------
