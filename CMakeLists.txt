@@ -1568,11 +1568,20 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 ########################################################################################################################
 # Ancillary ROSE components. These are things that are not part of the ROSE library.
 ########################################################################################################################
-add_custom_target(tools)                 # ie "make tools"  
-add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose 
-add_custom_target(install-tools          # ie "make install_tools" 
-  COMMAND + $(CMAKE_COMMAND) --build tools/ --target install
-)
+add_custom_target(tools)                 # ie "make tools"
+
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+  add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose
+  add_custom_target(install-tools          # ie "make install-tools"
+    COMMAND ${CMAKE_COMMAND} --build tools/ --target install
+  )
+else()
+  # Ninja does not create a separate build.ninja file in tools/ like Make does
+  add_subdirectory(tools)                  # making tools is not separate from making rose
+  add_custom_target(install-tools          # ie "make install-tools" is called from top-level build.ninja
+    COMMAND ${CMAKE_COMMAND} --build . --target install
+  )
+endif()
 
 # 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged  
 if(ENABLE-TESTS-DIRECTORY)
