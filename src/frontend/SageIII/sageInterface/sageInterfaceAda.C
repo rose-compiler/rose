@@ -556,7 +556,7 @@ namespace Ada
   }
 
   long long int
-  staticIntegralValue(SgExpression* n)
+  staticIntegralValue(const SgExpression* n)
   {
     return sg::dispatch(IntegralValue{}, n);
   }
@@ -613,6 +613,16 @@ namespace Ada
   getArrayTypeInfo(SgType& atype)
   {
     return ArrayBounds::find(&atype, ArrayType::find(&atype));
+  }
+
+  SgExpression* boundsExpression(SgType* atype)
+  {
+    return DimRange::descend(atype);
+  }
+
+  SgExpression* boundsExpression(SgType& atype)
+  {
+    return boundsExpression(&atype);
   }
 
   namespace
@@ -1704,10 +1714,7 @@ namespace Ada
     }
 
 
-    bool isElementaryInteger(const SgType* ty) { return isSgTypeLongLong(ty) != nullptr; }
-    bool isElementaryReal   (const SgType* ty) { return isSgTypeLongDouble(ty) != nullptr; }
-
-    bool isElementaryFixed  (const SgType* ty)
+    bool isUniversalFixedType(const SgType* ty)
     {
       const SgTypeFixed* fx = isSgTypeFixed(ty);
 
@@ -1716,11 +1723,11 @@ namespace Ada
 
     // bool isElementaryAccess(const SgType* ty) { return isNullptrType(ty); }
 
-    bool isElementaryType(const SgType* ty)
+    bool isUniversalType(const SgType* ty)
     {
-      return (  isElementaryInteger(ty)
-             || isElementaryReal(ty)
-             || isElementaryFixed(ty)
+      return (  isIntegerType(ty)
+             || isFloatingPointType(ty)
+             || isUniversalFixedType(ty)
              //~ || isElementaryAccess(ty)
              );
     }
@@ -1736,12 +1743,12 @@ namespace Ada
       if (isSgTypeDefault(lhs)) return rhs;
       if (isSgTypeDefault(rhs)) return lhs;
 
-      // \todo check that the elementary value can be converted
+      // \todo check that the universal value can be converted
       //       to the other type.
-      if (isElementaryType(lhs)) return rhs;
-      if (isElementaryType(rhs)) return lhs;
+      if (isUniversalType(lhs)) return rhs;
+      if (isUniversalType(rhs)) return lhs;
 
-      // this should be a deep test..
+      // this should be followed by a deep comparison..
       if (lhs == rhs) return lhs;
 
       return nullptr;
@@ -1772,6 +1779,97 @@ namespace Ada
       }
 
       return lhsDesc.typerep();
+    }
+
+    std::size_t
+    namedArgumentPosition(const SgInitializedNamePtrList& paramList, const std::string& name)
+    {
+      SgInitializedNamePtrList::const_iterator aaa = paramList.begin();
+      SgInitializedNamePtrList::const_iterator zzz = paramList.end();
+      SgInitializedNamePtrList::const_iterator pos = std::find_if( aaa, zzz,
+                                                                   [&name](const SgInitializedName* n) -> bool
+                                                                   {
+                                                                     ASSERT_not_null(n);
+                                                                     return stringeq(name, n->get_name().getString());
+                                                                   }
+                                                                 );
+
+      if (pos == zzz)
+      {
+        // \todo this currently occurs for derived types, where the publicly
+        //       declared ancestor type differs from the actual parent.
+        //       see test case: ancestors.adb
+        throw std::logic_error(std::string{"unable to find argument position for "} + name);
+      }
+
+      return std::distance(aaa, pos);
+    }
+
+
+    SgInitializedName*
+    findAssociatedParameter( const SgFunctionParameterList& parmlst,
+                             const SgExprListExp& argslst,
+                             const SgExpression& arg
+                           )
+    {
+      const SgExpressionPtrList& explst = argslst.get_expressions();
+      const auto                 argbeg = explst.begin();
+      const auto                 arglim = explst.end();
+      const auto                 argpos = std::find(argbeg, arglim, &arg);
+      if (argpos == arglim) return nullptr;
+
+      const std::size_t          argnum = std::distance(argbeg, argpos);
+      const std::size_t          posArgLimit = positionalArgumentLimit(argslst);
+      const SgInitializedNamePtrList& parameters = parmlst.get_args();
+
+      if (argnum < posArgLimit)
+        return parameters.at(argnum);
+
+      if (const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(&arg))
+        return parameters.at(namedArgumentPosition(parameters, actarg->get_argument_name()));
+
+      return nullptr;
+    }
+
+    struct ContextTypeFinder : sg::DispatchHandler<SgType*>
+    {
+        explicit
+        ContextTypeFinder(const SgExpression& ex)
+        : Base(), sgexpr(&ex)
+        {}
+
+        void handle(const SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+        void handle(const SgExpression&)          { /* res = nullptr; */ }
+
+        void handle(const SgExprListExp& n)
+        {
+          const SgFunctionParameterList* prmlist = calleeParameterList(isSgFunctionCallExp(n.get_parent()));
+          if (prmlist == nullptr) return;
+
+          const SgInitializedName* ini = findAssociatedParameter(*prmlist, n, *sgexpr);
+          if (ini == nullptr) return;
+
+          res = ini->get_type();
+        }
+
+        void handle(const SgReturnStmt& n)
+        {
+          const SgFunctionDeclaration& fndcl = sg::ancestor<SgFunctionDeclaration>(n);
+          const SgFunctionType&        fnty  = SG_DEREF(fndcl.get_type());
+
+          res = fnty.get_return_type();
+        }
+
+      private:
+        const SgExpression* sgexpr;
+    };
+
+    SgType*
+    typeFromContext(const SgExpression& n)
+    {
+      if (n.get_parent() == nullptr) return nullptr;
+
+      return sg::dispatch(ContextTypeFinder{n}, n.get_parent());
     }
 
 
@@ -1873,12 +1971,31 @@ namespace Ada
 
       void handle(const SgConditionalExp& n)
       {
+        /*
         // \todo implement Ada type resolution
         //       http://www.ada-auth.org/standards/rm12_w_tc1/html/RM-4-5-7.html#I2901
+        if (SgType* ctxTy = typeFromContext(n))
+        {
+          res = TypeDescription{ctxTy};
+          return;
+        }
+        */
+
         TypeDescription truDesc = typeOfExpr(n.get_true_exp());
         TypeDescription falDesc = typeOfExpr(n.get_false_exp());
 
         res = TypeDescription{ commonDenominator(truDesc.typerep(), falDesc.typerep()) };
+      }
+
+      void handle(const SgFunctionCallExp& n)
+      {
+        if (SgType* ctxTy = typeFromContext(n))
+        {
+          res = TypeDescription{ctxTy};
+          return;
+        }
+
+        handle(sg::asBaseType(n));
       }
 
       // Currently, we have no concept of class-wide type,
@@ -1893,6 +2010,7 @@ namespace Ada
 
       // an actual argument expression could have one of the special cases
       //   underneath. => use typeOfExpr..
+      // \todo alternatively the type could be derived from the parameter definition
       void handle(const SgActualArgumentExpression& n)
       {
         res = typeOfExpr(n.get_expression());
@@ -2866,30 +2984,6 @@ namespace Ada
   simpleArgumentExtractor(const SgFunctionCallExp& n, bool /* dummy */)
   {
     return SG_DEREF(n.get_args()).get_expressions();
-  }
-
-  std::size_t
-  namedArgumentPosition(const SgInitializedNamePtrList& paramList, const std::string& name)
-  {
-    SgInitializedNamePtrList::const_iterator aaa = paramList.begin();
-    SgInitializedNamePtrList::const_iterator zzz = paramList.end();
-    SgInitializedNamePtrList::const_iterator pos = std::find_if( aaa, zzz,
-                                                                 [&name](const SgInitializedName* n) -> bool
-                                                                 {
-                                                                   ASSERT_not_null(n);
-                                                                   return stringeq(name, n->get_name().getString());
-                                                                 }
-                                                               );
-
-    if (pos == zzz)
-    {
-      // \todo this currently occurs for derived types, where the publicly
-      //       declared ancestor type differs from the actual parent.
-      //       see test case: ancestors.adb
-      throw std::logic_error(std::string{"unable to find argument position for "} + name);
-    }
-
-    return std::distance(aaa, pos);
   }
 
   /// resize the container if \ref pos is outside the valid index range

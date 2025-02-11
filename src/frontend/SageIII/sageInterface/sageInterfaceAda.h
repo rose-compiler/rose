@@ -249,6 +249,11 @@ namespace Ada
   FlatArrayType getArrayTypeInfo(SgType& atype);
   /// @}
 
+  /// returns the bounds expression of a type
+  /// @{
+  SgExpression* boundsExpression(SgType& atype);
+  SgExpression* boundsExpression(SgType* atype);
+  /// @}
 
   /// returns a type from the standard package with name \p name.
   /// \param  the name of a type in the standard package
@@ -314,7 +319,7 @@ namespace Ada
   /// \returns an integral value for an Ada expression if possible
   /// \throws  an exception otherwise.
   long long int
-  staticIntegralValue(SgExpression* n);
+  staticIntegralValue(const SgExpression* n);
 
 
   /// returns the expression of an expression statement, or nullptr if s is some other node
@@ -424,7 +429,7 @@ namespace Ada
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
   /// @}
 
-  /// returns true if arg is a used as l-value in the call
+  /// returns true if arg is used as l-value in the call
   /// @{
   bool isOutInoutArgument(const SgFunctionCallExp& call, const SgExpression& arg);
   bool isOutInoutArgument(const SgFunctionCallExp* call, const SgExpression* arg);
