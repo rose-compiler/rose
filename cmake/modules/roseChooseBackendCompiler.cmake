@@ -108,8 +108,9 @@ endif()
 
 # --------check Backend CXX compiler -----------------------
 if(ENABLE-CPP)
-  include(roseCMakeDetermineCXXCompiler)
-
+  if(CMAKE_CROSSCOMPILING) 
+    include(roseCMakeDetermineCXXCompiler)
+  endif() 
   # Ada Support  
   if(ENABLE-ADA) 
      # Ensure GNAT_HOME is defined

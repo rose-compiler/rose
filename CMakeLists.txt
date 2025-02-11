@@ -960,7 +960,7 @@ if(NOT WIN32 AND NOT APPLE)
     # libc.so 
     find_library(C_LIB c REQUIRED) 
     # libm.so 
-    find_library(M_LIB m)
+    find_library(M_LIB m REQUIRED)
     # Find libquadmath.so, prioritize ${GCC_LIB_DIRS}
     file(GLOB GCC_LIB_DIRS "/usr/lib/gcc/x86_64-redhat-linux/*") 
     find_library(QM_LIB 
