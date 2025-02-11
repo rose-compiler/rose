@@ -90,8 +90,9 @@ SgBinaryOp::get_type() const
              }
           else if (lhsBase != NULL && rhsBase != NULL && variantT() == V_SgSubtractOp)
              {
-            // TODO: return ptrdiff_t
-               return lhsType;
+            // PL (1/27/2025): We return a long as the ptrdiff_t type because ROSE configures
+	    // EDG to emit a long when encountering a ptrdiff_t.
+               return SgTypeLong::createType();
              }
         }
 
