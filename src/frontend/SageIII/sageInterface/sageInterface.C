@@ -10396,7 +10396,7 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
 #endif
           bool returningNullSurroundingStatement = false;
        // while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
-          while ((returningNullSurroundingStatement == false) && (surroundingStatement != NULL) && surroundingStatement_fileId != targetStmt->get_file_info()->get_file_id())
+          while ((returningNullSurroundingStatement == false) && (surroundingStatement != NULL) && surroundingStatement_fileId != targetStmt->get_file_info()->get_file_id() && surroundingStatement_fileId !=Sg_File_Info::TRANSFORMATION_FILE_ID)
              {
             // Start by going up in the source sequence.
             // This is a declaration from the wrong file so go to the next statement.
