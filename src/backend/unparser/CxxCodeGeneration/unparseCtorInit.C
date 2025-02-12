@@ -35,43 +35,6 @@ static bool isAssociatedWithCxx11_initializationList(SgConstructorInitializer * 
   return is_cxx11_initialization_list;
 }
 
-//! Fixes generated name-qualification for constructor calls
-//! Call to constructor `Nspc::Abc()` is internally qualified as `Nspc::Abc::Abc()`
-//! Which produces the name-qualifier `Nspc::Abc::`
-//! Older compiler accept that qualification but not modern compilers which simply expect `Nspc::`
-//! When needed, this code removes the trailing `::`. In this case, it return `false` to signify that the constructor name does not need to be unparsed separately
-static bool trimCtorNameQual(std::string & qualifier) {
-#if DEBUG__trimCtorNameQual
-  printf("Enter trimTypenameFromCtorNameQual()\n");
-  printf("  qualifier = %s\n", qualifier.c_str());
-#endif
-
-#ifdef USE_CMAKE
-#  ifdef CMAKE_COMPILER_IS_GNUCXX && !( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4) )
-  return true;
-#  endif
-#  ifdef CMAKE_COMPILER_IS_CLANG && !(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
-  return true;
-#  endif
-#else
-#  if BACKEND_CXX_IS_GNU_COMPILER && !( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4) )
-  return true;
-#  endif
-#  if BACKEND_CXX_IS_CLANG_COMPILER && !(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)
-  return true;
-#  endif
-#endif
-
-  size_t size = qualifier.size();
-  if (size == 0) return true;
-  ROSE_ASSERT(size >= 2);
-  qualifier = qualifier.substr(0, size-2);
-#if DEBUG__trimCtorNameQual
-  printf("  qualifier = %s\n", qualifier.c_str());
-#endif
-  return false;
-}
-
 void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & info) {
 #if DEBUG__unparseCtorInit
   printf ("Enter Unparse_ExprStmt::unparseCtorInit():\n");
@@ -138,6 +101,8 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
     if (pp_con_init->get_declaration() != nullptr) {
       ppnode = nullptr;
     }
+  } else if (isSgInitializedName(pnode) || isSgExprStatement(ppnode) || isSgStatement(ppnode)) {
+      ppnode = nullptr; // FIXME probably not needed
   }
   while (ppnode != nullptr) {
     ppnode = ppnode->get_parent();
@@ -172,16 +137,62 @@ void Unparse_ExprStmt::unparseCtorInit(SgExpression * expr, SgUnparse_Info & inf
     SgUnparse_Info info_for_typename(info);
     if (ctor_class || ctor_decl) {
       std::string qualifier = con_init->get_qualified_name_prefix().str();
-      bool unparse_ctor_name = ctor_decl != nullptr ? trimCtorNameQual(qualifier) : true;
 #if DEBUG__unparseCtorInit
-      printf ("  unparse_ctor_name = %s\n", unparse_ctor_name ? "true" : "false");
       printf ("  qualifier = %s\n", qualifier.c_str());
 #endif
-      if (ppnode != nullptr) {
-        curprint(qualifier.c_str());
+      bool need_ctor_name = true;
+      size_t length = qualifier.size();
+      if (length > 0 && ctor_decl != nullptr) {
+        ROSE_ASSERT(length > 2);
+        ROSE_ASSERT(qualifier[length-1] == ':');
+        ROSE_ASSERT(qualifier[length-2] == ':');
+//         auto cursor = length-3;
+//         size_t tpl_depth = 0;
+//         bool found_valid_delim = false;
+//         while (cursor > 0) {
+//           char current = qualifier[cursor--];
+//           char next = qualifier[cursor];
+// #if DEBUG__unparseCtorInit
+//           printf ("    current = %c\n", current);
+// #endif
+//           switch (current) {
+//               case '>': {
+//                 if (next != '>') tpl_depth++;
+//                 break;
+//               }
+//               case '<': {
+//                 if (next != '<') tpl_depth--;
+//                 break;
+//               }
+//               case ':': {
+//                 found_valid_delim = (tpl_depth == 0);
+//                 break;
+//               }
+//               default: ;
+//           }
+//           if (found_valid_delim) break;
+// #if DEBUG__unparseCtorInit
+//           printf ("    tpl_depth = %d\n", tpl_depth);
+// #endif
+//         }
+//         if (cursor > 0) {
+//           qualifier = qualifier.substr(0,cursor+2);
+//         } else {
+//           qualifier = "";
+//         }
+// #if DEBUG__unparseCtorInit
+//         printf ("  cursor = %d\n", cursor);
+//         printf ("  qualifier = %s\n", qualifier.c_str());
+// #endif
+        qualifier = qualifier.substr(0,length-2);
+        need_ctor_name = false;
+#if DEBUG__unparseCtorInit
+        printf ("  qualifier = %s\n", qualifier.c_str());
+#endif
       }
+      curprint(qualifier.c_str());
 
-      if (unparse_ctor_name) {
+      if (need_ctor_name) {
         SgTemplateInstantiationMemberFunctionDecl * tpl_ctor_decl = isSgTemplateInstantiationMemberFunctionDecl(ctor_decl);
         if (ctor_class) {
           info_for_typename.set_reference_node_for_qualification(con_init);
