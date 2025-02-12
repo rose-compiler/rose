@@ -22,20 +22,20 @@ using namespace XMLUtil;
 bool XMLUtil::XMLParser::did_init_ = false;
 
 XMLUtil::XMLParser::XMLParser (void)
-  : did_parse_ (false), doc_ (NULL), handler_ (NULL)
+  : did_parse_{false}, doc_{nullptr}, handler_{nullptr}
 {
   init ();
 }
 
 XMLUtil::XMLParser::XMLParser (const char* infile)
-  : did_parse_ (false), doc_ (NULL), handler_ (NULL)
+  : did_parse_{false}, doc_{nullptr}, handler_{nullptr}
 {
   init ();
   parse (infile);
 }
 
 XMLUtil::XMLParser::XMLParser (const string& infile)
-  : did_parse_ (false), doc_ (NULL), handler_ (NULL)
+  : did_parse_{false}, doc_{nullptr}, handler_{nullptr}
 {
   init ();
   parse (infile);
@@ -43,9 +43,9 @@ XMLUtil::XMLParser::XMLParser (const string& infile)
 
 XMLUtil::XMLParser::~XMLParser (void)
 {
-  if (doc_ != NULL)
+  if (doc_ != nullptr)
     xmlFreeDoc (doc_);
-  if (handler_ != NULL)
+  if (handler_ != nullptr)
     delete handler_;
 }
 
@@ -104,40 +104,39 @@ endElem_ (void* user_data, const xmlChar* name)
 } // extern "C"
 
 //! List of SAX callbacks
-static
-xmlSAXHandler sax_handlers_ =
-  {
-    NULL, //internalSubsetSAXFunc internalSubset;
-    NULL, //isStandaloneSAXFunc isStandalone;
-    NULL, //hasInternalSubsetSAXFunc hasInternalSubset;
-    NULL, //hasExternalSubsetSAXFunc hasExternalSubset;
-    NULL, //resolveEntitySAXFunc resolveEntity;
-    NULL, //getEntitySAXFunc getEntity;
-    NULL, //entityDeclSAXFunc entityDecl;
-    NULL, //notationDeclSAXFunc notationDecl;
-    NULL, //attributeDeclSAXFunc attributeDecl;
-    NULL, //elementDeclSAXFunc elementDecl;
-    NULL, //unparsedEntityDeclSAXFunc unparsedEntityDecl;
-    NULL, //setDocumentLocatorSAXFunc setDocumentLocator;
-    startDoc_, //startDocumentSAXFunc startDocument;
-    endDoc_, //endDocumentSAXFunc endDocument;
-    startElem_, //startElementSAXFunc startElement;
-    endElem_, //endElementSAXFunc endElement;
-    NULL, //referenceSAXFunc reference;
-    NULL, //charactersSAXFunc characters;
-    NULL, //ignorableWhitespaceSAXFunc ignorableWhitespace;
-    NULL, //processingInstructionSAXFunc processingInstruction;
-    NULL, //commentSAXFunc comment;
-    NULL, //warningSAXFunc warning;
-    NULL, //errorSAXFunc error;
-    NULL //fatalErrorSAXFunc fatalError;
-  };
+static xmlSAXHandler sax_handlers_ = {
+    .internalSubset = nullptr,
+    .isStandalone = nullptr,
+    .hasInternalSubset = nullptr,
+    .hasExternalSubset = nullptr,
+    .resolveEntity = nullptr,
+    .getEntity = nullptr,
+    .entityDecl = nullptr,
+    .notationDecl = nullptr,
+    .attributeDecl = nullptr,
+    .elementDecl = nullptr,
+    .unparsedEntityDecl = nullptr,
+    .setDocumentLocator = nullptr,
+    .startDocument = startDoc_,
+    .endDocument = endDoc_,
+    .startElement = startElem_,
+    .endElement = endElem_,
+    .reference = nullptr,
+    .characters = nullptr,
+    .ignorableWhitespace = nullptr,
+    .processingInstruction = nullptr,
+    .comment = nullptr,
+    .warning = nullptr,
+    .error = nullptr,
+    .fatalError = nullptr,
+    .getParameterEntity = nullptr
+};
 
 bool
 XMLUtil::XMLParser::parse (const char* infile)
 {
   did_parse_ = false;
-  if (infile != NULL)
+  if (infile != nullptr)
     {
       handler_ = new XMLHandler;
       if (xmlSAXUserParseFile (&sax_handlers_, (void *)handler_, infile) >= 0)
@@ -149,7 +148,7 @@ XMLUtil::XMLParser::parse (const char* infile)
 const XMLUtil::XMLHandler::node_t *
 XMLUtil::XMLParser::getDoc (void) const
 {
-  return (didParse() && handler_ != NULL) ? handler_->getRoot () : NULL;
+  return (didParse() && handler_ != nullptr) ? handler_->getRoot () : nullptr;
 }
 
 /* eof */

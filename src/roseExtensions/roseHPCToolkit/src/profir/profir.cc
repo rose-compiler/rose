@@ -349,18 +349,24 @@ std::string File::toString() const
 }
 
 Procedure::Procedure (long int i, const std::string& name, long int l) 
-// DQ (12/6/2016): Eliminate warning we want to consider to be an error: -Wreorder.
-// : id(i), IRNode (name), Located(l, l)
-   : IRNode (name), Located(l, l), id(i)
+  : IRNode{name},
+    Located{static_cast<size_t>(l),static_cast<size_t>(l),nullptr},
+    id{i}
 {
+  std::cerr << "Procedure::Procedure: unused private variable id = " << id << "\n";
 }
 
 std::string Procedure::toString() const
 {
   std::string result;
   result = "Procedure "+IRNode::toString() + " @ " + Located::toString();
-  // result = "Procedure "+ IRNode::toString() + " @ line "+ boost::lexical_cast<std::string>(line);
   return result;
+}
+
+CallSite::CallSite(long int i, long int l)
+  : id{i}, line{l}
+{
+  std::cerr << "CallSite::CallSite: unused private variable id = " << id << "\n";
 }
 
 std::string CallSite::toString() const
@@ -368,6 +374,12 @@ std::string CallSite::toString() const
   std::string result;
   result = "CallSite " + IRNode::toString()  + " @ line " + boost::lexical_cast<std::string>(line);
   return result;
+}
+
+ProcFrame::ProcFrame(long int i, const std::string &n, long int l)
+  : id{i}, name{n}, line{l}
+{
+  std::cerr << "ProcFrame::ProcFrame: unused private variable id = " << id << "\n";
 }
 
 std::string ProcFrame::toString() const
@@ -387,7 +399,6 @@ std::string Loop::toString() const
 {
   std::string result;
   result = "Loop " +IRNode::toString() +" @ " + Located::toString();
-  // result = "Loop " + IRNode::toString() + " @ line" + boost::lexical_cast<std::string>(line);
   return result;
 }
 
@@ -395,29 +406,20 @@ std::string Statement::toString() const
 {
   std::string result;
   result = "Statement "+ IRNode::toString() + "@"+ Located::toString();
-  // result = "Statement "+ IRNode::toString() + " @ line " + boost::lexical_cast<std::string>(line);
   return result;
 }
 
-// Statement::Statement (void): id(0), hasMatchedSgNode(false)
 Statement::Statement (void): id(0)
 {
 }
 
-// Statement::Statement (const Statement& s): id(s.getId()), hasMatchedSgNode(s.hasMatchingSgNode()), Located (s)
 Statement::Statement (const Statement& s)
-// DQ (12/6/2016): Eliminate warning we want to consider to be an error: -Wreorder.
-// : id(s.getId()), Located (s)
    : Located (s), id(s.getId())
 {
     setHasMatchingSgNode(s.hasMatchingSgNode());
 }
 
-// Statement::Statement (const std::string& name, id_t i, size_t l):
-//         id(i), hasMatchedSgNode(false), IRNode (name), Located(l, l)
 Statement::Statement (const std::string& name, id_t i, size_t l)
-// DQ (12/6/2016): Eliminate warning we want to consider to be an error: -Wreorder.
-// : id(i), IRNode (name), Located(l, l)
    : IRNode (name), Located(l, l), id(i)
 {
 }

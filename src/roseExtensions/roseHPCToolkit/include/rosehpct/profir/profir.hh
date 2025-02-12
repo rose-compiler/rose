@@ -150,7 +150,7 @@ namespace RoseHPCT
   public:
     Located (void);
     Located (const Located& l);
-    Located (size_t b, size_t e, File* f=NULL);
+    Located (size_t b, size_t e, File* f=nullptr);
     virtual ~Located (void);
 
     File* getFileNode(void) const;
@@ -247,7 +247,6 @@ namespace RoseHPCT
     public:
       virtual std::string toString() const;
   };
-  
 
   //! Loader module node ("LM")
   class Module : public IRNode
@@ -280,7 +279,7 @@ namespace RoseHPCT
       long int id;
       long int line;
   public:
-    CallSite (long int i, long int l): id(i), line(l) {}
+    CallSite(long int i, long int l);
     virtual std::string toString() const;
   };
 
@@ -291,7 +290,7 @@ namespace RoseHPCT
       std::string name;
       long int line;
   public:
-      ProcFrame (long int i, const std::string& n, long int l): id(i), name(n), line(l) {}
+    ProcFrame(long int i, const std::string& n, long int l);
     virtual std::string toString() const;
   };
 

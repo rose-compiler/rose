@@ -69,6 +69,8 @@ namespace XMLUtil
              const std::string& v);
     //! Copy constructor.
     XMLAttr (const XMLAttr& a);
+    //! Copy assignment operator
+    XMLAttr& operator=(const XMLAttr&) = default;
 
     //! Function to match an attribute by name
     struct MatchName
@@ -94,6 +96,8 @@ namespace XMLUtil
     XMLElem (const std::string& n);
     //! Copy constructor
     XMLElem (const XMLElem& e);
+    //! Copy assignment operator
+    XMLElem& operator=(const XMLElem&) = default;
 
     //! Retrieve the value of an attribute by name
     std::string getAttr (const std::string & n) const;
