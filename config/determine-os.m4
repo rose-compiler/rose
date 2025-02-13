@@ -110,8 +110,11 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
                     darwin23*)
                         OS_release=14.3
                         ;;
+                    darwin24*)
+                        OS_release=15.3
+                        ;;
                     *)
-                        AC_MSG_ERROR([Apple macOS version not recognized as either darwin13 through darwin23 (macOS 10.9-14.3) ... (build_os = $build_os)])
+                        AC_MSG_ERROR([Apple macOS version not recognized as either darwin13 through darwin24 (macOS 10.9-15.3) ... (build_os = $build_os)])
                         ;;
                 esac
                 ;;
