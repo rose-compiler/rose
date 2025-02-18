@@ -135,12 +135,12 @@ Policy-Checker:
     script:
         - ./$TEST_DIRECTORY/util/policy_check.sh
 
-RHEL8-Main:
+RHEL9-Main:
     extends: .develop-base
     tags:
         - workpool:large:rhel9
 
-RHEL9-Main:
+RHEL8-Main:
     extends: .develop-base
     tags:
         - workpool:large:rhel9
@@ -150,7 +150,13 @@ RHEL7-Main:
     tags:
         - workpool:large
 
-CMake-Build:
+RHEL9-CMake:
+    extends: .develop-base
+
+RHEL8-CMake:
+    extends: .develop-base
+
+RHEL7-CMake:
     extends: .develop-base
 
 WINE:
