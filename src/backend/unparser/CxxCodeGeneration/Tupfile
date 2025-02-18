@@ -1,16 +1,22 @@
 include_rules
 
 run $(librose_compile)				\
-    helpers.C					\
+    helpers_exprs.C				\
+    helpers_stmts.C				\
+    helpers_types.C				\
     unparseAggrInit.C				\
     unparseAssnInit.C				\
     unparseBracedInit.C				\
+    unparseClassType.C				\
     unparseCompInit.C				\
     unparseCtorInit.C				\
     unparseCxx_expressions.C			\
     unparseCxx_statements.C			\
     unparseCxx_types.C				\
     unparseDesignatedInitializer.C		\
+    unparseNewOp.C				\
+    unparseTemplateArgumentList.C		\
+    unparseType.C				\
     unparseVarDeclStmt.C
     
 run $(public_header)				\
