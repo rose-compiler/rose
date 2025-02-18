@@ -58,18 +58,21 @@
 // A more traditional name than ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #define ROSE_ENABLE_BINARY_ANALYSIS
 
-// Whether to enable Boost Serialization for saving and restoring ROSE internal analysis state.
+// Whether to enable Boost Serialization for saving and restoring ROSE internal analysis state. If you want to enable serialization
+// even if this CPP code doesn't enable it, simply add `-DROSE_ENABLE_BOOST_SERIALIZATION` to your C++ compiler flags.
 #if !defined(ROSE_ENABLE_BOOST_SERIALIZATION) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     #if defined(BOOST_WINDOWS)
         // Lacks POSIX file system, so we can't monitor the I/O progress
     #elif !defined(__clang__) && defined(__GNUC__) && \
         __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
-        // GCC <= 4.2.4 gets segfaults compiling this file
+        // GCC <= 4.2.4 gets segfaults compiling SerialIo.C
+    #elif defined(ROSE_HOST_OS_IS_RHEL) && ROSE_HOST_OS_IS_RHLE == 8 && \
+        defined(__GNUC__) && __GNUC__ == 8 && __GNUC_MINOR__ == 5
+        // GCC 8.5.x on RHEL 8 takes very long to compile SerialIo.C (the assembly step is what takes long)
     #else
         #define ROSE_ENABLE_BOOST_SERIALIZATION
     #endif
 #endif
-#undef ROSE_ENABLE_BOOST_SERIALIZATION
 
 // ARM AArch64 A64 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
 #if !defined(ROSE_ENABLE_ASM_AARCH64) && defined(ROSE_HAVE_CAPSTONE)

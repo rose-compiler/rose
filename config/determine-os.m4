@@ -59,6 +59,7 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
 
     OS_vendor="ROSE_unknown_OS";
     OS_release="ROSE_unknown_OS_release";
+    ROSE_HOST_OS_IS_RHEL=
 
     if test "x$ROSE_LSB_RELEASE" = xno; then
         dnl Most OS's output their name buried in /etc/issue
@@ -130,6 +131,14 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
                         ;;
                 esac
                 ;;
+	    pc)
+	        dnl "pc" is autoconf's name for linux vendors
+		if test -r /etc/os-release; then
+		    if test $(bash -c '. /etc/os-release && echo $ID') = "rhel"; then
+		        ROSE_HOST_OS_IS_RHEL=$(bash -c '. /etc/os-release && echo ${VERSION_ID%%.*}')
+		    fi
+		fi
+		;;
         esac  
     else
         OS_vendor=`lsb_release -is`
@@ -199,4 +208,16 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
     # Major and minor release numbers for REDHAT OS.
     AC_SUBST(OS_major_release_number)
     AC_SUBST(OS_minor_release_number)
+
+    # Major release number for RHEL
+    if test "$ROSE_HOST_OS_IS_RHEL" = ""; then
+        if test "$REDHAT" = yes; then
+            if test "$OS_major_release_number" != ""; then
+	        ROSE_HOST_OS_IS_RHEL=$OS_major_release_number
+	    fi
+	fi
+    fi
+    if test "$ROSE_HOST_OS_IS_RHEL" != ""; then
+        AC_DEFINE_UNQUOTED([ROSE_HOST_OS_IS_RHEL], $ROSE_HOST_OS_IS_RHEL, [RedHat major version or undefined])
+    fi
 ])

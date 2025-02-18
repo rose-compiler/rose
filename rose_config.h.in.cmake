@@ -32,6 +32,9 @@
 /* Define user-friendly ROSE version */
 #cmakedefine ROSE_PACKAGE_VERSION "@ROSE_PACKAGE_VERSION@"
 
+/* Whether the OS release is Red Hat Enterprise Linux. */
+#cmakedefine ROSE_HOST_OS_IS_RHEL @ROSE_HOST_OS_IS_RHEL@
+
 // REQUIRED LIBS that should be found in CMakeLists.txt -- find_package() */ 
 /* Define to 1 if you have the `dl' library (-ldl). */
 #cmakedefine HAVE_LIBDL @HAVE_LIBDL@

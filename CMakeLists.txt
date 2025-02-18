@@ -187,6 +187,25 @@ message(STATUS "The ROSE version integer is ${ROSE_VERSION}")
 message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
 
 ########################################################################################################################
+# Operating system information
+########################################################################################################################
+
+# Test whether the host OS (the OS compiling ROSE) is Red Hat Enterprise Linux, and if so, set ROSE_HOST_OS_IS_RHEL to
+#the RHEL major version number.
+set(ROSE_HOST_OS_IS_RHEL "")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  execute_process(
+    COMMAND bash -c ". /etc/os-release && echo -n $ID"
+    OUTPUT_VARIABLE ROSE_HOST_OS_ID)
+  if ("${ROSE_HOST_OS_ID}" MATCHES "rhel")
+    execute_process(
+      COMMAND bash -c ". /etc/os-release && echo -n \${VERSION_ID%%.*}"
+      OUTPUT_VARIABLE ROSE_HOST_OS_VERSION_MAJOR)
+    set(ROSE_HOST_OS_IS_RHEL "${ROSE_HOST_OS_VERSION_MAJOR}")
+  endif()
+endif()
+
+########################################################################################################################
 # Initialize the leading part of the Rose::initialize token
 ########################################################################################################################
 # Configuration synopsis used by Rose::initialize.  The ROSE_CONFIG_TOKEN is #define'd as a string in rose_config.h and
@@ -1188,6 +1207,9 @@ if(VERBOSE)
   # is TRUE on Windows when using a Borland compiler
   message(STATUS "BORLAND:                            ${BORLAND}")
 
+  # is RHEL
+  message(STATUS "Red Hat version:                    ${ROSE_HOST_OS_IS_RHEL}")
+
   # Microsoft compiler
   message(STATUS "MSVC:                               ${MSVC}")
   message(STATUS "MSVC_IDE:                           ${MSVC_IDE}")
@@ -1197,7 +1219,7 @@ if(VERBOSE)
   message(STATUS "MSVC80:                             ${MSVC80}")
   message(STATUS "CMAKE_COMPILER_2005:                ${CMAKE_COMPILER_2005}")
 
-# set this to true if you don't want to rebuild the object files if the rules have changed,
+  # set this to true if you don't want to rebuild the object files if the rules have changed,
   # but not the actual source files or headers (e.g. if you changed the some compiler switches)
   message(STATUS "CMAKE_SKIP_RULE_DEPENDENCY:         ${CMAKE_SKIP_RULE_DEPENDENCY}")
 
