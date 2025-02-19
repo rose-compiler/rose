@@ -239,7 +239,7 @@ CilMethod::code() const {
 }
 
 void
-CilMethod::decode(const Disassembler::BasePtr &disassembler) const {
+CilMethod::decode(const Disassembler::BasePtr & /*disassembler*/) const {
   std::cerr << "CilMethod::decode():UNIMPLEMENTED\n";
 }
 

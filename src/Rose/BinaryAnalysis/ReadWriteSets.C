@@ -78,7 +78,7 @@ ReadWriteSets::localVariables(const Variables::AccessFlags required, const Varia
 }
 
 void
-ReadWriteSets::print(std::ostream &out, const std::string &prefix) const {
+ReadWriteSets::print(std::ostream &out, const std::string & /*prefix*/) const {
     for (const Variables::StackVariable &var: stackVariables_.values()) {
         Variables::AccessFlags access;
         for (const Variables::InstructionAccess &ia: var.instructionsAccessing())

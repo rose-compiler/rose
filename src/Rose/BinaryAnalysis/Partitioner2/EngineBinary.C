@@ -86,7 +86,7 @@ EngineBinary::factory() {
 }
 
 bool
-EngineBinary::matchFactory(const std::vector<std::string> &specimen) const {
+  EngineBinary::matchFactory(const std::vector<std::string> & /*specimen*/) const {
     // EngineBinary is the default. It treats all inputs as binaries even if they are something else. Therefore,
     // this engine class is usually the first one registered and therefore the last one matched.
     return true;
@@ -1212,7 +1212,7 @@ EngineBinary::obtainLoader() {
 }
 
 void
-EngineBinary::loadContainers(const std::vector<std::string> &fileNames) {
+EngineBinary::loadContainers(const std::vector<std::string> & /*fileNames*/) {
     // Load the interpretation if it hasn't been already
     if (interpretation() && (!interpretation()->get_map() || interpretation()->get_map()->isEmpty())) {
         obtainLoader();

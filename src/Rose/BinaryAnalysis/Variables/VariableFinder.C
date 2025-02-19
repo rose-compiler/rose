@@ -237,7 +237,7 @@ VariableFinder::instance(const Settings &settings) {
 }
 
 Sawyer::CommandLine::SwitchGroup
-VariableFinder::commandLineSwitches(Settings &settings) {
+VariableFinder::commandLineSwitches(Settings & /*settings*/) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup switches("Variable finder switches");
