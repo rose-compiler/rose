@@ -984,7 +984,7 @@ ROSE_DLL_API SgChooseExpression * buildChooseExpression_nfi();
 ROSE_DLL_API SgInitializedName* buildInitializedName(const SgName & name, SgType* type, SgInitializer* init = NULL);
 ROSE_DLL_API SgInitializedName* buildInitializedName(const std::string &name, SgType* type);
 ROSE_DLL_API SgInitializedName* buildInitializedName(const char* name, SgType* type);
-ROSE_DLL_API SgInitializedName* buildInitializedName_nfi(const SgName & name, SgType* type, SgInitializer* init);
+ROSE_DLL_API SgInitializedName* buildInitializedName_nfi(const SgName & name, SgType* type, SgInitializer* init, SgVariableDeclaration* declptr=NULL);
 
 //! Build SgFunctionParameterTypeList from SgFunctionParameterList
 ROSE_DLL_API SgFunctionParameterTypeList *

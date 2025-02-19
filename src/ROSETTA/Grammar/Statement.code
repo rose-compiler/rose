@@ -13280,9 +13280,8 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
    {
      ROSE_ASSERT (this != NULL);
 
-     SgInitializedName* c_item = SageBuilder::buildInitializedName_nfi(var_name, type, initializer);
+     SgInitializedName* c_item = SageBuilder::buildInitializedName_nfi(var_name, type, initializer, this);
      ROSE_ASSERT (c_item != NULL);
-     c_item->set_parent(this);
 
      initializeData (info, c_item);
    }

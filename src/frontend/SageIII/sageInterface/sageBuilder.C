@@ -1256,7 +1256,7 @@ SgInitializedName * SageBuilder::buildInitializedName ( const char* name, SgType
   return buildInitializedName(var_name,type);
 }
 
-SgInitializedName * SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init) {
+SgInitializedName * SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init, SgVariableDeclaration* declptr /*=NULL*/) {
 #if DEBUG__buildInitializedName
   std::cout << "SageBuilder::buildInitializedName_nfi" << std::endl;
   std::cout << "  name = " << name << std::endl;
@@ -1265,6 +1265,12 @@ SgInitializedName * SageBuilder::buildInitializedName_nfi ( const SgName & name,
 
   SgInitializedName* initializedName = new SgInitializedName(name,type,init);
   ROSE_ASSERT(initializedName != NULL);
+
+  if (declptr)
+  {
+      initializedName->set_parent(declptr);
+      initializedName->set_declptr(declptr);
+  }
 
   setOneSourcePositionNull(initializedName);
 
