@@ -21,7 +21,7 @@ void WholeProgramDependenceAnalysis::CollectPastResults(std::istream& dep_file, 
     Log.push("Done collecting past results of dependence analysis");
 }
 
-WholeProgramDependenceAnalysis:: WholeProgramDependenceAnalysis(int argc, const char** argv) {
+WholeProgramDependenceAnalysis:: WholeProgramDependenceAnalysis(int argc, const char** argv) : main_table(false), annot_table(true) {
   std::vector<std::string> argvList(argv, argv + argc);
   CmdOptions::GetInstance()->SetOptions(argvList);
   sageProject = new SgProject (argvList);
@@ -81,7 +81,7 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
     Log.push("Computing dependences for " + input->unparseToString());
     for (const auto& p : params) {
         DebugSaveDep([&p](){return "saving for function parameter:" + AstInterface::AstToString(p); });
-        if (!main_table.SaveOperatorSideEffect(input, p.get_ptr(), AstUtilInterface::OperatorSideEffect::Parameter, 0)) {
+        if (!annot_table.SaveOperatorSideEffect(input, p.get_ptr(), AstUtilInterface::OperatorSideEffect::Parameter, 0)) {
            DebugSaveDep([](){return "Did not save dependene" ; });
         }
      }

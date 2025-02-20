@@ -19,7 +19,8 @@ class WholeProgramDependenceAnalysis  {
     DebugLog Log = DebugLog("-debug-dep-analysis");
 
     WholeProgramDependenceAnalysis(int argc, const char** argv); 
-    WholeProgramDependenceAnalysis() : sageProject(0) {}
+    WholeProgramDependenceAnalysis() 
+      : sageProject(0), main_table(false), annot_table(true) {}
 
     // Read the dependences from an external file.
     void CollectPastResults(std::istream& input_file, std::istream* annot_file = 0); 

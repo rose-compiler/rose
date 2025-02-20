@@ -318,33 +318,34 @@ void DependenceTable:: save_dependence(const DependenceEntry& e) {
   DebugLog DebugSaveDep("-debugdep");
   DebugSaveDep([&e](){ return "processing " + e.to_string(); });
 
-  // Save into annotation  if necessary.
-  if (e.type_entry() == "parameter") {
-    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
-    OperatorSideEffectDescriptor* desc1 = funcAnnot->get_modify_descriptor(e.first_entry(), true);
-    assert(desc1 != 0);
-    desc1->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
-    OperatorSideEffectDescriptor* desc2 = funcAnnot->get_read_descriptor(e.first_entry(), true);
-    assert(desc2 != 0);
-    desc2->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
-    DebugSaveDep([&e](){ return "Saving parameter " + e.second_entry(); });
-  }
-  else if (e.type_entry() == "modify") {
-    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
-    OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
-    assert(desc != 0);
-    DebugSaveDep([&e](){ return "processing " + e.second_entry(); });
-    SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
-    desc->push_back(var);
-    DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });
-
-  } else if (e.type_entry() == "read") {
-    OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
-    OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
-    assert(desc != 0);
-    SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
-    desc->push_back(var);
-    DebugSaveDep([&var](){ return "Saving read " + var.toString(); });
+  if (update_annotations_) {
+    // Save into annotation  if necessary.
+    if (e.type_entry() == "parameter") {
+      OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+      OperatorSideEffectDescriptor* desc1 = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+      assert(desc1 != 0);
+      desc1->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+      OperatorSideEffectDescriptor* desc2 = funcAnnot->get_read_descriptor(e.first_entry(), true);
+      assert(desc2 != 0);
+      desc2->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+      DebugSaveDep([&e](){ return "Saving parameter " + e.second_entry(); });
+    }
+    else if (e.type_entry() == "modify") {
+      OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+      OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+      assert(desc != 0);
+      DebugSaveDep([&e](){ return "processing " + e.second_entry(); });
+      SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
+      desc->push_back(var);
+      DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });
+    } else if (e.type_entry() == "read") {
+      OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+      OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
+      assert(desc != 0);
+      SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
+      desc->push_back(var);
+      DebugSaveDep([&var](){ return "Saving read " + var.toString(); });
+    }
   }
   DependenceTable::SaveDependence(DependenceEntry(e));
 }

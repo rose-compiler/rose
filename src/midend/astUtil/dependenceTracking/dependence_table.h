@@ -145,7 +145,8 @@ class CollectTransitiveDependences : public CollectDependences {
 //! Stores dependence entries in a table.
 class DependenceTable : public CollectDependences {
   public:
-    DependenceTable() {}
+    DependenceTable(bool update_annotations) 
+      : update_annotations_(update_annotations) {}
 
     // Output the new dependences into a new file. 
     void OutputDependences(std::ostream& output);
@@ -196,6 +197,8 @@ class DependenceTable : public CollectDependences {
 
 
   private:
+    // Whether the internal entries need to be reflected in annotations.
+    bool update_annotations_;
     // The signatures of all dependence entities.
     std::vector<std::string> saved_dependences_sig_;
     std::map<std::string, std::vector<DependenceEntry> > saved_dependences_relation_;
