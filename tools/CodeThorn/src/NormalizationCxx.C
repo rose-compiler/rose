@@ -10,6 +10,7 @@
 #include "Normalization.h"
 #include "NormalizationCxx.h"
 #include "RoseCompatibility.h"
+#include "Memoizer.h"
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
@@ -255,114 +256,6 @@ namespace
 
   // end transformations
 
-  //
-  // functor/function decorator to memoize results
-
-
-  /// \private
-  template <class Fn>
-  struct fn_traits : fn_traits<decltype(&Fn::operator())> { /* use overloads */ };
-
-  /// \private
-  /// for const member operator() and non-mutable lambda's
-  template <class R, class C, class... Args>
-  struct fn_traits<R (C::*) (Args...) const>
-  {
-    typedef std::tuple<Args...> arguments_t;
-    typedef R                   result_t;
-  };
-
-  /// \private
-  /// for non-const member operator() and mutable lambda's
-  template <class R, class C, class... Args>
-  struct fn_traits<R (C::*) (Args...)>
-  {
-    typedef std::tuple<Args...> arguments_t;
-    typedef R                   result_t;
-  };
-
-  /// \private
-  /// for freestanding functions
-  template <class R, class... Args>
-  struct fn_traits<R (*) (Args...)>
-  {
-    typedef std::tuple<Args...> arguments_t;
-    typedef R                   result_t;
-  };
-
-  /// \brief   decorator on functions to cache and reuse results
-  /// \details On the first invocation with a set of arguments, the result
-  ///          is computed and memoized. On later invocations, the memoized
-  ///          result is returned.
-  /// \tparam Fn the type of the function or functor
-  /// \todo unordered_map may be faster
-  template <class Fn>
-  struct Memoizer
-  {
-      typedef Fn                                      func_t;
-      typedef typename fn_traits<func_t>::result_t    result_t;
-      typedef typename fn_traits<func_t>::arguments_t arguments_t;
-      typedef std::map<arguments_t, result_t>         result_cache_t;
-
-      explicit
-      Memoizer(Fn f)
-      : func(f)
-      {}
-
-      Memoizer()                           = default;
-      Memoizer(const Memoizer&)            = default;
-      Memoizer(Memoizer&&)                 = default;
-      Memoizer& operator=(Memoizer&&)      = default;
-      Memoizer& operator=(const Memoizer&) = default;
-
-      /// \tparam Args an argument pack consisting of less-than comparable components
-      /// \param  args the arguments to func
-      /// \return the result of calling func(args...)
-      template <class... Args>
-      result_t& operator()(Args... args)
-      {
-        typedef typename result_cache_t::iterator cache_iterator;
-
-        cache_iterator pos = cache.find(std::tie(args...));
-
-        if (pos != cache.end())
-        {
-          ++num_hits;
-          return pos->second;
-        }
-
-        arguments_t desc(args...);
-
-        return cache.emplace(std::move(desc), func(std::forward<Args...>(args)...)).first->second;
-      }
-
-      void clear() { cache.clear(); }
-
-      size_t size() const { return cache.size(); }
-      size_t hits() const { return num_hits; }
-
-    private:
-      size_t         num_hits = 0;
-      func_t         func;
-      result_cache_t cache;
-  };
-
-  template <class Fn>
-  std::ostream& operator<<(std::ostream& os, const Memoizer<Fn>& memo)
-  {
-    return os << memo.hits()
-              << " <hits -- size> "
-              << memo.size();
-  }
-
-  template <class Fn>
-  inline
-  Memoizer<Fn> memoizer(Fn fn)
-  {
-    return Memoizer<Fn>(fn);
-  }
-
-  // end memoization wrapper
 
   //
   // convenience functions + functors

@@ -46,8 +46,7 @@ struct ObjectLayoutEntry : ObjectLayoutEntryBase
   const ObjectLayoutElement& element() const { return std::get<1>(*this); }
 };
 
-
-class ObjectLayout : private std::vector<ObjectLayoutEntry>
+class ObjectLayout : std::vector<ObjectLayoutEntry>
 {
   public:
     using base = std::vector<ObjectLayoutEntry>;
@@ -59,6 +58,7 @@ class ObjectLayout : private std::vector<ObjectLayoutEntry>
     using base::begin;
     using base::end;
     using base::emplace_back;
+    using base::at;
 
     /// returns true, iff this is an abstract class
     /// \note this information is carried over from ClassData
@@ -66,11 +66,39 @@ class ObjectLayout : private std::vector<ObjectLayoutEntry>
     bool abstractClass()          const { return hasAbstractMethods; }
     void abstractClass(bool bval)       { hasAbstractMethods = bval; }
     /// \}
-    private:
-      bool hasAbstractMethods = false;
+    
+  private:
+    bool hasAbstractMethods = false;
 };
 
-using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;
+using ObjectLayoutAnalysisBase = std::unordered_map<ClassKeyType, ObjectLayout>;
+
+class ObjectLayoutAnalysis : ObjectLayoutAnalysisBase
+{
+  public:
+    using base = ObjectLayoutAnalysisBase;
+    using base::base;
+
+    using base::value_type;
+    using base::mapped_type;
+    using base::key_type;
+    using base::begin;
+    using base::end;
+    using base::iterator;
+    using base::const_iterator;
+    //~ using base::operator[];
+    using base::emplace;
+    using base::find;
+    using base::size;
+    using base::clear;  
+    
+    /// replaces base::at with functions that can provide better diagnostics
+    ///   in case \p k is not known.
+    /// \{
+          mapped_type& at (const key_type& k);
+    const mapped_type& at (const key_type& k) const;
+    /// \}    
+};
 
 /// computes a sample object layout table for classes in \p all
 /// \param all                   the result of the class hierarchy analysis
@@ -78,14 +106,18 @@ using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;
 /// \details
 ///    The generated object layout assumes an object model that is vtable based.
 ///    The generated layout is similar but not exactly the same as the IA64 Itanium object model.
-ObjectLayoutContainer
+ObjectLayoutAnalysis
 computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable = true);
 
+// \note using declaration for backward compatibility
+using ObjectLayoutContainer = ObjectLayoutAnalysis;
 
+
+using VirtualCallOffsetBase = std::tuple<std::ptrdiff_t, ClassKeyType>;
 /// \note part of the IA64 object model, currently not computed
-struct VirtualCallOffset : std::tuple<std::ptrdiff_t, ClassKeyType>
+struct VirtualCallOffset : VirtualCallOffsetBase
 {
-  using base = std::tuple<std::ptrdiff_t, ClassKeyType>;
+  using base = VirtualCallOffsetBase;
   using base::base;
 
   std::tuple_element<0, base>::type
@@ -95,10 +127,12 @@ struct VirtualCallOffset : std::tuple<std::ptrdiff_t, ClassKeyType>
   assoicatedClass() const { return std::get<1>(*this); }
 };
 
+using VirtualBaseOffsetBase = std::tuple<std::ptrdiff_t, ClassKeyType>;
+
 /// \note part of the IA64 object model, currently not computed
-struct VirtualBaseOffset : std::tuple<std::ptrdiff_t, ClassKeyType>
+struct VirtualBaseOffset : VirtualBaseOffsetBase
 {
-  using base = std::tuple<std::ptrdiff_t, ClassKeyType>;
+  using base = VirtualBaseOffsetBase;
   using base::base;
 
   std::tuple_element<0, base>::type
@@ -108,12 +142,15 @@ struct VirtualBaseOffset : std::tuple<std::ptrdiff_t, ClassKeyType>
   associatedClass() const { return std::get<1>(*this); }
 };
 
+
+using OffsetToTopBase = std::tuple<std::ptrdiff_t>;
+
 /// \brief the offset to the top of the object (e.g., used for casts to void*)
 ///        returns the number of v-table entries, between the sub-object and
 ///        the address of the primary vtable.
-struct OffsetToTop : std::tuple<std::ptrdiff_t>
+struct OffsetToTop : OffsetToTopBase
 {
-  using base = std::tuple<std::ptrdiff_t>;
+  using base = OffsetToTopBase;
   using base::base;
 
   /// A return value of 0 indicates the primary object,
@@ -122,10 +159,12 @@ struct OffsetToTop : std::tuple<std::ptrdiff_t>
   offset() const { return std::get<0>(*this); }
 };
 
+using TypeInfoPointerBase = std::tuple<ClassKeyType>;
+
 /// \brief pointer to RTTI
-struct TypeInfoPointer : std::tuple<ClassKeyType>
+struct TypeInfoPointer : TypeInfoPointerBase
 {
-  using base = std::tuple<ClassKeyType>;
+  using base = TypeInfoPointerBase;
   using base::base;
 
   std::tuple_element<0, base>::type
@@ -133,10 +172,12 @@ struct TypeInfoPointer : std::tuple<ClassKeyType>
 };
 
 
+using VirtualFunctionEntryBase = std::tuple<FunctionKeyType, ClassKeyType, bool, bool, bool>;
+
 /// \brief virtual function pointer
-struct VirtualFunctionEntry : std::tuple<FunctionKeyType, ClassKeyType, bool, bool, bool>
+struct VirtualFunctionEntry : VirtualFunctionEntryBase
 {
-  using base = std::tuple<FunctionKeyType, ClassKeyType, bool, bool, bool>;
+  using base = VirtualFunctionEntryBase;
   using base::base;
 
   /// returns the function representation
@@ -172,19 +213,13 @@ using VTableLayoutElement = boost::variant< VirtualCallOffset,
                                             VirtualFunctionEntry
                                           >;
 
-/*
-struct VTableSection
-{
-  ClassKeyType ref;
-  size_t       numInherited;
-  size_t       numTotal;
-  bool         isVirtual;
-};
-*/
+using VTableSectionBase = std::tuple<ClassKeyType, std::uint32_t, std::uint32_t, std::uint32_t, bool>;
 
-struct VTableSection : std::tuple<ClassKeyType, std::uint32_t, std::uint32_t, std::uint32_t, bool>
+/// A VTableSection corresponds to a segment of a vtable that is associated with a class
+///   a direct non-virtual base class, or a virtual base class (direct and indirect).
+struct VTableSection : VTableSectionBase
 {
-  using base = std::tuple<ClassKeyType, std::uint32_t, std::uint32_t, std::uint32_t, bool>;
+  using base = VTableSectionBase;
   using base::base;
 
   std::tuple_element<0, base>::type associatedClass() const { return std::get<0>(*this); }
@@ -200,13 +235,13 @@ struct VTableSection : std::tuple<ClassKeyType, std::uint32_t, std::uint32_t, st
   void virtualBase(std::tuple_element<4, base>::type val)     { std::get<4>(*this) = val; }
 };
 
+using VTableLayoutBase = std::vector<VTableLayoutElement>;
 
-class VTableLayout : private std::vector<VTableLayoutElement>
+/// VTable Model
+class VTableLayout : VTableLayoutBase
 {
   public:
-    using base = std::vector<VTableLayoutElement>;
-    // using base::base;
-
+    using base = VTableLayoutBase;
     using VTableSections = std::vector<VTableSection>;
 
     explicit
@@ -225,34 +260,75 @@ class VTableLayout : private std::vector<VTableLayoutElement>
     //~ using base::emplace_back;
     using base::push_back;
 
+    /// returns all vtable sections
+    /// \{
           VTableSections& vtableSections()       { return sections; }
     const VTableSections& vtableSections() const { return sections; }
+    /// \}
 
-    const VTableSection& virtualBaseSection(ClassKeyType) const;
+    /// returns the vtable section associated with a virtual base class \p key
+    const VTableSection& virtualBaseSection(ClassKeyType key) const;
 
-    VTableSection& createVTableSection()
-    {
-      sections.emplace_back(nullptr, 0, 0, size(), false);
-      return sections.back();
-    }
+    /// creates a new vtable section
+    VTableSection& createVTableSection();
 
-    // returns the vtable base address (the index where a vtable would point at)
+    /// returns the vtable base address (the index where a vtable would point at)
     size_t vtableAddress() const;
 
+    /// the class associated with this vtable
     ClassKeyType getClass() const { return clazz; }
 
+    /// property abstractClass
+    /// \{
     bool   isAbstractClass() const { return isAbstract; }
     void   isAbstractClass(bool v) { isAbstract = v; }
-
+    /// \}
+    
+    /// return the \p i ^th element in vtable section \p sec
+    /// \{
+          VTableLayoutElement& at(const VTableSection& sec, std::size_t i);
+    const VTableLayoutElement& at(const VTableSection& sec, std::size_t i) const;
+    /// \}
+    
   private:
     ClassKeyType   clazz;
     VTableSections sections;
     bool           isAbstract;
-
 };
 
 
-using VTableLayoutContainer = std::unordered_map<ClassKeyType, VTableLayout>;
+using VTableLayoutAnalysisBase = std::unordered_map<ClassKeyType, VTableLayout>;
+
+/// A collection of vtables for classes that have one
+class VTableLayoutAnalysis : VTableLayoutAnalysisBase
+{
+  public:
+    using base = VTableLayoutAnalysisBase;
+    using base::base;
+
+    using base::value_type;
+    using base::mapped_type;
+    using base::key_type;
+    using base::begin;
+    using base::end;
+    using base::iterator;
+    using base::const_iterator;
+    //~ using base::operator[];
+    using base::emplace;
+    using base::find;
+    using base::size;
+    using base::clear;
+
+    /// replaces base::at with functions that can provide better diagnostics
+    ///   in case \p k is not known.
+    /// \{
+          mapped_type& at (const key_type& k);
+    const mapped_type& at (const key_type& k) const;
+    /// \}
+};
+
+// \note using declaration for backward compatibility
+using VTableLayoutContainer = VTableLayoutAnalysis;
 
 /// computes a sample post-object construction virtual function table for classes in \p all
 /// \param all the result of the class hierarchy analysis
@@ -260,10 +336,10 @@ using VTableLayoutContainer = std::unordered_map<ClassKeyType, VTableLayout>;
 /// \details
 ///    The generated layout is similar but not exactly the same as the IA64 Itanium object model.
 ///    virtual function tables for constructors are different, and their layout generation unsupported at this time.
-VTableLayoutContainer
+VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa);
 
-VTableLayoutContainer
+VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa, const RoseCompatibilityBridge& rcb);
 
 }

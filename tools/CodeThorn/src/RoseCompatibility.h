@@ -17,6 +17,7 @@ constexpr
 unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
 
 
+using AnyKeyType            = const SgNode*;
 using ClassKeyType          = const SgClassDefinition*;
 using FunctionTypeKeyType   = const SgFunctionType*;
 using TypeKeyType           = const SgType*;
@@ -93,6 +94,9 @@ class RoseCompatibilityBridge
     /// returns a string representation for \p vid
     std::string nameOf(FunctionKeyType fid) const;
 
+    /// returns a unique numeric number for id
+    std::intptr_t numericId(AnyKeyType id) const;
+
     /// compares the name of functions \p lhs and \p rhs
     /// \param lhs some function
     /// \param rhs some function
@@ -151,6 +155,9 @@ class RoseCompatibilityBridge
 
     /// returns iff \p id is a pure virtual member function
     bool isPureVirtual(FunctionKeyType id) const;
+
+    /// returns iff a definition for \p id exists in the AST
+    bool hasDefinition(FunctionKeyType id) const;
 
     /// returns a function that maps a FunctionKeyType to std::string
     FuncNameFn functionNomenclator() const;

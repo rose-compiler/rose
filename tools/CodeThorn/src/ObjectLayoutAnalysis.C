@@ -540,6 +540,29 @@ namespace
                                 rcb
                               );
   }
+  
+  // TClassAnalysis = ClassAnalysis or const ClassAnalysis
+  template <class TLayoutAnalysis>
+  inline
+  auto
+  lookupAux(TLayoutAnalysis& m, const typename TLayoutAnalysis::key_type& key, const char* code)
+    -> decltype(*m.find(key))
+  {
+    auto pos = m.find(key);
+
+    if (pos != m.end())
+      return *pos;
+
+    msgError() << "\nUnable to find representation for class " << ct::typeNameOf(key) 
+               << "\n  * Number of known classes (in " << code << "): " << m.size()
+               << std::endl;
+
+    if (m.size() == 0)
+      msgError() << code << " found 0 classes"
+                 << std::endl;
+
+    throw std::out_of_range("Unable to find class in LayoutAnalysis.");
+  }
 }
 
 namespace CodeThorn
@@ -554,10 +577,9 @@ computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable)
           [&all, &res, onlyClassesWithVTable]
           (const ClassAnalysis::value_type& clazz) -> void
           {
-            if (!onlyClassesWithVTable || clazz.second.hasVirtualTable())
-            {
-              res[clazz.first] = computeObjectLayout(all, res, clazz);
-            }
+            if (onlyClassesWithVTable && !clazz.second.hasVirtualTable()) return;
+            
+            res.emplace(clazz.first, computeObjectLayout(all, res, clazz));
           };
 
   topDownTraversal(all, objectLayoutComputation);
@@ -566,7 +588,7 @@ computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable)
 
 
 
-VTableLayoutContainer
+VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa, const RoseCompatibilityBridge& rcb)
 {
   VTableLayoutContainer   res;
@@ -583,13 +605,16 @@ computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vf
   return res;
 }
 
-VTableLayoutContainer
+VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa)
 {
   RoseCompatibilityBridge rcb;
 
   return computeVTableLayouts(all, vfa, rcb);
 }
+
+//
+// VTableLayout
 
 const VTableSection&
 VTableLayout::virtualBaseSection(ClassKeyType key) const
@@ -601,6 +626,57 @@ VTableLayout::virtualBaseSection(ClassKeyType key) const
   pos = std::find_if(pos, lim, pred);
   ROSE_ASSERT(pos != lim);
   return *pos;
+}
+
+VTableSection& 
+VTableLayout::createVTableSection()
+{
+  sections.emplace_back(nullptr, 0, 0, size(), false);
+  return sections.back();
+}
+
+VTableLayoutElement& 
+VTableLayout::at(const VTableSection& sec, std::size_t i)
+{
+  return this->base::at(sec.startOffset() + i);
+}
+
+const VTableLayoutElement& 
+VTableLayout::at(const VTableSection& sec, std::size_t i) const
+{
+  return this->base::at(sec.startOffset() + i);
+}
+
+
+
+//
+// VTableLayoutAnalysis
+
+const VTableLayoutAnalysis::mapped_type&
+VTableLayoutAnalysis::at(const VTableLayoutAnalysis::key_type& k) const
+{
+  return lookupAux(*this, k, "VTableLayoutAnalysis").second;
+}
+
+VTableLayoutAnalysis::mapped_type&
+VTableLayoutAnalysis::at(const VTableLayoutAnalysis::key_type& k)
+{
+  return lookupAux(*this, k, "VTableLayoutAnalysis").second;
+}
+
+//
+// ObjectLayoutAnalysis
+
+const ObjectLayoutAnalysis::mapped_type&
+ObjectLayoutAnalysis::at(const ObjectLayoutAnalysis::key_type& k) const
+{
+  return lookupAux(*this, k, "ObjectLayoutAnalysis").second;
+}
+
+ObjectLayoutAnalysis::mapped_type&
+ObjectLayoutAnalysis::at(const ObjectLayoutAnalysis::key_type& k)
+{
+  return lookupAux(*this, k, "ObjectLayoutAnalysis").second;
 }
 
 }

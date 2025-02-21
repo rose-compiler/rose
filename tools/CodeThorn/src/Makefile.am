@@ -45,6 +45,7 @@ CODETHORN_SOLO_HEADER_FILES=\
   Evaluator.h \
   ExecutionTrace.h \
   HSetMaintainer.h \
+  Memoizer.h \
   ReadWriteData.h \
   WorkListSeq.h
 
@@ -62,6 +63,7 @@ CODETHORN_HEADER_FILES=\
   BoolLattice.h \
   CallString.h \
   CallGraphAnalysis.h \
+  CallGraphExport.h \
   CFAnalysis.h \
   ClassHierarchyAnalysis.h \
   ClassHierarchyWriter.h \
@@ -182,6 +184,7 @@ CODETHORN_SOURCE_FILES=\
   AstNodeInfo.C \
   BoolLattice.C \
   CallGraphAnalysis.C \
+  CallGraphExport.C \
   CallString.C \
   CFAnalysis.C \
   ClassHierarchyAnalysis.C \

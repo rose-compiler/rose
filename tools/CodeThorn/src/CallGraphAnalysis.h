@@ -1,9 +1,10 @@
-#ifndef CALL_GRAPH2_H
-#define CALL_GRAPH2_H 2
+#ifndef CALL_GRAPH_ANALYSIS_H
+#define CALL_GRAPH_ANALYSIS_H 20250214
 
 #include <sage3basic.h>
 #include <tuple>
 #include <Sawyer/Graph.h>
+
 #include "ClassHierarchyAnalysis.h"
 
 /*!
@@ -59,4 +60,4 @@ namespace CodeThorn
   // CallGraph generateCallGraphFromNormalizedAST(SgProject* proj);
 } // end of namespace CodeThorn
 
-#endif /* CALL_GRAPH2_H */
+#endif /* CALL_GRAPH_ANALYSIS_H */

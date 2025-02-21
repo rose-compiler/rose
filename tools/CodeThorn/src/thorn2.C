@@ -21,6 +21,7 @@
 #include "ClassHierarchyAnalysis.h"
 #include "ObjectLayoutAnalysis.h"
 #include "ClassHierarchyWriter.h"
+#include "Memoizer.h"
 
 namespace ct  = CodeThorn;
 namespace si  = SageInterface;
@@ -31,121 +32,6 @@ using namespace CodeThorn;
 
 const std::string thorn2version = "0.9.6";
 
-namespace
-{
-
-/// \private
-template <class Fn>
-struct fn_traits : fn_traits<decltype(&Fn::operator())> { /* use overloads */ };
-
-/// \private
-/// for const member operator() and non-mutable lambda's
-template <class R, class C, class... Args>
-struct fn_traits<R (C::*) (Args...) const>
-{
-  typedef std::tuple<Args...> arguments_t;
-  typedef R                   result_t;
-};
-
-/// \private
-/// for non-const member operator() and mutable lambda's
-template <class R, class C, class... Args>
-struct fn_traits<R (C::*) (Args...)>
-{
-  typedef std::tuple<Args...> arguments_t;
-  typedef R                   result_t;
-};
-
-/// \private
-/// for freestanding functions
-template <class R, class... Args>
-struct fn_traits<R (*) (Args...)>
-{
-  typedef std::tuple<Args...> arguments_t;
-  typedef R                   result_t;
-};
-
-/*
-template <class Elem>
-void printArgs(std::ostream& os, Elem&& elem)
-{
-  os << elem << ", ";
-}
-
-template <class Elem, class... Args>
-void printArgs(std::ostream& os, Elem&& elem, Args&&... args)
-{
-  printArgs(os, elem);
-  printArgs(os, args...);
-}
-*/
-
-/// \brief   decorator on functions to cache and reuse results
-/// \details On the first invocation with a set of arguments, the result
-///          is computed and memoized. On later invocations, the memoized
-///          result is returned.
-/// \tparam Fn the type of the function or functor
-/// \todo unordered_map may be faster
-template <class Fn>
-struct Memoizer
-{
-    typedef Fn                                      func_t;
-    typedef typename fn_traits<func_t>::result_t    result_t;
-    typedef typename fn_traits<func_t>::arguments_t arguments_t;
-    typedef std::map<arguments_t, result_t>         result_cache_t;
-
-    explicit
-    Memoizer(Fn f)
-    : func(f)
-    {}
-
-    Memoizer()                           = default;
-    Memoizer(const Memoizer&)            = default;
-    Memoizer(Memoizer&&)                 = default;
-    Memoizer& operator=(Memoizer&&)      = default;
-    Memoizer& operator=(const Memoizer&) = default;
-
-    /// \tparam Args an argument pack consisting of less-than comparable components
-    /// \param  args the arguments to func
-    /// \return the result of calling func(args...)
-    template <class... Args>
-    result_t& operator()(Args&&... args)
-    {
-      typedef typename result_cache_t::iterator cache_iterator;
-
-      cache_iterator pos = cache.find(std::tie(args...));
-
-      if (pos != cache.end())
-      {
-        ++num_hits;
-        return pos->second;
-      }
-
-      arguments_t desc(args...);
-      result_t    res = func(std::forward<Args>(args)...);
-      auto        cached = cache.emplace(std::move(desc), std::move(res));
-      assert(cached.second);
-
-      return cached.first->second;
-    }
-
-    void clear() { cache.clear(); }
-
-    size_t size() const { return cache.size(); }
-    size_t hits() const { return num_hits; }
-
-  private:
-    size_t         num_hits = 0;
-    func_t         func;
-    result_cache_t cache;
-};
-
-template <class Fn>
-inline
-Memoizer<Fn> memoizer(Fn fn)
-{
-  return Memoizer<Fn>(fn);
-}
 
 std::string encodedName(std::string origname, const char* prefix, size_t maxlen)
 {
@@ -352,8 +238,6 @@ const std::string Parameters::trav_memorypool("from_memorypool");
 const std::string Parameters::chk_traversals("check_traversals");
 const std::string Parameters::opt_none("");
 
-
-} // anonymous namespace
 
 
 struct Acuity

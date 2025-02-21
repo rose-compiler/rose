@@ -303,7 +303,7 @@ namespace
         boost::apply_visitor(*this, el.element());
       }
 
-      virtual void printClassHeader(const ct::ObjectLayoutContainer::value_type& el)
+      virtual void printClassHeader(const ct::ObjectLayoutAnalysis::value_type& el)
       {
         out() << "class " << escapeName(className(el.first));
       }
@@ -366,7 +366,7 @@ namespace
           edges.emplace_back(&el, el.ref, el.isVirtual, el.isDirect);
       }
 
-      void printClassHeader(const ct::ObjectLayoutContainer::value_type& el) override
+      void printClassHeader(const ct::ObjectLayoutAnalysis::value_type& el) override
       {
         currentClass = el.first;
 
@@ -450,7 +450,7 @@ namespace
         // out() << std::endl;
       }
 
-      void printClassHeader(const ct::ObjectLayoutContainer::value_type& el) override
+      void printClassHeader(const ct::ObjectLayoutAnalysis::value_type& el) override
       {
         base::printClassHeader(el);
         if (el.second.abstractClass()) out() << " [abstract]";
@@ -501,7 +501,7 @@ namespace
               ;
       }
 
-      virtual void printClassHeader(const ct::VTableLayoutContainer::value_type& el)
+      virtual void printClassHeader(const ct::VTableLayoutAnalysis::value_type& el)
       {
         //~ const ct::VTableLayout::VTableSections& sects = el.second.vtableSections();
 
@@ -544,7 +544,7 @@ namespace
 
       void printClassFooter() override { out() << std::endl; }
 
-      void printClassHeader(const ct::VTableLayoutContainer::value_type& el) override
+      void printClassHeader(const ct::VTableLayoutAnalysis::value_type& el) override
       {
         base::printClassHeader(el);
         out() << std::endl;
@@ -571,7 +571,7 @@ namespace
 
   void prnClassLayout( ObjectLayoutElementPrinter&& printer,
                        ct::ClassFilterFn include,
-                       const ct::ObjectLayoutContainer& cont
+                       const ct::ObjectLayoutAnalysis& cont
                      )
   {
     prnLayout(printer, include, cont);
@@ -579,7 +579,7 @@ namespace
 
   void prnVTableLayout( VTableLayoutElementPrinter&& printer,
                         ct::ClassFilterFn include,
-                        const ct::VTableLayoutContainer& cont
+                        const ct::VTableLayoutAnalysis& cont
                       )
   {
     prnLayout(printer, include, cont);
@@ -668,7 +668,7 @@ void classLayoutTxt( std::ostream& os,
                      ClassNameFn& className,
                      VarNameFn& varName,
                      ClassFilterFn include,
-                     const ObjectLayoutContainer& classLayout
+                     const ObjectLayoutAnalysis& classLayout
                    )
 {
   prnClassLayout(ObjectLayoutElementPrinterTxt{os, className, varName}, include, classLayout);
@@ -679,7 +679,7 @@ void classLayoutDot( std::ostream& os,
                      ClassNameFn& className,
                      VarNameFn& varName,
                      ClassFilterFn include,
-                     const ObjectLayoutContainer& classLayout
+                     const ObjectLayoutAnalysis& classLayout
                    )
 {
   dot_header(os, "digraph", "\"thorn2 - Class Layout\"");
@@ -694,7 +694,7 @@ void vtableLayoutTxt( std::ostream& os,
                       ClassNameFn& className,
                       FuncNameFn& funcName,
                       ClassFilterFn include,
-                      const VTableLayoutContainer& vtableLayout
+                      const VTableLayoutAnalysis& vtableLayout
                     )
 {
   prnVTableLayout(VTableLayoutElementPrinterTxt{os, className, funcName}, include, vtableLayout);

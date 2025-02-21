@@ -50,12 +50,22 @@ namespace
 
   bool isPureVirtual(const SgFunctionDeclaration& dcl)
   {
-    return dcl.get_functionModifier().isPureVirtual();;
+    return dcl.get_functionModifier().isPureVirtual();
   }
 
   bool isPureVirtual(ct::FunctionKeyType fn)
   {
     return isPureVirtual(SG_DEREF(fn));
+  }
+
+  bool hasDefinition(const SgFunctionDeclaration& dcl)
+  {
+    return dcl.get_definingDeclaration() != nullptr;
+  }
+
+  bool hasDefinition(ct::FunctionKeyType fn)
+  {
+    return hasDefinition(SG_DEREF(fn));
   }
 
   std::string functionName(ct::FunctionKeyType fn)
@@ -919,6 +929,12 @@ RoseCompatibilityBridge::nameOf(FunctionKeyType fun) const
   return functionName(fun);
 }
 
+std::intptr_t
+RoseCompatibilityBridge::numericId(AnyKeyType id) const
+{
+  return std::intptr_t(id);
+}
+
 namespace
 {
   struct CovarianceChecker : sg::DispatchHandler<RoseCompatibilityBridge::ReturnTypeRelation>
@@ -1216,6 +1232,11 @@ bool
 RoseCompatibilityBridge::isPureVirtual(FunctionKeyType id) const
 {
   return ::isPureVirtual(id);
+}
+
+bool RoseCompatibilityBridge::hasDefinition(FunctionKeyType id) const
+{
+  return ::hasDefinition(id);
 }
 
 FuncNameFn
