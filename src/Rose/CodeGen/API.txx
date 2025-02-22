@@ -131,7 +131,7 @@ void API<CRT>::load_headers(Driver & driver) {
 }
 
 template <typename CRT>
-void API<CRT>::load_api(Driver & driver) {
+void API<CRT>::load_api(Driver & /*driver*/) {
   SymbolScanner<CRT> scanner(*(CRT*)this);
 
   SgNamespaceSymbol::traverseMemoryPoolNodes(scanner);

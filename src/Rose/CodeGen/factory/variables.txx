@@ -34,7 +34,7 @@ struct __factory_helper_t<CRT, API, Object::a_variable> {
 
 template <typename CRT, typename API>
 declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_variable>::instantiate(
-  Factory<CRT, API> const & factory,
+  Factory<CRT, API> const & /*factory*/,
   symbol_t<Object::a_variable> * sym,
   SgNamedType * parent,
   tplargs_t & tpl_args
@@ -62,7 +62,6 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
 
   SgScopeStatement * defn_scope = iname->get_scope();
   if (parent) {
-    SgNamedType * pp = parent;
     while (isSgTypedefType(parent)) {
       parent = isSgNamedType(((SgTypedefType*)parent)->get_base_type());
     }
@@ -132,10 +131,10 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_variable>::reference(
-  Factory<CRT, API> const & factory,
+  Factory<CRT, API> const & /*factory*/,
   symbol_t<Object::a_variable> * sym,
-  SgNamedType * parent,
-  Args... args
+  SgNamedType * /*parent*/,
+  Args... /*args*/
 ) {
   return SageBuilder::buildVarRefExp(sym);
 }

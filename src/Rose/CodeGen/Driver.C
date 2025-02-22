@@ -70,8 +70,8 @@ size_t Driver::getFileID(SgScopeStatement * scope) const {
   return getFileID(enclosing_source_file);
 }
 
-void Driver::init(SgProject * project_) { 
-  assert(project != NULL);
+void Driver::init(SgProject* /*project_*/) {
+  ASSERT_not_null(project);
 
   if (!CommandlineProcessing::isCppFileNameSuffix("hpp"))
     CommandlineProcessing::extraCppSourceFileSuffixes.push_back("hpp");

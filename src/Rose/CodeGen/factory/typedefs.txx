@@ -34,9 +34,9 @@ struct __factory_helper_t<CRT, API, Object::a_typedef> {
 
 template <typename CRT, typename API>
 declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typedef>::instantiate(
-  Factory<CRT, API> const & factory,
+  Factory<CRT, API> const & /*factory*/,
   symbol_t<Object::a_typedef> * sym,
-  SgNamedType * parent,
+  SgNamedType * /*parent*/,
   tplargs_t & tpl_args
 ) {
 #if DEBUG___factory_helper_t__a_typedef__instantiate
@@ -105,10 +105,10 @@ declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typede
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typedef>::reference(
-  Factory<CRT, API> const & factory,
+  Factory<CRT, API> const & /*factory*/,
   symbol_t<Object::a_typedef> * sym,
   SgNamedType * parent,
-  Args... args
+  Args... /*args*/
 ) {
 #if DEBUG___factory_helper_t__a_typedef__reference
   std::cout << "__factory_helper_t<CRT, API, Object::a_typedef>::reference" << std::endl;

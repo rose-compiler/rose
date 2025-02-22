@@ -34,9 +34,9 @@ struct __factory_helper_t<CRT, API, Object::a_class> {
 
 template <typename CRT, typename API>
 declaration_t<Object::a_class> * __factory_helper_t<CRT, API, Object::a_class>::instantiate(
-  Factory<CRT, API> const & factory,
+  Factory<CRT, API> const & /*factory*/,
   symbol_t<Object::a_class> * sym,
-  SgNamedType * parent,
+  SgNamedType * /*parent*/,
   tplargs_t & tpl_args
 ) {
 #if DEBUG___factory_helper_t__a_class__instantiate
@@ -125,10 +125,10 @@ declaration_t<Object::a_class> * __factory_helper_t<CRT, API, Object::a_class>::
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_class> * __factory_helper_t<CRT, API, Object::a_class>::reference(
-  Factory<CRT, API> const & factory,
+  Factory<CRT, API> const & /*factory*/,
   symbol_t<Object::a_class> * sym,
   SgNamedType * parent,
-  Args... args
+  Args... /*args*/
 ) {
   ROSE_ASSERT(!parent); // TODO case of a field or method
   return sym->get_declaration()->get_type();
