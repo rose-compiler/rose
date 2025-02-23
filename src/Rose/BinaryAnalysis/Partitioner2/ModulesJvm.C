@@ -5931,6 +5931,12 @@ Zipper::LocalHeader::LocalHeader(const uint8_t* buf, size_t offset) {
 // Zipper class
 //--------------------------
 
+/** Listing of file names in the container */
+const std::vector<FileStat> &
+Zipper::files() const {
+    return files_;
+}
+
 /** Return uncompressed file size for file/class with given name */
 size_t
 Zipper::fileSize(const std::string &name) const {

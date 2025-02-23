@@ -43,6 +43,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+// class member used by --load-all-classes switch
+bool EngineJvm::loadAllClasses = false;
+
 EngineJvm::EngineJvm(const Settings &settings)
     : Engine("JVM", settings), nextFunctionVa_{static_cast<rose_addr_t>(-1)} {
 }
@@ -132,6 +135,32 @@ EngineJvm::frontend(const std::vector<std::string> &args, const std::string &pur
 //                                      Command-line parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::list<Sawyer::CommandLine::SwitchGroup>
+EngineJvm::commandLineSwitches() {
+    std::list<Sawyer::CommandLine::SwitchGroup> retval = Super::commandLineSwitches();
+    retval.push_back(engineSwitches(settings().engine));
+    return retval;
+}
+
+// class method
+Sawyer::CommandLine::SwitchGroup
+EngineJvm::engineSwitches(EngineSettings &settings) {
+    using namespace Sawyer::CommandLine;
+
+    SwitchGroup sg("JVM engine switches");
+    sg.name("jvm-engine");
+    sg.doc("These switches are used by Rose::BinaryAnalysis::Partitioner2::EngineJvm to control the overall operation of "
+           "the engine. Additional switches control different aspects of the engine's behavior such as loading, partitioning, "
+           "building the AST, etc.");
+
+    CommandLine::insertBooleanSwitch(sg, "load-all-classes", loadAllClasses,
+                                     "Load all classes from jar files (or other containers). "
+                                     "This doesn't affect the loading of classes from system libraries, which may be ignored. "
+                                     "Default behavior is to load classes lazily, as needed.");
+
+    return sg;
+}
+
 std::pair<std::string, std::string>
 EngineJvm::specimenNameDocumentation() {
     return {
@@ -184,6 +213,17 @@ EngineJvm::parseContainers(const std::vector<std::string> &fileNames) {
             // File need not be in file system (but somewhere in classpath)
             else if (CommandlineProcessing::isJavaClassFile(fileName)) {
                 classFiles.push_back(fileName);
+            }
+        }
+
+        // Preemptively load all classes from jar files
+        if (loadAllClasses) {
+            for (auto zip : jars_) {
+                for (auto file : zip->files()) {
+                    if (CommandlineProcessing::isJavaClassFile(file.filename())) {
+                        classFiles.push_back(file.filename());
+                    }
+                }
             }
         }
 
@@ -317,6 +357,7 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     if (className != ByteCode::JvmClass::name(jfh->get_this_class(), pool)) {
         className = ByteCode::JvmClass::name(jfh->get_this_class(), pool);
         if (classes_.find(className) != classes_.end()) {
+            std::cerr << "[ERROR]: already processed class: " << className << "\n";
             throw std::runtime_error("can't load class twice");
         }
     }
@@ -671,7 +712,7 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
         if (BasicBlock::Ptr bb = source->value().bblock()) {
           SgAsmInstruction* last = bb->instructions().back();
           std::string functionName = last->get_comment();
-          std::cout << "... indeterminate incoming: " << functionName << " at " << StringUtility::addrToString(bb->address()) << std::endl;
+          mlog[TRACE] << "... indeterminate incoming: " << functionName << " at " << StringUtility::addrToString(bb->address()) << std::endl;
           if (functionNameMap.find(functionName) != functionNameMap.end()) {
             rose_addr_t functionVa = functionNameMap[functionName];
             sourceBlocks[bb] = functionVa;
@@ -689,8 +730,8 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
     BasicBlock::Ptr bb = itr->first;
     rose_addr_t va = itr->second;
     auto detached = partitioner->detachBasicBlock(bb);
-    std::cout << "[INFO] replacing successor (to indeterminate) from bb(va): " << StringUtility::addrToString(bb->address())
-              << " : to " << StringUtility::addrToString(va) << "\n";
+    mlog[TRACE] << "replacing successor (to indeterminate) from bb(va): " << StringUtility::addrToString(bb->address())
+                << " : to " << StringUtility::addrToString(va) << "\n";
     detached->clearSuccessors();
     detached->insertSuccessor(va, 64, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
     partitioner->attachBasicBlock(detached);

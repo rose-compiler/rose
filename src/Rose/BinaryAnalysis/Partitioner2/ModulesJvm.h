@@ -174,6 +174,9 @@ struct Zipper {
 
   explicit Zipper(SgAsmGenericFile* gf);
 
+  /** Listing of file names in the container */
+  const std::vector<FileStat> & files() const;
+
   bool present(const std::string &name) const;
   size_t fileSize(const std::string &name) const;
   size_t offset(const char* file) const;
