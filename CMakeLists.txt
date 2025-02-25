@@ -1576,7 +1576,7 @@ add_custom_target(tools)                 # ie "make tools"
 if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
   add_subdirectory(tools EXCLUDE_FROM_ALL) # making tools is separate from making rose
   add_custom_target(install-tools          # ie "make install-tools"
-    COMMAND ${CMAKE_COMMAND} --build tools/ --target install
+    COMMAND + ${CMAKE_COMMAND} --build tools/ --target install
   )
 else()
   # Ninja does not create a separate build.ninja file in tools/ like Make does
