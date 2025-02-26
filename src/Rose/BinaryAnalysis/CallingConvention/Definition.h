@@ -48,7 +48,7 @@ private:
     std::vector<ConcreteLocation> inputParameters_;     // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ConcreteLocation> outputParameters_;    // Return values and output parameters.
     StackParameterOrder stackParameterOrder_ = StackParameterOrder::UNSPECIFIED; // Order of arguments on the stack
-    RegisterDescriptor stackPointerRegister_;           // Optionally override the stack pointerregister from the architecture
+    RegisterDescriptor stackPointerRegister_;           // Optionally override the stack pointer register from the architecture
     size_t nonParameterStackSize_ = 0;                  // Size in bytes of non-parameter stack area
     Alignment stackAlignment_;                          // Stack alignment in bytes
     StackDirection stackDirection_ = StackDirection::GROWS_DOWN; // Direction that stack grows from a PUSH operation
