@@ -340,6 +340,11 @@ public: // Supporting functions
     void modelCheckerSolver(const SmtSolver::Ptr&);
     /** @} */
 
+    /** Property: Semantic callbacks.
+     *
+     *  These are the non-null semantic callbacks that were provided to the constructor. */
+    SemanticCallbacks* semanticCallbacks() const;
+
     /** Property: Compute memory regions for variables.
      *
      *  If true, then memory regions are computed and used. Otherwise the SValue memory regions are always empty.
@@ -516,6 +521,7 @@ private:
     Settings settings_;                                 // settings are set by the constructor and not modified thereafter
     Partitioner2::PartitionerConstPtr partitioner_;     // generally shouldn't be changed once model checking starts, non-null
     SmtSolver::Memoizer::Ptr smtMemoizer_;              // memoizer shared among all solvers
+    AddressInterval stackRegion_;                       // addresses considered to be in the stack's area of memory
 
     mutable SAWYER_THREAD_TRAITS::Mutex unitsMutex_;    // protects only the units_ data member
     Sawyer::Container::Map<rose_addr_t, ExecutionUnitPtr> units_; // cached execution units
@@ -595,6 +601,11 @@ public:
     SmtSolver::Memoizer::Ptr smtMemoizer() const;
     void smtMemoizer(const SmtSolver::Memoizer::Ptr&);
     /** @} */
+
+    /** Property: Stack region.
+     *
+     *  Part of the address space reserved for the stack. */
+    AddressInterval stackRegion() const;
 
     /** Property: Number of duplicate states.
      *

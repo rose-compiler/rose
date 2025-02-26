@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 
+#include <Rose/Affirm.h>
 #include <Rose/As.h>
 #include <Rose/BinaryAnalysis/Architecture/Amd64.h>
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch32.h>
@@ -552,34 +553,12 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner::Co
                              ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
                              const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder,
                              const Variables::GlobalVariables &gvars)
-    : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
-      semantics_(dynamic_cast<PartitionerModel::SemanticCallbacks*>(semantics)), gvars_(gvars),
-      variableFinder_unsync(varFinder) {
-    ASSERT_not_null(partitioner);
-    ASSERT_not_null(semantics_);
-    ASSERT_not_null(variableFinder_unsync);
+    : Super(protoval, solver), settings_(settings), partitioner_(notnull(partitioner)),
+      semantics_(notnull(as<PartitionerModel::SemanticCallbacks>(semantics))), gvars_(gvars),
+      variableFinder_unsync(notnull(varFinder)) {
     (void)SValue::promote(protoval);
     name("PartitionerModel");
-
-    // Calculate the stack limits.  Start by assuming the stack can occupy all of memory. Then make that smaller based on
-    // other information.
-    const size_t nBits = partitioner->instructionProvider().instructionPointerRegister().nBits();
-    stackLimits_ = AddressInterval::hull(0, BitOps::lowMask<rose_addr_t>(nBits));
-    if (settings_.initialStackVa) {
-        // The stack should extend down to the top of the next lower mapped address.
-        ASSERT_forbid(partitioner->memoryMap()->at(*settings_.initialStackVa).exists());
-        if (auto prev = partitioner->memoryMap()->atOrBefore(*settings_.initialStackVa).next(Sawyer::Container::MATCH_BACKWARD))
-            stackLimits_ = stackLimits_ & AddressInterval::hull(*prev + 1, stackLimits_.greatest());
-
-        // The stack should extend up to the bottom of the next higher mapped address.
-        if (auto next = partitioner->memoryMap()->atOrAfter(*settings_.initialStackVa).next())
-            stackLimits_ = stackLimits_ & AddressInterval::hull(stackLimits_.least(), *next - 1);
-
-        // The stack should extend only a few bytes above it's initial location.
-        stackLimits_ = stackLimits_ & AddressInterval::hull(stackLimits_.least(),
-                                                            saturatedAdd(*settings_.initialStackVa, 256 /*arbitrary*/).first);
-    }
-    SAWYER_MESG(mlog[DEBUG]) <<"stack limited to " <<StringUtility::addrToString(stackLimits_) <<"\n";
+    stackLimits_ = semantics_->stackRegion();
 }
 
 RiscOperators::~RiscOperators() {}
@@ -627,6 +606,12 @@ RiscOperators::modelCheckerSolver() const {
 void
 RiscOperators::modelCheckerSolver(const SmtSolver::Ptr &solver) {
     modelCheckerSolver_ = solver;
+}
+
+SemanticCallbacks*
+RiscOperators::semanticCallbacks() const {
+    ASSERT_not_null(semantics_);
+    return semantics_;
 }
 
 bool
@@ -1444,7 +1429,8 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
     }
 
     if (!settings_.initialStackVa) {
-        // Choose an initial stack pointer that's unlikely to interfere with instructions or data.
+        // Choose an initial stack pointer that's unlikely to interfere with instructions or data. This model requires a concrete
+        // stack pointer.
         static const size_t RESERVE_BELOW  = 15*1024*1024;          // memory to reserve below the initial stack inter
         static const size_t RESERVE_ABOVE   =  1*1024*1024;         // memory reserved at and above the initial stack pointer
         static const size_t STACK_ALIGNMENT = 16;                   // alignment in bytes
@@ -1458,7 +1444,10 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
                         <<"falling back to abstract stack address\n";
         } else {
             settings_.initialStackVa = *va + RESERVE_BELOW;
-            SAWYER_MESG(mlog[INFO]) <<"initial stack pointer = " <<StringUtility::addrToString(*settings_.initialStackVa) <<"\n";
+            stackRegion_ = AddressInterval::hull(*va, *va + RESERVE_BELOW + RESERVE_ABOVE - 1);
+            SAWYER_MESG(mlog[INFO]) <<"initial stack:\n"
+                                    <<"  pointer = " <<StringUtility::addrToString(*settings_.initialStackVa) <<"\n"
+                                    <<"  region = " <<StringUtility::addrToString(stackRegion_) <<"\n";
         }
     }
 }
@@ -1484,6 +1473,11 @@ SemanticCallbacks::smtMemoizer() const {
 void
 SemanticCallbacks::smtMemoizer(const SmtSolver::Memoizer::Ptr &memoizer) {
     smtMemoizer_ = memoizer;
+}
+
+AddressInterval
+SemanticCallbacks::stackRegion() const {
+    return stackRegion_;
 }
 
 void
