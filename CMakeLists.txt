@@ -847,16 +847,13 @@ find_capstone()
 include(FindCereal)
 find_cereal()
 
-# To use GCrypt, set cmake .. -DENABLE_GCRYPT=ON -DGCRYPT_ROOT=/path/to/GCrypt/installation
-option(ENABLE_GCRYPT "Use the GNU cryptography library, libgcrypt, available from https://www.gnupg.org/related_software/libgcrypt/" OFF)
-if(ENABLE_CRYPT)
-  include(FindGcrypt)
-  find_gcrypt()
-  if(GCRYPT_FOUND)
-    # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=no
-    include(FindGpgError)
-    find_gpgerror()
-  endif()
+# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=no
+include(FindGcrypt)
+find_gcrypt()
+if(GCRYPT_FOUND)
+  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=no
+  include(FindGpgError)
+  find_gpgerror()
 endif()
 
 # To use libmagic, set MAGIC_ROOT to the libmagic installation prefix. To avoid libmagic set MAGIC_ROOT=no
