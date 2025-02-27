@@ -20,7 +20,7 @@ namespace ModelChecker {
  *
  *  The execution nodes form a tree data structure. A worklist points to the leaves of the tree and worker threads try to advance
  *  the frontier.  The tree is dynamically created by the workers, and parts of it are deleted when no longer required. */
-class PathNode {
+class PathNode: public std::enable_shared_from_this<PathNode> {
 public:
     /** Shared-ownership pointer. */
     using Ptr = PathNodePtr;

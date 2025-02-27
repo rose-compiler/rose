@@ -60,12 +60,12 @@ SemanticCallbacks::skipExecution(const Path::Ptr&) {
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::preExecute(const ExecutionUnit::Ptr&, const BS::RiscOperators::Ptr&) {
+SemanticCallbacks::preExecute(const PathNodePtr&, const BS::RiscOperators::Ptr&) {
     return {};
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::postExecute(const ExecutionUnit::Ptr&, const BS::RiscOperators::Ptr&) {
+SemanticCallbacks::postExecute(const PathNodePtr&, const BS::RiscOperators::Ptr&) {
     return {};
 }
 

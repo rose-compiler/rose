@@ -233,8 +233,7 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
      *  current state to which the RISC operators points will have been copied by this thread. */
-    virtual std::vector<TagPtr>
-    preExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+    virtual std::vector<TagPtr> preExecute(const PathNodePtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Called after execution ends.
      *
@@ -246,8 +245,7 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
      *  current state to which the RISC operators points will have been copied by this thread. */
-    virtual std::vector<TagPtr>
-    postExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+    virtual std::vector<TagPtr> postExecute(const PathNodePtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Return value for @ref nextUnits. */
     struct NextUnit {

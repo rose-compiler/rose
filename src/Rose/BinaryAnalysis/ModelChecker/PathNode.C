@@ -176,7 +176,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
     // condition above).
     if (ops->currentState()) {                          // null if parent execution failed
         SAWYER_MESG(mlog[DEBUG]) <<"  running pre-execution steps\n";
-        std::vector<Tag::Ptr> tags = semantics->preExecute(executionUnit_, ops);
+        std::vector<Tag::Ptr> tags = semantics->preExecute(shared_from_this(), ops);
         tags_.insert(tags_.end(), tags.begin(), tags.end());
     }
     if (ops->currentState()) {
@@ -185,7 +185,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
     }
     if (ops->currentState()) {
         SAWYER_MESG(mlog[DEBUG]) <<"  running post-execution steps\n";
-        std::vector<Tag::Ptr> tags = semantics->postExecute(executionUnit_, ops);
+        std::vector<Tag::Ptr> tags = semantics->postExecute(shared_from_this(), ops);
         tags_.insert(tags_.end(), tags.begin(), tags.end());
     }
 

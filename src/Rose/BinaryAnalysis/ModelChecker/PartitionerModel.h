@@ -708,10 +708,10 @@ public:
     nextCodeAddresses(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual std::vector<TagPtr>
-    preExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
+    preExecute(const PathNodePtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual std::vector<TagPtr>
-    postExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
+    postExecute(const PathNodePtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual InstructionSemantics::BaseSemantics::SValuePtr
     instructionPointer(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;

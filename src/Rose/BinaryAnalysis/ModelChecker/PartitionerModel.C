@@ -19,6 +19,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
+#include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 
@@ -1632,7 +1633,12 @@ SemanticCallbacks::attachModelCheckerSolver(const BS::RiscOperators::Ptr &ops, c
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperators::Ptr &ops_) {
+SemanticCallbacks::preExecute(const PathNode::Ptr &pathNode, const BS::RiscOperators::Ptr &ops_) {
+    ASSERT_not_null(pathNode);
+
+    ExecutionUnit::Ptr unit = pathNode->executionUnit();
+    ASSERT_not_null(unit);
+
     auto ops = RiscOperators::promote(ops_);
     ops->nInstructions(0);
 
@@ -1654,9 +1660,12 @@ SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOper
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::postExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperators::Ptr &ops_) {
-    ASSERT_not_null(unit);
+SemanticCallbacks::postExecute(const PathNode::Ptr &pathNode, const BS::RiscOperators::Ptr &ops_) {
+    ASSERT_not_null(pathNode);
     ASSERT_not_null(ops_);
+
+    ExecutionUnit::Ptr unit = pathNode->executionUnit();
+    ASSERT_not_null(unit);
 
     auto ops = RiscOperators::promote(ops_);
 
