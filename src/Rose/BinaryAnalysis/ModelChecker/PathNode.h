@@ -158,7 +158,7 @@ public:
     /** Execute this node.
      *
      *  If necessary, executes all predecessors recursively and then executes this node. Afterward, this node and all
-     *  predecessors will store their outgoing states. Only nodes that have not bee previously executed are executed.
+     *  predecessors will store their outgoing states. Only nodes that have not been previously executed are executed.
      *
      *  Although the RiscOperators may point to a solver already, the solver supplied as an argument is the one that's being
      *  used by the model checker itself.
@@ -166,6 +166,14 @@ public:
      *  Thread safety: This method is thread safe, but the RISC operators must be thread local. */
     void execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                  const SmtSolver::Ptr&);
+
+    /** Don't execute this node.
+     *
+     *  This is similar to calling @ref execute in a way that fails. The path is marked so that @ref executionFailed returns
+     *  true.
+     *
+     *  Thread safety: This method is thread safe. */
+    void doNotExecute();
 
     /** Property: Whether execution has failed.
      *
@@ -289,6 +297,10 @@ public:
 
 private:
     void restoreOutgoingState(const InstructionSemantics::BaseSemantics::StatePtr&);
+
+    std::pair<InstructionSemantics::BaseSemantics::StatePtr, bool>
+    incomingState_NS(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
+                     const SmtSolver::Ptr&);
 };
 
 } // namespace

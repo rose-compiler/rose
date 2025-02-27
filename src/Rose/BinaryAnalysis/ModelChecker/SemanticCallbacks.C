@@ -4,6 +4,7 @@
 
 #include <Rose/As.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
@@ -52,6 +53,11 @@ SemanticCallbacks::configureRiscOperators(const BS::RiscOperators::Ptr &ops) {
 
 void
 SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr&) {}
+
+std::pair<bool, const char*>
+SemanticCallbacks::skipExecution(const Path::Ptr&) {
+    return {false, nullptr};
+}
 
 std::vector<Tag::Ptr>
 SemanticCallbacks::preExecute(const ExecutionUnit::Ptr&, const BS::RiscOperators::Ptr&) {

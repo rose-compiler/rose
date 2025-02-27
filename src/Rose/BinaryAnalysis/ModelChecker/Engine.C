@@ -671,7 +671,14 @@ Engine::execute(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const 
         nStepsExplored_ += nsteps;
     }
 
-    path->lastNode()->execute(settings_, semantics_, ops, solver);
+    const auto skip = semantics_->skipExecution(path);
+    if (skip.first) {
+        SAWYER_MESG(mlog[DEBUG]) <<"  execution skipped: " <<skip.second <<"\n";
+        path->lastNode()->doNotExecute();
+    } else {
+        path->lastNode()->execute(settings_, semantics_, ops, solver);
+    }
+
     insertInteresting(path);
 }
 
@@ -704,7 +711,7 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const S
     if (path->executionFailed()) {
         SAWYER_MESG(mlog[DEBUG]) <<"    execution failure; no extension possible\n";
     } else {
-        // Get the list execution units that would be executed after this path
+        // Get the list of execution units that would be executed after this path
         PathNode::Ptr current = path->lastNode();
         std::vector<SemanticCallbacks::NextUnit> nextUnits;
         BS::State::Ptr parentOutgoingState;

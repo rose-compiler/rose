@@ -203,10 +203,31 @@ public:
     // Execution tree functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Decides whether a path should be executed.
+     *
+     *  This method is called on the path before the @ref preExecute function is called on the execution unit. If this predicate
+     *  returns true then execution is skipped. If the path is to be skipped, then this function must also return a non-null,
+     *  static, C-style NUL-terminated string explaining why the path should be skipped (if the path is not skipped then the string
+     *  is ignored and may be a null pointer).
+     *
+     *  This function may have side effects such as adding tags to the end of the path. Skipping a path's execution doesn't skip
+     *  whether the path is tested for being interesting and possibly added to the interresting queue.
+     *
+     *  RiscOperators (in particular the associated state) is not available to this callback because it might not have been computed
+     *  yet, and computing it might be expensive. One of the points of this callback is to avoid that computation. If you need to
+     *  cause a path to not be executed, you can also use the @ref preExecute callback and have it clear the RiscOperators state to
+     *  signal an error.
+     *
+     *  The default implementation always returns false without any side effects.
+     *
+     *  Thread safety: The implementation must be thread safe. */
+    virtual std::pair<bool, const char*> skipExecution(const PathPtr&);
+
     /** Called before execution starts.
      *
-     *  This method is called before the execution unit is executed. It is allowed to change the state prior to the execution.
-     *  It is also a convenient place at which to create tags to be later attached to the node.
+     *  This method is called before the execution unit at the end of the path is executed. It is allowed to change the state prior
+     *  to the execution.  Setting the state to a null pointer informs the caller that execution failed. This function is also a
+     *  convenient place at which to create tags to be later attached to the node.
      *
      *  The default implementation does nothing.
      *
@@ -217,8 +238,9 @@ public:
 
     /** Called after execution ends.
      *
-     *  This method is called after the execution unit is executed. It is allowed to change the execution's resulting state.
-     *  It is also a convenient place at which to create tags to be later attached to the node.
+     *  This method is called after the execution unit at the end of the path is executed. It is allowed to change the execution's
+     *  resulting state.  Setting the state to a null ointer informs the caller that execution failed. This function is also a
+     *  convenient place at which to create tags to be later attached to the node.
      *
      *  The default implementation does nothing.
      *

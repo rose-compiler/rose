@@ -110,6 +110,29 @@ PathNode::evidence() const {
     return evidence_;
 }
 
+std::pair<BS::State::Ptr, bool>
+PathNode::incomingState_NS(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics,
+                           const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
+    ASSERT_not_null(settings);
+    ASSERT_not_null(semantics);
+    ASSERT_not_null(ops);
+
+    BS::State::Ptr state;
+    bool needsInitialization = false;
+
+    if (incomingState_) {
+        state = incomingState_->clone();
+    } else if (parent_) {
+        parent_->execute(settings, semantics, ops, solver);
+        state = parent_->copyOutgoingState();
+    } else {
+        state = semantics->createInitialState();
+        needsInitialization = true;
+    }
+
+    return {state, needsInitialization};
+}
+
 void
 PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops,
                   const SmtSolver::Ptr &solver) {
@@ -130,15 +153,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
     // Get the incoming state, which might require recursively executing the parent.
     BS::State::Ptr state;
     bool needsInitialization = false;
-    if (incomingState_) {
-        state = incomingState_->clone();
-    } else if (parent_) {
-        parent_->execute(settings, semantics, ops, solver);
-        state = parent_->copyOutgoingState();
-    } else {
-        state = semantics->createInitialState();
-        needsInitialization = true;
-    }
+    std::tie(state, needsInitialization) = incomingState_NS(settings, semantics, ops, solver);
 
     // Prepare the RISC operators and maybe initialize the path initial state
     ASSERT_forbid(ops->currentState());                 // safety net
@@ -187,6 +202,13 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
     incomingState_ = BS::State::Ptr();
 
     // ops->currentState is reset to null on scope exit
+}
+
+void
+PathNode::doNotExecute() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    outgoingState_ = nullptr;
+    executionFailed_ = true;
 }
 
 bool
