@@ -100,13 +100,13 @@ SgAsmFunction::set_dest(SgAsmStatementPtrList const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmFunction::get_entryVa() const {
     return p_entryVa;
 }
 
 void
-SgAsmFunction::set_entryVa(rose_addr_t const& x) {
+SgAsmFunction::set_entryVa(Rose::BinaryAnalysis::Address const& x) {
     this->p_entryVa = x;
     set_isModified(true);
 }
@@ -173,7 +173,7 @@ SgAsmFunction::SgAsmFunction()
 //    property=name             class=SgAsmFunction
 //    property=reason           class=SgAsmFunction
 //    property=functionKind     class=SgAsmFunction
-SgAsmFunction::SgAsmFunction(rose_addr_t const& address,
+SgAsmFunction::SgAsmFunction(Rose::BinaryAnalysis::Address const& address,
                              std::string const& name,
                              unsigned const& reason,
                              SgAsmFunction::function_kind_enum const& functionKind)

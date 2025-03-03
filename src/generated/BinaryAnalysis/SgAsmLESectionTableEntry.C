@@ -51,24 +51,24 @@ SgAsmLESectionTableEntry::set_res1(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLESectionTableEntry::get_mappedSize() const {
     return p_mappedSize;
 }
 
 void
-SgAsmLESectionTableEntry::set_mappedSize(rose_addr_t const& x) {
+SgAsmLESectionTableEntry::set_mappedSize(Rose::BinaryAnalysis::Address const& x) {
     this->p_mappedSize = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLESectionTableEntry::get_baseAddr() const {
     return p_baseAddr;
 }
 
 void
-SgAsmLESectionTableEntry::set_baseAddr(rose_addr_t const& x) {
+SgAsmLESectionTableEntry::set_baseAddr(Rose::BinaryAnalysis::Address const& x) {
     this->p_baseAddr = x;
     set_isModified(true);
 }

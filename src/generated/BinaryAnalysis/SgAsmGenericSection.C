@@ -29,13 +29,13 @@ SgAsmGenericSection::set_header(SgAsmGenericHeader* const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSection::get_fileAlignment() const {
     return p_fileAlignment;
 }
 
 void
-SgAsmGenericSection::set_fileAlignment(rose_addr_t const& x) {
+SgAsmGenericSection::set_fileAlignment(Rose::BinaryAnalysis::Address const& x) {
     this->p_fileAlignment = x;
     set_isModified(true);
 }
@@ -95,23 +95,23 @@ SgAsmGenericSection::set_shortName(std::string const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSection::get_mappedPreferredRva() const {
     return p_mappedPreferredRva;
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSection::get_mappedSize() const {
     return p_mappedSize;
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSection::get_mappedAlignment() const {
     return p_mappedAlignment;
 }
 
 void
-SgAsmGenericSection::set_mappedAlignment(rose_addr_t const& x) {
+SgAsmGenericSection::set_mappedAlignment(Rose::BinaryAnalysis::Address const& x) {
     this->p_mappedAlignment = x;
     set_isModified(true);
 }
@@ -160,13 +160,13 @@ SgAsmGenericSection::set_containsCode(bool const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSection::get_mappedActualVa() const {
     return p_mappedActualVa;
 }
 
 void
-SgAsmGenericSection::set_mappedActualVa(rose_addr_t const& x) {
+SgAsmGenericSection::set_mappedActualVa(Rose::BinaryAnalysis::Address const& x) {
     this->p_mappedActualVa = x;
     set_isModified(true);
 }

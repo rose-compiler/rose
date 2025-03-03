@@ -23,13 +23,13 @@ SgAsmPERVASizePair::set_e_rva(Rose::BinaryAnalysis::RelativeVirtualAddress const
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPERVASizePair::get_e_size() const {
     return p_e_size;
 }
 
 void
-SgAsmPERVASizePair::set_e_size(rose_addr_t const& x) {
+SgAsmPERVASizePair::set_e_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_size = x;
     set_isModified(true);
 }

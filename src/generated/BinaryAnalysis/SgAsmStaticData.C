@@ -26,7 +26,7 @@ SgAsmStaticData::SgAsmStaticData() {}
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-SgAsmStaticData::SgAsmStaticData(rose_addr_t const& address)
+SgAsmStaticData::SgAsmStaticData(Rose::BinaryAnalysis::Address const& address)
     : SgAsmStatement(address) {}
 
 void

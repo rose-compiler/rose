@@ -68,7 +68,7 @@ SgAsmInstruction::SgAsmInstruction()
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
-SgAsmInstruction::SgAsmInstruction(rose_addr_t const& address,
+SgAsmInstruction::SgAsmInstruction(Rose::BinaryAnalysis::Address const& address,
                                    uint8_t const& architectureId)
     : SgAsmStatement(address)
     , p_architectureId(architectureId)

@@ -40,24 +40,24 @@ SgAsmPEFileHeader::set_e_time(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPEFileHeader::get_e_coff_symtab() const {
     return p_e_coff_symtab;
 }
 
 void
-SgAsmPEFileHeader::set_e_coff_symtab(rose_addr_t const& x) {
+SgAsmPEFileHeader::set_e_coff_symtab(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_coff_symtab = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPEFileHeader::get_e_nt_hdr_size() const {
     return p_e_nt_hdr_size;
 }
 
 void
-SgAsmPEFileHeader::set_e_nt_hdr_size(rose_addr_t const& x) {
+SgAsmPEFileHeader::set_e_nt_hdr_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_nt_hdr_size = x;
     set_isModified(true);
 }

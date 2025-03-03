@@ -40,24 +40,24 @@ SgAsmGenericSymbol::set_type(SgAsmGenericSymbol::SymbolType const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSymbol::get_value() const {
     return p_value;
 }
 
 void
-SgAsmGenericSymbol::set_value(rose_addr_t const& x) {
+SgAsmGenericSymbol::set_value(Rose::BinaryAnalysis::Address const& x) {
     this->p_value = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericSymbol::get_size() const {
     return p_size;
 }
 
 void
-SgAsmGenericSymbol::set_size(rose_addr_t const& x) {
+SgAsmGenericSymbol::set_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_size = x;
     set_isModified(true);
 }

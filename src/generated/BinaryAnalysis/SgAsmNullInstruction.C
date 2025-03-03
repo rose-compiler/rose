@@ -16,7 +16,7 @@ SgAsmNullInstruction::SgAsmNullInstruction() {}
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
-SgAsmNullInstruction::SgAsmNullInstruction(rose_addr_t const& address,
+SgAsmNullInstruction::SgAsmNullInstruction(Rose::BinaryAnalysis::Address const& address,
                                            uint8_t const& architectureId)
     : SgAsmInstruction(address, architectureId) {}
 

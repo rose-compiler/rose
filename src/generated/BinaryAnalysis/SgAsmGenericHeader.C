@@ -45,13 +45,13 @@ SgAsmGenericHeader::set_isa(SgAsmGenericFormat::InsSetArchitecture const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmGenericHeader::get_baseVa() const {
     return p_baseVa;
 }
 
 void
-SgAsmGenericHeader::set_baseVa(rose_addr_t const& x) {
+SgAsmGenericHeader::set_baseVa(Rose::BinaryAnalysis::Address const& x) {
     this->p_baseVa = x;
     set_isModified(true);
 }

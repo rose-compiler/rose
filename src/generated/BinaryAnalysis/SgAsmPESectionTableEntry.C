@@ -18,46 +18,46 @@ SgAsmPESectionTableEntry::set_name(std::string const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPESectionTableEntry::get_virtual_size() const {
     return p_virtual_size;
 }
 
 void
-SgAsmPESectionTableEntry::set_virtual_size(rose_addr_t const& x) {
+SgAsmPESectionTableEntry::set_virtual_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_virtual_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPESectionTableEntry::get_rva() const {
     return p_rva;
 }
 
 void
-SgAsmPESectionTableEntry::set_rva(rose_addr_t const& x) {
+SgAsmPESectionTableEntry::set_rva(Rose::BinaryAnalysis::Address const& x) {
     this->p_rva = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPESectionTableEntry::get_physical_size() const {
     return p_physical_size;
 }
 
 void
-SgAsmPESectionTableEntry::set_physical_size(rose_addr_t const& x) {
+SgAsmPESectionTableEntry::set_physical_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_physical_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmPESectionTableEntry::get_physical_offset() const {
     return p_physical_offset;
 }
 
 void
-SgAsmPESectionTableEntry::set_physical_offset(rose_addr_t const& x) {
+SgAsmPESectionTableEntry::set_physical_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_physical_offset = x;
     set_isModified(true);
 }

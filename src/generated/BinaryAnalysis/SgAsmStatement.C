@@ -7,13 +7,13 @@
 #define ROSE_SgAsmStatement_IMPL
 #include <SgAsmStatement.h>
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmStatement::get_address() const {
     return p_address;
 }
 
 void
-SgAsmStatement::set_address(rose_addr_t const& x) {
+SgAsmStatement::set_address(Rose::BinaryAnalysis::Address const& x) {
     this->p_address = x;
     set_isModified(true);
 }
@@ -38,7 +38,7 @@ SgAsmStatement::SgAsmStatement()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-SgAsmStatement::SgAsmStatement(rose_addr_t const& address)
+SgAsmStatement::SgAsmStatement(Rose::BinaryAnalysis::Address const& address)
     : p_address(address) {}
 
 void

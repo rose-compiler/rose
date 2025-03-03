@@ -1610,7 +1610,10 @@ bool Grammar::isIntegerKind(const string & typenameString)
           typenameString == "unsigned long int" ||  typenameString == "unsigned short" || typenameString == "long int"  || 
           typenameString == "long long int"  || typenameString == "long long unsigned int"  ||
           typenameString == "unsigned long long int"  ||
-          typenameString == "uint64_t"      || typenameString == "rose_addr_t")
+          typenameString == "uint64_t"      || typenameString == "rose_addr_t" ||
+          typenameString == "Rose::BinaryAnalysis::Address" ||
+          typenameString == "BinaryAnalysis::Address" ||
+          typenameString == "Address")
          {
            isInteger = true;
          }

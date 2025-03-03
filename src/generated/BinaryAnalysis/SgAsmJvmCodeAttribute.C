@@ -73,13 +73,13 @@ SgAsmJvmCodeAttribute::set_attribute_table(SgAsmJvmAttributeTable* const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmJvmCodeAttribute::get_code_offset() const {
     return p_code_offset;
 }
 
 void
-SgAsmJvmCodeAttribute::set_code_offset(rose_addr_t const& x) {
+SgAsmJvmCodeAttribute::set_code_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_code_offset = x;
     set_isModified(true);
 }

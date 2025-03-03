@@ -42,7 +42,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -50,7 +50,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -300,7 +300,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmX86Instruction(rose_addr_t const& address,
+    SgAsmX86Instruction(Rose::BinaryAnalysis::Address const& address,
                         uint8_t const& architectureId,
                         Rose::BinaryAnalysis::X86InstructionKind const& kind,
                         Rose::BinaryAnalysis::X86InstructionSize const& baseSize,
@@ -537,7 +537,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmUserInstruction(rose_addr_t const& address,
+    SgAsmUserInstruction(Rose::BinaryAnalysis::Address const& address,
                          uint8_t const& architectureId,
                          unsigned const& kind);
 
@@ -1087,7 +1087,7 @@ public:
 
 public:
     /** Constructor. */
-    explicit SgAsmSynthesizedFieldDeclaration(rose_addr_t const& address);
+    explicit SgAsmSynthesizedFieldDeclaration(Rose::BinaryAnalysis::Address const& address);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -1172,7 +1172,7 @@ public:
 
 public:
     /** Constructor. */
-    explicit SgAsmSynthesizedDataStructureDeclaration(rose_addr_t const& address);
+    explicit SgAsmSynthesizedDataStructureDeclaration(Rose::BinaryAnalysis::Address const& address);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -1199,6 +1199,11 @@ IS_SERIALIZABLE(AsmStringStorage);
 AsmStringStorage.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmStringStorage);
+#if defined(SgAsmStringStorage_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmStringStorage_HEADERS
+
 #ifdef DOCUMENTATION
 /** Strings stored in an ELF or PE container. */
 class SgAsmStringStorage: public SgAsmExecutableFileFormat {
@@ -1218,7 +1223,7 @@ class SgAsmStringStorage: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmStringStorage.setDataPrototype(
-        "rose_addr_t", "offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -1261,11 +1266,11 @@ public:
     /** Property: Location of string in storage table. 
      * 
      * @{ */
-    rose_addr_t const& get_offset() const;
-    void set_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_offset() const;
+    void set_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 public:
-    SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset);
+    SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, Rose::BinaryAnalysis::Address offset);
 
     void dump(FILE *s, const char *prefix, ssize_t idx) const;
 
@@ -1310,6 +1315,11 @@ IS_SERIALIZABLE(AsmStoredString);
 AsmStoredString.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmStoredString);
+#if defined(SgAsmStoredString_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmStoredString_HEADERS
+
 #ifdef DOCUMENTATION
 /** Strings stored in an ELF or PE container. */
 class SgAsmStoredString: public SgAsmGenericString {
@@ -1347,7 +1357,7 @@ public:
     /** @} */
 public:
     /** Construct a string existing in a string table. */
-    SgAsmStoredString(SgAsmGenericStrtab*, rose_addr_t offset);
+    SgAsmStoredString(SgAsmGenericStrtab*, Rose::BinaryAnalysis::Address offset);
 
     /** Construct a new string in a string table. */
     SgAsmStoredString(SgAsmGenericStrtab*, const std::string&);
@@ -1374,12 +1384,12 @@ public:
     /** Give the string a new value.
      *
      *  The string is given a new value by specifying the offset of a string that already exists in the string table. */
-    virtual void set_string(rose_addr_t) override;
+    virtual void set_string(Rose::BinaryAnalysis::Address) override;
 
     /** Returns the offset into the string table where the string is allocated.
      *
      *  If the string is not allocated then this call triggers an allocation. */
-    virtual rose_addr_t get_offset() const override;
+    virtual Rose::BinaryAnalysis::Address get_offset() const override;
 public:
     /** Destructor. */
     virtual ~SgAsmStoredString();
@@ -1484,7 +1494,7 @@ public:
 
 public:
     /** Constructor. */
-    explicit SgAsmStaticData(rose_addr_t const& address);
+    explicit SgAsmStaticData(Rose::BinaryAnalysis::Address const& address);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -1936,7 +1946,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmPowerpcInstruction(rose_addr_t const& address,
+    SgAsmPowerpcInstruction(Rose::BinaryAnalysis::Address const& address,
                             uint8_t const& architectureId,
                             Rose::BinaryAnalysis::PowerpcInstructionKind const& kind);
 
@@ -2038,6 +2048,11 @@ IS_SERIALIZABLE(AsmPEStringSection);
 AsmPEStringSection.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmPEStringSection);
+#if defined(SgAsmPEStringSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmPEStringSection_HEADERS
+
 #ifdef DOCUMENTATION
 /** String section. */
 class SgAsmPEStringSection: public SgAsmPESection {
@@ -2080,7 +2095,7 @@ public:
     virtual SgAsmPEStringSection* parse() override;
     virtual bool reallocate() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    virtual void set_size(rose_addr_t newsize) override;
+    virtual void set_size(Rose::BinaryAnalysis::Address newsize) override;
     virtual void unparse(std::ostream&) const override;
 public:
     /** Destructor. */
@@ -2186,6 +2201,11 @@ IS_SERIALIZABLE(AsmPESectionTableEntry);
 AsmPESectionTableEntry.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmPESectionTableEntry);
+#if defined(SgAsmPESectionTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmPESectionTableEntry_HEADERS
+
 #ifdef DOCUMENTATION
 /** Section table entry. */
 class SgAsmPESectionTableEntry: public SgAsmExecutableFileFormat {
@@ -2199,25 +2219,25 @@ class SgAsmPESectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "virtual_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "virtual_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "rva", "= 0",
+        "Rose::BinaryAnalysis::Address", "rva", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "physical_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "physical_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "physical_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "physical_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -2353,8 +2373,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_virtual_size() const;
-    void set_virtual_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_virtual_size() const;
+    void set_virtual_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -2363,8 +2383,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_rva() const;
-    void set_rva(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_rva() const;
+    void set_rva(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -2373,8 +2393,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_physical_size() const;
-    void set_physical_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_physical_size() const;
+    void set_physical_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -2383,8 +2403,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_physical_offset() const;
-    void set_physical_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_physical_offset() const;
+    void set_physical_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -2556,6 +2576,7 @@ AsmPERVASizePair.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmPERVASizePair);
 #if defined(SgAsmPERVASizePair_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #endif // SgAsmPERVASizePair_HEADERS
 
@@ -2572,7 +2593,7 @@ class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPERVASizePair.setDataPrototype(
-        "rose_addr_t", "e_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -2643,8 +2664,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_e_size() const;
-    void set_e_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_size() const;
+    void set_e_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -2659,7 +2680,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk*);
-    SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size);
+    SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, Rose::BinaryAnalysis::Address rva, Rose::BinaryAnalysis::Address size);
 
     /** Sets or removes the section associated with an RVA/size pair.
      *
@@ -2708,6 +2729,7 @@ AsmPEImportSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmPEImportSection);
 #if defined(SgAsmPEImportSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #ifdef ROSE_SgAsmPEImportSection_IMPL
@@ -3044,6 +3066,7 @@ AsmPEImportItem.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmPEImportItem);
 #if defined(SgAsmPEImportItem_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #ifdef ROSE_SgAsmPEImportItem_IMPL
@@ -3234,7 +3257,7 @@ public:
      *
      *  Returns the virtual address of the IAT slot for this import item.  This import item must be linked into the AST in
      *  order for this method to succeed. */
-    rose_addr_t get_iatEntryVa() const;
+    Rose::BinaryAnalysis::Address get_iatEntryVa() const;
 
 private:
     void initFromParent(SgAsmPEImportItemList *parent);
@@ -3244,7 +3267,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     size_t hintname_required_size() const ROSE_DEPRECATED("use hintNameRequiredSize");
-    rose_addr_t get_iat_entry_va() const ROSE_DEPRECATED("use get_iatEntryVa");
+    Rose::BinaryAnalysis::Address get_iat_entry_va() const ROSE_DEPRECATED("use get_iatEntryVa");
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportItem();
@@ -3360,6 +3383,7 @@ AsmPEImportDirectory.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmPEImportDirectory);
 #if defined(SgAsmPEImportDirectory_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <sageContainer.h>
@@ -3602,7 +3626,7 @@ public:
      *  The import directory is parsed from the specified virtual address via the PE header's loader map. Return value is
      *  this directory entry on success, or the null pointer if the entry is all zero (which marks the end of the directory
      *  list). The @p isLastEntry is true if the caller thinks this should be an all-zero entry. */
-    SgAsmPEImportDirectory *parse(rose_addr_t va, bool isLastEntry);
+    SgAsmPEImportDirectory *parse(Rose::BinaryAnalysis::Address va, bool isLastEntry);
 
     /** Allocates space for this import directory's name, import lookup table, and import address table.
      *
@@ -3696,6 +3720,7 @@ AsmPEFileHeader.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmPEFileHeader);
 #if defined(SgAsmPEFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #ifdef ROSE_SgAsmPEFileHeader_IMPL
@@ -3732,13 +3757,13 @@ class SgAsmPEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_coff_symtab", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_coff_symtab", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_nt_hdr_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_nt_hdr_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4181,8 +4206,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_e_coff_symtab() const;
-    void set_e_coff_symtab(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_coff_symtab() const;
+    void set_e_coff_symtab(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -4191,8 +4216,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_e_nt_hdr_size() const;
-    void set_e_nt_hdr_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_nt_hdr_size() const;
+    void set_e_nt_hdr_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -5513,7 +5538,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmNullInstruction(rose_addr_t const& address,
+    SgAsmNullInstruction(Rose::BinaryAnalysis::Address const& address,
                          uint8_t const& architectureId);
 
 protected:
@@ -5541,6 +5566,11 @@ IS_SERIALIZABLE(AsmNEStringTable);
 AsmNEStringTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmNEStringTable);
+#if defined(SgAsmNEStringTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmNEStringTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmNEStringTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -5561,9 +5591,9 @@ private:
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
-    SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    std::string get_string(rose_addr_t offset);
+    std::string get_string(Rose::BinaryAnalysis::Address offset);
 public:
     /** Destructor. */
     virtual ~SgAsmNEStringTable();
@@ -5597,6 +5627,11 @@ IS_SERIALIZABLE(AsmNESectionTable);
 AsmNESectionTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmNESectionTable);
+#if defined(SgAsmNESectionTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmNESectionTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmNESectionTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -5615,13 +5650,13 @@ class SgAsmNESectionTable: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "physicalSize", "= 0",
+        "Rose::BinaryAnalysis::Address", "physicalSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "virtualSize", "= 0",
+        "Rose::BinaryAnalysis::Address", "virtualSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -5654,12 +5689,12 @@ public:
     void set_sector(unsigned const&);
 
 public:
-    rose_addr_t const& get_physicalSize() const;
-    void set_physicalSize(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_physicalSize() const;
+    void set_physicalSize(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_virtualSize() const;
-    void set_virtualSize(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_virtualSize() const;
+    void set_virtualSize(Rose::BinaryAnalysis::Address const&);
 public:
     explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
     virtual void unparse(std::ostream&) const override;
@@ -5669,10 +5704,10 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
-    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
-    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
-    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
+    Rose::BinaryAnalysis::Address get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
+    void set_physical_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_physicalSize");
+    Rose::BinaryAnalysis::Address get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
+    void set_virtual_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_virtualSize");
 public:
     /** Destructor. */
     virtual ~SgAsmNESectionTable();
@@ -5706,6 +5741,11 @@ IS_SERIALIZABLE(AsmNESectionTableEntry);
 AsmNESectionTableEntry.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmNESectionTableEntry);
+#if defined(SgAsmNESectionTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmNESectionTableEntry_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmNESectionTableEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -5724,13 +5764,13 @@ class SgAsmNESectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmNESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "physicalSize", "= 0",
+        "Rose::BinaryAnalysis::Address", "physicalSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "virtualSize", "= 0",
+        "Rose::BinaryAnalysis::Address", "virtualSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -5809,12 +5849,12 @@ public:
     void set_sector(unsigned const&);
 
 public:
-    rose_addr_t const& get_physicalSize() const;
-    void set_physicalSize(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_physicalSize() const;
+    void set_physicalSize(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_virtualSize() const;
-    void set_virtualSize(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_virtualSize() const;
+    void set_virtualSize(Rose::BinaryAnalysis::Address const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5828,10 +5868,10 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
-    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
-    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
-    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
+    Rose::BinaryAnalysis::Address get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
+    void set_physical_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_physicalSize");
+    Rose::BinaryAnalysis::Address get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
+    void set_virtual_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_virtualSize");
 public:
     /** Destructor. */
     virtual ~SgAsmNESectionTableEntry();
@@ -6028,6 +6068,11 @@ IS_SERIALIZABLE(AsmNERelocEntry);
 AsmNERelocEntry.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmNERelocEntry);
+#if defined(SgAsmNERelocEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmNERelocEntry_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmNERelocEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -6058,7 +6103,7 @@ class SgAsmNERelocEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmNERelocEntry.setDataPrototype(
-        "rose_addr_t", "src_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "src_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -6150,12 +6195,12 @@ public:
     };
 
     // DQ (8/7/2008): At only (I hope) the risk of using more memory that required, break the union so that we can better support
-    // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, rose_addr_t; and then use
-    // member functions to access the data in the base class.
+    // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, Rose::BinaryAnalysis::Address;
+    // and then use member functions to access the data in the base class.
     struct iref_type { /*tgt_type==0x00: internal reference*/
         unsigned    sect_idx;       /* section index (1-origin) */
         unsigned    res1;           /* reserved */
-        rose_addr_t tgt_offset;
+        Rose::BinaryAnalysis::Address tgt_offset;
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
@@ -6173,9 +6218,9 @@ public:
     };
 
     struct iord_type { /*tgt_type==0x01: imported ordinal*/
-        unsigned    modref;         /* 1-based index into import module table */
-        unsigned    ordinal;
-        rose_addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
+        unsigned modref;                                /* 1-based index into import module table */
+        unsigned ordinal;
+        Rose::BinaryAnalysis::Address addend;           /* value to add (only present for flags & RF_2EXTRA) */
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
@@ -6193,9 +6238,9 @@ public:
     };
 
     struct iname_type { /*tgt_type==0x02: imported name*/
-        unsigned    modref;         /* 1-based index into import module table */
-        unsigned    nm_off;         /* offset into import procedure names */
-        rose_addr_t      addend;    /* value to add (only present for flags & RF_2EXTRA) */
+        unsigned modref;                                /* 1-based index into import module table */
+        unsigned nm_off;                                /* offset into import procedure names */
+        Rose::BinaryAnalysis::Address addend;           /* value to add (only present for flags & RF_2EXTRA) */
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
@@ -6251,8 +6296,8 @@ public:
     void set_flags(SgAsmNERelocEntry::NERelocFlags const&);
 
 public:
-    rose_addr_t const& get_src_offset() const;
-    void set_src_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_src_offset() const;
+    void set_src_offset(Rose::BinaryAnalysis::Address const&);
 
 public:
     SgAsmNERelocEntry::iref_type const& get_iref() const;
@@ -6273,8 +6318,8 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size);
-    rose_addr_t unparse(std::ostream&, const SgAsmGenericSection*, rose_addr_t spos) const;
+    SgAsmNERelocEntry(SgAsmGenericSection *relocs, Rose::BinaryAnalysis::Address at, Rose::BinaryAnalysis::Address *rec_size);
+    Rose::BinaryAnalysis::Address unparse(std::ostream&, const SgAsmGenericSection*, Rose::BinaryAnalysis::Address spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
 public:
     /** Destructor. */
@@ -6308,6 +6353,11 @@ IS_SERIALIZABLE(AsmNENameTable);
 #ifndef DOCUMENTATION
 AsmNENameTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmNENameTable);
+#if defined(SgAsmNENameTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmNENameTable_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmNENameTable: public SgAsmGenericSection {
@@ -6351,7 +6401,7 @@ public:
     SgUnsignedList const& get_ordinals() const;
     void set_ordinals(SgUnsignedList const&);
 public:
-    SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset);
+    SgAsmNENameTable(SgAsmNEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     std::vector<std::string> get_namesByOrdinal(unsigned ordinal);
@@ -6396,6 +6446,8 @@ AsmNEModuleTable.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmNEModuleTable);
 #if defined(SgAsmNEModuleTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmNEModuleTable_IMPL
 #include <SgAsmNEStringTable.h>
 #endif
@@ -6454,7 +6506,8 @@ public:
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
 public:
-    SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size);
+    SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, Rose::BinaryAnalysis::Address offset,
+                       Rose::BinaryAnalysis::Address size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
@@ -6630,61 +6683,61 @@ class SgAsmNEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_entrytab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_entrytab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_entrytab_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_entrytab_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_sectab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_sectab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_rsrctab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_rsrctab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_resnametab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_resnametab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_modreftab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_modreftab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_importnametab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_importnametab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_nonresnametab_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_nonresnametab_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_fastload_sector", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_fastload_sector", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_fastload_nsectors", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_fastload_nsectors", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -6935,44 +6988,44 @@ public:
     void set_e_winvers(unsigned const&);
 
 public:
-    rose_addr_t const& get_e_entrytab_rfo() const;
-    void set_e_entrytab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_entrytab_rfo() const;
+    void set_e_entrytab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_entrytab_size() const;
-    void set_e_entrytab_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_entrytab_size() const;
+    void set_e_entrytab_size(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_sectab_rfo() const;
-    void set_e_sectab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_sectab_rfo() const;
+    void set_e_sectab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_rsrctab_rfo() const;
-    void set_e_rsrctab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_rsrctab_rfo() const;
+    void set_e_rsrctab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_resnametab_rfo() const;
-    void set_e_resnametab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_resnametab_rfo() const;
+    void set_e_resnametab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_modreftab_rfo() const;
-    void set_e_modreftab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_modreftab_rfo() const;
+    void set_e_modreftab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_importnametab_rfo() const;
-    void set_e_importnametab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_importnametab_rfo() const;
+    void set_e_importnametab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_nonresnametab_offset() const;
-    void set_e_nonresnametab_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_nonresnametab_offset() const;
+    void set_e_nonresnametab_offset(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_fastload_sector() const;
-    void set_e_fastload_sector(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_fastload_sector() const;
+    void set_e_fastload_sector(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_fastload_nsectors() const;
-    void set_e_fastload_nsectors(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_fastload_nsectors() const;
+    void set_e_fastload_nsectors(Rose::BinaryAnalysis::Address const&);
 
 public:
     SgAsmDOSExtendedHeader* const& get_dos2Header() const;
@@ -7001,7 +7054,7 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset);
+    SgAsmNEFileHeader(SgAsmGenericFile *f, Rose::BinaryAnalysis::Address offset);
 
     static bool isNe (SgAsmGenericFile*);
     static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);
@@ -7063,6 +7116,11 @@ IS_SERIALIZABLE(AsmNEEntryTable);
 AsmNEEntryTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmNEEntryTable);
+#if defined(SgAsmNEEntryTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmNEEntryTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmNEEntryTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7106,7 +7164,7 @@ public:
     SgAsmNEEntryPointPtrList& get_entries();
     void set_entries(SgAsmNEEntryPointPtrList const&);
 public:
-    SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size);
     void populate_entries();
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
@@ -7324,7 +7382,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmMipsInstruction(rose_addr_t const& address,
+    SgAsmMipsInstruction(Rose::BinaryAnalysis::Address const& address,
                          uint8_t const& architectureId,
                          Rose::BinaryAnalysis::MipsInstructionKind const& kind);
 
@@ -7520,7 +7578,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmM68kInstruction(rose_addr_t const& address,
+    SgAsmM68kInstruction(Rose::BinaryAnalysis::Address const& address,
                          uint8_t const& architectureId,
                          Rose::BinaryAnalysis::M68kInstructionKind const& kind,
                          Rose::BinaryAnalysis::M68kDataFormat const& dataFormat);
@@ -7550,6 +7608,11 @@ IS_SERIALIZABLE(AsmLESectionTable);
 AsmLESectionTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmLESectionTable);
+#if defined(SgAsmLESectionTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmLESectionTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLESectionTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7570,7 +7633,7 @@ private:
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
-    SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
@@ -7608,6 +7671,7 @@ AsmLESectionTableEntry.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmLESectionTableEntry);
 #if defined(SgAsmLESectionTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #endif // SgAsmLESectionTableEntry_HEADERS
 
@@ -7641,13 +7705,13 @@ class SgAsmLESectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmLESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "mappedSize", "= 0",
+        "Rose::BinaryAnalysis::Address", "mappedSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "baseAddr", "= 0",
+        "Rose::BinaryAnalysis::Address", "baseAddr", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -7751,12 +7815,12 @@ public:
     void set_res1(unsigned const&);
 
 public:
-    rose_addr_t const& get_mappedSize() const;
-    void set_mappedSize(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_mappedSize() const;
+    void set_mappedSize(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_baseAddr() const;
-    void set_baseAddr(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_baseAddr() const;
+    void set_baseAddr(Rose::BinaryAnalysis::Address const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7774,10 +7838,10 @@ public:
     void set_pagemap_index(unsigned) ROSE_DEPRECATED("use set_pageMapIndex");
     unsigned get_pagemap_nentries() const ROSE_DEPRECATED("use get_pageMapNEntries");
     void set_pagemap_nentries(unsigned) ROSE_DEPRECATED("use set_pageMapNEntries");
-    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
-    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
-    rose_addr_t get_base_addr() const ROSE_DEPRECATED("use get_baseAddr");
-    void set_base_addr(rose_addr_t) ROSE_DEPRECATED("use set_baseAddr");
+    Rose::BinaryAnalysis::Address get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedSize");
+    Rose::BinaryAnalysis::Address get_base_addr() const ROSE_DEPRECATED("use get_baseAddr");
+    void set_base_addr(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_baseAddr");
 public:
     /** Destructor. */
     virtual ~SgAsmLESectionTableEntry();
@@ -7891,6 +7955,11 @@ IS_SERIALIZABLE(AsmLERelocTable);
 AsmLERelocTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmLERelocTable);
+#if defined(SgAsmLERelocTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmLERelocTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLERelocTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7923,7 +7992,7 @@ public:
     SgAsmLERelocEntryPtrList& get_entries();
     void set_entries(SgAsmLERelocEntryPtrList const&);
 public:
-    SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
+    SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -7958,6 +8027,11 @@ IS_SERIALIZABLE(AsmLEPageTable);
 AsmLEPageTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmLEPageTable);
+#if defined(SgAsmLEPageTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmLEPageTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLEPageTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -7990,7 +8064,7 @@ public:
     SgAsmLEPageTableEntryPtrList& get_entries();
     void set_entries(SgAsmLEPageTableEntryPtrList const&);
 public:
-    SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     SgAsmLEPageTableEntry *get_page(size_t idx);
@@ -8147,6 +8221,11 @@ IS_SERIALIZABLE(AsmLENameTable);
 AsmLENameTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmLENameTable);
+#if defined(SgAsmLENameTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmLENameTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLENameTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -8193,7 +8272,7 @@ public:
      * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
      * zero. In the non-resident name table the first entry is a module description and the functions are not always resident in
      * system memory (they are discardable). */
-    SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
+    SgAsmLENameTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
@@ -8231,6 +8310,7 @@ AsmLEFileHeader.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmLEFileHeader);
 #if defined(SgAsmLEFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
 #ifdef ROSE_SgAsmLEFileHeader_IMPL
@@ -8399,127 +8479,127 @@ class SgAsmLEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_npages", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_npages", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_eip", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_eip", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_esp", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_esp", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_page_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_page_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_fixup_sect_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_fixup_sect_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_loader_sect_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_loader_sect_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_secttab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_secttab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_pagetab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_pagetab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_iterpages_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_iterpages_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_rsrctab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_rsrctab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_resnametab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_resnametab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_entrytab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_entrytab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_fmtdirtab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_fmtdirtab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_fixup_pagetab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_fixup_pagetab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_fixup_rectab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_fixup_rectab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_import_modtab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_import_modtab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_import_proctab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_import_proctab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_ppcksumtab_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_ppcksumtab_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_data_pages_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_data_pages_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_nonresnametab_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_nonresnametab_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "rose_addr_t", "e_debug_info_rfo", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_debug_info_rfo", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -8824,88 +8904,88 @@ public:
     void set_e_heap_size(unsigned const&);
 
 public:
-    rose_addr_t const& get_e_npages() const;
-    void set_e_npages(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_npages() const;
+    void set_e_npages(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_eip() const;
-    void set_e_eip(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_eip() const;
+    void set_e_eip(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_esp() const;
-    void set_e_esp(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_esp() const;
+    void set_e_esp(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_page_size() const;
-    void set_e_page_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_page_size() const;
+    void set_e_page_size(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_fixup_sect_size() const;
-    void set_e_fixup_sect_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_fixup_sect_size() const;
+    void set_e_fixup_sect_size(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_loader_sect_size() const;
-    void set_e_loader_sect_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_loader_sect_size() const;
+    void set_e_loader_sect_size(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_secttab_rfo() const;
-    void set_e_secttab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_secttab_rfo() const;
+    void set_e_secttab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_pagetab_rfo() const;
-    void set_e_pagetab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_pagetab_rfo() const;
+    void set_e_pagetab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_iterpages_offset() const;
-    void set_e_iterpages_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_iterpages_offset() const;
+    void set_e_iterpages_offset(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_rsrctab_rfo() const;
-    void set_e_rsrctab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_rsrctab_rfo() const;
+    void set_e_rsrctab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_resnametab_rfo() const;
-    void set_e_resnametab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_resnametab_rfo() const;
+    void set_e_resnametab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_entrytab_rfo() const;
-    void set_e_entrytab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_entrytab_rfo() const;
+    void set_e_entrytab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_fmtdirtab_rfo() const;
-    void set_e_fmtdirtab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_fmtdirtab_rfo() const;
+    void set_e_fmtdirtab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_fixup_pagetab_rfo() const;
-    void set_e_fixup_pagetab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_fixup_pagetab_rfo() const;
+    void set_e_fixup_pagetab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_fixup_rectab_rfo() const;
-    void set_e_fixup_rectab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_fixup_rectab_rfo() const;
+    void set_e_fixup_rectab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_import_modtab_rfo() const;
-    void set_e_import_modtab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_import_modtab_rfo() const;
+    void set_e_import_modtab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_import_proctab_rfo() const;
-    void set_e_import_proctab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_import_proctab_rfo() const;
+    void set_e_import_proctab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_ppcksumtab_rfo() const;
-    void set_e_ppcksumtab_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_ppcksumtab_rfo() const;
+    void set_e_ppcksumtab_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_data_pages_offset() const;
-    void set_e_data_pages_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_data_pages_offset() const;
+    void set_e_data_pages_offset(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_nonresnametab_offset() const;
-    void set_e_nonresnametab_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_nonresnametab_offset() const;
+    void set_e_nonresnametab_offset(Rose::BinaryAnalysis::Address const&);
 
 public:
-    rose_addr_t const& get_e_debug_info_rfo() const;
-    void set_e_debug_info_rfo(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_debug_info_rfo() const;
+    void set_e_debug_info_rfo(Rose::BinaryAnalysis::Address const&);
 
 public:
     SgAsmDOSExtendedHeader* const& get_dos2Header() const;
@@ -8938,7 +9018,7 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset);
+    SgAsmLEFileHeader(SgAsmGenericFile *f, Rose::BinaryAnalysis::Address offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
@@ -9004,6 +9084,11 @@ IS_SERIALIZABLE(AsmLEEntryTable);
 AsmLEEntryTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmLEEntryTable);
+#if defined(SgAsmLEEntryTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmLEEntryTable_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLEEntryTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
@@ -9047,7 +9132,7 @@ public:
     SgAsmLEEntryPointPtrList& get_entries();
     void set_entries(SgAsmLEEntryPointPtrList const&);
 public:
-    SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
+    SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
@@ -9085,6 +9170,7 @@ AsmLEEntryPoint.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmLEEntryPoint);
 #if defined(SgAsmLEEntryPoint_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 #endif // SgAsmLEEntryPoint_HEADERS
@@ -9125,7 +9211,7 @@ class SgAsmLEEntryPoint: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmLEEntryPoint.setDataPrototype(
-        "rose_addr_t", "entry_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "entry_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -9203,16 +9289,16 @@ public:
     void set_res1(unsigned const&);
 
 public:
-    rose_addr_t const& get_entry_offset() const;
-    void set_entry_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_entry_offset() const;
+    void set_entry_offset(Rose::BinaryAnalysis::Address const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
     SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, unsigned flags);
-    rose_addr_t unparse(std::ostream&, Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmGenericSection*,
-                        rose_addr_t spos) const;
+    Rose::BinaryAnalysis::Address unparse(std::ostream&, Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmGenericSection*,
+                                          Rose::BinaryAnalysis::Address spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
 public:
     /** Destructor. */
@@ -11399,7 +11485,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmJvmInstruction(rose_addr_t const& address,
+    SgAsmJvmInstruction(Rose::BinaryAnalysis::Address const& address,
                         uint8_t const& architectureId,
                         Rose::BinaryAnalysis::JvmInstructionKind const& kind);
 
@@ -13262,6 +13348,11 @@ IS_SERIALIZABLE(AsmJvmCodeAttribute);
 AsmJvmCodeAttribute.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmJvmCodeAttribute);
+#if defined(SgAsmJvmCodeAttribute_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmJvmCodeAttribute_HEADERS
+
 #ifdef DOCUMENTATION
 /** JVM Code attribute.
  *
@@ -13309,7 +13400,7 @@ class SgAsmJvmCodeAttribute: public SgAsmJvmAttribute {
 
 #ifndef DOCUMENTATION
     AsmJvmCodeAttribute.setDataPrototype(
-        "rose_addr_t", "code_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "code_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -13405,8 +13496,8 @@ public:
      *  specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_code_offset() const;
-    void set_code_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_code_offset() const;
+    void set_code_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 public:
     /** Initialize the object before parsing.
@@ -15301,6 +15392,7 @@ AsmGenericFile.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmGenericFile);
 #if defined(SgAsmGenericFile_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 
@@ -15568,7 +15660,7 @@ public:
     const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferencedExtents() const;
 
     /** Marks part of a file as having been referenced if tracking references. */
-    void markReferencedExtent(rose_addr_t start_rva, rose_addr_t size);
+    void markReferencedExtent(Rose::BinaryAnalysis::Address start_rva, Rose::BinaryAnalysis::Address size);
 
     /** Property: Data converter.
      *
@@ -15580,10 +15672,10 @@ public:
     /** @} */
 
     /** Returns current size of file based on section with highest ending address. */
-    rose_addr_t get_currentSize() const;
+    Rose::BinaryAnalysis::Address get_currentSize() const;
 
     /** Returns original size of file, based on file system. */
-    rose_addr_t get_originalSize() const;
+    Rose::BinaryAnalysis::Address get_originalSize() const;
 
     /** Reads data from a file.
      *
@@ -15592,7 +15684,7 @@ public:
      *  is less than @p size then one of two things happen: if @p strict is true then an @ref
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise @p dst_buf is zero padded so that exactly @p
      *  size bytes are always initialized. */
-    size_t readContent(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(Rose::BinaryAnalysis::Address offset, void *dst_buf, Rose::BinaryAnalysis::Address size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -15600,8 +15692,8 @@ public:
      *  addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is not mapped we stop
      *  reading and do one of two things: if @p strict is set then a @ref Rose::BinaryAnalysis::MemoryMap::NotMapped exception is
      *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
-    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
-                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address va, void *dst_buf,
+                       Rose::BinaryAnalysis::Address size, bool strict=true);
 
     /** Reads a string from a file.
      *
@@ -15610,7 +15702,7 @@ public:
      *  address which is not mapped then one of two things happen: if @p strict is set then a @ref
      *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned
      *  string does not include the NUL byte. */
-    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address va, bool strict=true);
 
     /** Reads a string from a file.
      *
@@ -15619,7 +15711,7 @@ public:
      *  file offset. If we reach an invalid file offset one of two things happen: if @p strict is set (the default) then an
      *  @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the string is simply terminated. The
      *  returned string does not include the NUL byte. */
-    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(Rose::BinaryAnalysis::Address abs_offset, bool strict=true);
 
     /** Property: Entire file contents. */
     const SgFileContentList& content() { return p_data; }
@@ -15630,7 +15722,7 @@ public:
      *  file content until the vector elements are referenced. If the desired extent falls entirely or partially outside
      *  the range of data known to the file then throw an @ref SgAsmExecutableFileFormat::ShortRead exception. This
      *  function never updates reference tracking lists for the file. */
-    SgFileContentList content(rose_addr_t offset, rose_addr_t size);
+    SgFileContentList content(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size);
 
     /** Returns list of all sections in the file that are memory mapped, including headers and holes. */
     SgAsmGenericSectionPtrList get_mappedSections() const;
@@ -15648,19 +15740,19 @@ public:
      *
      *  Returns all sections that contain all of the specified portion of the file across all headers, including headers
      *  and holes. */
-    SgAsmGenericSectionPtrList get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const;
+    SgAsmGenericSectionPtrList get_sectionsByOffset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size) const;
 
     /** Find sections by address.
      *
      *  Returns all sections that are mapped to include the specified relative virtual address across all headers,
      *  including headers and holes. This uses the preferred mapping of the section rather than the actual mapping. */
-    SgAsmGenericSectionPtrList get_sectionsByRva(rose_addr_t rva) const;
+    SgAsmGenericSectionPtrList get_sectionsByRva(Rose::BinaryAnalysis::Address rva) const;
 
     /** Find sections by address.
      *
      *  Returns all sections that are mapped to include the specified virtual address across all headers, including headers
      *  and holes. This uses the preferred mapping rather than the actual mapping. */
-    SgAsmGenericSectionPtrList get_sectionsByVa(rose_addr_t va) const;
+    SgAsmGenericSectionPtrList get_sectionsByVa(Rose::BinaryAnalysis::Address va) const;
 
     /** Find section with specified ID.
      *
@@ -15679,26 +15771,27 @@ public:
      *
      *  Returns single section that contains all of the specified portion of the file across all headers, including headers
      *  and holes. */
-    SgAsmGenericSection *get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+    SgAsmGenericSection*
+    get_sectionByOffset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified relative virtual file address across all headers,
      *  including headers and holes. */
-    SgAsmGenericSection *get_sectionByRva(rose_addr_t rva, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByRva(Rose::BinaryAnalysis::Address rva, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified virtual address across all headers. See also
      *  @ref get_bestSectionByVa. */
-    SgAsmGenericSection *get_sectionByVa(rose_addr_t va, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByVa(Rose::BinaryAnalysis::Address va, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Similar to @ref get_sectionByVa except when more than one section contains the specified virtual address this
      *  choose the "best" one. All candidates must map the virtual address to the same file address or else we fail (return
      *  null and number of candidates). See @ref bestSectionByVa for definition of "best". */
-    SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, size_t *nfound=0) const;
+    SgAsmGenericSection *get_bestSectionByVa(Rose::BinaryAnalysis::Address va, size_t *nfound=0) const;
 
     /** Definition for "best".
      *
@@ -15710,7 +15803,7 @@ public:
      *  don't have names.  If more than one section remains, return the section that is earliest in the specified list of
      *  sections.  Return the null pointer if no section contains the specified virtual address, or if any two sections
      *  that contain the virtual address map it to different parts of the underlying binary file. */
-    static SgAsmGenericSection *bestSectionByVa(const SgAsmGenericSectionPtrList &sections, rose_addr_t va);
+    static SgAsmGenericSection *bestSectionByVa(const SgAsmGenericSectionPtrList &sections, Rose::BinaryAnalysis::Address va);
 
     /** Moves and enlarges a section.
      *
@@ -15751,15 +15844,16 @@ public:
      *  space).
      *
      * @{ */
-    void shiftExtend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity);
-    void shiftExtend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn);
+    void shiftExtend(SgAsmGenericSection*, Rose::BinaryAnalysis::Address sa, Rose::BinaryAnalysis::Address sn, AddressSpace,
+                     Elasticity);
+    void shiftExtend(SgAsmGenericSection *s, Rose::BinaryAnalysis::Address sa, Rose::BinaryAnalysis::Address sn);
     /** @} */
 
     /** File offset of next section.
      *
      *  Given a file address, return the file offset of the following section.  If there is no following section then
      *  return an address of -1 (when signed) */
-    rose_addr_t get_nextSectionOffset(rose_addr_t offset);
+    Rose::BinaryAnalysis::Address get_nextSectionOffset(Rose::BinaryAnalysis::Address offset);
 
     /** Adds a new hole to the file.
      *
@@ -15817,37 +15911,47 @@ public:
     void extend_to_eof(std::ostream&) const ROSE_DEPRECATED("use extendToEof");
     void dump_all(bool in_cwd=true, const char *ext=NULL) ROSE_DEPRECATED("use dumpAll");
     void dump_all(const std::string& dumpname) ROSE_DEPRECATED("use dumpAll");
-    const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
-    void mark_referenced_extent(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use markReferencedExtent");
+    const Rose::BinaryAnalysis::AddressIntervalSet& get_unreferenced_extents() const
+        ROSE_DEPRECATED("use get_unreferencedExtents");
+    void mark_referenced_extent(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address)
+        ROSE_DEPRECATED("use markReferencedExtent");
     DataConverter* get_data_converter() const ROSE_DEPRECATED("use get_dataConverter");
     void set_data_converter(DataConverter*) ROSE_DEPRECATED("use set_dataConverter");
-    rose_addr_t get_current_size() const ROSE_DEPRECATED("use get_currentSize");
-    rose_addr_t get_orig_size() const ROSE_DEPRECATED("use get_originalSize");
-    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, void*, rose_addr_t, bool=true)
+    Rose::BinaryAnalysis::Address get_current_size() const ROSE_DEPRECATED("use get_currentSize");
+    Rose::BinaryAnalysis::Address get_orig_size() const ROSE_DEPRECATED("use get_originalSize");
+    size_t read_content(Rose::BinaryAnalysis::Address, void*, Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContent");
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address, void*,
+                        Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContent");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContentString");
-    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContentString");
     SgAsmGenericSectionPtrList get_mapped_sections() const ROSE_DEPRECATED("use get_mappedSections");
     SgAsmGenericSectionPtrList get_sections_by_id(int id) const ROSE_DEPRECATED("use get_sectionById");
     SgAsmGenericSectionPtrList get_sections_by_name(std::string, char='\0') const ROSE_DEPRECATED("use get_sectionsByName");
-    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t, rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByOffset");
-    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByRva");
-    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByVa");
+    SgAsmGenericSectionPtrList get_sections_by_offset(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address) const
+        ROSE_DEPRECATED("use get_sectionsByOffset");
+    SgAsmGenericSectionPtrList get_sections_by_rva(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_sectionsByRva");
+    SgAsmGenericSectionPtrList get_sections_by_va(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_sectionsByVa");
     SgAsmGenericSection *get_section_by_id(int, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionById");
     SgAsmGenericSection *get_section_by_name(const std::string&, char=0, size_t* = nullptr) const
         ROSE_DEPRECATED("use get_sectionByName");
-    SgAsmGenericSection *get_section_by_offset(rose_addr_t, rose_addr_t, size_t* = nullptr) const
+    SgAsmGenericSection*get_section_by_offset(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address, size_t* = nullptr) const
         ROSE_DEPRECATED("use get_sectionByOffset");
-    SgAsmGenericSection *get_section_by_rva(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByRva");
-    SgAsmGenericSection *get_section_by_va(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByVa");
-    SgAsmGenericSection *get_best_section_by_va(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_bestSectionByVa");
-    static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList&, rose_addr_t)
+    SgAsmGenericSection *get_section_by_rva(Rose::BinaryAnalysis::Address, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByRva");
+    SgAsmGenericSection *get_section_by_va(Rose::BinaryAnalysis::Address, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByVa");
+    SgAsmGenericSection *get_best_section_by_va(Rose::BinaryAnalysis::Address, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_bestSectionByVa");
+    static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList&, Rose::BinaryAnalysis::Address)
         ROSE_DEPRECATED("use bestSectionByVa");
-    void shift_extend(SgAsmGenericSection*, rose_addr_t, rose_addr_t, AddressSpace, Elasticity) ROSE_DEPRECATED("use shiftExtend");
-    void shift_extend(SgAsmGenericSection*, rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use shiftExtend");
-    rose_addr_t get_next_section_offset(rose_addr_t) ROSE_DEPRECATED("use get_nextSectionOffset");
+    void shift_extend(SgAsmGenericSection*, Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address, AddressSpace, Elasticity)
+        ROSE_DEPRECATED("use shiftExtend");
+    void shift_extend(SgAsmGenericSection*, Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address)
+        ROSE_DEPRECATED("use shiftExtend");
+    Rose::BinaryAnalysis::Address get_next_section_offset(Rose::BinaryAnalysis::Address)
+        ROSE_DEPRECATED("use get_nextSectionOffset");
     void add_hole(SgAsmGenericSection*) ROSE_DEPRECATED("use addHole");
     void remove_hole(SgAsmGenericSection*) ROSE_DEPRECATED("use remoeHole");
     void fill_holes() ROSE_DEPRECATED("use fillHoles");
@@ -16074,6 +16178,7 @@ AsmFunction.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmFunction);
 #if defined(SgAsmFunction_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <sageContainer.h>
 
@@ -16151,7 +16256,7 @@ class SgAsmFunction: public SgAsmSynthesizedDeclaration {
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "rose_addr_t", "entryVa", "= 0",
+        "Rose::BinaryAnalysis::Address", "entryVa", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -16404,8 +16509,8 @@ public:
      *  address of the function's entry instruction.  The abbreviation "va" means "virtual address". 
      *  
      *  @{ */
-    rose_addr_t const& get_entryVa() const;
-    void set_entryVa(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_entryVa() const;
+    void set_entryVa(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -16526,8 +16631,8 @@ public:
      *  Rose::BinaryAnalysis::AddressIntervalSet extents;
      *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
      *  @endcode */
-    size_t get_extent(Rose::BinaryAnalysis::AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
-                      NodeSelector *selector=NULL);
+    size_t get_extent(Rose::BinaryAnalysis::AddressIntervalSet *emap=NULL, Rose::BinaryAnalysis::Address *lo_addr=NULL,
+                      Rose::BinaryAnalysis::Address *hi_addr=NULL, NodeSelector *selector=NULL);
 
     /** Computes the SHA1 message digest for the bytes of a function.
      *
@@ -16546,8 +16651,8 @@ public:
     void set_may_return(MayReturn) ROSE_DEPRECATED("use set_mayReturn");
     const std::string& get_name_md5() const ROSE_DEPRECATED("use get_nameMd5");
     void set_name_md5(const std::string&) ROSE_DEPRECATED("use set_nameMd5");
-    rose_addr_t get_entry_va() const ROSE_DEPRECATED("use get_entryVa");
-    void set_entry_va(rose_addr_t) ROSE_DEPRECATED("use set_entryVa");
+    Rose::BinaryAnalysis::Address get_entry_va() const ROSE_DEPRECATED("use get_entryVa");
+    void set_entry_va(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_entryVa");
     SgSymbolTable* get_symbol_table() const ROSE_DEPRECATED("use get_symbolTable");
     void set_symbol_table(SgSymbolTable*) ROSE_DEPRECATED("use set_symbolTable");
     size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");
@@ -16568,7 +16673,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmFunction(rose_addr_t const& address,
+    SgAsmFunction(Rose::BinaryAnalysis::Address const& address,
                   std::string const& name,
                   unsigned const& reason,
                   SgAsmFunction::function_kind_enum const& functionKind);
@@ -16649,7 +16754,7 @@ protected:
 
 protected:
     /** Constructor. */
-    explicit SgAsmSynthesizedDeclaration(rose_addr_t const& address);
+    explicit SgAsmSynthesizedDeclaration(Rose::BinaryAnalysis::Address const& address);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -17312,6 +17417,8 @@ AsmElfSymverSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSymverSection);
 #if defined(SgAsmElfSymverSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfSymverSection_IMPL
 #include <SgAsmElfSymverEntryList.h>
 #endif
@@ -17369,7 +17476,8 @@ public:
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write symver table sections back to disk */
     virtual void unparse(std::ostream&) const override;
@@ -17382,7 +17490,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverSection();
@@ -17418,6 +17527,8 @@ AsmElfSymverNeededSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSymverNeededSection);
 #if defined(SgAsmElfSymverNeededSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfSymverNeededSection_IMPL
 #include <SgAsmElfSymverNeededEntryList.h>
 #endif
@@ -17486,7 +17597,8 @@ public:
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverNeeded section back to disk.
      *
@@ -17500,7 +17612,8 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverNeededSection();
@@ -18187,6 +18300,8 @@ AsmElfSymverDefinedSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSymverDefinedSection);
 #if defined(SgAsmElfSymverDefinedSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfSymverDefinedSection_IMPL
 #include <SgAsmElfSymverDefinedEntryList.h>
 #endif
@@ -18310,7 +18425,8 @@ public:
 
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverDefined section back to disk.
      *
@@ -18325,7 +18441,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverDefinedSection();
@@ -18832,6 +18949,8 @@ AsmElfSymbolSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSymbolSection);
 #if defined(SgAsmElfSymbolSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfSymbolSection_IMPL
 #include <SgAsmElfSymbolList.h>
 #endif
@@ -18918,7 +19037,8 @@ public:
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Called prior to unparsing.
      *
@@ -18940,7 +19060,8 @@ public:
     virtual void finish_parsing() override ROSE_DEPRECATED("use finishParsing");
     size_t index_of(SgAsmElfSymbol*) ROSE_DEPRECATED("use indexOf");
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymbolSection();
@@ -19053,6 +19174,7 @@ AsmElfSymbol.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSymbol);
 #if defined(SgAsmElfSymbol_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 #endif // SgAsmElfSymbol_HEADERS
@@ -19085,7 +19207,7 @@ class SgAsmElfSymbol: public SgAsmGenericSymbol {
 
 #ifndef DOCUMENTATION
     AsmElfSymbol.setDataPrototype(
-        "rose_addr_t", "st_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "st_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -19211,8 +19333,8 @@ public:
      *  See ELF specification for details. 
      *  
      *  @{ */
-    rose_addr_t const& get_st_size() const;
-    void set_st_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_st_size() const;
+    void set_st_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -19314,6 +19436,11 @@ IS_SERIALIZABLE(AsmElfStrtab);
 AsmElfStrtab.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmElfStrtab);
+#if defined(SgAsmElfStrtab_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmElfStrtab_HEADERS
+
 #ifdef DOCUMENTATION
 /** ELF string table. */
 class SgAsmElfStrtab: public SgAsmGenericStrtab {
@@ -19363,33 +19490,33 @@ public:
      *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
      *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
      *  one string changes the other. */
-    virtual SgAsmStringStorage *createStorage(rose_addr_t offset, bool shared) override;
+    virtual SgAsmStringStorage *createStorage(Rose::BinaryAnalysis::Address offset, bool shared) override;
 
     /** Returns the number of bytes required to store the string in the string table.
      *
      *  This is the length of the string plus one for the NUL terminator. */
-    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*) override;
+    virtual Rose::BinaryAnalysis::Address get_storageSize(const SgAsmStringStorage*) override;
 
     /** Find offset for a string.
      *
-     *  Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the
-     *  new string is the same as the end of some other string (new="main", existing="domain") then we just use an offset
-     *  into that string since the space is already allocated for the existing string. If the new string ends with an
-     *  existing string (new="domain", existing="main") and there's enough free space before the existing string (two bytes
-     *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
-     *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
-     *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
+     *  Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the new
+     *  string is the same as the end of some other string (new="main", existing="domain") then we just use an offset into that
+     *  string since the space is already allocated for the existing string. If the new string ends with an existing string
+     *  (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then we
+     *  allocate some of that free space and use a suitable offset. In any case, upon return `storage->get_offset()` will return the
+     *  allocated offset if successful, or @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
     virtual void allocateOverlap(SgAsmStringStorage*) override;
 
-    /** Similar to create_storage() but uses a storage object that's already been allocated. */
-    virtual void rebind(SgAsmStringStorage*, rose_addr_t) override;
+    /** Similar to `create_storage` but uses a storage object that's already been allocated. */
+    virtual void rebind(SgAsmStringStorage*, Rose::BinaryAnalysis::Address) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) override ROSE_DEPRECATED("use createStorage");
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override ROSE_DEPRECATED("use get_storageSize");
+    virtual SgAsmStringStorage *create_storage(Rose::BinaryAnalysis::Address, bool) override ROSE_DEPRECATED("use createStorage");
+    virtual Rose::BinaryAnalysis::Address get_storage_size(const SgAsmStringStorage*) override
+        ROSE_DEPRECATED("use get_storageSize");
     virtual void allocate_overlap(SgAsmStringStorage*) override ROSE_DEPRECATED("use allocateOverlap");
 public:
     /** Destructor. */
@@ -19423,6 +19550,11 @@ IS_SERIALIZABLE(AsmElfStringSection);
 #ifndef DOCUMENTATION
 AsmElfStringSection.useSmallHeader(true);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmElfStringSection);
+#if defined(SgAsmElfStringSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmElfStringSection_HEADERS
 
 #ifdef DOCUMENTATION
 /** ELF string table section.
@@ -19477,7 +19609,7 @@ public:
      *
      * Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is
      * changed we adjust the free list in the ELF String Table contained in this section. */
-    virtual void set_size(rose_addr_t newsize) override;
+    virtual void set_size(Rose::BinaryAnalysis::Address newsize) override;
 
     /** Reallocate space for the string section if necessary.
      *
@@ -19521,6 +19653,11 @@ IS_SERIALIZABLE(AsmElfSegmentTable);
 #ifndef DOCUMENTATION
 AsmElfSegmentTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmElfSegmentTable);
+#if defined(SgAsmElfSegmentTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmElfSegmentTable_HEADERS
 
 #ifdef DOCUMENTATION
 /** Represents an ELF segment table.
@@ -19575,7 +19712,7 @@ public:
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    Rose::BinaryAnalysis::Address calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual bool reallocate() override;
 
@@ -19590,7 +19727,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
-    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSegmentTable();
@@ -19703,6 +19840,7 @@ AsmElfSegmentTableEntry.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSegmentTableEntry);
 #if defined(SgAsmElfSegmentTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 #endif // SgAsmElfSegmentTableEntry_HEADERS
@@ -19732,37 +19870,37 @@ class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
-        "rose_addr_t", "offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
-        "rose_addr_t", "vaddr", "= 0",
+        "Rose::BinaryAnalysis::Address", "vaddr", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
-        "rose_addr_t", "paddr", "= 0",
+        "Rose::BinaryAnalysis::Address", "paddr", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
-        "rose_addr_t", "filesz", "= 0",
+        "Rose::BinaryAnalysis::Address", "filesz", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
-        "rose_addr_t", "memsz", "= 0",
+        "Rose::BinaryAnalysis::Address", "memsz", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
-        "rose_addr_t", "align", "= 0",
+        "Rose::BinaryAnalysis::Address", "align", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -19919,8 +20057,8 @@ public:
      *  This is the starting byte offset of the segment within the file. 
      *  
      *  @{ */
-    rose_addr_t const& get_offset() const;
-    void set_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_offset() const;
+    void set_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -19930,8 +20068,8 @@ public:
      *  loader, which may map the segment to some other virtual address. 
      *  
      *  @{ */
-    rose_addr_t const& get_vaddr() const;
-    void set_vaddr(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_vaddr() const;
+    void set_vaddr(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -19940,8 +20078,8 @@ public:
      *  See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_paddr() const;
-    void set_paddr(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_paddr() const;
+    void set_paddr(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -19950,8 +20088,8 @@ public:
      *  Size of the segment in bytes as it is stored in the file. 
      *  
      *  @{ */
-    rose_addr_t const& get_filesz() const;
-    void set_filesz(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_filesz() const;
+    void set_filesz(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -19960,8 +20098,8 @@ public:
      *  Size of the segment in bytes after it is loaded into virtual memory. 
      *  
      *  @{ */
-    rose_addr_t const& get_memsz() const;
-    void set_memsz(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_memsz() const;
+    void set_memsz(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -19970,8 +20108,8 @@ public:
      *  Alignment in memory in bytes. Zero means the same thing as one, namely no alignment. 
      *  
      *  @{ */
-    rose_addr_t const& get_align() const;
-    void set_align(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_align() const;
+    void set_align(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20055,6 +20193,11 @@ IS_SERIALIZABLE(AsmElfSectionTable);
 AsmElfSectionTable.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmElfSectionTable);
+#if defined(SgAsmElfSectionTable_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmElfSectionTable_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents an ELF section table.
  *
@@ -20105,7 +20248,7 @@ public:
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    Rose::BinaryAnalysis::Address calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual bool reallocate() override;
 
@@ -20120,7 +20263,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
-    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSectionTable();
@@ -20156,6 +20299,7 @@ AsmElfSectionTableEntry.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSectionTableEntry);
 #if defined(SgAsmElfSectionTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 #endif // SgAsmElfSectionTableEntry_HEADERS
@@ -20197,31 +20341,31 @@ class SgAsmElfSectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfSectionTableEntry.setDataPrototype(
-        "rose_addr_t", "sh_addr", "= 0",
+        "Rose::BinaryAnalysis::Address", "sh_addr", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSectionTableEntry.setDataPrototype(
-        "rose_addr_t", "sh_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "sh_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSectionTableEntry.setDataPrototype(
-        "rose_addr_t", "sh_size", "= 0",
+        "Rose::BinaryAnalysis::Address", "sh_size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSectionTableEntry.setDataPrototype(
-        "rose_addr_t", "sh_addralign", "= 0",
+        "Rose::BinaryAnalysis::Address", "sh_addralign", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSectionTableEntry.setDataPrototype(
-        "rose_addr_t", "sh_entsize", "= 0",
+        "Rose::BinaryAnalysis::Address", "sh_entsize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -20411,8 +20555,8 @@ public:
      *  The sh_addr property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_sh_addr() const;
-    void set_sh_addr(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_sh_addr() const;
+    void set_sh_addr(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20421,8 +20565,8 @@ public:
      *  The sh_offset property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_sh_offset() const;
-    void set_sh_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_sh_offset() const;
+    void set_sh_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20431,8 +20575,8 @@ public:
      *  The sh_size property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_sh_size() const;
-    void set_sh_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_sh_size() const;
+    void set_sh_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20441,8 +20585,8 @@ public:
      *  The sh_addralign property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_sh_addralign() const;
-    void set_sh_addralign(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_sh_addralign() const;
+    void set_sh_addralign(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20451,8 +20595,8 @@ public:
      *  The sh_entsize property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_sh_entsize() const;
-    void set_sh_entsize(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_sh_entsize() const;
+    void set_sh_entsize(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20538,6 +20682,8 @@ AsmElfRelocSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfRelocSection);
 #if defined(SgAsmElfRelocSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfRelocSection_IMPL
 #include <SgAsmElfRelocEntryList.h>
 #endif
@@ -20618,7 +20764,8 @@ public:
     virtual SgAsmElfRelocSection *parse() override;
 
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     virtual bool reallocate() override;
 
@@ -20637,7 +20784,8 @@ public:
     SgAsmElfSection* get_target_section() const ROSE_DEPRECATED("use get_targetSection");
     void set_target_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_targetSection");
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfRelocSection();
@@ -20751,6 +20899,7 @@ AsmElfRelocEntry.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfRelocEntry);
 #if defined(SgAsmElfRelocEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 #endif // SgAsmElfRelocEntry_HEADERS
@@ -20762,13 +20911,13 @@ class SgAsmElfRelocEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfRelocEntry.setDataPrototype(
-        "rose_addr_t", "r_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "r_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfRelocEntry.setDataPrototype(
-        "rose_addr_t", "r_addend", "= 0",
+        "Rose::BinaryAnalysis::Address", "r_addend", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -20937,8 +21086,8 @@ public:
      *  See ELF specification for details. 
      *  
      *  @{ */
-    rose_addr_t const& get_r_offset() const;
-    void set_r_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_r_offset() const;
+    void set_r_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -20947,8 +21096,8 @@ public:
      *  See ELF specification for details. 
      *  
      *  @{ */
-    rose_addr_t const& get_r_addend() const;
-    void set_r_addend(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_r_addend() const;
+    void set_r_addend(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -21224,6 +21373,8 @@ AsmElfNoteEntry.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfNoteEntry);
 #if defined(SgAsmElfNoteEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 #ifdef ROSE_SgAsmElfNoteEntry_IMPL
@@ -21319,12 +21470,12 @@ public:
     /** Initialize a note by parsing it from the specified location in the note section.
      *
      *  Return value is the offset to the beginning of the next note. */
-    rose_addr_t parse(rose_addr_t starting_offset);
+    Rose::BinaryAnalysis::Address parse(Rose::BinaryAnalysis::Address starting_offset);
 
     /** Write a note at the specified offset to the section containing the note.
      *
      *  Returns the offset for the first byte past the end of the note. */
-    rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
+    Rose::BinaryAnalysis::Address unparse(std::ostream &f, Rose::BinaryAnalysis::Address starting_offset);
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -21335,13 +21486,13 @@ public:
     void set_payload(const void*, size_t nbytes);
 
     /** Returns the number of bytes needed to store this note. */
-    rose_addr_t calculateSize() const;
+    Rose::BinaryAnalysis::Address calculateSize() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t calculate_size() const ROSE_DEPRECATED("use calculateSize");
+    Rose::BinaryAnalysis::Address calculate_size() const ROSE_DEPRECATED("use calculateSize");
 public:
     /** Destructor. */
     virtual ~SgAsmElfNoteEntry();
@@ -21860,6 +22011,8 @@ AsmElfEHFrameSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfEHFrameSection);
 #if defined(SgAsmElfEHFrameSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfEHFrameSection_IMPL
 #include <SgAsmElfEHFrameEntryCIList.h>
 #endif
@@ -21914,7 +22067,8 @@ public:
      *
      *  See documentation for @ref SgAsmElfSection::calculateSizes. Since EH Frame Sections are run-length encoded, we
      *  need to actually unparse the section in order to determine its size. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Write data to .eh_frame section */
     virtual void unparse(std::ostream&) const override;
@@ -21923,7 +22077,7 @@ public:
      *
      *  If there is no output stream we still go through the actions but don't write anything. This is the only way to
      *  determine the amount of memory required to store the section since the section is run-length encoded. */
-    rose_addr_t unparse(std::ostream*) const;
+    Rose::BinaryAnalysis::Address unparse(std::ostream*) const;
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
@@ -21932,7 +22086,8 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfEHFrameSection();
@@ -22046,6 +22201,7 @@ AsmElfEHFrameEntryFD.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfEHFrameEntryFD);
 #if defined(SgAsmElfEHFrameEntryFD_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <sageContainer.h>
 #endif // SgAsmElfEHFrameEntryFD_HEADERS
@@ -22063,7 +22219,7 @@ class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfEHFrameEntryFD.setDataPrototype(
-        "rose_addr_t", "size", "= 0",
+        "Rose::BinaryAnalysis::Address", "size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -22116,8 +22272,8 @@ public:
      *  See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_size() const;
-    void set_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_size() const;
+    void set_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -22266,6 +22422,8 @@ AsmElfEHFrameEntryCI.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfEHFrameEntryCI);
 #if defined(SgAsmElfEHFrameEntryCI_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 #ifdef ROSE_SgAsmElfEHFrameEntryCI_IMPL
@@ -22336,7 +22494,7 @@ class SgAsmElfEHFrameEntryCI: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfEHFrameEntryCI.setDataPrototype(
-        "rose_addr_t", "prh_addr", "= 0",
+        "Rose::BinaryAnalysis::Address", "prh_addr", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -22490,8 +22648,8 @@ public:
      *  See official ELF specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_prh_addr() const;
-    void set_prh_addr(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_prh_addr() const;
+    void set_prh_addr(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -22582,6 +22740,8 @@ AsmElfDynamicSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfDynamicSection);
 #if defined(SgAsmElfDynamicSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfDynamicSection_IMPL
 #include <SgAsmElfDynamicEntryList.h>
 #endif
@@ -22637,7 +22797,8 @@ public:
 
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     virtual bool reallocate() override;
 
@@ -22653,7 +22814,8 @@ public:
 public:
     virtual void finish_parsing() override ROSE_DEPRECATED("use finishParsing") ROSE_DEPRECATED("use finishParsing");
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfDynamicSection();
@@ -22710,6 +22872,8 @@ AsmElfSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmElfSection);
 #if defined(SgAsmElfSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_SgAsmElfSection_IMPL
 #include <SgAsmElfSectionTableEntry.h>
 #include <SgAsmElfSegmentTableEntry.h>
@@ -22821,8 +22985,8 @@ public:
      *
      *  Return value is the total size needed for the section. In all cases, it is the product of @p entsize and @p
      *  entcount. */
-    rose_addr_t calculateSizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
-                               size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    Rose::BinaryAnalysis::Address calculateSizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
+                                           size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual void finishParsing();
 
@@ -22842,7 +23006,8 @@ public:
      *
      *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
      *  sh_entsize), could be smaller than the total size of the section. */
-    virtual rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual bool reallocate() override;
 
@@ -22871,10 +23036,12 @@ public:
         ROSE_DEPRECATED("use initFromSectionTable");
     SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false)
         ROSE_DEPRECATED("use initFromSegmentTable");
-    rose_addr_t calculate_sizes(size_t, size_t, const std::vector<size_t>&, size_t*, size_t*, size_t*, size_t*) const
+    Rose::BinaryAnalysis::Address
+    calculate_sizes(size_t, size_t, const std::vector<size_t>&, size_t*, size_t*, size_t*, size_t*) const
         ROSE_DEPRECATED("use calculateSizes");
     virtual void finish_parsing() ROSE_DEPRECATED("use finishParsing");
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address
+    calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
     void allocate_name_to_storage(SgAsmElfStringSection*) ROSE_DEPRECATED("use allocateNameToStorage");
     SgAsmElfFileHeader *get_elf_header() const ROSE_DEPRECATED("use get_elfHeader");
 public:
@@ -28169,6 +28336,11 @@ IS_SERIALIZABLE(AsmDOSFileHeader);
 AsmDOSFileHeader.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmDOSFileHeader);
+#if defined(SgAsmDOSFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmDOSFileHeader_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents the file header for DOS executables.
  *
@@ -28251,7 +28423,7 @@ class SgAsmDOSFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmDOSFileHeader.setDataPrototype(
-        "rose_addr_t", "e_relocs_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_relocs_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -28479,8 +28651,8 @@ public:
      *  See DOS specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_e_relocs_offset() const;
-    void set_e_relocs_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_relocs_offset() const;
+    void set_e_relocs_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -28525,7 +28697,7 @@ public:
      *  If max_offset is non-zero then use that as the maximum offset of the real-mode section. If the DOS header indicates a zero
      *  sized section then return NULL. If the section exists or is zero size due to the max_offset then return the section. See
      *  also, update_from_rm_section(). */
-    SgAsmGenericSection *parseRealModeSection(rose_addr_t max_offset=0);
+    SgAsmGenericSection *parseRealModeSection(Rose::BinaryAnalysis::Address max_offset=0);
 
     /** Update DOS header with data from real-mode section.
      *
@@ -28545,7 +28717,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     virtual const char* format_name() const override ROSE_DEPRECATED("use formatName");
-    SgAsmGenericSection* parse_rm_section(rose_addr_t max_offset = 0) ROSE_DEPRECATED("use parseRealModeSection");
+    SgAsmGenericSection* parse_rm_section(Rose::BinaryAnalysis::Address max_offset = 0) ROSE_DEPRECATED("use parseRealModeSection");
     void update_from_rm_section() ROSE_DEPRECATED("use updateFromRealModeSection");
     static bool is_DOS(SgAsmGenericFile*) ROSE_DEPRECATED("use isDos");
 public:
@@ -28601,6 +28773,7 @@ AsmGenericHeader.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmGenericHeader);
 #if defined(SgAsmGenericHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <sageContainer.h>
@@ -28640,7 +28813,7 @@ class SgAsmGenericHeader: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmGenericHeader.setDataPrototype(
-        "rose_addr_t", "baseVa", "= 0",
+        "Rose::BinaryAnalysis::Address", "baseVa", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -28714,8 +28887,8 @@ public:
     /** Property: Base virtual address used by all relative virtual addresses. 
      * 
      * @{ */
-    rose_addr_t const& get_baseVa() const;
-    void set_baseVa(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_baseVa() const;
+    void set_baseVa(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -28773,7 +28946,7 @@ public:
      *
      *  The return value is relative to the header's base virtual address. If there are no entry points defined then
      *  returns a zero RVA. */
-    rose_addr_t get_entryRva() const;
+    Rose::BinaryAnalysis::Address get_entryRva() const;
 
     /** Append an RVA to the list of entry points. */
     void addEntryRva(const Rose::BinaryAnalysis::RelativeVirtualAddress&);
@@ -28802,10 +28975,10 @@ public:
     SgAsmGenericSectionPtrList get_sectionsByName(std::string, char sep=0) const;
 
     /** Returns sectons in this header that contain all of the specified portion of the file. */
-    SgAsmGenericSectionPtrList get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const;
+    SgAsmGenericSectionPtrList get_sectionsByOffset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size) const;
 
     /** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
-    SgAsmGenericSectionPtrList get_sectionsByRva(rose_addr_t rva) const;
+    SgAsmGenericSectionPtrList get_sectionsByRva(Rose::BinaryAnalysis::Address rva) const;
 
     /** Returns sections having a preferred or actual mapping that includes the specified virtual address.
      *
@@ -28813,7 +28986,7 @@ public:
      *  otherwise the actual mapping is used.  If an actual mapping is used, the specified virtual address must be part of
      *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment
      *  constraints. */
-    SgAsmGenericSectionPtrList get_sectionsByVa(rose_addr_t va, bool use_preferred) const;
+    SgAsmGenericSectionPtrList get_sectionsByVa(Rose::BinaryAnalysis::Address va, bool use_preferred) const;
 
     /** Returns single section in this header that has the specified ID. */
     SgAsmGenericSection *get_sectionById(int id, size_t *nfound=0) const;
@@ -28822,12 +28995,13 @@ public:
     SgAsmGenericSection *get_sectionByName(const std::string&, char sep=0, size_t *nfound=0) const;
 
     /** Returns single section in this header that contains all of the specified portion of the file. */
-    SgAsmGenericSection *get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByOffset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size,
+                                             size_t *nfound=0) const;
 
     /** Returns the single section having a preferred mapping that includes the specified relative virtual address.
      *
      *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
-    SgAsmGenericSection *get_sectionByRva(rose_addr_t rva, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByRva(Rose::BinaryAnalysis::Address rva, size_t *nfound=0) const;
 
     /** Returns the section having a preferred or actual mapping that includes the specified virtual address.
      *
@@ -28835,10 +29009,10 @@ public:
      *  otherwise the actual mapping is used. If an actual mapping is used, the specified virtual address must be part of
      *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment constraints.
      *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
-    SgAsmGenericSection *get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByVa(Rose::BinaryAnalysis::Address va, bool use_preferred, size_t *nfound=0) const;
 
     /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
-    SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+    SgAsmGenericSection *get_bestSectionByVa(Rose::BinaryAnalysis::Address va, bool use_preferred, size_t *nfound=0) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -28846,14 +29020,14 @@ public:
 public:
     SgAsmGenericFormat* get_exec_format() const ROSE_DEPRECATED("use get_executableFormat");
     void set_exec_format(SgAsmGenericFormat*) ROSE_DEPRECATED("use set_executableFormat");
-    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
-    void set_base_va(rose_addr_t) ROSE_DEPRECATED("use set_baseVa");
+    Rose::BinaryAnalysis::Address get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    void set_base_va(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_baseVa");
     SgRVAList& get_entry_rvas() ROSE_DEPRECATED("use get_entryRvas");
     const SgRVAList& get_entry_rvas() const ROSE_DEPRECATED("use get_entryRvas");
     void set_entry_rvas(const SgRVAList&) ROSE_DEPRECATED("use set_entryRvas");
     virtual const char *format_name() const ROSE_DEPRECATED("use formatName");
     void add_dll(SgAsmGenericDLL*) ROSE_DEPRECATED("use addDll");
-    rose_addr_t get_entry_rva() const ROSE_DEPRECATED("use get_entryRva");
+    Rose::BinaryAnalysis::Address get_entry_rva() const ROSE_DEPRECATED("use get_entryRva");
     void add_entry_rva(const Rose::BinaryAnalysis::RelativeVirtualAddress&) ROSE_DEPRECATED("use addEntryRva");
     size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
     void add_section(SgAsmGenericSection*) ROSE_DEPRECATED("use addSection");
@@ -28861,17 +29035,22 @@ public:
     SgAsmGenericSectionPtrList get_mapped_sections() const ROSE_DEPRECATED("use get_mappedSections");
     SgAsmGenericSectionPtrList get_sections_by_id(int) const ROSE_DEPRECATED("use get_sectionsById");
     SgAsmGenericSectionPtrList get_sections_by_name(std::string, char=0) const ROSE_DEPRECATED("use get_sectionsByName");
-    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t, rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByOffset");
-    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByRva");
-    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t, bool) const ROSE_DEPRECATED("use get_sectionsByVa");
+    SgAsmGenericSectionPtrList get_sections_by_offset(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address) const
+        ROSE_DEPRECATED("use get_sectionsByOffset");
+    SgAsmGenericSectionPtrList get_sections_by_rva(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_sectionsByRva");
+    SgAsmGenericSectionPtrList get_sections_by_va(Rose::BinaryAnalysis::Address, bool) const
+        ROSE_DEPRECATED("use get_sectionsByVa");
     SgAsmGenericSection *get_section_by_id(int, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionById");
     SgAsmGenericSection *get_section_by_name(const std::string&, char=0, size_t* = nullptr) const
         ROSE_DEPRECATED("use get_sectionByName");
-    SgAsmGenericSection *get_section_by_offset(rose_addr_t, rose_addr_t, size_t* = nullptr) const
-        ROSE_DEPRECATED("use get_sectionByOffset");
-    SgAsmGenericSection *get_section_by_rva(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByRva");
-    SgAsmGenericSection *get_section_by_va(rose_addr_t, bool, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByVa");
-    SgAsmGenericSection *get_best_section_by_va(rose_addr_t, bool, size_t* = nullptr) const ROSE_DEPRECATED("use get_bestSectionByVa");
+    SgAsmGenericSection *get_section_by_offset(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address,
+                                               size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByOffset");
+    SgAsmGenericSection *get_section_by_rva(Rose::BinaryAnalysis::Address, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByRva");
+    SgAsmGenericSection *get_section_by_va(Rose::BinaryAnalysis::Address, bool, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByVa");
+    SgAsmGenericSection *get_best_section_by_va(Rose::BinaryAnalysis::Address, bool, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_bestSectionByVa");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericHeader();
@@ -28904,6 +29083,11 @@ IS_SERIALIZABLE(AsmDOSExtendedHeader);
 #ifndef DOCUMENTATION
 AsmDOSExtendedHeader.useSmallHeader(true);
 #endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmDOSExtendedHeader);
+#if defined(SgAsmDOSExtendedHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmDOSExtendedHeader_HEADERS
 
 #ifdef DOCUMENTATION
 /** DOS exteded header.
@@ -28962,7 +29146,7 @@ class SgAsmDOSExtendedHeader: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmDOSExtendedHeader.setDataPrototype(
-        "rose_addr_t", "e_lfanew", "= 0",
+        "Rose::BinaryAnalysis::Address", "e_lfanew", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29106,8 +29290,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_addr_t const& get_e_lfanew() const;
-    void set_e_lfanew(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_e_lfanew() const;
+    void set_e_lfanew(Rose::BinaryAnalysis::Address const&);
     /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -29880,6 +30064,8 @@ AsmCoffSymbol.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmCoffSymbol);
 #if defined(SgAsmCoffSymbol_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 #endif // SgAsmCoffSymbol_HEADERS
 
@@ -29896,7 +30082,7 @@ class SgAsmCoffSymbol: public SgAsmGenericSymbol {
 
 #ifndef DOCUMENTATION
     AsmCoffSymbol.setDataPrototype(
-        "rose_addr_t", "st_name_offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "st_name_offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29998,8 +30184,8 @@ public:
     /** Property: Symbol name offset. 
      * 
      * @{ */
-    rose_addr_t const& get_st_name_offset() const;
-    void set_st_name_offset(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_st_name_offset() const;
+    void set_st_name_offset(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -30108,6 +30294,8 @@ AsmGenericSymbol.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmGenericSymbol);
 #if defined(SgAsmGenericSymbol_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 /* Base class for symbol tables. */
 #endif // SgAsmGenericSymbol_HEADERS
 
@@ -30135,13 +30323,13 @@ class SgAsmGenericSymbol: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSymbol.setDataPrototype(
-        "rose_addr_t", "value", "= 0",
+        "Rose::BinaryAnalysis::Address", "value", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSymbol.setDataPrototype(
-        "rose_addr_t", "size", "= 0",
+        "Rose::BinaryAnalysis::Address", "size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30244,16 +30432,16 @@ public:
     /** Property: Symbol value. 
      * 
      * @{ */
-    rose_addr_t const& get_value() const;
-    void set_value(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_value() const;
+    void set_value(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
     /** Property: Symbol size in bytes. 
      * 
      * @{ */
-    rose_addr_t const& get_size() const;
-    void set_size(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_size() const;
+    void set_size(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -30318,6 +30506,11 @@ IS_SERIALIZABLE(AsmCoffStrtab);
 AsmCoffStrtab.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmCoffStrtab);
+#if defined(SgAsmCoffStrtab_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmCoffStrtab_HEADERS
+
 #ifdef DOCUMENTATION
 /** COFF symbol string table. */
 class SgAsmCoffStrtab: public SgAsmGenericStrtab {
@@ -30342,14 +30535,15 @@ public:
     explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section);
     void destructorHelper() override;
     virtual void unparse(std::ostream&) const;
-    virtual SgAsmStringStorage *createStorage(rose_addr_t offset, bool shared) override;
-    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*) override;
+    virtual SgAsmStringStorage *createStorage(Rose::BinaryAnalysis::Address offset, bool shared) override;
+    virtual Rose::BinaryAnalysis::Address get_storageSize(const SgAsmStringStorage*) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) override ROSE_DEPRECATED("use createStorage");
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override ROSE_DEPRECATED("use get_storageSize");
+    virtual SgAsmStringStorage *create_storage(Rose::BinaryAnalysis::Address, bool) override ROSE_DEPRECATED("use createStorage");
+    virtual Rose::BinaryAnalysis::Address get_storage_size(const SgAsmStringStorage*) override
+        ROSE_DEPRECATED("use get_storageSize");
 public:
     /** Destructor. */
     virtual ~SgAsmCoffStrtab();
@@ -30399,6 +30593,7 @@ AsmGenericStrtab.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmGenericStrtab);
 #if defined(SgAsmGenericStrtab_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #endif // SgAsmGenericStrtab_HEADERS
 
@@ -30521,7 +30716,7 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Constructs an SgAsmStoredString from an offset into this string table. */
-    SgAsmStoredString *createString(rose_addr_t offset, bool shared);
+    SgAsmStoredString *createString(Rose::BinaryAnalysis::Address offset, bool shared);
 
     /** Free area of this string table that corresponds to the string currently stored.
      *
@@ -30532,7 +30727,7 @@ public:
      *
      *  For instance, an ELF string table can have "main" and "domain" sharing storage. If we free the "domain" string then
      *  only "do" should be added to the free list. */
-    void free(rose_addr_t offset, rose_addr_t size); /*mark part of table as free*/
+    void free(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size); /*mark part of table as free*/
 
     /** Free all strings so they will be reallocated later.
      *
@@ -30550,9 +30745,9 @@ public:
     bool reallocate(bool shrink);
 
     //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-    virtual SgAsmStringStorage *createStorage(rose_addr_t /*offset*/, bool /*shared*/);
-    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*);
-    virtual void rebind(SgAsmStringStorage*, rose_addr_t);
+    virtual SgAsmStringStorage *createStorage(Rose::BinaryAnalysis::Address /*offset*/, bool /*shared*/);
+    virtual Rose::BinaryAnalysis::Address get_storageSize(const SgAsmStringStorage*);
+    virtual void rebind(SgAsmStringStorage*, Rose::BinaryAnalysis::Address);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -30566,11 +30761,11 @@ public:
     void set_dont_free(SgAsmStringStorage*) ROSE_DEPRECATED("use set_dontFree");
     size_t get_num_freed() const ROSE_DEPRECATED("use get_numberFreed");
     void set_num_freed(size_t) ROSE_DEPRECATED("use set_numberFreed");
-    SgAsmStoredString *create_string(rose_addr_t, bool) ROSE_DEPRECATED("use createString");
+    SgAsmStoredString *create_string(Rose::BinaryAnalysis::Address, bool) ROSE_DEPRECATED("use createString");
     void free_all_strings(bool=false) ROSE_DEPRECATED("use freeAllStrings");
     virtual void allocate_overlap(SgAsmStringStorage*) ROSE_DEPRECATED("use allocateOverlap");
-    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) ROSE_DEPRECATED("use createStorage");
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) ROSE_DEPRECATED("use get_storageSize");
+    virtual SgAsmStringStorage *create_storage(Rose::BinaryAnalysis::Address, bool) ROSE_DEPRECATED("use createStorage");
+    virtual Rose::BinaryAnalysis::Address get_storage_size(const SgAsmStringStorage*) ROSE_DEPRECATED("use get_storageSize");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericStrtab();
@@ -30935,6 +31130,7 @@ AsmGenericSection.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmGenericSection);
 #if defined(SgAsmGenericSection_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
@@ -30967,19 +31163,19 @@ class SgAsmGenericSection: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "size", "= 0",
+        "Rose::BinaryAnalysis::Address", "size", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "offset", "= 0",
+        "Rose::BinaryAnalysis::Address", "offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "fileAlignment", "= 0",
+        "Rose::BinaryAnalysis::Address", "fileAlignment", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31021,19 +31217,19 @@ class SgAsmGenericSection: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mappedPreferredRva", "= 0",
+        "Rose::BinaryAnalysis::Address", "mappedPreferredRva", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mappedSize", "= 0",
+        "Rose::BinaryAnalysis::Address", "mappedSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mappedAlignment", "= 0",
+        "Rose::BinaryAnalysis::Address", "mappedAlignment", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31063,7 +31259,7 @@ class SgAsmGenericSection: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mappedActualVa", "= 0",
+        "Rose::BinaryAnalysis::Address", "mappedActualVa", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31148,8 +31344,8 @@ public:
      *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::shiftExtend to do that).
      *
      *  @{ */
-    rose_addr_t get_size() const;
-    virtual void set_size(rose_addr_t);
+    Rose::BinaryAnalysis::Address get_size() const;
+    virtual void set_size(Rose::BinaryAnalysis::Address);
     /** @} */
 public:
     /** Property: Offset to start of section in file.
@@ -31161,8 +31357,8 @@ public:
      *  @{ */
  // Starting file offset of the section
 
-    rose_addr_t get_offset() const;
-    virtual void set_offset(rose_addr_t);
+    Rose::BinaryAnalysis::Address get_offset() const;
+    virtual void set_offset(Rose::BinaryAnalysis::Address);
     /** @} */
 public:
     /** Property: Required file alignment.
@@ -31170,8 +31366,8 @@ public:
      *  Zero and one both imply byte alignment. 
      *  
      *  @{ */
-    rose_addr_t const& get_fileAlignment() const;
-    void set_fileAlignment(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_fileAlignment() const;
+    void set_fileAlignment(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -31244,8 +31440,8 @@ public:
      *  The virtual address is relative to the base address stored in the file header.
      *
      *  @{ */
-    rose_addr_t const& get_mappedPreferredRva() const;
-    virtual void set_mappedPreferredRva(rose_addr_t);
+    Rose::BinaryAnalysis::Address const& get_mappedPreferredRva() const;
+    virtual void set_mappedPreferredRva(Rose::BinaryAnalysis::Address);
     /** @} */
 public:
     /** Property: Mapped size.
@@ -31253,15 +31449,15 @@ public:
      *  Size of section in bytes when it's mapped into virtual memory.
      *
      *  @{ */
-    rose_addr_t const& get_mappedSize() const;
-    virtual void set_mappedSize(rose_addr_t);
+    Rose::BinaryAnalysis::Address const& get_mappedSize() const;
+    virtual void set_mappedSize(Rose::BinaryAnalysis::Address);
     /** @} */
 public:
     /** Property: Alignment in virtual memory. 
      * 
      * @{ */
-    rose_addr_t const& get_mappedAlignment() const;
-    void set_mappedAlignment(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_mappedAlignment() const;
+    void set_mappedAlignment(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -31316,8 +31512,8 @@ public:
      *  preferred mapping attributes. 
      *  
      *  @{ */
-    rose_addr_t const& get_mappedActualVa() const;
-    void set_mappedActualVa(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_mappedActualVa() const;
+    void set_mappedActualVa(Rose::BinaryAnalysis::Address const&);
     /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
@@ -31383,7 +31579,7 @@ public:
     SgAsmGenericHeader *isFileHeader();
 
     /** File offset for end of section. */
-    rose_addr_t get_endOffset() const;
+    Rose::BinaryAnalysis::Address get_endOffset() const;
 
     /** Extend a section by some number of bytes during the construction and/or parsing phase.
      *
@@ -31391,7 +31587,7 @@ public:
      *  that's considered the "original size" of the section. To adjust the size of a section after the executable file is parsed,
      *  see @ref SgAsmGenericFile::shiftExtend.  Sections are allowed to extend beyond the end of the file and the original data
      *  (the @ref data property) is extended only up to the end of the file. */
-    void extend(rose_addr_t nbytes);
+    void extend(Rose::BinaryAnalysis::Address nbytes);
 
     /** Write data to a file section.
      *
@@ -31406,22 +31602,22 @@ public:
      *  written (end-of-file is determined by @ref SgAsmGenericFile::get_originalSize).
      *
      * @{ */
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, const std::string &str) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, char c) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, const SgFileContentList &buf) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, const SgUnsignedCharList &buf) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, size_t bufsize, const void *buf) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, const std::string &str) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, char c) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, const SgFileContentList &buf) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, const SgUnsignedCharList &buf) const;
     /** @} */
 
     /** Write an unsigned little-endian 128-bit value.
      *
      *  Encode an unsigned value as LEB128 and return the next offset. */
-    rose_addr_t writeUleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
+    Rose::BinaryAnalysis::Address writeUleb128(unsigned char*, Rose::BinaryAnalysis::Address offset, uint64_t) const;
 
     /** Write a signed little-endian 128-bit value.
      *
      *  Encode an signed value as LEB128 and return the next offset. */
-    rose_addr_t writeSleb128(unsigned char*, rose_addr_t offset, int64_t) const;
+    Rose::BinaryAnalysis::Address writeSleb128(unsigned char*, Rose::BinaryAnalysis::Address offset, int64_t) const;
 
     /** Reads data from a file.
      *
@@ -31430,7 +31626,7 @@ public:
      *  end-of-file is reached. If the return value is smaller than @p size then one of two things happen: if @p strict is
      *  set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf
      *  will be padded with zero bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
-    size_t readContent(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(Rose::BinaryAnalysis::Address abs_offset, void *dst_buf, Rose::BinaryAnalysis::Address size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -31443,10 +31639,10 @@ public:
      *  is NULL then the map defined in the underlying file is used.
      *
      * @{ */
-    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
-                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address start,  void *dst_buf,
+                       Rose::BinaryAnalysis::Address size, bool strict=true);
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress &start,
-                       void *dst_buf, rose_addr_t size, bool strict=true);
+                       void *dst_buf, Rose::BinaryAnalysis::Address size, bool strict=true);
     /** @} */
 
     /** Reads data from a file.
@@ -31455,7 +31651,8 @@ public:
      *  past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p strict is set
      *  (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the result is zero padded so
      *  as to contain exactly @p size bytes. */
-    size_t readContentLocal(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContentLocal(Rose::BinaryAnalysis::Address rel_offset, void *dst_buf, Rose::BinaryAnalysis::Address size,
+                            bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -31463,7 +31660,7 @@ public:
      *  is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an @ref
      *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to
      *  file offsets; if @p map is NULL then the map defined in the underlying file is used. */
-    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address va, bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -31472,7 +31669,7 @@ public:
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown.
      *
      * @{ */
-    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(Rose::BinaryAnalysis::Address abs_offset, bool strict=true);
     std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, Rose::BinaryAnalysis::RelativeVirtualAddress rva,
                                   bool strict=true);
     /** @} */
@@ -31482,27 +31679,27 @@ public:
      *  The string begins at the specified file offset relative to the start of this section and continues until the first
      *  NUL byte or the end of section is reached. However, if @p strict is set (the default) and we reach the
      *  end-of-section then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown. */
-    std::string readContentLocalString(rose_addr_t rel_offset, bool strict=true);
+    std::string readContentLocalString(Rose::BinaryAnalysis::Address rel_offset, bool strict=true);
 
     /** Reads content of a section and returns it as a container.
      *
      *  The returned container will always have exactly @p size byte.  If @p size bytes are not available in this section
      *  at the specified offset then the container will be zero padded. This method always behaves as a non-strict read. */
-    SgUnsignedCharList readContentLocalUcl(rose_addr_t rel_offset, rose_addr_t size);
+    SgUnsignedCharList readContentLocalUcl(Rose::BinaryAnalysis::Address rel_offset, Rose::BinaryAnalysis::Address size);
 
     /** Read a signed little-endian 128-bit value.
      *
      *  Extract a signed LEB128 value and adjust @p rel_offset according to how many bytes it occupied. If @p strict is set
      *  (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    int64_t readContentLocalSleb128(rose_addr_t *rel_offset, bool strict=true);
+    int64_t readContentLocalSleb128(Rose::BinaryAnalysis::Address *rel_offset, bool strict=true);
 
     /** Read an unsigned little-endian 128-bit value.
      *
      *  Extract an unsigned LEB128 value and adjust @p rel_offset according to how many bytes it occupied.  If @p strict is
      *  set (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    uint64_t readContentLocalUleb128(rose_addr_t *rel_offset, bool strict=true);
+    uint64_t readContentLocalUleb128(Rose::BinaryAnalysis::Address *rel_offset, bool strict=true);
 
     /** Obtain a local, writable pool to hold content.
      *
@@ -31541,24 +31738,24 @@ public:
      *
      *  Returns  zero if the section is not associated with a header.  This is just a convenience method to get the base
      *  virtual address of the file header that owns this section. */
-    rose_addr_t get_baseVa() const;
+    Rose::BinaryAnalysis::Address get_baseVa() const;
 
     /** Virtual address where section prefers to be mapped.
      *
      *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref mappedPreferredRva property. */
-    rose_addr_t get_mappedPreferredVa() const;
+    Rose::BinaryAnalysis::Address get_mappedPreferredVa() const;
 
     /** File offset for specified virtual address.
      *
      *  Returns the file offset associated with the virtual address of a mapped section. The @ref Rose::BinaryAnalysis::MemoryMap
      *  class is a better interface to this same information. */
-    rose_addr_t get_vaOffset(rose_addr_t va) const;
+    Rose::BinaryAnalysis::Address get_vaOffset(Rose::BinaryAnalysis::Address va) const;
 
     /** File offset for specified relative virtual address.
      *
      *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref
      *  Rose::BinaryAnalysis::MemoryMap class is a better interface to this same information. */
-    rose_addr_t get_rvaOffset(rose_addr_t rva) const;
+    Rose::BinaryAnalysis::Address get_rvaOffset(Rose::BinaryAnalysis::Address rva) const;
 
     /** Returns the file extent for the section.
      *
@@ -31593,16 +31790,16 @@ protected:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t get_file_alignment() const ROSE_DEPRECATED("use get_fileAlignment");
-    void set_file_alignment(rose_addr_t) ROSE_DEPRECATED("use set_fileAlignment");
+    Rose::BinaryAnalysis::Address get_file_alignment() const ROSE_DEPRECATED("use get_fileAlignment");
+    void set_file_alignment(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_fileAlignment");
     std::string get_short_name() const ROSE_DEPRECATED("use get_shortName");
     void set_short_name(const std::string&) ROSE_DEPRECATED("use set_shortName");
-    rose_addr_t get_mapped_preferred_rva() const ROSE_DEPRECATED("use get_mappedPreferredRva");
-    void set_mapped_preferred_rva(rose_addr_t) ROSE_DEPRECATED("use set_mappedPreferredRva");
-    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
-    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
-    rose_addr_t get_mapped_alignment() const ROSE_DEPRECATED("use get_mappedAlignment");
-    void set_mapped_alignment(rose_addr_t) ROSE_DEPRECATED("use set_mappedAlignment");
+    Rose::BinaryAnalysis::Address get_mapped_preferred_rva() const ROSE_DEPRECATED("use get_mappedPreferredRva");
+    void set_mapped_preferred_rva(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedPreferredRva");
+    Rose::BinaryAnalysis::Address get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedSize");
+    Rose::BinaryAnalysis::Address get_mapped_alignment() const ROSE_DEPRECATED("use get_mappedAlignment");
+    void set_mapped_alignment(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedAlignment");
     bool get_mapped_rperm() const ROSE_DEPRECATED("use get_mappedReadPermission");
     void set_mapped_rperm(bool) ROSE_DEPRECATED("use set_mappedReadPermission");
     bool get_mapped_wperm() const ROSE_DEPRECATED("use get_mappedWritePermission");
@@ -31611,43 +31808,48 @@ public:
     void set_mapped_xperm(bool) ROSE_DEPRECATED("use set_mappedExecutePermission");
     bool get_contains_code() const ROSE_DEPRECATED("use get_containsCode");
     void set_contains_code(bool) ROSE_DEPRECATED("use set_containsCode");
-    rose_addr_t get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
-    void set_mapped_actual_va(rose_addr_t) ROSE_DEPRECATED("use set_mappedActualVa");
+    Rose::BinaryAnalysis::Address get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
+    void set_mapped_actual_va(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedActualVa");
     static void dump_containing_sections(FILE*, const std::string&, Rose::BinaryAnalysis::RelativeVirtualAddress,
                                          const SgAsmGenericSectionPtrList&)
         ROSE_DEPRECATED("use dumpContainingSections");
     void grab_content() ROSE_DEPRECATED("use grabContent");
     void unparse_holes(std::ostream&) const ROSE_DEPRECATED("use unparseHoles");
     SgAsmGenericHeader *is_file_header() ROSE_DEPRECATED("use isFileHeader");
-    rose_addr_t get_end_offset() const ROSE_DEPRECATED("use get_endOffset");
-    rose_addr_t write_uleb128(unsigned char*, rose_addr_t, uint64_t) const ROSE_DEPRECATED("use writeUleb128");
-    rose_addr_t write_sleb128(unsigned char*, rose_addr_t, int64_t) const ROSE_DEPRECATED("use writeSleb128");
-    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t,  void*, rose_addr_t, bool=true)
+    Rose::BinaryAnalysis::Address get_end_offset() const ROSE_DEPRECATED("use get_endOffset");
+    Rose::BinaryAnalysis::Address write_uleb128(unsigned char*, Rose::BinaryAnalysis::Address, uint64_t) const
+        ROSE_DEPRECATED("use writeUleb128");
+    Rose::BinaryAnalysis::Address write_sleb128(unsigned char*, Rose::BinaryAnalysis::Address, int64_t) const
+        ROSE_DEPRECATED("use writeSleb128");
+    size_t read_content(Rose::BinaryAnalysis::Address, void*, Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address,  void*,
+                        Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContent");
     size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress&, void*,
-                        rose_addr_t, bool=true)
+                        Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContent");
-    size_t read_content_local(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocal");
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+    size_t read_content_local(Rose::BinaryAnalysis::Address, void*, Rose::BinaryAnalysis::Address, bool=true)
+        ROSE_DEPRECATED("use readContentLocal");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContentString");
-    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContentString");
     std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::RelativeVirtualAddress,
                                  bool=true)
         ROSE_DEPRECATED("use readContentString");
-    std::string read_content_local_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocalString");
-    SgUnsignedCharList read_content_local_ucl(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use readContentLocalUcl");
-    int64_t read_content_local_sleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
-    uint64_t read_content_local_uleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
+    std::string read_content_local_str(Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContentLocalString");
+    SgUnsignedCharList read_content_local_ucl(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address)
+        ROSE_DEPRECATED("use readContentLocalUcl");
+    int64_t read_content_local_sleb128(Rose::BinaryAnalysis::Address*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
+    uint64_t read_content_local_uleb128(Rose::BinaryAnalysis::Address*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
     unsigned char *writable_content(size_t) ROSE_DEPRECATED("use writableContent");
     Rose::BinaryAnalysis::AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
     Rose::BinaryAnalysis::AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
     bool is_mapped() const ROSE_DEPRECATED("use isMapped");
     void clear_mapped() ROSE_DEPRECATED("use clearMapped");
-    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
-    rose_addr_t get_mapped_preferred_va() const ROSE_DEPRECATED("use get_mappedPreferredVa");
-    rose_addr_t get_va_offset(rose_addr_t) const ROSE_DEPRECATED("use get_vaOffset");
-    rose_addr_t get_rva_offset(rose_addr_t) const ROSE_DEPRECATED("use get_rvaOffset");
+    Rose::BinaryAnalysis::Address get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    Rose::BinaryAnalysis::Address get_mapped_preferred_va() const ROSE_DEPRECATED("use get_mappedPreferredVa");
+    Rose::BinaryAnalysis::Address get_va_offset(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_vaOffset");
+    Rose::BinaryAnalysis::Address get_rva_offset(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_rvaOffset");
     Extent get_file_extent() const ROSE_DEPRECATED("use get_fileExtent");
     Extent get_mapped_preferred_extent() const ROSE_DEPRECATED("use get_mappedPreferredExtent");
 public:
@@ -36279,7 +36481,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmCilInstruction(rose_addr_t const& address,
+    SgAsmCilInstruction(Rose::BinaryAnalysis::Address const& address,
                         uint8_t const& architectureId,
                         Rose::BinaryAnalysis::CilInstructionKind const& kind);
 
@@ -40788,6 +40990,8 @@ AsmBlock.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmBlock);
 #if defined(SgAsmBlock_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 #ifdef ROSE_SgAsmBlock_IMPL
@@ -40821,7 +41025,7 @@ class SgAsmBlock: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmBlock.setDataPrototype(
-        "rose_addr_t", "id", "= 0",
+        "Rose::BinaryAnalysis::Address", "id", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -40942,8 +41146,8 @@ public:
      *  Block unique identification number. Not used by ROSE. 
      *  
      *  @{ */
-    rose_addr_t const& get_id() const;
-    void set_id(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_id() const;
+    void set_id(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -41077,7 +41281,7 @@ public:
      *
      *  A block's fall-through address is the virtual address that follows the last byte of the block's last instruction.
      *  The block must have instructions (e.g., it cannot be a strict data block). */
-    rose_addr_t get_fallthroughVa();
+    Rose::BinaryAnalysis::Address get_fallthroughVa();
 
     /** Returns the function that owns this block.
      *
@@ -41107,7 +41311,7 @@ public:
      *
      * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be
      * used by the Partitioner before an AST is created and might not be as accurate. */
-    bool isFunctionCall(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
+    bool isFunctionCall(Rose::BinaryAnalysis::Address &target_va/*out*/, Rose::BinaryAnalysis::Address &return_va/*out*/);
 
     /** Multi-line string describing the letters used for basic block reasons.
      *
@@ -41142,11 +41346,11 @@ public:
     void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
     void remove_statement(SgAsmStatement*) ROSE_DEPRECATED("use removeStatement");
     void remove_children() ROSE_DEPRECATED("use removeChildren");
-    rose_addr_t get_fallthrough_va() ROSE_DEPRECATED("use getFallthroughVa");
+    Rose::BinaryAnalysis::Address get_fallthrough_va() ROSE_DEPRECATED("use getFallthroughVa");
     SgAsmFunction* get_enclosing_function() const ROSE_DEPRECATED("use get_enclosingFunction");
     bool has_instructions() const ROSE_DEPRECATED("use hasInstructions");
     bool is_basic_block() const ROSE_DEPRECATED("use isBasicBlock");
-    bool is_function_call(rose_addr_t&, rose_addr_t&) ROSE_DEPRECATED("use isFunctionCall");
+    bool is_function_call(Rose::BinaryAnalysis::Address&, Rose::BinaryAnalysis::Address&) ROSE_DEPRECATED("use isFunctionCall");
     static std::string reason_key(const std::string& = "") ROSE_DEPRECATED("use reasonKey");
     std::string reason_str(bool) const ROSE_DEPRECATED("use reasonString");
     static std::string reason_str(bool, unsigned) ROSE_DEPRECATED("use reasonString");
@@ -41160,7 +41364,7 @@ public:
 
 public:
     /** Constructor. */
-    explicit SgAsmBlock(rose_addr_t const& address);
+    explicit SgAsmBlock(Rose::BinaryAnalysis::Address const& address);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -42076,6 +42280,11 @@ IS_SERIALIZABLE(AsmBasicString);
 AsmBasicString.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmBasicString);
+#if defined(SgAsmBasicString_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmBasicString_HEADERS
+
 #ifdef DOCUMENTATION
 /** String associated with a binary file.
  *
@@ -42110,7 +42319,7 @@ public:
 public:
     virtual std::string get_string(bool escape=false) const override;
     virtual void set_string(const std::string&) override;
-    virtual void set_string(rose_addr_t) override;
+    virtual void set_string(Rose::BinaryAnalysis::Address) override;
 
 public:
     /** Constructor that gives a value to the object.
@@ -42169,6 +42378,11 @@ AsmGenericString.setAutomaticGenerationOfDestructor(false);
 AsmGenericString.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmGenericString);
+#if defined(SgAsmGenericString_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmGenericString_HEADERS
+
 #ifdef DOCUMENTATION
 /** Base class for strings related to binary specimens. */
 class SgAsmGenericString: public SgAsmExecutableFileFormat {
@@ -42191,7 +42405,7 @@ private:
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
 public:
     /** Constant for addresses of unallocated strings. */
-    static const rose_addr_t unallocated;
+    static const Rose::BinaryAnalysis::Address unallocated;
 
     /** Property: String value.
      *
@@ -42203,10 +42417,10 @@ public:
      * @{ */
     virtual std::string get_string(bool escape=false) const;
     virtual void set_string(const std::string &s);
-    virtual void set_string(rose_addr_t);
+    virtual void set_string(Rose::BinaryAnalysis::Address);
     /** @} */
 
-    virtual rose_addr_t get_offset() const {return unallocated;}
+    virtual Rose::BinaryAnalysis::Address get_offset() const {return unallocated;}
 
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 public:
@@ -42310,6 +42524,7 @@ AsmExecutableFileFormat.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmExecutableFileFormat);
 #if defined(SgAsmExecutableFileFormat_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/Exception.h>
 #endif // SgAsmExecutableFileFormat_HEADERS
 
@@ -42343,8 +42558,8 @@ public:
     class ShortRead: public Rose::Exception {
     public:
         const SgAsmGenericSection *section;         /**< Section from which read occurred; null implies file-level write. */
-        rose_addr_t offset;                         /**< Byte offset into section (or file). */
-        rose_addr_t size;                           /**< Number of bytes of attempted read. */
+        Rose::BinaryAnalysis::Address offset;       /**< Byte offset into section (or file). */
+        Rose::BinaryAnalysis::Address size;         /**< Number of bytes of attempted read. */
 
         ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size)
             : Rose::Exception("short read"), section(section), offset(offset), size(size) {}
@@ -42361,8 +42576,8 @@ public:
     class ShortWrite: public Rose::Exception {
     public:
         const SgAsmGenericSection *section;         /**< Section to which write occurred; null implies file-level write. */
-        rose_addr_t          offset;                /**< Byte offset into section (or file). */
-        rose_addr_t          size;                  /**< Number of bytes of attempted write. */
+        Rose::BinaryAnalysis::Address offset;       /**< Byte offset into section (or file). */
+        Rose::BinaryAnalysis::Address size;         /**< Number of bytes of attempted write. */
 
         ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size)
             : Rose::Exception(""), section(section), offset(offset), size(size) {}
@@ -43028,7 +43243,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmAarch64Instruction(rose_addr_t const& address,
+    SgAsmAarch64Instruction(Rose::BinaryAnalysis::Address const& address,
                             uint8_t const& architectureId,
                             Rose::BinaryAnalysis::Aarch64InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch64InstructionCondition const& condition);
@@ -43425,7 +43640,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmAarch32Instruction(rose_addr_t const& address,
+    SgAsmAarch32Instruction(Rose::BinaryAnalysis::Address const& address,
                             uint8_t const& architectureId,
                             Rose::BinaryAnalysis::Aarch32InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch32InstructionCondition const& condition);
@@ -43484,6 +43699,7 @@ AsmInstruction.useSmallHeader(true);
 
 DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <sageContainer.h>
@@ -43710,15 +43926,17 @@ public:
 
     // [Robb Matzke 2023-12-04]: deprecated
     virtual bool terminatesBasicBlock() final ROSE_DEPRECATED("use Architecture::Base::terminatesBasicBlock");
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, Rose::BinaryAnalysis::Address *target,
+                                    Rose::BinaryAnalysis::Address *ret) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionCallFast");
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, Rose::BinaryAnalysis::Address *target,
+                                    Rose::BinaryAnalysis::Address *ret) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionCallSlow");
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnFast");
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnSlow");
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() final
+    virtual Sawyer::Optional<Rose::BinaryAnalysis::Address> branchTarget() final
         ROSE_DEPRECATED("use Architecture::Base::branchTarget");
 
     /** Returns true if this instruction is the first instruction in a basic block.
@@ -43959,7 +44177,7 @@ public:
      *
      *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called
      *  "immediates" for some architectures such as X86. */
-    virtual std::set<rose_addr_t> explicitConstants() const;
+    virtual std::set<Rose::BinaryAnalysis::Address> explicitConstants() const;
 
     /** Property: Whether instruction semantics failed at this location.
      *
@@ -43977,10 +44195,10 @@ public:
 
     /** Rewrite certain addressing modes for operands.
      *
-     *  The addressing mode: <code>REG1 + REG2 * SIZE + OFFSET</code> is changed from <code>(+ (+ REG1 (* REG2 SIZE))
-     *  OFFSET)</code> to <code>(+ (+ REG1 OFFSET) (* REG2 SIZE))</code>, which during instruction semantic executions causes
-     *  the base register and offset to be added first to obtain the starting address of an array, and then an additional offset
-     *  added to obtain the address of the desired element of that array.
+     *  The addressing mode: `REG1 + REG2 * SIZE + OFFSET` is changed from `(+ (+ REG1 (* REG2 SIZE)) OFFSET)` to `(+ (+ REG1
+     *  OFFSET) (* REG2 SIZE))`, which during instruction semantic executions causes the base register and offset to be added first
+     *  to obtain the starting address of an array, and then an additional offset added to obtain the address of the desired element
+     *  of that array.
      *
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
@@ -44013,7 +44231,7 @@ public:
 
 public:
     /** Constructor. */
-    SgAsmInstruction(rose_addr_t const& address,
+    SgAsmInstruction(Rose::BinaryAnalysis::Address const& address,
                      uint8_t const& architectureId);
 
 protected:
@@ -44057,6 +44275,11 @@ AsmStatement.setAutomaticGenerationOfDestructor(false);
 AsmStatement.useSmallHeader(true);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmStatement);
+#if defined(SgAsmStatement_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Address.h>
+#endif // SgAsmStatement_HEADERS
+
 #ifdef DOCUMENTATION
 /** Base class for statement-like subclasses.
  *
@@ -44067,7 +44290,7 @@ class SgAsmStatement: public SgAsmNode {
 
 #ifndef DOCUMENTATION
     AsmStatement.setDataPrototype(
-        "rose_addr_t", "address", "= 0",
+        "Rose::BinaryAnalysis::Address", "address", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -44101,8 +44324,8 @@ public:
      *  Virtual address of first byte of instruction, block, or whatever, depending on subclass. 
      *  
      *  @{ */
-    rose_addr_t const& get_address() const;
-    void set_address(rose_addr_t const&);
+    Rose::BinaryAnalysis::Address const& get_address() const;
+    void set_address(Rose::BinaryAnalysis::Address const&);
     /** @} */
 
 public:
@@ -44123,7 +44346,7 @@ protected:
 
 protected:
     /** Constructor. */
-    explicit SgAsmStatement(rose_addr_t const& address);
+    explicit SgAsmStatement(Rose::BinaryAnalysis::Address const& address);
 
 protected:
     /** Initialize all properties that have explicit initial values.

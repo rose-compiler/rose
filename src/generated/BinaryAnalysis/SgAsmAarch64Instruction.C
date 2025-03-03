@@ -55,7 +55,7 @@ SgAsmAarch64Instruction::SgAsmAarch64Instruction()
 //    property=architectureId   class=SgAsmInstruction
 //    property=kind             class=SgAsmAarch64Instruction
 //    property=condition        class=SgAsmAarch64Instruction
-SgAsmAarch64Instruction::SgAsmAarch64Instruction(rose_addr_t const& address,
+SgAsmAarch64Instruction::SgAsmAarch64Instruction(Rose::BinaryAnalysis::Address const& address,
                                                  uint8_t const& architectureId,
                                                  Rose::BinaryAnalysis::Aarch64InstructionKind const& kind,
                                                  Rose::BinaryAnalysis::Aarch64InstructionCondition const& condition)

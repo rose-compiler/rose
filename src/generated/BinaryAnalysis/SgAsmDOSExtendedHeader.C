@@ -95,13 +95,13 @@ SgAsmDOSExtendedHeader::set_e_res6(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmDOSExtendedHeader::get_e_lfanew() const {
     return p_e_lfanew;
 }
 
 void
-SgAsmDOSExtendedHeader::set_e_lfanew(rose_addr_t const& x) {
+SgAsmDOSExtendedHeader::set_e_lfanew(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_lfanew = x;
     set_isModified(true);
 }

@@ -42,7 +42,7 @@ SgAsmM68kInstruction::SgAsmM68kInstruction()
 //    property=architectureId   class=SgAsmInstruction
 //    property=kind             class=SgAsmM68kInstruction
 //    property=dataFormat       class=SgAsmM68kInstruction
-SgAsmM68kInstruction::SgAsmM68kInstruction(rose_addr_t const& address,
+SgAsmM68kInstruction::SgAsmM68kInstruction(Rose::BinaryAnalysis::Address const& address,
                                            uint8_t const& architectureId,
                                            Rose::BinaryAnalysis::M68kInstructionKind const& kind,
                                            Rose::BinaryAnalysis::M68kDataFormat const& dataFormat)

@@ -38,7 +38,7 @@ SgAsmSynthesizedFieldDeclaration::SgAsmSynthesizedFieldDeclaration()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-SgAsmSynthesizedFieldDeclaration::SgAsmSynthesizedFieldDeclaration(rose_addr_t const& address)
+SgAsmSynthesizedFieldDeclaration::SgAsmSynthesizedFieldDeclaration(Rose::BinaryAnalysis::Address const& address)
     : SgAsmSynthesizedDeclaration(address)
     , p_offset(0) {}
 

@@ -15,7 +15,7 @@ SgAsmSynthesizedDeclaration::SgAsmSynthesizedDeclaration() {}
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-SgAsmSynthesizedDeclaration::SgAsmSynthesizedDeclaration(rose_addr_t const& address)
+SgAsmSynthesizedDeclaration::SgAsmSynthesizedDeclaration(Rose::BinaryAnalysis::Address const& address)
     : SgAsmStatement(address) {}
 
 void

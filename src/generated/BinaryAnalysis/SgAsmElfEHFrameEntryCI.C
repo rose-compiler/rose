@@ -106,13 +106,13 @@ SgAsmElfEHFrameEntryCI::set_prh_arg(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfEHFrameEntryCI::get_prh_addr() const {
     return p_prh_addr;
 }
 
 void
-SgAsmElfEHFrameEntryCI::set_prh_addr(rose_addr_t const& x) {
+SgAsmElfEHFrameEntryCI::set_prh_addr(Rose::BinaryAnalysis::Address const& x) {
     this->p_prh_addr = x;
     set_isModified(true);
 }

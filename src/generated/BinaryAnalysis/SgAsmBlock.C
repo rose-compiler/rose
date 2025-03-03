@@ -7,13 +7,13 @@
 #define ROSE_SgAsmBlock_IMPL
 #include <SgAsmBlock.h>
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmBlock::get_id() const {
     return p_id;
 }
 
 void
-SgAsmBlock::set_id(rose_addr_t const& x) {
+SgAsmBlock::set_id(Rose::BinaryAnalysis::Address const& x) {
     this->p_id = x;
     set_isModified(true);
 }
@@ -131,7 +131,7 @@ SgAsmBlock::SgAsmBlock()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
-SgAsmBlock::SgAsmBlock(rose_addr_t const& address)
+SgAsmBlock::SgAsmBlock(Rose::BinaryAnalysis::Address const& address)
     : SgAsmStatement(address)
     , p_id(0)
     , p_reason(SgAsmBlock::BLK_NONE)

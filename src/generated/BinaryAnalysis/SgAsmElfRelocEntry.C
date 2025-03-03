@@ -7,24 +7,24 @@
 #define ROSE_SgAsmElfRelocEntry_IMPL
 #include <SgAsmElfRelocEntry.h>
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfRelocEntry::get_r_offset() const {
     return p_r_offset;
 }
 
 void
-SgAsmElfRelocEntry::set_r_offset(rose_addr_t const& x) {
+SgAsmElfRelocEntry::set_r_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_r_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfRelocEntry::get_r_addend() const {
     return p_r_addend;
 }
 
 void
-SgAsmElfRelocEntry::set_r_addend(rose_addr_t const& x) {
+SgAsmElfRelocEntry::set_r_addend(Rose::BinaryAnalysis::Address const& x) {
     this->p_r_addend = x;
     set_isModified(true);
 }

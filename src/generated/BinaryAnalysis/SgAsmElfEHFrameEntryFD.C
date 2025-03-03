@@ -23,13 +23,13 @@ SgAsmElfEHFrameEntryFD::set_begin_rva(Rose::BinaryAnalysis::RelativeVirtualAddre
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfEHFrameEntryFD::get_size() const {
     return p_size;
 }
 
 void
-SgAsmElfEHFrameEntryFD::set_size(rose_addr_t const& x) {
+SgAsmElfEHFrameEntryFD::set_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_size = x;
     set_isModified(true);
 }

@@ -29,13 +29,13 @@ SgAsmStringStorage::set_string(std::string const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmStringStorage::get_offset() const {
     return p_offset;
 }
 
 void
-SgAsmStringStorage::set_offset(rose_addr_t const& x) {
+SgAsmStringStorage::set_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_offset = x;
     set_isModified(true);
 }

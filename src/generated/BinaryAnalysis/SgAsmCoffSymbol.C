@@ -18,13 +18,13 @@ SgAsmCoffSymbol::set_st_name(std::string const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmCoffSymbol::get_st_name_offset() const {
     return p_st_name_offset;
 }
 
 void
-SgAsmCoffSymbol::set_st_name_offset(rose_addr_t const& x) {
+SgAsmCoffSymbol::set_st_name_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_st_name_offset = x;
     set_isModified(true);
 }

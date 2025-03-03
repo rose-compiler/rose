@@ -29,7 +29,7 @@ SgAsmMipsInstruction::SgAsmMipsInstruction()
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
 //    property=kind             class=SgAsmMipsInstruction
-SgAsmMipsInstruction::SgAsmMipsInstruction(rose_addr_t const& address,
+SgAsmMipsInstruction::SgAsmMipsInstruction(Rose::BinaryAnalysis::Address const& address,
                                            uint8_t const& architectureId,
                                            Rose::BinaryAnalysis::MipsInstructionKind const& kind)
     : SgAsmInstruction(address, architectureId)

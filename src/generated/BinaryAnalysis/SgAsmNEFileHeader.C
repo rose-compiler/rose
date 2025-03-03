@@ -216,112 +216,112 @@ SgAsmNEFileHeader::set_e_winvers(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_entrytab_rfo() const {
     return p_e_entrytab_rfo;
 }
 
 void
-SgAsmNEFileHeader::set_e_entrytab_rfo(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_entrytab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_entrytab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_entrytab_size() const {
     return p_e_entrytab_size;
 }
 
 void
-SgAsmNEFileHeader::set_e_entrytab_size(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_entrytab_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_entrytab_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_sectab_rfo() const {
     return p_e_sectab_rfo;
 }
 
 void
-SgAsmNEFileHeader::set_e_sectab_rfo(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_sectab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_sectab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_rsrctab_rfo() const {
     return p_e_rsrctab_rfo;
 }
 
 void
-SgAsmNEFileHeader::set_e_rsrctab_rfo(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_rsrctab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_rsrctab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_resnametab_rfo() const {
     return p_e_resnametab_rfo;
 }
 
 void
-SgAsmNEFileHeader::set_e_resnametab_rfo(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_resnametab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_resnametab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_modreftab_rfo() const {
     return p_e_modreftab_rfo;
 }
 
 void
-SgAsmNEFileHeader::set_e_modreftab_rfo(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_modreftab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_modreftab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_importnametab_rfo() const {
     return p_e_importnametab_rfo;
 }
 
 void
-SgAsmNEFileHeader::set_e_importnametab_rfo(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_importnametab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_importnametab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_nonresnametab_offset() const {
     return p_e_nonresnametab_offset;
 }
 
 void
-SgAsmNEFileHeader::set_e_nonresnametab_offset(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_nonresnametab_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_nonresnametab_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_fastload_sector() const {
     return p_e_fastload_sector;
 }
 
 void
-SgAsmNEFileHeader::set_e_fastload_sector(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_fastload_sector(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_fastload_sector = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNEFileHeader::get_e_fastload_nsectors() const {
     return p_e_fastload_nsectors;
 }
 
 void
-SgAsmNEFileHeader::set_e_fastload_nsectors(rose_addr_t const& x) {
+SgAsmNEFileHeader::set_e_fastload_nsectors(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_fastload_nsectors = x;
     set_isModified(true);
 }

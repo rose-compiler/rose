@@ -40,13 +40,13 @@ SgAsmElfSymbol::set_st_shndx(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSymbol::get_st_size() const {
     return p_st_size;
 }
 
 void
-SgAsmElfSymbol::set_st_size(rose_addr_t const& x) {
+SgAsmElfSymbol::set_st_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_st_size = x;
     set_isModified(true);
 }

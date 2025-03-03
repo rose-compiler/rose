@@ -40,68 +40,68 @@ SgAsmElfSegmentTableEntry::set_flags(SgAsmElfSegmentTableEntry::SegmentFlags con
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSegmentTableEntry::get_offset() const {
     return p_offset;
 }
 
 void
-SgAsmElfSegmentTableEntry::set_offset(rose_addr_t const& x) {
+SgAsmElfSegmentTableEntry::set_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSegmentTableEntry::get_vaddr() const {
     return p_vaddr;
 }
 
 void
-SgAsmElfSegmentTableEntry::set_vaddr(rose_addr_t const& x) {
+SgAsmElfSegmentTableEntry::set_vaddr(Rose::BinaryAnalysis::Address const& x) {
     this->p_vaddr = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSegmentTableEntry::get_paddr() const {
     return p_paddr;
 }
 
 void
-SgAsmElfSegmentTableEntry::set_paddr(rose_addr_t const& x) {
+SgAsmElfSegmentTableEntry::set_paddr(Rose::BinaryAnalysis::Address const& x) {
     this->p_paddr = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSegmentTableEntry::get_filesz() const {
     return p_filesz;
 }
 
 void
-SgAsmElfSegmentTableEntry::set_filesz(rose_addr_t const& x) {
+SgAsmElfSegmentTableEntry::set_filesz(Rose::BinaryAnalysis::Address const& x) {
     this->p_filesz = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSegmentTableEntry::get_memsz() const {
     return p_memsz;
 }
 
 void
-SgAsmElfSegmentTableEntry::set_memsz(rose_addr_t const& x) {
+SgAsmElfSegmentTableEntry::set_memsz(Rose::BinaryAnalysis::Address const& x) {
     this->p_memsz = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSegmentTableEntry::get_align() const {
     return p_align;
 }
 
 void
-SgAsmElfSegmentTableEntry::set_align(rose_addr_t const& x) {
+SgAsmElfSegmentTableEntry::set_align(Rose::BinaryAnalysis::Address const& x) {
     this->p_align = x;
     set_isModified(true);
 }

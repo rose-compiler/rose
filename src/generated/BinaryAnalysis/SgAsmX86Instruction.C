@@ -116,7 +116,7 @@ SgAsmX86Instruction::SgAsmX86Instruction()
 //    property=baseSize         class=SgAsmX86Instruction
 //    property=operandSize      class=SgAsmX86Instruction
 //    property=addressSize      class=SgAsmX86Instruction
-SgAsmX86Instruction::SgAsmX86Instruction(rose_addr_t const& address,
+SgAsmX86Instruction::SgAsmX86Instruction(Rose::BinaryAnalysis::Address const& address,
                                          uint8_t const& architectureId,
                                          Rose::BinaryAnalysis::X86InstructionKind const& kind,
                                          Rose::BinaryAnalysis::X86InstructionSize const& baseSize,

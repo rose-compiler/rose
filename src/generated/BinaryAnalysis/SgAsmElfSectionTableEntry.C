@@ -62,57 +62,57 @@ SgAsmElfSectionTableEntry::set_sh_flags(uint64_t const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSectionTableEntry::get_sh_addr() const {
     return p_sh_addr;
 }
 
 void
-SgAsmElfSectionTableEntry::set_sh_addr(rose_addr_t const& x) {
+SgAsmElfSectionTableEntry::set_sh_addr(Rose::BinaryAnalysis::Address const& x) {
     this->p_sh_addr = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSectionTableEntry::get_sh_offset() const {
     return p_sh_offset;
 }
 
 void
-SgAsmElfSectionTableEntry::set_sh_offset(rose_addr_t const& x) {
+SgAsmElfSectionTableEntry::set_sh_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_sh_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSectionTableEntry::get_sh_size() const {
     return p_sh_size;
 }
 
 void
-SgAsmElfSectionTableEntry::set_sh_size(rose_addr_t const& x) {
+SgAsmElfSectionTableEntry::set_sh_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_sh_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSectionTableEntry::get_sh_addralign() const {
     return p_sh_addralign;
 }
 
 void
-SgAsmElfSectionTableEntry::set_sh_addralign(rose_addr_t const& x) {
+SgAsmElfSectionTableEntry::set_sh_addralign(Rose::BinaryAnalysis::Address const& x) {
     this->p_sh_addralign = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmElfSectionTableEntry::get_sh_entsize() const {
     return p_sh_entsize;
 }
 
 void
-SgAsmElfSectionTableEntry::set_sh_entsize(rose_addr_t const& x) {
+SgAsmElfSectionTableEntry::set_sh_entsize(Rose::BinaryAnalysis::Address const& x) {
     this->p_sh_entsize = x;
     set_isModified(true);
 }

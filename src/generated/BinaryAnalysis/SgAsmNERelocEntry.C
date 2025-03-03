@@ -51,13 +51,13 @@ SgAsmNERelocEntry::set_flags(SgAsmNERelocEntry::NERelocFlags const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNERelocEntry::get_src_offset() const {
     return p_src_offset;
 }
 
 void
-SgAsmNERelocEntry::set_src_offset(rose_addr_t const& x) {
+SgAsmNERelocEntry::set_src_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_src_offset = x;
     set_isModified(true);
 }

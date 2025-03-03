@@ -282,233 +282,233 @@ SgAsmLEFileHeader::set_e_heap_size(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_npages() const {
     return p_e_npages;
 }
 
 void
-SgAsmLEFileHeader::set_e_npages(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_npages(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_npages = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_eip() const {
     return p_e_eip;
 }
 
 void
-SgAsmLEFileHeader::set_e_eip(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_eip(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_eip = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_esp() const {
     return p_e_esp;
 }
 
 void
-SgAsmLEFileHeader::set_e_esp(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_esp(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_esp = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_page_size() const {
     return p_e_page_size;
 }
 
 void
-SgAsmLEFileHeader::set_e_page_size(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_page_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_page_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_fixup_sect_size() const {
     return p_e_fixup_sect_size;
 }
 
 void
-SgAsmLEFileHeader::set_e_fixup_sect_size(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_fixup_sect_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_fixup_sect_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_loader_sect_size() const {
     return p_e_loader_sect_size;
 }
 
 void
-SgAsmLEFileHeader::set_e_loader_sect_size(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_loader_sect_size(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_loader_sect_size = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_secttab_rfo() const {
     return p_e_secttab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_secttab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_secttab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_secttab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_pagetab_rfo() const {
     return p_e_pagetab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_pagetab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_pagetab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_pagetab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_iterpages_offset() const {
     return p_e_iterpages_offset;
 }
 
 void
-SgAsmLEFileHeader::set_e_iterpages_offset(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_iterpages_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_iterpages_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_rsrctab_rfo() const {
     return p_e_rsrctab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_rsrctab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_rsrctab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_rsrctab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_resnametab_rfo() const {
     return p_e_resnametab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_resnametab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_resnametab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_resnametab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_entrytab_rfo() const {
     return p_e_entrytab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_entrytab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_entrytab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_entrytab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_fmtdirtab_rfo() const {
     return p_e_fmtdirtab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_fmtdirtab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_fmtdirtab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_fmtdirtab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_fixup_pagetab_rfo() const {
     return p_e_fixup_pagetab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_fixup_pagetab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_fixup_pagetab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_fixup_pagetab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_fixup_rectab_rfo() const {
     return p_e_fixup_rectab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_fixup_rectab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_fixup_rectab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_fixup_rectab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_import_modtab_rfo() const {
     return p_e_import_modtab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_import_modtab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_import_modtab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_import_modtab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_import_proctab_rfo() const {
     return p_e_import_proctab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_import_proctab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_import_proctab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_import_proctab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_ppcksumtab_rfo() const {
     return p_e_ppcksumtab_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_ppcksumtab_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_ppcksumtab_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_ppcksumtab_rfo = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_data_pages_offset() const {
     return p_e_data_pages_offset;
 }
 
 void
-SgAsmLEFileHeader::set_e_data_pages_offset(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_data_pages_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_data_pages_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_nonresnametab_offset() const {
     return p_e_nonresnametab_offset;
 }
 
 void
-SgAsmLEFileHeader::set_e_nonresnametab_offset(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_nonresnametab_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_nonresnametab_offset = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEFileHeader::get_e_debug_info_rfo() const {
     return p_e_debug_info_rfo;
 }
 
 void
-SgAsmLEFileHeader::set_e_debug_info_rfo(rose_addr_t const& x) {
+SgAsmLEFileHeader::set_e_debug_info_rfo(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_debug_info_rfo = x;
     set_isModified(true);
 }

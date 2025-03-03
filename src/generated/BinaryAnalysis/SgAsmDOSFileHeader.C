@@ -139,13 +139,13 @@ SgAsmDOSFileHeader::set_e_overlay(uint16_t const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmDOSFileHeader::get_e_relocs_offset() const {
     return p_e_relocs_offset;
 }
 
 void
-SgAsmDOSFileHeader::set_e_relocs_offset(rose_addr_t const& x) {
+SgAsmDOSFileHeader::set_e_relocs_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_e_relocs_offset = x;
     set_isModified(true);
 }

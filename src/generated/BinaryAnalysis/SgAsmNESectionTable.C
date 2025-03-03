@@ -29,24 +29,24 @@ SgAsmNESectionTable::set_sector(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNESectionTable::get_physicalSize() const {
     return p_physicalSize;
 }
 
 void
-SgAsmNESectionTable::set_physicalSize(rose_addr_t const& x) {
+SgAsmNESectionTable::set_physicalSize(Rose::BinaryAnalysis::Address const& x) {
     this->p_physicalSize = x;
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmNESectionTable::get_virtualSize() const {
     return p_virtualSize;
 }
 
 void
-SgAsmNESectionTable::set_virtualSize(rose_addr_t const& x) {
+SgAsmNESectionTable::set_virtualSize(Rose::BinaryAnalysis::Address const& x) {
     this->p_virtualSize = x;
     set_isModified(true);
 }

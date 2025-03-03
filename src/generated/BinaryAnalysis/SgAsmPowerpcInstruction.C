@@ -29,7 +29,7 @@ SgAsmPowerpcInstruction::SgAsmPowerpcInstruction()
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
 //    property=kind             class=SgAsmPowerpcInstruction
-SgAsmPowerpcInstruction::SgAsmPowerpcInstruction(rose_addr_t const& address,
+SgAsmPowerpcInstruction::SgAsmPowerpcInstruction(Rose::BinaryAnalysis::Address const& address,
                                                  uint8_t const& architectureId,
                                                  Rose::BinaryAnalysis::PowerpcInstructionKind const& kind)
     : SgAsmInstruction(address, architectureId)

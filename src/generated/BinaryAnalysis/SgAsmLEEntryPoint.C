@@ -67,13 +67,13 @@ SgAsmLEEntryPoint::set_res1(unsigned const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
+Rose::BinaryAnalysis::Address const&
 SgAsmLEEntryPoint::get_entry_offset() const {
     return p_entry_offset;
 }
 
 void
-SgAsmLEEntryPoint::set_entry_offset(rose_addr_t const& x) {
+SgAsmLEEntryPoint::set_entry_offset(Rose::BinaryAnalysis::Address const& x) {
     this->p_entry_offset = x;
     set_isModified(true);
 }

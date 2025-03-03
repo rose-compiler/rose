@@ -29,7 +29,7 @@ SgAsmJvmInstruction::SgAsmJvmInstruction()
 //    property=address          class=SgAsmStatement
 //    property=architectureId   class=SgAsmInstruction
 //    property=kind             class=SgAsmJvmInstruction
-SgAsmJvmInstruction::SgAsmJvmInstruction(rose_addr_t const& address,
+SgAsmJvmInstruction::SgAsmJvmInstruction(Rose::BinaryAnalysis::Address const& address,
                                          uint8_t const& architectureId,
                                          Rose::BinaryAnalysis::JvmInstructionKind const& kind)
     : SgAsmInstruction(address, architectureId)
