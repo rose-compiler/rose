@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_IMPL
 #include <SgAsmElfRelocEntryList.h>
 #endif
@@ -27,7 +29,8 @@ public:
     virtual SgAsmElfRelocSection *parse() override;
 
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     virtual bool reallocate() override;
 
@@ -46,5 +49,6 @@ public:
     SgAsmElfSection* get_target_section() const ROSE_DEPRECATED("use get_targetSection");
     void set_target_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_targetSection");
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 };

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_IMPL
 #include <SgAsmElfSymverDefinedEntryList.h>
 #endif
@@ -92,7 +94,8 @@ public:
 
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverDefined section back to disk.
      *
@@ -107,5 +110,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     using SgAsmElfSection::calculate_sizes;
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 };

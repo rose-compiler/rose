@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 
@@ -88,7 +89,7 @@ public:
      *
      *  See ELF specification for details. */
     [[using Rosebud: rosetta]]
-    rose_addr_t st_size = 0;
+    Rose::BinaryAnalysis::Address st_size = 0;
 
     /** Property: Extra data.
      *

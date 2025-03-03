@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
 #ifdef ROSE_IMPL
@@ -176,67 +177,67 @@ public:
     unsigned e_heap_size = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_npages = 0;
+    Rose::BinaryAnalysis::Address e_npages = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_eip = 0;
+    Rose::BinaryAnalysis::Address e_eip = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_esp = 0;
+    Rose::BinaryAnalysis::Address e_esp = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_page_size = 0;
+    Rose::BinaryAnalysis::Address e_page_size = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_fixup_sect_size = 0;
+    Rose::BinaryAnalysis::Address e_fixup_sect_size = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_loader_sect_size = 0;
+    Rose::BinaryAnalysis::Address e_loader_sect_size = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_secttab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_secttab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_pagetab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_pagetab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_iterpages_offset = 0;
+    Rose::BinaryAnalysis::Address e_iterpages_offset = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_rsrctab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_rsrctab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_resnametab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_resnametab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_entrytab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_entrytab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_fmtdirtab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_fmtdirtab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_fixup_pagetab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_fixup_pagetab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_fixup_rectab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_fixup_rectab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_import_modtab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_import_modtab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_import_proctab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_import_proctab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_ppcksumtab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_ppcksumtab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_data_pages_offset = 0;
+    Rose::BinaryAnalysis::Address e_data_pages_offset = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_nonresnametab_offset = 0;
+    Rose::BinaryAnalysis::Address e_nonresnametab_offset = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_debug_info_rfo = 0;
+    Rose::BinaryAnalysis::Address e_debug_info_rfo = 0;
 
     [[using Rosebud: rosetta, traverse]]
     SgAsmDOSExtendedHeader* dos2Header = nullptr;
@@ -263,7 +264,7 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset);
+    SgAsmLEFileHeader(SgAsmGenericFile *f, Rose::BinaryAnalysis::Address offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 

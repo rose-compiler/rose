@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 class SgAsmNESectionTableEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
@@ -53,10 +55,10 @@ public:
     unsigned sector = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t physicalSize = 0;
+    Rose::BinaryAnalysis::Address physicalSize = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t virtualSize = 0;
+    Rose::BinaryAnalysis::Address virtualSize = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -71,8 +73,8 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
-    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
-    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
-    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
+    Rose::BinaryAnalysis::Address get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
+    void set_physical_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_physicalSize");
+    Rose::BinaryAnalysis::Address get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
+    void set_virtual_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_virtualSize");
 };

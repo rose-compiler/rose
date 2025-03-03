@@ -67,7 +67,7 @@ public:
     /** Allocating constructor for a binary location.
      *
      *  This is only available when ROSE is configured to support binary analysis. */
-    static Ptr instance(const std::string &binaryArtifact, rose_addr_t, const std::string &mesg = "");
+    static Ptr instance(const std::string &binaryArtifact, BinaryAnalysis::Address, const std::string &mesg = "");
 #endif
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
@@ -111,7 +111,7 @@ public:
      *  "source location". A location is a binary location if and only if it is not a source location.
      *
      *  This is only available if ROSE is configured to support binary analysis. */
-    std::pair<std::string, rose_addr_t> binaryLocation() const;
+    std::pair<std::string, BinaryAnalysis::Address> binaryLocation() const;
 #endif
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS

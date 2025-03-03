@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 
@@ -111,38 +112,38 @@ public:
      *
      *  This is the starting byte offset of the segment within the file. */
     [[using Rosebud: rosetta]]
-    rose_addr_t offset = 0;
+    Rose::BinaryAnalysis::Address offset = 0;
 
     /** Property: Virtual address.
      *
      *  This is the virtual address for the start of the segment as stored in the segment table. This is only a hint to the
      *  loader, which may map the segment to some other virtual address. */
     [[using Rosebud: rosetta]]
-    rose_addr_t vaddr = 0;
+    Rose::BinaryAnalysis::Address vaddr = 0;
 
     /** Property: ELF paddr field.
      *
      *  See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t paddr = 0;
+    Rose::BinaryAnalysis::Address paddr = 0;
 
     /** Property: Size of segment in file.
      *
      *  Size of the segment in bytes as it is stored in the file. */
     [[using Rosebud: rosetta]]
-    rose_addr_t filesz = 0;
+    Rose::BinaryAnalysis::Address filesz = 0;
 
     /** Property:  Size of segment in memory.
      *
      *  Size of the segment in bytes after it is loaded into virtual memory. */
     [[using Rosebud: rosetta]]
-    rose_addr_t memsz = 0;
+    Rose::BinaryAnalysis::Address memsz = 0;
 
     /** Property: Alignment.
      *
      *  Alignment in memory in bytes. Zero means the same thing as one, namely no alignment. */
     [[using Rosebud: rosetta]]
-    rose_addr_t align = 0;
+    Rose::BinaryAnalysis::Address align = 0;
 
     /** Property: Extra bytes.
      *

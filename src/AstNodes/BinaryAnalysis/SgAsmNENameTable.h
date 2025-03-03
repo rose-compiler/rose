@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 class SgAsmNENameTable: public SgAsmGenericSection {
 public:
     [[using Rosebud: rosetta]]
@@ -7,7 +9,7 @@ public:
     SgUnsignedList ordinals;
 
 public:
-    SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset);
+    SgAsmNENameTable(SgAsmNEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     std::vector<std::string> get_namesByOrdinal(unsigned ordinal);

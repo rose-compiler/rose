@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 
@@ -135,31 +136,31 @@ public:
      *
      *  The sh_addr property of an ELF section table. See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t sh_addr= 0;
+    Rose::BinaryAnalysis::Address sh_addr= 0;
 
     /** Property: sh_offset.
      *
      *  The sh_offset property of an ELF section table. See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t sh_offset = 0;
+    Rose::BinaryAnalysis::Address sh_offset = 0;
 
     /** Property: sh_size.
      *
      *  The sh_size property of an ELF section table. See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t sh_size = 0;
+    Rose::BinaryAnalysis::Address sh_size = 0;
 
     /** Property: sh_addralign.
      *
      *  The sh_addralign property of an ELF section table. See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t sh_addralign = 0;
+    Rose::BinaryAnalysis::Address sh_addralign = 0;
 
     /** Property: sh_entsize.
      *
      *  The sh_entsize property of an ELF section table. See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t sh_entsize = 0;
+    Rose::BinaryAnalysis::Address sh_entsize = 0;
 
     /** Property: Extra bytes not officially part of the table entry.
      *

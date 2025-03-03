@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /* Base class for symbol tables. */
 [[Rosebud::abstract]]
 class SgAsmGenericSymbol: public SgAsmExecutableFileFormat {
@@ -52,11 +54,11 @@ public:
 
     /** Property: Symbol value. */
     [[using Rosebud: rosetta]]
-    rose_addr_t value = 0;
+    Rose::BinaryAnalysis::Address value = 0;
 
     /** Property: Symbol size in bytes. */
     [[using Rosebud: rosetta]]
-    rose_addr_t size = 0;
+    Rose::BinaryAnalysis::Address size = 0;
 
     /** Property: Associated file section. */
     [[using Rosebud: rosetta]]

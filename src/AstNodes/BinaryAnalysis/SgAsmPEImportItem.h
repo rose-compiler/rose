@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #ifdef ROSE_IMPL
@@ -80,7 +81,7 @@ public:
      *
      *  Returns the virtual address of the IAT slot for this import item.  This import item must be linked into the AST in
      *  order for this method to succeed. */
-    rose_addr_t get_iatEntryVa() const;
+    Rose::BinaryAnalysis::Address get_iatEntryVa() const;
 
 private:
     void initFromParent(SgAsmPEImportItemList *parent);
@@ -90,6 +91,6 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     size_t hintname_required_size() const ROSE_DEPRECATED("use hintNameRequiredSize");
-    rose_addr_t get_iat_entry_va() const ROSE_DEPRECATED("use get_iatEntryVa");
+    Rose::BinaryAnalysis::Address get_iat_entry_va() const ROSE_DEPRECATED("use get_iatEntryVa");
 
 };

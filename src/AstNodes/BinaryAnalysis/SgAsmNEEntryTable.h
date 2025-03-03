@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 class SgAsmNEEntryTable: public SgAsmGenericSection {
 public:
     [[using Rosebud: rosetta]]
@@ -7,7 +9,7 @@ public:
     SgAsmNEEntryPointPtrList entries;
 
 public:
-    SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size);
     void populate_entries();
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;

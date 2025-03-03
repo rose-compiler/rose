@@ -131,8 +131,7 @@ SgAsmFunction::reasonString(bool do_pad, unsigned r)
 }
 
 size_t
-SgAsmFunction::get_extent(AddressIntervalSet *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
-{
+SgAsmFunction::get_extent(AddressIntervalSet *extents, Address *lo_addr, Address *hi_addr, NodeSelector *selector) {
     if (lo_addr)
         *lo_addr = 0;
     if (hi_addr)
@@ -144,7 +143,7 @@ SgAsmFunction::get_extent(AddressIntervalSet *extents, rose_addr_t *lo_addr, ros
             return;
         SgAsmInstruction *insn = isSgAsmInstruction(node);
         SgAsmStaticData *data = isSgAsmStaticData(node);
-        rose_addr_t lo, hi;
+        Address lo, hi;
         if (insn) {
             lo = insn->get_address();
             hi = lo + insn->get_size();
@@ -284,13 +283,13 @@ SgAsmFunction::set_name_md5(const std::string &x) {
     set_nameMd5(x);
 }
 
-rose_addr_t
+Address
 SgAsmFunction::get_entry_va() const {
     return get_entryVa();
 }
 
 void
-SgAsmFunction::set_entry_va(rose_addr_t x) {
+SgAsmFunction::set_entry_va(Address x) {
     set_entryVa(x);
 }
 

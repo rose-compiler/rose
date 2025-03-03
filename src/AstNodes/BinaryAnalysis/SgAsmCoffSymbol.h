@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 /** COFF symbol. */
@@ -42,7 +44,7 @@ public:
 
     /** Property: Symbol name offset. */
     [[using Rosebud: rosetta]]
-    rose_addr_t st_name_offset = 0;
+    Rose::BinaryAnalysis::Address st_name_offset = 0;
 
     /** Property: Section number. */
     [[using Rosebud: rosetta]]

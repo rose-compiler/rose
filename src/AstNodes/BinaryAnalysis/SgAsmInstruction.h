@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <sageContainer.h>
@@ -152,15 +153,17 @@ public:
 
     // [Robb Matzke 2023-12-04]: deprecated
     virtual bool terminatesBasicBlock() final ROSE_DEPRECATED("use Architecture::Base::terminatesBasicBlock");
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, Rose::BinaryAnalysis::Address *target,
+                                    Rose::BinaryAnalysis::Address *ret) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionCallFast");
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, Rose::BinaryAnalysis::Address *target,
+                                    Rose::BinaryAnalysis::Address *ret) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionCallSlow");
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnFast");
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnSlow");
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() final
+    virtual Sawyer::Optional<Rose::BinaryAnalysis::Address> branchTarget() final
         ROSE_DEPRECATED("use Architecture::Base::branchTarget");
 
     /** Returns true if this instruction is the first instruction in a basic block.
@@ -401,7 +404,7 @@ public:
      *
      *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called
      *  "immediates" for some architectures such as X86. */
-    virtual std::set<rose_addr_t> explicitConstants() const;
+    virtual std::set<Rose::BinaryAnalysis::Address> explicitConstants() const;
 
     /** Property: Whether instruction semantics failed at this location.
      *

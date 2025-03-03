@@ -151,34 +151,34 @@ public:
     unsigned e_winvers = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_entrytab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_entrytab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_entrytab_size = 0;
+    Rose::BinaryAnalysis::Address e_entrytab_size = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_sectab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_sectab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_rsrctab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_rsrctab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_resnametab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_resnametab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_modreftab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_modreftab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_importnametab_rfo = 0;
+    Rose::BinaryAnalysis::Address e_importnametab_rfo = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_nonresnametab_offset = 0;
+    Rose::BinaryAnalysis::Address e_nonresnametab_offset = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_fastload_sector = 0;
+    Rose::BinaryAnalysis::Address e_fastload_sector = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t e_fastload_nsectors = 0;
+    Rose::BinaryAnalysis::Address e_fastload_nsectors = 0;
 
     [[using Rosebud: rosetta, traverse]]
     SgAsmDOSExtendedHeader* dos2Header = nullptr;
@@ -202,7 +202,7 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset);
+    SgAsmNEFileHeader(SgAsmGenericFile *f, Rose::BinaryAnalysis::Address offset);
 
     static bool isNe (SgAsmGenericFile*);
     static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);

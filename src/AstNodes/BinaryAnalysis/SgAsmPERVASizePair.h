@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 /** RVA/size pair. */
@@ -38,7 +39,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t e_size = 0;
+    Rose::BinaryAnalysis::Address e_size = 0;
 
     /** Property: Section.
      *
@@ -51,7 +52,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk*);
-    SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size);
+    SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, Rose::BinaryAnalysis::Address rva, Rose::BinaryAnalysis::Address size);
 
     /** Sets or removes the section associated with an RVA/size pair.
      *

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** ELF string table section.
  *
  *  A file section that holds string literals such as symbol names. */
@@ -23,7 +25,7 @@ public:
      *
      * Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is
      * changed we adjust the free list in the ELF String Table contained in this section. */
-    virtual void set_size(rose_addr_t newsize) override;
+    virtual void set_size(Rose::BinaryAnalysis::Address newsize) override;
 
     /** Reallocate space for the string section if necessary.
      *

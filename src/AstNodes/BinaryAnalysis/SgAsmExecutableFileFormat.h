@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/Exception.h>
 
 /** Base class for many binary analysis nodes. */
@@ -13,8 +14,8 @@ public:
     class ShortRead: public Rose::Exception {
     public:
         const SgAsmGenericSection *section;         /**< Section from which read occurred; null implies file-level write. */
-        rose_addr_t offset;                         /**< Byte offset into section (or file). */
-        rose_addr_t size;                           /**< Number of bytes of attempted read. */
+        Rose::BinaryAnalysis::Address offset;       /**< Byte offset into section (or file). */
+        Rose::BinaryAnalysis::Address size;         /**< Number of bytes of attempted read. */
 
         ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size)
             : Rose::Exception("short read"), section(section), offset(offset), size(size) {}
@@ -31,8 +32,8 @@ public:
     class ShortWrite: public Rose::Exception {
     public:
         const SgAsmGenericSection *section;         /**< Section to which write occurred; null implies file-level write. */
-        rose_addr_t          offset;                /**< Byte offset into section (or file). */
-        rose_addr_t          size;                  /**< Number of bytes of attempted write. */
+        Rose::BinaryAnalysis::Address offset;       /**< Byte offset into section (or file). */
+        Rose::BinaryAnalysis::Address size;         /**< Number of bytes of attempted write. */
 
         ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size)
             : Rose::Exception(""), section(section), offset(offset), size(size) {}

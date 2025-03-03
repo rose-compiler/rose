@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 class SgAsmNERelocEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
@@ -39,12 +41,12 @@ public:
     };
 
     // DQ (8/7/2008): At only (I hope) the risk of using more memory that required, break the union so that we can better support
-    // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, rose_addr_t; and then use
-    // member functions to access the data in the base class.
+    // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, Rose::BinaryAnalysis::Address;
+    // and then use member functions to access the data in the base class.
     struct iref_type { /*tgt_type==0x00: internal reference*/
         unsigned    sect_idx;       /* section index (1-origin) */
         unsigned    res1;           /* reserved */
-        rose_addr_t tgt_offset;
+        Rose::BinaryAnalysis::Address tgt_offset;
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
@@ -62,9 +64,9 @@ public:
     };
 
     struct iord_type { /*tgt_type==0x01: imported ordinal*/
-        unsigned    modref;         /* 1-based index into import module table */
-        unsigned    ordinal;
-        rose_addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
+        unsigned modref;                                /* 1-based index into import module table */
+        unsigned ordinal;
+        Rose::BinaryAnalysis::Address addend;           /* value to add (only present for flags & RF_2EXTRA) */
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
@@ -82,9 +84,9 @@ public:
     };
 
     struct iname_type { /*tgt_type==0x02: imported name*/
-        unsigned    modref;         /* 1-based index into import module table */
-        unsigned    nm_off;         /* offset into import procedure names */
-        rose_addr_t      addend;    /* value to add (only present for flags & RF_2EXTRA) */
+        unsigned modref;                                /* 1-based index into import module table */
+        unsigned nm_off;                                /* offset into import procedure names */
+        Rose::BinaryAnalysis::Address addend;           /* value to add (only present for flags & RF_2EXTRA) */
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
         template<class S>
@@ -136,7 +138,7 @@ public:
     SgAsmNERelocEntry::NERelocFlags flags = SgAsmNERelocEntry::RF_ADDITIVE;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t src_offset = 0;
+    Rose::BinaryAnalysis::Address src_offset = 0;
 
     [[using Rosebud: rosetta]]
     SgAsmNERelocEntry::iref_type iref;
@@ -154,7 +156,7 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size);
-    rose_addr_t unparse(std::ostream&, const SgAsmGenericSection*, rose_addr_t spos) const;
+    SgAsmNERelocEntry(SgAsmGenericSection *relocs, Rose::BinaryAnalysis::Address at, Rose::BinaryAnalysis::Address *rec_size);
+    Rose::BinaryAnalysis::Address unparse(std::ostream&, const SgAsmGenericSection*, Rose::BinaryAnalysis::Address spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
 };

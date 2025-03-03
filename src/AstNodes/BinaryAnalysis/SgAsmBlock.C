@@ -16,8 +16,9 @@
 #include <Cxx_GrammarDowncast.h>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
-rose_addr_t
+Address
 SgAsmBlock::get_fallthroughVa()
 {
     ROSE_ASSERT(!get_statementList().empty());
@@ -111,9 +112,9 @@ SgAsmBlock::reasonString(bool do_pad, unsigned r)
 }
 
 bool
-SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
+SgAsmBlock::isFunctionCall(Address &target_va, Address &return_va)
 {
-    static const rose_addr_t INVALID_ADDR = (rose_addr_t)(-1);
+    static const Address INVALID_ADDR = (Address)(-1);
     target_va = return_va = INVALID_ADDR;;
     if (!isBasicBlock())
         return false;
@@ -124,12 +125,12 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
     // might be one edge that points to the fall-through address of this block, and that's ok.
     SgAsmFunction *func = AST::Traversal::findParentTyped<SgAsmFunction>(this);
     SgAsmInterpretation *interp = AST::Traversal::findParentTyped<SgAsmInterpretation>(func);
-    std::set<rose_addr_t> callee_vas;
+    std::set<Address> callee_vas;
     if (interp) {
-        const BinaryAnalysis::InstructionMap &imap = interp->get_instructionMap();
+        const InstructionMap &imap = interp->get_instructionMap();
         const SgAsmIntegerValuePtrList &successors = get_successors();
         for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
-            rose_addr_t successor_va = (*si)->get_absoluteValue();
+            Address successor_va = (*si)->get_absoluteValue();
             if (SgAsmInstruction *target_insn = imap.get_value_or(successor_va, NULL)) {
                 SgAsmFunction *target_func = AST::Traversal::findParentTyped<SgAsmFunction>(target_insn);
                 if (successor_va==target_func->get_entryVa()) {
@@ -241,7 +242,7 @@ SgAsmBlock::remove_children() {
     removeChildren();
 }
 
-rose_addr_t
+Address
 SgAsmBlock::get_fallthrough_va() {
     return get_fallthroughVa();
 }
@@ -262,7 +263,7 @@ SgAsmBlock::is_basic_block() const {
 }
 
 bool
-SgAsmBlock::is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/) {
+SgAsmBlock::is_function_call(Address &target_va/*out*/, Address &return_va/*out*/) {
     return isFunctionCall(target_va, return_va);
 }
 

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Strings stored in an ELF or PE container. */
 class SgAsmStoredString: public SgAsmGenericString {
 public:
@@ -7,7 +9,7 @@ public:
 
 public:
     /** Construct a string existing in a string table. */
-    SgAsmStoredString(SgAsmGenericStrtab*, rose_addr_t offset);
+    SgAsmStoredString(SgAsmGenericStrtab*, Rose::BinaryAnalysis::Address offset);
 
     /** Construct a new string in a string table. */
     SgAsmStoredString(SgAsmGenericStrtab*, const std::string&);
@@ -34,10 +36,10 @@ public:
     /** Give the string a new value.
      *
      *  The string is given a new value by specifying the offset of a string that already exists in the string table. */
-    virtual void set_string(rose_addr_t) override;
+    virtual void set_string(Rose::BinaryAnalysis::Address) override;
 
     /** Returns the offset into the string table where the string is allocated.
      *
      *  If the string is not allocated then this call triggers an allocation. */
-    virtual rose_addr_t get_offset() const override;
+    virtual Rose::BinaryAnalysis::Address get_offset() const override;
 };

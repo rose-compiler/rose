@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 #ifdef ROSE_IMPL
@@ -43,12 +45,12 @@ public:
     /** Initialize a note by parsing it from the specified location in the note section.
      *
      *  Return value is the offset to the beginning of the next note. */
-    rose_addr_t parse(rose_addr_t starting_offset);
+    Rose::BinaryAnalysis::Address parse(Rose::BinaryAnalysis::Address starting_offset);
 
     /** Write a note at the specified offset to the section containing the note.
      *
      *  Returns the offset for the first byte past the end of the note. */
-    rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
+    Rose::BinaryAnalysis::Address unparse(std::ostream &f, Rose::BinaryAnalysis::Address starting_offset);
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -59,11 +61,11 @@ public:
     void set_payload(const void*, size_t nbytes);
 
     /** Returns the number of bytes needed to store this note. */
-    rose_addr_t calculateSize() const;
+    Rose::BinaryAnalysis::Address calculateSize() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t calculate_size() const ROSE_DEPRECATED("use calculateSize");
+    Rose::BinaryAnalysis::Address calculate_size() const ROSE_DEPRECATED("use calculateSize");
 };

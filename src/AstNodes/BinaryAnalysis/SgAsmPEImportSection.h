@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #ifdef ROSE_IMPL

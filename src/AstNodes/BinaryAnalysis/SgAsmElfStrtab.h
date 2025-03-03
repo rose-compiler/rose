@@ -47,7 +47,7 @@ public:
      *  allocate some of that free space and use a suitable offset. In any case, upon return `storage->get_offset()` will return the
      *  allocated offset if successful, or @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
     virtual void allocateOverlap(SgAsmStringStorage*) override;
-    
+
     /** Similar to `create_storage` but uses a storage object that's already been allocated. */
     virtual void rebind(SgAsmStringStorage*, Rose::BinaryAnalysis::Address) override;
 

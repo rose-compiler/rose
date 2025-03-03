@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <sageContainer.h>
 
@@ -14,7 +15,7 @@ public:
      *
      *  See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t size = 0;
+    Rose::BinaryAnalysis::Address size = 0;
 
     /** Property: Augmentation data.
      *

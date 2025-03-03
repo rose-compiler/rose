@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** JVM Code attribute.
  *
  *  A Code attribute contains the Java Virtual Machine instructions and auxiliary information for a method, including an instance
@@ -50,7 +52,7 @@ public:
      *  Offset in bytes from the start of the file for the byte-code array of the method.  A convenience property @a not in the JVM
      *  specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t code_offset = 0;
+    Rose::BinaryAnalysis::Address code_offset = 0;
 
 public:
     /** Initialize the object before parsing.

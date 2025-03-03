@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Strings stored in an ELF or PE container. */
 class SgAsmStringStorage: public SgAsmExecutableFileFormat {
 public:
@@ -11,10 +13,10 @@ public:
 
     /** Property: Location of string in storage table. */
     [[using Rosebud: rosetta]]
-    rose_addr_t offset = 0;
+    Rose::BinaryAnalysis::Address offset = 0;
 
 public:
-    SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset);
+    SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, Rose::BinaryAnalysis::Address offset);
 
     void dump(FILE *s, const char *prefix, ssize_t idx) const;
 

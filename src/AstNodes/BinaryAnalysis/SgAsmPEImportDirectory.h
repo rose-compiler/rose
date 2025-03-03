@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <sageContainer.h>
@@ -109,7 +110,7 @@ public:
      *  The import directory is parsed from the specified virtual address via the PE header's loader map. Return value is
      *  this directory entry on success, or the null pointer if the entry is all zero (which marks the end of the directory
      *  list). The @p isLastEntry is true if the caller thinks this should be an all-zero entry. */
-    SgAsmPEImportDirectory *parse(rose_addr_t va, bool isLastEntry);
+    SgAsmPEImportDirectory *parse(Rose::BinaryAnalysis::Address va, bool isLastEntry);
 
     /** Allocates space for this import directory's name, import lookup table, and import address table.
      *

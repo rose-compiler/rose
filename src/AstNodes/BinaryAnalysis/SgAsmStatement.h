@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Base class for statement-like subclasses.
  *
  *  This is a base class for those binary analysis entities, such as instructions and basic blocks, that have a starting
@@ -9,7 +11,7 @@ public:
      *
      *  Virtual address of first byte of instruction, block, or whatever, depending on subclass. */
     [[using Rosebud: rosetta, ctor_arg]]
-    rose_addr_t address = 0;
+    Rose::BinaryAnalysis::Address address = 0;
 
     /** Property: Commentary. */
     [[using Rosebud: rosetta]]

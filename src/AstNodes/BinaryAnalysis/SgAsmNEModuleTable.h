@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_IMPL
 #include <SgAsmNEStringTable.h>
 #endif
@@ -14,7 +16,8 @@ public:
     SgStringList names;
 
 public:
-    SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size);
+    SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, Rose::BinaryAnalysis::Address offset,
+                       Rose::BinaryAnalysis::Address size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 

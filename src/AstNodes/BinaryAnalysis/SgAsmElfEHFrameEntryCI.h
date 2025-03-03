@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 #ifdef ROSE_IMPL
@@ -67,7 +69,7 @@ public:
      *
      *  See official ELF specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t prh_addr = 0;
+    Rose::BinaryAnalysis::Address prh_addr = 0;
 
     /** Property: Address encoding.
      *

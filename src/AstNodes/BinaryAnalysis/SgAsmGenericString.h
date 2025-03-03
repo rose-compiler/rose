@@ -1,9 +1,11 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Base class for strings related to binary specimens. */
 [[Rosebud::abstract]]
 class SgAsmGenericString: public SgAsmExecutableFileFormat {
 public:
     /** Constant for addresses of unallocated strings. */
-    static const rose_addr_t unallocated;
+    static const Rose::BinaryAnalysis::Address unallocated;
 
     /** Property: String value.
      *
@@ -15,10 +17,10 @@ public:
      * @{ */
     virtual std::string get_string(bool escape=false) const;
     virtual void set_string(const std::string &s);
-    virtual void set_string(rose_addr_t);
+    virtual void set_string(Rose::BinaryAnalysis::Address);
     /** @} */
 
-    virtual rose_addr_t get_offset() const {return unallocated;}
+    virtual Rose::BinaryAnalysis::Address get_offset() const {return unallocated;}
 
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 };

@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
@@ -51,10 +52,10 @@ public:
      *
      *  @{ */
     [[using Rosebud: rosetta, accessors(), mutators()]]
-    rose_addr_t size = 0;
+    Rose::BinaryAnalysis::Address size = 0;
 
-    rose_addr_t get_size() const;
-    virtual void set_size(rose_addr_t);
+    Rose::BinaryAnalysis::Address get_size() const;
+    virtual void set_size(Rose::BinaryAnalysis::Address);
     /** @} */
 
     /** Property: Offset to start of section in file.
@@ -65,17 +66,17 @@ public:
      *
      *  @{ */
     [[using Rosebud: rosetta, accessors(), mutators()]]
-    rose_addr_t offset = 0; // Starting file offset of the section
+    Rose::BinaryAnalysis::Address offset = 0; // Starting file offset of the section
 
-    rose_addr_t get_offset() const;
-    virtual void set_offset(rose_addr_t);
+    Rose::BinaryAnalysis::Address get_offset() const;
+    virtual void set_offset(Rose::BinaryAnalysis::Address);
     /** @} */
 
     /** Property: Required file alignment.
      *
      *  Zero and one both imply byte alignment. */
     [[using Rosebud: rosetta]]
-    rose_addr_t fileAlignment = 0;
+    Rose::BinaryAnalysis::Address fileAlignment = 0;
 
     /** Property: Original content of just this section.
      *
@@ -133,8 +134,8 @@ public:
      *
      *  @{ */
     [[using Rosebud: rosetta, mutators()]]
-    rose_addr_t mappedPreferredRva = 0;
-    virtual void set_mappedPreferredRva(rose_addr_t);
+    Rose::BinaryAnalysis::Address mappedPreferredRva = 0;
+    virtual void set_mappedPreferredRva(Rose::BinaryAnalysis::Address);
     /** @} */
 
     /** Property: Mapped size.
@@ -143,13 +144,13 @@ public:
      *
      *  @{ */
     [[using Rosebud: rosetta, mutators()]]
-    rose_addr_t mappedSize = 0;
-    virtual void set_mappedSize(rose_addr_t);
+    Rose::BinaryAnalysis::Address mappedSize = 0;
+    virtual void set_mappedSize(Rose::BinaryAnalysis::Address);
     /** @} */
 
     /** Property: Alignment in virtual memory. */
     [[using Rosebud: rosetta]]
-    rose_addr_t mappedAlignment = 0;
+    Rose::BinaryAnalysis::Address mappedAlignment = 0;
 
     /** Property: Whether mapped with read permission. */
     [[using Rosebud: rosetta]]
@@ -185,7 +186,7 @@ public:
      *  section is not reset to zero.  The return value is not conditional upon @ref isMapped since that predicate applies only to
      *  preferred mapping attributes. */
     [[using Rosebud: rosetta]]
-    rose_addr_t mappedActualVa = 0;
+    Rose::BinaryAnalysis::Address mappedActualVa = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
@@ -251,7 +252,7 @@ public:
     SgAsmGenericHeader *isFileHeader();
 
     /** File offset for end of section. */
-    rose_addr_t get_endOffset() const;
+    Rose::BinaryAnalysis::Address get_endOffset() const;
 
     /** Extend a section by some number of bytes during the construction and/or parsing phase.
      *
@@ -259,7 +260,7 @@ public:
      *  that's considered the "original size" of the section. To adjust the size of a section after the executable file is parsed,
      *  see @ref SgAsmGenericFile::shiftExtend.  Sections are allowed to extend beyond the end of the file and the original data
      *  (the @ref data property) is extended only up to the end of the file. */
-    void extend(rose_addr_t nbytes);
+    void extend(Rose::BinaryAnalysis::Address nbytes);
 
     /** Write data to a file section.
      *
@@ -274,22 +275,22 @@ public:
      *  written (end-of-file is determined by @ref SgAsmGenericFile::get_originalSize).
      *
      * @{ */
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, const std::string &str) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, char c) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, const SgFileContentList &buf) const;
-    rose_addr_t   write(std::ostream &f, rose_addr_t offset, const SgUnsignedCharList &buf) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, size_t bufsize, const void *buf) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, const std::string &str) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, char c) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, const SgFileContentList &buf) const;
+    Rose::BinaryAnalysis::Address write(std::ostream&, Rose::BinaryAnalysis::Address offset, const SgUnsignedCharList &buf) const;
     /** @} */
 
     /** Write an unsigned little-endian 128-bit value.
      *
      *  Encode an unsigned value as LEB128 and return the next offset. */
-    rose_addr_t writeUleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
+    Rose::BinaryAnalysis::Address writeUleb128(unsigned char*, Rose::BinaryAnalysis::Address offset, uint64_t) const;
 
     /** Write a signed little-endian 128-bit value.
      *
      *  Encode an signed value as LEB128 and return the next offset. */
-    rose_addr_t writeSleb128(unsigned char*, rose_addr_t offset, int64_t) const;
+    Rose::BinaryAnalysis::Address writeSleb128(unsigned char*, Rose::BinaryAnalysis::Address offset, int64_t) const;
 
     /** Reads data from a file.
      *
@@ -298,7 +299,7 @@ public:
      *  end-of-file is reached. If the return value is smaller than @p size then one of two things happen: if @p strict is
      *  set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf
      *  will be padded with zero bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
-    size_t readContent(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(Rose::BinaryAnalysis::Address abs_offset, void *dst_buf, Rose::BinaryAnalysis::Address size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -311,10 +312,10 @@ public:
      *  is NULL then the map defined in the underlying file is used.
      *
      * @{ */
-    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
-                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address start,  void *dst_buf,
+                       Rose::BinaryAnalysis::Address size, bool strict=true);
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress &start,
-                       void *dst_buf, rose_addr_t size, bool strict=true);
+                       void *dst_buf, Rose::BinaryAnalysis::Address size, bool strict=true);
     /** @} */
 
     /** Reads data from a file.
@@ -323,7 +324,8 @@ public:
      *  past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p strict is set
      *  (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the result is zero padded so
      *  as to contain exactly @p size bytes. */
-    size_t readContentLocal(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContentLocal(Rose::BinaryAnalysis::Address rel_offset, void *dst_buf, Rose::BinaryAnalysis::Address size,
+                            bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -331,7 +333,7 @@ public:
      *  is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an @ref
      *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to
      *  file offsets; if @p map is NULL then the map defined in the underlying file is used. */
-    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address va, bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -340,7 +342,7 @@ public:
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown.
      *
      * @{ */
-    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(Rose::BinaryAnalysis::Address abs_offset, bool strict=true);
     std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, Rose::BinaryAnalysis::RelativeVirtualAddress rva,
                                   bool strict=true);
     /** @} */
@@ -350,27 +352,27 @@ public:
      *  The string begins at the specified file offset relative to the start of this section and continues until the first
      *  NUL byte or the end of section is reached. However, if @p strict is set (the default) and we reach the
      *  end-of-section then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown. */
-    std::string readContentLocalString(rose_addr_t rel_offset, bool strict=true);
+    std::string readContentLocalString(Rose::BinaryAnalysis::Address rel_offset, bool strict=true);
 
     /** Reads content of a section and returns it as a container.
      *
      *  The returned container will always have exactly @p size byte.  If @p size bytes are not available in this section
      *  at the specified offset then the container will be zero padded. This method always behaves as a non-strict read. */
-    SgUnsignedCharList readContentLocalUcl(rose_addr_t rel_offset, rose_addr_t size);
+    SgUnsignedCharList readContentLocalUcl(Rose::BinaryAnalysis::Address rel_offset, Rose::BinaryAnalysis::Address size);
 
     /** Read a signed little-endian 128-bit value.
      *
      *  Extract a signed LEB128 value and adjust @p rel_offset according to how many bytes it occupied. If @p strict is set
      *  (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    int64_t readContentLocalSleb128(rose_addr_t *rel_offset, bool strict=true);
+    int64_t readContentLocalSleb128(Rose::BinaryAnalysis::Address *rel_offset, bool strict=true);
 
     /** Read an unsigned little-endian 128-bit value.
      *
      *  Extract an unsigned LEB128 value and adjust @p rel_offset according to how many bytes it occupied.  If @p strict is
      *  set (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    uint64_t readContentLocalUleb128(rose_addr_t *rel_offset, bool strict=true);
+    uint64_t readContentLocalUleb128(Rose::BinaryAnalysis::Address *rel_offset, bool strict=true);
 
     /** Obtain a local, writable pool to hold content.
      *
@@ -409,24 +411,24 @@ public:
      *
      *  Returns  zero if the section is not associated with a header.  This is just a convenience method to get the base
      *  virtual address of the file header that owns this section. */
-    rose_addr_t get_baseVa() const;
+    Rose::BinaryAnalysis::Address get_baseVa() const;
 
     /** Virtual address where section prefers to be mapped.
      *
      *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref mappedPreferredRva property. */
-    rose_addr_t get_mappedPreferredVa() const;
+    Rose::BinaryAnalysis::Address get_mappedPreferredVa() const;
 
     /** File offset for specified virtual address.
      *
      *  Returns the file offset associated with the virtual address of a mapped section. The @ref Rose::BinaryAnalysis::MemoryMap
      *  class is a better interface to this same information. */
-    rose_addr_t get_vaOffset(rose_addr_t va) const;
+    Rose::BinaryAnalysis::Address get_vaOffset(Rose::BinaryAnalysis::Address va) const;
 
     /** File offset for specified relative virtual address.
      *
      *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref
      *  Rose::BinaryAnalysis::MemoryMap class is a better interface to this same information. */
-    rose_addr_t get_rvaOffset(rose_addr_t rva) const;
+    Rose::BinaryAnalysis::Address get_rvaOffset(Rose::BinaryAnalysis::Address rva) const;
 
     /** Returns the file extent for the section.
      *
@@ -461,16 +463,16 @@ protected:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    rose_addr_t get_file_alignment() const ROSE_DEPRECATED("use get_fileAlignment");
-    void set_file_alignment(rose_addr_t) ROSE_DEPRECATED("use set_fileAlignment");
+    Rose::BinaryAnalysis::Address get_file_alignment() const ROSE_DEPRECATED("use get_fileAlignment");
+    void set_file_alignment(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_fileAlignment");
     std::string get_short_name() const ROSE_DEPRECATED("use get_shortName");
     void set_short_name(const std::string&) ROSE_DEPRECATED("use set_shortName");
-    rose_addr_t get_mapped_preferred_rva() const ROSE_DEPRECATED("use get_mappedPreferredRva");
-    void set_mapped_preferred_rva(rose_addr_t) ROSE_DEPRECATED("use set_mappedPreferredRva");
-    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
-    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
-    rose_addr_t get_mapped_alignment() const ROSE_DEPRECATED("use get_mappedAlignment");
-    void set_mapped_alignment(rose_addr_t) ROSE_DEPRECATED("use set_mappedAlignment");
+    Rose::BinaryAnalysis::Address get_mapped_preferred_rva() const ROSE_DEPRECATED("use get_mappedPreferredRva");
+    void set_mapped_preferred_rva(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedPreferredRva");
+    Rose::BinaryAnalysis::Address get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedSize");
+    Rose::BinaryAnalysis::Address get_mapped_alignment() const ROSE_DEPRECATED("use get_mappedAlignment");
+    void set_mapped_alignment(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedAlignment");
     bool get_mapped_rperm() const ROSE_DEPRECATED("use get_mappedReadPermission");
     void set_mapped_rperm(bool) ROSE_DEPRECATED("use set_mappedReadPermission");
     bool get_mapped_wperm() const ROSE_DEPRECATED("use get_mappedWritePermission");
@@ -479,43 +481,48 @@ public:
     void set_mapped_xperm(bool) ROSE_DEPRECATED("use set_mappedExecutePermission");
     bool get_contains_code() const ROSE_DEPRECATED("use get_containsCode");
     void set_contains_code(bool) ROSE_DEPRECATED("use set_containsCode");
-    rose_addr_t get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
-    void set_mapped_actual_va(rose_addr_t) ROSE_DEPRECATED("use set_mappedActualVa");
+    Rose::BinaryAnalysis::Address get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
+    void set_mapped_actual_va(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedActualVa");
     static void dump_containing_sections(FILE*, const std::string&, Rose::BinaryAnalysis::RelativeVirtualAddress,
                                          const SgAsmGenericSectionPtrList&)
         ROSE_DEPRECATED("use dumpContainingSections");
     void grab_content() ROSE_DEPRECATED("use grabContent");
     void unparse_holes(std::ostream&) const ROSE_DEPRECATED("use unparseHoles");
     SgAsmGenericHeader *is_file_header() ROSE_DEPRECATED("use isFileHeader");
-    rose_addr_t get_end_offset() const ROSE_DEPRECATED("use get_endOffset");
-    rose_addr_t write_uleb128(unsigned char*, rose_addr_t, uint64_t) const ROSE_DEPRECATED("use writeUleb128");
-    rose_addr_t write_sleb128(unsigned char*, rose_addr_t, int64_t) const ROSE_DEPRECATED("use writeSleb128");
-    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t,  void*, rose_addr_t, bool=true)
+    Rose::BinaryAnalysis::Address get_end_offset() const ROSE_DEPRECATED("use get_endOffset");
+    Rose::BinaryAnalysis::Address write_uleb128(unsigned char*, Rose::BinaryAnalysis::Address, uint64_t) const
+        ROSE_DEPRECATED("use writeUleb128");
+    Rose::BinaryAnalysis::Address write_sleb128(unsigned char*, Rose::BinaryAnalysis::Address, int64_t) const
+        ROSE_DEPRECATED("use writeSleb128");
+    size_t read_content(Rose::BinaryAnalysis::Address, void*, Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address,  void*,
+                        Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContent");
     size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const Rose::BinaryAnalysis::RelativeVirtualAddress&, void*,
-                        rose_addr_t, bool=true)
+                        Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContent");
-    size_t read_content_local(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocal");
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+    size_t read_content_local(Rose::BinaryAnalysis::Address, void*, Rose::BinaryAnalysis::Address, bool=true)
+        ROSE_DEPRECATED("use readContentLocal");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::Address, bool=true)
         ROSE_DEPRECATED("use readContentString");
-    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContentString");
     std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, Rose::BinaryAnalysis::RelativeVirtualAddress,
                                  bool=true)
         ROSE_DEPRECATED("use readContentString");
-    std::string read_content_local_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocalString");
-    SgUnsignedCharList read_content_local_ucl(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use readContentLocalUcl");
-    int64_t read_content_local_sleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
-    uint64_t read_content_local_uleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
+    std::string read_content_local_str(Rose::BinaryAnalysis::Address, bool=true) ROSE_DEPRECATED("use readContentLocalString");
+    SgUnsignedCharList read_content_local_ucl(Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address)
+        ROSE_DEPRECATED("use readContentLocalUcl");
+    int64_t read_content_local_sleb128(Rose::BinaryAnalysis::Address*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
+    uint64_t read_content_local_uleb128(Rose::BinaryAnalysis::Address*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
     unsigned char *writable_content(size_t) ROSE_DEPRECATED("use writableContent");
     Rose::BinaryAnalysis::AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
     Rose::BinaryAnalysis::AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
     bool is_mapped() const ROSE_DEPRECATED("use isMapped");
     void clear_mapped() ROSE_DEPRECATED("use clearMapped");
-    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
-    rose_addr_t get_mapped_preferred_va() const ROSE_DEPRECATED("use get_mappedPreferredVa");
-    rose_addr_t get_va_offset(rose_addr_t) const ROSE_DEPRECATED("use get_vaOffset");
-    rose_addr_t get_rva_offset(rose_addr_t) const ROSE_DEPRECATED("use get_rvaOffset");
+    Rose::BinaryAnalysis::Address get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    Rose::BinaryAnalysis::Address get_mapped_preferred_va() const ROSE_DEPRECATED("use get_mappedPreferredVa");
+    Rose::BinaryAnalysis::Address get_va_offset(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_vaOffset");
+    Rose::BinaryAnalysis::Address get_rva_offset(Rose::BinaryAnalysis::Address) const ROSE_DEPRECATED("use get_rvaOffset");
     Extent get_file_extent() const ROSE_DEPRECATED("use get_fileExtent");
     Extent get_mapped_preferred_extent() const ROSE_DEPRECATED("use get_mappedPreferredExtent");
 };

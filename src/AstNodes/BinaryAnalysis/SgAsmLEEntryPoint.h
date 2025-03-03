@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <sageContainer.h>
 
@@ -49,7 +50,7 @@ public:
     unsigned res1 = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t entry_offset = 0;
+    Rose::BinaryAnalysis::Address entry_offset = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -57,7 +58,7 @@ public:
 public:
     SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
     SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, unsigned flags);
-    rose_addr_t unparse(std::ostream&, Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmGenericSection*,
-                        rose_addr_t spos) const;
+    Rose::BinaryAnalysis::Address unparse(std::ostream&, Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmGenericSection*,
+                                          Rose::BinaryAnalysis::Address spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
 };

@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <sageContainer.h>
 
@@ -188,7 +189,7 @@ public:
      *  Every function has one primary entry address that uniquely identifies the function in the AST. This is the starting
      *  address of the function's entry instruction.  The abbreviation "va" means "virtual address". */
     [[using Rosebud: rosetta]]
-    rose_addr_t entryVa = 0;
+    Rose::BinaryAnalysis::Address entryVa = 0;
 
     /** Property: Symbol table.
      *
@@ -297,8 +298,8 @@ public:
      *  Rose::BinaryAnalysis::AddressIntervalSet extents;
      *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
      *  @endcode */
-    size_t get_extent(Rose::BinaryAnalysis::AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
-                      NodeSelector *selector=NULL);
+    size_t get_extent(Rose::BinaryAnalysis::AddressIntervalSet *emap=NULL, Rose::BinaryAnalysis::Address *lo_addr=NULL,
+                      Rose::BinaryAnalysis::Address *hi_addr=NULL, NodeSelector *selector=NULL);
 
     /** Computes the SHA1 message digest for the bytes of a function.
      *
@@ -317,8 +318,8 @@ public:
     void set_may_return(MayReturn) ROSE_DEPRECATED("use set_mayReturn");
     const std::string& get_name_md5() const ROSE_DEPRECATED("use get_nameMd5");
     void set_name_md5(const std::string&) ROSE_DEPRECATED("use set_nameMd5");
-    rose_addr_t get_entry_va() const ROSE_DEPRECATED("use get_entryVa");
-    void set_entry_va(rose_addr_t) ROSE_DEPRECATED("use set_entryVa");
+    Rose::BinaryAnalysis::Address get_entry_va() const ROSE_DEPRECATED("use get_entryVa");
+    void set_entry_va(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_entryVa");
     SgSymbolTable* get_symbol_table() const ROSE_DEPRECATED("use get_symbolTable");
     void set_symbol_table(SgSymbolTable*) ROSE_DEPRECATED("use set_symbolTable");
     size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");

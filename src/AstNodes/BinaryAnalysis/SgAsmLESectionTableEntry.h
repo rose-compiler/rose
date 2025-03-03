@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
 class SgAsmLESectionTableEntry: public SgAsmExecutableFileFormat {
@@ -77,10 +78,10 @@ public:
     unsigned res1 = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t mappedSize = 0;
+    Rose::BinaryAnalysis::Address mappedSize = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t baseAddr = 0;
+    Rose::BinaryAnalysis::Address baseAddr = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -99,8 +100,8 @@ public:
     void set_pagemap_index(unsigned) ROSE_DEPRECATED("use set_pageMapIndex");
     unsigned get_pagemap_nentries() const ROSE_DEPRECATED("use get_pageMapNEntries");
     void set_pagemap_nentries(unsigned) ROSE_DEPRECATED("use set_pageMapNEntries");
-    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
-    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
-    rose_addr_t get_base_addr() const ROSE_DEPRECATED("use get_baseAddr");
-    void set_base_addr(rose_addr_t) ROSE_DEPRECATED("use set_baseAddr");
+    Rose::BinaryAnalysis::Address get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_mappedSize");
+    Rose::BinaryAnalysis::Address get_base_addr() const ROSE_DEPRECATED("use get_baseAddr");
+    void set_base_addr(Rose::BinaryAnalysis::Address) ROSE_DEPRECATED("use set_baseAddr");
 };

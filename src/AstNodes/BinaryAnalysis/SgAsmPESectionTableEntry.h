@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Section table entry. */
 class SgAsmPESectionTableEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,25 +80,25 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t virtual_size = 0;
+    Rose::BinaryAnalysis::Address virtual_size = 0;
 
     /** Property: RVA.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t rva = 0;
+    Rose::BinaryAnalysis::Address rva = 0;
 
     /** Property: Physical size.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t physical_size = 0;
+    Rose::BinaryAnalysis::Address physical_size = 0;
 
     /** Property: Physical offset.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t physical_offset = 0;
+    Rose::BinaryAnalysis::Address physical_offset = 0;
 
     /** Property: COFF line numbers.
      *

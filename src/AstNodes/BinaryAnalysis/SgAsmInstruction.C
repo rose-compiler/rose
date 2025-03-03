@@ -92,13 +92,13 @@ SgAsmInstruction::terminatesBasicBlock() {
 
 // [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) {
     return architecture()->isFunctionCallFast(insns, target, return_va);
 }
 
 // [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) {
     return architecture()->isFunctionCallSlow(insns, target, return_va);
 }
 
@@ -143,7 +143,7 @@ SgAsmInstruction::isLastInBlock()
 }
 
 // [Robb Matzke 2023-12-04]: deprecated
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 SgAsmInstruction::branchTarget() {
     return architecture()->branchTarget(this);
 }
@@ -236,9 +236,9 @@ SgAsmInstruction::toStringNoAddr() const {
     return architecture()->toStringNoAddr(this);
 }
 
-std::set<rose_addr_t>
+std::set<Address>
 SgAsmInstruction::explicitConstants() const {
-    std::set<rose_addr_t> values;
+    std::set<Address> values;
     AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(const_cast<SgAsmInstruction*>(this),
                                                             [&values](SgAsmIntegerValueExpression *ive) {
                                                                 values.insert(ive->get_absoluteValue());

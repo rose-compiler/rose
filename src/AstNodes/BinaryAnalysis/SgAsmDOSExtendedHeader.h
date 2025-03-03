@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** DOS exteded header.
  *
  *  Most of the properties correspond to those defined in the PE/DOS specifications and that documentation is not repeated here. */
@@ -84,7 +86,7 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t e_lfanew = 0;
+    Rose::BinaryAnalysis::Address e_lfanew = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions

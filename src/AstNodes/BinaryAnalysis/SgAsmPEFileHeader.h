@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #ifdef ROSE_IMPL
@@ -184,13 +185,13 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t e_coff_symtab = 0;
+    Rose::BinaryAnalysis::Address e_coff_symtab = 0;
 
     /** Property: Size of NT header.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t e_nt_hdr_size = 0;
+    Rose::BinaryAnalysis::Address e_nt_hdr_size = 0;
 
     /** Property: Number of COFF symbols.
      *

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #include <sageContainer.h>
 
 #ifdef ROSE_IMPL
@@ -69,7 +71,7 @@ public:
      *
      *  Block unique identification number. Not used by ROSE. */
     [[using Rosebud: rosetta, serialize()]]
-    rose_addr_t id = 0;
+    Rose::BinaryAnalysis::Address id = 0;
 
     /** Property: Reasons this block was created.
      *
@@ -171,7 +173,7 @@ public:
      *
      *  A block's fall-through address is the virtual address that follows the last byte of the block's last instruction.
      *  The block must have instructions (e.g., it cannot be a strict data block). */
-    rose_addr_t get_fallthroughVa();
+    Rose::BinaryAnalysis::Address get_fallthroughVa();
 
     /** Returns the function that owns this block.
      *
@@ -201,7 +203,7 @@ public:
      *
      * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be
      * used by the Partitioner before an AST is created and might not be as accurate. */
-    bool isFunctionCall(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
+    bool isFunctionCall(Rose::BinaryAnalysis::Address &target_va/*out*/, Rose::BinaryAnalysis::Address &return_va/*out*/);
 
     /** Multi-line string describing the letters used for basic block reasons.
      *
@@ -236,11 +238,11 @@ public:
     void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
     void remove_statement(SgAsmStatement*) ROSE_DEPRECATED("use removeStatement");
     void remove_children() ROSE_DEPRECATED("use removeChildren");
-    rose_addr_t get_fallthrough_va() ROSE_DEPRECATED("use getFallthroughVa");
+    Rose::BinaryAnalysis::Address get_fallthrough_va() ROSE_DEPRECATED("use getFallthroughVa");
     SgAsmFunction* get_enclosing_function() const ROSE_DEPRECATED("use get_enclosingFunction");
     bool has_instructions() const ROSE_DEPRECATED("use hasInstructions");
     bool is_basic_block() const ROSE_DEPRECATED("use isBasicBlock");
-    bool is_function_call(rose_addr_t&, rose_addr_t&) ROSE_DEPRECATED("use isFunctionCall");
+    bool is_function_call(Rose::BinaryAnalysis::Address&, Rose::BinaryAnalysis::Address&) ROSE_DEPRECATED("use isFunctionCall");
     static std::string reason_key(const std::string& = "") ROSE_DEPRECATED("use reasonKey");
     std::string reason_str(bool) const ROSE_DEPRECATED("use reasonString");
     static std::string reason_str(bool, unsigned) ROSE_DEPRECATED("use reasonString");

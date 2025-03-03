@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Represents an ELF segment table.
  *
  * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
@@ -33,7 +35,7 @@ public:
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    Rose::BinaryAnalysis::Address calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual bool reallocate() override;
 
@@ -48,5 +50,5 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
-    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 };

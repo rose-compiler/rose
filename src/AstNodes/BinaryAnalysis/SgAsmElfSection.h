@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_IMPL
 #include <SgAsmElfSectionTableEntry.h>
 #include <SgAsmElfSegmentTableEntry.h>
@@ -63,8 +65,8 @@ public:
      *
      *  Return value is the total size needed for the section. In all cases, it is the product of @p entsize and @p
      *  entcount. */
-    rose_addr_t calculateSizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
-                               size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    Rose::BinaryAnalysis::Address calculateSizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
+                                           size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual void finishParsing();
 
@@ -84,7 +86,8 @@ public:
      *
      *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
      *  sh_entsize), could be smaller than the total size of the section. */
-    virtual rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     virtual bool reallocate() override;
 
@@ -113,10 +116,12 @@ public:
         ROSE_DEPRECATED("use initFromSectionTable");
     SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false)
         ROSE_DEPRECATED("use initFromSegmentTable");
-    rose_addr_t calculate_sizes(size_t, size_t, const std::vector<size_t>&, size_t*, size_t*, size_t*, size_t*) const
+    Rose::BinaryAnalysis::Address
+    calculate_sizes(size_t, size_t, const std::vector<size_t>&, size_t*, size_t*, size_t*, size_t*) const
         ROSE_DEPRECATED("use calculateSizes");
     virtual void finish_parsing() ROSE_DEPRECATED("use finishParsing");
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address
+    calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
     void allocate_name_to_storage(SgAsmElfStringSection*) ROSE_DEPRECATED("use allocateNameToStorage");
     SgAsmElfFileHeader *get_elf_header() const ROSE_DEPRECATED("use get_elfHeader");
 };

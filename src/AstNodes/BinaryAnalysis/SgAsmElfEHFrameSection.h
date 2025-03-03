@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 #ifdef ROSE_IMPL
 #include <SgAsmElfEHFrameEntryCIList.h>
 #endif
@@ -23,7 +25,8 @@ public:
      *
      *  See documentation for @ref SgAsmElfSection::calculateSizes. Since EH Frame Sections are run-length encoded, we
      *  need to actually unparse the section in order to determine its size. */
-    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual Rose::BinaryAnalysis::Address
+    calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Write data to .eh_frame section */
     virtual void unparse(std::ostream&) const override;
@@ -32,7 +35,7 @@ public:
      *
      *  If there is no output stream we still go through the actions but don't write anything. This is the only way to
      *  determine the amount of memory required to store the section since the section is run-length encoded. */
-    rose_addr_t unparse(std::ostream*) const;
+    Rose::BinaryAnalysis::Address unparse(std::ostream*) const;
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
@@ -41,5 +44,6 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override
+        ROSE_DEPRECATED("use calculateSizes");
 };

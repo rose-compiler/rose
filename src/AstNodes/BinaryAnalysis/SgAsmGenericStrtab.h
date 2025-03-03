@@ -1,3 +1,4 @@
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 
 /** Base class for string tables. */
@@ -52,7 +53,7 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Constructs an SgAsmStoredString from an offset into this string table. */
-    SgAsmStoredString *createString(rose_addr_t offset, bool shared);
+    SgAsmStoredString *createString(Rose::BinaryAnalysis::Address offset, bool shared);
 
     /** Free area of this string table that corresponds to the string currently stored.
      *
@@ -63,7 +64,7 @@ public:
      *
      *  For instance, an ELF string table can have "main" and "domain" sharing storage. If we free the "domain" string then
      *  only "do" should be added to the free list. */
-    void free(rose_addr_t offset, rose_addr_t size); /*mark part of table as free*/
+    void free(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size); /*mark part of table as free*/
 
     /** Free all strings so they will be reallocated later.
      *
@@ -82,9 +83,9 @@ public:
 
 
     //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-    virtual SgAsmStringStorage *createStorage(rose_addr_t /*offset*/, bool /*shared*/);
-    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*);
-    virtual void rebind(SgAsmStringStorage*, rose_addr_t);
+    virtual SgAsmStringStorage *createStorage(Rose::BinaryAnalysis::Address /*offset*/, bool /*shared*/);
+    virtual Rose::BinaryAnalysis::Address get_storageSize(const SgAsmStringStorage*);
+    virtual void rebind(SgAsmStringStorage*, Rose::BinaryAnalysis::Address);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
@@ -98,9 +99,9 @@ public:
     void set_dont_free(SgAsmStringStorage*) ROSE_DEPRECATED("use set_dontFree");
     size_t get_num_freed() const ROSE_DEPRECATED("use get_numberFreed");
     void set_num_freed(size_t) ROSE_DEPRECATED("use set_numberFreed");
-    SgAsmStoredString *create_string(rose_addr_t, bool) ROSE_DEPRECATED("use createString");
+    SgAsmStoredString *create_string(Rose::BinaryAnalysis::Address, bool) ROSE_DEPRECATED("use createString");
     void free_all_strings(bool=false) ROSE_DEPRECATED("use freeAllStrings");
     virtual void allocate_overlap(SgAsmStringStorage*) ROSE_DEPRECATED("use allocateOverlap");
-    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) ROSE_DEPRECATED("use createStorage");
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) ROSE_DEPRECATED("use get_storageSize");
+    virtual SgAsmStringStorage *create_storage(Rose::BinaryAnalysis::Address, bool) ROSE_DEPRECATED("use createStorage");
+    virtual Rose::BinaryAnalysis::Address get_storage_size(const SgAsmStringStorage*) ROSE_DEPRECATED("use get_storageSize");
 };

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** Represents the file header for DOS executables.
  *
  *  Many of the properties for this node come directly from the DOS specification and have similar names to that documentation. Such
@@ -128,7 +130,7 @@ public:
      *
      *  See DOS specification. */
     [[using Rosebud: rosetta]]
-    rose_addr_t e_relocs_offset = 0;
+    Rose::BinaryAnalysis::Address e_relocs_offset = 0;
 
     /** Property: Reserved field 1.
      *
@@ -161,7 +163,7 @@ public:
      *  If max_offset is non-zero then use that as the maximum offset of the real-mode section. If the DOS header indicates a zero
      *  sized section then return NULL. If the section exists or is zero size due to the max_offset then return the section. See
      *  also, update_from_rm_section(). */
-    SgAsmGenericSection *parseRealModeSection(rose_addr_t max_offset=0);
+    SgAsmGenericSection *parseRealModeSection(Rose::BinaryAnalysis::Address max_offset=0);
 
     /** Update DOS header with data from real-mode section.
      *
@@ -181,7 +183,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     virtual const char* format_name() const override ROSE_DEPRECATED("use formatName");
-    SgAsmGenericSection* parse_rm_section(rose_addr_t max_offset = 0) ROSE_DEPRECATED("use parseRealModeSection");
+    SgAsmGenericSection* parse_rm_section(Rose::BinaryAnalysis::Address max_offset = 0) ROSE_DEPRECATED("use parseRealModeSection");
     void update_from_rm_section() ROSE_DEPRECATED("use updateFromRealModeSection");
     static bool is_DOS(SgAsmGenericFile*) ROSE_DEPRECATED("use isDos");
 };
