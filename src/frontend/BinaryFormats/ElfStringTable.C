@@ -64,20 +64,20 @@ SgAsmElfStringSection::unparse(std::ostream &f) const
 }
 
 void
-SgAsmElfStringSection::set_size(rose_addr_t newsize)
+SgAsmElfStringSection::set_size(Address newsize)
 {
-    rose_addr_t orig_size = get_size();
+    Address orig_size = get_size();
     SgAsmElfSection::set_size(newsize);
     SgAsmGenericStrtab *strtab = get_strtab();
 
     if (strtab) {
         if (get_size() > orig_size) {
             /* Add new address space to string table free list */
-            rose_addr_t n = get_size() - orig_size;
+            Address n = get_size() - orig_size;
             strtab->get_freeList().insert(AddressInterval::baseSize(orig_size, n));
         } else if (get_size() < orig_size) {
             /* Remove deleted address space from string table free list */
-            rose_addr_t n = orig_size - get_size();
+            Address n = orig_size - get_size();
             strtab->get_freeList().erase(AddressInterval::baseSize(get_size(), n));
         }
     }
@@ -144,12 +144,12 @@ SgAsmElfStrtab::destructorHelper() {
 }
 
 SgAsmStringStorage *
-SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared) {
+SgAsmElfStrtab::create_storage(Address offset, bool shared) {
     return createStorage(offset, shared);
 }
 
 SgAsmStringStorage *
-SgAsmElfStrtab::createStorage(rose_addr_t offset, bool shared)
+SgAsmElfStrtab::createStorage(Address offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
 
@@ -195,7 +195,7 @@ SgAsmElfStrtab::createStorage(rose_addr_t offset, bool shared)
 }
 
 void
-SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
+SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, Address offset)
 {
     ROSE_ASSERT(get_dontFree() && storage!=get_dontFree() && storage->get_offset()==get_dontFree()->get_offset());
     std::string s = get_container()->readContentLocalString(offset, false /*relax*/);
@@ -203,12 +203,12 @@ SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
     storage->set_string(s);
 }
 
-rose_addr_t
+Address
 SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
     return get_storageSize(storage);
 }
 
-rose_addr_t
+Address
 SgAsmElfStrtab::get_storageSize(const SgAsmStringStorage *storage) {
     return storage->get_string().size() + 1;
 }
@@ -235,7 +235,7 @@ SgAsmElfStrtab::allocateOverlap(SgAsmStringStorage *storage)
             } else if (need>have && existing->get_offset()>=need-have &&
                        0==storage->get_string().compare(need-have, have, existing->get_string())) {
                 /* New string ends with an existing string. Check for, and allocate, free space. */
-                rose_addr_t offset = existing->get_offset() - (need-have); /* positive diffs checked above */
+                Address offset = existing->get_offset() - (need-have); /* positive diffs checked above */
                 AddressInterval allocationRequest = AddressInterval::baseSize(offset, need-have);
                 if (get_freeList().contains(allocationRequest)) {
                     get_freeList().erase(allocationRequest);
@@ -259,7 +259,7 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
             mlog[WARN] <<"during unparsing, this string is unallocated in the string table and will be discarded: "
                        <<"\"" <<StringUtility::cEscape(storage->get_string()) <<"\"\n";
         } else {
-            rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
+            Address at = container->write(f, storage->get_offset(), storage->get_string());
             container->write(f, at, '\0');
         }
     }

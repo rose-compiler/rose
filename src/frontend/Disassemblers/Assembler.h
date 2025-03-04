@@ -115,7 +115,7 @@ public:
     /** Assembles a single basic block of instructions like the version that takes an SgAsmBlock pointer. In this case, the
      *  instructions are stored in a vector instead. The will be treated like a single basic block: no control flow
      *  adjustments will be made. An exception is thrown if any of the instructions cannot be disassembled. */
-    SgUnsignedCharList assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_t starting_rva);
+    SgUnsignedCharList assembleBlock(const std::vector<SgAsmInstruction*> &insns, Address starting_rva);
 
     /** Assembles a program from an assembly listing.  This method may call an external assembler to do its work. */
     virtual SgUnsignedCharList assembleProgram(const std::string &source) = 0;

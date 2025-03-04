@@ -92,7 +92,7 @@ SgAsmJvmFileHeader::parse()
   /* parse base class */
   SgAsmGenericHeader::parse();
 
-  rose_addr_t offset{get_offset()};
+  Rose::BinaryAnalysis::Address offset{get_offset()};
 
   /* Construct, but don't parse (yet), constant pool */
   auto pool = new SgAsmJvmConstantPool(this);

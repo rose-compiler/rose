@@ -57,19 +57,19 @@ SgAsmPEStringSection::unparse(std::ostream &f) const
 
 /* Augments superclass to make sure free list and such are adjusted properly */
 void
-SgAsmPEStringSection::set_size(rose_addr_t newsize)
+SgAsmPEStringSection::set_size(Address newsize)
 {
-    rose_addr_t orig_size = get_size();
+    Address orig_size = get_size();
     SgAsmPESection::set_size(newsize);
     SgAsmGenericStrtab *strtab = get_strtab();
 
     if (get_size() > orig_size) {
         /* Add new address space to string table free list */
-        rose_addr_t n = get_size() - orig_size;
+        Address n = get_size() - orig_size;
         strtab->get_freeList().insert(AddressInterval::baseSize(orig_size, n));
     } else if (get_size() < orig_size) {
         /* Remove deleted address space from string table free list */
-        rose_addr_t n = orig_size - get_size();
+        Address n = orig_size - get_size();
         strtab->get_freeList().erase(AddressInterval::baseSize(get_size(), n));
     }
 }
@@ -125,7 +125,7 @@ SgAsmCoffStrtab::destructorHelper() {
  * object, otherwise create a new one. Each storage object is considered to be a separate string, therefore when two strings
  * share the same storage object, changing one string changes the other. */
 SgAsmStringStorage *
-SgAsmCoffStrtab::createStorage(rose_addr_t offset, bool shared)
+SgAsmCoffStrtab::createStorage(Address offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
     SgAsmGenericSection *container = get_container();
@@ -180,7 +180,7 @@ SgAsmCoffStrtab::createStorage(rose_addr_t offset, bool shared)
 
 /* Returns the number of bytes required to store the string in the string table. This is one (the length byte) plus the
  * length of the string. */
-rose_addr_t
+Address
 SgAsmCoffStrtab::get_storageSize(const SgAsmStringStorage *storage) {
     return 1 + storage->get_string().size();
 }
@@ -195,7 +195,7 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     for (size_t i=0; i<p_storageList.size(); i++) {
         SgAsmStringStorage *storage = p_storageList[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
-        rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
+        Address at = container->write(f, storage->get_offset(), storage->get_string());
         container->write(f, at, '\0');
     }
     
@@ -205,11 +205,11 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
 }
 
 SgAsmStringStorage*
-SgAsmCoffStrtab::create_storage(rose_addr_t x, bool y) {
+SgAsmCoffStrtab::create_storage(Address x, bool y) {
     return createStorage(x, y);
 }
 
-rose_addr_t
+Address
 SgAsmCoffStrtab::get_storage_size(const SgAsmStringStorage *x) {
     return get_storageSize(x);
 }

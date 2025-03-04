@@ -14,7 +14,7 @@ template <typename T>
 size_t read_bytes(const SgAsmJvmConstantPool* pool, char* &bytes, T &length)
 {
   SgAsmGenericHeader* header{pool->get_header()};
-  rose_addr_t offset{header->get_offset()};
+  Rose::BinaryAnalysis::Address offset{header->get_offset()};
 
   /* read length of the array */
   size_t count = header->readContent(offset, &length, sizeof(length));
@@ -45,7 +45,7 @@ template <typename T>
 size_t read_value(const SgAsmJvmConstantPool* pool, T &value, bool advanceOffset=true)
 {
   SgAsmGenericHeader* header{pool->get_header()};
-  rose_addr_t offset{header->get_offset()};
+  Rose::BinaryAnalysis::Address offset{header->get_offset()};
 
   size_t count = header->readContent(offset, &value, sizeof(T));
   if (count != sizeof(T)) {

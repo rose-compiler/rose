@@ -9,8 +9,8 @@
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
-const rose_addr_t
-SgAsmGenericString::unallocated = ~(rose_addr_t)0;
+const Address
+SgAsmGenericString::unallocated = ~(Address)0;
 
 std::string
 SgAsmGenericString::get_string(bool /*escape*/) const
@@ -30,7 +30,7 @@ SgAsmGenericString::set_string(const std::string&)
 }
 
 void
-SgAsmGenericString::set_string(rose_addr_t /*offset*/)
+SgAsmGenericString::set_string(Address /*offset*/)
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
@@ -69,9 +69,9 @@ SgAsmBasicString::set_string(const std::string &s)
     p_string = s;
 }
 void
-SgAsmBasicString::set_string(rose_addr_t offset)
+SgAsmBasicString::set_string(Address offset)
 {
-    ASSERT_not_implemented("set_string(rose_addr_t offset=" + StringUtility::addrToString(offset) + ")");
+    ASSERT_not_implemented("set_string(Address offset=" + StringUtility::addrToString(offset) + ")");
 }
 
 void
@@ -87,7 +87,7 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string(true).c_str());
 }
     
-SgAsmStoredString::SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset) {
+SgAsmStoredString::SgAsmStoredString(SgAsmGenericStrtab *strtab, Address offset) {
     initializeProperties();
     ASSERT_not_null(strtab);
     p_storage = strtab->createStorage(offset, false);
@@ -114,7 +114,7 @@ SgAsmStoredString::get_string(bool escape) const
     return retval;
 }
 
-rose_addr_t
+Address
 SgAsmStoredString::get_offset() const
 {
     if (NULL==get_storage())
@@ -146,7 +146,7 @@ SgAsmStoredString::set_string(const std::string &s)
 }
 
 void
-SgAsmStoredString::set_string(rose_addr_t offset)
+SgAsmStoredString::set_string(Address offset)
 {
     set_isModified(true);
     SgAsmStringStorage *storage = get_storage();
@@ -171,7 +171,7 @@ SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx) const
         get_storage()->dump(f, p, -1);
 }
 
-SgAsmStringStorage::SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset) {
+SgAsmStringStorage::SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, Address offset) {
     initializeProperties();
     p_strtab = strtab;
     p_string = string;
@@ -213,13 +213,13 @@ SgAsmGenericStrtab::SgAsmGenericStrtab(SgAsmGenericSection *container) {
 }
 
 SgAsmStoredString *
-SgAsmGenericStrtab::create_string(rose_addr_t offset, bool shared)
+SgAsmGenericStrtab::create_string(Address offset, bool shared)
 {
     return createString(offset, shared);
 }
 
 SgAsmStoredString *
-SgAsmGenericStrtab::createString(rose_addr_t offset, bool shared)
+SgAsmGenericStrtab::createString(Address offset, bool shared)
 {
     SgAsmStringStorage *storage = createStorage(offset, shared);
     return new SgAsmStoredString(storage);
@@ -230,7 +230,7 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
 {
     ROSE_ASSERT(storage!=NULL);
     ROSE_ASSERT(storage!=get_dontFree());
-    rose_addr_t old_offset = storage->get_offset();
+    Address old_offset = storage->get_offset();
     if (old_offset!=SgAsmGenericString::unallocated) {
         set_isModified(true);
         storage->set_offset(SgAsmGenericString::unallocated);
@@ -239,7 +239,7 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
 }
 
 void
-SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
+SgAsmGenericStrtab::free(Address offset, Address size)
 {
     if (offset==SgAsmGenericString::unallocated || 0==size)
         return;
@@ -307,7 +307,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 {
     bool reallocated = false;
     SgAsmGenericSection *container = get_container();
-    rose_addr_t extend_size = 0;                                     /* amount by which to extend string table */
+    Address extend_size = 0;                            /* amount by which to extend string table */
 
     /* Get list of strings that need to be allocated and sort by descending size. */
     std::vector<size_t> map;
@@ -366,7 +366,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
                 ASSERT_require(iter->size() >= need);
                 AddressInterval allocated = AddressInterval::baseSize(iter->least(), need);
                 get_freeList().erase(allocated);
-                rose_addr_t new_offset = allocated.least();
+                Address new_offset = allocated.least();
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
                 /* nothing large enough on the free list */
@@ -502,27 +502,27 @@ void
 SgAsmGenericStrtab::allocateOverlap(SgAsmStringStorage *) {}
 
 SgAsmStringStorage*
-SgAsmGenericStrtab::create_storage(rose_addr_t x, bool y) {
+SgAsmGenericStrtab::create_storage(Address x, bool y) {
     return createStorage(x, y);
 }
 
 SgAsmStringStorage*
-SgAsmGenericStrtab::createStorage(rose_addr_t, bool) {
+SgAsmGenericStrtab::createStorage(Address, bool) {
     ASSERT_not_implemented("subclass must implement");
 }
 
-rose_addr_t
+Address
 SgAsmGenericStrtab::get_storage_size(const SgAsmStringStorage *x) {
     return get_storageSize(x);
 }
 
-rose_addr_t
+Address
 SgAsmGenericStrtab::get_storageSize(const SgAsmStringStorage*) {
     ASSERT_not_implemented("subclass must implement");
 }
 
 void
-SgAsmGenericStrtab::rebind(SgAsmStringStorage*, rose_addr_t) {
+SgAsmGenericStrtab::rebind(SgAsmStringStorage*, Address) {
     ASSERT_not_implemented("subclass must implement");
 }
 

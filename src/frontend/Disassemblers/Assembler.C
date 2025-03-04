@@ -55,7 +55,7 @@ Assembler::assembleBlock(SgAsmBlock *bb)
 }
 
 SgUnsignedCharList
-Assembler::assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_t va)
+Assembler::assembleBlock(const std::vector<SgAsmInstruction*> &insns, Address va)
 {
     SgUnsignedCharList retval;
     for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {

@@ -169,14 +169,14 @@ SgAsmElfSection::get_elfHeader() const
     return dynamic_cast<SgAsmElfFileHeader*>(get_header());
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of required parts*/
                                  const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
                                  size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
     return calculateSizes(r32size, r64size, optsizes, entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSection::calculateSizes(size_t r32size, size_t r64size,       /*size of required parts*/
                                 const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
                                 size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
@@ -235,13 +235,13 @@ SgAsmElfSection::calculateSizes(size_t r32size, size_t r64size,       /*size of 
     return entry_size * nentries;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
@@ -256,7 +256,7 @@ SgAsmElfSection::reallocate()
 
     /* Change section size if this section was defined in the ELF Section Table */
     if (sechdr!=NULL) {
-        rose_addr_t need = calculateSizes(NULL, NULL, NULL, NULL);
+        Rose::BinaryAnalysis::Address need = calculateSizes(NULL, NULL, NULL, NULL);
         if (need < get_size()) {
             if (isMapped()) {
                 ROSE_ASSERT(get_mappedSize()==get_size());

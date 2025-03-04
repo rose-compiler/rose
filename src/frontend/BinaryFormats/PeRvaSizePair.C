@@ -23,7 +23,8 @@ SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const RVA
     set_parent(parent);
 }
 
-SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size) {
+SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, Rose::BinaryAnalysis::Address rva,
+                                       Rose::BinaryAnalysis::Address size) {
     initializeProperties();
 
     p_e_rva = rva;

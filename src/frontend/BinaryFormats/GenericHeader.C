@@ -75,17 +75,17 @@ SgAsmGenericHeader::unparse(std::ostream &f) const
     }
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmGenericHeader::get_entry_rva() const
 {
     return get_entryRva();
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmGenericHeader::get_entryRva() const
 {
     if (get_entryRvas().size()==0)
-        return rose_addr_t();
+        return Rose::BinaryAnalysis::Address();
     return get_entryRvas()[0].rva();
 }
 
@@ -252,13 +252,13 @@ SgAsmGenericHeader::get_sectionByName(const std::string &name, char sep/*or NUL*
 }
 
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
+SgAsmGenericHeader::get_sections_by_offset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size) const
 {
     return get_sectionsByOffset(offset, size);
 }
 
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const
+SgAsmGenericHeader::get_sectionsByOffset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size) const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
@@ -271,13 +271,15 @@ SgAsmGenericHeader::get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) c
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_offset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size,
+                                          size_t *nfound/*optional*/) const
 {
     return get_sectionByOffset(offset, size, nfound);
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_sectionByOffset(Rose::BinaryAnalysis::Address offset, Rose::BinaryAnalysis::Address size,
+                                        size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sectionsByOffset(offset, size);
     if (nfound) *nfound = possible.size();
@@ -285,13 +287,13 @@ SgAsmGenericHeader::get_sectionByOffset(rose_addr_t offset, rose_addr_t size, si
 }
 
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
+SgAsmGenericHeader::get_sections_by_rva(Rose::BinaryAnalysis::Address rva) const
 {
     return get_sectionsByRva(rva);
 }
 
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sectionsByRva(rose_addr_t rva) const
+SgAsmGenericHeader::get_sectionsByRva(Rose::BinaryAnalysis::Address rva) const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
@@ -304,13 +306,13 @@ SgAsmGenericHeader::get_sectionsByRva(rose_addr_t rva) const
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_rva(Rose::BinaryAnalysis::Address rva, size_t *nfound/*optional*/) const
 {
     return get_sectionByRva(rva, nfound);
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_sectionByRva(rose_addr_t rva, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_sectionByRva(Rose::BinaryAnalysis::Address rva, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sectionsByRva(rva);
     if (nfound) *nfound = possible.size();
@@ -318,18 +320,18 @@ SgAsmGenericHeader::get_sectionByRva(rose_addr_t rva, size_t *nfound/*optional*/
 }
 
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
+SgAsmGenericHeader::get_sections_by_va(Rose::BinaryAnalysis::Address va, bool use_preferred) const
 {
     return get_sectionsByVa(va, use_preferred);
 }
 
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sectionsByVa(rose_addr_t va, bool use_preferred) const
+SgAsmGenericHeader::get_sectionsByVa(Rose::BinaryAnalysis::Address va, bool use_preferred) const
 {
     if (use_preferred) {
         if (va < get_baseVa())
             return SgAsmGenericSectionPtrList();
-        rose_addr_t rva = va - get_baseVa();
+        Rose::BinaryAnalysis::Address rva = va - get_baseVa();
         return get_sectionsByRva(rva);
     }
      
@@ -344,13 +346,13 @@ SgAsmGenericHeader::get_sectionsByVa(rose_addr_t va, bool use_preferred) const
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_va(Rose::BinaryAnalysis::Address va, bool use_preferred, size_t *nfound/*optional*/) const
 {
     return get_sectionByVa(va, use_preferred, nfound);
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_sectionByVa(Rose::BinaryAnalysis::Address va, bool use_preferred, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sectionsByVa(va, use_preferred);
     if (nfound) *nfound = possible.size();
@@ -358,13 +360,13 @@ SgAsmGenericHeader::get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound) const
+SgAsmGenericHeader::get_best_section_by_va(Rose::BinaryAnalysis::Address va, bool use_preferred, size_t *nfound) const
 {
     return get_bestSectionByVa(va, use_preferred, nfound);
 }
 
 SgAsmGenericSection *
-SgAsmGenericHeader::get_bestSectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound) const
+SgAsmGenericHeader::get_bestSectionByVa(Rose::BinaryAnalysis::Address va, bool use_preferred, size_t *nfound) const
 {
     const SgAsmGenericSectionPtrList &candidates = get_sectionsByVa(va, use_preferred);
     if (nfound) *nfound = candidates.size();
@@ -414,7 +416,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i = 0; i < get_entryRvas().size(); i++) {
         char label[64];
         snprintf(label, sizeof(label), "entry_rva[%" PRIuPTR "]", i);
-        rose_addr_t entry_rva = get_entryRvas()[i].rva();
+        Rose::BinaryAnalysis::Address entry_rva = get_entryRvas()[i].rva();
         fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dumpContainingSections(f, std::string(p)+label, entry_rva, sections);
@@ -443,13 +445,13 @@ SgAsmGenericHeader::set_exec_format(SgAsmGenericFormat *x) {
     set_executableFormat(x);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmGenericHeader::get_base_va() const {
     return get_baseVa();
 }
 
 void
-SgAsmGenericHeader::set_base_va(rose_addr_t x) {
+SgAsmGenericHeader::set_base_va(Rose::BinaryAnalysis::Address x) {
     set_baseVa(x);
 }
 

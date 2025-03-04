@@ -228,15 +228,15 @@ SgAsmElfRelocSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfRelocSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
-    rose_addr_t retval=0;
+    Rose::BinaryAnalysis::Address retval=0;
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
         extra_sizes.push_back(p_entries->get_entries()[i]->get_extra().size());
@@ -306,7 +306,7 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        rose_addr_t spos = i * entry_size;
+        Rose::BinaryAnalysis::Address spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
 #if 0 /*FIXME: padding not supported here yet (RPM 2008-10-13)*/
         if (entry->get_extra().size()>0) {

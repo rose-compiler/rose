@@ -13,8 +13,8 @@ using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 // Orthogonal to implementation, so they go here, blame me!
 // Also: see ROSE/BinaryAnalysis/Partitioner2/ModulesJvm.h
 
-std::map<string, SgAsmGenericFile*> jarMap; // probably a class member because ...
-std::map<string, rose_addr_t> classMap; // maps to local class offset
+std::map<string, SgAsmGenericFile*> jarMap;               // probably a class member because ...
+std::map<string, Rose::BinaryAnalysis::Address> classMap; // maps to local class offset
 bool compressed{false};
 bool isJarFile{false};
 

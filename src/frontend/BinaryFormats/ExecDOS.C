@@ -176,7 +176,7 @@ SgAsmDOSFileHeader::reallocate()
 {
     bool reallocated = SgAsmGenericHeader::reallocate();
 
-    rose_addr_t need = sizeof(DOSFileHeader_disk);
+    Rose::BinaryAnalysis::Address need = sizeof(DOSFileHeader_disk);
     if (need < get_size()) {
         if (isMapped()) {
             ROSE_ASSERT(get_mappedSize()==get_size());
@@ -224,16 +224,16 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
 }
 
 SgAsmGenericSection *
-SgAsmDOSFileHeader::parseRealModeSection(rose_addr_t max_offset)
+SgAsmDOSFileHeader::parseRealModeSection(Rose::BinaryAnalysis::Address max_offset)
 {
     ROSE_ASSERT(NULL == p_rm_section);
     
-    rose_addr_t rm_offset = p_e_header_paragraphs * 16;
-    rose_addr_t rm_end = p_e_total_pages * 512;
+    Rose::BinaryAnalysis::Address rm_offset = p_e_header_paragraphs * 16;
+    Rose::BinaryAnalysis::Address rm_end = p_e_total_pages * 512;
     if (p_e_total_pages>0)
         rm_end -= 512 - (p_e_last_page_size%512);
 
-    rose_addr_t rm_size = rm_end>rm_offset ? rm_end-rm_offset : 0;
+    Rose::BinaryAnalysis::Address rm_size = rm_end>rm_offset ? rm_end-rm_offset : 0;
     if (rm_size == 0)
         return NULL;
 
@@ -416,7 +416,7 @@ SgAsmDOSFileHeader::formatName() const {
 }
 
 SgAsmGenericSection*
-SgAsmDOSFileHeader::parse_rm_section(rose_addr_t x) {
+SgAsmDOSFileHeader::parse_rm_section(Rose::BinaryAnalysis::Address x) {
     return parseRealModeSection(x);
 }
 

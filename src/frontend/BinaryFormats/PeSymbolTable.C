@@ -161,7 +161,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             // into the string table. Replace the fake ".file" with the real file name.
             const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_auxiliaryData[0]);
             if (0 == d->st_zero) {
-                rose_addr_t fname_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(d->st_offset);
+                Rose::BinaryAnalysis::Address fname_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(d->st_offset);
                 if (fname_offset < 4)
                     throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->readContentLocalString(fname_offset)));
@@ -201,7 +201,9 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             // FIXME[Robb P Matzke 2017-05-17]: The record format isn't documented in the reference listed above.
             if (debug) {
                 debug <<"COFF aux comdat " <<escapeString(p_st_name) <<": aux record ignored\n";
-                Rose::BinaryAnalysis::hexdump(debug, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ",
+                Rose::BinaryAnalysis::hexdump(debug,
+                                              (Rose::BinaryAnalysis::Address) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size,
+                                              "    ",
                                               p_auxiliaryData);
             }
 
@@ -364,7 +366,7 @@ SgAsmCoffSymbolTable::parse()
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
-    rose_addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
+    Rose::BinaryAnalysis::Address strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
     p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr);
     p_strtab->set_offset(strtab_offset);
     p_strtab->set_size(sizeof(uint32_t));
@@ -375,7 +377,7 @@ SgAsmCoffSymbolTable::parse()
 
     uint32_t word;
     p_strtab->readContent(0, &word, sizeof word);
-    rose_addr_t strtab_size = Rose::BinaryAnalysis::ByteOrder::leToHost(word);
+    Rose::BinaryAnalysis::Address strtab_size = Rose::BinaryAnalysis::ByteOrder::leToHost(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
     p_strtab->extend(strtab_size - sizeof(uint32_t));
@@ -423,14 +425,14 @@ SgAsmCoffSymbolTable::get_nslots() const
 void
 SgAsmCoffSymbolTable::unparse(std::ostream &f) const
 {
-    rose_addr_t spos = 0; /*section offset*/
+    Rose::BinaryAnalysis::Address spos = 0; /*section offset*/
     
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmCoffSymbol *symbol = p_symbols->get_symbols()[i];
         SgAsmCoffSymbol::COFFSymbol_disk disk;
         symbol->encode(&disk);
         spos = write(f, spos, SgAsmCoffSymbol::COFFSymbol_disk_size, &disk);
-        spos = write(f, (rose_addr_t) spos, symbol->get_auxiliaryData());
+        spos = write(f, (Rose::BinaryAnalysis::Address) spos, symbol->get_auxiliaryData());
     }
     if (get_strtab())
         get_strtab()->unparse(f);

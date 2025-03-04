@@ -93,13 +93,13 @@ SgAsmElfSymverSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymverSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymverSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
@@ -129,7 +129,7 @@ SgAsmElfSymverSection::unparse(std::ostream &f) const
         SgAsmElfSymverEntry *entry = p_entries->get_entries()[i];
         Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex,entry->get_value(),&val);
 
-        rose_addr_t spos = i * entry_size;
+        Rose::BinaryAnalysis::Address spos = i * entry_size;
         spos = write(f, spos, struct_size, &val);
     }
     unparseHoles(f);
@@ -198,14 +198,14 @@ SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmElfSymverDefinedAux::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const ElfSymverDefinedAux_disk* disk)
 {
-    rose_addr_t name_offset  = diskToHost(sex, disk->vda_name);
+    Rose::BinaryAnalysis::Address name_offset  = diskToHost(sex, disk->vda_name);
     get_name()->set_string(name_offset);
 }
 
 void *
 SgAsmElfSymverDefinedAux::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, ElfSymverDefinedAux_disk* disk) const
 {
-    rose_addr_t name_offset = p_name->get_offset();
+    Rose::BinaryAnalysis::Address name_offset = p_name->get_offset();
     ROSE_ASSERT(name_offset!=SgAsmGenericString::unallocated);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, name_offset, &(disk->vda_name));
     return disk;
@@ -278,7 +278,7 @@ SgAsmElfSymverDefinedSection::parse()
     SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(NULL!=fhdr);
 
-    rose_addr_t entry_addr=0;
+    Rose::BinaryAnalysis::Address entry_addr=0;
 
     Rose::BinaryAnalysis::ByteOrder::Endianness sex=fhdr->get_sex();
     /* Parse each entry*/
@@ -293,7 +293,7 @@ SgAsmElfSymverDefinedSection::parse()
         size_t first_aux = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,entryDisk.vd_aux);
         size_t next_entry = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,entryDisk.vd_next);
 
-        rose_addr_t aux_addr=entry_addr+first_aux;
+        Rose::BinaryAnalysis::Address aux_addr=entry_addr+first_aux;
         for (size_t i=0; i < num_aux; ++i) {
             SgAsmElfSymverDefinedAux *aux=new SgAsmElfSymverDefinedAux(entry,this); /*adds SymverDefinedAux to this entry*/
             SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk auxDisk;
@@ -314,13 +314,13 @@ SgAsmElfSymverDefinedSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymverDefinedSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymverDefinedSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     size_t struct_size = sizeof(SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk);
@@ -368,7 +368,7 @@ SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
     get_sectionEntry()->set_sh_entsize(0); /*This doesn't have consistently sized entries, zero it*/
   
     /* Write each entry's required part followed by the optional part */
-    rose_addr_t entry_addr=0;/*as offset from section*/
+    Rose::BinaryAnalysis::Address entry_addr=0;/*as offset from section*/
 
     for (size_t ent=0; ent < nentries; ++ent) {
         SgAsmElfSymverDefinedEntry *entry=get_entries()->get_entries()[ent];
@@ -391,7 +391,7 @@ SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
 
         write(f, entry_addr, entry_size,&entryDisk);
 
-        rose_addr_t aux_addr=entry_addr+first_aux;
+        Rose::BinaryAnalysis::Address aux_addr=entry_addr+first_aux;
         for (size_t i=0; i < num_aux; ++i) {
             SgAsmElfSymverDefinedAux *aux=auxes[i];
 
@@ -481,7 +481,7 @@ SgAsmElfSymverNeededAux::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, 
     p_flags= Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,disk->vna_flags);
     p_other= Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,disk->vna_other);
 
-    rose_addr_t name_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vna_name);
+    Rose::BinaryAnalysis::Address name_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vna_name);
     get_name()->set_string(name_offset);
 }
 
@@ -492,7 +492,7 @@ SgAsmElfSymverNeededAux::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex,p_flags,&disk->vna_flags);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex,p_other,&disk->vna_other);
 
-    rose_addr_t name_offset = p_name->get_offset();
+    Rose::BinaryAnalysis::Address name_offset = p_name->get_offset();
     ROSE_ASSERT(name_offset!=SgAsmGenericString::unallocated);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, name_offset, &(disk->vna_name));
     return disk;
@@ -519,7 +519,7 @@ void
 SgAsmElfSymverNeededEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const ElfSymverNeededEntry_disk *disk)
 {
     p_version  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vn_version);
-    rose_addr_t file_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vn_file);
+    Rose::BinaryAnalysis::Address file_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vn_file);
     get_fileName()->set_string(file_offset);
 }
 
@@ -528,7 +528,7 @@ SgAsmElfSymverNeededEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness se
 {
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_version, &(disk->vn_version));
 
-    rose_addr_t file_offset = get_fileName()->get_offset();
+    Rose::BinaryAnalysis::Address file_offset = get_fileName()->get_offset();
     ROSE_ASSERT(file_offset!=SgAsmGenericString::unallocated);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, file_offset, &(disk->vn_file));
 
@@ -585,7 +585,7 @@ SgAsmElfSymverNeededSection::parse()
 
     //size_t struct_size=sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
   
-    rose_addr_t entry_addr=0;
+    Rose::BinaryAnalysis::Address entry_addr=0;
 
     Rose::BinaryAnalysis::ByteOrder::Endianness sex=fhdr->get_sex();
     /* Parse each entry*/
@@ -600,7 +600,7 @@ SgAsmElfSymverNeededSection::parse()
         size_t first_aux = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,entryDisk.vn_aux);
         size_t next_entry = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,entryDisk.vn_next);
 
-        rose_addr_t aux_addr=entry_addr+first_aux;
+        Rose::BinaryAnalysis::Address aux_addr=entry_addr+first_aux;
         for (size_t i=0; i < num_aux; ++i) {
             SgAsmElfSymverNeededAux *aux=new SgAsmElfSymverNeededAux(entry,this); /*adds SymverNeededAux to this entry*/
             SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk auxDisk;
@@ -620,13 +620,13 @@ SgAsmElfSymverNeededSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymverNeededSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymverNeededSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     size_t struct_size = sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
@@ -675,7 +675,7 @@ SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
   
     /* Write each entry's required part followed by the optional part */
     /* Parse each entry*/
-    rose_addr_t entry_addr=0; /* as offset from section */
+    Rose::BinaryAnalysis::Address entry_addr=0; /* as offset from section */
 
     for (size_t ent=0; ent < nentries; ++ent) {
         SgAsmElfSymverNeededEntry *entry=get_entries()->get_entries()[ent];
@@ -698,7 +698,7 @@ SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
 
         write(f, entry_addr, entry_size,&entryDisk);
 
-        rose_addr_t aux_addr=entry_addr+first_aux;
+        Rose::BinaryAnalysis::Address aux_addr=entry_addr+first_aux;
         for (size_t i=0; i < num_aux; ++i) {
             SgAsmElfSymverNeededAux *aux=auxes[i];
 

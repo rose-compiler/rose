@@ -78,15 +78,15 @@ SgAsmGenericSection::align()
     bool changed = false;
 
     if (get_fileAlignment()>0) {
-        rose_addr_t old_offset = get_offset();
-        rose_addr_t new_offset = alignUp(old_offset, get_fileAlignment());
+        Address old_offset = get_offset();
+        Address new_offset = alignUp(old_offset, get_fileAlignment());
         set_offset(new_offset);
         changed = changed ? true : (old_offset!=new_offset);
     }
 
     if (isMapped() && get_mappedAlignment()>0) {
-        rose_addr_t old_rva = get_mappedPreferredRva();
-        rose_addr_t new_rva = alignUp(old_rva, get_mappedAlignment());
+        Address old_rva = get_mappedPreferredRva();
+        Address new_rva = alignUp(old_rva, get_mappedAlignment());
         set_mappedPreferredRva(new_rva);
         changed = changed ? true : (old_rva!=new_rva);
     }
@@ -168,41 +168,41 @@ SgAsmGenericSection::set_short_name(const std::string &name)
     set_shortName(name);
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_size() const
 {
     return p_size;
 }
 
 void
-SgAsmGenericSection::set_size(rose_addr_t size)
+SgAsmGenericSection::set_size(Address size)
 {
     if (p_size!=size)
         set_isModified(true);
     p_size = size;
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_offset() const
 {
     return p_offset;
 }
 
 void
-SgAsmGenericSection::set_offset(rose_addr_t offset)
+SgAsmGenericSection::set_offset(Address offset)
 {
     if (p_offset!=offset)
         set_isModified(true);
     p_offset = offset;
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_end_offset() const
 {
     return get_endOffset();
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_endOffset() const
 {
     return get_offset() + get_size();
@@ -250,20 +250,20 @@ SgAsmGenericSection::clearMapped()
     set_mappedExecutePermission(false);
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_mapped_size() const
 {
     return get_mappedSize();
 }
 
 void
-SgAsmGenericSection::set_mapped_size(rose_addr_t size)
+SgAsmGenericSection::set_mapped_size(Address size)
 {
     set_mappedSize(size);
 }
 
 void
-SgAsmGenericSection::set_mappedSize(rose_addr_t size)
+SgAsmGenericSection::set_mappedSize(Address size)
 {
     ASSERT_not_null(this);
     if (get_mappedSize()!=size)
@@ -271,19 +271,19 @@ SgAsmGenericSection::set_mappedSize(rose_addr_t size)
     p_mappedSize = size;
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_mapped_preferred_rva() const {
     return get_mappedPreferredRva();
 }
 
 void
-SgAsmGenericSection::set_mapped_preferred_rva(rose_addr_t a)
+SgAsmGenericSection::set_mapped_preferred_rva(Address a)
 {
     set_mappedPreferredRva(a);
 }
 
 void
-SgAsmGenericSection::set_mappedPreferredRva(rose_addr_t a)
+SgAsmGenericSection::set_mappedPreferredRva(Address a)
 {
     ASSERT_not_null(this);
     if (get_mappedPreferredRva()!=a)
@@ -291,13 +291,13 @@ SgAsmGenericSection::set_mappedPreferredRva(rose_addr_t a)
     p_mappedPreferredRva = a;
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_mapped_preferred_va() const
 {
     return get_mappedPreferredVa();
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_mappedPreferredVa() const
 {
     ASSERT_not_null(this);
@@ -306,13 +306,13 @@ SgAsmGenericSection::get_mappedPreferredVa() const
     return 0;
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_base_va() const
 {
     return get_baseVa();
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_baseVa() const
 {
     ASSERT_not_null(this);
@@ -338,13 +338,13 @@ SgAsmGenericSection::get_mappedPreferredExtent() const
 }
 
 size_t
-SgAsmGenericSection::read_content(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::read_content(Address start_offset, void *dst_buf, Address size, bool strict)
 {
     return readContent(start_offset, dst_buf, size, strict);
 }
 
 size_t
-SgAsmGenericSection::readContent(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::readContent(Address start_offset, void *dst_buf, Address size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ASSERT_not_null(file);
@@ -352,13 +352,13 @@ SgAsmGenericSection::readContent(rose_addr_t start_offset, void *dst_buf, rose_a
 }
 
 size_t
-SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, Address start_va, void *dst_buf, Address size, bool strict)
 {
     return readContent(map, start_va, dst_buf, size, strict);
 }
 
 size_t
-SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, Address start_va, void *dst_buf, Address size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ASSERT_not_null(file);
@@ -366,25 +366,25 @@ SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, rose_addr_t start_va
 }
 
 size_t
-SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf,
-                                  rose_addr_t size, bool strict) {
+SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf, Address size,
+                                  bool strict) {
     return readContent(map, start, dst_buf, size, strict);
 }
 
 size_t
-SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf,
-                                 rose_addr_t size, bool strict) {
+SgAsmGenericSection::readContent(const MemoryMap::Ptr &map, const RelativeVirtualAddress &start, void *dst_buf, Address size,
+                                 bool strict) {
     return readContent(map, *start.va(), dst_buf, size, strict);
 }
 
 size_t
-SgAsmGenericSection::read_content_local(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::read_content_local(Address start_offset, void *dst_buf, Address size, bool strict)
 {
     return readContentLocal(start_offset, dst_buf, size, strict);
 }
 
 size_t
-SgAsmGenericSection::readContentLocal(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::readContentLocal(Address start_offset, void *dst_buf, Address size, bool strict)
 {
     size_t retval;
     SgAsmGenericFile *file = get_file();
@@ -407,13 +407,13 @@ SgAsmGenericSection::readContentLocal(rose_addr_t start_offset, void *dst_buf, r
 }
 
 SgUnsignedCharList
-SgAsmGenericSection::read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t size)
+SgAsmGenericSection::read_content_local_ucl(Address rel_offset, Address size)
 {
     return readContentLocalUcl(rel_offset, size);
 }
 
 SgUnsignedCharList
-SgAsmGenericSection::readContentLocalUcl(rose_addr_t rel_offset, rose_addr_t size)
+SgAsmGenericSection::readContentLocalUcl(Address rel_offset, Address size)
 {
     SgUnsignedCharList retval;
     unsigned char *buf = new unsigned char[size];
@@ -425,13 +425,13 @@ SgAsmGenericSection::readContentLocalUcl(rose_addr_t rel_offset, rose_addr_t siz
 }
 
 std::string
-SgAsmGenericSection::read_content_str(const MemoryMap::Ptr &map, rose_addr_t start_va, bool strict)
+SgAsmGenericSection::read_content_str(const MemoryMap::Ptr &map, Address start_va, bool strict)
 {
     return readContentString(map, start_va, strict);
 }
 
 std::string
-SgAsmGenericSection::readContentString(const MemoryMap::Ptr &map, rose_addr_t start_va, bool strict)
+SgAsmGenericSection::readContentString(const MemoryMap::Ptr &map, Address start_va, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ASSERT_not_null(file);
@@ -439,13 +439,13 @@ SgAsmGenericSection::readContentString(const MemoryMap::Ptr &map, rose_addr_t st
 }
 
 std::string
-SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
+SgAsmGenericSection::read_content_str(Address abs_offset, bool strict)
 {
     return readContentString(abs_offset, strict);
 }
 
 std::string
-SgAsmGenericSection::readContentString(rose_addr_t abs_offset, bool strict)
+SgAsmGenericSection::readContentString(Address abs_offset, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ASSERT_not_null(file);
@@ -458,13 +458,13 @@ SgAsmGenericSection::readContentString(const Rose::BinaryAnalysis::MemoryMap::Pt
 }
 
 std::string
-SgAsmGenericSection::read_content_local_str(rose_addr_t rel_offset, bool strict)
+SgAsmGenericSection::read_content_local_str(Address rel_offset, bool strict)
 {
     return readContentLocalString(rel_offset, strict);
 }
 
 std::string
-SgAsmGenericSection::readContentLocalString(rose_addr_t rel_offset, bool strict)
+SgAsmGenericSection::readContentLocalString(Address rel_offset, bool strict)
 {
     std::string retval;
     while (1) {
@@ -480,13 +480,13 @@ SgAsmGenericSection::readContentLocalString(rose_addr_t rel_offset, bool strict)
 }
 
 uint64_t
-SgAsmGenericSection::read_content_local_uleb128(rose_addr_t *rel_offset, bool strict)
+SgAsmGenericSection::read_content_local_uleb128(Address *rel_offset, bool strict)
 {
     return readContentLocalUleb128(rel_offset, strict);
 }
 
 uint64_t
-SgAsmGenericSection::readContentLocalUleb128(rose_addr_t *rel_offset, bool strict)
+SgAsmGenericSection::readContentLocalUleb128(Address *rel_offset, bool strict)
 {
     int shift=0;
     uint64_t retval=0;
@@ -504,13 +504,13 @@ SgAsmGenericSection::readContentLocalUleb128(rose_addr_t *rel_offset, bool stric
 }
 
 int64_t
-SgAsmGenericSection::read_content_local_sleb128(rose_addr_t *rel_offset, bool strict)
+SgAsmGenericSection::read_content_local_sleb128(Address *rel_offset, bool strict)
 {
     return readContentLocalSleb128(rel_offset, strict);
 }
 
 int64_t
-SgAsmGenericSection::readContentLocalSleb128(rose_addr_t *rel_offset, bool strict)
+SgAsmGenericSection::readContentLocalSleb128(Address *rel_offset, bool strict)
 {
     int shift=0;
     int64_t retval=0;
@@ -528,8 +528,8 @@ SgAsmGenericSection::readContentLocalSleb128(rose_addr_t *rel_offset, bool stric
     return retval;
 }
 
-rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const
+Address
+SgAsmGenericSection::write(std::ostream &f, Address offset, size_t bufsize, const void *buf) const
 {
     size_t nwrite;
 
@@ -546,7 +546,7 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
 
     /* Don't write past end of current EOF if we can help it. */
     f.seekp(0, std::ios::end);
-    rose_addr_t filesize = f.tellp();
+    Address filesize = f.tellp();
     while (nwrite>0 && 0==((const char*)buf)[nwrite-1] && get_offset()+offset+nwrite>filesize)
         --nwrite;
 
@@ -579,8 +579,8 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
     return offset+bufsize;
 }
 
-rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgFileContentList &buf) const
+Address
+SgAsmGenericSection::write(std::ostream &f, Address offset, const SgFileContentList &buf) const
 {
     if (0==buf.size()) {
         return 0;
@@ -588,8 +588,8 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgFileCont
     return write(f, offset, buf.size(), &(buf[0]));
 }
 
-rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgUnsignedCharList &buf) const
+Address
+SgAsmGenericSection::write(std::ostream &f, Address offset, const SgUnsignedCharList &buf) const
 {
     if (0==buf.size()) {
         return 0;
@@ -597,26 +597,26 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgUnsigned
     return write(f, offset, buf.size(), (void*)&(buf[0]));
 }
 
-rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const std::string &str) const
+Address
+SgAsmGenericSection::write(std::ostream &f, Address offset, const std::string &str) const
 {
     return write(f, offset, str.size(), &(str[0]));
 }
 
-rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, char c) const
+Address
+SgAsmGenericSection::write(std::ostream &f, Address offset, char c) const
 {
     return write(f, offset, 1, &c);
 }
 
-rose_addr_t
-SgAsmGenericSection::write_uleb128(unsigned char *buf, rose_addr_t offset, uint64_t val) const
+Address
+SgAsmGenericSection::write_uleb128(unsigned char *buf, Address offset, uint64_t val) const
 {
     return writeUleb128(buf, offset, val);
 }
 
-rose_addr_t
-SgAsmGenericSection::writeUleb128(unsigned char *buf, rose_addr_t offset, uint64_t val) const
+Address
+SgAsmGenericSection::writeUleb128(unsigned char *buf, Address offset, uint64_t val) const
 {
     if (val==0) {
         buf[offset++] = 0;
@@ -632,14 +632,14 @@ SgAsmGenericSection::writeUleb128(unsigned char *buf, rose_addr_t offset, uint64
     return offset;
 }
 
-rose_addr_t
-SgAsmGenericSection::write_sleb128(unsigned char *buf, rose_addr_t offset, int64_t val) const
+Address
+SgAsmGenericSection::write_sleb128(unsigned char *buf, Address offset, int64_t val) const
 {
     return writeSleb128(buf, offset, val);
 }
 
-rose_addr_t
-SgAsmGenericSection::writeSleb128(unsigned char *buf, rose_addr_t offset, int64_t val) const
+Address
+SgAsmGenericSection::writeSleb128(unsigned char *buf, Address offset, int64_t val) const
 {
     if (val==0) {
         buf[offset++] = 0;
@@ -706,14 +706,14 @@ SgAsmGenericSection::get_unreferencedExtents() const
 }
 
 void
-SgAsmGenericSection::extend(rose_addr_t size)
+SgAsmGenericSection::extend(Address size)
 {
     ASSERT_not_null(get_file());
     ROSE_ASSERT(get_file()->get_trackingReferences()); /*can only be called during the parsing phase*/
-    rose_addr_t new_size = get_size() + size;
+    Address new_size = get_size() + size;
 
     /* Ending file address for section using new size, limited by total file size */
-    rose_addr_t new_end = std::min(get_file()->get_originalSize(), get_offset()+new_size);
+    Address new_end = std::min(get_file()->get_originalSize(), get_offset()+new_size);
     if (get_offset()<=new_end) {
         p_data.resize(new_end-get_offset());
     } else {
@@ -785,30 +785,30 @@ SgAsmGenericSection::unparseHoles(std::ostream&) const
 //    unparse(f, get_unreferencedExtents());
 }
 
-rose_addr_t
-SgAsmGenericSection::get_rva_offset(rose_addr_t rva) const
+Address
+SgAsmGenericSection::get_rva_offset(Address rva) const
 {
     return get_rvaOffset(rva);
 }
 
-rose_addr_t
-SgAsmGenericSection::get_rvaOffset(rose_addr_t rva) const
+Address
+SgAsmGenericSection::get_rvaOffset(Address rva) const
 {
     return get_vaOffset(rva + get_baseVa());
 }
 
-rose_addr_t
-SgAsmGenericSection::get_va_offset(rose_addr_t va) const
+Address
+SgAsmGenericSection::get_va_offset(Address va) const
 {
     return get_vaOffset(va);
 }
 
-rose_addr_t
-SgAsmGenericSection::get_vaOffset(rose_addr_t va) const
+Address
+SgAsmGenericSection::get_vaOffset(Address va) const
 {
     ROSE_ASSERT(isMapped());
     ROSE_ASSERT(va >= get_baseVa());
-    rose_addr_t rva = va - get_baseVa();
+    Address rva = va - get_baseVa();
     ROSE_ASSERT(rva >= get_mappedPreferredRva());
     return get_offset() + (rva - get_mappedPreferredRva());
 }
@@ -826,7 +826,7 @@ SgAsmGenericSection::dumpContainingSections(FILE *f, const std::string &prefix, 
     for (size_t i=0; i<slist.size(); i++) {
         SgAsmGenericSection *s = slist[i];
         if (s->isMapped() && rva>=s->get_mappedPreferredRva() && rva<s->get_mappedPreferredRva()+s->get_mappedSize()) {
-            rose_addr_t offset = rva - s->get_mappedPreferredRva();
+            Address offset = rva - s->get_mappedPreferredRva();
             fprintf(f, "%-*s   is 0x%08" PRIx64 " (%" PRIu64 ") bytes into section [%d] \"%s\"\n",
                     (int)DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->get_string(true).c_str());
         }
@@ -895,23 +895,23 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_file_alignment() const {
     return get_fileAlignment();
 }
 
 void
-SgAsmGenericSection::set_file_alignment(rose_addr_t x) {
+SgAsmGenericSection::set_file_alignment(Address x) {
     set_fileAlignment(x);
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_mapped_alignment() const {
     return get_mappedAlignment();
 }
 
 void
-SgAsmGenericSection::set_mapped_alignment(rose_addr_t x) {
+SgAsmGenericSection::set_mapped_alignment(Address x) {
     set_mappedAlignment(x);
 }
 
@@ -955,13 +955,13 @@ SgAsmGenericSection::set_contains_code(bool x) {
     set_containsCode(x);
 }
 
-rose_addr_t
+Address
 SgAsmGenericSection::get_mapped_actual_va() const {
     return get_mappedActualVa();
 }
 
 void
-SgAsmGenericSection::set_mapped_actual_va(rose_addr_t x) {
+SgAsmGenericSection::set_mapped_actual_va(Address x) {
     set_mappedActualVa(x);
 }
 

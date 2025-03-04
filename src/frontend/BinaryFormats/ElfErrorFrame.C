@@ -43,7 +43,7 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
                          fhdr->get_wordSize());
     unsigned char *buf = new unsigned char[worst_size];
 
-    rose_addr_t at = 0;
+    Rose::BinaryAnalysis::Address at = 0;
     uint32_t u32_disk;
     unsigned char u8_disk;
 
@@ -175,7 +175,7 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
     unsigned char *buf = new unsigned char[worst_size];
 
     size_t sz;
-    rose_addr_t at = 0;
+    Rose::BinaryAnalysis::Address at = 0;
     uint32_t u32_disk;
 
     /* PC Begin (begin_rva) and size */
@@ -257,25 +257,25 @@ SgAsmElfEHFrameSection::parse()
     SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
 
-    rose_addr_t record_offset=0;
-    std::map<rose_addr_t, SgAsmElfEHFrameEntryCI*> cies;
+    Rose::BinaryAnalysis::Address record_offset=0;
+    std::map<Rose::BinaryAnalysis::Address, SgAsmElfEHFrameEntryCI*> cies;
 
     // This section consists of a Common Information Entry (CIE) followed by one or more Frame Description Entry (FDE) and this
     // pattern is repeated for the entire section or until a termination record is reached.  There is typically one CIE per
     // object file and one FDE per function.  The CIE and FDE together describe how to unwind the caller during an exception if
     // the current instruction pointer is in the range covered by the FDE.
 
-    Sawyer::Optional<rose_addr_t> prevCieOffset;
+    Sawyer::Optional<Rose::BinaryAnalysis::Address> prevCieOffset;
     while (record_offset<get_size()) {
-        rose_addr_t at = record_offset;
+        Rose::BinaryAnalysis::Address at = record_offset;
         unsigned char u8_disk;
         uint32_t u32_disk;
         uint64_t u64_disk;
 
         /* Length or extended length */
-        rose_addr_t length_field_size = 4; /*number of bytes not counted in length*/
+        Rose::BinaryAnalysis::Address length_field_size = 4; /*number of bytes not counted in length*/
         readContentLocal(at, &u32_disk, 4); at += 4;
-        rose_addr_t record_size = diskToHost(fhdr->get_sex(), u32_disk);
+        Rose::BinaryAnalysis::Address record_size = diskToHost(fhdr->get_sex(), u32_disk);
         if (record_size==0xffffffff) {
             readContentLocal(at, &u64_disk, 8); at += 8;
             record_size = diskToHost(fhdr->get_sex(), u64_disk);
@@ -288,7 +288,7 @@ SgAsmElfEHFrameSection::parse()
 
         /* Backward offset to CIE record, or zero if this is a CIE record. */
         readContentLocal(at, &u32_disk, 4); at += 4;
-        rose_addr_t cie_back_offset = diskToHost(fhdr->get_sex(), u32_disk);
+        Rose::BinaryAnalysis::Address cie_back_offset = diskToHost(fhdr->get_sex(), u32_disk);
         if (0==cie_back_offset) {
             /* This is a CIE record */
             SgAsmElfEHFrameEntryCI *cie = new SgAsmElfEHFrameEntryCI(this);
@@ -394,14 +394,14 @@ SgAsmElfEHFrameSection::parse()
 
             /* Initial instructions. These are apparently included in the augmentation_data_length. The final instructions can
              * be zero padding (no-op instructions) to bring the record up to a multiple of the word size. */
-            rose_addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
+            Rose::BinaryAnalysis::Address init_insn_size = (length_field_size + record_size) - (at - record_offset);
             cie->get_instructions() = readContentLocalUcl(at, init_insn_size);
             ROSE_ASSERT(cie->get_instructions().size()==init_insn_size);
 
         } else {
             /* This is a FDE record */
             bool fde_parse_error = false;
-            rose_addr_t cie_offset = record_offset + length_field_size - cie_back_offset;
+            Rose::BinaryAnalysis::Address cie_offset = record_offset + length_field_size - cie_back_offset;
             if (cies.find(cie_offset) == cies.end()) {
                 mlog[ERROR] <<"bad CIE offset " <<cie_offset
                             <<" in section \"" <<StringUtility::cEscape(get_name()->get_string()) <<"\"\n";
@@ -446,7 +446,7 @@ SgAsmElfEHFrameSection::parse()
                 /* Augmentation Data */
                 std::string astring = cie->get_augmentation_string();
                 if (astring.size()>0 && astring[0]=='z') {
-                    rose_addr_t aug_length = readContentLocalUleb128(&at);
+                    Rose::BinaryAnalysis::Address aug_length = readContentLocalUleb128(&at);
                     fde->get_augmentation_data() = readContentLocalUcl(at, aug_length);
                     at += aug_length;
                     ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
@@ -458,7 +458,7 @@ SgAsmElfEHFrameSection::parse()
                                 <<", FED " <<StringUtility::addrToString(get_offset()+record_offset)
                                 <<": invalid call frame instructions size (skipping)\n";
                 } else {
-                    rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
+                    Rose::BinaryAnalysis::Address cf_insn_size = (length_field_size + record_size) - (at - record_offset);
                     fde->get_instructions() = readContentLocalUcl(at, cf_insn_size);
                     ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
                 }
@@ -477,15 +477,15 @@ SgAsmElfEHFrameSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfEHFrameSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
-    rose_addr_t whole = unparse(NULL);
+    Rose::BinaryAnalysis::Address whole = unparse(NULL);
     if (entsize)
         *entsize = 0;
     if (required)
@@ -503,18 +503,18 @@ SgAsmElfEHFrameSection::unparse(std::ostream &f) const
     unparse(&f);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
 {
     SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
 
-    rose_addr_t at=0;
+    Rose::BinaryAnalysis::Address at=0;
     uint32_t u32_disk;
     uint64_t u64_disk;
 
     for (size_t i=0; i<get_ci_entries()->get_entries().size(); i++) {
-        rose_addr_t last_cie_offset = at;
+        Rose::BinaryAnalysis::Address last_cie_offset = at;
         SgAsmElfEHFrameEntryCI *cie = get_ci_entries()->get_entries()[i];
         std::string s = cie->unparse(this);
         if (s.size()<0xffffffff) {
@@ -541,7 +541,7 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
             std::string s = fde->unparse(this, cie);
 
             /* Record size, not counting run-length coded size field, but counting CIE back offset. */
-            rose_addr_t record_size = 4 + s.size();
+            Rose::BinaryAnalysis::Address record_size = 4 + s.size();
             if (record_size<0xffffffff) {
                 hostToDisk(fhdr->get_sex(), record_size, &u32_disk);
                 if (fp)
@@ -560,7 +560,7 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
 
             /* CIE back offset. Number of bytes from the beginning of the current CIE record (including the Size fields) to
              * the beginning of the FDE record (excluding the Size fields but including the CIE back offset). */
-            rose_addr_t cie_back_offset = at - last_cie_offset;
+            Rose::BinaryAnalysis::Address cie_back_offset = at - last_cie_offset;
             hostToDisk(fhdr->get_sex(), cie_back_offset, &u32_disk);
             if (fp)
                 write(*fp, at, 4, &u32_disk);

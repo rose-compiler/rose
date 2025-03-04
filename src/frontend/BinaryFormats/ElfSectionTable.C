@@ -122,7 +122,7 @@ SgAsmElfSectionTable::parse()
     // Read all the section headers.  Section headers are not essential to the Unix loader, which uses only segments. Therefore
     // we should be prepared to handle bad entries.
     std::vector<SgAsmElfSectionTableEntry*> entries;
-    rose_addr_t offset = 0;
+    Rose::BinaryAnalysis::Address offset = 0;
     try {
         for (size_t i=0; i<nentries; i++, offset+=ent_size) {
             SgAsmElfSectionTableEntry *shdr = NULL;
@@ -355,13 +355,13 @@ SgAsmElfSectionTable::addSection(SgAsmElfSection *section)
     return shdr;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSectionTable::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
@@ -589,7 +589,7 @@ SgAsmElfSectionTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    rose_addr_t need = calculateSizes(NULL, NULL, &opt_size, &nentries);
+    Rose::BinaryAnalysis::Address need = calculateSizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (isMapped()) {
             ROSE_ASSERT(get_mappedSize()==get_size());
@@ -654,7 +654,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
         }
 
         /* The disk struct */
-        rose_addr_t spos = write(f, id*ent_size, struct_size, disk);
+        Rose::BinaryAnalysis::Address spos = write(f, id*ent_size, struct_size, disk);
         if (shdr->get_extra().size() > 0) {
             ROSE_ASSERT(shdr->get_extra().size()<=opt_size);
             write(f, spos, shdr->get_extra());

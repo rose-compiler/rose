@@ -44,7 +44,7 @@ SgAsmElfSymbol::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf
     p_value    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->st_value);
     p_size     = p_st_size;
 
-    rose_addr_t name_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->st_name);
+    Rose::BinaryAnalysis::Address name_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->st_name);
     get_name()->set_string(name_offset);
 
     parse_common();
@@ -61,7 +61,7 @@ SgAsmElfSymbol::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf
     p_value    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->st_value);
     p_size     = p_st_size;
 
-    rose_addr_t name_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->st_name);
+    Rose::BinaryAnalysis::Address name_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->st_name);
     get_name()->set_string(name_offset);
 
     parse_common();
@@ -166,7 +166,7 @@ SgAsmElfSymbol::get_elfType() const
 void *
 SgAsmElfSymbol::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32SymbolEntry_disk *disk) const
 {
-    rose_addr_t st_name = p_name->get_offset();
+    Rose::BinaryAnalysis::Address st_name = p_name->get_offset();
     ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, st_name,     &(disk->st_name));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_st_info,   &(disk->st_info));
@@ -179,7 +179,7 @@ SgAsmElfSymbol::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32Sym
 void *
 SgAsmElfSymbol::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64SymbolEntry_disk *disk) const
 {
-    rose_addr_t st_name = p_name->get_offset();
+    Rose::BinaryAnalysis::Address st_name = p_name->get_offset();
     ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, st_name,     &(disk->st_name));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_st_info,   &(disk->st_info));
@@ -263,13 +263,13 @@ SgAsmElfSymbolSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSymbolSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
@@ -360,7 +360,7 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        rose_addr_t spos = i * entry_size;
+        Rose::BinaryAnalysis::Address spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);

@@ -1,6 +1,6 @@
 // Use AddressInterval or similar for all new code. I plan to eventually remove ExtentMap one. [Robb Matzke 2021-09-14]
 
-/* The ExtentMap class. This class is similar std::map<rose_addr_t,rose_addr_t> where the two addresses are the starting
+/* The ExtentMap class. This class is similar std::map<Address,Address> where the two addresses are the starting
  * offset and size.  The main difference is that if two adjacent extents are added to the map they will be condensed into a
  * single extent.  This class is used to keep track of what parts of a binary file have been parsed, and is also used to
  * manage string table free lists, among other things. */
@@ -86,7 +86,7 @@ ExtentMap::category(const Extent &a, const Extent &b)
 
 /* Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */
 Extent
-ExtentMap::allocate_best_fit(rose_addr_t size)
+ExtentMap::allocate_best_fit(Address size)
 {
     iterator found = best_fit(size, begin());
     if (found==end())
@@ -98,7 +98,7 @@ ExtentMap::allocate_best_fit(rose_addr_t size)
 
 /* Allocate an extent of the specified size (first fit) from the extent map, removing the returned extent from the map. */
 Extent
-ExtentMap::allocate_first_fit(rose_addr_t size)
+ExtentMap::allocate_first_fit(Address size)
 {
     iterator found = first_fit(size, begin());
     if (found==end())

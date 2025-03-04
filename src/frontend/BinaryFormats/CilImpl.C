@@ -3454,7 +3454,7 @@ struct MethodHeader : MethodHeaderBase
 };
 
 MethodHeader
-parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
+parseFatHeader(Rose::BinaryAnalysis::Address base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
 {
   // II.25.4.3 Fat format
   std::uint8_t         buf[12];
@@ -3481,10 +3481,10 @@ parseTinyHeader(std::uint8_t header)
 
 
 SgAsmBlock*
-disassemble(rose_addr_t base_va, SgAsmCilMethodDef*, MethodHeader,
-            std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
+disassemble(Rose::BinaryAnalysis::Address base_va, SgAsmCilMethodDef*, MethodHeader, std::vector<std::uint8_t>& buf,
+            const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
 {
-  rose_addr_t        addr = 0;
+  Rose::BinaryAnalysis::Address addr = 0;
   const std::size_t  sz = buf.size();
   std::vector<SgAsmInstruction*> lst;
 
@@ -3634,7 +3634,7 @@ methodData( std::uint64_t kind,
 };
 
 SgAsmCilExceptionData*
-parseFatEHClause(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
+parseFatEHClause(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address sectionRva)
 {
   using Rose::BinaryAnalysis::ByteOrder::leToHost;
 
@@ -3654,7 +3654,7 @@ parseFatEHClause(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
 }
 
 SgAsmCilExceptionData*
-parseTinyEHClause(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
+parseTinyEHClause(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address sectionRva)
 {
   using Rose::BinaryAnalysis::ByteOrder::leToHost;
 
@@ -3674,12 +3674,8 @@ parseTinyEHClause(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
 }
 
 std::vector<SgAsmCilExceptionData*>
-parseEHClauses( SgAsmPEFileHeader& fhdr,
-                rose_addr_t sectionRva,
-                std::size_t len,
-                std::size_t elemLen,
-                std::function<SgAsmCilExceptionData*(SgAsmPEFileHeader&, rose_addr_t)> parseClause
-              )
+parseEHClauses(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address sectionRva, std::size_t len, std::size_t elemLen,
+               std::function<SgAsmCilExceptionData*(SgAsmPEFileHeader&, Rose::BinaryAnalysis::Address)> parseClause)
 {
   ASSERT_require((len % elemLen) == 0);
 
@@ -3741,8 +3737,8 @@ void unparseEHClauses( const std::vector<SgAsmCilExceptionData*>& clauses,
   }
 }
 
-std::tuple<SgAsmCilMethodData*, rose_addr_t>
-parseSection(SgAsmPEFileHeader& fhdr, rose_addr_t sectionRva)
+std::tuple<SgAsmCilMethodData*, Rose::BinaryAnalysis::Address>
+parseSection(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address sectionRva)
 {
   ASSERT_require((sectionRva % 4) == 0);
 
@@ -3802,7 +3798,7 @@ void unparseSection(const SgAsmCilMethodData& section, std::vector<std::uint8_t>
 }
 
 
-void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root,
+void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root,
                     size_t /*dbg_bufbeg*/, size_t /*dbg_buflim*/)
 {
   ASSERT_not_null(mdh); ASSERT_not_null(root);
@@ -3821,7 +3817,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    rose_addr_t    rva = static_cast<std::uint32_t>(m->get_RVA());
+    Rose::BinaryAnalysis::Address rva = static_cast<std::uint32_t>(m->get_RVA());
 
     if (rva == 0) continue;
 
@@ -3841,7 +3837,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     m->set_localVarSigTok(mh.localVarSigTok());
 
     // parse code
-    rose_addr_t    codeRVA = rva + mh.headerSize();
+    Rose::BinaryAnalysis::Address codeRVA = rva + mh.headerSize();
     std::uint32_t  codeLen = mh.codeSize();
 
 /*
@@ -3890,7 +3886,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     m->set_body(blk);
 
     bool        hasMoreSections = m->get_hasMoreSections();
-    rose_addr_t sectionRva = base_va + codeRVA + codeLen;
+    Rose::BinaryAnalysis::Address sectionRva = base_va + codeRVA + codeLen;
 
   /*
     std::cerr << "################################## "
@@ -3908,7 +3904,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     while (hasMoreSections)
     {
       // extra sections start at next 4 bound boundary
-      rose_addr_t const   alignedSectionRva = (sectionRva + 3) & ~3;
+      Rose::BinaryAnalysis::Address const   alignedSectionRva = (sectionRva + 3) & ~3;
       SgAsmCilMethodData* section = nullptr;
 
       std::tie(section, sectionRva) = parseSection(*fhdr, alignedSectionRva);
@@ -3982,7 +3978,8 @@ unparseCode(SgAsmBlock* blk)
 }
 
 
-void encodeMetadata(std::vector<std::uint8_t>& buf, rose_addr_t base_va, rose_addr_t limit_va, const SgAsmCilMetadataHeap* mdh, const SgAsmCilMetadataRoot* root)
+void encodeMetadata(std::vector<std::uint8_t>& buf, Rose::BinaryAnalysis::Address base_va, Rose::BinaryAnalysis::Address limit_va,
+                    const SgAsmCilMetadataHeap* mdh, const SgAsmCilMetadataRoot* root)
 {
   ASSERT_not_null(mdh); ASSERT_not_null(root);
   ASSERT_require(buf.size() >= limit_va);
@@ -4001,7 +3998,7 @@ void encodeMetadata(std::vector<std::uint8_t>& buf, rose_addr_t base_va, rose_ad
   {
     ASSERT_not_null(m);
 
-    const rose_addr_t rva = static_cast<std::uint32_t>(m->get_RVA());
+    const Rose::BinaryAnalysis::Address rva = static_cast<std::uint32_t>(m->get_RVA());
 
     if (rva == 0) continue;
 
@@ -4020,7 +4017,7 @@ void encodeMetadata(std::vector<std::uint8_t>& buf, rose_addr_t base_va, rose_ad
       ASSERT_not_null(section);
 
       // extra sections start at next 4 bound boundary
-      rose_addr_t sectionRva = rva + base_va + mh.size() + code.size();
+      Rose::BinaryAnalysis::Address sectionRva = rva + base_va + mh.size() + code.size();
       const int   padding4Byte = ((sectionRva + 3) & ~3) - sectionRva;
 
       code.resize(code.size() + padding4Byte, 0);
@@ -4082,10 +4079,10 @@ void SgAsmCilMetadataRoot::parse()
 
   uint64_t          metaData = clih->get_metaData();
   uint8_t*          data = reinterpret_cast<uint8_t*>(&metaData);
-  const rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  const Rose::BinaryAnalysis::Address rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   const size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
-  const rose_addr_t base_va = clih->get_baseVa();
-  const rose_addr_t rva_offset = clih->get_rvaOffset(rva);
+  const Rose::BinaryAnalysis::Address base_va = clih->get_baseVa();
+  const Rose::BinaryAnalysis::Address rva_offset = clih->get_rvaOffset(rva);
 
   if (TRACE_CONSTRUCTION)
   {
@@ -4117,7 +4114,7 @@ void SgAsmCilMetadataRoot::parse()
 
     uint64_t    metaData = clih->get_metaData();
     uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
-    rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+    Rose::BinaryAnalysis::Address rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
 
     ensureSize(bytes, rva);
 
@@ -4191,10 +4188,10 @@ void SgAsmCilMetadataRoot::unparse(std::ostream& os) const
 
   uint64_t    metaData = clih->get_metaData();
   uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
-  rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  Rose::BinaryAnalysis::Address rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   // size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
-  //~rose_addr_t base_va = clih->get_baseVa();
-  //~rose_addr_t rva_offset = clih->get_rvaOffset(rva);
+  //~Rose::BinaryAnalysis::Address base_va = clih->get_baseVa();
+  //~Rose::BinaryAnalysis::Address rva_offset = clih->get_rvaOffset(rva);
 
   // assuming no modification, then the rva location must be past the code section
 

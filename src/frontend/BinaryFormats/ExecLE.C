@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
+SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, Rose::BinaryAnalysis::Address offset)
     : SgAsmGenericHeader(f) {
     initializeProperties();
 
@@ -167,7 +167,7 @@ SgAsmLEFileHeader::isLe(SgAsmGenericFile *file)
         /* Read four-byte offset of potential LE/LX File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->readContent(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        rose_addr_t le_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(lfanew_disk);
+        Rose::BinaryAnalysis::Address le_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(lfanew_disk);
         
         /* Look for the LE/LX File Header magic number */
         unsigned char le_magic[4];
@@ -451,7 +451,8 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
+SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset,
+                                   Rose::BinaryAnalysis::Address size)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
 
@@ -465,8 +466,8 @@ SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, 
     set_name(new SgAsmBasicString(section_name));
     set_purpose(SP_HEADER);
 
-    const rose_addr_t entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
-    for (rose_addr_t entry_offset=0; entry_offset+entry_size <= get_size(); entry_offset+=entry_size) {
+    const Rose::BinaryAnalysis::Address entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
+    for (Rose::BinaryAnalysis::Address entry_offset=0; entry_offset+entry_size <= get_size(); entry_offset+=entry_size) {
         SgAsmLEPageTableEntry::LEPageTableEntry_disk disk;
         readContentLocal(entry_offset, &disk, entry_size);
         p_entries.push_back(new SgAsmLEPageTableEntry(fhdr->get_sex(), &disk));
@@ -486,7 +487,7 @@ SgAsmLEPageTable::get_page(size_t idx)
 void
 SgAsmLEPageTable::unparse(std::ostream &f) const
 {
-    rose_addr_t spos=0; /*section offset*/
+    Rose::BinaryAnalysis::Address spos=0; /*section offset*/
     for (size_t i=0; i < p_entries.size(); i++) {
         SgAsmLEPageTableEntry::LEPageTableEntry_disk disk;
         p_entries[i]->encode(get_header()->get_sex(), &disk);
@@ -608,7 +609,8 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
+SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset,
+                                         Rose::BinaryAnalysis::Address size)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
 
@@ -634,7 +636,7 @@ SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t of
         /* The section pages in the executable file. For now we require that the entries in the page table for the section
          * being defined are contiguous in the executable file, otherwise we'd have to define more than one actual section to
          * represent this section table entry. */
-        rose_addr_t section_offset, section_size; /*offset and size of section within file */
+        Rose::BinaryAnalysis::Address section_offset, section_size; /*offset and size of section within file */
         SgAsmLEPageTableEntry *page = pages->get_page(entry->get_pageMapIndex());
 #ifndef NDEBUG
         for (size_t j = 1; j < entry->get_pageMapNEntries(); j++) {
@@ -642,21 +644,22 @@ SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t of
             ROSE_ASSERT(page->get_pageno()+j == p2->get_pageno());
         }
 #endif
-        rose_addr_t pageno = page->get_pageno();
+        Rose::BinaryAnalysis::Address pageno = page->get_pageno();
         ROSE_ASSERT(pageno>0);
         if (FAMILY_LE==fhdr->get_executableFormat()->get_family()) {
             section_offset = fhdr->get_e_data_pages_offset() + (pageno-1) * fhdr->get_e_page_size();
 
             section_size = std::min(entry->get_mappedSize(), entry->get_pageMapNEntries() * fhdr->get_e_page_size());
 
-                } else {
+        } else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_executableFormat()->get_family());
             section_offset = fhdr->get_e_data_pages_offset() + ((pageno-1) << fhdr->get_e_page_offset_shift());
 
             section_size = std::min(entry->get_mappedSize(),
-                                    (rose_addr_t)(entry->get_pageMapNEntries() * (1<<fhdr->get_e_page_offset_shift())));
+                                    (Rose::BinaryAnalysis::Address)((entry->get_pageMapNEntries() *
+                                                                     (1<<fhdr->get_e_page_offset_shift()))));
 
-                }
+        }
 
         SgAsmLESection *section = new SgAsmLESection(fhdr);
         section->set_offset(section_offset);
@@ -731,7 +734,7 @@ SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor assumes SgAsmGenericSection is zero bytes long so far */
-SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
+SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
 
@@ -747,7 +750,7 @@ SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
 
     /* Resident exported procedure names, until we hit a zero length name. The first name
      * is for the library itself and the corresponding ordinal has no meaning. */
-    rose_addr_t at = 0;
+    Rose::BinaryAnalysis::Address at = 0;
     while (1) {
         extend(1);
         unsigned char byte;
@@ -774,7 +777,7 @@ SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
 void
 SgAsmLENameTable::unparse(std::ostream &f) const
 {
-    rose_addr_t spos=0; /*section offset*/
+    Rose::BinaryAnalysis::Address spos=0; /*section offset*/
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
         /* Name length */
@@ -837,9 +840,9 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness
 }
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmLEEntryPoint::unparse(std::ostream &f, Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmGenericSection *section,
-                           rose_addr_t spos) const
+                           Rose::BinaryAnalysis::Address spos) const
 {
     if (0==(p_flags & 0x01)) {
         /* Empty entry; write only the flag byte */
@@ -891,7 +894,7 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor. We don't know the size of the LE Entry table until after reading the first byte. Therefore the SgAsmGenericSection is
  * created with an initial size of zero. */
-SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
+SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
 
@@ -915,7 +918,7 @@ SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset
         return;
     }
 
-    rose_addr_t at = 0;
+    Rose::BinaryAnalysis::Address at = 0;
     extend(1);
     unsigned char byte;
     readContentLocal(at++, &byte, 1);
@@ -939,7 +942,7 @@ SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset
 void
 SgAsmLEEntryTable::unparse(std::ostream &f) const
 {
-    rose_addr_t spos=0; /*section offset*/
+    Rose::BinaryAnalysis::Address spos=0; /*section offset*/
     ROSE_ASSERT(p_entries.size()<=0xff);
     uint8_t byte = p_entries.size();
     spos = write(f, spos, byte);
@@ -975,7 +978,7 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor. */
-SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
+SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, Rose::BinaryAnalysis::Address offset)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
 
@@ -995,7 +998,7 @@ SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset
     size_t nrelocs = 0;
 
  // DQ (12/8/2008): reloc_size was previously not initialized before use in the for loop.
-    rose_addr_t at = 0, reloc_size = 0;
+    Rose::BinaryAnalysis::Address at = 0, reloc_size = 0;
     for (size_t i = 0; i < nrelocs; i++, at+=reloc_size) {
         p_entries.push_back(new SgAsmLERelocEntry(this, at, &reloc_size));
     }
@@ -1052,16 +1055,17 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
     /* Page Table */
     if (le_header->get_e_pagetab_rfo() > 0 && le_header->get_e_npages() > 0) {
-        rose_addr_t table_offset = le_header->get_offset() + le_header->get_e_pagetab_rfo();
-        rose_addr_t table_size = le_header->get_e_npages() * sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
+        Rose::BinaryAnalysis::Address table_offset = le_header->get_offset() + le_header->get_e_pagetab_rfo();
+        Rose::BinaryAnalysis::Address table_size = le_header->get_e_npages() * sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
         SgAsmLEPageTable *table = new SgAsmLEPageTable(le_header, table_offset, table_size);
         le_header->set_pageTable(table);
     }
 
     /* Section (Object) Table */
     if (le_header->get_e_secttab_rfo() > 0 && le_header->get_e_secttab_nentries() > 0) {
-        rose_addr_t table_offset = le_header->get_offset() + le_header->get_e_secttab_rfo();
-        rose_addr_t table_size = le_header->get_e_secttab_nentries() * sizeof(SgAsmLESectionTableEntry::LESectionTableEntry_disk);
+        Rose::BinaryAnalysis::Address table_offset = le_header->get_offset() + le_header->get_e_secttab_rfo();
+        Rose::BinaryAnalysis::Address table_size =
+            le_header->get_e_secttab_nentries() * sizeof(SgAsmLESectionTableEntry::LESectionTableEntry_disk);
         SgAsmLESectionTable *table = new SgAsmLESectionTable(le_header, table_offset, table_size);
         le_header->set_sectionTable(table);
     }
@@ -1073,7 +1077,7 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
     /* Resident Names Table */
     if (le_header->get_e_resnametab_rfo() > 0) {
-        rose_addr_t table_offset = le_header->get_offset() + le_header->get_e_resnametab_rfo();
+        Rose::BinaryAnalysis::Address table_offset = le_header->get_offset() + le_header->get_e_resnametab_rfo();
         SgAsmLENameTable *table = new SgAsmLENameTable(le_header, table_offset);
         char section_name[64];
         snprintf(section_name, sizeof(section_name), "%s Resident Name Table", le_header->formatName());
@@ -1083,7 +1087,7 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
     /* Non-resident Names Table */
     if (le_header->get_e_nonresnametab_offset() > 0) {
-        rose_addr_t table_offset = le_header->get_e_nonresnametab_offset();
+        Rose::BinaryAnalysis::Address table_offset = le_header->get_e_nonresnametab_offset();
         SgAsmLENameTable *table = new SgAsmLENameTable(le_header, table_offset);
         char section_name[64];
         snprintf(section_name, sizeof(section_name), "%s Non-resident Name Table", le_header->formatName());
@@ -1093,14 +1097,14 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
     
     /* Entry Table */
     if (le_header->get_e_entrytab_rfo() > 0) {
-        rose_addr_t table_offset = le_header->get_offset() + le_header->get_e_entrytab_rfo();
+        Rose::BinaryAnalysis::Address table_offset = le_header->get_offset() + le_header->get_e_entrytab_rfo();
         SgAsmLEEntryTable *table = new SgAsmLEEntryTable(le_header, table_offset);
         le_header->set_entryTable(table);
     }
 
     /* Fixup (Relocation) Table */
     if (le_header->get_e_fixup_rectab_rfo() > 0) {
-        rose_addr_t table_offset = le_header->get_offset() + le_header->get_e_fixup_rectab_rfo();
+        Rose::BinaryAnalysis::Address table_offset = le_header->get_offset() + le_header->get_e_fixup_rectab_rfo();
         SgAsmLERelocTable *table = new SgAsmLERelocTable(le_header, table_offset);
         le_header->set_relocationTable(table);
     }
@@ -1201,23 +1205,23 @@ SgAsmLESectionTableEntry::set_pagemap_nentries(unsigned x) {
     set_pageMapNEntries(x);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmLESectionTableEntry::get_mapped_size() const {
     return get_mappedSize();
 }
 
 void
-SgAsmLESectionTableEntry::set_mapped_size(rose_addr_t x) {
+SgAsmLESectionTableEntry::set_mapped_size(Rose::BinaryAnalysis::Address x) {
     set_mappedSize(x);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmLESectionTableEntry::get_base_addr() const {
     return get_baseAddr();
 }
 
 void
-SgAsmLESectionTableEntry::set_base_addr(rose_addr_t x) {
+SgAsmLESectionTableEntry::set_base_addr(Rose::BinaryAnalysis::Address x) {
     set_baseAddr(x);
 }
 

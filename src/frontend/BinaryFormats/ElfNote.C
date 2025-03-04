@@ -45,8 +45,8 @@ SgAsmElfNoteEntry::set_payload(const void *_buf, size_t nbytes)
         p_payload.push_back(buf[i]);
 }
 
-rose_addr_t
-SgAsmElfNoteEntry::parse(rose_addr_t at)
+Rose::BinaryAnalysis::Address
+SgAsmElfNoteEntry::parse(Rose::BinaryAnalysis::Address at)
 {
     /* Find the section holding this note */
     SgAsmElfNoteSection *notes = SageInterface::getEnclosingNode<SgAsmElfNoteSection>(this);
@@ -86,8 +86,8 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     return at + payload_size;
 }
 
-rose_addr_t
-SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
+Rose::BinaryAnalysis::Address
+SgAsmElfNoteEntry::unparse(std::ostream &f, Rose::BinaryAnalysis::Address at)
 {
     /* Find the section holding this note */
     SgAsmElfNoteSection *notes = SageInterface::getEnclosingNode<SgAsmElfNoteSection>(this);
@@ -126,16 +126,16 @@ SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
     return at;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfNoteEntry::calculate_size() const {
     return calculateSize();
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfNoteEntry::calculateSize() const {
-    rose_addr_t need = 12;                           /*namesize, payloadsize, type*/
-    need += p_name->get_string().size() + 1;    /*name plus NUL terminator*/
-    need = (need+3) & ~0x3;                     /*pad to align payload on a four-byte offset */
+    Rose::BinaryAnalysis::Address need = 12;            /*namesize, payloadsize, type*/
+    need += p_name->get_string().size() + 1;            /*name plus NUL terminator*/
+    need = (need+3) & ~0x3;                             /*pad to align payload on a four-byte offset */
     need += p_payload.size();
     return need;
 }
@@ -170,7 +170,7 @@ SgAsmElfNoteSection::parse()
 {
     SgAsmElfSection::parse();
 
-    rose_addr_t at=0;
+    Rose::BinaryAnalysis::Address at=0;
     while (at < get_size()) {
         SgAsmElfNoteEntry *note = new SgAsmElfNoteEntry(this);
         at = note->parse(at);
@@ -184,7 +184,7 @@ SgAsmElfNoteSection::reallocate()
     bool reallocated = SgAsmElfSection::reallocate();
     
     /* How much space is needed by the notes? */
-    rose_addr_t need = 0;
+    Rose::BinaryAnalysis::Address need = 0;
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfNoteEntry *ent = p_entries->get_entries()[i];
         need += ent->calculateSize();
@@ -209,7 +209,7 @@ SgAsmElfNoteSection::reallocate()
 void
 SgAsmElfNoteSection::unparse(std::ostream &f) const
 {
-    rose_addr_t at = 0;
+    Rose::BinaryAnalysis::Address at = 0;
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfNoteEntry *ent = p_entries->get_entries()[i];
         at = ent->unparse(f, at);

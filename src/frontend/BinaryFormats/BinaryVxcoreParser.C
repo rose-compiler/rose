@@ -182,10 +182,10 @@ VxcoreParser::parseMemory(const std::string &header, std::istream &input, const 
         return false;
 
     std::string vaStr = matched[1];
-    rose_addr_t va = rose_strtoull(vaStr.c_str(), NULL, 16);
+    Address va = rose_strtoull(vaStr.c_str(), NULL, 16);
 
     std::string nBytesStr = matched[2];
-    rose_addr_t nBytes = rose_strtoull(nBytesStr.c_str(), NULL, 16);
+    Address nBytes = rose_strtoull(nBytesStr.c_str(), NULL, 16);
 
     std::string memProtStr = matched[3];
     unsigned memProt = settings_.protDefault;
@@ -278,7 +278,7 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
                       const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::RiscOperators::Ptr &ops,
                       const std::string &outputName) {
     if (memory && !memoryLimit.isEmpty()) {
-        rose_addr_t va = memoryLimit.least();
+        Address va = memoryLimit.least();
         const size_t maxPayload = 0xffffffff;
         while (const AddressInterval selected = memory->atOrAfter(va).limit(maxPayload).singleSegment().available() & memoryLimit) {
             MemoryMap::ConstNodeIterator inode = memory->at(selected.least()).nodes().begin();
@@ -314,8 +314,8 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
             AddressInterval remaining = selected;
             while (!remaining.isEmpty()) {
                 // What to read
-                rose_addr_t bufferVa = remaining.least();
-                size_t nBytes = std::min(remaining.size(), (rose_addr_t)sizeof(buffer));
+                Address bufferVa = remaining.least();
+                size_t nBytes = std::min(remaining.size(), (Address)sizeof(buffer));
                 AddressInterval toRead = AddressInterval::baseSize(bufferVa, nBytes);
 
                 // Read from map, write to std::ostream

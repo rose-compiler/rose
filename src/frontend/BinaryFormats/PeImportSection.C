@@ -63,13 +63,13 @@ SgAsmPEImportSection::parse()
     ROSE_ASSERT(fhdr!=NULL);
 
     ROSE_ASSERT(isMapped());
-    rose_addr_t idir_va = get_mappedActualVa();
+    Rose::BinaryAnalysis::Address idir_va = get_mappedActualVa();
 
     // Some compilers don't actually terminate the Import Directory list with an all-zero entry as specified in Microsoft's PE
     // format documenttion. Instead, they apparently assume that that loader uses the size of the import section to calculate
     // the length of the list and that it never actually reads the final entry which is normally all zero.  These compilers
     // seem to have garbage in the last entry.
-    rose_addr_t nBytes = get_size();
+    Rose::BinaryAnalysis::Address nBytes = get_size();
     ASSERT_require(nBytes > 0);
     size_t nEntries = nBytes / sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
 
@@ -152,7 +152,7 @@ SgAsmPEImportSection::reallocate()
         end_rva.increment(dirlist[i]->reallocate(end_rva));
 
     /* Adjust the section size */
-    rose_addr_t need = end_rva.boundOffset().orElse(end_rva.rva());
+    Rose::BinaryAnalysis::Address need = end_rva.boundOffset().orElse(end_rva.rva());
     if (need < get_size()) {
         if (isMapped())
             set_mappedSize(need);

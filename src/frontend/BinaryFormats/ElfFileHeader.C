@@ -470,7 +470,7 @@ SgAsmElfFileHeader::reallocate()
     bool reallocated = SgAsmGenericHeader::reallocate();
 
     /* Resize header based on current word size */
-    rose_addr_t need;
+    Rose::BinaryAnalysis::Address need;
     if (4==get_wordSize()) {
         need = sizeof(Elf32FileHeader_disk);
     } else if (8==get_wordSize()) {

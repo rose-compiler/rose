@@ -81,7 +81,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   SgAsmGenericHeader* header{pool->get_header()};
   ASSERT_not_null(header);
 
-  rose_addr_t offset{header->get_offset()};
+  Rose::BinaryAnalysis::Address offset{header->get_offset()};
   header->set_offset(offset + attribute_length);
 
   return nullptr;

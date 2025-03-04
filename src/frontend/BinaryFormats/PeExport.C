@@ -169,7 +169,7 @@ SgAsmPEExportSection::parse()
     p_exportDirectory = new SgAsmPEExportDirectory(this);
 
     // Check that the p_export_dir.p_nameptr_n is not out of range.
-    rose_addr_t availBytes = fhdr->get_loaderMap()->at(*get_exportDirectory()->get_nameptr_rva().va()).available().size();
+    Address availBytes = fhdr->get_loaderMap()->at(*get_exportDirectory()->get_nameptr_rva().va()).available().size();
     size_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
     if (get_exportDirectory()->get_nameptr_n() > availElmts) {
         mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<get_exportDirectory()->get_nameptr_n() <<")"
@@ -189,7 +189,7 @@ SgAsmPEExportSection::parse()
     for (size_t i=0; i<std::min(get_exportDirectory()->get_nameptr_n(), availElmts); i++) {
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
-        rose_addr_t nameptr_va = *get_exportDirectory()->get_nameptr_rva().va() + i*sizeof(nameptr_disk);
+        Address nameptr_va = *get_exportDirectory()->get_nameptr_rva().va() + i*sizeof(nameptr_disk);
         bool badFunctionNameVa = false;
         try {
             readContent(fhdr->get_loaderMap(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
@@ -206,8 +206,8 @@ SgAsmPEExportSection::parse()
             }
             nameptr_disk = 0;
         }
-        rose_addr_t fname_rva = ByteOrder::leToHost(nameptr_disk);
-        rose_addr_t fname_va = fname_rva + fhdr->get_baseVa();
+        Address fname_rva = ByteOrder::leToHost(nameptr_disk);
+        Address fname_va = fname_rva + fhdr->get_baseVa();
 
         /* Function name (fname) */
         std::string s;
@@ -228,7 +228,7 @@ SgAsmPEExportSection::parse()
 
         /* Ordinal (an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
-        rose_addr_t ordinal_va = *get_exportDirectory()->get_ordinals_rva().va() + i*sizeof(ordinal_disk);
+        Address ordinal_va = *get_exportDirectory()->get_ordinals_rva().va() + i*sizeof(ordinal_disk);
         bool badOrdinalVa = false;
         try {
             readContent(fhdr->get_loaderMap(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
@@ -256,7 +256,7 @@ SgAsmPEExportSection::parse()
 
         // Read the address from the Export Address Table. This table is indexed by ordinal.
         RelativeVirtualAddress expaddr = 0;                         // export address
-        const rose_addr_t expaddr_va = *get_exportDirectory()->get_expaddr_rva().va() + ordinal * sizeof(ExportAddress_disk);
+        const Address expaddr_va = *get_exportDirectory()->get_expaddr_rva().va() + ordinal * sizeof(ExportAddress_disk);
         try {
             ExportAddress_disk expaddr_disk;
             readContent(fhdr->get_loaderMap(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);

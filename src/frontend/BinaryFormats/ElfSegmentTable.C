@@ -240,7 +240,7 @@ SgAsmElfSegmentTable::parse()
     if (get_size()<=1 && get_size()<nentries*ent_size)
         extend(nentries*ent_size - get_size());
     
-    rose_addr_t offset=0;                                /* w.r.t. the beginning of this section */
+    Rose::BinaryAnalysis::Address offset=0;                                /* w.r.t. the beginning of this section */
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         /* Read/decode the segment header */
         SgAsmElfSegmentTableEntry *shdr = NULL;
@@ -334,13 +334,13 @@ SgAsmElfSegmentTable::addSection(SgAsmElfSection *section)
     return shdr;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfSegmentTable::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
@@ -399,7 +399,7 @@ SgAsmElfSegmentTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    rose_addr_t need = calculateSizes(NULL, NULL, &opt_size, &nentries);
+    Rose::BinaryAnalysis::Address need = calculateSizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (isMapped()) {
             ROSE_ASSERT(get_mappedSize()==get_size());
@@ -467,7 +467,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
         }
         
         // Write the disk struct and extra data to the table slot
-        rose_addr_t spos = write(f, id*ent_size, struct_size, disk);
+        Rose::BinaryAnalysis::Address spos = write(f, id*ent_size, struct_size, disk);
         if (shdr->get_extra().size() > 0)
             write(f, spos, shdr->get_extra());
         wasWritten[id] = true;

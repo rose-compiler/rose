@@ -88,7 +88,7 @@ SgAsmPEImportDirectory::hintNameTableExtent(AddressIntervalSet &extent/*in,out*/
 }
 
 SgAsmPEImportDirectory *
-SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
+SgAsmPEImportDirectory::parse(Address idir_va, bool /*isLastEntry*/)
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
     ROSE_ASSERT(fhdr!=nullptr);
@@ -188,7 +188,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
         return;                 // no ILT/IAT present
 
 
-    rose_addr_t entry_va=*table_start.va(), entry_size=fhdr->get_wordSize();
+    Address entry_va=*table_start.va(), entry_size=fhdr->get_wordSize();
     uint64_t by_ordinal_bit = 1ull << (8*entry_size-1);
 
     for (size_t idx=0; 1; ++idx, entry_va+=entry_size) {
@@ -310,7 +310,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
                 import_item->set_by_ordinal(false);
                 import_item->set_hintname_rva(RelativeVirtualAddress(entry_word).bindBestSection(fhdr));
                 import_item->set_hintname_nalloc(0); // for now, will adjust after we read it
-                rose_addr_t entry_word_va = entry_word + fhdr->get_baseVa();
+                Address entry_word_va = entry_word + fhdr->get_baseVa();
                 uint16_t hint;
                 try {
                     isec->readContent(fhdr->get_loaderMap(), entry_word_va, &hint, sizeof hint);

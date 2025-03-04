@@ -170,12 +170,12 @@ SgAsmElfDynamicSection::parse()
     return this;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
     return calculateSizes(entsize, required, optional, entcount);
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 SgAsmElfDynamicSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
@@ -321,7 +321,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        rose_addr_t spos = i * entry_size;
+        Rose::BinaryAnalysis::Address spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);

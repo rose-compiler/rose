@@ -68,13 +68,13 @@ SgAsmPEImportItem::hintNameRequiredSize() const
     return alignUp(2/*hint*/ + p_name->get_string().size() + 1/*NUL*/, (size_t)2);
 }
 
-rose_addr_t
+Address
 SgAsmPEImportItem::get_iat_entry_va() const
 {
     return get_iatEntryVa();
 }
 
-rose_addr_t
+Address
 SgAsmPEImportItem::get_iatEntryVa() const
 {
     SgAsmPEImportDirectory *idir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(this);
@@ -83,7 +83,7 @@ SgAsmPEImportItem::get_iatEntryVa() const
     assert(idx>=0); // parent/child connectivity problem
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(idir);
     assert(fhdr!=NULL);
-    rose_addr_t entry_size = fhdr->get_wordSize();
+    Address entry_size = fhdr->get_wordSize();
     return *idir->get_iat_rva().va() + idx * entry_size;
 }
 
