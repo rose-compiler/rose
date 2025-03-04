@@ -258,7 +258,7 @@ void AsmView::addArrows(int drawColumn,int addressColumn, const QModelIndex & st
 
     SgNode * sg = qvariant_cast<SgNode*>(model->data(ind,SgNodeRole));
 
-    rose_addr_t address;
+    Rose::BinaryAnalysis::Address address;
     bool success = findNextInstruction(sg,address);
     if(success)
     {

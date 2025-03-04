@@ -759,7 +759,7 @@ buildBasicBlock(const std::vector<SgAsmInstruction*> &insns) {
 }
 
 SgAsmStaticData*
-buildStaticData(rose_addr_t startVa, const SgUnsignedCharList &rawData) {
+buildStaticData(Rose::BinaryAnalysis::Address startVa, const SgUnsignedCharList &rawData) {
     SgAsmStaticData *sd = new SgAsmStaticData;
     sd->set_address(startVa);
     sd->set_rawBytes(rawData);
@@ -778,7 +778,7 @@ buildDataBlock(SgAsmStaticData *staticData) {
 }
 
 SgAsmFunction*
-buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*> &blocks) {
+buildFunction(Rose::BinaryAnalysis::Address entryVa, const std::vector<SgAsmBlock*> &blocks) {
     SgAsmFunction *func = new SgAsmFunction;
     func->set_entryVa(entryVa);
     if (!blocks.empty()) {

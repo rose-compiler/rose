@@ -958,7 +958,6 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "long long int" ) ||
                  ( varTypeString == "unsigned long long int" ) ||
                  ( varTypeString == "int64_t") ||
-                 ( varTypeString == "rose_addr_t" ) ||
                  varTypeString == "Rose::BinaryAnalysis::Address" ||
                  varTypeString == "BinaryAnalysis::Address" ||
                  varTypeString == "Address" ||

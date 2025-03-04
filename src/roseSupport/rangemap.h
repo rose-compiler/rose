@@ -764,12 +764,12 @@ protected:
  *
  *  @code
  *  struct InstructionAddresses: public AstSimpleProcessing {
- *      typedef Range<rose_addr_t> AddressRange;
+ *      typedef Range<Rose::BinaryAnalysis::Address> AddressRange;
  *      RangeMap<AddressRange> set;
  *      void visit(SgNode *node) {
  *          SgAsmInstruction *insn = isSgAsmInstruction(node);
  *          if (insn!=NULL) {
- *              rose_addr_t start = insn->get_address();
+ *              Rose::BinaryAnalysis::Address start = insn->get_address();
  *              size_t size = insn->get_size();
  *              set.insert(AddressRange(start, size));
  *          }
@@ -786,7 +786,7 @@ protected:
  *  this:
  *
  *  @code
- *  typedef Range<rose_addr_t> AddressRange;
+ *  typedef Range<Rose::BinaryAnalysis::Address> AddressRange;
  *
  *  class FunctionRangeMapValue: public RangeMapValue<AddressRange, SgAsmFunction*> {
  *  public:
@@ -818,7 +818,7 @@ protected:
  *          SgAsmInstruction *insn = isSgAsmInstruction(node);
  *          SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
  *          if (insn && func) {
- *              rose_addr_t start = insn->get_address();
+ *              Rose::BinaryAnalysis::Address start = insn->get_address();
  *              size_t size = insn->get_size();
  *              ranges.insert(AddressRange(start, size), func);
  *          }

@@ -104,7 +104,7 @@ void deleteFileFromProject(SgFile * file, SgProject * proj)
 }
 
 
-bool findNextInstruction(SgNode * node, rose_addr_t & out)
+bool findNextInstruction(SgNode * node, Rose::BinaryAnalysis::Address &out)
 {
     SgAsmInstruction * inst = isSgAsmInstruction(node);
     if(!inst)

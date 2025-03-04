@@ -156,11 +156,11 @@ SgAsmX86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build basic blocks
 SgAsmBlock* buildBasicBlock(const std::vector<SgAsmInstruction*>&);
-SgAsmFunction* buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*>&);
+SgAsmFunction* buildFunction(Rose::BinaryAnalysis::Address entryVa, const std::vector<SgAsmBlock*>&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build data blocks
-SgAsmStaticData* buildStaticData(rose_addr_t startVa, const SgUnsignedCharList &rawData);
+SgAsmStaticData* buildStaticData(Rose::BinaryAnalysis::Address startVa, const SgUnsignedCharList &rawData);
 SgAsmBlock* buildDataBlock(SgAsmStaticData*);
 
 

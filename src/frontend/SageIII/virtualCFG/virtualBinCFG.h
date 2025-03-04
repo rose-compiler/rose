@@ -23,8 +23,8 @@ namespace VirtualBinCFG {
         eckDefault              // Default label
     };
     
-    typedef std::set<rose_addr_t> AddressSet;
-    typedef std::map<rose_addr_t, SgAsmInstruction*> AddressToInstructionMap;
+    typedef std::set<Rose::BinaryAnalysis::Address> AddressSet;
+    typedef std::map<Rose::BinaryAnalysis::Address, SgAsmInstruction*> AddressToInstructionMap;
     typedef std::map<SgAsmInstruction*, AddressSet> InstructionToAddressesMap;
     typedef std::map<SgAsmStatement*, AddressSet> StatementToAddressesMap;
 
@@ -40,7 +40,7 @@ namespace VirtualBinCFG {
         AuxiliaryInformation(SgNode* top);
 
         /** Returns the instruction (if any) disassembled at the specified address. */
-        SgAsmInstruction *getInstructionAtAddress(rose_addr_t addr) const {
+        SgAsmInstruction *getInstructionAtAddress(Rose::BinaryAnalysis::Address addr) const {
             AddressToInstructionMap::const_iterator i = addressToInstructionMap.find(addr);
             if (i == addressToInstructionMap.end()) return NULL;
             return i->second;

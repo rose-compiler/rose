@@ -4554,15 +4554,15 @@ SgSharedVector<TYPE> EasyStorage <SgSharedVector<TYPE> > :: rebuildDataStoredInE
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 void EasyStorage<ExtentMap>::storeDataInEasyStorageClass(const ExtentMap& emap)
 {
-    /* Since first and second elements of the value_type pair are identical (both rose_addr_t), we store them in a single pool
-     * that is twice as large as the number of pairs in the ExtentMap. */
-    std::vector<rose_addr_t> data_;
+    /* Since first and second elements of the value_type pair are identical (both Rose::BinaryAnalysis::Address), we store them in a
+     * single pool that is twice as large as the number of pairs in the ExtentMap. */
+    std::vector<Rose::BinaryAnalysis::Address> data_;
     for (ExtentMap::const_iterator ei=emap.begin(); ei!=emap.end(); ++ei) {
         data_.push_back(ei->first.first());
         data_.push_back(ei->first.last());
     }
 
-    std::vector<rose_addr_t>::const_iterator dat = data_.begin();
+    std::vector<Rose::BinaryAnalysis::Address>::const_iterator dat = data_.begin();
     long offset = Base::setPositionAndSizeAndReturnOffset(data_.size());
     if (0 < offset) {
         /* The new data does not fit in the actual block, but store what we can in the actual block. */
@@ -4609,7 +4609,7 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (Base::actual!=NULL && Base::getSizeOfData()>0)
         {
-          rose_addr_t *pointer = Base::getBeginningOfDataBlock();
+          Rose::BinaryAnalysis::Address *pointer = Base::getBeginningOfDataBlock();
           for (long i=0; i<Base::getSizeOfData(); i+=2)
               emap.insert(Extent::inin(pointer[i+0], pointer[i+1]));
         }
@@ -4627,16 +4627,16 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 void
 EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>::storeDataInEasyStorageClass(const Rose::BinaryAnalysis::AddressIntervalSet &set)
 {
-    // Since the set's elements are of type Sawyer::Container::Interval<rose_addr_t> we can store the interval endpoints
-    // in a single pool that is twice as large as the number of intervals in the set.
-    std::vector<rose_addr_t> data_;
+    // Since the set's elements are of type Sawyer::Container::Interval<Rose::BinaryAnalysis::Address> we can store the interval
+    // endpoints in a single pool that is twice as large as the number of intervals in the set.
+    std::vector<Rose::BinaryAnalysis::Address> data_;
     BOOST_FOREACH (const Rose::BinaryAnalysis::AddressInterval &interval, set.intervals()) {
         assert(!interval.isEmpty());
         data_.push_back(interval.least());
         data_.push_back(interval.greatest());
     }
 
-    std::vector<rose_addr_t>::const_iterator dat = data_.begin();
+    std::vector<Rose::BinaryAnalysis::Address>::const_iterator dat = data_.begin();
     long offset = Base::setPositionAndSizeAndReturnOffset(data_.size());
     if (0 < offset) {
         /* The new data does not fit in the actual block, but store what we can in the actual block. */
@@ -4679,10 +4679,10 @@ EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>::rebuildDataStoredInEasySt
 
     Rose::BinaryAnalysis::AddressIntervalSet retval;
     if (Base::actual!=NULL && Base::getSizeOfData()>0) {
-        rose_addr_t *pointer = Base::getBeginningOfDataBlock();
+        Rose::BinaryAnalysis::Address *pointer = Base::getBeginningOfDataBlock();
         for (long i=0; i<Base::getSizeOfData(); i+=2) {
-            rose_addr_t lo = pointer[i+0];
-            rose_addr_t hi = pointer[i+1];
+            Rose::BinaryAnalysis::Address lo = pointer[i+0];
+            Rose::BinaryAnalysis::Address hi = pointer[i+1];
             assert(lo <= hi);
             retval.insert(Rose::BinaryAnalysis::AddressInterval::hull(lo, hi));
         }

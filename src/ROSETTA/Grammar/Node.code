@@ -1654,13 +1654,6 @@ SgTreeCopy::copyAst( const SgNode *n )
 
 // DQ (8/10/2008): Added to support binary file format.
 std::ostream &
-operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & m )
-   {
-     return os;
-   }
-
-// DQ (8/10/2008): Added to support binary file format.
-std::ostream &
 operator<< ( std::ostream & os, const struct stat & sb )
    {
      return os;

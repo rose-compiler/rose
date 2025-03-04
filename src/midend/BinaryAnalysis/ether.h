@@ -90,7 +90,7 @@ public:
     }
 
     /** Reads @p size bytes of memory from virtual address @p va in the connected domainU into a local buffer. */
-    void readguest(rose_addr_t va, unsigned char *buffer, size_t size) {
+    void readguest(Rose::BinaryAnalysis::Address va, unsigned char *buffer, size_t size) {
         domctl(CmdReadGuest(va, buffer, size));
     }
     
@@ -129,7 +129,7 @@ public:
     }
 
 
-    void add_cr3_filter(rose_addr_t cr3) {
+    void add_cr3_filter(Rose::BinaryAnalysis::Address cr3) {
         domctl(CmdAddCR3(cr3));
     }
 
@@ -204,7 +204,7 @@ private:
     };
 
     struct CmdReadGuest: public xen_domctl {
-        CmdReadGuest(rose_addr_t va, void *buffer, size_t size) {
+        CmdReadGuest(Rose::BinaryAnalysis::Address va, void *buffer, size_t size) {
             u.ether.command_code = XEN_DOMCTL_ETHER_READ_GUEST;
             u.ether.guest_va = va;
             u.ether.guest_buffer = (unsigned char*)buffer;
@@ -243,7 +243,7 @@ private:
     };
 
     struct CmdSysenter: public xen_domctl {
-        CmdSysenter(rose_addr_t eip) {
+        CmdSysenter(Rose::BinaryAnalysis::Address eip) {
             u.ether.command_code = XEN_DOMCTL_ETHER_SET_SYSENTER;
             u.ether.sysenter_cs = 0;
             u.ether.sysenter_eip = eip;
@@ -251,7 +251,7 @@ private:
     };
 
     struct CmdAddCR3: public xen_domctl {
-        CmdAddCR3(rose_addr_t cr3) {
+        CmdAddCR3(Rose::BinaryAnalysis::Address cr3) {
             u.ether.command_code = XEN_DOMCTL_ETHER_ADD_CR3;
             u.ether.cr3_value = cr3;
         }
@@ -302,7 +302,7 @@ private:
     int xc_event_iface;                         /**< Main Xen controller event channel */
     domid_t dom;                                /**< ID number of the DomainU; See "xm list" shell command. */
     
-    rose_addr_t shared_page_mfn;                /**< Machine frame number of shared page */
+    Rose::BinaryAnalysis::Address shared_page_mfn;      /**< Machine frame number of shared page */
     volatile unsigned char *shared_page;        /**< Shared page mapped to our address space */
     
     evtchn_port_t event_port;                   /**< Our end of the event channel that was created by the constructor. */

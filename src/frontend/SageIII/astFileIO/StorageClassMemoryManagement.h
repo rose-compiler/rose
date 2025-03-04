@@ -1242,8 +1242,8 @@ class EasyStorage<SgSharedVector<BASIC_TYPE> >: public StorageClassMemoryManagem
 
 /** Maps an ExtentMap to/from file representation. */
 template<>
-class EasyStorage<ExtentMap>: public StorageClassMemoryManagement<rose_addr_t> {
-    typedef StorageClassMemoryManagement<rose_addr_t> Base;
+class EasyStorage<ExtentMap>: public StorageClassMemoryManagement<Rose::BinaryAnalysis::Address> {
+    typedef StorageClassMemoryManagement<Rose::BinaryAnalysis::Address> Base;
   public:
     EasyStorage() {}
     void storeDataInEasyStorageClass(const ExtentMap&);
@@ -1252,8 +1252,8 @@ class EasyStorage<ExtentMap>: public StorageClassMemoryManagement<rose_addr_t> {
 
 /** Maps an AddressIntervalSet to/from file representation. */
 template<>
-class EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>: public StorageClassMemoryManagement<rose_addr_t> {
-    typedef StorageClassMemoryManagement<rose_addr_t> Base;
+class EasyStorage<Rose::BinaryAnalysis::AddressIntervalSet>: public StorageClassMemoryManagement<Rose::BinaryAnalysis::Address> {
+    typedef StorageClassMemoryManagement<Rose::BinaryAnalysis::Address> Base;
   public:
     EasyStorage() {}
     void storeDataInEasyStorageClass(const Rose::BinaryAnalysis::AddressIntervalSet&);

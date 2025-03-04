@@ -177,7 +177,6 @@ filter-doxygen-warnings() {
         /unable to resolve reference to 'InstructionMap'/d                      # 1
         /unable to resolve reference to 'frontend'/d                            # 1, 2.BAD_NAME
         /unable to resolve reference to 'Sg_File_Info'/d                        # 1, 2.BAD_NAME
-        /unable to resolve reference to 'rose_addr_t'/d                         # 1, 2.BAD_NAME
         "
 }
 

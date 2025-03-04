@@ -102,7 +102,7 @@ default zero and add base\_va explicitly whenever we need to.
 SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef);
 fhdr->get_exec_format()->set_word_size(8);                  /* default is 32-bit; we want 64-bit */
 fhdr->set_isa(SgAsmExecutableFileFormat::ISA_X8664_Family); /* instruction set architecture; default is ISA_IA32_386 */
-rose_addr_t base_va = 0x400000;                             /* base virtual address */
+Rose::BinaryAnalysis::Address base_va = 0x400000;           /* base virtual address */
 \end{verbatim}
 
 \section{Constructing the ELF Segment Table}
@@ -167,7 +167,7 @@ public:
     TextSection(SgAsmElfFileHeader *fhdr, size_t ins_size, const unsigned char *ins_bytes)
 	: SgAsmElfSection(fhdr), ins_size(ins_size), ins_bytes(ins_bytes)
 	{}
-    virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
+    virtual Rose::BinaryAnalysis::Address calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
 	if (entsize)  *entsize  = 1;                        /* an "entry" is one byte of instruction */
 	if (required) *required = 1;                        /* each "entry" is also stored in one byte of the file */
 	if (optional) *optional = 0;                        /* there is no extra data per instruction byte */

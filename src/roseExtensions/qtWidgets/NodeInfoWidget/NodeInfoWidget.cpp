@@ -203,7 +203,7 @@ void NodeInfoWidget::setNode(SgNode * node)
                 }
                 if( propName == "p_address" )
                 {
-                    rose_addr_t address( 0 );
+                    Rose::BinaryAnalysis::Address address( 0 );
                     SgAsmStatement *asmStatement( isSgAsmStatement( node ) );
                     if( asmStatement )
                     {

@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 // Deprecated. Use Rose::BinaryAnalysis::AddressInterval for all new code.
-typedef Range<rose_addr_t> Extent;
+typedef Range<Rose::BinaryAnalysis::Address> Extent;
 
 // Deprecated. Use Rose::BinaryAnalysis::AddressIntervalSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
@@ -25,8 +25,8 @@ public:
                 return invert_within<ExtentMap>(e);
         }
         void allocate_at(const Extent &request);
-        Extent allocate_best_fit(const rose_addr_t size);
-        Extent allocate_first_fit(const rose_addr_t size);
+        Extent allocate_best_fit(const Rose::BinaryAnalysis::Address size);
+        Extent allocate_first_fit(const Rose::BinaryAnalysis::Address size);
         void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
         void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };

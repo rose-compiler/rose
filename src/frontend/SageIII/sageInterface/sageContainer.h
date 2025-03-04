@@ -275,12 +275,11 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
-// DQ (8/21/2008): Use the reference built for rose_addr_t instead.
 // DQ (8/21/2008): Moved this from Node.code to make it local since
 // we can't reference the nested addr_t directly from glogal scope.
 // typedef uint64_t addr_t; // address and size (file and memory)
-typedef Rose_STL_Container<rose_addr_t>  SgAddressList;
-typedef SgAddressList*                   SgAddressListPtr;
+typedef Rose_STL_Container<Rose::BinaryAnalysis::Address> SgAddressList;
+typedef SgAddressList* SgAddressListPtr;
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 typedef Rose_STL_Container<rose_rva_t>         SgRVAList;
@@ -561,9 +560,9 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::str
 
 #ifndef SWIG
 
-// DQ (8/8/2008): Added support for std::multimap<rose_addr_t, rose_addr_t> used in binary file format.
-std::ostream & operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & m );
-std::ostream & operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_addr_t> > & l );
+std::ostream& operator<<(std::ostream&, const std::multimap<Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address>&);
+std::ostream& operator<<(std::ostream&,
+                         const std::vector<std::pair<Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address>>&);
 // struct SgAsmGenericFormat::fileDetails;
 // std::ostream & operator<< ( std::ostream & os, const SgAsmGenericFormat::fileDetails & sb );
 std::ostream & operator<< ( std::ostream & os, const struct stat & sb );
